@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.31 1995/06/09 16:11:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.32 1995/06/09 16:44:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -283,9 +283,6 @@ define primary abstract open %%class <object> ()
   slot %object-class, type: <class>, setter: #f, init-value: <object>
 end;
 
-define abstract open class <functional-object> (<object>)
-end;
-
 
 define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
@@ -300,7 +297,6 @@ define class <closure> (<function>)
   slot closure-var :: <object>,
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
-
 seal generic make (singleton(<closure>));
 seal generic initialize (<closure>);
 
@@ -311,8 +307,7 @@ end;
 
 define class <closure-method> (<method>, <closure>)
 end;
-
-seal generic make (singleton(<method-closure>));
+seal generic make (singleton(<closure-method>));
 
 define class <generic-function> (<function>) end;
 
