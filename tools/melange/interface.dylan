@@ -73,13 +73,13 @@ end method count-whitespace;
 //
 define method process-interface-file
     (in-file :: <string>, out-stream :: <stream>, #key verbose) => ();
-  let in-stream = make(<file-stream>, name: in-file);
-  let input-string = read-as(<byte-string>, in-stream, to-eof?: #t);
+  let in-stream = make(<file-stream>, locator: in-file);
+  let input-string = read-to-end(in-stream);
   let sz = input-string.size;
   
   local method try-define (position :: <integer>) => ();
 	  let new-position = match-define(input-string, start: position);
-	  write(input-string, out-stream, start: position,
+	  write(out-stream, input-string, start: position,
 		end: new-position | sz);
 	  if (new-position)
 	    let index = new-position + 6;
@@ -93,7 +93,7 @@ define method process-interface-file
 					   verbose: verbose);
 	      if (newer-position < sz) try-define(newer-position) end if;
 	    else
-	      write(input-string, out-stream, start: new-position,
+	      write(out-stream, input-string, start: new-position,
 		    end: index + space-count);
 	      try-define(index + space-count);
 	    end if;
@@ -101,7 +101,7 @@ define method process-interface-file
 	end method try-define;
   try-define(0);
   force-output(out-stream);
-  if (verbose) write-line("", *standard-output*) end if;
+  if (verbose) write-line(*standard-output*, "") end if;
 end method process-interface-file;
 
 //----------------------------------------------------------------------
@@ -484,7 +484,7 @@ define method main (program, #rest args)
 	in-file & out-file =>
 	  error("Too many args.");
 	in-file =>
-	  out-file := make(<file-stream>, name: arg, direction: #"output");
+	  out-file := make(<file-stream>, locator: arg, direction: #"output");
 	otherwise =>
 	  in-file := arg;
       end case;
