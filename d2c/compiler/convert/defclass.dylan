@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.57 1996/02/12 01:59:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.58 1996/02/18 18:30:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -954,7 +954,7 @@ define method class-defn-maker-function
 		signature: make(<signature>, specializers: #(),
 				keys: as(<list>, key-infos),
 				all-keys: #t,
-				returns: cclass));
+				returns: cclass.direct-type));
 	 end;
   else
     defn.%class-defn-maker-function;
@@ -1737,7 +1737,7 @@ define method convert-top-level-form
 				    make(<signature>, specializers: #(),
 					 keys: as(<list>, key-infos),
 					 all-keys: #t,
-					 returns: cclass),
+					 returns: cclass.direct-type),
 				    maker-region);
 	  build-assignment
 	    (evals-builder, policy, source, #(),
