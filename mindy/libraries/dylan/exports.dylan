@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.85 1996/02/17 17:54:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.86 1996/02/23 21:55:45 wlott Exp $
 
 //======================================================================
 //
@@ -117,6 +117,7 @@ define module Builtin-Stuff
     $pi, $e,
     init-keyword, keyword-required?;
   create
+    %define-sealed-domain,
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
     forward-iteration-protocol, backward-iteration-protocol, 

@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/func.dylan,v 1.4 1994/06/27 17:10:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/func.dylan,v 1.5 1996/02/23 21:55:45 wlott Exp $
 
 //======================================================================
 //
@@ -120,3 +120,20 @@ define method generic-apply (function :: <function>, #rest arguments)
   end;
   apply(function, new-args);
 end;
+
+
+define method %define-sealed-domain
+    (gf :: <generic-function>, #rest types) => ();
+  unless (gf.function-arguments == types.size)
+    error("Wrong number of types in define sealed domain for %=.\n"
+	    "Wanted %d, but got %d",
+	  gf, gf.function-arguments, types.size);
+  end unless;
+  for (gf-type in gf.function-specializers,
+       seal-type :: <type> in types)
+    unless (subtype?(seal-type, gf-type))
+      error("Seal type %= isn't a subtype of gf type %=.",
+	    seal-type, gf-type);
+    end unless;
+  end for;
+end method %define-sealed-domain;
