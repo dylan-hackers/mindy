@@ -19,11 +19,15 @@ if ($features{'compiled_for_win32'}) {
     &emit_c_file_rule('hp-dig-support', 'hp-dig-support.h');
     &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
 } elsif ($features{'compiled_for_solaris'} || $features{'compiled_for_linux'}) {
-    ### Do nothing; we just want to be able to process this makegen
-    $dig_lid_file = 'hp-dig';
+    # dig is unsupported on these platforms because the port is
+    # non-trivial.  There's a fair amount of OS-specific work involved
+    # in handling interrupts to make sure ^C does what you'd expect.
+    $dig_lid_file = 0;
 } else {
     &unknown_platform_error();
 }
    
-&emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '', 
-		   'compile', 'install');
+if ($dig_lid_file) {
+    &emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '', 
+		       'compile', 'install');
+}
