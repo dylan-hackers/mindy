@@ -1,9 +1,9 @@
-module: Time
+module: Time-Internal
 author: Ben Folk-Williams, bfw@cmu.edu and
         David Watson, dwatson@cmu.edu
 synopsis: Basic Time functions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.1 1996/07/23 16:03:34 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.2 1996/07/29 18:34:19 dwatson Exp $
  
 //======================================================================
 //
