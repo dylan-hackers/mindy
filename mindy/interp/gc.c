@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.7 1994/04/12 19:47:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.8 1994/04/20 02:37:21 wlott Exp $
 *
 * This file does whatever.
 *
@@ -47,6 +47,7 @@ extern void scavenge_driver_roots(void);
 extern void scavenge_buffer_roots(void);
 extern void scavenge_weak_roots(void);
 extern void scavenge_brkpt_roots(void);
+extern void scavenge_table_roots(void);
 
 
 #define CHECKGC 1
@@ -286,6 +287,7 @@ void collect_garbage(void)
     scavenge_buffer_roots();
     scavenge_weak_roots();
     scavenge_brkpt_roots();
+    scavenge_table_roots();
 
     scavenge_newspace();
 
