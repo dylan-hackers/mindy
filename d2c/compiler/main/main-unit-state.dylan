@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.3 2001/09/12 14:39:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.4 2003/03/02 23:14:17 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -34,17 +34,17 @@ copyright: see below
 //
 
 define class <main-unit-state> (<object>)
-  slot unit-command-line-features :: <list>, 
+  constant slot unit-command-line-features :: <list>, 
     required-init-keyword: command-line-features:;
-  slot unit-log-dependencies :: <boolean>, 
+  constant slot unit-log-dependencies :: <boolean>, 
     required-init-keyword: log-dependencies:;
-  slot unit-target :: <platform>,
+  constant slot unit-target :: <platform>,
     required-init-keyword: target:;
-  slot unit-no-binaries :: <boolean>,
+  constant slot unit-no-binaries :: <boolean>,
     required-init-keyword: no-binaries:;
-  slot unit-link-static :: <boolean>,
+  constant slot unit-link-static :: <boolean>,
     required-init-keyword: link-static:;
-  slot unit-link-rpath :: false-or(<string>),
+  constant slot unit-link-rpath :: false-or(<string>),
     required-init-keyword: link-rpath:;
   // Simplistic flags to control debugging (and someday, optimization).
   // We only have one of these right now.
@@ -52,7 +52,8 @@ define class <main-unit-state> (<object>)
   slot unit-profile? :: <boolean>, init-keyword: profile?:, init-value: #f;
 
   slot unit-header :: <header>;
-  slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
+  constant slot unit-init-functions :: <stretchy-vector>
+	= make(<stretchy-vector>);
 end class <main-unit-state>;
 
 // Find the library object file (archive) using the data-unit search path.
