@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.41 1996/03/17 01:08:37 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.42 1996/03/20 01:44:03 rgs Exp $
 
 /*
 
@@ -1185,7 +1185,7 @@ define sealed domain initialize (<data-unit>);
 
 // Table mapping data unit names to a list of pairs (unit-type . data-unit)
 //
-define variable *data-units* = make(<table>);
+define variable *data-units* :: <object-table> = make(<table>);
 
 
 define /* exported */ class <load-state> (<object>)
@@ -1776,7 +1776,7 @@ define constant load-word-vector = method (state :: <load-state>)
   let nwords = buffer-word(buffer, state.od-next);
   state.od-next := state.od-next + $word-bytes;
   let res = make(<simple-object-vector>, size: nwords);
-  for (i from 0 below nwords)
+  for (i :: <integer> from 0 below nwords)
     res[i] := buffer-word(buffer, fill-at-least($word-bytes, state));
     state.od-next := state.od-next + $word-bytes;
   end for;
@@ -2159,12 +2159,12 @@ define sealed domain initialize (<make-info>);
 
 // Table mapping classes to <make-info> objects.
 //
-define variable *make-dumpers* = make(<object-table>);
+define constant *make-dumpers* :: <object-table> = make(<object-table>);
 
 // Keep track of what we've complained about already, so we don't spam
 // the reader with the same warnings
 //
-define variable *classes-I-cant-dump* = make(<object-table>);
+define constant *classes-I-cant-dump* :: <object-table> = make(<object-table>);
 
 // In order to avoid using add-method (so dump-od can be sealed), we have a
 // default method for dump-od which does its own dispatching based on the
