@@ -66,16 +66,17 @@ do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
 # Custom utils with wrappers
 do install_perl_scripts('configure',
 			'find-dylan-files', 'mass-ci', 'mass-diff', 
-			'mk-build-tree', 'mk-rcs-links', 
-			'tree-diff', 'unix-find', 'which');
+			'mk-rcs-links', 'tree-diff', 'unix-find', 'which');
 
 # rcsupdate needs the path to co.exe
 do install_from_src('bin', 'rcsupdate.perl');
 do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
 			   "$GwydionDir\\rcs-bin\\co.exe");
 
-# gen-makefile.perl is in shared-misc, which doesn't do wrappers
+# gen-makefile.perl and mk-build-tree are in shared-misc, which
+# doesn't do wrappers
 do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
+do install_no_arg_wrapper('perl', 'mk-build-tree', '.perl');
 
 # Custom utils that are straight batch files
 do install_from_src('bin', 'build-tags.bat');
