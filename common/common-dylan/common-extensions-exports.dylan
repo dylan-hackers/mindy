@@ -108,7 +108,6 @@ define module common-extensions
 
     /* Converting to and from numbers */
     float-to-string,
-    string-to-float,
     integer-to-string,
     string-to-integer,
     // Not part of common? number-to-string,
