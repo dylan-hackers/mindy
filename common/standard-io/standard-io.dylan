@@ -2,7 +2,7 @@ module: Standard-io
 author: chiles@cs.cmu.edu
 synopsis: This file provides some standard I/O stuff.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/standard-io.dylan,v 1.1 1996/06/12 23:40:42 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/standard-io.dylan,v 1.2 1996/07/12 02:23:51 bfw Exp $
 
 //======================================================================
 //
@@ -28,20 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/standard-io
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library Standard-IO
-  use Dylan;
-  use New-Streams;
-  export Standard-IO;
-end library;
-
-define module Standard-IO
-  use Dylan;
-  use New-Streams,
-    import: {<fd-stream>};
-  export
-    *standard-input*, *standard-output*, *standard-error*;
-end module;
 
 define constant *standard-input* :: <fd-stream>
   = make(<fd-stream>, fd: 0);
