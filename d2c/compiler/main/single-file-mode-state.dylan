@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.5 2001/12/11 01:03:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.6 2002/01/07 21:33:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -121,7 +121,9 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "skipping rest of %s\n", state.unit-source-file);
   end block;
-    format(*debug-output*, "Finalizing definitions\n");
+  format(*debug-output*, "seeding representations\n");
+  seed-representations();
+  format(*debug-output*, "Finalizing definitions\n");
   for(tlfs in state.unit-tlf-vectors)  
     for (tlf in copy-sequence(tlfs))
       note-context(tlf);
@@ -141,8 +143,6 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
       assign-unique-ids(string-to-integer(unique-id-base));
     end;
   end;
-  format(*debug-output*, "seeding representations\n");
-  seed-representations();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
 end method parse-and-finalize-library;

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.3 2001/09/12 14:39:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.4 2002/01/07 21:33:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -274,6 +274,8 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
 #if (mindy)
   collect-garbage(purify: #t);
 #endif
+  format(*debug-output*, "seeding representations\n");
+  seed-representations();
   format(*debug-output*, "Finalizing definitions\n");
   for (tlfs in state.unit-tlf-vectors)
     *Top-Level-Forms* := tlfs;
@@ -295,8 +297,6 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
       assign-unique-ids(string-to-integer(unique-id-base));
     end;
   end;
-  format(*debug-output*, "seeding representations\n");
-  seed-representations();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
 end method parse-and-finalize-library;
