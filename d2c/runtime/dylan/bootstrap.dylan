@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.7 1995/12/06 11:45:45 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.8 1995/12/09 02:45:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -32,8 +32,8 @@ define %%module dylan-viscera
     <collection>, <explicit-key-collection>, <sequence>,
     <mutable-collection>, <mutable-explicit-key-collection>,
     <mutable-sequence>, <stretchy-collection>, <array>, <vector>,
-    <simple-object-vector>, <stretchy-vector>, <deque>, <list>,
-    <pair>, <empty-list>, <range>, <string>, <byte-string>,
+    <simple-vector>, <simple-object-vector>, <stretchy-vector>, <deque>,
+    <list>, <pair>, <empty-list>, <range>, <string>, <byte-string>,
     <unicode-string>, <table>, <object-table>,
 
     // Functions
@@ -60,7 +60,7 @@ define %%module dylan-viscera
 
     // Coercing and Copying Objects
     identity, values, as, as-uppercase, as-uppercase!,
-    as-lowercase, as-lowercase!, shallow-copy, class-for-copy,
+    as-lowercase, as-lowercase!, shallow-copy, type-for-copy,
 
     // Collection Operations
     empty?, size, size-setter, rank, row-major-index, dimensions,
