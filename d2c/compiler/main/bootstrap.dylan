@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.33 1995/06/09 19:01:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.34 1995/06/10 15:57:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -288,28 +288,35 @@ define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
 define class <false> (<boolean>) end;
 
-define class <function> (<object>)
+define abstract class <function> (<object>)
   slot general-entry :: <raw-pointer>,
     required-init-keyword: general-entry:;
 end;
 
-define class <closure> (<function>)
+define abstract class <closure> (<function>)
   slot closure-var :: <object>,
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
-seal generic make (singleton(<closure>));
 seal generic initialize (<closure>);
+
+define class <raw-function> (<function>)
+end;
+
+define class <raw-closure> (<raw-function>, <closure>)
+end;
+seal generic make (singleton(<raw-closure>));
 
 define class <method> (<function>)
   slot generic-entry :: <raw-pointer>,
     required-init-keyword: generic-entry:;
 end;
 
-define class <closure-method> (<method>, <closure>)
+define class <method-closure> (<method>, <closure>)
 end;
-seal generic make (singleton(<closure-method>));
+seal generic make (singleton(<method-closure>));
 
-define class <generic-function> (<function>) end;
+define class <generic-function> (<function>)
+end;
 
 define class <symbol> (<object>)
   slot symbol-string :: <string>, setter: #f, required-init-keyword: string:;
@@ -509,6 +516,23 @@ define constant catch
   = method (saved-state :: <raw-pointer>, thunk :: <function>)
       thunk(saved-state);
     end;
+
+define method make-closure
+    (func :: <function>, closure-size :: <fixed-integer>)
+    => res :: <raw-closure>;
+  make(<closure>,
+       general-entry: func.general-entry,
+       closure-size: closure-size);
+end;
+
+define method make-closure
+    (func :: <method>, closure-size :: <fixed-integer>)
+    => res :: <method-closure>;
+  make(<method-closure>,
+       general-entry: func.general-entry,
+       generic-entry: func.generic-entry,
+       closure-size: closure-size);
+end;
 
 define sealed inline method vector (#rest things)
     => res :: <simple-object-vector>;
