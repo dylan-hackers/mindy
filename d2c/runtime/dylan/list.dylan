@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.10 1996/06/12 16:39:57 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -247,16 +247,24 @@ define method reverse! (list :: <list>) => res :: <list>;
 end;
 
 
-define method \= (list1 :: <list>, list2 :: <list>)
+define sealed method \= (list1 :: <list>, list2 :: <list>)
     => res :: <boolean>;
   if (list1 == list2)
     #t;
   elseif (list1 == #() | list2 == #())
     #f;
   else
-    list1.head = list2.head & list1.tail = list2.tail;
-  end;
-end;
+    block (return)
+      for (l1 = list1 then l1.tail,
+	   l2 = list2 then l2.tail,
+	   while: (instance?(l1, <pair>) & instance?(l2, <pair>)))
+	unless (l1.head = l2.head) return(#f) end unless;
+      finally
+	l1 = l2;
+      end for;
+    end block;
+  end if;
+end method;
 
 define sealed method \= (list :: <list>, sequence :: <sequence>)
     => res :: <boolean>;
