@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.56 1996/02/07 01:32:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.57 1996/02/09 00:02:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -640,6 +640,24 @@ define method ct-value (defn :: <abstract-method-definition>)
 		signature: defn.function-defn-signature,
 		definition: defn,
 		hidden: instance?(defn, <method-definition>));
+	 end;
+  else
+    ctv;
+  end;
+end;
+
+define method ct-value (defn :: <accessor-method-definition>)
+    => res :: false-or(<ct-function>);
+  let ctv = defn.function-defn-ct-value;
+  if (ctv == #"not-computed-yet")
+    defn.function-defn-ct-value
+      := unless (defn.function-defn-hairy?)
+	   make(<ct-accessor-method>,
+		name: format-to-string("%s", defn.defn-name),
+		signature: defn.function-defn-signature,
+		definition: defn,
+		hidden: #t,
+		slot-info: defn.accessor-method-defn-slot-info);
 	 end;
   else
     ctv;
