@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.18 1995/04/27 09:24:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.19 1995/04/28 07:21:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -248,8 +248,13 @@ define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
 			     // ### Should really only be ssa-variable.
 			     output-info :: <output-info>)
     => res :: <backend-var-info>;
-  let rep = pick-representation(var.derived-type, #"speed");
   let varinfo = var.var-info;
+  let rep
+    = if (instance?(varinfo, <values-cluster-info>))
+	$cluster-rep;
+      else
+	pick-representation(var.derived-type, #"speed");
+      end;
 
   make(<backend-var-info>, representation: rep, name: #f);
 end;
@@ -348,12 +353,8 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     write("void", stream);
   elseif (~result.dependent-next)
     let var = result.source-exp;
-    if (instance?(var.var-info, <values-cluster-info>))
-      write("### VALUES-CLUSTER", stream);
-    else
-      let rep = variable-representation(var, output-info);
-      write(rep.representation-c-type, stream);
-    end;
+    let rep = variable-representation(var, output-info);
+    write(rep.representation-c-type, stream);
   else
     let header = output-info.output-info-header-stream;
     format(header, "struct %s_results {\n", name);
@@ -495,12 +496,8 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     let stream = make(<byte-string-output-stream>);
     if (~result.dependent-next)
       let var = result.source-exp;
-      if (instance?(var.var-info, <values-cluster-info>))
-	write("return ### VALUES-CLUSTER;\n", stream);
-      else
-	let rep = variable-representation(var, output-info);
-	format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
-      end;
+      let rep = variable-representation(var, output-info);
+      format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
     else
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
@@ -626,9 +623,17 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
 	format(stream, "abort();\n");
       end;
     else
-      format(stream, "longjmp(### jmpbuf, 1)\n");
+      error("Non-local raw exit?");
     end;
   end;
+end;
+
+define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
+    => ();
+  spew-pending-defines(output-info);
+  format(output-info.output-info-guts-stream, "pitch(%s);\n",
+	 ref-leaf($cluster-rep, pitcher.depends-on.source-exp, output-info));
+  deliver-results(defines, #[], output-info);
 end;
 
 define method block-id (region :: <false>) => id :: <false>;
@@ -655,88 +660,13 @@ end;
 // Assignments.
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       expr :: <expression>,
-			       output-info :: <output-info>)
-    => ();
-  spew-pending-defines(output-info);
-  let stream = output-info.output-info-guts-stream;
-  if (defines & instance?(defines.var-info, <values-cluster-info>))
-    write("### VALUES-CLUSTER = ???;\n", stream);
-  else
-    write("### [", stream);
-    for (var = defines then var.definer-next,
-	 first? = #t then #f,
-	 while: var)
-      write(", ", stream);
-      let (name, rep) = c-name-and-rep(var, output-info);
-      write(name, stream);
-    end;
-    write("] = ???;\n", stream);
-  end;
-end;
-
-define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       op :: <operation>,
-			       output-info :: <output-info>)
-    => ();
-  let stream = make(<byte-string-output-stream>);
-  if (defines & instance?(defines.var-info, <values-cluster-info>))
-    write("### VALUES-CLUSTER", stream);
-  else
-    write("### [", stream);
-    for (var = defines then var.definer-next,
-	 first? = #t then #f,
-	 while: var)
-      unless (first?)
-	write(", ", stream);
-      end;
-      let (name, rep) = c-name-and-rep(var, output-info);
-      write(name, stream);
-    end;
-    write(']', stream);
-  end;
-  write(" = ???(", stream);
-  for (dep = op.depends-on then dep.dependent-next,
-       first? = #t then #f,
-       while: dep)
-    unless (first?)
-      write(", ", stream);
-    end;
-    write(ref-leaf($general-rep, dep.source-exp, output-info), stream);
-  end;
-  write(");\n", stream);
-  spew-pending-defines(output-info);
-  write(stream.string-output-stream-string,
-	output-info.output-info-guts-stream);
-end;
-
-define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       var :: <abstract-variable>,
 			       output-info :: <output-info>)
     => ();
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
-      let stream = output-info.output-info-guts-stream;
-      if (instance?(defines.var-info, <values-cluster-info>))
-	write("### VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
-      else
-	let count
-	  = for (var = defines then var.definer-next,
-		 index from 0,
-		 while: var)
-	    finally
-	      index;
-	    end;
-	unless (count <= var.derived-type.min-values)
-	  format("### pad(VALUES-CLUSTER, %d);\n", count);
-	end;
-	for (var = defines then var.definer-next,
-	     index from 0,
-	     while: var)
-	  let source = format-to-string("### VALUES-CLUSTER[%d]", index);
-	  deliver-single-result(var, source, $general-rep, output-info);
-	end;
-      end;
+      deliver-cluster(defines, ref-leaf($cluster-rep, var, output-info),
+		      var.derived-type, output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
 		  $general-rep;
@@ -799,7 +729,52 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
+     call :: union(<unknown-call>, <error-call>),
+     output-info :: <output-info>)
+    => ();
+  let temp = new-local(output-info);
+  format(output-info.output-info-vars-stream, "%s %s;\n",
+	 $cluster-rep.representation-c-type, temp);
+  let stream = make(<byte-string-output-stream>);
+  let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
+  format(stream, "%s = sp;\n", temp);
+  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+       count from 0,
+       while: arg-dep)
+  finally
+    format(stream, "sp += %d;\n", count);
+  end;
+  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+       index from 0,
+       while: arg-dep)
+    format(stream, "%s[%d] = %s;\n", temp, index, 
+	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
+  end;
+  spew-pending-defines(output-info);
+  format(output-info.output-info-guts-stream, "%ssp = CALL(%s, %s);\n",
+	 stream.string-output-stream-string, func, temp);
+  deliver-cluster(results, temp, call.derived-type, output-info);
+end;
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>), call :: <mv-call>, 
+     output-info :: <output-info>)
+    => ();
+  let stream = make(<byte-string-output-stream>);
+  let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
+  spew-pending-defines(output-info);
+  let cluster
+    = ref-leaf($cluster-rep, call.depends-on.dependent-next.source-exp,
+	       output-info);
+  format(output-info.output-info-guts-stream, "sp = CALL(%s, %s);\n",
+	 func, cluster);
+  deliver-cluster(results, cluster, call.derived-type, output-info);
+end;
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
      expr :: union(<known-call>, <local-call>), output-info :: <output-info>)
+    => ();
   let func = expr.depends-on.source-exp;
   let func-info = get-info-for(func, output-info);
   let stream = make(<byte-string-output-stream>);
@@ -844,8 +819,15 @@ define method emit-assignment
     deliver-results(results, result-exprs, output-info);
   elseif (instance?(func.depends-on.source-exp.var-info,
 		      <values-cluster-info>))
-    format(output-info.output-info-guts-stream, "### VALUES-CLUSTER = %s;\n",
-	   call);
+    let temp = new-local(output-info);
+    format(output-info.output-info-vars-stream, "%s %s;\n",
+	   $cluster-rep.representation-c-type, temp);
+    format(stream, "%s = sp;\nsp = %s;\n", temp, call);
+    if (instance?(results.var-info, <values-cluster-info>))
+      deliver-single-result(results, temp, $cluster-rep, output-info);
+    else
+      deliver-cluster(results, temp, func.result-type, output-info);
+    end;
   else
     let rep = variable-representation(func.depends-on.source-exp, output-info);
     deliver-results(results, vector(pair(call, rep)), output-info);
@@ -869,27 +851,6 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <catcher>,
 			       output-info :: <output-info>)
     => ();
-end;
-
-define method emit-assignment
-    (pitcher-defines :: false-or(<definition-site-variable>),
-     pitcher :: <pitcher>, output-info :: <output-info>)
-    => ();
-  let args = pitcher.depends-on;
-  let catcher-defines = pitcher.catcher.dependents.dependent.defines;
-
-  if (args & instance?(args.source-exp, <abstract-variable>)
-	& instance?(args.source-exp.var-info, <values-cluster-info>))
-    emit-assignment(catcher-defines, args.source-exp, output-info);
-  else
-    let results = make(<stretchy-vector>);
-    for (dep = pitcher.depends-on then dep.dependent-next,
-	 while: dep)
-      let expr = ref-leaf($general-rep, dep.source-exp, output-info);
-      add!(results, pair(expr, $general-rep));
-    end;
-    deliver-results(catcher-defines, results, output-info);
-  end;
 end;
 
 define method emit-assignment
@@ -941,25 +902,52 @@ define method emit-assignment
 end;
 
 
+define method deliver-cluster
+    (defines :: false-or(<definition-site-variable>), name :: <string>,
+     type :: <values-ctype>, output-info :: <output-info>)
+    => ();
+  let stream = output-info.output-info-guts-stream;
+  if (instance?(defines.var-info, <values-cluster-info>))
+    deliver-single-result(defines, name, $cluster-rep, output-info, #f);
+  else
+    let count = for (var = defines then var.definer-next,
+		     index from 0,
+		     while: var)
+		finally
+		  index;
+		end;
+    unless (count <= type.min-values)
+      format(stream, "pad_cluster(%s, sp, %d);\n", name, count);
+    end;
+    for (var = defines then var.definer-next,
+	 index from 0,
+	 while: var)
+      let source = format-to-string("%s[%d]", name, index);
+      deliver-single-result(var, source, $general-rep, output-info, #t);
+    end;
+    format(stream, "sp = %s;\n", name);
+  end;
+end;
+
 define method deliver-results (defines :: false-or(<definition-site-variable>),
 			       values :: <vector>,
 			       output-info :: <output-info>)
   let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
-    // ### Make a values cluster.
-    write("### VALUES-CLUSTER = [", stream);
-    for (val in values, first? = #t then #f)
-      unless (first?)
-	write(", ", stream);
+    let name = c-name-and-rep(defines, output-info);
+    format(stream, "%s = sp;\n", name);
+    unless (empty?(values))
+      format(stream, "sp += %d;\n", values.size);
+      for (val in values, index from 0)
+	emit-copy(format-to-string("%s[%d]", name, index), $general-rep,
+		  val.head, val.tail, output-info);
       end;
-      write(val.head, stream);
     end;
-    write("];\n", stream);
   else
     for (var = defines then var.definer-next,
 	 val in values,
 	 while: var)
-      deliver-single-result(var, val.head, val.tail, output-info);
+      deliver-single-result(var, val.head, val.tail, output-info, #f);
     finally
       if (var)
 	let false = make(<literal-false>);
@@ -968,54 +956,35 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
 	  let target-rep = variable-representation(var, output-info);
 	  let (source-name, source-rep)
 	    = c-expr-and-rep(false, target-rep, output-info);
-	  deliver-single-result(var, source-name, source-rep, output-info);
+	  deliver-single-result(var, source-name, source-rep, output-info, #f);
 	end;
       end;
     end;
   end;
 end;
 
-define method deliver-single-result (var :: <abstract-variable>,
-				     // ### Should really be ssa-variable
-				     source :: <string>,
-				     source-rep :: <representation>,
-				     output-info :: <output-info>)
+define method deliver-single-result
+    (var :: <abstract-variable>, // ### Should really be ssa-variable
+     source :: <string>, source-rep :: <representation>,
+     output-info :: <output-info>, now-dammit? :: <boolean>)
     => ();
   if (var.dependents)
-    if (var.dependents.source-next)
-      really-deliver-single-result(var, source, source-rep, output-info);
+    if (now-dammit? | var.dependents.source-next)
+      let (target-name, target-rep) = c-name-and-rep(var, output-info);
+      emit-copy(target-name, target-rep, source, source-rep, output-info);
     else
       output-info.output-info-local-vars[var] := pair(source, source-rep);
     end;
   end;
 end;
 
-define method deliver-single-result (var :: <global-variable>,
-				     // ### Should really be ssa-variable
-				     source :: <string>,
-				     source-rep :: <representation>,
-				     output-info :: <output-info>)
+define method deliver-single-result
+    (var :: <initial-definition>, source :: <string>,
+     source-rep :: <representation>, output-info :: <output-info>,
+     now-dammit? :: <boolean>)
     => ();
-  if (var.dependents)
-    really-deliver-single-result(var, source, source-rep, output-info);
-  end;
-end;
-
-define method deliver-single-result (var :: <initial-definition>,
-				     source :: <string>,
-				     source-rep :: <representation>,
-				     output-info :: <output-info>)
-    => ();
-  deliver-single-result(var.definition-of, source, source-rep, output-info);
-end;
-
-define method really-deliver-single-result
-    (var :: <abstract-variable>, // ### Should really be ssa-variable
-     source :: <string>, source-rep :: <representation>,
-     output-info :: <output-info>)
-    => ();
-  let (target-name, target-rep) = c-name-and-rep(var, output-info);
-  emit-copy(target-name, target-rep, source, source-rep, output-info);
+  deliver-single-result(var.definition-of, source, source-rep, output-info,
+			now-dammit?);
 end;
 
 
