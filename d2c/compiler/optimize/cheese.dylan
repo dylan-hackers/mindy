@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.28 1995/04/27 05:00:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.29 1995/04/27 09:27:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -474,31 +474,23 @@ define method maybe-expand-exit-function
     (component :: <component>, call :: <abstract-call>,
      func :: <exit-function>)
     => ();
-  // If the call is in the same lambda as the block, convert it to a
-  // pitcher and exit region.
+  // Change the call into a pitcher and an exit.
   let call-dependency = call.dependents;
   let assign = call-dependency.dependent;
   let catcher = func.catcher;
-  let block-region = catcher.target-region;
-  for (region = assign.region then region.parent,
-       until: region == #f | region == block-region)
-  finally
-    if (region)
-      let args = call.depends-on.dependent-next;
-      let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
-			 depends-on: args, dependents: call-dependency);
-      catcher.pitchers := pitcher;
-      remove-dependency-from-source(component, call.depends-on);
-      for (dep = args then dep.dependent-next,
-	   while: dep)
-	dep.dependent := pitcher;
-      end;
-      call-dependency.source-exp := pitcher;
-      queue-dependent(component, assign);
-      queue-dependent(component, pitcher);
-      insert-exit-after(component, assign, block-region);
-    end;
+  let args = call.depends-on.dependent-next;
+  let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
+		     depends-on: args, dependents: call-dependency);
+  catcher.pitchers := pitcher;
+  remove-dependency-from-source(component, call.depends-on);
+  for (dep = args then dep.dependent-next,
+       while: dep)
+    dep.dependent := pitcher;
   end;
+  call-dependency.source-exp := pitcher;
+  queue-dependent(component, assign);
+  queue-dependent(component, pitcher);
+  insert-exit-after(component, assign, catcher.target-region);
 end;
 
 
@@ -554,62 +546,121 @@ end;
 
 define method optimize (component :: <component>, catcher :: <catcher>)
     => ();
+  // If there is still an exit function, there isn't much we can do.
   unless (catcher.exit-function)
-    let result-type = empty-ctype();
+    // Compute the result type of the catcher by unioning all the pitchers.
+    let catcher-home = home-lambda(catcher);
     for (pitcher = catcher.pitchers then pitcher.pitcher-next,
-	 while: pitcher)
-      result-type := values-type-union(result-type, pitcher.pitched-type);
-    end;
-    if (fixed-number-of-values?(result-type))
-      let builder = make-builder(component);
-      let vars = map(method (type)
-		       make-local-var(builder, #"temp", type);
-		     end,
-		     result-type.positional-types);
-      // Convert the catcher into ``values(var, ...)''
-      begin
-	let op = make-primitive-operation(builder, #"values", vars);
-	let dep = catcher.dependents;
-	dep.source-exp := op;
-	op.dependents := dep;
-	delete-dependent(component, catcher);
-      end;
-      // Convert the pitchers into ``(var, ...) := values(...)''
-      for (pitcher = catcher.pitchers then pitcher.pitcher-next,
+	 all-local? = #t
+	   then all-local? & home-lambda(pitcher) == catcher-home,
+	 result-type = empty-ctype()
+	   then values-type-union(result-type, pitcher.pitched-type),
 	   while: pitcher)
-	// Make the values op, stealing the arguments to the pitcher.
-	let op = make-primitive-operation(builder, #"values", #());
-	op.depends-on := pitcher.depends-on;
-	pitcher.depends-on := #f;
-	for (dep = op.depends-on then dep.dependent-next,
-	     while: dep)
-	  dep.dependent := op;
-	end;
-	// Assign the results.
-	let assign = pitcher.dependents.dependent;
-	build-assignment(builder, assign.policy, assign.source-location,
-			 vars, op);
-	insert-after(component, assign, builder-result(builder));
-	delete-and-unlink-assignment(component, assign);
+    finally
+      if (all-local?)
+	replace-catcher-and-pitchers(component, catcher);
+      else
+	maybe-restrict-type(component, catcher, result-type);
       end;
-    else
-      maybe-restrict-type(component, catcher, result-type);
     end;
-    catcher.target-region.catcher := #f;
   end;
 end;
 
 define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
-  for (dep = pitcher.depends-on then dep.dependent-next,
-       types = #() then pair(dep.source-exp.derived-type, types),
-       while: dep)
-  finally
-    let type = make-values-ctype(reverse!(types), #f);
-    let old-type = pitcher.pitched-type;
-    if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
-      pitcher.pitched-type := type;
-      queue-dependent(component, pitcher.catcher);
-    end;
+  let args = pitcher.depends-on;
+  let type
+    = if (args & instance?(args.source-exp.var-info, <values-cluster-info>))
+	args.source-exp.derived-type;
+      else
+	for (dep = args then dep.dependent-next,
+	     types = #() then pair(dep.source-exp.derived-type, types),
+	     while: dep)
+	finally
+	  make-values-ctype(reverse!(types), #f);
+	end;
+      end;
+  let old-type = pitcher.pitched-type;
+  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
+    pitcher.pitched-type := type;
+    queue-dependent(component, pitcher.catcher);
+  end;
+end;
+
+
+define method replace-catcher-and-pitchers
+    (component :: <component>, catcher :: <catcher>) => ();
+  // Okay, we are doing a transfer local to this lambda.  So where we had:
+  //   () := pitcher(args....)
+  //   exit
+  //   ...
+  //   vars... := catcher()
+  // we want to convert it into:
+  //   temps := values(args...)
+  //   exit
+  //   ...
+  //   vars := values(temps...)
+  // Except that if we are pitching/catching a cluster, we don't want to
+  // call values.
+
+  // First, fix up the catcher.
+  let builder = make-builder(component);
+  let catcher-dep = catcher.dependents;
+  let catcher-assign = catcher-dep.dependent;
+  let vars = catcher-assign.defines;
+  let (temps, temps-expr)
+    = if (vars & instance?(vars.var-info, <values-cluster-info>))
+	// We are catching a cluster.
+	let cluster = make-values-cluster(builder, vars.var-info.debug-name,
+					  vars.var-info.asserted-type);
+	values(cluster, cluster);
+      else
+	let temps = make(<stretchy-vector>);
+	for (var = vars then var.definer-next,
+	     while: var)
+	  add!(temps,
+	       make-local-var(builder, var.var-info.debug-name,
+			      vars.var-info.asserted-type));
+	end;
+	let list = as(<list>, temps);
+	values(list, make-primitive-operation(builder, #"values", list));
+      end;
+
+  // Change the catcher assignment to reference the temps.
+  catcher-dep.source-exp := temps-expr;
+  temps-expr.dependents := catcher-dep;
+  catcher.dependents := #f;
+  queue-dependent(component, catcher-assign);
+
+  // Flush the catcher.
+  delete-dependent(component, catcher);
+  catcher.target-region.catcher := #f;
+
+  for (pitcher = catcher.pitchers then pitcher.pitcher-next,
+       while: pitcher)
+    // Extract the args from the pitcher.
+    let arg-deps = pitcher.depends-on;
+    let args
+      = if (arg-deps & instance?(arg-deps.source-exp, <abstract-variable>)
+	      & instance?(arg-deps.source-exp.var-info, <values-cluster-info>))
+	  // We are pitching a cluster.
+	  arg-deps.source-exp;
+	else
+	  let args = make(<stretchy-vector>);
+	  for (dep = arg-deps then dep.dependent-next,
+	       while: dep)
+	    add!(args, dep.source-exp);
+	  end;
+	  make-primitive-operation(builder, #"values", as(<list>, args));
+	end;
+    // Assign the temps from the args, insert that assignment just before
+    // the pitcher, and then delete the pitcher.
+    let pitcher-assign = pitcher.dependents.dependent;
+    build-assignment(builder, pitcher-assign.policy,
+		     pitcher-assign.source-location, temps, args);
+    insert-before(component, pitcher-assign, builder-result(builder));
+    // Deleting the assignment causes the pitcher to be freed up and
+    // queued the catcher for reoptimization.
+    delete-and-unlink-assignment(component, pitcher-assign);
   end;
 end;
 
@@ -641,7 +692,7 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   // If there is exactly one reference and that reference is the function
   // in a local call, let convert the lambda.
   let dependents = lambda.dependents;
-  if (dependents & dependents.source-next == #f & lambda.self-tail-calls == #f)
+  if (dependents & dependents.source-next == #f)
     let dependent = dependents.dependent;
     if (instance?(dependent, <local-call>)
 	  & dependent.depends-on == dependents)
@@ -779,24 +830,67 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   let call :: <local-call> = lambda.dependents.dependent;
   let call-assign :: <assignment> = call.dependents.dependent;
 
-  // Change the args to be feeding into a newly allocated values-op
-  // instead of the call, and change the prologue references to refer to
-  // the values op.
+  let builder = make-builder(component);
+
+  // Define a bunch of temporaries from the call args just before the call.
+  let temps = make(<stretchy-vector>);
   begin
-    let args = call.depends-on.dependent-next;
+    let policy = call-assign.policy;
+    let source = call-assign.source-location;
+    for (dep = call.depends-on.dependent-next then dep.dependent-next,
+	 param = lambda.prologue.dependents.dependent.defines
+	   then param.definer-next,
+	 while: dep & param)
+      let var-info = param.var-info;
+      let temp = make-local-var(builder, var-info.debug-name,
+				var-info.asserted-type);
+      add!(temps, temp);
+      build-assignment(builder, policy, source, temp, dep.source-exp);
+    finally
+      if (dep | param)
+	error("Different number of parameters and arguments in known call?");
+      end;
+    end;
+    insert-before(component, call-assign, builder-result(builder));
+  end;
+  let temps = as(<list>, temps);
+
+  // Replace the prologue with the temps.
+  begin
+    let op = make-primitive-operation(builder, #"values", temps);
     let prologue = lambda.prologue;
-    let values-op = make(<primitive>, derived-type: prologue.derived-type,
-			 dependents: prologue.dependents, name: #"values",
-			 depends-on: args);
-    for (dep = args then dep.dependent-next,
-	 while: dep)
-      dep.dependent := values-op;
+    let dep = prologue.dependents;
+    dep.source-exp := op;
+    op.dependents := dep;
+    delete-dependent(component, prologue);
+    queue-dependent(component, op);
+  end;
+
+  // For each self-tail-call, change it into an assignment of the arg temps.
+  if (lambda.self-tail-calls)
+    // But first, peel off the temps that correspond to closure vars.
+    for (closure-var = lambda.environment.closure-vars
+	   then closure-var.closure-next,
+	 temps = temps then temps.tail,
+	 while: closure-var)
+    finally
+      for (self-tail-call = lambda.self-tail-calls
+	     then self-tail-call.next-self-tail-call,
+	   while: self-tail-call)
+	let assign = self-tail-call.dependents.dependent;
+	for (dep = self-tail-call.depends-on then dep.dependent-next,
+	     args = #() then pair(dep.source-exp, args),
+	     while: dep)
+	finally
+	  let op = make-primitive-operation(builder, #"values",
+					    reverse!(args));
+	  build-assignment(builder, assign.policy, assign.source-location,
+			   temps, op);
+	  insert-before(component, assign, builder-result(builder));
+	  delete-and-unlink-assignment(component, assign);
+	end;
+      end;
     end;
-    for (dep = prologue.dependents then dep.source-next,
-	 while: dep)
-      dep.source-exp := values-op;
-    end;
-    queue-dependent(component, values-op);
   end;
 
   // Change the call to a reference to the results.
@@ -1080,19 +1174,61 @@ define method identify-tail-calls-in
     (component :: <component>, home :: <lambda>,
      results :: false-or(<dependency>), region :: <simple-region>)
     => ();
-  let assign = region.last-assign;
-  for (result = results then result.dependent-next,
-       defn = assign.defines then defn.definer-next,
-       while: result & defn & ~defn.needs-type-check?
-	 & definition-for?(defn, result.source-exp))
-  finally
-    unless (result | defn)
-      let expr = assign.depends-on.source-exp;
-      if (instance?(expr, union(<known-call>, <local-call>))
-	    & expr.depends-on.source-exp == home)
-	// It's a self tail call.
-	convert-self-tail-call(component, home, expr);
+  block (return)
+    for (assign = region.last-assign then assign.prev-op,
+	 while: assign)
+      for (result = results then result.dependent-next,
+	   defn = assign.defines then defn.definer-next,
+	   while: result | defn)
+	if (~result | ~defn | defn.needs-type-check?
+	      | ~definition-for?(defn, result.source-exp))
+	  return();
+	end;
       end;
+      let expr = assign.depends-on.source-exp;
+      if (instance?(expr, union(<known-call>, <local-call>)))
+	if (expr.depends-on.source-exp == home)
+	  // It's a self tail call.
+	  convert-self-tail-call(component, home, expr);
+	end;
+	return();
+      end;
+      if (assign.defines
+	    & instance?(assign.defines.var-info, <values-cluster-info>))
+	// Want to return a cluster.
+	if (instance?(expr, <abstract-variable>)
+	      & instance?(expr.var-info, <values-cluster-info>))
+	  results := assign.depends-on;
+	else
+	  return();
+	end;
+      else
+	// Want to return a specific number of values.
+	if (instance?(expr, <abstract-variable>))
+	  if (assign.defines & assign.defines.definer-next == #f
+		& ~instance?(expr.var-info, <values-cluster-info>))
+	    results := assign.depends-on;
+	  else
+	    return();
+	  end;
+	elseif (instance?(expr, <primitive>) & expr.name == #"values")
+	  for (defn = assign.defines then defn.definer-next,
+	       dep = expr.depends-on then dep.dependent-next,
+	       while: defn & dep)
+	  finally
+	    if (defn | dep)
+	      return();
+	    else
+	      results := expr.depends-on;
+	    end;
+	  end;
+	else
+	  return();
+	end;
+      end;
+    finally
+      identify-tail-calls-before(component, home, results,
+				 region.parent, region);
     end;
   end;
 end;
@@ -1108,6 +1244,7 @@ define method identify-tail-calls-in
     (component :: <component>, home :: <lambda>,
      results :: false-or(<dependency>), region :: <empty-region>)
     => ();
+  identify-tail-calls-before(component, home, results, region.parent, region);
 end;
 
 define method identify-tail-calls-in
@@ -1132,7 +1269,7 @@ define method identify-tail-calls-in
        while: exit)
     if (home-lambda(exit) == home)
       identify-tail-calls-before(component, home, results,
-				 region.parent, region);
+				 exit.parent, exit);
     end;
   end;
 end;
@@ -1179,11 +1316,19 @@ define method identify-tail-calls-before
      results :: false-or(<dependency>), in :: <compound-region>,
      before :: <region>)
     => ();
-  unless (before == in.regions.last)
-    error("Exit found in the middle of a compound region?");
+  block (return)
+    for (subregion in in.regions,
+	 prev = #f then subregion)
+      if (subregion == before)
+	if (prev)
+	  identify-tail-calls-in(component, home, results, prev);
+	else
+	  identify-tail-calls-before(component, home, results, in.parent, in);
+	end;
+	return();
+      end;
+    end;
   end;
-  identify-tail-calls-in(component, home, results,
-			 in.regions[in.regions.size - 2]);
 end;
 
 define method identify-tail-calls-before
@@ -1240,6 +1385,9 @@ define method convert-self-tail-call
     delete-definition(component, defn);
   end;
   assign.defines := #f;
+  // Queue the assignment and self-tail-call operation.
+  queue-dependent(component, assign);
+  queue-dependent(component, op);
 end;
 
 
@@ -2262,6 +2410,10 @@ end;
 define method assure-all-done-region
     (component :: <component>, region :: <body-region>) => ();
   assure-all-done-region(component, region.body);
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <exit>) => ();
 end;
 
 define method assure-all-done-region
