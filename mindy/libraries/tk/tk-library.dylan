@@ -38,6 +38,7 @@ define library tk
   use streams;
   use string-extensions;
   use collection-extensions;
+  use table-extensions;
   use format;
   export tk;
   export tk-extension;
@@ -46,6 +47,7 @@ end library tk;
 define module tk-internal
   use dylan;
   use extensions;
+  use table-extensions;
 
   use file-descriptors;
   use system;
@@ -72,6 +74,7 @@ end module tk-internal;
 define module tk
   use dylan;
   use extensions;
+  use table-extensions;
 
   use file-descriptors;
   use system;
