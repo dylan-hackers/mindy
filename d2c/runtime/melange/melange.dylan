@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.1 1998/05/03 19:55:51 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.2 1998/08/10 06:57:27 emk Exp $
 
 //======================================================================
 //
@@ -241,6 +241,7 @@ define sealed inline method pointer-at-setter
           class :: <class> = <statically-typed-pointer>)
  => (result :: <statically-typed-pointer>);
   pointer-deref(ptr:, ptr.raw-value, offset) := new.raw-value;
+  new;
 end method pointer-at-setter;
 
 define sealed domain \= (<statically-typed-pointer>, <object>);
