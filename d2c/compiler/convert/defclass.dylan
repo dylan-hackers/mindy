@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.10 2000/10/20 15:03:18 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.11 2000/12/04 00:14:17 andreas Exp $
 copyright: see below
 
 
@@ -2587,7 +2587,8 @@ define method build-instance?-slot-posn-dispatch
     (builder :: <fer-builder>, slot :: <instance-slot-info>,
      instance-leaf :: <leaf>, thunk :: <function>)
     => ();
-  break();
+  // XXX here used to be a break(), meaning that whoever debugged that thing didn't finish.
+  // That is probably a bad sign.
 
   let policy = $Default-Policy;
   let source = make(<source-location>);
