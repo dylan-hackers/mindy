@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.15 1999/04/12 19:53:00 tree Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.16 1999/04/22 15:32:08 tree Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -449,8 +449,12 @@ word-directive:			.quad
 half-word-directive:		.word
 
 // Solaris support maintained by Tom Emerson, tree@tiac.net
+// Need to define default-features: below since all three of our inherited 'platforms'
+// also define a default-features. But later on code relies on features that otherwise
+// get stomped.
 platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
+default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 comment-token:			!
 word-directive:			.word
