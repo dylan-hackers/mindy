@@ -1,0 +1,13 @@
+$CPPFLAGS = '-I$(SRCDIR)';
+
+if ($win32) {
+    $binary_name = 'synopsis.exe';
+} else {
+    $binary_name = 'synopsis';
+} 
+   
+push(@compile_dependencies, $binary_name);
+push(@files_to_clean, $binary_name);
+
+do emit_library_rule('synopsis', '$(BUILDROOT)/force.timestamp', '');
+do install ('bin', $binary_name);
