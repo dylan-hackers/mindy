@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.18 1995/06/10 15:58:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.19 1995/06/14 10:56:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -649,7 +649,7 @@ define method find-position (layout :: <layout-table>,
 	let hole = remaining.head;
 	let posn = hole.head;
 	let aligned = ceiling/(posn, alignment) * alignment;
-	let surplus = (aligned + bytes) - (posn + hole.tail);
+	let surplus = (posn + hole.tail) - (aligned + bytes);
 	if (zero?(surplus))
 	  if (posn == aligned)
 	    if (prev)
@@ -665,6 +665,7 @@ define method find-position (layout :: <layout-table>,
 	  if (posn == aligned)
 	    remaining.head := pair(aligned + bytes, surplus);
 	  else
+	    hole.tail := aligned - posn;
 	    remaining.tail
 	      := pair(pair(aligned + bytes, surplus), remaining.tail);
 	  end;
