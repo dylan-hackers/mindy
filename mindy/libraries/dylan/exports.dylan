@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.58 1994/12/10 15:44:08 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.59 1995/02/09 18:25:53 wlott Exp $
 
 //======================================================================
 //
@@ -79,7 +79,7 @@ define module Builtin-Stuff
     initialize, instance?, invoke-debugger,
     kill-thread,
     limited, limited-integer-class, limited-integer-min, limited-integer-max,
-    list, locked?, logand, logbit?, logior, lognot, logxor,
+    list, load, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, merge-hash-codes, method-specializers,
     negative, numerator,
     object-address, object-class, object-hash,
@@ -222,7 +222,7 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: {main, exit, on-exit,
+    import: {main, exit, on-exit, load,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
