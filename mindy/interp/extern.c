@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.1 1994/11/06 20:03:21 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.2 1994/11/30 16:17:18 rgs Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -108,7 +108,7 @@ obj_t  load_c_symtab(obj_t /* <string> */ abs_file)
     if (total < sym_size) return 0;
 
     string_size = hdr.symbol_strings_size;
-    table_size = sym_count * sizeof(struct symtab);
+    table_size = (sym_count - 1) * sizeof(struct symtab);
     res = alloc(obj_ForeignFileClass,
 		sizeof(struct foreign_file) + table_size + string_size);
     FOREIGN_FILE(res)->extra_size = string_size + table_size;
@@ -156,20 +156,20 @@ obj_t  load_c_symtab(obj_t /* <string> */ abs_file)
 #endif
 }
 
-/* Links the named object file for dynamic loading, reads it in, and returns
+/* Links the named object files for dynamic loading, reads it in, and returns
    a "foreign_file" object which allows access to its symbols.  If
    names is a non-empty list (of byte-strings), then make ld "undefine"
    these names so that they will show up in the linked version. */
-obj_t load_c_file(obj_t c_file, obj_t /* list */ names)
+obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
 /* c_file is a <string> */
 {
 #ifdef hp9000s800
     char *execstr;
     int execlimit = 1024, execsize;
-    char *absfile, *file = string_chars(c_file);
-    obj_t res;
+    char *absfile;
+    obj_t res, file_name = obj_False;
     static int pagesize = 0;
-    int fd, count, total, codesize, mapresult;
+    int fd, count, total, codesize, bss_size, mapresult;
     struct header hdr;
     struct som_exec_auxhdr aux;
     static void *addr = (void *)0x20000000;
@@ -178,9 +178,20 @@ obj_t load_c_file(obj_t c_file, obj_t /* list */ names)
 
     execstr = malloc(execlimit);
     absfile = tmpnam(NULL);
-    sprintf(execstr, "/bin/ld -N -o %s -E -A %s -R %x %s",
-	    absfile, exec_file_name, (int) addr, file);
+    sprintf(execstr, "/bin/ld -N -o %s -E -A %s -R %x",
+	    absfile, exec_file_name, (int) addr);
     execsize = strlen(execstr);
+    /* append each object file */
+    for ( ; c_files != obj_Nil; c_files = TAIL(c_files)) {
+	int flaglen = obj_ptr(struct string *, HEAD(c_files))->len + 1;
+	if ((execsize + flaglen + 1) > execlimit) {
+	    execlimit += 1024;
+	    execstr = realloc(execstr, execlimit);
+	}
+	if (file_name == obj_False) file_name = HEAD(c_files);
+	sprintf(execstr+execsize, " %s", string_chars(HEAD(c_files)));
+	execsize += flaglen;
+    }
     /* undefine each of the names we were given */
     for ( ; names != obj_Nil; names = TAIL(names)) {
 	int flaglen = obj_ptr(struct string *, HEAD(names))->len + 4;
@@ -225,13 +236,21 @@ obj_t load_c_file(obj_t c_file, obj_t /* list */ names)
 	     PROT_READ | PROT_WRITE | PROT_EXEC,
 	     MAP_FIXED | MAP_PRIVATE | MAP_FILE, fd, aux.exec_dfile) < 0)
 	return NULL;
-    if (aux.exec_dmem + codesize > (int)addr)
-	addr = (void *)(aux.exec_dmem + codesize);
+
+    bss_size = ((aux.exec_bsize + pagesize - 1) / pagesize) * pagesize;
+    if (mmap((void *)(aux.exec_dmem + codesize), bss_size,
+	     PROT_READ | PROT_WRITE | PROT_EXEC,
+	     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) < 0)
+	return NULL;
+    if (aux.exec_bfill != 0)
+	error("Non-zero BSS fill value -- must fix extern.c");
+    if (aux.exec_dmem + codesize + bss_size > (int)addr)
+	addr = (void *)(aux.exec_dmem + codesize + bss_size);
 
     close(fd);
     
     res = load_c_symtab(make_byte_string(absfile));
-    FOREIGN_FILE(res)->file_name = c_file;
+    FOREIGN_FILE(res)->file_name = file_name;
     unlink(absfile);
     
     return res;
@@ -278,9 +297,10 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 	return find_c_function(symbol, mindy_dynamic_syms);
     } else if (lookup == obj_False)
 	return obj_False;
-    else if (object_class(lookup) != obj_ForeignFileClass)
+    else if (object_class(lookup) != obj_ForeignFileClass) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
-    else {
+	return retval;		/* make lint happy */
+    } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
 	for (i = 0; i < sym_count; i++)
@@ -311,9 +331,10 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 	return find_c_ptr(symbol, mindy_dynamic_syms);
     } else if (lookup == obj_False)
 	return obj_False;
-    else if (object_class(lookup) != obj_ForeignFileClass)
+    else if (object_class(lookup) != obj_ForeignFileClass) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
-    else {
+	return retval;		/* make lint happy */
+    } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
 	for (i = 0; i < sym_count; i++)
@@ -562,7 +583,7 @@ obj_t pointer_subtract(obj_t /* <statically-typed-pointer> */ pointer1,
     void *ptr1 = C_PTR(pointer1)->pointer;
     void *ptr2 = C_PTR(pointer2)->pointer;
     
-    return make_fixnum(ptr1 - ptr2);
+    return make_fixnum((long int)ptr1 - (long int)ptr2);
 }
     
 
@@ -710,7 +731,7 @@ void init_c_functions(void)
 		  list1(pair(symbol("file"), obj_Unbound)),
 		  FALSE, obj_ObjectClass, find_c_ptr);
     define_method("load-object-file",
-		  list1(obj_ByteStringClass), FALSE,
+		  list1(obj_ListClass), FALSE,
 		  list1(pair(symbol("include"), obj_Nil)), FALSE,
 		  obj_ObjectClass, load_c_file);
     define_method("signed-byte-at", list1(obj_CPointerClass), FALSE,
