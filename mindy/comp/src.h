@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.13 1994/06/27 16:49:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.14 1994/07/11 20:04:01 dpierce Exp $
 *
 \**********************************************************************/
 
@@ -97,8 +97,8 @@ struct defclass_constituent {
     struct id *name;
     struct superclass *supers;
     struct slot_spec *slots;
-    struct keyword_spec *keywords;
-    struct inherited_spec *inherits;
+    struct initarg_spec *initargs;
+    struct inherited_spec *inheriteds;
     struct method *tlf1;
     struct method *tlf2;
 };
@@ -471,11 +471,11 @@ struct slot_spec {
     struct slot_spec *next;
 };
 
-struct keyword_spec {
+struct initarg_spec {
     boolean required;
     struct symbol *keyword;
     struct plist *plist;
-    struct keyword_spec *next;
+    struct initarg_spec *next;
 };
 
 struct inherited_spec {
@@ -723,11 +723,11 @@ extern struct slot_spec
 		    struct id *name, struct expr *type, struct plist *plist);
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
-extern struct keyword_spec
-    *make_keyword_spec(boolean required, struct token *keyword,
+extern struct initarg_spec
+    *make_initarg_spec(boolean required, struct token *keyword,
 		       struct plist *plist);
 extern struct class_guts
-    *add_keyword_spec(struct class_guts *guts, struct keyword_spec *spec);
+    *add_initarg_spec(struct class_guts *guts, struct initarg_spec *spec);
 extern struct inherited_spec
     *make_inherited_spec(struct id *name, struct plist *plist);
 extern struct class_guts
