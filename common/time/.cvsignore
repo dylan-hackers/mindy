@@ -1,4 +1,5 @@
 GNUmakefile
+time-intr.dylan
 parse-time.c
 library.c
 time-intr.c
