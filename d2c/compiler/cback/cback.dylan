@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.35 2002/03/24 16:01:02 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.36 2002/04/07 10:09:01 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1903,26 +1903,28 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   indent(stream, -$indentation-step);
   format(stream, "}\n");
 
-  // We need to detect places where we can use "else if" rather than
-  // "else { if" because if we don't, we'll break the parsers on
-  // crappy C compilers (such as Microsoft Visual C++)
-  let clause-is-an-elseif = if-region.else-region.elseif-able?;
-  
-  if (clause-is-an-elseif)
-    write(stream, "else ");
-  else
-    format(stream, "else {\n");
-    indent(stream, $indentation-step);
-  end if;
-  
-  emit-region(if-region.else-region, file);
-  /* ### emit-joins(if-region.join-region, file); */
-
-  spew-pending-defines(file);
-  if (~clause-is-an-elseif)
-    indent(stream, -$indentation-step);
-    format(stream, "}\n");
-  end if;
+  unless (instance?(if-region.else-region, <empty-region>))
+    // We need to detect places where we can use "else if" rather than
+    // "else { if" because if we don't, we'll break the parsers on
+    // crappy C compilers (such as Microsoft Visual C++)
+    let clause-is-an-elseif = if-region.else-region.elseif-able?;
+    
+    if (clause-is-an-elseif)
+      write(stream, "else ");
+    else
+      format(stream, "else {\n");
+      indent(stream, $indentation-step);
+    end if;
+    
+    emit-region(if-region.else-region, file);
+    /* ### emit-joins(if-region.join-region, file); */
+    
+    spew-pending-defines(file);
+    if (~clause-is-an-elseif)
+      indent(stream, -$indentation-step);
+      format(stream, "}\n");
+    end if;
+  end unless;
 end method emit-region;
 
 
