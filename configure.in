@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.18 1996/05/12 22:53:41 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.19 1997/05/09 22:36:06 ram Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -17,13 +17,13 @@ dnl	directory tree suitable for making mindy.
 dnl
 dnl	This must come first -- do not move.
 
-AC_INIT(interp/mindy.h)
+AC_INIT(mindy/interp/mindy.h)
 
-# Require the use of Autoconf 2.4 or later to generate ./configure
-# Previous versions have bugs that prevent ./configure from working
-# under AIX
+# Require the use of Autoconf 2.12 or later to generate ./configure
+# some earlier versions don't have all the install directory output 
+# variables.  Don't really know when they came in.
 #
-AC_PREREQ(2.4)
+AC_PREREQ(2.12)
 
 #--------------------------------------------------------------------
 #	See if the #!interpreter syntax is supported
@@ -33,6 +33,122 @@ AC_SYS_INTERPRETER
 if test $ac_cv_sys_interpreter = no; then
     AC_DEFINE(NO_SHARP_BANG)
 fi
+
+
+#--------------------------------------------------------------------
+# See if Perl exists, and flame if not.
+#--------------------------------------------------------------------
+
+AC_PATH_PROG(PERL, perl, no)
+
+if test "$PERL" = no; then 
+    AC_MSG_WARN([Cannot build without perl to run gen-makefile])
+    PERL=perl
+elif test "$PERL" != "/usr/local/bin/perl"; then
+    AC_MSG_WARN([Perl is not in /usr/local/bin, so you need to fix the script \
+sharp-bang interpreter comments by hand.])
+fi
+
+#--------------------------------------------------------------------
+# builddir is the directory in which we run configure.
+#--------------------------------------------------------------------
+
+builddir=`pwd`
+AC_SUBST(builddir)
+
+#--------------------------------------------------------------------
+# Get host and target system information.
+#--------------------------------------------------------------------
+AC_CANONICAL_SYSTEM
+
+AC_MSG_CHECKING([system type for d2c target name])
+case $target in
+    *pc-linux-gnu) d2c_target=x86-linux ;;
+    hppa*-hp-hpux*) d2c_target=hppa-hpux ;;
+    sparc*-solaris*) d2c_target=sparc-solaris ;;
+    i*86-pc-cygwin32) d2c_target=x86-win32-gcc ;;
+    i*86-pc-none) d2c_target=x86-win32-vc ;;
+    *) d2c_target=unknown-unix ;;
+esac
+
+if test "$d2c_target" = "unknown-unix"; then
+    AC_MSG_RESULT([unsupported target type, using unknown-unix])
+else
+    AC_MSG_RESULT($d2c_target)
+fi
+
+AC_SUBST(d2c_target)
+
+
+AC_MSG_CHECKING([system type for d2c host name])
+case $host in
+    *pc-linux-gnu) d2c_host=x86-linux ;;
+    hppa*-hp-hpux*) d2c_host=hppa-hpux ;;
+    sparc*-solaris*) d2c_host=sparc-solaris ;;
+    i*86-pc-cygwin32) d2c_host=x86-win32-gcc ;;
+    *) d2c_host=unknown-unix ;;
+esac
+AC_MSG_RESULT($d2c_host)
+
+AC_SUBST(d2c_host)
+
+if test "$d2c_host" = "$d2c_target"; then
+  # If self compiling, always run mindy out of the build area, since the
+  # installed version might be wrong.
+  MINDY=$builddir/mindy/interp/mindy
+  MC=$builddir/mindy/comp/mindycomp
+
+  if $stage2; then
+    # We're using the installed compiler, but we want to use the new libraries.
+    # The individual makegens already include the needed -L's, so just use an
+    # empty path to make sure we don't get inconsistent libraries.
+    DYLANPATH=""
+  else
+    # Set DYLANPATH so that we can find the uninstalled libraries.
+    DYLANPATH=""
+    for dir in coll-ext format format-out internal-time matrix print \
+	regexp standard-io stream-ext streams string-ext table-ext time \
+	transcendental
+    do DYLANPATH=${DYLANPATH}":"$builddir/common/$dir
+    done
+    for dir in random dylan inspector tk;
+    do DYLANPATH=${DYLANPATH}":"$builddir/mindy/libraries/$dir
+    done
+  fi
+else
+    # If cross compiling, hopefully mindy will be on PATH.  It won't be in the
+    # build area.  Building the mindy stuff is actually unnecessary when
+    # cross-compiling, perhaps undesirable.  But it's easier not to
+    # conditionalize the files.
+    MINDY="mindy"
+    MC="mindycomp"
+    DYLANPATH=0
+fi
+
+DYLANPATH='"'$DYLANPATH'"'
+AC_SUBST(DYLANPATH)
+AC_SUBST(MINDY)
+AC_SUBST(MC)
+
+
+#--------------------------------------------------------------------
+# See if we can find an installed d2c.  They might have installed binaries but
+# not set up environment variable yet, so look in the install area as well as on
+# path.  If not found we must bootstrap.
+#--------------------------------------------------------------------
+
+AC_PATH_PROG(D2C, d2c, no, $PATH:$bindir:$prefix/bin)
+stage2=1
+if test "$D2C" = no; then
+    AC_MSG_WARN(d2c executable not found: configuring in bootstrap mode.)
+    stage2=0
+    D2C="$MINDY -f $builddir/d2c/compiler/main/d2c.dbc -p$srcdir/d2c/compiler/platforms.descr";
+elif test "$D2C" != d2c; then
+    D2C="$D2C -p$sysconfdir/platforms.descr";
+fi
+
+AC_SUBST(stage2)
+
 
 #--------------------------------------------------------------------
 #	These macros find a BSD install, a C compiler, and so on, and
@@ -416,9 +532,10 @@ AC_CHECK_FUNCS(_longjmp)
 #       Now we read this file to determine which libraries were 
 #       shipped with Mindy.
 #--------------------------------------------------------------------
+#Not!
 
-sinclude(distribution-options)
-AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
+dnl sinclude(mindy/distribution-options)
+dnl AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
 
 
 #--------------------------------------------------------------------
@@ -433,21 +550,23 @@ AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
 #	autoconf is a very brittle programming language.
 #--------------------------------------------------------------------
 
-AC_OUTPUT(Makefile \
-	comp/Makefile \
-	interp/Makefile \
-	compat/Makefile \
-	etc/Makefile \
-	libraries/Makefile \
-	BUNDLED_LIBRARY_MAKEFILES \
-	demos/Makefile \
-	demos/hello-world/Makefile \
-	demos/cat/Makefile \
-	demos/html2txt/Makefile \
-	demos/tk-html2txt/Makefile \
-	demos/minesweeper/Makefile \
-	demos/diff/Makefile \
-	tests/Makefile \
+# Autoconf only seems to create one directory level at a time, so we need to
+# create mindy (which contains no makefile.in)
+#
+$srcdir/mkinstalldirs mindy
+AC_OUTPUT(Defaults \
+	mindy/comp/Makefile \
+	mindy/interp/Makefile \
+	mindy/compat/Makefile \
+	mindy/etc/Makefile \
+	mindy/demos/hello-world/Makefile \
+	mindy/demos/minesweeper/Makefile \
+	mindy/demos/cat/Makefile \
+	mindy/demos/diff/Makefile \
+	mindy/demos/html2txt/Makefile \
+	mindy/demos/tk-html2txt/ \
 )
 
-rm config.cache
+${INSTALL} -m uog+rx $srcdir/tools/shared-misc/mk-build-tree ./
+${INSTALL} -m uog+rx $srcdir/tools/shared-misc/gen-makefile ./
+(PATH=`pwd`:${PATH}; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
