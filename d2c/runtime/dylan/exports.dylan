@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.8 1995/11/22 14:28:41 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.9 1995/12/06 11:46:04 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -130,9 +130,6 @@ define module Extensions
 	     // Type extensions.
 	     false-or, one-of, <never-returns>,
 
-	     // Cheap-IO stuff.
-	     format, print-message, print, write-integer, write,
-
 	     // Condition extensions.
 	     report-condition, condition-format, *warning-output*,
 
@@ -143,7 +140,18 @@ define module Extensions
 	     <buffer>,
 	     <buffer-index>,
 	     $maximum-buffer-size,
-	     copy-bytes
+	     copy-bytes,
+	     buffer-address
+
+    },
+    export: all;
+end;
+
+define module cheap-io
+  use Dylan-Viscera,
+    import: {
+	     // Cheap-IO stuff.
+	     format, print-message, print, write-integer, write
 
     },
     export: all;
