@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $header$
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.3 1996/09/15 20:27:26 nkramer Exp $
 
 // Program that slurps up a whole bunch of rlog outputs, and decides
 // which revisions go together to form a conceptual "version".  The
@@ -557,8 +557,15 @@ define method main (ignored :: <byte-string>, #rest argv-sequence)
   printe("Finding rcs files\n");
   let rcs-files = #[];
   for (dir in targets)
-    let cmd-string = format-to-string("%s %s -name \"*,v\" -print", 
-				      $find-command, dir);
+    let cmd-string
+      = format-to-string("%s %s %s -name \"*,v\" -print", 
+			 $find-command, 
+			 #if (compiled-for-x86-win32) 
+                            ""
+                         #else 
+                            "-follow" 
+                         #endif ,
+			 dir);
     let (to-find, from-find) = piped-exec(cmd-string);
     rcs-files := concatenate(rcs-files, slurp-stream(from-find));
     close(to-find);
