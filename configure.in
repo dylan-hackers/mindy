@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.15 1998/09/21 11:22:31 igor Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.16 1998/10/05 17:28:39 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -184,7 +184,10 @@ AC_CHECK_TOOL(D2C, d2c, no)
 
 AC_MSG_CHECKING(how to call d2c)
 if test "$D2C" != no; then
-    D2C=`(cd /;which d2c)`
+
+# we just did an AC_CHECK_TOOL, so this should not be needed. It even
+# prevents the uer from overriding which d2c to use.
+#    D2C=`(cd /;which d2c)`
     D2C_BASE=`echo "$D2C" | sed 's/\/bin\/d2c//'`
     if test -f $D2C_BASE/etc/platforms.descr; then
         D2C="$D2C -p$D2C_BASE/etc/platforms.descr"
