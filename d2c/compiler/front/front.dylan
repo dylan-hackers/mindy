@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.51 1996/02/13 05:39:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.52 1996/03/02 19:09:17 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -354,7 +354,7 @@ define abstract class <abstract-function-literal> (<leaf>)
 end;
 
 define constant <function-visibility>
-  = one-of(#"global", #"local", #"deleted");
+  = one-of(#"global", #"local", #"closure", #"deleted");
 
 define class <function-literal>
     (<abstract-function-literal>, <queueable-mixin>)
@@ -364,6 +364,8 @@ define class <function-literal>
   // Local: all references are explicit dependents of the leaf.
   // Global: some other references might exist, so assume the worst.
   // Deleted: no references will ever exist from now on.
+  // Closure: like local, but references are hidden behind
+  //          make-closure calls.
   //
   slot visibility :: <function-visibility>,
     init-value: #"local", init-keyword: visibility:;
