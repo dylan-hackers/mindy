@@ -66,11 +66,11 @@ OBJS	=	${LIBOBJS} protected.o
 
 SRCS	=	getcwd.c strerror.c strtod.c strtoul.c waitpid.c \
 		opendir.c strstr.c strtol.c tmpnam.c sigaction.c \
-		protected.c matherr.c memmove.c
+		protected.c matherr.c memmove.c setsid.c
 
 ALLOBJS	=	getcwd.o strerror.o strtod.o strtoul.o waitpid.o \
 		opendir.o strstr.o strtol.o tmpnam.o sigaction.o \
-		protected.o matherr.o memmove.o
+		protected.o matherr.o memmove.o setsid.c
 
 libcompat.a: ${OBJS}
 	${AR} ru libcompat.a ${OBJS}
@@ -88,48 +88,50 @@ realclean:
 install:
 
 # It's easiest to generate this part by machine.
-# Try gcc -MM -E *.c | perl /afs/cs/project/gwydion/hackers/nkramer/hack-depends.pl
+# Try gcc -MM -E *.c | perl ../etc/generate-depends
 
-getcwd.o :  ${SRCDIR}/getcwd.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+getcwd.o:  ${SRCDIR}/getcwd.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/getcwd.c
 
-matherr.o :  ${SRCDIR}/matherr.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+matherr.o:  ${SRCDIR}/matherr.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/matherr.c
 
-memmove.o :  ${SRCDIR}/memmove.c ${SRCDIR}/std-c.h
+memmove.o:  ${SRCDIR}/memmove.c ${SRCDIR}/std-c.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/memmove.c
 
-opendir.o :  ${SRCDIR}/opendir.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+opendir.o:  ${SRCDIR}/opendir.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/opendir.c
 
-protected.o :  ${SRCDIR}/protected.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+protected.o:  ${SRCDIR}/protected.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/protected.c
 
-rint.o :  ${SRCDIR}/rint.c
+rint.o:  ${SRCDIR}/rint.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/rint.c
 
-sigaction.o :  ${SRCDIR}/sigaction.c ${SRCDIR}/std-signal.h
+setsid.o:  ${SRCDIR}/setsid.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/setsid.c
+
+sigaction.o:  ${SRCDIR}/sigaction.c ${SRCDIR}/std-signal.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/sigaction.c
 
-strerror.o :  ${SRCDIR}/strerror.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+strerror.o:  ${SRCDIR}/strerror.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/strerror.c
 
-strstr.o :  ${SRCDIR}/strstr.c
+strstr.o:  ${SRCDIR}/strstr.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/strstr.c
 
-strtod.o :  ${SRCDIR}/strtod.c ${SRCDIR}/std-c.h
+strtod.o:  ${SRCDIR}/strtod.c ${SRCDIR}/std-c.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/strtod.c
 
-strtol.o :  ${SRCDIR}/strtol.c
+strtol.o:  ${SRCDIR}/strtol.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/strtol.c
 
-strtoul.o :  ${SRCDIR}/strtoul.c
+strtoul.o:  ${SRCDIR}/strtoul.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/strtoul.c
 
-tmpnam.o :  ${SRCDIR}/tmpnam.c
+tmpnam.o:  ${SRCDIR}/tmpnam.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/tmpnam.c
 
-waitpid.o :  ${SRCDIR}/waitpid.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
+waitpid.o:  ${SRCDIR}/waitpid.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/waitpid.c
-
 
