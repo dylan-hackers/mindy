@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.1 1996/03/19 23:58:28 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.2 1996/06/12 21:53:12 bfw Exp $
 ##
 ##  This is the makefile for the Mindy streams library, streams.dbc.
 ##
@@ -63,6 +63,44 @@ LIBS	=		@LIBS@
 
 MC	= ../../comp/mindycomp
 
+all: new-streams-lib.dbc streams-lib.dbc
+
+##
+## New streams... soon to replace the stuff below.
+##
+
+NEWMINDYFLAGS = -lNew-Streams
+
+NEWOBJS = new-library.dbc new-internals.dbc new-streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc
+
+new-streams-lib.dbc: ${NEWOBJS}
+	cat ${NEWOBJS} > $@
+
+new-library.dbc: ${SRCDIR}/new-library.dylan
+	${MC} ${NEWMINDYFLAGS} -o new-library.dbc ${SRCDIR}/new-library.dylan
+new-internals.dbc: ${SRCDIR}/new-internals.dylan
+	${MC} ${NEWMINDYFLAGS} -o new-internals.dbc ${SRCDIR}/new-internals.dylan
+new-streams.dbc: ${SRCDIR}/new-streams.dylan
+	${MC} ${NEWMINDYFLAGS} -o new-streams.dbc ${SRCDIR}/new-streams.dylan
+stream-reading.dbc: ${SRCDIR}/stream-reading.dylan
+	${MC} ${NEWMINDYFLAGS} -o stream-reading.dbc ${SRCDIR}/stream-reading.dylan
+stream-writing.dbc: ${SRCDIR}/stream-writing.dylan
+	${MC} ${NEWMINDYFLAGS} -o stream-writing.dbc ${SRCDIR}/stream-writing.dylan
+stream-lines.dbc: ${SRCDIR}/stream-lines.dylan
+	${MC} ${NEWMINDYFLAGS} -o stream-lines.dbc ${SRCDIR}/stream-lines.dylan
+stream-buffers.dbc: ${SRCDIR}/stream-buffers.dylan
+	${MC} ${NEWMINDYFLAGS} -o stream-buffers.dbc ${SRCDIR}/stream-buffers.dylan
+file-streams.dbc: ${SRCDIR}/file-streams.dylan
+	${MC} ${NEWMINDYFLAGS} -o file-streams.dbc ${SRCDIR}/file-streams.dylan
+wrapper-streams.dbc: ${SRCDIR}/wrapper-streams.dylan
+	${MC} ${NEWMINDYFLAGS} -o wrapper-streams.dbc ${SRCDIR}/wrapper-streams.dylan
+#standard-io.dbc: ${SRCDIR}/standard-io.dylan
+#	${MC} ${NEWMINDYFLAGS} -o standard-io.dbc ${SRCDIR}/standard-io.dylan
+
+##
+## Old streams
+##
+
 MINDYFLAGS = -lStreams
 
 OBJS = library.dbc internals.dbc streams.dbc standard-io.dbc
@@ -80,10 +118,10 @@ standard-io.dbc: ${SRCDIR}/standard-io.dylan
 	${MC} ${MINDYFLAGS} -o standard-io.dbc ${SRCDIR}/standard-io.dylan
 
 clean:
-	rm -f ${OBJS} streams-lib.dbc *~ \#* core
+	rm -f ${OBJS} ${NEWOBJS} new-streams-lib.dbc streams-lib.dbc *~ \#* core
 
 realclean:
-	rm -f ${OBJS} streams-lib.dbc Makefile *~ \#* core
+	rm -f ${OBJS} ${NEWOBJS} new-streams-lib.dbc streams-lib.dbc Makefile *~ \#* core
 
-install: streams-lib.dbc
-	${INSTALL_DATA} streams-lib.dbc ${LIBDIR}
+install: streams-lib.dbc new-streams-lib.dbc
+	${INSTALL_DATA} streams-lib.dbc new-streams-lib.dbc ${LIBDIR}
