@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.44 1996/07/21 15:18:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.45 1997/01/13 03:32:59 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1612,7 +1612,7 @@ define method ctype-intersection-dispatch
   let result = empty-ctype();
   for (class in intersection.members)
     assert(instance?(class, <cclass>));
-    result := type-union(result, make(<subclass-ctype>, of: class));
+    result := ctype-union(result, make(<subclass-ctype>, of: class));
   end for;
   values(result, exact?);
 end method ctype-intersection-dispatch;
