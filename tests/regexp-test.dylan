@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the regexp library.
-rcs-header: $Header: /scm/cvs/src/tests/regexp-test.dylan,v 1.1 1998/05/03 19:54:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tests/regexp-test.dylan,v 1.2 1998/07/22 17:12:15 andreas Exp $
 
 //======================================================================
 //
@@ -285,6 +285,10 @@ define method positioner-test ();
   test-regexp("[a-f]+", "SdFbIeNvI", #[1, 4]);
   test-regexp("[a-f]+", "SdFbIeNvI", #[1, 2], case-sensitive: #t);
   test-regexp("[\\s\\]]+", "blah[   \t]", #[5, 10], case-sensitive: #t);
+
+// test escaped characters
+  test-regexp("\\\"", "\\\"", #[1, 2]);
+  test-regexp("\\\\\"", "\\\"", #[0, 2]);
 end method positioner-test;
 
 
