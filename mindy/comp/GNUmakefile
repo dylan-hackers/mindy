@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.2 1994/03/28 11:40:15 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.3 1994/03/31 10:14:48 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -17,6 +17,7 @@
 include ../Config
 
 LFLAGS = -i
+LDLIBS = -lfl
 
 OBJS = mindycomp.o parser.tab.o lexer.o src.o sym.o print.o expand.o \
 	literal.o info.o lose.o lexenv.o envanal.o compile.o header.o \
@@ -31,7 +32,7 @@ ifdef VPATH
 else
 	${COMPILE.c} -DVERSION=\""`/bin/date`"\" version.c
 endif
-	$(LINK.c) $^ version.o $(LOADLIBES) $(LDLIBS) -o ,$@
+	$(LINK.o) $^ version.o $(LOADLIBES) $(LDLIBS) -o ,$@
 	mv ,$@ $@
 
 
