@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.6 2001/10/17 20:52:29 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.7 2001/10/19 00:11:03 gabor Exp $
 copyright: see below
 
 
@@ -30,6 +30,11 @@ copyright: see below
 //
 //======================================================================
 
+/*
+define function debug-reoptimize (component :: <component>, frob) => ()
+//  dformat("*** Skipping re-optimization!\n");
+end;
+*/
 
 // SSA conversion.
 
@@ -235,15 +240,15 @@ end;
 
 // fixup-assignment -- internal.
 //
-define method fixup-assignment
+define function fixup-assignment
     (component :: <component>, assignment :: <assignment>) => ();
   if (assignment.defines
 	& instance?(assignment.defines.var-info, <values-cluster-info>))
     maybe-restrict-type(component, assignment.defines, 
 			assignment.depends-on.source-exp.derived-type,
-			ignore /*, ignore*/);
+			ignore);
   end if;
-end method;
+end function;
 
 // queue-dependents -- external.
 //
@@ -264,7 +269,7 @@ define generic maybe-restrict-type
 
 define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>,
-     reoptimize :: <function> /*, queue-dependents :: <function>*/)
+     reoptimize :: <function>)
     => ();
   unless (type == wild-ctype())
     let old-type = expr.derived-type;
@@ -285,7 +290,7 @@ define method maybe-restrict-type
 		return();
 	      end;
 	    finally
-	      maybe-restrict-type(component, var, var-type, reoptimize /*, queue-dependents*/);
+	      maybe-restrict-type(component, var, var-type, reoptimize);
 	    end for;
 	  end block;
 	end if;
@@ -298,7 +303,7 @@ end method maybe-restrict-type;
 
 define method maybe-restrict-type
     (component :: <component>, var :: <abstract-variable>, type :: <values-ctype>,
-     reoptimize :: <function> /*, queue-dependents :: <function>*/, #next next-method)
+     reoptimize :: <function>, #next next-method)
     => ();
   let var-info = var.var-info;
   next-method(component, var,
@@ -308,15 +313,14 @@ define method maybe-restrict-type
 		ctype-intersection(defaulted-type(type, 0),
 				   var-info.asserted-type);
 	      end,
-	      reoptimize /*,
-	      queue-dependents*/);
+	      reoptimize);
 end;
 
 
 define method maybe-restrict-type
     (component :: <component>, var :: <definition-site-variable>,
      type :: <values-ctype>,
-     reoptimize :: <function> /*, queue-dependents :: <function> */, #next next-method)
+     reoptimize :: <function>, #next next-method)
     => ();
   if (var.needs-type-check?
 	& values-subtype?(type, var.var-info.asserted-type.ctype-extent))

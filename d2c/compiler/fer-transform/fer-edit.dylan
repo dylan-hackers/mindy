@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.4 2001/10/15 20:31:39 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.5 2001/10/19 00:10:56 gabor Exp $
 copyright: see below
 
 
@@ -30,13 +30,9 @@ copyright: see below
 //
 //======================================================================
 
-/*
-define function reoptimize (component :: <component>, frob) => ()
-//  dformat("*** Skipping re-optimization!\n");
-end;
-*/
 
 // Routines to edit FER.
+
 // insert-after -- external
 //
 // Insert the region immediate after the assignment.  All appropriate parent

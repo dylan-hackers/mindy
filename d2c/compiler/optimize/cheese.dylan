@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.14 2001/10/17 20:55:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.15 2001/10/19 00:13:04 gabor Exp $
 copyright: see below
 
 
@@ -161,56 +161,6 @@ end;
 
 
 
-// SSA conversion.
-
-/* define method maybe-convert-to-ssa
-    (component :: <component>, var :: <initial-variable>) => ();
-  let defns = var.definitions;
-  if (defns ~== #() & defns.tail == #())
-    // Single definition -- replace it with an ssa variable.
-    let defn = defns.head;
-    let assign = defn.definer;
-    if (assign)
-      let ssa = make(<ssa-variable>,
-		     dependents: var.dependents,
-		     derived-type: var.derived-type,
-		     var-info: var.var-info,
-		     definer: assign,
-		     definer-next: defn.definer-next,
-		     needs-type-check: defn.needs-type-check?);
-      // Replace the <initial-definition> with the <ssa-var> in the assignment
-      // defines.
-      for (other = assign.defines then other.definer-next,
-	   prev = #f then other,
-	   until: other == defn)
-      finally
-	if (prev)
-	  prev.definer-next := ssa;
-	else
-	  assign.defines := ssa;
-	end;
-      end;
-      defn.definer := #f;
-      // Replace each reference of the <initial-var> with the <ssa-var>.
-      for (dep = var.dependents then dep.source-next,
-	   while: dep)
-	unless (dep.source-exp == var)
-	  error("The dependent's source-exp wasn't the var we were trying "
-		  "to replace?");
-	end;
-	dep.source-exp := ssa;
-	// Reoptimize the dependent in case they can do something now that
-	// they are being given an ssa variable.
-	reoptimize(component, dep.dependent);
-      end;
-      // Reoptimize the defining assignment in case it can now be
-      // copy-propagated.
-      reoptimize(component, assign);
-    end;
-  end;
-end method maybe-convert-to-ssa; */
-
-
 // Optimizations.
 
 define generic optimize
@@ -238,33 +188,6 @@ define inline function queue-dependents
   fer-queue-dependents(component, expr, reoptimize);
 end;
 
-
-/* define method queue-dependents
-    (component :: <component>, expr :: <expression>) => ();
-  for (dependency = expr.dependents then dependency.source-next,
-       while: dependency)
-    reoptimize(component, dependency.dependent);
-  end;
-end; */
-
-/* define method delete-queueable
-    (component :: <component>, queueable :: <queueable-mixin>) => ();
-  //
-  // If we are queued for reoptimization, belay that.
-  unless (queueable.queue-next == #"absent")
-    for (q = component.reoptimize-queue then q.queue-next,
-	 prev = #f then q,
-	 until: q == queueable)
-    finally
-      if (prev)
-	prev.queue-next := q.queue-next;
-      else
-	component.reoptimize-queue := q.queue-next;
-      end;
-    end;
-  end;
-  queueable.queue-next := #"deleted";
-end;*/
 
 
 // Assignment optimization.
@@ -297,63 +220,6 @@ end;
 define method expression-flushable? (var :: <leaf>) => res :: <boolean>;
   #t;
 end;
-
-
-
-/* define method expression-movable? (expr :: <expression>)
-    => res :: <boolean>;
-  #f;
-end;
-
-define method expression-movable? (expr :: <primitive>)
-    => res :: <boolean>;
-  expr.primitive-info.priminfo-pure?;
-end method expression-movable?;
-
-define method expression-movable? (expr :: <known-call>)
-    => res :: <boolean>;
-  function-movable?(expr.depends-on.source-exp);
-end method expression-movable?; */
-
-/* define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
-  #f;
-end;
-
-define method function-movable?
-    (leaf :: <definition-constant-leaf>) => res :: <boolean>;
-  function-movable?(leaf.const-defn);
-end;
-
-define method function-movable?
-    (leaf :: <literal-constant>) => res :: <boolean>;
-  let defn = leaf.value.ct-function-definition;
-  defn & function-movable?(defn);
-end;
-
-define method function-movable?
-    (defn :: <definition>) => res :: <boolean>;
-  #f;
-end;
-
-define method function-movable?
-    (defn :: <function-definition>) => res :: <boolean>;
-  defn.function-defn-movable?;
-end;
-
-define method expression-movable? (var :: <leaf>)
-    => res :: <boolean>;
-  #t;
-end;
-
-define method expression-movable? (var :: <ssa-variable>)
-    => res :: <boolean>;
-  ~instance?(var.var-info, <values-cluster-info>);
-end;
-
-define method expression-movable? (var :: <initial-variable>)
-    => res :: <boolean>;
-  #f;
-end; */
 
 
 define method trim-unneeded-defines
@@ -683,110 +549,6 @@ define function expand-cluster
      names, reoptimize);
 end;
 
-/* define method expand-cluster 
-    (component :: <component>, cluster :: <ssa-variable>,
-     number-of-values :: <integer>, names :: <list>)
-    => ();
-  let cluster-dependency = cluster.dependents;
-  let target = cluster-dependency.dependent;
-  let assign = cluster.definer;
-  let new-defines = #f;
-  let new-depends-on = cluster-dependency.dependent-next;
-  for (index from number-of-values - 1 to 0 by -1,
-       names = names then names.tail)
-    let debug-name = if (names == #())
-		       as(<symbol>, format-to-string("result%d", index));
-		     else
-		       names.head;
-		     end;
-    let var-info = make(<local-var-info>, debug-name: debug-name,
-			asserted-type: object-ctype());
-    let var = make(<ssa-variable>, var-info: var-info,
-		   definer: assign, definer-next: new-defines);
-    let dep = make(<dependency>, source-exp: var, source-next: #f,
-		   dependent: target, dependent-next: new-depends-on);
-    var.dependents := dep;
-    new-defines := var;
-    new-depends-on := dep;
-  end;
-  assign.defines := new-defines;
-  for (dep = target.depends-on then dep.dependent-next,
-       prev = #f then dep,
-       until: dep == cluster-dependency)
-  finally
-    if (prev)
-      prev.dependent-next := new-depends-on;
-    else
-      target.depends-on := new-depends-on;
-    end;
-  end;
-  reoptimize(component, assign);
-  let assign-source = assign.depends-on.source-exp;
-  if (instance?(assign-source, <primitive>)
-	& assign-source.primitive-name == #"values")
-    reoptimize(component, assign-source);
-  end;
-end;
-
-define method expand-cluster 
-    (component :: <component>, cluster :: <initial-variable>,
-     number-of-values :: <integer>, names :: <list>)
-    => ();
-  let cluster-dependency = cluster.dependents;
-  let target = cluster-dependency.dependent;
-  let assigns = map(definer, cluster.definitions);
-  let new-defines = make(<list>, size: cluster.definitions.size, fill: #f);
-  let new-depends-on = cluster-dependency.dependent-next;
-
-  for (index from number-of-values - 1 to 0 by -1,
-       names = names then names.tail)
-    let debug-name = if (names == #())
-		       as(<symbol>, format-to-string("result%d", index));
-		     else
-		       names.head;
-		     end;
-    let var-info = make(<local-var-info>, debug-name: debug-name,
-			asserted-type: object-ctype());
-    let var = make(<initial-variable>, var-info: var-info,
-		   next-initial-variable: component.initial-variables,
-		   component: component);
-    component.initial-variables := var;
-    let defns = map(method (assign, next-define)
-		      make(<initial-definition>, var-info: var-info,
-			   definition: var, definer: assign,
-			   definer-next: next-define);
-		    end,
-		    assigns, new-defines);
-    let dep = make(<dependency>, source-exp: var, source-next: #f,
-		   dependent: target, dependent-next: new-depends-on);
-    var.dependents := dep;
-    new-defines := defns;
-    new-depends-on := dep;
-  end;
-  for (assign in assigns, defn in new-defines)
-    assign.defines := defn;
-  end;
-  for (dep = target.depends-on then dep.dependent-next,
-       prev = #f then dep,
-       until: dep == cluster-dependency)
-  finally
-    if (prev)
-      prev.dependent-next := new-depends-on;
-    else
-      target.depends-on := new-depends-on;
-    end;
-  end;
-
-  for (assign in assigns)
-    reoptimize(component, assign);
-    let assign-source = assign.depends-on.source-exp;
-    if (instance?(assign-source, <primitive>)
-	  & assign-source.primitive-name == #"values")
-      reoptimize(component, assign-source);
-    end;
-  end;
-end; */
-
 
 // block/exit related optimizations.
 
@@ -1092,107 +854,8 @@ end;
 define function maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
-  fer-maybe-restrict-type(component, expr, type, reoptimize /*, queue-dependents*/);
+  fer-maybe-restrict-type(component, expr, type, reoptimize);
 end;
-
-/* define method maybe-restrict-type
-    (component :: <component>, expr :: <expression>, type :: <values-ctype>)
-    => ();
-  unless (type == wild-ctype())
-    let old-type = expr.derived-type;
-    if (old-type == wild-ctype() 
-	  | (~values-subtype?(old-type, type)
-	       & values-subtype?(type, old-type)))
-      expr.derived-type := type;
-      if (instance?(expr, <initial-definition>))
-	let var = expr.definition-of;
-	if (instance?(var, <initial-variable>))
-	  block (return)
-	    let var-type = empty-ctype();
-	    for (defn in var.definitions)
-	      let (res, win) = values-type-union(var-type, defn.derived-type);
-	      if (win)
-		var-type := res;
-	      else
-		return();
-	      end;
-	    finally
-	      maybe-restrict-type(component, var, var-type);
-	    end for;
-	  end block;
-	end if;
-      end if;
-      queue-dependents(component, expr);
-    end if;
-  end unless;
-end method maybe-restrict-type;
-
-
-define method maybe-restrict-type
-    (component :: <component>, var :: <abstract-variable>,
-     type :: <values-ctype>, #next next-method)
-    => ();
-  let var-info = var.var-info;
-  next-method(component, var,
-	      if (instance?(var-info, <values-cluster-info>))
-		values-type-intersection(type, var-info.asserted-type);
-	      else
-		ctype-intersection(defaulted-type(type, 0),
-				   var-info.asserted-type);
-	      end);
-end;
-
-define method maybe-restrict-type
-    (component :: <component>, var :: <definition-site-variable>,
-     type :: <values-ctype>, #next next-method)
-    => ();
-  if (var.needs-type-check?
-	& values-subtype?(type, var.var-info.asserted-type.ctype-extent))
-    var.needs-type-check? := #f;
-    reoptimize(component, var.definer);
-  end;
-  next-method();
-end; */
-
-
-/* define generic defaulted-type (ctype :: <values-ctype>, index :: <integer>)
-    => res :: <ctype>;
-
-define method defaulted-type (ctype :: <ctype>, index :: <integer>)
-    => res :: <ctype>;
-  if (index.zero?)
-    ctype;
-  else
-    specifier-type(#"<false>").ctype-extent;
-  end if;
-end;
-
-define method defaulted-type
-    (ctype :: <multi-value-ctype>, index :: <integer>)
-    => res :: <ctype>;
-  let positionals = ctype.positional-types;
-  if (index < positionals.size)
-    let type = positionals[index];
-    if (index < ctype.min-values)
-      type;
-    else
-      ctype-union(type, specifier-type(#"<false>").ctype-extent);
-    end if;
-  else
-    ctype-union(ctype.rest-value-type,
-		specifier-type(#"<false>").ctype-extent);
-  end if;
-end method defaulted-type;
-
-define method fixed-number-of-values? (ctype :: <ctype>) => res :: <boolean>;
-  #t;
-end;
-
-define method fixed-number-of-values?
-    (ctype :: <values-ctype>) => res :: <boolean>;
-  ctype.min-values == ctype.positional-types.size
-    & ctype.rest-value-type == empty-ctype();
-end; */
 
 
 // Control flow cleanup stuff.
@@ -1327,87 +990,7 @@ define function add-type-checks (component :: <component>) => ();
   end;
 end;
 
-/* define method add-type-checks-aux
-    (component :: <component>, region :: <simple-region>) => ();
-  let next-assign = #f;
-  for (assign = region.first-assign then next-assign,
-       while: assign)
-    let builder = #f;
-    next-assign := assign.next-op;
-    for (defn = assign.defines then defn.definer-next,
-	 prev = #f then defn,
-	 while: defn)
-      if (defn.needs-type-check?)
-	if (instance?(defn.var-info, <values-cluster-info>))
-	  error("values cluster needs a type check?");
-	end;
-	// Make the builder if we haven't already.
-	unless (builder)
-	  builder := make-builder(component);
-	end;
-	// Make a temp to hold the unchecked value.
-	let temp = make-ssa-var(builder, #"temp", object-ctype());
-	// Link the temp in in place of this definition.
-	temp.definer := assign;
-	temp.definer-next := defn.definer-next;
-	defn.definer-next := #f;
-	if (prev)
-	  prev.definer-next := temp;
-	else
-	  assign.defines := temp;
-	end;
-	// Do the type check.
-	let checked = make-ssa-var(builder, #"checked", object-ctype());
-	let asserted-type = defn.var-info.asserted-type;
-	build-assignment
-	  (builder, assign.policy, assign.source-location, checked,
-	   make-unknown-call
-	     (builder,
-	      ref-dylan-defn(builder, assign.policy, assign.source-location,
-			     #"%check-type"),
-	      #f, list(temp, make-literal-constant(builder, asserted-type))));
-	// Assign the type checked value to the real var.
-	build-assignment
-	  (builder, assign.policy, assign.source-location, defn,
-	   make-operation(builder, <truly-the>, list(checked),
-			  guaranteed-type: asserted-type));
-	// Change defn to temp so that the loop steps correctly.
-	defn := temp;
-      end;
-    end;
-    if (builder)
-      // We built some type checks, so insert them.
-      insert-after(component, assign, builder-result(builder));
-      // Queue the assignment for reoptimization.
-      reoptimize(component, assign);
-    end;
-  end;
-end;
 
-define method add-type-checks-aux
-    (component :: <component>, region :: <compound-region>) => ();
-  for (subregion in region.regions)
-    add-type-checks-aux(component, subregion);
-  end;
-end;
-
-define method add-type-checks-aux
-    (component :: <component>, region :: <if-region>) => ();
-  add-type-checks-aux(component, region.then-region);
-  add-type-checks-aux(component, region.else-region);
-end;
-
-define method add-type-checks-aux
-    (component :: <component>, region :: <body-region>) => ();
-  add-type-checks-aux(component, region.body);
-end;
-
-define method add-type-checks-aux
-    (component :: <component>, region :: <exit>) => ();
-end; */
-
-
-
 // Replacement of placeholder
 
 define method replace-placeholders (component :: <component>) => ();
