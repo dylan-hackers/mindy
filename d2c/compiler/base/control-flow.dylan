@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.5 1995/04/21 02:31:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.6 1995/04/21 19:34:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,6 +12,7 @@ region [source-location-mixin] {abstract}
     linear-region {abstract}
         simple-region
         compound-region
+	    empty-region
 
     join-region {abstract}
         if-region [dependent-mixin]
@@ -57,10 +58,25 @@ define class <compound-region> (<linear-region>)
   slot regions :: <list>, required-init-keyword: regions:;
 end class;
 
+define method make (class == <compound-region>,
+		    #next next-method, #key regions)
+  let regions = choose(complement(curry(instance?, <empty-region>)), regions);
+  if (empty?(regions))
+    make(<empty-region>);
+  else
+    next-method();
+  end;
+end;
+
+define class <empty-region> (<compound-region>)
+  keyword regions:, init-value: #();
+end;
+
 
 // Join-Regions:
 //
-// Subclasses of <join-region> describe control flow than branches or joins.
+// Subclasses of <join-region> describe control flow that have branches
+// or joins.
 //
 define class <join-region> (<region>)
   //
@@ -132,6 +148,11 @@ end;
 //
 define class <component> (<block-region-mixin>)
   keyword source-location:, init-value: make(<source-location>);
+  //
+  // Queue of all the <initial-definition> variables that need to be ssa
+  // converted (threaded through next-initial-definition).
+  slot initial-definitions :: false-or(<initial-definition>),
+    init-value: #f;
   //
   // Queue of dependencies that need to be updated (threaded by queue-next.)
   slot reoptimize-queue :: false-or(<dependent-mixin>), init-value: #f;
