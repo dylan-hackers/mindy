@@ -9,12 +9,9 @@ define library common-extensions
   use table-extensions;
   use format-out;
 
-  // Only import transcendentals if we have them.
-//#if (~compiled-for-solaris)
   use transcendental,
     import: { transcendental => transcendentals },
     export: all;
-//#endif
 
   use random;
   use regular-expressions,
@@ -125,6 +122,7 @@ define module common-extensions
     export: {remove-all-keys!};
   use table-extensions,
     export: {<string-table>};
+  use transcendentals, import: { logn };
   use c-support;
   use format, export: all;
   use streams, import: { new-line, force-output, <stream> },
