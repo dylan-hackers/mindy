@@ -16,7 +16,7 @@ descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
 		    descriptor_t *sp, heapptr_t body_func)
 {
     volatile jmp_buf state;
-    volatile int rc;
+    volatile long rc;
 
     if(rc = setjmp(state)) { /* This _is_ an assignment */
       /* longjmp was called, return stack_top */
