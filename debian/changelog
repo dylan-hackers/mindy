@@ -1,3 +1,31 @@
+gwydion-dylan (2.3.10pre1-2) unstable; urgency=low
+
+  * Use system-provided GC, rather than build-in version.
+  * Correct build dependencies for autobuilders.
+  * Some corrections to better-process header files.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 27 Jan 2003 23:57:02 -0800
+
+gwydion-dylan (2.3.10pre1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Improved performance on copy-sequence for <byte-string>,
+    and upper/lower-case conversions.
+  * Improve performance of read-line from fd-stream and fd-file-stream
+    by a factor of 4.
+  * Improve performance of <stretchy-vector> to amortized O(1) time per
+    insertion.
+  * Beginnings of a single-library version of Dylan.
+  * More space-efficient boolean representation.
+  * Use new concatenate! function from Extensions library (rather than
+    crappy version from the Dylan library.)
+  * Add support for <double-integer> class (a.k.a. "long long"), and
+    remove assumption that size == alignment for C types.  Add assertions
+    that Dylans types and gcc's types are in agreement.
+  * Add dependency on libtool (Closes: #167139)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 16 Dec 2002 21:05:38 -0800
+
 gwydion-dylan (2.3.9pre4-1) unstable; urgency=low
 
   * Net networking library.
