@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.9 1996/08/10 21:29:12 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.10 1997/02/13 18:00:31 nkramer Exp $
 *
 * This file handles conditional compilation
 *
@@ -47,10 +47,12 @@ static struct feature {
 static char *InitialFeatures[] 
   = {"mindy",
 #    ifdef WIN32
-        "newlines-are-crlf",
-        "compiled-for-x86-win32",
+        "compiled-for-x86",
+        "compiled-for-win32",
 #    elif (defined(hpux))
-        "compiled-for-hppa-hpux",
+        "compiled-for-hpux",
+        "compiled-for-hppa",
+        "compiled-for-unix",
 #    endif
      NULL};
 
