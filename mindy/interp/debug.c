@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.17 1994/04/15 14:55:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.18 1994/04/28 04:02:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -524,6 +524,16 @@ static void troff_cmd(void)
 static void gc_cmd(void)
 {
     collect_garbage();
+}
+
+static void error_cmd(void)
+{
+    if (CurThread == NULL)
+	printf("No current thread.\n");
+    else if (CurThread->status != status_Debuggered)
+	printf("The current thread did not stop due to an error.\n");
+    else
+	explain_condition(CurThread, CurThread->datum);
 }
 
 /* help_cmd is defined later, because it needs to */
@@ -1567,7 +1577,7 @@ static struct byteop_info {
     {op_MAKE_METHOD, 0xff, "make-method"},
     {op_CHECK_TYPE, 0xff, "check-type"},
     {op_CHECK_TYPE_FUNCTION, 0xff, "check-type-function"},
-    {op_CANONICALIZE_VALUE, 0xff, "canonicalize-value %c"},
+    {op_CANONICALIZE_VALUE, 0xff, "canonicalize-value %r"},
     {op_PUSH_BYTE, 0xff, "push\t%b"},
     {op_PUSH_INT, 0xff, "push\t%i"},
     {op_CONDITIONAL_BRANCH, 0xff, "cbr\t%t"},
@@ -1578,16 +1588,16 @@ static struct byteop_info {
     {op_PUSH_FALSE, 0xff, "push\t#f"},
     {op_DUP, 0xff, "dup"},
     {op_DOT_TAIL, 0xff, "dot\ttail"},
-    {op_DOT_FOR_MANY, 0xff, "dot\tfor %c"},
+    {op_DOT_FOR_MANY, 0xff, "dot\tfor %r"},
     {op_DOT_FOR_SINGLE, 0xff, "dot\tfor single"},
 
-    {op_PUSH_CONSTANT, 0xf0, "push\tconst(%a)"},
+    {op_PUSH_CONSTANT, 0xf0, "push\tconst(%c)\t"},
     {op_PUSH_ARG, 0xf0, "push\targ(%a)"},
     {op_POP_ARG, 0xf0, "pop\targ(%a)"},
     {op_PUSH_LOCAL, 0xf0, "push\tlocal(%a)"},
     {op_POP_LOCAL, 0xf0, "pop\tlocal(%a)"},
     {op_CALL_TAIL, 0xf0, "call\tnargs = %a, tail"},
-    {op_CALL_FOR_MANY, 0xf0, "call\tnargs = %n, for %c"},
+    {op_CALL_FOR_MANY, 0xf0, "call\tnargs = %n, for %r"},
     {op_CALL_FOR_SINGLE, 0xf0, "call\tnargs = %n, for single"},
     {op_PUSH_VALUE, 0xf0, "push\tvalue %v"},
     {op_PUSH_FUNCTION, 0xf0, "push\tfunction %v"},
@@ -1647,14 +1657,16 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 		break;
 
 	      case 'c':
-		i = *ptr++;
-		if (i == 0xff) {
-		    i = disassem_int4(ptr);
-		    ptr += 4;
+		i = byte & 0xf;
+		if (i == 0xf) {
+		    i = *ptr++;
+		    if (i == 0xff) {
+			i = disassem_int4(ptr);
+			ptr += 4;
+		    }
 		}
-		sprintf(fill, "%d", i>>1);
-		if (i & 1)
-		    strcat(fill, ", #rest");
+		sprintf(fill, "%d", i);
+		trailer = COMPONENT(component)->constant[i];
 		break;
 
 	      case 'i':
@@ -1673,6 +1685,17 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 		    }
 		}
 		sprintf(fill, "%d", i);
+		break;
+
+	      case 'r':
+		i = *ptr++;
+		if (i == 0xff) {
+		    i = disassem_int4(ptr);
+		    ptr += 4;
+		}
+		sprintf(fill, "%d", i>>1);
+		if (i & 1)
+		    strcat(fill, ", #rest");
 		break;
 
 	      case 't':
@@ -1727,6 +1750,7 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 
 static void disassemble_component(obj_t component)
 {
+    obj_t debug_name = COMPONENT(component)->debug_name;
     obj_t debug_info = COMPONENT(component)->debug_info;
     obj_t source_file = COMPONENT(component)->source_file;
     int nconst = COMPONENT(component)->n_constants;
@@ -1736,6 +1760,19 @@ static void disassemble_component(obj_t component)
 	= obj_ptr(unsigned char *, component) + COMPONENT(component)->length;
     int debug_index = 0;
     unsigned char *next_line;
+    int i;
+
+    if (debug_name == obj_False)
+	printf("anonymous");
+    else
+	prin1(debug_name);
+    printf(" component");
+    if (source_file == obj_False)
+	putchar('\n');
+    else {
+	printf(", from ");
+	print(source_file);
+    }
 
     if (debug_info == obj_False)
 	next_line = end;
@@ -1760,6 +1797,16 @@ static void disassemble_component(obj_t component)
 	}
 	printf("%6d:", ptr - (unsigned char *)component);
 	ptr = disassemble_op(component, ptr);
+    }
+
+    for (i = 0; i < nconst; i++) {
+	obj_t c = COMPONENT(component)->constant[i];
+	if (instancep(c, obj_MethodInfoClass)) {
+	    putchar('\n');
+	    prin1(c);
+	    printf(", ");
+	    disassemble_component(METHOD_INFO(c)->component);
+	}
     }
 }
 
@@ -1865,7 +1912,7 @@ static struct cmd_entry Cmds[] = {
 	 backtrace_cmd},
     {"breakpoint", "breakpoint\tInstall a breakpoint.", breakpoint_cmd},
     {"c", NULL, continue_cmd},
-    {"call", "call expr...\tCall each expr in its own thread.", call_cmd},
+    {"call", "call expr...\tCall each expr, printing the results.", call_cmd},
     {"continue", "continue\tContinue execution.", continue_cmd},
     {"d", NULL, down_cmd},
     {"down", "down\t\tMove down one frame.", down_cmd},
@@ -1874,6 +1921,9 @@ static struct cmd_entry Cmds[] = {
 	 "disassemble\tDisassemble the component for the current frame",
 	 disassemble_cmd},
     {"enable", "enable thread\tRestart the given thread.", enable_cmd},
+    {"error",
+"error\t\tRedisplay the error that caused this thread to enter the debugger.",
+	 error_cmd},
     {"flush", "flush\t\tFlush all debugger variables.", flush_cmd},
     {"frame", "frame num\tMove to the given frame.", frame_cmd},
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
@@ -1888,7 +1938,7 @@ static struct cmd_entry Cmds[] = {
     {"module",
  "module [module]\tSwitch to given module or list modules in current library.",
 	 module_cmd},
-    {"print", "print expr...\tPrint the values of the listed vars", print_cmd},
+    {"print", "print expr...\tPrint each expr, ignoring errors.", print_cmd},
     {"restart", "restart [num]\tList or invoke one of the available restarts.",
 	 restart_cmd},
     {"return",
