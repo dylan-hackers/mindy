@@ -96,7 +96,8 @@ end method count-whitespace;
 // the interesting work.
 //
 define method process-interface-file
-    (in-stream :: <stream>, out-stream :: <stream>, #key verbose) => ();
+    (in-file :: <string>, out-stream :: <stream>, #key verbose) => ();
+  let in-stream = make(<file-stream>, name: in-file);
   let input-string = read-as(<byte-string>, in-stream, to-eof?: #t);
   let sz = input-string.size;
   
@@ -111,7 +112,7 @@ define method process-interface-file
 		  & is-prefix?("interface", input-string,
 			       start: index + space-count))
 	      let newer-position
-		= process-define-interface(input-string,
+		= process-define-interface(in-file, input-string,
 					   new-position, out-stream,
 					   verbose: verbose);
 	      if (newer-position < sz) try-define(newer-position) end if;
@@ -414,10 +415,12 @@ end method process-parse-state;
 // token after the interface definition.
 //
 define method process-define-interface
-    (string :: <string>, start :: <integer>, out-stream :: <stream>,
+    (file-name :: <string>, string :: <string>, start :: <integer>,
+     out-stream :: <stream>,
      #key verbose)
  => (end-position :: <integer>);
-  let tokenizer = make(<tokenizer>, source: string, start: start);
+  let tokenizer = make(<tokenizer>, source-string: string,
+		       source-file: file-name, start: start);
   let state = make(<parse-state>, tokenizer: tokenizer);
   // If there is a problem with the parse, it will simply signal an error
   parse(state);
@@ -460,7 +463,7 @@ define method main (program, #rest args)
 	in-file =>
 	  out-file := make(<file-stream>, name: arg, direction: #"output");
 	otherwise =>
-	  in-file := make(<file-stream>, name: arg);
+	  in-file := arg;
       end case;
     end if;
   end for;
