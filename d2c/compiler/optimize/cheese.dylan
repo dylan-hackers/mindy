@@ -77,12 +77,53 @@ define method optimize (component :: <component>,
   // By default, do nothing.
 end;
 
-define constant <side-effect-free-expr>
-  = type-or(<ssa-variable>, <constant>, <function-literal>);
+define method side-effect-free? (expr :: <expression>) => res :: <boolean>;
+  #f;
+end;
 
-define method optimize (component :: <component>,
-			assignment :: <assignment>)
-    => ();
+define method side-effect-free?
+    (var :: <abstract-variable>) => res :: <boolean>;
+  #t;
+end;
+
+define method side-effect-free?
+    (var :: <global-variable>) => res :: <boolean>;
+  if (var.var-info.var-defn.ct-value)
+    #t;
+  else
+    #f;
+  end;
+end;
+
+define method side-effect-free? (const :: <constant>) => res :: <boolean>;
+  #t;
+end;
+
+define method side-effect-free?
+    (func :: <function-literal>) => res :: <boolean>;
+  #t;
+end;
+
+
+define method pure-expression? (expr :: <expression>) => res :: <boolean>;
+  #f;
+end;
+
+define method pure-expression? (var :: <ssa-variable>) => res :: <boolean>;
+  #t;
+end;
+
+define method pure-expression? (var :: <constant>) => res :: <boolean>;
+  #t;
+end;
+
+define method pure-expression? (var :: <function-literal>) => res :: <boolean>;
+  #t;
+end;
+
+
+define method optimize
+    (component :: <component>, assignment :: <assignment>) => ();
   block (return)
     local
       method trim-unused-definitions (defn, new-tail) => ();
@@ -114,30 +155,14 @@ define method optimize (component :: <component>,
     let source-type = source.derived-type;
     let defines = assignment.defines;
 
-    if (instance?(source, <side-effect-free-expr>))
-      if (~defines)
-	remove-dependency(component, dependency);
-	let next = assignment.next-op;
-	let prev = assignment.prev-op;
-	if (next | prev)
-	  if (next)
-	    next.prev-op := prev;
-	  else
-	    assignment.region.last-assign := prev;
-	  end;
-	  if (prev)
-	    prev.next-op := next;
-	  else
-	    assignment.region.first-assign := next;
-	  end;
-	else
-	  let region = assignment.region;
-	  replace-subregion(region.parent, region, make(<empty-region>));
-	end;
-	assignment.region := #f;
-	  
+    if (~defines)
+      if (side-effect-free?(source))
+	remove-dependency-from-source(component, dependency);
+	delete-assignment(assignment);
 	return();
-      elseif (instance?(defines.var-info, <values-cluster-info>))
+      end;
+    elseif (pure-expression?(source))
+      if (instance?(defines.var-info, <values-cluster-info>))
 	if (instance?(source, <ssa-variable>)
 	      & instance?(source.var-info, <values-cluster-info>))
 	  maybe-propagate-copy(component, defines, source);
@@ -185,6 +210,27 @@ define method optimize (component :: <component>,
       end;
     end;
   end;
+end;
+
+define method delete-assignment (assignment :: <assignment>) => ();
+  let next = assignment.next-op;
+  let prev = assignment.prev-op;
+  if (next | prev)
+    if (next)
+      next.prev-op := prev;
+    else
+      assignment.region.last-assign := prev;
+    end;
+    if (prev)
+      prev.next-op := next;
+    else
+      assignment.region.first-assign := next;
+    end;
+  else
+    let region = assignment.region;
+    replace-subregion(region.parent, region, make(<empty-region>));
+  end;
+  assignment.region := #f;
 end;
 
 define method maybe-propagate-copy (component :: <component>,
@@ -350,6 +396,37 @@ define method optimize (component :: <component>, primitive :: <primitive>)
     let type = deriver(component, primitive);
     maybe-restrict-type(component, primitive, type);
   end;
+  // ### Should have some general purpose way to transform primitives.
+  if (primitive.name == #"values")
+    let assign = primitive.dependents.dependent;
+    let defns = assign.defines;
+    unless (defns & instance?(defns.var-info, <values-cluster-info>))
+      let builder = make-builder(component);
+      let next-var = #f;
+      for (var = defns then next-var,
+	   val-dep = primitive.depends-on
+	     then val-dep & val-dep.dependent-next,
+	   while: var)
+	next-var := var.definer-next;
+	var.definer-next := #f;
+	build-assignment(builder, assign.policy, assign.source-location, var,
+			 if (val-dep)
+			   val-dep.source-exp;
+			 else
+			   make-literal-constant(builder,
+						 make(<literal-false>));
+			 end);
+      end;
+      // Remove the primitive from arguments dependencies.
+      for (val-dep = primitive.depends-on then val-dep.dependent-next,      
+	   while: val-dep)
+	remove-dependency-from-source(component, val-dep);
+      end;
+      // Replace the assignment with the builder results.
+      insert-after(assign, builder.builder-result);
+      delete-assignment(assign);
+    end;
+  end;
 end;
 
 define method optimize (component :: <component>, prologue :: <prologue>)
@@ -384,16 +461,18 @@ define method optimize (component :: <component>, lambda :: <lambda>)
     maybe-restrict-result-type(component, lambda,
 			       make-values-ctype(as(<list>, types), #f));
   end;
+
+  // If there is exactly one reference, let convert the lambda.
+  if (lambda.dependents & ~lambda.dependents.source-next)
+    let-convert(component, lambda);
+  end;
 end;
 
 define method maybe-restrict-result-type
     (component :: <component>, lambda :: <lambda>, type :: <values-ctype>)
     => ();
   let old-type = lambda.result-type;
-  unless (old-type == type)
-    unless (values-subtype?(type, old-type))
-      error("result type became more general?");
-    end;
+  if (old-type ~= type & values-subtype?(type, old-type))
     lambda.result-type := type;
     queue-dependents(component, lambda);
   end;
@@ -437,12 +516,74 @@ define method maybe-expand-cluster
       end;
     end;
     queue-dependent(component, assign);
+    let assign-source = assign.depends-on.source-exp;
+    if (instance?(assign-source, <primitive>)
+	  & assign-source.name == #"values")
+      queue-dependent(component, assign-source);
+    end;
     #t;
   else
     #f;
   end;
 end;
 
+define method let-convert (component :: <component>, lambda :: <lambda>) => ();
+  let call :: <known-call> = lambda.dependents.dependent;
+  let call-assign :: <assignment> = call.dependents.dependent;
+
+  // Change the args to be feeding into a newly allocated values-op
+  // instead of the call, and change the prologue references to refer to
+  // the values op.
+  begin
+    let args = call.depends-on.dependent-next;
+    let prologue = lambda.prologue;
+    let values-op = make(<primitive>, derived-type: prologue.derived-type,
+			 dependents: prologue.dependents, name: #"values",
+			 depends-on: args);
+    for (dep = args then dep.dependent-next,
+	 while: dep)
+      dep.dependent := values-op;
+    end;
+    for (dep = prologue.dependents then dep.source-next,
+	 while: dep)
+      dep.source-exp := values-op;
+    end;
+    queue-dependent(component, values-op);
+  end;
+
+  // Change the call to a reference to the results.
+  let results = lambda.depends-on;
+  call-assign.depends-on.source-exp
+    := if (results
+	     & instance?(results.source-exp.var-info, <values-cluster-info>))
+	 results.dependent := call-assign;
+	 results.source-exp;
+       else
+	 // Make a values operation for the lambda results.
+	 let values-op = make(<primitive>, derived-type: lambda.result-type,
+			      dependents: call.dependents, name: #"values",
+			      depends-on: results);
+	 // Change the results to feed into the values-op
+	 for (dep = results then dep.dependent-next,
+	      while: dep)
+	   dep.dependent := values-op;
+	 end;
+	 for (dep = call.dependents then dep.source-next,
+	      while: dep)
+	   dep.source-exp := values-op;
+	 end;
+	 queue-dependent(component, values-op);
+	 values-op;
+       end;
+  queue-dependent(component, call-assign);
+
+  // Insert the lambda body before the call assignment (which is now the result
+  // assignment).
+  insert-before(call-assign, lambda.body);
+
+  // Delete the lambda.
+  component.all-methods := remove!(component.all-methods, lambda);
+end;
 
 
 // Type utilities.
@@ -467,10 +608,7 @@ define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
   let old-type = expr.derived-type;
-  unless (old-type == type)
-    unless (values-subtype?(type, old-type))
-      error("derived type became more general?");
-    end;
+  if (old-type ~= type & values-subtype?(type, old-type))
     expr.derived-type := type;
     queue-dependents(component, expr);
   end;
@@ -485,10 +623,9 @@ define method maybe-restrict-type
 				       var.var-info.asserted-type));
 end;
 
-define method maybe-restrict-type (component :: <component>,
-				   var :: <definition-site-variable>,
-				   type :: <values-ctype>,
-				   #next next-method)
+define method maybe-restrict-type
+    (component :: <component>, var :: <definition-site-variable>,
+     type :: <values-ctype>, #next next-method)
     => ();
   if (var.needs-type-check?
 	& values-subtype?(type, var.var-info.asserted-type))
@@ -508,6 +645,21 @@ define method define-primitive-deriver
     => ();
   $primitive-type-derivers[name] := deriver;
 end;
+
+
+define method values-type-deriver
+    (component :: <component>, primitive :: <primitive>)
+    => res :: <values-ctype>;
+  for (dep = primitive.depends-on then dep.dependent-next,
+       types = #() then pair(dep.source-exp.derived-type, types),
+       while: dep)
+  finally
+    make-values-ctype(reverse!(types), #f);
+  end;
+end;
+
+define-primitive-deriver(#"values", values-type-deriver);
+
 
 define method boolean-result
     (component :: <component>, primitive :: <primitive>)
@@ -595,9 +747,9 @@ define method add-type-checks-aux
 	build-assignment(builder, assign.policy, assign.source-location,
 			 defn, check);
 	// Seed the derived type of the check-type call.
+	let cur-type = assign.depends-on.source-exp.derived-type;
 	let (checked-type, precise?)
-	  = ctype-intersection(asserted-type,
-			       assign.depends-on.source-exp.derived-type);
+	  = values-type-intersection(asserted-type, cur-type);
 	maybe-restrict-type(component, check,
 			    if (precise?)
 			      checked-type;
@@ -659,7 +811,7 @@ end;
 // FER editing stuff.
 
 
-define method remove-dependency
+define method remove-dependency-from-source
     (component :: <component>, dependency :: <dependency>) => ();
 
   // Remove the dependency from the source exp.
@@ -675,33 +827,42 @@ define method remove-dependency
     end;
   end;
 
-  // If there are no more dependents on the source note that the source itself
-  // can maybe go away.
-  unless (source.dependents)
-    maybe-forget-source(component, source);
-  end;
-
-  // Remove the dependency from the dependent.
-  for (dep = dependency.dependent.depends-on then dep.dependent-next,
-       prev = #f then dep,
-       until: dep == dependency)
-  finally
-    if (prev)
-      prev.dependent-next := dep.dependent-next;
-    else
-      dep.dependent.depends-on := dep.dependent-next;
-    end;
-  end;
+  // Note that we dropped a dependent in case doing so will trigger
+  // some optimization based on the number of definers.
+  dropped-dependent(component, source);
 end;
 
-
-define method maybe-forget-source
-    (component :: <component>, var :: <ssa-variable>) => ();
-  queue-dependent(component, var.definer);
-end;
-
-define method maybe-forget-source
+define method dropped-dependent
     (component :: <component>, expr :: <expression>) => ();
+end;
+
+define method dropped-dependent
+    (component :: <component>, op :: <operation>) => ();
+  if (op.dependents)
+    error("%= had more than one dependent?");
+  end;
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    remove-dependency-from-source(dep);
+  end;
+end;
+
+define method dropped-dependent
+    (component :: <component>, var :: <ssa-variable>) => ();
+  // If the variable ended up with no references and doesn't need a type check,
+  // queue it for reoptimization so it gets deleted.
+  unless (var.dependents | var.needs-type-check?)
+    queue-dependent(component, var.definer);
+  end;
+end;
+
+define method dropped-dependent
+    (component :: <component>, lambda :: <lambda>) => ();
+  // If the lambda has exactly one reference, queue it for reoptimization so
+  // that reference can get let converted.
+  if (lambda.dependents & ~lambda.dependents.source-next)
+    queue-dependent(component, lambda);
+  end;
 end;
 
 
