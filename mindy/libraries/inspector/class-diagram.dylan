@@ -1,11 +1,10 @@
 module:     class-diagram
-library:    class-diagram
 author:     Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/class-diagram.dylan,v 1.1 1996/04/10 21:08:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/class-diagram.dylan,v 1.2 1996/04/22 15:32:04 nkramer Exp $
 
 //======================================================================
 //
-// Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
+// Copyright (c) 1996  Carnegie Mellon University
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -28,23 +27,15 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/clas
 //
 //======================================================================
 
-define library class-diagram
-  use dylan;
-  use tk;
-  export 
-    class-diagram;
-end library class-diagram;
+// This file is a kludge and a half.  The algorithm is really meant
+// for trees, not directed acyclic graphs.  Even for trees, it sticks
+// all nodes as far left as it can; this occasionally makes for ugly
+// pictures.  (This wouldn't be hard to correct with one more pass
+// through the tree)  And this whole implementation is one big kludge..
+// The main function, view-class-hierarchy, is actually threadsafe,
+// though, so that's one thing that works.
 
-define module class-diagram
-  use dylan;
-  use extensions;
-  use introspection;
-  use tk;
-  use tk-extension;
-  export 
-    view-class-hierarchy;
-end module class-diagram;
-
+
 // Directed Acyclic Graph
 //
 // All dags are instances of <real-dag>; this class is just a hack to
@@ -257,10 +248,15 @@ define method find-max-width (dag :: <dag>)
 	map(find-max-width, dag.dag-children));
 end method find-max-width;
 
+define variable *semaphore* = make(<semaphore>);
+
 define function view-class-hierarchy
     (root :: <class>, window-title :: <string>) => ();
+  grab-lock(*semaphore*);
   reset-dag-stuff();
   let dag = create-dag(root, #"down");
+  release-lock(*semaphore*);
+
   let window = make(<toplevel>);
   call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
   call-tk-function("wm title ", tk-as(<string>, window),
