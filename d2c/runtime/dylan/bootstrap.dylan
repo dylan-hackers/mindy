@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.19 1996/03/20 00:24:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.20 1996/03/20 14:16:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -173,7 +173,8 @@ define module dylan-viscera
     <string-table>, string-hash,
     collection-hash, sequence-hash,
     false-or, one-of, <never-returns>, subclass, direct-instance,
-    report-condition, condition-format, *warning-output*,
+    report-condition, condition-format, condition-force-output,
+    *warning-output*,
     <debugger>, invoke-debugger, *debugger*,
     <byte>, <byte-vector>,
     $not-supplied, ignore,
