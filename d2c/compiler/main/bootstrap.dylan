@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.27 1995/06/04 01:04:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.28 1995/06/05 20:58:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -291,8 +291,20 @@ define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
 define class <false> (<boolean>) end;
 
-define class <function> (<object>) end;
-define class <method> (<function>) end;
+define class <function> (<object>)
+  slot general-entry :: <raw-pointer>,
+    required-init-keyword: general-entry:;
+end;
+
+define class <method> (<function>)
+  slot generic-entry :: <raw-pointer>,
+    required-init-keyword: generic-entry:;
+  slot closure-var :: <object>,
+    sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
+end;
+seal generic make (singleton(<method>));
+seal generic initialize (<method>);
+
 define class <generic-function> (<function>) end;
 
 define class <symbol> (<object>)
@@ -440,6 +452,14 @@ define open generic value-setter (x, y) => value;
 
 
 // Methods that are nice to have by default.
+
+define method make (class :: <class>, #rest keys, #all-keys) => res;
+  error("make not supported in the bootstrap.");
+end;
+
+define inline method initialize (object :: <object>, #rest keys, #all-keys)
+    => ();
+end;
 
 define constant catch
   = method (saved-state :: <raw-pointer>, thunk :: <function>)
