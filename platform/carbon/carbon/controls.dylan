@@ -124,7 +124,7 @@ define constant $kControlEditTextPasswordTag :: <integer> = c-expr(int: "kContro
 define constant $kControlEditTextTextTag :: <integer> = c-expr(int: "kControlEditTextTextTag");
 define constant $kControlListBoxListHandleTag :: <integer> = c-expr(int: "kControlListBoxListHandleTag");
 define constant $kControlEditTextValidationProcTag :: <integer> = c-expr(int: "kControlEditTextValidationProcTag");
-define constant $kControlEditTextKeyFilterTag :: <integer> = c-expr(int: "kControlEditTextValidationProcTag");
+define constant $kControlEditTextKeyFilterTag :: <integer> = c-expr(int: "kControlEditTextKeyFilterTag");
 // etc.
 
 define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlSupportsEmbedding");
