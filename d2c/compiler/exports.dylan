@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.115 1995/11/20 16:16:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.116 1995/12/01 16:53:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -614,7 +614,7 @@ define module classes
     slot-init-keyword-required?, slot-overrides,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
-    slot-positions, find-slot-offset,
+    slot-positions, find-slot-offset, best-idea-of-class,
 
     <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
