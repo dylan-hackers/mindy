@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.25 2000/01/24 01:33:27 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.26 2000/03/22 09:31:16 robmyers Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -244,6 +244,13 @@ inherit-from:				generic-unix
 default-features:			compiled-for-macintosh
 make-command:						dummy
 
+// MacOS X
+platform-name:				macos
+inherit-from:				generic-unix
+default-features:			compiled-for-macos
+make-command:                   	gmake
+
+
 // Build-environment properties:
 //
 // object-filename-suffix: The suffix (aka extension) used to
@@ -377,6 +384,19 @@ link-shared-executable-command: $(LIBTOOL) gcc -o %s %s %s
 link-executable-flags:          -lm
 path-separator:        		:
 
+platform-name:			egcs
+default-features:		C-compiler-is-EGCS
+compile-c-command:              cc $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:   $(LIBTOOL) gcc $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
+default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
+assembler-command:		gcc $(CCFLAGS) -c %s -o %s
+link-library-command:           ar qc %s %s
+link-executable-command:        $(LIBTOOL) gcc -o %s %s %s
+link-shared-executable-command: $(LIBTOOL) gcc -o %s %s %s        
+path-separator:        		/
+
+
 // Combinations:
 
 // Fully supported platforms (i.e., we use these):
@@ -387,6 +407,9 @@ link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 platform-name:			x86-beos-gcc
 inherit-from:			beos-gcc beos x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
+platform-name:			ppc-macos-egcs
+inherit-from:			egcs macos ppc
 
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
