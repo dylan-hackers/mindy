@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.38 1996/04/14 19:21:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.39 1996/04/15 18:29:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -43,6 +43,10 @@ define abstract class <cclass>
   // class itself (if concrete and no subclasses) the empty type
   // (if abstract), or #f is we haven't decided yet.
   slot %direct-type :: false-or(<ctype>), init-value: #f;
+
+  // The <subclass-ctype> for subclasses of this class, or #f if we haven't
+  // allocated it yet.
+  slot subclass-ctype :: false-or(<subclass-ctype>) = #f;
 
   // class precedence list of all classes inherited, including this class and
   // indirectly inherited classes.  Unbound if not yet computed.
@@ -1384,6 +1388,70 @@ end class;
 
 define class <limited-cclass> (<cclass>)
 end;
+
+
+
+// Subclass types.
+
+define class <subclass-ctype>
+    (<limited-ctype>, <ct-value>, <identity-preserving-mixin>)
+  //
+  // The class this type covers the subclasses of.
+  constant slot subclass-of :: <cclass>,
+    required-init-keyword: of:;
+end class <subclass-ctype>;
+
+define sealed domain make (singleton(<subclass-ctype>));
+define sealed domain initialize (<subclass-ctype>);
+
+define method make (class == <subclass-ctype>, #next next-method,
+		    #key of, base-class)
+    => res :: <subclass-ctype>;
+  of.subclass-ctype
+    | (of.subclass-ctype
+	 := next-method(class,
+			of: of,
+			base-class: base-class | specifier-type(#"<class>")));
+end method make;
+
+define method print-object
+    (type :: <subclass-ctype>, stream :: <stream>) => ();
+  pprint-fields(type, stream, of: type.subclass-of);
+end method print-object;
+
+define method print-message
+    (type :: <subclass-ctype>, stream :: <stream>) => ();
+  format(stream, "subclass(%s)", type.subclass-of);
+end method print-message;
+
+
+define method csubtype-dispatch
+    (type1 :: <subclass-ctype>, type2 :: <subclass-ctype>)
+    => res :: <boolean>;
+  csubtype?(type1.subclass-of, type2.subclass-of);
+end method csubtype-dispatch;
+
+define method csubtype-dispatch
+    (type1 :: <singleton-ctype>, type2 :: <subclass-ctype>)
+    => res :: <boolean>;
+  let ctv = type1.singleton-value;
+  instance?(ctv, <cclass>) & csubtype?(ctv, type2.subclass-of);
+end method csubtype-dispatch;
+
+
+define method ctype-intersection-dispatch
+    (type1 :: <subclass-ctype>, type2 :: <subclass-ctype>)
+    => (res :: <ctype>, exact? :: <boolean>);
+  let (intersection, exact?)
+    = ctype-intersection(type1.subclass-of, type2.subclass-of);
+  let result = empty-ctype();
+  for (class in intersection.members)
+    assert(instance?(class, <cclass>));
+    result := type-union(result, make(<subclass-ctype>, of: class));
+  end for;
+  values(result, exact?);
+end method ctype-intersection-dispatch;
+
 
 
 // Proxies
