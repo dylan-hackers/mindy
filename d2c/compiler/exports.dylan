@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.49 1995/05/04 04:38:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.50 1995/05/04 07:04:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -471,10 +471,11 @@ define module classes
     <defined-cclass>,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
-    slot-type, slot-type-setter, slot-getter,
+    slot-type, slot-type-setter, slot-getter, slot-read-only?,
     slot-init-value, slot-init-value-setter,
     slot-init-function, slot-init-function-setter,
     slot-init-keyword, slot-init-keyword-required?,
+    slot-guaranteed-initialized?,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     find-slot-offset,
