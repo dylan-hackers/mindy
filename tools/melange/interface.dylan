@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.11 2000/01/24 04:58:57 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.12 2000/10/20 15:28:46 housel Exp $
 
 //======================================================================
 //
@@ -526,7 +526,7 @@ define method process-parse-state
     do(rcurry(write-declaration, written-names, load-string, out-stream),
        decls);
   else
-    write(out-stream, "#if (mindy)\n");
+    format(out-stream, "#if (mindy)\n");
     melange-target := #"mindy";
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
@@ -534,7 +534,7 @@ define method process-parse-state
     let written-names = make(<written-name-record>);
     do(rcurry(write-declaration, written-names, load-string, out-stream),
        decls);
-    write(out-stream, "#else\n");
+    format(out-stream, "#else\n");
     melange-target := #"d2c";
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
@@ -542,7 +542,7 @@ define method process-parse-state
     let written-names = make(<written-name-record>);
     do(rcurry(write-declaration, written-names, load-string, out-stream),
        decls);
-    write(out-stream, "#endif\n");
+    format(out-stream, "#endif\n");
   end if;
 end method process-parse-state;
 

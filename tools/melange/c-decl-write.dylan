@@ -601,7 +601,7 @@ define method write-declaration
 	       name, type-name, int-value);
 	register-written-name(written-names, name, decl, subname?: #t);
       finally
-	write(stream, "\n");
+	new-line(stream);
       end for;
     else
       format(stream, "define constant %s = <integer>;\n\n",
@@ -734,12 +734,12 @@ define method write-declaration
 	format(stream, "%s :: %s", arg.dylan-name, arg.mapped-name);
     end case;
   end for;
-  write(stream, ")\n => (");
+  format(stream, ")\n => (");
   for (arg in out-params, count from 1)
     if (count > 1) write(stream, ", ") end if;
     format(stream, "%s :: %s", arg.dylan-name, arg.mapped-name);
   end for;
-  write(stream, ");\n");
+  format(stream, ");\n");
 
   for (arg in out-params)
     // Don't create a new variable if the existing variable is already the
@@ -758,7 +758,7 @@ define method write-declaration
 
   let result-type = decl.type.result.type;
   if (result-type ~= void-type)
-    write(stream, "  let result-value\n    = ");
+    format(stream, "  let result-value\n    = ");
   else
     write(stream, "  ");
   end if;
@@ -781,7 +781,7 @@ define method write-declaration
 	    write(stream, export-value(arg, arg.dylan-name));
 	  end if;
 	end for;
-	write(stream, ");\n");
+	format(stream, ");\n");
       end;
     #"d2c" =>
       begin
@@ -802,8 +802,8 @@ define method write-declaration
 		     d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
 	    end if;
 	  end for;
-	  write(stream, ");\n");
-	  write(stream, "  end if;\n");
+	  format(stream, ");\n");
+	  format(stream, "  end if;\n");
 	else
 	  format(stream, "call-out(\"%s\", %s", decl.simple-name,
 		 decl.type.result.type.d2c-type-tag);
@@ -815,7 +815,7 @@ define method write-declaration
 		     d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
 	    end if;
 	  end for;
-	  write(stream, ");\n");
+	  format(stream, ");\n");
 	end if;
       end;
   end select;
@@ -1018,7 +1018,7 @@ define method write-declaration
 				    ("index * %d",
 				     target-type.c-type-size),
 				  "ptr", target-type.type-name)));
-    write(stream, ";\nend method pointer-value;\n\n");
+    format(stream, ";\nend method pointer-value;\n\n");
 
     // Write setter method, if applicable.
     unless (instance?(true-type(target-type), <non-atomic-types>))
@@ -1077,7 +1077,7 @@ define method write-file-load
 	    if (comma) write(stream, ", ") end if;
 	    format(stream, "\"%s\"", name);
 	  end for;
-	  write(stream, "));\n\n");
+	  format(stream, "));\n\n");
 	  concatenate(", file: ", file-name);
 	else
 	  ""
