@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.42 1996/05/29 23:31:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.43 1996/06/26 14:44:54 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,8 +13,8 @@ define library compiler-base
   use Format, export: all;
 #if (mindy)
   use Debugger-Format;
-  use String-extensions, export: all;
 #endif
+  use String-extensions, export: all;   // used by target
   
   export c-representation;
   export classes;
@@ -37,7 +37,7 @@ define library compiler-base
   export transformers;
   export utils;
   export variables;
-
+  export target-environment;
 end;
 
 define module params
@@ -747,3 +747,49 @@ define module signature
   use od-format;
 end;
 
+define module ini-files
+  use dylan;
+  use extensions;
+  use regular-expressions;
+  use substring-search;
+  use streams;
+  use format;         // format and standard-io are for printing error msgs
+  use standard-io;
+  export 
+    parse-ini-file, <parse-error>;
+end module ini-files;
+
+define module target-environment
+  use dylan;
+  use ini-files;
+  use streams, import: { <file-stream> };
+  export
+    get-targets, <target-environment>,
+
+    target-name,
+
+    heap-preamble,
+    align-directive,
+    export-directive,               // .import is hardwired
+    word-directive,                 // 32 bits
+    half-word-directive,
+    byte-directive,
+    comment-token,
+    mangled-name-prefix,
+
+    object-filename-suffix,         // => ".o" or ".obj"
+    library-filename-prefix,        // => "lib" or ""
+    library-filename-suffix,        // => ".a" or ".lib"
+    executable-filename-suffix,     // => "" or ".exe"
+
+    compile-c-command,              // source object
+    default-c-compiler-flags,
+    assembler-command,              // source object
+    link-library-command,
+    link-executable-command,
+    link-executable-flags,
+    make-command,
+    delete-file-command,            // filename
+    compare-file-command,           // file1 file2
+    move-file-command;              // old-name new-name
+end module target-environment;
