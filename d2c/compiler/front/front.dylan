@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.4 2000/09/09 20:39:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.5 2001/02/26 20:22:22 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -181,6 +181,7 @@ end;
 // 
 define class <prologue> (<operation>)
   slot function :: <fer-function-region>, required-init-keyword: function:;
+  slot preferred-names :: false-or(<vector>), init-value: #f;
 end;
 
 define abstract class <module-var-access> (<operation>)

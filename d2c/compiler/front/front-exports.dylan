@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.5 2001/02/08 21:55:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.6 2001/02/26 20:22:14 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -111,6 +111,7 @@ define module front
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, primitive-name, primitive-info,
     <prologue>, function, function-setter,
+    preferred-names, preferred-names-setter,
     <module-var-set>, <module-var-ref>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info,
