@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.15 2003/01/27 14:34:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.16 2003/01/28 23:35:08 andreas Exp $
 
 //======================================================================
 //
@@ -320,6 +320,10 @@ file (<macro-parse-token> constant-expr EOF)
   end if;
 %
 
+file (<macro-parse-token> <string-literal-token> EOF)
+  %2.value;
+%
+
 file (<cpp-parse-token> constant-expr EOF)
   int-value(%2, @0);
 %
@@ -357,7 +361,7 @@ primary-expr (<character-token>)
 %
 
 ;Primary-Expr (<STRING-LITERAL-Token>)
-;  Error("Primary-Expr Not Yet Handled.");
+;  %1.value;
 ;%
 
 primary-expr (<lparen-token> expr <rparen-token>)
