@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.1 1998/05/03 19:55:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.2 1998/12/30 00:35:12 emk Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,5 +64,7 @@ define module cheese
   use function-definitions;
 
   export
+    print-debugging-output,
+    dont-print-debugging-output,
     *optimize-ncalls*;
 end;

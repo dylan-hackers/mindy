@@ -30,4 +30,5 @@ $D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
     . '-L../../../common/print -L../../../common/format '
     . '-L../../runtime/random -L../../../common/coll-ext '
     . '-L../../../common/string-ext -L../../../common/table-ext '
-    . '-L../../../common/regexp -L../../runtime/melange';
+    . '-L../../../common/regexp -L../../runtime/melange '
+    . '-L../../../common/getopt';

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.2 1998/09/09 13:40:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.3 1998/12/30 00:35:11 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,8 +34,8 @@ define method enable-sanity-checks () => (); *do-sanity-checks* := #t; end;
 define method disable-sanity-checks () => (); *do-sanity-checks* := #f; end;
 
 define variable *print-shit* :: <boolean> = #f;
-define method print-shit () => (); *print-shit* := #t; end;
-define method dont-print-shit () => (); *print-shit* := #f; end;
+define method print-debugging-output () => (); *print-shit* := #t; end;
+define method dont-print-debugging-output () => (); *print-shit* := #f; end;
 
 define variable *optimize-ncalls* :: <integer> = 0;
 
