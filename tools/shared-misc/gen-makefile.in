@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.15 2000/12/19 03:12:45 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.16 2001/01/02 17:29:40 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -512,6 +512,7 @@ D2C = $D2C $compiler_debug_flags
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
 CPPFLAGS = $CPPFLAGS $debug_platform_name
+COPTS = $COPTS
 MELANGE = $MELANGE
 PARSERGEN = $PARSERGEN
 MC = $MC $compiler_debug_flags -Dmindy
@@ -519,7 +520,7 @@ MINDY = $MINDY
 
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
-	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
+	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
 	    if ($LIBTOOL) {
 		print "export LIBTOOL = $LIBTOOL\n\n";
 	    }
@@ -890,9 +891,9 @@ sub emit_c_file_rule {
 	print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+	print "\n\t\$(LIBTOOL) \$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     } else {
-	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+	print "\n\t\$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     }
     print " -c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
     if ($target_name eq $host_name) {
