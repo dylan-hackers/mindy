@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.5 1995/04/25 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.6 1995/04/26 11:57:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,7 +95,7 @@ define constant $boolean-rep
 	 to-more-general: "(%s ? obj_True : obj_False)",
 	 from-more-general: "(%s != obj_False)",
 	 alignment: $int-alignment, size: $int-size,
-	 c-type: "int");
+	 c-type: "boolean");
 
 define variable *long-rep* = #f;
 define variable *int-rep* = #f;
@@ -117,7 +117,7 @@ define method seed-representations () => ();
   begin
     let space-rep = make(<immediate-representation>,
 			 more-general: $boolean-rep,
-			 alignment: 1, size: 1, c-type: "char");
+			 alignment: 1, size: 1, c-type: "bool");
     set-representations(dylan-value(#"<boolean>"), $boolean-rep, space-rep);
     set-representations(dylan-value(#"<true>"), $boolean-rep, space-rep);
     set-representations(dylan-value(#"<false>"), $boolean-rep, space-rep);
