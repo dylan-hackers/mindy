@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.7 1996/01/27 20:17:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.8 1996/01/31 23:57:32 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -403,6 +403,7 @@ define module variables
     <use>, <renaming>,
 
     module-home, variable-home,
+    name-inherited-or-exported?,
 
     dylan-var, dylan-defn, dylan-value;
 end;
