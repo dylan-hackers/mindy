@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.2 1994/03/30 06:07:27 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.3 1994/04/20 02:38:43 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -153,19 +153,31 @@ define method expt (base :: <integer>, power :: <integer>)
 end;
 
 define method min (x :: <real>, #rest more)
-  for (y in more,
-       result = x then if (y < result) y else result end)
-  finally
-    result;
-  end;
+  select (size(more))
+    0 => x;
+    1 =>
+      let y = first(more);
+      if (y < x) y else x end if;
+    otherwise =>
+      for (y in more,
+	   result = x then if (y < result) y else result end)
+      finally result;
+      end;
+  end select;
 end;
 
 define method max (x :: <real>, #rest more)
-  for (y in more,
-       result = x then if (y > result) y else result end)
-  finally
-    result;
-  end;
+  select (size(more))
+    0 => x;
+    1 =>
+      let y = first(more);
+      if (y > x) y else x end if;
+    otherwise =>
+      for (y in more,
+	   result = x then if (y > result) y else result end)
+      finally result;
+      end;
+  end select;
 end;
 
 define method gcd (u :: <integer>, v :: <integer>)
