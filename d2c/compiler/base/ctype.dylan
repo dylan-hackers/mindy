@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.4 1995/01/09 17:34:37 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.5 1995/02/23 17:08:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -887,6 +887,9 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot direct-superclasses :: <list>,
        required-init-keyword: direct-superclasses:;
 
+  // Closest primary superclass.
+  slot closest-primary-superclass :: <cclass>;
+
   // True when class is sealed, abstract, and/or primary.
   slot sealed? :: <boolean>, init-keyword: sealed:, init-value: #f;
   slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
@@ -902,9 +905,6 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // List of all known subclasses (including this class and indirect
   // subclasses).  If sealed, then this is all of 'em.
   slot subclasses :: <list>, init-value: #();
-
-  // list of all slots, including inherited ones.  Unbound if not yet computed.
-  slot slot-infos :: <list>;
 end class;
 
 define method initialize (obj :: <cclass>, #all-keys)
@@ -913,6 +913,20 @@ define method initialize (obj :: <cclass>, #all-keys)
   obj.precedence-list := cpl;
   for (super in cpl)
     super.subclasses := pair(obj, super.subclasses);
+  end;
+  // Find the closest primary superclass.  Note: we don't have to do any
+  // error checking, because that is done for us in defclass.dylan.
+  if (obj.primary?)
+    obj.closest-primary-superclass := obj;
+  else
+    let closest = #f;
+    for (super in obj.direct-superclasses)
+      let primary-super = super.closest-primary-superclass;
+      if (~closest | csubtype?(primary-super, closest))
+	closest := primary-super;
+      end;
+    end;
+    obj.closest-primary-superclass := closest;
   end;
 end;
 
