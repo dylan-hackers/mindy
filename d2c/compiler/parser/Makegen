@@ -1,4 +1,7 @@
+
 do makegen_include("../common-Makegen");
+
+do emit_parsergen_rule('parser');
 
 do d2c_library("compiler-parser", "parser", 
                "parser-exports tokenize srcutil lexer fragments parse-tree"
@@ -7,10 +10,3 @@ do d2c_library("compiler-parser", "parser",
 do emit_library_rule(
     'Parser', '$(BUILDROOT)/force.timestamp', '-L../base'
 );
-
-if (! $win32) {
-    print <<'EOF';	
-parser.dylan: parsergen.lisp parser.input do-parsergen.lisp
-	cmucl $(word 1, $^) $(word 2, $^) -load $(word 3, $^)
-EOF
-}
