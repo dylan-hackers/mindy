@@ -3,7 +3,10 @@
  * in terms of BSD sigvec() and sigpause().
  */
 
+#ifndef _SIGSET_T_
+#define _SIGSET_T_
 typedef unsigned long sigset_t;
+#endif /* Not _SIGSET_T_ */
 
 typedef struct sigaction {
   void (*sa_handler)();

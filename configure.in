@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.134 2003/06/24 21:00:07 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.135 2003/06/25 21:57:34 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -114,7 +114,7 @@ case $1 in
 	     3.2*) $2=x86-cygnus-gcc32 ;;
 	     *)    $2=x86-cygnus-gcc ;;
         esac ;;
-    i*86-pc-mingw32*) $2=x86-mingw-gcc32 ;;
+    i*86-pc-mingw32*) $2=x86-mingw32-gcc32 ;;
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
     powerpc-apple-darwin*) $2=ppc-darwin-egcs ;;
@@ -145,11 +145,11 @@ AC_SUBST(d2c_host)
 AC_MSG_CHECKING(executable endings)
 exe_ext=""
 cygnus_line_hack=""
-if test "$d2c_build" = "x86-cygnus-gcc"; then
+if test "$d2c_build" = "x86-cygnus-gcc32"; then
   exe_ext=".exe"
   cygnus_line_hack="\$_ =~ s/\r//;"
 else
-  if test "$d2c_build" = "x86-mingw-gcc"; then
+  if test "$d2c_build" = "x86-mingw32-gcc"; then
     exe_ext=".exe"
     cygnus_line_hack="\$_ =~ s/\r//;"
   fi

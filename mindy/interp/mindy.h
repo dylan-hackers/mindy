@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/mindy.h,v 1.4 2001/06/23 00:08:40 brent Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.h,v 1.5 2003/06/25 21:57:35 brent Exp $
 *
 \**********************************************************************/
 
@@ -54,7 +54,9 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #ifdef WIN32
 #   define boolean unsigned char
+# ifdef MSVC
 #   include "mindy-w32.h"
+# endif
 #else
 #   define boolean int
 #endif

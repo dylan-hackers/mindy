@@ -202,7 +202,7 @@ define sealed method string-as-locator
        name: name)
 end method string-as-locator;
 
-
+
 /// Posix locator overrides
 
 define method simplify-locator

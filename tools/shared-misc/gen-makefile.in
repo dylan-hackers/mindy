@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.47 2003/06/24 17:39:26 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.48 2003/06/25 21:57:35 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -192,11 +192,11 @@ sub set_default_defaults {
     $D2CFLAGS = '-L$(DYLANDIR)/lib/dylan';
     $CFLAGS = '-g';
     $CPPFLAGS = '-I$(DYLANDIR)/include';
-    $MELANGE = 'melange';
-    $PARSERGEN = 'parsergen';
-    $MC = 'mindycomp';
+    $MELANGE = 'melange' . $dot_exe;
+    $PARSERGEN = 'parsergen' . $dot_exe;
+    $MC = 'mindycomp' . $dot_exe;
     # There is no MINDYFLAGS, because that depends on the library name.
-    $MINDY = 'mindy';
+    $MINDY = 'mindy' . $dot_exe;
     $gen_makefile = 'gen-makefile';
     $install_data = "cp";
     $install_program = "install";

@@ -244,7 +244,9 @@ define function run-command-processor()
   tcgetattr(*standard-input*.file-descriptor, old-termios);
 
   let new-termios = make(<termios>);
+  #if (compiled-for-linux | compiled-for-freebsd | compiled-for-hpux)
   cfmakeraw(new-termios);
+  #endif
 
   to-raw    := curry(tcsetattr, *standard-input*.file-descriptor, 
                      $TCSANOW, new-termios);
