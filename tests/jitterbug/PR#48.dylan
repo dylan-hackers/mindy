@@ -2,7 +2,7 @@ module: PR-48
 
 define macro capture-element
   {
-    capture-element(?coll:expression, ?coll:expression)
+    capture-element(?coll:expression, ?index:expression)
   }
   =>
   {
