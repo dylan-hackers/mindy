@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.4 1994/05/31 18:12:31 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.5 1994/06/11 15:55:11 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -53,10 +53,13 @@ end;
 define class <restart> (<condition>)
 end;
 
-define class <simple-restart> (<restart>)
+define class <simple-restart> (<restart>, <simple-condition>)
 end;
 
 define class <abort> (<restart>)
+  slot abort-description :: <byte-string>,
+    init-keyword: description:,
+    init-value: "<abort>";
 end;
 
 
@@ -76,6 +79,10 @@ define method report-condition (condition :: <type-error>)
   format("%= is not of type %=",
 	 condition.type-error-value,
 	 condition.type-error-expected-type);
+end;
+
+define method report-condition (condition :: <abort>)
+  puts(condition.abort-description);
 end;
 
 
@@ -131,7 +138,9 @@ end;
 define method cerror (restart-descr, cond-or-string, #rest arguments)
   block ()
     apply(error, cond-or-string, arguments);
-  exception (<simple-restart>, description: restart-descr)
+  exception (<simple-restart>,
+	     init-arguments: list(format-string: restart-descr,
+				  format-arguments: arguments))
     #f;
   end;
 end;
@@ -199,7 +208,8 @@ define method %break (cond :: <condition>, #rest noise)
   end;
   block ()
     invoke-debugger(cond);
-  exception (<simple-restart>, description: "Continue from break")
+  exception (<simple-restart>,
+	     init-arguments: list(format-string: "Continue from break"))
     #f;
   end;
 end;
@@ -221,7 +231,7 @@ define method do-handlers (function :: <function>)
     function(h.handler-type,
 	     h.handler-test | method (x) #t end,
 	     h.handler-function,
-	     h.handler-description);
+	     h.handler-init-args);
   end;
 end;
 
