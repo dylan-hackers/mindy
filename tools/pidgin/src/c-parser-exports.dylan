@@ -54,6 +54,8 @@ define module c-parser
 
   use ansi-c;
   use c-lexer;
+  use source-locations,
+    rename: {<source-location> => <real-source-location>};
 
   export
     parse-header;

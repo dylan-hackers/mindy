@@ -192,7 +192,7 @@ end method;
 // <parse-state> and tries to use it to figure out the error location.
 //
 define method source-location (state :: <parse-state>)
- => (srcloc :: <source-location>)
+ => (srcloc :: <real-source-location>)
   source-location(state.tokenizer);
 end method;
 
