@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.5 1994/10/26 19:49:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.6 1994/11/09 22:41:44 nkramer Exp $
 
 //======================================================================
 //
@@ -57,6 +57,8 @@ define method main (argv0, #rest ignored)
   join-test();
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");
+  else
+    format("All tests pass.\n");
   end if;
 end method main;
 
