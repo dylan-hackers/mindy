@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.19 1995/04/28 07:19:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.20 1995/04/29 01:04:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -104,14 +104,15 @@ end class;
 
 // A syntactically correct call where the function is a fixed-arg method
 // literal.  Variable arg calls can be converted into fixed-arg local calls
-// (e.g. to the main entry of a function with keywords.)
+// (e.g. to the main entry of a function with keywords.)  These calls can
+// will be let-converted if there is only one reference.
 // 
 define class <local-call> (<abstract-call>)
 end class;
 
-// A syntactically correct call to a known global definition.  If the function
-// has non-fixed args, then actual args in the call will have been massaged
-// into the format expected by the function's main or generic entry.
+// A syntactically correct call to a known global definition (or literal
+// extracted from one).  These calls will never be let-converted (but might
+// be inlined, which is equivalent).
 //
 define class <known-call> (<abstract-call>)
 end class;
@@ -141,6 +142,8 @@ end class;
 define class <prologue> (<operation>)
 end;
 
+// A catcher is used to receive the values from an exit-function.
+// 
 define class <catcher> (<operation>)
   //
   // A catcher depends on nothing.
@@ -156,6 +159,8 @@ define class <catcher> (<operation>)
     required-init-keyword: target-region:;
 end;
 
+// A set operation is used to change a global variable.
+// 
 define class <set> (<operation>)
   //
   // Set operations return nothing.
@@ -166,6 +171,9 @@ define class <set> (<operation>)
   slot variable :: <definition>, required-init-keyword: var:;
 end;
 
+// A self-tail-call is used to represent the rebinding of the arguments
+// once we have converted a tail-call of ourselves into a loop.
+//
 define class <self-tail-call> (<operation>)
   //
   // Self tail calls return nothing.
