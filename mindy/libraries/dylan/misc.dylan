@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.11 1996/03/07 17:59:19 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.12 1996/03/19 23:52:13 nkramer Exp $
 
 //======================================================================
 //
@@ -116,3 +116,5 @@ define method find-method
  => found-method :: false-or(<method>);
   find-method(gf, as(<list>, specializers));
 end method find-method;
+
+define constant $not-supplied = pair(#f, #f);
