@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.7 1994/03/31 13:04:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.8 1994/04/09 00:06:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -97,6 +97,27 @@ struct body *make_body(void)
 struct body
     *add_constituent(struct body *body, struct constituent *constituent)
 {
+    if (constituent->kind == constituent_EXPR) {
+	struct expr *expr = ((struct expr_constituent *)constituent)->expr;
+	if (expr->kind == expr_BODY) {
+	    struct body *insides = ((struct body_expr *)expr)->body;
+	    struct constituent *c, **prev;
+
+	    *body->tail = insides->head;
+	    /* Note: we can't use insides->tail because that will point */
+	    /* inside the bindings established inside this block */
+	    for (prev = body->tail; (c = *prev) != NULL; prev = &c->next)
+		;
+	    body->tail = prev;
+
+	    free(insides);
+	    free(expr);
+	    free(constituent);
+
+	    return body;
+	}
+    }
+	    
     *body->tail = constituent;
 
     switch (constituent->kind) {
@@ -922,13 +943,22 @@ struct literal *parse_keyword_token(struct token *token)
 
 struct expr *make_body_expr(struct body *body)
 {
-    struct body_expr *res = malloc(sizeof(struct body_expr));
+    if (body->head && body->head->kind == constituent_EXPR
+	  && body->head->next == NULL) {
+	struct expr *res = ((struct expr_constituent *)body->head)->expr;
+	free(body->head);
+	free(body);
+	return res;
+    }
+    else {
+	struct body_expr *res = malloc(sizeof(struct body_expr));
 
-    res->kind = expr_BODY;
-    res->analized = FALSE;
-    res->body = body;
+	res->kind = expr_BODY;
+	res->analized = FALSE;
+	res->body = body;
 
-    return (struct expr *)res;
+	return (struct expr *)res;
+    }
 }
 
 struct expr *make_block(struct id *exit, struct body *body,
