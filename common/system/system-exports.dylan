@@ -2,6 +2,8 @@ module: dylan-user
 
 define library system
   use common-dylan;
+  use melange-support;
+
   export
     operating-system,
     file-system,
@@ -15,6 +17,7 @@ define module operating-system
 	     application-arguments,
 	     exit-application,
 	     register-exit-application-function};
+  use melange-support;
   
   export
     $architecture-little-endian?,
