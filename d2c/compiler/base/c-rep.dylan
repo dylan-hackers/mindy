@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.18 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.19 1995/11/14 13:27:46 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,24 +112,28 @@ define method seed-representations () => ();
       class.speed-representation := speed-rep;
       class.space-representation := space-rep;
     end;
-  *general-rep*
-    := make(<general-representation>, name: #"general",
-	    alignment: $pointer-alignment,
-	    size: $pointer-size + $data-word-size,
-	    c-type: "descriptor_t");
-  *heap-rep*
-    := make(<heap-representation>, name: #"heap",
-	    alignment: $pointer-alignment, size: $pointer-size,
-	    c-type: "heapptr_t", more-general: *general-rep*,
-	    to-more-general: #f, from-more-general: "%s.heapptr");
-  *boolean-rep*
-    := make(<immediate-representation>, name: #"boolean",
-	    more-general: *heap-rep*,
-	    to-more-general: "(%s ? obj_True : obj_False)",
-	    from-more-general: "(%s != obj_False)",
-	    alignment: $int-alignment, size: $int-size,
-	    c-type: "boolean");
-  begin
+  unless (*general-rep*)
+    *general-rep*
+      := make(<general-representation>, name: #"general",
+	      alignment: $pointer-alignment,
+	      size: $pointer-size + $data-word-size,
+	      c-type: "descriptor_t");
+  end;
+  unless (*heap-rep*)
+    *heap-rep*
+      := make(<heap-representation>, name: #"heap",
+	      alignment: $pointer-alignment, size: $pointer-size,
+	      c-type: "heapptr_t", more-general: *general-rep*,
+	      to-more-general: #f, from-more-general: "%s.heapptr");
+  end;
+  unless (*boolean-rep*)
+    *boolean-rep*
+      := make(<immediate-representation>, name: #"boolean",
+	      more-general: *heap-rep*,
+	      to-more-general: "(%s ? obj_True : obj_False)",
+	      from-more-general: "(%s != obj_False)",
+	      alignment: $int-alignment, size: $int-size,
+	      c-type: "boolean");
     let space-rep = make(<immediate-representation>,
 			 more-general: *boolean-rep*,
 			 alignment: 1, size: 1, c-type: "bool");
@@ -139,39 +143,53 @@ define method seed-representations () => ();
   end;
   begin
     let fixed-int-cclass = dylan-value(#"<fixed-integer>");
-    *long-rep* := make(<data-word-representation>, name: #"long",
-		       alignment: $long-alignment, size: $long-size,
-		       more-general: *general-rep*, c-type: "long",
-		       to-more-general: #f,
-		       from-more-general: "%s.dataword.l",
-		       class: fixed-int-cclass, data-word-member: "l");
-    *int-rep* := make(<data-word-representation>, name: #"int",
-		      alignment: $int-alignment, size: $int-size,
-		      more-general: *long-rep*, c-type: "int",
-		      class: fixed-int-cclass, data-word-member: "l");
-    *uint-rep* := make(<data-word-representation>, name: #"uint",
-		       alignment: $int-alignment, size: $int-size,
-		       more-general: *long-rep*, c-type: "unsigned int",
-		       class: fixed-int-cclass, data-word-member: "l");
-    *short-rep* := make(<data-word-representation>, name: #"short",
-			alignment: $short-alignment, size: $short-size,
-			more-general: *int-rep*, c-type: "short",
-			class: fixed-int-cclass, data-word-member: "l");
-    *ushort-rep* := make(<data-word-representation>, name: #"ushort",
-			 alignment: $short-alignment, size: $short-size,
-			 more-general: *uint-rep*, c-type: "unsigned short",
+    unless (*long-rep*)
+      *long-rep* := make(<data-word-representation>, name: #"long",
+			 alignment: $long-alignment, size: $long-size,
+			 more-general: *general-rep*, c-type: "long",
+			 to-more-general: #f,
+			 from-more-general: "%s.dataword.l",
 			 class: fixed-int-cclass, data-word-member: "l");
-    *byte-rep* := make(<data-word-representation>, name: #"byte",
-		       alignment: 1, size: 1,
-		       more-general: *short-rep*, c-type: "signed char",
-		       class: fixed-int-cclass, data-word-member: "l");
-    *ubyte-rep* := make(<data-word-representation>, name: #"ubyte",
-			alignment: 1, size: 1,
-			more-general: *ushort-rep*, c-type: "unsigned char",
+      set-representations(fixed-int-cclass, *long-rep*, *long-rep*);
+    end;
+    unless (*int-rep*)
+      *int-rep* := make(<data-word-representation>, name: #"int",
+			alignment: $int-alignment, size: $int-size,
+			more-general: *long-rep*, c-type: "int",
 			class: fixed-int-cclass, data-word-member: "l");
-    set-representations(fixed-int-cclass, *long-rep*, *long-rep*);
+    end;
+    unless (*uint-rep*)
+      *uint-rep* := make(<data-word-representation>, name: #"uint",
+			 alignment: $int-alignment, size: $int-size,
+			 more-general: *long-rep*, c-type: "unsigned int",
+			 class: fixed-int-cclass, data-word-member: "l");
+    end;
+    unless (*short-rep*)
+      *short-rep* := make(<data-word-representation>, name: #"short",
+			  alignment: $short-alignment, size: $short-size,
+			  more-general: *int-rep*, c-type: "short",
+			  class: fixed-int-cclass, data-word-member: "l");
+    end;
+    unless (*ushort-rep*)
+      *ushort-rep* := make(<data-word-representation>, name: #"ushort",
+			   alignment: $short-alignment, size: $short-size,
+			   more-general: *uint-rep*, c-type: "unsigned short",
+			   class: fixed-int-cclass, data-word-member: "l");
+    end;
+    unless (*byte-rep*)
+      *byte-rep* := make(<data-word-representation>, name: #"byte",
+			 alignment: 1, size: 1,
+			 more-general: *short-rep*, c-type: "signed char",
+			 class: fixed-int-cclass, data-word-member: "l");
+    end;
+    unless (*ubyte-rep*)
+      *ubyte-rep* := make(<data-word-representation>, name: #"ubyte",
+			  alignment: 1, size: 1,
+			  more-general: *ushort-rep*, c-type: "unsigned char",
+			  class: fixed-int-cclass, data-word-member: "l");
+    end;
   end;
-  begin
+  unless (*float-rep*)
     let sf-cclass = dylan-value(#"<single-float>");
     let sf-rep
       = make(<data-word-representation>, name: #"float",
@@ -182,7 +200,7 @@ define method seed-representations () => ();
     set-representations(sf-cclass, sf-rep, sf-rep);
     *float-rep* := sf-rep;
   end;
-  begin
+  unless (*double-rep*)
     let df-class = dylan-value(#"<double-float>");
     let df-rep
       = if ($double-size > $data-word-size)
@@ -202,7 +220,7 @@ define method seed-representations () => ();
     set-representations(df-class, df-rep, df-rep);
     *double-rep* := df-rep;
   end;
-  begin
+  unless (*long-double-rep*)
     let xf-class = dylan-value(#"<extended-float>");
     let xf-rep
       = if ($long-double-size > $data-word-size)
@@ -222,7 +240,7 @@ define method seed-representations () => ();
     set-representations(xf-class, xf-rep, xf-rep);
     *long-double-rep* := xf-rep;
   end;
-  begin
+  unless (*ptr-rep*)
     let ptr-cclass = dylan-value(#"<raw-pointer>");
     *ptr-rep* := make(<data-word-representation>, name: #"ptr",
 		      alignment: $pointer-alignment, size: $pointer-size,
