@@ -45,16 +45,12 @@ define macro max!
 end macro max!;
 
 
-/*define macro destructuring-let
-  { destructuring-let ((?pattern:*) = ?value:expression) ?:body end }
+define macro destructuring-let
+  { destructuring-let ((?pattern:*) ?eq:token ?value:expression) ?:body end }
     => { begin
-	   let _destructuring-let-body = method (?pattern) ?body end;
+	   let _destructuring-let-body ?eq method (?pattern) ?body end;
 	   apply(_destructuring-let-body, ?value)
 	 end }
-end macro destructuring-let;*/
-define macro destructuring-let
-  { destructuring-let (?dummy:*) ?:body end } 
-    => { #f }
 end macro destructuring-let;
 
 
@@ -164,25 +160,15 @@ define inline function evacuate-list (_list) => (_list)
 end function evacuate-list;
 
 
-/*define macro with-stack-vector
-  { with-stack-vector (?:name = ?elements:*) ?:body end }
+define macro with-stack-vector
+  { with-stack-vector (?:name ?eq:token ?elements:*) ?:body end }
     => { begin
-           let ?name :: <simple-object-vector> = vector(?elements);
+           let ?name :: <simple-object-vector> ?eq vector(?elements);
            ?body
          end }
  elements:
   { } => { }
   { ?:expression, ... } => { ?expression, ... }
-end macro with-stack-vector;*/
-define macro with-stack-vector
-  { with-stack-vector (?:name ?equals:token ?elements) ?:body end }  //?elements:*
-    => { begin
-           let ?name :: <simple-object-vector> = vector( ?elements );
-           ?body
-         end }
- elements:
-    { } => { }
-    { ?:expression, ... } => { ?expression, ... }
 end macro with-stack-vector;
 
 define inline function evacuate-vector (_vector) => (_vector)
