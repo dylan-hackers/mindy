@@ -7,21 +7,14 @@ define class <foo> (<object>)
 //  class slot quuux = 23;
 end class <foo>;
 
-begin
-/*
-  let foo = make(<foo>);
-  dump-object(foo);
-  foo.bar := 23;
-  dump-object(foo);
-  dump-object(foo.object-class);
-  */
-  let dll-handle = dlopen(as(<c-string>, $null-pointer), $RTLD-LAZY);
-  if(dll-handle == as(<dll-handle>, $null-pointer))
+define constant $dll-handle = dlopen(as(<c-string>, $null-pointer), $RTLD-LAZY);
+
+define method inspect(symbol-name :: <string>)
+  if($dll-handle == as(<dll-handle>, $null-pointer))
     format-out("An error occurred dlopen()ing 0.\n");
   else
     let object-address =
-      dlsym(dll-handle, export-value(<c-string>, 
-                                     application-arguments()[0]));
+      dlsym($dll-handle, export-value(<c-string>, symbol-name));
     if(object-address == as(<raw-pointer>, $null-pointer))
       format-out("dlsym returned NULL.\n");
     else
@@ -29,6 +22,8 @@ begin
     end if;
   end;
 end;
+
+make(<command>, name: "Inspect", command: inspect);
 
 define method dump-object(o)
   let oc = o.object-class;
@@ -79,3 +74,5 @@ define method generic-slot-getter(o :: <object>, slot)
     end;
 //  end if;
 end method generic-slot-getter;
+
+run-command-processor();

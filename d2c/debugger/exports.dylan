@@ -5,6 +5,7 @@ define library debugger
   use common-dylan;
   use io;
   use melange-support;
+  use command-processor;
 end library debugger;
 
 define module debugger
@@ -16,4 +17,5 @@ define module debugger
   use introspection;
   use system;
   use melange-support;
+  use command-processor;
 end module debugger;
