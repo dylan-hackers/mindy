@@ -4,7 +4,7 @@ synopsis:   This file implements random numbers for the Gwydion
             implementation of Dylan.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/distributions.dylan,v 1.2 1994/06/28 23:57:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/distributions.dylan,v 1.3 1994/12/06 11:20:44 wlott Exp $
 
 //======================================================================
 //
@@ -154,8 +154,8 @@ end class;
 //
 
 define constant $a$ = 29413621;
-define constant $m$ = expt (2, 28);
-define constant $k$ = expt (2, 14);
+define constant $m$ = ash(1, 28);
+define constant $k$ = ash(1, 14);
 define constant a1 = floor/ ($a$, $k$);
 define constant a0 = modulo ($a$, $k$);
 
@@ -317,11 +317,12 @@ end method;
 // distribution to a number generated from a unit uniform
 // distribution.
 //
+/* ### Needs log
 define method random (dist :: <exponential-distribution>)
       => random :: <double-float>;
    - (log (random (dist.unit-uniform)) / dist.lambda)
 end method;
-
+*/
 
 
 /* Normal Distribution
@@ -386,13 +387,14 @@ end method;
 //
 define constant $pi$ = 3.14159265358975;
 //
+/* ### Needs cos
 define method random (dist :: <normal-distribution>)
       => random :: <double-float>;
    let unit-normal-random = sqrt (-2 * log (random (dist.unit-uniform-A)))
       * cos (2 * $pi$ * random (dist.unit-uniform-B));
    dist.sigma * unit-normal-random + dist.mean
 end method;
-
+*/
 
 
 /* Dylan Global Random Distribution
@@ -512,7 +514,7 @@ define method chi-square (dist :: <integer-uniform-distribution>)
       freq[d] := freq[d] + 1;
    end for;
    for (i from 0 below r,
-	sample-sum = 0.0 then sample-sum + expt (freq[i] - f, 2))
+	sample-sum = 0.0 then sample-sum + (freq[i] - f) ^ 2)
    finally
       sample-sum / f;
    end for;
