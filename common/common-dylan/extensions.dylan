@@ -174,6 +174,13 @@ end function;
                   error(error-string);
               end unless;
           #f;
+          end block; } 
+  { assert(?value:expression, ?message:expression) }
+  =>{	block()
+              unless (value)
+                  error(message);
+              end unless;
+          #f;
           end block; }
   { assert(?value:expression) }
   =>{	block()
@@ -187,6 +194,8 @@ end function;
   define macro debug-assert
       { debug-assert(?value:expression, ?format-string:expression, ?format-args:expression) }
   =>{ assert(?value, ?format-string, format-args) }
+      { debug-assert(?value:expression, ?message:expression) }
+  =>{ assert(?value, ?message) }
       { debug-assert(?value:expression) }
   =>{ assert(?value) }
   end macro debug-assert;
