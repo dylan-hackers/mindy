@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.9 1994/12/16 12:18:20 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.10 1994/12/16 14:27:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -549,7 +549,8 @@ define module fer-convert
   use parse-tree;
   use expand;
   use flow,
-    exclude: {<expression>, <assignment>},
+    rename: {<expression> => <fer-expression>,
+	     <assignment> => <fer-assignment>},
     export: all;
   use builder-interface, export: all;
   use ctype;
