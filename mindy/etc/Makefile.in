@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/etc/Makefile.in,v 1.1 1994/10/05 21:08:21 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/etc/Makefile.in,v 1.2 1994/10/08 17:11:39 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy load and go executive
 ##	and any other small programs that might be useful.

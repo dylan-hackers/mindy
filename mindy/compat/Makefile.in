@@ -45,8 +45,7 @@ LIBDIR	=		${exec_prefix}/lib/mindy
 AR      =               ar
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
-OPTIMIZE=               @OPTIMIZE@
-CFLAGS	=		$(CCOPTS) $(OPTIMIZE) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
 YACC	=		@YACC@
 YFLAGS	=		-d
 LEX	=		@LEX@
