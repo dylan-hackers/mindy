@@ -1,7 +1,7 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.2 1995/12/07 22:57:33 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.3 1996/01/04 15:28:18 ram Exp $
 module: test
 
-define method main ()
+define method main (foo, #rest stuff)
   
   write("File to type: ", *standard-output*);
   force-output(*standard-output*);
@@ -11,8 +11,8 @@ define method main ()
   force-output(*standard-output*);
   let stream = make(<file-stream>, name: res, direction: #"input");
   block (punt)
-    for ()
-      let wot = read-line(stream, signal-eof: #f);
+    for (while: #t)
+      let wot = read-line(stream, signal-eof?: #f);
       if (wot)
         write-line(wot, *standard-output*);
       else
@@ -25,4 +25,4 @@ define method main ()
 
 end method;
 
-main();
+main("foo");
