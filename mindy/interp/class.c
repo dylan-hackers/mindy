@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.3 1994/04/10 16:24:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.4 1994/04/10 19:02:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -43,6 +43,8 @@ obj_t make_builtin_class(int scavenge(struct object *ptr),
 
     init_class_type_stuff(res);
     CLASS(res)->abstract_p = FALSE;
+    CLASS(res)->sealed_p = TRUE;
+    CLASS(res)->library = NULL;
     CLASS(res)->scavenge = scavenge;
     CLASS(res)->transport = transport;
     CLASS(res)->print = NULL;
@@ -69,11 +71,12 @@ static obj_t trans_lose(obj_t obj)
     return NULL;
 }
 
-obj_t make_abstract_class(void)
+obj_t make_abstract_class(boolean sealed_p)
 {
     obj_t res = make_builtin_class(scav_lose, trans_lose);
 
     CLASS(res)->abstract_p = TRUE;
+    CLASS(res)->sealed_p = sealed_p;
 
     return res;
 }
@@ -236,6 +239,13 @@ static obj_t compute_cpl(obj_t class, obj_t superclasses)
 void setup_class_supers(obj_t class, obj_t supers)
 {
     obj_t cpl, scan;
+
+    for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
+	obj_t super = HEAD(scan);
+	if (CLASS(super)->sealed_p
+	      && CLASS(super)->library != CLASS(class)->library)
+	    error("Can't add subclasses to sealed class ~S", super);
+    }
 
     CLASS(class)->superclasses = supers;
     cpl = compute_cpl(class, supers);
