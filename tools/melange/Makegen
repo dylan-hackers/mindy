@@ -1,5 +1,4 @@
-$alt = "/users/rgs/ccomp/runtime";
-$D2CFLAGS = "-L$alt/string-ext -L$alt/dylan -L$alt/coll-ext -L$alt/streams -L$alt/print -L$alt/format -L$alt/c-code -L$alt/gc";
+$D2CFLAGS = "-L/afs/cs/project/gwydion/compiler/lib";
 
 push(@files_to_clean, "*.dbc");
 &emit_library_rule
