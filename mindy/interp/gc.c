@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.15 1994/11/03 22:19:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.16 1994/11/06 20:00:12 rgs Exp $
 *
 * This file is the garbage collector.
 *
@@ -63,7 +63,7 @@ extern void scavenge_buffer_roots(void);
 extern void scavenge_weak_roots(void);
 extern void scavenge_brkpt_roots(void);
 extern void scavenge_table_roots(void);
-
+extern void scavenge_c_roots(void);
 
 #define CHECKGC 1
 
@@ -318,6 +318,7 @@ void collect_garbage(void)
     scavenge_weak_roots();
     scavenge_brkpt_roots();
     scavenge_table_roots();
+    scavenge_c_roots();
 
     scavenge_newspace();
 

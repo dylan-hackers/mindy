@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.10 1994/10/05 21:02:11 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.11 1994/11/06 20:00:28 rgs Exp $
 *
 * This file initializes everything else.
 *
@@ -53,6 +53,7 @@ extern void make_instance_classes(void);
 extern void make_buffer_classes(void);
 extern void make_weak_classes(void);
 extern void make_table_classes(void);
+extern void make_c_classes(void);
 
 extern void init_nil(void);
 extern void init_symbol_tables(void);
@@ -80,6 +81,7 @@ extern void init_instance_classes(void);
 extern void init_buffer_classes(void);
 extern void init_weak_classes(void);
 extern void init_table_classes(void);
+extern void init_c_classes(void);
 
 extern void init_obj_functions(void);
 extern void init_type_functions(void);
@@ -105,6 +107,7 @@ extern void init_table_functions(void);
 extern void init_fd_functions(void);
 extern void init_buffer_functions(void);
 extern void init_weak_functions(void);
+extern void init_c_functions(void);
 
 extern void done_initializing_vars(void);
 
@@ -137,6 +140,7 @@ void init(void)
     make_buffer_classes();
     make_weak_classes();
     make_table_classes();
+    make_c_classes();
 
     init_nil();
     init_symbol_tables();
@@ -164,6 +168,7 @@ void init(void)
     init_buffer_classes();
     init_weak_classes();
     init_table_classes();
+    init_c_classes();
 
     init_obj_functions();
     init_type_functions();
@@ -189,6 +194,7 @@ void init(void)
     init_fd_functions();
     init_buffer_functions();
     init_weak_functions();
+    init_c_functions();
 
     done_initializing_vars();
 
