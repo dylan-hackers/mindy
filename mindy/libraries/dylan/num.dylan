@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.4 1994/05/19 22:37:39 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.5 1994/06/03 01:09:17 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -152,6 +152,27 @@ define method remainder (x :: <real>, y :: <real>)
   let (quo, rem) = truncate/(x, y);
   rem;
 end;
+
+define method \< (x :: <real>, y :: <real>)
+  let (x, y) = contagion(x, y);
+  x < y;
+end;
+
+define method \<= (x :: <rational>, y :: <float>)
+  let (x, y) = contagion(x, y);
+  x <= y;
+end;
+
+define method \<= (x :: <float>, y :: <real>)
+  let (x, y) = contagion(x, y);
+  x <= y;
+end;  
+
+define method \= (x :: <real>, y :: <real>)
+  let (x, y) = contagion(x, y);
+  x = y;
+end;
+  
 
 
 // Other routines.
