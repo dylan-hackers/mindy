@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.102 1995/11/11 11:15:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.103 1995/11/12 17:11:37 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,6 +11,7 @@ define library compiler
   use Print;
   use Format;
   use Debugger-Format;
+  use String-extensions;
 end;
 
 define module params
@@ -201,6 +202,7 @@ define module tokens
   use source;
   use compile-time-values;
   use forwards, import: {<module>};
+  use od-format;
 
   export
 
@@ -360,6 +362,9 @@ define module parse-tree
   use utils;
   use tokens;
   use fragments;
+  use od-format;
+  use source, import: { source-location };
+  use compile-time-values, import: { *compiler-dispatcher* };
 
   export
     <property>, prop-keyword, prop-value,
