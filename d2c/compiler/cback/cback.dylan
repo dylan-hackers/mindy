@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.64 1995/06/08 16:41:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.65 1995/06/10 12:39:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1134,6 +1134,14 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
     deliver-result(defines, expr, rep, #f, output-info);
   end;
+end;
+
+define method emit-assignment (defines :: false-or(<definition-site-variable>),
+			       leaf :: <function-literal>,
+			       output-info :: <output-info>)
+    => ();
+  deliver-result(defines, ref-leaf($heap-rep, leaf, output-info),
+		 $heap-rep, #f, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
