@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.6 1997/01/16 14:58:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.7 1997/02/13 12:52:30 nkramer Exp $
 
 //======================================================================
 //
@@ -34,6 +34,16 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,
 
 // Functions that aren't exported are marked as such.  Everything else
 // is exported.
+//
+// There are quite a few make-fooer functions hanging around.  Now
+// that regexp-position does caching, these are basically useless, but
+// we've kept them around for backwards compatibility.  Unfortunately,
+// internally most of the functions are implemented in terms of
+// make-regexp-positioner.  To minimize the amount of rewriting, I've
+// liberally applied seals and inline declarations so that
+// make-regexp-positioner won't clobber all type information.  The
+// downside, of course, is that everything's sealed, but hey, no one
+// ever subclassed regexp-position anyway.
 
 
 // Caching
@@ -106,7 +116,7 @@ end method table-protocol;
 
 // *regexp-cache* -- internal
 //
-// The only instance of <regexp-cache>.
+// The only instance of <regexp-cache>.  ### Not threadsafe.
 //
 define constant *regexp-cache* = make(<regexp-cache>);
 
@@ -132,18 +142,13 @@ define inline function parse-or-use-cached
 end function parse-or-use-cached;
 
 
-// Regexp functions
+// Regexp positioner stuff
 
 // Find the position of a regular expression inside a string.  If the
 // regexp is not found, return #f, otherwise return a variable number
 // of marks.
 //
-define open generic regexp-position
-    (big :: <string>, regexp :: <string>, #key start,
-     end: the-end, case-sensitive)
- => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
-
-define method regexp-position
+define function regexp-position
     (big :: <string>, regexp :: <string>, #key start: big-start = 0,
      end: big-end = #f, case-sensitive = #f)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
@@ -173,78 +178,86 @@ define method regexp-position
   else
     #f  
   end if;
-end method regexp-position;
+end function regexp-position;
 
-// Returns an appropriate matcher function that acts just like
-// regexp-position curried.  If the user can deal with a positioner
-// that works only on byte strings and doesn't return any marks, and
-// doesn't mind the extra wait while the thing compiles, he can get a
-// positioner that executes considerably faster.
+// Once upon a time, this was how you interfaced to the NFA stuff
+// (maximum-compile: #t).  That's gone.  Now it's just here for
+// backwards compatibility.  All keywords except case-sensitive are
+// now ignored.
 //
-define open generic make-regexp-positioner
-    (regexp :: <string>, #key byte-characters-only,
-     need-marks, maximum-compile, case-sensitive)
- => regexp-positioner :: <function>;
-
-define method make-regexp-positioner
+define inline function make-regexp-positioner
     (regexp :: <string>, 
      #key byte-characters-only = #f, need-marks = #t, maximum-compile = #f,
      case-sensitive = #f)
  => regexp-positioner :: <function>;
-  let char-set-class = if (case-sensitive) 
-			 <case-sensitive-character-set>;
-		       else
-			 <case-insensitive-character-set>;
-		       end if;
-  let (parsed-regexp, last-group, has-backrefs, alternatives, quantifiers) 
-    = parse(regexp, char-set-class);
-  let match-root-function = if (parsed-regexp.is-anchored?)
-			      anchored-match-root?
-			    else
-			      match-root?;
-			    end if;
-  let initial = parsed-regexp.initial-substring;
-  let searcher = ~initial.empty?
-    & make-substring-positioner(initial, case-sensitive: case-sensitive);
+  method (big :: <string>, #key start: big-start = 0,
+	  end: big-end = #f)
+   => (regexp-start :: false-or(<integer>), 
+       #rest marks :: false-or(<integer>));
+    regexp-position(big, regexp, case-sensitive: case-sensitive, 
+		    start: big-start, end: big-end);
+  end method;
+end function make-regexp-positioner;
 
-  if (~maximum-compile | has-backrefs | ~byte-characters-only | need-marks)
-    method (big :: <string>, #key start: big-start = 0,
-	    end: big-end = #f)
-     => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
-      let substring = make(<substring>, string: big, start: big-start,
-			   end: big-end | big.size);
-      let (matched, marks)
-	= match-root-function(parsed-regexp, substring, case-sensitive,
-			      last-group + 1, searcher);
-      if (matched)  
-	apply(values, marks);
-      else
-	#f  
-      end if;
-    end method;
-  else
-    let (nfa-begin, nfa-end) = build-nfa(parsed-regexp);
-       // Now modify the DFA to accomodate a substring match rather
-       // than matching the entire string
-    let dot = make(<set-atom>, set: any-char);
-    let star = make(<e-state>, next-state: dot, other-next-state: nfa-begin);
-    dot.next-state := star;
-    let dfa = nfa-to-dfa(star, nfa-end, case-sensitive);
-    method (big :: <string>, #key start: big-start = 0,
-	    end: big-end = #f)
-        => answer :: <boolean>;
-      sim-dfa(dfa, make(<substring>, string: big, start: big-start,
-			end: big-end | big.size));
-    end method;
+
+#if (have-free-time)
+// regexp-matches -- exported
+//
+// A more convenient form of regexp-position.  Usually you want
+// substrings that were matched by a group rather than the marks for
+// the group.  How you use this is you give the group numbers you
+// want, and it'll give you the strings.  (#f if that group wasn't
+// matched)
+//
+define function regexp-matches
+    (big :: <string>, regexp :: <string>,
+     #key start: start-index :: <integer> = 0,
+          end: end-index :: false-or(<integer>),
+          case-sensitive :: <boolean> = #f,
+          groups :: false-or(<sequence>))
+ => (#rest group-strings :: false-or(<string>));
+  if (~groups)
+    error("Mandatory keyword groups: not used in call to regexp-matches");
   end if;
-end method make-regexp-positioner;
+  let (#rest marks)
+    = regexp-position(big, regexp, start: start-index, end: end-index, 
+		      case-sensitive: case-sensitive);
+  let return-val = make(<vector>, size: groups.size, fill: #f);
+  for (index from 0 below return-val.size)
+    let group-start = groups[index] * 2;
+    let group-end = group-start + 1;
+    if (element(marks, group-start, default: #f))
+      return-val[index] := copy-sequence(big, start: 
 
-define open generic regexp-replace
-    (input :: <string>, regexp :: <string>, new-substring :: <string>,
-     #key count, case-sensitive, start, end: the-end)
- => changed-string :: <string>;
+  let sz = floor/(marks.size, 2);
+  let return = make(<vector>, size: sz, fill: #f);
+  for (index from 0 below sz)
+    let pos = index * 2;
+    if (element(marks, pos, default: #f))
+      return[index] := copy-sequence(big, start: marks[pos],
+				     end: marks[pos + 1]);
+    end if;
+  end for;
+  if (matches)
+    let return = make(<vector>, size: matches.size * 2);
+    for (raw-pos in matches, index from 0)
+      let src-pos = raw-pos * 2;
+      let dest-pos = index * 2;
+      return[dest-pos] := element(marks, src-pos, default: #f);
+      return[dest-pos + 1] := element(marks, src-pos + 1, default: #f);
+    end for;
+    apply(values, return);
+  else
+    
+    apply(values, marks);
+  end if;
 
-define method regexp-replace
+#endif
+
+
+// Functions based on regexp-position
+
+define function regexp-replace
     (input :: <string>, regexp :: <string>, new-substring :: <string>,
      #key count = #f, case-sensitive = #f, start = 0, end: input-end = #f)
  => changed-string :: <string>;
@@ -252,13 +265,9 @@ define method regexp-replace
     = make-regexp-positioner(regexp, case-sensitive: case-sensitive);
   do-replacement(positioner, new-substring, input, start, 
 		 input-end, count, #t);
-end method regexp-replace;
+end function regexp-replace;
 
-define open generic make-regexp-replacer
-    (regexp :: <string>, #key replace-with, case-sensitive)
- => replacer :: <function>;
-
-define method make-regexp-replacer 
+define inline function make-regexp-replacer 
     (regexp :: <string>, #key replace-with, case-sensitive = #f)
  => replacer :: <function>;
   let positioner
@@ -278,7 +287,7 @@ define method make-regexp-replacer
 		     start, input-end, count, #t);
     end method;
   end if;
-end method make-regexp-replacer;
+end function make-regexp-replacer;
 
 // equivalent of Perl's tr.  Does a character by character translation.
 //
@@ -317,7 +326,7 @@ end method make-translator;
 
 // Used by translate.  Not exported.
 //
-define method make-translation-table
+define function make-translation-table
     (from-set :: <byte-string>, to-set :: <byte-string>,
      #key delete: delete = #f)
  => table :: <byte-character-table>;
@@ -386,11 +395,11 @@ define method make-translation-table
   end for;
 
   table;
-end method make-translation-table;
+end function make-translation-table;
 
 // Used by translate.  Not exported.
 //
-define method run-translator
+define function run-translator
     (source :: <byte-string>, table :: <byte-character-table>, 
      start-index :: <integer>, end-index :: <integer>)
  => output :: <byte-string>;
@@ -412,28 +421,20 @@ define method run-translator
   else
     replace-subsequence!(dest-string, "", start: dest-index, end: end-index);
   end if;
-end method run-translator;
+end function run-translator;
 
 // Like Perl's split function
 //
-define open generic split
-    (pattern :: <string>, input :: <string>, 
-     #key count, remove-empty-items, start, end: the-end);
-// => #rest whole-bunch-of-strings :: <string>;
-
-define method split
+define function split
     (pattern :: <string>, input :: <string>, 
      #key count = #f, remove-empty-items = #t, start = 0, end: input-end = #f)
  => (#rest whole-bunch-of-strings :: <string>);
   let positioner = make-regexp-positioner(pattern);
   split-string(positioner, input, start, input-end | size(input),
 	       count, remove-empty-items);
-end method split;
+end function split;
 
-define open generic make-splitter
-    (pattern :: <string>) => splitter :: <function>;
-
-define method make-splitter
+define inline function make-splitter
     (pattern :: <string>) => splitter :: <function>;
   let positioner = make-regexp-positioner(pattern);
   method (string :: <string>, #key count = #f,
@@ -442,11 +443,11 @@ define method make-splitter
     split-string(positioner, string, start, input-end | size(string), 
 		 count, remove-empty-items);
   end method;
-end method make-splitter;
+end function make-splitter;
 
 // Used by split.  Not exported.
 //
-define method split-string
+define function split-string
     (positioner :: <function>, input :: <string>, start :: <integer>, 
      input-end :: <integer>, count :: false-or(<integer>), 
      remove-empty-items :: <object>)
@@ -485,17 +486,14 @@ define method split-string
   else
     apply(values, strings);
   end if;
-end method split-string;
+end function split-string;
 
 // join--like Perl's join
 //
-define open generic join (delimiter :: <string>, #rest strings)
- => big-string :: <string>;
-
 // This is not really any more efficient than concatenate-as, but it's
 // more convenient.
 //
-define method join (delimiter :: <byte-string>, #rest strings)
+define function join (delimiter :: <byte-string>, #rest strings)
  => big-string :: <byte-string>;
   let length = max(0, (strings.size - 1 ) * delimiter.size);
   for (string in strings)
@@ -520,4 +518,4 @@ define method join (delimiter :: <byte-string>, #rest strings)
 			      start: big-index, end: big-string.size);
   end if;
   big-string;
-end method join;
+end function join;
