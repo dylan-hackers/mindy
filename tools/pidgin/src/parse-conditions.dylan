@@ -168,5 +168,6 @@ define method default-handler(condition :: <parse-progress-report>)
   if (*show-parse-progress?*)
     report-condition(condition, *warning-output*);
     condition-format(*warning-output*, "\n");
+    force-output(*warning-output*);
   end;
 end method default-handler;
