@@ -51,7 +51,8 @@ define module c-lexer
     <union-token>, <enum-token>, <minus-token>, <tilde-token>, <bang-token>,
     <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
     value, unget-token, add-typedef, get-token,
-    check-cpp-expansion, open-in-include-path
+    check-cpp-expansion, <c-include-path>, <gcc-include-path>,
+    find-in-include-path;
 end module c-lexer;
 
 define module c-parser-engine
@@ -98,13 +99,16 @@ define module c-parser
   use source-locations;
   use parse-conditions;
   use ansi-c;
-  use c-lexer;
+  use c-lexer,
+    export: {<c-include-path>,
+	     <gcc-include-path>,
+	     find-in-include-path};
   use c-parser-engine;
 
   export
     parse-c-file,
     <c-platform>,
+      c-platform-default-include-path,
+      c-platform-default-defines,
     $i386-linux-platform;
 end module c-parser;
-
-
