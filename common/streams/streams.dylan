@@ -65,7 +65,7 @@ define constant <unicode-character> = <character>;
 
 define open abstract class <stream> (<object>)
   slot stream-lock :: <multilock> = make(<multilock>);
-  slot outer-stream :: <stream>, init-keyword: outer-stream:;
+  slot outer-stream :: false-or(<stream>), init-keyword: outer-stream:;
 end class <stream>;
 
 /// <buffered-stream> -- Exported.
