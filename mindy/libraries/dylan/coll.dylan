@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.9 1994/04/18 05:50:44 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.10 1994/05/03 02:08:56 rgs Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -40,7 +40,7 @@ define method element(coll :: <collection>, key :: <object>,
       end if;
     finally
       if (default == no_default)
-	error("No such element in ~S: ~S", collection, key);
+	error("No such element in ~S: ~S", coll, key);
       else 
 	default;
       end if;
