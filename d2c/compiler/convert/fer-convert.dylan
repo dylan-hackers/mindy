@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.54 1996/03/28 00:05:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.55 1996/04/06 07:14:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -554,11 +554,11 @@ define method fer-convert
     method repeat (op-ptr :: <list>, index :: <integer>, types :: <list>)
       if (op-ptr == #())
 	unless (types == #() | types.head == #"rest")
-	  compiler-error-location
+	  compiler-fatal-error-location
 	    (form, "Too few arguments to %%%%primitive %s", name);
 	end;
       elseif (types == #())
-	compiler-error-location
+	compiler-fatal-error-location
 	  (form, "Too many arguments to %%%%primitive %s", name);
       else
 	let (type, remaining-types)
@@ -961,11 +961,11 @@ define method fer-convert-method
 	temp;
       end;
     build-call(#"%make-method",
-	       list(build-call(#"list", specializer-leaves),
-		    build-call(#"list", result-type-leaves),
+	       list(build-call(#"vector", specializer-leaves),
+		    build-call(#"vector", result-type-leaves),
 		    rest-type-leaf
-		      | make-literal-constant(builder, make(<literal-false>)),
-		    make-function-literal(builder, #f, #f, #"local", signature,
+		      | make-literal-constant(builder, empty-ctype()),
+		    make-function-literal(builder, #f, #t, #"local", signature,
 					  function-region)));
   else
     make-function-literal(builder, ctv, #t, visibility, signature,
