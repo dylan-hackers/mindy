@@ -1,4 +1,4 @@
-Module: dylan-user
+Module: dylan-test
 author: Roger Critchlow (rec@elf.org)
 synopsis: A regression test for core Dylan.
 
@@ -32,6 +32,12 @@ synopsis: A regression test for core Dylan.
 // even these few have turned up some problems.  A large block are copied
 // from the DIRM examples.
 //
+
+define module dylan-test
+  use Dylan;
+  use Extensions;
+  use Cheap-IO;
+end;
 
 define constant buggy? = #f;		// not bugs, features!
 
