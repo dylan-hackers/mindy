@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.23 1996/02/18 14:17:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.24 1996/02/20 16:00:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -431,5 +431,6 @@ define method spew-dependency-log (file :: <byte-string>) => ();
     format(stream, " \\\n\t%s", dep);
   end for;
   write('\n', stream);
+  close(stream);
 end method spew-dependency-log;
 
