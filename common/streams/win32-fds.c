@@ -306,3 +306,9 @@ void fd_exec(char *command_line, int *toprog, int *fromprog)
 
     pipe_cleanup(inpipes, outpipes, old_handles);
 }
+
+void streams_fd_init (void) {
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
+}
