@@ -17,6 +17,7 @@ $mandir = "@mandir@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
+$enable_debug = "@enable_debug@" eq "yes";
 $enable_mindy = "@enable_mindy@" eq "yes";
 $enable_d2c = "@enable_d2c@" eq "yes";
 $enable_mindy_bootstrap = "@enable_mindy_bootstrap@" eq "yes";
@@ -36,7 +37,11 @@ $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
 $CC = 'gcc';
-$CFLAGS = '-O4 -finline-functions';
+if ($enable_debug) {
+  $CFLAGS = '-g -O4 -finline-functions';
+} else {
+  $CFLAGS = '-O4 -finline-functions';
+}
 $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
 
 if ($enable_mindy_bootstrap) {
