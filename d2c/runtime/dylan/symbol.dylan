@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.5 1995/12/11 21:03:14 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.6 1995/12/15 14:06:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -128,7 +128,8 @@ define method as (class == <symbol>, string :: <string>)
   make(<symbol>, string: string);
 end;
 
-define sealed inline method as (class == <string>, symbol :: <symbol>)
+define sealed inline method as
+    (class :: one-of(<string>, <byte-string>), symbol :: <symbol>)
     => res :: <string>;
   symbol.symbol-string;
 end;
