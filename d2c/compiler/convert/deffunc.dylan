@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.10 2001/03/17 03:43:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.11 2003/12/15 21:39:09 andreas Exp $
 copyright: see below
 
 
@@ -673,7 +673,7 @@ define method convert-generic-definition
     let parameters = parse.defgeneric-parameters;
     let results = parse.defgeneric-results;
     let policy = $Default-Policy;
-    let source = make(<source-location>);
+    let source = tlf.source-location;
     let args = make(<stretchy-vector>);
     
     add!(args, ref-dylan-defn(builder, policy, source, #"<generic-function>"));
@@ -882,7 +882,7 @@ end method discriminator-possible?;
 define method make-discriminator
     (builder :: <fer-builder>, gf :: <generic-definition>) => ();
   let policy = $Default-Policy;
-  let source = make(<source-location>);
+  let source = gf.source-location;
   let discriminator = gf.generic-defn-discriminator;
   let name = discriminator.ct-function-name;
   let sig = discriminator.ct-function-signature;

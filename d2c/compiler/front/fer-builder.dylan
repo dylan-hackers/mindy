@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.11 2003/04/12 00:25:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.12 2003/12/15 21:38:59 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -68,9 +68,11 @@ define method pop-canonical-body(builder, p-region)
   else
     let regions = reverse!(body);
     let res = make(<compound-region>, regions: regions, parent: p-region,
-                   source-location: if (p-region) p-region.source-location
-			       else make(<source-location>)
-			       end);
+                   source-location: 
+                     if (p-region) p-region.source-location
+                     else 
+                       make(<source-location>)
+                     end);
     for (reg in regions)
       reg.parent := res;
     end;
@@ -781,7 +783,7 @@ define method make-error-operation
     => res :: <operation>;
   make-unknown-call
     (builder,
-     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+     ref-dylan-defn(builder, $Default-Policy, source,
 		     #"error"),
      #f,
      pair(make-literal-constant(builder, as(<ct-value>, msg)),
@@ -794,7 +796,7 @@ define method make-error-operation
     => res :: <operation>;
   make-unknown-call
     (builder,
-     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+     ref-dylan-defn(builder, $Default-Policy, source,
 		     symbol),
      #f,
      as(<list>, args));
