@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.15 1994/04/12 20:14:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.16 1994/04/17 17:45:49 wlott Exp $
 *
 * This file does whatever.
 *
@@ -189,7 +189,7 @@ void invoke(struct thread *thread, int nargs)
     }
 
     FUNC(function)->xep(thread, nargs);
-#ifndef sparc
+#if !SLOW_LONGJMP
     go_on();
 #endif
 }
@@ -227,7 +227,11 @@ void set_c_continuation(struct thread *thread,
     thread->pc = 0;
 }
 
+#if SLOW_LONGJMP
+void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
+#else
 void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
+#endif
 {
     if (Tracing)
 	trace_return(old_sp, vals, thread->sp - vals);
@@ -253,7 +257,7 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
     }
 }
 
-#ifndef sparc
+#if !SLOW_LONGJMP
 void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
     do_return_setup(thread, old_sp, vals);
@@ -888,7 +892,7 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 
     fp = push_linkage(thread, args);
     set_byte_continuation(thread, BYTE_METHOD(method)->component);
-#ifndef sparc
+#if !SLOW_LONGJMP
     go_on();
 #endif
 }

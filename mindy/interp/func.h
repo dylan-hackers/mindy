@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.4 1994/04/15 02:24:53 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.5 1994/04/17 17:46:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -76,7 +76,7 @@ extern obj_t *push_linkage(struct thread *thread, obj_t *args);
 extern void set_c_continuation(struct thread *thread,
 			       void cont(struct thread *thread, obj_t *vals));
 extern obj_t *pop_linkage(struct thread *thread);
-#ifdef sparc
+#if SLOW_LONGJMP
 #define do_return do_return_setup
 #else
 extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
