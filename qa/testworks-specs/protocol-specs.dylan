@@ -143,7 +143,7 @@ define macro protocol-spec-definer
          define protocol-spec-bindings "$" ## ?protocol-name ## "-protocol-spec" (?options)
            ?specs
          end;
-         define protocol-spec-suite ?protocol-name => "$" ## ?protocol-name ## "-protocol-spec";
+         define protocol-spec-suite ?protocol-name => "$" ## ?protocol-name ## "-protocol-spec" end;
          }
 end macro protocol-spec-definer;
 
