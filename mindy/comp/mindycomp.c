@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.1 1994/03/24 21:49:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.2 1994/04/08 14:26:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -32,13 +32,14 @@ struct body *Program = NULL;
 
 struct symbol *LibraryName = NULL;
 struct symbol *ModuleName = NULL;
+boolean ParseOnly = FALSE;
 
 char *current_file = "<stdin>";
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: mindycomp [-p[p][e]] [-l library-name] "
-	    "[-o object-name] source-name\n");
+    fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
+	    "[-o object-name] [-p] source-name\n");
     exit(1);
 }
 
@@ -62,14 +63,14 @@ static char *find_extension(char *source)
 	return NULL;
 }
 
-static char *make_output_name(char *source)
+static char *make_output_name(char *source, char *new_extension)
 {
     char *extension = find_extension(source);
     int base_len = extension ? extension - source - 1 : strlen(source);
-    char *output = malloc(base_len + sizeof(".dbc"));
+    char *output = malloc(base_len + strlen(new_extension) + 1);
 
     bcopy(source, output, base_len);
-    strcpy(output + base_len, ".dbc");
+    strcpy(output + base_len, new_extension);
 
     return output;
 }
@@ -94,7 +95,7 @@ main(int argc, char *argv[])
     while ((arg = *++argv) != NULL) {
 	if (arg[0] == '-') {
 	    switch (arg[1]) {
-	      case 'p':
+	      case 'd':
 		if (arg[2] == '\0') {
 		    print_parse = TRUE;
 		    print_expanded = TRUE;
@@ -148,6 +149,18 @@ main(int argc, char *argv[])
 		}
 		else
 		    LibraryName = symbol(*argv);
+		break;
+
+	      case 'p':
+		if (ParseOnly) {
+		    fprintf(stderr, "-p can only be used once.\n");
+		    usage();
+		}
+		if (arg[2] != '\0') {
+		    fprintf(stderr, "noise after -p switch: %s\n", arg+2);
+		    usage();
+		}
+		ParseOnly = TRUE;
 		break;
 
 	      default:
@@ -208,10 +221,12 @@ main(int argc, char *argv[])
     }
 
     /* Run environment analysis */
-    environment_analysis(Program);
+    if (!ParseOnly)
+	environment_analysis(Program);
 
     if (output_name == NULL)
-	output_name = make_output_name(source_name);
+	output_name = make_output_name(source_name,
+				       ParseOnly ? ".parse" : ".dbc");
 
     file = fopen(output_name, "w");
     if (file == NULL) {
@@ -219,10 +234,13 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    dump_setup_output(source_name, file);
+    dump_setup_output(source_name, file, ParseOnly ? "parse" : "compilation");
 
     /* Generate code. */
-    compile(Program);
+    if (ParseOnly)
+	dump_program(Program);
+    else
+	compile(Program);
 
     dump_finalize_output();
 
