@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.109 1995/11/14 13:29:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.110 1995/11/14 14:17:06 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -111,11 +111,11 @@ define module od-format
     actual-obj,
     obj-resolved?,
     request-backpatch,
+    resolve-forward-ref,
     <identity-preserving-mixin>,
     maybe-dump-reference,
     load-external-definition,
     add-make-dumper,
-    state-stack, state-stack-setter,
     *Data-Unit-Search-Path*;
 
 end;
