@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.14 2001/06/22 07:26:48 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.15 2001/06/29 05:02:33 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -136,16 +136,20 @@ define macro if
 end;
 
 define macro method
-    { method ( ?:parameter-list ) => (?results:variable-list) ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+  { method ( ?:parameter-list ) => (?results:variable-list) ; ?:body end }
+ => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body }, { })
+    
     { method ( ?:parameter-list ) => (?results:variable-list) ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body }, { })
+
     { method ( ?:parameter-list ) => ?result:variable ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?result }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { ?result }, { ?body }, { })
+
     { method ( ?:parameter-list ) ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body }, { })
+ 
     { method ( ?:parameter-list ) ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body }, { })
 end;
 
 define macro select
@@ -494,19 +498,64 @@ define macro domain-definer
 end;
 
 define macro function-definer
-    { define ?adjectives function ?:name ?rest:* end }
-      => make-define-constant({ ?name }, { method ?rest end })
+
+  // Result list followed by semicolon
+  { define ?adjectives function ?:name ( ?:parameter-list )
+     => (?results:variable-list) ; ?:body end }
+
+    => make-define-constant
+    ({ ?name },
+     make-anonymous-method
+       ({ ?parameter-list }, { ?results }, { ?body }, { ?adjectives }))
+
+
+    // Result list, no semicolon
+    { define ?adjectives function ?:name ( ?:parameter-list )
+       => (?results:variable-list) ?:body end }
+
+    => make-define-constant
+    ({ ?name },
+     make-anonymous-method
+       ({ ?parameter-list }, { ?results }, { ?body }, {?adjectives}))
+
+
+    // single result followed by semicolon
+    { define ?adjectives function ?:name ( ?:parameter-list )
+       => ?result:variable ; ?:body end }
+
+    => make-define-constant
+    ({ ?name },
+     make-anonymous-method
+       ({ ?parameter-list }, { ?result }, { ?body }, {?adjectives}))
+
+
+    // no result, semicolon
+    { define ?adjectives function ?:name ( ?:parameter-list ) ; ?:body end }
+    
+    => make-define-constant
+    ({ ?name },
+     make-anonymous-method
+       ({ ?parameter-list }, { #rest res }, { ?body }, {?adjectives}))
+
+
+    // no result, no semicolon
+    { define ?adjectives function ?:name ( ?:parameter-list ) ?:body end }
+
+    => make-define-constant
+    ({ ?name },
+     make-anonymous-method
+       ({ ?parameter-list }, { #rest res }, { ?body }, {?adjectives}))
 
   adjectives:
     { } => { }
-    { not-inline ... } => { }
-    { default-inline ... } => { }
-    { may-inline ... } => { }
-    { inline ... } => { }
-    { inline-only ... } => { }
-    { movable ... } => { }
-    { flushable ... } => { }
-    { sideways ... } => { }
+    { not-inline ... } => { inline-type: not-inline, ... }
+    { default-inline ... } => { inline-type: default-inline, ... }
+    { may-inline ... } => { inline-type: may-inline, ... }
+    { inline ... } => { inline: #t, inline-type: inline, ... }
+    { inline-only ... } => { inline-type: inline-only, ... }
+    { movable ... } => { movable: #t, ... }
+    { flushable ... } => { flushable: #t, ... }
+
 end;
 
 define macro generic-definer
