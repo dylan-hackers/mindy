@@ -1,0 +1,86 @@
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/common/format-out/Attic/Makefile.in,v 1.1 1996/07/15 17:57:42 dwatson Exp $
+##
+##  This is the makefile for the Mindy format-out library.
+##
+
+SHELL	=	/bin/sh
+
+##
+## begin autoconf'ed source
+##
+
+prefix	=		@prefix@
+exec_prefix	=	@exec_prefix@
+srcdir	=		@srcdir@
+
+SRCDIR	=		${srcdir}
+BINDIR	=		${exec_prefix}/bin
+LIBDIR	=		${exec_prefix}/lib/mindy
+
+CC	=		@CC@
+CCOPTS	=		@CCOPTS@
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+YACC	=		@YACC@
+YFLAGS	=		-d
+LEX	=		@LEX@
+LFLAGS	=		@LFLAGS@
+RANLIB	=		@RANLIB@
+INSTALL	=		@INSTALL@
+INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
+INSTALL_DATA	=	@INSTALL_DATA@
+
+LIBOBJS =		@LIBOBJS@
+LIBS	=		@LIBS@
+
+##
+## end of configure written portion
+##
+
+MC	= ../../comp/mindycomp
+
+MINDYFLAGS = -lFormat-Out
+
+OBJS = library.dbc format-out.dbc
+
+format-out-lib.dbc: ${OBJS}
+	cat ${OBJS} > $@
+
+format-out.dbc: ${SRCDIR}/format-out.dylan
+	${MC} ${MINDYFLAGS} -o format-out.dbc ${SRCDIR}/format-out.dylan
+	
+library.dbc: ${SRCDIR}/library.dylan
+	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
+
+clean:
+	rm -f ${OBJS} format-out-lib.dbc *~ \#* core
+
+realclean:
+	rm -f ${OBJS} format-out-lib.dbc Makefile *~ \#* core
+
+install: format-out-lib.dbc
+	${INSTALL_DATA} format-out-lib.dbc ${LIBDIR}
