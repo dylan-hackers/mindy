@@ -41,7 +41,7 @@ end method content-size;
 	initialize <EventTypeSpec>
 */
 
-define method initialize( es :: <EventTypeSpec>, eventClass :: <UInt32>, eventKind :: <UInt32>)
+define method initialize( es :: <EventTypeSpec>, eventClass :: <UInt32>, eventKind :: <UInt32>, #key, #all-keys)
 => ( result :: <EventTypeSpec> )
 
   event-type-spec-eventClass( es ) := eventClass;
@@ -185,7 +185,7 @@ define method InstallWindowEventHandler( inTarget :: <WindowRef>, inHandler :: <
 => ( result :: <OSStatus> )
 
     let status = call-out( integer:, "InstallWindowEventHandler", ptr: inTarget,raw-value, ptr: inHandler.raw.value,
-                            integer: inNumTypes, ptr: inUserData.raw-value. ptr: outRef.raw-value );
+                            integer: inNumTypes, ptr: inUserData.raw-value, ptr: outRef.raw-value );
                             
     as( <OSStatus>, status );
  
@@ -213,9 +213,9 @@ UInt32 GetEventKind(EventRef inEvent);
 OSStatus GetEventParameter(EventRef inEvent,
  EventParamName inName,
  EventParamType inDesiredType,
- EventParamType * outActualType, /* can be NULL */
+ EventParamType * outActualType, / * can be NULL * /
  UInt32 inBufferSize,
- UInt32 * outActualSize, /* can be NULL */
+ UInt32 * outActualSize, / * can be NULL * /
  const void * ioBuffer);
 
 EventTime GetEventTime(EventRef inEvent);
@@ -245,7 +245,7 @@ OSStatus InstallEventHandler(EventTargetRef inTarget,
  UInt32 inNumTypes,
  const EventTypeSpec * inList,
  void * inUserData,
- EventHandlerRef * outRef) /* can be NULL */;
+ EventHandlerRef * outRef) / * can be NULL * /;
 
 OSStatus InstallEventLoopTimer(EventLoopRef inEventLoop,
  EventTimerInterval inFireDelay,
