@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.16 1994/11/06 20:00:12 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.17 1994/11/18 04:09:00 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -285,7 +285,6 @@ void collect_garbage(void)
     fprintf(stderr, "[GCing with %d bytes in use...", bytes_at_start);
     fflush(stderr);
 
-    TimeToGC = FALSE;
     BytesInUse = 0;
     UsedBlocks = 0;
     cur_block = 0;
@@ -353,6 +352,7 @@ void collect_garbage(void)
 
     bytes_at_end = bytes_in_use();
     GCTrigger = bytes_at_end + BYTES_CONSED_BETWEEN_GCS;
+    TimeToGC = FALSE;
 
     fprintf(stderr, "reclaimed %d leaving %d]\n",
 	    bytes_at_start - bytes_at_end,
