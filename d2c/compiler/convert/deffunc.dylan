@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.7 1995/01/06 21:18:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.8 1995/01/10 13:55:12 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,9 +30,9 @@ define class <generic-definition> (<function-definition>)
   slot generic-defn-methods :: <list>,
     init-value: #();
   //
-  // Information about sealed methods of this GF.  Filled in once all methods
-  // have been defined.  See "method-tree".
-  slot generic-defn-seal-info :: <list>;
+  // Information about sealed methods of this GF.  This is filled in on demand.
+  // Use generic-defn-seal-info instead.  See "method-tree".
+  slot %generic-defn-seal-info :: <list>;
 end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
@@ -221,6 +221,11 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		   method-of: generic-defn,
 		   keys);
   if (generic-defn)
+    if (slot-initialized?(generic-defn, %generic-defn-seal-info))
+      error("Adding a method to a GF which has already been sealed:\n"
+            "  %=",
+	    defn);
+    end;
     generic-defn.generic-defn-methods
       := pair(defn, generic-defn.generic-defn-methods);
   end;
@@ -291,6 +296,10 @@ end;
 
 define method convert-generic-definition
     (builder :: <fer-builder>, defn :: <generic-definition>) => ();
+  //
+  // Ensure summary analysis of method set.
+  generic-defn-seal-info(defn);
+
   if (defn.function-defn-hairy?)
     let policy = $Default-Policy;
     let source = make(<source-location>);
