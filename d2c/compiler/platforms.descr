@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.67 2003/04/05 10:00:03 bruce Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.68 2003/04/17 19:00:43 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -228,6 +228,22 @@ inherit-from:				generic-unix
 make-command:				make
 use-dbclink?:				#t
 executable-filename-suffix:		.exe
+double-alignment:		8
+long-double-alignment:		8
+
+// Mingwin (automake, autoconf, libtool installed)
+// added by Douglas M. Auclair (dauclair@hotmail.com)
+platform-name:				mingw32
+default-features:			compiled-for-mingw32
+					newlines-are-CRLF
+inherit-from:				win32
+make-command:				make
+use-dbclink?:				#t
+executable-filename-suffix:		.exe
+double-alignment:		8
+long-double-alignment:		8
+
+
 
 // Linux:
 platform-name:				linux
@@ -606,6 +622,15 @@ long-double-alignment:	4
 // Douglas M. Auclair's cygnus port (doug@cotilliongroup.com)
 platform-name:			x86-cygnus-gcc
 inherit-from:			gcc x86 cygnus
+link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+
+// Mingwin Port
+platform-name:			x86-mingw32-gcc
+inherit-from:			gcc x86 mingw32
+link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+
+platform-name:			x86-cygnus-gcc32
+inherit-from:			x86-gcc32 cygnus
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 
 // Solaris support maintained by Tom Emerson, tree@tiac.net
