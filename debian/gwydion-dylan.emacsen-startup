@@ -4,7 +4,7 @@
 		(symbol-name debian-emacs-flavor)
 		"/site-lisp/gwydion-dylan") load-path))
 
-(autoload 'dylan-mode "gwydion-dylan"
+(autoload 'dylan-mode "dylan-mode"
         "Major mode for editing Dylan source code" t)
 (setq auto-mode-alist (cons '("\\.dylan$" . dylan-mode) auto-mode-alist))
 (setq auto-mode-alist (cons '("\\.lid$" . dylan-mode) auto-mode-alist))

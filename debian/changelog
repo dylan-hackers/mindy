@@ -1,11 +1,29 @@
+gwydion-dylan (2.3.9pre3-4) unstable; urgency=low
+
+  * Corrected without-bounds-checks
+  * Some corrections to bignums
+  * Command-line GC options
+  * Some small generated C improvements
+  * Correct Dylan-Mode loading routine.  (Closes:Bug#158286)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 26 Aug 2002 22:36:26 -0700
+
+gwydion-dylan (2.3.9pre3-3) unstable; urgency=low
+
+  * Fixes to meet Common Dylan standard.
+  * Fixes for Melange to allow it to parse more C headers.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Wed, 21 Aug 2002 23:26:39 -0700
+
 gwydion-dylan (2.3.9pre3-2) unstable; urgency=low
 
   * Updated to 'pre3' tag.
   * Bumped bootstrap counter for autobuilders.
   * Included Emacs mode.
   * Includes 'Testworks' testing framework.
+  * Add a build-dependency on bison.  (Closes:Bug#155600)
 
- -- Brent A. Fulgham <bfulgham@debian.org>  Wed, 31 Jul 2002 21:20:49 -0700
+ -- Brent A. Fulgham <bfulgham@debian.org>  Wed,  7 Aug 2002 21:11:24 -0700
 
 gwydion-dylan (2.3.9pre2-1) unstable; urgency=low
 
