@@ -13,11 +13,11 @@ do emit_library_rule(
     'test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
 do emit_library_rule(
+    'fact', '$(BUILDROOT)/force.timestamp', '', 'compile'
+);
+do emit_library_rule(
     'gobbledygook', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
 do emit_library_rule(
     'format-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
-);
-do emit_library_rule(
-    'fact', '$(BUILDROOT)/force.timestamp', ''
 );
