@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.31 2002/02/19 22:23:40 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.32 2002/02/25 22:15:27 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -526,15 +526,19 @@ MINDY = $MINDY
 
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
-            print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
+			local($EXPORT = "export");
+        	if ($target_name eq 'x86-win32-vc') {
+				$EXPORT="set";
+			}
+            print "$EXPORT CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
             if ($LIBTOOL) {
-                print "export LIBTOOL = $LIBTOOL\n\n";
+                print "$EXPORT LIBTOOL = $LIBTOOL\n\n";
             }
             if ($DYLANPATH) {
-                print "export DYLANPATH = $DYLANPATH\n\n";
+                print "$EXPORT DYLANPATH = $DYLANPATH\n\n";
             };
             if ($DYLANDIR) {
-                print "export DYLANDIR = $DYLANDIR\n\n";
+                print "$EXPORT DYLANDIR = $DYLANDIR\n\n";
             }
         } else {
             print "LIBTOOL = $LIBTOOL\n\n";
