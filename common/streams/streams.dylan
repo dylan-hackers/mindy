@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.2 1999/02/24 16:57:34 andreas Exp $
 
 //======================================================================
 //
@@ -533,6 +533,32 @@ define sealed method stream-contents (stream :: <simple-sequence-stream>,
     unlock-stream(stream);
   end block;
 end method stream-contents;
+
+
+//// with-open-file
+//// Sorry, no macros in mindy
+#if (~mindy)
+define macro with-open-file // I _must_ be overlooking this one!
+  {
+    with-open-file (?stream:variable = ?namestring:expression,
+		    #rest ?parameters:expression)
+      ?:body
+    end
+  }
+ => {
+      let stream = #f;
+      block ()
+	stream := make(<file-stream>, locator: ?namestring, ?parameters);
+	let ?stream = stream;
+	?body;
+      cleanup
+	if (stream)
+	  close(stream);
+	end if;
+      end block
+    }
+end macro with-open-file;
+#endif
 
 
 //// Using File Streams.
