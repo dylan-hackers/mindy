@@ -12,4 +12,4 @@ if ($features{'compiled_for_unix'}) {
     &unknown_platform_error();
 }
 
-&compile_subdirs('libraries', 'demos');
+&compile_subdirs('libraries');
