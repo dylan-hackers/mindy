@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.58 2001/09/08 23:34:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.59 2001/09/12 14:39:35 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -391,18 +391,33 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
 
   let state
-      = make(<lid-mode-state>,
-             lid-file: lid-file,
-	     command-line-features: as(<list>, features), 
-	     log-dependencies: log-dependencies,
-	     target: *current-target*,
-	     no-binaries: no-binaries,
-	     link-static: link-static,
-	     link-rpath: link-rpath,
-	     debug?: debug?,
-	     profile?: profile?,
-	     cc-override: cc-override,
-	     override-files: as(<list>, override-files));
+      = if(lid-file.filename-extension = ".dylan"))
+          format(*standard-output*, "Entering single file mode.\n");
+          force-output(*standard-output*);
+          make(<single-file-mode-state>,
+               source-file: lid-file,
+               command-line-features: as(<list>, features), 
+               log-dependencies: log-dependencies,
+               target: *current-target*,
+               no-binaries: no-binaries,
+               link-static: link-static,
+               link-rpath: link-rpath,
+               debug?: debug?,
+               profile?: profile?);
+        else
+          make(<lid-mode-state>,
+               lid-file: lid-file,
+               command-line-features: as(<list>, features), 
+               log-dependencies: log-dependencies,
+               target: *current-target*,
+               no-binaries: no-binaries,
+               link-static: link-static,
+               link-rpath: link-rpath,
+               debug?: debug?,
+               profile?: profile?,
+               cc-override: cc-override,
+               override-files: as(<list>, override-files));
+        end if;
   let worked? = compile-library(state);
   exit(exit-code: if (worked?) 0 else 1 end);
 end method main;
