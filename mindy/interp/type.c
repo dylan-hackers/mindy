@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.19 1994/11/03 22:19:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.20 1994/11/04 13:14:28 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -1191,6 +1191,47 @@ static obj_t dylan_make_singleton(obj_t class, obj_t object)
 }
 
 
+/* Introspection stuff. */
+
+static obj_t dylan_singleton_object(obj_t singleton)
+{
+    return SING(singleton)->object;
+}
+
+static obj_t dylan_subclass_of(obj_t subclass)
+{
+    return SUBCLASS(subclass)->of;
+}
+
+static obj_t dylan_lim_int_class(obj_t lim_int)
+{
+    switch (LIMINT(lim_int)->type_id) {
+      case id_LimFixnum:
+	return obj_FixnumClass;
+      case id_LimBignum:
+	return obj_BignumClass;
+      default:
+	lose("Strange kind of limited integer.");
+	return NULL;
+    }
+}
+
+static obj_t dylan_lim_int_min(obj_t lim_int)
+{
+    return LIMINT(lim_int)->min;
+}
+
+static obj_t dylan_lim_int_max(obj_t lim_int)
+{
+    return LIMINT(lim_int)->max;
+}
+
+static obj_t dylan_union_members(obj_t u)
+{
+    return UNION(u)->members;
+}
+
+
 /* Printing stuff. */
 
 static void print_singleton(obj_t singleton)
@@ -1345,4 +1386,21 @@ void init_type_functions(void)
     define_method("limited", list1(singleton(obj_ClassClass)), FALSE,
 		  list1(pair(symbol("subclass-of"), obj_Unbound)),
 		  FALSE, obj_TypeClass, dylan_limited_class);
+
+    define_function("singleton-object", list1(obj_SingletonClass), FALSE,
+		    obj_False, FALSE, obj_ObjectClass, dylan_singleton_object);
+    define_function("subclass-of", list1(obj_SubclassClass), FALSE, obj_False,
+		    FALSE, obj_ClassClass, dylan_subclass_of);
+    define_function("limited-integer-class", list1(obj_LimIntClass), FALSE,
+		    obj_False, FALSE, obj_ClassClass, dylan_lim_int_class);
+    define_function("limited-integer-min", list1(obj_LimIntClass), FALSE,
+		    obj_False, FALSE,
+		    type_union(object_class(obj_False), obj_IntegerClass),
+		    dylan_lim_int_min);
+    define_function("limited-integer-max", list1(obj_LimIntClass), FALSE,
+		    obj_False, FALSE,
+		    type_union(object_class(obj_False), obj_IntegerClass),
+		    dylan_lim_int_max);
+    define_function("union-members", list1(obj_UnionClass), FALSE, obj_False,
+		    FALSE, obj_ListClass, dylan_union_members);
 }
