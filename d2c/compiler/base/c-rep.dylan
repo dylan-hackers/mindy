@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.19 1995/11/14 13:27:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.20 1995/12/15 01:54:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,8 +64,8 @@ define method print-object (rep :: <c-representation>, stream :: <stream>)
 end;
 
 define class <general-representation> (<c-representation>)
-  keyword to-more-general:, init-value: #f;
-  keyword from-more-general:, init-value: #f;
+  inherited slot representation-to-more-general, init-value: #f;
+  inherited slot representation-from-more-general, init-value: #f;
 end;
 
 define class <heap-representation> (<c-representation>)

@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.31 1995/12/13 15:57:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.32 1995/12/15 01:56:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1098,15 +1098,17 @@ end;
 // <byte-character-ctype>
 
 define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
-  keyword base-class:,
-    init-function: method () specifier-type(#"<character>") end method;
 end;
 
 define variable *byte-character-ctype-memo* = #f;
 
-define method make (class == <byte-character-ctype>, #next next-method, #key)
+define method make
+    (class == <byte-character-ctype>, #next next-method, #key base-class)
   *byte-character-ctype-memo*
-    | (*byte-character-ctype-memo* := next-method());
+    | (*byte-character-ctype-memo*
+	 := next-method(class,
+			base-class:
+			  base-class | specifier-type(#"<character>")));
 end;
 
 define method print-message

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.46 1995/12/09 00:12:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.47 1995/12/15 01:55:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,7 +47,9 @@ define constant $ct-sam-cache-size = 97;  // handy prime.
 define class <generic-definition> (<function-definition>)
   //
   // #f iff the open adjective wasn't supplied.
-  slot generic-defn-sealed? :: <boolean>, required-init-keyword: sealed:;
+  slot generic-defn-sealed? :: <boolean>, init-keyword: sealed:,
+    init-function:
+      curry(error, "sealed: unsupplied in make of <generic-definition>");
   //
   // All the <method-definition>s defined on this generic function.
   slot generic-defn-methods :: <list>,
@@ -72,7 +74,7 @@ define class <implicit-generic-definition>
     (<generic-definition>, <implicit-definition>)
   //
   // Implicit generic definitions are sealed.
-  keyword sealed:, init-value: #t;
+  inherited slot generic-defn-sealed?, init-value: #t;
 end;
 
 define abstract class <abstract-method-definition> (<function-definition>)

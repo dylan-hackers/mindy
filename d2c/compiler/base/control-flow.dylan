@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.17 1995/10/30 13:08:04 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.18 1995/12/15 01:55:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -70,9 +70,17 @@ define method make (class == <compound-region>,
 end;
 
 define class <empty-region> (<compound-region>)
-  keyword regions:, init-value: #();
 end;
 
+define method make
+    (class == <empty-region>, #next next-method,
+     #rest keys, #key regions = #())
+    => res :: <empty-region>;
+  unless (regions == #())
+    error("Can't make a non-empty <empty-region>");
+  end unless;
+  apply(next-method, class, regions: #(), keys);
+end method make;
 
 // Join-Regions:
 //
@@ -164,7 +172,6 @@ end;
 // unwind.)
 //
 define class <component> (<block-region-mixin>)
-  keyword source-location:, init-value: make(<source-location>);
   //
   // Queue of all the <initial-variable> variables that need to be ssa
   // converted (threaded through next-initial-variable).
