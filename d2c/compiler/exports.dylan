@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.33 1995/04/26 05:50:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.34 1995/04/26 07:03:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,6 +41,7 @@ define module utils
     write-class-name, write-address, pprint-fields,
     find-in, size-in,
     dformat, assert,
+    <annotatable>, info, info-setter,
     compiler-warning, compiler-error, key-of, list?, pair?;
 end;
 
@@ -597,8 +598,6 @@ define module flow
   use source;
   use forwards, import: {<abstract-variable>}, export: all;
   export 
-    <annotatable>, info, info-setter,
-
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <empty-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,

@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.11 1995/04/25 23:02:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.12 1995/04/26 07:03:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,9 +7,6 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // single-assignment (SSA) form.
 
 /*
-
-object
-    annotatable {mixin}
 
 expression
     leaf {abstract}
@@ -33,13 +30,6 @@ abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
     join-assignment
 
 */
-
-// Defines the Info slot used for back-end annotation.
-//
-define class <annotatable> (<object>)
-  slot info, init-value: #f;
-end class;
-
 
 // Expressions:
 //

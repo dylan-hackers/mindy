@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.7 1995/03/22 14:24:07 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.8 1995/04/26 07:03:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -239,6 +239,13 @@ define method report-condition (condition :: type-or(<simple-error>,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
 end;
+
+
+// Defines the Info slot used for back-end annotation.
+//
+define class <annotatable> (<object>)
+  slot info, init-value: #f;
+end class;
 
 
 // foo-IN collection-like functions for threaded lists.
