@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.14 1995/04/26 09:43:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.15 1995/04/26 21:48:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,7 +240,7 @@ end;
 define class <backend-var-info> (<object>)
   slot backend-var-info-rep :: <representation>,
     required-init-keyword: representation:;
-  slot backend-var-info-name :: <string>,
+  slot backend-var-info-name :: union(<false>, <string>),
     required-init-keyword: name:;
 end;
 
@@ -250,15 +250,8 @@ define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
     => res :: <backend-var-info>;
   let rep = pick-representation(var.derived-type, #"speed");
   let varinfo = var.var-info;
-  let name = new-local(output-info);
-  let stream = output-info.output-info-vars-stream;
-  format(stream, "%s %s;", rep.representation-c-type, name);
-  if (instance?(varinfo, <debug-named-info>))
-    format(stream, " /* %s */", varinfo.debug-name);
-  end;
-  write('\n', stream);
 
-  make(<backend-var-info>, representation: rep, name: name);
+  make(<backend-var-info>, representation: rep, name: #f);
 end;
 
 define method make-info-for (defn :: <definition>,
@@ -280,29 +273,43 @@ define method make-info-for (defn :: <definition>,
 end;
 
 
-define generic c-name-and-rep (thing :: <abstract-variable>,
-			       output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
+define method get-info-for (leaf :: <initial-definition>,
+			    output-info :: <output-info>)
+    => res :: <backend-var-info>;
+  get-info-for(leaf.definition-of, output-info);
+end;
+
+define method get-info-for (leaf :: <global-variable>,
+			    output-info :: <output-info>)
+    => res :: <backend-var-info>;
+  get-info-for(leaf.var-info.var-defn, output-info);
+end;
 
 define method c-name-and-rep (leaf :: <abstract-variable>,
 			      // ### Should really be ssa-variable
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
   let info = get-info-for(leaf, output-info);
-  values(info.backend-var-info-name, info.backend-var-info-rep);
+  let name = info.backend-var-info-name;
+  unless (name)
+    name := new-local(output-info);
+    let stream = output-info.output-info-vars-stream;
+    format(stream, "%s %s;",
+	   info.backend-var-info-rep.representation-c-type, name);
+    if (instance?(leaf.var-info, <debug-named-info>))
+      format(stream, " /* %s */", leaf.var-info.debug-name);
+    end;
+    write('\n', stream);
+    info.backend-var-info-name := name;
+  end;
+  values(name, info.backend-var-info-rep);
 end;
 
-define method c-name-and-rep (leaf :: <initial-definition>,
-			      output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
-  c-name-and-rep(leaf.definition-of, output-info);
-end;
-
-define method c-name-and-rep (leaf :: <global-variable>,
-			      output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
-  let info = get-info-for(leaf.var-info.var-defn, output-info);
-  values(info.backend-var-info-name, info.backend-var-info-rep);
+define method variable-representation (leaf :: <abstract-variable>,
+				       // ### Should really be ssa-variable
+				       output-info :: <output-info>)
+    => rep :: <representation>;
+  get-info-for(leaf, output-info).backend-var-info-rep;
 end;
 
 
@@ -344,7 +351,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     if (instance?(var.var-info, <values-cluster-info>))
       write("### VALUES-CLUSTER", stream);
     else
-      let (name, rep) = c-name-and-rep(var, output-info);
+      let rep = variable-representation(var, output-info);
       write(rep.representation-c-type, stream);
     end;
   else
@@ -355,7 +362,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 	 index from 0,
 	 while: dep)
       let var = dep.source-exp;
-      let (name, rep) = c-name-and-rep(var, output-info);
+      let rep = variable-representation(var, output-info);
       format(header, "%s R%d;\n", rep.representation-c-type, index);
     end;
     indent(header, -$indentation-step);
@@ -485,29 +492,35 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
   emit-region(lambda.body, output-info);
   let result = lambda.depends-on;
   if (result)
-    let stream = output-info.output-info-guts-stream;
+    let stream = make(<byte-string-output-stream>);
     if (~result.dependent-next)
       let var = result.source-exp;
       if (instance?(var.var-info, <values-cluster-info>))
 	write("return ### VALUES-CLUSTER;\n", stream);
       else
-	let (name, rep) = c-name-and-rep(var, output-info);
-	format(stream, "return %s;\n", name);
+	let rep = variable-representation(var, output-info);
+	format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
       end;
     else
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
 	     info.lambda-info-main-entry-name, temp);
+      let stream = output-info.output-info-guts-stream;
       for (dep = result then dep.dependent-next,
 	   index from 0,
 	   while: dep)
 	let var = dep.source-exp;
-	let (name, rep) = c-name-and-rep(var, output-info);
-	emit-copy(format-to-string("%s.R%d", temp, index), rep, name, rep,
-		  output-info);
+	let rep = variable-representation(var, output-info);
+	format(stream, "%s.R%d = %s;\n",
+	       temp, index, ref-leaf(rep, var, output-info));
       end;
       format(stream, "return %s;\n", temp);
     end;
+    spew-pending-defines(output-info);
+    write(stream.string-output-stream-string,
+	  output-info.output-info-guts-stream);
+  else
+    spew-pending-defines(output-info);
   end;
 
   write(output-info.output-info-vars-stream.string-output-stream-string,
@@ -543,12 +556,14 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
   indent(stream, $indentation-step);
   emit-region(region.then-region, output-info);
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
   write("else {\n", stream);
   indent(stream, $indentation-step);
   emit-region(region.else-region, output-info);
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
 end;
@@ -557,11 +572,13 @@ define method emit-region (region :: <loop-region>,
 			   output-info :: <output-info>)
     => ();
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   let stream = output-info.output-info-guts-stream;
   write("while (1) {\n", stream);
   indent(stream, $indentation-step);
   emit-region(region.body, output-info);
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
 end;
@@ -572,6 +589,7 @@ define method emit-region (region :: <block-region>,
   let stream = output-info.output-info-guts-stream;
   emit-region(region.body, output-info);
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   if (region.exits)
     let half-step = ash($indentation-step, -1);
     indent(stream, - half-step);
@@ -583,6 +601,7 @@ end;
 define method emit-region (region :: <exit>, output-info :: <output-info>)
     => ();
   /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
   let stream = output-info.output-info-guts-stream;
   let id = region.block-of.block-id;
   if (id)
@@ -619,6 +638,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <expression>,
 			       output-info :: <output-info>)
     => ();
+  spew-pending-defines(output-info);
   let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
     write("### VALUES-CLUSTER = ???;\n", stream);
@@ -665,6 +685,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     write(ref-leaf($general-rep, dep.source-exp, output-info), stream);
   end;
   write(");\n", stream);
+  spew-pending-defines(stream);
   write(stream.string-output-stream-string,
 	output-info.output-info-guts-stream);
 end;
@@ -673,31 +694,40 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       var :: <abstract-variable>,
 			       output-info :: <output-info>)
     => ();
-  if (instance?(var.var-info, <values-cluster-info>))
-    let stream = output-info.output-info-guts-stream;
-    if (defines & instance?(defines.var-info, <values-cluster-info>))
-      write("### VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
+  if (defines)
+    if (instance?(var.var-info, <values-cluster-info>))
+      let stream = output-info.output-info-guts-stream;
+      if (instance?(defines.var-info, <values-cluster-info>))
+	write("### VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
+      else
+	let count
+	  = for (var = defines then var.definer-next,
+		 index from 0,
+		 while: var)
+	    finally
+	      index;
+	    end;
+	unless (count <= var.derived-type.min-values)
+	  format("### pad(VALUES-CLUSTER, %d);\n", count);
+	end;
+	for (var = defines then var.definer-next,
+	     index from 0,
+	     while: var)
+	  let source = format-to-string("### VALUES-CLUSTER[%d]", index);
+	  deliver-single-result(var, source, $general-rep, output-info);
+	end;
+      end;
     else
-      let count
-	= for (var = defines then var.definer-next,
-	       index from 0,
-	       while: var)
-	  finally
-	    index;
-	  end;
-      unless (count <= var.derived-type.min-values)
-	format("### pad(VALUES-CLUSTER, %d);\n", count);
-      end;
-      for (var = defines then var.definer-next,
-	   index from 0,
-	   while: var)
-	let source = format-to-string("### VALUES-CLUSTER[%d]", index);
-	deliver-single-result(var, source, $general-rep, output-info);
-      end;
+      let rep = if (instance?(defines.var-info, <values-cluster-info>))
+		  $general-rep;
+		else
+		  variable-representation(defines, output-info)
+		end;
+
+      deliver-results(defines,
+		      vector(pair(ref-leaf(rep, var, output-info), rep)),
+		      output-info);
     end;
-  else
-    let (name, rep) = c-name-and-rep(var, output-info);
-    deliver-results(defines, vector(pair(name, rep)), output-info);
   end;
 end;
 
@@ -726,12 +756,10 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
     => ();
   if (defines)
-    let varinfo = defines.var-info;
-    let rep-hint = if (instance?(varinfo, <values-cluster-info>))
+    let rep-hint = if (instance?(defines.var-info, <values-cluster-info>))
 		     $general-rep;
 		   else
-		     let (name, rep) = c-name-and-rep(defines, output-info);
-		     rep;
+		     variable-representation(defines, output-info)
 		   end;
     let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
     deliver-results(defines, vector(pair(expr, rep)), output-info);
@@ -763,7 +791,7 @@ define method emit-assignment
 	 then param.definer-next,
        first? = #t then #f,
        while: arg-dep & param)
-    let (param-name, param-rep) = c-name-and-rep(param, output-info);
+    let param-rep = variable-representation(param, output-info);
     unless (first?)
       write(", ", stream);
     end;
@@ -775,6 +803,7 @@ define method emit-assignment
   end;
   write(')', stream);
   let call = string-output-stream-string(stream);
+  spew-pending-defines(output-info);
   if (~func.depends-on | ~results)
     format(output-info.output-info-guts-stream, "%s;\n", call);
     deliver-results(results, #[], output-info);
@@ -787,7 +816,7 @@ define method emit-assignment
     for (dep = func.depends-on then dep.dependent-next,
 	 index from 0,
 	 while: dep)
-      let (name, rep) = c-name-and-rep(dep.source-exp, output-info);
+      let rep = variable-representation(dep.source-exp, output-info);
       add!(result-exprs,
 	   pair(format-to-string("%s.R%d", temp, index),
 		rep));
@@ -798,7 +827,7 @@ define method emit-assignment
     format(output-info.output-info-guts-stream, "### VALUES-CLUSTER = %s;\n",
 	   call);
   else
-    let (name, rep) = c-name-and-rep(func.depends-on.source-exp, output-info);
+    let rep = variable-representation(func.depends-on.source-exp, output-info);
     deliver-results(results, vector(pair(call, rep)), output-info);
   end;
 end;
@@ -852,6 +881,7 @@ define method emit-assignment
   let target = info.backend-var-info-name;
   let rep = info.backend-var-info-rep;
   let source = extract-operands(set, output-info, rep);
+  spew-pending-defines(output-info);
   emit-copy(target, rep, source, rep, output-info);
   unless (defn.ct-value)
     unless (rep.representation-has-bottom-value?)
@@ -888,7 +918,7 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
 	let false = make(<literal-false>);
 	for (var = var then var.definer-next,
 	     while: var)
-	  let (target-name, target-rep) = c-name-and-rep(var, output-info);
+	  let target-rep = variable-representation(var, output-info);
 	  let (source-name, source-rep)
 	    = c-expr-and-rep(false, target-rep, output-info);
 	  deliver-single-result(var, source-name, source-rep, output-info);
@@ -904,8 +934,24 @@ define method deliver-single-result (var :: <abstract-variable>,
 				     source-rep :: <representation>,
 				     output-info :: <output-info>)
     => ();
-  let (target-name, target-rep) = c-name-and-rep(var, output-info);
-  emit-copy(target-name, target-rep, source, source-rep, output-info);
+  if (var.dependents)
+    if (var.dependents.source-next)
+      really-deliver-single-result(var, source, source-rep, output-info);
+    else
+      output-info.output-info-local-vars[var] := pair(source, source-rep);
+    end;
+  end;
+end;
+
+define method deliver-single-result (var :: <global-variable>,
+				     // ### Should really be ssa-variable
+				     source :: <string>,
+				     source-rep :: <representation>,
+				     output-info :: <output-info>)
+    => ();
+  if (var.dependents)
+    really-deliver-single-result(var, source, source-rep, output-info);
+  end;
 end;
 
 define method deliver-single-result (var :: <initial-definition>,
@@ -914,6 +960,15 @@ define method deliver-single-result (var :: <initial-definition>,
 				     output-info :: <output-info>)
     => ();
   deliver-single-result(var.definition-of, source, source-rep, output-info);
+end;
+
+define method really-deliver-single-result
+    (var :: <abstract-variable>, // ### Should really be ssa-variable
+     source :: <string>, source-rep :: <representation>,
+     output-info :: <output-info>)
+    => ();
+  let (target-name, target-rep) = c-name-and-rep(var, output-info);
+  emit-copy(target-name, target-rep, source, source-rep, output-info);
 end;
 
 
@@ -947,6 +1002,7 @@ define method default-primitive-emitter
        while: op)
     add!(ops, ref-leaf($general-rep, op.source-exp, output-info));
   end;
+  spew-pending-defines(output-info);
   format(stream, "PRIMITIVE %s(", operation.name);
   for (op in ops, first? = #t then #f)
     unless (first?)
@@ -983,7 +1039,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s == %s", x, y),
+		     vector(pair(format-to-string("(%s == %s)", x, y),
 				 $boolean-rep)),
 		     output-info);
    end);
@@ -997,7 +1053,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s < %s", x, y),
+		     vector(pair(format-to-string("(%s < %s)", x, y),
 				 $boolean-rep)),
 		     output-info);
    end);
@@ -1011,7 +1067,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s + %s", x, y),
+		     vector(pair(format-to-string("(%s + %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1025,7 +1081,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s * %s", x, y),
+		     vector(pair(format-to-string("(%s * %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1039,7 +1095,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s - %s", x, y),
+		     vector(pair(format-to-string("(%s - %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1052,7 +1108,7 @@ define-primitive
        => ();
      let x = extract-operands(operation, output-info, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("- %s", x), *long-rep*)),
+		     vector(pair(format-to-string("(- %s)", x), *long-rep*)),
 		     output-info);
    end);
 
@@ -1062,12 +1118,13 @@ define-primitive
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     spew-pending-defines(output-info);
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s / %s", x, y),
+		     vector(pair(format-to-string("(%s / %s)", x, y),
 				 *long-rep*),
-			    pair(format-to-string("%s %% %s", x, y),
+			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1078,12 +1135,13 @@ define-primitive
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     spew-pending-defines(output-info);
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s / %s", x, y),
+		     vector(pair(format-to-string("(%s / %s)", x, y),
 				 *long-rep*),
-			    pair(format-to-string("%s %% %s", x, y),
+			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1094,12 +1152,13 @@ define-primitive
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     spew-pending-defines(output-info);
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s / %s", x, y),
+		     vector(pair(format-to-string("(%s / %s)", x, y),
 				 *long-rep*),
-			    pair(format-to-string("%s %% %s", x, y),
+			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1110,12 +1169,13 @@ define-primitive
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     spew-pending-defines(output-info);
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s / %s", x, y),
+		     vector(pair(format-to-string("(%s / %s)", x, y),
 				 *long-rep*),
-			    pair(format-to-string("%s %% %s", x, y),
+			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1129,7 +1189,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s | %s", x, y),
+		     vector(pair(format-to-string("(%s | %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1143,7 +1203,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s ^ %s", x, y),
+		     vector(pair(format-to-string("(%s ^ %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1157,7 +1217,7 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("%s & %s", x, y),
+		     vector(pair(format-to-string("(%s & %s)", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -1170,7 +1230,7 @@ define-primitive
        => ();
      let x = extract-operands(operation, output-info, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("~ %s", x), *long-rep*)),
+		     vector(pair(format-to-string("(~ %s)", x), *long-rep*)),
 		     output-info);
    end);
 
@@ -1227,13 +1287,34 @@ end;
 
 // Value manipulation utilities.
 
+define method spew-pending-defines (output-info :: <output-info>) => ();
+  let table = output-info.output-info-local-vars;
+  let vars = key-sequence(table);
+  let stream = output-info.output-info-guts-stream;
+  for (var in vars)
+    let (target, target-rep) = c-name-and-rep(var, output-info);
+    let noise = table[var];
+    emit-copy(target, target-rep, noise.head, noise.tail, output-info);
+    remove-key!(table, var);
+  end;
+end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <abstract-variable>,
 			output-info :: <output-info>)
     => res :: <string>;
-  let (name, rep) = c-name-and-rep(leaf, output-info);
-  conversion-expr(target-rep, name, rep, output-info);
+  let (expr, rep)
+    = begin
+	let info
+	  = element(output-info.output-info-local-vars, leaf, default: #f);
+	if (info)
+	  remove-key!(output-info.output-info-local-vars, leaf);
+	  values(info.head, info.tail);
+	else
+	  c-name-and-rep(leaf, output-info);
+	end;
+      end;
+  conversion-expr(target-rep, expr, rep, output-info);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
