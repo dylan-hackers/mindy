@@ -191,6 +191,26 @@ end function test-c-types-and-declarations;
 //=========================================================================
 //  XXX - Need to add support for some kind of "header finder object".
 
+define generic print-item
+    (item :: type-union(<c-file>, <c-declaration>))
+ => ();
+
+define method print-item (file :: <c-file>) => ()
+  let name = file.c-file-name | "nameless header";
+  format(*standard-output*, "/* >>> Entering %s >>> */\n", name);
+  for (item in file.c-file-contents)
+    print-item(item);
+  end for;
+  format(*standard-output*, "/* <<< Exiting  %s <<< */\n", name);
+  force-output(*standard-output*);
+end method print-item;
+
+define method print-item (decl :: <c-declaration>) => ()
+  format(*standard-output*, "%s\n",
+	 format-c-declaration(decl, multi-line?: #t));
+  force-output(*standard-output*);
+end method print-item;
+
 define function test-c-parser(args)
   test-section-header("C Parser");
   if (~empty?(args))
@@ -226,15 +246,10 @@ define function test-c-parser(args)
     format(*standard-output*, "Parser finished.\n");
     force-output(*standard-output*);
 
-    format(*standard-output*, "Ignoring recursively included files.\n");
-    format(*standard-output*, "Contents of top-level file:\n");
-    for (decl in c-file.c-file-declarations)
-      format(*standard-output*, "  %s\n", format-c-declaration(decl));
-      force-output(*standard-output*);
-    end;
-
-    format(*standard-output*, "Contents of type repository:\n");
-    dump-type-repository(repository, indent?: #t);
+    test-section-header("Contents of top-level file");
+    print-item(c-file);
+    test-section-header("Contents of type repository");
+    dump-type-repository(repository);
   else
     format(*standard-output*, "No input supplied; skipping test.\n");
   end;
