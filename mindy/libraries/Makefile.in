@@ -23,11 +23,11 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/Makefile.in,v 1.4 1995/02/22 18:40:49 rgs Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/Makefile.in,v 1.5 1995/04/04 16:53:27 nkramer Exp $
 ##
 
 SHELL	=	/bin/sh
-SUBDIRS	=	dylan streams print format random coll-ext string-ext tk
+SUBDIRS	=	@BUNDLED_LIBRARY_DIRS@
 
 all:
 	for dir in ${SUBDIRS}; do (cd $$dir; ${MAKE}); done
