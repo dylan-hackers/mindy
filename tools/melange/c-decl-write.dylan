@@ -121,24 +121,40 @@ define class <written-name-record> (<object>)
     = make(<table>);
 end class <written-name-record>;
 
+define class <written-declaration> (<object>)
+  constant slot written-declaration :: <declaration>,
+    required-init-keyword: declaration:;
+  constant slot written-name :: <string>,
+    required-init-keyword: name:;
+end class <written-declaration>;
+
 define function register-written-name
     (rec :: <written-name-record>, name :: <string>,
      decl :: <declaration>, #key subname? = #f)
- => ()
+ => ();
 
   let interned-name = as(<symbol>, name);
   let table = rec.written-name-table;
   let existing = element(table, interned-name, default: #f);
 
-  if (existing)
+  // If there is already a symbol by that name, there is a potential
+  // conflict if the case is different, or if either of the names is
+  // not a structure accessor.  If both are struct slot accessors then
+  // it's probably okay.
+  if (existing
+	& (name ~= existing.written-name
+	     | ~instance?(decl, <structured-type-declaration>)
+	     | ~instance?(existing.written-declaration,
+			 <structured-type-declaration>)))
     // XXX - We should try to extract a source location from each record
     // when printing these error messages. We should also give the C and
     // Dylan forms of each name. But doing so will be a pain.
     signal(make(<simple-warning>,
 		format-string: "melange: %s has multiple definitions",
-		format-arguments: name));
+		format-arguments: list(name)));
   else 
-    element(table, interned-name) := decl;
+    element(table, interned-name)
+      := make(<written-declaration>, declaration: decl, name: name);
   end if;
 end function register-written-name;
 
@@ -761,29 +777,43 @@ define method write-declaration
 	    write(stream, export-value(arg, arg.dylan-name));
 	  end if;
 	end for;
+	write(stream, ");\n");
       end;
     #"d2c" =>
       begin
 	if (~params.empty? & instance?(last(params), <varargs-declaration>))
-	  signal("Varargs functions not yet handled: %s", decl.simple-name);
+	  format(stream, "if (~empty?(%s))\n"
+		   "    error(\"Variable arguments not yet supported\");\n"
+		   "  else\n    ", last(params).dylan-name);
+	  format(stream, "call-out(\"%s\", %s", decl.simple-name,
+		 decl.type.result.type.d2c-type-tag);
+	  for (count from 1, arg in params)
+	    if (instance?(arg, <varargs-declaration>))
+	      // print nothing
+	    elseif (arg.direction == #"in-out" | arg.direction == #"out")
+		format(stream, ", ptr: %s-ptr.raw-value", arg.dylan-name);
+	    else
+	      format(stream, ", %s",
+		     d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
+	    end if;
+	  end for;
+	  write(stream, ");\n");
+	  write(stream, "  end if;\n");
 	else
 	  format(stream, "call-out(\"%s\", %s", decl.simple-name,
 		 decl.type.result.type.d2c-type-tag);
+	  for (count from 1, arg in params)
+	    if (arg.direction == #"in-out" | arg.direction == #"out")
+		format(stream, ", ptr: %s-ptr.raw-value", arg.dylan-name);
+	    else
+	      format(stream, ", %s",
+		     d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
+	    end if;
+	  end for;
+	  write(stream, ");\n");
 	end if;
-	for (count from 1, arg in params)
-	  write(stream, ", ");
-	  if (instance?(arg, <varargs-declaration>))
-	    format(stream, "%s", d2c-arg(arg.type, arg.dylan-name));
-	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
-	    format(stream, "ptr: %s-ptr.raw-value", arg.dylan-name);
-	  else
-	    format(stream, "%s",
-		   d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
-	  end if;
-	end for;
       end;
   end select;
-  write(stream, ");\n");
 
   if(melange-target = #"d2c")
     if (instance?(result-type.true-type, <pointer-rep-types>))
