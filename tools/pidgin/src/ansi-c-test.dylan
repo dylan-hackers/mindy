@@ -190,7 +190,7 @@ end function test-c-types-and-declarations;
 define function test-c-parser(args)
   test-section-header("C Parser");
   let r :: <c-type-repository> = make(<c-type-repository>);
-  /* let c-f :: <c-file> = */ parse-header(r, args[0]);
+  /* let c-f :: <c-file> = */ parse-c-file(r, args[0]);
   
   // Print out results (c-f & r) ...
 end function test-c-parser;
