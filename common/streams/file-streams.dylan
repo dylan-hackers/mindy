@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.15 1996/11/13 18:25:27 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.16 1996/11/19 03:33:25 wlott Exp $
 
 //======================================================================
 //
@@ -146,50 +146,7 @@ define sealed method do-get-input-buffer
      #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
-  let direction = stream.fd-direction;
-  if (direction == #"output")
-    error("Stream is an output stream -- %=.", stream);
-  end;
-  let buf :: false-or(<buffer>) = stream.buffer;
-  // Since buffer is currently unheld by anyone, make sure it isn't closed.
-  if (~ buf) error("Stream has been closed -- %=.", stream) end;
-  let avail :: <buffer-index> = buf.buffer-end - buf.buffer-next;
-  if (bytes)
-    if (avail < bytes)
-      // Fill input buffer
-      if (buf.buffer-next == buf.buffer-end)
-	// We don't have to worry about loosing valid input.
-	buf.buffer-next := (buf.buffer-end := 0);
-      end if;
-      let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
-				   buf.buffer-end,
-				   (buf.size - buf.buffer-end));
-      let max-avail = avail + count;
-      buf.buffer-end := buf.buffer-end + count;
-      if (max-avail < bytes)
-	// Still not enough!
-	let inc-seq = make(<buffer>, size: max-avail);
-	copy-bytes(inc-seq, 0, buf, buf.buffer-next, max-avail);
-	buf.buffer-next := buf.buffer-end;
-	error(make(<incomplete-read-error>, stream: stream,
-		   sequence: inc-seq, count: bytes));
-      end if;
-    end if;
-    buf;
-  elseif (wait?)
-    if (buf.buffer-next == buf.buffer-end)
-      // There's no input at all, might as well fill as much as we can
-      let count = call-fd-function(fd-read, stream.file-descriptor, buf,
-				   0, buf.size);
-      buf.buffer-next := 0;
-      buf.buffer-end := count;
-      if (count == 0) #f else buf end;
-    else
-      buf;
-    end if;
-  else
-    buf;
-  end if;
+  fill-input-buffer(stream, wait?, bytes);
 end method do-get-input-buffer;
 
 define sealed method do-release-input-buffer (stream :: <fd-stream>);
@@ -203,6 +160,13 @@ define sealed method do-next-input-buffer
      #key wait? :: <boolean> = #t, 
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
+  fill-input-buffer(stream, wait?, bytes);
+end method do-next-input-buffer;
+
+
+define function fill-input-buffer
+    (stream :: <fd-stream>, wait? :: <boolean>, bytes :: false-or(<integer>))
+    => buffer :: false-or(<buffer>);
   let direction = stream.fd-direction;
   if (direction == #"output")
     error("Stream is an output stream -- %=.", stream);
@@ -217,10 +181,15 @@ define sealed method do-next-input-buffer
       if (buf.buffer-next == buf.buffer-end)
 	// We don't have to worry about loosing valid input.
 	buf.buffer-next := (buf.buffer-end := 0);
+      elseif (buf.buffer-next > 0 & buf.size - buf.buffer-end < bytes)
+	// Move the currently valid data to the start of the buffer.
+	copy-bytes(buf, 0, buf, buf.buffer-next, avail);
+	buf.buffer-next := 0;
+	buf.buffer-end := avail;
       end if;
       let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
 				   buf.buffer-end,
-				   (buf.size - buf.buffer-end));
+				   buf.size - buf.buffer-end);
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
@@ -247,7 +216,7 @@ define sealed method do-next-input-buffer
   else
     buf;
   end if;
-end method do-next-input-buffer;
+end function fill-input-buffer;
 
 define inline sealed method do-input-available-at-source?
     (stream :: <fd-stream>)
@@ -278,7 +247,7 @@ define sealed method do-get-output-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	   until: (x = next))
       end;
     end;
@@ -314,7 +283,7 @@ define sealed method do-next-output-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	   until: (x = next))
       end for;
     end if;
@@ -335,7 +304,7 @@ define sealed method do-force-output-buffers (stream :: <fd-stream>) => ();
     let fd = stream.file-descriptor;
     for (x :: <buffer-index>
 	   = call-fd-function(fd-write, fd, buf, 0, next)
-	   then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	   then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	 until: (x = next))
     end;
   end;
@@ -551,7 +520,7 @@ define sealed method stream-at-end? (stream :: <fd-file-stream>,
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	   until: (x = next))
       end;
     end;
@@ -808,7 +777,7 @@ define sealed method do-get-input-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	   until: (x = next))
       end;
     end;
@@ -857,7 +826,7 @@ define sealed method do-next-input-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
 	   until: (x = next))
       end;
     end;

@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.6 1996/09/04 16:47:36 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.7 1996/11/19 03:33:25 wlott Exp $
 
 //======================================================================
 //
@@ -87,12 +87,12 @@ define /* exported */ generic fd-close (fd :: <integer>)
 
 define /* exported */ generic fd-read
     (fd :: <integer>, buf :: <buffer>, start :: <integer>,
-     buf-end :: <integer>)
+     max-count :: <integer>)
  => (nbytes :: false-or(<integer>), errno :: false-or(<integer>));
 
 define /* exported */ generic fd-write
     (fd :: <integer>, buf :: <buffer>, start :: <integer>,
-     buf-end :: <integer>)
+     max-count :: <integer>)
  => (nbytes :: false-or(<integer>), errno :: false-or(<integer>));
 
 define /* exported */ generic fd-seek
@@ -161,21 +161,21 @@ end method;
 
 define inline method fd-read
     (fd :: <integer>, buf :: <buffer>, start :: <integer>,
-     buf-end :: <integer>)
+     max-count :: <integer>)
  => (nbytes :: false-or(<integer>), errno :: false-or(<integer>));
   let res = call-out("fd_read", int:, int: fd, 
 		     ptr: buffer-address(buf) + start,
-		     int: buf-end - start);
+		     int: max-count);
   results(res, res);
 end method;
 
 
 define inline method fd-write
     (fd :: <integer>, buf :: <buffer>, start :: <integer>,
-     buf-end :: <integer>)
+     max-count :: <integer>)
  => (nbytes :: false-or(<integer>), errno :: false-or(<integer>));
   let res = call-out("write", int:, int: fd, ptr: buffer-address(buf) + start,
-		     int: buf-end - start);
+		     int: max-count);
   results(res, res);
 end method;
 
