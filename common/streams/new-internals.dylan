@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.3 1996/06/19 18:45:23 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.4 1996/07/04 18:11:49 bfw Exp $
 
 //======================================================================
 //
@@ -52,7 +52,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-inter
 /// As methods.
 ///
 
-#if (mindy) // singleton doesn't work in compiler???
+#if (mindy) // singleton(<byte>) causes the compiler to die, very ungracefully.
 define method as (result :: singleton(<byte>), object :: <byte-character>)
     => result :: <byte>;
   as(<integer>, object);

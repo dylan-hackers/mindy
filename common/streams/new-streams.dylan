@@ -30,8 +30,11 @@ copyright: See below.
 
 
 //// Right now this file is chopped up with #if's for workarounds to the
-//// current d2c not dealing with singleton. Once it does, the mindy versions
-//// of everything should be used.
+//// current d2c not dealing with singleton({<byte>, <byte-character>}). 
+//// Once it does, the mindy versions of everything should be used.
+//// Check file-streams.dylan, stream-writing.dylan, new-internals.dylan
+//// for the same.
+////
 
 //// Constants.
 ////
@@ -69,8 +72,6 @@ end class <stream>;
 ///
 
 define open abstract class <buffered-stream> (<stream>)
-  // The buffer slot is set to #f when the stream is closed.
-  slot buffer :: false-or(<buffer>);
   slot buffer-held? :: <boolean> = #f;
 end class <buffered-stream>;
 
@@ -104,7 +105,6 @@ end class;
 /// This is maintained through every action on a <simple-sequence-stream>:
 /// 0 <= stream-start <= position <= stream-end <= contents.size
 /// 
-#if (mindy)
 define class <simple-sequence-stream> (<sequence-stream>)
   // The contents slot is set to #f when the stream is closed.
   slot contents :: false-or(<sequence>),
@@ -115,18 +115,6 @@ define class <simple-sequence-stream> (<sequence-stream>)
   slot stream-end :: <integer>, init-keyword: end:; // = contents.size
   slot position :: <integer> = 0;
 end class;
-#else
-define class <simple-sequence-stream> (<sequence-stream>)
-  // The contents slot is set to #f when the stream is closed.
-  slot contents :: false-or(<sequence>),
-    required-init-keyword: contents:;
-  slot direction // :: one-of(#"input", #"output", #"input-output")
-    = #"input", init-keyword: direction:;
-  slot stream-start :: <integer> = 0, init-keyword: start:;
-  slot stream-end :: <integer>, init-keyword: end:; // = contents.size
-  slot position :: <integer> = 0;
-end class;
-#endif
 
 /// <byte-string-stream> -- Exported.
 ///
@@ -169,7 +157,6 @@ define inline sealed method type-for-sequence-stream (seq :: <unicode-string>)
   <unicode-string-stream>;
 end method type-for-sequence-stream;
 
-#if (mindy)
 /// type-for-file-stream -- Exported.
 ///
 define open generic type-for-file-stream
@@ -178,6 +165,7 @@ define open generic type-for-file-stream
      encoding :: false-or(<symbol>))
  => type :: <type>;
 
+#if (mindy)
 define inline method type-for-file-stream
     (locator :: <byte-string>,
      element-type :: one-of(#f, <byte-character>, <byte>),
@@ -186,11 +174,12 @@ define inline method type-for-file-stream
   <fd-file-stream>;
 end method;
 #else
-// The compiler can't deal with singletons (and thus one-of)
-// Note implicit GF.
+// The compiler can't deal with singleton(<byte>)
 //
 define inline method type-for-file-stream
-    (locator :: <byte-string>, element-type, encoding)
+    (locator :: <byte-string>, 
+     element-type :: false-or(<type>),
+     encoding :: one-of(#f, #"ANSI", #"ISO-Latin-1"))
  => type :: <type>;
   <fd-file-stream>;
 end method;
@@ -212,7 +201,6 @@ define inline method make
   apply(make, type-for-sequence-stream(contents), keys);
 end method make;
 
-#if (mindy)
 define inline method make
     (result-class :: singleton(<file-stream>), #rest keys,
      #key locator :: type-union(<locator>, <string>),
@@ -222,17 +210,6 @@ define inline method make
  => result :: <fd-file-stream>;
   apply(make, type-for-file-stream(locator, element-type, encoding), keys);
 end method;
-#else
-define inline method make
-    (result-class :: singleton(<file-stream>), #rest keys,
-     #key locator :: <string>,
-          element-type :: false-or(<type>),
-          encoding :: false-or(<symbol>),
-     #all-keys)
- => result :: <fd-file-stream>;
-  apply(make, type-for-file-stream(locator, element-type, encoding), keys);
-end method;
-#endif
 
 /// initialize
 ///
@@ -317,7 +294,7 @@ define sealed method stream-open? (stream :: <simple-sequence-stream>)
  => open? :: <boolean>;
   block ()
     lock-stream(stream);
-    // The if *looks* unnecessary, but we need a #t, not just non-#f
+    // The if looks unnecessary, but we need a #t, not just non-#f
     if (stream.contents) #t else #f end;
   cleanup
     unlock-stream(stream);
@@ -417,7 +394,7 @@ end method stream-position;
 ///
 define open generic stream-position-setter
     (pos :: type-union(<stream-position>, <integer>, 
-			    one-of(#"start", #"end")),
+		       one-of(#"start", #"end")),
      stream :: <positionable-stream>)
  => new-position :: type-union(<stream-position>, <integer>);
 
@@ -615,17 +592,10 @@ define inline sealed method report-condition
 		   cond.incomplete-read-count);
 end method;
 
-#if (mindy)
 define class <file-error> (<error>)
   slot file-locator :: type-union(<byte-string>, <locator>),
     required-init-keyword: locator:;
 end class;
-#else
-define class <file-error> (<error>)
-  slot file-locator :: <byte-string>,
-    required-init-keyword: locator:;
-end class;
-#endif
 
 define sealed domain make (singleton(<file-error>));
 define sealed domain initialize (<file-error>);
@@ -708,7 +678,7 @@ define inline sealed method type-for-sequence
   <unicode-string>;
 end method;
 #else
-// The compiler can't deal with singleton.
+// The compiler can't deal with singleton(<byte>).
 //
 define inline sealed method type-for-sequence (element-type)
  => type;

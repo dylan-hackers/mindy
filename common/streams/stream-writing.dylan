@@ -33,6 +33,7 @@ copyright: See below.
 define open generic write-element (stream :: <stream>, element :: <object>)
  => ();
 
+#if (mindy)
 define method write-element (stream :: <buffered-stream>, element :: <object>)
  => ();
   block ()
@@ -43,6 +44,21 @@ define method write-element (stream :: <buffered-stream>, element :: <object>)
     release-output-buffer(stream);
   end block;
 end method write-element;
+#else
+// The compiler doesn't have as(<byte>,...), since it can't handle
+// singleton(<byte>)
+//
+define method write-element (stream :: <buffered-stream>, element :: <object>)
+ => ();
+  block ()
+    let buf :: <buffer> = get-output-buffer(stream);
+    buf[buf.buffer-next] := as(<integer>, element);
+    buf.buffer-next := buf.buffer-next + 1;
+  cleanup
+    release-output-buffer(stream);
+  end block;
+end method write-element;
+#endif
 
 define sealed method write-element (stream :: <simple-sequence-stream>,
 				    element :: <object>)

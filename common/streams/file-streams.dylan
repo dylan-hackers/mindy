@@ -38,6 +38,7 @@ copyright: See below.
 /// This is a non-standard class defined for Gwydion streams.  This stream
 /// and <file-stream> are the superclasses of <fd-file-stream>s.
 ///
+
 define class <fd-stream> (<buffered-stream>)
   //
   // This slot holds the direction of the file-descriptor.  <fd-stream>s have
@@ -50,6 +51,9 @@ define class <fd-stream> (<buffered-stream>)
   // <fd-file-stream>.
   slot fd-direction :: one-of(#"input", #"output");
   slot file-descriptor :: <integer>;
+  //
+  // The buffer slot is set to #f when the stream is closed.
+  slot buffer :: false-or(<buffer>);
 end class;
 
 define sealed domain make (singleton(<fd-stream>));
@@ -101,10 +105,18 @@ define inline sealed method stream-open? (stream :: <fd-stream>)
   if (stream.buffer) #t else #f end;
 end method;
 
+#if (mindy)
 define inline sealed method stream-element-type (stream :: <fd-stream>)
  => type :: singleton(<byte-character>);
   <byte-character>;
 end method;
+#else
+// Until d2c can deal with singleton
+define inline sealed method stream-element-type (stream :: <fd-stream>)
+ => type :: <type>;
+  <byte-character>;
+end method;
+#endif
 
 define sealed method stream-at-end? (stream :: <fd-stream>)
  => at-end? :: <boolean>;
@@ -346,12 +358,21 @@ define constant file-buffer-last-use-setter = fd-direction-setter;
 /// This is the concrete class that is instantiated when users make a
 /// <file-stream>.
 ///
+#if (mindy)
 define sealed class <fd-file-stream> (<fd-stream>, <file-stream>)
   slot file-name :: <byte-string>;
   slot file-direction :: one-of(#"input", #"output", #"input-output");
   slot element-type :: one-of(<byte>, <byte-character>, <unicode-character>)
     = <byte-character>;
 end class;
+#else
+// The compiler can't deal with singleton(<byte>)
+define sealed class <fd-file-stream> (<fd-stream>, <file-stream>)
+  slot file-name :: <byte-string>;
+  slot file-direction :: one-of(#"input", #"output", #"input-output");
+  slot element-type = <byte-character>;
+end class;
+#endif
 
 define sealed domain make (singleton(<fd-file-stream>));
 // Don't need to seal initialize because it is sealed on <fd-stream>.
@@ -590,8 +611,9 @@ define sealed method initialize
             = if (direction == #"output") #"replace" else #f end,
           if-does-not-exist :: one-of(#f, #"signal", #"create")
             = if (direction == #"input") #"signal" else #"create" end,
-          element-type :: one-of(<byte>, <byte-character>, <unicode-character>)
-            = <byte-character>,
+          element-type // :: one-of(<byte>, <byte-character>, <unicode-character>)
+                       // The compiler can't deal with singleton(<byte>)
+       = <byte-character>,
           encoding :: one-of(#f, #"ANSI")
             = select (element-type) 
 		(<byte>) => #f;
@@ -676,10 +698,18 @@ define sealed method close (stream :: <fd-file-stream>, #next next-method,
   end;
 end method;
 
+#if (mindy)
 define inline sealed method stream-element-type (stream :: <fd-file-stream>)
  => type :: one-of(<byte>, <byte-character>, <unicode-character>);
   stream.element-type;
 end method;
+#else
+// Until d2c can deal with singleton
+define inline sealed method stream-element-type (stream :: <fd-file-stream>)
+ => type :: <type>;
+  stream.element-type;
+end method;
+#endif
 
 define sealed method stream-at-end? (stream :: <fd-file-stream>,
 				     #next next-method)
