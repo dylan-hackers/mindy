@@ -16,14 +16,14 @@ OBJS = allocate.obj main.obj nlx.obj i386.obj
 runtime.lib: $(OBJS)
 	lib /out:runtime.lib $(OBJS)
 
-allocate.obj: allocate.c
-	$(CC) $(CFLAGS) -c allocate.c
-main.obj: main.c
-	$(CC) $(CFLAGS) -c main.c
-nlx.obj: nlx.c
-	$(CC) $(CFLAGS) -c nlx.c
-i386.obj: i386.s
-	$(AS) i386.s -o i386.obj
+allocate.obj: $(SRCDIR)\allocate.c
+	$(CC) $(CFLAGS) -c $(SRCDIR)\allocate.c
+main.obj: $(SRCDIR)\main.c
+	$(CC) $(CFLAGS) -c $(SRCDIR)\main.c
+nlx.obj: $(SRCDIR)\nlx.c
+	$(CC) $(CFLAGS) -c $(SRCDIR)\nlx.c
+i386.obj: $(SRCDIR)\i386.s
+	$(AS) $(SRCDIR)\i386.s -o i386.obj
 
 EOF
 
