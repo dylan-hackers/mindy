@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.27 1996/04/06 07:05:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.28 1996/04/13 21:08:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -528,7 +528,8 @@ end method;
 // Simple utility functions.
 
 define method dformat(#rest args) => ();
-  apply(format, *debug-output*, args);
+  fresh-line(*debug-output*);
+  apply(pretty-format, *debug-output*, args);
 end;
 
 
