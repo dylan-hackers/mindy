@@ -11,7 +11,7 @@ module: dylan-user
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.1 1994/03/24 21:49:50 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.2 1994/03/26 07:46:39 wlott Exp $
 ##
 ##  This file does whatever.
 ##
@@ -51,7 +51,7 @@ define module Builtin-Stuff
     do-next-method,
     element, element-setter, enable-error-system,
     floor/, format, function-arguments,
-    generic-function-methods,
+    generic-function-methods, getc,
     handler-description, handler-function, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
@@ -78,7 +78,7 @@ define module Dylan
     exclude: (main, type-error, current-handler, handler-description,
 	      handler-function, handler-next, handler-test, handler-type,
 	      make-next-method-function, do-next-method, generic-apply,
-	      format, prin1, print, putc, puts, invoke-debugger,
+	      format, prin1, print, putc, puts, getc, invoke-debugger,
 	      debugger-print, debugger-report-condition, debugger-abort,
 	      debugger-describe-restarts, debugger-restart, debugger-return,
 	      enable-error-system),
@@ -87,7 +87,7 @@ define module Dylan
     import: (main, type-error, current-handler, handler-description,
 	     handler-function, handler-next, handler-test, handler-type,
 	     make-next-method-function, do-next-method, generic-apply,
-	     format, prin1, print, putc, puts, invoke-debugger, 
+	     format, prin1, print, putc, puts, getc, invoke-debugger, 
 	     debugger-print, debugger-report-condition, debugger-abort,
 	     debugger-describe-restarts, debugger-restart, debugger-return,
 	     enable-error-system);
@@ -136,6 +136,6 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: (main, format, prin1, print, putc, puts),
+    import: (main, format, prin1, print, putc, puts, getc),
     export: all;
 end Extensions;
