@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.1 1994/12/12 13:01:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.2 1994/12/13 18:35:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ define abstract class <define-tlf> (<top-level-form>)
 end;
 
 define abstract class <simple-define-tlf> (<define-tlf>)
-  slot tlf-defn :: <definition>, required-init-keyword: defn:;
+  slot tlf-defn :: <definition>, init-keyword: defn:;
 end;
 
 define method print-object (tlf :: <simple-define-tlf>, stream :: <stream>)
