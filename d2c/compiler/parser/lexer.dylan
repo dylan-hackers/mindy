@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.2 1994/12/12 19:55:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.3 1994/12/17 01:44:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -226,7 +226,7 @@ define method parse-integer (source-location :: <file-source-location>,
 	    result;
 	  end;
 	end;
-  if (contents[start] == '-')
+  if (contents[start] == as(<integer>, '-'))
     -repeat(start + 1, 0);
   else
     repeat(start, 0);
@@ -807,6 +807,10 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-slash, posn, depth);
       elseif (char == '*')
 	next(seen-star, posn, depth);
+      elseif (char == '\n')
+	lexer.line := lexer.line + 1;
+	lexer.line-start := posn;
+	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
       end;
@@ -821,6 +825,10 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-slash-slash, posn, depth);
       elseif (char == '*')
 	next(seen-nothing, posn, depth + 1);
+      elseif (char == '\n')
+	lexer.line := lexer.line + 1;
+	lexer.line-start := posn;
+	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
       end;
@@ -840,6 +848,10 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	end;
       elseif (char == '*')
 	next(seen-star, posn, depth);
+      elseif (char == '\n')
+	lexer.line := lexer.line + 1;
+	lexer.line-start := posn;
+	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
       end;
@@ -850,6 +862,8 @@ define method skip-multi-line-comment (lexer :: <lexer>,
     method seen-slash-slash (char :: <character>, posn :: <integer>,
 			     depth :: <integer>)
       if (char == '\n')
+	lexer.line := lexer.line + 1;
+	lexer.line-start := posn;
 	next(seen-nothing, posn, depth);
       else
 	next(seen-slash-slash, posn, depth);
@@ -938,7 +952,7 @@ define method get-token (lexer :: <lexer>) => res :: <token>;
 	      lexer.line-start := result-end;
 	    #"end-of-line-comment" =>
 	      for (i from result-end below length,
-		   until (contents[i] == as(<integer>, '\n')))
+		   until: (contents[i] == as(<integer>, '\n')))
 	      finally
 		result-end := i;
 	      end;
