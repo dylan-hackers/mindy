@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.10 1994/04/04 14:48:59 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.11 1994/04/06 17:27:09 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -44,7 +44,7 @@ define module Builtin-Stuff
     <type>,
     <unicode-string>,
     <vector>,
-    $permanent-state,
+    $permanent-hash-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
     direct-subclasses, direct-superclasses,
