@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.3 1994/03/26 00:47:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.4 1994/03/28 11:12:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -292,10 +292,12 @@ struct keyword_param {
 struct id {
     struct symbol *symbol;
     boolean internal;
+    int line;
 };
 
 struct method {
     struct id *name;
+    int line;
     struct literal *debug_name;
     boolean top_level;
     struct component *component;
@@ -695,6 +697,8 @@ extern struct param_list *allow_keywords(struct param_list *param_list);
 extern struct keyword_param
     *make_keyword_param(struct token *keyword, struct id *sym,
 			struct expr *def);
+extern struct method
+    *set_method_source(struct token *source, struct method *method);
 extern struct method
     *set_method_name(struct id *name, struct method *method);
 extern struct method
