@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.31 1996/07/18 15:04:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.32 1997/02/03 04:33:23 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -166,7 +166,8 @@ end;
 
 define class <gf-cache> (<object>)
   slot simple :: <boolean>, init-value: #t;
-  slot cached-sam :: <list>, init-value: #();
+  slot cached-method :: false-or(<method>) = #f;
+  slot cached-next-info :: <list>, init-value: #();
   slot cached-valid-keywords :: type-union(<simple-object-vector>,
 					   one-of(#f, #"all")),
     init-value: #f;
@@ -734,9 +735,9 @@ define constant gf-call
 	end;
       end;
       let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
-      let (sam, valid-keywords)
+      let (meth, next-info, valid-keywords)
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
-      if (nargs > nfixed)
+      if (nfixed ~== nargs)
         case 
           (valid-keywords == #f) => #t;
           (valid-keywords == #"all") =>
@@ -756,7 +757,10 @@ define constant gf-call
 	    end for;
         end case;
       end if;
-      if (sam.empty?)
+      if (meth)
+	%%primitive(invoke-generic-entry, meth, next-info,
+		    %%primitive(pop-args, arg-ptr));
+      elseif (next-info.empty?)
 	for (index :: <integer> from 0 below nfixed)
 	  let specializer :: <type> = %element(specializers, index);
 	  let arg = %%primitive(extract-arg, arg-ptr, index);
@@ -765,21 +769,45 @@ define constant gf-call
 	no-applicable-methods-error
 	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
       else
-	let meth = sam.head;
-	if (instance?(meth, <pair>))
-	  // There is no unambiguous "first method"
-	  ambiguous-method-error(meth);
-	else
-	  %%primitive(invoke-generic-entry, meth, sam.tail,
-		      %%primitive(pop-args, arg-ptr));
-	end if;
+	// There is no unambiguous "first method"
+	ambiguous-method-error(next-info.first);
       end if;
     end method;
     
+// gf-call-one-arg -- magic.
+//
+// The compiler uses this for the general-entry to certain simple generic
+// functions.  The functions must accept no keywords and take exactly one
+// argument.
+//
+define constant gf-call-one-arg
+  = method (self :: <generic-function>, nargs :: <integer>)
+      if (nargs ~= 1)
+       wrong-number-of-arguments-error(#t, 1, nargs);
+      end;
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
+      let (meth, next-info, valid-keywords)
+       = one-arg-sorted-applicable-methods(self, arg-ptr);
+      if (meth)
+	%%primitive(invoke-generic-entry, meth, next-info,
+		    %%primitive(pop-args, arg-ptr));
+      elseif (next-info.empty?)
+	let specializers = self.function-specializers;                         
+	let specializer :: <type> = %element(specializers, 0);
+	let arg = %%primitive(extract-arg, arg-ptr, 0);
+	%check-type(arg, specializer);
+	no-applicable-methods-error
+	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
+      else
+	// There is no unambiguous "first method"
+	ambiguous-method-error(next-info.first);
+      end if;
+    end method;
+
 define method internal-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <integer>,
      arg-ptr :: <raw-pointer>)
-    => (ordered :: <list>, 
+    => (meth :: false-or(<method>), next-method-info :: <list>, 
 	valid-keywords
 	  :: type-union(<simple-object-vector>, one-of(#f, #"all")));
 
@@ -901,21 +929,37 @@ define method internal-sorted-applicable-methods
   end;
 
   let old-cache = gf.method-cache;
+  // In the special case that we have a simple dispatch on one argument, we
+  // can use a blazingly fast dispatch function
+  if (old-cache == #f & valid-keywords == #f & ~gf.function-rest?
+       & cache.simple & nargs == 1)
+    gf.general-entry := %%primitive(main-entry, gf-call-one-arg);
+  elseif (~cache.simple)
+    gf.general-entry := %%primitive(main-entry, gf-call);
+  end if;
+
   gf.method-cache := cache;
   cache.next := old-cache;
-  unless (ambiguous.empty?)
-    for (prev :: false-or(<pair>) = #f then remaining,
-	 remaining :: <list> = ordered then remaining.tail,
-	 until: remaining == #())
-    finally
-      if (prev)
+  if (ordered.empty?)
+    cache.cached-method := #f;
+    if (ambiguous.empty?)
+      cache.cached-next-info := #();
+    else
+      cache.cached-next-info := list(ambiguous);
+    end if;
+  else
+    cache.cached-method := ordered.head;
+    unless (ambiguous.empty?)
+      for (prev :: <pair> = ordered then remaining,
+	   remaining :: <list> = ordered.tail then remaining.tail,
+	   until: remaining == #())
+      finally
 	prev.tail := list(ambiguous);
-      else
-	ordered := list(ambiguous);
-      end;
-    end for;
-  end unless;
-  cache.cached-sam := ordered;
+      end for;
+    end unless;
+    cache.cached-next-info := ordered.tail;
+  end if;
+
   let valid-keywords
     = if (instance?(valid-keywords, <list>))
 	let vec = make(<simple-object-vector>,
@@ -930,7 +974,8 @@ define method internal-sorted-applicable-methods
       end if;
   cache.cached-valid-keywords := valid-keywords;
 
-  values(ordered, valid-keywords);
+  values(cache.cached-method, cache.cached-next-info,
+	 cache.cached-valid-keywords);
 end;
 
 define variable *debug-generic-threshold* :: <integer> = -1;
@@ -938,7 +983,8 @@ define variable *debug-generic-threshold* :: <integer> = -1;
 define inline method cached-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <integer>,
      arg-ptr :: <raw-pointer>)
- => (ordered :: <list>, 
+ => (function :: false-or(<method>),
+     next-method-info :: <list>, 
      valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
   block (return)
     for (prev :: type-union(<false>, <gf-cache>) = #f then cache,
@@ -982,12 +1028,47 @@ define inline method cached-sorted-applicable-methods
 	  gf.method-cache := cache;
 	end if;
 
-	return(cache.cached-sam, cache.cached-valid-keywords);
+	return(cache.cached-method, cache.cached-next-info,
+	       cache.cached-valid-keywords);
       end block;
     end for;
     internal-sorted-applicable-methods(gf, nargs, arg-ptr);
   end block;
 end method cached-sorted-applicable-methods;
+
+define inline method one-arg-sorted-applicable-methods
+    (gf :: <generic-function>, arg-ptr :: <raw-pointer>)
+ => (function :: false-or(<method>),
+     next-method-info :: <list>, 
+     valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
+  let arg-class = (%%primitive(extract-arg, arg-ptr, 0)).object-class;
+  let cache = gf.method-cache;
+  if (~cache)
+    internal-sorted-applicable-methods(gf, 1, arg-ptr);
+  elseif (%element(cache.cached-classes, 0) == arg-class)
+    values(cache.cached-method, cache.cached-next-info, #f);
+  else
+    block (return)
+      for (prev :: <gf-cache> = cache then cache,
+          cache :: type-union(<false>, <gf-cache>) = cache.next
+            then cache.next,
+          until: cache == #f)
+       block (no-match)
+         let cache :: <gf-cache> = cache; // A hint to the type system.
+
+         let class = %element(cache.cached-classes, 0);
+         unless (class == arg-class) no-match() end unless;
+
+         prev.next := cache.next;
+         cache.next := gf.method-cache;
+         gf.method-cache := cache;
+         return(cache.cached-method, cache.cached-next-info, #f);
+       end block;
+      end for;
+      internal-sorted-applicable-methods(gf, 1, arg-ptr);
+    end block;
+  end if;
+end method one-arg-sorted-applicable-methods;
 
 define method internal-applicable-method?
     (meth :: <method>, arg-ptr :: <raw-pointer>, cache :: <gf-cache>)
