@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.17 2001/12/11 04:53:42 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.18 2002/01/04 16:26:02 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -67,7 +67,7 @@ define variable *All-Classes* :: <stretchy-vector> = make(<stretchy-vector>);
 define abstract class <cclass> (<ctype>, <eql-ct-value>)
   //
   // The name, for printing purposes.
-  slot cclass-name :: <name>, required-init-keyword: name:;
+  constant slot cclass-name :: <name>, required-init-keyword: name:;
 
   slot loaded? :: <boolean>,
     init-value: #t, init-keyword: loading:;
@@ -569,11 +569,11 @@ define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
   if (type1.all-subclasses-known?)
     values(reduce(ctype-union, empty-ctype(),
 		  choose(rcurry(csubtype?, type2), type1.subclasses)),
-	   #t);
+           #t);
   elseif (type2.all-subclasses-known?)
     values(reduce(ctype-union, empty-ctype(),
-		  choose(rcurry(csubtype?, type1), type2.subclasses)),
-	   #t);
+                  choose(rcurry(csubtype?, type1), type2.subclasses)),
+           #t);
   else
     let primary1 = type1.closest-primary-superclass;
     let primary2 = type2.closest-primary-superclass;
@@ -2011,12 +2011,14 @@ define method make (class == <subclass-ctype>, #next next-method,
     | (of.subclass-ctype
 	 := next-method(class,
 			of: of,
-			base-class: base-class | class-ctype()));
+			base-class: base-class | ct-value-cclass(of)));
 end method make;
 
 define method print-object
     (type :: <subclass-ctype>, stream :: <stream>) => ();
-  pprint-fields(type, stream, of: type.subclass-of);
+  pprint-fields(type, stream,
+                of: type.subclass-of,
+                base-class: type.base-class);
 end method print-object;
 
 define method print-message
