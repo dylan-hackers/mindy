@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.25 1996/05/11 14:47:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.26 1996/05/12 00:16:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -520,6 +520,66 @@ define-primitive-transformer
        replace-expression(component, primitive.dependents, x);
      end if;
    end method);
+
+
+
+define-primitive-type-deriver
+  (#"fixnum-logand",
+   method (primitive :: <primitive>, arg-types :: <list>)
+       => res :: <values-ctype>;
+     let (x-sign, x-bits) = sign-and-bits-from-type(arg-types.first);
+     let (y-sign, y-bits) = sign-and-bits-from-type(arg-types.second);
+     if (x-sign == #"off" | y-sign == #"off")
+       type-from-sign-and-bits(#"off", min(x-bits, y-bits));
+     elseif (x-sign == #"on" & y-sign == #"on")
+       type-from-sign-and-bits(#"on", max(x-bits, y-bits));
+     else
+       type-from-sign-and-bits(#"either", max(x-bits, y-bits));
+     end if;
+   end method);
+
+
+define generic sign-and-bits-from-type (ctype :: <ctype>)
+    => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
+
+define method sign-and-bits-from-type (ctype :: <ctype>)
+    => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
+  sign-and-bits-from-range(runtime-$minimum-integer, runtime-$maximum-integer);
+end method sign-and-bits-from-type;
+
+define method sign-and-bits-from-type (ctype :: <limited-integer-ctype>)
+    => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
+  sign-and-bits-from-range(ctype.high-bound, ctype.low-bound);
+end method sign-and-bits-from-type;
+
+
+define method sign-and-bits-from-range
+    (high :: <extended-integer>, low :: <extended-integer>)
+    => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
+  values(if (high < 0)
+	   if (low < 0) #"on" else #"either" end if;
+	 else
+	   if (low < 0) #"either" else #"off" end if;
+	 end,
+	 max(high.integer-length, low.integer-length));
+end method sign-and-bits-from-range;
+
+
+define method type-from-sign-and-bits
+    (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>)
+    => res :: <ctype>;
+  let low = if (sign == #"off")
+	      0;
+	    else
+	      ash(as(<extended-integer>, -1), bits);
+	    end if;
+  let high = if (sign == #"on")
+	       -1;
+	     else
+	       lognot(ash(as(<extended-integer>, -1), bits));
+	     end if;
+  make-canonical-limited-integer(specifier-type(#"<integer>"), low, high);
+end method type-from-sign-and-bits;
 
 
 define-primitive-transformer
