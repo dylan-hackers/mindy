@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.38 1996/02/18 14:17:27 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.39 1996/02/21 02:43:46 wlott Exp $
 
 /*
 
@@ -463,9 +463,10 @@ begin
   register-object-id(#"basic-name", #x0088);
   register-object-id(#"type-cell-name", #x0089);
   register-object-id(#"method-name", #x008A);
-  register-object-id(#"module-variable", #x008B);
-  register-object-id(#"module", #x008C);
-  register-object-id(#"library", #x008D);
+  register-object-id(#"generated-name", #x008B);
+  register-object-id(#"module-variable", #x008C);
+  register-object-id(#"module", #x008D);
+  register-object-id(#"library", #x008E);
 
   // FER:
   register-object-id(#"compiler-policy", #x0090);
@@ -527,12 +528,13 @@ begin
   register-object-id(#"constant-method-definition", #x00C6);
   register-object-id(#"variable-definition", #x00C7);
   register-object-id(#"class-definition", #x00C8);
-  register-object-id(#"define-bindings-macro-definition", #x00C9);
-  register-object-id(#"define-macro-definition", #x00CA);
-  register-object-id(#"function-macro-definition", #x00CB);
-  register-object-id(#"statement-macro-definition", #x00CC);
-  register-object-id(#"seal-info", #x00CD);
-  register-object-id(#"seal-generic", #x00CE);
+  register-object-id(#"init-function-definition", #x00C9);
+  register-object-id(#"define-bindings-macro-definition", #x00CA);
+  register-object-id(#"define-macro-definition", #x00CB);
+  register-object-id(#"function-macro-definition", #x00CC);
+  register-object-id(#"statement-macro-definition", #x00CD);
+  register-object-id(#"seal-info", #x00CE);
+  register-object-id(#"seal-generic", #x00CF);
 
   register-object-id(#"backend-var-info", #x00D0);
   // register-object-id(#"function-info", #x00D1);  ### Needed?
@@ -648,7 +650,7 @@ begin
   register-object-id(#"parameter", #x183);
   register-object-id(#"keyword-parameter", #x184);
   register-object-id(#"method-parse", #x185);
-  register-object-id(#"case-clause", #x186);
+  // register-object-id(#"case-clause", #x186); -- no longer used.
   register-object-id(#"property-set", #x187);
   register-object-id(#"use-clause", #x188);
   register-object-id(#"export-clause", #x189);
