@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.98 1996/02/09 03:32:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.99 1996/02/09 17:01:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -358,26 +358,35 @@ end;
 //
 define constant c-prefix-transform :: <vector>
   = begin
-      let map = make(<byte-string>, size: 256);
-      for (i from 0 below 256)
-	map[i] := as(<character>, i);
-      end for;
-      map[as(<integer>, '-')] := '_';
-      map[as(<integer>, '%')] := '_';
-      map[as(<integer>, '*')] := 'O';
-      map[as(<integer>, '/')] := 'O';
-      map[as(<integer>, '+')] := 'O';
-      map[as(<integer>, '~')] := 'O';
-      map[as(<integer>, '$')] := '_';
-      map[as(<integer>, '?')] := 'P';
-      map[as(<integer>, '!')] := 'D';
-      map[as(<integer>, '<')] := 'C';
-      map[as(<integer>, '>')] := 'C';
-      map[as(<integer>, '=')] := 'O';
-      map[as(<integer>, '&')] := 'O';
-      map[as(<integer>, '|')] := 'O';
-      map[as(<integer>, '^')] := 'O';
+      let map = make(<byte-string>, size: 256, fill: 'X');
+      local
+	method fill-range
+	    (start :: <character>, stop :: <character>, xform :: <function>)
+	    => ();
+	  for (i from as(<integer>, start) to as(<integer>, stop))
+	    map[i] := xform(as(<character>, i));
+	  end for;
+	end method fill-range;
       map[as(<integer>, ' ')] := '_';
+      map[as(<integer>, '!')] := 'D';
+      map[as(<integer>, '$')] := '_';
+      map[as(<integer>, '%')] := '_';
+      map[as(<integer>, '&')] := 'O';
+      map[as(<integer>, '*')] := 'O';
+      map[as(<integer>, '+')] := 'O';
+      map[as(<integer>, '-')] := '_';
+      map[as(<integer>, '/')] := 'O';
+      fill-range('0', '9', identity);
+      map[as(<integer>, '<')] := 'C';
+      map[as(<integer>, '=')] := 'O';
+      map[as(<integer>, '>')] := 'C';
+      map[as(<integer>, '?')] := 'P';
+      fill-range('A', 'Z', as-lowercase);
+      map[as(<integer>, '^')] := 'O';
+      map[as(<integer>, '_')] := '_';
+      fill-range('a', 'z', identity);
+      map[as(<integer>, '|')] := 'O';
+      map[as(<integer>, '~')] := 'O';
       map;
     end;
 
