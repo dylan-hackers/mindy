@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.5 1994/11/06 19:57:53 rgs Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.6 1994/11/06 23:03:24 rgs Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -75,7 +75,7 @@ SRCS = parser.tab.c lexer.c \
 	char.c handler.c instance.c input.c driver.c \
 	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
 
-EXTERN-INCLUDES = 
+EXTERN-INCLUDES = malloc.inc
 
 mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy
