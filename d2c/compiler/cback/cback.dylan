@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.12 2000/08/11 12:54:44 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.13 2000/10/04 05:29:12 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -256,7 +256,7 @@ end;
 define method maybe-emit-include
     (name :: <byte-string>, file :: <file-state>)
   unless (element(file.file-includes-exist-for, name, default: #f))
-    format(file.file-body-stream, "#include <%s>\n\n", name);
+    format(file.file-body-stream, "#include \"%s\"\n\n", name);
     element(file.file-includes-exist-for, name) := #t;
   end;
 end;
