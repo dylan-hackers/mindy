@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.49 2000/06/07 09:21:13 robmyers Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.50 2000/06/11 20:43:22 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -180,7 +180,7 @@ fi
 # Configure libtool.
 #--------------------------------------------------------------------
 
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 LIBTOOL="${CONFIG_SHELL-/bin/sh} $builddir/libtool"
 
 AC_MSG_CHECKING(whether or not to build shared libraries)
