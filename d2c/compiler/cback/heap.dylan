@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.5 1998/09/09 13:40:17 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.6 1999/01/25 12:09:41 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -55,6 +55,10 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 // If the class is open, then other libraries can add additional subclasses.
 // If we dumped the class in a local heap, we would have no way of including
 // these new subclasses in the direct-subclasses list.
+//
+// Also, due to the new %subclass? code, we have to dump all classes to the
+// global heap, since we have to calculate the type inclusion matrix after
+// we know about all of them.
 //
 // A related issue is slot descriptors for open classes.  Slot descriptors
 // contain a ``position table'' mapping (sub)class to slot position.  But slot
@@ -815,10 +819,12 @@ end method defer-for-global-heap?;
 // when originally defined must be defered because we *must* not ever dump
 // more than one copy.
 // 
+// New: dump all the classes to global heap.
 define method defer-for-global-heap?
     (object :: <cclass>, state :: <local-state>)
     => defer? :: <boolean>;
-  ~object.sealed? | object.defined-externally?;
+//  ~object.sealed? | object.defined-externally?;
+  #t;
 end method defer-for-global-heap?;
 
 // Likewise, slot infos for open classes must be defered because their
@@ -1119,6 +1125,11 @@ define method spew-object
 		class-all-slot-descriptors:
 		  make(<literal-simple-object-vector>,
 		       contents: object.all-slot-infos,
+		       sharable: #t),
+		class-bucket: as(<ct-value>, object.bucket),
+		class-row:
+		  make(<literal-simple-object-vector>,
+		       contents: map(curry(as,<ct-value>), object.row),
 		       sharable: #t));
 end;
 

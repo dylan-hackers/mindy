@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.1 1998/05/03 19:55:37 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.2 1999/01/25 12:09:49 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -107,6 +107,12 @@ define class <class> (<type>)
   // is computed.
   slot class-each-subclass-slots :: <simple-object-vector>;
 */
+  // 
+  // The bucket this class occupies for use in subtype testing.
+  slot class-bucket :: <integer>, required-init-keyword: class-bucket:;
+  //
+  // The row of the type inclusion test matrix for this class.
+  slot class-row :: <simple-object-vector>, init-value: #[];
 end;
 
 /*

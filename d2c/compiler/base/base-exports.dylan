@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.8 1999/01/06 06:51:35 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.9 1999/01/25 12:09:38 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -711,7 +711,7 @@ define module classes
     instance-slots-layout, vector-slot,
     vector-slot-setter, data-word-slot,
     class-heap-fields, class-heap-fields-setter,
-    <defined-cclass>, class-defn, class-defn-setter,
+    <defined-cclass>, class-defn, class-defn-setter, bucket, row,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
     slot-type, slot-type-setter, slot-getter, slot-read-only?,
@@ -743,6 +743,7 @@ define module classes
 
     inherit-slots, inherit-overrides, assign-unique-ids,
     layout-instance-slots, layout-slots-for, layout-slots-for-if-possible,
+    calculate-type-inclusion-matrix,
 
     // For dumper...
     <limited-cclass>, each-subclass-slots-count;

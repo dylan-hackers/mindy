@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.1 1998/05/03 19:55:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.2 1999/01/25 12:09:50 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1052,6 +1052,7 @@ end method %subtype?;
 //
 define method %subtype? (class1 :: <class>, class2 :: <class>)
     => res :: <boolean>;
+/* This is the old implementation.
   // This could be recoded simply as member(class2, class1.superclasses), but
   // that would marginally slower, and this is in the critical path.
   if (class1 == class2)
@@ -1068,7 +1069,10 @@ define method %subtype? (class1 :: <class>, class2 :: <class>)
 	#f;
       end for;
     end block;
-  end if;
+  end if; */
+  // the new code 
+  class1 == class2 |
+    class1.class-row[class2.class-bucket] == class2.class-row[class2.class-bucket]; 
 end method %subtype?;
 
 // %subtype?(<direct-instance>,<type>) -- internal gf method.

@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.3 1998/08/27 19:56:15 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.4 1999/01/25 12:09:39 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -147,6 +147,25 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // Used by the heap builder.
   slot class-heap-fields :: false-or(<simple-object-vector>),
     init-value: #f;
+  // 
+  // The bucket this class occupies for use in subtype testing.
+  slot bucket :: <integer>;
+  //
+  // The row of the type inclusion test matrix for this class.
+  slot row :: <vector>;
+  // 
+  // This is used to calculate the type inclusion matrix and
+  // holds the joins of each class.
+  slot joins :: <stretchy-vector> = make(<stretchy-vector>);
+  slot used :: <stretchy-vector> = make(<stretchy-vector>);
+  //
+  // This holds the length of the longest path to <object>
+  slot level :: <integer>, init-value: 0;
+  //
+  // Is this a plain, join or spine class? This is used to
+  // separate the classes into single-inheritance and
+  // multiple-inheritance sets.
+  slot inheritance-type :: one-of (#"plain", #"join", #"spine", #f), init-value: #f;
 end class;
 
 define sealed domain make (singleton(<cclass>));
@@ -601,6 +620,213 @@ define constant slow-compute-cpl = method (cl, superclasses)
 
   reverse!(rcpl);
 end method;
+
+
+// computation of compressed matrix for type inclusion tests
+
+// calculate-type-inclusion-matrix -- exported.
+//
+// Computes the binary matrix for type inclusion tests (cinstance?) and
+// saves each row in every <cclass>.
+//
+
+define method calculate-type-inclusion-matrix () => ();
+  // find <object>
+  format(*debug-output*, " find <object>\n");
+  let root-object = choose (method(x) x.direct-superclasses == #() end method, *all-classes*).first;
+  
+  // recursion for level calculation
+  format(*debug-output*, " recursion for level calculation\n");
+
+  compute-level(root-object);
+  
+  // calculate inheritance type of the classes
+  // plain classes are classes with only one direct superclass and only plain subclasses
+  // join classes are classes with multiple direct superclasses and only plain subclasses
+  // spine classes are superclasses of join classes
+  format(*debug-output*, " calculate inheritance type of the classes\n");
+
+  for (i in *all-classes*)
+    unless(i.inheritance-type)
+      if(i.direct-superclasses.size > 1)
+	i.inheritance-type := #"join";
+	format(*debug-output*, "  %= is a join type\n", i.cclass-name.name-symbol);
+	do-all-superclasses(i, method(x)
+				   x.inheritance-type := #"spine";
+			       end method);
+      else
+	i.inheritance-type := #"plain";
+      end if;
+    end unless;
+  end for;
+	  
+  let join-list = choose(method (x) 
+		       x.inheritance-type == #"join";
+		     end method, *all-classes*);
+
+  let spine-list = choose(method (x) 
+		       x.inheritance-type == #"spine";
+		     end method, *all-classes*);
+
+  let plain-list = choose(method (x) 
+		       x.inheritance-type == #"plain";
+		     end method, *all-classes*);
+
+  let level-order = method (x :: <sequence>) => (result :: <sequence>)
+		      sort(x, test: method (x, y)
+				      x.level < y.level;
+				    end method);
+		    end method;
+
+  let rev-level-order = method (x :: <sequence>) => (result :: <sequence>)
+			  sort(x, test: method (x, y)
+					  x.level > y.level;
+					end method);
+			end method;
+
+
+  // store joins in superclasses
+  format(*debug-output*, " store joins in superclasses\n");
+  for (x in join-list)
+    for(y in x.direct-superclasses)
+      y.joins := add!(y.joins, x);
+    end for;
+  end for;
+
+  let buckets = make(<stretchy-vector>);
+  let found = #f;
+
+  // assign buckets to spine types
+  format(*debug-output*, " assign buckets to spine types\n");
+  for (x in rev-level-order(spine-list))
+    found := #f;
+    block(break)
+      for (b in buckets)
+	if(intersection(x.joins, b.joins).size == 0)
+	  found := #t;
+	  b.elements := add!(b.elements, x);
+	  b.joins := union(b.joins, x.joins);
+	  x.used := add!(x.used, b);
+	  break();
+	end if;
+      end for;
+    end block;
+    if(found = #f)
+      let b = make(<bucket>);
+      buckets := add!(buckets, b);
+      b.joins := x.joins;
+      b.elements := add!(b.elements, x);
+      x.used := add!(x.used, b);
+    end if;
+    for(y in x.direct-superclasses)
+      y.joins := union(y.joins, x.joins);
+    end for;
+  end for;
+
+  for (x in level-order(spine-list))
+    for(y in x.direct-subclasses)
+      y.used := union(y.used, x.used);
+    end for;
+  end for;  
+
+  // assign non-spine types
+  format(*debug-output*, " assign non-spine types\n");
+  for(x in level-order(union(plain-list, join-list)))
+    found := #f;
+    block(break)
+      for(b in buckets)
+	if(~member?(b, x.used))
+	  found := #t;
+	  b.elements := add!(b.elements, x);
+	  x.used := add!(x.used, b);
+	  break();
+	end if;
+      end for;
+    end block;
+    if(~found)
+      let b = make(<bucket>);
+      buckets := add!(buckets, b);
+      b.elements := add!(b.elements, x);
+      x.used := add!(x.used, b);
+    end if;
+    for(y in x.direct-subclasses)
+      y.used := union(y.used, x.used);
+    end for;
+  end for;
+  
+  let P = size(buckets);
+
+  let sum = 0;	
+
+  // build matrix
+  format(*debug-output*, " build matrix\n");
+  for(b in buckets, n from 0)
+    sum := sum + b.elements.size;
+    for(x in b.elements, c from 1)
+      x.bucket := n;
+      x.row := make(<vector>, size: P, fill: 0);
+      x.row[n] := c;
+    end for;
+  end for;
+
+  format(*debug-output*, "  visited nodes: %=, total nodes: %=, joins: %=, spines: %=, plains: %=\n", sum, *all-classes*.size, join-list.size, spine-list.size, plain-list.size);
+  format(*debug-output*, "  Number of buckets: %=\n", P);
+
+/*
+  format(*debug-output*, "  visited nodes: %=, total nodes: %=\n", sum, *all-classes*.size);
+*/
+
+  // fill in matrix fields
+  format(*debug-output*, " fill in matrix fields\n\n   Matrix:\n\n");
+  for(x in level-order(*all-classes*))
+    for(y in x.direct-subclasses)
+      for(i from 0 below P)
+	if(y.row[i] == 0)
+	  y.row[i] := x.row[i];
+	end if;
+      end for;
+    end for;
+    for(i from 0 below P)
+      format(*debug-output*, " %= : ", x.row[i]);
+    end for;
+    format(*debug-output*, " %= (%=, %=) \n", x.cclass-name.name-symbol, x.bucket, x.inheritance-type);
+  end for;
+  format(*debug-output*, "\n");
+
+  let my-csubtype? = method(a, b) => (result :: <boolean>)
+			a.row[b.bucket] = b.row[b.bucket];
+		    end method;
+
+  for(i in *all-classes*)
+    for(j in *all-classes*)
+      if(csubtype?(i, j) ~= my-csubtype?(i, j))
+	format(*debug-output*, "Subtype mismatch, csubtype?(%=, %=) is %=\n", i.cclass-name.name-symbol, j.cclass-name.name-symbol, csubtype?(i, j));
+      end if;
+    end for;
+  end for;
+
+end method calculate-type-inclusion-matrix;
+
+define method compute-level ( c :: <cclass> ) => ();
+  for(i in c.direct-subclasses)
+    i.level := max(i.level, c.level + 1);
+  end for;
+  for (i in c.direct-subclasses)
+    compute-level(i);
+  end for;
+end method;
+
+define method do-all-superclasses ( c :: <cclass>, f :: <function>) => ()
+    for(i in c.direct-superclasses)
+      f(i);
+      do-all-superclasses(i, f);
+    end for;
+end method do-all-superclasses;
+
+define class <bucket> (<object>)
+  slot elements :: <stretchy-vector> = make(<stretchy-vector>);
+  slot joins :: <stretchy-vector> = make(<stretchy-vector>);
+end class <bucket>;
 
 
 // Slot inheritance.

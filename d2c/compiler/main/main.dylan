@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.11 1999/01/06 06:51:39 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.12 1999/01/25 12:09:43 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1024,6 +1024,7 @@ define method compile-library (state :: <main-unit-state>)
     build-ar-file(state);
     if (state.unit-executable)
       log-target(state.unit-executable);
+      calculate-type-inclusion-matrix();
       build-da-global-heap(state);
       build-inits-dot-c(state);
       build-executable(state);
