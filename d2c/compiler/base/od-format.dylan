@@ -484,8 +484,8 @@ register-object-id(#"constant-info", #x00D2);
 register-object-id(#"constant-function-info", #x00D3);
 register-object-id(#"constant-method-info", #x00D4);
 
-register-object-id(#"c-representation", #x00D8);
-register-object-id(#"general-representation", #x00D9);
+register-object-id(#"general-representation", #x00D8);
+register-object-id(#"heap-representation", #x00D9);
 register-object-id(#"immediate-representation", #x00DA);
 register-object-id(#"data-word-representation", #x00DB);
 
