@@ -172,15 +172,15 @@ end macro;
 
 define macro iterate
   { iterate ?:name (?clauses:*) ?:body end }
-    => { iterate-aux ?name
-	   iterate-param-helper(?clauses)
-           iterate-value-helper(?clauses)
+    => { %iterate-aux ?name
+	   %iterate-param-helper(?clauses)
+           %iterate-value-helper(?clauses)
 	   ?body
          end }
 end;
 
-define macro iterate-aux
-  { iterate-aux ?:name
+define macro %iterate-aux
+  { %iterate-aux ?:name
       ?param-clauses:macro
       ?value-clauses:macro
       ?:body
@@ -191,23 +191,23 @@ define macro iterate-aux
          ?name(?value-clauses) }
 end macro;
 
-define macro iterate-param-helper
-  { iterate-param-helper(?clauses) }
+define macro %iterate-param-helper
+  { %iterate-param-helper(?clauses) }
     => { ?clauses }
 clauses:
-  { ?:name = ?value:*, ... }
-    => { ?name :: <object>, ... }
+  { ?:name :: ?type:*, ... }
+    => { ?name :: ?type, ... }
   { ?:name :: ?type:* = ?value:*, ... }
     => { ?name :: ?type, ... }
   { } => { }
 end;
 
-define macro iterate-value-helper
-  { iterate-value-helper(?clauses) }
+define macro %iterate-value-helper
+  { %iterate-value-helper(?clauses) }
     => { ?clauses }
 clauses:
-  { ?:name = ?value:*, ... }
-    => { ?value, ... }
+  { ?:name :: ?type:*, ... }
+    => { #f, ... }
   { ?:name :: ?type:* = ?value:*, ... }
     => { ?value, ... }
   { } => { }
