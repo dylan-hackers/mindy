@@ -447,12 +447,22 @@ register-object-id(#"lexical-var-info", #x009E);
 
 register-object-id(#"let-assignment", #x00A0);
 register-object-id(#"set-assignment", #x00A1);
-
-register-object-id(#"define-library-tlf", #x00B0);
-register-object-id(#"define-module-tlf", #x00B1);
-register-object-id(#"define-library/module-use-clause", #x00B2);
-register-object-id(#"define-binding-tlf", #x00B3);
-register-object-id(#"here-be-roots", #x00B4);
+register-object-id(#"join-operation", #x00A2);
+register-object-id(#"primitive-operation", #x00A3);
+register-object-id(#"known-call-operation", #x00A4);
+register-object-id(#"unknown-call-operation", #x00A5);
+register-object-id(#"mv-call-operation", #x00A6);
+register-object-id(#"error-call-operation", #x00A7);
+register-object-id(#"module-var-ref-operation", #x00A8);
+register-object-id(#"module-var-set-operation", #x00A9);
+register-object-id(#"self-tail-call-operation", #x00AA);
+register-object-id(#"slot-ref-operation", #x00AB);
+register-object-id(#"slot-set-operation", #x00AC);
+register-object-id(#"literal-constant", #x00AD);
+register-object-id(#"definition-constant-leaf", #x00AE);
+register-object-id(#"uninitialized-value-leaf", #x00AF);
+register-object-id(#"method-literal", #x00B0);
+register-object-id(#"exit-function-literal", #x00B1);
 
 register-object-id(#"generic-definition", #x00C0);
 register-object-id(#"implicit-generic-definition", #x00C1);
@@ -467,6 +477,13 @@ register-object-id(#"define-bindings-macro-definition", #x00C9);
 register-object-id(#"define-macro-definition", #x00CA);
 register-object-id(#"function-macro-definition", #x00CB);
 register-object-id(#"statement-macro-definition", #x00CC);
+
+
+register-object-id(#"define-library-tlf", #x00E0);
+register-object-id(#"define-module-tlf", #x00E1);
+register-object-id(#"define-library/module-use-clause", #x00E2);
+register-object-id(#"define-binding-tlf", #x00E3);
+register-object-id(#"here-be-roots", #x00E4);
 
 /*
 generic-function
@@ -527,8 +544,8 @@ end method;
 define method dump-header-word
     (hi :: <fixed-integer>, obj :: <fixed-integer>, buf :: <dump-buffer>) => ();
 
-  if (buf.current-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
-  let i = buf.current-pos;
+  if (buf.buffer-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
+  let i = buf.buffer-pos;
 
   let bbuf = buf.dump-buffer;
   // ### big-endian 32 assumption.  Should be a primitive.
@@ -537,7 +554,7 @@ define method dump-header-word
   bbuf[i + 2] := logand(ash(obj, -8), #xFF);
   bbuf[i + 3] := logand(obj, #xFF);
 
-  buf.current-pos := i + $word-bytes;
+  buf.buffer-pos := i + $word-bytes;
 end method;
 
 
@@ -572,15 +589,36 @@ define constant $od-initial-buffer-size = #x2000;
 // faster since it's specialized.
 //
 define /* exported */ class <dump-buffer> (<object>)
+  //
+  // List of pairs (buffer . length) of previously filled buffers (in reverse
+  // order.)   This output comes before the current buffer contents.
+  slot previous-buffers :: <list>, init-value: #();
+  //
+  // Total size of all previously dumped stuff.  This must be added to
+  // current-pos to get the actual current file position.
+  slot previous-size :: <fixed-integer>, init-value: 0;
+
+  //
+  // Area where we are currently writing output.
   slot dump-buffer :: <buffer>, 
     init-function: curry(make, <buffer>, size: $od-initial-buffer-size);
 
-  // Current position and end are byte offsets, but are always word-aligned.
-  /* exported */ slot current-pos :: <buffer-index>, init-value: 0;
+  // Current position and end are byte offsets in dump-buffer, but are always
+  // word-aligned.
+  slot buffer-pos :: <buffer-index>, init-value: 0;
   slot dump-end :: <buffer-index>, init-value: $od-initial-buffer-size;
 
   slot dump-stack :: <list>, init-value: #();
 end class;
+
+
+// The current "file position" in the dump.  User primarily to record object
+// starting positions.
+//
+define /* exported */ method current-pos (buf :: <dump-buffer>) 
+ => res :: <fixed-integer>;
+  buf.previous-size + buf.buffer-pos;
+end method;
 
 
 // Overall state of dumping, probably involves at least one other buffer (for
@@ -632,6 +670,15 @@ define /* exported */ method begin-dumping
 end method;
 
 
+// Return a list of pairs describing all of the buffers in a dump-buffer.  This
+// is the previous-buffers appended to a pair describing the current buffer &
+// reversed to put in forward order.
+//
+define method all-dump-buffers (buf :: <dump-buffer>) => res :: <list>;
+  reverse(pair(pair(buf.dump-buffer, buf.buffer-pos), buf.previous-buffers));
+end method;
+
+
 // A big prime scaled by word-bytes.
 define constant $hash-inc = 134217689 * $word-bytes;
 
@@ -646,20 +693,21 @@ define constant $rot-mask
 // state.  Use of a large prime increment ensures that the hashed words will be
 // scattered about the data.
 //
-// ### It would be good to throw in the time-of-day if we could get it.
-//
 define method compute-unit-hash (state :: <dump-state>) => <integer>;
-  let len = state.current-pos;
-  let buf = state.dump-buffer;
-  for (count from 0 to 100,
-       i = modulo(object-hash(state), truncate/(len, $word-bytes)) * $word-bytes
-         then modulo(i + $hash-inc, len),
-       res = as(<extended-integer>, 0)
-         then logxor(logior(ash(res, 3 - $word-bits), 
-                            ash(logand(res, $rot-mask), 3)),
-		     buffer-word(buf, i)))
-    finally res;
+
+  let res = as(<extended-integer>, get-time-of-day());
+  let hash-idx = object-hash(state) * $word-bytes;
+  for (wot in state.all-dump-buffers)
+    let buf = wot.head;
+    let len = wot.tail;
+    for (count from 0 to 20)
+      hash-idx := modulo(hash-idx + $hash-inc, len);
+      res := logxor(logior(ash(res, 3 - $word-bits), 
+                           ash(logand(res, $rot-mask), 3)),
+		    buffer-word(buf, hash-idx));
+    end for;
   end for;
+  res;
 end method;
 
 
@@ -737,6 +785,16 @@ define method build-local-map (state :: <dump-state>)
 end method;
 
 
+// Write all the data in a dump buffer to Stream.
+// 
+define method write-dump-buffer (buf :: <dump-buffer>, stream :: <stream>)
+ => ();
+  for (wot in buf.all-dump-buffers)
+    write(wot.head, stream, end: wot.tail);
+  end for;
+end method;
+
+
 // Build the index and actually write stuff out.
 //
 define /* exported */ method end-dumping (state :: <dump-state>) => ();
@@ -766,15 +824,16 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
 
 		   
   let fname = state.dump-where
-  	      | concatenate(as(<string>, state.dump-name), ".",
+  	      | concatenate(as-lowercase(as(<string>, state.dump-name)),
+	      		    ".",
 	                    $unit-type-strings[state.dump-type],
 			    ".du");
 
   let stream = make(<file-stream>, name: fname, direction: #"output");
-  write(header-buffer.dump-buffer, stream, end: header-buffer.current-pos);
-  let ebuf = state.extern-buf;
-  write(ebuf.dump-buffer, stream, end: ebuf.current-pos);
-  write(state.dump-buffer, stream, end: state.current-pos);
+
+  write-dump-buffer(header-buffer, stream);
+  write-dump-buffer(state.extern-buf, stream);
+  write-dump-buffer(state, stream);
   close(stream);
 end method;
 
@@ -782,18 +841,37 @@ end method;
 
 // Dumper utilities:
 
+// Largest buffer we'll create.  Works around mindy object size limits, and
+// probably also saves some gratuitous copying/paging.
+//
+define constant $dump-buffer-maximum-size = #x10000;
+
 // Increase the size of buffer, leaving room for at least min-bytes more data 
-// (a word multiple.)
+// (a word multiple.)  If the buffer would be bigger than the maximum size,
+// then stash the buffer in the previous-buffers slot and make a new
+// maximum-size one.
+//
+// Note that both the buffer and position may be changed by this operation.
 //
 define method grow-dump-buffer
   (buf :: <dump-buffer>, min-bytes :: <fixed-integer>)
  => ();
   let cur-size = buf.dump-end;
   let new-size = max(cur-size + min-bytes, cur-size * 2);
-  let new-buf = make(<buffer>, size: new-size);
-  copy-into-buffer!(buf.dump-buffer, new-buf, 0);
-  buf.dump-buffer := new-buf;
-  buf.dump-end := new-size;
+  if (new-size > $dump-buffer-maximum-size)
+    buf.previous-buffers
+      := pair(pair(buf.dump-buffer, buf.buffer-pos),
+              buf.previous-buffers);
+    buf.previous-size := buf.previous-size + buf.buffer-pos;
+    buf.buffer-pos := 0;
+    buf.dump-buffer := make(<buffer>, size: $dump-buffer-maximum-size);
+    buf.dump-end := $dump-buffer-maximum-size;
+  else
+    let new-buf = make(<buffer>, size: new-size);
+    copy-into-buffer!(buf.dump-buffer, new-buf, 0);
+    buf.dump-buffer := new-buf;
+    buf.dump-end := new-size;
+  end if;
 end method;
 
 
@@ -801,10 +879,10 @@ end method;
 //
 define /* exported */ method dump-word(obj :: <integer>, buf :: <dump-buffer>)
  => ();
-  if (buf.current-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
-  let start = buf.current-pos;
+  if (buf.buffer-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
+  let start = buf.buffer-pos;
   buffer-word(buf.dump-buffer, start) := obj;
-  buf.current-pos := start + $word-bytes;
+  buf.buffer-pos := start + $word-bytes;
 end method;
 
 
@@ -815,12 +893,13 @@ define /* exported */ method dump-raw-data
   (obj :: <collection>, bsize :: <fixed-integer>, buf :: <dump-buffer>) 
  => ();
   dump-word(bsize, buf);
-  let cpos = buf.current-pos;
   let rounded-bsize = round-to-word(bsize);
-  let new-pos = cpos + rounded-bsize;
-  if (new-pos >= buf.dump-end) grow-dump-buffer(buf, rounded-bsize) end;
-  copy-into-buffer!(obj, buf.dump-buffer, cpos);
-  buf.current-pos := new-pos;
+  if (buf.buffer-pos + rounded-bsize >= buf.dump-end)
+    // may change buffer-pos...
+    grow-dump-buffer(buf, rounded-bsize)
+  end;
+  copy-into-buffer!(obj, buf.dump-buffer, buf.buffer-pos);
+  buf.buffer-pos := buf.buffer-pos + rounded-bsize;
 end method;
 
 
@@ -1039,7 +1118,7 @@ define constant undefined-entry-type = method (#rest args)
   error("Undefined ODF entry type.");
 end method;
 
-define constant $dispatcher-table-size = #x100;
+define constant $dispatcher-table-size = #x400;
 define /* exported */ class <dispatcher> (<object>)
   slot table :: <simple-object-vector>,
     init-function: curry(make, <vector>, size: $dispatcher-table-size,
@@ -1185,7 +1264,9 @@ define method load-data-unit
  => res :: <data-unit>;
 
   let name-guess
-    = concatenate(as(<string>, name), ".", $unit-type-strings[type], ".du");
+    = concatenate(as-lowercase(as(<string>, name)), ".",
+    		  $unit-type-strings[type], ".du");
+
   let stream = (loc & maybe-open(loc)) | maybe-open(name-guess);
   unless (stream)
     error("Can't open object dump file #=", name-guess);
