@@ -3,10 +3,12 @@
 $D2CFLAGS = $D2CFLAGS . ' -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext';
 
 # Solaris doesn't support the Time library because it doesn't have the
-# "timezone" variable.  And windows is even more clueless.
+# "timezone" variable.  Neither does FreeBSD.  And windows is even
+# more clueless.
 #
 if ((! $features{'compiled_for_solaris'})
-    && (! $features{'compiled_for_win32'})) {
+    && (! $features{'compiled_for_win32'})
+    && (! $features{'compiled_for_freebsd'})) {
 	&emit_melange_rule('time-intr');
 
 	do emit_library_rule(
