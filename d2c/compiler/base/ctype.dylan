@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.27 1995/12/05 22:14:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.28 1995/12/06 23:27:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -148,6 +148,19 @@ end method;
 /// potentially return #() if there is no possibly non-abstract class.
 ///
 define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
+
+
+//// CINSTANCE? -- exported
+//
+define method cinstance? (ctv :: <ct-value>, ctype :: <ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+  csubtype?(ctv.ct-value-cclass, ctype);
+end;
+
+define method cinstance? (ctv :: <eql-ct-value>, ctype :: <ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+  csubtype?(ctv.make-canonical-singleton, ctype);
+end;
 
 
 //// CSUBTYPE?
