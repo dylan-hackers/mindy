@@ -79,15 +79,17 @@ define module c-parse
   use self-organizing-list;
   use c-lexer;
   use streams;
+  use standard-io;
   create
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
     <parse-macro-state>, tokenizer, verbose, verbose-setter,
     push-include-level, pop-include-level, objects, process-type-list,
     process-declarator, declare-objects, make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
-    <varargs-declaration>;
+    <varargs-declaration>, <enum-slot-declaration>, constant-value,
+    <integer-type-declaration>, true-type, make-enum-slot;
   export
-    parse, parse-type, parse-macro;
+    parse, parse-type, parse-macro, constant-value;
 end module c-parse;
 
 //----------------------------------------------------------------------
@@ -142,6 +144,19 @@ define method int-value
       int-value(head(expansion), state);
   end case;
 end method;
+
+// Evaluate identifiers in the case where we are *not* evaluating an
+// expression in a CPP line.
+//
+define method int-value
+    (value :: <identifier-token>, state :: <parse-state>)
+  let object-decl = element(state.objects, value.string-value, default: #f);
+  if (instance?(object-decl, <enum-slot-declaration>))
+    object-decl.constant-value;
+  else
+    parse-error(value, "Value in constant expression must be an integer.");
+  end if;
+end method int-value;
 
 //----------------------------------------------------------------------
 // Generic parser boilerplate.
@@ -299,7 +314,7 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   // "defined".
   //
   if (~instance?($state, <parse-cpp-state>) | $r1.string-value ~= "defined")
-    error("Function calls not allowed in constant expressions.");
+    parse-error($state,"Function calls not allowed in constant expressions.");
   elseif (element($r3.generator.cpp-table, $r3.string-value, default: #f))
     1;
   else
@@ -387,9 +402,17 @@ cast-expr (unary-expr)
   $r1;
 %
 
-;cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
-;  error("cast-expr not yet handled.");
-;%
+cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
+  let result = int-value($r4, $state);
+  if (instance?(result, <integer>)
+       & instance?($r2.true-type, <integer-type-declaration>))
+    result;
+  else
+    parse-error
+      ($state,
+       "Melange only handles compile time casts from integer to integer");
+  end if;
+%
 
 multiplicative-expr (cast-expr)
   $r1;
@@ -745,15 +768,21 @@ Enum-Specifier (<ENUM-Token> <name-token>)
 %
 
 enumerator-list (enumerator)
-  list($r1);
+  list(make-enum-slot($r1.head, $r1.tail, #f, $state));
 %
 
 enumerator-list (enumerator-list <comma-token> enumerator)
-  pair($r3, $r1);
+  // HACK: We depend here on the fact that this parser generator evaluates
+  // the subtrees left-to-right.
+  //
+  // We do all of this on the fly because some (i.e. Apple's) C compilers
+  // let later enum values be computed based upon those earlier in the 
+  // same enum declaration.
+  pair(make-enum-slot($r3.head, $r3.tail, $r1.head, $state), $r1);
 %
 
 enumerator (identifier)
-  $r1.value
+  pair($r1.value, #f);
 %
 
 enumerator (identifier <assign-token> constant-expr)
@@ -1194,7 +1223,7 @@ define method find-action (table, token)
   if (action)
     action;
   else
-    parse-error(token, "Parse error at or before %=.", token);
+    parse-error(token, "Parse error at or before %=.", token.string-value);
   end;
 end;
 

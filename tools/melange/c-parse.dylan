@@ -77,7 +77,6 @@ define module c-parse
   use dylan;
   use extensions;
   use self-organizing-list;
-    use self-organizing-list;
   use c-lexer;
   use streams;
   use standard-io;
@@ -87,11 +86,11 @@ define module c-parse
     push-include-level, pop-include-level, objects, process-type-list,
     process-declarator, declare-objects, make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
-    <varargs-declaration>;
+    <varargs-declaration>, <enum-slot-declaration>, constant-value,
+    <integer-type-declaration>, true-type, make-enum-slot;
   export
-    parse, parse-type, parse-macro;
+    parse, parse-type, parse-macro, constant-value;
 end module c-parse;
-
 
 //----------------------------------------------------------------------
 // Simple parser support 
@@ -145,6 +144,19 @@ define method int-value
       int-value(head(expansion), state);
   end case;
 end method;
+
+// Evaluate identifiers in the case where we are *not* evaluating an
+// expression in a CPP line.
+//
+define method int-value
+    (value :: <identifier-token>, state :: <parse-state>)
+  let object-decl = element(state.objects, value.string-value, default: #f);
+  if (instance?(object-decl, <enum-slot-declaration>))
+    object-decl.constant-value;
+  else
+    parse-error(value, "Value in constant expression must be an integer.");
+  end if;
+end method int-value;
 
 //----------------------------------------------------------------------
 // Generic parser boilerplate.
@@ -209,22 +221,22 @@ define class <cpp-parse-token> (<token>) end class;
 //  %
 //----------------------------------------------------------------------
 
-define constant *action-table* = make(<vector>, size: 213);
-define constant *production-table* = make(<vector>, size: 134);
+define constant *action-table* = make(<vector>, size: 216);
+define constant *production-table* = make(<vector>, size: 135);
 
 *action-table*[0] :=
   // S-PRIME -> * FILE
-  make-action-table(make(<shift>, on: <ALIEN-NAME-TOKEN>, state: 199),
+  make-action-table(make(<shift>, on: <ALIEN-NAME-TOKEN>, state: 202),
                     make(<shift>, on: <BEGIN-INCLUDE-TOKEN>, state: 2),
                     make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <CPP-PARSE-TOKEN>, state: 209),
+                    make(<shift>, on: <CPP-PARSE-TOKEN>, state: 212),
                     make(<shift>, on: <END-INCLUDE-TOKEN>, state: 3),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <EOF-TOKEN>, state: 1),
                     make(<shift>, on: <EXTERN-TOKEN>, state: 5),
-                    make(<shift>, on: <MACRO-PARSE-TOKEN>, state: 204),
+                    make(<shift>, on: <MACRO-PARSE-TOKEN>, state: 207),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <TYPEDEF-TOKEN>, state: 4),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
@@ -236,21 +248,6 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *action-table*[2] :=
   // EXTERNAL-DEFINITION -> <BEGIN-INCLUDE-TOKEN> *
-  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 130),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 130),
-                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 130),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 130),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 130),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 130),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 130),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 130),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 130),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 130),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 130),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 130));
-
-*action-table*[3] :=
-  // EXTERNAL-DEFINITION -> <END-INCLUDE-TOKEN> *
   make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 131),
                     make(<reduce>, on: <CONST-TOKEN>, production: 131),
                     make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 131),
@@ -264,24 +261,23 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 131),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 131));
 
+*action-table*[3] :=
+  // EXTERNAL-DEFINITION -> <END-INCLUDE-TOKEN> *
+  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 132),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 132),
+                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 132),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 132),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 132),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 132),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 132),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 132),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 132),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 132),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 132),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 132));
+
 *action-table*[4] :=
   // STORAGE-CLASS-SPECIFIER -> <TYPEDEF-TOKEN> *
-  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 65),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 65),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 65),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 65),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 65),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 65),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 65),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 65),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 65),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 65),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 65),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 65),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 65));
-
-*action-table*[5] :=
-  // STORAGE-CLASS-SPECIFIER -> <EXTERN-TOKEN> *
   make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 66),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 66),
                     make(<reduce>, on: <EXTERN-TOKEN>, production: 66),
@@ -296,34 +292,13 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 66),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 66));
 
-*action-table*[6] :=
-  // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER *
-  // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER * DECLARATION-SPECIFIERS
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <EXTERN-TOKEN>, state: 5),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 58),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 58),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 58),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 58),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <TYPEDEF-TOKEN>, state: 4),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[7] :=
-  // TYPE-SPECIFIER -> <TYPE-SPECIFIER-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 67),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 67),
+*action-table*[5] :=
+  // STORAGE-CLASS-SPECIFIER -> <EXTERN-TOKEN> *
+  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 67),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 67),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 67),
                     make(<reduce>, on: <EXTERN-TOKEN>, production: 67),
                     make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 67),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 67),
                     make(<reduce>, on: <LPAREN-TOKEN>, production: 67),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 67),
                     make(<reduce>, on: <SEMICOLON-TOKEN>, production: 67),
                     make(<reduce>, on: <STAR-TOKEN>, production: 67),
                     make(<reduce>, on: <STRUCT-TOKEN>, production: 67),
@@ -333,8 +308,25 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 67),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 67));
 
-*action-table*[8] :=
-  // TYPE-SPECIFIER -> <CONST-TOKEN> *
+*action-table*[6] :=
+  // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER *
+  // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER * DECLARATION-SPECIFIERS
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <EXTERN-TOKEN>, state: 5),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 59),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 59),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 59),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 59),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <TYPEDEF-TOKEN>, state: 4),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[7] :=
+  // TYPE-SPECIFIER -> <TYPE-SPECIFIER-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 68),
                     make(<reduce>, on: <CONST-TOKEN>, production: 68),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 68),
@@ -353,8 +345,8 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 68),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 68));
 
-*action-table*[9] :=
-  // TYPE-SPECIFIER -> <VOLATILE-TOKEN> *
+*action-table*[8] :=
+  // TYPE-SPECIFIER -> <CONST-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 69),
                     make(<reduce>, on: <CONST-TOKEN>, production: 69),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 69),
@@ -373,35 +365,8 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 69),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 69));
 
-*action-table*[10] :=
-  // STRUCT-OR-UNION -> <STRUCT-TOKEN> *
-  make-action-table(make(<reduce>, on: <LCURLY-TOKEN>, production: 76),
-                    make(<reduce>, on: <NAME-TOKEN>, production: 76));
-
-*action-table*[11] :=
-  // STRUCT-OR-UNION -> <UNION-TOKEN> *
-  make-action-table(make(<reduce>, on: <LCURLY-TOKEN>, production: 77),
-                    make(<reduce>, on: <NAME-TOKEN>, production: 77));
-
-*action-table*[12] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <NAME-TOKEN>
-  make-action-table(make(<shift>, on: <LCURLY-TOKEN>, state: 13),
-                    make(<shift>, on: <NAME-TOKEN>, state: 179));
-
-*action-table*[13] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> * STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[14] :=
-  // TYPE-SPECIFIER -> STRUCT-OR-UNION-SPECIFIER *
+*action-table*[9] :=
+  // TYPE-SPECIFIER -> <VOLATILE-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 70),
                     make(<reduce>, on: <CONST-TOKEN>, production: 70),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 70),
@@ -420,34 +385,81 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 70),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 70));
 
+*action-table*[10] :=
+  // STRUCT-OR-UNION -> <STRUCT-TOKEN> *
+  make-action-table(make(<reduce>, on: <LCURLY-TOKEN>, production: 77),
+                    make(<reduce>, on: <NAME-TOKEN>, production: 77));
+
+*action-table*[11] :=
+  // STRUCT-OR-UNION -> <UNION-TOKEN> *
+  make-action-table(make(<reduce>, on: <LCURLY-TOKEN>, production: 78),
+                    make(<reduce>, on: <NAME-TOKEN>, production: 78));
+
+*action-table*[12] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION * <NAME-TOKEN>
+  make-action-table(make(<shift>, on: <LCURLY-TOKEN>, state: 13),
+                    make(<shift>, on: <NAME-TOKEN>, state: 182));
+
+*action-table*[13] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> * STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[14] :=
+  // TYPE-SPECIFIER -> STRUCT-OR-UNION-SPECIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 71),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 71),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 71),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 71),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 71),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 71),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 71),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 71),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 71),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 71),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 71),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 71),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 71),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 71),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 71),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 71),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 71));
+
 *action-table*[15] :=
   // ENUM-SPECIFIER -> <ENUM-TOKEN> * <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN>
   // ENUM-SPECIFIER -> <ENUM-TOKEN> * <NAME-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN>
   // ENUM-SPECIFIER -> <ENUM-TOKEN> * <NAME-TOKEN>
-  make-action-table(make(<shift>, on: <LCURLY-TOKEN>, state: 163),
+  make-action-table(make(<shift>, on: <LCURLY-TOKEN>, state: 166),
                     make(<shift>, on: <NAME-TOKEN>, state: 16));
 
 *action-table*[16] :=
   // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> *
   // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> * <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN>
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 86),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 86),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 86),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 86),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 86),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 86),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 86),
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 87),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 87),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 87),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 87),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 87),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 87),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 87),
                     make(<shift>, on: <LCURLY-TOKEN>, state: 17),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 86),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 86),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 86),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 86),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 86),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 86),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 86),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 86),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 86),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 86));
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 87),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 87),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 87),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 87),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 87),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 87),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 87),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 87),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 87),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 87));
 
 *action-table*[17] :=
   // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> <LCURLY-TOKEN> * ENUMERATOR-LIST <RCURLY-TOKEN>
@@ -455,52 +467,52 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *action-table*[18] :=
   // IDENTIFIER -> <IDENTIFIER-TOKEN> *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 133),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <ASSIGN-TOKEN>, production: 133),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 133),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 133),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 133),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 133),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 133),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <GT-TOKEN>, production: 133),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 133),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 133),
-                    make(<reduce>, on: <LT-TOKEN>, production: 133),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 133),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 133),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 133),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 133),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 133),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 133),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 133),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 133),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 133),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 133),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 133));
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 134),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <ASSIGN-TOKEN>, production: 134),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 134),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 134),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 134),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 134),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 134),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <GT-TOKEN>, production: 134),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 134),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 134),
+                    make(<reduce>, on: <LT-TOKEN>, production: 134),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 134),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 134),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 134),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 134),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 134),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 134),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 134),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 134),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 134),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 134),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 134));
 
 *action-table*[19] :=
   // ENUMERATOR -> IDENTIFIER *
   // ENUMERATOR -> IDENTIFIER * <ASSIGN-TOKEN> CONSTANT-EXPR
   make-action-table(make(<shift>, on: <ASSIGN-TOKEN>, state: 20),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 89),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 89));
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 90),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 90));
 
 *action-table*[20] :=
   // ENUMERATOR -> IDENTIFIER <ASSIGN-TOKEN> * CONSTANT-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
 *action-table*[21] :=
   // PRIMARY-EXPR -> IDENTIFIER *
@@ -561,16 +573,6 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <STAR-TOKEN>, production: 11));
 
 *action-table*[23] :=
-  // PRIMARY-EXPR -> <LPAREN-TOKEN> * EXPR <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[24] :=
   // POSTFIX-EXPR -> PRIMARY-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 13),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 13),
@@ -599,7 +601,7 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 13),
                     make(<reduce>, on: <STAR-TOKEN>, production: 13));
 
-*action-table*[25] :=
+*action-table*[24] :=
   // POSTFIX-EXPR -> POSTFIX-EXPR * <LPAREN-TOKEN> ARGUMENT-EXPR-LIST <RPAREN-TOKEN>
   // UNARY-EXPR -> POSTFIX-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 16),
@@ -614,7 +616,7 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <GT-TOKEN>, production: 16),
                     make(<reduce>, on: <LE-OP-TOKEN>, production: 16),
                     make(<reduce>, on: <LEFT-OP-TOKEN>, production: 16),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 26),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 25),
                     make(<reduce>, on: <LT-TOKEN>, production: 16),
                     make(<reduce>, on: <MINUS-TOKEN>, production: 16),
                     make(<reduce>, on: <NE-OP-TOKEN>, production: 16),
@@ -629,17 +631,17 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 16),
                     make(<reduce>, on: <STAR-TOKEN>, production: 16));
 
-*action-table*[26] :=
+*action-table*[25] :=
   // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> * ARGUMENT-EXPR-LIST <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[27] :=
+*action-table*[26] :=
   // UNARY-OPERATOR -> <MINUS-TOKEN> *
   make-action-table(make(<reduce>, on: <BANG-TOKEN>, production: 19),
                     make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 19),
@@ -649,7 +651,7 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SIZEOF-TOKEN>, production: 19),
                     make(<reduce>, on: <TILDE-TOKEN>, production: 19));
 
-*action-table*[28] :=
+*action-table*[27] :=
   // UNARY-OPERATOR -> <TILDE-TOKEN> *
   make-action-table(make(<reduce>, on: <BANG-TOKEN>, production: 20),
                     make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 20),
@@ -659,7 +661,7 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SIZEOF-TOKEN>, production: 20),
                     make(<reduce>, on: <TILDE-TOKEN>, production: 20));
 
-*action-table*[29] :=
+*action-table*[28] :=
   // UNARY-OPERATOR -> <BANG-TOKEN> *
   make-action-table(make(<reduce>, on: <BANG-TOKEN>, production: 21),
                     make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 21),
@@ -669,52 +671,32 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SIZEOF-TOKEN>, production: 21),
                     make(<reduce>, on: <TILDE-TOKEN>, production: 21));
 
-*action-table*[30] :=
+*action-table*[29] :=
   // UNARY-EXPR -> UNARY-OPERATOR * CAST-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[30] :=
+  // UNARY-EXPR -> <SIZEOF-TOKEN> * <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <LPAREN-TOKEN>, state: 31));
 
 *action-table*[31] :=
-  // UNARY-EXPR -> <SIZEOF-TOKEN> * <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <LPAREN-TOKEN>, state: 32));
-
-*action-table*[32] :=
   // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> * TYPE-NAME <RPAREN-TOKEN>
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[33] :=
+*action-table*[32] :=
   // TYPE-SPECIFIER -> ENUM-SPECIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 71),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 71),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 71),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 71),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 71),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 71),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 71),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 71),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 71),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 71),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 71),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 71),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 71),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 71),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 71),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 71),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 71));
-
-*action-table*[34] :=
-  // TYPE-SPECIFIER -> <TYPE-NAME-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 72),
                     make(<reduce>, on: <CONST-TOKEN>, production: 72),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 72),
@@ -733,53 +715,73 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 72),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 72));
 
-*action-table*[35] :=
-  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 104),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 104),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 104),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 104),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 104),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 104),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 104),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 104),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 104),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 104),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 104),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 104),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 104),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 104));
+*action-table*[33] :=
+  // TYPE-SPECIFIER -> <TYPE-NAME-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 73),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 73),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 73),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 73),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 73),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 73),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 73),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 73),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 73),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 73),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 73),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 73),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 73),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 73),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 73),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 73),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 73));
 
-*action-table*[36] :=
+*action-table*[34] :=
+  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 105),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 105),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 105),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 105),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 105),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 105),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 105),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 105),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 105),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 105),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 105),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 105),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 105),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 105));
+
+*action-table*[35] :=
   // TYPE-NAME -> TYPE-SPECIFIER-LIST *
   // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
   // TYPE-NAME -> TYPE-SPECIFIER-LIST * ABSTRACT-DECLARATOR
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 116),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 94),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 116),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 117),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 101),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 117),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[37] :=
+*action-table*[36] :=
   // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> * <RBRACKET-TOKEN>
   // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> * CONSTANT-EXPR <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <RBRACKET-TOKEN>, state: 93),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <RBRACKET-TOKEN>, state: 100),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[38] :=
+*action-table*[37] :=
   // CAST-EXPR -> UNARY-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 22),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 22),
@@ -807,8 +809,40 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 22),
                     make(<reduce>, on: <STAR-TOKEN>, production: 22));
 
+*action-table*[38] :=
+  // PRIMARY-EXPR -> <LPAREN-TOKEN> * EXPR <RPAREN-TOKEN>
+  // CAST-EXPR -> <LPAREN-TOKEN> * TYPE-NAME <RPAREN-TOKEN> CAST-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
 *action-table*[39] :=
-  // MULTIPLICATIVE-EXPR -> CAST-EXPR *
+  // CAST-EXPR -> <LPAREN-TOKEN> TYPE-NAME * <RPAREN-TOKEN> CAST-EXPR
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 40));
+
+*action-table*[40] :=
+  // CAST-EXPR -> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN> * CAST-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[41] :=
+  // CAST-EXPR -> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN> CAST-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 23),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 23),
                     make(<reduce>, on: <BAR-TOKEN>, production: 23),
@@ -835,125 +869,8 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 23),
                     make(<reduce>, on: <STAR-TOKEN>, production: 23));
 
-*action-table*[40] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <STAR-TOKEN> CAST-EXPR
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <SLASH-TOKEN> CAST-EXPR
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <PERCENT-TOKEN> CAST-EXPR
-  // ADDITIVE-EXPR -> MULTIPLICATIVE-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 27),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 27),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 27),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 27),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 27),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 27),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <GT-TOKEN>, production: 27),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <LT-TOKEN>, production: 27),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 27),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 27),
-                    make(<shift>, on: <PERCENT-TOKEN>, state: 41),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 27),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 27),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 27),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 27),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 27),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 27),
-                    make(<shift>, on: <SLASH-TOKEN>, state: 43),
-                    make(<shift>, on: <STAR-TOKEN>, state: 45));
-
-*action-table*[41] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <PERCENT-TOKEN> * CAST-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
 *action-table*[42] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <PERCENT-TOKEN> CAST-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 26),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 26),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 26),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 26),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 26),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 26),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <GT-TOKEN>, production: 26),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <LT-TOKEN>, production: 26),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 26),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 26),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 26),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 26),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 26),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 26),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 26),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 26),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 26),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 26));
-
-*action-table*[43] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <SLASH-TOKEN> * CAST-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[44] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <SLASH-TOKEN> CAST-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 25),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 25),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 25),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 25),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 25),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 25),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <GT-TOKEN>, production: 25),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <LT-TOKEN>, production: 25),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 25),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 25),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 25),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 25),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 25),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 25),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 25),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 25),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 25),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 25));
-
-*action-table*[45] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <STAR-TOKEN> * CAST-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[46] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <STAR-TOKEN> CAST-EXPR *
+  // MULTIPLICATIVE-EXPR -> CAST-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 24),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 24),
                     make(<reduce>, on: <BAR-TOKEN>, production: 24),
@@ -980,89 +897,11 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 24),
                     make(<reduce>, on: <STAR-TOKEN>, production: 24));
 
-*action-table*[47] :=
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <PLUS-TOKEN> MULTIPLICATIVE-EXPR
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <MINUS-TOKEN> MULTIPLICATIVE-EXPR
-  // SHIFT-EXPR -> ADDITIVE-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 30),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 30),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 30),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 30),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 30),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 30),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <GT-TOKEN>, production: 30),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <LT-TOKEN>, production: 30),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 48),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 30),
-                    make(<shift>, on: <PLUS-TOKEN>, state: 50),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 30),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 30),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 30),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 30),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 30));
-
-*action-table*[48] :=
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR <MINUS-TOKEN> * MULTIPLICATIVE-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[49] :=
+*action-table*[43] :=
   // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <STAR-TOKEN> CAST-EXPR
   // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <SLASH-TOKEN> CAST-EXPR
   // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <PERCENT-TOKEN> CAST-EXPR
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR <MINUS-TOKEN> MULTIPLICATIVE-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 29),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 29),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 29),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 29),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 29),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 29),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <GT-TOKEN>, production: 29),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <LT-TOKEN>, production: 29),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 29),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 29),
-                    make(<shift>, on: <PERCENT-TOKEN>, state: 41),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 29),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 29),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 29),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 29),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 29),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 29),
-                    make(<shift>, on: <SLASH-TOKEN>, state: 43),
-                    make(<shift>, on: <STAR-TOKEN>, state: 45));
-
-*action-table*[50] :=
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR <PLUS-TOKEN> * MULTIPLICATIVE-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[51] :=
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <STAR-TOKEN> CAST-EXPR
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <SLASH-TOKEN> CAST-EXPR
-  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <PERCENT-TOKEN> CAST-EXPR
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR <PLUS-TOKEN> MULTIPLICATIVE-EXPR *
+  // ADDITIVE-EXPR -> MULTIPLICATIVE-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 28),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 28),
                     make(<reduce>, on: <BAR-TOKEN>, production: 28),
@@ -1079,92 +918,134 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <MINUS-TOKEN>, production: 28),
                     make(<reduce>, on: <NE-OP-TOKEN>, production: 28),
                     make(<reduce>, on: <OR-OP-TOKEN>, production: 28),
-                    make(<shift>, on: <PERCENT-TOKEN>, state: 41),
+                    make(<shift>, on: <PERCENT-TOKEN>, state: 44),
                     make(<reduce>, on: <PLUS-TOKEN>, production: 28),
                     make(<reduce>, on: <QUESTION-TOKEN>, production: 28),
                     make(<reduce>, on: <RBRACKET-TOKEN>, production: 28),
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 28),
                     make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 28),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 28),
-                    make(<shift>, on: <SLASH-TOKEN>, state: 43),
-                    make(<shift>, on: <STAR-TOKEN>, state: 45));
+                    make(<shift>, on: <SLASH-TOKEN>, state: 46),
+                    make(<shift>, on: <STAR-TOKEN>, state: 48));
 
-*action-table*[52] :=
-  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
-  // RELATIONAL-EXPR -> SHIFT-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 33),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 33),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 33),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 33),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 33),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 33),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 33),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 33),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 33),
-                    make(<reduce>, on: <GT-TOKEN>, production: 33),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 33),
-                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 55),
-                    make(<reduce>, on: <LT-TOKEN>, production: 33),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 33),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 33),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 33),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 33),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 33),
-                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 53),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 33));
-
-*action-table*[53] :=
-  // SHIFT-EXPR -> SHIFT-EXPR <RIGHT-OP-TOKEN> * ADDITIVE-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[44] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <PERCENT-TOKEN> * CAST-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[54] :=
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <PLUS-TOKEN> MULTIPLICATIVE-EXPR
-  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <MINUS-TOKEN> MULTIPLICATIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR <RIGHT-OP-TOKEN> ADDITIVE-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 32),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 32),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 32),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 32),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 32),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 32),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <GT-TOKEN>, production: 32),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <LT-TOKEN>, production: 32),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 48),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 32),
-                    make(<shift>, on: <PLUS-TOKEN>, state: 50),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 32),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 32),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 32),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 32),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 32));
+*action-table*[45] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <PERCENT-TOKEN> CAST-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 27),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 27),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 27),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 27),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 27),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 27),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <GT-TOKEN>, production: 27),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <LT-TOKEN>, production: 27),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 27),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 27),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 27),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 27),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 27),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 27),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 27),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 27),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 27),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 27));
 
-*action-table*[55] :=
-  // SHIFT-EXPR -> SHIFT-EXPR <LEFT-OP-TOKEN> * ADDITIVE-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[46] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <SLASH-TOKEN> * CAST-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[56] :=
+*action-table*[47] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <SLASH-TOKEN> CAST-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 26),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 26),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 26),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 26),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 26),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 26),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <GT-TOKEN>, production: 26),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <LT-TOKEN>, production: 26),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 26),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 26),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 26),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 26),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 26),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 26),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 26),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 26),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 26),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 26));
+
+*action-table*[48] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <STAR-TOKEN> * CAST-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[49] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <STAR-TOKEN> CAST-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 25),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 25),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 25),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 25),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 25),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 25),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <GT-TOKEN>, production: 25),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <LT-TOKEN>, production: 25),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 25),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 25),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 25),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 25),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 25),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 25),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 25),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 25),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 25),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 25));
+
+*action-table*[50] :=
   // ADDITIVE-EXPR -> ADDITIVE-EXPR * <PLUS-TOKEN> MULTIPLICATIVE-EXPR
   // ADDITIVE-EXPR -> ADDITIVE-EXPR * <MINUS-TOKEN> MULTIPLICATIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR <LEFT-OP-TOKEN> ADDITIVE-EXPR *
+  // SHIFT-EXPR -> ADDITIVE-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 31),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 31),
                     make(<reduce>, on: <BAR-TOKEN>, production: 31),
@@ -1178,160 +1059,102 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <LE-OP-TOKEN>, production: 31),
                     make(<reduce>, on: <LEFT-OP-TOKEN>, production: 31),
                     make(<reduce>, on: <LT-TOKEN>, production: 31),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 48),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 51),
                     make(<reduce>, on: <NE-OP-TOKEN>, production: 31),
                     make(<reduce>, on: <OR-OP-TOKEN>, production: 31),
-                    make(<shift>, on: <PLUS-TOKEN>, state: 50),
+                    make(<shift>, on: <PLUS-TOKEN>, state: 53),
                     make(<reduce>, on: <QUESTION-TOKEN>, production: 31),
                     make(<reduce>, on: <RBRACKET-TOKEN>, production: 31),
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 31),
                     make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 31),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 31));
 
-*action-table*[57] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LT-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GT-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LE-OP-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GE-OP-TOKEN> SHIFT-EXPR
-  // EQUALITY-EXPR -> RELATIONAL-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 38),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 38),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 38),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 38),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 38),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 38),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 38),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 38),
-                    make(<shift>, on: <GE-OP-TOKEN>, state: 58),
-                    make(<shift>, on: <GT-TOKEN>, state: 62),
-                    make(<shift>, on: <LE-OP-TOKEN>, state: 60),
-                    make(<shift>, on: <LT-TOKEN>, state: 64),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 38),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 38),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 38),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 38),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 38),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 38));
-
-*action-table*[58] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GE-OP-TOKEN> * SHIFT-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[51] :=
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR <MINUS-TOKEN> * MULTIPLICATIVE-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[59] :=
-  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GE-OP-TOKEN> SHIFT-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 37),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 37),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 37),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 37),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 37),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 37),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 37),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 37),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 37),
-                    make(<reduce>, on: <GT-TOKEN>, production: 37),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 37),
-                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 55),
-                    make(<reduce>, on: <LT-TOKEN>, production: 37),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 37),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 37),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 37),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 37),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 37),
-                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 53),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 37));
+*action-table*[52] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <STAR-TOKEN> CAST-EXPR
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <SLASH-TOKEN> CAST-EXPR
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <PERCENT-TOKEN> CAST-EXPR
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR <MINUS-TOKEN> MULTIPLICATIVE-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 30),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 30),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 30),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 30),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 30),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 30),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <GT-TOKEN>, production: 30),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <LT-TOKEN>, production: 30),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 30),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 30),
+                    make(<shift>, on: <PERCENT-TOKEN>, state: 44),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 30),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 30),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 30),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 30),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 30),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 30),
+                    make(<shift>, on: <SLASH-TOKEN>, state: 46),
+                    make(<shift>, on: <STAR-TOKEN>, state: 48));
 
-*action-table*[60] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LE-OP-TOKEN> * SHIFT-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[53] :=
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR <PLUS-TOKEN> * MULTIPLICATIVE-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[61] :=
+*action-table*[54] :=
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <STAR-TOKEN> CAST-EXPR
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <SLASH-TOKEN> CAST-EXPR
+  // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR * <PERCENT-TOKEN> CAST-EXPR
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR <PLUS-TOKEN> MULTIPLICATIVE-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 29),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 29),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 29),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 29),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 29),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 29),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <GT-TOKEN>, production: 29),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <LT-TOKEN>, production: 29),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 29),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 29),
+                    make(<shift>, on: <PERCENT-TOKEN>, state: 44),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 29),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 29),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 29),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 29),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 29),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 29),
+                    make(<shift>, on: <SLASH-TOKEN>, state: 46),
+                    make(<shift>, on: <STAR-TOKEN>, state: 48));
+
+*action-table*[55] :=
   // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
   // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LE-OP-TOKEN> SHIFT-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 36),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 36),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 36),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 36),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 36),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 36),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 36),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 36),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 36),
-                    make(<reduce>, on: <GT-TOKEN>, production: 36),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 36),
-                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 55),
-                    make(<reduce>, on: <LT-TOKEN>, production: 36),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 36),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 36),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 36),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 36),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 36),
-                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 53),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 36));
-
-*action-table*[62] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GT-TOKEN> * SHIFT-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[63] :=
-  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GT-TOKEN> SHIFT-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 35),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 35),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 35),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 35),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 35),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 35),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 35),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 35),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 35),
-                    make(<reduce>, on: <GT-TOKEN>, production: 35),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 35),
-                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 55),
-                    make(<reduce>, on: <LT-TOKEN>, production: 35),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 35),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 35),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 35),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 35),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 35),
-                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 53),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 35));
-
-*action-table*[64] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LT-TOKEN> * SHIFT-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[65] :=
-  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
-  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LT-TOKEN> SHIFT-EXPR *
+  // RELATIONAL-EXPR -> SHIFT-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 34),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 34),
                     make(<reduce>, on: <BAR-TOKEN>, production: 34),
@@ -1343,86 +1166,96 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <GE-OP-TOKEN>, production: 34),
                     make(<reduce>, on: <GT-TOKEN>, production: 34),
                     make(<reduce>, on: <LE-OP-TOKEN>, production: 34),
-                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 55),
+                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 58),
                     make(<reduce>, on: <LT-TOKEN>, production: 34),
                     make(<reduce>, on: <NE-OP-TOKEN>, production: 34),
                     make(<reduce>, on: <OR-OP-TOKEN>, production: 34),
                     make(<reduce>, on: <QUESTION-TOKEN>, production: 34),
                     make(<reduce>, on: <RBRACKET-TOKEN>, production: 34),
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 34),
-                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 53),
+                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 56),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 34));
 
-*action-table*[66] :=
-  // EQUALITY-EXPR -> EQUALITY-EXPR * <EQ-OP-TOKEN> RELATIONAL-EXPR
-  // EQUALITY-EXPR -> EQUALITY-EXPR * <NE-OP-TOKEN> RELATIONAL-EXPR
-  // AND-EXPR -> EQUALITY-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 41),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 41),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 41),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 41),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 41),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 41),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 41),
-                    make(<shift>, on: <EQ-OP-TOKEN>, state: 69),
-                    make(<shift>, on: <NE-OP-TOKEN>, state: 67),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 41),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 41),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 41),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 41),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 41));
-
-*action-table*[67] :=
-  // EQUALITY-EXPR -> EQUALITY-EXPR <NE-OP-TOKEN> * RELATIONAL-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[56] :=
+  // SHIFT-EXPR -> SHIFT-EXPR <RIGHT-OP-TOKEN> * ADDITIVE-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[68] :=
+*action-table*[57] :=
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <PLUS-TOKEN> MULTIPLICATIVE-EXPR
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <MINUS-TOKEN> MULTIPLICATIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR <RIGHT-OP-TOKEN> ADDITIVE-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 33),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 33),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 33),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 33),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 33),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 33),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <GT-TOKEN>, production: 33),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <LT-TOKEN>, production: 33),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 51),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 33),
+                    make(<shift>, on: <PLUS-TOKEN>, state: 53),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 33),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 33),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 33),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 33),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 33));
+
+*action-table*[58] :=
+  // SHIFT-EXPR -> SHIFT-EXPR <LEFT-OP-TOKEN> * ADDITIVE-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[59] :=
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <PLUS-TOKEN> MULTIPLICATIVE-EXPR
+  // ADDITIVE-EXPR -> ADDITIVE-EXPR * <MINUS-TOKEN> MULTIPLICATIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR <LEFT-OP-TOKEN> ADDITIVE-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 32),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 32),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 32),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 32),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 32),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 32),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <GT-TOKEN>, production: 32),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <LT-TOKEN>, production: 32),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 51),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 32),
+                    make(<shift>, on: <PLUS-TOKEN>, state: 53),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 32),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 32),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 32),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 32),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 32));
+
+*action-table*[60] :=
   // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LT-TOKEN> SHIFT-EXPR
   // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GT-TOKEN> SHIFT-EXPR
   // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LE-OP-TOKEN> SHIFT-EXPR
   // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GE-OP-TOKEN> SHIFT-EXPR
-  // EQUALITY-EXPR -> EQUALITY-EXPR <NE-OP-TOKEN> RELATIONAL-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 40),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 40),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 40),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 40),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 40),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 40),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 40),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 40),
-                    make(<shift>, on: <GE-OP-TOKEN>, state: 58),
-                    make(<shift>, on: <GT-TOKEN>, state: 62),
-                    make(<shift>, on: <LE-OP-TOKEN>, state: 60),
-                    make(<shift>, on: <LT-TOKEN>, state: 64),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 40),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 40),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 40),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 40),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 40),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 40));
-
-*action-table*[69] :=
-  // EQUALITY-EXPR -> EQUALITY-EXPR <EQ-OP-TOKEN> * RELATIONAL-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[70] :=
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LT-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GT-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LE-OP-TOKEN> SHIFT-EXPR
-  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GE-OP-TOKEN> SHIFT-EXPR
-  // EQUALITY-EXPR -> EQUALITY-EXPR <EQ-OP-TOKEN> RELATIONAL-EXPR *
+  // EQUALITY-EXPR -> RELATIONAL-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 39),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 39),
                     make(<reduce>, on: <BAR-TOKEN>, production: 39),
@@ -1431,10 +1264,10 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <COMMA-TOKEN>, production: 39),
                     make(<reduce>, on: <EOF-TOKEN>, production: 39),
                     make(<reduce>, on: <EQ-OP-TOKEN>, production: 39),
-                    make(<shift>, on: <GE-OP-TOKEN>, state: 58),
-                    make(<shift>, on: <GT-TOKEN>, state: 62),
-                    make(<shift>, on: <LE-OP-TOKEN>, state: 60),
-                    make(<shift>, on: <LT-TOKEN>, state: 64),
+                    make(<shift>, on: <GE-OP-TOKEN>, state: 61),
+                    make(<shift>, on: <GT-TOKEN>, state: 65),
+                    make(<shift>, on: <LE-OP-TOKEN>, state: 63),
+                    make(<shift>, on: <LT-TOKEN>, state: 67),
                     make(<reduce>, on: <NE-OP-TOKEN>, production: 39),
                     make(<reduce>, on: <OR-OP-TOKEN>, production: 39),
                     make(<reduce>, on: <QUESTION-TOKEN>, production: 39),
@@ -1442,36 +1275,150 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 39),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 39));
 
-*action-table*[71] :=
-  // AND-EXPR -> AND-EXPR * <AMPERSAND-TOKEN> EQUALITY-EXPR
-  // EXCLUSIVE-OR-EXPR -> AND-EXPR *
-  make-action-table(make(<shift>, on: <AMPERSAND-TOKEN>, state: 72),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 43),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 43),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 43),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 43),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 43),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 43),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 43),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 43),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 43),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 43),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 43));
-
-*action-table*[72] :=
-  // AND-EXPR -> AND-EXPR <AMPERSAND-TOKEN> * EQUALITY-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[61] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GE-OP-TOKEN> * SHIFT-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[73] :=
+*action-table*[62] :=
+  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GE-OP-TOKEN> SHIFT-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 38),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 38),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 38),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 38),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 38),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 38),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 38),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 38),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 38),
+                    make(<reduce>, on: <GT-TOKEN>, production: 38),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 38),
+                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 58),
+                    make(<reduce>, on: <LT-TOKEN>, production: 38),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 38),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 38),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 38),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 38),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 38),
+                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 56),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 38));
+
+*action-table*[63] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LE-OP-TOKEN> * SHIFT-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[64] :=
+  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LE-OP-TOKEN> SHIFT-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 37),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 37),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 37),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 37),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 37),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 37),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 37),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 37),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 37),
+                    make(<reduce>, on: <GT-TOKEN>, production: 37),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 37),
+                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 58),
+                    make(<reduce>, on: <LT-TOKEN>, production: 37),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 37),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 37),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 37),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 37),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 37),
+                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 56),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 37));
+
+*action-table*[65] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GT-TOKEN> * SHIFT-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[66] :=
+  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <GT-TOKEN> SHIFT-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 36),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 36),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 36),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 36),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 36),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 36),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 36),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 36),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 36),
+                    make(<reduce>, on: <GT-TOKEN>, production: 36),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 36),
+                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 58),
+                    make(<reduce>, on: <LT-TOKEN>, production: 36),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 36),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 36),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 36),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 36),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 36),
+                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 56),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 36));
+
+*action-table*[67] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LT-TOKEN> * SHIFT-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[68] :=
+  // SHIFT-EXPR -> SHIFT-EXPR * <LEFT-OP-TOKEN> ADDITIVE-EXPR
+  // SHIFT-EXPR -> SHIFT-EXPR * <RIGHT-OP-TOKEN> ADDITIVE-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR <LT-TOKEN> SHIFT-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 35),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 35),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 35),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 35),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 35),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 35),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 35),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 35),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 35),
+                    make(<reduce>, on: <GT-TOKEN>, production: 35),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 35),
+                    make(<shift>, on: <LEFT-OP-TOKEN>, state: 58),
+                    make(<reduce>, on: <LT-TOKEN>, production: 35),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 35),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 35),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 35),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 35),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 35),
+                    make(<shift>, on: <RIGHT-OP-TOKEN>, state: 56),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 35));
+
+*action-table*[69] :=
   // EQUALITY-EXPR -> EQUALITY-EXPR * <EQ-OP-TOKEN> RELATIONAL-EXPR
   // EQUALITY-EXPR -> EQUALITY-EXPR * <NE-OP-TOKEN> RELATIONAL-EXPR
-  // AND-EXPR -> AND-EXPR <AMPERSAND-TOKEN> EQUALITY-EXPR *
+  // AND-EXPR -> EQUALITY-EXPR *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 42),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 42),
                     make(<reduce>, on: <BAR-TOKEN>, production: 42),
@@ -1479,43 +1426,88 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <COLON-TOKEN>, production: 42),
                     make(<reduce>, on: <COMMA-TOKEN>, production: 42),
                     make(<reduce>, on: <EOF-TOKEN>, production: 42),
-                    make(<shift>, on: <EQ-OP-TOKEN>, state: 69),
-                    make(<shift>, on: <NE-OP-TOKEN>, state: 67),
+                    make(<shift>, on: <EQ-OP-TOKEN>, state: 72),
+                    make(<shift>, on: <NE-OP-TOKEN>, state: 70),
                     make(<reduce>, on: <OR-OP-TOKEN>, production: 42),
                     make(<reduce>, on: <QUESTION-TOKEN>, production: 42),
                     make(<reduce>, on: <RBRACKET-TOKEN>, production: 42),
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 42),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 42));
 
-*action-table*[74] :=
-  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR * <CARAT-TOKEN> AND-EXPR
-  // INCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR *
-  make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 45),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 45),
-                    make(<shift>, on: <CARAT-TOKEN>, state: 75),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 45),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 45),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 45),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 45),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 45),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 45),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 45),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 45));
-
-*action-table*[75] :=
-  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR <CARAT-TOKEN> * AND-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[70] :=
+  // EQUALITY-EXPR -> EQUALITY-EXPR <NE-OP-TOKEN> * RELATIONAL-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[76] :=
+*action-table*[71] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LT-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GT-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LE-OP-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GE-OP-TOKEN> SHIFT-EXPR
+  // EQUALITY-EXPR -> EQUALITY-EXPR <NE-OP-TOKEN> RELATIONAL-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 41),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 41),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 41),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 41),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 41),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 41),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 41),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 41),
+                    make(<shift>, on: <GE-OP-TOKEN>, state: 61),
+                    make(<shift>, on: <GT-TOKEN>, state: 65),
+                    make(<shift>, on: <LE-OP-TOKEN>, state: 63),
+                    make(<shift>, on: <LT-TOKEN>, state: 67),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 41),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 41),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 41),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 41),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 41),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 41));
+
+*action-table*[72] :=
+  // EQUALITY-EXPR -> EQUALITY-EXPR <EQ-OP-TOKEN> * RELATIONAL-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[73] :=
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LT-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GT-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <LE-OP-TOKEN> SHIFT-EXPR
+  // RELATIONAL-EXPR -> RELATIONAL-EXPR * <GE-OP-TOKEN> SHIFT-EXPR
+  // EQUALITY-EXPR -> EQUALITY-EXPR <EQ-OP-TOKEN> RELATIONAL-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 40),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 40),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 40),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 40),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 40),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 40),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 40),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 40),
+                    make(<shift>, on: <GE-OP-TOKEN>, state: 61),
+                    make(<shift>, on: <GT-TOKEN>, state: 65),
+                    make(<shift>, on: <LE-OP-TOKEN>, state: 63),
+                    make(<shift>, on: <LT-TOKEN>, state: 67),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 40),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 40),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 40),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 40),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 40),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 40));
+
+*action-table*[74] :=
   // AND-EXPR -> AND-EXPR * <AMPERSAND-TOKEN> EQUALITY-EXPR
-  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR <CARAT-TOKEN> AND-EXPR *
-  make-action-table(make(<shift>, on: <AMPERSAND-TOKEN>, state: 72),
+  // EXCLUSIVE-OR-EXPR -> AND-EXPR *
+  make-action-table(make(<shift>, on: <AMPERSAND-TOKEN>, state: 75),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 44),
                     make(<reduce>, on: <BAR-TOKEN>, production: 44),
                     make(<reduce>, on: <CARAT-TOKEN>, production: 44),
@@ -1528,36 +1520,41 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 44),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 44));
 
-*action-table*[77] :=
-  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR * <BAR-TOKEN> EXCLUSIVE-OR-EXPR
-  // LOGICAL-AND-EXPR -> INCLUSIVE-OR-EXPR *
-  make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 47),
-                    make(<shift>, on: <BAR-TOKEN>, state: 78),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 47),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 47),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 47),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 47),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 47),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 47),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 47),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 47));
-
-*action-table*[78] :=
-  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR <BAR-TOKEN> * EXCLUSIVE-OR-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[75] :=
+  // AND-EXPR -> AND-EXPR <AMPERSAND-TOKEN> * EQUALITY-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[79] :=
+*action-table*[76] :=
+  // EQUALITY-EXPR -> EQUALITY-EXPR * <EQ-OP-TOKEN> RELATIONAL-EXPR
+  // EQUALITY-EXPR -> EQUALITY-EXPR * <NE-OP-TOKEN> RELATIONAL-EXPR
+  // AND-EXPR -> AND-EXPR <AMPERSAND-TOKEN> EQUALITY-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 43),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 43),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 43),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 43),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 43),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 43),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 43),
+                    make(<shift>, on: <EQ-OP-TOKEN>, state: 72),
+                    make(<shift>, on: <NE-OP-TOKEN>, state: 70),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 43),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 43),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 43),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 43),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 43));
+
+*action-table*[77] :=
   // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR * <CARAT-TOKEN> AND-EXPR
-  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR <BAR-TOKEN> EXCLUSIVE-OR-EXPR *
+  // INCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR *
   make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 46),
                     make(<reduce>, on: <BAR-TOKEN>, production: 46),
-                    make(<shift>, on: <CARAT-TOKEN>, state: 75),
+                    make(<shift>, on: <CARAT-TOKEN>, state: 78),
                     make(<reduce>, on: <COLON-TOKEN>, production: 46),
                     make(<reduce>, on: <COMMA-TOKEN>, production: 46),
                     make(<reduce>, on: <EOF-TOKEN>, production: 46),
@@ -1567,34 +1564,37 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 46),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 46));
 
-*action-table*[80] :=
-  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR * <AND-OP-TOKEN> INCLUSIVE-OR-EXPR
-  // LOGICAL-OR-EXPR -> LOGICAL-AND-EXPR *
-  make-action-table(make(<shift>, on: <AND-OP-TOKEN>, state: 81),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 49),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 49),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 49),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 49),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 49),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 49),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 49),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 49));
-
-*action-table*[81] :=
-  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR <AND-OP-TOKEN> * INCLUSIVE-OR-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+*action-table*[78] :=
+  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR <CARAT-TOKEN> * AND-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
-*action-table*[82] :=
+*action-table*[79] :=
+  // AND-EXPR -> AND-EXPR * <AMPERSAND-TOKEN> EQUALITY-EXPR
+  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR <CARAT-TOKEN> AND-EXPR *
+  make-action-table(make(<shift>, on: <AMPERSAND-TOKEN>, state: 75),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 45),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 45),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 45),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 45),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 45),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 45),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 45),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 45),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 45),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 45),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 45));
+
+*action-table*[80] :=
   // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR * <BAR-TOKEN> EXCLUSIVE-OR-EXPR
-  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR <AND-OP-TOKEN> INCLUSIVE-OR-EXPR *
+  // LOGICAL-AND-EXPR -> INCLUSIVE-OR-EXPR *
   make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 48),
-                    make(<shift>, on: <BAR-TOKEN>, state: 78),
+                    make(<shift>, on: <BAR-TOKEN>, state: 81),
                     make(<reduce>, on: <COLON-TOKEN>, production: 48),
                     make(<reduce>, on: <COMMA-TOKEN>, production: 48),
                     make(<reduce>, on: <EOF-TOKEN>, production: 48),
@@ -1604,66 +1604,35 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 48),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 48));
 
+*action-table*[81] :=
+  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR <BAR-TOKEN> * EXCLUSIVE-OR-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[82] :=
+  // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR * <CARAT-TOKEN> AND-EXPR
+  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR <BAR-TOKEN> EXCLUSIVE-OR-EXPR *
+  make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 47),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 47),
+                    make(<shift>, on: <CARAT-TOKEN>, state: 78),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 47),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 47),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 47),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 47),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 47),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 47),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 47),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 47));
+
 *action-table*[83] :=
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR *
-  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR * <OR-OP-TOKEN> LOGICAL-AND-EXPR
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR * <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 51),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 51),
-                    make(<shift>, on: <OR-OP-TOKEN>, state: 88),
-                    make(<shift>, on: <QUESTION-TOKEN>, state: 84),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 51),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 51),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 51));
-
-*action-table*[84] :=
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> * LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[85] :=
-  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR * <OR-OP-TOKEN> LOGICAL-AND-EXPR
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR * <COLON-TOKEN> CONDITIONAL-EXPR
-  make-action-table(make(<shift>, on: <COLON-TOKEN>, state: 86),
-                    make(<shift>, on: <OR-OP-TOKEN>, state: 88));
-
-*action-table*[86] :=
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> * CONDITIONAL-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[87] :=
-  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 52),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 52),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 52),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 52),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 52));
-
-*action-table*[88] :=
-  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR <OR-OP-TOKEN> * LOGICAL-AND-EXPR
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[89] :=
   // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR * <AND-OP-TOKEN> INCLUSIVE-OR-EXPR
-  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR <OR-OP-TOKEN> LOGICAL-AND-EXPR *
-  make-action-table(make(<shift>, on: <AND-OP-TOKEN>, state: 81),
+  // LOGICAL-OR-EXPR -> LOGICAL-AND-EXPR *
+  make-action-table(make(<shift>, on: <AND-OP-TOKEN>, state: 84),
                     make(<reduce>, on: <COLON-TOKEN>, production: 50),
                     make(<reduce>, on: <COMMA-TOKEN>, production: 50),
                     make(<reduce>, on: <EOF-TOKEN>, production: 50),
@@ -1673,608 +1642,112 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 50),
                     make(<reduce>, on: <RPAREN-TOKEN>, production: 50));
 
+*action-table*[84] :=
+  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR <AND-OP-TOKEN> * INCLUSIVE-OR-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[85] :=
+  // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR * <BAR-TOKEN> EXCLUSIVE-OR-EXPR
+  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR <AND-OP-TOKEN> INCLUSIVE-OR-EXPR *
+  make-action-table(make(<reduce>, on: <AND-OP-TOKEN>, production: 49),
+                    make(<shift>, on: <BAR-TOKEN>, state: 81),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 49),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 49),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 49),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 49),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 49),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 49),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 49),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 49));
+
+*action-table*[86] :=
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR *
+  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR * <OR-OP-TOKEN> LOGICAL-AND-EXPR
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR * <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 52),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 52),
+                    make(<shift>, on: <OR-OP-TOKEN>, state: 91),
+                    make(<shift>, on: <QUESTION-TOKEN>, state: 87),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 52),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 52),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 52));
+
+*action-table*[87] :=
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> * LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[88] :=
+  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR * <OR-OP-TOKEN> LOGICAL-AND-EXPR
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR * <COLON-TOKEN> CONDITIONAL-EXPR
+  make-action-table(make(<shift>, on: <COLON-TOKEN>, state: 89),
+                    make(<shift>, on: <OR-OP-TOKEN>, state: 91));
+
+*action-table*[89] :=
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> * CONDITIONAL-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
 *action-table*[90] :=
-  // CONSTANT-EXPR -> CONDITIONAL-EXPR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 55),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 55),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 55),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 55));
+  // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 53),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 53),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 53),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 53),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 53));
 
 *action-table*[91] :=
-  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 92));
+  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR <OR-OP-TOKEN> * LOGICAL-AND-EXPR
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
 
 *action-table*[92] :=
-  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 123),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 123),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 123),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 123),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 123));
+  // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR * <AND-OP-TOKEN> INCLUSIVE-OR-EXPR
+  // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR <OR-OP-TOKEN> LOGICAL-AND-EXPR *
+  make-action-table(make(<shift>, on: <AND-OP-TOKEN>, state: 84),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 51),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 51),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 51),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 51),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 51),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 51),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 51),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 51));
 
 *action-table*[93] :=
-  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 122),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 122),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 122),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 122),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 122));
-
-*action-table*[94] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * ABSTRACT-DECLARATOR <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 94),
-                    make(<shift>, on: <RPAREN-TOKEN>, state: 135),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[95] :=
-  // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST * DECLARATOR
-  // TYPE-NAME -> TYPE-SPECIFIER-LIST *
-  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
-  // TYPE-NAME -> TYPE-SPECIFIER-LIST * ABSTRACT-DECLARATOR
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 116),
-                    make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 114),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 116),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[96] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR -> ABSTRACT-DECLARATOR2 *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 119),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 119),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 107),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 97),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 119));
-
-*action-table*[97] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <RPAREN-TOKEN>, state: 98),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[98] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 128),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 128),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 128),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 128),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 128));
-
-*action-table*[99] :=
-  // PARAMETER-DECLARATION -> TYPE-NAME *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 115),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 115));
-
-*action-table*[100] :=
-  // PARAMETER-LIST -> PARAMETER-DECLARATION *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 112),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 112));
-
-*action-table*[101] :=
-  // PARAMETER-TYPE-LIST -> PARAMETER-LIST *
-  // PARAMETER-LIST -> PARAMETER-LIST * <COMMA-TOKEN> PARAMETER-DECLARATION
-  // PARAMETER-TYPE-LIST -> PARAMETER-LIST * <COMMA-TOKEN> <ELIPSIS-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 102),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 110));
-
-*action-table*[102] :=
-  // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> * <ELIPSIS-TOKEN>
-  // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> * PARAMETER-DECLARATION
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ELIPSIS-TOKEN>, state: 104),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[103] :=
-  // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> PARAMETER-DECLARATION *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 113),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 113));
-
-*action-table*[104] :=
-  // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN> *
-  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 111));
-
-*action-table*[105] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 106));
-
-*action-table*[106] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 129),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 129),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 129),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 129),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 129));
-
-*action-table*[107] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> * CONSTANT-EXPR <RBRACKET-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> * <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <RBRACKET-TOKEN>, state: 108),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[108] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 124),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 124),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 124),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 124),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 124));
-
-*action-table*[109] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 110));
-
-*action-table*[110] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 125),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 125),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 125),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 125),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 125));
-
-*action-table*[111] :=
-  // TYPE-NAME -> TYPE-SPECIFIER-LIST ABSTRACT-DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 117),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 117),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 117));
-
-*action-table*[112] :=
-  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST TYPE-SPECIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 105),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 105),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 105),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 105),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 105),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 105),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 105),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 105),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 105),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 105),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 105),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 105),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 105),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 105));
-
-*action-table*[113] :=
-  // DECLARATOR2 -> IDENTIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 93),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 93),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 93),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 93),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 93));
-
-*action-table*[114] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * ABSTRACT-DECLARATOR <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // DECLARATOR2 -> <LPAREN-TOKEN> * DECLARATOR <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 114),
-                    make(<shift>, on: <RPAREN-TOKEN>, state: 135),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[115] :=
-  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
-  // DECLARATOR -> DECLARATOR2 *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 91),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 127),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 116),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 91),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 91));
-
-*action-table*[116] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <RPAREN-TOKEN>, state: 117),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[117] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 97),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 97),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 97),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 97),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 97));
-
-*action-table*[118] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 119));
-
-*action-table*[119] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 98),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 98),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 98),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 98),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 98));
-
-*action-table*[120] :=
-  // IDENTIFIER-LIST -> IDENTIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 108),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 108));
-
-*action-table*[121] :=
-  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST *
-  // IDENTIFIER-LIST -> IDENTIFIER-LIST * <COMMA-TOKEN> IDENTIFIER
-  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST * <COMMA-TOKEN> <ELIPSIS-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 122),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 106));
-
-*action-table*[122] :=
-  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> * <ELIPSIS-TOKEN>
-  // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> * IDENTIFIER
-  make-action-table(make(<shift>, on: <ELIPSIS-TOKEN>, state: 124),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
-
-*action-table*[123] :=
-  // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> IDENTIFIER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 109),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 109));
-
-*action-table*[124] :=
-  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN> *
-  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 107));
-
-*action-table*[125] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 126));
-
-*action-table*[126] :=
-  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 99),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 99),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 99),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 99),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 99));
-
-*action-table*[127] :=
-  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> * CONSTANT-EXPR <RBRACKET-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> * <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <RBRACKET-TOKEN>, state: 128),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
-*action-table*[128] :=
-  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 95),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 95),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 95),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 95),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 95));
-
-*action-table*[129] :=
-  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
-  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 130));
-
-*action-table*[130] :=
-  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 96),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 96),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 96),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 96),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 96));
-
-*action-table*[131] :=
-  // DECLARATOR2 -> <LPAREN-TOKEN> DECLARATOR * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 132));
-
-*action-table*[132] :=
-  // DECLARATOR2 -> <LPAREN-TOKEN> DECLARATOR <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 94),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 94),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 94),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 94),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 94));
-
-*action-table*[133] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 134));
-
-*action-table*[134] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 127),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 127),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 127),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 127),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 127));
-
-*action-table*[135] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 126),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 126),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 126),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 126),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 126));
-
-*action-table*[136] :=
-  // POINTER -> <STAR-TOKEN> *
-  // POINTER -> <STAR-TOKEN> * TYPE-SPECIFIER-LIST
-  // POINTER -> <STAR-TOKEN> * POINTER
-  // POINTER -> <STAR-TOKEN> * TYPE-SPECIFIER-LIST POINTER
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 100),
-                    make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 100),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 100),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 100),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 100),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 100),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[137] :=
-  // POINTER -> <STAR-TOKEN> POINTER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 102),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 102),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 102),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 102),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 102),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 102));
-
-*action-table*[138] :=
-  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST * POINTER
-  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
-  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 101),
-                    make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 101),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 101),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 101),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 101),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 101),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[139] :=
-  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST POINTER *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 103),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 103),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 103),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 103),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 103),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 103));
-
-*action-table*[140] :=
-  // DECLARATOR -> POINTER * DECLARATOR2
-  // ABSTRACT-DECLARATOR -> POINTER *
-  // ABSTRACT-DECLARATOR -> POINTER * ABSTRACT-DECLARATOR2
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 118),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 114),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 118));
-
-*action-table*[141] :=
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // ABSTRACT-DECLARATOR -> POINTER ABSTRACT-DECLARATOR2 *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 120),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 120),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 107),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 97),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 120));
-
-*action-table*[142] :=
-  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
-  // DECLARATOR -> POINTER DECLARATOR2 *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 92),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 127),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 116),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 92),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 92));
-
-*action-table*[143] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 144));
-
-*action-table*[144] :=
-  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 121),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 121),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 121),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 121),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 121));
-
-*action-table*[145] :=
-  // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 114),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 114));
-
-*action-table*[146] :=
-  // ABSTRACT-DECLARATOR -> POINTER *
-  // ABSTRACT-DECLARATOR -> POINTER * ABSTRACT-DECLARATOR2
-  make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 118),
-                    make(<shift>, on: <LBRACKET-TOKEN>, state: 37),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 94),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 118));
-
-*action-table*[147] :=
-  // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> TYPE-NAME * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 148));
-
-*action-table*[148] :=
-  // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 18),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 18),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 18),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 18),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 18),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 18),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <GT-TOKEN>, production: 18),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <LT-TOKEN>, production: 18),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 18),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 18),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 18),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 18),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 18),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 18),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 18),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 18),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 18),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 18));
-
-*action-table*[149] :=
-  // UNARY-EXPR -> UNARY-OPERATOR CAST-EXPR *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 17),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 17),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 17),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 17),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 17),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 17),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <GT-TOKEN>, production: 17),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <LT-TOKEN>, production: 17),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 17),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 17),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 17),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 17),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 17),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 17),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 17),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 17),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 17),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 17));
-
-*action-table*[150] :=
   // ASSIGNMENT-EXPR -> CONDITIONAL-EXPR *
-  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 53));
-
-*action-table*[151] :=
-  // ARGUMENT-EXPR-LIST -> ASSIGNMENT-EXPR *
-  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 15));
-
-*action-table*[152] :=
-  // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> ARGUMENT-EXPR-LIST * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 153));
-
-*action-table*[153] :=
-  // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> ARGUMENT-EXPR-LIST <RPAREN-TOKEN> *
-  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 14),
-                    make(<reduce>, on: <AND-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <BAR-TOKEN>, production: 14),
-                    make(<reduce>, on: <CARAT-TOKEN>, production: 14),
-                    make(<reduce>, on: <COLON-TOKEN>, production: 14),
-                    make(<reduce>, on: <COMMA-TOKEN>, production: 14),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 14),
-                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <GE-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <GT-TOKEN>, production: 14),
-                    make(<reduce>, on: <LE-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 14),
-                    make(<reduce>, on: <LT-TOKEN>, production: 14),
-                    make(<reduce>, on: <MINUS-TOKEN>, production: 14),
-                    make(<reduce>, on: <NE-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <OR-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <PERCENT-TOKEN>, production: 14),
-                    make(<reduce>, on: <PLUS-TOKEN>, production: 14),
-                    make(<reduce>, on: <QUESTION-TOKEN>, production: 14),
-                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 14),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 14),
-                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 14),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 14),
-                    make(<reduce>, on: <SLASH-TOKEN>, production: 14),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 14));
-
-*action-table*[154] :=
-  // EXPR -> ASSIGNMENT-EXPR *
   make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 54));
 
-*action-table*[155] :=
-  // PRIMARY-EXPR -> <LPAREN-TOKEN> EXPR * <RPAREN-TOKEN>
-  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 156));
+*action-table*[94] :=
+  // EXPR -> ASSIGNMENT-EXPR *
+  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 55));
 
-*action-table*[156] :=
+*action-table*[95] :=
+  // PRIMARY-EXPR -> <LPAREN-TOKEN> EXPR * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 96));
+
+*action-table*[96] :=
   // PRIMARY-EXPR -> <LPAREN-TOKEN> EXPR <RPAREN-TOKEN> *
   make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 12),
                     make(<reduce>, on: <AND-OP-TOKEN>, production: 12),
@@ -2303,24 +1776,652 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <SLASH-TOKEN>, production: 12),
                     make(<reduce>, on: <STAR-TOKEN>, production: 12));
 
+*action-table*[97] :=
+  // CONSTANT-EXPR -> CONDITIONAL-EXPR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 56),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 56),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 56),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 56));
+
+*action-table*[98] :=
+  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
+  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 99));
+
+*action-table*[99] :=
+  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 124),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 124),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 124),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 124),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 124));
+
+*action-table*[100] :=
+  // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 123),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 123),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 123),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 123),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 123));
+
+*action-table*[101] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * ABSTRACT-DECLARATOR <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 101),
+                    make(<shift>, on: <RPAREN-TOKEN>, state: 142),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[102] :=
+  // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST * DECLARATOR
+  // TYPE-NAME -> TYPE-SPECIFIER-LIST *
+  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
+  // TYPE-NAME -> TYPE-SPECIFIER-LIST * ABSTRACT-DECLARATOR
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 117),
+                    make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 121),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 117),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[103] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR -> ABSTRACT-DECLARATOR2 *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 120),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 120),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 114),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 104),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 120));
+
+*action-table*[104] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <RPAREN-TOKEN>, state: 105),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[105] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 129),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 129),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 129),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 129),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 129));
+
+*action-table*[106] :=
+  // PARAMETER-DECLARATION -> TYPE-NAME *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 116),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 116));
+
+*action-table*[107] :=
+  // PARAMETER-LIST -> PARAMETER-DECLARATION *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 113),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 113));
+
+*action-table*[108] :=
+  // PARAMETER-TYPE-LIST -> PARAMETER-LIST *
+  // PARAMETER-LIST -> PARAMETER-LIST * <COMMA-TOKEN> PARAMETER-DECLARATION
+  // PARAMETER-TYPE-LIST -> PARAMETER-LIST * <COMMA-TOKEN> <ELIPSIS-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 109),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 111));
+
+*action-table*[109] :=
+  // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> * <ELIPSIS-TOKEN>
+  // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> * PARAMETER-DECLARATION
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ELIPSIS-TOKEN>, state: 111),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[110] :=
+  // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> PARAMETER-DECLARATION *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 114),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 114));
+
+*action-table*[111] :=
+  // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN> *
+  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 112));
+
+*action-table*[112] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 113));
+
+*action-table*[113] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 130),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 130),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 130),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 130),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 130));
+
+*action-table*[114] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> * CONSTANT-EXPR <RBRACKET-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> * <RBRACKET-TOKEN>
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <RBRACKET-TOKEN>, state: 115),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[115] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 125),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 125),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 125),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 125),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 125));
+
+*action-table*[116] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
+  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 117));
+
+*action-table*[117] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 126),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 126),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 126),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 126),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 126));
+
+*action-table*[118] :=
+  // TYPE-NAME -> TYPE-SPECIFIER-LIST ABSTRACT-DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 118),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 118),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 118));
+
+*action-table*[119] :=
+  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST TYPE-SPECIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 106),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 106),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 106),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 106),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 106),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 106),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 106),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 106),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 106),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 106),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 106),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 106),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 106),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 106));
+
+*action-table*[120] :=
+  // DECLARATOR2 -> IDENTIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 94),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 94),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 94),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 94),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 94));
+
+*action-table*[121] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * ABSTRACT-DECLARATOR <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // DECLARATOR2 -> <LPAREN-TOKEN> * DECLARATOR <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 121),
+                    make(<shift>, on: <RPAREN-TOKEN>, state: 142),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[122] :=
+  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
+  // DECLARATOR -> DECLARATOR2 *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 92),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 134),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 123),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 92),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 92));
+
+*action-table*[123] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <RPAREN-TOKEN>, state: 124),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[124] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 98),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 98),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 98),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 98),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 98));
+
+*action-table*[125] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 126));
+
+*action-table*[126] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 99),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 99),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 99),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 99),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 99));
+
+*action-table*[127] :=
+  // IDENTIFIER-LIST -> IDENTIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 109),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 109));
+
+*action-table*[128] :=
+  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST *
+  // IDENTIFIER-LIST -> IDENTIFIER-LIST * <COMMA-TOKEN> IDENTIFIER
+  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST * <COMMA-TOKEN> <ELIPSIS-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 129),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 107));
+
+*action-table*[129] :=
+  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> * <ELIPSIS-TOKEN>
+  // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> * IDENTIFIER
+  make-action-table(make(<shift>, on: <ELIPSIS-TOKEN>, state: 131),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
+
+*action-table*[130] :=
+  // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> IDENTIFIER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 110),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 110));
+
+*action-table*[131] :=
+  // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN> *
+  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 108));
+
+*action-table*[132] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 133));
+
+*action-table*[133] :=
+  // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 100),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 100),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 100),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 100),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 100));
+
+*action-table*[134] :=
+  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> * CONSTANT-EXPR <RBRACKET-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> * <RBRACKET-TOKEN>
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <RBRACKET-TOKEN>, state: 135),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[135] :=
+  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 96),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 96),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 96),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 96),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 96));
+
+*action-table*[136] :=
+  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR * <RBRACKET-TOKEN>
+  make-action-table(make(<shift>, on: <RBRACKET-TOKEN>, state: 137));
+
+*action-table*[137] :=
+  // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 97),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 97),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 97),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 97),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 97));
+
+*action-table*[138] :=
+  // DECLARATOR2 -> <LPAREN-TOKEN> DECLARATOR * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 139));
+
+*action-table*[139] :=
+  // DECLARATOR2 -> <LPAREN-TOKEN> DECLARATOR <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 95),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 95),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 95),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 95),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 95));
+
+*action-table*[140] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 141));
+
+*action-table*[141] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 128),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 128),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 128),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 128),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 128));
+
+*action-table*[142] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 127),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 127),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 127),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 127),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 127));
+
+*action-table*[143] :=
+  // POINTER -> <STAR-TOKEN> *
+  // POINTER -> <STAR-TOKEN> * TYPE-SPECIFIER-LIST
+  // POINTER -> <STAR-TOKEN> * POINTER
+  // POINTER -> <STAR-TOKEN> * TYPE-SPECIFIER-LIST POINTER
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 101),
+                    make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 101),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 101),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 101),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 101),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 101),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[144] :=
+  // POINTER -> <STAR-TOKEN> POINTER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 103),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 103),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 103),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 103),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 103),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 103));
+
+*action-table*[145] :=
+  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST * POINTER
+  // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
+  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 102),
+                    make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 102),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 102),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 102),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 102),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 102),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[146] :=
+  // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST POINTER *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 104),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 104),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 104),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 104),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 104),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 104));
+
+*action-table*[147] :=
+  // DECLARATOR -> POINTER * DECLARATOR2
+  // ABSTRACT-DECLARATOR -> POINTER *
+  // ABSTRACT-DECLARATOR -> POINTER * ABSTRACT-DECLARATOR2
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 119),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 121),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 119));
+
+*action-table*[148] :=
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // ABSTRACT-DECLARATOR -> POINTER ABSTRACT-DECLARATOR2 *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 121),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 121),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 114),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 104),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 121));
+
+*action-table*[149] :=
+  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+  // DECLARATOR2 -> DECLARATOR2 * <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
+  // DECLARATOR -> POINTER DECLARATOR2 *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 93),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 134),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 123),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 93),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 93));
+
+*action-table*[150] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 151));
+
+*action-table*[151] :=
+  // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 122),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 122),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 122),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 122),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 122));
+
+*action-table*[152] :=
+  // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 115),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 115));
+
+*action-table*[153] :=
+  // ABSTRACT-DECLARATOR -> POINTER *
+  // ABSTRACT-DECLARATOR -> POINTER * ABSTRACT-DECLARATOR2
+  make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 119),
+                    make(<shift>, on: <LBRACKET-TOKEN>, state: 36),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 101),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 119));
+
+*action-table*[154] :=
+  // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> TYPE-NAME * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 155));
+
+*action-table*[155] :=
+  // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 18),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 18),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 18),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 18),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 18),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 18),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <GT-TOKEN>, production: 18),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <LT-TOKEN>, production: 18),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 18),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 18),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 18),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 18),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 18),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 18),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 18),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 18),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 18),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 18));
+
+*action-table*[156] :=
+  // UNARY-EXPR -> UNARY-OPERATOR CAST-EXPR *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 17),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 17),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 17),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 17),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 17),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 17),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <GT-TOKEN>, production: 17),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <LT-TOKEN>, production: 17),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 17),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 17),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 17),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 17),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 17),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 17),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 17),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 17),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 17),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 17));
+
 *action-table*[157] :=
-  // ENUMERATOR -> IDENTIFIER <ASSIGN-TOKEN> CONSTANT-EXPR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 90),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 90));
+  // ARGUMENT-EXPR-LIST -> ASSIGNMENT-EXPR *
+  make-action-table(make(<reduce>, on: <RPAREN-TOKEN>, production: 15));
 
 *action-table*[158] :=
-  // ENUMERATOR-LIST -> ENUMERATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 87),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 87));
+  // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> ARGUMENT-EXPR-LIST * <RPAREN-TOKEN>
+  make-action-table(make(<shift>, on: <RPAREN-TOKEN>, state: 159));
 
 *action-table*[159] :=
-  // ENUMERATOR-LIST -> ENUMERATOR-LIST * <COMMA-TOKEN> ENUMERATOR
-  // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST * <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 161),
-                    make(<shift>, on: <RCURLY-TOKEN>, state: 160));
+  // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> ARGUMENT-EXPR-LIST <RPAREN-TOKEN> *
+  make-action-table(make(<reduce>, on: <AMPERSAND-TOKEN>, production: 14),
+                    make(<reduce>, on: <AND-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <BAR-TOKEN>, production: 14),
+                    make(<reduce>, on: <CARAT-TOKEN>, production: 14),
+                    make(<reduce>, on: <COLON-TOKEN>, production: 14),
+                    make(<reduce>, on: <COMMA-TOKEN>, production: 14),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 14),
+                    make(<reduce>, on: <EQ-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <GE-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <GT-TOKEN>, production: 14),
+                    make(<reduce>, on: <LE-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <LEFT-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 14),
+                    make(<reduce>, on: <LT-TOKEN>, production: 14),
+                    make(<reduce>, on: <MINUS-TOKEN>, production: 14),
+                    make(<reduce>, on: <NE-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <OR-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <PERCENT-TOKEN>, production: 14),
+                    make(<reduce>, on: <PLUS-TOKEN>, production: 14),
+                    make(<reduce>, on: <QUESTION-TOKEN>, production: 14),
+                    make(<reduce>, on: <RBRACKET-TOKEN>, production: 14),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 14),
+                    make(<reduce>, on: <RIGHT-OP-TOKEN>, production: 14),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 14),
+                    make(<reduce>, on: <SLASH-TOKEN>, production: 14),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 14));
 
 *action-table*[160] :=
+  // ENUMERATOR -> IDENTIFIER <ASSIGN-TOKEN> CONSTANT-EXPR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 91),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 91));
+
+*action-table*[161] :=
+  // ENUMERATOR-LIST -> ENUMERATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 88),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 88));
+
+*action-table*[162] :=
+  // ENUMERATOR-LIST -> ENUMERATOR-LIST * <COMMA-TOKEN> ENUMERATOR
+  // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST * <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 164),
+                    make(<shift>, on: <RCURLY-TOKEN>, state: 163));
+
+*action-table*[163] :=
   // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 86),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 86),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 86),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 86),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 86),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 86),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 86),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 86),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 86),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 86),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 86),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 86),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 86),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 86),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 86),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 86),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 86));
+
+*action-table*[164] :=
+  // ENUMERATOR-LIST -> ENUMERATOR-LIST <COMMA-TOKEN> * ENUMERATOR
+  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
+
+*action-table*[165] :=
+  // ENUMERATOR-LIST -> ENUMERATOR-LIST <COMMA-TOKEN> ENUMERATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 89),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 89));
+
+*action-table*[166] :=
+  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> * ENUMERATOR-LIST <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
+
+*action-table*[167] :=
+  // ENUMERATOR-LIST -> ENUMERATOR-LIST * <COMMA-TOKEN> ENUMERATOR
+  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST * <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 164),
+                    make(<shift>, on: <RCURLY-TOKEN>, state: 168));
+
+*action-table*[168] :=
+  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 85),
                     make(<reduce>, on: <CONST-TOKEN>, production: 85),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 85),
@@ -2339,88 +2440,114 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 85),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 85));
 
-*action-table*[161] :=
-  // ENUMERATOR-LIST -> ENUMERATOR-LIST <COMMA-TOKEN> * ENUMERATOR
-  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
-
-*action-table*[162] :=
-  // ENUMERATOR-LIST -> ENUMERATOR-LIST <COMMA-TOKEN> ENUMERATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 88),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 88));
-
-*action-table*[163] :=
-  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> * ENUMERATOR-LIST <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18));
-
-*action-table*[164] :=
-  // ENUMERATOR-LIST -> ENUMERATOR-LIST * <COMMA-TOKEN> ENUMERATOR
-  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST * <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 161),
-                    make(<shift>, on: <RCURLY-TOKEN>, state: 165));
-
-*action-table*[165] :=
-  // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 84),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 84),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 84),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 84),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 84),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 84),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 84),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 84),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 84),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 84),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 84),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 84),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 84),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 84),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 84),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 84),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 84));
-
-*action-table*[166] :=
+*action-table*[169] :=
   // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST * TYPE-SPECIFIER
   // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST * STRUCT-DECLARATOR-LIST <SEMICOLON-TOKEN>
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[167] :=
+*action-table*[170] :=
   // DECLARATOR2 -> <LPAREN-TOKEN> * DECLARATOR <RPAREN-TOKEN>
   make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143));
 
-*action-table*[168] :=
+*action-table*[171] :=
   // DECLARATOR -> POINTER * DECLARATOR2
   make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170));
 
-*action-table*[169] :=
+*action-table*[172] :=
   // STRUCT-DECLARATOR -> DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 84),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 84));
+
+*action-table*[173] :=
+  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 82),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 82));
+
+*action-table*[174] :=
+  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST * <COMMA-TOKEN> STRUCT-DECLARATOR
+  // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST STRUCT-DECLARATOR-LIST * <SEMICOLON-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 176),
+                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 175));
+
+*action-table*[175] :=
+  // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST STRUCT-DECLARATOR-LIST <SEMICOLON-TOKEN> *
+  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 81),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 81),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 81),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 81),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 81),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 81),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 81),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 81));
+
+*action-table*[176] :=
+  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST <COMMA-TOKEN> * STRUCT-DECLARATOR
+  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143));
+
+*action-table*[177] :=
+  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST <COMMA-TOKEN> STRUCT-DECLARATOR *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 83),
                     make(<reduce>, on: <SEMICOLON-TOKEN>, production: 83));
 
-*action-table*[170] :=
-  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 81),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 81));
+*action-table*[178] :=
+  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION *
+  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 79),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 79),
+                    make(<reduce>, on: <RCURLY-TOKEN>, production: 79),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 79),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 79),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 79),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 79),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 79));
 
-*action-table*[171] :=
-  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST * <COMMA-TOKEN> STRUCT-DECLARATOR
-  // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST STRUCT-DECLARATOR-LIST * <SEMICOLON-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 173),
-                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 172));
+*action-table*[179] :=
+  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST * STRUCT-DECLARATION
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> STRUCT-DECLARATION-LIST * <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <RCURLY-TOKEN>, state: 180),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[172] :=
-  // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST STRUCT-DECLARATOR-LIST <SEMICOLON-TOKEN> *
+*action-table*[180] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN> *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 75),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 75),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 75),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 75),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 75),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 75),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 75),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 75),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 75),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 75),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 75),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 75),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 75),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 75),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 75),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 75),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 75));
+
+*action-table*[181] :=
+  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST STRUCT-DECLARATION *
   make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 80),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 80),
                     make(<reduce>, on: <RCURLY-TOKEN>, production: 80),
@@ -2430,42 +2557,52 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 80),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 80));
 
-*action-table*[173] :=
-  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST <COMMA-TOKEN> * STRUCT-DECLARATOR
-  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136));
+*action-table*[182] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> *
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> * <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 76),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 76),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 76),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 76),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 76),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 76),
+                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 76),
+                    make(<shift>, on: <LCURLY-TOKEN>, state: 183),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 76),
+                    make(<reduce>, on: <RPAREN-TOKEN>, production: 76),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 76),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 76),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 76),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 76),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 76),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 76),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 76),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 76));
 
-*action-table*[174] :=
-  // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST <COMMA-TOKEN> STRUCT-DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 82),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 82));
-
-*action-table*[175] :=
-  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION *
-  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 78),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 78),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 78),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 78),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 78),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 78),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 78),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 78));
-
-*action-table*[176] :=
-  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST * STRUCT-DECLARATION
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> STRUCT-DECLARATION-LIST * <RCURLY-TOKEN>
+*action-table*[183] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> * STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <RCURLY-TOKEN>, state: 177),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[177] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN> *
+*action-table*[184] :=
+  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST * STRUCT-DECLARATION
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST * <RCURLY-TOKEN>
+  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
+                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
+                    make(<shift>, on: <RCURLY-TOKEN>, state: 185),
+                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
+                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
+                    make(<shift>, on: <UNION-TOKEN>, state: 11),
+                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
+
+*action-table*[185] :=
+  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN> *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 74),
                     make(<reduce>, on: <CONST-TOKEN>, production: 74),
                     make(<reduce>, on: <ENUM-TOKEN>, production: 74),
@@ -2484,138 +2621,89 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 74),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 74));
 
-*action-table*[178] :=
-  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST STRUCT-DECLARATION *
-  make-action-table(make(<reduce>, on: <CONST-TOKEN>, production: 79),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 79),
-                    make(<reduce>, on: <RCURLY-TOKEN>, production: 79),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 79),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 79),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 79),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 79),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 79));
-
-*action-table*[179] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> *
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> * <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 75),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 75),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 75),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 75),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 75),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 75),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 75),
-                    make(<shift>, on: <LCURLY-TOKEN>, state: 180),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 75),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 75),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 75),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 75),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 75),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 75),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 75),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 75),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 75),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 75));
-
-*action-table*[180] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> * STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[181] :=
-  // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST * STRUCT-DECLARATION
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST * <RCURLY-TOKEN>
-  make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
-                    make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <RCURLY-TOKEN>, state: 182),
-                    make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
-                    make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
-                    make(<shift>, on: <UNION-TOKEN>, state: 11),
-                    make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
-
-*action-table*[182] :=
-  // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN> *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 73),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 73),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 73),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 73),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 73),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 73),
-                    make(<reduce>, on: <LBRACKET-TOKEN>, production: 73),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 73),
-                    make(<reduce>, on: <RPAREN-TOKEN>, production: 73),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 73),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 73),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 73),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 73),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 73),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 73),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 73),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 73));
-
-*action-table*[183] :=
+*action-table*[186] :=
   // DECLARATION-SPECIFIERS -> TYPE-SPECIFIER *
   // DECLARATION-SPECIFIERS -> TYPE-SPECIFIER * DECLARATION-SPECIFIERS
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <EXTERN-TOKEN>, state: 5),
-                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 60),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 60),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 60),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 60),
+                    make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 61),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 61),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 61),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 61),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <TYPEDEF-TOKEN>, state: 4),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[184] :=
+*action-table*[187] :=
   // DECLARATION-SPECIFIERS -> TYPE-SPECIFIER DECLARATION-SPECIFIERS *
-  make-action-table(make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 61),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 61),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 61),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 61));
+  make-action-table(make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 62),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 62),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 62),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 62));
 
-*action-table*[185] :=
+*action-table*[188] :=
   // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER DECLARATION-SPECIFIERS *
-  make-action-table(make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 59),
-                    make(<reduce>, on: <LPAREN-TOKEN>, production: 59),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 59),
-                    make(<reduce>, on: <STAR-TOKEN>, production: 59));
+  make-action-table(make(<reduce>, on: <IDENTIFIER-TOKEN>, production: 60),
+                    make(<reduce>, on: <LPAREN-TOKEN>, production: 60),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 60),
+                    make(<reduce>, on: <STAR-TOKEN>, production: 60));
 
-*action-table*[186] :=
+*action-table*[189] :=
   // DECLARATION -> DECLARATION-SPECIFIERS * <SEMICOLON-TOKEN>
   // DECLARATION -> DECLARATION-SPECIFIERS * INIT-DECLARATOR-LIST <SEMICOLON-TOKEN>
   make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167),
-                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 193),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136));
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170),
+                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 196),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143));
 
-*action-table*[187] :=
+*action-table*[190] :=
   // INIT-DECLARATOR -> DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 65),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 65));
+
+*action-table*[191] :=
+  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR *
+  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 63),
+                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 63));
+
+*action-table*[192] :=
+  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST * <COMMA-TOKEN> INIT-DECLARATOR
+  // DECLARATION -> DECLARATION-SPECIFIERS INIT-DECLARATOR-LIST * <SEMICOLON-TOKEN>
+  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 194),
+                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 193));
+
+*action-table*[193] :=
+  // DECLARATION -> DECLARATION-SPECIFIERS INIT-DECLARATOR-LIST <SEMICOLON-TOKEN> *
+  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 58),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 58),
+                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 58),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 58),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 58),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 58),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 58),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 58),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 58),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 58),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 58),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 58));
+
+*action-table*[194] :=
+  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST <COMMA-TOKEN> * INIT-DECLARATOR
+  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 170),
+                    make(<shift>, on: <STAR-TOKEN>, state: 143));
+
+*action-table*[195] :=
+  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST <COMMA-TOKEN> INIT-DECLARATOR *
   make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 64),
                     make(<reduce>, on: <SEMICOLON-TOKEN>, production: 64));
 
-*action-table*[188] :=
-  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 62),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 62));
-
-*action-table*[189] :=
-  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST * <COMMA-TOKEN> INIT-DECLARATOR
-  // DECLARATION -> DECLARATION-SPECIFIERS INIT-DECLARATOR-LIST * <SEMICOLON-TOKEN>
-  make-action-table(make(<shift>, on: <COMMA-TOKEN>, state: 191),
-                    make(<shift>, on: <SEMICOLON-TOKEN>, state: 190));
-
-*action-table*[190] :=
-  // DECLARATION -> DECLARATION-SPECIFIERS INIT-DECLARATOR-LIST <SEMICOLON-TOKEN> *
+*action-table*[196] :=
+  // DECLARATION -> DECLARATION-SPECIFIERS <SEMICOLON-TOKEN> *
   make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 57),
                     make(<reduce>, on: <CONST-TOKEN>, production: 57),
                     make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 57),
@@ -2629,48 +2717,22 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 57),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 57));
 
-*action-table*[191] :=
-  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST <COMMA-TOKEN> * INIT-DECLARATOR
-  make-action-table(make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 167),
-                    make(<shift>, on: <STAR-TOKEN>, state: 136));
-
-*action-table*[192] :=
-  // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST <COMMA-TOKEN> INIT-DECLARATOR *
-  make-action-table(make(<reduce>, on: <COMMA-TOKEN>, production: 63),
-                    make(<reduce>, on: <SEMICOLON-TOKEN>, production: 63));
-
-*action-table*[193] :=
-  // DECLARATION -> DECLARATION-SPECIFIERS <SEMICOLON-TOKEN> *
-  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 56),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 56),
-                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 56),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 56),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 56),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 56),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 56),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 56),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 56),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 56),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 56),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 56));
-
-*action-table*[194] :=
+*action-table*[197] :=
   // EXTERNAL-DEFINITION -> DECLARATION *
-  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 132),
-                    make(<reduce>, on: <CONST-TOKEN>, production: 132),
-                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 132),
-                    make(<reduce>, on: <ENUM-TOKEN>, production: 132),
-                    make(<reduce>, on: <EOF-TOKEN>, production: 132),
-                    make(<reduce>, on: <EXTERN-TOKEN>, production: 132),
-                    make(<reduce>, on: <STRUCT-TOKEN>, production: 132),
-                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 132),
-                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 132),
-                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 132),
-                    make(<reduce>, on: <UNION-TOKEN>, production: 132),
-                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 132));
+  make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 133),
+                    make(<reduce>, on: <CONST-TOKEN>, production: 133),
+                    make(<reduce>, on: <END-INCLUDE-TOKEN>, production: 133),
+                    make(<reduce>, on: <ENUM-TOKEN>, production: 133),
+                    make(<reduce>, on: <EOF-TOKEN>, production: 133),
+                    make(<reduce>, on: <EXTERN-TOKEN>, production: 133),
+                    make(<reduce>, on: <STRUCT-TOKEN>, production: 133),
+                    make(<reduce>, on: <TYPE-NAME-TOKEN>, production: 133),
+                    make(<reduce>, on: <TYPE-SPECIFIER-TOKEN>, production: 133),
+                    make(<reduce>, on: <TYPEDEF-TOKEN>, production: 133),
+                    make(<reduce>, on: <UNION-TOKEN>, production: 133),
+                    make(<reduce>, on: <VOLATILE-TOKEN>, production: 133));
 
-*action-table*[195] :=
+*action-table*[198] :=
   // FILE1 -> EXTERNAL-DEFINITION *
   make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 8),
                     make(<reduce>, on: <CONST-TOKEN>, production: 8),
@@ -2685,27 +2747,27 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 8),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 8));
 
-*action-table*[196] :=
+*action-table*[199] :=
   // FILE1 -> FILE1 * EXTERNAL-DEFINITION
   // FILE -> FILE1 * <EOF-TOKEN>
   make-action-table(make(<shift>, on: <BEGIN-INCLUDE-TOKEN>, state: 2),
                     make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <END-INCLUDE-TOKEN>, state: 3),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
-                    make(<shift>, on: <EOF-TOKEN>, state: 197),
+                    make(<shift>, on: <EOF-TOKEN>, state: 200),
                     make(<shift>, on: <EXTERN-TOKEN>, state: 5),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <TYPEDEF-TOKEN>, state: 4),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[197] :=
+*action-table*[200] :=
   // FILE -> FILE1 <EOF-TOKEN> *
   make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 2));
 
-*action-table*[198] :=
+*action-table*[201] :=
   // FILE1 -> FILE1 EXTERNAL-DEFINITION *
   make-action-table(make(<reduce>, on: <BEGIN-INCLUDE-TOKEN>, production: 9),
                     make(<reduce>, on: <CONST-TOKEN>, production: 9),
@@ -2720,87 +2782,87 @@ define constant *production-table* = make(<vector>, size: 134);
                     make(<reduce>, on: <UNION-TOKEN>, production: 9),
                     make(<reduce>, on: <VOLATILE-TOKEN>, production: 9));
 
-*action-table*[199] :=
+*action-table*[202] :=
   // FILE -> <ALIEN-NAME-TOKEN> * TYPE-NAME <EOF-TOKEN>
   // FILE -> <ALIEN-NAME-TOKEN> * IDENTIFIER <EOF-TOKEN>
   make-action-table(make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[200] :=
+*action-table*[203] :=
   // FILE -> <ALIEN-NAME-TOKEN> IDENTIFIER * <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 201));
+  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 204));
 
-*action-table*[201] :=
+*action-table*[204] :=
   // FILE -> <ALIEN-NAME-TOKEN> IDENTIFIER <EOF-TOKEN> *
   make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 4));
 
-*action-table*[202] :=
+*action-table*[205] :=
   // FILE -> <ALIEN-NAME-TOKEN> TYPE-NAME * <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 203));
+  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 206));
 
-*action-table*[203] :=
+*action-table*[206] :=
   // FILE -> <ALIEN-NAME-TOKEN> TYPE-NAME <EOF-TOKEN> *
   make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 3));
 
-*action-table*[204] :=
+*action-table*[207] :=
   // FILE -> <MACRO-PARSE-TOKEN> * TYPE-NAME <EOF-TOKEN>
   // FILE -> <MACRO-PARSE-TOKEN> * CONSTANT-EXPR <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
                     make(<shift>, on: <CONST-TOKEN>, state: 8),
                     make(<shift>, on: <ENUM-TOKEN>, state: 15),
                     make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
                     make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
                     make(<shift>, on: <STRUCT-TOKEN>, state: 10),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28),
-                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 34),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27),
+                    make(<shift>, on: <TYPE-NAME-TOKEN>, state: 33),
                     make(<shift>, on: <TYPE-SPECIFIER-TOKEN>, state: 7),
                     make(<shift>, on: <UNION-TOKEN>, state: 11),
                     make(<shift>, on: <VOLATILE-TOKEN>, state: 9));
 
-*action-table*[205] :=
+*action-table*[208] :=
   // FILE -> <MACRO-PARSE-TOKEN> CONSTANT-EXPR * <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 206));
+  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 209));
 
-*action-table*[206] :=
+*action-table*[209] :=
   // FILE -> <MACRO-PARSE-TOKEN> CONSTANT-EXPR <EOF-TOKEN> *
   make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 6));
 
-*action-table*[207] :=
-  // FILE -> <MACRO-PARSE-TOKEN> TYPE-NAME * <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 208));
-
-*action-table*[208] :=
-  // FILE -> <MACRO-PARSE-TOKEN> TYPE-NAME <EOF-TOKEN> *
-  make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 5));
-
-*action-table*[209] :=
-  // FILE -> <CPP-PARSE-TOKEN> * CONSTANT-EXPR <EOF-TOKEN>
-  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 29),
-                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
-                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
-                    make(<shift>, on: <LPAREN-TOKEN>, state: 23),
-                    make(<shift>, on: <MINUS-TOKEN>, state: 27),
-                    make(<shift>, on: <SIZEOF-TOKEN>, state: 31),
-                    make(<shift>, on: <TILDE-TOKEN>, state: 28));
-
 *action-table*[210] :=
-  // FILE -> <CPP-PARSE-TOKEN> CONSTANT-EXPR * <EOF-TOKEN>
+  // FILE -> <MACRO-PARSE-TOKEN> TYPE-NAME * <EOF-TOKEN>
   make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 211));
 
 *action-table*[211] :=
+  // FILE -> <MACRO-PARSE-TOKEN> TYPE-NAME <EOF-TOKEN> *
+  make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 5));
+
+*action-table*[212] :=
+  // FILE -> <CPP-PARSE-TOKEN> * CONSTANT-EXPR <EOF-TOKEN>
+  make-action-table(make(<shift>, on: <BANG-TOKEN>, state: 28),
+                    make(<shift>, on: <IDENTIFIER-TOKEN>, state: 18),
+                    make(<shift>, on: <INTEGER-TOKEN>, state: 22),
+                    make(<shift>, on: <LPAREN-TOKEN>, state: 38),
+                    make(<shift>, on: <MINUS-TOKEN>, state: 26),
+                    make(<shift>, on: <SIZEOF-TOKEN>, state: 30),
+                    make(<shift>, on: <TILDE-TOKEN>, state: 27));
+
+*action-table*[213] :=
+  // FILE -> <CPP-PARSE-TOKEN> CONSTANT-EXPR * <EOF-TOKEN>
+  make-action-table(make(<shift>, on: <EOF-TOKEN>, state: 214));
+
+*action-table*[214] :=
   // FILE -> <CPP-PARSE-TOKEN> CONSTANT-EXPR <EOF-TOKEN> *
   make-action-table(make(<reduce>, on: <EOF-TOKEN>, production: 7));
 
-*action-table*[212] :=
+*action-table*[215] :=
   // S-PRIME -> FILE *
   make-action-table(make(<accept>, on: <EOF-TOKEN>));
 
@@ -2809,7 +2871,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2827,7 +2889,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> FILE1 <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(state-stack));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2847,7 +2909,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <ALIEN-NAME-TOKEN> TYPE-NAME <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2869,7 +2931,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <ALIEN-NAME-TOKEN> IDENTIFIER <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2892,7 +2954,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <MACRO-PARSE-TOKEN> TYPE-NAME <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2914,7 +2976,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <MACRO-PARSE-TOKEN> CONSTANT-EXPR <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2941,7 +3003,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE -> <CPP-PARSE-TOKEN> CONSTANT-EXPR <EOF-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(212,
+             pair(215,
                   poped-state-stack);
            end,
            begin
@@ -2963,7 +3025,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE1 -> EXTERNAL-DEFINITION
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(196,
+             pair(199,
                   poped-state-stack);
            end,
            begin
@@ -2981,7 +3043,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // FILE1 -> FILE1 EXTERNAL-DEFINITION
     values(begin
              let poped-state-stack = tail(tail(state-stack));
-             pair(196,
+             pair(199,
                   poped-state-stack);
            end,
            begin
@@ -3001,7 +3063,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // PRIMARY-EXPR -> IDENTIFIER
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(24,
+             pair(23,
                   poped-state-stack);
            end,
            begin
@@ -3025,7 +3087,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // PRIMARY-EXPR -> <INTEGER-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(24,
+             pair(23,
                   poped-state-stack);
            end,
            begin
@@ -3043,7 +3105,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // PRIMARY-EXPR -> <LPAREN-TOKEN> EXPR <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(24,
+             pair(23,
                   poped-state-stack);
            end,
            begin
@@ -3065,7 +3127,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // POSTFIX-EXPR -> PRIMARY-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(25,
+             pair(24,
                   poped-state-stack);
            end,
            begin
@@ -3083,7 +3145,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // POSTFIX-EXPR -> POSTFIX-EXPR <LPAREN-TOKEN> ARGUMENT-EXPR-LIST <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
-             pair(25,
+             pair(24,
                   poped-state-stack);
            end,
            begin
@@ -3102,7 +3164,7 @@ define constant *production-table* = make(<vector>, size: 134);
                       // "defined".
                       //
                       if (~instance?($state, <parse-cpp-state>) | $r1.string-value ~= "defined")
-                        error("Function calls not allowed in constant expressions.");
+                        parse-error($state,"Function calls not allowed in constant expressions.");
                       elseif (element($r3.generator.cpp-table, $r3.string-value, default: #f))
                         1;
                       else
@@ -3118,7 +3180,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // ARGUMENT-EXPR-LIST -> ASSIGNMENT-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(152,
+             pair(158,
                   poped-state-stack);
            end,
            begin
@@ -3136,7 +3198,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-EXPR -> POSTFIX-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(38,
+             pair(37,
                   poped-state-stack);
            end,
            begin
@@ -3154,7 +3216,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-EXPR -> UNARY-OPERATOR CAST-EXPR
     values(begin
              let poped-state-stack = tail(tail(state-stack));
-             pair(38,
+             pair(37,
                   poped-state-stack);
            end,
            begin
@@ -3178,7 +3240,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-EXPR -> <SIZEOF-TOKEN> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
-             pair(38,
+             pair(37,
                   poped-state-stack);
            end,
            begin
@@ -3202,7 +3264,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-OPERATOR -> <MINUS-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(30,
+             pair(29,
                   poped-state-stack);
            end,
            begin
@@ -3220,7 +3282,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-OPERATOR -> <TILDE-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(30,
+             pair(29,
                   poped-state-stack);
            end,
            begin
@@ -3238,7 +3300,7 @@ define constant *production-table* = make(<vector>, size: 134);
     // UNARY-OPERATOR -> <BANG-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(30,
+             pair(29,
                   poped-state-stack);
            end,
            begin
@@ -3257,11 +3319,12 @@ define constant *production-table* = make(<vector>, size: 134);
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    30 => 149;
-                    41 => 42;
-                    43 => 44;
-                    45 => 46;
-                    OTHERWISE => 39;
+                    29 => 156;
+                    40 => 41;
+                    44 => 45;
+                    46 => 47;
+                    48 => 49;
+                    OTHERWISE => 42;
                   end,
                   poped-state-stack);
            end,
@@ -3277,13 +3340,52 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[23] :=
   method (state-stack, symbol-stack, #key $state)
+    // CAST-EXPR -> <LPAREN-TOKEN> TYPE-NAME <RPAREN-TOKEN> CAST-EXPR
+    values(begin
+             let poped-state-stack = tail(tail(tail(tail(state-stack))));
+             pair(select (head(poped-state-stack))
+                    29 => 156;
+                    40 => 41;
+                    44 => 45;
+                    46 => 47;
+                    48 => 49;
+                    OTHERWISE => 42;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r4 = head(symbol-stack);
+             let temp4 = tail(symbol-stack);
+             let $r3 = head(temp4);
+             let temp3 = tail(temp4);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      let result = int-value($r4, $state);
+                      if (instance?(result, <integer>)
+                           & instance?($r2.true-type, <integer-type-declaration>))
+                        result;
+                      else
+                        parse-error
+                          ($state,
+                           "Melange only handles compile time casts from integer to integer");
+                      end if;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[24] :=
+  method (state-stack, symbol-stack, #key $state)
     // MULTIPLICATIVE-EXPR -> CAST-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    48 => 49;
-                    50 => 51;
-                    OTHERWISE => 40;
+                    51 => 52;
+                    53 => 54;
+                    OTHERWISE => 43;
                   end,
                   poped-state-stack);
            end,
@@ -3297,15 +3399,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[24] :=
+*production-table*[25] :=
   method (state-stack, symbol-stack, #key $state)
     // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <STAR-TOKEN> CAST-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    48 => 49;
-                    50 => 51;
-                    OTHERWISE => 40;
+                    51 => 52;
+                    53 => 54;
+                    OTHERWISE => 43;
                   end,
                   poped-state-stack);
            end,
@@ -3323,15 +3425,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[25] :=
+*production-table*[26] :=
   method (state-stack, symbol-stack, #key $state)
     // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <SLASH-TOKEN> CAST-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    48 => 49;
-                    50 => 51;
-                    OTHERWISE => 40;
+                    51 => 52;
+                    53 => 54;
+                    OTHERWISE => 43;
                   end,
                   poped-state-stack);
            end,
@@ -3349,15 +3451,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[26] :=
+*production-table*[27] :=
   method (state-stack, symbol-stack, #key $state)
     // MULTIPLICATIVE-EXPR -> MULTIPLICATIVE-EXPR <PERCENT-TOKEN> CAST-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    48 => 49;
-                    50 => 51;
-                    OTHERWISE => 40;
+                    51 => 52;
+                    53 => 54;
+                    OTHERWISE => 43;
                   end,
                   poped-state-stack);
            end,
@@ -3375,15 +3477,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[27] :=
+*production-table*[28] :=
   method (state-stack, symbol-stack, #key $state)
     // ADDITIVE-EXPR -> MULTIPLICATIVE-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    53 => 54;
-                    55 => 56;
-                    OTHERWISE => 47;
+                    56 => 57;
+                    58 => 59;
+                    OTHERWISE => 50;
                   end,
                   poped-state-stack);
            end,
@@ -3397,15 +3499,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[28] :=
+*production-table*[29] :=
   method (state-stack, symbol-stack, #key $state)
     // ADDITIVE-EXPR -> ADDITIVE-EXPR <PLUS-TOKEN> MULTIPLICATIVE-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    53 => 54;
-                    55 => 56;
-                    OTHERWISE => 47;
+                    56 => 57;
+                    58 => 59;
+                    OTHERWISE => 50;
                   end,
                   poped-state-stack);
            end,
@@ -3423,15 +3525,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[29] :=
+*production-table*[30] :=
   method (state-stack, symbol-stack, #key $state)
     // ADDITIVE-EXPR -> ADDITIVE-EXPR <MINUS-TOKEN> MULTIPLICATIVE-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    53 => 54;
-                    55 => 56;
-                    OTHERWISE => 47;
+                    56 => 57;
+                    58 => 59;
+                    OTHERWISE => 50;
                   end,
                   poped-state-stack);
            end,
@@ -3449,17 +3551,17 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[30] :=
+*production-table*[31] :=
   method (state-stack, symbol-stack, #key $state)
     // SHIFT-EXPR -> ADDITIVE-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    58 => 59;
-                    60 => 61;
-                    62 => 63;
-                    64 => 65;
-                    OTHERWISE => 52;
+                    61 => 62;
+                    63 => 64;
+                    65 => 66;
+                    67 => 68;
+                    OTHERWISE => 55;
                   end,
                   poped-state-stack);
            end,
@@ -3473,17 +3575,17 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[31] :=
+*production-table*[32] :=
   method (state-stack, symbol-stack, #key $state)
     // SHIFT-EXPR -> SHIFT-EXPR <LEFT-OP-TOKEN> ADDITIVE-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    58 => 59;
-                    60 => 61;
-                    62 => 63;
-                    64 => 65;
-                    OTHERWISE => 52;
+                    61 => 62;
+                    63 => 64;
+                    65 => 66;
+                    67 => 68;
+                    OTHERWISE => 55;
                   end,
                   poped-state-stack);
            end,
@@ -3501,17 +3603,17 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[32] :=
+*production-table*[33] :=
   method (state-stack, symbol-stack, #key $state)
     // SHIFT-EXPR -> SHIFT-EXPR <RIGHT-OP-TOKEN> ADDITIVE-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    58 => 59;
-                    60 => 61;
-                    62 => 63;
-                    64 => 65;
-                    OTHERWISE => 52;
+                    61 => 62;
+                    63 => 64;
+                    65 => 66;
+                    67 => 68;
+                    OTHERWISE => 55;
                   end,
                   poped-state-stack);
            end,
@@ -3529,15 +3631,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[33] :=
+*production-table*[34] :=
   method (state-stack, symbol-stack, #key $state)
     // RELATIONAL-EXPR -> SHIFT-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    67 => 68;
-                    69 => 70;
-                    OTHERWISE => 57;
+                    70 => 71;
+                    72 => 73;
+                    OTHERWISE => 60;
                   end,
                   poped-state-stack);
            end,
@@ -3551,15 +3653,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[34] :=
+*production-table*[35] :=
   method (state-stack, symbol-stack, #key $state)
     // RELATIONAL-EXPR -> RELATIONAL-EXPR <LT-TOKEN> SHIFT-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    67 => 68;
-                    69 => 70;
-                    OTHERWISE => 57;
+                    70 => 71;
+                    72 => 73;
+                    OTHERWISE => 60;
                   end,
                   poped-state-stack);
            end,
@@ -3577,15 +3679,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[35] :=
+*production-table*[36] :=
   method (state-stack, symbol-stack, #key $state)
     // RELATIONAL-EXPR -> RELATIONAL-EXPR <GT-TOKEN> SHIFT-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    67 => 68;
-                    69 => 70;
-                    OTHERWISE => 57;
+                    70 => 71;
+                    72 => 73;
+                    OTHERWISE => 60;
                   end,
                   poped-state-stack);
            end,
@@ -3603,15 +3705,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[36] :=
+*production-table*[37] :=
   method (state-stack, symbol-stack, #key $state)
     // RELATIONAL-EXPR -> RELATIONAL-EXPR <LE-OP-TOKEN> SHIFT-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    67 => 68;
-                    69 => 70;
-                    OTHERWISE => 57;
+                    70 => 71;
+                    72 => 73;
+                    OTHERWISE => 60;
                   end,
                   poped-state-stack);
            end,
@@ -3629,15 +3731,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[37] :=
+*production-table*[38] :=
   method (state-stack, symbol-stack, #key $state)
     // RELATIONAL-EXPR -> RELATIONAL-EXPR <GE-OP-TOKEN> SHIFT-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    67 => 68;
-                    69 => 70;
-                    OTHERWISE => 57;
+                    70 => 71;
+                    72 => 73;
+                    OTHERWISE => 60;
                   end,
                   poped-state-stack);
            end,
@@ -3655,14 +3757,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[38] :=
+*production-table*[39] :=
   method (state-stack, symbol-stack, #key $state)
     // EQUALITY-EXPR -> RELATIONAL-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    72 => 73;
-                    OTHERWISE => 66;
+                    75 => 76;
+                    OTHERWISE => 69;
                   end,
                   poped-state-stack);
            end,
@@ -3676,14 +3778,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[39] :=
+*production-table*[40] :=
   method (state-stack, symbol-stack, #key $state)
     // EQUALITY-EXPR -> EQUALITY-EXPR <EQ-OP-TOKEN> RELATIONAL-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    72 => 73;
-                    OTHERWISE => 66;
+                    75 => 76;
+                    OTHERWISE => 69;
                   end,
                   poped-state-stack);
            end,
@@ -3701,14 +3803,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[40] :=
+*production-table*[41] :=
   method (state-stack, symbol-stack, #key $state)
     // EQUALITY-EXPR -> EQUALITY-EXPR <NE-OP-TOKEN> RELATIONAL-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    72 => 73;
-                    OTHERWISE => 66;
+                    75 => 76;
+                    OTHERWISE => 69;
                   end,
                   poped-state-stack);
            end,
@@ -3726,14 +3828,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[41] :=
+*production-table*[42] :=
   method (state-stack, symbol-stack, #key $state)
     // AND-EXPR -> EQUALITY-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    75 => 76;
-                    OTHERWISE => 71;
+                    78 => 79;
+                    OTHERWISE => 74;
                   end,
                   poped-state-stack);
            end,
@@ -3747,14 +3849,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[42] :=
+*production-table*[43] :=
   method (state-stack, symbol-stack, #key $state)
     // AND-EXPR -> AND-EXPR <AMPERSAND-TOKEN> EQUALITY-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    75 => 76;
-                    OTHERWISE => 71;
+                    78 => 79;
+                    OTHERWISE => 74;
                   end,
                   poped-state-stack);
            end,
@@ -3772,14 +3874,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[43] :=
+*production-table*[44] :=
   method (state-stack, symbol-stack, #key $state)
     // EXCLUSIVE-OR-EXPR -> AND-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    78 => 79;
-                    OTHERWISE => 74;
+                    81 => 82;
+                    OTHERWISE => 77;
                   end,
                   poped-state-stack);
            end,
@@ -3793,14 +3895,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[44] :=
+*production-table*[45] :=
   method (state-stack, symbol-stack, #key $state)
     // EXCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR <CARAT-TOKEN> AND-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    78 => 79;
-                    OTHERWISE => 74;
+                    81 => 82;
+                    OTHERWISE => 77;
                   end,
                   poped-state-stack);
            end,
@@ -3818,14 +3920,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[45] :=
+*production-table*[46] :=
   method (state-stack, symbol-stack, #key $state)
     // INCLUSIVE-OR-EXPR -> EXCLUSIVE-OR-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    81 => 82;
-                    OTHERWISE => 77;
+                    84 => 85;
+                    OTHERWISE => 80;
                   end,
                   poped-state-stack);
            end,
@@ -3839,14 +3941,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[46] :=
+*production-table*[47] :=
   method (state-stack, symbol-stack, #key $state)
     // INCLUSIVE-OR-EXPR -> INCLUSIVE-OR-EXPR <BAR-TOKEN> EXCLUSIVE-OR-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    81 => 82;
-                    OTHERWISE => 77;
+                    84 => 85;
+                    OTHERWISE => 80;
                   end,
                   poped-state-stack);
            end,
@@ -3864,14 +3966,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[47] :=
+*production-table*[48] :=
   method (state-stack, symbol-stack, #key $state)
     // LOGICAL-AND-EXPR -> INCLUSIVE-OR-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    88 => 89;
-                    OTHERWISE => 80;
+                    91 => 92;
+                    OTHERWISE => 83;
                   end,
                   poped-state-stack);
            end,
@@ -3885,14 +3987,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[48] :=
+*production-table*[49] :=
   method (state-stack, symbol-stack, #key $state)
     // LOGICAL-AND-EXPR -> LOGICAL-AND-EXPR <AND-OP-TOKEN> INCLUSIVE-OR-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    88 => 89;
-                    OTHERWISE => 80;
+                    91 => 92;
+                    OTHERWISE => 83;
                   end,
                   poped-state-stack);
            end,
@@ -3910,14 +4012,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[49] :=
+*production-table*[50] :=
   method (state-stack, symbol-stack, #key $state)
     // LOGICAL-OR-EXPR -> LOGICAL-AND-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    84 => 85;
-                    OTHERWISE => 83;
+                    87 => 88;
+                    OTHERWISE => 86;
                   end,
                   poped-state-stack);
            end,
@@ -3931,14 +4033,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[50] :=
+*production-table*[51] :=
   method (state-stack, symbol-stack, #key $state)
     // LOGICAL-OR-EXPR -> LOGICAL-OR-EXPR <OR-OP-TOKEN> LOGICAL-AND-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    84 => 85;
-                    OTHERWISE => 83;
+                    87 => 88;
+                    OTHERWISE => 86;
                   end,
                   poped-state-stack);
            end,
@@ -3956,16 +4058,16 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[51] :=
+*production-table*[52] :=
   method (state-stack, symbol-stack, #key $state)
     // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    23 => 150;
-                    26 => 150;
-                    86 => 87;
-                    OTHERWISE => 90;
+                    25 => 93;
+                    38 => 93;
+                    89 => 90;
+                    OTHERWISE => 97;
                   end,
                   poped-state-stack);
            end,
@@ -3979,16 +4081,16 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[52] :=
+*production-table*[53] :=
   method (state-stack, symbol-stack, #key $state)
     // CONDITIONAL-EXPR -> LOGICAL-OR-EXPR <QUESTION-TOKEN> LOGICAL-OR-EXPR <COLON-TOKEN> CONDITIONAL-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(tail(tail(state-stack)))));
              pair(select (head(poped-state-stack))
-                    23 => 150;
-                    26 => 150;
-                    86 => 87;
-                    OTHERWISE => 90;
+                    25 => 93;
+                    38 => 93;
+                    89 => 90;
+                    OTHERWISE => 97;
                   end,
                   poped-state-stack);
            end,
@@ -4010,33 +4112,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[53] :=
+*production-table*[54] :=
   method (state-stack, symbol-stack, #key $state)
     // ASSIGNMENT-EXPR -> CONDITIONAL-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    23 => 154;
-                    OTHERWISE => 151;
+                    25 => 157;
+                    OTHERWISE => 94;
                   end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[54] :=
-  method (state-stack, symbol-stack, #key $state)
-    // EXPR -> ASSIGNMENT-EXPR
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(155,
                   poped-state-stack);
            end,
            begin
@@ -4051,16 +4135,34 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[55] :=
   method (state-stack, symbol-stack, #key $state)
+    // EXPR -> ASSIGNMENT-EXPR
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(95,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[56] :=
+  method (state-stack, symbol-stack, #key $state)
     // CONSTANT-EXPR -> CONDITIONAL-EXPR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    20 => 157;
-                    37 => 91;
-                    107 => 109;
-                    127 => 129;
-                    204 => 205;
-                    OTHERWISE => 210;
+                    20 => 160;
+                    36 => 98;
+                    114 => 116;
+                    134 => 136;
+                    207 => 208;
+                    OTHERWISE => 213;
                   end,
                   poped-state-stack);
            end,
@@ -4076,12 +4178,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[56] :=
+*production-table*[57] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION -> DECLARATION-SPECIFIERS <SEMICOLON-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(state-stack));
-             pair(194,
+             pair(197,
                   poped-state-stack);
            end,
            begin
@@ -4097,12 +4199,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[57] :=
+*production-table*[58] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION -> DECLARATION-SPECIFIERS INIT-DECLARATOR-LIST <SEMICOLON-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(194,
+             pair(197,
                   poped-state-stack);
            end,
            begin
@@ -4122,15 +4224,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[58] :=
+*production-table*[59] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    6 => 185;
-                    183 => 184;
-                    OTHERWISE => 186;
+                    6 => 188;
+                    186 => 187;
+                    OTHERWISE => 189;
                   end,
                   poped-state-stack);
            end,
@@ -4145,15 +4247,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[59] :=
+*production-table*[60] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION-SPECIFIERS -> STORAGE-CLASS-SPECIFIER DECLARATION-SPECIFIERS
     values(begin
              let poped-state-stack = tail(tail(state-stack));
              pair(select (head(poped-state-stack))
-                    6 => 185;
-                    183 => 184;
-                    OTHERWISE => 186;
+                    6 => 188;
+                    186 => 187;
+                    OTHERWISE => 189;
                   end,
                   poped-state-stack);
            end,
@@ -4170,15 +4272,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[60] :=
+*production-table*[61] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION-SPECIFIERS -> TYPE-SPECIFIER
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    6 => 185;
-                    183 => 184;
-                    OTHERWISE => 186;
+                    6 => 188;
+                    186 => 187;
+                    OTHERWISE => 189;
                   end,
                   poped-state-stack);
            end,
@@ -4192,15 +4294,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[61] :=
+*production-table*[62] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATION-SPECIFIERS -> TYPE-SPECIFIER DECLARATION-SPECIFIERS
     values(begin
              let poped-state-stack = tail(tail(state-stack));
              pair(select (head(poped-state-stack))
-                    6 => 185;
-                    183 => 184;
-                    OTHERWISE => 186;
+                    6 => 188;
+                    186 => 187;
+                    OTHERWISE => 189;
                   end,
                   poped-state-stack);
            end,
@@ -4216,12 +4318,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[62] :=
+*production-table*[63] :=
   method (state-stack, symbol-stack, #key $state)
     // INIT-DECLARATOR-LIST -> INIT-DECLARATOR
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(189,
+             pair(192,
                   poped-state-stack);
            end,
            begin
@@ -4234,12 +4336,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[63] :=
+*production-table*[64] :=
   method (state-stack, symbol-stack, #key $state)
     // INIT-DECLARATOR-LIST -> INIT-DECLARATOR-LIST <COMMA-TOKEN> INIT-DECLARATOR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(189,
+             pair(192,
                   poped-state-stack);
            end,
            begin
@@ -4256,14 +4358,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[64] :=
+*production-table*[65] :=
   method (state-stack, symbol-stack, #key $state)
     // INIT-DECLARATOR -> DECLARATOR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    186 => 188;
-                    OTHERWISE => 192;
+                    189 => 191;
+                    OTHERWISE => 195;
                   end,
                   poped-state-stack);
            end,
@@ -4277,7 +4379,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[65] :=
+*production-table*[66] :=
   method (state-stack, symbol-stack, #key $state)
     // STORAGE-CLASS-SPECIFIER -> <TYPEDEF-TOKEN>
     values(begin
@@ -4296,7 +4398,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[66] :=
+*production-table*[67] :=
   method (state-stack, symbol-stack, #key $state)
     // STORAGE-CLASS-SPECIFIER -> <EXTERN-TOKEN>
     values(begin
@@ -4314,49 +4416,21 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[67] :=
+*production-table*[68] :=
   method (state-stack, symbol-stack, #key $state)
     // TYPE-SPECIFIER -> <TYPE-SPECIFIER-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[68] :=
-  method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER -> <CONST-TOKEN>
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
                   end,
                   poped-state-stack);
            end,
@@ -4372,19 +4446,19 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[69] :=
   method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER -> <VOLATILE-TOKEN>
+    // TYPE-SPECIFIER -> <CONST-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
                   end,
                   poped-state-stack);
            end,
@@ -4400,19 +4474,19 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[70] :=
   method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER -> STRUCT-OR-UNION-SPECIFIER
+    // TYPE-SPECIFIER -> <VOLATILE-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
                   end,
                   poped-state-stack);
            end,
@@ -4428,19 +4502,19 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[71] :=
   method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER -> ENUM-SPECIFIER
+    // TYPE-SPECIFIER -> STRUCT-OR-UNION-SPECIFIER
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
                   end,
                   poped-state-stack);
            end,
@@ -4456,19 +4530,47 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[72] :=
   method (state-stack, symbol-stack, #key $state)
+    // TYPE-SPECIFIER -> ENUM-SPECIFIER
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[73] :=
+  method (state-stack, symbol-stack, #key $state)
     // TYPE-SPECIFIER -> <TYPE-NAME-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 183;
-                    6 => 183;
-                    36 => 112;
-                    95 => 112;
-                    138 => 112;
-                    166 => 112;
-                    183 => 183;
-                    196 => 183;
-                    OTHERWISE => 35;
+                    0 => 186;
+                    6 => 186;
+                    35 => 119;
+                    102 => 119;
+                    145 => 119;
+                    169 => 119;
+                    186 => 186;
+                    199 => 186;
+                    OTHERWISE => 34;
                   end,
                   poped-state-stack);
            end,
@@ -4482,7 +4584,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[73] :=
+*production-table*[74] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN> <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
     values(begin
@@ -4508,7 +4610,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[74] :=
+*production-table*[75] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <LCURLY-TOKEN> STRUCT-DECLARATION-LIST <RCURLY-TOKEN>
     values(begin
@@ -4532,7 +4634,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[75] :=
+*production-table*[76] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-OR-UNION-SPECIFIER -> STRUCT-OR-UNION <NAME-TOKEN>
     values(begin
@@ -4552,7 +4654,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[76] :=
+*production-table*[77] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-OR-UNION -> <STRUCT-TOKEN>
     values(begin
@@ -4570,7 +4672,7 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[77] :=
+*production-table*[78] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-OR-UNION -> <UNION-TOKEN>
     values(begin
@@ -4588,14 +4690,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[78] :=
+*production-table*[79] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    13 => 176;
-                    OTHERWISE => 181;
+                    13 => 179;
+                    OTHERWISE => 184;
                   end,
                   poped-state-stack);
            end,
@@ -4609,14 +4711,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[79] :=
+*production-table*[80] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATION-LIST -> STRUCT-DECLARATION-LIST STRUCT-DECLARATION
     values(begin
              let poped-state-stack = tail(tail(state-stack));
              pair(select (head(poped-state-stack))
-                    13 => 176;
-                    OTHERWISE => 181;
+                    13 => 179;
+                    OTHERWISE => 184;
                   end,
                   poped-state-stack);
            end,
@@ -4633,15 +4735,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[80] :=
+*production-table*[81] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATION -> TYPE-SPECIFIER-LIST STRUCT-DECLARATOR-LIST <SEMICOLON-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    13 => 175;
-                    180 => 175;
-                    OTHERWISE => 178;
+                    13 => 178;
+                    183 => 178;
+                    OTHERWISE => 181;
                   end,
                   poped-state-stack);
            end,
@@ -4665,12 +4767,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[81] :=
+*production-table*[82] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(171,
+             pair(174,
                   poped-state-stack);
            end,
            begin
@@ -4683,12 +4785,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[82] :=
+*production-table*[83] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATOR-LIST -> STRUCT-DECLARATOR-LIST <COMMA-TOKEN> STRUCT-DECLARATOR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(171,
+             pair(174,
                   poped-state-stack);
            end,
            begin
@@ -4706,14 +4808,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[83] :=
+*production-table*[84] :=
   method (state-stack, symbol-stack, #key $state)
     // STRUCT-DECLARATOR -> DECLARATOR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    166 => 170;
-                    OTHERWISE => 174;
+                    169 => 173;
+                    OTHERWISE => 177;
                   end,
                   poped-state-stack);
            end,
@@ -4727,12 +4829,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[84] :=
+*production-table*[85] :=
   method (state-stack, symbol-stack, #key $state)
     // ENUM-SPECIFIER -> <ENUM-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
-             pair(33,
+             pair(32,
                   poped-state-stack);
            end,
            begin
@@ -4751,12 +4853,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[85] :=
+*production-table*[86] :=
   method (state-stack, symbol-stack, #key $state)
     // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN> <LCURLY-TOKEN> ENUMERATOR-LIST <RCURLY-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(tail(state-stack)))));
-             pair(33,
+             pair(32,
                   poped-state-stack);
            end,
            begin
@@ -4777,12 +4879,12 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[86] :=
+*production-table*[87] :=
   method (state-stack, symbol-stack, #key $state)
     // ENUM-SPECIFIER -> <ENUM-TOKEN> <NAME-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(state-stack));
-             pair(33,
+             pair(32,
                   poped-state-stack);
            end,
            begin
@@ -4797,14 +4899,14 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[87] :=
+*production-table*[88] :=
   method (state-stack, symbol-stack, #key $state)
     // ENUMERATOR-LIST -> ENUMERATOR
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    17 => 159;
-                    OTHERWISE => 164;
+                    17 => 162;
+                    OTHERWISE => 167;
                   end,
                   poped-state-stack);
            end,
@@ -4812,20 +4914,20 @@ define constant *production-table* = make(<vector>, size: 134);
              let $r1 = head(symbol-stack);
              let temp1 = tail(symbol-stack);
              pair(begin
-                      list($r1);
+                      list(make-enum-slot($r1.head, $r1.tail, #f, $state));
                   end,
                   temp1);
            end);
   end;
 
-*production-table*[88] :=
+*production-table*[89] :=
   method (state-stack, symbol-stack, #key $state)
     // ENUMERATOR-LIST -> ENUMERATOR-LIST <COMMA-TOKEN> ENUMERATOR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    17 => 159;
-                    OTHERWISE => 164;
+                    17 => 162;
+                    OTHERWISE => 167;
                   end,
                   poped-state-stack);
            end,
@@ -4837,28 +4939,13 @@ define constant *production-table* = make(<vector>, size: 134);
              let $r1 = head(temp2);
              let temp1 = tail(temp2);
              pair(begin
-                      pair($r3, $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[89] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ENUMERATOR -> IDENTIFIER
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    161 => 162;
-                    OTHERWISE => 158;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1.value
+                      // HACK: We depend here on the fact that this parser generator evaluates
+                      // the subtrees left-to-right.
+                      //
+                      // We do all of this on the fly because some (i.e. Apple's) C compilers
+                      // let later enum values be computed based upon those earlier in the 
+                      // same enum declaration.
+                      pair(make-enum-slot($r3.head, $r3.tail, $r1.head, $state), $r1);
                   end,
                   temp1);
            end);
@@ -4866,12 +4953,33 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[90] :=
   method (state-stack, symbol-stack, #key $state)
+    // ENUMERATOR -> IDENTIFIER
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    164 => 165;
+                    OTHERWISE => 161;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      pair($r1.value, #f);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[91] :=
+  method (state-stack, symbol-stack, #key $state)
     // ENUMERATOR -> IDENTIFIER <ASSIGN-TOKEN> CONSTANT-EXPR
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    161 => 162;
-                    OTHERWISE => 158;
+                    164 => 165;
+                    OTHERWISE => 161;
                   end,
                   poped-state-stack);
            end,
@@ -4889,18 +4997,18 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[91] :=
+*production-table*[92] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR -> DECLARATOR2
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    95 => 145;
-                    114 => 131;
-                    166 => 169;
-                    167 => 131;
-                    173 => 169;
-                    OTHERWISE => 187;
+                    102 => 152;
+                    121 => 138;
+                    169 => 172;
+                    170 => 138;
+                    176 => 172;
+                    OTHERWISE => 190;
                   end,
                   poped-state-stack);
            end,
@@ -4914,18 +5022,18 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[92] :=
+*production-table*[93] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR -> POINTER DECLARATOR2
     values(begin
              let poped-state-stack = tail(tail(state-stack));
              pair(select (head(poped-state-stack))
-                    95 => 145;
-                    114 => 131;
-                    166 => 169;
-                    167 => 131;
-                    173 => 169;
-                    OTHERWISE => 187;
+                    102 => 152;
+                    121 => 138;
+                    169 => 172;
+                    170 => 138;
+                    176 => 172;
+                    OTHERWISE => 190;
                   end,
                   poped-state-stack);
            end,
@@ -4941,15 +5049,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[93] :=
+*production-table*[94] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> IDENTIFIER
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -4963,15 +5071,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[94] :=
+*production-table*[95] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> <LPAREN-TOKEN> DECLARATOR <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -4989,15 +5097,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[95] :=
+*production-table*[96] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -5015,15 +5123,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[96] :=
+*production-table*[97] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -5043,15 +5151,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[97] :=
+*production-table*[98] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(state-stack)));
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -5070,43 +5178,15 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[98] :=
+*production-table*[99] :=
   method (state-stack, symbol-stack, #key $state)
     // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
              pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r4 = head(symbol-stack);
-             let temp4 = tail(symbol-stack);
-             let $r3 = head(temp4);
-             let temp3 = tail(temp4);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(#"function", pair(reverse!($r3), $r1));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[99] :=
-  method (state-stack, symbol-stack, #key $state)
-    // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(tail(state-stack))));
-             pair(select (head(poped-state-stack))
-                    140 => 142;
-                    168 => 142;
-                    OTHERWISE => 115;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -5128,729 +5208,13 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[100] :=
   method (state-stack, symbol-stack, #key $state)
-    // POINTER -> <STAR-TOKEN>
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    36 => 146;
-                    94 => 146;
-                    95 => 140;
-                    114 => 140;
-                    136 => 137;
-                    138 => 139;
-                    OTHERWISE => 168;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      list(#"pointer");
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[101] :=
-  method (state-stack, symbol-stack, #key $state)
-    // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    36 => 146;
-                    94 => 146;
-                    95 => 140;
-                    114 => 140;
-                    136 => 137;
-                    138 => 139;
-                    OTHERWISE => 168;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      // They can put "const" in some screwy places.  Ignore it.
-                      list(#"pointer");
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[102] :=
-  method (state-stack, symbol-stack, #key $state)
-    // POINTER -> <STAR-TOKEN> POINTER
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    36 => 146;
-                    94 => 146;
-                    95 => 140;
-                    114 => 140;
-                    136 => 137;
-                    138 => 139;
-                    OTHERWISE => 168;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(#"pointer", $r2);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[103] :=
-  method (state-stack, symbol-stack, #key $state)
-    // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST POINTER
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    36 => 146;
-                    94 => 146;
-                    95 => 140;
-                    114 => 140;
-                    136 => 137;
-                    138 => 139;
-                    OTHERWISE => 168;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      // They can put "const" in some screwy places.  Ignore it.
-                      pair(#"pointer", $r2);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[104] :=
-  method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    13 => 166;
-                    32 => 36;
-                    136 => 138;
-                    176 => 166;
-                    180 => 166;
-                    181 => 166;
-                    199 => 36;
-                    204 => 36;
-                    OTHERWISE => 95;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      list($r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[105] :=
-  method (state-stack, symbol-stack, #key $state)
-    // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST TYPE-SPECIFIER
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    13 => 166;
-                    32 => 36;
-                    136 => 138;
-                    176 => 166;
-                    180 => 166;
-                    181 => 166;
-                    199 => 36;
-                    204 => 36;
-                    OTHERWISE => 95;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      // Produces a list in reverse order
-                      pair($r2, $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[106] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(125,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[107] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(125,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[108] :=
-  method (state-stack, symbol-stack, #key $state)
-    // IDENTIFIER-LIST -> IDENTIFIER
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(121,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      list(make(<arg-declaration>, name: $r1.string-value, type: unknown-type));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[109] :=
-  method (state-stack, symbol-stack, #key $state)
-    // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> IDENTIFIER
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(121,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      // Produces list in reverse order.
-                      pair(make(<arg-declaration>, name: $r3.string-value, type: unknown-type),
-                           $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[110] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-TYPE-LIST -> PARAMETER-LIST
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    97 => 105;
-                    116 => 118;
-                    OTHERWISE => 133;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[111] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    97 => 105;
-                    116 => 118;
-                    OTHERWISE => 133;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[112] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-LIST -> PARAMETER-DECLARATION
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(101,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      list($r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[113] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> PARAMETER-DECLARATION
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(101,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      // Produces lists in reverse order.
-                      pair($r3, $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[114] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST DECLARATOR
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    102 => 103;
-                    OTHERWISE => 100;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      let type = process-type-list(reverse!($r1), $state);
-                      let (type, name) = process-declarator(type, $r2, $state);
-                      make(<arg-declaration>, name: name.string-value, type: type);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[115] :=
-  method (state-stack, symbol-stack, #key $state)
-    // PARAMETER-DECLARATION -> TYPE-NAME
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    102 => 103;
-                    OTHERWISE => 100;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      make(<arg-declaration>, name: "", type: $r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[116] :=
-  method (state-stack, symbol-stack, #key $state)
-    // TYPE-NAME -> TYPE-SPECIFIER-LIST
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    32 => 147;
-                    199 => 202;
-                    204 => 207;
-                    OTHERWISE => 99;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      process-type-list(reverse!($r1), $state);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[117] :=
-  method (state-stack, symbol-stack, #key $state)
-    // TYPE-NAME -> TYPE-SPECIFIER-LIST ABSTRACT-DECLARATOR
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    32 => 147;
-                    199 => 202;
-                    204 => 207;
-                    OTHERWISE => 99;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      let type = process-type-list(reverse!($r1), $state);
-                      let (type, name) = process-declarator(type, $r2, $state);
-                      type;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[118] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR -> POINTER
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    36 => 111;
-                    95 => 111;
-                    OTHERWISE => 143;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      list($r1);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[119] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR -> ABSTRACT-DECLARATOR2
-    values(begin
-             let poped-state-stack = tail(state-stack);
-             pair(select (head(poped-state-stack))
-                    36 => 111;
-                    95 => 111;
-                    OTHERWISE => 143;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r1 = head(symbol-stack);
-             let temp1 = tail(symbol-stack);
-             pair(begin
-                      $r1;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[120] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR -> POINTER ABSTRACT-DECLARATOR2
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    36 => 111;
-                    95 => 111;
-                    OTHERWISE => 143;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair($r1, $r2);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[121] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      $r2;
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[122] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      list(#"vector", #f);
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[123] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      list(#"vector", int-value($r2, $state));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[124] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(#"vector", pair(#f, $r1));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[125] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+    // DECLARATOR2 -> DECLARATOR2 <LPAREN-TOKEN> PARAMETER-IDENTIFIER-LIST <RPAREN-TOKEN>
     values(begin
              let poped-state-stack = tail(tail(tail(tail(state-stack))));
              pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r4 = head(symbol-stack);
-             let temp4 = tail(symbol-stack);
-             let $r3 = head(temp4);
-             let temp3 = tail(temp4);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(#"vector", pair(int-value($r3, $state), $r1));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[126] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(state-stack));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r2 = head(symbol-stack);
-             let temp2 = tail(symbol-stack);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      list(#"function",
-                           list(make(<varargs-declaration>, name: "", type: unknown-type)));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[127] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      list(#"function", reverse!($r2));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[128] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(state-stack)));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
-                  end,
-                  poped-state-stack);
-           end,
-           begin
-             let $r3 = head(symbol-stack);
-             let temp3 = tail(symbol-stack);
-             let $r2 = head(temp3);
-             let temp2 = tail(temp3);
-             let $r1 = head(temp2);
-             let temp1 = tail(temp2);
-             pair(begin
-                      pair(#"function", pair(list(make(<varargs-declaration>,
-                                                       name: "", type: unknown-type)), $r1));
-                  end,
-                  temp1);
-           end);
-  end;
-
-*production-table*[129] :=
-  method (state-stack, symbol-stack, #key $state)
-    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
-    values(begin
-             let poped-state-stack = tail(tail(tail(tail(state-stack))));
-             pair(select (head(poped-state-stack))
-                    140 => 141;
-                    146 => 141;
-                    OTHERWISE => 96;
+                    147 => 149;
+                    171 => 149;
+                    OTHERWISE => 122;
                   end,
                   poped-state-stack);
            end,
@@ -5870,14 +5234,19 @@ define constant *production-table* = make(<vector>, size: 134);
            end);
   end;
 
-*production-table*[130] :=
+*production-table*[101] :=
   method (state-stack, symbol-stack, #key $state)
-    // EXTERNAL-DEFINITION -> <BEGIN-INCLUDE-TOKEN>
+    // POINTER -> <STAR-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 195;
-                    OTHERWISE => 198;
+                    35 => 153;
+                    101 => 153;
+                    102 => 147;
+                    121 => 147;
+                    143 => 144;
+                    145 => 146;
+                    OTHERWISE => 171;
                   end,
                   poped-state-stack);
            end,
@@ -5885,11 +5254,707 @@ define constant *production-table* = make(<vector>, size: 134);
              let $r1 = head(symbol-stack);
              let temp1 = tail(symbol-stack);
              pair(begin
-		    if ($state.verbose)
-		      write('[', *standard-error*);
-		      force-output(*standard-error*);
-		    end if;
-                      push-include-level($state);
+                      list(#"pointer");
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[102] :=
+  method (state-stack, symbol-stack, #key $state)
+    // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    35 => 153;
+                    101 => 153;
+                    102 => 147;
+                    121 => 147;
+                    143 => 144;
+                    145 => 146;
+                    OTHERWISE => 171;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      // They can put "const" in some screwy places.  Ignore it.
+                      list(#"pointer");
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[103] :=
+  method (state-stack, symbol-stack, #key $state)
+    // POINTER -> <STAR-TOKEN> POINTER
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    35 => 153;
+                    101 => 153;
+                    102 => 147;
+                    121 => 147;
+                    143 => 144;
+                    145 => 146;
+                    OTHERWISE => 171;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(#"pointer", $r2);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[104] :=
+  method (state-stack, symbol-stack, #key $state)
+    // POINTER -> <STAR-TOKEN> TYPE-SPECIFIER-LIST POINTER
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    35 => 153;
+                    101 => 153;
+                    102 => 147;
+                    121 => 147;
+                    143 => 144;
+                    145 => 146;
+                    OTHERWISE => 171;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      // They can put "const" in some screwy places.  Ignore it.
+                      pair(#"pointer", $r2);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[105] :=
+  method (state-stack, symbol-stack, #key $state)
+    // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(#[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 0, 102, 0, 0, 0, 0, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 145, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 169, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 35][head(poped-state-stack)],
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      list($r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[106] :=
+  method (state-stack, symbol-stack, #key $state)
+    // TYPE-SPECIFIER-LIST -> TYPE-SPECIFIER-LIST TYPE-SPECIFIER
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(#[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 0, 102, 0, 0, 0, 0, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 145, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 169, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 35][head(poped-state-stack)],
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      // Produces a list in reverse order
+                      pair($r2, $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[107] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(132,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[108] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(132,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[109] :=
+  method (state-stack, symbol-stack, #key $state)
+    // IDENTIFIER-LIST -> IDENTIFIER
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(128,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      list(make(<arg-declaration>, name: $r1.string-value, type: unknown-type));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[110] :=
+  method (state-stack, symbol-stack, #key $state)
+    // IDENTIFIER-LIST -> IDENTIFIER-LIST <COMMA-TOKEN> IDENTIFIER
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(128,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      // Produces list in reverse order.
+                      pair(make(<arg-declaration>, name: $r3.string-value, type: unknown-type),
+                           $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[111] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-TYPE-LIST -> PARAMETER-LIST
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    104 => 112;
+                    123 => 125;
+                    OTHERWISE => 140;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[112] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-TYPE-LIST -> PARAMETER-LIST <COMMA-TOKEN> <ELIPSIS-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    104 => 112;
+                    123 => 125;
+                    OTHERWISE => 140;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[113] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-LIST -> PARAMETER-DECLARATION
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(108,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      list($r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[114] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-LIST -> PARAMETER-LIST <COMMA-TOKEN> PARAMETER-DECLARATION
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(108,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      // Produces lists in reverse order.
+                      pair($r3, $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[115] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-DECLARATION -> TYPE-SPECIFIER-LIST DECLARATOR
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    109 => 110;
+                    OTHERWISE => 107;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      let type = process-type-list(reverse!($r1), $state);
+                      let (type, name) = process-declarator(type, $r2, $state);
+                      make(<arg-declaration>, name: name.string-value, type: type);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[116] :=
+  method (state-stack, symbol-stack, #key $state)
+    // PARAMETER-DECLARATION -> TYPE-NAME
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    109 => 110;
+                    OTHERWISE => 107;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      make(<arg-declaration>, name: "", type: $r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[117] :=
+  method (state-stack, symbol-stack, #key $state)
+    // TYPE-NAME -> TYPE-SPECIFIER-LIST
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    31 => 154;
+                    38 => 39;
+                    202 => 205;
+                    207 => 210;
+                    OTHERWISE => 106;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      process-type-list(reverse!($r1), $state);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[118] :=
+  method (state-stack, symbol-stack, #key $state)
+    // TYPE-NAME -> TYPE-SPECIFIER-LIST ABSTRACT-DECLARATOR
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    31 => 154;
+                    38 => 39;
+                    202 => 205;
+                    207 => 210;
+                    OTHERWISE => 106;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      let type = process-type-list(reverse!($r1), $state);
+                      let (type, name) = process-declarator(type, $r2, $state);
+                      type;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[119] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR -> POINTER
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    35 => 118;
+                    102 => 118;
+                    OTHERWISE => 150;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      list($r1);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[120] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR -> ABSTRACT-DECLARATOR2
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    35 => 118;
+                    102 => 118;
+                    OTHERWISE => 150;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[121] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR -> POINTER ABSTRACT-DECLARATOR2
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    35 => 118;
+                    102 => 118;
+                    OTHERWISE => 150;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair($r1, $r2);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[122] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> ABSTRACT-DECLARATOR <RPAREN-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      $r2;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[123] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      list(#"vector", #f);
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[124] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      list(#"vector", int-value($r2, $state));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[125] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> <RBRACKET-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(#"vector", pair(#f, $r1));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[126] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LBRACKET-TOKEN> CONSTANT-EXPR <RBRACKET-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(tail(state-stack))));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r4 = head(symbol-stack);
+             let temp4 = tail(symbol-stack);
+             let $r3 = head(temp4);
+             let temp3 = tail(temp4);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(#"vector", pair(int-value($r3, $state), $r1));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[127] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> <RPAREN-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(state-stack));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r2 = head(symbol-stack);
+             let temp2 = tail(symbol-stack);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      list(#"function",
+                           list(make(<varargs-declaration>, name: "", type: unknown-type)));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[128] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      list(#"function", reverse!($r2));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[129] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> <RPAREN-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(state-stack)));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r3 = head(symbol-stack);
+             let temp3 = tail(symbol-stack);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(#"function", pair(list(make(<varargs-declaration>,
+                                                       name: "", type: unknown-type)), $r1));
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[130] :=
+  method (state-stack, symbol-stack, #key $state)
+    // ABSTRACT-DECLARATOR2 -> ABSTRACT-DECLARATOR2 <LPAREN-TOKEN> PARAMETER-TYPE-LIST <RPAREN-TOKEN>
+    values(begin
+             let poped-state-stack = tail(tail(tail(tail(state-stack))));
+             pair(select (head(poped-state-stack))
+                    147 => 148;
+                    153 => 148;
+                    OTHERWISE => 103;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r4 = head(symbol-stack);
+             let temp4 = tail(symbol-stack);
+             let $r3 = head(temp4);
+             let temp3 = tail(temp4);
+             let $r2 = head(temp3);
+             let temp2 = tail(temp3);
+             let $r1 = head(temp2);
+             let temp1 = tail(temp2);
+             pair(begin
+                      pair(#"function", pair(reverse!($r3), $r1));
                   end,
                   temp1);
            end);
@@ -5897,12 +5962,12 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[131] :=
   method (state-stack, symbol-stack, #key $state)
-    // EXTERNAL-DEFINITION -> <END-INCLUDE-TOKEN>
+    // EXTERNAL-DEFINITION -> <BEGIN-INCLUDE-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 195;
-                    OTHERWISE => 198;
+                    0 => 198;
+                    OTHERWISE => 201;
                   end,
                   poped-state-stack);
            end,
@@ -5910,12 +5975,11 @@ define constant *production-table* = make(<vector>, size: 134);
              let $r1 = head(symbol-stack);
              let temp1 = tail(symbol-stack);
              pair(begin
-  if ($state.verbose)
-    write(']', *standard-error*);
-    force-output(*standard-error*);
-  end if;
-                      do(curry(add-cpp-declaration, $state), $r1.value);
-                      pop-include-level($state);
+                      if ($state.verbose)
+                        write('[', *standard-error*);
+                        force-output(*standard-error*);
+                      end if;
+                      push-include-level($state);
                   end,
                   temp1);
            end);
@@ -5923,12 +5987,12 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[132] :=
   method (state-stack, symbol-stack, #key $state)
-    // EXTERNAL-DEFINITION -> DECLARATION
+    // EXTERNAL-DEFINITION -> <END-INCLUDE-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
              pair(select (head(poped-state-stack))
-                    0 => 195;
-                    OTHERWISE => 198;
+                    0 => 198;
+                    OTHERWISE => 201;
                   end,
                   poped-state-stack);
            end,
@@ -5936,11 +6000,12 @@ define constant *production-table* = make(<vector>, size: 134);
              let $r1 = head(symbol-stack);
              let temp1 = tail(symbol-stack);
              pair(begin
-  if ($state.verbose)
-    write('.', *standard-error*);
-    force-output(*standard-error*);
-  end if;
-                      $r1;
+                      if ($state.verbose)
+                        write(']', *standard-error*);
+                        force-output(*standard-error*);
+                      end if;
+                      do(curry(add-cpp-declaration, $state), $r1.value);
+                      pop-include-level($state);
                   end,
                   temp1);
            end);
@@ -5948,10 +6013,35 @@ define constant *production-table* = make(<vector>, size: 134);
 
 *production-table*[133] :=
   method (state-stack, symbol-stack, #key $state)
+    // EXTERNAL-DEFINITION -> DECLARATION
+    values(begin
+             let poped-state-stack = tail(state-stack);
+             pair(select (head(poped-state-stack))
+                    0 => 198;
+                    OTHERWISE => 201;
+                  end,
+                  poped-state-stack);
+           end,
+           begin
+             let $r1 = head(symbol-stack);
+             let temp1 = tail(symbol-stack);
+             pair(begin
+                      if ($state.verbose)
+                        write('.', *standard-error*);
+                        force-output(*standard-error*);
+                      end if;
+                      $r1;
+                  end,
+                  temp1);
+           end);
+  end;
+
+*production-table*[134] :=
+  method (state-stack, symbol-stack, #key $state)
     // IDENTIFIER -> <IDENTIFIER-TOKEN>
     values(begin
              let poped-state-stack = tail(state-stack);
-             pair(#[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 21, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 21, 0, 21, 0, 0, 0, 0, 0, 0, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 113, 0, 120, 0, 0, 0, 0, 0, 123, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 19, 0, 0, 113, 113, 113, 0, 0, 0, 0, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 113, 0, 0, 0, 0, 113, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 0, 21, 0, 0, 0, 0, 21][head(poped-state-stack)],
+             pair(#[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 21, 0, 0, 0, 0, 21, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 21, 0, 21, 0, 21, 0, 0, 0, 21, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 21, 0, 21, 0, 0, 21, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 0, 21, 0, 21, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 120, 0, 127, 0, 0, 0, 0, 0, 130, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 19, 0, 0, 120, 120, 120, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 203, 0, 0, 0, 0, 21, 0, 0, 0, 0, 21][head(poped-state-stack)],
                   poped-state-stack);
            end,
            begin
@@ -6011,7 +6101,7 @@ define method find-action (table, token)
   if (action)
     action;
   else
-    parse-error(token, "Parse error at or before %=.", token);
+    parse-error(token, "Parse error at or before %=.", token.string-value);
   end;
 end;
 

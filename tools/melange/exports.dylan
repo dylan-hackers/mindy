@@ -22,6 +22,22 @@ rcs-header: $Header:
 // facilitate user extension of the program.  See "name-map.dylan" or the
 // Melange documentation for further instructions on such extension.
 //======================================================================
+// Melange versions:
+//   b1.0: (04/28/95)
+//     Initial "beta" release
+//   b1.1: (05/17/95)
+//     Added "superclasses" option for structure and union clauses
+//     Bug fixes:
+//       Allow enumeration literals in compile time expressions (including
+//         specification of other literal values)
+//       Show token string rather than token type in error messages
+//       Report line numbers rather than character numbers in error messages
+//       Report name of interface files in error messages
+//       Fix handling of empty strings in interfaces
+//       Fix handling of CPP '#include "foo"'
+//       Allow CPP '#pragma'
+//       Fix handling of CPP foo##bar
+//======================================================================
 
 define library melange
   use dylan;
