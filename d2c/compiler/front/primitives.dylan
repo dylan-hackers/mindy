@@ -441,3 +441,7 @@ define-primitive
 define-primitive
   (#"vector-elements", #(#"<builtin-vector>"), #"<raw-pointer>",
    pure: #t);
+
+define-primitive
+  (#"object-address", #(#"<object>"), #"<raw-pointer>",
+   pure: #t);

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.17 1995/12/04 17:15:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.18 1995/12/05 04:01:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1500,5 +1500,17 @@ define-primitive-emitter
 				     vec-expr,
 				     dylan-slot-offset(vec.derived-type,
 						       #"%element")),
+		    *ptr-rep*, #f, file);
+   end);
+
+define-primitive-emitter
+  (#"object-address",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let object = extract-operands(operation, file, *heap-rep*);
+     deliver-result(results,
+		    format-to-string("((void *)%s)", object),
 		    *ptr-rep*, #f, file);
    end);
