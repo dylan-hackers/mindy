@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.72 2001/06/22 07:43:28 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.73 2001/06/29 05:17:03 bruce Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -48,7 +48,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=10
+CURRENT_BOOTSTRAP_COUNTER=11
 
 #--------------------------------------------------------------------
 # Make srcdir absolute to keep Mindy's build system from choking.
