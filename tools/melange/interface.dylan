@@ -1,7 +1,7 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.32 2003/10/15 20:01:57 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.33 2003/12/17 18:07:30 housel Exp $
 
 //======================================================================
 //
@@ -98,6 +98,9 @@ define method process-interface-file
   let input-string = read-to-end(in-stream);
   let sz = input-string.size;
   let module-line-start = match-module(input-string);
+  unless (module-line-start)
+    error("Unable to find a module: keyword");
+  end unless;
   let module-line-end = match-newline(input-string, start: module-line-start);
 
   let module-line 
@@ -106,7 +109,6 @@ define method process-interface-file
     & copy-sequence(input-string, 
                     start: module-line-start + 8, 
                     end: module-line-end + 1);
-
   
   local method try-define (position :: <integer>) => ();
 	  let new-position = match-define(input-string, start: position);
