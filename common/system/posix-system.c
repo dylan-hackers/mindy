@@ -22,14 +22,17 @@
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.3 2000/01/24 04:55:36 andreas Exp $ */
+/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.4 2002/03/06 21:05:27 brent Exp $ */
+
+#ifdef WIN32
+#else
+# include <unistd.h>
+# include <grp.h>
+#endif
 
 #include <sys/types.h>
-#include <unistd.h>
-#include <grp.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include "posix-system.h"
 
 #ifndef MIN
@@ -60,12 +63,18 @@ int primary_group_name(unsigned char *outBuf, long bufLen)
 
     if ((outBuf == NULL) || (bufLen <= 0))
         return 1;
- 
+
+#ifdef WIN32
+	strncpy((char *) outBuf, "NOT IMPLEMENTED", bufLen - 1);
+	outBuf[bufLen - 1] = '\0';
+	return 0;
+#else
     if ((gpptr = getgrgid(getgid())) != NULL) {
         strncpy((char *) outBuf, gpptr->gr_name, bufLen - 1);
         outBuf[bufLen - 1] = '\0';
         return 0;
     }
+#endif
     return 1;
 }
 
@@ -166,7 +175,7 @@ int safe_unsetenv(const char *name)
     int    nameLen = strlen(name);
     int    offset  = 0;
     char **p       = environ;
-    
+
     while (*p != NULL) {
         int l = strlen(*p);
         offset += sizeof(char **);
@@ -181,11 +190,12 @@ int safe_unsetenv(const char *name)
 }
 
 #ifdef TESTING
+#include <stdio.h>
 int main()
 {
     int i;
     char *foo;
-    
+
     i = safe_putenv("FOO=BAR");
     i = safe_putenv("FOO=QUX");
     i = safe_putenv("FOO=foobar");
@@ -193,11 +203,15 @@ int main()
     i = safe_putenv("QUX=bal");
 
     foo = getenv("FOO");
+	printf("Foo = %s\n", foo);
     foo = getenv("GREAT_QUX");
+	printf("Foo = %s\n", foo);
 
     i = safe_unsetenv("QUX");
     i = safe_unsetenv("PWD");
     i = safe_unsetenv("MAIRIN");
+
+	printf("returning %d\n", i);
 
     return i;
 }
