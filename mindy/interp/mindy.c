@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.3 1994/04/09 13:35:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.4 1994/04/30 14:57:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -28,6 +28,7 @@
 #include "func.h"
 #include "debug.h"
 #include "load.h"
+#include "num.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
@@ -58,6 +59,7 @@ void main(int argc, char *argv[])
 {
     struct thread *thread;
     enum pause_reason reason;
+    struct variable *var;
 
     init();
 
@@ -74,10 +76,20 @@ void main(int argc, char *argv[])
 
     finalize_modules();
 
-    thread_restart(thread);
+    while (1) {
+	thread_restart(thread);
 
-    reason = do_stuff();
-    if (reason != pause_NothingToRun)
-	invoke_debugger(reason);
-    exit(0);
+	reason = do_stuff();
+	if (reason != pause_NothingToRun)
+	    invoke_debugger(reason);
+
+	var = find_variable(module_BuiltinStuff, symbol("exit"),
+			    FALSE, FALSE);
+	if (var == NULL)
+	    lose("main undefined?");
+
+	thread = thread_create(symbol("exit"));
+	*thread->sp++ = var->value;
+	*thread->sp++ = make_fixnum(0);
+    }
 }
