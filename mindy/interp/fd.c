@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.8 1994/04/18 05:41:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.9 1994/04/29 05:48:27 rgs Exp $
 *
 * This file does whatever.
 *
@@ -226,6 +226,69 @@ static void fd_write(obj_t self, struct thread *thread, obj_t *args)
 }
 
 
+/* Function to run an arbitrary program, returning file descriptors for the
+   program's stdin and stdout. */
+static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
+{
+    int inpipes[2], outpipes[2], forkresult;
+    obj_t *oldargs;
+
+    oldargs = args - 1;
+    thread->sp = args + 1;
+
+    if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
+	(forkresult = fork()) != -1)
+    {
+	if (forkresult == 0) {
+	    /* This process is going to exit shortly, so we needn't be too
+	       careful about malloc behavior, nor about the fact that we
+	       destructively modify the command string. */
+	    char *command = string_chars(args[0]);
+	    char *p, **args;
+	    int argcounter = 1;
+
+	    for (p = command; *p != 0; p++)
+		if (*p == ' ') {
+		    argcounter++;
+		    while (*(++p) == ' ');
+		}
+	    args = (char **) calloc(argcounter+1, sizeof(char *));
+	    args[0] = command;
+	    for (p = command, argcounter = 1; *p != 0; p++) {
+		if (*p == ' ') {
+		    *p = 0;
+		    while (*(++p) == ' ');
+		    if (*p != 0)
+			args[argcounter++] = p;
+		}
+	    }
+	    args[argcounter] = 0;
+
+	    close(0);
+	    dup(inpipes[0]);
+	    close(inpipes[0]);
+	    close(inpipes[1]);
+	    close(1);
+	    dup(outpipes[1]);
+	    close(outpipes[0]);
+	    close(outpipes[1]);
+	    execvp(args[0], args);
+	    /* We never get here.... */
+	}
+	close(inpipes[0]);
+	close(outpipes[1]);
+	
+	oldargs[0] = make_fixnum(inpipes[1]);
+	oldargs[1] = make_fixnum(outpipes[0]);
+    } else {
+	oldargs[0] = obj_False;
+	oldargs[1] = obj_False;
+    }
+
+    do_return(thread, oldargs, oldargs);
+}
+
+
 /* Init stuff. */
 
 void init_fd_functions(void)
@@ -276,4 +339,10 @@ void init_fd_functions(void)
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_write));
+    define_constant("fd-exec",
+		    make_raw_method("fd-exec",
+				    list1(obj_ByteStringClass),
+				    FALSE, obj_False,
+				    list2(obj_ObjectClass, obj_ObjectClass),
+				    obj_False, fd_exec));
 }
