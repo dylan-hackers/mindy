@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.3 1994/04/04 14:46:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.4 1994/04/04 17:40:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -18,7 +18,13 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/errno.h>
+#include <errno.h>
+
+#ifdef hpux
+/* hpux doesn't define these for some reason. */
+extern int sys_nerr;
+extern char *sys_errlist[];
+#endif
 
 #include "mindy.h"
 #include "list.h"
