@@ -23,12 +23,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.5 1996/06/11 14:38:35 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.6 1997/04/29 17:01:42 ram Exp $
 *
 \**********************************************************************/
 
 #define YYSTYPE obj_t
 extern YYSTYPE yylval;
+
+#ifndef YYPARSE_RETURN_TYPE
+#define YYPARSE_RETURN_TYPE int
+#endif
 
 #include "parser-tab.h"
 

@@ -23,11 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.h,v 1.3 1994/10/05 20:55:34 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.h,v 1.4 1997/04/29 17:00:56 ram Exp $
 *
 \**********************************************************************/
 
+#ifndef YYPARSE_RETURN_TYPE
+#define YYPARSE_RETURN_TYPE int
+#endif
 
-extern int yyparse(void);
+extern YYPARSE_RETURN_TYPE yyparse(void);
 
 extern struct body *Program;

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.10 1996/06/11 14:38:35 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.11 1997/04/29 17:01:59 ram Exp $
 *
 * This file is the parser for the debugger.
 *
@@ -140,7 +140,7 @@ static void yyerror(char *msg)
 
 YYSTYPE parse_command(char *input)
 {
-    extern int yyparse();
+    extern YYPARSE_RETURN_TYPE yyparse();
     yyinput_setter(input);
     return yyparse() ? obj_False : result;
 }
