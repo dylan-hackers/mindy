@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.16 2001/04/17 21:29:32 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.17 2001/05/28 20:17:15 gabor Exp $
 copyright: see below
 
 
@@ -943,33 +943,32 @@ define method compute-cclass (defn :: <real-class-definition>)
     let class-slot-infos = choose(rcurry(instance?, <class-slot-info>), slot-infos);
     
     let metaclass
-    = unless (class-slot-infos.empty?)
+      = unless (class-slot-infos.empty?)
     
-      local method associate(info :: <class-slot-info>)
-		  => associated :: <instance-slot-info>;
-		info.associated-meta-slot
-		  := make(<meta-slot-info>,
-			  referred: info,
-			  getter: #f,
-			  read-only: info.slot-read-only?,
-			  init-keyword: info.slot-init-keyword,
-			  init-keyword-required: info.slot-init-keyword-required?);
-	    end method;
+	  local method associate(info :: <class-slot-info>)
+		 => associated :: <instance-slot-info>;
+		  info.associated-meta-slot
+		    := make(<meta-slot-info>,
+			    referred: info,
+			    getter: #f,
+			    read-only: info.slot-read-only?,
+			    init-keyword: info.slot-init-keyword,
+			    init-keyword-required: info.slot-init-keyword-required?);
+		end method;
 
-      let associated-infos = map-as(<simple-object-vector>, associate, class-slot-infos);
+	  let associated-infos = map-as(<simple-object-vector>, associate, class-slot-infos);
 
-      make(<meta-cclass>,
-	 loading: #f,
-	 name: make(<anonymous-name>, location: defn.source-location),
-	 	// better: make(<augmented-anonymous-name>, location: defn.source-location, augment: <meta-cclass>),
-	 direct-superclasses: list(specifier-type(#"<class>")), // change for each-subclass!
-	 not-functional:#t,
-	 functional: #f,
-	 sealed: #t,
-	 primary: #t, // abstract??? - probably not because no slot layout then?
-	 slots: associated-infos,
-	 metaclass: #f);
-    end unless;
+	  make(<meta-cclass>,
+	       loading: #f,
+	       name: make(<derived-name>, how: #"class-meta", base: defn.defn-name),
+	       direct-superclasses: list(class-ctype()), // change for each-subclass!
+	       not-functional:#t,
+	       functional: #f,
+	       sealed: #t,
+	       primary: #t, // abstract??? - probably not because no slot layout then?
+	       slots: associated-infos,
+	       metaclass: #f);
+	end unless;
     //
     // Make and return the <cclass>.
     make(<defined-cclass>,
