@@ -29,6 +29,18 @@ my_daylight(void)
   time(&now);
   return -(localtime(&now)->tm_gmtoff);
 }
+#elif defined(HAVE_CYGNUS_DAYLIGHT)
+int
+my_timezone(void)
+{
+  return _timezone;
+}
+
+int
+my_daylight(void)
+{
+  return _daylight;
+}
 #else
 #error "No implementation provided for my_timezone()/my_daylight()"
 #endif
