@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.42 2003/04/07 12:17:25 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.43 2003/04/16 19:37:51 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1035,11 +1035,6 @@ sub emit_cc_file_rule {
 #
 # Emits the rule to turn a Melange input (.intr) file into a .dylan
 # file.
-#
-# stopgag measure, FIXME:
-# this is disabled until melange can actually cope with all the header
-# files, and the build order is fixed so melange gets built before
-# the libraries needing it.
 sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
@@ -1048,7 +1043,7 @@ sub emit_melange_rule {
     foreach $header (@headers) {
        print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
+    print "\n\t\$(MELANGE) --d2c -I\$(SRCDIR) ";
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
