@@ -1,7 +1,10 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.6 1995/05/08 11:42:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.7 1995/10/13 15:07:37 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+// This stuff is mostly used for remembering where definitions came from for
+// compiler debugging, generating function debug info, etc.
 
 define abstract class <name> (<object>)
 end;
@@ -27,7 +30,7 @@ define method id-name (token :: <identifier-token>) => res :: <basic-name>;
   make(<basic-name>, symbol: token.token-symbol, module: token.token-module);
 end;
 
-
+// see misc-dump for basic-name dumping (module ordering problem.)
 
 define class <type-cell-name> (<name>)
   slot type-cell-name-base :: <basic-name>,
@@ -44,6 +47,9 @@ define method print-message (name :: <type-cell-name>, stream :: <stream>)
   format(stream, "type cell for %s", name.type-cell-name-base);
 end;
 
+add-make-dumper(#"type-cell-name", *compiler-dispatcher*, <type-cell-name>,
+  list(type-cell-name-base, base:, #f)
+);
 
 
 define class <method-name> (<name>)
@@ -72,3 +78,7 @@ define method print-message (name :: <method-name>, stream :: <stream>) => ();
   format(stream, "} in %s", gf-name.name-module);
 end;
 
+add-make-dumper(#"method-name", *compiler-dispatcher*, <method-name>,
+  list(method-name-generic-function, generic-function:, #f,
+       method-name-specializers, specializers:, #f)
+);
