@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.12 1995/05/12 12:30:01 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.13 1995/05/26 10:46:04 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -30,6 +30,7 @@ OBJS = exports.dbc \
 	rep.dbc \
 	cclass.dbc \
 	c-rep.dbc \
+	transdef.dbc \
 	cteval.dbc \
 	expand.dbc \
 	deflibmod.dbc \
