@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.27 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.28 1995/12/16 03:42:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -289,7 +289,7 @@ end;
 
 define class <each-subclass-slot-info> (<slot-info>)
   slot slot-positions :: <list>,
-    init-value: #(), init-keyword: slot-positions;
+    init-value: #(), init-keyword: slot-positions:;
 end;
 
 define class <virtual-slot-info> (<slot-info>)
