@@ -66,8 +66,6 @@ MINDYFLAGS = -lStandard-IO
 
 OBJS = library.dbc standard-io.dbc
 
-all: ${OBJS}
-
 standard-io-lib.dbc: ${OBJS}
 	cat ${OBJS} > $@
 
