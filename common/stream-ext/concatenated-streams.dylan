@@ -1,6 +1,6 @@
 module: combination-streams
 author: Nick Kramer
-rcs-header: $header$
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/concatenated-streams.dylan,v 1.4 1996/09/15 15:38:29 nkramer Exp $
 
 //======================================================================
 //
