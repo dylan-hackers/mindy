@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.1 1994/03/24 21:49:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.2 1994/03/25 00:50:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -465,6 +465,7 @@ static enum method_comparison compare_methods(obj_t meth1, obj_t meth2,
 		    meth2_first = TRUE;
 		    break;
 		}
+		cpl = TAIL(cpl);
 	    }
 	    if (cpl == obj_Nil)
 		lose("Couldn't find either class in the objects cpl?");
