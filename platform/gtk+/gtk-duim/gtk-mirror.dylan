@@ -159,7 +159,6 @@ define method initialize
   next-method();
   let widget = mirror-widget(mirror);
   when (widget)
-    debug-message("widget-mirror for %= is %=", widget, mirror);
     widget-mirror(widget) := mirror
   end
 end method initialize;
