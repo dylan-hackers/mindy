@@ -585,7 +585,7 @@ define sealed method make-gtk-mirror
       = if (push-button-like?(gadget))
           GTK-TOGGLE-BUTTON(gtk-toggle-button-new-with-label(c-string))
 	else
-          GTK-RADIO-BUTTON(gtk-check-button-new-with-label(c-string))
+          GTK-CHECK-BUTTON(gtk-check-button-new-with-label(c-string))
 	end;
     assert(~null-pointer?(widget), "gtk-toggle/radio-button-new-with-label failed");
     make(<gadget-mirror>,
@@ -943,7 +943,8 @@ define method set-text-widget-text (widget, text :: <string>)
     with-stack-structure (position :: <c-int*>)
       gtk-editable-delete-text(widget, 0, -1);
       pointer-value(position) := 0;
-      gtk-editable-insert-text(widget, c-text, text.size, position);
+      gtk-editable-insert-text(widget, c-text, text.size,
+                               pointer-cast(<gint*>, position));
     end;
   end;
 end set-text-widget-text;
