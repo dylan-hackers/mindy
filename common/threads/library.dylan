@@ -13,6 +13,6 @@ define module threads
     <semaphore>, <recursive-lock>,
     <read-write-lock>,
     <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!, current-thread,
+    <thread>, atomic-increment!, current-thread, thread-name, join-thread,
     <notification>, wait-for, release-all;
 end module threads;

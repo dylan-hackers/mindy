@@ -49,7 +49,7 @@ end macro dynamic-bind;
 // Dummy multithreading support implementations
 
 define abstract class <synchronization> (<object>) end class;
-define open class <lock> (<synchronization>) end class;
+define open abstract class <lock> (<synchronization>) end class;
 define class <notification> (<synchronization>) end class;
 define open class <exclusive-lock> (<lock>) end class;
 define primary class <semaphore> (<lock>) end class;
@@ -57,6 +57,11 @@ define primary class <recursive-lock> (<exclusive-lock>) end class;
 define primary class <read-write-lock> (<exclusive-lock>) end class;
 define primary class <simple-lock> ( <exclusive-lock> ) end class;
 
+define method make
+    (class == <lock>, #rest init-args, #key, #all-keys)
+ => (instance :: <simple-lock>)
+  apply(make, <simple-lock>, init-args)
+end method;
 
 // with-lock
 // do-nothing version
@@ -71,16 +76,16 @@ end macro with-lock;
 
 // <thread>
 
-define class <thread> ( <object> ) end class;
+define class <thread> ( <object> )
+  constant slot thread-name :: <string> = "dummy thread";
+end class;
 
 
 // current-thread
 
 define method current-thread()
 => ( result :: <thread> )
-
     make( <thread> );
-
 end method current-thread;
 
 
@@ -111,3 +116,10 @@ define method release-all
  => ()
     values();
 end method release-all;
+
+// join-thread
+define method join-thread
+    (thread :: <thread>)
+ => ();
+  error("attempt to call join-thread()");
+end method;
