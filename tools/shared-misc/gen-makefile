@@ -19,6 +19,12 @@ $PARSERGEN = 'parsergen';
 # Find the defaults
 $subdir = '';
 $buildroot = $cwd;
+
+# Change //d/path into d:/path on NT.  Only a problem on drives other
+# than C:.  (We can't conditionalize this on $win32, because that
+# variable is set by the Defaults file, which we're trying to locate)
+$buildroot =~ s|^//(\w)/|\1:/|;
+
 until (-e ($defaults = $buildroot . '/Defaults')) {
     ($buildroot =~ /^(.*)\/([^\/]+)$/)
       || die("Can't find Defaults and hence can't tell where the root is.\n");
