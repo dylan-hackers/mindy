@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.8 1996/01/15 12:09:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.9 1996/01/31 23:55:21 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,8 +17,9 @@ define generic fer-dump-od
  => ();
 
 // The component that we guess we're dumping, since we can't pass it to
-// everyone who wants it.  Set in the <lambda> dumper.  The dumper doesn't need
-// to be reentrant, so this is probably o.k.
+// everyone who wants it.  This is shallow-bound to be the current dumping
+// component by the lambda dumper, which is supposed to be the entry point into
+// this code.
 //
 define variable *dump-component* = #f;
 
@@ -547,42 +548,46 @@ add-od-loader(*compiler-dispatcher*, #"fer-component",
 
 
 // lambda: component, source, name, arg-vars, arg-types, result-type,
-// hidden-references, "self", body.
+// hidden-references, "self", body.  We shallow-bind *dump-component* so that
+// nested operation dumpers can get at it.
 //
 define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
   if (maybe-dump-reference(obj, buf))
     let odc = *dump-component*;
-    *dump-component* := obj.parent;
-    assert(~odc | odc == obj.parent);
-    let start-pos = buf.current-pos;
-    dump-definition-header(#"fer-lambda", buf, subobjects: #t);
-    dump-od(obj.parent, buf);
-    dump-od(obj.source-location, buf);
-    dump-od(obj.name, buf);
+    block ()
+      *dump-component* := obj.parent;
+      let start-pos = buf.current-pos;
+      dump-definition-header(#"fer-lambda", buf, subobjects: #t);
+      dump-od(obj.parent, buf);
+      dump-od(obj.source-location, buf);
+      dump-od(obj.name, buf);
 
-    for (def = obj.prologue.dependents.dependent.defines
-	   then def.definer-next,
-	 res = #()
-	   then pair(if (instance?(def, <initial-definition>))
-		       def.definition-of
-		     else
-		       def
-		     end,
-		     res),
-	 until: def == #f)
+      for (def = obj.prologue.dependents.dependent.defines
+	     then def.definer-next,
+	   res = #()
+	     then pair(if (instance?(def, <initial-definition>))
+			 def.definition-of
+		       else
+			 def
+		       end,
+		       res),
+	   until: def == #f)
 
-    finally 
-      dump-od(reverse!(res), buf);
-    end for;
+      finally 
+	dump-od(reverse!(res), buf);
+      end for;
 
-    dump-od(obj.argument-types, buf);
-    dump-od(obj.result-type, buf);
-    dump-od(obj.hidden-references?, buf);
-    dump-od(obj, buf);
+      dump-od(obj.argument-types, buf);
+      dump-od(obj.result-type, buf);
+      dump-od(obj.hidden-references?, buf);
+      dump-od(obj, buf);
 
-    fer-dump-od(obj.body, obj.parent, buf);
-    dump-end-entry(start-pos, buf);
-    *dump-component* := odc;
+      fer-dump-od(obj.body, obj.parent, buf);
+      dump-end-entry(start-pos, buf);
+
+    cleanup
+      *dump-component* := odc;
+    end block;
   end if;
 end method;
 
