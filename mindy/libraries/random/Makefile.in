@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/Makefile.in,v 1.3 1994/10/26 19:48:32 nkramer Exp $
+##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/Makefile.in,v 1.4 1995/09/27 23:06:53 nkramer Exp $
 ##
 ## This is the makefile for the Mindy random library, random.dbc.
 ##
@@ -65,21 +65,16 @@ MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -lRandom
 
-OBJS = library.dbc distributions.dbc
+# OBJS = 
 
-random.dbc: ${OBJS}
-	cat ${OBJS} > $@
-
-library.dbc: ${SRCDIR}/library.dylan
-	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
-distributions.dbc: ${SRCDIR}/distributions.dylan
-	${MC} ${MINDYFLAGS} -o distributions.dbc ${SRCDIR}/distributions.dylan
+random.dbc: ${SRCDIR}/random.dylan
+	${MC} ${MINDYFLAGS} -o random.dbc ${SRCDIR}/random.dylan
 
 clean:
-	rm -f ${OBJS} random.dbc *~ \#* core
+	rm -f random.dbc *~ \#* core
 
 realclean:
-	rm -f ${OBJS} random.dbc Makefile *~ \#* core
+	rm -f random.dbc Makefile *~ \#* core
 
 install: random.dbc
 	${INSTALL_DATA} random.dbc ${LIBDIR}
