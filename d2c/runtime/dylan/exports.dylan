@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.36 1996/09/15 15:33:39 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.37 1996/10/06 14:09:41 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Transcendental, Cheap-IO, System,
+    Dylan, Extensions, %Transcendental, Cheap-IO, System,
     Introspection, Magic, %Hash-Tables;
 end;
 
@@ -147,21 +147,24 @@ define module Extensions
 	     <byte>, <byte-vector>,
 
 	     // Misc other stuff.
-	     $not-supplied, ignore, functional-==, key-exists?, assert
+	     $not-supplied, ignore, functional-==, key-exists?, assert,
+	     exit
     },
     export: all;
 end;
 
-define module Transcendental
+// This module is used only by the Transcendental library
+define module %Transcendental
   use Dylan-Viscera,
     import: {
 	     // Transcendentals
 	     $double-pi, $single-pi, $double-e, $single-e,
 	     sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
-	     asinh, acosh, log, exp, \^, sqrt, isqrt
+	     log, exp, \^, sqrt, isqrt
+	     // unimplemented: asinh, acosh, atanh
 	     },
     export: all;
-end module Transcendental;
+end module %Transcendental;
 
 define module Cheap-IO
   use Dylan-Viscera,
@@ -183,11 +186,8 @@ define module System
 	     // Raw pointer stuff.
 	     <raw-pointer>, pointer-deref, pointer-deref-setter,
 
-	     // Object address
-	     object-address,
-
 	     system, import-string, export-string, getenv, 
-	     exit, no-core-dumps, get-time-of-day,
+	     no-core-dumps, get-time-of-day,
 
 	     // Buffers
 	     <buffer>, <buffer-index>, $maximum-buffer-size,
@@ -205,7 +205,9 @@ define module Introspection
 	     <union>, union-members, union-singletons,
 	     <subclass>, subclass-of,
 	     <direct-instance>, direct-instance-of,
-	     <byte-character-type>},
+	     <byte-character-type>,
+	     object-address
+},
     export: all;
 end;
 
