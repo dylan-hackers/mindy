@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.65 2002/03/06 23:01:30 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.66 2002/08/21 14:18:14 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -201,6 +201,17 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   #if (~mindy)
   no-core-dumps();
   #endif
+
+  // alter the GC params, if the user wants
+  c-include("../../runtime/gc/include/gc.h");
+  if (getenv("D2C_SMALL_MACHINE"))
+    c-expr(void: "GC_free_space_divisor = 5");
+  end;
+  if (getenv("D2C_BIG_MACHINE"))
+    c-expr(void: "GC_expand_hp(25*1024*1024)");
+    c-expr(void: "GC_free_space_divisor = 2");
+  end;
+
   *random-state* := make(<random-state>, seed: 0);
   define-bootstrap-module();
  
