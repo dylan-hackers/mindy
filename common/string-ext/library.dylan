@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.4 1996/08/10 20:25:42 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.5 1996/08/10 20:28:13 nkramer Exp $
 
 //======================================================================
 //
@@ -37,8 +37,9 @@ define library string-extensions
   use collection-extensions;
   use table-extensions;
   export
-    string-conversions, character-type, string-hacking,
-    substring-search, %parse-string, %do-replacement;
+    string-conversions, character-type, string-hacking, substring-search, 
+    // These last two are only to be used by the Regular-expressions library
+    %parse-string, %do-replacement;  
 end library string-extensions;
 
 
@@ -55,7 +56,8 @@ define module character-type
     punctuation?, control?, byte-character?;
 end module character-type;
 
-
+// For internal use and for use by the regexp library
+//
 define module %parse-string
   use dylan;
   use extensions;
@@ -99,6 +101,8 @@ define module string-conversions
 end module string-conversions;
 
 
+// For internal use and for use by the regexp library
+//
 define module %do-replacement
   use dylan;
   use extensions;
