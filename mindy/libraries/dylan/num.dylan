@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.12 1996/01/11 18:43:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.13 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -299,7 +299,7 @@ define method \^ (base :: <number>, power :: <general-integer>)
       for (power = power then ash (power, -1),
 	   total = 1 then if (odd? (power)) base * total else total end,
 	   base = base then base * base,
-	   until zero? (power))
+	   until: zero? (power))
       finally
 	total;
       end;
@@ -356,7 +356,7 @@ define method gcd (u :: <general-integer>, v :: <general-integer>)
       for (k from 0,
 	   u = abs(u) then ash(u, -1),
 	   v = abs(v) then ash(v, -1),
-	   until odd?(logior(u, v)))
+	   until: odd?(logior(u, v)))
       finally
 	block (return)
 	  for (temp = if (odd?(u)) -v else ash(u, -1) end

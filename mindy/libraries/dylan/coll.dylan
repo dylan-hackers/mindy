@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.28 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.29 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -49,7 +49,7 @@ define method element(coll :: <collection>, key :: <object>,
   let test = key-test(coll);
   block (return)
     for (state = init-state then next-state(coll, state),
-	 until done?(coll, state, limit))
+	 until: done?(coll, state, limit))
       if (test(current-key(coll, state), key))
 	return(current-element(coll, state));
       end if;
@@ -73,7 +73,7 @@ define method element-setter (new-value :: <object>,
   let test = key-test(collection);
   block (return)
     for (state = init-state then next-state(collection, state),
-	 until done?(collection, state, limit))
+	 until: done?(collection, state, limit))
       if (test(current-key(collection, state), key))
 	current-element(collection, state) := new-value;
 	return();
@@ -182,7 +182,7 @@ define method map-as(cls :: <class>, proc :: <function>,
       let (init, limit, next, done?, curkey, curelt)
         = forward-iteration-protocol(coll);
       for (state = init then next(coll, state),
-	   until done?(coll, state, limit))
+	   until: done?(coll, state, limit))
 	result[curkey(coll, state)] := proc(curelt(coll, state));
       end for;
       result;
@@ -342,7 +342,7 @@ define method reduce1(proc :: <function>, collection :: <collection>)
 	   then proc(value, current-element(collection, state)),
 	 state = next-state(collection, init-state)
 	   then next-state(collection, state),
-	 until done?(collection, state, limit))
+	 until: done?(collection, state, limit))
     finally value;
     end for;
   end if;
@@ -367,7 +367,7 @@ define method replace-elements!(collection :: <mutable-collection>,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(collection);
   for (state = init-state then next-state(collection, state),
-       until done?(collection, state, limit) | count == 0)
+       until: done?(collection, state, limit) | count == 0)
     let this-element = current-element(collection, state);
     if (predicate(this-element))
       current-element(collection, state) := new-value-fn(this-element);
@@ -385,7 +385,7 @@ define method fill!(collection :: <mutable-collection>, value :: <object>,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(collection);
   for (state = init-state then next-state(collection, state),
-       until done?(collection, state, limit))
+       until: done?(collection, state, limit))
     current-element(collection, state) := value;
   end for;
   collection;
@@ -398,7 +398,7 @@ define method find-key(collection :: <collection>, proc :: <function>,
        current-key, current-element) = forward-iteration-protocol(collection);
   block (return)
     for (state = init-state then next-state(collection, state),
-	 until done?(collection, state, limit))
+	 until: done?(collection, state, limit))
       if (proc(current-element(collection, state)))
 	if (skip & skip > 0)
 	  skip := skip - 1;
@@ -418,7 +418,7 @@ define method key-sequence(collection :: <collection>) => <collection>;
   let result = make(<vector>, size: size(collection));
   for (index from 0,
        state = init-state then next-state(collection, state),
-       until done?(collection, state, limit))
+       until: done?(collection, state, limit))
     result[index] := current-key(collection, state);
   end for;
   result;
@@ -451,7 +451,7 @@ define method element-setter (new-value, sequence :: <mutable-sequence>,
   block (return)
     for (this-key from 0,
 	 state = init-state then next-state(sequence, state),
-	 until done?(sequence, state, limit))
+	 until: done?(sequence, state, limit))
       if (this-key == key)
 	current-element(sequence, state) := new-value;
 	return();
@@ -470,7 +470,7 @@ define method \=(a :: <sequence>, b :: <sequence>) => <object>;
   block (return)
     for (a-state = a-init then a-next(a, a-state),
 	 b-state = b-init then b-next(b, b-state),
-	 until a-done?(a, a-state, a-limit) | b-done?(b, b-state, b-limit))
+	 until: a-done?(a, a-state, a-limit) | b-done?(b, b-state, b-limit))
       if (a-elem(a, a-state) ~= b-elem(b, b-state))
 	return(#f);
       end if;
@@ -521,7 +521,7 @@ define constant aux-map-as =
     end for;
 
     for (state = init then next(result, state),
-	 until done?(result, state, limit))
+	 until: done?(result, state, limit))
       for (i from 0 below seq-count)
 	let (this-seq, this-state) = values(seqs[i], states[i]);
 	vals[i] := elems[i](this-seq, this-state);
@@ -566,7 +566,7 @@ define method map-into(destination :: <mutable-sequence>, proc :: <function>,
 	 res-elem-setter) = forward-iteration-protocol(destination);
     for (element in sequence,
 	 res-state = res-init then res-next(destination, res-state),
-	 until res-done?(destination, res-state, res-limit))
+	 until: res-done?(destination, res-state, res-limit))
       res-elem(destination, res-state) := proc(element);
     end for;
     destination;
@@ -587,17 +587,17 @@ define method fill!(sequence :: <mutable-sequence>, value :: <object>,
        current-element-setter) = forward-iteration-protocol(sequence);
   for (state = init-state then next-state(sequence, state),
        index from 0 below first,
-       until done?(sequence, state, limit))
+       until: done?(sequence, state, limit))
   finally
     if (last)
       for (state = state then next-state(sequence, state),
 	   index from index below last,
-	   until done?(sequence, state, limit))
+	   until: done?(sequence, state, limit))
 	current-element(sequence, state) := value;
       end for;
     else
       for (state = state then next-state(sequence, state),
-	   until done?(sequence, state, limit))
+	   until: done?(sequence, state, limit))
 	current-element(sequence, state) := value;
       end for;
     end if;
@@ -709,7 +709,7 @@ define method remove! (sequence :: <mutable-sequence>, value,
 		     then next-state(sequence, dest-state),
 		   src-state = src-state then next-state(sequence, src-state),
 		   length from length,
-		   until done?(sequence, src-state, limit))
+		   until: done?(sequence, src-state, limit))
 		current-element(sequence, dest-state)
 		  := current-element(sequence, src-state);
 	      finally
@@ -731,7 +731,7 @@ define method remove! (sequence :: <mutable-sequence>, value,
     block (return)
       for (state = init-state then next-state(sequence, state),
 	   length from 0,
-	   until done?(sequence, state, limit))
+	   until: done?(sequence, state, limit))
 	if (test(current-element(sequence, state), value))
 	  return(replace(copy-state(sequence, state),
 			 next-state(sequence, state), 1, length));
@@ -1038,13 +1038,13 @@ define method map-into(destination :: <stretchy-collection>,
     for (key from 0,
 	 src-state = src-init then src-next(sequence, src-state),
 	 res-state = res-init then res-next(destination, res-state),
-	 until src-done?(sequence, src-state, src-limit) |
+	 until: src-done?(sequence, src-state, src-limit) |
 	   res-done?(destination, res-state, res-limit))
       res-elem(destination, res-state) := proc(src-elem(sequence, src-state));
     finally
       for (key from key,
 	   src-state = src-state then src-next(sequence, src-state),
-	   until src-done?(sequence, src-state, src-limit))
+	   until: src-done?(sequence, src-state, src-limit))
 	destination[key] := proc(src-elem(sequence, src-state));
       end for;
     end for;

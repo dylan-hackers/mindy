@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.11 1994/11/29 06:39:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.12 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -183,7 +183,7 @@ define method debugger-describe-restarts (cond)
   block ()
     block ()
       let index = 0;
-      for (h = current-handler() then h.handler-next, while h)
+      for (h = current-handler() then h.handler-next, while: h)
 	let type = h.handler-type;
 	if (instance?(type, <class>) & subtype?(type, <restart>))
 	  block ()
@@ -246,7 +246,7 @@ end method debugger-describe-restarts;
 define method debugger-restart (cond, index)
   block (return)
     let count = 0;
-    for (h = current-handler() then h.handler-next, while h)
+    for (h = current-handler() then h.handler-next, while: h)
       let type = h.handler-type;
       let test = h.handler-test;
       if (instance?(type, <class>) & subtype?(type, <restart>))

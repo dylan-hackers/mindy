@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.9 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.10 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -128,7 +128,7 @@ define method insertion-sort!(vector :: <vector>,
   for (current-key from first + 1 below last)
     let current-element = vector[current-key];
     for (insert-key from current-key - 1 to first by -1,
-	 while test(current-element, vector[insert-key]))
+	 while: test(current-element, vector[insert-key]))
       vector[insert-key + 1] := vector[insert-key];
     finally
       vector[insert-key + 1] := current-element;

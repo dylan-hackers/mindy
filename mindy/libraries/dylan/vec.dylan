@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.20 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.21 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -121,7 +121,7 @@ end;
 define method \=(vec1 :: <vector>, vec2 :: <vector>)
   let (size1, size2) = values(size(vec1), size(vec2));
   (size1 == size2) & for (index from 0 below size1,
-			 while vec1[index] = vec2[index])
+			  while: vec1[index] = vec2[index])
 		    finally
 		      // #t iff we fell off the end
 		      index == size1;
@@ -257,7 +257,7 @@ define method subsequence-position(big :: <vector>, pattern :: <vector>,
     1 =>
       let ch = pattern[0];
       for (key from 0 below sz,
-	   until test(big[key], ch) & (count := count - 1) <= 0)
+	   until: test(big[key], ch) & (count := count - 1) <= 0)
       finally
 	if (key < sz) key end if;
       end for;
@@ -265,7 +265,7 @@ define method subsequence-position(big :: <vector>, pattern :: <vector>,
       let ch1 = pattern[0];
       let ch2 = pattern[1];
       for (key from 0 below sz - 1,
-	   until test(big[key], ch1) & test(big[key + 1], ch2)
+	   until: test(big[key], ch1) & test(big[key + 1], ch2)
 	     & (count := count - 1) <= 0)
       finally
 	if (key < (sz - 1)) key end if;
@@ -302,7 +302,7 @@ define method subsequence-position(big :: <byte-string>,
     1 =>
       let ch = pattern[0];
       for (key from 0 below sz,
-	   until test(big[key], ch) & (count := count - 1) <= 0)
+	   until: test(big[key], ch) & (count := count - 1) <= 0)
       finally
 	if (key < sz) key end if;
       end for;
@@ -310,7 +310,7 @@ define method subsequence-position(big :: <byte-string>,
       let ch1 = pattern[0];
       let ch2 = pattern[1];
       for (key from 0 below sz - 1,
-	   until test(big[key], ch1) & test(big[key + 1], ch2)
+	   until: test(big[key], ch1) & test(big[key + 1], ch2)
 	     & (count := count - 1) <= 0)
       finally
 	if (key < (sz - 1)) key end if;
@@ -376,7 +376,7 @@ define method replace-elements!(vector :: <vector>,
 				new_value_fn :: <function>,
 				#key count: count) => <vector>;
   for (key from 0 below size(vector),
-       until count == 0)
+       until: count == 0)
     let this_element = vector[key];
     if (predicate(this_element))
       vector[key] := new_value_fn(this_element);

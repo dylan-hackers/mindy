@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.7 1995/04/08 19:16:48 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.8 1996/02/13 20:41:17 nkramer Exp $
 
 //======================================================================
 //
@@ -107,9 +107,9 @@ end method join-test;
 define method case-insensitive-equal-test ()
   format("Case insensitive equal");
   for (c1 = as(<character>, 0) then successor(c1), 
-       until c1 = as(<character>, 255))
+       until: c1 = as(<character>, 255))
     for (c2 = as(<character>, 0) then successor(c2), 
-	 until c2 = as(<character>, 255))
+	 until: c2 = as(<character>, 255))
       run-test(case-insensitive-equal(c1, c2), 
 	       as-lowercase(c1) = as-lowercase(c2),
 	       "Case-insensitive equal");

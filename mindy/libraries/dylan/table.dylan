@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.23 1996/01/11 18:43:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.24 1996/02/13 20:43:17 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -537,7 +537,7 @@ end method element;
 //
 define method find-new-size (target :: <integer>) => (result :: <integer>);
   for (num from if (even?(target)) target + 1 else target end if by 2,
-       until (modulo(num, 3) > 0 & modulo(num, 5) > 0 & modulo(num, 7) > 0
+       until: (modulo(num, 3) > 0 & modulo(num, 5) > 0 & modulo(num, 7) > 0
 		& modulo(num, 11) > 0))
   finally
     num;
@@ -747,7 +747,7 @@ define method rehash (ht :: <table>) => rehashed-ht :: <table>;
       
       for (remaining = bucket then next,
 	   next = bucket.tail then next.tail, // depends on #().tail == #()
-	   until remaining == #())
+	   until: remaining == #())
 	let bucket-entry = remaining.head;
 	if (bucket-entry.entry-hash-state.state-valid?)
 	  // Put it back into the same bucket
@@ -781,7 +781,7 @@ define method rehash (ht :: <table>) => rehashed-ht :: <table>;
   // Now we can process everything we put off before.
   for (remaining = deferred-elements then next,
        next = deferred-elements.tail then next.tail, //  #().tail == #()
-       until remaining == #())
+       until: remaining == #())
     let bucket-entry = remaining.head;
     let id = bucket-entry.entry-hash-id;
     let state = bucket-entry.entry-hash-state;
@@ -839,7 +839,7 @@ define constant next-table-state
 	let new-cell = state.bucket-cell.tail;
 	if (new-cell == #())
 	  for (i from state.bucket-index + 1,
-	       until ht.buckets[i] ~= #())
+	       until: ht.buckets[i] ~= #())
 	  finally
 	    state.bucket-index := i;
 	    state.bucket-cell := ht.buckets[i];

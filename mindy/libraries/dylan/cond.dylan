@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.11 1996/01/14 02:00:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.12 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -285,7 +285,7 @@ end method break;
 
 define method do-handlers (function :: <function>)
   for (h = current-handler() then h.handler-next,
-       while h)
+       while: h)
     function(h.handler-type,
 	     h.handler-test | method (x) #t end,
 	     h.handler-function,

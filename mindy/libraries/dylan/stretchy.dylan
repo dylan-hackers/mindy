@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.14 1996/01/11 18:43:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.15 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -71,7 +71,7 @@ define method make(cls == <simple-stretchy-vector>,
 		      size < 16 => 16;
 		      size < 1024 =>
 			for (data-size = 16 then data-size * 2,
-			     until size < data-size)
+			     until: size < data-size)
 			finally data-size;
 			end for;
 		      otherwise =>
@@ -94,7 +94,7 @@ define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
     if (new > len)
       let new-len = if (new < 1024)
 		      for (new-len = 16 then new-len * 2,
-			   until new < new-len)
+			   until: new < new-len)
 		      finally new-len;
 		      end for;
 		    else 

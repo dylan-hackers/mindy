@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.10 1996/01/11 18:43:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.11 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -46,7 +46,7 @@ define method \< (string1 :: <string>, string2 :: <string>)
        forward-iteration-protocol(string2);
     for (char1 in string1,
 	 state = init then next(string2, state),
-	 until done?(string2, state, limit))
+	 until: done?(string2, state, limit))
       let char2 = elem(string2, state);
       case
 	char1 < char2 => return(#t);

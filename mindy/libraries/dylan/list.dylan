@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.7 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.8 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -65,7 +65,7 @@ define constant list_fip_current_key =
   method (list :: <list>, state :: <list>) => <integer>;
     for (key from 0,
 	 scan = list then tail(scan),
-	 until scan == state)
+	 until: scan == state)
       if (scan == #())
 	error("State not part of list?");
       end;
@@ -127,7 +127,7 @@ define method member? (value, l :: <list>, #key test: test = \==)
 	 fast = tail (l) then if (lapped-slow) fast;
 			      else tail (tail (fast))
 			      end if,
-	 until done | slow == #() )
+	 until: done | slow == #() )
 
       if (test (value, head (slow)))
 	return(#t);
@@ -162,7 +162,7 @@ define method map-as (a_class :: singleton (<list>), proc :: <function>,
 	 result     = #()        then pair (apply (proc, head (l),
 						   map (head, more-lists)),
 					    result),
-	 until ( l == #() ) | any? (rcurry (\==, #()), more-lists))
+	 until: ( l == #() ) | any? (rcurry (\==, #()), more-lists))
     finally
       reverse! (result);
     end for;
@@ -315,7 +315,7 @@ define method replace-subsequence! (l :: <list>, seq :: <sequence>,
 
   let after-hole = for (after-hole = tail (prev) then tail (after-hole),
 			index = start then index + 1,
-			until index = stop)
+			until: index = stop)
 		   finally after-hole;
 		   end for;
 

@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.13 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.14 1996/02/13 20:43:17 nkramer Exp $
 
 //======================================================================
 //
@@ -163,7 +163,7 @@ define constant deque_fip_current_key =
   method (deque :: <deque>, state :: <deque-element>) => <integer>;
     for (count from -1,
 	 deque_elem = state then prev-deque-element(deque_elem),
-	 while deque_elem)
+	 while: deque_elem)
     finally
       count;
     end for;
@@ -462,7 +462,7 @@ define method map-as (cls == <deque>, proc :: <function>,
     empty?(more-deques) =>
       let result = make(<deque>);
       for (element = deque-head(deque) then next-deque-element(element),
-	   while element)
+	   while: element)
 	push-last(result, proc(deque-element-data(element)));
       end for;
       result;
@@ -472,7 +472,7 @@ define method map-as (cls == <deque>, proc :: <function>,
       for (element = deque-head(deque) then next-deque-element(element),
 	   more-elements = map-as(<vector>, deque-head, more-deques)
 	     then map-into(more-elements, next-deque-element, more-elements),
-	   while element & every?(identity, more-elements))
+	   while: element & every?(identity, more-elements))
 	map-into(more-vals, deque-element-data, more-elements);
 	push-last(result, apply(proc, deque-element-data(element), more-vals));
       end for;
@@ -641,7 +641,7 @@ define method remove-duplicates (deque :: <deque>,
 				 #key test = \==) => <deque>;
   local method member?(value, state)
 	  for (state = state then next-deque-element(state),
-	       while state & ~test(value, deque-element-data(state)))
+	       while: state & ~test(value, deque-element-data(state)))
 	  finally
 	    state;
 	  end for;
@@ -674,7 +674,7 @@ define method remove-duplicates! (deque :: <deque>,
 				  #key test = \==) => <deque>;
   local method member?(value, state)
 	  for (state = state then next-deque-element(state),
-	       while state & ~test(value, deque-element-data(state)))
+	       while: state & ~test(value, deque-element-data(state)))
 	  finally state;
 	  end for;
 	end method member?,
@@ -768,7 +768,7 @@ end method reverse;
 //
 define method reverse! (deque :: <deque>) => <deque>;
   for (state = deque-head(deque) then prev-deque-element(state),
-       while state)
+       while: state)
     let (prev, next) = values(prev-deque-element(state),
 			      next-deque-element(state));
     prev-deque-element(state) := next;
