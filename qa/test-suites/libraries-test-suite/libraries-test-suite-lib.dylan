@@ -7,7 +7,8 @@ define library libraries-test-suite
 //  use functional-dylan;
   use testworks;
   use dylan-test-suite;
-  //use common-dylan-test-suite;
+  use common-dylan-test-suite;
+  use random;
   //use functional-dylan-test-suite;
   //use collections-test-suite;
   //use system-test-suite;
@@ -21,7 +22,8 @@ define module libraries-test-suite
   //use functional-dylan;
   use testworks;
   use dylan-test-suite;
-  //use common-dylan-test-suite;
+  use common-dylan-test-suite;
+  use random;
   //use functional-dylan-test-suite;
   //use collections-test-suite;
   //use system-test-suite;
