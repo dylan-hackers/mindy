@@ -611,7 +611,8 @@ define constant reserved-words
 	   "struct", <struct-token>,
 	   "union", <union-token>,
 	   "pointer", <pointer-token>,
-	   "constant", <constant-token>,
+//          Again, no clue what this is supposed to be.
+//	   "constant", <constant-token>,
 	   "variable", <variable-token>,
 	   "getter:", <getter-token>,
 	   "setter:", <setter-token>,

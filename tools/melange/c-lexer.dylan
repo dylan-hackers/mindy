@@ -1053,7 +1053,8 @@ define constant reserved-words
 	   "enum", <enum-token>,
 	   "...", <elipsis-token>,
 	   "sizeof", <sizeof-token>,
-	   "constant", <constant-token>,
+//         There's no C dialect where "constant" is a reserved word...
+//	   "constant", <constant-token>,
 	   "#machine", <machine-token>,
 	   "--", <dec-op-token>,
 	   "++", <inc-op-token>,
