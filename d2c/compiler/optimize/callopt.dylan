@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.14 1996/05/29 23:12:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.15 1996/07/03 17:08:21 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -441,20 +441,23 @@ define method optimize-generic
 	  end if;
 	end if;
 	
-	// Change to an unknown call of the most specific method.
-	let builder = make-builder(component);
-	let assign = call.dependents.dependent;
-	let policy = assign.policy;
-	let source = assign.source-location;
-	let new-func = build-defn-ref(builder, policy, source, ordered.head);
-	let next-leaf
-	  = make-next-method-info-leaf(builder, ordered, ambiguous);
-	insert-before(component, assign, builder-result(builder));
-	let new-call
-	  = (make-unknown-call
-	       (builder, new-func, next-leaf,
-		listify-dependencies(call.depends-on.dependent-next)));
-	replace-expression(component, call.dependents, new-call);
+	// Change to an unknown call of the most specific method if we know
+	// what that method is.
+	if (ordered)
+	  let builder = make-builder(component);
+	  let assign = call.dependents.dependent;
+	  let policy = assign.policy;
+	  let source = assign.source-location;
+	  let new-func = build-defn-ref(builder, policy, source, ordered.head);
+	  let next-leaf
+	    = make-next-method-info-leaf(builder, ordered, ambiguous);
+	  insert-before(component, assign, builder-result(builder));
+	  let new-call
+	    = (make-unknown-call
+		 (builder, new-func, next-leaf,
+		  listify-dependencies(call.depends-on.dependent-next)));
+	  replace-expression(component, call.dependents, new-call);
+	end if;
     end select;
   end block;
 end method optimize-generic;
