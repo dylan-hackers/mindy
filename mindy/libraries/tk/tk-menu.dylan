@@ -82,6 +82,7 @@ define method configure-entry
 		      #"indicatoron", #"selectimage", #"underline",
 		      #"activeforeground", #"font"],
 		    #f, options));
+  menu;
 end method configure-entry;
 
 define method entry-configuration
@@ -93,6 +94,7 @@ end method entry-configuration;
 define method invoke-entry
     (menu :: <menu>, index :: <object>) => (result :: <menu>);
   put-tk-line(menu, " invoke ", index);
+  menu;
 end method invoke-entry;
 
 define method post (menu :: <menu>, x, y);
