@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.19 1996/03/19 23:49:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.20 1996/07/23 09:58:21 nkramer Exp $
 
 //======================================================================
 //
@@ -55,9 +55,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dy
 // NEXT-DEQUE-ELEMENT, the marker #f should be used in these slots.
 //
 define class <deque-element> (<object>)
-  slot deque-element-data, init-keyword: data: ;
-  slot prev-deque-element, init-value: #f;
-  slot next-deque-element, init-value: #f;
+  slot deque-element-data, init-keyword: #"data";
+  slot prev-deque-element = #f;
+  slot next-deque-element = #f;
 end class <deque-element>;
 
 // Note: When union types make it into Dylan, if it's possible we will
@@ -72,12 +72,9 @@ end class <deque-element>;
 // be preserved by the deque functions.
 //
 define class <deque> (<stretchy-collection>, <mutable-sequence>)
-  slot size :: <integer>,
-    setter: deque-size-setter,
-    init-value: 0,
-    init-keyword: size: ;
-  slot deque-head, init-value: #f;
-  slot deque-tail, init-value: #f;
+  slot size :: <integer> = 0, setter: deque-size-setter;
+  slot deque-head = #f;
+  slot deque-tail = #f;
 end class <deque>;
 
 // Note: When union types make it into Dylan we will want to use these
@@ -116,9 +113,6 @@ define constant $deque-fill-default$ = #f;
 //
 define method initialize (deque :: <deque>,
 			  #key data, size = 0, fill = $deque-fill-default$)
-//  deque.deque-head := #f;
-//  deque.deque-tail := #f;
-  deque.deque-size := size;
   if (data)
     for (element in data)
       push-last(deque, element);
@@ -129,11 +123,6 @@ define method initialize (deque :: <deque>,
     end for;
   end if;
 end method initialize;
-
-// I don't understand why I have to set DEQUE-HEAD and DEQUE-TAIL to #f.
-// They should already be initialized by the INIT-VALUE: key I gave when I
-// created the class!
-
 
 
 //; Iteration Protocol
