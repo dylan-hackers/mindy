@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.1 1996/06/26 16:57:47 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.2 1996/07/11 16:15:23 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,6 +10,8 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 
 define sealed class <target-environment> (<object>)
   constant slot target-name :: <symbol>, init-keyword: #"target-name";
+
+  slot default-features :: <byte-string>;
 
   slot heap-preamble :: <byte-string>;
   slot align-directive :: <byte-string>; 
@@ -41,7 +43,8 @@ define sealed domain make(singleton(<target-environment>));
 define sealed domain initialize(<target-environment>);
 
 define constant $target-attribute-description 
-    = vector(#"heap-preamble", heap-preamble-setter,
+    = vector(#"default-features", default-features-setter,
+	     #"heap-preamble", heap-preamble-setter,
 	     #"align-directive", align-directive-setter,
 	     #"export-directive", export-directive-setter,
 	     #"word-directive", word-directive-setter,
