@@ -2,7 +2,7 @@ module: Print
 author: chiles@cs.cmu.edu
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.1 1996/03/20 00:02:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.2 1996/03/20 05:01:13 wlott Exp $
 
 //======================================================================
 //
@@ -960,23 +960,26 @@ define method print-specializer (type :: <limited-integer>, stream :: <stream>)
   write(')', stream);
 end method;
 
+define method print-specializer (type :: <union>, stream :: <stream>)
+    => ();
 #if (mindy)
-define method print-specializer (type :: <union>, stream :: <stream>)
-    => ();
-  pprint-logical-block
-    (stream,
-     prefix: "type-union(",
-     body: method (stream)
-	     pprint-newline(#"fill", stream);
-	     print(type.union-members, stream);
-	   end method,
-     suffix: ")");
-end method;
+  let members = #();
+  let singletons = #();
+  for (member in type.union-members)
+    if (instance?(member, <singleton>))
+      singletons := pair(member.singleton-object, singletons);
+    else
+      members := pair(member, members);
+    end if;
+  end for;
+  print-union(members, singletons, stream);
 #else
-define method print-specializer (type :: <union>, stream :: <stream>)
-    => ();
-  let members = type.union-members;
-  let singletons = type.union-singletons;
+  print-union(type.union-members, type.union-singletons, stream);
+#end
+end method print-specializer;
+
+define method print-union
+    (members :: <sequence>, singletons :: <sequence>, stream :: <stream>)
   local
     method print-singletons (stream :: <stream>)
       if (singletons.tail == #())
@@ -1025,10 +1028,9 @@ define method print-specializer (type :: <union>, stream :: <stream>)
 		 end unless;
 	       end for;
 	     end method,
-       suffix: "}");
+       suffix: ")");
   end if;
 end method;
-#end
 
 
 /// Print-object methods for <type> and its subclasses.
