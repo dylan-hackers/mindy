@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.22 1995/11/12 21:09:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.23 1995/11/14 15:13:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,6 +18,9 @@ define abstract class <cclass>
   //
   // The name, for printing purposes.
   slot cclass-name :: <name>, required-init-keyword: name:;
+
+  slot loaded? :: <boolean>,
+    init-value: #t, init-keyword: loading:;
 
   // List of the direct superclasses of this class.
   slot direct-superclasses :: <list>,
@@ -619,34 +622,67 @@ end;
 
 // Unique ID assignment.
 
-define method assign-unique-ids () => ();
+define constant $class-for-id = make(<object-table>);
+
+define method set-and-record-unique-id
+    (id :: false-or(<fixed-integer>), class :: <cclass>) => ();
+  if (id)
+    let clash = element($class-for-id, id, default: #f);
+    if (clash)
+      compiler-error("Can't give both %= and %= unique id %d, because then "
+		       "it wouldn't be unique.",
+		     clash, class, id);
+    end;
+    $class-for-id[id] := class;
+    class.unique-id := id;
+  end;
+end;
+
+define method assign-unique-ids (base :: <fixed-integer>) => ();
   local
     method grovel (class :: <cclass>, this-id :: <fixed-integer>)
-      let next-id = if (class.abstract?)
-		      this-id;
-		    else
-		      class.unique-id := this-id;
-		      this-id + 1;
-		    end;
-      for (sub in class.direct-subclasses)
-	if (sub.direct-superclasses.first == class)
-	  next-id := grovel(sub, next-id);
-	end;
-      end;
-      if (class.sealed?)
-	block (return)
-	  for (sub in class.subclasses)
-	    unless (sub.abstract? | (sub.unique-id & this-id <= sub.unique-id))
-	      return();
+	=> (next-id :: <fixed-integer>);
+      let next-id = this-id;
+      if (class.loaded?)
+	unless (class.sealed?)
+	  for (sub in class.direct-subclasses)
+	    if (sub.direct-superclasses.first == class)
+	      next-id := grovel(sub, next-id);
 	    end;
 	  end;
-	  class.subclass-id-range-min := this-id;
-	  class.subclass-id-range-max := next-id - 1;
+	end;
+      else
+	unless (class.abstract?)
+	  if (element($class-for-id, next-id, default: #f))
+	    compiler-error("Attempting to reuse unique id %d, you should pick "
+			     "a different unique-id-base.",
+			   next-id);
+	  end;
+	  $class-for-id[next-id] := class;
+	  class.unique-id := next-id;
+	  next-id := next-id + 1;
+	end;
+	for (sub in class.direct-subclasses)
+	  if (sub.direct-superclasses.first == class)
+	    next-id := grovel(sub, next-id);
+	  end;
+	end;
+	if (class.sealed?)
+	  block (return)
+	    for (sub in class.subclasses)
+	      unless (sub.abstract?
+			| (sub.unique-id & this-id <= sub.unique-id))
+		return();
+	      end;
+	    end;
+	    class.subclass-id-range-min := this-id;
+	    class.subclass-id-range-max := next-id - 1;
+	  end;
 	end;
       end;
       next-id;
     end;
-  grovel(dylan-value(#"<object>"), 0);
+  grovel(dylan-value(#"<object>"), base);
 end;
 
 
