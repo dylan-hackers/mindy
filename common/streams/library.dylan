@@ -2,7 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.7 1996/08/08 12:09:28 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.8 1996/09/04 16:47:34 nkramer Exp $
 
 //======================================================================
 //
@@ -31,7 +31,11 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v
 
 define library streams
   use dylan;
-  export streams;
+#if (~mindy)
+  use melange-support;
+#endif
+  export 
+    streams, piped-exec;
 end library;
 
 #if (~mindy)
@@ -281,3 +285,15 @@ define module streams
     <fd-stream>,
     <buffered-byte-string-output-stream>;
 end module;
+
+define module piped-exec
+  use dylan;
+  use streams;
+#if (~mindy)
+  use melange-support;
+#else
+  use file-descriptors;
+#endif
+  export
+    piped-exec;
+end module piped-exec;
