@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.45 1996/03/07 17:46:34 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.46 1996/08/22 09:58:31 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1327,8 +1327,14 @@ static obj_t compute_defaulted_initargs(obj_t class, obj_t keyword_arg_pairs)
     obj_t initargs;
 
     /* Get the supplied initialization arguments */
-
-    for (i = 0; i < nkeys; i += 2) {
+    if ((nkeys & 1) != 0) {
+	/* I'm not sure this can ever happen (maybe the caller of this
+	   function take care of this), but just in case... 
+	 */
+	error("More keywords than values supplied");
+    }
+    /* Iterate backwards so we don't change their order */
+    for (i = nkeys-2; i >= 0; i -= 2) {
 	obj_t initarg =
 	  make_initarg_descr(SOVEC(keyword_arg_pairs)->contents[i],
 			     obj_False, obj_False, obj_Unbound,
