@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.10 1999/07/16 16:30:47 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.11 1999/10/28 18:54:58 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -58,7 +58,9 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 //
 // Also, due to the new %subclass? code, we have to dump all classes to the
 // global heap, since we have to calculate the type inclusion matrix after
-// we know about all of them.
+// we know about all of them. This step should be deferred to program
+// initialization time, because this would allow us to dump classes to
+// the local heap again.
 //
 // A related issue is slot descriptors for open classes.  Slot descriptors
 // contain a ``position table'' mapping (sub)class to slot position.  But slot
