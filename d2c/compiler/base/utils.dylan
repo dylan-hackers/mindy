@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.9 1995/05/18 13:26:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.10 1995/11/14 14:19:22 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -244,7 +244,7 @@ end;
 // Defines the Info slot used for back-end annotation.
 //
 define class <annotatable> (<object>)
-  slot info, init-value: #f;
+  slot info, init-value: #f, init-keyword: info:;
 end class;
 
 
