@@ -1,30 +1,27 @@
 WinMindy runs under Windows '95 and under Windows/NT v. 3.5 or later.
 It requires a file system that supports long file names.  WinMindy
-requires tar and GNU Zip (gzip) to unpackage.  To run tar you will
-need tar.exe and win32gnu.dll.  To run gzip, get gnubin.tar and use
-tar.exe to unpackage it.  Install the GNU utilities contained in
-gnubin.tar (gzip is one of these utilities).  You can find all of
-these files in the same directory you found WinMindy.tar.gz
+requires unzip.exe, which can be found in the same directory as
+WinMindy.zip.  (This is the Info-ZIP extractor.  WinZip 6.1 will also
+work.  PkZip will *not* work, because it doesn't do long file names)
 
-To install Mindy, unzip the release, change directory to where you
-want to install Mindy, and untar it.  This will create a directory
-called "WinMindy".  In order to run Mindy, you will need to set the
-MINDYPATH environment variable to point to the mindyNT\lib directory.
-You may also want to put the WinMindy\bin directory in your PATH.  For
-example, if WinMindy.tar.gz is currently in c:\users\fred, and you want
-to install it to c:\stuff\mindy-1.3, type the following:
+To install Mindy, change directory to where you want to install Mindy
+and unzip it.  This will create a directory called "WinMindy".  In
+order to run Mindy, you will need to set the MINDYPATH environment
+variable to point to the mindyNT\lib directory.  You may also want to
+put the WinMindy\bin directory in your PATH.  For example, if
+WinMindy.zip is currently in c:\users\fred, and you want to install
+it to c:\stuff, type the following:
 
 	c:
-	cd \users\fred
-	gzip -d WinMindy.tar.gz
 	cd \stuff
-	tar -xvf \users\fred\WinMindy.tar
+	unzip c:\users\fred\WinMindy.zip
 	set MINDYPATH=c:\stuff\WinMindy\lib
 	set PATH=%PATH%;c:\stuff\WinMindy\bin
 
 
 WinMindy comes compiled, but if you want to recompile it, you will
-need Microsoft Visual C++ version 4.0.
+need Microsoft Visual C++ version 4.0, Perl, and a "tr" utility
+(something that works like the Unix command tr).
 
 To recompile Mindy, follow these steps:
 	- Fire up Visual C++ by double-clicking on Mindy.mak under the
