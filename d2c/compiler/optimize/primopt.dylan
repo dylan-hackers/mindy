@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.8 1995/08/23 01:11:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.9 1995/10/05 14:15:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -165,12 +165,26 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      for (vec = primitive.depends-on.source-exp
 	    then vec.definer.depends-on.source-exp,
+	  assign = #f then vec.definer,
 	  while: instance?(vec, <ssa-variable>))
      finally
        if (instance?(vec, <primitive>))
 	 if (vec.name == #"vector")	 
+	   let builder = make-builder(component);
+	   let policy = assign.policy;
+	   let source = assign.source-location;
+	   local
+	     method copy-arg (arg)
+	       if (arg.expression-movable?)
+		 arg;
+	       else
+		 let temp = make-ssa-var(builder, #"temp", object-ctype());
+		 build-assignment(builder, policy, source, temp, arg);
+		 temp;
+	       end;
+	     end;
 	   for (value-dep = vec.depends-on then value-dep.dependent-next,
-		values = #() then pair(value-dep.source-exp, values),
+		values = #() then pair(copy-arg(value-dep.source-exp), values),
 		while: value-dep)
 	   finally
 	     replace-expression
@@ -178,6 +192,7 @@ define-primitive-transformer
 		make-operation(make-builder(component), <primitive>,
 			       reverse!(values), name: #"values"));
 	   end;
+	   insert-before(component, assign, builder-result(builder));
 	 elseif (vec.name == #"canonicalize-results")
 	   let vec-assign = vec.dependents.dependent;
 	   let prim-assign = primitive.dependents.dependent;
