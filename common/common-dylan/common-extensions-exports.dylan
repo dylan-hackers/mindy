@@ -96,7 +96,7 @@ define module common-extensions
     exit-application;
     //register-exit-application-function,
 
-#if (d2c)
+#if (~mindy)
   export
     \table-definer,
     \iterate,

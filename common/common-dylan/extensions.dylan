@@ -152,17 +152,23 @@ end;
 //  Miscellaneous macros exported from common-extensions. These are not
 //  available under Mindy.
 //
+//  XXX - table-definer conses excessively. With more macrology, it could
+//  run much faster.
 //  XXX - can the name bound by 'iterate' return?
 
-#if (d2c)
+#if (~mindy)
 
 define macro table-definer
-  { define table ?:name ?equals:token { } }
-    => { define constant ?name :: <table> = make(<table>) }
+  { define table ?:name ?equals:token {?keys-and-values:*} }
+    => { define constant ?name :: <table> = make(<table>);
+         fill-table!(?name, list(?keys-and-values)); }
   { define table ?:name :: ?type:* ?equals:token { } }
-    => { define constant ?name :: ?type = make(?type) }
+    => { define constant ?name :: ?type = make(?type);
+         fill-table!(?name, list(?keys-and-values)); }
+keys-and-values:
+  { ?key:expression => ?value:expression, ... } => { ?key, ?value, ... }
+  { } => { }
 end macro;
-
 
 define macro iterate
   { iterate ?:name (?clauses:*) ?:body end }
