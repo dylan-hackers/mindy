@@ -13,6 +13,14 @@ credits file:
 			Linus
 ----------
 
+N: Douglas M. Auclair
+E: dauclair@hotmail.com
+D: Cygnus port, Solaris maintainer (updated to include Time library)
+D: Made file-system library Common-Dylan compliant
+D: Added introspection of instance slots
+D: Added Dylan-style virtual structs that shadow C-style structs from Melange
+D: Fixed --no-binaries flag for d2c
+
 N: Andreas Bogk
 E: ich@andreas.org
 D: LinuxPPC port, libc5 RPMS and tarballs, CVS and FTP site mirrors,
@@ -34,6 +42,7 @@ D: Enormous improvements to Emacs dylan-mode, moral encouragement.
 N: Peter Hinely
 E: phinely@hawaii.edu
 D: BeOS port of Mindy.
+
 
 N: Matthias Hoelzl
 E: tc@gauss.muc.de
@@ -70,4 +79,4 @@ D: Debian advisor
 
 N: Ole J. Tetlie
 E: olet@ifi.uio.no
-D: Solaris maintainer, Debian maintainer
+D: Debian maintainer
