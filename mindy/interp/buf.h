@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.h,v 1.3 1994/10/05 21:01:17 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.h,v 1.4 1996/06/04 23:22:56 bfw Exp $
 *
 \**********************************************************************/
 
@@ -34,6 +34,8 @@ struct buffer {
     obj_t class;
     int length;
     unsigned char data[4];
+    int buffer_next;
+    int buffer_end;
 };
 
 #define buffer_data(buf) (obj_ptr(struct buffer *, buf)->data)

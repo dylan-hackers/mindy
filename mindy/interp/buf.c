@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.13 1996/02/02 01:58:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.14 1996/06/04 23:22:22 bfw Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -54,21 +54,29 @@
 
 obj_t obj_BufferClass = NULL;
 
-static obj_t dylan_buffer_make(obj_t class, obj_t size)
+static obj_t dylan_buffer_make(obj_t class, obj_t size, obj_t next, obj_t end)
 {
-    int len;
+    int len, start, stop;
     obj_t res;
 
     len = fixnum_value(check_type(size, obj_FixnumClass));
+    start = fixnum_value(next);
+    stop = fixnum_value(end);
 
     if (len < 0)
 	error("Bogus size: for make %=: %d", class, size);
+    if (start < 0 || start > len)
+	error("Bogus buffer-next: for make %=: %d", class, next);
+    if (stop < 0 || stop > len)
+	error("Bogus buffer-end: for make %=: %d", class, end);
 
     res = alloc(obj_BufferClass, sizeof(struct buffer) 
 	  + max(len - sizeof(((struct buffer *)res)->data),
 		sizeof(((struct buffer *)res)->data)));
 
     obj_ptr(struct buffer *, res)->length = len;
+    obj_ptr(struct buffer *, res)->buffer_next = start;
+    obj_ptr(struct buffer *, res)->buffer_end = stop;
 
     return res;
 }
@@ -76,6 +84,30 @@ static obj_t dylan_buffer_make(obj_t class, obj_t size)
 static obj_t dylan_buffer_size(obj_t buffer)
 {
     return make_fixnum(obj_ptr(struct buffer *, buffer)->length);
+}
+
+static obj_t dylan_buffer_next(obj_t buffer)
+{
+    return make_fixnum(obj_ptr(struct buffer *, buffer)->buffer_next);
+}
+
+static obj_t dylan_buffer_next_setter(obj_t val, obj_t buffer)
+{
+    obj_ptr(struct buffer *, buffer)->buffer_next = fixnum_value(val);
+
+    return val;
+}
+
+static obj_t dylan_buffer_end(obj_t buffer)
+{
+    return make_fixnum(obj_ptr(struct buffer *, buffer)->buffer_end);
+}
+
+static obj_t dylan_buffer_end_setter(obj_t val, obj_t buffer)
+{
+    obj_ptr(struct buffer *, buffer)->buffer_end = fixnum_value(val);
+
+    return val;
 }
 
 static obj_t dylan_buffer_element(obj_t buffer, obj_t index, obj_t def)
@@ -162,8 +194,20 @@ void init_buffer_functions(void)
 		  dylan_buffer_element_setter);
     define_method("size", list1(obj_BufferClass), FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_buffer_size);
+    define_method("buffer-next", list1(obj_BufferClass), FALSE, obj_False,
+		  FALSE, obj_FixnumClass, dylan_buffer_next);
+    define_method("buffer-next-setter", 
+		  list2(obj_FixnumClass, obj_BufferClass), FALSE, obj_False,
+		  FALSE, obj_FixnumClass, dylan_buffer_next_setter);
+    define_method("buffer-end", list1(obj_BufferClass), FALSE, obj_False,
+		  FALSE, obj_FixnumClass, dylan_buffer_end);
+    define_method("buffer-end-setter", 
+		  list2(obj_FixnumClass, obj_BufferClass), FALSE, obj_False,
+		  FALSE, obj_FixnumClass, dylan_buffer_end_setter);
     define_method("make", list1(singleton(obj_BufferClass)), FALSE,
-		  list1(pair(symbol("size"), make_fixnum(4096))),
+		  list3(pair(symbol("size"), make_fixnum(4096)),
+			pair(symbol("next"), make_fixnum(0)),
+			pair(symbol("end"), make_fixnum(0))),
 		  FALSE, obj_BufferClass, dylan_buffer_make);
 
     u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
