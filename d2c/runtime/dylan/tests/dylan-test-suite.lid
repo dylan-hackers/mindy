@@ -15,6 +15,7 @@ Files:  library
         functions
 	core
 	numbers
+	collections
 Other-files: Open-Source-License.txt
 Major-version: 2
 Minor-version: 1

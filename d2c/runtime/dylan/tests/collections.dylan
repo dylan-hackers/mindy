@@ -983,11 +983,11 @@ define method valid-type-for-copy?
  => (valid-type? :: <boolean>)
   //--- The DRM pg. 293 says that this should be == object-class(collection)
   //--- but that doesn't work in the emulator. Which should it be?
-  if (instance?(collection, <limited-collection>))
-    instance?(collection, type)
-  else
+  //if (instance?(collection, <limited-collection>))
+  //  instance?(collection, type)
+  //else
     subtype?(object-class(collection), type)
-  end if
+  //end if
 end method valid-type-for-copy?;
 
 define method valid-type-for-copy?
