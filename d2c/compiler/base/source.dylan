@@ -1,25 +1,24 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.12 1996/03/21 02:57:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.13 1996/03/21 19:15:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+// source-location -- exported.
+//
+// Return the location in the source where the thing came from, or #f if
+// unknown.
+// 
+define open generic source-location (thing :: <object>)
+    => res :: <source-location>;
 
 
 // The <source-location-mixin> class.
 
 define open abstract class <source-location-mixin> (<object>)
-  constant slot source-location :: <source-location>
+  sealed constant slot source-location :: <source-location>
       = make(<unknown-source-location>),
     init-keyword: source-location:;
 end;
-
-// source-location -- exported.
-//
-// Return the location in the source where token came from, of #f if
-// unknown.
-// 
-define generic source-location (thing :: <source-location-mixin>)
-    => res :: <source-location>;
-
 
 
 // The <source-location> class.
@@ -37,6 +36,10 @@ end;
 
 
 define open generic source-location-before
+    (source-loc :: <source-location>)
+    => res :: <source-location>;
+
+define open generic source-location-after
     (source-loc :: <source-location>)
     => res :: <source-location>;
 
@@ -61,11 +64,25 @@ end;
 define sealed domain make (singleton(<unknown-source-location>));
 define sealed domain initialize (<unknown-source-location>);
 
+define variable *unknown-srcloc* :: false-or(<unknown-source-location>) = #f;
+
+define method make
+    (class == <unknown-source-location>, #next next-method, #key)
+    => res :: <unknown-source-location>;
+  *unknown-srcloc* | (*unknown-srcloc* := next-method());
+end method make;
+  
 define sealed method source-location-before
     (srcloc :: <unknown-source-location>)
     => res :: <source-location>;
   make(<unknown-source-location>);
 end method source-location-before;
+
+define sealed method source-location-after
+    (srcloc :: <unknown-source-location>)
+    => res :: <source-location>;
+  make(<unknown-source-location>);
+end method source-location-after;
 
 define sealed method source-location-between
     (left :: <unknown-source-location>, right :: <unknown-source-location>)
@@ -389,6 +406,18 @@ define sealed method source-location-before (srcloc :: <file-source-location>)
        end-line: srcloc.start-line,
        end-column: srcloc.start-column);
 end method source-location-before;
+
+define sealed method source-location-after (srcloc :: <file-source-location>)
+    => res :: <file-source-location>;
+  make(<file-source-location>,
+       source: srcloc.source-file,
+       start-posn: srcloc.end-posn,
+       start-line: srcloc.end-line,
+       start-column: srcloc.end-column,
+       end-posn: srcloc.end-posn,
+       end-line: srcloc.end-line,
+       end-column: srcloc.end-column);
+end method source-location-after;
 
 define sealed method source-location-between
     (left :: <file-source-location>, right :: <file-source-location>)
