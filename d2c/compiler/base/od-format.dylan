@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.34 1996/02/07 01:29:29 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.35 1996/02/08 11:39:04 wlott Exp $
 
 /*
 
@@ -202,13 +202,19 @@ Note that:
 // Note that it is intended that all IDs be registered in this file so that
 // we are sure that IDs are globally unique.
 
-define variable *object-id-registry* = make(<self-organizing-list>);
+define constant $object-id-registry :: <object-table>
+  = make(<object-table>);
+define constant $object-id-registry-inverse :: <stretchy-vector>
+  = make(<stretchy-vector>, size: 0);
 
 define method register-object-id (name :: <symbol>, id :: <integer>)
  => ();
-  assert(~element(*object-id-registry*, name, default: #f));
-  assert(~find-key(*object-id-registry*, method (x) x = id end));
-  *object-id-registry*[name] := id;
+  assert(~element($object-id-registry, name, default: #f));
+  assert(id >= 0);
+  assert(id > $object-id-registry-inverse.size
+	   | $object-id-registry-inverse[id] == #f);
+  $object-id-registry[name] := id;
+  $object-id-registry-inverse[id] := name;
 end method;
 
 
@@ -1196,7 +1202,7 @@ define /* exported */ method dump-definition-header
   dump-header-word(logior($odf-object-definition-etype,
   		          if (subobjects) $odf-subobjects-flag else 0 end,
 			  raw-data),
-		   *object-id-registry*[name], buf);
+		   $object-id-registry[name], buf);
   if (subobjects)
     buf.dump-stack := pair(name, buf.dump-stack);
   end;
@@ -1433,7 +1439,7 @@ define /* exported */ variable *default-dispatcher*
 define /* exported */ method add-od-loader
     (dispatcher :: <dispatcher>, name :: <symbol>, func :: <function>)
  => ();
-  let etype = *object-id-registry*[name];
+  let etype = $object-id-registry[name];
   unless (dispatcher.table[etype] == undefined-entry-type)
     signal("Already an OD loader for etype %=\n", etype);
   end;
@@ -2365,7 +2371,7 @@ end method;
 // This function is used by the dump file profiler
 //
 define method invert-registry () => inverted-registery :: <vector>;
-  let registry = *object-id-registry*;
+  let registry = $object-id-registry;
   let vec = make(<vector>, size: // $dispatcher-table-size);
 		   4000);
   let keys = key-sequence(registry);
