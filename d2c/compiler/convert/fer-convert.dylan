@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.14 1995/03/23 22:04:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.15 1995/04/23 03:27:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -453,11 +453,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
   let function
     = fer-convert(builder, operands[0], make(<lexenv>, inside: lexenv),
 		  #"leaf", #"function");
-  let argument
-    = fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
-		  #"leaf", #"argument");
+  let cluster = make-values-cluster(builder, #"results", wild-ctype());
+  fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
+	      #"assignment", cluster);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-mv-operation(builder, list(function, argument)));
+		 make-mv-operation(builder, list(function, cluster)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
