@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.119 2003/04/04 11:45:29 bruce Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.120 2003/04/04 18:02:20 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -488,9 +488,9 @@ AC_ARG_WITH(gc-prefix, [  --with-gc-prefix=PFX    Prefix where Boehm gc is insta
             gc_prefix="$withval", gc_prefix="")
 if test "x$gc_prefix" != x; then
   GC_CFLAGS="-I$gc_prefix/include"
-  GC_LIBS="-L$gc_prefix/lib -lgc -ldl"
+  GC_LIBS="-L$gc_prefix/lib -lgc"
 else
-  GC_LIBS="-lgc -ldl"
+  GC_LIBS="-lgc"
 fi
 save_CPPFLAGS="$CPPFLAGS"
 save_LIBS="$LIBS"
@@ -920,7 +920,7 @@ AC_CHECK_LIB(dld, shl_load, [AC_DEFINE(HAVE_LIBDLD)
 AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
 			 AC_DEFINE(HAVE_LIBDLD)
                          AC_LIBOBJ([shl])
-			 LIBS="$LIBS -ldl"])
+			 LIBS="$LIBS -ldl" GC_LIBS="$GC_LIBS -ldl"])
 
 #--------------------------------------------------------------------
 #	Check to see whether we know how to read the number of bytes
