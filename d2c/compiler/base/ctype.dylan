@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.26 1995/12/05 03:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.27 1995/12/05 22:14:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1054,10 +1054,6 @@ define method ct-value-cclass (object :: <literal-extended-float>)
     => res :: <cclass>;
   dylan-value(#"<extended-float>");
 end method;
-
-define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
-  dylan-value(#"<class>");
-end;
 
 define method ct-value-cclass (object :: <union-ctype>) => res :: <cclass>;
   dylan-value(#"<union>");
