@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.12 1996/07/12 14:31:31 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.13 1996/08/08 19:35:50 dwatson Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -785,6 +785,8 @@ define open generic remove-all-keys!
 define method remove-all-keys! (table :: <table>)
  => (table :: <table>);
   table-init(table);
+  table.table-size := 0;
+  table.table-hash-state := $permanent-hash-state;
   table;
 end method remove-all-keys!;
 
