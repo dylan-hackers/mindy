@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.13 1996/02/08 23:54:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.14 1996/02/16 03:37:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -126,13 +126,11 @@ define constant $class-dump-slots =
        subclass-id-range-max, subclass-id-range-max:, #f,
        speed-representation,speed-representation:,speed-representation-setter,
        space-representation,space-representation:,space-representation-setter,
-       each-subclass-slots-count, each-subclass-slots-count:, #f,
-       ct-value-heap-labels, heap-labels:, #f);
+       each-subclass-slots-count, each-subclass-slots-count:, #f);
 
 
 define constant $slot-info-dump-slots =
   list(info, #f, info-setter,
-       ct-value-heap-labels, heap-labels:, #f,
        slot-introduced-by, introduced-by:, #f,
        slot-type, type:, slot-type-setter,
        slot-getter, getter:, #f,
@@ -154,14 +152,16 @@ add-make-dumper(#"instance-slot-info", *compiler-dispatcher*,
 
 
 add-make-dumper(#"vector-slot-info", *compiler-dispatcher*, <vector-slot-info>,
-  concatenate(
-    $slot-info-dump-slots,
-    list(slot-size-slot, size-slot:, slot-size-slot-setter)),
-  load-external: #t
+   concatenate(
+     $slot-info-dump-slots,
+     list(slot-size-slot, size-slot:, slot-size-slot-setter)),
+   load-external: #t
 );
 
 add-make-dumper(#"class-slot-info", *compiler-dispatcher*, <class-slot-info>,
-		$slot-info-dump-slots);
+  $slot-info-dump-slots,
+  load-external: #t
+);
 
 add-make-dumper(#"each-subclass-slot-info", *compiler-dispatcher*,
   <each-subclass-slot-info>,
@@ -201,7 +201,7 @@ add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
 		$class-dump-slots, load-external: #t);
 
 add-make-dumper(#"class-proxy", *compiler-dispatcher*, <proxy>,
-  list(ct-value-heap-labels, heap-labels:, #f, proxy-for, for:, #f),
+  list(proxy-for, for:, #f),
   load-external: #t
 );
 
