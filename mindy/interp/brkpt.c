@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.1 1994/04/12 19:51:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.2 1994/04/17 17:46:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -103,7 +103,11 @@ static void skip_byte_breakpoint(struct thread *thread)
     struct byte_brkpt_info *info
 	= find_byte_breakpoint(thread->component, thread->pc);
 
+#if SLOW_FUNCTION_POINTERS
+    thread->advance = NULL;
+#else
     thread->advance = interpret_next_byte;
+#endif
 
     if (info) {
 	thread->pc++;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.8 1994/04/11 00:23:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.9 1994/04/17 17:47:21 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -33,6 +33,9 @@ extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 #include "driver.h"
 #include "bool.h"
 #include "gc.h"
+#if SLOW_FUNCTION_POINTERS
+#include "interp.h"
+#endif
 
 static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
@@ -208,8 +211,16 @@ enum pause_reason do_stuff(void)
 	    set_interrupt_handler(set_pause_interrupted);
 	    _setjmp(Catcher);
 	    if (PauseReason == pause_NoReason)
-		while (timer-- > 0)
+		while (timer-- > 0) {
+#if SLOW_FUNCTION_POINTERS
+		    if (thread->advance)
+			thread->advance(thread);
+		    else
+			interpret_next_byte(thread);
+#else
 		    thread->advance(thread);
+#endif
+		}
 	    InInterpreter = FALSE;
 	    clear_interrupt_handler();
 
@@ -241,8 +252,16 @@ enum pause_reason single_step(struct thread *thread)
     InInterpreter = TRUE;
     PauseReason = pause_NoReason;
     set_interrupt_handler(set_pause_interrupted);
-    if (_setjmp(Catcher) == 0)
+    if (_setjmp(Catcher) == 0) {
+#if SLOW_FUNCTION_POINTERS
+	if (thread->advance)
+	    thread->advance(thread);
+	else
+	    interpret_next_byte(thread);
+#else
 	thread->advance(thread);
+#endif
+    }
     InInterpreter = FALSE;
     clear_interrupt_handler();
     if (TimeToGC)

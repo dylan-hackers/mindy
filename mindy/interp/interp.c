@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.12 1994/04/14 20:00:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.13 1994/04/17 17:47:22 wlott Exp $
 *
 * This file does whatever.
 *
@@ -973,7 +973,11 @@ void set_byte_continuation(struct thread *thread, obj_t component)
     thread->pc = (char *)(&COMPONENT(component)->constant[n_const])
 	- (char *)component;
     thread->sp = thread->fp + COMPONENT(component)->frame_size;
+#if SLOW_FUNCTION_POINTERS
+    thread->advance = NULL;
+#else
     thread->advance = interpret_next_byte;
+#endif    
 }
 
 void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
@@ -996,7 +1000,11 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     else
 	lose("Strange call opcode: 0x%02x", opcode);
 
+#if SLOW_FUNCTION_POINTERS
+    thread->advance = NULL;
+#else
     thread->advance = interpret_next_byte;
+#endif
 }
 
 
