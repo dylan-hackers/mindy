@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.35 1996/02/08 11:39:04 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.36 1996/02/08 23:55:05 wlott Exp $
 
 /*
 
@@ -452,22 +452,20 @@ begin
   // Compile-time functions:
   register-object-id(#"ct-function", #x0080);
   register-object-id(#"ct-sealed-generic", #x0081);
-  // Note #"ct-open-generic" below.
-  register-object-id(#"ct-method", #x0082);
-  register-object-id(#"ct-entry-point", #x0083);
-  register-object-id(#"function-signature", #x0084);
-  register-object-id(#"function-key-info", #x0085);
+  register-object-id(#"ct-open-generic", #x0082);
+  register-object-id(#"ct-method", #x0083);
+  register-object-id(#"ct-accessor-method", #x0084);
+  register-object-id(#"ct-entry-point", #x0085);
+  register-object-id(#"function-signature", #x0086);
+  register-object-id(#"function-key-info", #x0087);
 
   // Names, modules, & the like
-  register-object-id(#"basic-name", #x0086);
-  register-object-id(#"type-cell-name", #x0087);
-  register-object-id(#"method-name", #x0088);
-  register-object-id(#"module-variable", #x0089);
-  register-object-id(#"module", #x008A);
-
-  // late additions to category
-  register-object-id(#"ct-open-generic", #x008B);
-  register-object-id(#"library", #x008C);
+  register-object-id(#"basic-name", #x0088);
+  register-object-id(#"type-cell-name", #x0089);
+  register-object-id(#"method-name", #x008A);
+  register-object-id(#"module-variable", #x008B);
+  register-object-id(#"module", #x008C);
+  register-object-id(#"library", #x008D);
 
   // FER:
   register-object-id(#"compiler-policy", #x0090);
