@@ -1,5 +1,5 @@
 module: Concatenate
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.2 1994/10/26 19:46:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.3 1996/02/17 18:08:06 nkramer Exp $
 
 //======================================================================
 //
@@ -45,7 +45,7 @@ define module Concatenate
   use Standard-IO;
 end;
 
-define method main (argv0, #rest names)
+define method main (argv0 :: <byte-string>, #rest names)
   if (empty?(names))
     spew(*standard-input*);
   else
@@ -68,7 +68,7 @@ define method spew (stream :: <stream>)
   end;
   for (stop = fill-input-buffer(stream, 0)
 	 then fill-input-buffer(stream, 0),
-       until stop = 0)
+       until: stop = 0)
     write(buf, *standard-output*, start: 0, end: stop);
   end;
   release-input-buffer(stream, 0, 0);
