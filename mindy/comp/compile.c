@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.18 1994/10/05 20:54:13 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.19 1995/01/13 17:59:54 wlott Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -682,8 +682,11 @@ static void compile_repeat_expr(struct repeat_expr *expr,
 				struct component *component,
 				int want)
 {
+    unsigned char *branch_loc;
+
     emit_op(component, op_BRANCH);
-    write_branch_displacement(reserve_space(component, 4),
+    branch_loc = reserve_space(component, 4);
+    write_branch_displacement(branch_loc,
 			      current_position(component),
 			      expr->loop->position);
 }
