@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.39 1995/04/28 15:39:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.40 1995/04/29 04:04:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -717,7 +717,7 @@ define module fer-convert
 
   export
     build-general-method, fer-convert, fer-convert-body,
-    build-hairy-method-body, canonicalize-results,
+    build-hairy-method-body,
     dylan-defn-leaf, make-check-type-operation, make-error-operation;
 end;
 
