@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.3 1994/03/27 03:15:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.4 1994/03/28 11:05:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -34,13 +34,27 @@
 #include "obj.h"
 #include "bool.h"
 #include "print.h"
+#include "interp.h"
+#include "value.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
 
+struct frame_info {
+    struct frame_info *up;
+    struct frame_info *down;
+    obj_t *fp;
+    obj_t component;
+    int pc;
+    obj_t source_file;
+    int line;
+    obj_t locals;
+};
+
 static jmp_buf BlowOffCmd;
 static struct thread *CurThread = NULL;
-static obj_t *CurFP = NULL;
+static struct frame_info *CurFrame = NULL, *TopFrame = NULL;
+static int PrevLine = -1;
 static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
 static boolean Continue;
 
@@ -55,23 +69,111 @@ static struct variable *debugger_restart_var;
 static struct variable *debugger_return_var;
 
 
-/* Random utilities. */
+/* Frame utilities. */
 
-static void blow_off_cmd(void)
+static struct frame_info *make_frame(struct frame_info *up, obj_t *fp,
+				     obj_t component, int pc)
 {
-    longjmp(BlowOffCmd, TRUE);
+    struct frame_info *res = malloc(sizeof(*res));
+    obj_t debug_info;
+    int len, i, n_const;
+
+    res->up = up;
+    res->down = NULL;
+    res->fp = fp;
+    res->component = component;
+    res->pc = pc;
+    res->source_file = obj_False;
+    res->line = 0;
+    res->locals = obj_False;
+
+    if (obj_is_fixnum(component))
+	return res;
+
+    res->source_file = COMPONENT(component)->source_file;
+
+    debug_info = COMPONENT(component)->debug_info;
+    if (debug_info == obj_False)
+	return res;
+
+    n_const = COMPONENT(component)->n_constants;
+    pc -= (char *)(&COMPONENT(component)->constant[n_const])-(char *)component;
+
+    if (pc < 0)
+	return res;
+
+    len = SOVEC(debug_info)->length;
+    for (i = 0; i < len; i++) {
+	obj_t entry = SOVEC(debug_info)->contents[i];
+	pc -= fixnum_value(SOVEC(entry)->contents[1]);
+	if (pc < 0) {
+	    res->line = fixnum_value(SOVEC(entry)->contents[0]);
+	    res->locals = SOVEC(entry)->contents[2];
+	    break;
+	}
+    }
+
+    return res;
 }
 
-
-
-/* Frame printing. */
-
-static void print_frame(obj_t *fp)
+static struct frame_info *top_frame(struct thread *thread)
 {
-    obj_t *ptr = obj_rawptr(fp[-3]);
-    obj_t *end = fp - 4;
+    if (thread)
+	return make_frame(NULL, thread->fp, thread->component, thread->pc);
+    else
+	return NULL;
+}
 
-    printf("fp 0x%08lx: ", (unsigned long)fp);
+static struct frame_info *frame_down(struct frame_info *frame)
+{
+    if (frame->down != NULL)
+	return frame->down;
+    else {
+	obj_t *fp = frame->fp;
+	obj_t *old_fp = obj_rawptr(fp[-4]);
+
+	if (old_fp) {
+	    frame->down = make_frame(frame, old_fp, fp[-2],
+				     fixnum_value(fp[-1]));
+	    return frame->down;
+	}
+	else
+	    return NULL;
+    }
+}
+
+static struct frame_info *frame_up(struct frame_info *frame)
+{
+    return frame->up;
+}
+
+static void free_frames(struct frame_info *frame)
+{
+    struct frame_info *next;
+
+    while (frame) {
+	next = frame->down;
+	free(frame);
+	frame = next;
+    }
+}
+
+static void scav_frames(struct frame_info *frame)
+{
+    while (frame != NULL) {
+	scavenge(&frame->component);
+	scavenge(&frame->source_file);
+	scavenge(&frame->locals);
+	frame = frame->down;
+    }
+}
+
+static void print_frame(struct frame_info *frame, boolean print_line)
+{
+    obj_t *ptr = obj_rawptr(frame->fp[-3]);
+    obj_t *end = frame->fp - 4;
+
+    printf("fp 0x%08lx: ", (unsigned long)frame->fp);
     prin1(function_debug_name_or_self(*ptr++));
     putchar('(');
     if (ptr < end) {
@@ -82,7 +184,35 @@ static void print_frame(obj_t *fp)
 	    printf(", ");
 	}
     }
-    printf(")\n");
+    if (frame->source_file == obj_False || !print_line)
+	printf(")\n");
+    else {
+	printf(") [%s", string_chars(frame->source_file));
+	if (frame->line == 0)
+	    printf("]\n");
+	else
+	    printf(", line %d]\n", frame->line);
+    }
+}
+
+static void set_frame(struct frame_info *frame)
+{
+    CurFrame = frame;
+    PrevLine = -1;
+    FrameChanged = TRUE;
+}
+
+
+
+/* Thread utilities. */
+
+static void set_thread(struct thread *thread)
+{
+    CurThread = thread;
+    ThreadChanged = TRUE;
+    free_frames(TopFrame);
+    TopFrame = top_frame(thread);
+    set_frame(TopFrame);
 }
 
 static void print_thread(struct thread *thread)
@@ -98,36 +228,6 @@ static void print_thread(struct thread *thread)
     else
 	putchar('\n');
 }
-
-static void maybe_print_frame(void)
-{
-    if (ThreadChanged) {
-	ThreadChanged = FALSE;
-
-	if (CurThread == NULL) {
-	    printf("no current thread\n");
-	    CurFP = NULL;
-	    FrameChanged = FALSE;
-	}
-	else {
-	    printf("thread ");
-	    print_thread(CurThread);
-	    CurFP = CurThread->fp;
-	    FrameChanged = TRUE;
-	}
-    }
-
-    if (FrameChanged) {
-	if (CurFP == NULL)
-	    printf("No stack.\n");
-	else
-	    print_frame(CurFP);
-	FrameChanged = FALSE;
-    }
-}
-
-
-/* Thread control utilities. */
 
 static void suspend_other_threads(struct thread *thread)
 {
@@ -147,13 +247,11 @@ static void restart_other_threads(struct thread *thread)
 	    thread_restart(threads->thread);
 }
 
-
 static void kill_me(struct thread *thread, obj_t *vals)
 {
     thread_kill(thread);
     restart_other_threads(NULL);
-    CurThread = NULL;
-    ThreadChanged = TRUE;
+    set_thread(NULL);
     pause(pause_DebuggerCommandFinished);
 }
 
@@ -164,8 +262,122 @@ static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
     pause(pause_DebuggerCommandFinished);
 }
 
+static void validate_thread_and_frame()
+{
+    struct thread_list *threads;
 
+    if (CurThread != NULL) {
+	for (threads = all_threads(); threads != NULL; threads = threads->next)
+	    if (threads->thread == CurThread)
+		break;
+	if (threads == NULL) {
+	    printf("Current thread no longer exists.\n");
+	    set_thread(NULL);
+	    ThreadChanged = FALSE;
+	    FrameChanged = FALSE;
+	    return;
+	}
 
+	if (TopFrame == NULL) {
+	    if (CurThread->fp != NULL) {
+		TopFrame = top_frame(CurThread);
+		set_frame(TopFrame);
+	    }
+	}
+	else {
+	    if (CurThread->fp != TopFrame->fp
+		  || CurThread->component != TopFrame->component
+		  || CurThread->pc != TopFrame->pc) {
+		free_frames(TopFrame);
+		TopFrame = top_frame(CurThread);
+		set_frame(TopFrame);
+	    }
+	}
+    }
+}
+
+
+/* Stuff to explain the reason why we dropped into the debugger. */
+
+static void explain_condition(struct thread *thread, obj_t condition)
+{
+    if (instancep(condition, obj_SimpleObjectVectorClass)) {
+	char *fmt = string_chars(SOVEC(condition)->contents[0]);
+
+	putchar('\n');
+	vformat(fmt, SOVEC(condition)->contents+1);
+	printf("\n\n");
+    }
+    else if (debugger_report_var == NULL
+	     || debugger_report_var->value == obj_Unbound) {
+	printf("\ninvoke-debugger called from dylan.  Condition = ");
+	print(condition);
+	putchar('\n');
+    }
+    else {
+	thread_push_escape(thread);
+	set_c_continuation(thread, debugger_cmd_finished);
+
+	suspend_other_threads(thread);
+
+	*thread->sp++ = debugger_report_var->value;
+	*thread->sp++ = condition;
+	thread_restart(thread);
+	Continue = TRUE;
+    }
+}
+
+static void explain_debugger_invocation(void)
+{
+    struct thread *thread = thread_current();
+
+    set_thread(thread);
+
+    if (thread == NULL) {
+	printf("Debugger explicitly invoked, but no current thread?\n");
+	ThreadChanged = FALSE;
+	FrameChanged = FALSE;
+	return;
+    }
+
+    if (thread->status != status_Debuggered) {
+	printf("Debugger explicitly invoked, but not by current thread?\n");
+	return;
+    }
+
+    explain_condition(thread, thread->datum);
+}
+
+static void explain_reason(enum pause_reason reason)
+{
+    struct thread_list *threads;
+
+    switch (reason) {
+      case pause_NoReason:
+	validate_thread_and_frame();
+	break;
+      case pause_NothingToRun:
+	printf("All threads exited.\n");
+	set_thread(NULL);
+	ThreadChanged = FALSE;
+	FrameChanged = FALSE;
+	break;
+      case pause_Interrupted:
+	printf("Interrupted\n");
+	set_thread(thread_current());
+	break;
+      case pause_DebuggerInvoked:
+	explain_debugger_invocation();
+	break;
+      case pause_HitBreakpoint:
+	printf("Breakpoint\n");
+	set_thread(thread_current());
+	break;
+      case pause_DebuggerCommandFinished:
+	validate_thread_and_frame();
+	break;
+    }
+}
 
 
 /* Command tables. */
@@ -242,15 +454,13 @@ static void down_cmd(void)
 {
     if (CurThread == NULL)
 	printf("No current thread.\n");
-    else if (CurFP == NULL)
+    else if (CurFrame == NULL)
 	printf("The current thread has nothing on the stack.\n");
     else {
-	obj_t *old_fp = obj_rawptr(CurFP[-4]);
+	struct frame_info *down = frame_down(CurFrame);
 
-	if (old_fp) {
-	    CurFP = old_fp;
-	    FrameChanged = TRUE;
-	}
+	if (down != NULL)
+	    set_frame(down);
 	else
 	    printf("Already at the bottom of the stack.\n");
     }
@@ -260,24 +470,15 @@ static void up_cmd(void)
 {
     if (CurThread == NULL)
 	printf("No current thread.\n");
-    else if (CurFP == NULL)
+    else if (CurFrame == NULL)
 	printf("The current thread has nothing on the stack.\n");
     else {
-	obj_t *fp, *up_fp = NULL;
+	struct frame_info *up = frame_up(CurFrame);
 
-	for (fp = CurThread->fp;
-	     fp != CurFP && fp != NULL;
-	     fp = obj_rawptr(fp[-4]))
-	    up_fp = fp;
-
-	if (fp == NULL)
-	    printf("Can't find the frame above this one.\n");
-	else if (up_fp == NULL)
+	if (up != NULL)
+	    set_frame(up);
+	else
 	    printf("Already at the top of the stack.\n");
-	else {
-	    CurFP = up_fp;
-	    FrameChanged = TRUE;
-	}
     }
 }
 
@@ -285,33 +486,31 @@ static void frame_cmd(void)
 {
     if (CurThread == NULL)
 	printf("No current thread.\n");
-    else if (CurFP == NULL)
+    else if (TopFrame == NULL)
 	printf("The current thread has nothing on the stack.\n");
     else {
 	int tok = yylex();
 
 	if (tok == tok_EOF)
-	    print_frame(CurFP);
+	    FrameChanged = TRUE;
 	else if (tok != tok_LITERAL || !obj_is_fixnum(yylval))
 	    printf("Bogus frame number, should be an integer.\n");
 	else {
-	    int frame = fixnum_value(yylval);
+	    int num = fixnum_value(yylval);
 
-	    if (frame < 0)
+	    if (num < 0)
 		printf("Bogus frame number, should be >= 0.\n");
 	    else {
-		obj_t *fp = CurThread->fp;
+		struct frame_info *frame = TopFrame;
 		int i;
 
-		for (i = 0; fp != NULL && i < frame; i++)
-		    fp = obj_rawptr(fp[-4]);
+		for (i = 0; frame != NULL && i < num; i++)
+		    frame = frame_down(frame);
 
-		if (fp == NULL)
+		if (frame == NULL)
 		    printf("Frame number too large, should be < %d.\n", i);
-		else {
-		    CurFP = fp;
-		    FrameChanged = TRUE;
-		}
+		else
+		    set_frame(frame);
 	    }
 	}
     }
@@ -329,18 +528,19 @@ static void backtrace_cmd(void)
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else {
-	obj_t *fp;
+	struct frame_info *frame;
     
 	backtrace_punted = FALSE;
 	set_interrupt_handler(punt_backtrace);
 
-	for (fp = CurThread->fp; fp != NULL; fp = obj_rawptr(fp[-4])) {
+	for (frame = TopFrame; frame != NULL; frame = frame_down(frame)) {
 	    if (backtrace_punted) {
 		printf("interrupted\n");
 		break;
 	    }
-	    print_frame(fp);
+	    print_frame(frame, TRUE);
 	}
+
 	clear_interrupt_handler();
     }
 }
@@ -416,6 +616,55 @@ static void module_cmd(void)
 }
 
 
+/* Locals command. */
+
+static void locals_cmd()
+{
+    obj_t locals;
+
+    if (CurFrame == NULL) {
+	printf("No current frame.\n");
+	return;
+    }
+
+    locals = CurFrame->locals;
+    if (locals == obj_False) {
+	printf("No debug info for this frame.\n");
+	return;
+    }
+
+    while (locals != obj_Nil) {
+	obj_t vec = HEAD(locals);
+	int len = SOVEC(vec)->length;
+	int i;
+
+	for (i = 0; i < len; i++) {
+	    obj_t entry = SOVEC(vec)->contents[i];
+	    obj_t symbol = SOVEC(entry)->contents[0];
+	    int loc_info = fixnum_value(SOVEC(entry)->contents[1]);
+	    boolean indirect = loc_info & 2;
+	    boolean argument = loc_info & 1;
+	    int offset = loc_info >> 2;
+	    obj_t value;
+
+	    if (argument)
+		value = CurFrame->fp[-offset-5];
+	    else
+		value = CurFrame->fp[offset];
+	    if (indirect)
+		value = value_cell_ref(value);
+
+	    prin1(symbol);
+	    printf(": ");
+	    print(value);
+	}
+
+	locals = TAIL(locals);
+    }
+}
+
+
+
 /* print command. */
 
 static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
@@ -428,6 +677,35 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
     else if (kind == keyword("variable")) {
 	/* Variable reference. */
 	obj_t name = TAIL(expr);
+	if (CurFrame != NULL && CurFrame->locals != obj_False) {
+	    obj_t list = CurFrame->locals;
+	    while (list != obj_Nil) {
+		obj_t vec = HEAD(list);
+		int len = SOVEC(vec)->length;
+		int i;
+		for (i = 0; i < len; i++) {
+		    obj_t entry = SOVEC(vec)->contents[i];
+		    if (SOVEC(entry)->contents[0] == name) {
+			int loc_info = fixnum_value(SOVEC(entry)->contents[1]);
+			boolean indirect = loc_info & 2;
+			boolean argument = loc_info & 1;
+			int offset = loc_info >> 2;
+			obj_t value;
+
+			if (argument)
+			    value = CurFrame->fp[-offset-5];
+			else
+			    value = CurFrame->fp[offset];
+			if (indirect)
+			    value = value_cell_ref(value);
+			HEAD(expr) = keyword("literal");
+			TAIL(expr) = value;
+			return;
+		    }
+		}
+		list = TAIL(list);
+	    }
+	}
 	if (CurModule == NULL) {
 	    if (*okay) {
 		printf("No module currently selected\n");
@@ -869,10 +1147,8 @@ static void thread_cmd(void)
       case tok_SYMBOL:
       case tok_LITERAL:
 	thread = find_thread();
-	if (thread != NULL) {
-	    CurThread = thread;
-	    ThreadChanged = TRUE;
-	}
+	if (thread != NULL)
+	    set_thread(thread);
 	break;
 
       default:
@@ -913,8 +1189,7 @@ static void kill_cmd(void)
     thread_kill(thread);
     if (thread == CurThread) {
 	printf("killed the current thread, hence it is no longer current.\n");
-	CurThread = NULL;
-	CurFP = NULL;
+	set_thread(NULL);
 	ThreadChanged = FALSE;
 	FrameChanged = FALSE;
     }
@@ -991,6 +1266,27 @@ static void enable_cmd(void)
 }
     
 
+/* Step/next commands */
+
+static void step_cmd(void)
+{
+    enum pause_reason reason;
+
+    if (CurThread == NULL) {
+	printf("No current thread.\n");
+	return;
+    }
+
+    if (CurThread->status != status_Running) {
+	printf("The current thread is not runnable.\n");
+	return;
+    }
+
+    reason = single_step(CurThread);
+    explain_reason(reason);
+}
+
+
 /* Command table. */
 
 static struct cmd_entry Cmds[] = {
@@ -1010,9 +1306,12 @@ static struct cmd_entry Cmds[] = {
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
     {"help", "help [topic]\tDisplay help about some topic.", help_cmd},
     {"kill", "kill thread\tKill the given thread.", kill_cmd},
+    {"l", NULL, locals_cmd},
     {"library",
 	 "library [lib]\tSwitch to given library or list all libraries.",
 	 library_cmd},
+    {"locals", "locals\t\tDisplay all the locals in the current frame.",
+	 locals_cmd},
     {"module",
  "module [module]\tSwitch to given module or list modules in current library.",
 	 module_cmd},
@@ -1022,6 +1321,7 @@ static struct cmd_entry Cmds[] = {
     {"return",
 	 "return\t\tReturn from this call to invoke-debugger (if allowed)",
 	 return_cmd},
+    {"step", "step\t\tStep the current thread one byte-op.", step_cmd},
     {"thread", "thread [name]\tSwitch to given thread or list all threads.",
 	 thread_cmd},
     {"troff", "troff\t\tTurn function/return tracing off.", troff_cmd},
@@ -1048,103 +1348,49 @@ static void help_cmd(void)
 }
 
 
-/* Stuff to explain the reason why we dropped into the debugger. */
+/* The main debugger loop */
 
-static void explain_condition(struct thread *thread, obj_t condition)
+static void maybe_print_frame(void)
 {
-    if (instancep(condition, obj_SimpleObjectVectorClass)) {
-	char *fmt = string_chars(SOVEC(condition)->contents[0]);
-
-	putchar('\n');
-	vformat(fmt, SOVEC(condition)->contents+1);
-	printf("\n\n");
-    }
-    else if (debugger_report_var == NULL
-	     || debugger_report_var->value == obj_Unbound) {
-	printf("\ninvoke-debugger called from dylan.  Condition = ");
-	print(condition);
-	putchar('\n');
-    }
-    else {
-	thread_push_escape(thread);
-	set_c_continuation(thread, debugger_cmd_finished);
-
-	suspend_other_threads(thread);
-
-	*thread->sp++ = debugger_report_var->value;
-	*thread->sp++ = condition;
-	thread_restart(thread);
-	Continue = TRUE;
-    }
-}
-
-static void explain_debugger_invocation(void)
-{
-    struct thread *thread = thread_current();
-
-    CurThread = thread;
-    ThreadChanged = TRUE;
-
-    if (thread == NULL) {
-	printf("Debugger explicitly invoked, but no current thread?\n");
+    if (ThreadChanged) {
 	ThreadChanged = FALSE;
-	FrameChanged = FALSE;
-	return;
-    }
 
-    if (thread->status != status_Debuggered) {
-	printf("Debugger explicitly invoked, but not by current thread?\n");
-	return;
-    }
-
-    explain_condition(thread, thread->datum);
-}
-
-static void explain_reason(enum pause_reason reason)
-{
-    struct thread_list *threads;
-
-    switch (reason) {
-      case pause_NoReason:
-	break;
-      case pause_NothingToRun:
-	printf("All threads exited.\n");
-	CurThread = NULL;
-	ThreadChanged = FALSE;
-	FrameChanged = FALSE;
-	break;
-      case pause_Interrupted:
-	printf("Interrupted\n");
-	CurThread = thread_current();
-	ThreadChanged = TRUE;
-	break;
-      case pause_DebuggerInvoked:
-	explain_debugger_invocation();
-	break;
-      case pause_HitBreakpoint:
-	printf("Breakpoint\n");
-	CurThread = thread_current();
-	ThreadChanged = TRUE;
-	break;
-      case pause_DebuggerCommandFinished:
-	break;
-    }
-
-    if (CurThread != NULL) {
-	for (threads = all_threads(); threads != NULL; threads = threads->next)
-	    if (threads->thread == CurThread)
-		break;
-	if (threads == NULL) {
-	    printf("Current thread no longer exists.\n");
-	    CurThread = NULL;
-	    ThreadChanged = FALSE;
+	if (CurThread == NULL) {
+	    printf("no current thread\n");
 	    FrameChanged = FALSE;
 	}
+	else {
+	    printf("thread ");
+	    print_thread(CurThread);
+	    FrameChanged = TRUE;
+	}
+    }
+
+    if (FrameChanged) {
+	if (CurFrame == NULL)
+	    printf("No stack.\n");
+	else
+	    print_frame(CurFrame, FALSE);
+	FrameChanged = FALSE;
+	PrevLine = -1;
+    }
+
+    if (CurFrame != NULL
+	  && CurFrame->source_file != obj_False
+	  && CurFrame->line != PrevLine) {
+	printf("%s", string_chars(CurFrame->source_file));
+	if (CurFrame->line != 0)
+	    printf(", line %d.\n", CurFrame->line);
+	else
+	    putchar('\n');
+	PrevLine = CurFrame->line;
     }
 }
 
-
-/* The main debugger loop */
+static void blow_off_cmd(void)
+{
+    longjmp(BlowOffCmd, TRUE);
+}
 
 void invoke_debugger(enum pause_reason reason)
 {
@@ -1214,6 +1460,7 @@ void scavenge_debug_roots(void)
 {
     scavenge(&do_print_func);
     scavenge(&do_funcall_func);
+    scav_frames(TopFrame);
 }
 
 
