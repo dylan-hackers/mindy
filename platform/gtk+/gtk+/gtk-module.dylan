@@ -6,8 +6,9 @@ define module gtk
   use Dylan;
   use System, import: { <raw-pointer> }, export: all;
   use Melange-support,
-    exclude: { null-pointer, destroy },
+    exclude: { null-pointer },
     export: { <C-string>,
+	      destroy,
               pointer-value,
               pointer-value-setter,
               callback-method };
@@ -26,7 +27,7 @@ define module gtk
     // <C-string>, <C-unicode-string>,
     <C-string*>,
     // <C-unicode-string*>,
-    pointer-cast, destroy,
+    pointer-cast, // destroy,
     pointer-value-address, c-type-cast,
     // c-callable-wrapper-definer, 
     \with-c-string,
