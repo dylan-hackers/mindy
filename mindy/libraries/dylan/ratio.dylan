@@ -1,6 +1,5 @@
 module: dylan
-
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.1 1995/03/02 19:19:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.2 1995/03/02 19:31:37 wlott Exp $
 
 //======================================================================
 //
