@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.49 1996/08/10 20:06:10 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.50 1996/08/22 11:34:54 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -794,13 +794,13 @@ end;
 
 define module target-environment
   use dylan;
+  use extensions;
   use header;
   use source;
   use streams, import: { <file-stream> };
   use substring-search, import: { substring-replace };
   export
     get-targets, <target-environment>,
-    target-name,
     default-features,
 
     heap-preamble,
@@ -826,5 +826,13 @@ define module target-environment
     make-command,
     delete-file-command,            // filename
     compare-file-command,           // file1 file2
-    move-file-command;              // old-name new-name
+    move-file-command,              // old-name new-name
+
+    // The remainder are really just a way for the compiler to know
+    // when it needs to do black magic, but without knowing the
+    // target's name
+    link-like-a-windows-machine?,
+    link-doesnt-search-for-libs?,
+    import-directive-required?,
+    supports-debugging?;   // perhaps should be supports-stabs...
 end module target-environment;

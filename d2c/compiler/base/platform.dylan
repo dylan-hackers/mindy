@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.6 1996/08/12 14:01:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.7 1996/08/22 11:34:54 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,11 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 // from disk and presenting it to the rest of the program in a
 // reasonable way.
 
+// If you add a slot, make sure you update the make method to keep the
+// target inheritence working right
+//
 define sealed class <target-environment> (<object>)
+  // target-name is for internal use only
   constant slot target-name :: <symbol>, required-init-keyword: #"target-name";
 
   constant slot default-features :: <byte-string>,
@@ -60,40 +64,98 @@ define sealed class <target-environment> (<object>)
     required-init-keyword: #"compare-file-command";
   constant slot move-file-command :: <byte-string>,
     required-init-keyword: #"move-file-command";
+
+  // see Make for the default values...
+  constant slot link-like-a-windows-machine? :: <boolean> = #f,
+    init-keyword: #"link-like-a-windows-machine?";
+  constant slot link-doesnt-search-for-libs? :: <boolean> = #f,
+    init-keyword: #"link-doesnt-search-for-libs?";
+  constant slot import-directive-required? :: <boolean> = #f,
+    init-keyword: #"import-directive-required?";
+  constant slot supports-debugging? :: <boolean> = #f,
+    init-keyword: #"supports-debugging?";
 end class <target-environment>;
 
 define sealed domain make(singleton(<target-environment>));
 define sealed domain initialize(<target-environment>);
+
+define function string-to-boolean (string :: <string>) => bool :: <boolean>;
+  block (return)
+    if (string.size == 2 & string.first == '#')
+      let char = as-lowercase(string.second);
+      if (char == 't')
+	return(#t);
+      elseif (char == 'f')
+	return(#f);
+      end if;
+    end if;
+    error("%s is no boolean I've ever heard of", string);
+  end block;
+end function string-to-boolean;
 
 // Construct a sequence of keyword/values, and pass it to make().  Not
 // only will this work, it will even catch duplicate and missing
 // keywords (although the error message might not be readily
 // understood by the most casual observer)
 //
-define method as (cls == <target-environment>, header :: <header>)
- => target :: <target-environment>;
+define function add-target!
+    (header :: <header>, targets-table :: <object-table>,
+     defaults-table :: <object-table>)
+ => ();
   // keyword-values must be some kind of sequence that add! adds
   // elements to the end of
-  let keyword-values = make(<stretchy-vector>);
+  let keyword-values = #();  // It's critical that new keyword/value pairs 
+                             // come before old keyword-value pairs
+  let name :: false-or(<symbol>) = #f;
+  let from :: <list> = #();
   for (val keyed-by key in header)
     let val = substring-replace(val, "\\t", "\t");
     let val = substring-replace(val, "\\n", "\n");
     
-    add!(keyword-values, key);
-    if (key == #"target-name")  // hack--target-name: wants a symbol, 
-                                // but val is a byte-string.
-      add!(keyword-values, as(<symbol>, val));
-    else  // normal case
-      add!(keyword-values, val);
+    if (key == #"inherit-from")
+      // Make sure we don't actually do the keyword-append until after
+      // we've completely parsed this header.  Otherwise, the inherit
+      // could override things in this header that came before the
+      // "inherit-from" line
+      from := element(defaults-table, as(<symbol>, val), default: #f);
+      if (from == #f)
+	error("Target tries to inherit from %s, which isn't any "
+		"target I know of", val);
+      end if;
+    else
+      // Do a select here to do conversions for the slot's type (and a
+      // few other hacks)
+      select (key)
+	#"target-name" =>
+	  keyword-values := add!(keyword-values, as(<symbol>, val));
+	#"link-like-a-windows-machine?" =>
+	  keyword-values := add!(keyword-values, string-to-boolean(val));
+	#"link-doesnt-search-for-libs?" =>
+	  keyword-values := add!(keyword-values, string-to-boolean(val));
+	#"import-directive-required?" =>
+	  keyword-values := add!(keyword-values, string-to-boolean(val));
+	#"supports-debugging?" =>
+	  keyword-values := add!(keyword-values, string-to-boolean(val));
+	otherwise =>
+	  keyword-values := add!(keyword-values, val);
+      end select;
+      keyword-values := add!(keyword-values, key);
     end if;
   end for;
-  apply(make, <target-environment>, keyword-values);
-end method as;
+  keyword-values := concatenate(keyword-values, from);  // inherit!
+  let target = apply(make, <target-environment>, keyword-values);
+  if (key-exists?(targets-table, target.target-name))
+    error("Redefinition of target %s", target.target-name);
+  end if;
+  targets-table[target.target-name] := target;
+  defaults-table[target.target-name] := keyword-values;
+end function add-target!;
 
 define method get-targets (filename :: <byte-string>)
  => targets :: <object-table>;
   let source = make(<source-file>, name: filename);
   let result = make(<object-table>);
+  let state = make(<object-table>);
 
   local 
     method repeat (old-line :: <integer>, old-posn :: <integer>)
@@ -106,8 +168,7 @@ define method get-targets (filename :: <byte-string>)
 	if (~ header.empty?)
 	  // The "if" is so we can allow header blocks which are nothing
 	  // but comments
-	  let target = as(<target-environment>, header);
-	  result[target.target-name] := target;
+	  add-target!(header, result, state);
 	end if;
 	repeat(line, posn);
       end if;
