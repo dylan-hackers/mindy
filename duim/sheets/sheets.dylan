@@ -693,7 +693,7 @@ end method sheet-frame;
 define method sheet-frame-setter 
     (frame :: false-or(<frame>), sheet :: <sheet>)
  => (frame :: false-or(<frame>))
-  error("Attempt to set frame of a non top-level sheet %=\n", sheet)
+  error("Attempt to set frame of a non top-level sheet %=", sheet)
 end method sheet-frame-setter;
 
 define method frame-manager
