@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.25 1995/12/05 22:13:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.26 1995/12/15 05:55:19 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,6 +103,10 @@ define abstract class <cclass>
   // Count of the number of each-subclass slots.
   slot each-subclass-slots-count :: <fixed-integer>,
     init-keyword: each-subclass-slots-count:;
+  //
+  // Used by the heap builder.
+  slot class-heap-fields :: false-or(<simple-object-vector>),
+    init-value: #f;
 end class;
 
 define method initialize
