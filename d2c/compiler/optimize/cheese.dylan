@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.86 1995/06/08 00:44:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.87 1995/06/08 14:11:59 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -104,7 +104,7 @@ define method maybe-convert-to-ssa
     if (assign)
       let ssa = make(<ssa-variable>,
 		     dependents: var.dependents,
-		     derived-type: var.var-info.asserted-type,
+		     derived-type: var.derived-type,
 		     var-info: var.var-info,
 		     definer: assign,
 		     definer-next: defn.definer-next,
@@ -2919,6 +2919,7 @@ define-primitive-transformer
 	 finally
 	   res;
 	 end;
+     func.visibility := #"global";
      let ctv
        = (func.ct-function
 	    | (func.ct-function
