@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.14 1996/03/17 00:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.15 1996/03/20 19:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -19,7 +19,7 @@ define method make-binary-operator
        kind: $other-binary-operator-token,
        symbol: as(<symbol>, extract-string(source-location)),
        module: *Current-Module*);
-end;
+end method make-binary-operator;
 //
 define method make-tilde
     (lexer :: <lexer>, source-location :: <file-source-location>)
@@ -29,7 +29,7 @@ define method make-tilde
        kind: $tilde-token,
        symbol: #"~",
        module: *Current-Module*);
-end;
+end method make-tilde;
 //
 define method make-minus
     (lexer :: <lexer>, source-location :: <file-source-location>)
@@ -39,7 +39,7 @@ define method make-minus
        kind: $minus-token,
        symbol: #"-",
        module: *Current-Module*);
-end;
+end method make-minus;
 //
 define method make-equal
     (lexer :: <lexer>, source-location :: <file-source-location>)
@@ -49,7 +49,7 @@ define method make-equal
        kind: $equal-token,
        symbol: #"=",
        module: *Current-Module*);
-end;
+end method make-equal;
 //
 define method make-double-equal
     (lexer :: <lexer>, source-location :: <file-source-location>)
@@ -59,7 +59,7 @@ define method make-double-equal
        kind: $double-equal-token,
        symbol: #"==",
        module: *Current-Module*);
-end;
+end method make-double-equal;
 
 
 // make-quoted-name -- internal.
@@ -109,11 +109,11 @@ define method make-constrained-name
 	       below source-location.end-posn)
 	  if (contents[posn] == as(<integer>, ':'))
 	    return(posn);
-	  end;
-	end;
+	  end if;
+	end for;
 	error("No : in a constrained-name?");
 	#f;
-      end;
+      end block;
   let constraint
     = as(<symbol>, extract-string(source-location, start: colon-posn + 1));
   make(<constrained-name-token>,
@@ -147,8 +147,8 @@ define method escape-character
     '\\' => '\\';
     '\'' => '\'';
     '"' => '"';
-  end;
-end;
+  end select;
+end method escape-character;
 
 // decode-string -- internal.
 //
@@ -169,11 +169,11 @@ define method decode-string
 			     repeat (posn + 2, result + 1);
 			   else
 			     repeat (posn + 1, result + 1);
-			   end;
+			   end if;
 			 else
 			   result;
-			 end;
-		       end;
+			 end if;
+		       end method repeat;
 		 repeat(start, 0);
 	       end;
   let result = make(<string>, size: length);
@@ -186,12 +186,12 @@ define method decode-string
 	    else
 	      result[dst] := as(<character>, contents[src]);
 	      repeat(src + 1, dst + 1);
-	    end;
-	  end;
-	end;
+	    end if;
+	  end if;
+	end method repeat;
   repeat(start, 0);
   result;
-end;
+end method decode-string;
 			 
 // make-quoted-symbol -- internal.
 //
@@ -207,7 +207,7 @@ define method make-quoted-symbol
        source-location: source-location,
        kind: $symbol-token,
        literal: make(<literal-symbol>, value: sym));
-end;
+end method make-quoted-symbol;
 
 // make-keyword-symbol -- internal.
 //
@@ -223,7 +223,7 @@ define method make-keyword-symbol
        source-location: source-location,
        kind: $symbol-token,
        literal: make(<literal-symbol>, value: sym));
-end;
+end method make-keyword-symbol;
 		    
 // parse-integer -- internal.
 //
@@ -249,11 +249,11 @@ define method parse-integer
 		     result * radix + digit - as(<integer>, 'a') + 10);
 	    else
 	      error("Bogus digit in integer: %=", as(<character>, digit));
-	    end;
+	    end if;
 	  else
 	    result;
-	  end;
-	end;
+	  end if;
+	end method repeat;
   let first = as(<character>, contents[start]);
   if (first == '-')
     -repeat(start + 1, as(<extended-integer>, 0));
@@ -261,8 +261,8 @@ define method parse-integer
     repeat(start + 1, as(<extended-integer>, 0));
   else
     repeat(start, as(<extended-integer>, 0));
-  end;
-end;
+  end if;
+end method parse-integer;
 
 // parse-integer-literal -- all internal.
 //
@@ -283,7 +283,7 @@ define method parse-integer-literal
       posn := posn + 1;
       char := as(<character>, contents[posn]);
       extended := #t;
-    end;
+    end if;
     if (char == 'b' | char == 'B')
       posn := posn + 1;
       radix := 2;
@@ -293,8 +293,8 @@ define method parse-integer-literal
     elseif (char == 'x' | char == 'X')
       posn := posn + 1;
       radix := 16;
-    end;
-  end;
+    end if;
+  end if;
   
   let int = parse-integer(source-location, radix: radix, start: posn);
 
@@ -305,7 +305,7 @@ define method parse-integer-literal
 		       "using <extended-integer> instead",
 		     int);
     extended := #t;
-  end;
+  end if;
 
   make(<literal-token>,
        source-location: source-location,
@@ -315,7 +315,7 @@ define method parse-integer-literal
 		else
 		  make(<literal-integer>, value: int);
 		end);
-end;
+end method parse-integer-literal;
 
 // make-character-literal -- internal.
 //
@@ -337,7 +337,7 @@ define method make-character-literal
 		     else
 		       char;
 		     end));
-end;
+end method make-character-literal;
 
 // make-string-literal -- internal.
 //
@@ -351,7 +351,7 @@ define method make-string-literal
        kind: $string-token,
        literal: make(<literal-string>,
 		     value: decode-string(source-location)));
-end;
+end method make-string-literal;
 
 // parse-ratio-literal -- internal.
 // 
@@ -365,18 +365,18 @@ define method parse-ratio-literal
 	       below source-location.end-posn)
 	  if (contents[posn] == as(<integer>, '/'))
 	    return(posn);
-	  end;
-	end;
+	  end if;
+	end for;
 	error("No / in a ratio?");
 	#f;
-      end;
+      end block;
   let numerator = parse-integer(source-location, end: slash);
   let denominator = parse-integer(source-location, start: slash + 1);
   make(<literal-token>,
        source-location: source-location,
        kind: $literal-token,
        literal: make(<literal-ratio>, value: ratio(numerator, denominator)));
-end;
+end method parse-ratio-literal;
 
 define method atof (string :: <byte-string>,
 		    #key start :: <integer> = 0,
@@ -399,8 +399,8 @@ define method atof (string :: <byte-string>,
       sign := -1;
     elseif (char == '+')
       posn := posn + 1;
-    end;
-  end;
+    end if;
+  end if;
 
   block (return)
     block (parse-exponent)
@@ -413,11 +413,11 @@ define method atof (string :: <byte-string>,
 	  mantissa := mantissa * 10 + digit;
 	  if (scale)
 	    scale := scale + 1;
-	  end;
+	  end if;
 	elseif (char == '.')
 	  if (scale)
 	    error("bogus float.");
-	  end;
+	  end if;
 	  scale := 0;
 	elseif (char == 'e' | char == 'E')
 	  return();
@@ -432,7 +432,7 @@ define method atof (string :: <byte-string>,
 	  return();
 	else
 	  error("bogus float.");
-	end;
+	end if;
       end while;
       return();
     end block;
@@ -445,7 +445,7 @@ define method atof (string :: <byte-string>,
 	posn := posn + 1;
       elseif (char == '+')
 	posn := posn + 1;
-      end;
+      end if;
 
       while (posn < finish)
 	let char = string[posn];
@@ -454,7 +454,7 @@ define method atof (string :: <byte-string>,
 	  exponent := exponent * 10 + digit;
 	else
 	  error("bogus float");
-	end;
+	end if;
       end while;
     end if;
   end block;
@@ -462,7 +462,7 @@ define method atof (string :: <byte-string>,
   values(class,
 	 sign * mantissa
 	   * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
-end;
+end method atof;
 
 // parse-fp-literal -- internal.
 // 
@@ -478,9 +478,9 @@ define method parse-fp-literal
 		       #"single" => <literal-single-float>;
 		       #f, #"double" => <literal-double-float>;
 		       #"extended" => <literal-extended-float>;
-		     end,
+		     end select,
 		     value: value));
-end;
+end method parse-fp-literal;
 
 
 // state machine.
@@ -509,14 +509,14 @@ define class <state> (<object>)
   // state objects.
   slot transitions :: false-or(<simple-object-vector>),
     required-init-keyword: transitions:;
-end;
+end class <state>;
 
 define sealed domain make (singleton(<state>));
 define sealed domain initialize (<state>);
 
 define method print-object (state :: <state>, stream :: <stream>) => ();
   pprint-fields(state, stream, name: state.name);
-end;
+end method print-object;
 
 
 define method add-transition
@@ -541,7 +541,7 @@ define method add-transition
 	      as(<character>, on), table[on], new-state);
       else
 	table[on] := new-state;
-      end;
+      end if;
     <character> =>
       add-transition(table, as(<integer>, on), new-state);
     <byte-string> =>
@@ -552,22 +552,22 @@ define method add-transition
 	  if (last)
 	    for (i from as(<integer>, last) + 1 to as(<integer>, char))
 	      add-transition(table, i, new-state);
-	    end;
+	    end for;
 	    last := #f;
 	  else
 	    add-transition(table, as(<integer>, '-'), new-state);
 	    add-transition(table, as(<integer>, char), new-state);
 	    last := char;
-	  end;
+	  end if;
 	  range := #f;
 	elseif (char == '-')
 	  range := #t;
 	else 
 	  add-transition(table, as(<integer>, char), new-state);
 	  last := char;
-	end;
-      end;
-  end;
+	end if;
+      end for;
+  end select;
 end method add-transition;
 
 define method state
@@ -582,7 +582,7 @@ define method state
     & make(<vector>, size: 128, fill: #f);
   for (transition in transitions)
     add-transition(table, head(transition), tail(transition));
-  end;
+  end for;
   make(<state>,
        name: name,
        result: result,
@@ -615,10 +615,10 @@ define method compile-state-machine (#rest states)
 	let new-state = table[i];
 	if (new-state)
 	  table[i] := state-table[new-state];
-	end;
-      end;
-    end;
-  end;
+	end if;
+      end for;
+    end if;
+  end for;
   //
   // Return the start state, 'cause that is what we want
   // $Initial-State to hold.
@@ -1092,7 +1092,7 @@ define class <lexer> (<tokenizer>)
   slot pushed-tokens :: <list>, init-value: #();
   //
   slot conditional-state :: false-or(<conditional-state>), init-value: #f;
-end;
+end class <lexer>;
 
 define sealed domain make (singleton(<lexer>));
 define sealed domain initialize (<lexer>);
@@ -1103,7 +1103,7 @@ define method print-object (lexer :: <lexer>, stream :: <stream>) => ();
 		posn: lexer.posn,
 		line: lexer.line,
 		column: lexer.posn - lexer.line-start + 1);
-end;
+end method print-object;
 
 // skip-multi-line-comment -- internal.
 //
@@ -1127,7 +1127,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	func(as(<character>, contents[posn]), posn + 1, depth);
       else
 	#f;
-      end;
+      end if;
     end next,
     //
     // Seen nothing of interest.  Look for the start of any of /*, //, or */
@@ -1144,7 +1144,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
-      end;
+      end if;
     end seen-nothing,
     //
     // Okay, we've seen a slash.  Look to see if it was /*, //, or just a
@@ -1162,7 +1162,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
-      end;
+      end if;
     end seen-slash,
     //
     // Okay, we've seen a star.  Look to see if it was */ or a random star.
@@ -1176,7 +1176,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	  posn;
 	else
 	  next(seen-nothing, posn, depth - 1);
-	end;
+	end if;
       elseif (char == '*')
 	next(seen-star, posn, depth);
       elseif (char == '\n')
@@ -1185,7 +1185,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-nothing, posn, depth)
       else
 	next(seen-nothing, posn, depth);
-      end;
+      end if;
     end seen-star,
     //
     // We've seen a //, so skip until the end of the line.
@@ -1198,7 +1198,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	next(seen-nothing, posn, depth);
       else
 	next(seen-slash-slash, posn, depth);
-      end;
+      end if;
     end seen-slash-slash;
   //
   // Start out not having seen anything.
@@ -1211,142 +1211,143 @@ end method;
 // Tokenize the next token and return it.
 //
 define method internal-get-token (lexer :: <lexer>) => res :: <token>;
-  if (lexer.pushed-tokens ~= #())
-    //
-    // There are some unread tokens, so extract one of them instead of
-    // consuming any more stuff from the source.
-    // 
-    let result = lexer.pushed-tokens.head;
-    lexer.pushed-tokens = lexer.pushed-tokens.tail;
-    result;
-  else
-    //
-    // There are no pending unread tokens, so extract the next one.
-    // Basically, just record where we are starting, and keep
-    // advancing the state machine until there are no more possible
-    // advances.  We don't stop at the first accepting state we find,
-    // because the longest token is supposed to take precedence.  We
-    // just note where the last accepting state we came across was,
-    // and then when the state machine jams, we just use that latest
-    // accepting state's result.
-    // 
-    let contents = lexer.source.contents;
-    let length = contents.size;
-    let result-kind = #f;
-    let result-start = lexer.posn;
-    let result-end = #f;
-    local
-      method repeat (state, posn)
-	if (state.result)
-	  //
-	  // It is an accepting state, so record the result and where
-	  // it ended.
-	  // 
-	  result-kind := state.result;
-	  result-end := posn;
-	end;
+  //
+  // Basically, just record where we are starting, and keep
+  // advancing the state machine until there are no more possible
+  // advances.  We don't stop at the first accepting state we find,
+  // because the longest token is supposed to take precedence.  We
+  // just note where the last accepting state we came across was,
+  // and then when the state machine jams, we just use that latest
+  // accepting state's result.
+  // 
+  let contents = lexer.source.contents;
+  let length = contents.size;
+  let result-kind = #f;
+  let result-start = lexer.posn;
+  let result-end = #f;
+  local
+    method repeat (state, posn)
+      if (state.result)
 	//
-	// Try advancing the state machine once more if possible.
+	// It is an accepting state, so record the result and where
+	// it ended.
 	// 
-	if (posn < length)
-	  let table = state.transitions;
-	  let char = contents[posn];
-	  let new-state = table & char < 128 & table[char];
-	  if (new-state)
-	    repeat(new-state, posn + 1);
-	  else
-	    maybe-done();
-	  end;
+	result-kind := state.result;
+	result-end := posn;
+      end if;
+      //
+      // Try advancing the state machine once more if possible.
+      // 
+      if (posn < length)
+	let table = state.transitions;
+	let char = contents[posn];
+	let new-state = table & char < 128 & table[char];
+	if (new-state)
+	  repeat(new-state, posn + 1);
 	else
 	  maybe-done();
-	end;
-      end,
-      method maybe-done ()
-	//
-	// maybe-done is called when the state machine cannot be
-	// advanced any further.  It just checks to see if we really
-	// are done or not.
-	//
-	if (instance?(result-kind, <symbol>))
-	  //
-	  // The result-kind is a symbol if this is one of the magic
-	  // accepting states.  Instead of returning some token, we do
-	  // some special processing depending on exactly what symbol
-	  // it is, and then start the state machine over at the
-	  // initial state.
-	  //
-	  select (result-kind)
-	    #"whitespace" =>
-	      #f;
-	    #"newline" =>
-	      lexer.line := lexer.line + 1;
-	      lexer.line-start := result-end;
-	    #"end-of-line-comment" =>
-	      for (i from result-end below length,
-		   until: (contents[i] == as(<integer>, '\n')))
-	      finally
-		result-end := i;
-	      end;
-	    #"multi-line-comment" =>
-	      result-end := skip-multi-line-comment(lexer, result-end);
-	  end;
-	  result-kind := #f;
-	  if (result-end)
-	    result-start := result-end;
-	    result-end := #f;
-	    repeat($Initial-State, result-start);
-	  end;
-	end;
-      end;
-    repeat($Initial-State, lexer.posn);
-    if (~result-kind)
-      //
-      // If result-kind is #f, that means we didn't find an accepting
-      // state.  Check to see if that means we are at the end or hit
-      // an error.
-      // 
-      if (result-start == length)
-	result-kind := $eof-token;
-	result-end := result-start;
+	end if;
       else
-	result-kind := $error-token;
-	result-end := result-start + 1;
-      end;
-    end;
+	maybe-done();
+      end if;
+    end method repeat,
+    method maybe-done ()
+      //
+      // maybe-done is called when the state machine cannot be
+      // advanced any further.  It just checks to see if we really
+      // are done or not.
+      //
+      if (instance?(result-kind, <symbol>))
+	//
+	// The result-kind is a symbol if this is one of the magic
+	// accepting states.  Instead of returning some token, we do
+	// some special processing depending on exactly what symbol
+	// it is, and then start the state machine over at the
+	// initial state.
+	//
+	select (result-kind)
+	  #"whitespace" =>
+	    #f;
+	  #"newline" =>
+	    lexer.line := lexer.line + 1;
+	    lexer.line-start := result-end;
+	  #"end-of-line-comment" =>
+	    for (i from result-end below length,
+		 until: (contents[i] == as(<integer>, '\n')))
+	    finally
+	      result-end := i;
+	    end for;
+	  #"multi-line-comment" =>
+	    result-end := skip-multi-line-comment(lexer, result-end);
+	end select;
+	result-kind := #f;
+	if (result-end)
+	  result-start := result-end;
+	  result-end := #f;
+	  repeat($Initial-State, result-start);
+	end if;
+      end if;
+    end method maybe-done;
+  repeat($Initial-State, lexer.posn);
+  if (~result-kind)
     //
-    // Save the current token's end position so that the next token
-    // starts here.
-    //
-    lexer.posn := result-end;
-    //
-    // Make a source location for the current token.
+    // If result-kind is #f, that means we didn't find an accepting
+    // state.  Check to see if that means we are at the end or hit
+    // an error.
     // 
-    let source-location
-      = make(<file-source-location>,
-	     source: lexer.source,
-	     start-posn: result-start,
-	     start-line: lexer.line,
-	     start-column: result-start - lexer.line-start,
-	     end-posn: result-end,
-	     end-line: lexer.line,
-	     end-column: result-end - lexer.line-start);
-    //
-    // And finally, make and return the actual token.
-    // 
-    select(result-kind by instance?)
-      <integer> =>
-	make(<token>, source-location: source-location, kind: result-kind);
-      <function> =>
-	result-kind(lexer, source-location);
-      otherwise =>
-	error("oops");
-	#f;
-    end;
-  end;
-end;
+    if (result-start == length)
+      result-kind := $eof-token;
+      result-end := result-start;
+    else
+      result-kind := $error-token;
+      result-end := result-start + 1;
+    end if;
+  end if;
+  //
+  // Save the current token's end position so that the next token
+  // starts here.
+  //
+  lexer.posn := result-end;
+  //
+  // Make a source location for the current token.
+  // 
+  let source-location
+    = make(<file-source-location>,
+	   source: lexer.source,
+	   start-posn: result-start,
+	   start-line: lexer.line,
+	   start-column: result-start - lexer.line-start,
+	   end-posn: result-end,
+	   end-line: lexer.line,
+	   end-column: result-end - lexer.line-start);
+  //
+  // And finally, make and return the actual token.
+  // 
+  select(result-kind by instance?)
+    <integer> =>
+      make(<token>, source-location: source-location, kind: result-kind);
+    <function> =>
+      result-kind(lexer, source-location);
+    otherwise =>
+      error("oops");
+      #f;
+  end select;
+end method internal-get-token;
 
-define method get-token (lexer :: <lexer>) => token :: <token>;
+define method get-token (lexer :: <lexer>)
+    => (token :: <token>, srcloc :: <source-location>);
   block (return)
+    if (lexer.pushed-tokens ~= #())
+      //
+      // There are some unread tokens, so extract one of them instead of
+      // consuming any more stuff from the source.
+      // 
+      let result = lexer.pushed-tokens.head;
+      lexer.pushed-tokens = lexer.pushed-tokens.tail;
+      return(result, result.head, result.tail);
+    end if;
+    //
+    // There are no pending unread tokens, so extract the next one.
     while (#t)
       let token = internal-get-token(lexer);
       select (token.token-kind)
@@ -1390,11 +1391,11 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
 	    compiler-error("#end with no matching #if");
 	  else
 	    lexer.conditional-state := lexer.conditional-state.old-state;
-	  end;
+	  end if;
 	  
 	otherwise =>
 	  if (lexer.conditional-state.active?)
-	    return(token);
+	    return(token, token.source-location);
 	  end if;
       end select;
     end while;
@@ -1407,6 +1408,7 @@ end method get-token;
 // it.  Used by the parser when it wants to put back its lookahead
 // token.
 //
-define method unget-token (lexer :: <lexer>, token :: <token>) => ();
-  lexer.pushed-tokens := pair(token, lexer.pushed-tokens);
-end;
+define method unget-token
+    (lexer :: <lexer>, token :: <token>, srcloc :: <source-location>) => ();
+  lexer.pushed-tokens := pair(token, pair(lexer.pushed-tokens, srcloc));
+end method unget-token;
