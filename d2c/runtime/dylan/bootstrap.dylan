@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.15 1996/02/09 04:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.16 1996/02/18 18:36:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -118,7 +118,7 @@ define %%module dylan-viscera
     <value-table>, value-hash,
     <string-table>, string-hash,
     collection-hash, sequence-hash,
-    false-or, one-of, <never-returns>,
+    false-or, one-of, <never-returns>, subclass, direct-instance,
     report-condition, condition-format, *warning-output*,
     <debugger>, invoke-debugger, *debugger*,
     <byte>, <byte-vector>,
@@ -141,6 +141,9 @@ define %%module dylan-viscera
     <limited-integer>, limited-integer-base-class,
     limited-integer-minimum, limited-integer-maximum,
     <union>, union-members, union-singletons,
+    <subclass>, subclass-of,
+    <direct-instance>, direct-instance-of,
+    <byte-character-type>,
 
     // Variables magically referenced by the compiler which we need to hang
     // around even though they aren't otherwise overtly exported.

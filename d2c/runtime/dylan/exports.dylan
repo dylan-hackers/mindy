@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.18 1996/02/09 04:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.19 1996/02/18 18:36:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -138,7 +138,7 @@ define module Extensions
 	     collection-hash, sequence-hash,
 
 	     // Type extensions.
-	     false-or, one-of, <never-returns>,
+	     false-or, one-of, <never-returns>, subclass, direct-instance,
 
 	     // Condition extensions.
 	     <format-string-condition>, report-condition, condition-format,
@@ -189,7 +189,10 @@ define module Introspection
 	     singleton-object,
 	     <limited-integer>, limited-integer-base-class,
 	     limited-integer-minimum, limited-integer-maximum,
-	     <union>, union-members, union-singletons},
+	     <union>, union-members, union-singletons,
+	     <subclass>, subclass-of,
+	     <direct-instance>, direct-instance-of,
+	     <byte-character-type>},
     export: all;
 end;
 
