@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.17 1995/04/07 17:53:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.18 1995/11/20 02:23:52 rgs Exp $
 
 //======================================================================
 //
@@ -220,6 +220,31 @@ define method every?(proc :: <function>, vector :: <vector>,
     next_method();
   end if;
 end method every?;
+
+// The next two functions are usually called upon rest vectors, so we should
+// handle the vector case as fast as possible.
+define method reduce(proc :: <function>, init-val, collection :: <vector>)
+  for (value = init-val then proc(value, collection[i]),
+       i from 0 below collection.size)
+  finally value;
+  end for;
+end method reduce;
+
+define method reduce1(proc :: <function>, collection :: <vector>)
+  let sz = collection.size;
+  select (sz)
+    // Handle the most common cases first.
+    2 => proc(collection[0], collection[1]);
+    1 => collection[0];
+    0 => error("Reduce1 not defined for empty collections.");
+    otherwise =>
+      for (value = collection[0] then proc(value, collection[i]),
+	   i from 1 below sz)
+      finally
+	value;
+      end for;
+  end select;
+end method reduce1;
 
 define method subsequence-position(big :: <vector>, pattern :: <vector>,
 				   #key test = \==, count = 1)
