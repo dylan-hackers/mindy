@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.3 1995/04/29 08:28:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.4 1995/05/02 16:34:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -145,7 +145,7 @@ define method compare-specializers
 
 	      // we already picked off the res == result case, so they must
 	      // mismatch.
-	      #"<", #">" => done("ambiguous");
+	      #"<", #">" => done(#"ambiguous");
 	    end;
 	end;
       end unless;
