@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.125 1995/12/16 21:16:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.126 1995/12/18 04:04:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,7 @@ end;
 define module utils
   use common;
   use standard-io;
+  use extensions, import: {$minimum-fixed-integer};
 #if (mindy)
   use Introspection, import: {object-address, class-name};
   use System, import: {copy-bytes};
@@ -63,7 +64,7 @@ define module utils
     dformat, assert,
     <annotatable>, info, info-setter,
     compiler-warning, *warnings*, compiler-error, key-of, list?, pair?,
-    symcat;
+    symcat, stringify;
 end;
 
 define module od-format
