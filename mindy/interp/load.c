@@ -9,16 +9,26 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.4 1994/03/31 10:19:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.5 1994/04/09 13:35:58 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <string.h>
 #include <errno.h>
 #include <sys/file.h>
 #include <sys/param.h>
 #include <ctype.h>
+#ifdef MACH
+extern int open(const void *path, int flags, int mode);
+extern int close(int fd);
+extern int read(int fd, void *ptr, int bytes);
+extern int access(const void *path, int flags);
+#endif
+#ifdef hpux
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "bool.h"
@@ -31,11 +41,14 @@
 #include "interp.h"
 #include "func.h"
 #include "obj.h"
+#include "gc.h"
 #include "class.h"
 #include "char.h"
+#include "driver.h"
 #include "debug.h"
 #include "instance.h"
 #include "vec.h"
+#include "error.h"
 #include "../comp/fileops.h"
 #include "load.h"
 
@@ -94,12 +107,12 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
 
     while (1) {
 	if (bytes <= count) {
-	    bcopy(info->ptr, ptr, bytes);
+	    memcpy(ptr, info->ptr, bytes);
 	    info->ptr += bytes;
 	    return;
 	}
 
-	bcopy(info->ptr, ptr, count);
+	memcpy(ptr, info->ptr, count);
 	ptr += count;
 	bytes -= count;
 	info->ptr = info->end = info->buffer;
@@ -188,6 +201,7 @@ static obj_t read_thing(struct load_info *info)
 static obj_t fop_flame(struct load_info *info)
 {
     lose("Bogus opcode in %s\n", info->name);
+    return NULL;
 }
 
 static obj_t fop_comment(struct load_info *info)
@@ -813,6 +827,7 @@ static obj_t fop_define_module(struct load_info *info)
 static obj_t fop_done(struct load_info *info)
 {
     info->done = TRUE;
+    return obj_False;
 }
 
 
@@ -855,7 +870,7 @@ static void free_load_info(struct load_info *info)
 
 void load(char *name)
 {
-    int fd = open(name, O_RDONLY);
+    int fd = open(name, O_RDONLY, 0);
     struct load_info *info;
 
     if (fd < 0)
@@ -903,7 +918,7 @@ void load_library(obj_t name)
 	if (c == ':' || c == '\0') {
 	    int len = ptr - start;
 	    if (len) {
-		bcopy(start, path, len);
+		memcpy(path, start, len);
 		path[len++] = '/';
 	    }
 	    dst = path+len;

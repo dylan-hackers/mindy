@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.2 1994/04/07 18:30:59 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.3 1994/04/09 13:36:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,6 +19,9 @@
 #include "num.h"
 #include "class.h"
 #include "bool.h"
+#include "list.h"
+#include "def.h"
+#include "gc.h"
 #include "obj.h"
 
 obj_t obj_ObjectClass = 0;

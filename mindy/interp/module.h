@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.1 1994/03/24 21:49:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.2 1994/04/09 13:36:05 wlott Exp $
 *
 * This file does whatever.
 *
@@ -92,3 +92,5 @@ extern void list_libraries(void);
 extern obj_t library_name(struct library *library);
 extern void list_modules(struct library *library);
 extern obj_t module_name(struct module *module);
+
+extern void finalize_modules(void);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.1 1994/03/24 21:49:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.2 1994/04/09 13:35:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,6 +26,10 @@
 #include "num.h"
 #include "thread.h"
 #include "func.h"
+#include "error.h"
+#include "print.h"
+#include "type.h"
+#include "def.h"
 #include "list.h"
 
 obj_t obj_Nil = 0;

@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.6 1994/04/08 18:00:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.7 1994/04/09 13:35:52 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -28,6 +30,10 @@
 #include "vec.h"
 #include "type.h"
 #include "module.h"
+#include "print.h"
+#include "driver.h"
+#include "error.h"
+#include "def.h"
 #include "func.h"
 
 obj_t obj_FunctionClass = 0;
@@ -973,6 +979,9 @@ static obj_t
 		    *prev = obj_Nil;
 		    ambiguous = list2(method, HEAD(scan));
 		    goto next;
+		  case method_Identical:
+		    lose("Two identical methods in the same "
+			 "generic function?");
 		}
 	    }
 	    {
@@ -989,6 +998,9 @@ static obj_t
 		      case method_LessSpecific:
 			more_specific = FALSE;
 			break;
+		      case method_Identical:
+			lose("Two identical methods in the same "
+			     "generic function?");
 		    }
 		}
 		if (new_ambiguous != obj_Nil)
@@ -1024,7 +1036,6 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 {
     struct gf *true_gf = GF(gf);
     obj_t *prev, cache;
-    static boolean report = FALSE;
     obj_t methods = true_gf->methods;
     int max = true_gf->required_args;
 	
@@ -1336,6 +1347,7 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
 	prev = &TAIL(scan);
     }
     error("~S isn't one of the methods in ~S", method, gf);
+    return NULL;
 }
 
 static void dylan_do_next_method(obj_t self, struct thread *thread,

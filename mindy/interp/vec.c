@@ -9,11 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.2 1994/03/31 10:19:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.3 1994/04/09 13:36:19 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
+#include <string.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -28,6 +31,9 @@
 #include "module.h"
 #include "sym.h"
 #include "type.h"
+#include "error.h"
+#include "print.h"
+#include "def.h"
 #include "vec.h"
 
 obj_t obj_SimpleObjectVectorClass = NULL;
@@ -40,8 +46,8 @@ obj_t make_vector(int length, obj_t *contents)
     obj_ptr(struct sovec *, res)->length = length;
 
     if (contents)
-	bcopy(contents, obj_ptr(struct sovec *, res)->contents,
-	      sizeof(obj_t) * length);
+	memcpy(obj_ptr(struct sovec *, res)->contents, contents,
+	       sizeof(obj_t) * length);
 
     return res;
 }
@@ -65,8 +71,10 @@ static obj_t dylan_sovec_element(obj_t sovec, obj_t index, obj_t def)
 	return obj_ptr(struct sovec *, sovec)->contents[i];
     else if (def != obj_Unbound)
 	return def;
-    else
+    else {
 	error("No element ~S in ~S", index, sovec);
+	return NULL;
+    }
 }
 
 static obj_t dylan_sovec_element_setter(obj_t value, obj_t sovec, obj_t index)

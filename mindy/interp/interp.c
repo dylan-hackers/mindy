@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.7 1994/04/08 17:59:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.8 1994/04/09 13:35:56 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,6 +29,8 @@
 #include "num.h"
 #include "vec.h"
 #include "sym.h"
+#include "error.h"
+#include "type.h"
 #include "interp.h"
 #include "../comp/byteops.h"
 

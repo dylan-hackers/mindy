@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.2 1994/03/26 07:44:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.3 1994/04/09 13:35:44 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "obj.h"
@@ -21,6 +23,11 @@
 #include "class.h"
 #include "num.h"
 #include "bool.h"
+#include "error.h"
+#include "print.h"
+#include "list.h"
+#include "type.h"
+#include "def.h"
 #include "char.h"
 
 obj_t obj_CharacterClass;
@@ -48,8 +55,10 @@ static obj_t int_as_char(obj_t class, obj_t i)
 
     if (0 <= c && c < 256)
 	return int_char(c);
-    else
+    else {
 	error("Can't make a character out of ~S", i);
+	return NULL;
+    }
 }
 
 static obj_t char_as_int(obj_t class, obj_t c)

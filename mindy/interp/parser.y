@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.3 1994/04/06 22:49:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.4 1994/04/09 13:36:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,6 +21,7 @@
 #include "list.h"
 #include "sym.h"
 #include "bool.h"
+#include "lexer.h"
 
 static void yyerror(char *);
 

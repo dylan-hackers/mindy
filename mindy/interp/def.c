@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.2 1994/04/08 17:55:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.3 1994/04/09 13:35:49 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,8 @@
 #include "bool.h"
 #include "obj.h"
 #include "def.h"
+#include "type.h"
+#include "instance.h"
 
 
 /* Stuff to define builtin stuff. */
@@ -182,12 +184,12 @@ static obj_t defclass(obj_t var_obj, obj_t superclasses, obj_t slots)
 
     init_defined_class(var->value, superclasses, slots);
     /* init_defined_class doesn't return */
+    return NULL;
 }
 
 static obj_t defslot(obj_t getter, obj_t setter)
 {
     struct variable *var;
-    obj_t gf;
 
     if (setter != obj_False) {
 	var = obj_rawptr(setter);

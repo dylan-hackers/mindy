@@ -9,13 +9,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.1 1994/03/24 21:49:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.2 1994/04/09 13:35:43 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <stdio.h>
+
 #include "mindy.h"
+#include "print.h"
 #include "gc.h"
 #include "class.h"
 #include "obj.h"

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.2 1994/04/08 17:56:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.3 1994/04/09 13:35:50 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,6 +29,9 @@
 #include "def.h"
 #include "bool.h"
 #include "obj.h"
+#include "print.h"
+#include "func.h"
+#include "driver.h"
 
 static boolean error_system_enabled = FALSE;
 
@@ -40,7 +43,6 @@ void error(char *msg, ...)
     int nargs = count_format_args(msg);
     va_list ap;
     int i;
-    char *ptr;
     struct thread *thread = thread_current();
     
     if (error_system_enabled) {

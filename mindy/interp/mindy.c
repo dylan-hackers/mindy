@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.2 1994/03/27 02:10:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.3 1994/04/09 13:35:59 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include "mindy.h"
+#include "init.h"
 #include "thread.h"
 #include "driver.h"
 #include "module.h"
@@ -25,6 +26,7 @@
 #include "obj.h"
 #include "sym.h"
 #include "func.h"
+#include "debug.h"
 #include "load.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
@@ -46,13 +48,13 @@ static void invoke_main(struct thread *thread, obj_t *vals)
 static void startup(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;
-    obj_t *fp = push_linkage(thread, args);
 
+    push_linkage(thread, args);
     set_c_continuation(thread, invoke_main);
     load_do_inits(thread);
 }
 
-main(int argc, char *argv[])
+void main(int argc, char *argv[])
 {
     struct thread *thread;
     enum pause_reason reason;

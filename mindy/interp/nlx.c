@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.3 1994/04/08 17:58:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.4 1994/04/09 13:36:05 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,8 @@
 #include "obj.h"
 #include "sym.h"
 #include "class.h"
+#include "error.h"
+#include "def.h"
 
 static obj_t obj_CatchBlockClass = 0;
 

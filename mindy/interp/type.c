@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.3 1994/04/06 13:52:52 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.4 1994/04/09 13:36:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -25,45 +25,40 @@
 #include "num.h"
 #include "module.h"
 #include "sym.h"
+#include "error.h"
+#include "def.h"
 
 obj_t obj_TypeClass = 0;
 static obj_t obj_SingletonClass, obj_SubclassClass;
 static obj_t obj_LimIntClass, obj_UnionClass;
 
-#define n_types 5
-#define id_Singleton 0
-#define id_Class 1
-#define id_SubClass 2
-#define id_LimInt 3
-#define id_Union 4
-
 struct type {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
 };
 
 struct singleton {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     obj_t object;
 };
 
 struct subclass {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     obj_t of;
 };
 
 struct lim_int {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     obj_t min;
     obj_t max;
 };
 
 struct union_type {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     obj_t members;
 };
 
@@ -128,19 +123,9 @@ static inline boolean union_instancep(obj_t thing, obj_t u)
     return FALSE;
 }
 
-#if 0
-static boolean (*instancep_table[n_types])(obj_t thing, obj_t type) = {
-    singleton_instancep,
-    class_instancep,
-    subclass_instancep,
-    lim_int_instancep,
-    union_instancep
-};
-#endif
-
 boolean instancep(obj_t thing, obj_t type)
 {
-    int type_id = obj_ptr(struct type *, type)->type_id;
+    enum type_Id type_id = obj_ptr(struct type *, type)->type_id;
 
     switch (type_id) {
     case id_Singleton:
@@ -159,7 +144,6 @@ boolean instancep(obj_t thing, obj_t type)
 	return union_instancep(thing, type);
 	break;
     }
-/*    return (*instancep_table[type_id])(thing, type);*/
 }
 
 
@@ -287,36 +271,6 @@ static inline boolean type_union_subtypep(obj_t type, obj_t u)
     return FALSE;
 }
 
-#if 0
-static boolean (*subtypep_table[n_types][n_types])(obj_t t1, obj_t t2) = {
-    /* singleton x mumble methods */
-    {
-	sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,
-	sing_type_subtypep, type_union_subtypep
-    },
-    /* class x mumble methods */
-    {
-	class_sing_subtypep, class_class_subtypep, class_subclass_subtypep,
-	never_subtypep, type_union_subtypep
-    },
-    /* subclass x mumble methods */
-    {
-	subclass_type_subtypep, subclass_type_subtypep,
-	subclass_subclass_subtypep, never_subtypep, type_union_subtypep
-    },
-    /* limint x mumble methods */
-    {
-	lim_sing_subtypep, lim_type_subtypep, lim_type_subtypep,
-	lim_lim_subtypep, type_union_subtypep
-    },
-    /* union x mumble methods */
-    {
-	union_type_subtypep, union_type_subtypep, union_type_subtypep,
-	union_type_subtypep, type_union_subtypep
-    }
-};
-#endif
-
 boolean subtypep(obj_t type1, obj_t type2)
 {
     int type1_id, type2_id;
@@ -415,7 +369,8 @@ boolean subtypep(obj_t type1, obj_t type2)
 	}
 	break;
     }
-/*    return (subtypep_table[type1_id][type2_id])(type1, type2);*/
+    lose("subtypep dispatch didn't do anything.");
+    return FALSE;
 }
 
 
@@ -497,7 +452,7 @@ static boolean union_type_overlapp(obj_t u, obj_t type)
     return FALSE;
 }
 
-static boolean (*overlapp_table[n_types][n_types])(obj_t t1, obj_t t2) = {
+static boolean (*overlapp_table[5][5])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
 	sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,

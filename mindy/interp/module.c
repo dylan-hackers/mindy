@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.2 1994/03/25 05:57:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.3 1994/04/09 13:36:01 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdarg.h>
+#include <string.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -31,6 +32,8 @@
 #include "func.h"
 #include "def.h"
 #include "load.h"
+#include "error.h"
+#include "print.h"
 
 obj_t obj_Unbound = NULL;
 static obj_t obj_UnboundClass = NULL;
@@ -105,7 +108,7 @@ static struct table *make_table(void)
     table->threshold = 96;
     table->length = 64;
     table->table = (struct bucket **)malloc(sizeof(struct bucket *)*64);
-    bzero(table->table, sizeof(struct bucket *)*64);
+    memset(table->table, 0, sizeof(struct bucket *)*64);
 
     return table;
 }
@@ -130,7 +133,7 @@ static void rehash_table(struct table *table)
 	= (struct bucket **)malloc(sizeof(struct bucket *) * new_length);
     int i;
 
-    bzero(new_table, sizeof(struct bucket *) * new_length);
+    memset(new_table, 0, sizeof(struct bucket *) * new_length);
 
     for (i = 0; i < length; i++) {
 	struct bucket *bucket, *next;
@@ -192,22 +195,6 @@ static void *table_remove(struct table *table, obj_t symbol)
 	}
 
     return NULL;
-}
-
-static void scavenge_table(struct table *table,
-			   void scav_datum(void *datum))
-{
-    int i;
-    int length = table->length;
-
-    for (i = 0; i < length; i++) {
-	struct bucket *bucket;
-
-	for (bucket = table->table[i]; bucket != NULL; bucket = bucket->next) {
-	    scavenge(&bucket->symbol);
-	    scav_datum(bucket->datum);
-	}
-    }
 }
 
 
@@ -953,9 +940,6 @@ static void scav_var(struct var *var)
 
 static void scav_module(struct module *module)
 {
-    int i;
-    struct bucket *bucket;
-
     scavenge(&module->name);
     scav_defn(module->defn);
     scav_table(module->variables, TRUE);
@@ -1042,7 +1026,9 @@ void finalize_modules(void)
 {
     struct library *library;
     struct module *module;
+#if 0
     struct var *var;
+#endif
 
     for (library = Libraries; library != NULL; library = library->next)
 	if (!library->completed)

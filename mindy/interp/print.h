@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.h,v 1.1 1994/03/24 21:49:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.h,v 1.2 1994/04/09 13:36:13 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,3 +20,5 @@ extern void print(obj_t object);
 extern void format(char *fmt, ...);
 extern int count_format_args(char *fmt);
 extern void vformat(char *fmt, obj_t *args);
+
+extern void def_printer(obj_t class, void (*print_fn)(obj_t object));

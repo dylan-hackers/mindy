@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.1 1994/03/24 21:49:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.2 1994/04/09 13:35:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,9 @@
 #include "sym.h"
 #include "bool.h"
 #include "obj.h"
+#include "error.h"
+#include "def.h"
+#include "print.h"
 #include "class.h"
 
 obj_t obj_ClassClass = 0;
@@ -56,11 +59,13 @@ obj_t make_builtin_class(int scavenge(struct object *ptr),
 static int scav_lose(struct object *ptr)
 {
     lose("Found an instance of an abstract class?\n");
+    return 0;
 }
 
 static obj_t trans_lose(obj_t obj)
 {
     lose("Found an instance of an abstract class?\n");
+    return NULL;
 }
 
 obj_t make_abstract_class(void)
@@ -162,9 +167,8 @@ static struct cpd *find_cpd(obj_t class)
 
 static struct cpd *tie_breaker(struct cpd_chain **candidates, obj_t rcpl)
 {
-    obj_t remaining, class, supers;
+    obj_t remaining, supers;
     struct cpd_chain **prev, *ptr;
-    struct cpd *cpd;
 
     for (remaining = rcpl; remaining != obj_Nil; remaining = TAIL(remaining)) {
 	supers = CLASS(HEAD(remaining))->superclasses;
@@ -173,6 +177,7 @@ static struct cpd *tie_breaker(struct cpd_chain **candidates, obj_t rcpl)
 		return pop_cpd(prev);
     }
     lose("Can't happen.\n");
+    return NULL;
 }
 
 static obj_t slow_compute_cpl(obj_t class, obj_t superclasses)

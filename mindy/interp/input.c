@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.4 1994/04/08 17:59:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.5 1994/04/09 13:35:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,6 +19,11 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#ifdef MACH
+extern void bzero(void *ptr, size_t bytes);
+extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
+		  fd_set *except_fds, struct timeval *timeout);
+#endif
 
 #include "mindy.h"
 #include "char.h"
@@ -27,6 +32,8 @@
 #include "thread.h"
 #include "func.h"
 #include "driver.h"
+#include "error.h"
+#include "def.h"
 
 static void getc_or_wait(struct thread *thread)
 {
@@ -73,10 +80,10 @@ static void getc_or_wait(struct thread *thread)
 
 static obj_t dylan_getc(void)
 {
-    int c;
-
     getc_or_wait(thread_current());
     go_on();
+    /* go_on never returns. */
+    return NULL;
 }
 
 void init_input_functions(void)

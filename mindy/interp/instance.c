@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.4 1994/04/08 17:59:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.5 1994/04/09 13:35:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,11 +29,14 @@
 #include "func.h"
 #include "sym.h"
 #include "value.h"
+#include "error.h"
+#include "driver.h"
+#include "def.h"
 #include "instance.h"
 
 struct defined_class {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     boolean abstract_p;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);
@@ -523,7 +526,7 @@ obj_t make_defined_class(obj_t debug_name)
     return res;
 }
 
-static obj_t compute_lengths(obj_t class)
+static void compute_lengths(obj_t class)
 {
     obj_t scan, slots, layout;
     int instance_length = 0;
@@ -871,6 +874,7 @@ static obj_t dylan_make(obj_t class, obj_t key_and_value_pairs)
 {
     error("Can't make instances of ~S with the default make method.",
 	  class);
+    return NULL;
 }
 
 static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
@@ -930,6 +934,8 @@ static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
     }
 
     do_inits(res, key_and_value_pairs, init_functions);
+    /* do_inits never returns. */
+    return NULL;
 }
 
 static obj_t dylan_init(obj_t object, obj_t key_val_pairs)
@@ -984,6 +990,7 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
     }
 
     error("~S doens't access a slot in ~S", getter, instance);    
+    return NULL;
 }
 
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.8 1994/04/08 17:55:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.9 1994/04/09 13:35:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,12 @@
 
 #include <stdio.h>
 #include <setjmp.h>
+#include <string.h>
+#ifdef MACH
+extern int isatty(int fd);
+#else
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "thread.h"
@@ -36,6 +42,8 @@
 #include "print.h"
 #include "interp.h"
 #include "value.h"
+#include "error.h"
+#include "gc.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
@@ -352,10 +360,10 @@ static void explain_debugger_invocation(void)
 
 static void explain_reason(enum pause_reason reason)
 {
-    struct thread_list *threads;
-
     switch (reason) {
       case pause_NoReason:
+      case pause_PickNewThread:
+      case pause_DebuggerCommandFinished:
 	validate_thread_and_frame();
 	break;
       case pause_NothingToRun:
@@ -374,9 +382,6 @@ static void explain_reason(enum pause_reason reason)
       case pause_HitBreakpoint:
 	printf("Breakpoint\n");
 	set_thread(thread_current());
-	break;
-      case pause_DebuggerCommandFinished:
-	validate_thread_and_frame();
 	break;
     }
 }
@@ -782,7 +787,6 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 
 static void do_funcall(struct thread *thread, obj_t args, int nargs);
 static void do_more_prints(struct thread *thread, obj_t exprs);
-static void do_more_calls(struct thread *thread, obj_t exprs);
 
 static void funcall_return(struct thread *thread, obj_t *vals)
 {

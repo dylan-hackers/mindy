@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.7 1994/04/08 17:57:35 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.8 1994/04/09 13:36:16 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <string.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -27,6 +29,7 @@
 #include "list.h"
 #include "def.h"
 #include "type.h"
+#include "error.h"
 
 #define STACK_SIZE (1*1024*1024)
 
@@ -129,11 +132,6 @@ static void return_false(struct thread *thread)
     do_return(thread, old_sp, old_sp);
 }
 
-static void flame(struct thread *thread)
-{
-    lose("Exited thread attempted to keep running.\n");
-}
-
 static void stop_thread(struct thread *thread, obj_t *vals)
 {
     assert(Current == thread);
@@ -160,7 +158,6 @@ struct thread *thread_create(obj_t debug_name)
 {
     struct thread_list *list = malloc(sizeof(*list));
     struct thread *thread = malloc(STACK_SIZE);
-    int i, j;
 
     list->thread = thread;
     list->next = NULL;
@@ -415,6 +412,8 @@ void lock_grab(struct thread *thread, obj_t lock,
 static obj_t dylan_lock_grab(obj_t lock)
 {
     lock_grab(Current, lock, return_false);
+    /* lock_grab doesn't return. */
+    return NULL;
 }
 
 void lock_release(obj_t lock)
@@ -526,6 +525,8 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
 static obj_t dylan_event_wait(obj_t event, obj_t lock)
 {
     event_wait(Current, event, lock, return_false);
+    /* event_wait doens't return. */
+    return NULL;
 }
 
 obj_t event_signal(obj_t event)
@@ -611,7 +612,7 @@ static obj_t trans_event(obj_t event)
     return transport(event, sizeof(struct event));
 }
 
-static scav_thread(struct thread *thread)
+static void scav_thread(struct thread *thread)
 {
     obj_t *ptr;
 
@@ -623,7 +624,7 @@ static scav_thread(struct thread *thread)
 
     for (ptr = thread->stack_base; ptr < thread->sp; ptr++)
 	scavenge(ptr);
-    bzero(thread->sp, (thread->stack_end - thread->sp) * sizeof(obj_t));
+    memset(thread->sp, 0, (thread->stack_end - thread->sp) * sizeof(obj_t));
 }
 
 void scavenge_thread_roots(void)

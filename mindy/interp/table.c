@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.4 1994/04/06 17:25:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.5 1994/04/09 13:36:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,6 +26,7 @@
 #include "num.h"
 #include "obj.h"
 #include "sym.h"
+#include "table.h"
 
 static obj_t valid_state = NULL;
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.5 1994/04/08 17:56:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.6 1994/04/09 13:35:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,8 +19,19 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <errno.h>
-
+#ifdef MACH
+extern void bzero(void *ptr, size_t bytes);
+extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
+		  fd_set *except_fds, struct timeval *timeout);
+extern int open(const void *path, int flags, int mode);
+extern int close(int fd);
+extern int read(int fd, void *ptr, int bytes);
+extern int write(int fd, const void *ptr, int bytes);
+extern off_t lseek(int fd, off_t offset, int whence);
+extern int fsync(int fd);
+#endif
 #ifdef hpux
+#include <unistd.h>
 /* hpux doesn't define these for some reason. */
 extern int sys_nerr;
 extern char *sys_errlist[];
@@ -74,7 +85,6 @@ static int input_available(int fd)
 {
     fd_set fds;
     struct timeval tv;
-    int nfound;
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);

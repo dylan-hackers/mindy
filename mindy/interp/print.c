@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.1 1994/03/24 21:49:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.2 1994/04/09 13:36:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -30,6 +30,8 @@
 #include "thread.h"
 #include "func.h"
 #include "def.h"
+#include "sym.h"
+#include "error.h"
 
 void def_printer(obj_t class, void (*print_fn)(obj_t object))
 {

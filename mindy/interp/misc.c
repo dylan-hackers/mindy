@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.3 1994/03/30 12:13:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.4 1994/04/09 13:36:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,7 @@
 #include "obj.h"
 #include "module.h"
 #include "sym.h"
+#include "def.h"
 
 static struct variable *generic_apply_var = NULL;
 

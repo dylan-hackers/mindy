@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.2 1994/04/06 17:43:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.3 1994/04/09 13:36:06 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -26,6 +28,8 @@
 #include "num.h"
 #include "thread.h"
 #include "func.h"
+#include "error.h"
+#include "print.h"
 
 obj_t obj_NumberClass = 0;
 obj_t obj_ComplexClass = 0;
@@ -637,6 +641,7 @@ void init_num_classes(void)
     def_printer(obj_DoubleFloatClass, print_df);
     init_builtin_class(obj_ExtendedFloatClass, "<extended-float>",
 		       obj_FloatClass, NULL);
+    def_printer(obj_ExtendedFloatClass, print_xf);
 }
 
 void init_num_functions(void)
@@ -695,22 +700,22 @@ void init_num_functions(void)
 
     define_method("negative", list1(obj_SingleFloatClass), FALSE, obj_False,
 		  obj_SingleFloatClass, dylan_sf_negative);
-    define_method("+", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_sf_sf_plus);
-    define_method("-", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_sf_sf_minus);
-    define_method("*", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_sf_sf_times);
-    define_method("/", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_sf_sf_divide);
-    define_method("<", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_less);
-    define_method("<=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_less_or_eql);
-    define_method("=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_equal);
-    define_method("~=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_not_equal);
+    define_method("+", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+		  dylan_sf_sf_plus);
+    define_method("-", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+		  dylan_sf_sf_minus);
+    define_method("*", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+		  dylan_sf_sf_times);
+    define_method("/", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+		  dylan_sf_sf_divide);
+    define_method("<", two_sfs, FALSE, obj_False, obj_BooleanClass,
+		  dylan_sf_sf_less);
+    define_method("<=", two_sfs, FALSE, obj_False, obj_BooleanClass,
+		  dylan_sf_sf_less_or_eql);
+    define_method("=", two_sfs, FALSE, obj_False, obj_BooleanClass,
+		  dylan_sf_sf_equal);
+    define_method("~=", two_sfs,FALSE, obj_False, obj_BooleanClass,
+		  dylan_sf_sf_not_equal);
     
     define_method("negative", list1(obj_DoubleFloatClass), FALSE, obj_False,
 		  obj_DoubleFloatClass, dylan_df_negative);

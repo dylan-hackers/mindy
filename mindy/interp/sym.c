@@ -9,12 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.2 1994/03/31 10:19:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.3 1994/04/09 13:36:15 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <stdio.h>
 #include <ctype.h>
 
 #include "mindy.h"
@@ -24,6 +25,10 @@
 #include "obj.h"
 #include "coll.h"
 #include "str.h"
+#include "def.h"
+#include "list.h"
+#include "type.h"
+#include "print.h"
 #include "sym.h"
 
 obj_t obj_SymbolClass = NULL;

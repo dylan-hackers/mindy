@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.2 1994/03/31 10:19:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.3 1994/04/09 13:36:14 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -25,6 +27,13 @@
 #include "bool.h"
 #include "obj.h"
 #include "str.h"
+#include "error.h"
+#include "type.h"
+#include "print.h"
+#include "list.h"
+#include "def.h"
+#include "sym.h"
+
 
 obj_t obj_ByteStringClass = 0;
 
@@ -60,8 +69,10 @@ static obj_t dylan_str_element(obj_t str, obj_t index, obj_t def)
 	return int_char(string_chars(str)[i]);
     else if (def != obj_Unbound)
 	return def;
-    else
+    else {
 	error("No element ~S in ~S", index, str);
+	return NULL;
+    }
 }
 
 static obj_t dylan_str_element_setter(obj_t value, obj_t str, obj_t index)

@@ -9,18 +9,21 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.1 1994/03/24 21:49:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.2 1994/04/09 13:35:45 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 
+enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union};
+
+
 extern obj_t obj_ClassClass;
 
 struct class {
     obj_t class;
-    int type_id;
+    enum type_Id type_id;
     boolean abstract_p;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);

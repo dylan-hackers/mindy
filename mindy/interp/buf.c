@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.1 1994/03/31 22:44:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.2 1994/04/09 13:35:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -23,6 +23,11 @@
 #include "num.h"
 #include "bool.h"
 #include "obj.h"
+#include "error.h"
+#include "list.h"
+#include "def.h"
+#include "sym.h"
+#include "type.h"
 #include "buf.h"
 
 obj_t obj_BufferClass = NULL;
@@ -50,8 +55,10 @@ static obj_t dylan_buffer_element(obj_t buffer, obj_t index, obj_t def)
 	return make_fixnum(buffer_data(buffer)[i]);
     else if (def != obj_Unbound)
 	return def;
-    else
+    else {
 	error("No element ~S in ~S", index, buffer);
+	return NULL;
+    }
 }
 
 static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)

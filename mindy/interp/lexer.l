@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.3 1994/04/06 22:49:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.4 1994/04/09 13:35:57 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,8 @@
 
 
 %{
+#include <stdlib.h>
+
 #include "mindy.h"
 #include "str.h"
 #include "sym.h"
@@ -31,10 +33,8 @@
 static int yy_input(char *buf, int max_size);
 
 static obj_t token_as_address(void);
-static obj_t token_as_integer(void);
 static obj_t token_as_string(void);
 static obj_t token_as_symbol(void);
-static obj_t token_as_keyword(void);
 
 %}
 
@@ -55,7 +55,7 @@ IDENTIFIER	[-!$%&*+/0-9<=>?@A-Z^_a-z~]+
 -?{DIGIT}+	yylval = make_fixnum(atoi(yytext)); return tok_LITERAL;
 \"[^"\\]*(\\.[^"\\])*\"	yylval = token_as_string(); return tok_LITERAL;
 {IDENTIFIER}		yylval = token_as_symbol(); return tok_SYMBOL;
-{IDENTIFIER}:		yylval = token_as_keyword(); return tok_KEYWORD;
+{IDENTIFIER}:		yylval = token_as_symbol(); return tok_KEYWORD;
 ,			return tok_COMMA;
 [ \t\n]+		;
 .			return tok_ERROR;
@@ -83,13 +83,13 @@ static int yy_input(char *buf, int max_size)
 	return YY_NULL;
     if (remaining <= max_size) {
 	int count = remaining;
-	bcopy(readptr, buf, remaining);
+	memcpy(buf, readptr, remaining);
 	readptr = NULL;
 	remaining = 0;
 	return count;
     }
     else {
-	bcopy(readptr, buf, max_size);
+	memcpy(buf, readptr, max_size);
 	readptr += max_size;
 	remaining -= max_size;
 	return max_size;
@@ -167,19 +167,8 @@ static obj_t token_as_symbol(void)
 {
     char buffer[256];
 
-    bcopy(yytext, buffer, yyleng);
+    memcpy(buffer, yytext, yyleng);
     buffer[yyleng] = '\0';
 
     return symbol(buffer);
 }
-
-static obj_t token_as_keyword(void)
-{
-    char buffer[256];
-
-    bcopy(yytext, buffer, yyleng-1);
-    buffer[yyleng-1] = '\0';
-
-    return symbol(buffer);
-}
-

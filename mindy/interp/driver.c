@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.5 1994/04/08 14:36:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.6 1994/04/09 13:35:50 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -17,15 +17,22 @@
 
 #include <setjmp.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#ifdef MACH
+extern void bzero(void *ptr, size_t bytes);
+extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
+		  fd_set *except_fds, struct timeval *timeout);
+#endif
 
 #include "mindy.h"
 #include "gc.h"
 #include "thread.h"
 #include "driver.h"
 #include "bool.h"
+#include "gc.h"
 
 static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
@@ -82,8 +89,8 @@ static void check_fds(boolean block)
 	return;
     }
 
-    bcopy(&Readers.fds, &readfds, sizeof(readfds));
-    bcopy(&Writers.fds, &writefds, sizeof(writefds));
+    memcpy(&readfds, &Readers.fds, sizeof(readfds));
+    memcpy(&writefds, &Writers.fds, sizeof(writefds));
 
     if (block)
 	tvp = NULL;

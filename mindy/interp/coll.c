@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.1 1994/03/24 21:49:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.2 1994/04/09 13:35:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -18,6 +18,7 @@
 #include "mindy.h"
 #include "class.h"
 #include "obj.h"
+#include "gc.h"
 #include "coll.h"
 
 obj_t obj_CollClass = 0;
