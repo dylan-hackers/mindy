@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.133 1996/11/04 19:18:01 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.134 1996/11/18 23:50:06 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -368,10 +368,10 @@ define method c-name (name :: <basic-name>) => (result :: <byte-string>);
   let lastidx = def-name.size - 1;
   if (def-name[0] == '<' & def-name[lastidx] == '>')
     concatenate
-      (mod-name, "_CLS_",
+      (mod-name, "ZCLS_",
        string-to-c-name(copy-sequence(def-name, start: 1, end: lastidx)));
   else
-    concatenate(mod-name, "_", string-to-c-name(def-name));
+    concatenate(mod-name, "Z", string-to-c-name(def-name));
   end if;
 end method c-name;
 
@@ -444,15 +444,15 @@ define method new-c-global
  => res :: <string>;
   let unit = file.file-unit;
   let da-name = if (name) name.c-name else "" end;
-  let result = stringify(unit.unit-prefix, '_', da-name, modifier);
+  let result = stringify(unit.unit-prefix, 'Z', da-name, modifier);
   let num = element(unit.unit-global-table, result, default: 0) + 1;
   unit.unit-global-table[result] := num;
   if (num == 1)
     result;
   else
-    if (name & name.name-unique?)
-      error("%S should have been unique, but it wasn't.", result);
-    end if;
+//    if (name & name.name-unique?)
+//      error("%S should have been unique, but it wasn't.", result);
+//    end if;
     new-c-global(name, file, modifier: stringify(modifier, '_', num));
   end if;
 end method new-c-global;
