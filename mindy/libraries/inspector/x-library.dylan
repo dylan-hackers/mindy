@@ -5,7 +5,7 @@ synopsis:   Contains the library and module definitions for the X-inspector
             library.
 copyright:  Copyright (C) 1996 Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.1 1996/04/22 15:30:24 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.2 1996/04/24 12:29:10 wlott Exp $
 
 //======================================================================
 //
@@ -55,6 +55,7 @@ end module class-diagram;
 define module X-inspector
   use dylan;
   use extensions;
+  use threads;
   use regular-expressions, import: { split };
   use substring-search, import: { substring-position };
   use tk;
