@@ -43,7 +43,7 @@ rcs-header: $header$
 
 
 define sealed class <indenting-stream> (<buffered-stream>, <wrapper-stream>)
-  slot is-buffer :: <buffer> = curry(make, <buffer>, size: 1024);
+  slot is-buffer :: <buffer> = make(<buffer>, size: 1024);
   slot is-after-newline? :: <boolean> = #t;
   slot is-column :: <integer> = 0;
   slot is-indentation :: <integer> = 0, init-keyword: indentation:;
