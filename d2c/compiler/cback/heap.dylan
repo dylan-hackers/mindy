@@ -614,8 +614,10 @@ define method find-init-value
 	end;
       end;
     end;
+    let object-type = specifier-type(#"<object>");
     for (override in slot.slot-overrides)
-      if (csubtype?(class, override.override-introduced-by))
+      let intro = override.override-introduced-by;
+      if (intro = object-type | csubtype?(class, intro))
 	if (override.override-init-value == #t
 	      | override.override-init-function)
 	  compiler-warning("Init value for %s in %= not set up.",
