@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.12 1995/04/21 20:45:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.13 1995/04/23 02:59:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,6 +16,7 @@ operation
         local-call
         known-call
         unknown-call
+	error-call
 	mv-call
     prologue
 
@@ -110,6 +111,12 @@ end class;
 //
 define class <unknown-call> (<abstract-call>)
 end class;
+
+// A call that is known to be in error.  Basically, the same as <unknown-call>
+// but we've given up trying to optimize it.
+//
+define class <error-call> (<abstract-call>)
+end;
 
 // In a MV-Call, there is one argument which must be a values cluster.  This
 // values cluster is spread out to form the actual arguments to the called
@@ -244,6 +251,9 @@ define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
 
   // The results this lambda produces.
   inherited slot depends-on;
+
+  // The result type of this function.
+  slot result-type :: <values-ctype>, init-function: wild-ctype;
 
   // A list of all the functions directly called from this function
   // using a non-let-converted local call.  May include deleted functions
