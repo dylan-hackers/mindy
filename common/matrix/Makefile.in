@@ -24,7 +24,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/matrix/Attic/Makefile.in,v 1.1 1995/12/05 15:48:48 rsbe Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/matrix/Attic/Makefile.in,v 1.2 1996/01/16 23:44:21 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy matrix library, 
 ##  matrix.dbc.
@@ -36,9 +36,9 @@ SHELL	=	/bin/sh
 ## begin autoconf'ed source
 ##
 
-prefix	=		/afs/cs/project/gwydion/mindy
-exec_prefix	=	${prefix}
-srcdir	=		.
+prefix	=		@prefix@
+exec_prefix	=	@exec_prefix@
+srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
 BINDIR	=		${exec_prefix}/bin

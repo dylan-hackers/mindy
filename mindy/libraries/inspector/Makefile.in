@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.1 1995/12/05 15:36:27 rsbe Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.2 1996/01/16 23:42:45 nkramer Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -38,7 +38,7 @@ prefix	=		@prefix@
 exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
-SRCDIR	=		.
+SRCDIR	=		${srcdir}
 BINDIR	=		${exec_prefix}/bin
 LIBDIR	=		${exec_prefix}/lib/mindy
 
