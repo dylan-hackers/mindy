@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.14 1995/11/07 11:37:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.15 1995/11/07 12:48:03 wlott Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -152,6 +152,16 @@ static obj_t dylan_system(obj_t command)
     return make_fixnum(system(string_chars(command)));
 }
 
+static obj_t dylan_getenv(obj_t name)
+{
+    char *res = getenv(string_chars(name));
+
+    if (res)
+	return make_byte_string(res);
+    else
+	return obj_False;
+}
+
 
 /* Init stuff. */
 
@@ -170,6 +180,8 @@ void init_misc_functions(void)
 		    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
     define_function("system", list1(obj_ByteStringClass), FALSE, obj_False,
 		    FALSE, obj_FixnumClass, dylan_system);
+    define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
+		    FALSE, obj_ObjectClass, dylan_getenv);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
