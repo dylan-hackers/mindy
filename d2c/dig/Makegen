@@ -19,7 +19,8 @@ if ($features{'compiled_for_win32'}) {
     &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
 } elsif ($features{'compiled_for_solaris'}
 	 || $features{'compiled_for_linux'}
-	 || $features{'compiled_for_freebsd'}) {
+	 || $features{'compiled_for_freebsd'}
+	 || $features{'compiled_for_openbsd'}) {
     # The only non-portable part of dig involves passing Control-C through
     # to GDB. This can be done in a portable fashion assuming the system
     # supports sigaction and SA_RESTART. For now, we'll assume that all

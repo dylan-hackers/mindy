@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.16 1999/04/22 15:32:08 tree Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.17 1999/05/19 19:15:51 andreas Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -207,6 +207,14 @@ inherit-from:				generic-unix
 default-features:			compiled-for-freebsd
 make-command:                   	gmake
 randomize-library-command:      	ranlib %s
+
+// OpenBSD:
+platform-name:				openbsd
+inherit-from:				generic-unix
+default-features:			compiled-for-openbsd
+make-command:                   	gmake
+randomize-library-command:      	ranlib %s
+
 
 // Solaris:
 platform-name:				solaris
@@ -461,6 +469,19 @@ word-directive:			.word
 half-word-directive:		.half
 descriptor-type-string:		.stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
 descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+
+// This is untested. 
+platform-name:			sparc-openbsd-gcc
+inherit-from:			gcc openbsd sparc
+default-features:               compiled-for-openbsd compiled-for-sparc C-compiler-is-GCC
+default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
+comment-token:			!
+word-directive:			.word
+half-word-directive:		.half
+descriptor-type-string:		.stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
+descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+mangled-name-prefix:		_
+align-arg-is-power-of-two?:	#t
 
 
 // Other platforms:

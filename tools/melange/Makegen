@@ -10,6 +10,8 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "linux-c-decl";
 } elsif ($features{'compiled_for_freebsd'}) {
     $c_decl_lid = "freebsd-c-decl";
+} elsif ($features{'compiled_for_openbsd'}) {
+    $c_decl_lid = "openbsd-c-decl";
 } else {
     &uknown_platform_error();
 };
