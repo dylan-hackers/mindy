@@ -1,11 +1,11 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.33 2001/12/29 02:38:39 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.34 2002/03/07 23:28:18 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -2708,8 +2708,13 @@ define method emit-assignment
 	format(stream, " = %s;\n", source);
       end unless;
     finally
-      if (arg-dep | param)
-	error("Wrong number of operands in a self-tail-call?");
+      if (param)
+	error("Too many operands in a self-tail-call?");
+      elseif (arg-dep & #f /* index >= prolog.type.<multi-value-ctype>.min-values*/)
+	// we should check if we passed over enough arguments...
+	// currently never reached
+	// TODO, FIXME
+	error("Not enough operands in a self-tail-call?");
       end;
     end;
   end;
@@ -2718,7 +2723,7 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <heap-slot-ref>, 
+     op :: <heap-slot-ref>,
      source-location :: <source-location>,
      file :: <file-state>)
     => ();
