@@ -50,10 +50,8 @@ define simple-profiling macro-test profiling-test ()
 		 for (i from 0 to 200) end
 	       results
 		 true?
-		   := instance?(1, <integer>)
-		   // TODO:  Fix!
-		   //instance?(cpu-time-seconds, <integer>)
-		   //     & instance?(cpu-time-microseconds, <integer>)
+		   := instance?(cpu-time-seconds, <integer>)
+		        & instance?(cpu-time-microseconds, <integer>)
 	       end;
 	       true?
 	     end)

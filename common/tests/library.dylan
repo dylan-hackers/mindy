@@ -38,7 +38,6 @@ define module common-dylan-test-suite
   export common-dylan-test-suite;
 
   // Stream testing protocol
-/*
   export <stream-test-info>,
          make-stream-tests-of-size,
          info-test-name,
@@ -50,9 +49,8 @@ define module common-dylan-test-suite
          register-stream-test,
          stream-class-info,
          test-stream-class;
-*/
+
   // Stream class info
-/*
   export <stream-class-info>,
          info-class-name,
          info-class,
@@ -65,5 +63,4 @@ define module common-dylan-test-suite
   // Test streams
   export <test-input-stream>,
          <test-output-stream>;
-*/
 end module common-dylan-test-suite;

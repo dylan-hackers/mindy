@@ -14,9 +14,9 @@ define library-spec common-dylan ()
   module finalization;
   module simple-io;
   module simple-random;
-  //module simple-profiling;
+  module simple-profiling;
   module transcendentals;
-  //module byte-vector;
+  module byte-vector;
   module machine-words;
   suite common-dylan-regressions;
   //suite threads-test-suite;             //---*** NOTE: Should be changed to module test
@@ -180,7 +180,6 @@ define module-spec simple-random ()
   function random (<integer>, #"key", #"random") => (<integer>);
 end module-spec simple-random;
 
-/*
 define module-spec simple-profiling ()
   sealed instantiable class <profiling-state> (<table>);
   open generic-function start-profiling-type
@@ -193,9 +192,7 @@ define module-spec simple-profiling ()
   macro-test profiling-test;
   // ... anything else?
 end module-spec simple-profiling;
-*/
 
-/*
 define module-spec byte-vector ()
   sealed instantiable class <byte-vector> (<vector>);
   open generic function copy-bytes
@@ -209,7 +206,6 @@ define module-spec byte-vector ()
   function byte-vector-ref-setter
     (<integer>, <byte-vector>, <integer>) => (<integer>);
 end module-spec byte-vector;
-*/
 
 define module-spec machine-words ()
   sealed instantiable class <machine-word> (<object>);
