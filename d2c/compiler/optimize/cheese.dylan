@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.33 1995/04/28 02:32:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.34 1995/04/28 07:22:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -140,19 +140,23 @@ define method side-effect-free?
 end;
 
 
-define method pure-expression? (expr :: <expression>) => res :: <boolean>;
+define method pure-single-value-expression? (expr :: <expression>)
+    => res :: <boolean>;
   #f;
 end;
 
-define method pure-expression? (var :: <ssa-variable>) => res :: <boolean>;
+define method pure-single-value-expression? (var :: <ssa-variable>)
+    => res :: <boolean>;
   #t;
 end;
 
-define method pure-expression? (var :: <constant>) => res :: <boolean>;
+define method pure-single-value-expression? (var :: <constant>)
+    => res :: <boolean>;
   #t;
 end;
 
-define method pure-expression? (var :: <function-literal>) => res :: <boolean>;
+define method pure-single-value-expression? (var :: <function-literal>)
+    => res :: <boolean>;
   #t;
 end;
 
@@ -188,61 +192,102 @@ define method optimize
   let defines = assignment.defines;
   
   if (source-type == empty-ctype())
+    //
+    // The source never returns.  Insert an exit to the component and nuke
+    // the variables we would have otherwise defined.
     insert-exit-after(component, assignment, component);
     for (defn = defines then defn.definer-next,
 	 while: defn)
       delete-definition(component, defn);
     end;
     assignment.defines := #f;
-  else
-    if (defines-unneeded?(defines) & side-effect-free?(source))
-      delete-and-unlink-assignment(component, assignment);
-    else
-      if (pure-expression?(source))
-	if (instance?(defines.var-info, <values-cluster-info>))
-	  if (instance?(source, <ssa-variable>)
-		& instance?(source.var-info, <values-cluster-info>))
-	    maybe-propagate-copy(component, defines, source);
-	  end;
-	else
-	  unless (instance?(source, <ssa-variable>)
-		    & instance?(source.var-info, <values-cluster-info>))
-	    maybe-propagate-copy(component, defines, source);
-	    let next = defines.definer-next;
-	    if (next)
-	      let false =
-		make-literal-constant(make-builder(component),
-				      make(<literal-false>));
-	      for (var = next then var.definer-next,
-		   while: var)
-		maybe-propagate-copy(component, var, false);
-	      end;
-	    end;
-	  end;
-	end;
-      end;
 
-      if (instance?(defines & defines.var-info, <values-cluster-info>))
-	maybe-restrict-type(component, defines, source-type);
-      else
-	for (var = defines then var.definer-next,
-	     index from 0 below source-type.min-values,
-	     positionals = source-type.positional-types then positionals.tail,
-	     while: var)
-	  maybe-restrict-type(component, var, positionals.head);
+  elseif (defines-unneeded?(defines) & side-effect-free?(source))
+    //
+    // there is no point to this assignment, so nuke it.
+    delete-and-unlink-assignment(component, assignment);
+
+  elseif (instance?(source, <abstract-variable>)
+	    & instance?(source.var-info, <values-cluster-info>))
+    //
+    // We are referencing a cluster.
+    if (instance?(defines.var-info, <values-cluster-info>))
+      // Propagate the type on to the result.
+      maybe-restrict-type(component, defines, source-type);
+      // We are making a copy of a cluster.  If the cluster we are copying
+      // is an <ssa-variable>, then copy propagate it.
+      if (instance?(source, <ssa-variable>))
+	maybe-propagate-copy(component, defines, source);
+      end;
+    else
+      // We are extracting some number of values out of a cluster.  Expand
+      // the cluster into that number of variables.
+      for (nvals from 0, defn = defines then defn.definer-next, while: defn)
+      finally
+	expand-cluster(component, source, nvals);
+      end;
+    end;
+
+  elseif (instance?(defines & defines.var-info, <values-cluster-info>))
+    //
+    // We are defining a cluster.  Propagate the type on though.
+    maybe-restrict-type(component, defines, source-type);
+
+  else
+
+    // We are defining some fixed number of variables.
+    if (pure-single-value-expression?(source))
+      // But we don't have to do it right here, so propagate the value to
+      // dependents of whatever we define.
+      maybe-propagate-copy(component, defines, source);
+    end;
+
+    // Propagate type information to the defined variables.
+    for (var = defines then var.definer-next,
+	 index from 0 below source-type.min-values,
+	 positionals = source-type.positional-types then positionals.tail,
+	 while: var)
+      //
+      // For the values that are guarenteed to be returned, we have precise
+      // type information.
+      maybe-restrict-type(component, var, positionals.head);
+
+    finally
+      if (var)
+
+	// For the variables that might be defaulted to #f because the value
+	// was unsupplied, union in <false>.
+	let false-type = dylan-value(#"<false>");
+	for (var = var then var.definer-next,
+	     positionals = positionals then positionals.tail,
+	     until: var == #f | positionals == #())
+	  maybe-restrict-type(component, var,
+			      ctype-union(positionals.head,
+					  false-type));
 	finally
 	  if (var)
-	    let false-type = dylan-value(#"<false>");
-	    for (var = var then var.definer-next,
-		 positionals = positionals then positionals.tail,
-		 while: var)
-	      let type = if (positionals == #())
-			   source-type.rest-value-type;
-			 else
-			   positionals.head;
-			 end;
-	      maybe-restrict-type(component, var,
-				  ctype-union(type, false-type));
+
+	    let type = source-type.rest-value-type;
+	    if (type == empty-ctype())
+	      //
+	      // We know we will be defaulting this variable to #f, so
+	      // use <false> as the type and see if we can propagate the #f
+	      // to users of the variable.
+	      let false = make-literal-constant(make-builder(component),
+						make(<literal-false>));
+	      for (var = var then var.definer-next,
+		   while: var)
+		maybe-restrict-type(component, var, false-type);
+		maybe-propagate-copy(component, var, false);
+	      end;
+	    else
+	      //
+	      // We might get a value, or we might default it to #f.
+	      let type-or-false = ctype-union(type, false-type);
+	      for (var = var then var.definer-next,
+		   while: var)
+		maybe-restrict-type(component, var, type-or-false);
+	      end;
 	    end;
 	  end;
 	end;
@@ -432,7 +477,16 @@ end;
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>, func :: <exit-function>)
     => ();
-  maybe-expand-exit-function(component, call, func);
+  // Make a values operation, steeling the args from the call.
+  let args = call.depends-on.dependent-next;
+  let cluster = make(<primitive>, name: #"values", depends-on: args);
+  call.depends-on.dependent-next := #f;
+  for (dep = args then dep.dependent-next,
+       while: dep)
+    dep.dependent := cluster;
+  end;
+  queue-dependent(component, cluster);
+  expand-exit-function(component, call, func, cluster);
 end;
 
 define method change-call-kind
@@ -465,37 +519,9 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
   else
     let func = call.depends-on.source-exp;
     if (instance?(func, <exit-function>))
-      maybe-expand-exit-function(component, call, func);
+      expand-exit-function(component, call, func, cluster);
     end;
   end;
-end;
-
-define method maybe-expand-exit-function
-    (component :: <component>, call :: <abstract-call>,
-     func :: <exit-function>)
-    => ();
-  // Change the call into a pitcher and an exit.
-  let call-dependency = call.dependents;
-  let assign = call-dependency.dependent;
-  let catcher = func.catcher;
-  let args = call.depends-on.dependent-next;
-  let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
-		     depends-on: args, dependents: call-dependency);
-  catcher.pitchers := pitcher;
-  remove-dependency-from-source(component, call.depends-on);
-  for (dep = args then dep.dependent-next,
-       while: dep)
-    dep.dependent := pitcher;
-  end;
-  call-dependency.source-exp := pitcher;
-  for (defn = assign.defines then defn.definer-next,
-       while: defn)
-    delete-definition(component, defn);
-  end;
-  assign.defines := #f;
-  queue-dependent(component, assign);
-  queue-dependent(component, pitcher);
-  insert-exit-after(component, assign, catcher.target-region);
 end;
 
 
@@ -549,52 +575,63 @@ define method optimize (component :: <component>, prologue :: <prologue>)
 		      make-values-ctype(as(<list>, types), #f));
 end;
 
+
+// block/exit related optimizations.
+
+define method expand-exit-function
+    (component :: <component>, call :: <abstract-call>,
+     func :: <exit-function>, cluster :: <expression>)
+    => ();
+  let builder = make-builder(component);
+  let call-dependency = call.dependents;
+  let assign = call-dependency.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+
+  unless (instance?(cluster, <abstract-variable>))
+    let temp = make-values-cluster(builder, #"cluster", wild-ctype());
+    build-assignment(builder, policy, source, temp, cluster);
+    cluster := temp;
+  end;
+
+  insert-before(component, assign, builder-result(builder));
+  insert-pitcher-after(component, assign, func.catcher.target-region, cluster);
+  delete-and-unlink-assignment(component, assign);
+end;
+
+
+define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
+  let type = pitcher.depends-on.source-exp.derived-type;
+  let old-type = pitcher.pitched-type;
+  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
+    pitcher.pitched-type := type;
+    queue-dependent(component, pitcher.block-of.catcher);
+  end;
+end;
+
+
 define method optimize (component :: <component>, catcher :: <catcher>)
     => ();
   // If there is still an exit function, there isn't much we can do.
   unless (catcher.exit-function)
     // Compute the result type of the catcher by unioning all the pitchers.
     let catcher-home = home-lambda(catcher);
-    for (pitcher = catcher.pitchers then pitcher.pitcher-next,
-	 all-local? = #t
-	   then all-local? & home-lambda(pitcher) == catcher-home,
-	 result-type = empty-ctype()
-	   then values-type-union(result-type, pitcher.pitched-type),
-	   while: pitcher)
-    finally
-      if (all-local?)
-	replace-catcher-and-pitchers(component, catcher);
-      else
-	maybe-restrict-type(component, catcher, result-type);
+    let all-local? = #t;
+    let result-type = empty-ctype();
+    for (exit = catcher.target-region.exits then exit.next-exit,
+	 while: exit)
+      if (instance?(exit, <pitcher>))
+	unless (home-lambda(exit) == catcher-home)
+	  all-local? := #f;
+	end;
+	result-type := values-type-union(result-type, exit.pitched-type);
       end;
     end;
-  end;
-end;
-
-define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
-  let args = pitcher.depends-on;
-  let type
-    = block (return)
-	if (args & instance?(args.source-exp, <abstract-variable>)
-	      & instance?(args.source-exp.var-info, <values-cluster-info>))
-	  args.source-exp.derived-type;
-	else
-	  let types = #();
-	  for (dep = args then dep.dependent-next,
-	       while: dep)
-	    let type = dep.source-exp.derived-type;
-	    if (type == empty-ctype())
-	      return(type);
-	    end;
-	    types := pair(type, types);
-	  end;
-	  make-values-ctype(reverse!(types), #f);
-	end;
-      end;
-  let old-type = pitcher.pitched-type;
-  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
-    pitcher.pitched-type := type;
-    queue-dependent(component, pitcher.catcher);
+    if (all-local?)
+      replace-catcher-and-pitchers(component, catcher);
+    else
+      maybe-restrict-type(component, catcher, result-type);
+    end;
   end;
 end;
 
@@ -602,85 +639,57 @@ end;
 define method replace-catcher-and-pitchers
     (component :: <component>, catcher :: <catcher>) => ();
   // Okay, we are doing a transfer local to this lambda.  So where we had:
-  //   () := pitcher(args....)
-  //   exit
+  //   pitcher(cluster)
   //   ...
   //   vars... := catcher()
   // we want to convert it into:
-  //   temps := values(args...)
+  //   temp := cluster
   //   exit
   //   ...
-  //   vars := values(temps...)
-  // Except that if we are pitching/catching a cluster, we don't want to
-  // call values.
+  //   vars := temp
 
   // First, fix up the catcher.
   let builder = make-builder(component);
+
+  let target = catcher.target-region;
   let catcher-dep = catcher.dependents;
   let catcher-assign = catcher-dep.dependent;
   let vars = catcher-assign.defines;
-  let (temps, temps-expr)
-    = if (vars & instance?(vars.var-info, <values-cluster-info>))
-	// We are catching a cluster.
-	let cluster = make-values-cluster(builder, vars.var-info.debug-name,
-					  vars.var-info.asserted-type);
-	values(cluster, cluster);
-      else
-	let temps = make(<stretchy-vector>);
-	for (var = vars then var.definer-next,
-	     while: var)
-	  add!(temps,
-	       make-local-var(builder, var.var-info.debug-name,
-			      vars.var-info.asserted-type));
-	end;
-	let list = as(<list>, temps);
-	values(list, make-primitive-operation(builder, #"values", list));
-      end;
+  let temp = make-values-cluster(builder, #"cluster", wild-ctype());
 
-  // Change the catcher assignment to reference the temps.
-  catcher-dep.source-exp := temps-expr;
-  temps-expr.dependents := catcher-dep;
+  // Change the catcher assignment to reference the temp.
+  catcher-dep.source-exp := temp;
+  temp.dependents := catcher-dep;
   catcher.dependents := #f;
   queue-dependent(component, catcher-assign);
 
-  // Flush the catcher.
-  delete-dependent(component, catcher);
-  catcher.target-region.catcher := #f;
+  // Convert the pitchers into assignments and regular exits.
+  for (exit = target.exits then exit.next-exit,
+       while: exit)
+    if (instance?(exit, <pitcher>))
+      // Assign the temp from the args, insert that assignment just before
+      // the pitcher, and then delete the pitcher.
+      build-assignment(builder, $Default-Policy, exit.source-location,
+		       temp, exit.depends-on.source-exp);
+      build-exit(builder, $Default-Policy, exit.source-location, target);
 
-  for (pitcher = catcher.pitchers then pitcher.pitcher-next,
-       while: pitcher)
-    // Extract the args from the pitcher.
-    let arg-deps = pitcher.depends-on;
-    let args
-      = if (arg-deps & instance?(arg-deps.source-exp, <abstract-variable>)
-	      & instance?(arg-deps.source-exp.var-info, <values-cluster-info>))
-	  // We are pitching a cluster.
-	  arg-deps.source-exp;
-	else
-	  let args = make(<stretchy-vector>);
-	  for (dep = arg-deps then dep.dependent-next,
-	       while: dep)
-	    add!(args, dep.source-exp);
-	  end;
-	  make-primitive-operation(builder, #"values", as(<list>, args));
-	end;
-    // Assign the temps from the args, insert that assignment just before
-    // the pitcher, and then delete the pitcher.
-    let pitcher-assign = pitcher.dependents.dependent;
-    build-assignment(builder, pitcher-assign.policy,
-		     pitcher-assign.source-location, temps, args);
-    insert-before(component, pitcher-assign, builder-result(builder));
-    // Deleting the assignment causes the pitcher to be freed up and
-    // queued the catcher for reoptimization.
-    delete-and-unlink-assignment(component, pitcher-assign);
+      replace-subregion(component, exit.parent, exit, builder-result(builder));
+
+      delete-dependent(component, exit);
+    end;
   end;
 
+  // Flush the catcher.
+  delete-dependent(component, catcher);
+  target.catcher := #f;
+
   // Now if there are no exits, flush the block.
-  let target = catcher.target-region;
   unless (target.exits)
     replace-subregion(component, target.parent, target, target.body);
   end;
 end;
+
+
 
 
 // Function optimization
@@ -749,9 +758,10 @@ define method maybe-expand-cluster
       error("Trying to expand a cluster that isn't being used?");
     end;
     if (cluster.dependents.source-next)
-      error("Trying to expand a cluster that is in more than one place?");
+      error("Trying to expand a cluster that is referenced "
+	      "in more than one place?");
     end;
-    expand-cluster(component, cluster);
+    expand-cluster(component, cluster, cluster.derived-type.min-values);
     #t;
   else
     #f;
@@ -759,13 +769,15 @@ define method maybe-expand-cluster
 end;
 
 define method expand-cluster 
-    (component :: <component>, cluster :: <ssa-variable>) => ();
+    (component :: <component>, cluster :: <ssa-variable>,
+     number-of-values :: <fixed-integer>)
+    => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
   let assign = cluster.definer;
   let new-defines = #f;
   let new-depends-on = cluster-dependency.dependent-next;
-  for (index from cluster.derived-type.min-values - 1 to 0 by -1)
+  for (index from number-of-values - 1 to 0 by -1)
     let debug-name = as(<symbol>, format-to-string("result%d", index));
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
@@ -797,13 +809,15 @@ define method expand-cluster
 end;
 
 define method expand-cluster 
-    (component :: <component>, cluster :: <initial-variable>) => ();
+    (component :: <component>, cluster :: <initial-variable>,
+     number-of-values :: <fixed-integer>)
+    => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
   let assigns = map(definer, cluster.definitions);
   let new-defines = make(<list>, size: cluster.definitions.size, fill: #f);
   let new-depends-on = cluster-dependency.dependent-next;
-  for (index from cluster.derived-type.min-values - 1 to 0 by -1)
+  for (index from number-of-values - 1 to 0 by -1)
     let debug-name = as(<symbol>, format-to-string("result%d", index));
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
@@ -1790,18 +1804,17 @@ define method delete-dependent
     (component :: <component>, pitcher :: <pitcher>, #next next-method)
     => ();
   next-method();
-  let catcher = pitcher.catcher;
-  for (scan = catcher.pitchers then scan.pitcher-next,
-       prev = #f then scan,
-       until: scan == pitcher)
+  for (exit = pitcher.block-of.exits then exit.next-exit,
+       prev = #f then exit,
+       until: exit == pitcher)
   finally
     if (prev)
-      prev.pitcher-next := pitcher.pitcher-next;
+      prev.next-exit := pitcher.next-exit;
     else
-      catcher.pitchers := pitcher.pitcher-next;
+      pitcher.block-of.exits := pitcher.next-exit;
     end;
   end;
-  queue-dependent(component, catcher);
+  queue-dependent(component, pitcher.block-of.catcher);
 end;
 
 define method delete-and-unlink-assignment
@@ -1954,6 +1967,26 @@ define method insert-exit-after
   end;
 end;
 
+define method insert-pitcher-after
+    (component :: <component>, assignment :: <abstract-assignment>,
+     target :: <block-region-mixin>, cluster :: <abstract-variable>)
+    => ();
+  let region = assignment.region;
+  let region-parent = region.parent;
+  let (before, after) = split-after(assignment);
+  let exit = make(<pitcher>, block: target, next: target.exits);
+  target.exits := exit;
+  let dep = make(<dependency>, dependent: exit, source-exp: cluster,
+		 source-next: cluster.dependents);
+  cluster.dependents := dep;
+  exit.depends-on := dep;
+  let new = combine-regions(before, exit);
+  replace-subregion(component, region-parent, region, new);
+  after.parent := #f;
+  delete-stuff-in(component, after);
+  delete-stuff-after(component, exit.parent, exit);
+end;
+
 
 define generic exit-useless?
     (from :: <region>, after :: <region>, target :: <block-region-mixin>)
@@ -2053,6 +2086,11 @@ define method delete-stuff-in
   end;
 end;
 
+define method delete-stuff-in
+    (component :: <component>, region :: <pitcher>, #next next-method) => ();
+  delete-dependent(region);
+  next-method();
+end;
 
 define method all-exits-gone
     (component :: <component>, region :: <component>) => ();
@@ -2530,6 +2568,11 @@ end;
 
 define method assure-all-done-region
     (component :: <component>, region :: <exit>) => ();
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <pitcher>) => ();
+  assure-all-done-dependent(component, region);
 end;
 
 define method assure-all-done-region
