@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.13 1995/04/28 02:42:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.14 1995/05/05 08:49:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -935,7 +935,8 @@ define method ct-value-cclass (object :: <literal-string>) => res :: <cclass>;
   dylan-value(#"<byte-string>");
 end method;
 
-define method ct-value-cclass (object :: <literal-vector>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-simple-object-vector>)
+    => res :: <cclass>;
   dylan-value(#"<simple-object-vector>");
 end method;
 
