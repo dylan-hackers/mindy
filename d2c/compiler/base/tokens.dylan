@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.6 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.7 1995/08/28 13:03:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -286,6 +286,7 @@ define constant $operator-info
       table[#"="] := #(2 . #t);
       table[#"=="] := #(2 . #t);
       table[#"~="] := #(2 . #t);
+      table[#"~=="] := #(2 . #t);
       table[#"<"] := #(2 . #t);
       table[#">"] := #(2 . #t);
       table[#"<="] := #(2 . #t);
