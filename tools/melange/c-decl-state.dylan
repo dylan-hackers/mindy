@@ -122,6 +122,8 @@ define method push-include-level
        | make(<deque>));
   push(state.recursive-files-stack, old-file);
   state.current-file := file;
+  push-default-parse-context(state);
+  parse-progress-report(#f, ">>> entered header");
   state;
 end method push-include-level;
 
@@ -133,9 +135,11 @@ define method pop-include-level
   if (state.recursive-files-stack.empty?)
     parse-error(state, "Bad pop-include-level");
   end if;
+  parse-progress-report(#f, "<<< exiting header");
   state.recursive-declaration-table[state.current-file] := state.declarations;
   state.current-file := pop(state.recursive-files-stack);
   state.declarations := state.recursive-declaration-table[state.current-file];
+  pop-default-parse-context();
   state;
 end method pop-include-level;
 
@@ -189,14 +193,13 @@ end method;
 // Functions to be called from within c-parse
 //----------------------------------------------------------------------
 
-// Another method for the "parse-error" generic.  This one accepts a
+// Another method for the "source-location" generic.  This one accepts a
 // <parse-state> and tries to use it to figure out the error location.
 //
-define method parse-error
-    (state :: <parse-state>, format :: <string>, #rest args)
- => (); // Never returns
-  apply(parse-error, state.tokenizer, format, args);
-end method parse-error;
+define method source-location (state :: <parse-state>)
+ => (srcloc :: <source-location>)
+  source-location(state.tokenizer);
+end method;
 
 // We may have a jumble of type specifiers.  Rationalize them into a
 // predefined type or user defined type.

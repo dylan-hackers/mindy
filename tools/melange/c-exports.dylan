@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.3 1998/09/25 00:11:00 emk Exp $
 
 //======================================================================
 //
@@ -47,8 +47,54 @@ define library melange-c
   use streams;
   use standard-io;
   use format;
-  export multistring-match, c-lexer, c-declarations, portability;
+
+  // General purpose utility modules.
+  export
+    source-locations,
+    parse-conditions,
+    multistring-match;
+
+  // Melange-specific.
+  export
+    c-lexer,
+    c-declarations,
+    portability;
 end library melange-c;
+
+define module source-locations
+  use dylan;
+  use extensions;
+  use streams;
+  use format;
+  export
+    source-location,
+    <source-location>,
+    describe-source-location,
+    <unknown-source-location>,
+    <file-source-location>,
+      source-file,
+      source-line;
+end module source-locations;
+
+define module parse-conditions
+  use dylan;
+  use extensions;
+  use source-locations;
+  use streams;
+  use format;
+  export
+    *show-parse-progress?*,
+    <parse-condition>,
+    <simple-parse-error>,
+    <simple-parse-warning>,
+    <parse-progress-report>,
+    push-default-parse-context,
+    pop-default-parse-context,
+    \with-default-parse-context,
+    parse-error,
+    parse-warning,
+    parse-progress-report;
+end module;
 
 define module multistring-match
   use dylan;
@@ -70,6 +116,12 @@ define module c-lexer
   use substring-search;
   use character-type;
   use streams;
+  use source-locations;
+  use parse-conditions,
+    // XXX - These should probably go away.
+    export: {parse-error,
+	     parse-warning,
+	     parse-progress-report};
   use multistring-match;
   create cpp-parse;
   export
@@ -82,7 +134,7 @@ define module c-lexer
     <unsigned-token>, <float-token>, <double-token>, <void-token>,
     <union-token>, <enum-token>, <minus-token>, <tilde-token>, <bang-token>,
     <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
-    value, parse-error, unget-token, add-typedef, get-token, include-path,
+    value, unget-token, add-typedef, get-token, include-path,
     check-cpp-expansion, open-in-include-path
 end module c-lexer;
 
@@ -140,6 +192,8 @@ define module c-declarations
   use c-lexer;			// Tokens are used in process-type-list and
 				// make-struct-type
   use portability;              // constants for size of C data types
+  use source-locations;         // Used for error and 
+  use parse-conditions;         //   progress reporting.
 
   export
     // Basic type declarations

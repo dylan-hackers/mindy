@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.1 1998/05/03 19:55:53 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.2 1998/09/25 00:11:02 emk Exp $
 
 //======================================================================
 //
@@ -172,7 +172,7 @@ define module define-interface
    
   // From standard-io
   use standard-io;
-
+  
   // local packages
   use int-lexer;
   use int-parse, rename: {rename => renames};
@@ -181,5 +181,6 @@ define module define-interface
     rename: {parse => c-parse, <parse-state> => <c-parse-state>};
   use name-mappers;
   use portability;
+  use parse-conditions, exclude: {parse-error};
 end module define-interface;
 

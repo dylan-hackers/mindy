@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.1 1998/05/03 19:55:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.2 1998/09/25 00:11:04 emk Exp $
 
 //======================================================================
 //
@@ -538,9 +538,12 @@ define method main (program, #rest args)
   let out-file = #f;
   let verbose = #f;
 
+  *warning-output* := *standard-error*;
+
   for (arg in args)
     if (arg = "-v")
       verbose := #t;
+      *show-parse-progress?* := #t;
     elseif (is-prefix?("-I", arg))
       let include-string = copy-sequence(arg, start: 2);
       #if (compiled-for-win32)
