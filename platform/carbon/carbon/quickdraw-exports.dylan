@@ -21,6 +21,7 @@ define module quickdraw
 		SetRect, PtInRect, InsetRect,
 				
 		<BitMap>, GetPixBounds, //<QDGlobals>, screenBits, qd,
+    GetQDGlobalsScreenBits,
 		<RgnHandle>, NewRgn, DisposeRgn, SetEmptyRgn, SetRectRgn, RectRgn,
 		
 		<GrafPtr>, SetPort, GetPort,
