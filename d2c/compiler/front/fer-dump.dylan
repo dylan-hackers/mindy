@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.29 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.30 1995/06/09 19:07:59 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,8 +193,10 @@ define method dump
 		   prefix: "(",
 		   body:
 		     method (stream)
+		       let prologue-assign-dep = func.prologue.dependents;
 		       for (arg-type in func.argument-types,
-			    var = func.prologue.dependents.dependent.defines
+			    var = (prologue-assign-dep
+				     & prologue-assign-dep.dependent.defines)
 			      then var & var.definer-next,
 			    first? = #t then #f)
 			 unless (first?)
