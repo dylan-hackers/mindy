@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.32 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.33 1995/08/29 15:22:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -905,7 +905,7 @@ define method class-defn-maker-function
 		 let key-info
 		   = make(<key-info>, key-name: key, type: slot.slot-type,
 			  required: slot.slot-init-keyword-required?,
-			  default: init-value, supplied?-var: ~init-value);
+			  default: init-value);
 		 add!(key-infos, key-info);
 	       end;
 	     end;
@@ -1462,7 +1462,7 @@ define method convert-top-level-form
 				 type);
 	      let key-info = make(<key-info>, key-name: key, type: type,
 				  required: slot.slot-init-keyword-required?,
-				  default: default, supplied?-var: ~default);
+				  default: default);
 	      add!(key-infos, key-info);
 	      if (default)
 		add!(maker-args, init-value-var);
@@ -1477,7 +1477,14 @@ define method convert-top-level-form
 		  = make-local-var(maker-builder,
 				   symcat(key, "-supplied?"),
 				   specifier-type(#"<boolean>"));
-		add!(maker-args, supplied?-arg);
+		if (key-info.key-needs-supplied?-var)
+		  add!(maker-args, supplied?-arg);
+		else
+		  build-assignment
+		    (maker-builder, policy, source, supplied?-arg,
+		     make-operation(maker-builder, <primitive>, list(arg),
+				    name: #"initialized?"));
+		end;
 		build-if-body(maker-builder, policy, source, supplied?-arg);
 		build-assignment(maker-builder, policy, source,
 				 init-value-var, arg);
