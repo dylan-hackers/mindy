@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.9 1996/09/19 12:18:32 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.10 1997/01/16 15:15:49 nkramer Exp $
 
 //======================================================================
 //
@@ -37,6 +37,8 @@ define library text-inspector
   use print;
   use string-extensions;
   use inspector-base;
+  export
+    text-inspector;
 end library text-inspector;
 
 define module text-inspector
