@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.2 1996/02/08 01:36:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.3 1996/02/17 06:51:50 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -231,7 +231,7 @@ define method optimize-generic
 
     // Blow out of here if applicable isn't a valid set of methods.
     unless (maybe == #() | (maybe.tail == #() & definitely == #()))
-      return();
+      maybe-change-to-known();
     end unless;
 
     // Compute the set of valid keywords.
