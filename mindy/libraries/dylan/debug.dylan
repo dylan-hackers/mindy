@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.2 1994/03/30 06:07:23 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.3 1994/04/06 22:53:30 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -26,38 +26,77 @@ define method report-problem (problem)
 end;
 
 
+define constant debug-variables = make(<stretchy-vector>);
 
-define method eval-debugger-expr (expr)
-  select (head(expr))
-    literal: => tail(expr);
-    funcall: =>
-      apply(method (func, #rest args) apply(func, args) end,
-	    map(eval-debugger-expr, tail(expr)));
-  end;
+
+define method debugger-flush ()
+  debug-variables.size := 0;
+  puts("Flushed all debugger variables.\n");
+  values();
 end;
 
 
+
+define method eval-debugger-expr (expr, num-debug-vars)
+  select (head(expr))
+    debug-var: =>
+      let var = tail(expr);
+      block ()
+	if (var < 0)
+	  debug-variables[num-debug-vars + var];
+	else
+	  debug-variables[var];
+	end;
+      exception <error>
+	error("No debug variable $~S", var);
+      end;
+    literal: => tail(expr);
+    funcall: =>
+      apply(method (func, #rest args) apply(func, args) end,
+	    map(rcurry(eval-debugger-expr, num-debug-vars), tail(expr)));
+  end;
+end method;
+
+
+define method eval-and-print (expr, num-debug-vars)
+  let (#rest results) = eval-debugger-expr(expr, num-debug-vars);
+  if (empty?(results))
+    puts("[0 values returned]");
+  else
+    for (first = #t then #f,
+	 result in results)
+      unless (first)
+	puts(", ");
+      end;
+      format("$~S=~S", debug-variables.size, result);
+      add!(debug-variables, result);
+    end;
+  end;
+  putc('\n');
+end method;
+
+define method debugger-call (exprs)
+  let num-debug-vars = debug-variables.size;
+  for (expr in exprs)
+    block ()
+      eval-and-print(expr, num-debug-vars);
+    exception (<abort>, description: "Blow off call")
+      #f;
+    end;
+  end;
+end;
+
 define method debugger-print (exprs)
   block ()
+    let num-debug-vars = debug-variables.size;
     for (expr in exprs)
       block ()
-	let (#rest results) = eval-debugger-expr(expr);
-	if (empty?(results))
-	  puts("[0 values returned]");
-	else
-	  for (first = #t then #f,
-	       result in results)
-	    unless (first)
-	      puts(", ");
-	    end;
-	    prin1(result);
-	  end;
-	end;
+	eval-and-print(expr, num-debug-vars);
       exception (problem :: <error>)
 	puts("invocation failed:\n  ");
 	report-problem(problem);
+	putc('\n');
       end;
-      putc('\n');
     end;
   exception (<error>)
     puts("Could not recover from earlier error.\n");
