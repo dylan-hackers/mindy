@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.3 1994/04/24 21:41:53 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.4 1994/05/31 17:24:58 rgs Exp $
 *
 * This file does whatever.
 *
@@ -19,7 +19,8 @@
 /* If this enumeration changes, you must also update "class.h" */
 #ifndef type_Id_defined
 #define type_Id_defined
-enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union};
+enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union,
+	      id_NoneOf};
 #endif
 
 extern obj_t obj_TypeClass;
@@ -44,5 +45,6 @@ extern obj_t type_union(obj_t type1, obj_t type2);
 extern void init_class_type_stuff(obj_t class);
 extern obj_t intersect_limited_integers(obj_t lim1, obj_t lim2);
 extern obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2);
+extern obj_t restrict_type(obj_t val, obj_t type);
 
 extern void type_init_classes(void);
