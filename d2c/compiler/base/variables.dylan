@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.24 1996/02/03 04:33:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.25 1996/02/09 20:38:40 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -90,9 +90,9 @@ define method print-object (mod :: <module>, stream :: <stream>) => ();
 end;
 
 define method print-message (mod :: <module>, stream :: <stream>) => ();
-  format(stream, "module %s, library %s",
-	 mod.module-name,
-	 mod.module-home.library-name);
+  format(stream, "module %s:%s",
+	 mod.module-home.library-name,
+	 mod.module-name);
 end;
 
 define method initialize
