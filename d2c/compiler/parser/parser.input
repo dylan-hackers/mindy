@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.7 2001/05/27 08:32:23 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.8 2003/03/03 14:18:03 gabor Exp $
 copyright: see below
 
 %%
@@ -1432,7 +1432,7 @@ method-and-name-opt (non-variable-name variable-name)
 :type method-body <method-parse>
 
 method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN semi-opt body-opt)
-  make(<method-parse>, parameters: %2, body: %5);
+  make(<method-parse>, parameters: %2, body: %5, source-location: simplify-source-location(@0));
 %
 
 method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
@@ -1440,13 +1440,14 @@ method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
   make(<method-parse>,
        parameters: %2,
        returns: make(<parameter-list>, fixed: vector(%5)),
-       body: %7);
+       body: %7,
+	   source-location: simplify-source-location(@0));
 %
 
 method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
 	     ARROW LEFT-PAREN variable-list-opt
 	     RIGHT-PAREN semi-opt body-opt)
-  make(<method-parse>, parameters: %2, returns: %6, body: %9);
+  make(<method-parse>, parameters: %2, returns: %6, body: %9, source-location: simplify-source-location(@0));
 %
 
 :type parameter-list-opt <parameter-list>
