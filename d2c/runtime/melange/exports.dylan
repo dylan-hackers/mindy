@@ -1,4 +1,5 @@
 module: dylan-user
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/exports.dylan,v 1.3 1996/09/15 15:51:10 nkramer Exp $
 
 define library melange-support
   use dylan;

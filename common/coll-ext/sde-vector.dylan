@@ -1,5 +1,6 @@
 module: SDE-vector
 author: Nick Kramer (nkramer@cs.cmu.edu)
+RCS-header: $Header: /home/housel/work/rcs/gd/src/common/coll-ext/sde-vector.dylan,v 1.2 1996/09/15 15:51:05 nkramer Exp $
 
 // Stretchy double ended vector
 

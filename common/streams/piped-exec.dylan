@@ -1,6 +1,6 @@
 module: piped-exec
 author: Nick Kramer
-rcs-header: $header$
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/piped-exec.dylan,v 1.3 1996/09/15 15:51:20 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 

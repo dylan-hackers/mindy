@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $header$
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.6 1996/09/15 15:52:00 nkramer Exp $
 
 //========================================================================
 //

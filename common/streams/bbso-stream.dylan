@@ -1,6 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, adapted from code by Bill Chiles
 synopsis: <buffered-byte-string-output-stream> -- used inside d2c.
+RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/bbso-stream.dylan,v 1.5 1996/09/15 15:51:19 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 

@@ -1,6 +1,7 @@
 module: dylan-viscera
 author: Ben Folk-Williams
 synopsis: Transcendentals.
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Attic/transcendental.dylan,v 1.4 1996/09/15 15:51:09 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 

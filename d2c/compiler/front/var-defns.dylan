@@ -1,4 +1,5 @@
 module: variable-definitions
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/var-defns.dylan,v 1.4 1996/09/15 15:51:03 nkramer Exp $
 
 
 // definition class definitions

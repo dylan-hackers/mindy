@@ -2,6 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Wrapper Streams.
 copyright: See below.
+RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/wrapper-streams.dylan,v 1.10 1996/09/15 15:51:16 nkramer Exp $
 
 //======================================================================
 //
