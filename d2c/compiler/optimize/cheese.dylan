@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.27 1995/04/27 04:37:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.28 1995/04/27 05:00:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -432,31 +432,7 @@ end;
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>, func :: <exit-function>)
     => ();
-  // If the call is in the same lambda as the block, convert it to a
-  // pitcher and exit region.
-  let call-dependency = call.dependents;
-  let assign = call-dependency.dependent;
-  let catcher = func.catcher;
-  let block-region = catcher.target-region;
-  for (region = assign.region then region.parent,
-       until: region == #f | region == block-region)
-  finally
-    if (region)
-      let args = call.depends-on.dependent-next;
-      let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
-			 depends-on: args, dependents: call-dependency);
-      catcher.pitchers := pitcher;
-      remove-dependency-from-source(component, call.depends-on);
-      for (dep = args then dep.dependent-next,
-	   while: dep)
-	dep.dependent := pitcher;
-      end;
-      call-dependency.source-exp := pitcher;
-      queue-dependent(component, assign);
-      queue-dependent(component, pitcher);
-      insert-exit-after(component, assign, block-region);
-    end;
-  end;
+  maybe-expand-exit-function(component, call, func);
 end;
 
 define method change-call-kind
@@ -486,6 +462,42 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
   let cluster = call.depends-on.dependent-next.source-exp;
   if (maybe-expand-cluster(component, cluster))
     change-call-kind(component, call, <unknown-call>);
+  else
+    let func = call.depends-on.source-exp;
+    if (instance?(func, <exit-function>))
+      maybe-expand-exit-function(component, call, func);
+    end;
+  end;
+end;
+
+define method maybe-expand-exit-function
+    (component :: <component>, call :: <abstract-call>,
+     func :: <exit-function>)
+    => ();
+  // If the call is in the same lambda as the block, convert it to a
+  // pitcher and exit region.
+  let call-dependency = call.dependents;
+  let assign = call-dependency.dependent;
+  let catcher = func.catcher;
+  let block-region = catcher.target-region;
+  for (region = assign.region then region.parent,
+       until: region == #f | region == block-region)
+  finally
+    if (region)
+      let args = call.depends-on.dependent-next;
+      let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
+			 depends-on: args, dependents: call-dependency);
+      catcher.pitchers := pitcher;
+      remove-dependency-from-source(component, call.depends-on);
+      for (dep = args then dep.dependent-next,
+	   while: dep)
+	dep.dependent := pitcher;
+      end;
+      call-dependency.source-exp := pitcher;
+      queue-dependent(component, assign);
+      queue-dependent(component, pitcher);
+      insert-exit-after(component, assign, block-region);
+    end;
   end;
 end;
 
