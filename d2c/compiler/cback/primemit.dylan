@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.23 1996/02/09 00:04:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.24 1996/02/16 18:52:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -976,6 +976,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("fabsf(", x, ')'), *float-rep*,
 		    #f, file);
    end);
@@ -997,6 +998,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1008,6 +1010,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1019,6 +1022,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1177,7 +1181,8 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, stringify("fabsf(", x, ')'), *double-rep*,
+     maybe-emit-include("math.h", file);
+     deliver-result(results, stringify("fabs(", x, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1199,6 +1204,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1210,6 +1216,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1221,6 +1228,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1379,7 +1387,8 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, stringify("fabsf(", x, ')'),
+     maybe-emit-include("math.h", file);
+     deliver-result(results, stringify("fabs(", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1401,6 +1410,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1412,6 +1422,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
@@ -1423,6 +1434,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
+     maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
