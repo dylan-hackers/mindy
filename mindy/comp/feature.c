@@ -1,3 +1,34 @@
+/**********************************************************************\
+*
+*  Copyright (c) 1995, 1996  Carnegie Mellon University
+*  All rights reserved.
+*  
+*  Use and copying of this software and preparation of derivative
+*  works based on this software are permitted, including commercial
+*  use, provided that the following conditions are observed:
+*  
+*  1. This copyright notice must be retained in full on any copies
+*     and on appropriate parts of any derivative works.
+*  2. Documentation (paper or online) accompanying any system that
+*     incorporates this software, or any part of it, must acknowledge
+*     the contribution of the Gwydion Project at Carnegie Mellon
+*     University.
+*  
+*  This software is made available "as is".  Neither the authors nor
+*  Carnegie Mellon University make any warranty about the software,
+*  its performance, or its conformity to any specification.
+*  
+*  Bug reports, questions, comments, and suggestions should be sent by
+*  E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+*
+***********************************************************************
+*
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.5 1996/06/11 11:20:53 nkramer Exp $
+*
+* This file handles conditional compilation
+*
+\**********************************************************************/
+
 #include "../compat/std-c.h"
 
 #include "mindycomp.h"
@@ -237,7 +268,7 @@ int yylex(void)
 	    if (State == NULL || State->active)
 		return yytoken;
 	    new_token();
-	    break;
+	    break;  /* Break out of switch */
 	}
     }
 }
