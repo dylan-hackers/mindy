@@ -102,8 +102,8 @@ if (@files_to_clean) {
     push(@clean_commands, "-rm -f @files_to_clean");
 }
 
-push(@Makefile_dependencies, $0, $defaults, $makegen);
-push(@Makefile_commands, $0);
+push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
+push(@GNUmakefile_commands, $0);
 
 do emit_rule ('compile');
 $destdir && do emit_rule ('install');
@@ -364,5 +364,6 @@ sub makegen_include {
     local($include_file) =  @_;
     $include_file = $srcdir . '/' . $include_file;
     (-e $include_file) || die("No $include_file\n");
+    push(@GNUmakefile_dependencies, $0, $include_file);
     do $include_file;
 }
