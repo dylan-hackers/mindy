@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.94 1995/06/15 01:29:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.95 1995/06/15 15:01:46 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -450,7 +450,8 @@ define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <ssa-variable>,
      #next next-method)
     => did-anything? :: <boolean>;
-  unless (instance?(var.definer, <let-assignment>))
+  unless (instance?(var.definer, <let-assignment>)
+	    & ~instance?(value.definer, <let-assignment>))
     next-method();
   end;
 end;
