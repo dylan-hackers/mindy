@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.6 1996/04/22 15:27:29 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.7 1996/04/24 12:28:41 wlott Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -93,8 +93,7 @@ clean:
 realclean:
 	rm -f ${OBJS} Makefile *~ \#* core
 
-install: inspector-base.dbc text-inspector.dbc x-inspector.dbc
+install: inspector-base.dbc text-inspector.dbc x-inspector-lib.dbc
 	${INSTALL_DATA} inspector-base.dbc ${LIBDIR}
 	${INSTALL_DATA} text-inspector.dbc ${LIBDIR}
-	${INSTALL_DATA} class-diagram.dbc ${LIBDIR}
-	${INSTALL_DATA} x-inspector.dbc ${LIBDIR}
+	${INSTALL_DATA} x-inspector-lib.dbc ${LIBDIR}
