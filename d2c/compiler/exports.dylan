@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.19 1995/03/23 21:54:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.20 1995/03/24 12:23:21 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,7 +38,9 @@ define module utils
 
   // Stuff defined in utils
   export
-    write-class-name, write-address, pprint-fields, dformat, assert,
+    write-class-name, write-address, pprint-fields,
+    find-in, size-in,
+    dformat, assert,
     compiler-warning, compiler-error, key-of, list?, pair?;
 end;
 
@@ -576,13 +578,13 @@ define module flow
 
     parent, parent-setter, first-assign, first-assign-setter, last-assign,
     last-assign-setter, regions, regions-setter, join-region,
-    join-region-setter, if-test, if-test-setter, then-region,
+    join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, call-sites, call-sites-setter, block-of,
     block-of-setter, method-of, method-of-setter, all-methods,
     all-methods-setter,
 
-    <expression>, <dependency>, <leaf>, <variable-info>,
+    <expression>, <dependency>, <dependent-mixin>, <leaf>, <variable-info>,
     <definition-site-variable>, <ssa-variable>, <initial-definition>,
     <multi-definition-variable>, <initial-variable>, <global-variable>,
     <operation>, <join-operation>, <abstract-assignment>, <assignment>,
@@ -590,15 +592,15 @@ define module flow
 
     dependents, derived-type, source-exp, source-next, dependent,
     dependent-next, var-info, asserted-type, definer, definer-next, queue-next,
-    definition-of, definitions, operands, defines, region, next-op, prev-op,
-    expression,
+    definition-of, definitions, defines, region, next-op, prev-op,
+    depends-on,
 
     dependents-setter, derived-type-setter, source-exp-setter,
     source-next-setter, dependent-setter, dependent-next-setter,
     var-info-setter, asserted-type-setter, definer-setter, definer-next-setter,
     queue-next-setter, definition-of-setter, definitions-setter,
-    operands-setter, defines-setter, region-setter, next-op-setter,
-    prev-op-setter, expression-setter;
+    defines-setter, region-setter, next-op-setter, depends-on-setter,
+    prev-op-setter;
 
 end;
 
