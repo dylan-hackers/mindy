@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.38 2002/08/25 12:05:40 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.39 2002/08/25 12:22:57 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -2591,8 +2591,8 @@ define method emit-assignment
 	  result-exprs[index]
 	    := pair(stringify(temp, ".R", index), rep);
 	end;
-	deliver-results(results, result-exprs, #t, file);
-        free-local(file, temp); // BGH bug!?
+        deliver-results(results, result-exprs, #t, file);
+        free-local(file, temp);
       end if;
     otherwise =>
       deliver-result(results, call, result-rep, #t, file);
