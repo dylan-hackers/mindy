@@ -15,7 +15,7 @@ if ($buildroot) {
     }
 }
 
-($srcroot =~ /^\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
+($srcroot =~ /^(\w:)?\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
 
 do mk_build_tree($srcroot, '.');
 

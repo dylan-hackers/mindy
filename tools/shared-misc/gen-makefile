@@ -73,7 +73,7 @@ unless ($buildroot eq $orig_buildroot) {
 
 # Make sure they set srcroot.  And set it to an absolute pathname.
 $srcroot || die('$srcroot not set in Defaults.\n');
-($srcroot =~ /^\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
+($srcroot =~ /^(\w:)?\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
 
 # Tack the subdir onto srcroot.  Note: subdir is empty or ends with a /, hence
 # the chop.
