@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.4 1994/03/28 11:30:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.5 1994/03/30 06:03:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -132,13 +132,14 @@ struct constituent *make_define_constant(struct bindings *bindings)
     return (struct constituent *)res;
 }
 
-struct constituent *make_define_method(struct method *method)
+struct constituent *make_define_method(flags_t flags, struct method *method)
 {
     struct defmethod_constituent *res
 	= malloc(sizeof(struct defmethod_constituent));
 
     res->kind = constituent_DEFMETHOD;
     res->next = NULL;
+    res->flags = flags;
     res->method = method;
     res->tlf = NULL;
 
@@ -288,10 +289,8 @@ struct id *make_id(struct token *token)
     char *ptr = token->chars;
     struct id *res;
 
-    if (*ptr == '`') {
-	ptr[token->length-1] = '\0';
+    if (*ptr == '\\')
 	ptr++;
-    }
 
     res = id(symbol(ptr));
     res->internal = FALSE;
@@ -377,20 +376,25 @@ struct param_list *allow_keywords(struct param_list *param_list)
 }
 
 struct keyword_param
-    *make_keyword_param(struct token *key, struct id *sym,
+    *make_keyword_param(struct token *key, struct id *sym, struct expr *type,
 			struct expr *def)
 {
     struct keyword_param *res = malloc(sizeof(struct keyword_param));
 
-    /* The keyword token has a trailing : */
-    key->chars[key->length-1] = '\0';
+    if (key) {
+	/* The keyword token has a trailing : */
+	key->chars[key->length-1] = '\0';
+	res->keyword = keyword(key->chars);
+	free(key);
+    }
+    else
+	res->keyword = keyword(sym->symbol->name);
 
-    res->keyword = keyword(key->chars);
     res->id = sym;
+    res->type = type;
+    res->type_temp = NULL;
     res->def = def;
     res->next = NULL;
-
-    free(key);
 
     return res;
 }
@@ -646,6 +650,7 @@ struct return_type_list *make_return_type_list(struct expr *rest)
     struct return_type_list *res = malloc(sizeof(struct return_type_list));
 
     res->req_types = NULL;
+    res->req_types_tail = &res->req_types;
     res->req_types_list = NULL;
     res->rest_type = rest;
     res->rest_temp = NULL;
@@ -653,16 +658,25 @@ struct return_type_list *make_return_type_list(struct expr *rest)
     return res;
 }
 
-struct return_type_list *push_return_type(struct expr *type,
-					  struct return_type_list *list)
+struct return_type_list *add_return_type(struct return_type_list *list,
+					 struct expr *type)
 {
     struct return_type *rtype = malloc(sizeof(struct return_type));
 
     rtype->type = type;
     rtype->temp = NULL;
-    rtype->next = list->req_types;
-    list->req_types = rtype;
+    rtype->next = NULL;
+    *list->req_types_tail = rtype;
+    list->req_types_tail = &rtype->next;
 
+    return list;
+}
+
+struct return_type_list
+    *set_return_type_rest_type(struct return_type_list *list,
+			       struct expr *type)
+{
+    list->rest_type = type;
     return list;
 }
 
@@ -871,16 +885,9 @@ struct literal *parse_symbol_token(struct token *token)
     /* We modify the token here, but we don't care 'cause we will be */
     /* freeing it shortly. */
 
-    if (*ptr == '#') {
-	/* They used the #`...` quoting convention. */
-	ptr[token->length-1] = '\0';
-	ptr += 2;
-    }
-    else if (*ptr == '`') {
-	/* They used the `...` quoting convention. */
-	ptr[token->length-1] = '\0';
+    if (*ptr == '\\')
+	/* They used the \op quoting convention. */
 	ptr++;
-    }
 
     res = make_symbol_literal(symbol(ptr));
     res->line = token->line;
@@ -898,8 +905,12 @@ struct literal *parse_keyword_token(struct token *token)
     /* We modify the token here, but we don't care 'cause we will be */
     /* freeing it shortly. */
 
-    /* keyword tokens have a trailing : */
+    /* keyword tokens have a trailing : or " */
     ptr[token->length-1] = '\0';
+
+    /* Sometimes they also have a leading #" */
+    if (*ptr == '#')
+	ptr += 2;
 
     res = make_keyword_literal(keyword(ptr));
     res->line = token->line;
@@ -1195,7 +1206,7 @@ struct condition_clause
 }
 
 struct for_clause
-    *make_equal_then_for_clause(struct param *var, struct expr *equal,
+    *make_equal_then_for_clause(struct param_list *vars, struct expr *equal,
 				struct expr *then)
 {
     struct equal_then_for_clause *res
@@ -1203,7 +1214,7 @@ struct for_clause
 
     res->kind = for_EQUAL_THEN;
     res->next = NULL;
-    res->var = var;
+    res->vars = vars;
     res->equal = equal;
     res->then = then;
 
@@ -1218,7 +1229,7 @@ struct for_clause
 
     res->kind = for_IN;
     res->next = NULL;
-    res->var = var;
+    res->vars = push_param(var, make_param_list());
     res->collection = collection;
 
     return (struct for_clause *)res;
@@ -1233,7 +1244,7 @@ struct for_clause
 
     res->kind = for_FROM;
     res->next = NULL;
-    res->var = var;
+    res->vars = push_param(var, make_param_list());
     res->from = from;
     if (to) {
 	res->to_kind = to->kind;
@@ -1289,6 +1300,7 @@ struct constituent
 
     res->kind = constituent_DEFCLASS;
     res->next = NULL;
+    res->flags = 0;
     res->name = name;
     res->supers = supers->head;
     free(supers);
@@ -1305,6 +1317,13 @@ struct constituent
     }
 
     return (struct constituent *)res;
+}
+
+struct constituent *set_class_flags(flags_t flags,
+				    struct constituent *defclass)
+{
+    ((struct defclass_constituent *)defclass)->flags = flags;
+    return defclass;
 }
 
 struct superclass_list *make_superclass_list(void)
@@ -1346,11 +1365,12 @@ struct class_guts *make_class_guts(void)
 }
 
 struct slot_spec
-    *make_slot_spec(enum slot_allocation alloc, struct id *name,
+    *make_slot_spec(flags_t flags, enum slot_allocation alloc, struct id *name,
 		    struct expr *type, struct plist *plist)
 {
     struct slot_spec *res = malloc(sizeof(struct slot_spec));
 
+    res->flags = flags;
     res->alloc = alloc;
     res->name = name;
     res->type = type;
@@ -1425,6 +1445,7 @@ struct constituent
 
     res->kind = constituent_DEFGENERIC;
     res->next = NULL;
+    res->flags = 0;
     res->name = name;
     res->params = params;
     res->rettypes = suffix->rettypes;
@@ -1434,6 +1455,13 @@ struct constituent
     free(suffix);
 
     return (struct constituent *)res;
+}
+
+struct constituent *set_generic_flags(flags_t flags,
+				    struct constituent *defgeneric)
+{
+    ((struct defgeneric_constituent *)defgeneric)->flags = flags;
+    return defgeneric;
 }
 
 struct gf_suffix

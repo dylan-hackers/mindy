@@ -9,12 +9,20 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.4 1994/03/28 11:12:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.5 1994/03/30 06:01:39 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+
+typedef unsigned int flags_t;
+
+#define flag_OPEN 1
+#define flag_SEALED 2
+#define flag_ABSTRACT 4
+#define flag_CONCRETE 5
+#define flag_PRIMARY 6
 
 struct body {
     struct constituent *head;
@@ -51,6 +59,7 @@ struct defvar_constituent {
 struct defmethod_constituent {
     enum constituent_kind kind;
     struct constituent *next;
+    flags_t flags;
     struct method *method;
     struct method *tlf;
 };
@@ -58,6 +67,7 @@ struct defmethod_constituent {
 struct defgeneric_constituent {
     enum constituent_kind kind;
     struct constituent *next;
+    flags_t flags;
     struct id *name;
     struct param_list *params;
     struct return_type_list *rettypes;
@@ -68,6 +78,7 @@ struct defgeneric_constituent {
 struct defclass_constituent {
     enum constituent_kind kind;
     struct constituent *next;
+    flags_t flags;
     struct id *name;
     struct superclass *supers;
     struct slot_spec *slots;
@@ -285,6 +296,8 @@ struct param {
 struct keyword_param {
     struct keyword *keyword;
     struct id *id;
+    struct expr *type;
+    struct symbol *type_temp;
     struct expr *def;
     struct keyword_param *next;
 };
@@ -342,6 +355,7 @@ struct property {
 
 struct return_type_list {
     struct return_type *req_types;
+    struct return_type **req_types_tail;
     struct expr *req_types_list;
     struct expr *rest_type;
     struct symbol *rest_temp;
@@ -383,13 +397,13 @@ enum for_clause_kind {
 struct for_clause {
     enum for_clause_kind kind;
     struct for_clause *next;
-    struct param *var;
+    struct param_list *vars;
 };
 
 struct equal_then_for_clause {
     enum for_clause_kind kind;
     struct for_clause *next;
-    struct param *var;
+    struct param_list *vars;
     struct expr *equal;
     struct expr *then;
 };
@@ -397,7 +411,7 @@ struct equal_then_for_clause {
 struct in_for_clause {
     enum for_clause_kind kind;
     struct for_clause *next;
-    struct param *var;
+    struct param_list *vars;
     struct expr *collection;
 };
 
@@ -408,7 +422,7 @@ enum to_kind {
 struct from_for_clause {
     enum for_clause_kind kind;
     struct for_clause *next;
-    struct param *var;
+    struct param_list *vars;
     struct expr *from;
     enum to_kind to_kind;
     struct expr *to;
@@ -426,6 +440,7 @@ enum slot_allocation {
 };
 
 struct slot_spec {
+    flags_t flags;
     enum slot_allocation alloc;
     struct id *name;
     struct expr *type;
@@ -545,7 +560,8 @@ extern struct body
     *add_constituent(struct body *body, struct constituent *constituent);
 extern struct body *make_expr_body(struct expr *expr);
 extern struct constituent *make_define_constant(struct bindings *bindings);
-extern struct constituent *make_define_method(struct method *method);
+extern struct constituent
+    *make_define_method(flags_t flags, struct method *method);
 extern struct constituent *make_define_variable(struct bindings *bindings);
 extern struct constituent *make_expr_constituent(struct expr *expr);
 extern struct constituent *make_let(struct bindings *bindings);
@@ -598,8 +614,11 @@ extern struct plist
     *add_property(struct plist *plist, struct token *keyword,
 		  struct expr *expr);
 extern struct return_type_list *make_return_type_list(struct expr *rest);
-extern struct return_type_list *push_return_type(struct expr *type,
-						 struct return_type_list *l);
+extern struct return_type_list *add_return_type(struct return_type_list *l,
+						struct expr *type);
+extern struct return_type_list
+    *set_return_type_rest_type(struct return_type_list *l,
+			       struct expr *type);
 extern struct literal *parse_true_token(struct token *token);
 extern struct literal *parse_false_token(struct token *token);
 extern struct literal *parse_string_token(struct token *token);
@@ -654,7 +673,7 @@ extern struct condition_clause
 extern struct condition_clause
     *push_condition(struct expr *cond, struct condition_clause *clause);
 extern struct for_clause
-    *make_equal_then_for_clause(struct param *var, struct expr *equal,
+    *make_equal_then_for_clause(struct param_list *vars, struct expr *equal,
 				struct expr *then);
 extern struct for_clause
     *make_in_for_clause(struct param *var, struct expr *collection);
@@ -667,12 +686,14 @@ extern struct to_part *make_below(struct expr *expr);
 extern struct constituent
     *make_class_definition(struct id *name, struct superclass_list *supers,
 			   struct class_guts *guts);
+extern struct constituent
+    *set_class_flags(flags_t flags, struct constituent *defclass);
 extern struct superclass_list *make_superclass_list(void);
 extern struct superclass_list
     *add_superclass(struct superclass_list *list, struct expr *expr);
 extern struct class_guts *make_class_guts(void);
 extern struct slot_spec
-    *make_slot_spec(enum slot_allocation alloc, struct id *name,
+    *make_slot_spec(flags_t flags, enum slot_allocation alloc, struct id *name,
 		    struct expr *type, struct plist *plist);
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
@@ -688,6 +709,8 @@ extern struct class_guts
 extern struct constituent
     *make_define_generic(struct id *name, struct param_list *params,
 			 struct gf_suffix *suffix);
+extern struct constituent
+    *set_generic_flags(flags_t flags, struct constituent *defgeneric);
 extern struct gf_suffix
     *make_gf_suffix(struct return_type_list *rettypes,
 		    struct plist *plist);
@@ -696,7 +719,7 @@ extern struct param_list
 extern struct param_list *allow_keywords(struct param_list *param_list);
 extern struct keyword_param
     *make_keyword_param(struct token *keyword, struct id *sym,
-			struct expr *def);
+			struct expr *type, struct expr *def);
 extern struct method
     *set_method_source(struct token *source, struct method *method);
 extern struct method
