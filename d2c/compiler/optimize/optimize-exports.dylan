@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.6 2001/10/15 20:34:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.7 2001/10/17 20:56:18 gabor Exp $
 copyright: see below
 
 
@@ -62,6 +62,7 @@ define module cheese
       insert-after => fer-insert-after,
       remove-dependency-from-source => fer-remove-dependency-from-source,
       expand-cluster => fer-expand-cluster,
+      queue-dependents => fer-queue-dependents,
       maybe-restrict-type => fer-maybe-restrict-type,
       add-type-checks-aux => fer-add-type-checks
     };
