@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.12 1994/04/14 19:15:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.13 1994/04/18 03:27:45 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "mindycomp.h"
@@ -902,8 +903,58 @@ struct literal *parse_integer_token(struct token *token)
 
 struct literal *parse_float_token(struct token *token)
 {
-    /* ### Need to actually parse the float. */
-    struct literal *res = make_float_literal(0.0);
+    unsigned char c, *ptr;
+    enum literal_kind kind = literal_SINGLE_FLOAT;
+    struct literal *res;
+
+    for (ptr = token->chars; (c = *ptr) != '\0'; ptr++) {
+	if (c == 'e' || c == 'E')
+	    break;
+	if (c == 's' || c == 'S') {
+	    *ptr = 'e';
+	    break;
+	}
+	if (c == 'd' || c == 'D') {
+	    *ptr = 'e';
+	    kind = literal_DOUBLE_FLOAT;
+	    break;
+	}
+	if (c == 'x' || c == 'X') {
+	    *ptr = 'e';
+	    kind = literal_EXTENDED_FLOAT;
+	    break;
+	}
+    }
+
+    switch (kind) {
+      case literal_SINGLE_FLOAT:
+	{
+	    struct single_float_literal *r = malloc(sizeof(*r));
+	    res = (struct literal *)r;
+	    r->value = atof(token->chars);
+	    break;
+	}
+      case literal_DOUBLE_FLOAT:
+	{
+	    struct double_float_literal *r = malloc(sizeof(*r));
+	    res = (struct literal *)r;
+	    r->value = atof(token->chars);
+	    break;
+	}
+      case literal_EXTENDED_FLOAT:
+	{
+	    struct extended_float_literal *r = malloc(sizeof(*r));
+	    res = (struct literal *)r;
+	    r->value = atof(token->chars);
+	    break;
+	}
+      default:
+	lose("Strange float literal kind.\n");
+	break;
+    }
+
+    res->kind = kind;
+    res->next = NULL;
     res->line = token->line;
 
     free(token);
