@@ -4,7 +4,6 @@ define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
   slot next-id :: <fixed-integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
-  slot object-names :: <table>, init-function: curry(make, <table>);
   slot symbols :: union(<literal-false>, <literal-symbol>),
     init-function: curry(make, <literal-false>);
 end;
@@ -16,7 +15,7 @@ define method build-initial-heap (roots :: <vector>, stream :: <stream>)
   for (unit in roots)
     let prefix :: <byte-string> = unit[0];
     let roots :: <simple-object-vector> = unit[1];
-    format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots", prefix, prefix);
+    format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
     for (ctv in roots, index from 0)
       spew-reference(ctv, *general-rep*, format-to-string("roots[%d]", index),
 		     state);
@@ -25,7 +24,7 @@ define method build-initial-heap (roots :: <vector>, stream :: <stream>)
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
     format(stream, "\n; %s\n\t.align\t8\n%s",
-	   object, state.object-names[object]);
+	   object, object.ct-value-heap-label);
     spew-object(object, state);
   end;
   format(stream,
@@ -114,11 +113,11 @@ end;
 
 define method object-name (object :: <ct-value>, state :: <state>)
     => name :: <string>;
-  element(state.object-names, object, default: #f)
+  object.ct-value-heap-label
     | begin
 	let name = format-to-string("L%d", state.next-id);
 	state.next-id := state.next-id + 1;
-	element(state.object-names, object) := name;
+	object.ct-value-heap-label := name;
 	push-last(state.object-queue, object);
 	name;
       end;
@@ -126,11 +125,11 @@ end;
 
 define method object-name (object :: <ct-entry-point>, state :: <state>)
     => name :: <string>;
-  element(state.object-names, object, default: #f)
+  object.ct-value-heap-label
     | begin
 	let name = object.entry-point-c-name;
 	format(state.stream, "\t.import\t%s, code\n", name);
-	element(state.object-names, object) := name;
+	object.ct-value-heap-label := name;
 	name;
       end;
 end;
@@ -314,10 +313,53 @@ end;
 define method spew-object
     (object :: <literal-string>, state :: <state>) => ();
   let str = object.literal-value;
-  spew-instance(specifier-type(#"<byte-string>"), state,
-		size: as(<ct-value>, str.size),
-		%element: map-as(<vector>, curry(as, <ct-value>), str));
-end;
+  let class = specifier-type(#"<byte-string>");
+  let fields = get-class-fields(class);
+  for (field in fields)
+    select (field by instance?)
+      <false> => #f;
+      <fixed-integer> =>
+	format(state.stream, "\t.blockz\t%d\n", field);
+      <instance-slot-info> =>
+	select (field.slot-getter.variable-name)
+	  #"%object-class" =>
+	    spew-reference(class, field.slot-representation, "%object-class",
+			   state);
+	  #"size" =>
+	    spew-reference(as(<ct-value>, str.size), field.slot-representation,
+			   "size", state);
+	  #"%element" =>
+	    let stream = state.stream;
+	    write("\t.string\t\"", stream);
+	    for (char in str)
+	      if (char == '\\')
+		write("\\\\", stream);
+	      elseif (char == '"')
+		write("\\\"", stream);
+	      elseif (char >= ' ' & char <= '~')
+		write(char, stream);
+	      elseif (char == '\0')
+		write("\\0", stream);
+	      elseif (char == '\n')
+		write("\\n", stream);
+	      elseif (char == '\t')
+		write("\\t", stream);
+	      elseif (char == '\b')
+		write("\\b", stream);
+	      elseif (char == '\r')
+		write("\\r", stream);
+	      elseif (char == '\f')
+		write("\\f", stream);
+	      else
+		let code = as(<integer>, char);
+		format("\\x%x%x", ash(code, -16), logand(code, 15));
+	      end if;
+	    end for;
+	    write("\"\n", stream);
+	end select;
+    end select;
+  end for;
+end method spew-object;
 
 define method spew-object
     (object :: <union-ctype>, state :: <state>) => ();
@@ -530,28 +572,7 @@ end;
 
 define method spew-instance
     (class :: <cclass>, state :: <state>, #rest slots) => ();
-  if (class.abstract?)
-    error("Spewing an abstract class?");
-  end;
-  let layout = class.instance-slots-layout;
-  let fields = make(<vector>, size: layout.layout-length + 1, fill: #f);
-  for (slot in class.all-slot-infos)
-    if (instance?(slot, <instance-slot-info>))
-      block (return)
-	for (entry in slot.slot-positions)
-	  if (csubtype?(class, entry.head))
-	    fields[entry.tail] := slot;
-	    return();
-	  end;
-	end;
-	error("Can't find the position for %= in %=?", slot, class);
-      end;
-    end;
-  end;
-  for (hole in layout.layout-holes)
-    fields[hole.head] := hole.tail;
-  end;
-  for (field in fields)
+  for (field in get-class-fields(class))
     select (field by instance?)
       <false> => #f;
       <fixed-integer> =>
@@ -598,6 +619,36 @@ define method spew-instance
     end;
   end;
 end;
+
+define method get-class-fields (class :: <cclass>)
+    => res :: <simple-object-vector>;
+  if (class.class-heap-fields)
+    class.class-heap-fields;
+  else
+    if (class.abstract?)
+      error("Spewing an abstract class?");
+    end;
+    let layout = class.instance-slots-layout;
+    let fields = make(<vector>, size: layout.layout-length + 1, fill: #f);
+    for (slot in class.all-slot-infos)
+      if (instance?(slot, <instance-slot-info>))
+	block (return)
+	  for (entry in slot.slot-positions)
+	    if (csubtype?(class, entry.head))
+	      fields[entry.tail] := slot;
+	      return();
+	    end;
+	  end;
+	  error("Can't find the position for %= in %=?", slot, class);
+	end;
+      end;
+    end;
+    for (hole in layout.layout-holes)
+      fields[hole.head] := hole.tail;
+    end;
+    class.class-heap-fields := fields;
+  end if;
+end method get-class-fields;
 
 define method find-init-value
     (class :: <cclass>, slot :: <instance-slot-info>,
