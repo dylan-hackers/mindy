@@ -232,10 +232,10 @@ define method merge-stacks
     let len1 = stack1.size;
     let len2 = stack2.size;
     if (len1 < len2)
-      assert(stack2[len2 - len1] == stack1.head);
+      assert(stack1 == #() | stack2[len2 - len1] == stack1.head);
       stack2;
     elseif (len2 < len1)
-      assert(stack1[len1 - len2] == stack2.head);
+      assert(stack2 == #() | stack1[len1 - len2] == stack2.head);
       stack1;
     else
       error("Inconsistent wants via different routes?");
