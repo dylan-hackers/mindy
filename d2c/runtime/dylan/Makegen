@@ -1,0 +1,6 @@
+do emit_library_rule(
+    'Dylan',
+    '',
+    '',
+    'compile', 'install'
+);

@@ -1,0 +1,5 @@
+do compile_subdirs(
+    'compiler',
+    'runtime',
+    'tests'
+);

@@ -1,0 +1,11 @@
+do compile_subdirs(
+    'c-code',
+    'dylan',
+    'streams',
+    'print',
+    'format',
+    'random',
+    'coll-ext'
+);
+
+do install('include', 'runtime.h');

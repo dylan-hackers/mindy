@@ -1,0 +1,27 @@
+
+do emit_library_rule(
+    'craps',
+    '../runtime/dylan/dylan.lib.du ../runtime/random/random.lib.du',
+    '-L../runtime/dylan -L../runtime/random',
+    'compile', 'install'
+);
+
+do emit_library_rule(
+    'test',
+    '../runtime/dylan/dylan.lib.du ../runtime/streams/streams.lib.du',
+    '-L../runtime/dylan -L../runtime/streams',
+    'compile'
+);
+
+do emit_library_rule(
+    'gobbledygook',
+    '../runtime/dylan/dylan.lib.du fact.lib.du',
+    '-L../runtime/dylan',
+    'compile'
+);
+
+do emit_library_rule(
+    'fact',
+    '../runtime/dylan/dylan.lib.du',
+    '-L../runtime/dylan'
+);
