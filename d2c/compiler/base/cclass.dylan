@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.14 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.15 1995/06/06 01:17:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -488,8 +488,20 @@ define method inherit-slots-for (class :: <cclass>) => ();
     end;
   do(process, supers);
   for (slot in class.new-slot-infos)
+    reset-slot(slot);
     add-slot(slot, class);
   end;
+end;
+
+define method reset-slot (slot :: <slot-info>) => ();
+  slot.slot-overrides := #();
+end;
+
+define method reset-slot (slot :: <instance-slot-info>) => ();
+  slot.slot-overrides := #();
+  slot.slot-representation := #f;
+  slot.slot-positions := #();
+  slot.slot-initialized?-slot := #f;
 end;
 
 define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
