@@ -59,25 +59,79 @@ end method run-test;
 define method write-test ();
   let s = make(<byte-string-stream>, direction: #"output");
   write(s, "foo");
+  run-test(s.stream-contents, "foo", "write test");
   new-line(s);
+  #if (newlines-are-CRLF)
+     run-test(s.stream-contents, "\r\n", "new-line test");
+     write-line(s, "poo");
+     run-test(s.stream-contents, "poo\r\n", "write-line test");
+  #else
+     run-test(s.stream-contents, "\n", "new-line test");
+     write-line(s, "poo");
+     run-test(s.stream-contents, "poo\n", "write-line test");
+  #endif
   write-element(s, 'P');
-  write-line(s, "poo");
-  write(s, "happy");
-  run-test(s.stream-contents, "foo\nPpoo\nhappy", "Write test");
+  write(s, "oop");
+  run-test(s.stream-contents, "Poop", "write-element test");
+  close(s);
 end method write-test;
 
 define method read-test ();
   let s = make(<byte-string-stream>, contents: "Hi Joe.\nFoo");
   run-test(read-line(s), "Hi Joe.", "read-line test");
-  run-test(peek(s), 'F', "peek test");
+  run-test(peek(s), 'F', " peek test");
   run-test(read-element(s), 'F', "read-element test");
   run-test(read(s, 2), "oo", "read test");
+  close(s);
 end method read-test;
+
+define method buffered-write-test ();
+  // Except for the call to make, this is exactly the same as write-test.
+  // Make edits to both.
+  let s = make(<file-stream>, direction: #"output", locator: ".delete.me~");
+  // Included ~ in the file name so that 'make clean' will zap it.
+
+  write(s, "foo");
+  run-test(s.stream-contents, "foo", "write test");
+  new-line(s);
+  #if (newlines-are-CRLF)
+     run-test(s.stream-contents, "\r\n", "new-line test");
+     write-line(s, "poo");
+     run-test(s.stream-contents, "poo\r\n", "write-line test");
+  #else
+     run-test(s.stream-contents, "\n", "new-line test");
+     write-line(s, "poo");
+     run-test(s.stream-contents, "poo\n", "write-line test");
+  #endif
+  write-element(s, 'P');
+  write(s, "oop");
+  run-test(s.stream-contents, "Poop", "write-element test");
+  close(s);
+end method buffered-write-test;
+
+define method buffered-read-test ();
+  let s = make(<file-stream>, direction: #"input-output",
+	       locator: ".delete.me~");
+  // Included ~ in the file name so that 'make clean' will zap it.
+
+  write(s, "Hi Joe.");
+  new-line(s);
+  write(s, "Foo");
+  s.stream-position := #"start";
+  // The rest is identical to read-test. Make edits to both.
+  run-test(read-line(s), "Hi Joe.", "read-line test");
+  run-test(peek(s), 'F', " peek test");
+  run-test(read-element(s), 'F', "read-element test");
+  run-test(read(s, 2), "oo", "read test");
+  close(s);
+end method buffered-read-test;
 
 define method main (argv0 :: <byte-string>, #rest ignored)
   format("\nRegression test for the streams library.\n\n");
   run-several-tests("Writing", write-test);
   run-several-tests("Reading", read-test);
+  run-several-tests("Buffered writing", buffered-write-test);
+  run-several-tests("Buffered reading", buffered-read-test);
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");
   else
