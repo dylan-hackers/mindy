@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.21 1996/02/08 19:21:31 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.22 1996/02/09 18:06:34 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -464,15 +464,17 @@ names (names <comma-token> <name-token>)
 :type local-declaration <local-declaration>
 
 local-declaration (<let-token> bindings)
-  make(<let>, bindings: %2);
+  make(<let>, source-location: extract-source(%1), bindings: %2);
 %
 
 local-declaration (<let-token> <handler-token> condition <equal-token> handler)
-  make(<let-handler>, type: %3.head, plist: %3.tail, handler: %5);
+  make(<let-handler>, source-location: extract-source(%1),
+       type: %3.head, plist: %3.tail, handler: %5);
 %
 
 local-declaration (<local-token> local-methods)
-  make(<local>, methods: as(<simple-object-vector>, %2));
+  make(<local>, source-location: extract-source(%1),
+       methods: as(<simple-object-vector>, %2));
 %
 
 local-declaration (<local-declaration>)
@@ -674,7 +676,8 @@ expression (expression-aux)
 %
 
 expression (<keyword-token>)
-  make(<literal-ref>, literal: %1.token-literal);
+  make(<literal-ref>, source-location: extract-source(%1),
+       literal: %1.token-literal);
 %
 
 :type expression-aux <vector>
@@ -692,7 +695,8 @@ expression-aux (expression-aux binary-operator-token binary-operand)
 :type binary-operand <expression>
 
 binary-operand (<keyword-token>)
-  make(<literal-ref>, literal: %1.token-literal);
+  make(<literal-ref>, source-location: extract-source(%1),
+       literal: %1.token-literal);
 %
 
 binary-operand (binary-operand-sans-keyword)
@@ -706,8 +710,11 @@ binary-operand-sans-keyword (operand)
 %
 
 binary-operand-sans-keyword (<minus-token> operand)
+  let sloc = extract-source(%1);
   make(<funcall>,
+       source-location: sloc,
        function: make(<varref>,
+       		      source-location: sloc,
 		      id: make(<name-token>,
 			       symbol: #"negative",
 			       module: %1.token-module,
@@ -717,19 +724,22 @@ binary-operand-sans-keyword (<minus-token> operand)
 
 binary-operand-sans-keyword (<tilde-token> operand)
   make(<funcall>,
-       function: make(<varref>, id: %1),
+       function: make(<varref>, source-location: extract-source(%1), id: %1),
        arguments: vector(%2));
 %
 
 :type operand <expression>
 
 operand (operand <left-paren-token> arguments-opt <right-paren-token>)
-  make(<funcall>, function: %1, arguments: %3);
+  make(<funcall>, source-location: extract-source(%2),
+       function: %1, arguments: %3);
 %
 
 operand (operand <left-bracket-token> arguments <right-bracket-token>)
   make(<funcall>,
+       source-location: extract-source(%2),
        function: make(<varref>,
+       		      source-location: extract-source(%2),
 		      id: make(<name-token>,
 			       symbol: if (%3.size == 1)
 					 #"element";
@@ -742,7 +752,7 @@ operand (operand <left-bracket-token> arguments <right-bracket-token>)
 %
 
 operand (operand <dot-token> <name-token>)
-  make(<dot>, operand: %1, name: %3);
+  make(<dot>, source-location: extract-source(%2), operand: %1, name: %3);
 %
 
 operand (leaf)
@@ -766,7 +776,9 @@ arguments (expression)
 %
 
 arguments (<keyword-token> expression)
-  stretchy-vector(make(<literal-ref>, literal: %1.token-literal), %2);
+  stretchy-vector(make(<literal-ref>, source-location: extract-source(%1),
+  		       literal: %1.token-literal),
+		  %2);
 %
 
 arguments (arguments <comma-token> expression)
@@ -774,7 +786,10 @@ arguments (arguments <comma-token> expression)
 %
 
 arguments (arguments <comma-token> <keyword-token> expression)
-  add!(add!(%1, make(<literal-ref>, literal: %3.token-literal)), %4);
+  add!(add!(%1, make(<literal-ref>, source-location: extract-source(%3),
+  		     literal: %3.token-literal)
+	    ),
+       %4);
 %
 
 :type leaf <expression>
@@ -784,11 +799,11 @@ leaf (<expression>)
 %
 
 leaf (literal)
-  make(<literal-ref>, literal: %1);
+  make(<literal-ref>, source-location: extract-source(%1), literal: %1);
 %
 
 leaf (<name-token>)
-  make(<varref>, id: %1);
+  make(<varref>, source-location: extract-source(%1), id: %1);
 %
 
 leaf (<left-paren-token> expression <right-paren-token>)
@@ -824,15 +839,18 @@ literal (<false-token>)
 literal (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
   make(<literal-list>, sharable: #t,
+       source-location: extract-source(%1),
        contents: as(<simple-object-vector>, %2), tail: %4);
 %
 
 literal (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal-list>, sharable: #t, contents: %2);
+  make(<literal-list>, source-location: extract-source(%1),
+       sharable: #t, contents: %2);
 %
 
 literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal-simple-object-vector>, sharable: #t, contents: %2);
+  make(<literal-simple-object-vector>, source-location: extract-source(%1),
+       sharable: #t, contents: %2);
 %
 
 :type strings <stretchy-vector>
@@ -884,21 +902,23 @@ statement (<begin-word-token> fragment-opt end-clause)
   if (%3 & ~same-id?(%1, %3))
     compiler-error("Begin-word mismatch: %= isn't %=", %3, %1);
   end;
-  make(<macro-statement>, begin-word: %1, fragment: %2);
+  make(<macro-statement>, source-location: extract-source(%1),
+       begin-word: %1, fragment: %2);
 %
 
 statement (<begin-token> body-opt <end-token>)
-  make(<begin>, body: %2);
+  make(<begin>, source-location: extract-source(%1), body: %2);
 %
 
 statement (<bind-exit-token> <left-paren-token> <name-token>
 	   <right-paren-token> body-opt <end-token>)
-  make(<bind-exit>, name: %3, body: %5);
+  make(<bind-exit>, source-location: extract-source(%1), name: %3, body: %5);
 %
 
 statement (<for-token> <left-paren-token> for-header <right-paren-token>
 	   body-opt <finally-token> body-opt <end-token>)
-  make(<for>, header: %3, body: %5, finally: %7);
+  make(<for>, source-location: extract-source(%1),
+       header: %3, body: %5, finally: %7);
 %
 
 :type for-header <simple-object-vector>
@@ -950,29 +970,32 @@ for-clause (<while-token> expression)
 
 statement (<if-token> <left-paren-token> expression <right-paren-token>
 	   body-opt <else-token> body-opt <end-token>)
-  make(<if>, condition: %3, consequent: %5, alternate: %7);
+  make(<if>, source-location: extract-source(%1), condition: %3,
+       consequent: %5, alternate: %7);
 %
 
 statement (<method-token> method-body <end-token>)
-  make(<method-ref>, method: %2);
+  make(<method-ref>, source-location: extract-source(%1), method: %2);
 %
 
 statement (<mv-call-token> <left-paren-token> arguments <right-paren-token>)
-  make(<mv-call>, operands: as(<simple-object-vector>, %3));
+  make(<mv-call>, source-location: extract-source(%2),
+       operands: as(<simple-object-vector>, %3));
 %
 
 statement (<primitive-token> <identifier-token>
 	   <left-paren-token> arguments-opt <right-paren-token>)
-  make(<primitive>, name: %2, operands: %4);
+  make(<primitive>, source-location: extract-source(%1), name: %2,
+       operands: %4);
 %
 
 statement (<set-token> <left-paren-token> expression <comma-token> expression
 	   <right-paren-token>)
-  make(<assignment>, place: %3, value: %5);
+  make(<assignment>, source-location: extract-source(%1), place: %3, value: %5);
 %
 
 statement (<uwp-token> body-opt <cleanup-token> body-opt <end-token>)
-  make(<uwp>, body: %2, cleanup: %4);
+  make(<uwp>, source-location: extract-source(%3), body: %2, cleanup: %4);
 %
 
 :type fragment-opt <fragment>
@@ -1143,18 +1166,21 @@ modified-constant (<false-token>)
 modified-constant (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
   make(<literal-ref>,
+       source-location: extract-source(%3),
        literal: make(<literal-list>, sharable: #t,
 		     contents: as(<simple-object-vector>, %2),
 		     tail: %4));
 %
 
 modified-constant (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal-ref>, 
+  make(<literal-ref>,
+       source-location: extract-source(%1),
        literal: make(<literal-list>, sharable: #t, contents: %2));
 %
 
 modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
   make(<literal-ref>,
+       source-location: extract-source(%1),
        literal: make(<literal-simple-object-vector>, sharable: #t,
 		     contents: %2));
 %
@@ -1424,8 +1450,11 @@ parameter (<name-token> <double-equal-token> expression)
 			    symbol: #"singleton",
 			    module: $Dylan-Module,
 			    uniquifier: make(<uniquifier>));
-  let singleton-varref = make(<varref>, id: singleton-name);
+  let sloc = extract-source(%1);			    
+  let singleton-varref
+    = make(<varref>, source-location: sloc, id: singleton-name);
   let funcall = make(<funcall>,
+  		     source-location: sloc,
 		     function: singleton-varref,
 		     arguments: vector(%3));
   make(<parameter>, name: %1, type: funcall);
