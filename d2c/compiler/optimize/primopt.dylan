@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.13 1995/12/06 04:58:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.14 1995/12/07 00:38:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -307,7 +307,7 @@ define-primitive-transformer
 	     next := dep.dependent-next;
 	     let cluster = dep.source-exp;
 	     expand-cluster(component, cluster,
-			    cluster.derived-type.min-values);
+			    cluster.derived-type.min-values, #());
 	   finally
 	     for (dep = primitive.depends-on then dep.dependent-next,
 		  vars = #() then pair(dep.source-exp, vars),
