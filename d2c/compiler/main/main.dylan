@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.72 2003/02/15 19:33:01 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.73 2003/03/05 17:14:14 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -96,6 +96,7 @@ define method show-help(stream :: <stream>) => ()
 "       -T, --target:      Target platform name.\n"
 "       -p, --platforms:   File containing platform descriptions.\n"
 "       --no-binaries:     Do not compile generated C files.\n"
+"       --no-makefile:     Do not create makefile for generated C files. Implies --no-binaries.\n"
 "       -g, --debug:       Generate debugging code.\n"
 "       --profile:         Generate profiling code.\n"
 "       -s, --static:      Force static linking.\n"
@@ -269,6 +270,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("no-binaries"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
+			    long-options: #("no-makefile"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
 			    long-options: #("break"),
 			    short-options: #("d"));
   add-option-parser-by-type(argp,
@@ -331,7 +335,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let library-dirs = option-value-by-long-name(argp, "libdir");
   let features = option-value-by-long-name(argp, "define");
   let log-dependencies = option-value-by-long-name(argp, "log-deps");
-  let no-binaries = option-value-by-long-name(argp, "no-binaries");
+  let no-binaries-pre = option-value-by-long-name(argp, "no-binaries");
+  let no-makefile = option-value-by-long-name(argp, "no-makefile");
+  let no-binaries = no-binaries-pre | no-makefile;
   let cc-override = option-value-by-long-name(argp, "cc-override-command");
   let override-files = option-value-by-long-name(argp, "cc-override-file");
   let link-static = option-value-by-long-name(argp, "static");
@@ -446,6 +452,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
                log-dependencies: log-dependencies,
                target: *current-target*,
                no-binaries: no-binaries,
+               no-makefile: no-makefile,
                link-static: link-static,
                link-rpath: link-rpath,
                debug?: debug?,
@@ -457,6 +464,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
                log-dependencies: log-dependencies,
                target: *current-target*,
                no-binaries: no-binaries,
+               no-makefile: no-makefile,
                link-static: link-static,
                link-rpath: link-rpath,
                debug?: debug?,

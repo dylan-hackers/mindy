@@ -1,11 +1,11 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.4 2003/03/02 23:14:17 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.5 2003/03/05 17:14:14 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -42,6 +42,8 @@ define class <main-unit-state> (<object>)
     required-init-keyword: target:;
   constant slot unit-no-binaries :: <boolean>,
     required-init-keyword: no-binaries:;
+  constant slot unit-no-makefile :: <boolean>,
+    required-init-keyword: no-makefile:;
   constant slot unit-link-static :: <boolean>,
     required-init-keyword: link-static:;
   constant slot unit-link-rpath :: false-or(<string>),

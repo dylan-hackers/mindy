@@ -1,11 +1,11 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.14 2003/03/01 15:06:13 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.15 2003/03/05 17:14:14 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -355,38 +355,41 @@ define method emit-make-prologue (state :: <lid-mode-state>) => ();
 #endif
   state.unit-makefile-name := makefile-name;
   state.unit-temp-makefile-name := temp-makefile-name;
-  format(*debug-output*, "Creating %s\n", makefile-name);
-  let makefile = make(<file-stream>, locator: temp-makefile-name,
-		      direction: #"output", if-exists: #"overwrite");
-  state.unit-makefile := makefile;
-  format(makefile, "# Makefile for compiling the .c and .s files\n");
-  format(makefile, "# If you want to compile .dylan files, don't use "
-	   "this makefile.\n\n");
-  format(makefile, "CCFLAGS = %s\n", cc-flags);
-  let libtool = getenv("LIBTOOL") | state.unit-target.libtool-command;
-  if (libtool)
-    format(makefile, "LIBTOOL = %s\n", libtool);
-  end;
-  format(makefile, "GC_LIBS = %s\n", $gc-libs);   
 
-  format(makefile, "# We only know the ultimate target when we've finished"
-	   " building the rest\n");
-  format(makefile, "# of this makefile.  So we use this fake "
-	   "target...\n#\n");
-  format(makefile, "all : all-at-end-of-file\n\n");
-
-  // These next three streams gather filenames.  Objects-stream is
-  // simply *.o.  clean-stream is the list of files we will delete
-  // with the "clean" target--all objects plus the library archive
-  // (.a), the library summary (.du), and the executable.
-  // real-clean-stream is everything in clean plus *.c, *.s, and
-  // cc-lib-files.mak.
-  //
-  state.unit-objects-stream := make(<buffered-byte-string-output-stream>);
-  state.unit-clean-stream := make(<buffered-byte-string-output-stream>);
-  state.unit-real-clean-stream := make(<buffered-byte-string-output-stream>);
-  format(state.unit-real-clean-stream, " %s", makefile-name);
-end method emit-make-prologue;
+   unless (state.unit-no-makefile)
+     format(*debug-output*, "Creating %s\n", makefile-name);
+     let makefile = make(<file-stream>, locator: temp-makefile-name,
+			 direction: #"output", if-exists: #"overwrite");
+     state.unit-makefile := makefile;
+     format(makefile, "# Makefile for compiling the .c and .s files\n");
+     format(makefile, "# If you want to compile .dylan files, don't use "
+	      "this makefile.\n\n");
+     format(makefile, "CCFLAGS = %s\n", cc-flags);
+     let libtool = getenv("LIBTOOL") | state.unit-target.libtool-command;
+     if (libtool)
+       format(makefile, "LIBTOOL = %s\n", libtool);
+     end;
+     format(makefile, "GC_LIBS = %s\n", $gc-libs);   
+     
+     format(makefile, "# We only know the ultimate target when we've finished"
+	      " building the rest\n");
+     format(makefile, "# of this makefile.  So we use this fake "
+	      "target...\n#\n");
+     format(makefile, "all : all-at-end-of-file\n\n");
+     
+     // These next three streams gather filenames.  Objects-stream is
+     // simply *.o.  clean-stream is the list of files we will delete
+     // with the "clean" target--all objects plus the library archive
+     // (.a), the library summary (.du), and the executable.
+     // real-clean-stream is everything in clean plus *.c, *.s, and
+     // cc-lib-files.mak.
+     //
+     state.unit-objects-stream := make(<buffered-byte-string-output-stream>);
+     state.unit-clean-stream := make(<buffered-byte-string-output-stream>);
+     state.unit-real-clean-stream := make(<buffered-byte-string-output-stream>);
+     format(state.unit-real-clean-stream, " %s", makefile-name);
+   end;
+ end method emit-make-prologue;
 
 // Establish various condition handlers while iterating over all of the source
 // files and compiling each of them to an output file.
@@ -450,7 +453,9 @@ define method compile-all-files (state :: <lid-mode-state>) => ();
 			end);
 	state.unit-all-generated-files
 	  := add!(state.unit-all-generated-files, c-name);
-	output-c-file-rule(state, c-name, o-name);
+	unless (state.unit-no-makefile)
+	     output-c-file-rule(state, c-name, o-name);
+	end;
 
       exception (<fatal-error-recovery-restart>)
 	format(*debug-output*, "skipping rest of %s\n", file);
@@ -510,7 +515,9 @@ define method build-library-inits (state :: <lid-mode-state>) => ();
 		      else
 			state.unit-target.object-filename-suffix
 		      end if);
-      output-c-file-rule(state, c-name, o-name);
+      unless (state.unit-no-makefile)
+	output-c-file-rule(state, c-name, o-name);
+      end;
       state.unit-all-generated-files 
 	:= add!(state.unit-all-generated-files, c-name);
     end;
@@ -543,7 +550,9 @@ define method build-local-heap-file (state :: <lid-mode-state>) => ();
 			   else
 			     state.unit-target.object-filename-suffix
 			   end);
-  output-c-file-rule(state, c-name, o-name);
+  unless (state.unit-no-makefile)
+    output-c-file-rule(state, c-name, o-name);
+  end;
   state.unit-all-generated-files 
     := add!(state.unit-all-generated-files, c-name);
 
@@ -613,7 +622,7 @@ define method build-ar-file (state :: <lid-mode-state>) => ();
   format(state.unit-real-clean-stream, " %s", state.unit-ar-name);
   format(state.unit-makefile, "\nall-at-end-of-file : %s\n", 
 	 state.unit-ar-name);
-end method;
+end method build-ar-file;
 
 
 define method build-da-global-heap (state :: <lid-mode-state>) => ();
@@ -633,7 +642,9 @@ define method build-da-global-heap (state :: <lid-mode-state>) => ();
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 		    heap-state);
   close(heap-stream);
-  output-c-file-rule(state, c-name, o-name);
+  unless (state.unit-no-makefile)
+    output-c-file-rule(state, c-name, o-name);
+  end;
   state.unit-all-generated-files 
     := add!(state.unit-all-generated-files, c-name);
 end method;
@@ -686,7 +697,9 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
    format(stream, "}\n");
  end if;
  close(stream);
- output-c-file-rule(state, c-name, o-name);
+ unless (state.unit-no-makefile)
+   output-c-file-rule(state, c-name, o-name);
+ end;
  state.unit-all-generated-files 
    := add!(state.unit-all-generated-files, c-name);
 end method;
@@ -784,11 +797,13 @@ define method dump-library-summary (state :: <lid-mode-state>) => ();
   dump-queued-methods(dump-buf);
 
   end-dumping(dump-buf);
-  format(state.unit-makefile, "\nall-at-end-of-file : %s\n",
-  	 state.unit-ar-name);
-  format(state.unit-clean-stream, " %s", state.unit-ar-name);
-  format(state.unit-real-clean-stream, " %s %s.lib.du", state.unit-ar-name, 
-	 as-lowercase(state.unit-lib-name));
+  unless (state.unit-no-makefile)
+    format(state.unit-makefile, "\nall-at-end-of-file : %s\n",
+	   state.unit-ar-name);
+    format(state.unit-clean-stream, " %s", state.unit-ar-name);
+    format(state.unit-real-clean-stream, " %s %s.lib.du", state.unit-ar-name, 
+	   as-lowercase(state.unit-lib-name));
+  end;
 end method;
 
 
@@ -847,7 +862,7 @@ define method compile-library (state :: <lid-mode-state>)
     if (~ zero?(*errors*)) give-up(); end if;
     build-library-inits(state);
     build-local-heap-file(state);
-    if(state.unit-executable | state.unit-embedded?)
+    if (state.unit-executable | state.unit-embedded?)
       calculate-type-inclusion-matrix();
       build-da-global-heap(state);
       build-inits-dot-c(state);
@@ -856,7 +871,9 @@ define method compile-library (state :: <lid-mode-state>)
       log-target(state.unit-executable);
       build-executable(state);
     else
-      build-ar-file(state);
+      unless (state.unit-no-makefile)
+	build-ar-file(state);
+      end;
       dump-library-summary(state);
     end if;
 
@@ -864,7 +881,9 @@ define method compile-library (state :: <lid-mode-state>)
       spew-dependency-log(concatenate(state.unit-mprefix, ".dep"));
     end if;
 
-    do-make(state);
+    unless (state.unit-no-makefile)
+      do-make(state);
+    end;
 
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "giving up.\n");
