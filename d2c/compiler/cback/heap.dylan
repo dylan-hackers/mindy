@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.35 2002/04/12 18:40:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.36 2002/09/11 11:21:40 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -764,11 +764,11 @@ define method spew-object
   local
     method repeat (remainder :: <extended-integer>);
       let (remainder :: <extended-integer>, digit :: <general-integer>)
-	= floor/(remainder, 256);
+	= floor/(remainder, 65536);
       add!(digits,
 	   make(<literal-integer>,
 		value: as(<extended-integer>, digit)));
-      unless (if (logbit?(7, digit))
+      unless (if (logbit?(15, digit))
 		remainder = -1;
 	      else
 		remainder = 0;
@@ -1613,8 +1613,8 @@ define method literal-vector-size
     method repeat (remainder :: <extended-integer>);
       vector-size := vector-size + 1;
       let (remainder :: <extended-integer>, digit :: <general-integer>)
-	= floor/(remainder, 256);
-      unless (if (logbit?(7, digit))
+	= floor/(remainder, 65536);
+      unless (if (logbit?(15, digit))
 		remainder = -1;
 	      else
 		remainder = 0;
