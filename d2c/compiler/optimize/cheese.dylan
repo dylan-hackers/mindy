@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.96 1995/07/12 15:02:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.97 1995/07/20 16:52:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -134,6 +134,9 @@ define method maybe-convert-to-ssa
 	// they are being given an ssa variable.
 	reoptimize(component, dep.dependent);
       end;
+      // Reoptimize the defining assignment in case it can now be
+      // copy-propagated.
+      reoptimize(component, assign);
     end;
   end;
 end method maybe-convert-to-ssa;
@@ -2454,56 +2457,48 @@ define method add-type-checks-aux
 	 prev = #f then defn,
 	 while: defn)
       if (defn.needs-type-check?)
-	// Make a temp to hold the unchecked value.
-	let temp = if (instance?(defn.var-info, <values-cluster-info>))
-		     error("values cluster needs a type check?");
-		   else
-		     make(<ssa-variable>,
-			  definer: assign,
-			  definer-next: defn.definer-next,
-			  var-info: make(<local-var-info>,
-					 debug-name: defn.var-info.debug-name,
-					 asserted-type: object-ctype()));
-		   end;
-	// Link the temp in in place of this definition.
-	if (prev)
-	  prev.definer-next := temp;
-	else
-	  assign.defines := temp;
+	if (instance?(defn.var-info, <values-cluster-info>))
+	  error("values cluster needs a type check?");
 	end;
 	// Make the builder if we haven't already.
 	unless (builder)
 	  builder := make-builder(component);
 	end;
-	// Make the check type operation.
-	let asserted-type = defn.var-info.asserted-type;
-	let check = make-check-type-operation(builder, assign.policy,
-					      assign.source-location, temp,
-					      make-literal-constant
-						(builder, asserted-type));
-	// Assign the type checked value to the real var.
+	// Make a temp to hold the unchecked value.
+	let temp = make-ssa-var(builder, #"temp", object-ctype());
+	// Link the temp in in place of this definition.
+	temp.definer := assign;
+	temp.definer-next := defn.definer-next;
 	defn.definer-next := #f;
-	build-assignment(builder, assign.policy, assign.source-location,
-			 defn, check);
-	// Seed the derived type of the check-type call.
-	let cur-type = assign.depends-on.source-exp.derived-type;
-	let cur-type-positionals = cur-type.positional-types;
-	let (checked-type, precise?)
-	  = ctype-intersection(asserted-type, defaulted-first-type(cur-type));
-	maybe-restrict-type(component, check,
-			    if (precise?)
-			      checked-type;
-			    else
-			      asserted-type;
-			    end);
-	// Queue the assignment for reoptimization.
-	reoptimize(component, assign);
+	if (prev)
+	  prev.definer-next := temp;
+	else
+	  assign.defines := temp;
+	end;
+	// Do the type check.
+	let checked = make-ssa-var(builder, #"checked", object-ctype());
+	let asserted-type = defn.var-info.asserted-type;
+	build-assignment
+	  (builder, assign.policy, assign.source-location, checked,
+	   make-unknown-call
+	     (builder,
+	      ref-dylan-defn(builder, assign.policy, assign.source-location,
+			     #"%check-type"),
+	      #f, list(temp, make-literal-constant(builder, asserted-type))));
+	// Assign the type checked value to the real var.
+	build-assignment
+	  (builder, assign.policy, assign.source-location, defn,
+	   make-operation(builder, <truly-the>, list(checked),
+			  guaranteed-type: asserted-type));
 	// Change defn to temp so that the loop steps correctly.
 	defn := temp;
       end;
     end;
     if (builder)
+      // We built some type checks, so insert them.
       insert-after(component, assign, builder-result(builder));
+      // Queue the assignment for reoptimization.
+      reoptimize(component, assign);
     end;
   end;
 end;
