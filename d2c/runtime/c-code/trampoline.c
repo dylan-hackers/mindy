@@ -5,7 +5,7 @@
 #include <sys/cachectl.h>
 #endif
 
-#include "../gc/gc.h"
+#include "../gc/include/gc.h"
 
 #define KEY_OBJECT		'o'
 #define KEY_HEAPPTR		'h'

@@ -1,11 +1,11 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.11 2001/03/04 11:58:52 bruce Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.12 2001/03/21 13:18:08 bruce Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <runtime.h>
 #include <math.h>
 
-#include "../gc/gc.h"
+#include "../gc/include/gc.h"
 
 int application_argc;
 char **application_argv;
