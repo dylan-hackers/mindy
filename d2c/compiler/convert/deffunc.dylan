@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.19 1995/05/12 12:36:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.20 1995/05/12 15:40:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -296,6 +296,12 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
   defn;
 end;
 
+// This method exists just so make will recognize base-name as a valid
+// init keyword.
+// 
+define method initialize (defn :: <method-definition>, #key base-name) => ();
+end;
+
 define method compute-signature
     (param-list :: <parameter-list>, returns :: <parameter-list>)
     => (signature :: <signature>, anything-non-constant? :: <boolean>);
@@ -452,14 +458,14 @@ define method maybe-make-discriminator
       = make(<signature>,
 	     specializers: sig.specializers,
 	     rest-type: rest-type,
-	     key-infos: sig.key-infos & #(),
+	     keys: sig.key-infos & #(),
 	     all-keys: sig.key-infos & #t,
 	     returns: sig.returns);
 
     let region = build-function-body(builder, policy, source,
 				     format-to-string("Discriminator for %s",
 						      gf.defn-name),
-				     as(<list>, vars));
+				     as(<list>, vars), #"best");
     let results = make-values-cluster(builder, #"results", wild-ctype());
     build-discriminator-tree
       (builder, policy, source, as(<list>, vars), rest-type & #t, results,

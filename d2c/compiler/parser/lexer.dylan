@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.6 1995/05/05 08:53:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.7 1995/05/12 15:40:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -75,10 +75,18 @@ define method maybe-reserved-word (lexer :: <lexer>,
 				   source-location :: <file-source-location>)
   let name = as(<symbol>, extract-string(source-location));
   let mod = *Current-Module*;
-  make(element(mod.module-syntax-table, name, default: <name-token>),
-       source-location: source-location,
-       symbol: name,
-       module: mod);
+  let class = element(mod.module-syntax-table, name, default: <name-token>);
+  select (class by subtype?)
+    <identifier-token> =>
+      make(class,
+	   source-location: source-location,
+	   symbol: name,
+	   module: mod);
+    <symbol-token> =>
+      make(class,
+	   source-location: source-location,
+	   symbol: name);
+  end;
 end;
 
 // make-constrainted-name -- internal.
