@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-base-exports.dylan,v 1.1 2002/03/12 22:00:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-base-exports.dylan,v 1.2 2002/03/16 23:23:16 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -383,7 +383,8 @@ define module header
   use source;
 
   export
-    <header>, parse-header, find-newline;
+    <header>, parse-header, find-newline,
+    header-add, header-add-new, header-concatenate;
 end;
 
 
