@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.30 1994/06/01 20:09:39 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.31 1994/06/11 02:15:18 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -39,7 +39,7 @@ define module Builtin-Stuff
     <pair>,
     <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
-    <string>, <symbol>,
+    <spin-lock>, <string>, <symbol>,
     <thread>, <true>, <type>,
     <unicode-string>,
     <vector>,
@@ -49,17 +49,18 @@ define module Builtin-Stuff
     apply-curry, as, ash,
     broadcast-event,
     direct-subclasses, direct-superclasses,
-    ceiling, ceiling/, copy-bytes, current-handler,
+    ceiling, ceiling/, copy-bytes, current-handler, current-thread,
     do-next-method,
     element, element-setter, enable-error-system,
     find-method, floor, floor/, format, function-arguments,
-    generic-function-methods, getc, grab-lock,
+    generic-function-mandatory-keywords, generic-function-methods,
+    getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     kill-thread,
     limited, list, locked?, logand, logbit?, logior, lognot, logxor,
-    main, make, merge-hash-codes, method-specializers,
+    main, make, make-generic-function, merge-hash-codes, method-specializers,
     negative,
     object-class, object-hash,
     pair, prin1, print, putc, puts,
@@ -122,7 +123,7 @@ define module Dylan
 	     element, element-setter, error,
 	     find-method, floor, floor/, forward-iteration-protocol,
 	     function-arguments,
-	     generic-function-methods,
+	     generic-function-mandatory-keywords, generic-function-methods,
 	     head, head-setter,
 	     initialize, instance?,
 	     limited, list, logand, logbit?, logior, lognot, logxor,
@@ -244,9 +245,13 @@ end File-Descriptors;
 
 define module Threads
   use Dylan;
+  use Extensions;
   use Builtin-Stuff,
-    import: (<thread>, spawn-thread, kill-thread,
-	     <lock>, locked?, grab-lock, release-lock,
+    import: (<thread>, spawn-thread, current-thread, kill-thread,
+	     <lock>, <spin-lock>,
+	     locked?, grab-lock, release-lock,
 	     <event>, wait-for-event, signal-event, broadcast-event),
     export: all;
+  export
+    <multi-lock>, <semaphore>;
 end;
