@@ -158,7 +158,15 @@ define-primitive
   (#"pop-args", #(#"<raw-pointer>"), #(values:));
 
 define-primitive
-  (#"initialized?", #("<object>"), #"<boolean>",
+  (#"initialized?", #(#"<object>"), #"<boolean>",
+   pure: #t);
+
+define-primitive
+  (#"allocate", #(#"<fixed-integer>"), #"<object>",
+   pure: #t);
+
+define-primitive
+  (#"make-data-word-instance", #(#"<object>"), #"<object>",
    pure: #t);
 
 for (name in #[#"fixnum-=", #"fixnum-<"])
