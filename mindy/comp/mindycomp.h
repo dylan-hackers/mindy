@@ -23,10 +23,15 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.10 1995/09/13 23:35:09 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.11 1995/09/14 19:32:26 nkramer Exp $
 *
 \**********************************************************************/
 
+#ifdef WIN32
+#   define boolean unsigned char
+#else
+#   define boolean int
+#endif
 #define TRUE 1
 #define FALSE 0
 
