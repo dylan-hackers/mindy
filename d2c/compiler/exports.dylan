@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.38 1995/04/28 07:21:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.39 1995/04/28 15:39:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -161,7 +161,7 @@ define module signature-interface
     <signature>, specializers, next?, rest-type, key-infos, all-keys?,
     returns,
 
-    <key-info>, key-name, key-type, required?;
+    <key-info>, key-name, key-type, required?, key-default;
 end;
 
 define module names
