@@ -34,7 +34,7 @@ define method slurp-file (filename :: <string>) => lines :: <sequence>;
   for (i from 0, 
        line = read-line(stream, signal-eof?: #f) 
 	 then read-line(stream, signal-eof?: #f),
-       while line ~= #f)
+       while: line ~= #f)
       lines[i] := line;
   end for;
   lines;
@@ -78,7 +78,7 @@ end method print-entry;
 
 define method print-diffs 
     (diffs :: <script>, file1 :: <sequence>, file2 :: <sequence>) => ();
-  for (pointer = diffs then pointer.tail, while pointer ~= #())
+  for (pointer = diffs then pointer.tail, while: pointer ~= #())
     let entry = pointer.head;
 
     // If two consecutive entries could be considered a "change" (ie,
@@ -104,7 +104,7 @@ define method print-diffs
   end for;
 end method print-diffs;
 
-define method main (argv0, #rest filenames)
+define method main (argv0 :: <byte-string>, #rest filenames)
   let file1 = slurp-file(filenames[0]);
   let file2 = slurp-file(filenames[1]);
   print-diffs(sequence-diff(file1, file2), file1, file2);
