@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.16 1995/04/25 23:03:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.17 1995/04/26 03:34:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -73,6 +73,9 @@ end class;
 // lexical variables.
 //
 define class <let-assignment> (<fer-assignment>)
+  //
+  // The next link in the chain of lets in this component.
+  slot let-next :: false-or(<let-assignment>), required-init-keyword: next:;
 end class;
 
 // An assignment that doesn't create a new "variable" (that would side-effect
@@ -304,8 +307,9 @@ define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
   slot tail-set :: <tail-set>;
 
   // The structure which represents the environment that this Function's
-  // variables are allocated in.  This is filled in by environment analysis.
-  slot environment :: <environment>;
+  // variables are allocated in.
+  slot environment :: <environment>,
+    init-function: curry(make, <environment>);
 
   // If this function is or ever was an entry-point for some other function,
   // then this is that function.
@@ -354,10 +358,9 @@ define class <fer-component> (<component>)
   // that have new references to them.
   slot reanalyze-functions :: <list>, init-value: #();
 
-  // List of all of the <initial-variable>s currently in this component.  These
-  // are variables which we should attempt to SSA-convert.  If successful, the
-  // <initial-variable> is no longer used, and is deleted from this list.
-  slot initial-variables :: <list>, init-value: #();
+  // Chain of all the lets (though let-next) in this component.  Used by
+  // environment analysis.  Deleted lets are left in this chain, so beware.
+  slot all-lets :: false-or(<let-assignment>), init-value: #f;
 
   // String that is some sort of name for the code in this component.
   slot name :: <byte-string>, init-value: "<unknown>";
@@ -391,17 +394,14 @@ end class;
 // The Environment structure represents the result of Environment analysis.
 //
 define class <environment> (<annotatable>)
-
-  // The function that allocates this environment.
-  slot lambda :: <lambda>, required-init-keyword: lambda:;
-
-  // A list of all the <Lambdas> that allocate variables in this environment.
-  slot lambdas :: <list>, init-value: #();
-
-  // A list of all the <lambda-var>s and <exit-functions>s needed from
-  // enclosing environments by code in this environment.
-  slot closure :: <list>, init-value: #();
+  slot closure-vars :: false-or(<closure-var>), init-value: #f;
 end class;
+
+define class <closure-var> (<object>)
+  slot original-var :: <ssa-variable>, required-init-keyword: original:;
+  slot copy-var :: <ssa-variable>, required-init-keyword: copy:;
+  slot closure-next :: false-or(<closure-var>), required-init-keyword: next:;
+end;
 
 
 // The Tail-Set structure is used to accmumlate information about
