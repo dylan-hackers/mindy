@@ -1,5 +1,7 @@
 module: carbon
 
+c-include("Carbon.h");
+
 /*
 	Basic types
 */
@@ -31,6 +33,17 @@ define constant <ResType> = <FourCharCode>;
 */
 
 define constant $noErr :: <OSErr> = 0;
+
+// Fonts
+
+define constant $normal :: <integer> = c-expr(int: "normal");
+define constant $bold :: <integer> = c-expr(int: "bold");
+define constant $italic :: <integer> = c-expr(int: "italic");
+define constant $underline :: <integer> = c-expr(int: "underline");
+define constant $outline :: <integer> = c-expr(int: "outline");
+define constant $shadow :: <integer> = c-expr(int: "shadow");
+define constant $condense :: <integer> = c-expr(int: "condense");
+define constant $extend :: <integer> = c-expr(int: "extend");
 
 
 /*

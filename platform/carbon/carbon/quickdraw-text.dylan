@@ -6,6 +6,13 @@ module: carbon
 
 c-include("Carbon.h");
 
+// These should be in TextEdit
+
+define constant $teFlushDefault  :: <integer> = c-expr(int: "teFlushDefault ");
+define constant $teCenter :: <integer> = c-expr(int: "teCenter");
+define constant $teFlushRight :: <integer> = c-expr(int: "teFlushRight");
+define constant $teFlushLeft :: <integer> = c-expr(int: "teFlushLeft");
+
 /*
   FontInfo
 */

@@ -194,7 +194,9 @@ define module carbon
     $kControlListBoxListHandleTag, $kControlEditTextValidationProcTag, $kControlEditTextKeyFilterTag,
     $kControlNoPart, $kControlEntireControl, $kControlEditTextPart,
     $kControlSupportsEmbedding,
-		<ControlHandle>, <ControlRef>,
+    $kControlFontBigSystemFont, $kControlFontSmallSystemFont, $kControlFontSmallBoldSystemFont, 
+    $kControlFontViewSystemFont,
+    <ControlHandle>, <ControlRef>,
     <ControlActionUPP>, <ControlEditTextValidationUPP>, <ControlKeyFilterUPP>,
 		NewControl, DisposeControl, KillControls,
 		HiliteControl, ShowControl, HideControl, GetControlBounds,
@@ -212,6 +214,7 @@ define module carbon
     SetControl32BitValue, SetControl32BitMinimum, SetControl32BitMaximum, SetControlViewSize,
     GetControl32BitValue, GetControl32BitMinimum, GetControl32BitMaximum, GetControlViewSize,
     SetControlAction,
+    CreateSliderControl,
     $kDataBrowserListView, $kDataBrowserColumnView, 
     $kDataBrowserDragSelect, $kDataBrowserSelectOnlyOne, $kDataBrowserResetSelection,
     $kDataBrowserNoItem,
@@ -223,6 +226,7 @@ define module carbon
     CreateDataBrowserControl,
     $kDataBrowserListViewLatestHeaderDesc,
     $kDataBrowserIconType, $kDataBrowserTextType, $kDataBrowserIconAndTextType,
+    $kDataBrowserDefaultPropertyFlags,
     <DataBrowserListViewColumnDesc*>,
     propertyDesc-value, headerBtnDesc-value,
     <DataBrowserPropertyDesc*>, <DataBrowserTableViewColumnDesc*>,
@@ -243,7 +247,7 @@ define module carbon
     foreColor-value, backColor-value, foreColor-value-setter, backColor-value-setter,
     <DataBrowserListViewHeaderDesc*>,
     version-value, version-value-setter, minimumWidth-value, minimumWidth-value-setter, 
-    maximumWidth-value, maximum-value-setter, titleOffset-value, titleOffset-value-setter,
+    maximumWidth-value, maximumWidth-value-setter, titleOffset-value, titleOffset-value-setter,
     titleString-value, titleString-value-setter, initialOrder-value, initialOrder-value-setter,
     // XXX - No setters for these two. Get them, and set their fields
     btnFontStyle-value, btnContentInfo-value,
@@ -332,12 +336,14 @@ define module carbon
                         <UInt8>, <SInt8>, <UInt16>, <SInt16>, <UInt32>,
                         <SInt32>,  <OSErr>, <OSStatus>, <FourCharCode>, 
                         <OSType>, <ResType>,
-                // Utilities
+      // Utilities
 			os-type,
 			Debugger, DebugStr,
-                // Error Codes        
-                        $noErr,
-                // pascal string	
+      // Error Codes        
+      $noErr,
+      // Font styles
+      $normal, $bold, $italic, $underline, $outline, $shadow, $condense, $extend,
+      // pascal string	
 			<pascal-string>,
       
 // Memory Manager
@@ -436,6 +442,7 @@ define module carbon
     QDSetDirtyRegion,
     
 // QuickDraw Text
+    $teFlushDefault, $teCenter, $teFlushRight, $teFlushLeft,
     <FontInfo*>,
     ascent-value, descent-value, widMax-value, leading-value,
     ascent-value-setter, descent-value-setter, widMax-value-setter, leading-value-setter,
