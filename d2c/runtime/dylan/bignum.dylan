@@ -267,7 +267,7 @@ end;
 // originally passed.
 //
 define inline method normalize-bignum (num :: <extended-integer>,
-				len :: <fixed-integer>)
+				       len :: <fixed-integer>)
     => res :: <extended-integer>;
   shrink-bignum(num, normalized-length(num, len));
 end;
@@ -302,7 +302,7 @@ define method as (class == <extended-integer>, num :: <fixed-integer>)
 end;
 
 define method as (class == <fixed-integer>, num :: <extended-integer>)
-    => res :: <extended-integer>;
+    => res :: <fixed-integer>;
   //
   // To convert an extended integer into a fixnum, we just combine the digits
   // by shifting and logior-ing.  We use as-signed on the most significant
@@ -370,6 +370,7 @@ end;
 
 define inline method bignum-as-float
     (class :: <class>, num :: <extended-integer>)
+    => res :: <float>;
   let len = bignum-size(num);
   local
     method repeat (index, result)
@@ -494,6 +495,7 @@ end;
 // Addition.
 
 define method \+ (a :: <extended-integer>, b :: <extended-integer>)
+    => res :: <extended-integer>;
   let a-len = bignum-size(a);
   let b-len = bignum-size(b);
   let (shorter, shorter-len, longer, longer-len)
@@ -577,6 +579,7 @@ end;
 // Subtraction.
 
 define method \- (a :: <extended-integer>, b :: <extended-integer>)
+    => res :: <extended-integer>;
   let a-len = bignum-size(a);
   let b-len = bignum-size(b);
   if (a-len < b-len)
@@ -667,6 +670,7 @@ define method divide-by-digit (num :: <extended-integer>, digit :: <digit>)
 end;
 
 define method divisor-shift (num :: <extended-integer>)
+    => res :: <fixed-integer>;
   for (top-digit = as-signed(bignum-digit(num, num.bignum-size - 1))
 	 then ash(top-digit, -1),
        count from 1,
@@ -709,6 +713,7 @@ end;
 
 define method shift-for-division
     (x :: <extended-integer>, shift :: <fixed-integer>)
+    => res :: <extended-integer>;
   let len = x.bignum-size;
   if (zero?(shift))
     let res = make-bignum(len + 1);
