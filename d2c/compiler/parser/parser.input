@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.14 1995/08/22 00:18:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.15 1995/11/15 17:24:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -517,7 +517,7 @@ condition (type)
 %
 
 condition (<left-paren-token> type property-list <right-paren-token>)
-  pair(%2, %3);
+  pair(%2, as(<simple-object-vector>, %3));
 %
 
 :type handler <expression>
