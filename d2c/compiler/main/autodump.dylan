@@ -1,6 +1,6 @@
 module: autodump
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.6 1995/11/14 22:20:38 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.7 1995/11/14 22:25:02 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -57,8 +57,7 @@ define method generate-dumper-and-loader
 		    end: as(<byte-string>, cls.class-name).size - 1);
   format(stream, 
 	 "add-make-dumper(#\"%s\", *compiler-dispatcher*, %s,\n"
-	 "  list(%s\n"
-	 "      ));\n\n",
+	 "  list(%s));\n\n",
 	 class-name-without-brackets, as(<byte-string>, cls.class-name), 
 	 list-literal-contents);
   force-output(stream);
