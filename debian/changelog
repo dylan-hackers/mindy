@@ -1,3 +1,10 @@
+gwydion-dylan (2.3.6pre2cvs10142001-1) unstable; urgency=low
+
+  * Upstream optimizations to compiler.
+  * Implementation of DUIM/GTK+ file-select and directory-select browsers.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 14 Oct 2001 19:03:53 -0700
+
 gwydion-dylan (2.3.6pre2cvs09272001-1) unstable; urgency=low
 
   * Correct build rules for multiple architectures in BOOTSTRAP path.
