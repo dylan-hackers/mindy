@@ -4,3 +4,4 @@ usr/lib/dylan/lib*.so
 usr/lib/dylan/lib*.lo
 usr/lib/dylan/lib*.a
 usr/lib/dylan/lib*.la
+usr/share/man/man1/parsergen.1

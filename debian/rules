@@ -30,7 +30,7 @@ bootstrap-stage2-stamp:  bootstrap-stage1-stamp
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
 			--with-gnu-ld \
-			--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan/2.3.5pre2/x86-linux-gcc
+			--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan
 	# End Bootstrapping portion
 
 	touch bootstrap-stage2-stamp
@@ -38,7 +38,7 @@ bootstrap-stage2-stamp:  bootstrap-stage1-stamp
 	# Add here commands to compile the package.
 
 	export PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
-	    export LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan/2.3.5pre2/x86-linux-gcc:$(LD_LIBRARY_PATH); \
+	    export LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan:$(LD_LIBRARY_PATH); \
 	    $(MAKE)
 
 	touch build-stamp
@@ -80,6 +80,8 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) bootstrap_clean
 
+	chmod 0755 `pwd`/debian/delMakefiles
+	chmod 0755 `pwd`/debian/delStatics
 	`pwd`/debian/delMakefiles `pwd`
 	`pwd`/debian/delStatics `pwd`
 	rm -f `pwd`/ltconfig

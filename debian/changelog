@@ -1,3 +1,17 @@
+gwydion-dylan (2.3.4-3) unstable; urgency=low
+
+  * A few final tweaks to get everything to search the right directories.
+  * Get 'parsergen' manpage into -dev where it belongs.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Thu, 22 Mar 2001 19:23:11 -0800
+
+gwydion-dylan (2.3.4-2) unstable; urgency=low
+
+  * Fixes for Alpha architecture.
+  * Fixes for autobuilders.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 20 Mar 2001 20:31:38 -0800
+
 gwydion-dylan (2.3.4-1) unstable; urgency=low
 
   * New upstream version.
