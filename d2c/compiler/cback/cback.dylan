@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.15 1995/04/26 21:48:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.16 1995/04/26 22:04:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -685,7 +685,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     write(ref-leaf($general-rep, dep.source-exp, output-info), stream);
   end;
   write(");\n", stream);
-  spew-pending-defines(stream);
+  spew-pending-defines(output-info);
   write(stream.string-output-stream-string,
 	output-info.output-info-guts-stream);
 end;
