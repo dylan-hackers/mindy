@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.5 2001/10/15 20:33:41 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.6 2001/10/16 21:58:20 gabor Exp $
 copyright: see below
 
 
@@ -56,6 +56,7 @@ define module fer-transform
   export 
     just-add-type-checks, 
     convert-component-to-ssa,
+    maybe-convert-to-ssa,
     traverse-component,
     add-type-checks-aux,
     delete-dependent,
