@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.7 2001/07/22 04:44:30 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.8 2001/07/24 06:24:13 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1302,15 +1302,14 @@ define method make-transformer
       give-up();
     end;
 
+    let assign = call.dependents.dependent;
     let builder = make-builder(component);
+    let policy = assign.policy;
+    let source = assign.source-location;
 
     if (defn.class-defn-key-defaulter-function)
       let keyword-infos = cclass.all-keyword-infos;
 
-      if (any?(keyword-init-function, keyword-infos))
-        give-up();
-      end if;
-      
       let init-leaves :: <object-table> = make(<object-table>);
       for(keywords-list = init-keywords then keywords-list.tail.tail,
           count from 1 by 2,
@@ -1360,6 +1359,15 @@ define method make-transformer
         elseif(info.keyword-init-value)
           init-leaves[key]
             := make-literal-constant(builder, info.keyword-init-value);
+        elseif(info.keyword-init-function)
+          let init-func-temp
+            = make-local-var(builder, info.keyword-symbol, info.keyword-type);
+          let init-func-leaf
+            = make-literal-constant(builder, info.keyword-init-function);
+          build-assignment
+            (builder, policy, source, init-func-temp,
+             make-unknown-call(builder, init-func-leaf, #f, #()));
+          init-leaves[key] := init-func-temp;
         end if;
       end for;
       
@@ -1373,9 +1381,6 @@ define method make-transformer
            end for;
     end if;
 
-    let assign = call.dependents.dependent;
-    let policy = assign.policy;
-    let source = assign.source-location;
     let instance-var = make-local-var(builder, #"instance", cclass);
     build-assignment
       (builder, policy, source, instance-var,
