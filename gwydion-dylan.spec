@@ -16,7 +16,7 @@ Version: VERSION
 Release: 1.libcX
 Copyright: X-style
 Group: Development/Languages/Dylan
-Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-VERSION.tar.gz
+Source0: ftp://berlin.ccc.de/pub/gd/src/gd-VERSION.tar.gz
 Source1: ftp://berlin.ccc.de/pub/gd/doc/gd20-html.tar.gz
 URL: http://www.gwydiondylan.org/
 Packager: eric.kidd@pobox.com
@@ -64,6 +64,10 @@ on the web at <http://www.gwydiondylan.org/>.
 
 
 %changelog
+* Tue Jun 01 1999 Andreas Bogk <andreas@andreas.org>
+  - added site-local directory according to FSSTND
+  - changed the Dylan library location to reflect 2.3.1 changes
+
 * Sat Jan 09 1999 Eric Kidd <eric.kidd@pobox.com>
   - Added a build root.
   - Simplified file list.
@@ -125,7 +129,7 @@ if [ ! -f configure ]; then
   autoconf
 fi
 # This does the wrong thing if d2c isn't in PATH.
-./configure --prefix=/usr
+./configure --prefix=/usr --with-site-dylan-prefix=/usr/local
 make
 
 
@@ -173,8 +177,9 @@ fi
 /usr/bin/gen-makefile
 /usr/bin/mk-build-tree
 /usr/bin/make-dylan-app
+/usr/bin/make-dylan-lib
 /usr/include/runtime.h
-/usr/lib/dylan/elisp/
+/usr/lib/dylan/VERSION/*/elisp/
 
 # Our man pages (but see below for mindy.1).
 /usr/man/man7/dylan.7
@@ -185,8 +190,8 @@ fi
 /usr/man/man4/platforms.descr.4
 
 # Our libraries.
-/usr/lib/dylan/*.a
-/usr/lib/dylan/*.du
+/usr/lib/dylan/VERSION/*/*.a
+/usr/lib/dylan/VERSION/*/*.du
 
 
 %files extras
@@ -207,4 +212,4 @@ fi
 /usr/man/man1/mindy.1
 /usr/man/man1/mindycomp.1
 
-/usr/lib/dylan/*.dbc
+/usr/lib/dylan/VERSION/*/*.dbc
