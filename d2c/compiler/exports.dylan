@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.122 1995/12/15 05:56:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.123 1995/12/15 16:15:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,11 +30,14 @@ define module common
     import: {main,
 	     <fixed-integer>, <extended-integer>,
 	     $maximum-fixed-integer, ratio,
-	     false-or, one-of, type-or,
+	     false-or, one-of,
 	     <boolean>, <false>, <true>,
 	     ignore,
 	     *debug-output*, <equal-table>, <string-table>, <dictionary>,
 	     key-exists?, equal-hash},
+#if (mindy)
+    rename: {type-or => type-union},
+#end
     export: all;
   use Streams, export: all;
   use Print, export: all;
