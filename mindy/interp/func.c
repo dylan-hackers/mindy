@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.2 1998/12/17 08:52:22 igor Exp $
 *
 * This file implements functions.
 *
@@ -1096,7 +1096,7 @@ static void c_function_xep(struct thread *thread, int nargs)
     obj_t cf = args[-1];
     int (*fun)() = (int(*) ()) C_FUNCTION(cf)->pointer;
     obj_t res_type = HEAD(C_FUNCTION(cf)->result_types);
-    int result;
+    long result;
     obj_t *old_sp;
     obj_t value;
 
