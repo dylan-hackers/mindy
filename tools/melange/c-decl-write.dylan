@@ -644,9 +644,10 @@ define method write-declaration
 		      select (melange-target)
 			#"mindy" => c-accessor(decl.type,
 					       0, raw-name, decl.type-name);
-			#"d2c" => concatenate("c-variable-ref(",
+			#"d2c" => concatenate("as(", decl.type-name,
+					      ", c-variable-ref(",
 					      decl.type.d2c-type-tag, " \"&",
-					      decl.simple-name, "\")");
+					      decl.simple-name, "\"))");
 		      end select),
 	 decl.getter);
   register-written-name(written-names, decl.getter, decl);
@@ -655,6 +656,7 @@ define method write-declaration
   if (~decl.read-only 
 	& ~instance?(real-type, <non-atomic-types>))
     format(stream,
+	   // XXX - Broken when assigning to pointer variables.
 	   "define %s method %s (value :: %s) => (result :: %s);\n"
 	     "  %s := %s;\n  value;\nend method %s;\n\n",
 	   decl.sealed-string, decl.setter, decl.type.mapped-name,
