@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.4 1994/10/05 21:01:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.5 1995/05/14 12:29:43 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -33,10 +33,10 @@ extern obj_t obj_ByteCharacterClass;
 
 struct character {
     obj_t class;
-    unsigned char high_byte, low_byte;
+    unsigned short unicode_value;  /* ASCII is a subset of Unicode,  */
+                                   /* so this works                  */
 };
 
 extern obj_t int_char(int c);
 
-#define char_int(o) (((obj_ptr(struct character *, o)->high_byte) << 8) \
-                     + (obj_ptr(struct character *, o)->low_byte))
+#define char_int(o) (obj_ptr(struct character *, o)->unicode_value)

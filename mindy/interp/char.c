@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.10 1994/11/06 19:58:38 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.11 1995/05/14 12:29:43 nkramer Exp $
 *
 * This file implements characters.
 *
@@ -61,8 +61,7 @@ obj_t int_char(int c)
 	    res = alloc(obj_ByteCharacterClass, sizeof(struct character));
 	else
 	    res = alloc(obj_CharacterClass, sizeof(struct character));
-	obj_ptr(struct character *, res)->low_byte = c & 255;
-	obj_ptr(struct character *, res)->high_byte = (c >> 8);
+	obj_ptr(struct character *, res)->unicode_value = c;
 	obj_Characters[c] = res;
     }
 

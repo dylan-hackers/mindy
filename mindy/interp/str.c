@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.13 1995/05/13 22:59:42 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.14 1995/05/14 12:29:43 nkramer Exp $
 *
 * This file implements strings.
 *
@@ -140,10 +140,10 @@ static obj_t dylan_unicode_str_element_setter(obj_t value,
     int i = fixnum_value(index);
 
     if (0 <= i && i < obj_ptr(struct string *, str)->len) {
-	string_chars(str)[2*i]
-	    = obj_ptr(struct character *, value)->high_byte;
-	string_chars(str)[2*i + 1] 
-	    = obj_ptr(struct character *, value)->low_byte;
+	string_chars(str)[2*i]     /* High byte */
+	    = (obj_ptr(struct character *, value)->unicode_value) >> 8;
+	string_chars(str)[2*i + 1]  /* Low byte */
+	    = (obj_ptr(struct character *, value)->unicode_value) & 255;
     }
     else
 	error("No element %= in %=", index, str);
