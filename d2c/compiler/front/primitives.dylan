@@ -439,7 +439,9 @@ define-primitive
    #(values:));
 
 define-primitive
-  (#"vector-elements", #(#"<builtin-vector>"), #"<raw-pointer>",
+  (#"vector-elements",
+   #(#(union:, #"<byte-vector>", #"<byte-string>", #"<unicode-string>")),
+   #"<raw-pointer>",
    pure: #t);
 
 define-primitive
