@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.14 1996/09/28 20:28:06 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.15 1996/11/13 18:25:27 bfw Exp $
 
 //======================================================================
 //
@@ -163,7 +163,7 @@ define sealed method do-get-input-buffer
       end if;
       let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
 				   buf.buffer-end,
-				   buf.size);
+				   (buf.size - buf.buffer-end));
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
@@ -220,7 +220,7 @@ define sealed method do-next-input-buffer
       end if;
       let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
 				   buf.buffer-end,
-				   buf.size);
+				   (buf.size - buf.buffer-end));
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
