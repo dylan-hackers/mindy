@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/cat/Attic/GNUmakefile,v 1.1 1994/06/29 00:03:26 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/cat/Attic/GNUmakefile,v 1.2 1994/06/29 03:37:17 wlott Exp $
 ##
 ##  This is the makefile for the cat demo.
 ##
@@ -42,3 +42,5 @@ all: ${OBJS}
 
 clean:
 	rm -f ${OBJS}
+
+install:

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/hello-world/Attic/GNUmakefile,v 1.1 1994/06/29 00:04:19 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/hello-world/Attic/GNUmakefile,v 1.2 1994/06/29 03:37:03 wlott Exp $
 ##
 ##  This is the makefile for the hello-world demo.
 ##
@@ -42,3 +42,5 @@ all: ${OBJS}
 
 clean:
 	rm -f ${OBJS}
+
+install:

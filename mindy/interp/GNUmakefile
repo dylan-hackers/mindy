@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.13 1994/06/27 16:31:22 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.14 1994/06/29 03:34:16 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -65,6 +65,11 @@ clean:
 depend: ${SRCS}
 	$(CC) -MM -E ${CPPFLAGS} $^ > ,depends
 	mv ,depends Depends
+
+install: mindy
+	rm -f $(DESTDIR)/bin/mindy
+	cp mindy $(DESTDIR)/bin/mindy
+
 
 ifndef IGNORE_DEPENDS
 

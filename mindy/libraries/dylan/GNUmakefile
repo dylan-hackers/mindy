@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.11 1994/06/28 23:08:10 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.12 1994/06/29 03:35:29 wlott Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -46,3 +46,7 @@ dylan.dbc: ${OBJS}
 
 clean:
 	rm -f ${OBJS} dylan.dbc
+
+install: dylan.dbc
+	rm -f $(DESTDIR)/lib/dylan.dbc
+	cp dylan.dbc $(DESTDIR)/lib/dylan.dbc

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/GNUmakefile,v 1.3 1994/06/28 23:58:18 wlott Exp $
+##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/GNUmakefile,v 1.4 1994/06/29 03:36:02 wlott Exp $
 ##
 ## This is the makefile for the Mindy random library, random.dbc.
 ##
@@ -43,3 +43,7 @@ random.dbc: ${OBJS}
 
 clean:
 	rm -f ${OBJS} random.dbc
+
+install: random.dbc
+	rm -f $(DESTDIR)/lib/random.dbc
+	cp random.dbc $(DESTDIR)/lib/random.dbc

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.7 1994/06/27 16:49:04 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.8 1994/06/29 03:33:52 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -70,6 +70,10 @@ clean:
 depend: ${SRCS}
 	$(CC) -MM -E ${CPPFLAGS} $^ > ,depends
 	mv ,depends Depends
+
+install: mc
+	rm -f $(DESTDIR)/bin/mc
+	cp mc $(DESTDIR)/bin/mc
 
 
 ifndef IGNORE_DEPENDS
