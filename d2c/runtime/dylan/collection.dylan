@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.5 1995/11/16 03:36:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.6 1995/12/05 03:34:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -494,11 +494,11 @@ define sealed generic third-setter
     (new-value :: <object>, seq :: <sequence>)
     => value :: <object>;
 
-define sealed generic last
+define open generic last
     (seq :: <sequence>, #key default)
     => value :: <object>;
 
-define sealed generic last-setter
+define open generic last-setter
     (new-value :: <object>, seq :: <sequence>)
     => value :: <object>;
 
