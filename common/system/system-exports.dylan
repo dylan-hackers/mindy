@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.7 2000/11/29 04:28:32 dauclair Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.8 2001/02/21 13:09:58 robmyers Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright: see below
@@ -40,7 +40,8 @@ end library;
 
 define module operating-system
   use dylan;
-  use extensions;
+  use extensions,
+    exclude: {assert};
   use melange-support;
 
   use common-dylan,
