@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.11 1996/02/05 23:26:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.12 1996/02/06 15:39:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -195,7 +195,7 @@ end;
 
 define module forwards
   create
-    <module>,
+    <library>, <module>,
     <ctype>,
     <cclass>,
     <abstract-variable>,
@@ -347,11 +347,12 @@ define module definitions
   use compile-time-values;
   use names;
   use od-format;
-  use forwards, import: {<ctype>, <ct-function>};
+  use forwards, import: {<library>, <ctype>, <ct-function>};
   use signature-interface;
 
   export
-    <definition>, defn-name, defn-type, ct-value, $definition-slots,
+    <definition>, defn-name, defn-library, defn-type, ct-value,
+    $definition-slots,
     check-syntax-table-additions, make-syntax-table-additions,
     <abstract-constant-definition>,
     <implicit-definition>,
@@ -383,11 +384,11 @@ define module variables
   use variables-dumper-vars;
   use od-format;
 
-  use forwards, import: {<module>}, export: all;
+  use forwards, import: {<library>, <module>}, export: all;
   export
     $Dylan-Library, $Dylan-Module, *Current-Library*, *Current-Module*,
 
-    <library>, find-library, library-name, note-library-definition,
+    find-library, library-name, note-library-definition,
     find-module, use-module, module-name, module-syntax-table,
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
