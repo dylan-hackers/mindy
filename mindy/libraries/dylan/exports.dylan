@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.24 1994/05/01 05:36:36 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.25 1994/05/11 01:15:55 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -155,7 +155,7 @@ define module Dylan
     fill!, find-key, first, first-setter, floor,
     gcd,
     identity, integral?, intersection,
-    key-hash, key-sequence, key=,
+    key-hash, key-sequence, key-test, key=,
     last, last-setter, lcm,
     map, map-as, map-into, max, member?, min, modulo,
     numerator,
