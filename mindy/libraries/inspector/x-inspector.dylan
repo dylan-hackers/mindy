@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.6 1996/04/24 12:29:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.7 1996/04/25 18:24:12 wlott Exp $
 
 //======================================================================
 //
@@ -43,7 +43,12 @@ define class <inspector-state> (<object>)
   constant slot state-done :: <event> = make(<event>);
   //
   // All the windows that have been created for this state.
-  constant slot state-windows :: <stretchy-vector> = make(<stretchy-vector>);
+  constant slot state-all-windows :: <stretchy-vector>
+    = make(<stretchy-vector>);
+  //
+  // Table mapping objects to the corresponding window.
+  constant slot state-object-windows :: <object-table>
+    = make(<object-table>);
 end class <inspector-state>;
 
 
@@ -84,98 +89,118 @@ define function xinspect-one-object
   if (state.state-done?)
     release-lock(state.state-lock);
   else
-    let window = make(<toplevel>);
-    add!(state.state-windows, window);
-    release-lock(state.state-lock);
+    let old-window = element(state.state-object-windows, obj, default: #f);
+    if (old-window)
+      release-lock(state.state-lock);
+      put-tk-line("raise ", old-window);
+    else
+      let window = make(<toplevel>);
+      add!(state.state-all-windows, window);
+      state.state-object-windows[obj] := window;
+      release-lock(state.state-lock);
+      unmap-window(window);
 
-    call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
-    let window-title = tk-quote(concatenate("Inspect ", short-string(obj)));
-    call-tk-function("wm title ", tk-as(<string>, window),
-		     " \"", window-title, "\"");
-    let info = obj.object-info;
-    for (attrib in info)
-      make(<label>, text: attrib.attrib-header, in: window, 
-	   side: "top", anchor: "w");
-      if (attrib.attrib-body.size > 5 
-	    & every?(method (component)
-		       component.related-objects.size == 1;
-		     end method,
-		     attrib.attrib-body))
-	let frame = make(<frame>, anchor: "w", side: "top", 
-			 in: window, expand: #t, fill: "both");
-	make(<frame>, relief: "sunken",
-	     width: 50, fill: "y", anchor: "w", side: "left", in: frame);
-	let listbox = make(<listbox>, relief: "sunken", in: frame,
-			   side: "left", expand: #t, fill: "both");
-	scroll(listbox, orient: "vertical", fill: "y",
-	       in: frame, side: "left", relief: "sunken");
-	apply(insert, listbox, 0,
-	      map(stripped-description, attrib.attrib-body));
-	bind(listbox, "<Double-Button-1>",
-	     method ()
-	       let index = listbox.current-selection.first;
-	       let component = attrib.attrib-body[index];
-	       xinspect-one-object(component.related-objects.first, state);
-	     end method);
-      else
-	let frame = make(<frame>, anchor: "w", side: "top", in: window);
-	// padding
-	make(<frame>, relief: "sunken",
-	     width: 50, fill: "y", anchor: "w", side: "left", in: frame);
-	let descr-frame = make(<frame>, side: "right", in: frame, 
-			       expand: #t, fill: "both");
-	for (component in attrib.attrib-body)
-	  do-component(component, descr-frame, state);
-	end for;
+      put-tk-line("wm protocol ", window, " \"WM_DELETE_WINDOW\" {",
+		  curry(close-command, state, window, obj), "}");
+
+      call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
+      let window-title = tk-quote(concatenate("Inspect ", short-string(obj)));
+      call-tk-function("wm title ", tk-as(<string>, window),
+		       " \"", window-title, "\"");
+      let info = obj.object-info;
+      for (attrib in info)
+	make(<label>, text: attrib.attrib-header, in: window, 
+	     side: "top", anchor: "w");
+	if (attrib.attrib-body.size > 5 
+	      & every?(method (component)
+			 component.related-objects.size == 1;
+		       end method,
+		       attrib.attrib-body))
+	  let frame = make(<frame>, anchor: "w", side: "top", 
+			   in: window, expand: #t, fill: "both");
+	  make(<frame>, relief: "sunken",
+	       width: 50, fill: "y", anchor: "w", side: "left", in: frame);
+	  let listbox = make(<listbox>, relief: "sunken", in: frame,
+			     side: "left", expand: #t, fill: "both");
+	  scroll(listbox, orient: "vertical", fill: "y",
+		 in: frame, side: "left", relief: "sunken");
+	  apply(insert, listbox, 0,
+		map(stripped-description, attrib.attrib-body));
+	  bind(listbox, "<Double-Button-1>",
+	       method ()
+		 let index = listbox.current-selection.first;
+		 let component = attrib.attrib-body[index];
+		 xinspect-one-object(component.related-objects.first, state);
+	       end method);
+	else
+	  let frame = make(<frame>, anchor: "w", side: "top", in: window);
+	  // padding
+	  make(<frame>, relief: "sunken",
+	       width: 50, fill: "y", anchor: "w", side: "left", in: frame);
+	  let descr-frame = make(<frame>, side: "right", in: frame, 
+				 expand: #t, fill: "both");
+	  for (component in attrib.attrib-body)
+	    do-component(component, descr-frame, state);
+	  end for;
+	end if;
+      end for;
+      
+      let button-frame = make(<frame>, side: "top", in: window);
+      if (instance?(obj, <class>))
+	make(<button>, text: "See Class Diagram",
+	     relief: "raised", side: "left", anchor: "w", in: button-frame,
+	     command: method () 
+			let title = concatenate("Diagram ", short-string(obj));
+			view-class-hierarchy(state, obj, title);
+		      end method);
       end if;
-    end for;
-    
-    let button-frame = make(<frame>, side: "top", in: window);
-    if (instance?(obj, <class>))
-      make(<button>, text: "See Class Diagram",
-	   relief: "raised", side: "left", anchor: "w", in: button-frame,
-	   command: method () 
-		      let title = concatenate("Diagram ", short-string(obj));
-		      view-class-hierarchy(obj, title);
-		    end method);
+      make(<button>, text: "Close",
+	   command: curry(close-command, state, window, obj),
+	   relief: "raised", side: "left", anchor: "w", in: button-frame);
+      make(<button>, text: "Quit",
+	   command: curry(quit-command, state),
+	   relief: "raised", side: "left", anchor: "w", in: button-frame);
+      map-window(window);
     end if;
-    make(<button>, text: "Close",
-	 command: method ()
-		    grab-lock(state.state-lock);
-		    if (state.state-done?)
-		      release-lock(state.state-lock);
-		    else
-		      remove!(state.state-windows, window);
-		      let last-window? = state.state-windows.empty?;
-		      if (last-window?)
-			state.state-done? := #t;
-		      end if;
-		      release-lock(state.state-lock);
-		      destroy-window(window);
-		      if (last-window?)
-			signal-event(state.state-done);
-		      end if;
-		    end if;
-		  end,
-	 relief: "raised", side: "left", anchor: "w", in: button-frame);
-    make(<button>, text: "Quit",
-	 command: method ()
-		    grab-lock(state.state-lock);
-		    let already-done? = state.state-done?;
-		    state.state-done? := #t;
-		    release-lock(state.state-lock);
-		    // Once the done flag has been set, nobody changes windows
-		    // so we don't need to protect it anymore.
-		    for (window in state.state-windows)
-		      destroy-window(window);
-		    end for;
-		    unless (already-done?)
-		      signal-event(state.state-done);
-		    end unless;
-		  end method,
-	 relief: "raised", side: "left", anchor: "w", in: button-frame);
   end if;
 end function xinspect-one-object;
+
+
+define method close-command
+    (state :: <inspector-state>, window :: <window>, object :: <object>)
+    => ();
+  grab-lock(state.state-lock);
+  if (state.state-done? | ~member?(window, state.state-all-windows))
+    release-lock(state.state-lock);
+  else
+    remove!(state.state-all-windows, window);
+    remove-key!(state.state-object-windows, object);
+    let last-window? = state.state-all-windows.empty?;
+    if (last-window?)
+      state.state-done? := #t;
+    end if;
+    release-lock(state.state-lock);
+    destroy-window(window);
+    if (last-window?)
+      signal-event(state.state-done);
+    end if;
+  end if;
+end method close-command;
+
+define method quit-command (state :: <inspector-state>) => ();
+  grab-lock(state.state-lock);
+  let already-done? = state.state-done?;
+  state.state-done? := #t;
+  release-lock(state.state-lock);
+  // Once the done flag has been set, nobody changes the all-windows
+  // so we don't need to protect it anymore.
+  for (window in state.state-all-windows)
+    destroy-window(window);
+  end for;
+  unless (already-done?)
+    signal-event(state.state-done);
+  end unless;
+end method quit-command;
 
 
 
