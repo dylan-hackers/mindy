@@ -1,6 +1,6 @@
 module: concatenated-streams
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/concatenated-streams.dylan,v 1.5 1996/09/19 14:16:40 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/concatenated-streams.dylan,v 1.6 1997/01/16 15:15:53 nkramer Exp $
 
 //======================================================================
 //
@@ -92,11 +92,12 @@ define method make (cls == <concatenated-stream>, #next next-method,
 	if (~ every?(rcurry(instance?, <string>), locators))
 	  error("Your locators (%=) are not all strings", locators);
 	end if;
-	let index = -1; // close over this variable
+	let index = 0; // close over this variable
 	method () => stream :: false-or(<file-stream>);
 	  if (index < locators.size)
+	    let res = make(<file-stream>, locator: locators[index]);
 	    index := index + 1;
-	    make(<file-stream>, locator: locators[index]);
+	    res;
 	  else
 	    #f;
 	  end if;
