@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.41 1995/05/12 12:32:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.42 1995/05/12 15:35:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,7 +363,10 @@ define method make-info-for
   let name = new-global(output-info);
   let result-type = function.result-type;
   let result-rep
-    = if (result-type == empty-ctype())
+    = if (function.return-convention == #"cluster")
+	write("descriptor_t *", stream);
+	#"cluster";
+      elseif (result-type == empty-ctype())
 	write("void", stream);
 	#"doesn't-return";
       else
