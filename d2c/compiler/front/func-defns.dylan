@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.8 1996/05/29 23:29:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.9 1996/07/03 17:07:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -413,14 +413,18 @@ define method ct-applicable-methods
 	let definitely? = #t;
 	for (call-type in call-types,
 	     spec in meth.function-defn-signature.specializers)
-	  let spec-extent = spec.ctype-extent;
-	  unless (csubtype?(call-type, spec-extent))
-	    if (ctypes-intersect?(call-type, spec-extent))
-	      definitely? := #f;
-	    else
-	      next();
-	    end if;
-	  end unless;
+	  if (instance?(spec, <unknown-ctype>))
+	    definitely? := #f;
+	  else
+	    let spec-extent = spec.ctype-extent;
+	    unless (csubtype?(call-type, spec-extent))
+	      if (ctypes-intersect?(call-type, spec-extent))
+		definitely? := #f;
+	      else
+		next();
+	      end if;
+	    end unless;
+	  end if;
 	end for;
 	if (definitely?)
 	  definitely-applicable := pair(meth, definitely-applicable);
