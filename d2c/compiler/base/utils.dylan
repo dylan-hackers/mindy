@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.6 2002/06/03 22:22:13 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.7 2002/12/11 04:46:16 bruce Exp $
 copyright: see below
 
 
@@ -522,7 +522,7 @@ end;
 #else
 
 define variable *debug-output* :: <stream>
-  = make(<flush-happy-stream>, target: *standard-error*);
+  = make(<flush-happy-stream>, target: *standard-output*);
 
 #endif
 

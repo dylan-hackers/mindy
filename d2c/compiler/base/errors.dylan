@@ -1,5 +1,5 @@
 module: errors
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/errors.dylan,v 1.2 2000/01/24 04:56:00 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/errors.dylan,v 1.3 2002/12/11 04:46:16 bruce Exp $
 copyright: see below
 
 
@@ -101,12 +101,12 @@ end method report-condition;
 // a new line and print the context if we haven't already.
 // 
 define method default-handler (condition :: <compiler-condition>) => ();
-  fresh-line(*debug-output*);
+  fresh-line(*standard-error*);
   if (*print-context*)
-    format(*debug-output*, "In %s:\n", *current-context*);
+    format(*standard-error*, "In %s:\n", *current-context*);
     *print-context* := #f;
   end if;
-  format(*debug-output*, "%s\n", condition);
+  format(*standard-error*, "%s\n", condition);
 end method default-handler;
 
 
