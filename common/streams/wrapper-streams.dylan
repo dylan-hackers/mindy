@@ -68,42 +68,21 @@ define inline method stream-at-end? (stream :: <wrapper-stream>)
   stream-at-end?(stream.inner-stream);
 end method;
 
-define inline method write-element (stream :: <wrapper-stream>,
-				    element :: <object>)
- => ();
-  write-element(stream.inner-stream, element);
-end method;
-
-define inline method write (stream :: <wrapper-stream>, sequence :: <sequence>,
-			    #key start :: <integer> = 0,
-			         end: stop :: <integer> = sequence.size)
- => ();
-  write-element(stream.inner-stream, sequence, start: start, end: stop);
-end method;
-
-define inline method force-output (stream :: <wrapper-stream>) => ();
-  force-output(stream.inner-stream);
-end method;
-
-define inline method synchronize-output (stream :: <wrapper-stream>) => ();
-  syncronize-output(stream.inner-stream);
-end method;
-
-define inline method discard-output (stream :: <wrapper-stream>) => ();
-  discard-output(stream.inner-stream);
-end method;
-
 define inline method read-element (stream :: <wrapper-stream>,
 				   #key on-end-of-stream :: <object>)
  => element-or-eof :: <object>;
   read-element(stream.inner-stream, on-end-of-stream: on-end-of-stream);
 end method;
 
-define inline method unread-element (stream :: <wrapper-stream>,
-				     element :: <object>)
- => element :: <object>;
-  unread-element(stream.inner-stream, element);
-end method;
+// Since GF unread-element is specialized on <positionable-stream>,
+// I think it will be necessary to add wrapper stream functionality
+// to the default <positionable-stream> method.
+//
+//define inline method unread-element (stream :: <wrapper-stream>,
+//				     element :: <object>)
+// => element :: <object>;
+//  unread-element(stream.inner-stream, element);
+//end method;
 
 define inline method peek (stream :: <wrapper-stream>,
 			   #key on-end-of-stream :: <object>)
@@ -136,6 +115,31 @@ end method;
 define inline method stream-input-available? (stream :: <wrapper-stream>)
  => input-available? :: <boolean>;
   stream-input-available?(stream.inner-stream);
+end method;
+
+define inline method write-element (stream :: <wrapper-stream>,
+				    element :: <object>)
+ => ();
+  write-element(stream.inner-stream, element);
+end method;
+
+define inline method write (stream :: <wrapper-stream>, sequence :: <sequence>,
+			    #key start :: <integer> = 0,
+			         end: stop :: <integer> = sequence.size)
+ => ();
+  write-element(stream.inner-stream, sequence, start: start, end: stop);
+end method;
+
+define inline method force-output (stream :: <wrapper-stream>) => ();
+  force-output(stream.inner-stream);
+end method;
+
+define inline method synchronize-output (stream :: <wrapper-stream>) => ();
+  synchronize-output(stream.inner-stream);
+end method;
+
+define inline method discard-output (stream :: <wrapper-stream>) => ();
+  discard-output(stream.inner-stream);
 end method;
 
 define inline method read-line (stream :: <wrapper-stream>,
