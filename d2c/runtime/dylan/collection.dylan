@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.10 2002/10/09 07:30:33 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.11 2002/10/09 22:46:23 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -823,7 +823,7 @@ define method do
 		end,
 		sequences, states, limits, finished-state?s))
       apply(proc,
-	    map(method (coll, state, current-element)
+            map(method (coll, state, current-element)
 		  current-element(coll, state);
 		end,
 		sequences, states, current-elements));
@@ -831,7 +831,7 @@ define method do
 	       method (coll, state, next-state)
 		 next-state(coll, state);
 	       end,
-	       sequence, states, next-states);
+	       sequences, states, next-states);
     end;
     #f;
   else
