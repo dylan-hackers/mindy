@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.12 2002/01/24 22:02:42 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.13 2002/01/24 23:42:10 housel Exp $
 
 //======================================================================
 //
@@ -782,7 +782,14 @@ inline-specifiers (<inline-token> <static-token>)
   %1;
 %
 
-declaration (<extern-token> init-declarator-list <semicolon-token>)
+declaration (declaration-aux <semicolon-token>)
+  // We use an auxiliary production so that it can be reduced and
+  // the add-typedef function called before the first token of the following
+  // declaration is read.
+  %1;
+%
+
+declaration-aux (<extern-token> init-declarator-list)
   // Storage class must be extern; unspecified type must be "int"
   let spec = list(make(<int-token>, generator: %1.generator, string: "int"));
   let type = process-type-list(spec, @0);
@@ -791,7 +798,7 @@ declaration (<extern-token> init-declarator-list <semicolon-token>)
   *typedef-flag* := #f;
 %
 
-declaration (declaration-specifiers extended-declarator-list <semicolon-token>)
+declaration-aux (declaration-specifiers extended-declarator-list)
   let type = process-type-list(%1, @0);
   let names = reverse!(%2);
   declare-objects(@0, type, names, *typedef-flag*);
