@@ -1,7 +1,8 @@
 // File: Gwydion.r
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Gwydion.r,v 1.2 2002/03/16 23:52:28 gabor Exp $
 // Purpose: define necessary resources for plugin
 // Author: Gabor Greif <gabor@mac.com>
-// Status: This version is of historical interest only: Pro5 CW API
+// Status: This version is based on the Pro6 CW API
 
 //======================================================================
 //
@@ -36,6 +37,7 @@
 
 #define PluginFileName "Gwydion Dylan PPC"
 #define PluginResName PluginFileName
+#define VERSION10API 10
 
 
 resource 'vers' (1, PluginResName" Vers")
@@ -61,44 +63,44 @@ resource 'vers' (2, PluginResName" Prod")
 };
 
 resource 'Flag' (128, PluginResName) {
-	kCurrentResourceVersion,
 	Compiler {
-		VERSION10API {
-			generatesCode,
-			doesntGenerateResources,
-			cantPreprocess,
-			cantPrecompile,
-			isntPascal,
-			cantImport,
-			cantDisassemble,
-			isntPersistent,
-			dontAllowDuplicateFileNames,
-			isntMultipleTargetAware,
-			isntMultiprocessingAware,
-			doesntUseTargetStorage,
-			doesntHaveCompSpecificBrSymbols,
-			alwaysReload,	// dontAlwaysReload, when fixed the cleanup issue
-			doesntWantBuildStartedRequest,
-			doesntWantTargetBuildStartedRequest,
-			doesntWantSubprojectBuildStartedRequest,
-			doesntWantFileListBuildStartedRequest,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			reserved,
-			UnknownLanguage,
-			10						// newest API version
-		}
+		VERSION10API,
+		generatesCode,
+		doesntGenerateResources,
+		cantPreprocess,
+		cantPrecompile,
+		isntPascal,
+		cantImport,
+		cantDisassemble,
+		isntPersistent,
+		dontAllowDuplicateFileNames,
+		isntMultipleTargetAware,
+		isntMultiprocessingAware,
+		doesntUseTargetStorage,
+		doesntHaveCompSpecificBrSymbols,
+		alwaysReload,	// dontAlwaysReload, when fixed the cleanup issue
+		doesntWantBuildStartedRequest,
+		doesntWantTargetBuildStartedRequest,
+		doesntWantSubprojectBuildStartedRequest,
+		doesntWantFileListBuildStartedRequest,
+		isntReentrant,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		reserved,
+		UnknownLanguage,
+		newestAPIVersion,
+		reserved,
+		reserved,
 	}
 };
 
