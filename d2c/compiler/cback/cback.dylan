@@ -872,8 +872,9 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("fixnum_floor(%s, %s)",
-						  x, y),
+		     vector(pair(format-to-string("%s / %s", x, y),
+				 *long-rep*),
+			    pair(format-to-string("%s %% %s", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -887,8 +888,9 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("fixnum_ceiling(%s, %s)",
-						  x, y),
+		     vector(pair(format-to-string("%s / %s", x, y),
+				 *long-rep*),
+			    pair(format-to-string("%s %% %s", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -902,8 +904,9 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("fixnum_round(%s, %s)",
-						  x, y),
+		     vector(pair(format-to-string("%s / %s", x, y),
+				 *long-rep*),
+			    pair(format-to-string("%s %% %s", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
@@ -917,8 +920,9 @@ define-primitive
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("fixnum_truncate(%s, %s)",
-						  x, y),
+		     vector(pair(format-to-string("%s / %s", x, y),
+				 *long-rep*),
+			    pair(format-to-string("%s %% %s", x, y),
 				 *long-rep*)),
 		     output-info);
    end);
