@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-exports.dylan,v 1.2 1997/01/16 16:09:04 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-exports.dylan,v 1.3 1997/02/04 14:41:02 nkramer Exp $
 
 //======================================================================
 //
@@ -131,10 +131,10 @@ define function parse-line
 	   "|/\\*\\s*exported\\s*\\*/))+"
 	   
 	   // Next, we pick off the kind of definition we have
-	   "\\s+([-A-Za-z0-9!&*<>|^$%@_?]+)"
+	   "\\s+([-A-Za-z0-9!&*<>|^$%@_?=]+)"
 	   
 	   // Finally, we get the name of the identifier
-	   "\\s+([-A-Za-z0-9!&*<>|^$%@_?]+)");
+	   "\\s+([-A-Za-z0-9!&*<>|^$%@_?=]+)");
   
   // If it wasn't a normal definition, see if we can interpret it
   // as a slot.  Were it not for the "class" flag on slots, we
@@ -155,7 +155,7 @@ define function parse-line
 	     "\\s+slot"
 	     
 	     // Finally, we get the name of the identifier
-	     "\\s+([-A-Za-z0-9!&*<>|^$%@_]+)");
+	     "\\s+([-A-Za-z0-9!&*<>|^$%@_?=]+)");
     if (found-as-slot?)
       values("slot", slot-name);
     else
@@ -269,7 +269,7 @@ define function generate-output
       = regexp-substrings
           (line, 
            "^\\w*(.*)/\\*\\s*exports\\s+for\\s+" // find "/* exports for"
-	     "([-A-Za-z0-9!&*<>|^$%@_]+)" // find module name
+	     "([-A-Za-z0-9!&*<>|^$%@_?=]+)" // find module name
 	     "\\s+\\*/(.*)$"); // find end of comment + rest of line
     if (found?)
       pprint-logical-block
