@@ -92,9 +92,9 @@ sub do_makefile {
 	s/\@LEX\@/flex/;
 	s/\@LFLAGS\@//;
 	s/\@RANLIB\@//;
-	s/\@INSTALL\@/cp -f/;
-	s/\@INSTALL_PROGRAM\@/cp -f/;
-	s/\@INSTALL_DATA\@/cp -f/;
+	s/\@INSTALL\@/dbccopy/;
+	s/\@INSTALL_PROGRAM\@/dbccopy/;
+	s/\@INSTALL_DATA\@/dbccopy/;
 
 	s/\@LIBOBJS\@/sigaction.obj rint.obj/;
 	s/\@LIBS\@//;
