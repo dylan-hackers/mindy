@@ -1,6 +1,6 @@
 module: autodump
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.8 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.9 1996/02/08 02:23:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -99,7 +99,7 @@ define method autodump
     (component :: <symbol>, id :: false-or(<integer>)) => ();
   select (component)
     #"parse-tree" =>
-      output-dumper("parse-tree", "parse-dump.dylan", id,
+      output-dumper("parse-tree-dump", "parse-dump.dylan", id,
 		    <property>, <bindings>, <parameter-list>, <parameter>,
 		    <keyword-parameter>, <method-parse>, <case-clause>,
 		    <property-set>, <use-clause>, <export-clause>,
@@ -132,7 +132,7 @@ define method autodump
 		    <auxiliary-rule-set>, <auxiliary-rule>, <template>,
 		    <paren-template>, <pattern-variable-reference>);
     #"tokens" =>
-      output-dumper("tokens", "token-dump.dylan", id,
+      output-dumper("tokens-dump", "token-dump.dylan", id,
 		    <token>, <eof-token>, <error-token>, <symbol-token>,
 		    <identifier-token>, <word-token>, <name-token>,
 		    <simple-name-token>, <quoted-name-token>,
