@@ -12,15 +12,13 @@ end library;
 define module c-ffi
   use Dylan;
   use Extensions, import: { subclass };
+  use Machine-words;
   use System, export: { size-of, alignment-of, referenced-type };
-/*
   export
-    // Types which might be intended to live here?
-    <machine-word>,
-
     // Basic designator types & operations
-    <C-value>, <C-void>,
+    <C-value>, <C-void>;
 
+/*
     // Numeric designator types. Is this enough float types for ANSI C?
     <C-number>, <C-float>, <C-double>, <C-float*>, <C-double*>,
 
@@ -39,7 +37,7 @@ define module c-ffi
     <C-char>, <C-raw-char>, <C-unsafe-char>,
     <C-signed-char>, <C-raw-signed-char>, <C-unsafe-signed-char>,
     <C-unsigned-char>, <C-raw-unsigned-char>, <C-unsafe-unsigned-char>,
-    
+  
     // Predefined pointer types for the above.
     <C-int*>, <C-raw-int*>, <C-unsafe-int*>,
     <C-signed-int*>, <C-raw-signed-int*>, <C-unsafe-signed-int*>,
@@ -53,17 +51,21 @@ define module c-ffi
     <C-char*>, <C-raw-char*>, <C-unsafe-char*>,
     <C-signed-char*>, <C-raw-signed-char*>, <C-unsafe-signed-char*>,
     <C-unsigned-char*>, <C-raw-unsigned-char*>, <C-unsafe-unsigned-char*>,
+*/
     
     // Worry about Alpha 64-bit types here... We need to support such
     // things as long long.
 
+  export
     // Pointer types
     <C-pointer>, pointer-address, pointer-cast, null-pointer,
     null-pointer?, <C-void*>, <C-statically-typed-pointer>,
     \C-pointer-type-definer, pointer-value,
-    pointer-value-setter, pointer-value-address, 
+    pointer-value-setter, pointer-value-address; 
     // element, element-setter, \=, \<,
 
+/*
+  export
     // Pointer accessors for integer types
     C-int-at, C-int-at-setter,
     C-signed-int-at, C-signed-int-at-setter,
@@ -82,7 +84,8 @@ define module c-ffi
     C-float-at, C-float-at-setter,
     C-double-at, C-double-at-setter,
     C-pointer-at, C-pointer-at-setter,
-
+*/
+  export
     // Structs and unions
     <C-struct>, <C-union>,
 
@@ -93,8 +96,9 @@ define module c-ffi
 
     // Allocating and deallocating storage.
     // make(subclass(<C-pointer>),...),
-    destroy, \with-stack-structure,
+    destroy, \with-stack-structure;
 
+/*
     // Utility designator classes
     <C-boolean>, <C-string>, <C-character>, \with-c-string,
     clear-memory!, copy-bytes!, copy-into!, equal-memory?, <C-Dylan-object>,

@@ -4,28 +4,19 @@ Synopsis: An implementation of the low-level Harlequin C API, as faked on
           top of the low-level Gwydion API.
 
 //=========================================================================
-//  <machine-word>
-//=========================================================================
-//  Must be able to represent either a "long" or a "void*". We implement
-//  this using d2c's <integer> type. I don't know how we'll implement
-//  64-bit values on 32-bit systems.
-
-define constant <machine-word> = <integer>;
-
-//=========================================================================
 //  Primitive Designator Types
 //=========================================================================
 //  These are the top-level designator types. None of are instantiable,
 //  and none of them have input or output mappings.
 
-define sealed abstract class <C-value> (<object>)
-end class <C-value>;
+define sealed abstract designator-class <C-value> (<object>)
+end designator-class <C-value>;
 
-define sealed abstract class <C-void> (<C-value>)
-end class <C-void>;
+define sealed abstract designator-class <C-void> (<C-value>)
+end designator-class <C-void>;
 
-define sealed abstract class <C-number> (<C-value>)
-end class <C-number>;
+define sealed abstract designator-class <C-number> (<C-value>)
+end designator-class <C-number>;
 
 //=========================================================================
 //  Pointer Designator Types
@@ -33,17 +24,23 @@ end class <C-number>;
 //  These designator types represent pointers. All but the top-level types
 //  are directly instantiable and map to themselves for import and export.
 
-define primary open abstract functional class <C-pointer> (<C-value>)
+define primary open abstract designator-class <C-pointer> (<C-value>)
   // XXX - Why is this class open? It has two complete, mutually
   // exclusive subclasses which could be open.
-  constant slot pointer-address :: <raw-pointer>,
+  constant slot %pointer-address :: <raw-pointer>,
     required-init-keyword: %address:;
-end class <C-pointer>;
+end designator-class <C-pointer>;
+
+define function pointer-address
+    (C-pointer :: <C-pointer>)
+ => (address :: <machine-word>);
+  as(<machine-word>, C-pointer.%pointer-address);
+end function;
 
 define function pointer-cast
     (class :: <designator-class>, pointer :: <C-pointer>)
  => (cast-pointer :: <C-pointer>)
-  make(class, %address: pointer.pointer-address);
+  make(class, %address: pointer.%pointer-address);
 end function;
 
 define function null-pointer
@@ -58,22 +55,28 @@ define function null-pointer?
   pointer.pointer-address == as(<raw-pointer>, 0);
 end function;
 
-define open abstract functional class <C-statically-typed-pointer>
-    (<C-pointer>, <mutable-collection>)
-  // no additional slots
-end class <C-statically-typed-pointer>;
+define open designator-class <C-void*> (<C-pointer>)
+  options c-rep: #"ptr",
+          referenced-type: <C-void>,
+          pointer-type-superclass: <C-statically-typed-pointer>;
+end designator-class;
 
+define open abstract designator-class <C-statically-typed-pointer>
+    (<C-pointer>, <mutable-sequence>)
+  options c-rep: #"ptr";
+end designator-class <C-statically-typed-pointer>;
+
+// XXX - This doesn't define the concrete version
+// need a primitive or an "instantiable" adjective to designator-class-definer
 define macro C-pointer-type-definer
   { define C-pointer-type ?pointer-class:name => ?designator-class:expression }
-    => { define functional designator-class ?pointer-class
+    => { define open abstract designator-class ?pointer-class
              (<C-statically-typed-pointer>)
-           referenced-type: ?designator-class,
-           c-rep: #"ptr",
-           pointer-type-superclass: <C-statically-typed-pointer>
+           options referenced-type: ?designator-class,
+                   c-rep: #"ptr",
+                   pointer-type-superclass: <C-statically-typed-pointer>;
 	 end designator-class; }
 end macro;
-
-define C-pointer-type <C-void*> => <C-void>;
 
 define open generic c-type-cast
     (type :: <class>, value :: <object>)
@@ -108,13 +111,13 @@ end method element-setter;
 define inline method \=
     (p1 :: <C-pointer>, p2 :: <C-pointer>)
  => (equal? :: <boolean>)
-  p1.pointer-address = p2.pointer-address;
+  p1.%pointer-address = p2.%pointer-address;
 end method;
 
 define inline method \<
     (p1 :: <C-pointer>, p2 :: <C-pointer>)
  => (equal? :: <boolean>)
-  p1.pointer-address < p2.pointer-address;
+  p1.%pointer-address < p2.%pointer-address;
 end method;
 
 //=========================================================================
@@ -125,14 +128,17 @@ define sealed inline method C-char-at
     (ptr :: <C-pointer>,
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
-  pointer-deref(char:, ptr.pointer-address, byte-index + scaled-index);
+  as(<machine-word>,
+     pointer-deref(char:, ptr.%pointer-address, byte-index + scaled-index));
 end method C-char-at;
 
 define sealed inline method C-char-at-setter
     (new :: <machine-word>, ptr :: <C-pointer>,
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
-  pointer-deref(char:, ptr.pointer-address, byte-index + scaled-index) := new;
+  pointer-deref(char:, ptr.%pointer-address, byte-index + scaled-index)
+    := as(<integer>, new);
+  new;
 end method C-char-at-setter;
 
 //=========================================================================
@@ -143,13 +149,13 @@ end method C-char-at-setter;
 //  corresponding pointer type, since the structure and union types are
 //  not instantiable.
 
-define open abstract class <C-struct> (<C-value>)
+define open abstract designator-class <C-struct> (<C-value>)
   // no additional slots
-end class <C-struct>;
+end designator-class <C-struct>;
 
-define open abstract class <C-union> (<C-value>)
+define open abstract designator-class <C-union> (<C-value>)
   // no additional slots
-end class <C-union>;
+end designator-class <C-union>;
 
 define macro C-struct-definer
   { define C-struct ?:name
@@ -157,9 +163,9 @@ define macro C-struct-definer
       ?type-options
     end }
     => { define abstract designator-class ?name (<C-struct>)
+           options pointer-type-superclass: <C-statically-typed-pointer>,
+                   ?type-options;
            ?slots
-           pointer-type-superclass: <C-statically-typed-pointer>,
-           ?type-options
          end designator-class; }
 end macro;
 
@@ -195,6 +201,10 @@ end macro;
 //  C functions
 //=========================================================================
 //  Using Dylan functions from C, and vice versa.
+
+define open abstract designator-class <C-function-pointer> (<C-pointer>)
+  // no additional slots
+end designator-class;
 
 define macro C-function-definer
   { define C-function ?:name
@@ -263,18 +273,16 @@ define sealed inline method make
      #all-keys)
  => (pointer :: <C-pointer>)
   if (address)
-    next-method(class, %address: address);
+    next-method(class, %address: as(<raw-pointer>, address));
   else
-/* XXX
     let memory :: <machine-word> =
       allocator(size-of(class.referenced-type) * element-count + extra-bytes);
     next-method(class, %address: memory);
-*/
   end if;
 end method;
 
 define open generic destroy
-    (pointer :: <C-pointer>, #key de-allocator = #f /* XXX free */)
+    (pointer :: <C-pointer>, #key de-allocator)
  => ();
 
 define method destroy
@@ -350,11 +358,15 @@ end;
 define constant $C-Dylan-object-table = make(<table>);
 
 define function register-C-Dylan-object (object :: <object>) => ()
-  $C-Dylan-object-table[object] = #t; // Arbitrary value
+  element($C-Dylan-object-table, object)
+    := element($C-Dylan-object-table, object, default: 0) + 1;
 end function;
 
 define function unregister-C-Dylan-object (object :: <object>) => ()
-  remove-key!($C-Dylan-object-table, object);
+  if((element($C-Dylan-object-table, object)
+        := element($C-Dylan-object-table, object) - 1) = 0)
+    remove-key!($C-Dylan-object-table, object);
+  end if;
 end function;
 
 /* XXX - Need export-C-Dylan-object, import-C-Dylan-object */
