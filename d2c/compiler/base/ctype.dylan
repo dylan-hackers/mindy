@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.2 1998/11/11 03:49:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.3 1998/12/18 00:34:37 tc Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -40,19 +40,20 @@ define sealed domain make (singleton(<values-ctype>));
 define sealed domain initialize (<values-ctype>);
 
 
-//// Type function memoization:
-///
-/// Our primary approach for getting good performance on the type operations is
-/// to use memoization, rather than trying to come up with clever ways to
-/// quickly determine type relationships.  This based on the observation that
-/// relatively few types are actually in use at any given time, and that the
-/// compiler does the same operations over and over.
+/// Type function memoization:
+//
+// Our primary approach for getting good performance on the type
+// operations is to use memoization, rather than trying to come up
+// with clever ways to quickly determine type relationships.  This
+// based on the observation that relatively few types are actually in
+// use at any given time, and that the compiler does the same
+// operations over and over.
 
-/// Memoization is based on the type-hash, which is a slot shared by all
-/// compile-time types.
-///
-/// <ctype> objects are also hash-consed, which (modulo unknown types)
-/// means that == is type equivalence.
+// Memoization is based on the type-hash, which is a slot shared by
+// all compile-time types.
+//
+// <ctype> objects are also hash-consed, which (modulo unknown types)
+// means that == is type equivalence.
 
 
 define abstract class <ctype> (<values-ctype>)
@@ -62,12 +63,13 @@ end class;
 
 define sealed domain make (singleton(<ctype>));
 
-/// Memoization is done in a vector.  Each entry has four elements: the two arg
-/// types, the result type and the result precise flag.  All elements are
-/// initialized to #F, which ensures that empty entries will miss (since the
-/// arguments are always types.)  This memoization is a probablistic cache, not
-/// a complete record of all results ever computed.
-///
+// Memoization is done in a vector.  Each entry has four elements: the
+// two arg types, the result type and the result precise flag.  All
+// elements are initialized to #F, which ensures that empty entries
+// will miss (since the arguments are always types.)  This memoization
+// is a probablistic cache, not a complete record of all results ever
+// computed.
+//
 define class <memo-entry> (<object>)
   slot memo-type1 :: false-or(<ctype>) = #f;
   slot memo-type2 :: false-or(<ctype>) = #f;
@@ -119,29 +121,29 @@ end;
 
 #endif
 
-/// log2 of the the number of entries in the table.
+// log2 of the the number of entries in the table.
 define constant memo2-bits = 9;
 
-// mask which gives a vector index from a large hash value.  Low zeros align to
-// start of an entry.
+// mask which gives a vector index from a large hash value.  Low zeros
+// align to start of an entry.
 define constant memo2-size = ash(1, memo2-bits);
 define constant memo2-mask = memo2-size - 1;
 
-define constant make-memo2-table = method ()
+define function make-memo2-table ()
   make(<memo-table>, size: memo2-size, fill: $null-memo-entry);
-end method;
+end function make-memo2-table;
 
 // some hit rate info, for tuning.
 define variable *memo2-hits* :: <integer> = 0;
 define variable *memo2-probes* :: <integer> = 0;
 
-// See if Type1 & Type2 are memoized in Table.  If so, the two memoized values
-// are returned.  If not, we return #"miss" and #f;
-define constant memo2-lookup = method
-   (type1 :: <ctype>, type2 :: <ctype>, table :: <memo-table>)
-    => (value :: type-union(<ctype>, <boolean>, singleton(#"miss")),
-        precise :: <boolean>);
-
+// See if Type1 & Type2 are memoized in Table.  If so, the two
+// memoized values are returned.  If not, we return #"miss" and #f;
+define function memo2-lookup
+    (type1 :: <ctype>, type2 :: <ctype>, table :: <memo-table>)
+ => (value :: type-union(<ctype>, <boolean>, singleton(#"miss")),
+     precise :: <boolean>);
+  
   *memo2-probes* := *memo2-probes* + 1;
 #if (mindy)
   let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
@@ -155,12 +157,12 @@ define constant memo2-lookup = method
   else
     values(#"miss", #f);
   end;
-end method;
+end function memo2-lookup;
 
-define constant memo2-enter = method
-   (type1 :: <ctype>, type2 :: <ctype>,
-    result :: type-union(<ctype>, <boolean>),
-    precise :: <boolean>, table :: <memo-table>)
+define function memo2-enter
+    (type1 :: <ctype>, type2 :: <ctype>,
+     result :: type-union(<ctype>, <boolean>),
+     precise :: <boolean>, table :: <memo-table>)
 #if (mindy)  
   let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
 #else
@@ -175,35 +177,36 @@ define constant memo2-enter = method
   entry.memo-type2 := type2;
   entry.memo-value := result;
   entry.memo-precise := precise;
-end method;
+end function memo2-enter;
  
 
-//// Equality:
-///
-///  Since ctypes are hash-consed, equality/inequality is pretty degenerate.
-/// The only problem area is with unknown types (whice we could not or elected
-/// not to evaluate at compile time.)  Unknown types may be spuriously ~==,
-/// so to ensure a precise result we must test for unknown types.  
+/// Equality:
+//
+// Since ctypes are hash-consed, equality/inequality is pretty
+// degenerate.  The only problem area is with unknown types (whice we
+// could not or elected not to evaluate at compile time.)  Unknown
+// types may be spuriously ~==, so to ensure a precise result we must
+// test for unknown types.
 
-///    If two types are definitely equivalent, return true.  The second value
-/// indicates whether the first value is definitely correct.  This should only
-/// fail in the presence of Unknown types.
-///
-define constant ctype-eq? = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <boolean>, precise :: <boolean>);
+// If two types are definitely equivalent, return true.  The second
+// value indicates whether the first value is definitely correct.
+// This should only fail in the presence of Unknown types.
+//
+define function ctype-eq? (type1 :: <ctype>, type2 :: <ctype>)
+ => (result :: <boolean>, precise :: <boolean>);
   
   if (type1 == type2)
     values(#t, #t);
   else
     values(#f, ~(instance?(type1, <unknown-ctype>) 
-                 | instance?(type2, <unknown-ctype>)))
+		   | instance?(type2, <unknown-ctype>)))
   end;
-end method;
+end function ctype-eq?;
 
-/// Similar to ctype-eq, but we return true if the types are definitely not the
-/// same.
-///
-define constant ctype-neq? = method (type1 :: <ctype>, type2 :: <ctype>)
+// Similar to ctype-eq, but we return true if the types are definitely
+// not the same.
+//
+define function ctype-neq? (type1 :: <ctype>, type2 :: <ctype>)
        => (result :: <boolean>, precise :: <boolean>);
   
   if (type1 == type2)
@@ -214,24 +217,26 @@ define constant ctype-neq? = method (type1 :: <ctype>, type2 :: <ctype>)
   else
     values(#t, #t);
   end;
-end method;
+end function ctype-neq?;
 
 
-/// find-direct-classes  --  exported
-///
-///    Given an arbitrary type, return a list of all the classes that a value
-/// of that type could possibly be direct instances of.  If we can't determine
-/// this (because an open class is involved) then return #f.  We could
-/// potentially return #() if there is no possibly non-abstract class.
-///
+// find-direct-classes  --  exported
+//
+// Given an arbitrary type, return a list of all the classes that a
+// value of that type could possibly be direct instances of.  If we
+// can't determine this (because an open class is involved) then
+// return #f.  We could potentially return #() if there is no possibly
+// non-abstract class.
+//
 define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
 
 
-/// ctype-extent -- exported.
-///
-/// Return a new ctype that describes the set of all values that could be
-/// instances of that type (i.e. the extensional interpretation of the type).
-/// 
+// ctype-extent -- exported.
+//
+// Return a new ctype that describes the set of all values that could
+// be instances of that type (i.e. the extensional interpretation of
+// the type).
+// 
 define method ctype-extent (ctype :: <values-ctype>) => res :: <values-ctype>;
   let extent = ctype.%ctype-extent;
   if (extent)
@@ -257,7 +262,7 @@ define generic ctype-extent-dispatch (ctype :: <values-ctype>)
 
 
 
-//// CINSTANCE? -- exported
+/// CINSTANCE? -- exported
 //
 define generic cinstance? (ctv :: <ct-value>, ctype :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
@@ -273,9 +278,8 @@ define method cinstance? (ctv :: <eql-ct-value>, ctype :: <ctype>)
 end;
 
 
-//// CSUBTYPE?
-///
-
+/// CSUBTYPE?
+//
 // Ignoring unknown and union types (which are handled specially), we have the
 // following cross products:
 //
@@ -364,25 +368,28 @@ define constant $csubtype-memo :: <memo-table> = make-memo2-table();
 
 // csubtype? -- exported.
 // 
-// Like subtype?, but works on ctypes, and returns the second value #F if the
-// relation cannot be determined at compile time (due to unknown types.)
+// Like subtype?, but works on ctypes, and returns the second value #F
+// if the relation cannot be determined at compile time (due to
+// unknown types.)
 //
-// Check if result is memoized; if not, pick off the unknown & union cases
-// before calling the generic function.
+// Check if result is memoized; if not, pick off the unknown & union
+// cases before calling the generic function.
 // 
-define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <boolean>, precise :: <boolean>);
-
+define function csubtype? (type1 :: <ctype>, type2 :: <ctype>)
+ => (result :: <boolean>, precise :: <boolean>);
   case
-    // Makes unknown types be subtypes of themselves, & eliminates the case of
-    // equal types from later consideration.  Also speeds up a common case...
+    // Makes unknown types be subtypes of themselves, & eliminates the
+    // case of equal types from later consideration.  Also speeds up a
+    // common case...
     (type1 == type2) => values(#t, #t);
-    
-    // the only thing an unknown type is surely a subtype of is <object>
+      
+    // the only thing an unknown type is surely a subtype of is
+    // <object>
     instance?(type1, <unknown-ctype>) =>
       if (type2 == object-ctype()) values(#t,#t) else values(#f, #f) end;
       
-    // nothing is a definite subtype of an unknown type (except itself.)
+    // nothing is a definite subtype of an unknown type (except
+    // itself.)
     instance?(type2, <unknown-ctype>) => values(#f, #f);
       
     otherwise =>
@@ -404,58 +411,59 @@ define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
 	values(memo-val, memo-win);
       end;
   end case;
-end method;
+end function csubtype?;
 
 
-//// Intersection:
+// Intersection:
 
-/// Ignoring unknowns and unions (which are handled specially), we have the
-/// following possible combinations.  Note: we only list half of them, because
-/// intersection is commutative.
-///
-/// Singleton with:
-///   singleton -- empty, 'cause == singletons are picked off.
-///   limited-int -- empty, 'cause singleton integers don't exist due to
-///     canonicalization.
-///   class -- the singleton if subtype?, otherwise empty
-///   direct -- the singleton if subtype?, otherwise empty
-///   byte-char -- the singleton if subtype?, otherwise empty
-/// Limited integer with:
-///   limited-int -- the intersection of the base classes and range.
-///   class -- the intersection of the base class and the other class, same
-///     range
-///   direct -- empty, 'cause the direct integer classes are canonicalized into
-///     themselves.
-///   byte-char -- empty
-/// Class:
-///   class -- the subtype class if one is a subtype of the other, the
-///     intersection of their subtypes if both are sealed, or one at random
-///     otherwise.
-///   direct -- the direct type if it is a subtype of the class, empty
-///     otherwise
-///   byte-char -- the byte-char type if it is a subtype of the class
-/// Direct:
-///   direct -- the type when they are the same, otherwise empty
-///   byte-char -- the byte-char type if it is a subtype of the class
-/// Byte-char:
-///   byte-char -- won't be called, 'cause the == case is picked off
-///
-/// So if we pick off the case where one type is a subtype of the other first,
-/// we have the following cases left:
-///
-/// Limited integer with:
-///   limited-int -- the intersection of the base classes and range.
-///   class -- the intersection of the base class and the other class, same
-///     range
-/// Class:
-///   class -- the subtype class if one is a subtype of the other, the
-///     intersection of their subtypes if both are sealed, or one at random
-///     otherwise.
-///
+// Ignoring unknowns and unions (which are handled specially), we have
+// the following possible combinations.  Note: we only list half of
+// them, because intersection is commutative.
+//
+// Singleton with:
+//   singleton -- empty, 'cause == singletons are picked off.
+//   limited-int -- empty, 'cause singleton integers don't exist due to
+//     canonicalization.
+//   class -- the singleton if subtype?, otherwise empty
+//   direct -- the singleton if subtype?, otherwise empty
+//   byte-char -- the singleton if subtype?, otherwise empty
+// Limited integer with:
+//   limited-int -- the intersection of the base classes and range.
+//   class -- the intersection of the base class and the other class, 
+//     same range
+//   direct -- empty, 'cause the direct integer classes are canonicalized
+//     into themselves.
+//   byte-char -- empty
+// Class:
+//   class -- the subtype class if one is a subtype of the other, the
+//     intersection of their subtypes if both are sealed, or one at
+//     random otherwise.
+//   direct -- the direct type if it is a subtype of the class, empty
+//     otherwise
+//   byte-char -- the byte-char type if it is a subtype of the class
+// Direct:
+//   direct -- the type when they are the same, otherwise empty
+//   byte-char -- the byte-char type if it is a subtype of the class
+// Byte-char:
+//   byte-char -- won't be called, 'cause the == case is picked off
+//
+// So if we pick off the case where one type is a subtype of the other
+// first, we have the following cases left:
+//
+// Limited integer with:
+//   limited-int -- the intersection of the base classes and range.
+//   class -- the intersection of the base class and the other class,
+//     same range
+// Class:
+//   class -- the subtype class if one is a subtype of the other, the
+//     intersection of their subtypes if both are sealed, or one at
+//     random otherwise.
+//
 
-/// Handle ctype-intersection for unequal types other than union and unknown.
-/// Result may be imprecise if we intersect two non-sealed classes.
-///
+// Handle ctype-intersection for unequal types other than union and
+// unknown.  Result may be imprecise if we intersect two non-sealed
+// classes.
+//
 define sealed generic ctype-intersection-dispatch
     (type1 :: <ctype>, type2 :: <ctype>)
      => (result :: false-or(<ctype>), precise :: <boolean>);
@@ -469,81 +477,94 @@ end method;
 
 define constant $intersection-memo :: <memo-table> = make-memo2-table();
 
-///    Return as restrictive a type as we can discover that is no more
-/// restrictive than the intersection of Type1 and Type2.  The second value is
-/// true if the result is exact.  At worst, we arbitrarily return one of the
-/// arguments as the first value (trying not to return an unknown type).
-///
-define constant ctype-intersection
-  = method (type1 :: <ctype>, type2 :: <ctype>)
+// Return as restrictive a type as we can discover that is no more
+// restrictive than the intersection of Type1 and Type2.  The second
+// value is true if the result is exact.  At worst, we arbitrarily
+// return one of the arguments as the first value (trying not to
+// return an unknown type).
+//
+define function ctype-intersection (type1 :: <ctype>, type2 :: <ctype>)
      => (result :: <ctype>, precise :: <boolean>);
 
-      if (type1 == type2)
-	values(type1, #t);
+  if (type1 == type2)
+    values(type1, #t);
+  else
+    let (memo-val, memo-win) = memo2-lookup(type1, type2,
+					    $intersection-memo);
+    if (memo-val == #"miss")
+      let (val, win) = compute-ctype-intersection(type1, type2);      
+      memo2-enter(type1, type2, val, win, $intersection-memo);
+      values(val, win);
+    else
+      values(memo-val, memo-win);
+    end;
+  end if;
+end function ctype-intersection;
+
+define function compute-ctype-intersection
+    (type1 :: <ctype>, type2 :: <ctype>)
+ => (ctype-or-false :: type-union(<ctype>, <boolean>),
+     precise? :: <boolean>);
+  case
+    // Makes unknown types intersect with themselves, & eliminates the
+    // case of equal types from later consideration.  If one arg is
+    // unknown, return the other and #f.
+    //
+    instance?(type1, <unknown-ctype>) =>
+      values(type2, #f);
+    instance?(type2, <unknown-ctype>) =>
+      values(type1, #f);
+      
+    // Otherwise, the intersection is the union of the pairwise
+    // intersection of the members.  As described above, we try both
+    // orders.
+    otherwise =>
+      compute-ctype-intersection-using-members(type1, type2);
+  end case;
+end function compute-ctype-intersection;
+
+define function compute-ctype-intersection-using-members
+    (type1 :: <ctype>, type2 :: <ctype>)
+ => (ctype-or-false :: type-union(<ctype>, <boolean>),
+     precise? :: <boolean>);
+  let precise? = #t;
+  let res-union = empty-ctype();
+  for (mem1 in type1.members)
+    for (mem2 in type2.members)
+      // If either is a subtype of the other, include the subtype.
+      if (csubtype?(mem1, mem2))
+	res-union := ctype-union(res-union, mem1);
+      elseif (csubtype?(mem2, mem1))
+	res-union := ctype-union(res-union, mem2);
       else
-	let (memo-val, memo-win) = memo2-lookup(type1, type2,
-						$intersection-memo);
-	if (memo-val == #"miss")
-	  let (val, win) = 
-	    case
-	      // Makes unknown types intersect with themselves, & eliminates
-	      // the case of equal types from later consideration.
-	      // If one arg is unknown, return the other and #f.
-	      instance?(type1, <unknown-ctype>) => values(type2, #f);
-	      instance?(type2, <unknown-ctype>) => values(type1, #f);
-	  
-	      // Otherwise, the intersection is the union of the pairwise
-	      // intersection of the members.  As described above, we try both
-	      // orders. 
-	      otherwise =>
-		let win-int = #t;
-		let res-union = empty-ctype();
-		for (mem1 in type1.members)
-		  for (mem2 in type2.members)
-		    // If either is a subtype of the other, include the
-		    // subtype.
-		    if (csubtype?(mem1, mem2))
-		      res-union := ctype-union(res-union, mem1);
-		    elseif (csubtype?(mem2, mem1))
-		      res-union := ctype-union(res-union, mem2);
-		    else
-		      // Call the intersection dispatch function.
-		      let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
-		      if (res12)
-			unless (win12) win-int := #f end;
-			res-union := ctype-union(res-union, res12);
-		      else
-			let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
-			if (res21)
-			  unless (win21) win-int := #f end;
-			  res-union := ctype-union(res-union, res21);
-			  
-			  // else precisely empty, nothing to union.
-			end if;
-		      end if;
-		    end if;
-		  end for;
-		end for;
-		values(res-union, win-int);
-	    end case;
-
-	  memo2-enter(type1, type2, val, win, $intersection-memo);
-	  values(val, win);
+	// Call the intersection dispatch function.
+	let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
+	if (res12)
+	  unless (win12) precise? := #f end;
+	  res-union := ctype-union(res-union, res12);
 	else
-	  values(memo-val, memo-win);
-	end;
+	  let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
+	  if (res21)
+	    unless (win21) precise? := #f end;
+	    res-union := ctype-union(res-union, res21);
+	    
+	    // else precisely empty, nothing to union.
+	  end if;
+	end if;
       end if;
-    end method;
+    end for;
+  end for;
+  values(res-union, precise?);
+end function compute-ctype-intersection-using-members;
 
-
-/// The first value is true unless the types definitely don't intersect.  The
-/// second value is true if the first value is definitely correct.  empty-ctype
-/// is considered to intersect with any type.  If either type is <object>, we
-/// also return #T, #T.  This way we consider unknown types to intersect with
-/// <object>.
-///
-define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <boolean>, precise :: <boolean>);
+// The first value is true unless the types definitely don't
+// intersect.  The second value is true if the first value is
+// definitely correct.  empty-ctype is considered to intersect with
+// any type.  If either type is <object>, we also return #T, #T.  This
+// way we consider unknown types to intersect with <object>.
+//
+define function ctypes-intersect? (type1 :: <ctype>, type2 :: <ctype>)
+ => (result :: <boolean>, precise :: <boolean>);
   if (type1 == empty-ctype() | type2 == empty-ctype())
     values(#t, #t);
   else
@@ -556,20 +577,18 @@ define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
       values(#t, #f);
     end;
   end;
-end method;
+end function ctypes-intersect?;
 
 
 /// Difference.
 
-
 define constant $difference-memo :: <memo-table> = make-memo2-table();
 
-
-/// Return our best guess at the type that describes all objects that are in
-/// Type1 but not in Type2.  If we can't precisely determine this type, then
-/// return something more inclusive than it, but never more inclusive than
-/// type1.
-///
+// Return our best guess at the type that describes all objects that
+// are in Type1 but not in Type2.  If we can't precisely determine
+// this type, then return something more inclusive than it, but never
+// more inclusive than type1.
+//
 define method ctype-difference (type1 :: <ctype>, type2 :: <ctype>)
     => (result :: <ctype>, precise? :: <boolean>);
   if (type1 == type2)
@@ -635,9 +654,10 @@ define constant $union-table :: <union-table> = make(<union-table>);
 define generic members (type :: <ctype>) => members :: <list>;
 
 define class <union-ctype> (<ctype>, <ct-value>)
-  // list of ctypes in the union, which can only be classes, limited types or
-  // singletons.  Any nested unions are flattened into this one, and the union
-  // of anything and an unknown type is itself an unknown type.
+  // list of ctypes in the union, which can only be classes, limited
+  // types or singletons.  Any nested unions are flattened into this
+  // one, and the union of anything and an unknown type is itself an
+  // unknown type.
   slot members :: <list>, setter: #f, required-init-keyword: members:;
 end class;
 
@@ -721,8 +741,8 @@ end method ctype-extent-dispatch;
 
 // find-direct-classes{<union-ctype>}
 // 
-// Most type ops have a non-generic wrapper that handles unions and unknowns.
-// Not so for find-direct-classes.
+// Most type ops have a non-generic wrapper that handles unions and
+// unknowns.  Not so for find-direct-classes.
 //
 // Just accumulate the direct classes of all the members.
 // 
@@ -747,21 +767,22 @@ end method;
 define constant $union-memo :: <memo-table> = make-memo2-table();
 
 
-///    Find a type which includes both types.  The result is an unknown type if
-/// either of the arguments are unknown; otherwise the result is precise.  This
-/// result is simplified into the canonical form, thus is not a union type
-/// unless there is no other way to represent the result.
-///
-/// If no members, the result is the empty type.  If one, it is that type.
-/// Otherwise, make (or reuse) a union-ctype.
-///
-define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
-    => value :: <ctype>;
-
+// Find a type which includes both types.  The result is an unknown
+// type if either of the arguments are unknown; otherwise the result
+// is precise.  This result is simplified into the canonical form,
+// thus is not a union type unless there is no other way to represent
+// the result.
+//
+// If no members, the result is the empty type.  If one, it is that
+// type.  Otherwise, make (or reuse) a union-ctype.
+//
+define function ctype-union (type1 :: <ctype>, type2 :: <ctype>)
+ => value :: <ctype>;
   let (value, precise) = memo2-lookup(type1, type2, $union-memo);
   case 
-    ~(value == #"miss") => value;
-
+    ~(value == #"miss") =>
+      value;
+      
     instance?(type1, <unknown-ctype>) =>
       make(<unknown-ctype>, type-exp: type1.type-exp);
    
@@ -769,54 +790,64 @@ define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
       make(<unknown-ctype>, type-exp: type2.type-exp);
 
     otherwise =>
-      let new-members :: <list> = copy-sequence(type1.members);
-      for (member in type2.members)
-	if (instance?(member, <limited-integer-ctype>))
-	  member := limited-int-union(member, new-members);
-	end if;
-	block (next-member)
-	  for (remaining = new-members then remaining.tail,
-	       prev = #f then remaining,
-	       until: remaining == #())
-	    let other = remaining.head;
-	    if (csubtype?(member, other))
-	      next-member();
-	    elseif (csubtype?(other, member))
-	      if (prev)
-		prev.tail := remaining.tail;
-	      else
-		new-members := remaining.tail;
-	      end if;
-	    end if;
-	  end for;
-	  new-members := pair(member, new-members);
-	end block;
-      end for;
+      compute-ctype-union(type1, type2);
+  end case;
+end function ctype-union;
 
-      let res = if (new-members == #())
-		  empty-ctype();
-		elseif (tail(new-members) == #())
-		  head(new-members);
-		else
-		  make(<union-ctype>, members: new-members);
-		end if;
-      memo2-enter(type1, type2, res, #t, $union-memo);
-      res;
-  end;
-end method;
+define function compute-ctype-union (type1 :: <ctype>, type2 :: <ctype>)
+ => value :: <ctype>;
+  let new-members :: <list> = copy-sequence(type1.members);
+  for (member in type2.members)
+    if (instance?(member, <limited-integer-ctype>))
+      member := limited-int-union(member, new-members);
+    end if;
+    block (next-member)
+      for (remaining = new-members then remaining.tail,
+	   prev = #f then remaining,
+	   until: remaining == #())
+	let other = remaining.head;
+	if (csubtype?(member, other))
+	  next-member();
+	elseif (csubtype?(other, member))
+	  if (prev)
+	    prev.tail := remaining.tail;
+	  else
+	    new-members := remaining.tail;
+	  end if;
+	end if;
+      end for;
+      new-members := pair(member, new-members);
+    end block;
+  end for;
+  
+  let res = list-to-ctype-union(new-members);
+  memo2-enter(type1, type2, res, #t, $union-memo);
+  res;
+end function compute-ctype-union;
+
+define function list-to-ctype-union(members :: <list>)
+  if (members == #())
+    empty-ctype();
+  elseif (tail(members) == #())
+    head(members);
+  else
+    make(<union-ctype>, members: members);
+  end if;
+end function list-to-ctype-union;
+
 
 
-/// <unknown-ctype> represents some random non-compile-time expression that
-/// ought to be a type.
-///
-/// This should be interpreted as "some type whose meaning is unknown because
-/// the value of EXP is unknown".  An unknown type is never CTYPE-EQ to itself
-/// or to any other type.
-///
+// <unknown-ctype> represents some random non-compile-time expression
+// that ought to be a type.
+//
+// This should be interpreted as "some type whose meaning is unknown
+// because the value of EXP is unknown".  An unknown type is never
+// CTYPE-EQ to itself or to any other type.
+//
 define class <unknown-ctype> (<ctype>)
   //
-  // The expression which was of unknown type.  In general, this is only for
-  // human context. 
+  // The expression which was of unknown type.  In general, this is
+  // only for human context.
   slot type-exp, init-value: #f, init-keyword: type-exp:;
 end class;
 
@@ -838,11 +869,11 @@ define method ctype-extent-dispatch (type :: <unknown-ctype>)
 end method ctype-extent-dispatch;
 
 
-//// Limited types:
+/// Limited types:
 //
-// The <limited-ctype> abstract class is inherited by various non-class types
-// where there is a class that is a "tight" supertype of the type.  This
-// includes singleton and direct-instance types.
+// The <limited-ctype> abstract class is inherited by various
+// non-class types where there is a class that is a "tight" supertype
+// of the type.  This includes singleton and direct-instance types.
 //
 define abstract class <limited-ctype> (<ctype>)
   // The most specific class that is a supertype of this type.
@@ -899,8 +930,8 @@ end method make;
 
 /// Limited integer types:
 
-// A limited-integer-table is used to keep track of all the limited integers we
-// have already allocated, so we can reuse them.
+// A limited-integer-table is used to keep track of all the limited
+// integers we have already allocated, so we can reuse them.
 
 define class <limited-integer-table> (<table>)
 end;
@@ -965,7 +996,7 @@ define method print-object (limint :: <limited-integer-ctype>,
 			if (limint.high-bound)
 			  write(stream, ", ");
 			  pprint-newline(#"fill", stream);
-			  format(stream, "min: %d", limint.high-bound);
+			  format(stream, "max: %d", limint.high-bound);
 			end;
 		      end,
 		suffix: ")");
@@ -1046,8 +1077,8 @@ end;
 
 // csubtype-dispatch{<limited-integer-ctype>,<limited-integer-ctype>}
 //
-// A limited integer type is a subtype of another if the bounds of type1 are
-// not wider that type2's (and the base class is a subtype.)
+// A limited integer type is a subtype of another if the bounds of
+// type1 are not wider that type2's (and the base class is a subtype.)
 //
 define method csubtype-dispatch
     (type1 :: <limited-integer-ctype>, type2 :: <limited-integer-ctype>)
@@ -1070,23 +1101,27 @@ define method ctype-intersection-dispatch
   let base = ctype-intersection(type1.base-class, type2);
   if (base == empty-ctype())
     values(empty-ctype(), #t);
+  elseif (instance?(base, <singleton-ctype>)) // tc
+    // Should we return make-canonical-limited-integer...?
+    values(base, #t);
   elseif (instance?(base, <cclass>))
-    values(make-canonical-limited-integer(base, type1.low-bound, type1.high-bound),
+    values(make-canonical-limited-integer(base, type1.low-bound,
+					  type1.high-bound),
 	   #t);
   else
-    error("Shouldn't happen.");
+    error("Wrong base for type intersection with <limited-integer-ctype>.\n"
+	    "Shouldn't happen.");
     #f;
   end;
 end;
 
-// The intersection of two limited integer types is the overlap of the ranges.
-// We determine this by maximizing the lower bounds and minimizing the upper
-// bounds, returning that range if non-empty.
+// The intersection of two limited integer types is the overlap of the
+// ranges.  We determine this by maximizing the lower bounds and
+// minimizing the upper bounds, returning that range if non-empty.
 //
 define method ctype-intersection-dispatch
     (type1 :: <limited-integer-ctype>, type2 :: <limited-integer-ctype>)
     => (result :: <ctype>, precise :: <true>);
-
   local innerize(b1, b2, fun)
     case
       ~b1 => b2;
@@ -1115,15 +1150,16 @@ end method;
 
 
 // Return a new limited integer type with Int joined to any of the
-// types in Others that it intesects.  We don't bother removing the overlapped
-// type, since it will be removed by the subtype elimination pass later on.
+// types in Others that it intesects.  We don't bother removing the
+// overlapped type, since it will be removed by the subtype
+// elimination pass later on.
 //
-define constant limited-int-union = method 
+define function limited-int-union
     (int :: <limited-integer-ctype>, others :: <list>)
     => res :: <limited-integer-ctype>;
-
-  // Return true if the two types have overlapping or contiguous ranges.  Value
-  // is arbitrary if one is a subtype of the other, which doesn't matter here.
+  // Return true if the two types have overlapping or contiguous
+  // ranges.  Value is arbitrary if one is a subtype of the other,
+  // which doesn't matter here.
   local method adjacent? (type1, type2)
 	  let L1 = type1.low-bound;
 	  let H1 = type1.high-bound;
@@ -1160,13 +1196,13 @@ define constant limited-int-union = method
 
   make(<limited-integer-ctype>,
        base-class: base, low-bound: LI, high-bound: HI);
-end method;
+end function limited-int-union;
 
 
 /// Limited collection types:
 
-// A limited-collection-table is used to keep track of all the limited collections we
-// have already allocated, so we can reuse them.
+// A limited-collection-table is used to keep track of all the limited
+// collections we have already allocated, so we can reuse them.
 
 define class <limited-collection-table> (<table>)
 end;
@@ -1277,8 +1313,9 @@ end method ctype-extent-dispatch;
 
 // csubtype-dispatch{<limited-collection-ctype>,<limited-collection-ctype>}
 //
-// A limited collection type is a subtype of another if the element types are
-// identical and the sizes are compatible (and the base class is a subtype.)
+// A limited collection type is a subtype of another if the element
+// types are identical and the sizes are compatible (and the base
+// class is a subtype.)
 //
 define method csubtype-dispatch
     (type1 :: <limited-collection-ctype>, type2 :: <limited-collection-ctype>)
@@ -1299,7 +1336,8 @@ define method ctype-intersection-dispatch
   if (base == empty-ctype() | type1.element-type ~= type2.element-type)
     values(empty-ctype(), precise);
   elseif (~instance?(base, <cclass>))
-    error("Shouldn't happen.");
+    error("Wrong base for intersection of <limited-collection-ctype>.\n"
+	    "Shouldn't happen.");
     #f;
   else
     let size1 = type1.size-or-dimension;
@@ -1354,9 +1392,9 @@ end method;
 //
 define class <singleton-ctype> (<limited-ctype>, <ct-value>)
 
-  // The base-class is the direct class of this object, which can be used
-  // interchangably with the object when testing this object for class
-  // membership.
+  // The base-class is the direct class of this object, which can be
+  // used interchangably with the object when testing this object for
+  // class membership.
 
   // The value we represent.
   slot singleton-value :: <eql-ct-value>,
@@ -1403,8 +1441,8 @@ end;
 
 // ctype-extent-dispatch{<singleton-ctype>}
 //
-// Check to see if the value is one of the ones we would rather represent
-// as a member of some set of values.
+// Check to see if the value is one of the ones we would rather
+// represent as a member of some set of values.
 //
 define method ctype-extent-dispatch (type :: <singleton-ctype>)
     => res :: <ctype>;
@@ -1429,8 +1467,8 @@ end method ctype-extent-dispatch;
 
 // csubtype-dispatch{<singleton-ctype>,<limited-integer-ctype>}
 //
-// A singleton is a subtype of a limited integer if it is the right kind of
-// integer and if it is inside the bounds.
+// A singleton is a subtype of a limited integer if it is the right
+// kind of integer and if it is inside the bounds.
 // 
 define method csubtype-dispatch
     (type1 :: <singleton-ctype>, type2 :: <limited-integer-ctype>)
@@ -1444,8 +1482,8 @@ end method csubtype-dispatch;
 
 // csubtype-dispatch{<singleton-ctype>,<limited-collection-ctype>}
 //
-// Without a compile type model of collection's element-type, we cannot
-// determine instance relationships, so just return #f.
+// Without a compile type model of collection's element-type, we
+// cannot determine instance relationships, so just return #f.
 // 
 define method csubtype-dispatch
     (type1 :: <singleton-ctype>, type2 :: <limited-collection-ctype>)
@@ -1455,8 +1493,8 @@ end method csubtype-dispatch;
 
 // csubtype-dispatch{<singleton-ctype>,<byte-character-ctype>}
 //
-// A singleton is a subtype of <byte-character-ctype> iff the singleton is
-// a byte character.
+// A singleton is a subtype of <byte-character-ctype> iff the
+// singleton is a byte character.
 // 
 define method csubtype-dispatch
     (type1 :: <singleton-ctype>, type2 :: <byte-character-ctype>)
@@ -1602,51 +1640,54 @@ end method ctype-extent-dispatch;
 
 
 
-//// Multi-values types:
+/// Multi-values types:
 
-///
-///    The normal type operations (type-union, csubtype?, etc.) are not allowed
-/// on multi-value types.  In most situations in the compiler (such as with
-/// values of variables and slots.), we we are manipulating a single value
-/// (<ctype> class), and don't have to worry about multi-value types.
-///
-/// Instead we provide new operations which are analogous to the one-value
-/// operations (and delegate to them in the single-value case.)  These
-/// operations are optimized for utility rather than exactness, but it is
-/// guaranteed that it will be no smaller (no more restrictive) than the
-/// precise result.
-///
-/// With values types such as:
-///    values(a0, a1)
-///    values(b0, b1)
-///
-/// We compute the more useful result:
-///    values(OP(a0, b0), OP(a1, b1))
-///
-/// Rather than the precise result:
-///    OP(values(a0, a1), values(b0, b1))
-///
-/// This has the virtue of always keeping the values type specifier outermost
-/// (so that it is easily stripped off or decoded), and retains all of the
-/// information that is really useful for static type analysis.  We want to
-/// know what is always true of each value independently.  It is worthless to
-/// know that IF the first value is B0 then the second will be B1.
+//
+// The normal type operations (type-union, csubtype?, etc.) are not
+// allowed on multi-value types.  In most situations in the compiler
+// (such as with values of variables and slots.), we we are
+// manipulating a single value (<ctype> class), and don't have to
+// worry about multi-value types.
+//
+// Instead we provide new operations which are analogous to the
+// one-value operations (and delegate to them in the single-value
+// case.)  These operations are optimized for utility rather than
+// exactness, but it is guaranteed that it will be no smaller (no more
+// restrictive) than the precise result.
+//
+// With values types such as:
+//    values(a0, a1)
+//    values(b0, b1)
+//
+// We compute the more useful result:
+//    values(OP(a0, b0), OP(a1, b1))
+//
+// Rather than the precise result:
+//    OP(values(a0, a1), values(b0, b1))
+//
+// This has the virtue of always keeping the values type specifier
+// outermost (so that it is easily stripped off or decoded), and
+// retains all of the information that is really useful for static
+// type analysis.  We want to know what is always true of each value
+// independently.  It is worthless to know that IF the first value is
+// B0 then the second will be B1.
 
 
-/// <multi-value-ctype> holds information about values for situations (function
-/// return, etc.) where there are more than one value.  We extend the slot
-/// accessors to handle the degenerate case of a 1-value <ctype>.
-///
-/// In order to allow the result of union or intersection of values-types to be
-/// represented more precisely, we allow some vagueness in the number of
-/// "positional" values.  If we union (Y1, Y2) and (X1), then the positional
-/// types are (Y1 union X1, Y2), and the min-values is 1.  Y2 is thus sort of
-/// an "optional" result type.
-///
+// <multi-value-ctype> holds information about values for situations
+// (function return, etc.) where there are more than one value.  We
+// extend the slot accessors to handle the degenerate case of a
+// 1-value <ctype>.
+//
+// In order to allow the result of union or intersection of
+// values-types to be represented more precisely, we allow some
+// vagueness in the number of "positional" values.  If we union (Y1,
+// Y2) and (X1), then the positional types are (Y1 union X1, Y2), and
+// the min-values is 1.  Y2 is thus sort of an "optional" result type.
+//
 define class <multi-value-ctype> (<values-ctype>)
 
-  // Types of each specifically typed value.  Values > than min-values might
-  // not actually be returned.
+  // Types of each specifically typed value.  Values > than min-values
+  // might not actually be returned.
   slot positional-types :: <list>, required-init-keyword: positional-types:;
 
   // The minimum number of values that will ever be returned (<= to
@@ -1723,10 +1764,10 @@ end;
 
 // make-values-ctype  --  Exported
 //
-// Make a potentially multi-value ctype.  If there is only one value, just
-// return that.  If #rest object, return wild-ctype().
+// Make a potentially multi-value ctype.  If there is only one value,
+// just return that.  If #rest object, return wild-ctype().
 //
-define constant make-values-ctype = method
+define function make-values-ctype
   (req :: <list>, rest :: false-or(<ctype>)) => res :: <values-ctype>;
   if (member?(empty-ctype(), req))
     empty-ctype();
@@ -1741,7 +1782,7 @@ define constant make-values-ctype = method
 	   rest-value-type: rest | empty-ctype());
     end if;
   end if;
-end method;
+end function make-values-ctype;
 
    
 define generic positional-types (type :: <values-ctype>) => res :: <list>;
@@ -1778,15 +1819,15 @@ end method ctype-extent-dispatch;
 
 
 
-//// Multi-value type operations:
+/// Multi-value type operations:
 
-/// Fixed-Values-Op  --  Internal
-///
-///    Return a list of Operation applied to the types in Types1 and Types2,
-/// padding the shorter with the appropriate rest values as needed.
-/// The second value is #t if Operation always returned a true second
-/// value.
-///
+// Fixed-Values-Op  --  Internal
+//
+// Return a list of Operation applied to the types in Types1 and
+// Types2, padding the shorter with the appropriate rest values as
+// needed.  The second value is #t if Operation always returned a true
+// second value.
+//
 define constant fixed-values-op
   = method (types1 :: <list>, types2 :: <list>,
 	    rest1 :: <ctype>, rest2 :: <ctype>,
@@ -1805,29 +1846,29 @@ define constant fixed-values-op
       values(reverse!(result), exact);
     end method;
 
-/// Args-Type-Op  --  Internal
-///
-/// If the values count signatures differ, then we produce result with the
-/// required value count chosen by Min-Fun when applied to the number of
-/// required values in type1 and type2.
-///
-/// The second value is true if the result is definitely empty or if Operation
-/// returned true as its second value each time we called it.  Since we
-/// approximate the intersection of values types, the second value being true
-/// doesn't mean the result is exact.
-///
+// Args-Type-Op  --  Internal
+//
+// If the values count signatures differ, then we produce result with
+// the required value count chosen by Min-Fun when applied to the
+// number of required values in type1 and type2.
+//
+// The second value is true if the result is definitely empty or if
+// Operation returned true as its second value each time we called it.
+// Since we approximate the intersection of values types, the second
+// value being true doesn't mean the result is exact.
+//
 define generic args-type-op
     (type1 :: <values-ctype>, type2 :: <values-ctype>, operation :: <function>,
      min-fun :: <function>)
     => (res :: <values-ctype>, win? :: <boolean>);
-///
+
 define method args-type-op
     (type1 :: <ctype>, type2 :: <ctype>, operation :: <function>,
      min-fun :: <function>)
     => (res :: <values-ctype>, win? :: <boolean>);
   operation(type1, type2);
 end;
-///
+
 define method args-type-op
     (type1 :: <values-ctype>, type2 :: <values-ctype>, operation :: <function>,
      min-fun :: <function>)
@@ -1863,12 +1904,12 @@ define method args-type-op
 end method;
 
 
-/// Values-Type-Union, Values-Type-Intersection  --  Interface
-///
-///    Do a union or intersection operation on types that might be values
-/// types.
-///
-define constant values-type-union = method
+// Values-Type-Union, Values-Type-Intersection  --  Interface
+//
+// Do a union or intersection operation on types that might be values
+// types.
+//
+define function values-type-union
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
   if (type1 == empty-ctype())
@@ -1883,9 +1924,9 @@ define constant values-type-union = method
 		 end,
 		 min);
   end;
-end method;
-///
-define constant values-type-intersection = method
+end function values-type-union;
+
+define function values-type-intersection
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
   if (type1 == empty-ctype() | type2 == empty-ctype())
@@ -1893,25 +1934,26 @@ define constant values-type-intersection = method
   else
     args-type-op(type1, type2, ctype-intersection, max);
   end;
-end method;
+end function values-type-intersection;
 
 
-/// Values-Types-Intersect?  --  Interface
-///
-///    Like CTypes-Intersect?, except that it sort of works on values types.
-/// Note that due to the semantics of Values-Type-Intersection, this might
-/// return {T, T} when there isn't really any intersection (?).
-///
+// Values-Types-Intersect?  --  Interface
+//
+// Like CTypes-Intersect?, except that it sort of works on values
+// types.  Note that due to the semantics of Values-Type-Intersection,
+// this might return {T, T} when there isn't really any intersection
+// (?).
+//
 define generic values-types-intersect?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-///
+
 define method values-types-intersect?
     (type1 :: <ctype>, type2 :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
   ctypes-intersect?(type1, type2);
 end;
-///
+
 define method values-types-intersect?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
@@ -1924,21 +1966,22 @@ define method values-types-intersect?
 end method;
 
 
-/// Values-Subtype?  --  Interface
-///
-///    A subtypep-like operation that can be used on any types, including
-/// values types.  This is something like the result type congruence rule.
-///
+// Values-Subtype?  --  Interface
+//
+// A subtypep-like operation that can be used on any types, including
+// values types.  This is something like the result type congruence
+// rule.
+//
 define generic values-subtype?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-///
+
 define method values-subtype?
     (type1 :: <ctype>, type2 :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
   csubtype?(type1, type2);
 end;
-///
+
 define method values-subtype?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
@@ -2024,7 +2067,7 @@ define constant empty-ctype
     end;
 
 
-//// Type specifiers.
+/// Type specifiers.
 
 define constant <type-specifier> = type-union(<symbol>, <list>);
 
