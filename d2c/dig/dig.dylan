@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.5 2000/12/12 00:01:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.6 2000/12/12 00:23:01 andreas Exp $
 
 //======================================================================
 //
@@ -1124,11 +1124,18 @@ define dig-command "prompt" (line)
 end;
 
 define dig-command "break" (line)
-  set-any-breakpoints(line);
+  line ~= "" & set-any-breakpoints(line);
 end;
 
 define dig-command "gbreak" (line)
-  set-generic-breakpoints(line);
+  line ~= "" & set-generic-breakpoints(line);
+end;
+
+define dig-command "run-stopped" (line)
+  clear-gdb-variable-types();	// See expr-token for more info
+  do-gdb-command("break real_main");
+  do-gdb-command("run %s", line);
+  do-gdb-command("break dylanZdylan_visceraZinvoke_debugger_METH_GENERIC");
 end;
 
 #else
@@ -1181,10 +1188,6 @@ define method main (prog-name :: <string>, #rest args);
   receive-gdb-response();
   do-gdb-command("set confirm off");
   do-gdb-command("set height 10000");
-
-  do-gdb-command("break real_main"); // FIXME: force loading of shared library symbols
-  do-gdb-command("run");
-
   do-gdb-command("break dylanZdylan_visceraZinvoke_debugger_METH_GENERIC");
   do-gdb-command("break abort");
   command-loop();
