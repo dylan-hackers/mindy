@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.38 1995/11/14 15:45:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.39 1995/11/15 15:56:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -208,13 +208,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	unless (type == #f | instance?(type, <expression>))
 	  compiler-error("Bogus type expression: %=", type);
 	end;
-	let setter = if (allocation == #"constant")
-		       if (setter)
-			 compiler-warning("Constant slots can't "
-					    "have a setter.");
-		       end;
-		       #f;
-		     elseif (class-functional? & allocation == #"instance")
+	let setter = if (class-functional? & allocation == #"instance")
 		       if (setter)
 			 compiler-warning("Instance allocation slots in "
 					    "functional classes can't "
@@ -1551,8 +1545,8 @@ define method convert-top-level-form
 	  // ### If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
 	  error("Can't deal with class slots yet.");
-	<constant-slot-info>, <virtual-slot-info> =>
-	  // Don't need to do anything for constant or virtual slots.
+	<virtual-slot-info> =>
+	  // Don't need to do anything for virtual slots.
 	  #f;
       end;
     end;

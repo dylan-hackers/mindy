@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.18 1995/11/14 14:18:44 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.19 1995/11/15 15:56:08 wlott Exp $
 
 /*
 
@@ -406,7 +406,7 @@ register-object-id(#"instance-slot-info", #x0067);
 register-object-id(#"vector-slot-info", #x0068);
 register-object-id(#"class-slot-info", #x0069);
 register-object-id(#"each-subclass-slot-info", #x006A);
-register-object-id(#"constant-slot-info", #x006B);
+// #x006B unused (was constant-slot-info).
 register-object-id(#"virtual-slot-info", #x006C);
 register-object-id(#"override-info", #x006D);
 register-object-id(#"layout-table", #x006E);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.112 1995/11/14 22:20:38 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.113 1995/11/15 15:56:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -618,8 +618,7 @@ define module classes
 
     <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
-    <virtual-slot-info>, <constant-slot-info>, <class-slot-info>,
-    <each-subclass-slot-info>,
+    <virtual-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
 
     <override-info>, override-introduced-by, override-introduced-by-setter, 
     override-getter, override-slot,

@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.23 1995/11/14 15:13:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.24 1995/11/15 15:56:08 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -190,7 +190,7 @@ end;
 
 
 define constant <slot-allocation>
-  = one-of(#"instance", #"class", #"each-subclass", #"constant", #"virtual");
+  = one-of(#"instance", #"class", #"each-subclass", #"virtual");
 
 define abstract class <slot-info> (<identity-preserving-mixin>)
   //
@@ -244,7 +244,6 @@ define method make (class == <slot-info>, #rest keys, #key allocation)
 	  #"instance" => <instance-slot-info>;
 	  #"class" => <class-slot-info>;
 	  #"each-subclass" => <each-subclass-slot-info>;
-	  #"constant" => <constant-slot-info>;
 	  #"virtual" => <virtual-slot-info>;
 	end,
 	keys);
@@ -282,9 +281,6 @@ end;
 define class <each-subclass-slot-info> (<slot-info>)
   slot slot-positions :: <list>,
     init-value: #(), init-keyword: slot-positions;
-end;
-
-define class <constant-slot-info> (<slot-info>)
 end;
 
 define class <virtual-slot-info> (<slot-info>)
@@ -571,9 +567,6 @@ define method inherit-overrides ()
 	    end;
 	    if (instance?(slot, <class-slot-info>))
 	      compiler-error("Can't override class allocation slots");
-	    end;
-	    if (instance?(slot, <constant-slot-info>))
-	      compiler-error("Can't override constant slots");
 	    end;
 	    if (instance?(slot, <virtual-slot-info>))
 	      compiler-error("Can't override virtual slots");
