@@ -1,0 +1,37 @@
+	Compilation and installation instructions for Mindy.
+
+Compiling Mindy currently requires the use of an ANSI C compiler.
+
+To configure mindy for your system, simply type ``./configure''
+and wait for configure to figure things out.
+
+The default installation path for executables is /usr/local/bin,
+for the libraries is /usr/local/lib/mindy.  You can change the
+prefix for these paths from /usr/local to whatever by typing
+``configure --prefix=whatever''. 
+
+If you want to build mindy in one-place while the sources are
+kept in another-place, then type ``cd one-place;
+another-place/configure --srcdir=another-place'' and configure will
+construct the appropriate directory tree and Makefiles.
+
+Other options may be specified to configure with environment
+variables: 
+
+	CC	specifies the c compiler to use
+	CCOPTS	specifies options to pass to the c compiler
+	YACC	specifies the parser generator
+	LEX	specifies the lexer generator
+	LFLAGS	specifies the flags passed to LEX
+
+Once you have run configure, you should be able to compile and install
+everything by just saying ``make install'' at the top level directory.
+If you just want to compile everything without installing it, just say
+``make.'' 
+
+The default C compiler options are ``CCOPTS=-g''.  If you're using gcc,
+you might try ``CCOPTS="-O4 -finline-functions make -e''.
+
+You can clean up any previously made objects with ``make clean''.
+
+
