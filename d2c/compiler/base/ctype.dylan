@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.3 1995/01/06 21:16:46 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.4 1995/01/09 17:34:37 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -492,7 +492,7 @@ define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
   else
     let (res, win) = ctype-intersection(type1, type2);
     if (win)
-      values(res == empty-ctype(), #t);
+      values(~(res == empty-ctype()), #t);
     elseif (type1 == object-ctype() | type2 == object-ctype())
       values(#t, #t);
     else
