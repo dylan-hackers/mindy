@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.3 1995/05/05 08:46:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.4 1995/05/05 14:44:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,6 +49,14 @@ end;
 
 define method print-object (lit :: <literal-false>, stream :: <stream>) => ();
   write("{literal #f}", stream);
+end;
+
+define method print-message (lit :: <literal-true>, stream :: <stream>) => ();
+  write("#t", stream);
+end;
+
+define method print-message (lit :: <literal-false>, stream :: <stream>) => ();
+  write("#f", stream);
 end;
 
 define method \= (x :: <true>, y :: <literal-true>) => res :: <boolean>;
@@ -164,10 +172,22 @@ define method print-object (lit :: <literal-fixed-integer>, stream :: <stream>)
   format(stream, "{literal fixed-integer %d}", lit.literal-value);
 end;
 
-define method print-object (lit :: <literal-extended-integer>,
-			    stream :: <stream>)
+define method print-message
+    (lit :: <literal-fixed-integer>, stream :: <stream>)
+    => ();
+  format(stream, "%d", lit.literal-value);
+end;
+
+define method print-object
+    (lit :: <literal-extended-integer>, stream :: <stream>)
     => ();
   format(stream, "{literal extended-integer %d}", lit.literal-value);
+end;
+
+define method print-message
+    (lit :: <literal-extended-integer>, stream :: <stream>)
+    => ();
+  format(stream, "#e%d", lit.literal-value);
 end;
 
 define method print-object (lit :: <literal-ratio>, stream :: <stream>) => ();
@@ -231,6 +251,16 @@ define method make (class == <literal-symbol>, #next next-method, #key value)
     | (element($literal-symbol-memo, value) := next-method());
 end;
 
+define method print-object (lit :: <literal-symbol>, stream :: <stream>)
+    => ();
+  format(stream, "{literal symbol %=}", lit.literal-value);
+end;
+
+define method print-message (lit :: <literal-symbol>, stream :: <stream>)
+    => ();
+  print(lit.literal-value, stream);
+end;
+
 define method as (class == <ct-value>, sym :: <symbol>)
   make(<literal-symbol>, value: sym);
 end;
@@ -256,6 +286,16 @@ define method make (class == <literal-character>, #next next-method,
 		    #key value)
   element($literal-character-memo, value, default: #f)
     | (element($literal-character-memo, value) := next-method());
+end;
+
+define method print-object (lit :: <literal-character>, stream :: <stream>)
+    => ();
+  format(stream, "{literal character %=}", lit.literal-value);
+end;
+
+define method print-message (lit :: <literal-character>, stream :: <stream>)
+    => ();
+  print(lit.literal-value, stream);
 end;
 
 define method as (class == <ct-value>, char :: <character>)
@@ -333,6 +373,11 @@ define variable *literal-empty-list* = #f;
 
 define method make (class == <literal-empty-list>, #next next-method, #key)
   *literal-empty-list* | (*literal-empty-list* := next-method());
+end;
+
+define method print-message (lit :: <literal-empty-list>, stream :: <stream>)
+    => ();
+  write("#()", stream);
 end;
 
 define method as (class == <ct-value>, thing :: <empty-list>)
