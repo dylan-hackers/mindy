@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.78 1996/01/11 18:43:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.79 1996/02/02 02:29:34 wlott Exp $
 
 //======================================================================
 //
@@ -67,7 +67,8 @@ define module Builtin-Stuff
     apply-curry, as, ash,
     binary-logand, binary-logior, binary-logxor, broadcast-event,
     direct-subclasses, direct-superclasses,
-    ceiling, ceiling/, class-name, copy-bytes, current-handler, current-thread,
+    ceiling, ceiling/, class-name, collect-garbage, copy-bytes,
+    current-handler, current-thread,
     denominator, do-next-method,
     element, element-setter, enable-error-system,
     fflush, find-method, float-hash, floor, floor/, format, function-arguments,
@@ -248,7 +249,7 @@ define module System
   use Dylan;
   use Builtin-Stuff,
     import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-time-of-day,
-	     system, getenv},
+	     system, getenv, collect-garbage},
     export: all;
 end System;
 
