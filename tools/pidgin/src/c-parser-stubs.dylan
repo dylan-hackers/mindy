@@ -129,18 +129,24 @@ end;
 define function add-cpp-declaration
     (state :: <parse-state>, macro-name :: <byte-string>)
  => ()
-  parse-warning(state, "ignoring '#define %s' for now", macro-name);
-
-/*
-  block ()
-    let value = parse-macro(macro-name, state);
-    state.objects[macro-name] :=
-      add-declaration(state, make(<macro-declaration>, name: macro-name,
-				  value: value));
-  exception (<error>)
-    #f;
-  end block;
-*/
+  let macro-value = 
+    block ()
+      parse-macro(macro-name, state);
+    exception (<error>)
+      #f;
+    end block;
+  let decl = 
+    case
+      instance?(macro-value, <integer>) =>
+	make(<c-integer-define>, name: macro-name, value: macro-value);
+      instance?(macro-value, <string>) =>
+	make(<c-string-define>, name: macro-name, value: macro-value);	
+      macro-value == #"empty-macro" =>
+	make(<c-empty-define>, name: macro-name);
+      otherwise =>
+	make(<c-unknown-define>, name: macro-name);
+    end case;
+  state.objects[macro-name] := add-declaration(state, decl);
 end function add-cpp-declaration;
 
 // No longer used (except as a superclass in this file).
