@@ -9,7 +9,7 @@ synopsis:	Provides a small assortment of specialized operations for
 		collection-extensions)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.2 1996/03/07 18:06:22 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.3 1996/11/16 13:15:40 rgs Exp $
 
 //======================================================================
 //
@@ -50,41 +50,56 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-se
 //     simpler search strategy -- this function should never be slower than
 //     subsequence-position.) 
 //
-define method substring-position 
-    (big :: <byte-string>, pattern :: <byte-string>, #key start = 0,
+define sealed inline method substring-position 
+    (big :: <string>, pattern :: <byte-string>, #key start = 0,
      end: big-end = size(big), case-sensitive = #f)
  => (position :: false-or(<integer>), #rest end-position :: <integer>);
-  let comparison = if (case-sensitive) \= else case-insensitive-equal end;
-  let compiled-pattern = compile-substring(pattern, comparison);
-  find-substring(big, pattern, start, big-end, comparison, compiled-pattern);
+  let compiled-pattern = compile-substring(pattern, case-sensitive);
+  find-substring(big, pattern, start, big-end, case-sensitive,
+		 compiled-pattern);
 end method substring-position;
 
 
-define method make-substring-positioner 
+define sealed inline method make-substring-positioner 
     (pattern :: <byte-string>, #key case-sensitive = #f)
  => positioner :: <function>;
-  let comparison = if (case-sensitive) \= else case-insensitive-equal end;
-  let compiled-pattern = compile-substring(pattern, comparison);
-  method (big :: <byte-string>, #key start = 0, end: big-end = size(big))
-   => (position :: false-or(<integer>), #rest end-position :: <integer>);
-    find-substring(big, pattern, start, big-end, comparison, compiled-pattern);
-  end method;
+  let compiled-pattern = compile-substring(pattern, case-sensitive);
+  local method compiled-matcher
+	    (big :: <string>, #key start = 0, end: big-end = size(big))
+	 => (position :: false-or(<integer>), #rest end-position :: <integer>);
+	  find-substring(big, pattern, start, big-end, case-sensitive,
+			 compiled-pattern);
+	end method compiled-matcher;
+  compiled-matcher;
 end method make-substring-positioner;
 
+define inline function equal?
+    (char1 :: <character>, char2 :: <character>, case-sensitive :: <boolean>)
+ => (result :: <boolean>);
+  if (case-sensitive)
+    char1 == char2;
+  else
+    case-insensitive-equal(char1, char2);
+  end if;
+end function equal?;
 
 // Does the real work of substring-position.  Not exported.
 //
-// Specialized version of "subsequence-position" specialized for byte-strings.
-// Since this routine only handles byte-characters and "==" tests, it can do
-// a Boyer-Moore-ish search.  As a further optimization, you may pre-compile
-// the pattern with "compile-substring" and pass it in as the "compiled:"
-// keyword.  This will save both time and space if you are searching for the
-// same pattern repeatedly.
+// Specialized version of "subsequence-position" specialized for byte-strings
+// patterns.  Since this routine only handles byte-characters and "==" tests,
+// it can do a Boyer-Moore-ish search.  As a further optimization, you may
+// pre-compile the pattern with "compile-substring" and pass it in as the
+// "compiled:" keyword.  This will save both time and space if you are
+// searching for the same pattern repeatedly.
 //
-define method find-substring (big :: <byte-string>,
-			      pattern :: <byte-string>,
-			      start :: <integer>, big-end :: <integer>,
-			      equal? :: <function>, compiled-pattern)
+// Note: By specializing on <string> instead of <byte-string>, we increase our
+// generality while decreasing efficiency.  This may be a good candidate for
+// providing an "out-lined" implementation on <byte-string>.
+//
+define sealed method find-substring
+    (big :: <string>, pattern :: <byte-string>, start :: <integer>,
+     big-end :: <integer>, case-sensitive :: <boolean>,
+     compiled-pattern :: <simple-object-vector>)
  => (position :: false-or(<integer>), #rest end-position :: <integer>);
   let pat-sz = size(pattern);
   let start-of-occurence
@@ -94,7 +109,7 @@ define method find-substring (big :: <byte-string>,
 	1 =>			// simple character search
 	  let ch = pattern[0];
 	  for (key from start below big-end,
-	       until: equal?(big[key], ch))
+	       until: equal?(big[key], ch, case-sensitive))
 	  finally
 	    if (key < big-end) key else #f end;
 	  end for;
@@ -102,7 +117,8 @@ define method find-substring (big :: <byte-string>,
 	  let ch1 = pattern[0];	// marginal 
 	  let ch2 = pattern[1];
 	  for (key from start below big-end - 1,
-	       until: equal?(big[key], ch1) & equal?(big[key + 1], ch2))
+	       until: equal?(big[key], ch1, case-sensitive)
+		 & equal?(big[key + 1], ch2, case-sensitive))
 	  finally
 	    if (key < (big-end - 1)) key else #f end;
 	  end for;
@@ -115,11 +131,12 @@ define method find-substring (big :: <byte-string>,
 		    #f;
 		  else 
 		    let char = big[index];
-		    if (equal?(char, last-char)) 
+		    if (equal?(char, last-char, case-sensitive)) 
 		      // maybe it's here -- we'd better check
 		      for (pat-key from 0 below pat-last,
 			   big-key from index - pat-last,
-			   while: equal?(big[big-key], pattern[pat-key]))
+			   while: equal?(big[big-key], pattern[pat-key],
+					 case-sensitive))
 		      finally
 			if (pat-key == pat-last) // fell off end -- found it.
 			  index - pat-last;
@@ -129,7 +146,8 @@ define method find-substring (big :: <byte-string>,
 		      end for;
 		    else    // last character didn't match, so we can use
 		            // the "skip table" to optimize
-		      search(index + skip[as(<integer>, char)]);
+		      search(index + element(skip, as(<integer>, char),
+					     default: pat-sz));
 		    end if;
 		  end if;
 		end method;
@@ -150,15 +168,15 @@ end method find-substring;
 // strings, thus avoiding one of the more expensive parts of the search.
 //
 define method compile-substring
-    (pattern :: <byte-string>, equal? :: one-of(\=, case-insensitive-equal))
- => (compiled :: <object>);
+    (pattern :: <byte-string>, case-sensitive :: <boolean>)
+ => (compiled :: <simple-object-vector>);
   let sz = size(pattern);
   if (sz < 3)
-    #();
+    make(<simple-object-vector>, size: 0)
   else
-    let result = make(<vector>, size: 256, fill: sz);
+    let result = make(<simple-object-vector>, size: 256, fill: sz);
     for (index from 0 below sz - 1, skip from sz - 1 by -1)
-      if (equal? == case-insensitive-equal)
+      if (case-sensitive == #f)
 	result[as(<integer>, as-lowercase(pattern[index]))] := skip;
 	result[as(<integer>, as-uppercase(pattern[index]))] := skip;
       else
@@ -169,12 +187,11 @@ define method compile-substring
   end if;
 end method compile-substring;
 
-
 define method substring-replace 
-    (big :: <byte-string>, search-for :: <byte-string>, 
-     replace-with :: <byte-string>, #key count, start = 0, 
+    (big :: <string>, search-for :: <byte-string>, 
+     replace-with :: <string>, #key count, start = 0, 
      end: input-end = size(big))
- => replaced-string :: <byte-string>;
+ => replaced-string :: <string>;
   let positioner = make-substring-positioner(search-for);
   do-replacement(positioner, replace-with, big, start, input-end, count, #f);
 end method substring-replace;
@@ -186,14 +203,14 @@ define method make-substring-replacer
   let positioner = make-substring-positioner(search-for, 
 					     case-sensitive: case-sensitive);
   if (replace-with)
-    method (big :: <byte-string>, #key count, start = 0, 
+    method (big :: <string>, #key count, start = 0, 
 	    end: input-end = size(big))
      => new-string :: <byte-string>;
       do-replacement(positioner, replace-with, big, start, 
 		     input-end, count, #f);
     end method;
   else
-    method (big :: <byte-string>, replace-with :: <string>, 
+    method (big :: <string>, replace-with :: <string>, 
 	    #key count, start = 0, end: input-end = size(big))
      => new-string :: <byte-string>;
       do-replacement(positioner, replace-with, big, start, 
