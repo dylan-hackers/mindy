@@ -149,6 +149,9 @@ install-stamp: build-stamp
 	chmod 0755 `pwd`/debian/tmp/usr/share/dylan
 	chmod 0644 `pwd`/debian/tmp/usr/share/dylan/*
 
+	# Add the emacs mode
+	cp -a -r `pwd`/tools/elisp/* `pwd`/debian/gwydion-dylan-dev/usr/share/emacs/site-lisp/gwydion-dylan
+
 	dh_movefiles
 
 	# Make sure we don't have a bunch of extra stuff in Mindy
@@ -185,7 +188,7 @@ binary-arch: build install
 	dh_installdocs
 	dh_installexamples
 	dh_installmenu
-#	dh_installemacsen
+	dh_installemacsen
 #	dh_installinit
 	dh_installcron
 #	dh_installmanpages
