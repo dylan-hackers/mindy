@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.9 1995/05/03 07:20:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.10 1995/05/04 04:36:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,6 +30,8 @@ define method compile (#rest files) => res :: <component>;
   assign-unique-ids();
   format(*debug-output*, "seeding representations\n");
   seed-representations();
+  format(*debug-output*, "assigning slot representations\n");
+  assign-slot-representations();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
   format(*debug-output*, "Converting in FER\n");
