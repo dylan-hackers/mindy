@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.62 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.63 1995/05/18 22:11:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,6 +63,7 @@ define method optimize-component (component :: <component>) => ();
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(add-type-checks, "adding type checks")
+	| try(replace-placeholders, "replacing placeholders")
 	| try(environment-analysis, "running environment analysis")
 	| try(build-external-entries, "building external entries")
 	| (done := #t);
@@ -2500,6 +2501,112 @@ end;
 
 define method add-type-checks-aux
     (component :: <component>, region :: <exit>) => ();
+end;
+
+
+
+// Replacement of placeholder
+
+define method replace-placeholders (component :: <component>) => ();
+  for (function in component.all-function-regions)
+    replace-placeholders-in(component, function);
+  end;
+end;
+
+define method replace-placeholders-in
+    (component :: <component>, region :: <simple-region>) => ();
+  for (assign = region.first-assign then assign.next-op,
+       while: assign)
+    replace-placeholder(component, assign.depends-on,
+			assign.depends-on.source-exp);
+  end;
+end;
+
+define method replace-placeholders-in
+    (component :: <component>, region :: <compound-region>) => ();
+  for (subregion in region.regions)
+    replace-placeholders-in(component, subregion);
+  end;
+end;
+
+define method replace-placeholders-in
+    (component :: <component>, region :: <if-region>) => ();
+  replace-placeholder(component, region.depends-on,
+		      region.depends-on.source-exp);
+  replace-placeholders-in(component, region.then-region);
+  replace-placeholders-in(component, region.else-region);
+end;
+
+define method replace-placeholders-in
+    (component :: <component>, region :: <body-region>) => ();
+  replace-placeholders-in(component, region.body);
+end;
+
+define method replace-placeholders-in
+    (component :: <component>, region :: <exit>) => ();
+end;
+  
+define method replace-placeholders-in
+    (component :: <component>, region :: <return>) => ();
+  for (dep = region.depends-on then dep.dependent-next,
+       while: dep)
+    replace-placeholder(component, dep, dep.source-exp);
+  end;
+end;
+  
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>,
+     placeholder :: <expression>)
+    => ();
+end;
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <operation>)
+    => ();
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    replace-placeholder(component, dep, dep.source-exp);
+  end;
+end;
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <primitive>)
+    => ();
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    replace-placeholder(component, dep, dep.source-exp);
+  end;
+  select (op.name)
+    #"vector" => #f;
+    #"values-sequence" => #f;
+    #"make-catcher", #"disable-catcher", #"throw" =>
+      let builder = make-builder(component);
+      replace-expression
+	(component, dep,
+	 make-unknown-call
+	   (builder, dylan-defn-leaf(builder, op.name), #f,
+	    for (dep = op.depends-on then dep.dependent-next,
+		 args = #() then pair(dep.source-exp, args),
+		 while: dep)
+	    finally
+	      reverse!(args);
+	    end));
+    otherwise => #f;
+  end;
+end;
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, leaf :: <exit-function>)
+    => ();
+  let builder = make-builder(component);
+  let catcher = leaf.depends-on.source-exp;
+  let make-exit-fun-leaf = dylan-defn-leaf(builder, #"make-exit-function");
+  let temp = make-local-var(builder, #"exit-function", function-ctype());
+  build-assignment
+    (builder, $Default-Policy, make(<source-location>), temp,
+     make-unknown-call(builder, make-exit-fun-leaf, #f, list(catcher)));
+  insert-before(component, dep.dependent, builder-result(builder));
+  replace-expression(component, dep, temp);
 end;
 
 
