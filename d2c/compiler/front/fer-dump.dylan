@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.13 1995/04/25 20:59:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.14 1995/04/25 23:03:46 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -261,6 +261,13 @@ define method dump (op :: <pitcher>, stream :: <stream>) => ();
   format(stream, "PITCHER[%d]", op.id);
   dump-operands(op.depends-on, stream);
   format(stream, " to CATCHER[%d]", op.catcher.id);
+end;
+
+define method dump (op :: <set>, stream :: <stream>) => ();
+  write("set ", stream);
+  dump(op.variable.defn-name, stream);
+  format(stream, "[%d]", op.id);
+  dump-operands(op.depends-on, stream);
 end;
 
 define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
