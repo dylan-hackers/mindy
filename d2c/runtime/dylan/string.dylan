@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/string.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/string.dylan,v 1.3 2002/12/10 00:36:40 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -93,6 +93,26 @@ end;
 
 define method as-uppercase! (str :: <string>)
     => res :: <string>;
+  map-into(str, as-uppercase, str);
+end;
+
+define method as-lowercase (str :: <byte-string>)
+    => res :: <byte-string>;
+  map(as-lowercase, str);
+end;
+
+define method as-lowercase! (str :: <byte-string>)
+    => res :: <byte-string>;
+  map-into(str, as-lowercase, str);
+end;
+
+define method as-uppercase (str :: <byte-string>)
+    => res :: <byte-string>;
+  map(as-uppercase, str);
+end;
+
+define method as-uppercase! (str :: <byte-string>)
+    => res :: <byte-string>;
   map-into(str, as-uppercase, str);
 end;
 
@@ -304,7 +324,7 @@ define method \= (str1 :: <byte-string>, str2 :: <byte-string>)
 end;
 
 define method copy-sequence
-    (vector :: <byte-string>, #key start :: <integer> = 0, end: last)
+    (vector :: <byte-string>, #key start :: <integer> = 0, end: last :: false-or(<integer>))
  => (result :: <byte-string>);
   let src-sz :: <integer> = size(vector);
   let last :: <integer>
