@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.17 1995/04/26 03:34:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.18 1995/04/27 04:42:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,6 +22,7 @@ operation
     catcher
     pitcher
     set
+    self-tail-call
 
 
 variable-info
@@ -166,6 +167,8 @@ define class <catcher> (<operation>)
 end;
 
 define class <set> (<operation>)
+  //
+  // Set operations return nothing.
   inherited slot derived-type,
     init-function: curry(make-values-ctype, #(), #f);
   //
@@ -173,6 +176,20 @@ define class <set> (<operation>)
   slot variable :: <definition>, required-init-keyword: var:;
 end;
 
+define class <self-tail-call> (<operation>)
+  //
+  // Self tail calls return nothing.
+  inherited slot derived-type,
+    init-function: curry(make-values-ctype, #(), #f);
+  //
+  // The function we are self tail calling.
+  slot self-tail-call-of :: <lambda>,
+    required-init-keyword: of:;
+  //
+  // The next self tail call in this method.
+  slot next-self-tail-call :: false-or(<self-tail-call>),
+    required-init-keyword: next-self-tail-call:;
+end;
 
 
 // Constants and variables:
@@ -303,8 +320,13 @@ define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
   // because nobody bothers to clear them out.
   slot calls :: <list>, init-value: #();
 
-  // The Tail-Set that this lambda is in.
-  slot tail-set :: <tail-set>;
+  // The block self tail calls should exit to.  #f if we haven't inserted it
+  // yet (i.e. haven't found any self tail calls yet).
+  slot self-call-block :: false-or(<block-region>), init-value: #f;
+
+  // Chain of all the self tail calls in this lambda.  Linked via
+  // next-self-tail-call.
+  slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
 
   // The structure which represents the environment that this Function's
   // variables are allocated in.
