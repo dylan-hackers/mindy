@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.36 2000/04/01 12:08:26 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.37 2000/10/20 15:19:48 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -200,12 +200,10 @@ end method set-library;
 // Used in searching for files
 
 define constant $this-dir = #if (macos)
-								"";
-							#else
-								".";
-							#endif
-
-
+			       "";
+			    #else
+			       ".";
+			    #endif
 
 define method test-parse
     (parser :: <function>, file :: <byte-string>,
@@ -647,11 +645,11 @@ define method emit-make-prologue (state :: <main-unit-state>) => ();
 					 *units*);
 
   let makefile-name = format-to-string("cc-%s-files.mak", state.unit-mprefix);
-  #if (macos)
-		 let temp-makefile-name = "makefile";
-  #else
-		 let temp-makefile-name = concatenate(makefile-name, "-temp");
-  #endif
+#if (macos)
+  let temp-makefile-name = "makefile";
+#else
+  let temp-makefile-name = concatenate(makefile-name, "-temp");
+#endif
   state.unit-makefile-name := makefile-name;
   state.unit-temp-makefile-name := temp-makefile-name;
   format(*debug-output*, "Creating %s\n", makefile-name);
@@ -754,11 +752,12 @@ define method compile-all-files (state :: <main-unit-state>) => ();
 	format(*debug-output*, "Processing %s\n", file);
 	let base-name = file.base-filename;
 	let c-name = concatenate(base-name, ".c");
-	#if (macos)
-		let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
-	#else
-		let temp-c-name = concatenate(c-name, "-temp");
-	#endif
+        #if (macos)
+        let temp-c-name = concatenate(state.unit-lid-file.filename-prefix,
+				      c-name);
+        #else
+        let temp-c-name = concatenate(c-name, "-temp");
+        #endif
 	let body-stream
 	  = make(<file-stream>, locator: temp-c-name, direction: #"output");
 	block ()
@@ -824,10 +823,11 @@ define method build-library-inits (state :: <main-unit-state>) => ();
     begin
       let c-name = concatenate(state.unit-mprefix, "-init.c");
       #if (macos)
-			let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
-	  #else
-			let temp-c-name = concatenate(c-name, "-temp");
-	  #endif
+      let temp-c-name = concatenate(state.unit-lid-file.filename-prefix,
+				    c-name);
+      #else
+      let temp-c-name = concatenate(c-name, "-temp");
+      #endif
       let body-stream = make(<file-stream>, 
 			     locator: temp-c-name, direction: #"output");
       let file = make(<file-state>, unit: state.unit-cback-unit,
@@ -860,9 +860,9 @@ define method build-local-heap-file (state :: <main-unit-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
   let c-name = concatenate(state.unit-mprefix, "-heap.c");
   #if (macos)
-		let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
+  let temp-c-name = concatenate(state.unit-lid-file.filename-prefix, c-name);
   #else
-		let temp-c-name = concatenate(c-name, "-temp");
+  let temp-c-name = concatenate(c-name, "-temp");
   #endif
   let heap-stream = make(<file-stream>, 
 			 locator: temp-c-name, direction: #"output");
@@ -935,12 +935,14 @@ end method;
 
 define method build-da-global-heap (state :: <main-unit-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
-  let heap-stream 
   #if (macos)
-    = make(	<file-stream>, 
-    		locator: concatenate( state.unit-lid-file.filename-prefix, "heap.c" ), 
-    		direction: #"output");
+  let heap-stream 
+       = make(<file-stream>, 
+	      locator: concatenate(state.unit-lid-file.filename-prefix,
+				   "heap.c"), 
+	      direction: #"output");
   #else
+  let heap-stream 
   	= make(<file-stream>, locator: "heap.c", direction: #"output");
   #endif
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
@@ -953,16 +955,18 @@ end method;
 
 define method build-inits-dot-c (state :: <main-unit-state>) => ();
   format(*debug-output*, "Building inits.c.\n");
+#if (macos) 
   let stream
-  #if (macos) 
-    = make(	<file-stream>, 
-    		locator: concatenate( state.unit-lid-file.filename-prefix,"inits.c" ), 
-    		direction: #"output");
-  #else
-  	= make(<file-stream>, locator: "inits.c", direction: #"output");
-  #endif
-  write(stream, "#include <runtime.h>\n\n");
-  write(stream, 
+   = make(<file-stream>, 
+	  locator: concatenate(state.unit-lid-file.filename-prefix,
+			       "inits.c"), 
+	  direction: #"output");
+#else
+  let stream
+   = make(<file-stream>, locator: "inits.c", direction: #"output");
+#endif
+  format(stream, "#include <runtime.h>\n\n");
+  format(stream, 
 	"/* This file is machine generated.  Do not edit. */\n\n");
   let entry-function-name
     = (state.unit-entry-function
@@ -974,26 +978,26 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
 	   "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
 	   entry-function-name);
   end if;
-  write(stream,
-	"void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
+  format(stream,
+	 "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
   for (unit in *units*)
     format(stream, "    %s_Library_init(sp);\n", string-to-c-name(unit.unit-name));
   end;
   if (entry-function-name)
     format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
   end if;
-  write(stream, "}\n");
-  write(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
+  format(stream, "}\n");
+  format(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
 #if (macos)
-  write(stream, "#include<console.h>\n");
+  format(stream, "#include<console.h>\n");
 #endif
-  write(stream, "int main(int argc, char *argv[]) {\n");
+  format(stream, "int main(int argc, char *argv[]) {\n");
 #if (macos)
-  write(stream, "    argc = ccommand( &argv );\n");
+  format(stream, "    argc = ccommand( &argv );\n");
 #endif
-  write(stream, "    real_main(argc, argv);\n");
-  write(stream, "    return 0;\n");
-  write(stream, "}\n");
+  format(stream, "    real_main(argc, argv);\n");
+  format(stream, "    return 0;\n");
+  format(stream, "}\n");
   close(stream);
 end method;
 
@@ -1359,11 +1363,11 @@ define constant $search-path-seperator =
 #if (compiled-for-win32)
   ';';
 #else
-	#if (macos)
-		'\t';
-	#else
-  		':';
-  	#endif
+  #if (macos)
+     '\t';
+  #else
+     ':';
+  #endif
 #endif
 
 
