@@ -3,7 +3,7 @@ author: Ben Folk-Williams, bfw@cmu.edu and
         David Watson, dwatson@cmu.edu
 synopsis: Basic Time functions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.4 1996/08/14 15:44:06 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.5 1996/10/06 13:43:48 nkramer Exp $
  
 //======================================================================
 //
@@ -63,7 +63,7 @@ define constant <timezone> = limited(<integer>, min: -86400, max: 86400);
 // Internal constants.
 //
 define constant $days-before-month
-  = vector(0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365);
+  = #[0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
 define constant $minutes-per-day = 24 * 60;
 define constant $jan-1-1970 = 719527; // in days
 define constant $weekday-jan-1-1970 = 3;
@@ -193,7 +193,10 @@ define constant $default-time
 
 // Internal helper function.
 //
-define method days-before-month (month :: <month>, year :: <year>)
+// As a special kluge, month can be 13, in which case the answer is
+// the # of days in that year.
+//
+define method days-before-month (month :: <integer>, year :: <year>)
  => num-days :: <integer>;
   element($days-before-month, month - 1)
     + if (month > 2 & leap-year?(year)) 1 else 0 end if;
@@ -227,15 +230,17 @@ define method leap-year? (year)
   end if;
 end method leap-year?;
 
-// <decoded-time> initialization method. Internal.
-//  All slots are initialized to the value supplied with their corresponding
-// keyword. If a default-from: is supplied, any unspecified slots are
-// initialized to the corresponding value from the default-from <decoded-time>.
-// If a default-from: is not supplied, any unspecified slot are initialized
-// to #f.
-//  If the day of week is computable, it is computed and used to initialize the
-// day-of-week slot. If this value is different than the supplied dau-of-week,
-// a warning is signalled.
+// <decoded-time> initialization method.
+//
+// All slots are initialized to the value supplied with their
+// corresponding keyword. If a default-from: is supplied, any
+// unspecified slots are initialized to the corresponding value from
+// the default-from <decoded-time>.  If a default-from: is not
+// supplied, any unspecified slot are initialized to #f.
+//
+// If the day of week is computable, it is computed and used to
+// initialize the day-of-week slot. If this value is different than
+// the supplied day-of-week, a warning is signalled.
 //
 define method initialize
       (time :: <decoded-time>,
@@ -262,16 +267,16 @@ define method initialize
 	   end if,
        timezone: tzone :: false-or(<timezone>)
 	 = if (default-from) default-from.timezone else #f end if);
-    next-method();
+  next-method();
 
-    time.seconds := secs;
-    time.minutes := mins;
-    time.hours := hrs;
-    time.day-of-month := date;
-    time.month := mth;
-    time.year := yr;
-    time.daylight-savings-time? := dst?;
-    time.timezone := tzone;
+  time.seconds := secs;
+  time.minutes := mins;
+  time.hours := hrs;
+  time.day-of-month := date;
+  time.month := mth;
+  time.year := yr;
+  time.daylight-savings-time? := dst?;
+  time.timezone := tzone;
 
   if (time.year & time.month & time.day-of-month) // day-of-week is computable
     let computed-day-of-week
@@ -284,6 +289,26 @@ define method initialize
     time.day-of-week := weekday;
   end if;
 end method initialize;
+
+// There's no point in not defining a print-object method, since the
+// parse-time stuff already uses streams.  Might as well use print and
+// format, too.
+//
+// We don't write "hh:mm:ss mm/dd/yy" or anything clever like that
+// because it might not look so hot with undefined slots.  (Besides,
+// mm/dd/yy is rather ambiguous)
+//
+define method print-object (time :: <decoded-time>, stream :: <stream>) => ();
+  write(stream, "{<decoded-time> ");
+  
+  format(stream, 
+	 "seconds=%= minutes=%= hours=%= day-of-month=%= month=%= "
+	   "year=%= day-of-week=%= daylight-savings-time?=%= timezone=%=", 
+	 time.seconds, time.minutes, time.hours, time.day-of-month, 
+	 time.month, time.year, time.day-of-week, time.daylight-savings-time?,
+	 time.timezone);
+  write(stream, "}");
+end method print-object;
 
 // Return the current time as a <universal-time>.
 //
@@ -359,7 +384,15 @@ define method decode-time
 
   let (days-this-year, seconds-today)
     = truncate/(seconds-this-year, $seconds-per-day);
-  
+
+  // truncate/ yields *full* days.  Unless seconds-today is 0, that's
+  // one less than what we'd expect.
+  //
+  // I intentionally used = rather than == because I'm not convinced
+  // this is <integer> arithmetic rather than <extended-integer>
+  // arithmetic
+  let days-this-year = days-this-year + if (seconds-today = 0) 0 else 1 end;
+
   let (hours, seconds-this-hour) = truncate/(seconds-today, $seconds-per-hour);
   let (minutes, seconds) = truncate/(seconds-this-hour, $seconds-per-minute);
 
@@ -368,8 +401,7 @@ define method decode-time
     month := month + 1;
   end while;
 
-  // Need to add 1 because days-this-year only counts full days
-  let day-of-month = days-this-year - days-before-month(month, year) + 1;
+  let day-of-month = days-this-year - days-before-month(month, year);
 
   let day-of-week = #f;
 
@@ -379,6 +411,11 @@ define method decode-time
        daylight-savings-time?: daylight-savings-time?, timezone: zone);
 
 end method decode-time;
+
+define method as (cls == <decoded-time>, universal-time :: <universal-time>) 
+ => decoded-time :: <decoded-time>;
+  decode-time(universal-time);
+end method as;
 
 // Encode a <decoded-time> into the universal time format.
 //
@@ -405,7 +442,7 @@ define method encode-time (decoded-time :: <decoded-time>)
 end method encode-time;
 
 // Returns #t if time may be encoded.
-// A <decoded-time> is encodable if all of it's slots are specified,
+// A <decoded-time> is encodable if all of its slots are specified,
 // except possibly day-of-week.
 //
 define method encodable-time? (time :: <decoded-time>) => result :: <boolean>;
