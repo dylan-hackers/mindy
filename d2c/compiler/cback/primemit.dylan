@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.12 2001/06/22 07:28:43 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.13 2002/08/28 13:06:57 bruce Exp $
 copyright: see below
 
 
@@ -78,7 +78,9 @@ define method default-primitive-emitter
 	  unless (first?)
 	    write(stream, ", ");
 	  end;
-	  write(stream, ref-leaf(rep, dep.source-exp, file));
+          let (leaf, temp?) = ref-leaf(rep, dep.source-exp, file);
+          contact-bgh-if(temp?);
+	  write(stream, leaf);
 	end;
 	return();
       else
@@ -91,7 +93,9 @@ define method default-primitive-emitter
 	  format(stream, "%s...%s", bottom-name, top-name);
 	else
 	  let rep = pick-representation(type, #"speed");
-	  write(stream, ref-leaf(rep, dep.source-exp, file));
+          let (leaf, temp?) = ref-leaf(rep, dep.source-exp, file);
+          contact-bgh-if(temp?);
+	  write(stream, leaf);
 	end;
       end;
     end;
@@ -111,8 +115,9 @@ end;
 define method extract-operands
     (operation :: <operation>, file :: <file-state>,
      #rest representations)
-    => (#rest str :: <string>);
+    => (temps :: <temp-locals-list>, #rest str :: <string>);
   let results = make(<stretchy-vector>);
+  let temps = make-temp-locals-list();
   block (return)
     for (op = operation.depends-on then op.dependent-next,
 	 index from 0)
@@ -128,19 +133,23 @@ define method extract-operands
 	  if (index + 2 == representations.size)
 	    let rep = representations[index + 1];
 	    for (op = op then op.dependent-next)
-	      add!(results, ref-leaf(rep, op.source-exp, file));
+              let (leaf, temp?) = ref-leaf(rep, op.source-exp, file);
+              if (temp?) temps := add!(temps, leaf) end;
+	      add!(results, leaf);
 	    end;
 	    return();
 	  end;
 	elseif (op)
-	  add!(results, ref-leaf(rep, op.source-exp, file));
+          let (leaf, temp?) = ref-leaf(rep, op.source-exp, file);
+          if (temp?) temps := add!(temps, leaf) end;
+	  add!(results, leaf);
 	else
 	  error("Not enough operands for %s", operation);
 	end;
       end;
     end;
   end;
-  apply(values, results);
+  apply(values, temps, results);
 end;
 
 
@@ -162,7 +171,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let nargs = extract-operands(operation, file, *long-rep*);
+     let (temps, nargs) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      let expr = stringify("((void *)(orig_sp - ", nargs, "))");
      deliver-result(results, expr, *ptr-rep*, #f, file);
    end);
@@ -173,8 +183,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (args, index) = extract-operands(operation, file,
+     let (temps, args, index) = extract-operands(operation, file,
 					  *ptr-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      let expr = stringify("(((descriptor_t *)", args, ")[", index, "])");
      deliver-result(results, expr, *general-rep*, #t, file);
    end);
@@ -185,9 +196,10 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (args, nfixed, nargs)
+     let (temps, args, nfixed, nargs)
        = extract-operands(operation, file,
 			  *ptr-rep*, *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      let cur-top = cluster-names(operation.info);
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
@@ -205,7 +217,8 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let stream = file.file-guts-stream;
-     let args = extract-operands(operation, file, *ptr-rep*);
+     let (temps, args) = extract-operands(operation, file, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      spew-pending-defines(file);
      assert(zero?(operation.info));
      if (results)
@@ -293,7 +306,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let vec = extract-operands(operation, file, *heap-rep*);
+     let (temps, vec) = extract-operands(operation, file, *heap-rep*);
+     contact-bgh-unless-empty(temps);
      let (cur-sp, new-sp) = cluster-names(operation.info);
      format(file.file-guts-stream,
 	    "%s = values_sequence(%s, %s);\n", new-sp, cur-sp, vec);
@@ -307,12 +321,15 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let results = make(<stretchy-vector>);
+     let temps = make-temp-locals-list();
      for (dep = operation.depends-on then dep.dependent-next,
 	  while: dep)
-       let expr = ref-leaf(*general-rep*, dep.source-exp, file);
+       let (expr, temp?) = ref-leaf(*general-rep*, dep.source-exp, file);
+       if (temp?) temps := add!(temps, expr) end;
        add!(results, pair(expr, *general-rep*));
      end;
      deliver-results(defines, results, #f, file);
+     free-temps(temps, file);
    end);
 
 
@@ -328,7 +345,8 @@ define-primitive-emitter
      assert(class.data-word-slot == #f);
 
      let bytes-leaf = operation.depends-on.dependent-next.source-exp;
-     let bytes = ref-leaf(*long-rep*, bytes-leaf, file);
+     let (bytes, temp?) = ref-leaf(*long-rep*, bytes-leaf, file);
+     contact-bgh-if(temp?);
 
      deliver-result(defines, stringify("allocate(", bytes, ')'),
 		    *heap-rep*, #f, file);
@@ -345,14 +363,16 @@ define-primitive-emitter
      let data-word-member = slot-rep.representation-data-word-member;
 
      let bytes-leaf = operation.depends-on.dependent-next.source-exp;
-     let bytes = ref-leaf(*long-rep*, bytes-leaf, file);
+     let (bytes, bytes-temp?) = ref-leaf(*long-rep*, bytes-leaf, file);
+     contact-bgh-if(bytes-temp?);
 
      let data-word-leaf
        = operation.depends-on.dependent-next.dependent-next.source-exp;
      let data-word-rep
        = pick-representation(data-word-leaf.derived-type, #"speed");
-     let data-word
+     let (data-word, data-word-temp?)
        = ref-leaf(data-word-rep, data-word-leaf, file);
+     contact-bgh-if(data-word-temp?);
 
      assert(data-word-member = data-word-rep.representation-data-word-member);
 
@@ -443,6 +463,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let stream = make(<buffered-byte-string-output-stream>);
+     let temps = make-temp-locals-list();
 
      let func-dep = operation.depends-on;
      let func = func-dep.source-exp;
@@ -454,9 +475,11 @@ define-primitive-emitter
 	   & instance?(func.value, <literal-string>))
        format(stream, "%s(", func.value.literal-value);
      elseif(csubtype?(func.derived-type, specifier-type(#"<raw-pointer>")))
+       let (leaf, temp?) = ref-leaf(*ptr-rep*, func, file);
+       if (temp?) temps := add!(temps, leaf) end;
        format(stream, "((%s (*)())%s)(",
 	      if (result-rep) result-rep.representation-c-type else "void" end,
-	      ref-leaf(*ptr-rep*, func, file));
+	      leaf);
      else
        error("First argument to call-out must be a literal string "
 	       "or an instance of <raw-pointer>");
@@ -470,7 +493,9 @@ define-primitive-emitter
 	   end;
 	   let rep = rep-for-c-type(dep.source-exp);
 	   let next = dep.dependent-next;
-           format(stream, "%s",  ref-leaf(rep, next.source-exp, file));
+           let (leaf, temp?) = ref-leaf(rep, next.source-exp, file);
+           if (temp?) temps := add!(temps, leaf) end;
+           format(stream, "%s", leaf);
 	   repeat(next.dependent-next, #f);
 	 end;
        end;
@@ -487,6 +512,7 @@ define-primitive-emitter
 	      stream-contents(stream));
        deliver-results(defines, #[], #f, file);
      end;
+     free-temps(temps, file);
    end);
 
 define function c-include-emitter
@@ -618,7 +644,8 @@ define-primitive-emitter
      let result-rep = rep-for-c-type(res-dep.source-exp);
 
      let ptr-dep = res-dep.dependent-next;
-     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let (ptr, temp?) = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     contact-bgh-if(temp?);
 
      let struct-dep = ptr-dep.dependent-next;
      let struct = struct-dep.source-exp;
@@ -649,10 +676,12 @@ define-primitive-emitter
      let new-dep = operation.depends-on;
      let type-dep = new-dep.dependent-next;
      let rep = rep-for-c-type(type-dep.source-exp);
-     let new = ref-leaf(rep, new-dep.source-exp, file);
+     let (new, new-temp?) = ref-leaf(rep, new-dep.source-exp, file);
+     contact-bgh-if(new-temp?);
 
      let ptr-dep = type-dep.dependent-next;
-     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let (ptr, ptr-temp?) = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     contact-bgh-if(ptr-temp?);
 
      let struct-dep = ptr-dep.dependent-next;
      let struct = struct-dep.source-exp;
@@ -743,7 +772,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let expr = extract-operands(operation, file, *boolean-rep*);
+     let (temps, expr) = extract-operands(operation, file, *boolean-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
 
@@ -756,9 +786,13 @@ define-primitive-emitter
      let arg = operation.depends-on.source-exp;
      let expr
        = if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
-	   stringify('!', ref-leaf(*boolean-rep*, arg, file));
+           let (leaf, temp?) = ref-leaf(*boolean-rep*, arg, file);
+           contact-bgh-if(temp?);
+	   stringify('!', leaf);
 	 else
-	   stringify('(', ref-leaf(*heap-rep*, arg, file), " == obj_False)");
+           let (leaf, temp?) = ref-leaf(*heap-rep*, arg, file);
+           contact-bgh-if(temp?);
+	   stringify('(', leaf, " == obj_False)");
 	 end;
      deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
@@ -769,8 +803,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *heap-rep*, *heap-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -781,7 +816,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let expr = stringify('(', extract-operands(operation, file, *heap-rep*),
+     let (temps, inited) = extract-operands(operation, file, *heap-rep*);
+     contact-bgh-unless-empty(temps);
+     let expr = stringify('(', inited,
 			  " != NULL)");
      deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
@@ -792,7 +829,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     extract-operands(operation, file);
+     let temps = extract-operands(operation, file);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, "initial_symbols", *heap-rep*, #f, file);
    end);
    
@@ -807,7 +845,8 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let instance-dep = operation.depends-on;
-     let instance = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
+     let (instance, instance-temp?) = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
+     contact-bgh-if(instance-temp?);
      let repsym-dep = instance-dep.dependent-next;
      let repsym-leaf = repsym-dep.source-exp;
      unless (instance?(repsym-leaf, <literal-constant>)
@@ -821,7 +860,8 @@ define-primitive-emitter
 		 #"boolean" => *boolean-rep*;
 	       end select;
      let offset-dep = repsym-dep.dependent-next;
-     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     let (offset, offset-temp?) = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     contact-bgh-if(offset-temp?);
 
      spew-pending-defines(file);
      
@@ -853,9 +893,10 @@ define-primitive-emitter
 		 #"heap" => *heap-rep*;
 		 #"boolean" => *boolean-rep*;
 	       end select;
-     let newval = ref-leaf(rep, newval-dep.source-exp, file);
-     let instance = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
-     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     let (newval, newval-temp?) = ref-leaf(rep, newval-dep.source-exp, file);
+     let (instance, instance-temp?) = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
+     let (offset, offset-temp?) = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     contact-bgh-if(newval-temp? | instance-temp? | offset-temp?);
 
      format(file.file-guts-stream,
 	    "SLOT(%s, %s, %s) = %s;\n",
@@ -886,8 +927,11 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let sp = cluster-names(operation.info);
+     let (temps, unwind-amount) =
+       extract-operands(operation, file, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      format(file.file-guts-stream, "%s = %s;\n",
-	    sp, extract-operands(operation, file, *ptr-rep*));
+	    sp, unwind-amount);
      deliver-results(defines, #[], #f, file);
    end);
 
@@ -897,8 +941,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let state-expr
+     let (state-expr, temp?)
        = ref-leaf(*ptr-rep*, operation.depends-on.source-exp, file);
+     contact-bgh-if(temp?);
      let cluster = operation.depends-on.dependent-next.source-exp;
      let (bottom-name, top-name) = consume-cluster(cluster, file);
      spew-pending-defines(file);
@@ -915,8 +960,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -927,8 +973,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -939,8 +986,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " + ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -951,8 +999,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " * ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -963,8 +1012,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " - ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -975,7 +1025,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify("(- ", x, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -987,8 +1038,9 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      spew-pending-defines(file);
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-results(defines,
 		     vector(pair(stringify('(', x, " / ", y, ')'), *long-rep*),
 			    pair(stringify('(', x, " % ", y, ')'),
@@ -1002,8 +1054,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " | ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -1014,8 +1067,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " ^ ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -1026,8 +1080,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " & ", y, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -1038,7 +1093,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify("(~ ", x, ')'), *long-rep*,
 		    #f, file);
    end);
@@ -1049,8 +1105,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " << ", y, ')'),
 		    *long-rep*, #f, file);
    end);
@@ -1061,8 +1118,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " >> ", y, ')'),
 		    *long-rep*, #f, file);
    end);
@@ -1076,7 +1134,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
@@ -1087,7 +1146,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
@@ -1098,7 +1158,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
@@ -1109,8 +1170,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -1121,7 +1183,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -1132,7 +1195,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -1143,8 +1207,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
@@ -1156,8 +1221,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -1168,8 +1234,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " + ", y, ')'), *float-rep*,
 		    #f, file);
    end);
@@ -1180,8 +1247,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " * ", y, ')'), *float-rep*,
 		    #f, file);
    end);
@@ -1192,8 +1260,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " - ", y, ')'), *float-rep*,
 		    #f, file);
    end);
@@ -1204,8 +1273,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " / ", y, ')'), *float-rep*,
 		    #f, file);
    end);
@@ -1216,7 +1286,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("fabsf(", x, ')'), *float-rep*,
 		    #f, file);
@@ -1228,7 +1299,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("(-", x, ')'), *float-rep*, #f, file);
    end);
 
@@ -1238,7 +1310,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1250,7 +1323,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1262,7 +1336,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1277,7 +1352,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
@@ -1288,7 +1364,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
@@ -1299,7 +1376,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
@@ -1310,8 +1388,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -1322,8 +1401,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1335,8 +1415,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -1347,8 +1428,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
@@ -1360,8 +1442,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1373,8 +1456,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " + ", y, ')'), *double-rep*,
 		    #f, file);
    end);
@@ -1385,8 +1469,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " * ", y, ')'), *double-rep*,
 		    #f, file);
    end);
@@ -1397,8 +1482,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " - ", y, ')'), *double-rep*,
 		    #f, file);
    end);
@@ -1409,8 +1495,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " / ", y, ')'), *double-rep*,
 		    #f, file);
    end);
@@ -1421,7 +1508,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("fabs(", x, ')'), *double-rep*,
 		    #f, file);
@@ -1433,7 +1521,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("(-", x, ')'), *double-rep*,
 		    #f, file);
    end);
@@ -1444,7 +1533,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1456,7 +1546,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1468,7 +1559,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1483,7 +1575,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1494,7 +1587,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *float-rep*);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1505,7 +1599,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *double-rep*);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1516,8 +1611,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
@@ -1528,8 +1624,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1541,8 +1638,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -1553,8 +1651,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
@@ -1566,8 +1665,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1579,8 +1679,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " + ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1591,8 +1692,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " * ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1603,8 +1705,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " - ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1615,8 +1718,9 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
+     let (temps, x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " / ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
@@ -1627,7 +1731,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("fabs(", x, ')'),
 		    *long-double-rep*, #f, file);
@@ -1639,7 +1744,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("(-", x, ')'), *long-double-rep*,
 		    #f, file);
    end);
@@ -1650,7 +1756,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1662,7 +1769,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1674,7 +1782,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-double-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
      maybe-emit-include("math.h", file);
      deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
@@ -1689,7 +1798,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *long-rep*);
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((void *)", x, ')'),
 		    *ptr-rep*, #f, file);
    end);
@@ -1700,7 +1810,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, file, *ptr-rep*);
+     let (temps, x) = extract-operands(operation, file, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify("((long)", x, ')'),
 		    *long-rep*, #f, file);
    end);
@@ -1711,7 +1822,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *ptr-rep*, *long-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *ptr-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify("((void *)((char *)", x, " + ", y, "))"),
 		    *ptr-rep*, #f, file);
@@ -1723,7 +1835,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify("((char *)", x, " - (char *)", y, ')'),
 		    *long-rep*, #f, file);
@@ -1735,7 +1848,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify("((char *)", x, " < (char *)", y, ')'),
 		    *boolean-rep*, #f, file);
@@ -1747,7 +1861,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     let (temps, x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
@@ -1761,12 +1876,12 @@ define-primitive-emitter
      let type-dep = operation.depends-on;
      let rep = rep-for-c-type(type-dep.source-exp);
      let ptr-dep = type-dep.dependent-next;
-     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let (ptr, ptr-temp?) = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
      let offset-dep = ptr-dep.dependent-next;
-     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     let (offset, offset-temp?) = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     contact-bgh-if(ptr-temp? | offset-temp?);
 
      spew-pending-defines(file);
-     
      deliver-result(results,
 		    stringify("(*(", rep.representation-c-type, " *)((char *)",
 			      ptr, " + ", offset, " ))"),
@@ -1782,11 +1897,12 @@ define-primitive-emitter
      let new-dep = operation.depends-on;
      let type-dep = new-dep.dependent-next;
      let rep = rep-for-c-type(type-dep.source-exp);
-     let new = ref-leaf(rep, new-dep.source-exp, file);
+     let (new, new-temp?) = ref-leaf(rep, new-dep.source-exp, file);
      let ptr-dep = type-dep.dependent-next;
-     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let (ptr, ptr-temp?) = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
      let offset-dep = ptr-dep.dependent-next;
-     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     let (offset, offset-temp?) = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+     contact-bgh-if(new-temp? | ptr-temp? | offset-temp?);
 
      spew-pending-defines(file);
      format(file.file-guts-stream, "*(%s *)((char *)%s + %s) = %s;\n",
@@ -1802,7 +1918,8 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let vec = operation.depends-on.source-exp;
-     let vec-expr = extract-operands(operation, file, *heap-rep*);
+     let (temps, vec-expr) = extract-operands(operation, file, *heap-rep*);
+     contact-bgh-unless-empty(temps);
      let classes = vec.derived-type.find-direct-classes;
      assert(classes ~== #f & classes ~== #());
      let offset = dylan-slot-offset(classes.first, #"%element");
@@ -1821,7 +1938,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let object = extract-operands(operation, file, *heap-rep*);
+     let (temps, object) = extract-operands(operation, file, *heap-rep*);
+     contact-bgh-unless-empty(temps);
      deliver-result(results,
 		    stringify("((void *)", object, ')'),
 		    *ptr-rep*, #f, file);

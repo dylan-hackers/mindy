@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.11 2001/11/08 00:28:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.12 2002/08/28 13:06:57 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -84,7 +84,7 @@ define module cback
   use variables;
   use source;
   use source-utilities; // For <macro-source-location>, which isn't yet handled
-
+  use Extensions, import: {<stretchy-object-vector>};
   use abstract-optimizer;
   use xep-tools, import: {build-xep-component};
 

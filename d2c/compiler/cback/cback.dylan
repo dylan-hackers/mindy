@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.39 2002/08/25 12:22:57 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.40 2002/08/28 13:06:57 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -560,6 +560,27 @@ end method;
 // but their usage is idiosyncratic.
 //========================================================================
 
+define function contact-bgh() => ();
+  dformat
+    ("\n\n\n\n%s\n%s\n%s\n%s\n%s\n\n\n\n",
+     "Could you please contact bruce@hoult.org and provide a copy of",
+     "the program you are compiling.  There is no problem with your",
+     "program but it is doing something that I didn't think could",
+     "happen, or don't have a test case for and I'd like to use it to",
+     "help improve the compiler.  Thank you!");
+end;
+
+define inline function contact-bgh-if(test :: <boolean>)
+ => ();
+  if (test) contact-bgh() end;
+end;
+
+define inline function contact-bgh-unless-empty(temps :: <temp-locals-list>)
+ => ();
+  unless (temps.empty?) contact-bgh() end;
+end;
+
+
 define class <local-var> (<object>)
   constant slot local-name :: <byte-string>,
     required-init-keyword: name:;
@@ -573,7 +594,7 @@ define class <local-var> (<object>)
 end <local-var>;
 
 
-define method new-local
+define function new-local
     (file :: <file-state>,
      #key name :: <byte-string> = "L_",
      modifier :: <byte-string> = "anon",
@@ -593,7 +614,6 @@ define method new-local
         // we only really need to make sure the c-rep is the
         // same, but it makes it easier to read the generated
         // code if the base-name is the same too :-)
-//        dformat("reusing %= ", curr.local-name);
         if (curr-rep
               & curr.base-name = result
               & curr-rep = wanted-rep)
@@ -602,6 +622,7 @@ define method new-local
           else
             file.file-freed-locals := curr.next
           end;
+          //dformat("reusing %= ", curr.local-name);
           return(curr.local-name);
         end if;
       end for;
@@ -635,11 +656,45 @@ define method new-local
   end block;
 end;
 
-define method free-local(file :: <file-state>, name :: <byte-string>)
+
+define function free-temp(name :: <string>, file :: <file-state>)
  => ();
+  //dformat("var %s freed\n", name);
   let var :: <local-var> = file.file-local-vars[name];
   var.next := file.file-freed-locals;
   file.file-freed-locals := var;
+end;
+
+define inline function free-temp-if
+    (temp? :: <boolean>, name :: <string>, file :: <file-state>)
+ => ();
+  if (temp?)
+    // this is true 0.5% of the time, when compiling d2c
+    free-temp(name, file);
+  end;
+end;
+
+// Compiling d2c, the average number of items in the list is 0.3:
+//
+//  76% of the time the list is empty
+//  19% of the time the list has a single item
+//  3.5% of the time the list has two items
+//  1.5% of the time there are more than two
+//
+// Conclusion: a list does six times less consing than a stretchy!!
+
+define constant <temp-locals-list> = <list>;
+
+define function free-temps(names :: <temp-locals-list>, file :: <file-state>)
+ => ();
+  for (name in names)
+    free-temp(name, file);
+  end;
+end;
+
+define inline function make-temp-locals-list()
+ => (list :: <temp-locals-list>);
+  #();
 end;
 
 
@@ -1450,12 +1505,14 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_double_float(double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
+
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
     let (c-code, temp?) = conversion-expr(*heap-rep*, expr, rep, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
 	   c-code);
-    if (temp?) free-local(file, c-code) end;
+    free-temp-if(temp?, c-code, file);
+
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -1473,12 +1530,14 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
+
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
     let (c-code, temp?) = conversion-expr(*heap-rep*, expr, rep, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
 	   c-code);
-    if (temp?) free-local(file, c-code) end;
+    free-temp-if(temp?, c-code, file);
+
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -1658,7 +1717,7 @@ define method emit-definition-gunk
       format(stream, "%s;\t/* %s */\n",
 	     c-code,
 	     defn.defn-name.clean-for-comment);
-      if (temp?) free-local(file, c-code) end;
+      free-temp-if(temp?, c-code, file);
     else
       format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
 	     defn.defn-name.clean-for-comment, name);
@@ -1978,7 +2037,8 @@ end method elseif-able?;
 define method emit-region (if-region :: <if-region>, file :: <file-state>)
  => ();
   let stream = file.file-guts-stream;
-  let cond = ref-leaf(*boolean-rep*, if-region.depends-on.source-exp, file);
+  let (cond, temp?) = ref-leaf(*boolean-rep*, if-region.depends-on.source-exp, file);
+  contact-bgh-if(temp?);
   spew-pending-defines(file);
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
@@ -2108,15 +2168,18 @@ define method emit-return
     spew-pending-defines(file);
     format(stream, "return %s;\n", top-name);
   else
+    let temps = make-temp-locals-list();
     for (dep = results then dep.dependent-next,
 	 count from 0,
 	 while: dep)
-      format(stream, "orig_sp[%d] = %s;\n", count,
-	     ref-leaf(*general-rep*, dep.source-exp, file));
+      let (leaf, temp?) = ref-leaf(*general-rep*, dep.source-exp, file);
+      if (temp?) temps := add!(temps, leaf) end;
+      format(stream, "orig_sp[%d] = %s;\n", count, leaf);
     finally
       spew-pending-defines(file);
       format(stream, "return orig_sp + %d;\n", count);
     end;
+    free-temps(temps, file);
   end;
 end;
 
@@ -2125,9 +2188,10 @@ define method emit-return
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
-  let expr = ref-leaf(result-rep, return.depends-on.source-exp, file);
+  let (expr, temp?) = ref-leaf(result-rep, return.depends-on.source-exp, file);
   spew-pending-defines(file);
   format(stream, "return %s;\n", expr);
+  free-temp-if(temp?, expr, file);
 end;
 
 //define method emit-return
@@ -2144,20 +2208,25 @@ define method emit-return
     spew-pending-defines(file);
     format(file.file-guts-stream, "return;\n");
   else
-    let stream = file.file-guts-stream;  
+    let stream = file.file-guts-stream;
+    let temps = make-temp-locals-list();
     let function = return.block-of;
     let function-info = get-info-for(function, file);
     let c-type = concatenate("struct ", pick-result-structure(result-reps, file));
-    let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
+    let ret-val = new-local(file, modifier: "temp", wanted-rep: c-type);
+    temps := add!(temps, ret-val);
+
     for (rep in result-reps,
 	 index from 0,
 	 dep = return.depends-on then dep.dependent-next)
-      format(stream, "%s.R%d = %s;\n",
-	     temp, index, ref-leaf(rep, dep.source-exp, file));
+      let (leaf, temp?) = ref-leaf(rep, dep.source-exp, file);
+      if (temp?) temps := add!(temps, leaf) end;
+      format(stream, "%s.R%d = %s;\n", ret-val, index, leaf);
     end;
+
     spew-pending-defines(file);
-    format(stream, "return %s;\n", temp);
-    free-local(file, temp);
+    format(stream, "return %s;\n", ret-val);
+    free-temps(temps, file);
   end if;
 end;
 
@@ -2202,9 +2271,17 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		else
 		  variable-representation(defines, file)
 		end;
-
-      deliver-result(defines, ref-leaf(rep, var, file), rep, #f,
-		     file);
+      let (leaf, temp?) = ref-leaf(rep, var, file);
+      // bgh
+      // This deliver-result had now-dammit=#f, but we can't allow that if
+      // we're freeing the temp.
+      // Ideally, we'd like to make the temp pending, which would require
+      // telling deliver-result that it *is* a temp, so that if it makes the copy
+      // pending it can store that fact in the <pending-define> object and free
+      // up the temp when it goes non-pending.  Or, maybe it's not worth the
+      // bother?
+      deliver-result(defines, leaf, rep, temp?, file);
+      free-temp-if(temp?, leaf, file);
     end;
   end;
 end;
@@ -2230,8 +2307,9 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
-  deliver-result(defines, ref-leaf(*heap-rep*, leaf, file),
-		 *heap-rep*, #f, file);
+  let (leaf, temp?) = ref-leaf(*heap-rep*, leaf, file);
+  contact-bgh-if(temp?);
+  deliver-result(defines, leaf, *heap-rep*, #f, file);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -2273,15 +2351,17 @@ define method emit-assignment
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
+  let temps = make-temp-locals-list();
 
   let use-generic-entry?
     = instance?(call, <general-call>) & call.use-generic-entry?;
 
-  let (next-info, arguments)
+  let (next-info, arguments, next-info-temp?)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
-	values(ref-leaf(*heap-rep*, dep.source-exp, file),
-	       dep.dependent-next);
+        let (leaf, temp?) = ref-leaf(*heap-rep*, dep.source-exp, file);
+        contact-bgh-if(temp?);
+	values(leaf, dep.dependent-next, temp?);
       else
 	values(#f, call.depends-on.dependent-next);
       end;
@@ -2300,8 +2380,9 @@ define method emit-assignment
 	for (arg-dep = arguments then arg-dep.dependent-next,
 	     count from 0,
 	     while: arg-dep)
-	  format(setup-stream, "%s[%d] = %s;\n", args, count,
-		 ref-leaf(*general-rep*, arg-dep.source-exp, file));
+          let (leaf, temp?) = ref-leaf(*general-rep*, arg-dep.source-exp, file);
+          if (temp?) temps := add!(temps, leaf) end;
+	  format(setup-stream, "%s[%d] = %s;\n", args, count, leaf);
 	finally
 	  write(stream, setup-stream.stream-contents);
 	  values(args,
@@ -2316,7 +2397,8 @@ define method emit-assignment
   let function = call.depends-on.source-exp;
   let (entry, name, is-gf-call?)
     = xep-expr-and-name(function, use-generic-entry?, file);
-  let func = ref-leaf(*heap-rep*, function, file);
+  let (func, func-temp?) = ref-leaf(*heap-rep*, function, file);
+  contact-bgh-if(func-temp?);
 
   if (name)
     format(stream, "/* %s */\n",
@@ -2364,6 +2446,7 @@ define method emit-assignment
   deliver-cluster
     (results, bottom-name, return-top-name,
      call.derived-type.min-values, file);
+  free-temps(temps, file);
 end;
 
 define generic xep-expr-and-name
@@ -2374,14 +2457,13 @@ define method xep-expr-and-name
     (func :: <leaf>, generic-entry? :: <boolean>, file :: <file-state>)
  => (expr :: <string>, name :: false-or(<name>), is-gf-call :: <boolean>);
   spew-pending-defines(file);
-  values(stringify(if (generic-entry?)
-                     "GENERIC_ENTRY(";
-                   else
-                     "GENERAL_ENTRY(";
-                   end,
-                   ref-leaf(*heap-rep*, func, file),
-		   ')'),
-	 #f);
+  let (leaf, temp?) = ref-leaf(*heap-rep*, func, file);
+  contact-bgh-if(temp?);
+  values
+    (stringify
+       (if (generic-entry?) "GENERIC" else "GENERAL" end,
+        "_ENTRY(", leaf, ')'),
+     #f);
 end;
 
 define function entry-by-slot
@@ -2547,19 +2629,24 @@ define method emit-assignment
   let stream = make(<buffered-byte-string-output-stream>);
   let c-name = main-entry-c-name(func-info, file);
   let (sp, new-sp) = cluster-names(call.info);
+  let temps = make-temp-locals-list();
   format(stream, "%s(%s", c-name, sp);
+
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        rep in func-info.function-info-argument-representations)
     unless (arg-dep)
       error("Not enough arguments in a known call?");
     end;
-      write(stream, ", ");
-      write(stream, ref-leaf(rep, arg-dep.source-exp, file));
+    let (leaf, temp?) = ref-leaf(rep, arg-dep.source-exp, file);
+    if (temp?) temps := add!(temps, leaf) end;
+    write(stream, ", ");
+    write(stream, leaf);
   finally
     if (arg-dep)
       error("Too many arguments in a known call?");
     end;
   end;
+
   write-element(stream, ')');
   let call = stream-contents(stream);
   format(file.file-guts-stream, "/* %s */\n",
@@ -2592,11 +2679,12 @@ define method emit-assignment
 	    := pair(stringify(temp, ".R", index), rep);
 	end;
         deliver-results(results, result-exprs, #t, file);
-        free-local(file, temp);
+        free-temp(temp, file);
       end if;
     otherwise =>
       deliver-result(results, call, result-rep, #t, file);
   end;
+  free-temps(temps, file);
 end;
 
 define method find-main-entry-info
@@ -2670,7 +2758,8 @@ define method emit-assignment
      source-location :: <source-location>,
      file :: <file-state>)
     => ();
-  let func = extract-operands(expr, file, *heap-rep*);
+  let (temps, func) = extract-operands(expr, file, *heap-rep*);
+  contact-bgh-unless-empty(temps);
   let (values, sp) = cluster-names(expr.info);
   let stream = file.file-guts-stream;
   if (defines)
@@ -2732,7 +2821,7 @@ define method emit-assignment
       let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
       format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
       deliver-result(defines, temp, rep, #t, file);
-      free-local(file, temp);
+      free-temp(temp, file);
 
     otherwise =>
       format(stream, "if (!%s_initialized) abort();\n", name);
@@ -2751,7 +2840,7 @@ define method emit-assignment
   let target = info.backend-var-info-name;
   maybe-emit-prototype(target, defn, file);
   let rep = info.backend-var-info-rep;
-  let source = extract-operands(set, file, rep);
+  let (temps, source) = extract-operands(set, file, rep);
   spew-pending-defines(file);
   emit-copy(target, rep, source, rep, file);
   unless (defn.defn-guaranteed-initialized?
@@ -2759,6 +2848,7 @@ define method emit-assignment
     let stream = file.file-guts-stream;
     format(stream, "%s_initialized = TRUE;\n", target);
   end;
+  free-temps(temps, file);
   deliver-results(defines, #[], #f, file);
 end;
 
@@ -2786,7 +2876,7 @@ define method emit-assignment
       let prefs = function.prologue.preferred-names;
       let pref = element(prefs, index, default: #f);
       let (name, rep) = c-name-and-rep(param, file);
-      let source = ref-leaf(rep, arg-dep.source-exp, file);
+      let (source, source-temp?) = ref-leaf(rep, arg-dep.source-exp, file);
       unless (source = pref)
 	if (pref)
 	  format(stream, "%s", pref);
@@ -2795,6 +2885,7 @@ define method emit-assignment
 	end if;
 	format(stream, " = %s;\n", source);
       end unless;
+      free-temp-if(source-temp?, source, file);
     finally
       if (param)
 	error("Too many operands in a self-tail-call?");
@@ -2823,20 +2914,23 @@ define method emit-assignment
 
   let expr
     = if (instance?(slot, <vector-slot-info>))
-	let (instance, offset, index)
+	let (temps, instance, offset, index)
 	  = extract-operands(op, file, *heap-rep*, *long-rep*, *long-rep*);
+        contact-bgh-unless-empty(temps);
 	let c-type = slot-rep.representation-c-type;
 	stringify("SLOT(", instance, ", ", c-type, ", ",
 		  offset, " + ", index, " * sizeof(", c-type, "))");
       elseif (instance?(instance-rep, <immediate-representation>)
 		& instance?(slot-rep, <immediate-representation>))
 	assert(instance-rep == slot-rep);
-	let (instance, offset)
+	let (temps, instance, offset)
 	  = extract-operands(op, file, instance-rep, *long-rep*);
+        contact-bgh-unless-empty(temps);
 	instance;
       else
-	let (instance, offset)
+	let (temps, instance, offset)
 	  = extract-operands(op, file, *heap-rep*, *long-rep*);
+        contact-bgh-unless-empty(temps);
 	stringify("SLOT(", instance, ", ",
 		  slot-rep.representation-c-type, ", ",
 		  offset, ')');
@@ -2862,7 +2956,7 @@ define method emit-assignment
   let instance-leaf = op.depends-on.source-exp;
   let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
 
-  let expr
+  let (expr, temp?)
     = if (instance?(instance-rep, <general-representation>))
 	// The instance is currently being represented with the general
 	// representation, either because the instance has both heap slots and
@@ -2882,6 +2976,7 @@ define method emit-assignment
       end if;
 
   deliver-result(results, expr, slot-rep, #f, file);
+  contact-bgh-if(temp?);
 end method emit-assignment;
 
 define method emit-assignment
@@ -2893,19 +2988,21 @@ define method emit-assignment
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
   if (instance?(slot, <vector-slot-info>))
-    let (new, instance, offset, index)
+    let (temps, new, instance, offset, index)
       = extract-operands(op, file, slot-rep, *heap-rep*,
 			 *long-rep*, *long-rep*);
     let c-type = slot-rep.representation-c-type;
     format(file.file-guts-stream,
 	   "SLOT(%s, %s, %s + %s * sizeof(%s)) = %s;\n",
 	   instance, c-type, offset, index, c-type, new);
+    free-temps(temps, file);
   else
-    let (new, instance, offset)
+    let (temps, new, instance, offset)
       = extract-operands(op, file, slot-rep, *heap-rep*, *long-rep*);
     format(file.file-guts-stream,
 	   "SLOT(%s, %s, %s) = %s;\n",
 	   instance, slot-rep.representation-c-type, offset, new);
+    free-temps(temps, file);
   end;
   deliver-results(results, #[], #f, file);
 end;
@@ -2919,8 +3016,12 @@ define method emit-assignment
     => ();
   if (results)
     let rep = variable-representation(results, file);
-    let source = extract-operands(op, file, rep);
-    deliver-result(results, source, rep, #f, file);
+    let (temps, source) = extract-operands(op, file, rep);
+    // bgh
+    // now-dammit was #f.  Should be passing the temps through
+    // for deliver-result for storage
+    deliver-result(results, source, rep, temps.size > 0, file);
+    free-temps(temps, file);
   end;
 end;
 
@@ -2960,7 +3061,7 @@ define method deliver-cluster
                     ')');
         end;
       deliver-single-result(defines, source, rep, #t, file);
-      if (guts-temp?) free-local(file, guts) end;
+      free-temp-if(guts-temp?, guts, file);
     else
       let count = for (var = defines then var.definer-next,
 		       index from 0,
@@ -3126,7 +3227,7 @@ end method spew-pending-defines;
 define method ref-leaf
     (target-rep :: <c-representation>, leaf :: <abstract-variable>,
      file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   let (expr, rep)
     = block (return)
 	for (prev = #f then pending,
@@ -3150,7 +3251,7 @@ end;
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <literal-constant>,
 			file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   let (expr, rep) = c-expr-and-rep(leaf.value, target-rep, file);
   conversion-expr(target-rep, expr, rep, file);
 end;
@@ -3158,7 +3259,7 @@ end;
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <definition-constant-leaf>,
 			file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   let defn = leaf.const-defn;
   let info = get-info-for(defn, file);
   let name = info.backend-var-info-name;
@@ -3173,7 +3274,7 @@ end;
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <function-literal>,
 			file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   let ctv = leaf.ct-function;
   if (ctv == #f)
     ctv := make(if (instance?(leaf, <method-literal>))
@@ -3209,7 +3310,7 @@ end;
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <uninitialized-value>,
 			file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   if (target-rep == *general-rep*)
     conversion-expr(target-rep, "0", *heap-rep*, file);
   else
@@ -3549,7 +3650,7 @@ define method emit-copy
 	 target, c-code);
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
-  if (temp?) free-local(file, c-code) end;
+  free-temp-if(temp?, c-code, file);
 end;
 
 define method emit-copy
@@ -3561,7 +3662,7 @@ define method emit-copy
   let (heapptr, temp?) = conversion-expr(*heap-rep*, source, source-rep, file);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
   format(stream, "%s.dataword.l = 0;\n", target);
-  if (temp?) free-local(file, heapptr) end;
+  free-temp-if(temp?, heapptr, file);
 end;
 
 define method emit-copy
@@ -3572,7 +3673,7 @@ define method emit-copy
   let stream = file.file-guts-stream;
   let (expr, temp?) = conversion-expr(target-rep, source, source-rep, file);
   target ~= expr & format(stream, "%s = %s;\n", target, expr);
-  if (temp?) free-local(file, expr) end;
+  free-temp-if(temp?, expr, file);
 end;
 
 
