@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.9 1994/04/10 21:11:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.10 1994/04/14 19:16:27 wlott Exp $
 *
 * This file does whatever.
 *
@@ -37,6 +37,7 @@
 #define want_req(want) ((want)>>1)
 #define want_restp(want) ((want)&1)
 #define SINGLE make_want(1,FALSE)
+#define NOTHING make_want(0,FALSE)
 
 static struct component *compile_method(struct method *method);
 static void compile_expr(struct expr *expr, struct component *component,
@@ -387,7 +388,7 @@ static void compile_varref_expr(struct varref_expr *expr,
     set_line(component, expr->var->line);
 
     if (binding) {
-	if (want == make_want(0, FALSE))
+	if (want == NOTHING)
 	    return;
 	if (binding->home != expr->home)
 	    /* It is a closure var. */
@@ -402,16 +403,14 @@ static void compile_varref_expr(struct varref_expr *expr,
 	if (!(want == FUNC && binding->function))
 	    canonicalize_value(component, want);
     }
-    else {
-	/* It is a reference to a global variable. */
-	emit_op_and_arg(component, op_PUSH_CONSTANT,
+    else if (want == FUNC)
+	emit_op_and_arg(component, op_PUSH_FUNCTION,
 			find_variable(component, expr->var, FALSE));
-	if (want == FUNC)
-	    emit_op(component, op_VARIABLE_FUNCTION);
-	else {
-	    emit_op(component, op_VARIABLE_VALUE);
+    else {
+	emit_op_and_arg(component, op_PUSH_VALUE,
+			find_variable(component, expr->var, FALSE));
+	if (want != FUNC)
 	    canonicalize_value(component, want);
-	}
     }
 }
 
@@ -421,7 +420,7 @@ static void compile_literal_expr(struct literal_expr *expr,
 {
     struct literal *lit = expr->lit;
 
-    if (want == make_want(0, FALSE))
+    if (want == NOTHING)
 	return;
 
     set_line(component, lit->line);
@@ -513,7 +512,21 @@ static void compile_dot_expr(struct dot_expr *expr,
 			     struct component *component,
 			     int want)
 {
-    lose("dot expr made it though expand?\n");
+    compile_expr(expr->arg, component, SINGLE);
+    compile_expr(expr->func, component, FUNC);
+
+    if (want == TAIL)
+	emit_op(component, op_DOT_TAIL);
+    else if (want == FUNC) {
+	emit_op(component, op_DOT_FOR_SINGLE);
+	emit_op(component, op_CHECK_TYPE_FUNCTION);
+    }
+    else if (want == SINGLE)
+	emit_op(component, op_DOT_FOR_SINGLE);
+    else {
+	emit_op(component, op_DOT_FOR_MANY);
+	emit_wants(component, want);
+    }
 }
 
 static void compile_body_expr(struct body_expr *expr,
@@ -553,6 +566,7 @@ static void compile_if_expr(struct if_expr *expr,
     concequent_pos = current_position(component);
     compile_body(expr->consequent, component, want);
     if (want != TAIL) {
+	set_line(component, expr->else_line);
 	emit_op(component, op_BRANCH);
 	done_branch_loc = reserve_space(component, 4);
     }
@@ -600,7 +614,7 @@ static void compile_varset_expr(struct varset_expr *expr,
     if (binding) {
 	if (!binding->set)
 	    lose("Compiling a varset expr for a binding that isn't set?");
-	if (want != make_want(0, FALSE))
+	if (want != NOTHING)
 	    emit_op(component, op_DUP);
 	if (binding->home != expr->home) {
 	    /* It is a closure var. */
@@ -623,13 +637,12 @@ static void compile_varset_expr(struct varset_expr *expr,
     }
     else {
 	/* It is a reference to a global variable. */
-	if (want != make_want(0, FALSE))
+	if (want != NOTHING)
 	    emit_op(component, op_DUP);
-	emit_op_and_arg(component, op_PUSH_CONSTANT,
+	emit_op_and_arg(component, op_POP_VALUE,
 			find_variable(component, expr->var, TRUE));
-	emit_op(component, op_SET_VARIABLE_VALUE);
     }
-    if (want != FUNC && want != make_want(0, FALSE))
+    if (want != FUNC && want != NOTHING)
 	canonicalize_value(component, want);
 }
 
@@ -772,23 +785,20 @@ static void compile_handler_constituent(struct handler_constituent *c,
 					int want)
 {
     if (want == TAIL) {
-	emit_op_and_arg(component, op_PUSH_CONSTANT,
+	emit_op_and_arg(component, op_PUSH_FUNCTION,
 			find_variable(component, id(symbol("apply")), FALSE));
-	emit_op(component, op_VARIABLE_FUNCTION);
-	emit_op_and_arg(component, op_PUSH_CONSTANT,
+	emit_op_and_arg(component, op_PUSH_FUNCTION,
 			find_variable(component, id(symbol("values")), FALSE));
-	emit_op(component, op_VARIABLE_FUNCTION);
 	compile_handler_constituent(c, component, make_want(0, TRUE));
 	emit_op_and_arg(component, op_CALL_TAIL, 2);
     }
     else {
 	compile_body(c->body, component, want);
-	emit_op_and_arg(component, op_PUSH_CONSTANT,
+	emit_op_and_arg(component, op_PUSH_FUNCTION,
 			find_variable(component, id(symbol("pop-handler")),
 				      FALSE));
-	emit_op(component, op_VARIABLE_FUNCTION);
 	emit_call_op_and_arg(component, op_CALL_FOR_MANY, 0);
-	emit_wants(component, make_want(0, FALSE));
+	emit_wants(component, NOTHING);
     }
 }
 
@@ -899,6 +909,8 @@ static struct component *compile_method(struct method *method)
     component->cur_block = NULL;
     component->fill = NULL;
     component->end = NULL;
+
+    set_line(component, method->line);
 
     for (binding = method->lexenv->bindings;
 	 binding != NULL && binding->home == method;
@@ -1153,7 +1165,7 @@ static void compile_values_call(struct call_expr *call,
 	if (args) {
 	    compile_expr(args->expr, component, FUNC);
 	    while ((args = args->next) != NULL)
-		compile_expr(args->expr, component, make_want(0, FALSE));
+		compile_expr(args->expr, component, NOTHING);
 	}
 	else {
 	    struct varref_expr *func = (struct varref_expr *)call->func;
@@ -1179,7 +1191,7 @@ static void compile_values_call(struct call_expr *call,
 		emit_op(component, op_PUSH_FALSE);
 	else {
 	    while (args != NULL) {
-		compile_expr(args->expr, component, make_want(0, FALSE));
+		compile_expr(args->expr, component, NOTHING);
 		args = args->next;
 	    }
 	}
