@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.18 2003/04/08 22:25:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.19 2003/04/19 23:52:29 andreas Exp $
 
 //======================================================================
 //
@@ -168,7 +168,8 @@ define module c-parse
   use format;
   use standard-io;
   create
-    <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
+    <parse-state>, <parse-file-state>, <parse-value-state>,
+    <parse-type-state>, <parse-cpp-state>,
     <parse-macro-state>, tokenizer, verbose, verbose-setter,
     push-include-level, pop-include-level, objects, process-type-list,
     process-declarator, declare-objects, make-struct-type, c-type-size,
@@ -233,7 +234,7 @@ define module c-declarations
     write-file-load, write-mindy-includes,
 
     // Miscellaneous
-		getter, setter, sealed-string, excluded?,
-    declarations,
+    getter, setter, sealed-string, excluded?,
+    declarations, *inhibit-struct-accessors?*,
     melange-target;
 end module c-declarations;

@@ -329,7 +329,7 @@ define method write-c-accessor-method
   // Write getter method
   unless(real-type.abstract-type?)
     format(stream,
-           "define %s inline method %s\n"
+           "define %s inline-only method %s\n"
              "    (ptr :: %s) => (result :: %s);\n"
              "  %s;\n"
              "end method %s;\n\n",
@@ -344,7 +344,7 @@ define method write-c-accessor-method
           & ~instance?(real-type, <non-atomic-types>))
       // Write setter method
       format(stream,
-             "define %s inline method %s-setter\n"
+             "define %s inline-only method %s-setter\n"
                "    (value :: %s, ptr :: %s) => (result :: %s);\n"
                "  %s := %s;\n"
                "  value;\n"
@@ -388,7 +388,7 @@ define method write-c-accessor-method
 			 real-type.start-bit, real-type.bits-in-field);
       // Write getter method
       format(stream,
-	     "define %s method %s\n"
+	     "define %s inline-only method %s\n"
 	       "    (ptr :: %s) => (result :: %s);\n"
 	       "  %s;\n"
 	       "end method %s;\n\n",
@@ -401,7 +401,7 @@ define method write-c-accessor-method
 	    & ~instance?(real-type, <non-atomic-types>))
 	// Write setter method
 	format(stream,
-	       "define %s method %s-setter\n"
+	       "define %s inline-only method %s-setter\n"
 		 "    (value :: %s, ptr :: %s) => (result :: %s);\n"
 		 "  let mask = lognot(ash((2 ^ %d) - 1, %d));\n"
 		 "  %s := logand(%s, mask) + ash(%s, %d);\n"
@@ -490,6 +490,9 @@ end method d2c-arg;
 // the structure.  "Write-c-accessor-method" will do all the real work of
 // creating slot accessors.
 //
+
+define variable *inhibit-struct-accessors?* = #f;
+
 define method write-declaration
     (decl :: <struct-declaration>, written-names :: <written-name-record>,
      load-string :: <string>, stream :: <stream>)
@@ -520,7 +523,9 @@ define method write-declaration
 
     // This may still be an "incomplete type".  If so, we define the class,
     // but don't write any slot accessors.
-    decl.members & reduce(slot-accessors, 0, decl.coalesced-members);
+    ~*inhibit-struct-accessors?*
+      & decl.members 
+      & reduce(slot-accessors, 0, decl.coalesced-members);
 
     format(stream,
 	   "define method pointer-value (value :: %s, #key index = 0) "
@@ -560,7 +565,7 @@ define method write-declaration
 
     // This may still be an "incomplete type".  If so, we define the class, but
     // don't write any slot accessors.
-    if (decl.members)
+    if (~ *inhibit-struct-accessors?* & decl.members)
       for (c-slot in decl.coalesced-members)
 	if (~c-slot.excluded?)
 	  write-c-accessor-method(decl, c-slot, 0, written-names,

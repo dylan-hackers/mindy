@@ -1,7 +1,7 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.30 2003/04/09 17:38:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.31 2003/04/19 23:52:29 andreas Exp $
 
 //======================================================================
 //
@@ -738,6 +738,9 @@ define method main (program, #rest args)
   add-option-parser-by-type(*argp*,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("framework"));
+  add-option-parser-by-type(*argp*,
+                            <simple-option-parser>,
+                            long-options: #("no-struct-accessors"));
   
   // Parse our command-line arguments.
   unless (parse-arguments(*argp*, args))
@@ -763,12 +766,17 @@ define method main (program, #rest args)
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
   let regular-args = regular-arguments(*argp*);
   let framework-dirs = option-value-by-long-name( *argp*, "framework" );
+  let no-struct-accessors? = option-value-by-long-name( *argp*, "no-struct-accessors" );
 
   // Handle --verbose.
   if (verbose?)
     *show-parse-progress?* := #t;
   end if;
   
+  if (no-struct-accessors?)
+    *inhibit-struct-accessors?* := #t;
+  end if;
+
   // Handle --mindy, --d2c, -T.
   if (size(choose(identity, list(d2c?, mindy?, target))) > 1)
     format(*standard-error*,
