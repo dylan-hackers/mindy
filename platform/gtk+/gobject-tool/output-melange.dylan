@@ -277,20 +277,19 @@ define method output-melange-clause
            type-name(clause));
 
     format(stream,
-           "define sealed method size-of-referenced-type\n");
+           "define sealed method content-size\n");
     format(stream,
            "    (class == %s) => (size :: <integer>);\n", type-name(clause));
     format(stream,
            "  c-expr(int:, \"%s\");\n", size-expr);
     format(stream,
-           "end method;\n");
+           "end method;\n\n");
   else
     format(stream,
            "define functional class %s (<statically-typed-pointer>) end;\n",
            type-name(clause));
     format(stream, "define sealed domain make(singleton(%s));\n\n",
            type-name(clause));
-
   end if;
 
   next-method();
@@ -317,20 +316,19 @@ define method output-melange-clause
            type-name(clause));
 
     format(stream,
-           "define sealed method size-of-referenced-type\n");
+           "define sealed method content-size\n");
     format(stream,
            "    (class == %s) => (size :: <integer>);\n", type-name(clause));
     format(stream,
            "  c-expr(int:, \"%s\");\n", size-expr);
     format(stream,
-           "end method;\n");
+           "end method;\n\n");
   else
     format(stream,
            "define functional class %s (<statically-typed-pointer>) end;\n",
            type-name(clause));
     format(stream, "define sealed domain make(singleton(%s));\n\n",
            type-name(clause));
-
   end if;
 
   next-method();
@@ -371,7 +369,8 @@ define method output-melange-clause
      repository :: <c-type-repository>,
      stream :: <stream>)
  => ();
-  format(stream, "define method %s\n", melange-name(func.clause-name));
+  format(stream, "define inline-only function %s\n",
+	 melange-name(func.clause-name));
   format(stream, "    (");
 
   for(arg in func.func-arguments, first? = #t then #f)
@@ -468,7 +467,7 @@ define method output-melange-clause
     format(stream, "  return-value;\n");
   end if;
 
-  format(stream, "end method;\n\n");
+  format(stream, "end function;\n\n");
 end method;
 
 define method output-melange-clause
