@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.13 1996/03/28 00:07:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.14 1996/04/02 02:51:50 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -151,8 +151,8 @@ define-procedural-expander
        (generator,
 	make-magic-fragment
 	  (make(<export-clause>,
-		names: map(extract-name, names),
-		source-location: generate-token-source-location(generator))));
+		names: map(extract-name, names)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
