@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.27 1996/01/11 18:43:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.28 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -121,9 +121,9 @@ define method size(collection :: <collection>) => <integer>;
 end method size;
 
 
-define method class-for-copy(collection :: <mutable-collection>) => <class>;
+define method type-for-copy(collection :: <mutable-collection>) => <class>;
   object-class(collection);
-end method class-for-copy;
+end method type-for-copy;
 
 
 define method empty?(collection :: <collection>) => <object>;
@@ -158,7 +158,7 @@ end method do;
 
 define method map(proc :: <function>, collection :: <collection>,
 		  #rest more-collections) => <collection>;
-  apply(map-as, class-for-copy(collection), proc, collection,
+  apply(map-as, type-for-copy(collection), proc, collection,
 	more-collections);
 end method map;
 
@@ -628,7 +628,7 @@ end method find-key;
 
 define method add(sequence :: <sequence>, new-element) => <sequence>;
   let old-size = size(sequence);
-  let result = make(class-for-copy(sequence), size: old-size + 1);
+  let result = make(type-for-copy(sequence), size: old-size + 1);
   map-into(result, identity, sequence);
   result[old-size] := new-element;
   result;
@@ -671,7 +671,7 @@ define method remove(sequence :: <sequence>, value,
 			 end if,
        elem in sequence)
   finally
-    as(class-for-copy(sequence), reverse!(result));
+    as(type-for-copy(sequence), reverse!(result));
   end for;
 end remove;
 
@@ -750,7 +750,7 @@ define method choose(predicate :: <function>,
 			 else result
 			 end if,
        elem in sequence)
-  finally as(class-for-copy(sequence), reverse!(result));
+  finally as(type-for-copy(sequence), reverse!(result));
   end for;
 end choose;
 
@@ -761,7 +761,7 @@ define method choose-by(predicate :: <function>, test-seq :: <sequence>,
 			 else result
 			 end if,
        value-elem in value-seq, test-elem in test-seq)
-  finally as(class-for-copy(value-seq), reverse!(result));
+  finally as(type-for-copy(value-seq), reverse!(result));
   end for;
 end method;
 
@@ -795,7 +795,7 @@ define method remove-duplicates(sequence :: <sequence>,
 			 else result
 			 end if,
        element in sequence)
-  finally as(class-for-copy(sequence), reverse!(result));
+  finally as(type-for-copy(sequence), reverse!(result));
   end for;
 end method remove-duplicates;
 
@@ -815,7 +815,7 @@ define method copy-sequence(sequence :: <sequence>,
 	   else
 	     error("End: (%=) is smaller than start: (%=)", last, start);
 	   end if;
-  let result = make(class-for-copy(sequence), size: sz);
+  let result = make(type-for-copy(sequence), size: sz);
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(sequence);
 
@@ -859,7 +859,7 @@ end method concatenate-as;
 
 define method concatenate(sequence :: <sequence>,
 			  #rest more-sequences) => <sequence>;
-  apply(concatenate-as, class-for-copy(sequence), sequence, more-sequences);
+  apply(concatenate-as, type-for-copy(sequence), sequence, more-sequences);
 end method concatenate;
 
 
@@ -874,7 +874,7 @@ end method replace-subsequence!;
 
 
 define method reverse(sequence :: <sequence>) => <sequence>;
-  let result = make(class-for-copy(sequence), size: size(sequence));
+  let result = make(type-for-copy(sequence), size: size(sequence));
   let (res-state, res-limit, res-next, res-done?, res-key, res-elem,
        res-elem-setter) = forward-iteration-protocol(result);
   let (source-state, source-limit, source-next, source-done?, source-key,

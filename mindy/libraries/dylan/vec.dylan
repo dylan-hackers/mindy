@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.19 1996/01/11 18:43:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.20 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -421,7 +421,7 @@ define method copy-sequence(vector :: <vector>, #key start = 0, end: last)
 	   else
 	     error("End: (%=) is smaller than start: (%=)", last, start);
 	   end if;
-  let result = make(class-for-copy(vector), size: sz);
+  let result = make(type-for-copy(vector), size: sz);
   for (src-index from start, index from 0 below sz)
     result[index] := vector[src-index];
   end for;

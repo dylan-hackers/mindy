@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.80 1996/02/13 19:58:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.81 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -199,7 +199,7 @@ define module Dylan
     as-lowercase!, as-uppercase, as-uppercase!,
     break,
     cerror, check-type, choose, choose-by,
-    class-for-copy, complement, compose, concatenate, concatenate-as,
+    type-for-copy, complement, compose, concatenate, concatenate-as,
     condition-format-string, condition-format-arguments, conjoin,
     copy-sequence, curry,
     default-handler, dimension, dimensions, disjoin, do-handlers,

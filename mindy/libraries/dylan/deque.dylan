@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.12 1996/01/11 18:43:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.13 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -332,16 +332,16 @@ end method pop-last;
 // implemented primarily in terms of the iteration protocol.
 //
 // The collection functions that must be implemented (besides the
-// iteration protocol functions) are CLASS-FOR-COPY and MAP-AS.
+// iteration protocol functions) are TYPE-FOR-COPY and MAP-AS.
 // Definitions for these are below.
 
-// class-for-copy -- public
+// type-for-copy -- public
 //
 // Return the class for copy of deques (<deque>).
 //
-define method class-for-copy (deque :: <deque>)
+define method type-for-copy (deque :: <deque>)
   <deque>;
-end method class-for-copy;
+end method type-for-copy;
 
 // size-setter -- public
 //

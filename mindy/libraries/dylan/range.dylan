@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.7 1996/01/11 18:43:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.8 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -515,7 +515,7 @@ end method;
 /* Collection Function Methods
 
    The collection functions which have methods specialized for ranges
-   are SIZE, CLASS-FOR-COPY, EMPTY?, and MEMBER?.  These methods are
+   are SIZE, TYPE-FOR-COPY, EMPTY?, and MEMBER?.  These methods are
    defined in this section.
 
    Ranges use the default methods for the collection functions DO,
@@ -548,9 +548,9 @@ define method size (range :: <unbounded-range>)
 end method;
 
 
-// class-for-copy -- public
+// type-for-copy -- public
 // 
-define method class-for-copy (range :: <range>)
+define method type-for-copy (range :: <range>)
    <list>
 end method;
 

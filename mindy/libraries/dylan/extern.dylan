@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.6 1995/10/02 19:56:41 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.7 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -180,9 +180,9 @@ define constant strcmp
 define constant strlen
   = get-c-function("strlen", args: list(<c-string>), result: <integer>);
 
-define method class-for-copy (string :: <c-string>)
+define method type-for-copy (string :: <c-string>)
   <byte-string>;
-end method class-for-copy;
+end method type-for-copy;
 
 define method make (cls :: limited(<class>, subclass-of: <c-string>),
 		    #next next, #key size: sz = 0, fill = ' ')

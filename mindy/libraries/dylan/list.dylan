@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.6 1994/11/06 20:10:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.7 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -111,9 +111,9 @@ end method empty?;
 
 /* ---------------- */
 
-define method class-for-copy(list :: <list>) => <class>;
+define method type-for-copy(list :: <list>) => <class>;
   <list>;
-end method class-for-copy;
+end method type-for-copy;
 
 /* ---------------- */
 

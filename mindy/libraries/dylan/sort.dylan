@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.8 1996/01/11 18:43:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.9 1996/02/13 20:09:56 nkramer Exp $
 
 //======================================================================
 //
@@ -441,7 +441,7 @@ define method sort!(sequence :: <sequence>,
   let result = if (stable) merge-sort!(vector, test: test);
 	       else quick-sort!(vector, test: test);
 	       end if;
-  as(class-for-copy(sequence), result);
+  as(type-for-copy(sequence), result);
 end method sort!;
 
 // sort -- public
