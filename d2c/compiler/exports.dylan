@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.34 1995/04/26 07:03:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.35 1995/04/26 09:27:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -196,8 +196,10 @@ define module definitions
   create
     <class-definition>,
     <function-definition>, function-defn-signature, function-defn-hairy?,
+    <abstract-method-definition>, method-defn-leaf,
     <bindings-definition>, defn-init-value,
     <constant-definition>,
+    <constant-method-definition>,
     <variable-definition>, var-defn-type-defn;
 
 end;
@@ -266,6 +268,7 @@ define module parse-tree
   export
     <property>, prop-keyword, prop-value,
     <bindings>, bindings-parameter-list, bindings-expression,
+    bindings-expression-setter,
     <parameter-list>, paramlist-required-vars, paramlist-required-vars-setter,
     paramlist-rest, paramlist-rest-setter, paramlist-next,
     paramlist-next-setter, paramlist-keys, paramlist-all-keys?,
@@ -734,10 +737,13 @@ define module define-functions
   use compile-time-eval;
   use lexenv;
   use source;
+  use front, import: {<method-literal>};
 
   export
+    compute-signature,
+    function-defn-signature-setter, function-defn-hairy?-setter,
     <generic-definition>,
-    <abstract-method-definition>,
+    method-defn-leaf-setter,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
     <getter-method-definition>, <setter-method-definition>,
@@ -762,6 +768,9 @@ define module define-constants-and-variables
   use builder-interface;
   use fer-convert;
   use source;
+  use front, import: {<method-literal>};
+  use define-functions;
+  use expand;
 
   export
     <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn;
@@ -813,6 +822,7 @@ define module cback
   use flow;
   use front;
   use top-level-forms;
+  use define-functions;
   use define-constants-and-variables;
   use ctype;
 
