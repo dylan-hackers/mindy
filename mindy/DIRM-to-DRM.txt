@@ -1,0 +1,14 @@
+Here's a brief list of gotchas when moving DIRM code to newer
+DRM-based implementations:
+
+- Rename union to type-union.
+- while and until in for loops are now while: and until:.
+- Exception clauses in blocks now require the exception to be
+  surrounded by parentheses.
+- Methods on generic functions must exactly match the GF signature.
+  For instance, for methods on forward-iteration-protocol, you need
+  to declare the return type as being six functions.
+- add() on lists may share structure.
+- Replace class-for-copy with type-for-copy.
+- Change calls which depend upon the return types of push, push-last,
+  or remove-key!.
