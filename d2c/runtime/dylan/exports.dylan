@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.23 1996/03/20 14:16:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.24 1996/04/06 05:23:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -207,7 +207,6 @@ define module magic
     import: {%check-type,
 	     %element-setter,
 	     %instance?,
-	     %make-gf,
 	     %make-method,
 	     %make-next-method-cookie,
 	     %object-class,
