@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.30 2000/12/11 19:52:38 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.31 2001/01/14 17:43:24 david Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -111,6 +111,12 @@ long-size:			8
 single-size:			4
 double-size:			8
 long-double-size:		8
+
+// MIPS:
+platform-name:			mips
+inherit-from:			32-bit
+default-features:		compiled-for-mips
+big-endian?:			#t
 
 // Operating system entries:
 // 
@@ -262,6 +268,12 @@ inherit-from:				generic-unix
 default-features:			compiled-for-darwin
 make-command:                   	gnumake
 randomize-library-command:              ranlib -c %s
+
+// IRIX
+platform-name:				irix
+inherit-from:				generic-unix
+default-features:			compiled-for-irix
+make-command:                   	gmake
 
 
 // Build-environment properties:
@@ -469,6 +481,13 @@ platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
 default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
+
+// MIPS support maintained by David Lichteblau, lichteblau@fhtw-berlin.de
+// This is supposed to work, but I don't use it extensively. 
+platform-name:			mips-irix-gcc
+inherit-from:			gcc irix mips
+default-features:               compiled-for-irix compiled-for-mips C-compiler-is-GCC
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 // This is untested. 
 platform-name:			sparc-openbsd-gcc

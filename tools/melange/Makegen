@@ -16,6 +16,8 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "openbsd-c-decl";
 } elsif ($features{'compiled_for_darwin'}) {
     $c_decl_lid = "macos-decl";
+} elsif ($features{'compiled_for_irix'}) {
+    $c_decl_lid = "irix-c-decl";
 } else {
     &unknown_platform_error();
 };

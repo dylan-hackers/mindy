@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.57 2000/12/19 03:12:45 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.58 2001/01/14 17:43:23 david Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -102,6 +102,7 @@ case $1 in
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
     powerpc-apple-darwin*) $2=ppc-darwin-egcs ;;
+    mips-sgi-irix*) $2=mips-irix-gcc ;;
     *) $2=unknown-unix ;;
 esac])
 
