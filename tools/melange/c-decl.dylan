@@ -25,54 +25,6 @@ rcs-header: $Header:
 // list below.
 //======================================================================
 
-define module c-declarations
-  use dylan;
-  use extensions, exclude: {format, <string-table>};
-  use regular-expressions;
-  use streams;
-  use format;
-
-  // We completely encapsulate "c-parse" and only pass out the very few 
-  // objects that will be needed by "define-interface".  Note that the 
-  // classes are actually defined within this module but are exported
-  // from c-parse.
-  use c-parse, export: {<declaration>, <parse-state>, parse, parse-type,
-			constant-value, true-type};
-
-  use c-lexer;			// Tokens are used in process-type-list and
-				// make-struct-type
-  use portability;              // constants for size of C data types
-
-  export
-    // Basic type declarations
-    <function-declaration>, <structured-type-declaration>,
-    <struct-declaration>, <union-declaration>, <variable-declaration>,
-    <constant-declaration>, <typedef-declaration>, <pointer-declaration>,
-    <vector-declaration>,
-
-    // Preliminary "set declaration properties phase"
-    ignored?-setter, find-result, find-parameter, find-slot,
-    argument-direction-setter, constant-value-setter, getter-setter,
-    setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
-    exclude-slots, equate, remap, rename, superclasses-setter, pointer-equiv,
-    dylan-name,
-
-    // "Import declarations phase" 
-    declaration-closure, // also calls compute-closure
-
-    // "Name computation phase"
-    apply-options, apply-container-options, // also calls find-dylan-name,
-					    // compute-dylan-name
-
-    // "Write declaration phase"
-    write-declaration, 
-    write-file-load, write-mindy-includes,
-
-    // Miscellaneous
-    getter, setter, sealed-string, excluded?,
-    canonical-name,declarations;
-end module c-declarations;
-
 //------------------------------------------------------------------------
 // <declaration>
 //
@@ -320,14 +272,6 @@ end class <new-static-pointer>;
 //
 define generic true-type (type :: <type-declaration>);
 
-// Returns the number of bytes required to store instances of some C type.
-// Portability note: these sizes should hold true for "typical" C compilers on
-// 16 and 32 bit machines.  However, they may well need to be customized for
-// other architectures or C compilers.  See the XXXX-portability.dylan file
-// in the source directory.
-//
-define generic c-type-size (type :: <type-declaration>);
-
 //------------------------------------------------------------------------
 
 define method equate (decl :: <type-declaration>, name :: <string>) => ();
@@ -352,13 +296,6 @@ end method type-name;
 define method true-type (type :: <type-declaration>)
   type;
 end method true-type;
-
-// Returns the number of bytes required to store instances of some C type.
-//
-define method c-type-size (type :: <type-declaration>)
- => size :: <integer>;
-  0;
-end method c-type-size;
 
 //------------------------------------------------------------------------
 
@@ -565,59 +502,6 @@ define method apply-container-options
   end if;
 end method apply-container-options;
 
-define method c-type-size (decl :: <union-declaration>) => size :: <integer>;
-  if (decl.members)
-    reduce(method (sz, member) max(sz, c-type-size(member.type)) end method,
-	   0, decl.members);
-  else
-    0;
-  end if;
-end method c-type-size;
-
-// Returns both the start and end of the memory occupied by the given slot,
-// given that the previous slot ended at "prev-slot-end".  This takes into
-// account alignment restrictions on pointers and builtin types.  (Portability
-// note: these alignment restrictions are typical on current UNIX (tm)
-// machines, but may not apply to *all* machines.)
-//
-define method aligned-slot-position
-    (prev-slot-end :: <integer>, slot-type :: <type-declaration>)
- => (this-slot-end :: <integer>, this-slot-start :: <integer>);
-  if (instance?(slot-type, <typedef-declaration>))
-    aligned-slot-position(prev-slot-end, slot-type.type);
-  else 
-    let (size, alignment)
-      = select (slot-type by instance?)
-	  <predefined-type-declaration>, <function-type-declaration>,
-	  <pointer-declaration>, <enum-declaration> => 
-	    let sz = c-type-size(slot-type);
-	    values(sz, sz);
-	  <struct-declaration>, <union-declaration>, <vector-declaration> =>
-	    // Portability note: Assume that inlined structs, unions, and
-	    // vectors will be word aligned.
-	    values(c-type-size(slot-type), 4);
-	  otherwise =>
-	    error("Unhandled c type in aligned-slot-position");
-	end select;
-    let alignment-temp = prev-slot-end + alignment - 1;
-    let slot-start = alignment-temp - remainder(alignment-temp, alignment);
-    values(slot-start + size, slot-start);
-  end if;
-end method aligned-slot-position;
-
-define method c-type-size (decl :: <struct-declaration>) => size :: <integer>;
-  if (decl.members)
-    reduce(method (sz, member) aligned-slot-position(sz,member.type) end,
-	   0, decl.members);
-  else
-    0;
-  end if;
-end method c-type-size;
-
-define method c-type-size (type :: <enum-declaration>) => size :: <integer>;
-  $enum-size;
-end method c-type-size;
-
 //------------------------------------------------------------------------
 
 define class <pointer-declaration> (<new-static-pointer>, <type-declaration>)
@@ -751,17 +635,6 @@ define method pointer-to
   end if;
 end method pointer-to;
 
-define method c-type-size (pointer :: <pointer-declaration>)
- => size :: <integer>;
-  $pointer-size;
-end method c-type-size;
-
-define method c-type-size (vector :: <vector-declaration>)
- => size :: <integer>;
-  // Portability note: Might some compilers do alignment of elements?
-  vector.pointer-equiv.referent.c-type-size * (vector.length | 0);
-end method c-type-size;
-
 //------------------------------------------------------------------------
 
 define class <function-type-declaration> (<type-declaration>)
@@ -826,11 +699,6 @@ define method compute-closure
   results;
 end method compute-closure;
 
-define method c-type-size (type :: <function-type-declaration>)
- => size :: <integer>;
-  $function-pointer-size;
-end method c-type-size;
-
 //------------------------------------------------------------------------
 
 define class <typedef-declaration> (<type-declaration>, <typed>) end class;
@@ -863,17 +731,12 @@ define method true-type (alias :: <typedef-declaration>)
   true-type(alias.type);
 end method true-type;
 
-define method c-type-size (typedef :: <typedef-declaration>)
- => size :: <integer>;
-  c-type-size(typedef.type);
-end method c-type-size;
-
 //------------------------------------------------------------------------
 
 define class <incomplete-type-declaration> (<type-declaration>) end class;
 
 define class <predefined-type-declaration> (<type-declaration>) 
-  slot c-type-size :: <integer>, required-init-keyword: #"size";
+  slot type-size-slot :: <integer>, required-init-keyword: #"size";
 end class;
 
 define class <integer-type-declaration> (<predefined-type-declaration>)
