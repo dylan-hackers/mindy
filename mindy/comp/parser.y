@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.5 2000/01/24 04:58:04 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.6 2002/07/27 13:37:04 housel Exp $
 *
 * This file is the grammar.
 *
@@ -220,7 +220,8 @@ static void pop_yacc_recoveries(int count);
 
 %type <nothing> dylan_file dylan_headers header_list
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
-%type <nothing> unless_opt until_opt while_opt class_opt function_opt method_opt semi_opt
+%type <nothing> unless_opt until_opt while_opt class_opt function_opt
+%type <nothing> begin_opt method_opt semi_opt
 %type <nothing> arrow_opt
 %type <token> symbol_opt
 %type <body> body body_opt constituents cleanup_part
@@ -538,6 +539,7 @@ constant:
 concat_string:
 	STRING 			{ $$ = parse_string_token($1); }
     |	concat_string STRING	{ $$ = concat_string_token($1, $2); }
+;
 
 dotted_list:
 	literals DOT literal
@@ -564,8 +566,8 @@ literal:
 
 statement:
 	DBEGIN { push_yacc_recovery(END); }
-	body_opt END
-	{ free($1); free($4); $$ = make_body_expr($3);
+	body_opt END begin_opt
+	{ free($1); free($4); free($5); $$ = make_body_expr($3);
           pop_yacc_recoveries(1); }
     |	BLOCK LPAREN variable_name_opt RPAREN
 	{ push_yacc_recovery(END);
@@ -1121,6 +1123,7 @@ module_definition:
 module_opt:
 	/* empty */ 		{ $$ = NULL; }
     |	MODULE			{ free($1); $$ = NULL; }
+;
 
 module_clauses_opt:
 	/* empty */		{ $$ = make_define_module(); }
@@ -1256,6 +1259,7 @@ library_definition:
 library_opt:
 	/* empty */ 		{ $$ = NULL; }
     |	LIBRARY			{ free($1); $$ = NULL; }
+;
 
 library_clauses_opt:
 	/* empty */		{ $$ = make_define_library(); }
@@ -1275,6 +1279,7 @@ library_clauses:
 ;
 
 
+begin_opt:	{ $$ = NULL; } | DBEGIN { free($1); $$ = NULL; } ;
 block_opt:	{ $$ = NULL; } | BLOCK { free($1); $$ = NULL; } ;
 case_opt:	{ $$ = NULL; } | CASE { free($1); $$ = NULL; } ;
 if_opt:		{ $$ = NULL; } | IF { free($1); $$ = NULL; } ;
