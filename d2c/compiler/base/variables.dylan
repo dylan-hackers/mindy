@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.16 1995/11/20 16:16:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.17 1995/12/07 05:22:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -191,6 +191,9 @@ define class <variable> (<object>)
   // List of FER transformers for this variable.  Gets propagated to the defn
   // when the defn is installed.
   slot variable-transformers :: <list>, init-value: #();
+  //
+  // Function to compile-time evaluate calls to this function.
+  slot variable-ct-evaluator :: false-or(<function>), init-value: #f;
 end;
 
 define method print-object (var :: <variable>, stream :: <stream>) => ();
@@ -587,7 +590,7 @@ define method complete-module (mod :: <module>) => ();
     let used-mod = find-module(mod.module-home, u.name-used);
     unless (used-mod)
       compiler-error("No module %s in library %s",
-		     u.module-name, mod.module-home.library-name);
+		     u.name-used, mod.module-home.library-name);
     end;
 
     local
