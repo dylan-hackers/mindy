@@ -62,17 +62,6 @@ rcs-header: $Header:
 //
 define constant default-cpp-table = make(<string-table>);
 
-// include-path -- exported constant.
-//
-// This sequence should contain a complete list of "standard include
-// directories". It gets initialized by the appropriate portability
-// module at load time. Any command-line include directories are
-// added (preserving order) to the front of the list by main(). The
-// directory "./" is to the front after adding any specified on
-// the command line.
-//
-define /* exported */ constant include-path :: <deque> = make(<deque>);
-
 // This routine grabs tokens from within the "parameter list" of a
 // parameterized macro use.  The calling routine should have already consumed
 // the opening paren.  The result is a reversed list of reversed token lists.
@@ -316,7 +305,11 @@ end function expand-cpp-tokens;
 // open-in-include-path -- exported function.
 //
 define /* exported */ function open-in-include-path
-    (name :: <string>)
+    (name :: <string>,
+     #key user-include-path :: <sequence>,
+     system-include-path :: <sequence>,
+     user-header? :: <boolean>,
+     current-directory :: false-or(<string>))
  => (full-name :: false-or(<string>), stream :: false-or(<stream>));
   if (first(name) == '/')
     block ()
@@ -328,7 +321,7 @@ define /* exported */ function open-in-include-path
     // We don't have any "file-exists" functions, so we just keep trying
     // to open files until one of them fails to signal an error.
     block (return)
-      for (dir in include-path)
+      for (dir in system-include-path)
 	block ()
 	  let full-name = concatenate(dir, "/", name);
 	  let stream = make(<file-stream>, locator: full-name,
@@ -362,7 +355,10 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	// full pathname is specified, we just use that.)
 	let name = copy-sequence(contents, start: angle-start + 1,
 				 end: angle-end - 1);
-	let (full-name, stream) = open-in-include-path(name);
+	let (full-name, stream) =
+	  open-in-include-path(name,
+			       user-include-path: state.user-include-path,
+			       system-include-path: state.system-include-path);
 	if (full-name)
 	  // This is inefficient, but simplifies our logic.  We may wish to
 	  // adjust later.

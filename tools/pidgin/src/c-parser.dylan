@@ -76,6 +76,12 @@ define abstract class <parse-state> (<object>)
     required-init-keyword: tokenizer:;
   slot pointers :: <table>; // XXX - will probably go away
   slot verbose :: <boolean>;
+
+  // *HACK*: We temporarily use a global variable to figure out whether a
+  // given declaration is an object declaration or a typedef declaration.
+  // This appears to be simpler than trying to propogate detailed information
+  // upwards.
+  slot processing-typedef? :: <boolean> = #f;
 end class <parse-state>;
 
 // <parse-file-state> is used for heavy duty parsing of full include files.
@@ -553,15 +559,6 @@ define function parse-c-file
   // XXX - We need to accept a parameter which knows about sizeof and
   // the header search path.
 
-  // Set up out include path.
-  include-path.size := 0;
-  for (dir in includes)
-    push-last(include-path, dir);
-  end for;    
-  for (dir in platform.c-platform-default-include-path)
-    push-last(include-path, dir);
-  end for;
-
   // Preload our default defines.
   let defines = make(<string-table>);
   let default-defines = platform.c-platform-default-defines;
@@ -569,7 +566,13 @@ define function parse-c-file
     defines[default-defines[i]] := default-defines[i + 1];
   end for;
 
-  let state = parse(repository, list(filename), defines: defines);
+  let state = parse(repository,
+		    list(filename),
+		    defines: defines,
+		    user-include-path: #(),
+		    system-include-path:
+		      concatenate(includes,
+				  platform.c-platform-default-include-path));
   state.hackish-output-list;
 end function;
 

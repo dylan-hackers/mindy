@@ -118,6 +118,12 @@ define /* exported */ primary class <tokenizer> (<object>)
   /* exported */ slot cpp-decls :: type-union(<deque>, <false>) = #f;
   slot include-tokenizer :: false-or(<tokenizer>) = #f;
   slot typedefs :: <table>;
+
+  // Places to look for included files.
+  slot user-include-path :: false-or(<sequence>) = #f,
+    init-keyword: user-include-path:;
+  slot system-include-path :: false-or(<sequence>) = #f,
+    init-keyword: system-include-path:;
 end class <tokenizer>;
 
 //======================================================================
@@ -909,6 +915,8 @@ define method initialize (value :: <tokenizer>,
     value.typedefs := (typedefs-from | parent).typedefs;
     value.cpp-table := parent.cpp-table;
     value.cpp-decls := make(<deque>);
+    value.user-include-path := parent.user-include-path;
+    value.system-include-path := parent.system-include-path;
   else
     value.cpp-table := make(<string-table>);
     value.typedefs := if (typedefs-from)

@@ -50,7 +50,7 @@ define module c-lexer
     <unsigned-token>, <float-token>, <double-token>, <void-token>,
     <union-token>, <enum-token>, <minus-token>, <tilde-token>, <bang-token>,
     <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
-    value, unget-token, add-typedef, get-token, include-path,
+    value, unget-token, add-typedef, get-token,
     check-cpp-expansion, open-in-include-path
 end module c-lexer;
 
@@ -75,7 +75,8 @@ define module c-parser-engine
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
     <parse-macro-state>, repository, tokenizer, verbose, verbose-setter,
     push-include-level, pop-include-level, objects, process-type-list,
-    process-declarator, declare-objects;
+    process-declarator, declare-objects, processing-typedef?,
+    processing-typedef?-setter;
 
   // Defined by c-decl.dylan, which we don't have.
   create
