@@ -203,3 +203,20 @@ define function do-c-type-repository-entries
     function(item);
   end;
 end;
+
+
+//=========================================================================
+//  Making C types.
+//=========================================================================
+//  We override make(...) to force all derived types to be created in a
+//  repository.
+
+define inline method make
+    (class :: subclass(<c-derived-type>),
+     #next next-method,
+     #rest keys,
+     #key repository,
+     #all-keys)
+ => (type :: <c-derived-type>)
+  find-canonical-c-type(repository, next-method());
+end method make;

@@ -43,7 +43,7 @@ define module c-types
       c-type-tag,
       c-type-anonymous-tag,
     <c-struct-or-union-type>,
-      c-type-members,
+      c-type-members, c-type-members-setter,
     <c-struct-type>,
     <c-union-type>,
     <c-enum-type>,
@@ -105,8 +105,6 @@ define module c-types
   export
     <c-identifier-table>,
     <c-type-repository>,
-    find-canonical-c-type,
-    find-canonical-pointer-to-c-type,
     do-c-type-repository-entries;
 end module;
 

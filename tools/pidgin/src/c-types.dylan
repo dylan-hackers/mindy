@@ -5,6 +5,13 @@ Module: c-types
 //  C Types
 //=========================================================================
 //  All C types are either primitive or derived from other types.
+//
+//  There's only one mutable slot in the entire <c-type> hierachy: the
+//  c-type-members slot on <c-tagged-type>. This must be mutable to handle
+//  "incomplete" types when specifying a self-referential type.
+//
+//  Desctructively modifying any other slot in the entire <c-type>
+//  hiearchy is an error and will have very, very bad consequences.
 
 define abstract class <c-type> (<object>)
 end class;
@@ -15,6 +22,10 @@ define abstract class <c-primitive-type> (<c-type>)
 end class;
 
 define abstract class <c-derived-type> (<c-type>)
+  required keyword repository:;
+  //  Derived types are stored in a type reposity to prevent duplication.
+  //  To accomplish this, we override 'make' for all subclasses of
+  //  <c-derived-type>. See c-type-repository.dylan for details.
 end class;
 
 
@@ -152,9 +163,12 @@ define generic format-tagged-type
 //=========================================================================
 //  Structures and unions are essentially identical (in terms of the type
 //  model) except for the handling of bit fields in structs.
+//
+//  The slot c-type-members is mutable to allow for incomplete types.
 
 define abstract class <c-struct-or-union-type> (<c-tagged-type>)
-  slot c-type-members :: false-or(<stretchy-vector>) = make(<stretchy-vector>),
+  slot c-type-members :: false-or(<stretchy-vector>)
+    = make(<stretchy-vector>),
     init-keyword: members:;
 end;
 
@@ -185,9 +199,11 @@ end;
 
 define class <c-bit-field> (<c-struct-member>)
   slot c-bit-field-name :: false-or(<string>),
-    required-init-keyword: name:;
+    init-keyword: name:,
+    init-value: #f;
   slot c-bit-field-sign-specifier :: <c-sign-specifier>,
-    required-init-keyword: sign:;
+    init-keyword: sign:,
+    init-value: #"unspecified";
   slot c-bit-field-width :: <integer>,
     required-init-keyword: width:;
 end;
@@ -239,7 +255,8 @@ end;
 //  support the "counting" mechanism used by ANSI C.
 
 define class <c-enum-type> (<c-tagged-type>)
-  slot c-enum-members :: <stretchy-vector> = make(<stretchy-vector>);
+  slot c-enum-members :: <stretchy-vector>,
+    required-init-keyword: members:;
   // elements of c-enum-members are of type <c-enum-constant>
 end;
 
@@ -313,8 +330,10 @@ end;
 define class <c-function-type> (<c-derived-type>)
   slot c-function-return-type :: <c-type>,
     required-init-keyword: return-type:;
-  slot c-function-parameter-types :: <stretchy-vector> =
-    make(<stretchy-vector>);
+  slot c-function-parameter-types :: <stretchy-vector>
+    = make(<stretchy-vector>),
+    init-keyword: parameter-types:;
+
   // members of c-function-parameter-types are of type <c-type>
   // XXX - need to think about parameter names. They're not part of the
   // function type but sometimes we need them.
