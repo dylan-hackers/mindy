@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.44 1995/08/29 15:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.45 1995/09/01 19:30:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -675,16 +675,16 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
   let res = fer-convert-body(builder, form.uwp-body,
 			     make(<lexenv>, inside: lexenv),
 			     want, datum);
+  build-assignment
+    (builder, policy, source, #(),
+     make-unknown-call
+       (builder,
+	ref-dylan-defn(builder, policy, source, #"pop-unwind-protect"),
+	#f, #()));
   build-assignment(builder, policy, source, #(),
 		   make-unknown-call(builder, cleanup-literal, #f, #()));
   end-body(builder);
 
-  build-assignment
-    (cleanup-builder, policy, source, #(),
-     make-unknown-call
-       (cleanup-builder,
-	ref-dylan-defn(builder, policy, source, #"pop-unwind-protect"),
-	#f, #()));
   fer-convert-body(cleanup-builder, form.uwp-cleanup,
 		   make(<lexenv>, inside: lexenv),
 		   #"nothing", #f);
