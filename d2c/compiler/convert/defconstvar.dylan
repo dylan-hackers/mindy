@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.3 1994/12/13 13:20:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.4 1994/12/13 18:40:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,7 +17,7 @@ define abstract class <bindings-definition> (<definition>)
   slot defn-type :: union(<false>, <ctype>), init-keyword: type:;
   //
   // The initial value (or only value for constants) if it is a compile-time
-  // value, or #f otherwise.  Filled in either when defn-value on a constant,
+  // value, or #f otherwise.  Filled in either by defn-value on a constant
   // or by finalize-top-level-form.
   slot defn-init-value :: union(<false>, <ct-value>), init-keyword: value:;
 end;
@@ -134,7 +134,8 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	   .paramlist-required-vars,
 	 index from 0)
       let type = if (param.param-type)
-		   ct-eval(param.param-type, lexenv);
+		   let ctype = ct-eval(param.param-type, lexenv);
+		   instance?(ctype, <ctype>) & ctype;
 		 else
 		   object-ctype();
 		 end;
@@ -166,7 +167,7 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 		    name: make(<type-cell-name>, base: defn.defn-name),
 		    tlf: tlf,
 		    type: dylan-value(#"<type>"),
-		    init-value: #f);
+		    value: #f);
 	end;
       end;
     end;
@@ -198,6 +199,50 @@ end;
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-bindings-tlf>) => ();
   if (tlf.tlf-anything-non-constant?)
-    error("Can't deal with non-constant init values or types.");
+    let lexenv = make(<lexenv>);
+    let policy = $Default-Policy;
+    let source = make(<source-location>);
+    let init-builder = make-builder(builder);
+    let bindings = tlf.tlf-bindings;
+    let paramlist = bindings.bindings-parameter-list;
+    local
+      method foo (defn, param)
+	let temp = make-local-var(builder, param.param-name.token-symbol,
+				  defn.defn-type | object-ctype());
+	unless (defn.defn-init-value)
+	  let checked
+	    = if (defn.defn-type)
+		temp;
+	      else
+		let type = make-local-var(builder, #"type",
+					  dylan-value(#"<type>"));
+		fer-convert(builder, param.param-type, lexenv, type);
+		if (instance?(defn, <variable-definition>))
+		  let type-defn = defn.var-defn-type-defn;
+		  build-assignment(builder, policy, source,
+				   make-definition-leaf(builder, type-defn),
+				   type);
+		end;
+		make-check-type-operation(init-builder, temp, type);
+	      end;
+	  build-assignment(init-builder, policy, source,
+			   make-definition-leaf(init-builder, defn), checked);
+	end;
+	temp;
+      end;
+    let vars = map-as(<list>, foo, tlf.tlf-required-defns,
+		      paramlist.paramlist-required-vars);
+    let rest-defn = tlf.tlf-rest-defn;
+    if (rest-defn & ~rest-defn.defn-init-value)
+      let rest-temp = make-local-var(builder,
+				     paramlist.paramlist-rest.token-symbol,
+				     rest-defn.defn-type | object-ctype());
+      let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
+      fer-convert(builder, bindings.bindings-expression, lexenv, cluster);
+      canonicalize-results(builder, policy, source, cluster, vars, rest-temp);
+    else
+      fer-convert(builder, bindings.bindings-expression, lexenv, vars);
+    end;
+    build-region(builder, builder-result(init-builder));
   end;
 end;
