@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.9 1994/11/03 22:19:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.10 1994/11/28 04:20:22 wlott Exp $
 *
 * This file contains <object>.
 *
@@ -37,6 +37,7 @@
 #include "list.h"
 #include "def.h"
 #include "gc.h"
+#include "num.h"
 #include "obj.h"
 
 obj_t obj_ObjectClass = 0;
@@ -44,6 +45,11 @@ obj_t obj_ObjectClass = 0;
 static obj_t dylan_object_class(obj_t object)
 {
     return object_class(object);
+}
+
+static obj_t dylan_object_address(obj_t object)
+{
+    return make_fixnum((long)object);
 }
 
 
@@ -71,4 +77,6 @@ void init_obj_functions(void)
 {
     define_function("object-class", list1(obj_ObjectClass), FALSE, obj_False,
 		    FALSE, obj_ClassClass, dylan_object_class);
+    define_function("object-address", list1(obj_ObjectClass), FALSE, obj_False,
+		    FALSE, obj_FixnumClass, dylan_object_address);
 }
