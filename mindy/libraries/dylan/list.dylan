@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.8 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.9 1996/02/13 21:04:30 nkramer Exp $
 
 //======================================================================
 //
@@ -188,7 +188,7 @@ end method every?;
 //// Sequence routines.
 
 define method add  (l :: <list>, new)
-  apply (list, new, l);
+  pair(new, l);
 end method add;
 
 /* ---------------- */
