@@ -32,13 +32,19 @@ define method analize
 end;
 
 define method analize
+    (op :: <expression>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  want;
+end;
+
+define method analize
     (op :: <operation>, want :: <list>, state :: <state>)
     => want :: <list>;
   analize(op.depends-on, want, state);
 end;
 
 define method analize
-    (op :: union(<unknown-call>, <error-call>), want :: <list>,
+    (op :: type-or(<unknown-call>, <error-call>, <catch>), want :: <list>,
      state :: <state>)
     => want :: <list>;
   //
@@ -56,27 +62,6 @@ define method analize
   // Don't need to scan the depends-on, because we can't depend-on any
   // clusters.
   want;
-end;
-
-define method analize
-    (op :: <primitive>, want :: <list>, state :: <state>)
-    => want :: <list>;
-  if (op.name == #"catch" & op.dependents.dependent.defines)
-    //
-    // Dink the depth because the results really act like clusters
-    // even if they arn't.
-    let new-depth = size(want) + 1;
-    if (new-depth > state.max-depth)
-      state.max-depth := new-depth;
-    end;
-  end;
-  analize(op.depends-on, want, state);
-end;
-
-define method analize
-    (op :: <expression>, want :: <list>, state :: <state>)
-    => want :: <list>;
-  values(want, max-depth);
 end;
 
 define method analize
