@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.8 2003/04/11 22:15:40 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.9 2003/04/11 23:07:46 gabor Exp $
 copyright: see below
 
 
@@ -150,8 +150,8 @@ define method expand-cluster
 		     end;
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
-    let var = make(<ssa-variable>, var-info: var-info,
-		   definer: assign, definer-next: new-defines);
+    let var = make(<ssa-variable>, var-info: var-info, definer: assign,
+		   definer-next: new-defines, needs-type-check: #f);
     let dep = make(<dependency>, source-exp: var, source-next: #f,
 		   dependent: target, dependent-next: new-depends-on);
     var.dependents := dep;
