@@ -1,42 +1,8 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.49 1995/12/16 04:15:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.50 1996/01/03 21:43:43 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-
-define abstract class <function-definition> (<abstract-constant-definition>)
-  //
-  // The signature.
-  slot %function-defn-signature :: type-union(<signature>, <function>),
-    setter: function-defn-signature-setter, init-keyword: signature:;
-  //
-  // #t if this definition requires special handling at loadtime.  Can be
-  // because of something non-constant in the signature or in the case of
-  // methods, can be because the generic is hairy.  Fill in during
-  // finalization.
-  slot function-defn-hairy? :: <boolean>,
-    init-value: #f, init-keyword: hairy:;
-  //
-  // The ctv for this function.  #f if we can't represent it (because the
-  // function is hairy) and #"not-computed-yet" if we haven't computed it yet.
-  slot function-defn-ct-value
-    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet";
-  //
-  // The FER transformers for this function.  Gets initialized from the
-  // variable.
-  slot function-defn-transformers :: <list>, init-value: #();
-  //
-  // True if we can drop calls to this function when the results isn't used
-  // because there are no side effects.
-  slot function-defn-flushable? :: <boolean>,
-    init-value: #f, init-keyword: flushable:;
-  //
-  // True if we can move calls to this function around with impunity because
-  // the result depends on nothing but the value of the arguments.
-  slot function-defn-movable? :: <boolean>,
-    init-value: #f, init-keyword: movable:;
-end;
 
 define method defn-type (defn :: <function-definition>) => res :: <cclass>;
   dylan-value(#"<function>");
@@ -469,16 +435,6 @@ define method compute-signature
 			                 returns.paramlist-required-vars),
 				  returns.paramlist-rest & object-ctype())),
 	 anything-non-constant?);
-end;
-
-define method function-defn-signature
-    (defn :: <function-definition>) => res :: <signature>;
-  let sig-or-func = defn.%function-defn-signature;
-  if (instance?(sig-or-func, <function>))
-    defn.function-defn-signature := sig-or-func();
-  else
-    sig-or-func;
-  end;
 end;
 
 
