@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.2 1995/12/09 02:47:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.3 1995/12/09 20:16:33 rgs Exp $
 
 //======================================================================
 //
@@ -164,7 +164,7 @@ end method insertion-sort;
 // subsequence should be before the simple sorts are called.  (The simple
 // sorts can be turned off by setting this to 0.)
 //
-define variable $small-sort-size$ = 10;
+define variable $small-sort-size$ :: <fixed-integer> = 10;
 
 // Merge Sort
 //
@@ -219,7 +219,8 @@ define method merge!
         start-key := start-key + 1;
     end case;
   end for;
-  for (merge-key from 0 below merge-size, copy-key from first)
+  for (merge-key :: <fixed-integer> from 0 below merge-size,
+       copy-key :: <fixed-integer> from first)
     vector[copy-key] := merge-vector[merge-key]
   end for;
 end method merge!;
