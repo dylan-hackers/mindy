@@ -1,5 +1,5 @@
 .\" @(#)mindy.1		-*- nroff -*-
-.TH MINDY 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH MINDY 1 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 mindycomp, mindy \- A Dylan bytecode interpreter

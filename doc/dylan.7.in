@@ -1,5 +1,5 @@
 .\" @(#)dylan.7		-*- nroff -*-
-.TH DYLAN 7 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH DYLAN 7 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 Dylan \- An object-oriented, dynamic language.

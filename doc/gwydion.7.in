@@ -1,5 +1,5 @@
 .\" @(#)gwydion.7		-*- nroff -*-
-.TH GWYDION 7 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH GWYDION 7 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 Gwydion Dylan \- A collection of Dylan development tools

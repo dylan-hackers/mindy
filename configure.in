@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.22 1998/12/21 18:43:15 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.23 1998/12/24 08:49:34 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -117,6 +117,13 @@ AC_SUBST(d2c_target)
 #    cross_compiler=yes
 #fi
 #AC_MSG_RESULT($cross_compiler)
+
+#--------------------------------------------------------------------
+# Find the current date, for substitution into man pages.
+#--------------------------------------------------------------------
+
+DATE="`date '+%d %B %Y'`"
+AC_SUBST(DATE)
 
 #--------------------------------------------------------------------
 # Look for various programs which we might need. If these are
@@ -673,7 +680,15 @@ AC_OUTPUT(Defaults \
 	tools/shared-misc/mk-build-tree \
 	tools/shared-misc/line-count \
 	tools/shared-misc/make-dylan-app \
-	tools/unix-misc/mk-rcs-links, [
+	tools/unix-misc/mk-rcs-links \
+	doc/Makefile \
+	doc/dylan.7 \
+	doc/gwydion.7 \
+	doc/d2c.1 \
+	doc/mindy.1 \
+	doc/melange.1 \
+	doc/make-dylan-app.1 \
+	doc/platforms.descr.4, [
 ${INSTALL} -m uog+rx $builddir/tools/shared-misc/mk-build-tree ./
 ${INSTALL} -m uog+rx $builddir/tools/shared-misc/gen-makefile ./
 (PATH=$builddir:$PATH; export PATH; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)

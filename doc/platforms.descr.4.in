@@ -1,5 +1,5 @@
 .\" @(#)platforms.descr.4		-*- nroff -*-
-.TH PLATFORMS.DESCR 4 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH PLATFORMS.DESCR 4 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 platforms.descr \- Platform descriptions for Gwydion Dylan

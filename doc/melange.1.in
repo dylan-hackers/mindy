@@ -31,7 +31,7 @@
 .in
 ..
 .\" ========== MAN PAGE    ==========
-.TH MELANGE 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH MELANGE 1 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 melange \- Translates C headers into Dylan

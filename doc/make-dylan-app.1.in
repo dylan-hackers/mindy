@@ -1,5 +1,5 @@
 .\" @(#)make-dylan-app.1		-*- nroff -*-
-.TH MAKE-DYLAN-APP 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.TH MAKE-DYLAN-APP 1 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
 .UC
 .SH NAME
 make-dylan-app \- Create a new Dylan program
