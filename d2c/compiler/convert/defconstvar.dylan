@@ -1,12 +1,12 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.8 1995/03/04 22:01:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.9 1995/04/21 02:37:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
 // definition class definitions
 
-define abstract class <bindings-definition> (<definition>)
+define abstract class <bindings-definition> (<definition>, <annotatable>)
   //
   // The <ctype> for this definition if it is a compile-time constant.  Filled
   // in by finalize-top-level-form.
