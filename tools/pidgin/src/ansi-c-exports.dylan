@@ -138,9 +138,23 @@ define module c-declarations
 
   export
     format-c-declaration;
-end;
+end module c-declarations;
+
+define module c-file
+  use outside-dependencies;
+  use c-declarations; 
+  
+  export
+    <c-file>,
+      c-file-name,
+      c-file-system-header?,
+      c-file-contents,
+      add-c-declaration!,
+      add-c-file!;
+end module;
 
 define module ansi-c
   use c-types, export: all;
   use c-declarations, export: all;
+  use c-file, export: all;
 end;

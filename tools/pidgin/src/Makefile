@@ -7,6 +7,7 @@ clean:
 	rm -f ansi-c-test
 	rm -f core
 
+
 # parser-utilities library
 
 parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan \
@@ -16,6 +17,7 @@ parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan \
 parser-utilities.lib.du: parser-utilities.lid
 	d2c $<
 
+
 # ansi-c library
 
 ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan
@@ -24,17 +26,18 @@ ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan
 ansi-c.lib.du: ansi-c.lid parser-utilities.lib.du
 	d2c $<
 
+
 # c-parser library
 
 c-parser.dylan: c-parser.input	
 	parsergen $< $@
 
-c-parser.lid: c-parser-exports.dylan c-parser-interface.dylan \
-	      c-parser.dylan c-lexer.dylan c-lexer-cpp.dylan 
-	touch $@
-
-c-parser.lib.du: c-parser.lid
+c-parser.lib.du: c-parser.lid c-parser-exports.dylan \
+	         c-parser-interface.dylan c-parser.dylan c-lexer.dylan \
+	         c-lexer-cpp.dylan \
+	         ansi-c.lib.du parser-utilities.lib.du
 	d2c $<
+
 
 # ansi-c-test library
 

@@ -6,3 +6,4 @@ ansi-c-exports.dylan
 c-types.dylan
 c-declarations.dylan
 c-type-repository.dylan
+c-file.dylan
