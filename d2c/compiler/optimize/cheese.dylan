@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.31 1995/04/27 23:54:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.32 1995/04/28 00:38:37 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -570,7 +570,8 @@ end;
 define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
   let args = pitcher.depends-on;
   let type
-    = if (args & instance?(args.source-exp.var-info, <values-cluster-info>))
+    = if (args & instance?(args.source-exp, <abstract-variable>)
+	    & instance?(args.source-exp.var-info, <values-cluster-info>))
 	args.source-exp.derived-type;
       else
 	for (dep = args then dep.dependent-next,
@@ -902,29 +903,31 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
 
   // Change the call to a reference to the results.
   let results = lambda.depends-on;
-  call-assign.depends-on.source-exp
-    := if (results
-	     & instance?(results.source-exp.var-info, <values-cluster-info>))
-	 results.dependent := call-assign;
-	 results.source-exp;
-       else
-	 // Make a values operation for the lambda results.
-	 let values-op = make(<primitive>, derived-type: lambda.result-type,
-			      dependents: call.dependents, name: #"values",
-			      depends-on: results);
-	 // Change the results to feed into the values-op
-	 for (dep = results then dep.dependent-next,
-	      while: dep)
-	   dep.dependent := values-op;
-	 end;
-	 for (dep = call.dependents then dep.source-next,
-	      while: dep)
-	   dep.source-exp := values-op;
-	 end;
-	 queue-dependent(component, values-op);
-	 values-op;
-       end;
+  if (results & instance?(results.source-exp.var-info, <values-cluster-info>))
+    results.dependent := call-assign;
+    call-assign.depends-on := results;
+  else
+    // Make a values operation for the lambda results.
+    let values-op = make(<primitive>, derived-type: lambda.result-type,
+			 dependents: call.dependents, name: #"values",
+			 depends-on: results);
+    // Change the results to feed into the values-op
+    for (dep = results then dep.dependent-next,
+	 while: dep)
+      dep.dependent := values-op;
+    end;
+    for (dep = call.dependents then dep.source-next,
+	 while: dep)
+      dep.source-exp := values-op;
+    end;
+    queue-dependent(component, values-op);
+    call-assign.depends-on.source-exp := values-op;
+  end;
   queue-dependent(component, call-assign);
+
+  // Queue the catchers for blocks in the new home that are exited to from the
+  // lambda's body.
+  queue-catchers(component, home-lambda(call-assign), lambda.body);
 
   // Insert the lambda body before the call assignment (which is now the result
   // assignment).
@@ -933,6 +936,42 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   // Delete the lambda.
   component.all-methods := remove!(component.all-methods, lambda);
 end;
+
+define method queue-catchers
+    (component :: <component>, home :: <lambda>, region :: <simple-region>)
+    => ();
+end;
+
+define method queue-catchers
+    (component :: <component>, home :: <lambda>, region :: <compound-region>)
+    => ();
+  for (subregion in region.regions)
+    queue-catchers(component, home, subregion);
+  end;
+end;
+
+define method queue-catchers
+    (component :: <component>, home :: <lambda>, region :: <if-region>)
+    => ();
+  queue-catchers(component, home, region.then-region);
+  queue-catchers(component, home, region.else-region);
+end;
+
+define method queue-catchers
+    (component :: <component>, home :: <lambda>, region :: <body-region>)
+    => ();
+  queue-catchers(component, home, region.body);
+end;
+
+define method queue-catchers
+    (component :: <component>, home :: <lambda>, region :: <exit>)
+    => ();
+  let target = region.block-of;
+  if (home-lambda(target) == home)
+    queue-dependent(component, target.catcher);
+  end;
+end;
+
 
 
 // If optimizations.
@@ -962,6 +1001,7 @@ define method replace-if-with
   build-region(builder, with);
   replace-subregion(component, if-region.parent, if-region,
 		    builder-result(builder));
+  delete-dependent(component, if-region);
 end;
 
 
