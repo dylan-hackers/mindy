@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.6 1995/12/09 02:48:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.7 1995/12/09 21:09:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -66,7 +66,7 @@ end;
 define class <unicode-string> (<string>, <vector>)
   sealed slot %element :: <character>,
     init-value: ' ', init-keyword: fill:,
-    sizer: size, required-size-init-keyword: size:;
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<unicode-string>));
@@ -116,7 +116,7 @@ end;
 define class <byte-string> (<string>, <vector>)
   sealed slot %element :: <byte-character>,
     init-value: ' ', init-keyword: fill:,
-    sizer: size, required-size-init-keyword: size:;
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<byte-string>));

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.8 1995/12/09 21:00:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.9 1995/12/09 21:09:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -96,7 +96,7 @@ end;
 define class <type-vector> (<simple-vector>)
   sealed slot %element :: <type>,
     init-value: type-union(), init-keyword: fill:,
-    sizer: size, required-size-init-keyword: size:;
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
 end class <type-vector>;
 
 seal generic make (singleton(<type-vector>));

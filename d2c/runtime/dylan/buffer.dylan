@@ -3,7 +3,7 @@ author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.6 1995/12/09 02:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.7 1995/12/09 21:09:35 wlott Exp $
 
 
 %%primitive c-include ("string.h");
@@ -14,7 +14,7 @@ define /* exported */ constant <byte> =
 define /* exported */ class <byte-vector> (<simple-vector>)
   sealed slot %element :: <byte>,
     init-value: 0, init-keyword: fill:,
-    sizer: size, required-size-init-keyword: size:;
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<byte-vector>));
