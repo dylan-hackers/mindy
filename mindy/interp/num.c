@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.23 1995/10/24 00:36:06 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.24 1995/10/26 16:10:36 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -2384,10 +2384,8 @@ void init_num_functions(void)
     define_method("atan2", two_dfs, FALSE, obj_False, FALSE,  
 		  obj_DoubleFloatClass, dylan_df_atan2);     
 
-    define_generic_function("expt", 2, FALSE, obj_False, FALSE,
-			    any_float, obj_False);                             
-    define_method("expt", two_sfs, FALSE, obj_False, FALSE,  
+    define_method("^", two_sfs, FALSE, obj_False, FALSE,  
 		  obj_SingleFloatClass, dylan_sf_expt);     
-    define_method("expt", two_dfs, FALSE, obj_False, FALSE,  
+    define_method("^", two_dfs, FALSE, obj_False, FALSE,  
 		  obj_DoubleFloatClass, dylan_df_expt);     
 }

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.71 1995/10/24 00:34:21 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.72 1995/10/26 16:10:22 nkramer Exp $
 
 //======================================================================
 //
@@ -112,7 +112,7 @@ define module Builtin-Stuff
     find-c-function, constrain-c-function,
     sin, cos, tan, asin, acos, atan, atan2, 
     sinh, cosh, tanh,
-    exp, log, expt, sqrt,
+    exp, log, sqrt,
     $pi, $e;
   create
     aref, aref-setter, do, error, type-error,
@@ -370,7 +370,7 @@ define module Transcendental
   use Builtin-stuff, 
     import: { sin, cos, tan, asin, acos, atan, atan2, 
 	      sinh, cosh, tanh, // no inverse hyperbolic functions
-	      exp, log, expt, sqrt,
+	      exp, log, sqrt,
 	      $pi, $e }, 
     export: all;
 end module Transcendental;

@@ -1,6 +1,6 @@
 module: Transcendental
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/transcendental.dylan,v 1.1 1995/10/24 00:34:21 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/transcendental.dylan,v 1.2 1995/10/26 16:10:22 nkramer Exp $
 
 //======================================================================
 //
@@ -40,15 +40,15 @@ define method atan2 (num1 :: <double-float>, num2 :: <single-float>)
   atan2(num1, as(<double-float>, num2));
 end method atan2;
 
-define method expt (num1 :: <single-float>, num2 :: <double-float>) 
+define method \^ (num1 :: <single-float>, num2 :: <double-float>) 
  => answer :: <double-float>;
-  expt(as(<double-float>, num1), num2);
-end method expt;
+  as(<double-float>, num1) ^ num2;
+end method;
 
-define method expt (num1 :: <double-float>, num2 :: <single-float>) 
+define method \^ (num1 :: <double-float>, num2 :: <single-float>) 
  => answer :: <double-float>;
-  expt(num1, as(<double-float>, num2));
-end method expt;
+  num1 ^ as(<double-float>, num2);
+end method;
 
 
 
