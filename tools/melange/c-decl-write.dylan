@@ -1049,7 +1049,8 @@ define method write-declaration
   let value = select (raw-value by instance?)
 		<declaration> => raw-value.dylan-name;
 		<general-integer>, <float> => format-to-string("%=", raw-value);
-		<string> => format-to-string("\"%s\"", raw-value);
+		<string> => format-to-string("\"%s\"", 
+                                             escape-characters(raw-value));
 		<token> => raw-value.string-value;
 		<character> => "1"; // for #define FOO\n, suggested by dauclair
 	      end select;
@@ -1058,6 +1059,21 @@ define method write-declaration
     register-written-name(written-names, decl.dylan-name, decl);
   end unless;
 end method write-declaration;
+
+define method escape-characters(s :: <string>) => (s* :: <string>)
+  let new = make(<stretchy-vector>);
+
+  for(char in s)
+    select(char)
+      '\\'      => do(curry(add!, new), "\\\\");
+      '"'       => do(curry(add!, new), "\\\"");
+      '\n'      => do(curry(add!, new), "\\n\"\n\"");
+      '\r'      => do(curry(add!, new), "\\r");
+      otherwise => add!(new, char);
+    end select;
+  end for;
+  as(<string>, new);
+end method escape-characters;
 
 // For pointers, we need "dereference" and "content-size" functions.  This is
 // pretty strightforward.
