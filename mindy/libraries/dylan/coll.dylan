@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.17 1994/06/06 22:26:19 dpierce Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.18 1994/06/11 02:12:54 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -790,15 +790,15 @@ define method reverse!(sequence :: <sequence>) => <sequence>;
   reverse(sequence);
 end method reverse!;
 
-define method first(sequence :: <sequence>, #rest keys)
+define method first(sequence :: <sequence>, #rest keys, #key default)
   apply(element, sequence, 0, keys);
 end method first;
 
-define method second(sequence :: <sequence>, #rest keys)
+define method second(sequence :: <sequence>, #rest keys, #key default)
   apply(element, sequence, 1, keys);
 end method second;
 
-define method third(sequence :: <sequence>, #rest keys)
+define method third(sequence :: <sequence>, #rest keys, #key default)
   apply(element, sequence, 2, keys);
 end method third;
 
@@ -814,7 +814,7 @@ define method third-setter(value, sequence :: <sequence>)
   sequence[2] := value;
 end method third-setter;
 
-define method last(sequence :: <sequence>, #rest keys)
+define method last(sequence :: <sequence>, #rest keys, #key default)
   apply(element, sequence, size(sequence) - 1, keys);
 end method last;
     
