@@ -27,7 +27,7 @@ $D2CFLAGS = $d2c_runtime
                    'compile'); # not ready to install yet
 &emit_library_rule('ansi-c-test',
 		   'parser-utilities.lib.du ansi-c.lib.du c-parser.lib.du '
-		   . 'c-ffi-output.lib.du',
+		   . 'c-ffi-output.lib.du', '-L.',
 		   'compile');
 &emit_library_rule('pidgin-gcc',
 		   'parser-utilities.lib.du ansi-c.lib.du c-parser.lib.du '
