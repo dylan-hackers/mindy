@@ -470,17 +470,3 @@ define macro when
 end macro;
 
 #endif
-
-
-//=========================================================================
-//  Subclass
-//=========================================================================
-//  XXX - GROSS HACK! d2c seems to have trouble with subclass for some
-//  reason--it won't find it when we re-export it. Apparently, you can't
-//  re-export inline functions or something stupid like that.
-//  XXX - This doesn't work very well: the compiler can't constant-eval
-//  through this constant, so subclass types will give warnings.
-//  The related bug needs to be fixed.
-
-define constant subclass = hackish-subclass;
-    

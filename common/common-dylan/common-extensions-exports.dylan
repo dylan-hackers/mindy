@@ -39,13 +39,12 @@ define module common-extensions
   use extensions,
     exclude: { assert },
     rename: {$not-supplied => $unsupplied,
-	     on-exit => register-exit-application-function,
-	     subclass => hackish-subclass},
+	     on-exit => register-exit-application-function},
     export: {$unsupplied,
              integer-length,
 	     false-or,
 	     one-of,
-	     //subclass,
+	     subclass,
 	     <format-string-condition>, <simple-condition>,
 	     ignore,
 	     key-exists?,
@@ -99,7 +98,7 @@ define module common-extensions
     /* Types */
     //false-or,
     //one-of,
-    subclass,
+    //subclass,
 
     /* Ignoring */
     //ignore,
