@@ -66,11 +66,10 @@ define class <active-variable> (<object>)
   virtual slot value;
   slot index :: <string>;
   slot internal-value :: <object>,  // Will be stored as a member of "cls"
-    init-value: pair(#f, #f);
+    required-init-keyword: #"value";
   slot cls :: <class>, init-keyword: #"class", init-value: <string>;
   slot command :: union(<function>, <false>),
     init-keyword: #"command", init-value: #f;
-  required keyword value:;
 end class <active-variable>;
 
 
@@ -220,7 +219,18 @@ define method do-callback (line :: <string>) => ();
 	= tk-as(var.cls, parse-tk-list(line, start: frst,
 				       depth: 1, unquote: #t).first);
       if (var.command & new-value ~= var.internal-value)
-	var.command(new-value)
+	// Give the execution thread a new function to execute.  It may be
+	// waiting for us to give it to us, or it may be too busy executing a
+	// previous function, in which case it will be deferred.
+	if (~exec-thread-running)
+	  spawn-thread("exec", exec-thread-loop);
+	  exec-thread-running := #t;
+	end if;
+
+	grab-lock(exec-thread-lock);
+	push-last(exec-thread-procs, curry(var.command, new-value));
+	signal-event(exec-thread-event);
+	release-lock(exec-thread-lock);
       end if;
       var.internal-value := new-value;
     end block;
