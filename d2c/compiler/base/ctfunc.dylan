@@ -1,11 +1,11 @@
 module: compile-time-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.4 2001/03/17 03:43:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.5 2001/05/30 21:34:23 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -56,11 +56,11 @@ define abstract class <ct-function>
   //
   // <name> object describing what this function is used for.  Used for
   // debugging, to generate the C name, etc.
-  slot ct-function-name :: <name>,
+  constant slot ct-function-name :: <name>,
     required-init-keyword: name:;
   //
   // The signature for this function.
-  slot ct-function-signature :: <signature>,
+  constant slot ct-function-signature :: <signature>,
     required-init-keyword: signature:;
   //
   // The definition this <ct-function> came from, or #f if it didn't come
@@ -128,7 +128,7 @@ add-make-dumper(#"ct-callback-function", *compiler-dispatcher*,
 
 
 define abstract class <ct-generic-function> (<ct-function>, <eql-ct-value>)
-  slot ct-generic-sealed?, required-init-keyword: #"sealed?", setter: #f;
+  constant slot ct-generic-sealed?, required-init-keyword: #"sealed?";
 end;
 
 define class <ct-open-generic> (<ct-generic-function>) end class;
@@ -191,7 +191,7 @@ add-make-dumper(#"ct-method", *compiler-dispatcher*, <ct-method>,
 define class <ct-accessor-method> (<ct-method>)
   //
   // The slot being accessed.
-  slot ct-accessor-method-slot-info :: <slot-info>,
+  constant slot ct-accessor-method-slot-info :: <slot-info>,
     required-init-keyword: slot-info:;
   //
   // The shared accessor standin, or #f if we need a custom one.
@@ -220,14 +220,15 @@ add-make-dumper
 define class <ct-entry-point> (<ct-value>, <identity-preserving-mixin>)
   //
   // The function this is an entry point for.
-  slot ct-entry-point-for :: <ct-function>,
+  constant slot ct-entry-point-for :: <ct-function>,
     required-init-keyword: for:;
   //
   // The kind of entry point.
-  slot ct-entry-point-kind :: one-of(#"main",
-				     #"general",
-				     #"generic",
-				     #"callback"),
+  constant slot ct-entry-point-kind
+    :: one-of(#"main",
+	      #"general",
+	      #"generic",
+	      #"callback"),
     required-init-keyword: kind:;
 end;
 
