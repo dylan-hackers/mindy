@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.11 1999/10/28 18:54:58 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.12 1999/11/17 20:32:19 robmyers Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1433,7 +1433,11 @@ define method spew-heap-prototype
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
     let cclass = defn.ct-value-cclass;
+#if (macos)
+	// Do nothing
+#else
     format(stream, "extern ");
+#endif
     spew-layout(cclass, state, size: literal-vector-size(defn));
     format(stream, " %s;\n\n", name);
     state.file-prototypes-exist-for[name] := #t;

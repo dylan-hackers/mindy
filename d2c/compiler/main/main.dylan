@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.28 1999/11/11 21:13:16 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.29 1999/11/17 20:32:33 robmyers Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -362,6 +362,24 @@ end method process-feature;
 // of shared-library-filename-suffix in platforms.descr), and if the user
 // didn't specify '-static' on the command line, locate shared library
 // version first. 
+
+#if (macos)
+
+// At the moment we don't include compiled libs, so we don't need to look properly
+// This will cause problems for MPW and building projects, 
+// and so this is a temporary measure
+
+define method find-library-archive
+    (unit-name :: <byte-string>, state :: <main-unit-state>)
+ => path :: <byte-string>;
+	let target = state.unit-target;
+	let suffixes = split-at-whitespace( target.library-filename-suffix );
+	let libname = concatenate( target.library-filename-prefix, unit-name, first( suffixes ) );
+ 	libname;
+ end method find-library-archive;
+
+#else
+
 define method find-library-archive
     (unit-name :: <byte-string>, state :: <main-unit-state>)
  => path :: <byte-string>;
@@ -405,6 +423,8 @@ define method find-library-archive
     found.head;
   end if;
 end method find-library-archive;
+
+#endif
 
 
 // save-c-file is #t when we don't want the .c file added to the
@@ -946,7 +966,13 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
   end if;
   write(stream, "}\n");
   write(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
+#if (macos)
+  write(stream, "#include<console.h>\n");
+#endif
   write(stream, "int main(int argc, char *argv[]) {\n");
+#if (macos)
+  write(stream, "    argc = ccommand( &argv );\n");
+#endif
   write(stream, "    real_main(argc, argv);\n");
   write(stream, "    return 0;\n");
   write(stream, "}\n");
