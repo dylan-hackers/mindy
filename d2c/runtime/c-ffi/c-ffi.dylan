@@ -41,8 +41,8 @@ define primary open abstract functional class <C-pointer> (<C-value>)
 end class <C-pointer>;
 
 define function pointer-cast
-    (class :: subclass(<C-pointer>), pointer :: <C-pointer>)
- => (cast-pointer :: <C-pointer)
+    (class :: <designator-class>, pointer :: <C-pointer>)
+ => (cast-pointer :: <C-pointer>)
   make(class, %address: pointer.pointer-address);
 end function;
 
