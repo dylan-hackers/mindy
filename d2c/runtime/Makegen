@@ -15,7 +15,8 @@ do compile_subdirs(
     'format-out',
     'matrix',
     'time',
-    'stream-ext'
+    'stream-ext',
+    'transcendental'
 );
 
 do install_from_src('include', "runtime.h");
