@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.2 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.3 1996/04/18 23:00:42 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -235,9 +235,18 @@ define method extract-if-constraints
      then-renamings :: <renaming-set>, else-renamings :: <renaming-set>)
     => ();
   let cond-type = cond.derived-type;
-  maybe-constrain-type(component, region.then-region, then-renamings, cond,
-		       ctype-difference(cond-type,
-					specifier-type(#"<false>")));
+  if (csubtype?(cond-type, specifier-type(#"<boolean>")))
+    add-renaming(then-renamings,
+		 cond,
+		 method () => new :: <leaf>;
+		   make-literal-constant(make-builder(component),
+					 as(<ct-value>, #t));
+		 end method);
+  else
+    maybe-constrain-type(component, region.then-region, then-renamings, cond,
+			 ctype-difference(cond-type,
+					  specifier-type(#"<false>")));
+  end if;
   add-renaming(else-renamings,
 	       cond,
 	       method () => new :: <leaf>;
