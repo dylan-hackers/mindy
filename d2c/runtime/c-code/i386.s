@@ -49,8 +49,8 @@ _save_state:
 	# clear the two pushed args.
         leal    8(%esp), %esp
 
-	# set the return value.
-	xor	%eax, %eax
+	# Leave %eax alone.  It holds the return value, and we're just
+	# going to use the return value from the function we called.
 
 restore_state:
 
