@@ -1,16 +1,8 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.2 1995/11/13 15:14:34 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.3 1995/11/14 14:18:04 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-
-
-/* 
-front.dylan:define class <fer-function-region>
-
-front.dylan:define class <nlx-info> (<object>)
-
-*/
 
 // Note that the only official starting point (root) for FER dumping is a
 // <function-literal>.  Any other dumpers and loaders expect to be called
@@ -23,6 +15,12 @@ front.dylan:define class <nlx-info> (<object>)
 define generic fer-dump-od
  (obj :: <object>, component :: <fer-component>, buf :: <dump-state>)
  => ();
+
+// The component that we guess we're dumping, since we can't pass it to
+// everyone who wants it.  Set in the <lambda> dumper.  The dumper doesn't need
+// to be reentrant, so this is probably o.k.
+//
+define variable *dump-component* = #f;
 
 
 // Utilities:
@@ -47,14 +45,6 @@ end method;
 
 
 // Regions:
-
-
-define method fer-dump-od 
-  (obj :: <empty-region>, component :: <fer-component>, buf :: <dump-state>)
- => ();
-  ignore(component, obj, buf);
-end method;
-
 
 // For simple regions, call fer-dump-od on each assignment.  Note that there is
 // only one OD object kind for both simple and compound, but we need different
@@ -144,14 +134,14 @@ define method dump-simple-region (name, buf, component, #rest stuff)
 end method;
 
 
-// block: component, source, body, info.
+// block: component, source, info, "self", body.
 //
 define method fer-dump-od
     (obj :: <block-region>, component :: <fer-component>, buf :: <dump-state>)
  => ();
   if (maybe-dump-reference(obj, buf))
     dump-simple-region(#"block-region", buf, component, obj.source-location,
-  		       obj.info, obj.body);
+  		       obj.info, obj, obj.body);
   end if;
 end method;
 
@@ -161,11 +151,19 @@ define method dump-od (obj :: <block-region>, buf :: <dump-state>) => ();
   assert(~maybe-dump-reference(obj, buf));
 end method;
 
+
+// We use resolve-forward-ref to resolve references to the block before we load
+// the code in the block.  This is necessary because exits need to point back
+// to the enclosing block.
+//
 add-od-loader(*compiler-dispatcher*, #"block-region",
   method (state :: <load-state>)
     let builder = load-object-dispatch(state);
-    build-block-body(builder, $default-policy, load-object-dispatch(state));
+    let res = build-block-body(builder, $default-policy,
+    			       load-object-dispatch(state));
     let dinfo = load-object-dispatch(state);
+    let self = load-object-dispatch(state);
+    resolve-forward-ref(self, res);
     load-object-dispatch(state);
     let res = end-body(builder);
     res.info := dinfo;
@@ -197,8 +195,9 @@ add-od-loader(*compiler-dispatcher*, #"loop-region",
 // exit: component source, block-of
 define method fer-dump-od 
     (obj :: <exit>, component :: <fer-component>, buf :: <dump-state>) => ();
+  let bo = obj.block-of;
   dump-simple-object(#"exit-region", buf, component, obj.source-location,
-  		     obj.block-of);
+		     if (bo == component) #f else bo end);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"exit-region",
@@ -246,10 +245,10 @@ end method;
 add-od-loader(*compiler-dispatcher*, #"return-region",
   method (state :: <load-state>)
     let builder = load-object-dispatch(state);
-    build-exit(builder, $default-policy,
-    	       load-object-dispatch(state),
-    	       load-object-dispatch(state),
-	       load-object-dispatch(state));
+    build-return(builder, $default-policy,
+    	         load-object-dispatch(state),
+		 load-object-dispatch(state),
+		 load-object-dispatch(state));
 
     assert-end-object(state);
   end method
@@ -357,9 +356,18 @@ add-make-dumper(#"lexical-var-info", *compiler-dispatcher*,
 
 // Operations:
 
+// We don't really want to make the component a slot in all operations, so here
+// goes...
+
+define method operation-builder-hack (x)
+  ignore(x);
+  *dump-component*;
+end method;
+
 define constant $operation-slots =
   list(derived-type, derived-type:, #f,
-       depends-list, operands:, #f);
+       depends-list, operands:, #f,
+       operation-builder-hack, builder:, #f);
 
 
 add-make-dumper(#"join-operation", *compiler-dispatcher*, <join-operation>,
@@ -541,10 +549,11 @@ add-od-loader(*compiler-dispatcher*, #"fer-component",
 
 
 // lambda: component, source, name, arg-vars, result-type,
-// hidden-references, body.
+// hidden-references, "self", body.
 //
 define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
   if (maybe-dump-reference(obj, buf))
+    *dump-component* := obj.parent;
     let start-pos = buf.current-pos;
     dump-definition-header(#"fer-lambda", buf, subobjects: #t);
     dump-od(obj.parent, buf);
@@ -566,13 +575,17 @@ define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
 
     dump-od(obj.result-type, buf);
     dump-od(obj.hidden-references?, buf);
+    dump-od(obj, buf);
 
     fer-dump-od(obj.body, obj.parent, buf);
-
     dump-end-entry(start-pos, buf);
   end if;
 end method;
 
+
+// As for blocks, we resolve our self-references before loading the body so
+// that enclosed code can directly get at the actual lambda.
+//
 add-od-loader(*compiler-dispatcher*, #"fer-lambda", 
   method (state :: <load-state>) => res :: <lambda>;
     let builder = load-object-dispatch(state);
@@ -581,12 +594,13 @@ add-od-loader(*compiler-dispatcher*, #"fer-lambda",
     let arg-vars = load-object-dispatch(state);
     let result-type = load-object-dispatch(state);
     let hidden = load-object-dispatch(state);
-    build-function-body(builder, $default-policy, source, #t,
-    			name, arg-vars, result-type, hidden);
-
+    let self = load-object-dispatch(state);
+    let res = build-function-body(builder, $default-policy, source, #t,
+    				  name, arg-vars, result-type, hidden);
+    resolve-forward-ref(self, res);
     load-object-dispatch(state);
     assert-end-object(state);
     end-body(builder);
-    let res = builder-result(builder);
+    res;
   end method
 );
