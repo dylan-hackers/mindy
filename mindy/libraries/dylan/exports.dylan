@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.79 1996/02/02 02:29:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.80 1996/02/13 19:58:44 nkramer Exp $
 
 //======================================================================
 //
@@ -139,6 +139,7 @@ define module Dylan
     import: all,
     export: {\~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==,
 	     <array>,
+	     <boolean>,
 	     <byte-string>,
 	     <character>, <class>, <collection>, <complex>,
 	     <double-float>,
@@ -231,7 +232,7 @@ define module Extensions
     import: {main, exit, on-exit, load, *print-GC-messages*,
 	     $maximum-integer, $minimum-integer,
 	     <byte-character>, <byte-vector>,
-	     <boolean>, <true>, <false>,
+	     <true>, <false>,
 	     <general-integer>, <extended-integer>,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
