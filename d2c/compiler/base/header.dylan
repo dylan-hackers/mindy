@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.3 1995/12/16 01:56:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.4 1995/12/16 21:17:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -166,7 +166,7 @@ end;
 // Return the position of the first non-whitespace character at or
 // after posn.
 //
-define method skip-whitespace (contents :: <buffer>, posn :: <integer>)
+define method skip-whitespace (contents :: <file-contents>, posn :: <integer>)
     => ws-end :: <integer>;
   if (posn < contents.size)
     let char = as(<character>, contents[posn]);
@@ -184,7 +184,7 @@ end method;
 //
 // Return the position of the next newline at or after posn.
 //
-define method find-newline (contents :: <buffer>, posn :: <integer>)
+define method find-newline (contents :: <file-contents>, posn :: <integer>)
     => newline :: <integer>;
   if (posn < contents.size)
     let char = as(<character>, contents[posn]);
@@ -205,7 +205,7 @@ end method;
 // #f.  This is only ever called when we know that start holds an
 // alphabetic, so we don't have to check that.
 //
-define method scan-keyword (contents :: <buffer>, start :: <integer>)
+define method scan-keyword (contents :: <file-contents>, start :: <integer>)
     => (keywrd :: false-or(<symbol>),
 	keyword-end :: <integer>);
   local
@@ -234,7 +234,7 @@ end method;
 // Extract the value starting at posn and return it.  Additionally,
 // return the posn and line number for the next char after the value.
 //
-define method scan-value (contents :: <buffer>, start :: <integer>,
+define method scan-value (contents :: <file-contents>, start :: <integer>,
 			  start-line :: <integer>)
     => (value :: <byte-string>, value-end :: <integer>, end-line :: <integer>);
   local
