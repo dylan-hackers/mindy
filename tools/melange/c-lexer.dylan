@@ -115,17 +115,18 @@ end module c-lexer;
 // "#included"ed files.
 //
 define primary class <tokenizer> (<object>)
-  required keyword source:, type: union(<string>, <stream>);
-  keyword name:, init-value: #f, type: union(<false>, <string>);
-  keyword parent:, init-value: #f, type: union(<false>, <tokenizer>);
-  keyword typedefs-from:, init-value: #f, type: union(<false>, <tokenizer>);
+  required keyword source:, type: type-union(<string>, <stream>);
+  keyword name:, init-value: #f, type: type-union(<false>, <string>);
+  keyword parent:, init-value: #f, type: type-union(<false>, <tokenizer>);
+  keyword typedefs-from:, init-value: #f,
+	type: type-union(<false>, <tokenizer>);
   slot file-name :: <string>;
   slot contents :: <string>;
   slot position :: <integer>, init-value: 0;
   slot unget-stack :: <deque>, init-function: curry(make, <deque>);
   slot cpp-table :: <table>;
   slot cpp-stack :: <list>, init-value: #();
-  slot cpp-decls :: union(<deque>, <false>);
+  slot cpp-decls :: type-union(<deque>, <false>);
   slot include-tokenizer, init-value: #f;
   slot typedefs :: <table>;
 end class <tokenizer>;
@@ -656,7 +657,7 @@ end method lex-identifier;
 //
 define method try-identifier
     (state :: <tokenizer>, position :: <integer>, #key expand = #t)
- => (result :: union(<token>, <false>));
+ => (result :: type-union(<token>, <false>));
   let contents :: <string> = state.contents;
 
   let pos = if (contents[position] == '#') position + 1 else position end if;
@@ -683,7 +684,7 @@ define constant match-punctuation
 // and #f otherwise.
 //
 define method try-punctuation (state :: <tokenizer>, position :: <integer>)
- => result :: union(<token>, <false>);
+ => result :: type-union(<token>, <false>);
   let contents :: <string> = state.contents;
 
   if (punctuation?(contents[position]))
@@ -707,7 +708,7 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
   let sz = contents.size;
 
   local method skip-comments (index :: <integer>)
-	 => end-index :: union(<integer>, <false>);
+	 => end-index :: type-union(<integer>, <false>);
 	  for (i from index,
 	       until: (i >= sz | ~whitespace?(contents[i])))
 	  finally
@@ -733,7 +734,7 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
   let sz = contents.size;
 
   local method skip-comments (index :: <integer>)
-	 => end-index :: union(<integer>, <false>);
+	 => end-index :: type-union(<integer>, <false>);
 	  for (i from index,
 	       until: (i >= sz | (contents[i] ~= ' ' & contents[i] ~= '\t')))
 	  finally
