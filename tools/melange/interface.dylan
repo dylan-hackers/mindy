@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.21 2003/02/13 15:29:13 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.22 2003/02/18 13:11:13 andreas Exp $
 
 //======================================================================
 //
@@ -652,7 +652,10 @@ define function protect (f :: <function>) => (f* :: <function>)
   method(#rest arguments)
     block()
       apply(f, arguments)
-    exception(<condition>)
+    exception(condition :: <condition>)
+      condition-format(*warning-output*, "%s\n", condition);
+      format(*warning-output*, "while calling %= with %=\n", f, arguments);
+      force-output(*warning-output*);
       #f
     end block
   end method
