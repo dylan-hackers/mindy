@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.10 1994/04/29 06:41:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.11 1994/05/25 12:31:40 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <sys/file.h>
 #ifdef MACH
 #define alloca buttplug1
 #define pause buttplug2
@@ -113,10 +114,9 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t path = args[0];
     obj_t flags = args[1];
-    obj_t mode = args[2];
     int res;
 
-    res = open(string_chars(path), fixnum_value(flags), fixnum_value(mode));
+    res = open(string_chars(path), fixnum_value(flags), 0666);
 
     results(thread, args-1, res, make_fixnum(res));
 }
@@ -307,8 +307,7 @@ void init_fd_functions(void)
 				    obj_False, fd_input_available));
     define_constant("fd-open",
 		    make_raw_method("fd-open",
-				    list3(obj_ByteStringClass,
-					  obj_IntegerClass,
+				    list2(obj_ByteStringClass,
 					  obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
@@ -345,4 +344,51 @@ void init_fd_functions(void)
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_exec));
+
+    define_constant("L_SET", make_fixnum(L_SET));
+    define_constant("L_INCR", make_fixnum(L_INCR));
+    define_constant("L_XTND", make_fixnum(L_XTND));
+
+    define_constant("FNDELAY", make_fixnum(FNDELAY));
+    define_constant("FAPPEND", make_fixnum(FAPPEND));
+
+    define_constant("FCREAT", make_fixnum(FCREAT));
+    define_constant("FTRUNC", make_fixnum(FTRUNC));
+    define_constant("FEXCL", make_fixnum(FEXCL));
+
+    define_constant("O_RDONLY", make_fixnum(O_RDONLY));
+    define_constant("O_WRONLY", make_fixnum(O_WRONLY));
+    define_constant("O_RDWR", make_fixnum(O_RDWR));
+    define_constant("O_NDELAY", make_fixnum(O_NDELAY));
+    define_constant("O_APPEND", make_fixnum(O_APPEND));
+    define_constant("O_CREAT", make_fixnum(O_CREAT));
+    define_constant("O_TRUNC", make_fixnum(O_TRUNC));
+    define_constant("O_EXCL", make_fixnum(O_EXCL));
+
+    define_constant("ENOENT", make_fixnum(ENOENT));
+    define_constant("EIO", make_fixnum(EIO));
+    define_constant("ENXIO", make_fixnum(ENXIO));
+    define_constant("EACCES", make_fixnum(EACCES));
+    define_constant("EFAULT", make_fixnum(EFAULT));
+    define_constant("EEXIST", make_fixnum(EEXIST));
+    define_constant("ENOTDIR", make_fixnum(ENOTDIR));
+    define_constant("EISDIR", make_fixnum(EISDIR));
+    define_constant("EINVAL", make_fixnum(EINVAL));
+    define_constant("ENFILE", make_fixnum(ENFILE));
+    define_constant("EMFILE", make_fixnum(EMFILE));
+    define_constant("ETXTBSY", make_fixnum(ETXTBSY));
+    define_constant("ENOSPC", make_fixnum(ENOSPC));
+    define_constant("EROFS", make_fixnum(EROFS));
+    define_constant("EOPNOTSUPP", make_fixnum(EOPNOTSUPP));
+    define_constant("ELOOP", make_fixnum(ELOOP));
+    define_constant("ENAMETOOLONG", make_fixnum(ENAMETOOLONG));
+    define_constant("EDQUOT", make_fixnum(EDQUOT));
+
+    define_constant("EBADF", make_fixnum(EBADF));
+
+    define_constant("EINTR", make_fixnum(EINTR));
+    define_constant("EWOULDBLOCK", make_fixnum(EWOULDBLOCK));
+
+    define_constant("EPIPE", make_fixnum(EPIPE));
+    define_constant("EFBIG", make_fixnum(EFBIG));
 }
