@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.11 1996/05/08 15:57:06 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.12 1996/06/26 14:52:10 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,6 +17,14 @@ define library compiler-main
   use compiler-convert;
 end;
 
+define module file-system
+  use dylan;
+  use System, import: {system};
+  export
+    delete-file,
+    rename-file,
+    files-identical?;
+end module file-system;
 
 define module main
   use common;
@@ -24,9 +32,10 @@ define module main
   use System, import: {system, copy-bytes, getenv, collect-garbage};
   use Extensions, import: {exit};
 #else
-  use System,
-     import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
-	      pointer-deref, pointer-deref-setter};
+  use System, 
+     import: {<raw-pointer>, copy-bytes, system, import-string, 
+	      export-string, getenv, exit, no-core-dumps,
+	      c-expr, pointer-deref, pointer-deref-setter};
 #endif
   use string-conversions, import: {string-to-integer};
   use random;
@@ -66,4 +75,7 @@ define module main
   use macros;
   use fragments;
   use parse-tree, exclude: {primitive-name};
+  use target-environment;
+  use file-system;
+  use extensions, import: {key-exists?};
 end;
