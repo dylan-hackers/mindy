@@ -1,5 +1,7 @@
 &makegen_include("../common-Makegen");
 
+$D2CFLAGS = $d2c_runtime;
+
 $plat = "unix";
 
 # N.B.: The order of tests is important!  The cygnus
