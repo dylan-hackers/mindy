@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.8 1996/02/21 02:49:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.9 1996/02/21 15:50:25 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -61,6 +61,7 @@ define module top-level-forms
   use definitions;
   use builder-interface, import: {<fer-builder>};
   use od-format;
+  use source;
 
   export
     <top-level-form>,
