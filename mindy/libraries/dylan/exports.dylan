@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.75 1995/11/10 01:02:09 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.76 1995/12/07 15:53:33 wlott Exp $
 
 //======================================================================
 //
@@ -83,8 +83,8 @@ define module Builtin-Stuff
     main, make, make-generic-function, make-ratio, merge-hash-codes,
     method-specializers,
     negative, numerator,
-    object-address, object-class, object-hash,
-    pair, prin1, print, putc, puts,
+    object-address, object-class,
+    pair, pointer-hash, prin1, print, putc, puts,
     raw-exit, release-lock, remove-method, round, round/,
     signal-event, singleton, singleton-object, size, slot-allocation,
     slot-descriptors, slot-getter, slot-getter-method, slot-initialized?,
@@ -173,7 +173,7 @@ define module Dylan
 	     limited, list, logand, logbit?, logior, lognot, logxor,
 	     make, merge-hash-codes, method-specializers,
 	     negative, negative?, numerator,
-	     object-class, object-hash,
+	     object-class,
 	     pair,
 	     remove-method, round, round/,
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
@@ -221,7 +221,7 @@ define module Dylan
     type-error-expected-type,
     zero?;
   create
-    <object-table>, <table>, remove-key!;
+    <object-table>, <table>, remove-key!, object-hash;
 end Dylan;
 
 define module Extensions
@@ -313,7 +313,7 @@ end;
 
 define module Hash-Tables
   use Dylan;
-  use Builtin-Stuff, import: {state-valid?, float-hash};
+  use Builtin-Stuff, import: {state-valid?, pointer-hash, float-hash};
   use Extensions;
 end;
 
