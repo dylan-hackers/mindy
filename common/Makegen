@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.11 2000/11/29 04:28:32 dauclair Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.12 2002/02/28 13:49:38 andreas Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -12,7 +12,7 @@
 @libraries_needed_to_bootstrap =
     ('streams', 'standard-io', 'print', 'format', 'coll-ext',
      'table-ext', 'string-ext', 'regexp', 'format-out', 'matrix',
-     'time', 'stream-ext', 'transcendental', 'getopt', 'file-system-base');
+     'time', 'stream-ext', 'transcendental', 'getopt', 'base-file-system');
     #'internal-time'
 
 # These libraries have been introduced since 2.2.0. They may not be used by
