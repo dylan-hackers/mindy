@@ -10,10 +10,12 @@ copyright: Copyright (c) 1996  Carnegie Mellon University
 
 define function piped-exec (command-line :: <string>) 
  => writeable-pipe :: <stream>, readable-pipe :: <stream>;
-  let (writable-pipe, readable-pipe) = fd-exec(command-line);
-  let writeable-pipe = make(<fd-stream>, direction: #"output", fd: to-fd);
-  let readable-pipe = make(<fd-stream>, direction: #"input", fd: from-fd);
-  values(writeable-pipe, readable-pipe);
+  let (writeable-fd, readable-fd) = fd-exec(command-line);
+  let writeable-stream 
+    = make(<fd-stream>, direction: #"output", fd: writeable-fd);
+  let readable-stream
+    = make(<fd-stream>, direction: #"input", fd: readable-fd);
+  values(writeable-stream, readable-stream);
 end function piped-exec;
 
 #else
