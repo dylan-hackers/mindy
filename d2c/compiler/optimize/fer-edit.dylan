@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.3 1996/04/18 21:49:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.4 1996/05/01 12:31:28 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -174,13 +174,19 @@ end;
 
 define method dropped-dependent
     (component :: <component>, var :: <ssa-variable>) => ();
-  // If the variable ended up with no references and doesn't need a type check,
-  // queue it for reoptimization so it gets deleted.  But only if is still
-  // actually being defines.
-  unless (var.dependents | var.needs-type-check? | var.definer == #f)
+  // If the variable doesn't need a type check and is still being defined,
+  // then we might be able to flush the assignment.  We can flush the
+  // assignment if the variable is unused (i.e. dependents == #f) or if it
+  // is can now be copy-propagated away.
+  if (~var.needs-type-check?
+	& var.definer ~== #f
+	& (var.dependents == #f
+	     | (var.dependents.source-next == #f
+		  & expression-movable?(var.definer.depends-on.source-exp))))
     reoptimize(component, var.definer);
-  end;
-end;
+  end if;
+end method dropped-dependent;
+
 
 define method dropped-dependent
     (component :: <component>, var :: <initial-variable>) => ();
@@ -245,7 +251,7 @@ define method insert-exit-after
   unless (exit-useless?(orig-parent, orig-region, target))
     let exit = make(<exit>, block: target, next: target.exits);
     target.exits := exit;
-    let new = combine-regions(orig-region, exit);
+    let new = combine-regions(component, orig-region, exit);
     replace-subregion(component, orig-parent, orig-region, new);
     delete-stuff-after(component, exit.parent, exit);
   end;
@@ -268,7 +274,7 @@ define method insert-return-before
   if (assignment.prev-op)
     let (before, after) = split-before(assignment);
     replace-subregion(component, orig-parent, orig-region,
-		      combine-regions(before, exit));
+		      combine-regions(component, before, exit));
     after.parent := #f;
     delete-stuff-in(component, after);
   else
@@ -597,7 +603,8 @@ end;
 // first subregion to see if it exits or not (i.e. whether the second subregion
 // is actually reachable.
 // 
-define method combine-regions (#rest stuff) => res :: <region>;
+define method combine-regions
+    (component :: <component>, #rest stuff) => res :: <region>;
   let results = #();
   local
     method grovel (region)
@@ -607,7 +614,7 @@ define method combine-regions (#rest stuff) => res :: <region>;
 	end;
       elseif (instance?(region, <simple-region>)
 		& instance?(results.head, <simple-region>))
-	results.head := merge-simple-regions(results.head, region);
+	results.head := merge-simple-regions(component, results.head, region);
       else
 	results := pair(region, results);
       end;
@@ -630,7 +637,8 @@ define method combine-regions (#rest stuff) => res :: <region>;
 end;
 
 define method merge-simple-regions
-    (first :: <simple-region>, second :: <simple-region>)
+    (component :: <component>, first :: <simple-region>,
+     second :: <simple-region>)
     => res :: <simple-region>;
   let last-of-first = first.last-assign;
   let first-of-second = second.first-assign;
@@ -643,7 +651,29 @@ define method merge-simple-regions
   for (assign = first-of-second then assign.next-op,
        while: assign)
     assign.region := first;
-  end;
+
+    // If the operation is a values-sequence of a canonicalize-results
+    // in the same region, queue it up for reoptimization because we might
+    // be able to squeeze them out.
+    let op = assign.depends-on.source-exp;
+    if (instance?(op, <primitive>) & op.primitive-name == #"values-sequence")
+      let vec = op.depends-on.source-exp;
+      if (instance?(vec, <ssa-variable>))
+	let vec-definer = vec.definer;
+	if (vec-definer.region == first)
+	  let vec-defn = vec-definer.depends-on.source-exp;
+	  if (instance?(vec-defn, <primitive>)
+		& vec-defn.primitive-name == #"canonicalize-results")
+	    let nfixed = vec-defn.depends-on.dependent-next.source-exp;
+	    if (instance?(nfixed, <literal-constant>)
+		  & nfixed.value.literal-value = 0)
+	      reoptimize(component, op);
+	    end if;
+	  end if;
+	end if;
+      end if;
+    end if;
+  end for;
 
   first;
 end;
@@ -712,7 +742,7 @@ define method insert-after
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-after(assign);
-  let new = combine-regions(before, insert, after);
+  let new = combine-regions(component, before, insert, after);
   new.parent := parent;
   replace-subregion(component, parent, region, new);
 end;
@@ -759,7 +789,7 @@ define method insert-before
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-before(assign);
-  let new = combine-regions(before, insert, after);
+  let new = combine-regions(component, before, insert, after);
   new.parent := parent;
   replace-subregion(component, parent, region, new);
 end;
@@ -795,7 +825,7 @@ define method insert-before
   // Note: the region.parent must be evaluated first because combine-regions
   // is allowed to dick with the parent links.
   replace-subregion(component, region.parent, region,
-		    combine-regions(insert, region));
+		    combine-regions(component, insert, region));
 end;
 
 define method insert-before
@@ -810,7 +840,7 @@ define method insert-before
   // Note: the region.parent must be evaluated first because combine-regions
   // is allowed to dick with the parent links.
   replace-subregion(component, region.parent, region,
-		    combine-regions(insert, region));
+		    combine-regions(component, insert, region));
 end;
 
 
@@ -875,7 +905,7 @@ define method replace-subregion
 	end;
 
     let parent = region.parent;
-    let combo = apply(combine-regions, regions);
+    let combo = apply(combine-regions, component, regions);
     replace-subregion(component, parent, region, combo);
   end;
 end;
@@ -952,7 +982,7 @@ define method extract-stuff-after
     //
     // Combine the stuff we clipped off with the stuff following this
     // region.
-    combine-regions(after,
+    combine-regions(component, after,
 		    extract-stuff-after(component, region.parent, region));
   end for;
 end method extract-stuff-after;
