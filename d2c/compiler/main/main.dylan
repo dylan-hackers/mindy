@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.32 1995/11/14 13:30:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.33 1995/11/14 15:14:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -141,8 +141,16 @@ define method compile-library (lid-file :: <byte-string>) => ();
   inherit-slots();
   format(*debug-output*, "inheriting overrides\n");
   inherit-overrides();
-  format(*debug-output*, "assigning unique ids\n");
-  assign-unique-ids();
+  begin
+    let unique-id-base = element(header, #"unique-id-base", default: #f);
+    format(*debug-output*, "assigning unique ids\n");
+    assign-unique-ids(if (unique-id-base)
+			string-to-integer(unique-id-base);
+		      else
+			0;
+		      end);
+    end;
+  end;
   format(*debug-output*, "seeding representations\n");
   seed-representations();
   format(*debug-output*, "assigning slot representations\n");
@@ -167,7 +175,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
 
 	for (tlf in tlfs)
 	  let name = format-to-string("%s", tlf);
-	  format(*debug-output*, "...Converting %s\n", name);
+	  format(*debug-output*, "...Compiling %s\n", name);
 	  let component = make(<fer-component>);
 	  let builder = make-builder(component);
 	  convert-top-level-form(builder, tlf);
@@ -188,9 +196,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
 		 make-function-literal(builder, ctv, #f, #"global", sig,
 				       init-function));
 	  end;
-	  format(*debug-output*, "...Optimizing %s\n", name);
 	  optimize-component(component);
-	  format(*debug-output*, "...Emitting %s\n", name);
 	  emit-tlf-gunk(tlf, output-info);
 	  emit-component(component, output-info);
 	end;
@@ -244,30 +250,15 @@ define method compile-library (lid-file :: <byte-string>) => ();
     end;
   end;
 
-  begin
-    format(*debug-output*, "Dumping library summary.\n");
-    let dump-buf
-      = begin-dumping(as(<symbol>, lib-name), $library-summary-unit-type);
-
-    for (tlfs in tlf-vectors)
-      for (tlf in tlfs)
-	dump-od(tlf, dump-buf);
-      end;
-    end;
-
-    let roots = as(<simple-object-vector>, unit-info.unit-info-init-roots);
-    dump-simple-object(#"here-be-roots", dump-buf, unit-prefix, roots);
-    here-be-roots(unit-prefix, roots);
-
-    end-dumping(dump-buf);
-  end;
-
   let executable = element(header, #"executable", default: #f);
   if (executable)
     begin
       format(*debug-output*, "Emitting Initial Heap.\n");
       let heap-stream 
 	= make(<file-stream>, name: "heap.s", direction: #"output");
+      here-be-roots(unit-prefix,
+		    as(<simple-object-vector>,
+		       unit-info.unit-info-init-roots));
       build-initial-heap(*roots*, heap-stream);
       close(heap-stream);
     end;
@@ -301,6 +292,24 @@ define method compile-library (lid-file :: <byte-string>) => ();
 	cerror("so what", "cc failed?");
       end;
     end;
+
+  else
+
+    format(*debug-output*, "Dumping library summary.\n");
+    let dump-buf
+      = begin-dumping(as(<symbol>, lib-name), $library-summary-unit-type);
+
+    for (tlfs in tlf-vectors)
+      for (tlf in tlfs)
+	dump-od(tlf, dump-buf);
+      end;
+    end;
+
+    dump-simple-object(#"here-be-roots", dump-buf, unit-prefix,
+		       as(<simple-object-vector>,
+			  unit-info.unit-info-init-roots));
+
+    end-dumping(dump-buf);
   end;
 
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
