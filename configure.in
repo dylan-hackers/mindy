@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.21 1997/05/10 05:08:44 ram Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.22 1997/05/19 14:03:33 ram Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -137,15 +137,24 @@ AC_SUBST(MC)
 # path.  If not found we must bootstrap.
 #--------------------------------------------------------------------
 
-AC_PATH_PROG(D2C, d2c, no, $PATH:$bindir:$prefix/bin)
 stage2=1
+
+AC_CHECK_PROG(D2C, d2c, d2c, no)
+
+if test "$D2C" = no; then
+    AC_PATH_PROG(D2C, d2c, no, $bindir:$prefix/bin)
+    if test "$D2C" != no; then
+        D2C="$D2C -p$sysconfdir/platforms.descr"
+    fi
+fi
+
 if test "$D2C" = no; then
     AC_MSG_WARN(d2c executable not found: configuring in bootstrap mode.)
     stage2=0
     D2C="$MINDY -f $builddir/d2c/compiler/main/d2c.dbc -p$srcdir/d2c/compiler/platforms.descr";
-elif test "$D2C" != d2c; then
-    D2C="$D2C -p$sysconfdir/platforms.descr";
 fi
+
+
 
 AC_SUBST(stage2)
 
@@ -569,4 +578,4 @@ AC_OUTPUT(Defaults \
 
 ${INSTALL} -m uog+rx $srcdir/tools/shared-misc/mk-build-tree ./
 ${INSTALL} -m uog+rx $srcdir/tools/shared-misc/gen-makefile ./
-(PATH=`pwd`:${PATH}; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
+(PATH=`pwd`:${PATH}; export PATH; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
