@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.25 1994/05/11 01:15:55 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.26 1994/05/19 22:37:13 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -50,10 +50,10 @@ define module Builtin-Stuff
     apply-curry, as, ash,
     broadcast-event,
     direct-subclasses, direct-superclasses,
-    ceiling/, copy-bytes, current-handler,
+    ceiling, ceiling/, copy-bytes, current-handler,
     do-next-method,
     element, element-setter, enable-error-system,
-    find-method, floor/, format, function-arguments,
+    find-method, floor, floor/, format, function-arguments,
     generic-function-methods, getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
     handler-type, head, head-setter,
@@ -64,10 +64,10 @@ define module Builtin-Stuff
     negative,
     object-class, object-hash,
     pair, prin1, print, putc, puts,
-    raw-exit, release-lock, remove-method, round/,
+    raw-exit, release-lock, remove-method, round, round/,
     signal-event, singleton, size, slot-initialized?, spawn-thread,
     sorted-applicable-methods, state-valid?, subtype?,
-    tail, tail-setter, truncate/,
+    tail, tail-setter, truncate, truncate/,
     union, fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
     values, vector,
@@ -112,10 +112,10 @@ define module Dylan
 	     aref, aref-setter, as, ash,
 	     backward-iteration-protocol,
 	     direct-subclasses, direct-superclasses,
-	     ceiling/,
+	     ceiling, ceiling/,
 	     do,
 	     element, element-setter, error,
-	     find-method, floor/, forward-iteration-protocol,
+	     find-method, floor, floor/, forward-iteration-protocol,
 	     function-arguments,
 	     generic-function-methods,
 	     head, head-setter,
@@ -125,10 +125,10 @@ define module Dylan
 	     negative, negative?,
 	     object-class, object-hash,
 	     pair,
-	     remove-method, round/,
+	     remove-method, round, round/,
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
 	     subtype?,
-	     tail, tail-setter, truncate/,
+	     tail, tail-setter, truncate, truncate/,
 	     union,
 	     values, vector);
   export
@@ -146,13 +146,13 @@ define module Dylan
     abort, abs, add, add!, add-new, add-new!, always, any?, as-lowercase,
     as-lowercase!, as-uppercase, as-uppercase!,
     break,
-    ceiling, cerror, check-type, choose, choose-by,
+    cerror, check-type, choose, choose-by,
     class-for-copy, complement, compose, concatenate, concatenate-as,
     condition-format-string, condition-format-arguments, conjoin,
     copy-sequence, curry,
     default-handler, denominator, dimensions, disjoin, do-handlers,
     empty?, even?, every?, expt,
-    fill!, find-key, first, first-setter, floor,
+    fill!, find-key, first, first-setter,
     gcd,
     identity, integral?, intersection,
     key-hash, key-sequence, key-test, key=,
@@ -165,10 +165,9 @@ define module Dylan
     remove!, remove-duplicates, remove-duplicates!, remove-key!,
     replace-elements!, replace-subsequence!, restart-query,
     return-allowed?, return-description, return-query, reverse, reverse!,
-    round,
     second, second-setter, shallow-copy, signal, size-setter, sort, sort!,
     subsequence-position,
-    third, third-setter, truncate, type-error-value,
+    third, third-setter, type-error-value,
     type-error-expected-type,
     zero?;
 end Dylan;
