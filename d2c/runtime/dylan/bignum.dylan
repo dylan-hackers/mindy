@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.10 1996/05/11 16:16:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.11 1996/05/12 00:17:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -541,7 +541,10 @@ define method \* (a :: <extended-integer>, b :: <extended-integer>)
     bignum-digit(res, index) := make-digit(0);
   end;
   local
-    method mult-and-add (a-digit, b-digit, res-index, carry)
+    method mult-and-add
+	(a-digit :: <digit>, b-digit :: <digit>, res-index :: <integer>,
+	 carry :: <digit>)
+	=> new-carry :: <digit>;
       let (low, high) = digit-multiply(a-digit, b-digit);
       let (low, carry) = digit-add(low, carry, $no-carry);
       let high = digit-add(high, make-digit(0), carry);
