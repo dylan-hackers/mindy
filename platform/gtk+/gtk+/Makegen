@@ -35,13 +35,15 @@ print "\t \$(GOBJECT_TOOL) $gtk_cflags $OTH_INC --exports \\\n";
 print "\t\t--module gdk-internal \\\n";
 print "\t\t--use Dylan --use Melange-support \\\n";
 print "\t\t--use glib --use gdk-extra \\\n";
-print "\t\t\gdk-1.2.defs > gdk-internal-module.dylan)\n";
+print "\t\t\gdk-1.2.defs > ,gdk-internal-module.dylan \\\n";
+print "\t && mv ,gdk-internal-module.dylan gdk-internal-module.dylan)\n";
 print "\n";
 print "\$(SRCDIR)/gdk-internal.dylan: \$(SRCDIR)/gdk-1.2.defs\n";
 print "\t(cd \$(SRCDIR); \\\n";
 print "\t \$(GOBJECT_TOOL) $gtk_cflags $OTH_INC \\\n";
 print "\t\t--module gdk-internal \\\n";
-print "\t\tgdk-1.2.defs > gdk-internal.dylan)\n";
+print "\t\tgdk-1.2.defs > ,gdk-internal.dylan \\\n";
+print "\t && mv ,gdk-internal.dylan gdk-internal.dylan)\n";
 print "\n";
 
 &emit_library_rule('gtk',
@@ -57,12 +59,14 @@ print "\t \$(GOBJECT_TOOL) $gtk_cflags --exports \\\n";
 print "\t\t--module gtk-internal \\\n";
 print "\t\t--use Dylan --use Melange-support \\\n";
 print "\t\t--use glib --use gdk --use gtk-extra \\\n";
-print "\t\t\gtk-1.2.defs > gtk-internal-module.dylan)\n";
+print "\t\t\gtk-1.2.defs > ,gtk-internal-module.dylan \\\n";
+print "\t && mv ,gtk-internal-module.dylan gtk-internal-module.dylan)\n";
 print "\n";
 print "\$(SRCDIR)/gtk-internal.dylan: \$(SRCDIR)/gtk-1.2.defs\n";
 print "\t(cd \$(SRCDIR); \\\n";
 print "\t \$(GOBJECT_TOOL) $gtk_cflags $OTH_INC \\\n";
 print "\t\t--module gtk-internal \\\n";
-print "\t\tgtk-1.2.defs > gtk-internal.dylan)\n";
+print "\t\tgtk-1.2.defs > ,gtk-internal.dylan \\\n";
+print "\t && mv ,gtk-internal.dylan gtk-internal.dylan)\n";
 print "\n";
 
