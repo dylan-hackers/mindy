@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.10 1994/11/03 23:51:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.11 1995/01/10 16:12:40 wlott Exp $
 
 //======================================================================
 //
@@ -75,7 +75,7 @@ define method make(cls == <simple-stretchy-vector>,
 			finally data-size;
 			end for;
 		      otherwise =>
-			ceiling(size + 1024, 1024) * 1024;
+			ceiling/(size + 1024, 1024) * 1024;
 		    end case;
     let data = make(<simple-object-vector>, size: data-size);
     fill!(data, fill, end: data-size);
@@ -99,7 +99,7 @@ define method size-setter(new :: <fixed-integer>, ssv :: <simple-stretchy-vector
 		      finally new-len;
 		      end for;
 		    else 
-		      ceiling(new + 1024, 1024) * 1024;
+		      ceiling/(new + 1024, 1024) * 1024;
 		    end if;
       let new-data = make(<simple-object-vector>, size: new-len);
       for (index from 0 below fill)
