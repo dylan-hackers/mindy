@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.20 1995/04/28 09:05:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.21 1995/04/28 15:40:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -383,8 +383,6 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 	format(stream, " /* %s */", varinfo.debug-name);
       end;
     end;
-  else
-    write("void", stream);
   end;
   write(')', stream);
 
@@ -493,8 +491,12 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     let stream = make(<byte-string-output-stream>);
     if (~result.dependent-next)
       let var = result.source-exp;
-      let rep = variable-representation(var, output-info);
-      format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
+      if (instance?(var.var-info, <values-cluster-info>))
+	write("return sp;\n", stream);
+      else
+	let rep = variable-representation(var, output-info);
+	format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
+      end;
     else
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
@@ -817,9 +819,10 @@ define method emit-assignment
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "%s %s;\n",
 	   $cluster-rep.representation-c-type, temp);
-    format(stream, "%s = sp;\nsp = %s;\n", temp, call);
+    format(output-info.output-info-guts-stream, "%s = sp;\nsp = %s;\n",
+	   temp, call);
     if (instance?(results.var-info, <values-cluster-info>))
-      deliver-single-result(results, temp, $cluster-rep, output-info);
+      deliver-single-result(results, temp, $cluster-rep, output-info, #f);
     else
       deliver-cluster(results, temp, func.result-type, output-info);
     end;
