@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.6 1995/06/09 16:16:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.7 1995/06/14 10:55:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -153,8 +153,12 @@ define-primitive-emitter
      let (args, nfixed, nargs)
        = extract-operands(operation, output-info,
 			  *ptr-rep*, *long-rep*, *long-rep*);
+     let cur-top = cluster-names(output-info.output-info-cur-stack-depth);
+     let mra-defn = dylan-defn(#"make-rest-arg");
+     let mra-info = find-main-entry-info(mra-defn, output-info);
      let expr
-       = format-to-string("make_rest_arg((descriptor_t *)%s + %s, %s - %s)",
+       = format-to-string("%s(%s, (descriptor_t *)%s + %s, %s - %s)",
+			  main-entry-name(mra-info, output-info), cur-top,
 			  args, nfixed, nargs, nfixed);
      deliver-result(defines, expr, $heap-rep, #t, output-info);
    end);
@@ -197,9 +201,14 @@ define-primitive-emitter
        results[index] := pair(format-to-string("%s[%d]", bottom-name, index),
 			      $general-rep);
      end;
-     results[nfixed] := pair(format-to-string("make_rest_arg(%s + %d, %s)",
-					      bottom-name, nfixed, top-name),
-			     $heap-rep);
+     let mra-defn = dylan-defn(#"make-rest-arg");
+     let mra-info = find-main-entry-info(mra-defn, output-info);
+     results[nfixed]
+       := pair(format-to-string("%s(%s, %s + %d, %s - %s - %d)",
+				main-entry-name(mra-info, output-info),
+				bottom-name, nfixed,
+				top-name, bottom-name, nfixed),
+	       $heap-rep);
      deliver-results(defines, results, #t, output-info);
    end);
 
