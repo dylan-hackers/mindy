@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.35 1995/02/14 02:32:47 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.36 1995/02/24 01:33:58 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1224,6 +1224,8 @@ void init_defined_class(obj_t class, obj_t slots,
     if (object_class(class) != obj_DefinedClassClass) {
 	if (slots != obj_Nil)
 	    error("Cannot add slots to %= classes", object_class(class));
+	if (initargs != obj_Nil)
+	    error("Initialization args not supported for class %=.", class);
 	if (object_class(class) == obj_StaticTypeClass)
 	    /* Statically typed pointers have special requirements.  This
 	       isn't the best place for this, but it must be done after all
@@ -1238,13 +1240,8 @@ void init_defined_class(obj_t class, obj_t slots,
 		    continue;
 
 		if (object_class(super) == obj_DefinedClassClass) {
-		    if (DC(super)->all_slots == obj_False) {
-			printf("Hi mom!\n");
-			inherit_slots(super, super);
-			if (DC(super)->all_slots == obj_False)
-			    printf("Screwed again!\n");
-		    }
-		    if (DC(super)->all_slots != obj_Nil)
+		    if (DC(super)->all_slots != obj_Nil
+			| DC(super)->all_initargs != obj_Nil)
 			error("Can't mix normal class %= with "
 			      "statically typed pointer classes in %=",
 			      super, class);
@@ -1253,6 +1250,8 @@ void init_defined_class(obj_t class, obj_t slots,
 			  "statically typed pointer classes in %=",
 			  super, class);
 	    }
+	if (inheriteds != obj_Nil)
+	    error("Inherited slots are not accepted for class %=.", class);
 	do_initialization(class, obj_Nil, obj_Nil);
     }
 
