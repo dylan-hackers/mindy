@@ -44,8 +44,7 @@ define module duim-utilities
     <lock>, <simple-lock>, with-lock,
     <thread>, atomic-increment!, current-thread,
     <notification>, wait-for, release-all,
-    put-property!, get-property, remove-property!,
-    true?;
+    put-property!, get-property, \remove-property!;
   // format, for format-to-string
   use format, export: all;
 
