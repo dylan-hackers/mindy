@@ -205,7 +205,7 @@ define function test-c-parser(args)
     format(*standard-output*, "Ignoring recursively included files.\n");
     format(*standard-output*, "Contents of top-level file:\n");
     for (decl in c-file.c-file-declarations)
-      format(*standard-output*, "  %s\n", decl);
+      format(*standard-output*, "  %s\n", format-c-declaration(decl));
       force-output(*standard-output*);
     end;
 
@@ -222,6 +222,7 @@ end function test-c-parser;
 //=========================================================================
 
 define method main(appname, #rest args)
+  *warning-output* := *standard-output*;
   test-c-types-and-declarations();
   test-c-parser(args);
 end;

@@ -89,6 +89,7 @@ end class <parse-state>;
 define class <parse-file-state> (<parse-state>) 
   // Declarations is an ordered list of all declarations made withing a single
   // ".h" file.
+  // XXX - less useful without Melange's declaration-closure function. Fix.
   slot declarations :: <deque> = make(<deque>);
   slot current-file :: <string> = "<top-level>";
   slot recursive-files-stack :: <deque> = make(<deque>);
@@ -96,6 +97,8 @@ define class <parse-file-state> (<parse-state>)
   slot recursive-include-table :: <table> = make(<string-table>);
   // maps a filename into a sequence of declarations from that file
   slot recursive-declaration-table :: <table> = make(<string-table>);
+  // XXX - this is temporary
+  slot hackish-output-list :: <c-file> = make(<c-file>);
 end class;
 
 define method initialize (value :: <parse-file-state>, #key)
@@ -499,6 +502,7 @@ define method add-declaration
     (state :: <parse-file-state>, declaration :: <c-declaration>)
  => (declaration :: <c-declaration>);
   push-last(state.declarations, declaration);
+  add-c-declaration!(state.hackish-output-list, declaration);
   declaration;
 end method add-declaration;
 
@@ -516,21 +520,14 @@ end method add-declaration;
 define function parse-c-file
     (repository :: <c-type-repository>, filename :: <byte-string>)
  => (c-file :: <c-file>)
-  // use lookup-object to find header
-  // make a <c-file> object
-
-  // let tokenizer = make(<tokenizer>, name: header-filename);
-
-//  let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
-//  parse-state.verbose := #t;
-
-//  parse-loop(parse-state);
-//  if (tokenizer.cpp-decls)
-//    do(curry(add-cpp-declaration, parse-state), tokenizer.cpp-decls)
-//  end if;
-//  parse-state;
-
-  make(<c-file>, name: filename);
+  // XXX - We ignore typedefs and structs already in the repository.
+  // We should probably either (1) honor them or (2) create and return
+  // a repository.
+  // XXX - We need to accept a parameter which knows about sizeof and
+  // the header search path.
+  *show-parse-progress?* := #t;
+  let state = parse(repository, list(filename), verbose: #t);
+  state.hackish-output-list;
 end function;
 
 
