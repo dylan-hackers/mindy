@@ -1,11 +1,11 @@
-module:   do-replacement
+module:   %do-replacement
 author:   Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: This implements search and replace facilities, which is 
           given a wrapper and called from both regular-expressions
           and substring-search.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replacement.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replacement.dylan,v 1.2 1996/08/10 20:29:00 nkramer Exp $
 
 //======================================================================
 //
