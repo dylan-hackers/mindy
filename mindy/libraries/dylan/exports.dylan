@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.22 1994/04/30 15:02:31 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.23 1994/04/30 15:19:36 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -52,7 +52,7 @@ define module Builtin-Stuff
     direct-subclasses, direct-superclasses,
     ceiling/, copy-bytes, current-handler,
     do-next-method,
-    element, element-setter, enable-error-system, exit,
+    element, element-setter, enable-error-system,
     find-method, floor/, format, function-arguments,
     generic-function-methods, getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
@@ -79,7 +79,7 @@ define module Builtin-Stuff
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
     debugger-return, debugger-eval,
-    on-exit;
+    on-exit, exit;
 end Builtin-Stuff;
 
 define module Dylan
