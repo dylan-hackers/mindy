@@ -322,3 +322,8 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
 	   end);
 end;
 
+define method dump (hairy-method :: <hairy-method-literal>,
+		    stream :: <stream>)
+    => ();
+  format(stream, "HAIRY-METHOD [%d]", hairy-method.id);
+end;
