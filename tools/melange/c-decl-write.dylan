@@ -81,7 +81,7 @@ define generic c-accessor
 //
 define method import-value (decl :: <declaration>, var :: <string>)
  => (result :: <string>);
-  if (decl.mapped-name ~= decl.type-name)
+  if (mapped-name(decl, explicit-only?: #t))
     format-to-string("import-value(%s, %s)", decl.mapped-name, var);
   else
     var;
@@ -93,7 +93,7 @@ end method import-value;
 //
 define method export-value (decl :: <declaration>, var :: <string>)
  => (result :: <string>);
-  if (decl.mapped-name ~= decl.type-name)
+  if (mapped-name(decl, explicit-only?: #t))
     format-to-string("export-value(%s, %s)", decl.type-name, var);
   else
     var;
