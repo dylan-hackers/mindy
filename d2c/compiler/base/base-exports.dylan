@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.36 2002/03/24 19:57:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.37 2002/05/08 14:40:34 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -857,9 +857,9 @@ define module flow
 
     dependents-setter, derived-type-setter, guessed-type-setter,
     source-exp-setter, source-next-setter, dependent-setter,
-    dependent-next-setter, var-info-setter, asserted-type-setter,
+    dependent-next-setter,
     definer-setter, definer-next-setter, needs-type-check?-setter,
-    queue-next-setter, definition-of-setter, definitions-setter,
+    queue-next-setter, definitions-setter,
     defines-setter, region-setter, next-op-setter, depends-on-setter,
     prev-op-setter;
 
