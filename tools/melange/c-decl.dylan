@@ -691,7 +691,8 @@ define method pointer-to
 	  <pointer-declaration>,
 	  <enum-declaration>,
 	  <predefined-type-declaration> =>
-	    make(<pointer-declaration>, name: anonymous-name(),
+	    make(<pointer-declaration>, 
+                 name: concatenate(target-type.simple-name, "*"),
 		 referent: target-type);
 	  otherwise =>
 	    // Pointers to struct types are the same as the types themselves.
