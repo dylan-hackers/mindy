@@ -73,8 +73,8 @@ define module int-lexer
     <define-token>, <interface-token>, <end-token>, <include-token>,
     <object-file-token>, <define-macro-token>, <undefine-token>,
     <name-mapper-token>, <import-token>, <prefix-token>, <exclude-token>,
-    <rename-token>, <mapping-token>, <equate-token>, <all-token>,
-    <function-token>, <map-result-token>, <equate-result-token>,
+    <rename-token>, <mapping-token>, <equate-token>, <superclass-token>,
+    <all-token>, <function-token>, <map-result-token>, <equate-result-token>,
     <ignore-result-token>, <map-argument-token>, <equate-argument-token>,
     <input-argument-token>, <output-argument-token>,
     <input-output-argument-token>, <struct-token>, <union-token>,
@@ -287,6 +287,7 @@ define class <exclude-token> (<reserved-word-token>) end class;
 define class <rename-token> (<reserved-word-token>) end class;
 define class <mapping-token> (<reserved-word-token>) end class;
 define class <equate-token> (<reserved-word-token>) end class;
+define class <superclass-token> (<reserved-word-token>) end class;
 define class <all-token> (<reserved-word-token>) end class;
 define class <function-token> (<reserved-word-token>) end class;
 define class <map-result-token> (<reserved-word-token>) end class;
@@ -372,6 +373,7 @@ define constant reserved-words
 	   "rename:", <rename-token>,
 	   "map:", <mapping-token>,
 	   "equate:", <equate-token>,
+	   "superclasses:", <superclass-token>,
 	   "all", <all-token>,
            "function", <function-token>,
            "map-result:", <map-result-token>,
@@ -408,7 +410,7 @@ define constant reserved-words
 // above
 //
 define constant reserved-word-table =
-  make(<object-table>, buckets: truncate/(reserved-words.size, 2));
+  make(<object-table>, size: truncate/(reserved-words.size, 2));
 
 // Do the actual initialization of reserved-word-table at load time.
 //
