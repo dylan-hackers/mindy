@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.15 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.16 1995/05/12 13:23:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -266,9 +266,7 @@ define macro method-definer
       => { define ?modifiers %%method ?name ?noise end }
   modifiers:
     { } => { }
-    { open ... } => { open ... }
-    { sealed ... } => { sealed ... }
-    { inline ... } => { inline ... }
+    { ?name ... } => { ?name ... }
 end;
 
 define macro variable-definer
@@ -375,14 +373,10 @@ end;
 
 // Functions that need to be defined.
 
-define open generic apply (function, #rest args);
-define open generic values (#rest values);
 define open generic %make-method
     (specializers :: <list>, result-types :: <list>,
      rest-result-type :: <type>, entry :: <method>)
     => res :: <method>;
-define open generic list (#rest things) => res :: <list>;
-define open generic vector (#rest things) => res :: <simple-object-vector>;
 define open generic %make-gf () => res :: <generic-function>;
 define open generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
@@ -401,12 +395,22 @@ define open generic %closure-ref
 define open generic %make-next-method-cookie
     (next-method-info :: <list>, #rest original-args)
     => res :: union(<false>, <function>);
+define open generic as (class :: <class>, thing :: <object>)
+    => result :: <object>;
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;
 
 
 // Methods that are nice to have by default.
+
+define inline method vector (#rest things) => res :: <simple-object-vector>;
+  things;
+end;
+
+define movable method list (#rest things) => res :: <list>;
+  as(<list>, things);
+end;
 
 define inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <boolean>;
@@ -428,3 +432,31 @@ define inline method \- (x :: <fixed-integer>, y :: <fixed-integer>)
   %%primitive fixnum-- (x, y);
 end;
 
+
+
+// Extra dreck.
+
+define generic values-sequence (sequence :: <sequence>);
+
+define inline method values-sequence (sequence :: <sequence>)
+  values-sequence(as(<simple-object-vector>, sequence));
+end;
+
+define inline method values-sequence
+    (vector :: <simple-object-vector>)
+  %%primitive values-sequence (vector);
+end;
+
+
+define generic values (#rest values);
+
+define inline method values (#rest values)
+  %%primitive values-sequence (values);
+end;
+
+
+define generic apply (function :: <function>, #rest arguments);
+
+define method apply (function :: <function>, #rest arguments)
+  error("Apply wasn't inlined?");
+end;
