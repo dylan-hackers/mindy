@@ -1,7 +1,9 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.44 1995/11/16 17:12:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.45 1995/12/16 04:14:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+%%primitive break ();
 
 
 // Statement macros.
@@ -377,18 +379,17 @@ define abstract open class <mutable-sequence>
 end;
 define abstract open class <array> (<mutable-sequence>) end;
 define abstract open class <vector> (<array>) end;
-define class <builtin-vector> (<vector>) end;
 define abstract open class <string> (<mutable-sequence>) end;
-define class <simple-object-vector> (<builtin-vector>)
+define class <simple-object-vector> (<vector>)
   sealed slot %element, init-value: #f, init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
-define class <unicode-string> (<builtin-vector>, <string>)
+define class <unicode-string> (<vector>, <string>)
   sealed slot %element :: <character>,
     init-value: ' ', init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
-define class <byte-string> (<builtin-vector>, <string>)
+define class <byte-string> (<vector>, <string>)
   sealed slot %element :: <byte-character>,
     init-value: ' ', init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
@@ -476,6 +477,11 @@ define open generic pop-handler () => ();
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;
+
+define open generic verify-keywords
+    (keyword-value-arguments :: <simple-object-vector>,
+     valid-keywords :: type-union(singleton(#"all"), <simple-object-vector>))
+    => ();
 
 
 // Internal errors.
