@@ -682,7 +682,7 @@ define method try-cpp
 	    state.cpp-stack := pair(#"accept", state.cpp-stack);
 	  else
 	    do-skip(state.position,
-		    state.cpp-stack := pair(#"skip", state.cpp-stack));
+		    state.cpp-stack := pair(#"retry", state.cpp-stack));
 	  end if;
 	"if" =>
 	  let stack = state.cpp-stack;
