@@ -1,6 +1,6 @@
 module: synopsis
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.2 1997/01/16 16:12:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.3 1997/02/13 13:06:35 nkramer Exp $
 
 //======================================================================
 //
@@ -53,9 +53,22 @@ define variable *file* :: <string> = "";
 //
 define function find-end-of-comment (start-pos :: <integer>) 
  => comment-end :: <integer>;
-  let (ignored, end-of-comment) 
-    = regexp-position(*file*, "^(/" "/[^\r\n]*\r?\n)*", start: start-pos);
-  end-of-comment;
+  // We use an explicit loop here instead of just putting a "*" at the
+  // end of the regular expression, because if we use a "*", the
+  // regexp library will blow out the stack when it matches long
+  // comments.  (And "long" isn't all that long -- about 20 lines)
+  local 
+    method repeat (pos :: <integer>) => next-pos :: <integer>;
+      let (found?, next-pos) 
+	= regexp-position(*file*, "^/" "/[^\r\n]*\r?\n", start: pos);
+      if (found?)
+	repeat(next-pos);
+      else
+	pos;
+      end if;
+    end method repeat;
+
+  repeat(start-pos);
 end function find-end-of-comment;
 
 // maybe-print -- internal
@@ -376,33 +389,25 @@ end function process-file;
 define method main (ignored, #rest cmd-line-args) => ();
   let show-non-exported = #t;
   let filenames = make(<stretchy-vector>);
-  let output-name = #f;
   for (arg in cmd-line-args)
     if (arg = "-exported")
       show-non-exported := #f;
-    elseif (output-name == #f)
-      output-name := arg;
     else
       add!(filenames, arg);
     end if;
   end for;
 
-  if (output-name == #f | filenames.empty?)
+  if (filenames.empty?)
     write(*standard-error*, 
 	  "Usage:\n"
-	    "  synopsis [-exported] output-file input1 [input2...]\n\n"
+	    "  synopsis [-exported] input1 [input2...]\n\n"
 	    "where -exported means show only definitions that are exported,\n"
 	    "and - as an output-file means to use standard output.\n");
+    force-output(*standard-error*);
     exit(exit-code: 1);
   end if;
 
-  let out-stream
-    = if (output-name = "-") 
-	*standard-output*;
-      else
-	make(<file-stream>, locator: output-name, direction: #"output");
-      end if;
-
+  let out-stream = *standard-output*;
   for (filename in filenames)
     let stream = make(<file-stream>, locator: filename);
 
@@ -414,7 +419,6 @@ define method main (ignored, #rest cmd-line-args) => ();
     process-file(out-stream, show-non-exported);
   end for;
   force-output(out-stream);
-  close(out-stream);
 end method main;
 
 #if (~mindy)
