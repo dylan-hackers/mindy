@@ -250,8 +250,12 @@ define module new-streams
     // Conditions.
     //
     <end-of-stream-error>,
+    end-of-stream-stream,
     <incomplete-read-error>,
+    incomplete-read-sequence,
+    incomplete-read-count,
     <file-error>,
+    file-locator,
     <file-exists-error>,
     <file-does-not-exist-error>,
     <invalid-file-permissions-error>,
