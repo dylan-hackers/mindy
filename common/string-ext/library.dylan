@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.5 1996/08/10 20:28:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.6 1996/10/18 14:59:13 nkramer Exp $
 
 //======================================================================
 //
@@ -51,7 +51,7 @@ define module character-type
   use extensions;
   use %Hash-Tables, export: {uppercase?};
   export
-    alpha?, digit?, alphanumeric?, whitespace?,
+    alpha?, alphabetic?, digit?, alphanumeric?, whitespace?,
     lowercase?, hex-digit?, graphic?, printable?,
     punctuation?, control?, byte-character?;
 end module character-type;
