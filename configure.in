@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.11 1998/08/27 19:56:10 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.12 1998/09/05 22:52:36 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -174,10 +174,22 @@ AC_SUBST(MC)
 
 AC_CHECK_TOOL(D2C, d2c, no)
 
+D2C=`which d2c`
+
+AC_MSG_CHECKING(how to call d2c)
 if test "$D2C" != no; then
-#    D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
-    D2C="$D2C -p$sysconfdir/platforms.descr"
+    D2C_BASE=`echo "$D2C" | sed 's/\/bin\/d2c//'`
+    if test -f $D2C_BASE/etc/platforms.descr; then
+        D2C="$D2C -p$D2C_BASE/etc/platforms.descr"
+    else
+        if test -f $sysconfdir/platforms.descr; then
+            D2C="$D2C -p$sysconfdir/platforms.descr"
+        else
+            D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
+        fi
+    fi
 fi
+AC_MSG_RESULT($D2C)
 
 #--------------------------------------------------------------------
 # Check to see if the user asked us not to build Mindy or d2c.
