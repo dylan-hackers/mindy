@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.6 2002/01/07 21:33:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.7 2002/03/04 21:48:13 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -278,12 +278,12 @@ define method build-executable (state :: <single-file-mode-state>) => ();
 
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
-  let objects = format-to-string("%s.o %s", state.unit-name, unit-libs);
+  let objects = format-to-string("%s%s %s", state.unit-name, state.unit-target.object-filename-suffix, unit-libs);
 
   let compile-string
     = substring-replace(format-to-string(state.unit-target.compile-c-command,
                                          concatenate(state.unit-name, ".c"),
-                                         concatenate(state.unit-name, ".o")),
+                                         concatenate(state.unit-name, state.unit-target.object-filename-suffix)),
                         "$(CCFLAGS)", cc-flags);
 
   close(state.unit-stream);
@@ -293,12 +293,19 @@ define method build-executable (state :: <single-file-mode-state>) => ();
     cerror("so what", "gcc failed?");
   end if;
 
+  let exec-name = concatenate(state.unit-name, state.unit-target.executable-filename-suffix);
+
+  let link-string-intermediate
+    = format-to-string(state.unit-target.link-executable-command,
+                       exec-name,
+                       concatenate(objects, dash-small-ells," "),
+                       linker-args);
+#if ( libtool )
   let link-string
-    = substring-replace(format-to-string(state.unit-target.link-executable-command,
-                                         state.unit-name,
-                                         concatenate(objects, dash-small-ells," "),
-                                         linker-args),
-                        "$(LIBTOOL)", libtool);
+    = substring-replace(link-string-intermediate, "$(LIBTOOL)", libtool);
+#else
+  let link-string = link-string-intermediate;
+#endif
 
   if (system(link-string) ~== 0)
     cerror("so what", "gcc failed?");
