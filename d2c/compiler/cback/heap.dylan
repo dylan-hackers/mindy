@@ -372,7 +372,7 @@ define method spew-object
     (object :: <defined-cclass>, state :: <state>) => ();
   let defn = object.class-defn;
   spew-instance(specifier-type(#"<class>"), state,
-		debug-name:
+		class-name:
 		  make(<literal-symbol>,
 		       value: object.cclass-name.name-symbol),
 		unique-id:
@@ -500,6 +500,8 @@ define method spew-function
   let positionals = returns.positional-types;
   let min-values = returns.min-values;
   apply(spew-instance, func.ct-value-cclass, state,
+	function-name:
+	  make(<literal-string>, value: func.ct-function-name),
 	function-specializers:
 	  make(<literal-simple-object-vector>,
 	       contents: sig.specializers,
@@ -614,10 +616,10 @@ define method find-init-value
 	end;
       end;
     end;
-    let object-type = specifier-type(#"<object>");
+    let object-type = object-ctype();
     for (override in slot.slot-overrides)
       let intro = override.override-introduced-by;
-      if (intro = object-type | csubtype?(class, intro))
+      if (intro == object-type | csubtype?(class, intro))
 	if (override.override-init-value == #t
 	      | override.override-init-function)
 	  compiler-warning("Init value for %s in %= not set up.",
