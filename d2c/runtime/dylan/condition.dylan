@@ -2,6 +2,11 @@ module: dylan
 
 define method check-type
     (object :: <object>, type :: <type>) => object :: <object>;
+  %check-type(object, type);
+end;
+
+define inline method %check-type
+    (object :: <object>, type :: <type>) => object :: <object>;
   if (instance?(object, type))
     object;
   else
