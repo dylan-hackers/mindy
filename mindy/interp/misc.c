@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.2 1994/03/27 02:07:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.3 1994/03/30 12:13:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -76,6 +76,30 @@ static void dylan_apply(struct thread *thread, int nargs)
     invoke(thread, dst - args);
 }
 
+static void dylan_apply_curry(struct thread *thread, int nargs)
+{
+    obj_t *args = thread->sp - 3;
+    obj_t func = args[0];
+    obj_t vec1 = args[1];
+    obj_t vec2 = args[2];
+    int len1 = SOVEC(vec1)->length;
+    int len2 = SOVEC(vec2)->length;
+    int i;
+
+    assert(nargs == 3);
+
+    args[-1] = func;
+
+    for (i = 0; i < len1; i++)
+	*args++ = SOVEC(vec1)->contents[i];
+    for (i = 0; i < len2; i++)
+	*args++ = SOVEC(vec2)->contents[i];
+
+    thread->sp = args;
+
+    invoke(thread, len1+len2);
+}
+
 
 /* Invoking the debugger. */
 
@@ -113,4 +137,8 @@ void init_misc_functions(void)
     generic_apply_var = find_variable(module_BuiltinStuff,
 				      symbol("generic-apply"),
 				      FALSE, TRUE);
+    define_constant("apply-curry",
+		    make_raw_function("apply-curry", 3, FALSE, obj_False,
+				      obj_Nil, obj_ObjectClass,
+				      dylan_apply_curry));
 }
