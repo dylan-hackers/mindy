@@ -6,6 +6,7 @@ define library ansi-c-test
   use format;
   use standard-io;
   use parse-arguments;
+  use melange-support;
 
   use parser-utilities;
   use ansi-c;
@@ -19,6 +20,7 @@ define module ansi-c-test
   use format;
   use standard-io;
   use parse-arguments;
+  use melange-support, import: {call-out};
 
   use parse-conditions;
   use ansi-c;

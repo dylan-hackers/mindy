@@ -237,7 +237,18 @@ end function test-c-parser;
 //=========================================================================
 
 // Set up our I/O.
-*warning-output* := *standard-error*;
+define class <better-debugger> (<debugger>)
+end class <better-debugger>;
+define method invoke-debugger
+    (debugger :: <better-debugger>, condition :: <condition>)
+ => res :: <never-returns>;
+  //fresh-line(*warning-output*);
+  condition-format(*warning-output*, "%s\n", condition);
+  force-output(*warning-output*);
+  call-out("abort", void:);
+end method invoke-debugger;
+*debugger* := make(<better-debugger>);
+*warning-output* := *standard-output*;
 *show-parse-progress?* := #t;
 
 define method main(appname, #rest args)
