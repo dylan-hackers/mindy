@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.113 1996/01/05 11:32:14 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.114 1996/01/09 16:39:37 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2587,22 +2587,28 @@ define method cleanup-control-flow-aux
   let else-terminating-exit
     = cleanup-control-flow-aux(component, region.else-region);
   if (then-terminating-exit & else-terminating-exit)
-    for (then-target-ancestor = then-terminating-exit.block-of
-	   then then-target-ancestor.parent,
-	 else-target-ancestor = else-terminating-exit.block-of
-	   then else-target-ancestor.parent,
-	 while: then-target-ancestor & else-target-ancestor)
-    finally
-      if (then-target-ancestor == #f)
-	else-terminating-exit;
-      else
-	then-terminating-exit;
-      end;
-    end;
+    if (then-terminating-exit == #t)
+      else-terminating-exit;
+    elseif (else-terminating-exit == #t)
+      then-terminating-exit;
+    else
+      for (then-target-ancestor = then-terminating-exit.block-of
+	     then then-target-ancestor.parent,
+	   else-target-ancestor = else-terminating-exit.block-of
+	     then else-target-ancestor.parent,
+	   while: then-target-ancestor & else-target-ancestor)
+      finally
+	if (then-target-ancestor == #f)
+	  else-terminating-exit;
+	else
+	  then-terminating-exit;
+	end if;
+      end for;
+    end if;
   else
     #f;
-  end;
-end;
+  end if;
+end method cleanup-control-flow-aux;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <loop-region>)
