@@ -2,8 +2,9 @@ GNUmakefile
 craps-init.c
 craps.c
 craps-exports.c
-heap.s
-craps-heap.s
+heap.c
+craps-heap.c
 inits.c
 cc-craps-files.mak
 craps
+.libs

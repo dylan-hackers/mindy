@@ -4,7 +4,8 @@ cc-mkexports-files.mak
 library.c
 mkexports-init.c
 make-exports.c
-heap.s
+heap.c
 inits.c
-mkexports-heap.s
+mkexports-heap.c
 make-exports
+.libs

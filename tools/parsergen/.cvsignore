@@ -3,11 +3,12 @@ parsergen-init.c
 library.c
 lisp-read.c
 parsergen.c
-heap.s
+heap.c
 inits.c
-parsergen-heap.s
+parsergen-heap.c
 cc-parsergen-files.mak
 parsergen
 .cvsignore
 cc-parsergen-files.mak-temp
 parsergen.c-temp
+.libs

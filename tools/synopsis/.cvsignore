@@ -4,6 +4,7 @@ library.c
 synopsis
 synopsis-init.c
 synopsis.c
-heap.s
+heap.c
 inits.c
-synopsis-heap.s
+synopsis-heap.c
+.libs

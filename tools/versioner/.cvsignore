@@ -1,9 +1,10 @@
 cc-ver-files.mak
 GNUmakefile
 exports.c
-heap.s
+heap.c
 versioner.c
 ver-init.c
-ver-heap.s
+ver-heap.c
 inits.c
 versioner
+.libs

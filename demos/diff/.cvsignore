@@ -3,7 +3,8 @@ diff-init.c
 diff.c
 diff
 diff-exports.c
-heap.s
-diff-heap.s
+heap.c
+diff-heap.c
 inits.c
 cc-diff-files.mak
+.libs

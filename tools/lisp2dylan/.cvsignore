@@ -3,7 +3,9 @@ cc-lisp2dylan-files.mak
 library.c
 lisp2dylan-init.c
 lisp2dylan.c
-heap.s
+heap.c
 inits.c
-lisp2dylan-heap.s
+lisp2dylan-heap.c
 lisp2dylan
+.libs
+

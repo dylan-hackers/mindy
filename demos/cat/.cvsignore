@@ -3,7 +3,8 @@ cat-init.c
 cat.c
 cat
 cat-exports.c
-heap.s
-cat-heap.s
+heap.c
+cat-heap.c
 inits.c
 cc-cat-files.mak
+.libs
