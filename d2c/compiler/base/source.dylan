@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.8 2003/02/16 15:55:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.9 2003/03/01 13:37:04 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -415,7 +415,12 @@ end method describe-source-location;
 
 define method print-object (sl :: <source-location>, stream :: <stream>)
     => ();
-  describe-source-location(sl, stream);
+  block()
+    describe-source-location(sl, stream);
+  exception(e :: <condition>) // FIXME: this is a stopgag measure
+    report-condition(e, *debug-output*);
+    write(stream, "<buggy source location>");
+  end block;
 end;
 
 
