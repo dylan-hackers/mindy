@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.22 1996/02/17 21:26:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.23 1996/02/18 14:17:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -98,7 +98,8 @@ define module utils
     dformat, assert,
     <annotatable>, info, info-setter,
     key-of, list?, pair?,
-    symcat, stringify;
+    symcat, stringify,
+    log-target, log-dependency, spew-dependency-log;
 end;
 
 define module od-format

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.37 1996/02/16 03:43:40 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.38 1996/02/18 14:17:27 wlott Exp $
 
 /*
 
@@ -1116,6 +1116,7 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
 	                    $unit-type-strings[state.dump-type],
 			    ".du");
 
+  log-target(fname);
   let stream = make(<file-stream>, name: fname, direction: #"output");
 
   write-dump-buffer(header-buffer, stream);
@@ -1568,6 +1569,8 @@ define method load-data-unit
   unless (stream)
     error("Can't open object dump file %=", name-guess);
   end;
+
+  log-dependency(found-loc);
 
 //dformat("\nLoading %=\n", name-guess);
   let (buffer, initial-next, buf-end) = get-input-buffer(stream);

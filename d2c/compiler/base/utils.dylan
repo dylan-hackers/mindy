@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.22 1996/02/08 19:18:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.23 1996/02/18 14:17:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -400,4 +400,36 @@ define method append
     repeat(what);
   end if;
 end method append;
+
+
+// Dependency logging.
+
+define constant $targets = make(<stretchy-vector>);
+define constant $dependencies = make(<stretchy-vector>);
+
+define method log-target (target :: <byte-string>) => ();
+  add!($targets, target);
+end method log-target;
+
+define method log-dependency (dependency :: <byte-string>) => ();
+  add!($dependencies, dependency);
+end method log-dependency;
+
+define method spew-dependency-log (file :: <byte-string>) => ();
+  if ($targets.empty?)
+    error("No targets in spew-dependencies.");
+  end if;
+  let stream = make(<file-stream>, name: file, direction: #"output");
+  for (target in $targets, first? = #t then #f)
+    unless (first?)
+      write(' ', stream);
+    end unless;
+    write(target, stream);
+  end for;
+  write(':', stream);
+  for (dep in $dependencies)
+    format(stream, " \\\n\t%s", dep);
+  end for;
+  write('\n', stream);
+end method spew-dependency-log;
 
