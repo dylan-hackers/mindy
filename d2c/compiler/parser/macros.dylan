@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.2 1994/12/16 11:51:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.3 1994/12/17 02:21:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -373,7 +373,7 @@ define method find-body-variable-rule-sets
     again? := #f;
     for (rule-set in aux-rule-sets)
       for (rule in rule-set.rule-set-rules,
-	   until rule-set.rule-set-body-variable?)
+	   until: rule-set.rule-set-body-variable?)
 	let pieces = rule.rule-pattern.pattern-pieces;
 	unless (empty?(pieces))
 	  let pattern-list = pieces.last;
@@ -626,8 +626,8 @@ define method guess-extent-of (fragment :: <fragment>, type :: <type>)
   let tail = fragment.fragment-tail;
   for (prev = #f then piece,
        piece = fragment.fragment-head then piece.piece-next,
-       while (piece & piece.piece-prev ~= tail
-		& instance?(piece.piece-token, type)))
+       while: (piece & piece.piece-prev ~= tail
+		 & instance?(piece.piece-token, type)))
     if (instance?(piece, <balanced-piece>))
       piece := piece.piece-other;
     end;
@@ -648,10 +648,10 @@ define method find-intermediate-word
   let tail = fragment.fragment-tail;
   for (prev = #f then piece,
        piece = fragment.fragment-head then piece.piece-next,
-       while (piece & piece.piece-prev ~= tail
-		& ~(instance?(piece.piece-token, <word-token>)
-		      & member?(piece.piece-token.token-symbol,
-				intermediate-words))))
+       while: (piece & piece.piece-prev ~= tail
+		 & ~(instance?(piece.piece-token, <word-token>)
+		       & member?(piece.piece-token.token-symbol,
+				 intermediate-words))))
     if (instance?(piece, <balanced-piece>))
       piece := piece.piece-other;
     end;
@@ -1062,12 +1062,22 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
       if (pattern.patvar-wildcard?)
 	match-wildcard(pattern, fragment, fail, continue, results);
       elseif (fragment.more?)
-	continue(consume-token(fragment), fail,
-		 add-binding(pattern,
-			     make(<fragment>,
-				  head: fragment.fragment-head,
-				  tail: fragment.fragment-head),
-			     results));
+	let head = fragment.fragment-head;
+	if (instance?(head, <balanced-piece>))
+	  let tail = head.piece-other;
+	  continue(make(<fragment>,
+			head: tail.piece-next,
+			tail: fragment.fragment-tail),
+		   fail,
+		   add-binding(pattern,
+			       make(<fragment>, head: head, tail: tail),
+			       results));
+	else
+	  continue(consume-token(fragment), fail,
+		   add-binding(pattern,
+			       make(<fragment>, head: head, tail: head),
+			       results));
+	end;
       else
 	fail();
       end;
@@ -1109,7 +1119,10 @@ define method match-wildcard (pattern :: <pattern-variable>,
 			      fragment :: <fragment>, fail :: <function>,
 			      continue :: <function>, results :: <list>)
     => res :: union(<false>, <list>);
-  local method match-wildcard-aux (split)
+  local method match-wildcard-aux (split :: <piece>)
+	  if (instance?(split, <balanced-piece>))
+	    split := split.piece-other;
+	  end;
 	  let matched-fragment
 	    = make(<fragment>, head: fragment.fragment-head, tail: split);
 	  let remaining-fragment
@@ -1289,7 +1302,7 @@ define method expand-template-aux (piece :: <pattern-variable-reference>,
 	  method append-frag (frag :: <fragment>)
 	    let tail-piece = frag.fragment-tail;
 	    for (new-piece = frag.fragment-head then new-piece.piece-next,
-		 while (new-piece & new-piece.piece-prev ~= tail-piece))
+		 while: (new-piece & new-piece.piece-prev ~= tail-piece))
 	      postpend-piece(result,
 			     make(<piece>, token: new-piece.piece-token));
 	    end;
