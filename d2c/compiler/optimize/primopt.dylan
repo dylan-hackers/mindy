@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.4 1995/06/07 15:15:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.5 1995/06/07 22:52:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,56 +7,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
   let info = primitive.info;
-
-  let assign = primitive.dependents.dependent;
-  local
-    method assert-arg-types
-	(dep :: false-or(<dependency>), arg-types :: <list>) => ();
-      if (arg-types == #())
-	if (dep)
-	  error("Too many arguments to %%%%primitive %s", primitive.name);
-	end;
-      else
-	let arg-type = arg-types.head;
-	if (arg-type == #"rest")
-	  let arg-type = arg-types.tail.head;
-	  if (arg-type == #"cluster")
-	    for (dep = dep then dep.dependent-next,
-		 while: dep)
-	      let arg = dep.source-exp;
-	      unless (instance?(arg, <abstract-variable>)
-			& instance?(arg.var-info, <values-cluster-info>))
-		error("%%%%primitive %s expected a values cluster but got "
-			"a regular variable.");
-	      end;
-	    end;
-	  else
-	    for (dep = dep then dep.dependent-next,
-		 while: dep)
-	      assert-type(component, assign, dep, arg-type);
-	    end;
-	  end;
-	elseif (dep == #f)
-	  error("Not enough arguments to %%%%primitive %s", primitive.name);
-	else
-	  if (arg-type == #"cluster")
-	    let arg = dep.source-exp;
-	    unless (instance?(arg, <abstract-variable>)
-		      & instance?(arg.var-info, <values-cluster-info>))
-	      error("%%%%primitive %s expected a values cluster but got "
-		      "a regular variable.");
-	    end;
-	  else
-	    assert-type(component, assign, dep, arg-type);
-	  end;
-	  assert-arg-types(dep.dependent-next, arg-types.tail);
-	end;
-      end;
-    end;
-  assert-arg-types(primitive.depends-on, info.primitive-arg-types);
-
   maybe-restrict-type(component, primitive, info.primitive-result-type);
-
   let transformer = info.primitive-transformer;
   if (transformer)
     transformer(component, primitive);
