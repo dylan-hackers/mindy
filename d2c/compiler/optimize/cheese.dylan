@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.11 2001/10/14 18:56:48 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.12 2001/10/15 20:36:16 gabor Exp $
 copyright: see below
 
 
@@ -649,8 +649,7 @@ define method maybe-propagate-copy
 end method maybe-propagate-copy;
 
 
-/* next candidate for refactoring, see in fer-transform */
-define method maybe-expand-cluster
+define function maybe-expand-cluster
     (component :: <component>, cluster :: <abstract-variable>)
     => did-anything? :: <boolean>;
   if (fixed-number-of-values?(cluster.derived-type))
@@ -661,14 +660,23 @@ define method maybe-expand-cluster
       error("Trying to expand a cluster that is referenced "
 	      "in more than one place?");
     end;
-    expand-cluster(component, cluster, cluster.derived-type.min-values, #());
+    expand-cluster(component, cluster,
+		   cluster.derived-type.min-values,
+		   #());
     #t;
-  else
-    #f;
   end;
 end;
 
-define method expand-cluster 
+define function expand-cluster
+    (component :: <component>, cluster :: <abstract-variable>,
+     number-of-values :: <integer>, names :: <list>)
+    => ();
+  fer-expand-cluster
+    (component, cluster, number-of-values,
+     names, reoptimize);
+end;
+
+/* define method expand-cluster 
     (component :: <component>, cluster :: <ssa-variable>,
      number-of-values :: <integer>, names :: <list>)
     => ();
@@ -722,6 +730,7 @@ define method expand-cluster
   let assigns = map(definer, cluster.definitions);
   let new-defines = make(<list>, size: cluster.definitions.size, fill: #f);
   let new-depends-on = cluster-dependency.dependent-next;
+
   for (index from number-of-values - 1 to 0 by -1,
        names = names then names.tail)
     let debug-name = if (names == #())
@@ -760,6 +769,7 @@ define method expand-cluster
       target.depends-on := new-depends-on;
     end;
   end;
+
   for (assign in assigns)
     reoptimize(component, assign);
     let assign-source = assign.depends-on.source-exp;
@@ -768,7 +778,7 @@ define method expand-cluster
       reoptimize(component, assign-source);
     end;
   end;
-end;
+end; */
 
 
 // block/exit related optimizations.
@@ -1304,13 +1314,13 @@ end;
 
 // Cheesy type check stuff.
 
-define method add-type-checks (component :: <component>) => ();
+define function add-type-checks (component :: <component>) => ();
   for (function in component.all-function-regions)
-    add-type-checks-aux(component, function);
+    fer-add-type-checks(component, function, reoptimize);
   end;
 end;
 
-define method add-type-checks-aux
+/* define method add-type-checks-aux
     (component :: <component>, region :: <simple-region>) => ();
   let next-assign = #f;
   for (assign = region.first-assign then next-assign,
@@ -1387,7 +1397,7 @@ end;
 
 define method add-type-checks-aux
     (component :: <component>, region :: <exit>) => ();
-end;
+end; */
 
 
 
