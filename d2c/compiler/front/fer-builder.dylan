@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.37 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.38 1995/10/05 01:12:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -265,7 +265,7 @@ end method;
 
 define method build-exit
     (builder :: <internal-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <block-region>)
+     source :: <source-location>, target :: <block-region-mixin>)
  => ();
   ignore(policy);
   let res = make(<exit>, source-location: source,
@@ -278,7 +278,7 @@ end method;
 
 define method build-return
     (builder :: <internal-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <block-region>,
+     source :: <source-location>, target :: <function-region>,
      operands :: union(<list>, <leaf>))
  => ();
   ignore(policy);
