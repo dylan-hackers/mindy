@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.22 1995/05/01 11:49:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.23 1995/05/02 16:34:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -303,6 +303,8 @@ end class;
 // objects.
 //
 define class <lambda> (<method-literal>, <method-region>, <annotatable>)
+
+  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
 
   // List of lexical varibles for args.
   slot prologue :: <prologue>;
