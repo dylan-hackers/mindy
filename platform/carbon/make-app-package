@@ -12,6 +12,8 @@ EOD
 
 $appname = $ARGV[0];
 
+system "rm -r \"$appname.app\"";
+
 mkdir "$appname.app", 0777 or die "Can't create directory $appname.app: $!";
 chdir "$appname.app" or die "Can't chdir to directory $appname.app: $!";
 
