@@ -1172,7 +1172,7 @@ define method GetDataBrowserItemCount
   let recurse? :: <integer> = if(recurse) 1 else 0 end;
   let temp :: <Handle> = make(<Handle>);
   values(as(<OSStatus>, call-out("GetDataBrowserItemCount", int:, ptr: browser.raw-value, 
-      int: container, int: recurse, int: state, ptr: temp.raw-value)),
+      int: container, int: recurse?, int: state, ptr: temp.raw-value)),
     unsigned-long-at(temp, offset: 0));
 end method GetDataBrowserItemCount;
   
