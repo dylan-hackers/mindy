@@ -9,18 +9,18 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library-spec common-dylan ()
   module common-extensions;
-  //module streams-protocol;
+  module streams-protocol;
   module locators-protocol;
   module finalization;
   module simple-io;
   module simple-random;
   //module simple-profiling;
   module transcendentals;
-  module byte-vector;
+  //module byte-vector;
   module machine-words;
   suite common-dylan-regressions;
   //suite threads-test-suite;             //---*** NOTE: Should be changed to module test
-  //suite test-stream-suite;
+  suite test-stream-suite;
 end library-spec common-dylan;
 
 define module-spec common-extensions ()
@@ -74,7 +74,7 @@ define module-spec common-extensions ()
   // Formatting
   function float-to-string (<float>) => (<string>);
   function integer-to-string (<integer>, #"key", #"base") => (<string>);
-  //function number-to-string (<number>) => (<string>);
+  function number-to-string (<number>) => (<string>);
   function string-to-integer
       (<string>, #"key", #"base", #"start", #"end")
    => (<integer>, <integer>);
@@ -89,22 +89,17 @@ define module-spec common-extensions ()
   function application-filename () => (false-or(<string>));
   function application-arguments () => (<sequence>);
   function exit-application (<integer>) => ();
-
-/*
- * TODO:  We don't have this
-   function register-application-exit-function (<function>) => ();
- */
+  function register-application-exit-function (<function>) => ();
 end module-spec common-extensions;
 
-/*
- * TODO:  These are not working properly
- *
 define module-spec streams-protocol ()
   abstract class <stream> (<object>);
+/*
   variable *standard-input* :: <stream>;
   variable *standard-output* :: <stream>;
   variable *standard-error* :: <stream>;
   variable *debug-output* :: <stream>;
+*/
 
   // Conditions
   open abstract class <stream-error> (<error>);
@@ -160,13 +155,12 @@ define module-spec streams-protocol ()
       (<positionable-stream>, <integer>, #"key", #"from")
    => (<object>);
 end module-spec streams-protocol;
-*/
 
 define module-spec locators-protocol ()
   // This may be merged into any other module.
   open abstract instantiable class <locator> (<object>);
   open generic-function supports-open-locator? (<locator>) => (<boolean>);
-  //open generic-function open-locator (<locator>) => (<stream>);
+  open generic-function open-locator (<locator>) => (<stream>);
   open generic-function supports-list-locator? (<locator>) => (<boolean>);
   open generic-function list-locator (<locator>) => (<sequence>);
 end module-spec locators-protocol;
@@ -182,12 +176,11 @@ define module-spec simple-io ()
 end module-spec simple-io;
   
 define module-spec simple-random ()
-  //sealed instantiable class <random> (<object>);
+  sealed instantiable class <random> (<object>);
   function random (<integer>, #"key", #"random") => (<integer>);
 end module-spec simple-random;
 
 /*
-TODO:  Implement these!
 define module-spec simple-profiling ()
   sealed instantiable class <profiling-state> (<table>);
   open generic-function start-profiling-type
@@ -202,14 +195,12 @@ define module-spec simple-profiling ()
 end module-spec simple-profiling;
 */
 
+/*
 define module-spec byte-vector ()
   sealed instantiable class <byte-vector> (<vector>);
   open generic function copy-bytes
     (<sequence>, <integer>, <sequence>, <integer>, <integer>)
  => ();
-/*
- * TODO:  Missing
- *
   function byte-vector-fill
     (<byte-vector>, <integer>, #"key", #"start", #"end")
  => ();
@@ -217,8 +208,8 @@ define module-spec byte-vector ()
     (<byte-vector>, <integer>) => (<integer>);
   function byte-vector-ref-setter
     (<integer>, <byte-vector>, <integer>) => (<integer>);
-*/
 end module-spec byte-vector;
+*/
 
 define module-spec machine-words ()
   sealed instantiable class <machine-word> (<object>);
@@ -227,7 +218,7 @@ define module-spec machine-words ()
   constant $minimum-signed-machine-word :: <machine-word>;
   constant $maximum-unsigned-machine-word :: <machine-word>;
   constant $minimum-unsigned-machine-word :: <machine-word>;
-//  function as-unsigned (<type>, <machine-word>) => (<object>);
+  // function as-unsigned (<type>, <machine-word>) => (<object>);
 end module-spec machine-words;
 
 define module-spec transcendentals ()
@@ -272,13 +263,11 @@ define module-spec transcendentals ()
 // The floating point precision of the result is given by the precision
 // of _x_.  The result will be a <single-float> if _x_ is an integer.
 
-/*
- * TODO:  Missing!
- *
+#if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
   open generic-function asinh (<real>) => (<float>);
   open generic-function acosh (<real>) => (<float>);
   open generic-function atanh (<real>) => (<float>);
- */
+#endif
 
 // Returns the hyperbolic arc sine, hyperbolic arc cosine, or hyperbolic
 // arc tangent of _y_, respectively.
@@ -302,13 +291,9 @@ define module-spec transcendentals ()
 // The floating point precision of the result is given by the precision
 // of _x_.
 
-/*
- * TODO:  Missing
- *
+
   open generic-function logn (<real>, <real>) => (<float>);
   // x > 0, b > 1
- *
- */
 
 // Returns the logarithm of _x_ in base _b_.  If _b_ <= 1 or _x_ <= 0, an
 // error is signalled.

@@ -9,7 +9,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Stream testing
 
-define /* sideways */ method class-test-function
+define sideways method class-test-function
     (class :: subclass(<stream>)) => (function :: <function>)
   test-stream-class
 end method class-test-function;
@@ -120,7 +120,7 @@ define method find-stream-test-info
   end
 end method find-stream-test-info;
 
-define /* sideways */ method make-test-instance
+define sideways method make-test-instance
     (class :: subclass(<stream>)) => (stream :: <stream>)
   let info = find-stream-test-info(class);
   assert(info, "Making test instance of unregistered stream class %=", class);
@@ -128,7 +128,7 @@ define /* sideways */ method make-test-instance
   make-function()
 end method make-test-instance;
 
-define /* sideways */ method destroy-test-instance
+define sideways method destroy-test-instance
     (class :: subclass(<stream>), stream :: <stream>) => ()
   let info = find-stream-test-info(class);
   assert(info, "Destroying test instance of unregistered stream class %=", class);
@@ -735,20 +735,20 @@ end method test-adjust-stream-position;
 
 /// Stream conditions
 
-define /* sideways */ method test-condition-class
+define sideways method test-condition-class
     (class :: subclass(<stream-error>), #key name, abstract?, #all-keys) => ()
   unless (abstract?)
     test-stream-condition(name, make-test-instance(class))
   end
 end method test-condition-class;
 
-define /* sideways */ method make-test-instance
+define sideways method make-test-instance
     (class :: subclass(<stream-error>))
  => (error :: <stream-error>)
   make(class, stream: make(<test-output-stream>))
 end method make-test-instance;
 
-define /* sideways */ method make-test-instance
+define sideways method make-test-instance
     (class :: subclass(<incomplete-read-error>))
  => (error :: <incomplete-read-error>)
   make(class, 
@@ -757,7 +757,7 @@ define /* sideways */ method make-test-instance
        sequence: #[1, 2, 3]);
 end method make-test-instance;
 
-define /* sideways */ method make-test-instance
+define sideways method make-test-instance
     (class :: subclass(<incomplete-write-error>))
  => (error :: <incomplete-write-error>)
   make(class, 
