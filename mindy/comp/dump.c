@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.16 1994/07/07 07:14:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.17 1994/07/11 20:05:25 dpierce Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -1003,8 +1003,8 @@ static void dump_defclass_constituent(struct defclass_constituent *c)
 {
     struct superclass *super;
     struct slot_spec *slot;
-    struct keyword_spec *keyword;
-    struct inherited_spec *inherit;
+    struct initarg_spec *initarg;
+    struct inherited_spec *inherited;
     int n;
 
     dump_op(fop_DEFINE_CLASS);
@@ -1052,21 +1052,23 @@ static void dump_defclass_constituent(struct defclass_constituent *c)
     }
 
     n = 0;
-    for (keyword = c->keywords; keyword != NULL; keyword = keyword->next)
+    for (initarg = c->initargs; initarg != NULL; initarg = initarg->next)
 	n++;
     dump_integer(n);
-    for (keyword = c->keywords; keyword != NULL; keyword = keyword->next) {
-	dump_symbol(keyword->keyword);
-	dump_plist(keyword->plist);
+    for (initarg = c->initargs; initarg != NULL; initarg = initarg->next) {
+	dump_symbol(initarg->keyword);
+	dump_plist(initarg->plist);
     }
 
     n = 0;
-    for (inherit = c->inherits; inherit != NULL; inherit = inherit->next)
+    for (inherited = c->inheriteds; inherited != NULL;
+	 inherited = inherited->next)
 	n++;
     dump_integer(n);
-    for (inherit = c->inherits; inherit != NULL; inherit = inherit->next) {
-	dump_id(inherit->name);
-	dump_plist(inherit->plist);
+    for (inherited = c->inheriteds; inherited != NULL;
+	 inherited = inherited->next) {
+	dump_id(inherited->name);
+	dump_plist(inherited->plist);
     }
 }
 
