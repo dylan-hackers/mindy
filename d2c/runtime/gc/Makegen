@@ -26,7 +26,7 @@ if ($target_name =~ /^sparc.*-solaris/) {
 } elsif ($target_name =~ /^alpha/) {
     &emit_cppasm_file_rule('mach_dep', 'alpha_mach_dep');
 } else {
-    local $CFLAGS = "-g";
+    local ($CFLAGS) = "-g";
     &emit_c_file_rule('mach_dep', 'gc.h', 'gc_priv.h', 'gcconfig.h',
 		      'gc_hdrs.h');
 }
@@ -36,7 +36,7 @@ if ($target_name =~ /^sparc.*-solaris/) {
 &emit_c_file_rule('mark', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
 		  'gc_mark.h');
 if ($target_name =~ /^alpha/) {
-    local $CFLAGS = "$CFLAGS -Wo,-notail";
+    local ($CFLAGS) = "$CFLAGS -Wo,-notail";
     &emit_c_file_rule('mark_rts', 'gc.h', 'gc_priv.h', 'gcconfig.h',
 		      'gc_hdrs.h');
 } else {
@@ -97,7 +97,7 @@ if ($shared) {
     if ($static) {
 	local ($dot_lib)
 	    = split(/\s+/, $target_platform{'library_filename_suffix'});
-	local $unit_prefix = "gc";
+	local ($unit_prefix) = "gc";
 	print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
 	print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
 	" $lib_prefix$unit_prefix$dot_lib\n";

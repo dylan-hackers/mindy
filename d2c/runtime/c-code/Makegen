@@ -16,7 +16,7 @@ if ($shared) {
 	if ($static) {
 	    local ($dot_lib)
 		= split(/\s+/, $target_platform{'library_filename_suffix'});
-	    local $unit_prefix = "runtime";
+	    local ($unit_prefix) = "runtime";
 	    print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
 	    print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
 	        " $lib_prefix$unit_prefix$dot_lib\n";
