@@ -251,7 +251,8 @@ define method write-declaration
 	    let name = c-slot.dylan-name;
 	    let slot-type = c-slot.type;
 	    let (end-offset, start-offset)
-	      = aligned-slot-position(end-offset, slot-type);
+	      = aligned-slot-position(end-offset, slot-type,
+				      alignment: c-type-alignment(decl));
 	    if (~c-slot.excluded?)
 	      write-c-accessor-method(decl, name, c-slot,
 				      start-offset, stream);
