@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.23 1996/01/31 23:58:02 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.24 1996/02/03 04:33:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -726,7 +726,6 @@ end method;
 define method name-inherited-or-exported? (name :: <basic-name>)
   => res :: <boolean>;
   let var = find-variable(name);
- let res =
   (var.variable-home.module-home ~== name.name-module.module-home)
     | block (hit)
         for (modu in var.accessing-modules)
@@ -738,10 +737,6 @@ define method name-inherited-or-exported? (name :: <basic-name>)
 	finally #f;
 	end for;
       end block;
- unless (res)
- dformat("nih: %= = %=\n", name, res);
- end;
- res;
 end method;
 
 define method name-inherited-or-exported? (name :: <method-name>)
