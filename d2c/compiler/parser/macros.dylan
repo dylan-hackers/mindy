@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.2 1999/05/26 04:29:10 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2214,7 +2214,22 @@ define method extract-constrained-fragment
     // Now this is an easy constraint.
     #"token" =>
       if (fragment.more?)
-	consume-elementary-fragment(fragment);
+	let (token-frag, after-token) = consume-elementary-fragment(fragment);
+	if (instance?(token-frag, <token-fragment>)
+	      & ~instance?(token-frag.fragment-token, <pre-parsed-token>)
+	      & begin
+		  let kind = token-frag.fragment-token.token-kind;
+		  kind < $define-token
+		    | kind = $otherwise-token
+		    | kind = $raw-ordinary-word-token
+		    | kind = $ordinary-define-body-word-token
+		    | kind = $ordinary-define-list-word-token
+		    | kind >= $quoted-name-token;
+		end)
+	  values(token-frag, after-token);
+	else
+	  values(#f, #f);
+	end if;
       else
 	values(#f, #f);
       end if;
