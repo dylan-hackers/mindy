@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.6 1995/03/12 16:43:37 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.7 1996/07/08 21:53:59 panda Exp $
 *
 \**********************************************************************/
 
@@ -56,11 +56,11 @@ struct thread_obj {
 #define obj_is_saved_c_function(o) \
   (((unsigned long)(o) & 0xffff) == (unsigned long)C_CONTINUATION_MARKER)
 #define save_c_function_hi(c) \
-  rawptr_obj((unsigned long)(c) & 0xffff0000)
+  rawptr_obj((unsigned long)(c) & ~1)
 #define save_c_function_lo(c) \
-  rawptr_obj((((unsigned long)(c) & 0xffff) << 16) | (unsigned long)C_CONTINUATION_MARKER)
+  rawptr_obj((((unsigned long)(c) & 1) << 16) | (unsigned long)C_CONTINUATION_MARKER)
 #define restore_c_function(lo, hi) \
-  (void (*)(struct thread *thread, obj_t *vals))(((unsigned long)(hi) & 0xffff0000) | ((unsigned long)(lo) >> 16)) 
+  ((void (*)(struct thread *thread, obj_t *vals))((unsigned long)hi | ((unsigned long)(lo) >> 16)))
 
 struct thread {
     int id;
