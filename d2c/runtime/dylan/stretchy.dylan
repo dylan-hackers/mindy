@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.8 2002/08/26 05:24:55 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.9 2002/10/15 15:41:39 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -78,24 +78,37 @@ end class <stretchy-object-vector>;
 
 define sealed domain make(singleton(<stretchy-object-vector>));
 
+define function calc-size(new :: <integer>)
+ => new :: <integer>;
+  if (new < 0)
+    error("size: can't be negative.");
+  end;
+  for (new-len = 4 then new-len * 2,
+       until: new <= new-len)
+  finally
+    // earlier code considered doubling to be too wastefull for large
+    // vectors and increased by no more than 1024 elements, but if you
+    // don't increase it geometrically you lose the important property
+    // of O(N) amortised time.  So we now take two steps to double...
+    //
+    let three-quarters = new-len - ash(new-len, -2);
+    if (new <= three-quarters)
+      three-quarters
+    else
+      new-len
+    end;
+  end for;
+end calc-size;
+
 define sealed method initialize
     (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill = #f)
  => ();
-  let data-size = case
-		    size < 0 =>
-		      error("size: can't be negative.");
-		    size < 16 => 16;
-		    size < 1024 =>
-		      for (data-size = 16 then data-size * 2,
-			   until: size < data-size)
-		      finally data-size;
-		      end for;
-		    otherwise =>
-		      ceiling/(size + 1024, 1024) * 1024;
-		  end case;
+  let data-size = calc-size(size);
+
   // The "fill:" keyword assures that elements above ssv-current-size
   // will be #f...
   let data = make(<simple-object-vector>, size: data-size, fill: #f);
+
   // ...and then we manually fill the other elements if necessary.
   if (fill) fill!(data, fill, end: size) end if;
   object.ssv-data := data;
@@ -110,14 +123,7 @@ define method size-setter
   if (new > current)
     let len = data.size;
     if (new > len)
-      let new-len = if (new < 1024)
-		      for (new-len = 16 then new-len * 2,
-			   until: new < new-len)
-		      finally new-len;
-		      end for;
-		    else 
-		      ceiling/(new + 1024, 1024) * 1024;
-		    end if;
+      let new-len = calc-size(new);
       let new-data = make(<simple-object-vector>, size: new-len);
       for (index :: <integer> from 0 below current)
 	new-data[index] := data[index];
@@ -501,14 +507,7 @@ define sealed method size-setter
   if (new > current)
     let len = data.size;
     if (new > len)
-      let new-len = if (new < 1024)
-		      for (new-len = 16 then new-len * 2,
-			   until: new < new-len)
-		      finally new-len;
-		      end for;
-		    else 
-		      ceiling/(new + 1024, 1024) * 1024;
-		    end if;
+      let new-len = calc-size(new);
       let new-data = make(ssv.lsv-data-type, size: new-len);
       let (init, limit, next, done?, key, elem, elem-setter, copy)
 	= forward-iteration-protocol(new-data);
