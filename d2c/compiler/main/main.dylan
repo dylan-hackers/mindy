@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.97 1997/02/04 14:39:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.98 1997/05/09 22:57:02 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,8 +17,15 @@ define class <main-unit-state> (<object>)
          required-init-keyword: log-dependencies:;
     slot unit-no-binaries :: <boolean>,
          required-init-keyword: no-binaries:;
-    slot unit-delayed-binaries :: <boolean>,
-         required-init-keyword: delayed-binaries:;
+
+    // A facility for hacking around C compiler bugs by using a different
+    // command for particular C compilations.  cc-override is a format string
+    // used instead of the normal platform compile-c-command.  It is used
+    // whenever compiling one of the files in the override-files list.
+    slot unit-cc-override :: false-or(<string>),
+         required-init-keyword: cc-override:;
+    slot unit-override-files :: <list>,
+         required-init-keyword: override-files:;
 
     slot unit-header :: <header>;
     slot unit-files :: <stretchy-vector>;
@@ -239,12 +246,18 @@ define method parse-lid (state :: <main-unit-state>) => ();
   state.unit-header := header;
   state.unit-files := files;
 end method parse-lid;
-
 // Considers anything with an ASCII value less than 32 (' ') to be
 // whitespace.  This includes control characters as well as what we
 // normally consider whitespace.
-//
 define method split-at-whitespace (string :: <byte-string>)
+    => res :: <list>;
+  split-at(method (x :: <character>) x <= ' ' end, string);
+end method split-at-whitespace;
+
+
+// Split a string at locations where test returns true, removing the delimiter
+// characters.
+define method split-at (test :: <function>, string :: <byte-string>)
     => res :: <list>;
   let size = string.size;
   local
@@ -252,7 +265,7 @@ define method split-at-whitespace (string :: <byte-string>)
 	=> res :: <list>;
       if (posn == size)
 	results;
-      elseif (string[posn] <= ' ')
+      elseif (test(string[posn]))
 	scan(posn + 1, results);
       else
 	copy(posn + 1, posn, results);
@@ -261,7 +274,7 @@ define method split-at-whitespace (string :: <byte-string>)
     method copy (posn :: <integer>, start :: <integer>,
 		 results :: <list>)
 	=> res :: <list>;
-      if (posn == size | string[posn] <= ' ')
+      if (posn == size | test(string[posn]))
 	scan(posn,
 	     pair(copy-sequence(string, start: start, end: posn), results));
       else
@@ -269,7 +282,8 @@ define method split-at-whitespace (string :: <byte-string>)
       end;
     end method copy;
   reverse!(scan(0, #()));
-end method split-at-whitespace;
+end method split-at;
+
 
 define method process-feature (feature :: <byte-string>) => ();
   if (feature.empty? | feature[0] ~== '~')
@@ -285,33 +299,27 @@ end method process-feature;
 // all, but if we find it under more than one suffix, we error.
 //
 define method find-library-archive
-    (unit-name :: <byte-string>, target :: <platform>,
-     no-binaries :: <boolean>)
+    (unit-name :: <byte-string>, target :: <platform>)
  => path :: <byte-string>;
   let libname = concatenate(target.library-filename-prefix, unit-name);
   let suffixes = split-at-whitespace(target.library-filename-suffix);
-  if (no-binaries)  // Who knows where the libraries will be when the user 
-                    // finally decides to link this?
-    concatenate(libname, suffixes.head);
-  else
-    let found = #();
-    for (suffix in suffixes)
-      let suffixed = concatenate(libname, suffix);
-      let path = find-file(suffixed, *data-unit-search-path*);
-      if (path)
-        found := pair(path, found);
-      end if;
-    end for;
-    if (empty?(found))
-      error("Can't find object file for library %s.", unit-name);
-    elseif (found.tail ~== #())
-      error("Found more than one type of object file for library %s:\n"
-            "  %=",
-	    unit-name,
-	    found);
-    else
-      found.head;
+  let found = #();
+  for (suffix in suffixes)
+    let suffixed = concatenate(libname, suffix);
+    let path = find-file(suffixed, *data-unit-search-path*);
+    if (path)
+      found := pair(path, found);
     end if;
+  end for;
+  if (empty?(found))
+    error("Can't find object file for library %s.", unit-name);
+  elseif (found.tail ~== #())
+    error("Found more than one type of object file for library %s:\n"
+	  "  %=",
+	  unit-name,
+	  found);
+  else
+    found.head;
   end if;
 end method find-library-archive;
 
@@ -324,10 +332,17 @@ define method output-c-file-rule
     (state :: <main-unit-state>, c-name :: <string>, o-name :: <string>,
      #key save-c-file = #f)
  => ();
+
   let cc-command
-    = format-to-string(state.unit-target.compile-c-command, c-name, o-name);
+      = if (member?(c-name, state.unit-override-files, test: \=))
+          state.unit-cc-override;
+	else
+	  state.unit-target.compile-c-command;
+	end if;
+
   format(state.unit-makefile, "%s : %s\n", o-name, c-name);
-  format(state.unit-makefile, "\t%s\n", cc-command);
+  format(state.unit-makefile, "\t%s\n",
+         format-to-string(cc-command, c-name, o-name));
   format(state.unit-objects-stream, " %s", o-name);
   format(state.unit-clean-stream, " %s", o-name);
   format(state.unit-real-clean-stream, " %s", o-name);
@@ -491,14 +506,11 @@ end method parse-and-finalize-library;
 // Open various streams used to build the makefiles that we generate to compile
 // the C output code.
 define method emit-make-prologue (state :: <main-unit-state>) => ();
-  // If no-binaries is specified, we assume the CCFLAGS environment
-  // variable is unreliable because we're probably cross-compiling.
-  let cc-flags = if (state.unit-no-binaries)
-		   state.unit-target.default-c-compiler-flags;
-		 else
-		   getenv("CCFLAGS") 
-		     | state.unit-target.default-c-compiler-flags;
-		 end if;
+  let cc-flags
+    = getenv("CCFLAGS") 
+        | format-to-string(state.unit-target.default-c-compiler-flags,
+			   $runtime-include-dir);
+
   state.unit-cc-flags := cc-flags;
 
   state.unit-cback-unit := make(<unit-state>, prefix: state.unit-mprefix);
@@ -509,7 +521,7 @@ define method emit-make-prologue (state :: <main-unit-state>) => ();
   let temp-makefile-name = concatenate(makefile-name, "-temp");
   state.unit-makefile-name := makefile-name;
   state.unit-temp-makefile-name := temp-makefile-name;
-  format(*debug-output*, "Creating %s\n", temp-makefile-name);
+  format(*debug-output*, "Creating %s\n", makefile-name);
   let makefile = make(<file-stream>, locator: temp-makefile-name,
 		      direction: #"output", if-exists: #"overwrite");
   state.unit-makefile := makefile;
@@ -782,12 +794,17 @@ end function use-correct-path-separator;
 
 define method build-executable (state :: <main-unit-state>) => ();
   let unit-libs = "";
+  let dash-small-ells = "";
   let linker-args = concatenate(" ", state.unit-target.link-executable-flags);
 
   local method add-archive (name :: <byte-string>) => ();
-	  let archive = find-library-archive(name, state.unit-target,
-					     state.unit-no-binaries);
-	  unit-libs := stringify(' ', archive, unit-libs);
+          if (state.unit-no-binaries)
+	    // If cross-compiling use -l -L search mechanism.
+	    dash-small-ells := stringify(" -l", name, dash-small-ells);
+	  else
+	    let archive = find-library-archive(name, state.unit-target);
+	    unit-libs := stringify(' ', archive, unit-libs);
+	  end if;
 	end method add-archive;
 
   // Under Unix, the order of the libraries is significant!  First to
@@ -815,6 +832,20 @@ define method build-executable (state :: <main-unit-state>) => ();
   output-c-file-rule(state, "inits.c", inits-dot-o);
   output-s-file-rule(state, "heap.s", heap-dot-o);
 
+  let dash-cap-ells = "";
+  // If cross-compiling, throw in a bunch of -Ls that will probably help.
+  if (state.unit-no-binaries)
+    for (dir in *data-unit-search-path*)
+      dash-cap-ells := concatenate(dash-cap-ells, " -L", dir);
+    end for;
+    dash-cap-ells
+      := concatenate(" $(LDFLAGS)",
+      		     use-correct-path-separator(dash-cap-ells,
+		     				state.unit-target),
+		     " ");						
+
+  end;
+
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
   // Again, make sure inits.o and heap.o come first
@@ -825,7 +856,9 @@ define method build-executable (state :: <main-unit-state>) => ();
   format(state.unit-makefile, "\n%s : %s\n", state.unit-executable, objects);
   let link-string
     = format-to-string(state.unit-target.link-executable-command,
-		       state.unit-executable, objects, linker-args);
+		       state.unit-executable,
+		       concatenate(dash-cap-ells, dash-small-ells, objects),
+		       linker-args);
   format(state.unit-makefile, "\t%s\n", link-string);
 
   format(state.unit-clean-stream, " %s %s", 
@@ -890,7 +923,7 @@ define method do-make (state :: <main-unit-state>) => ();
     end unless;
   end if;
 
-  if (~state.unit-no-binaries & ~state.unit-delayed-binaries)
+  if (~state.unit-no-binaries)
     let make-string = format-to-string("%s -f %s", target.make-command, 
 				       state.unit-makefile-name);
     format(*debug-output*, "%s\n", make-string);
@@ -1083,26 +1116,59 @@ define method incorrect-usage () => ();
   format(*standard-error*, 
 	 "    -M                  Generate makefile dependencies\n");
   format(*standard-error*, 
-	 "    -no-binaries        Do not compile the generated C code;\n"
-	   "                        assume cross-compiling\n");
-  format(*standard-error*, 
-	 "    -delayed-binaries   Do not compile the generated C code;\n"
-	   "                        don't assume cross-compiling\n");
-
+	 "    -no-binaries        Do not compile the generated C code\n");
   format(*standard-error*, 
 	 "    -Ttarget            Generate code for the given target machine\n");
   format(*standard-error*, 
 	 "                        Often used with -no-binaries\n");
   format(*standard-error*, 
 	 "    -pfilename          Get platform information from \n"
-	   "                        filename instead of the default platforms.descr\n");
+	 "                        filename instead of the default platforms.descr\n");
   format(*standard-error*, 
 	 "    -d                  Compiler debug mode (for debugging this compiler)\n");
+  format(*standard-error*, 
+	 "    -Fformat-string     Alternate format string for running the C "
+	 "compiler\n"
+	 "                        Used when a C file named by -f is compiled.\n");
+  format(*standard-error*, 
+	 "    -fcfilename         Names a C output file to compile specially.\n");
   format(*standard-error*, 
 	 "    -g                  Emit all function objects\n");
   force-output(*standard-error*);
   exit(exit-code: 1);
 end method incorrect-usage;
+
+define constant $search-path-seperator =
+#if (compiled-for-win32)
+  ';';
+#else
+  ':';
+#endif
+
+// Where to find various important files.
+
+// $default-dylan-dir and $default-target-name are defined in
+// file-locations.dylan, which is generated by makegen.
+
+// If DYLANDIR is defined, then it is assumed to be the root of the install
+// area, and the location of platforms.descr and the libraries are derived from
+// there.  Otherwise we use the autoconf prefix @prefix@.  It would be nice to
+// use libdir, etc., but the default substitutions contain ${prefix}
+// variables, which Dylan doesn't have yet.
+
+define constant $dylan-dir = getenv("DYLANDIR") | $default-dylan-dir;
+
+// Platform parameter database.
+define constant $default-targets-dot-descr
+  = concatenate($dylan-dir, "/etc/platforms.descr");
+
+// Library search path.
+define constant $default-dylan-path
+  = concatenate(".:", $dylan-dir, "/lib/dylan/");
+
+// Location of runtime.h
+define constant $runtime-include-dir
+  = concatenate($dylan-dir, "/include/");
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
   #if (~mindy)
@@ -1114,21 +1180,11 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let lid-file = #f;
   let features = #();
   let log-dependencies = #f;
-  let target-machine = 
-       #if (compiled-for-hppa & compiled-for-hpux)
-	  #"hppa-hpux";
-       #elseif (compiled-for-x86 & compiled-for-win32)
-	  #"x86-win32";
-       #elseif (compiled-for-x86 & compiled-for-linux)
-          #"x86-linux";
-       #elseif (compiled-for-sparc & compiled-for-solaris)
-	  #"sparc-solaris";
-       #else
-	  #"unknown";
-       #endif
+  let target-machine = $default-target-name;
   let no-binaries = #f;
-  let delayed-binaries = #f;
   let targets-file = $default-targets-dot-descr;
+  let cc-override = #f;
+  let override-files = #();
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
       if (arg.size >= 2)
@@ -1181,10 +1237,17 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	  'd' =>
 	    if (arg.size == 2)
 	      *break-on-compiler-errors* := #t;
-	    elseif (arg = "-delayed-binaries")
-	      delayed-binaries := #t;
 	    else
 	      error("Bogus switch: %s", arg);
+	    end if;
+	  'F' =>
+	    cc-override := copy-sequence(arg, start: 2);
+	  'f' =>
+	    if (arg.size > 2)
+	      override-files := pair(copy-sequence(arg, start: 2),
+	      			     override-files);
+	    else
+	      error("Name of override file not supplied with -f.");
 	    end if;
 	  'g' =>
 	    *emit-all-function-objects?* := #t;
@@ -1202,7 +1265,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
       end;
     end;
   end;
-  *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
+
   unless (lid-file)
     incorrect-usage();
   end;
@@ -1215,6 +1278,19 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   end if;
   let target = possible-targets[target-machine];
   *current-target* := target;
+
+  // Stuff in DYLANPATH goes after any explicitly listed directories.
+  let dylanpath = getenv("DYLANPATH") | $default-dylan-path;
+  let dirs = split-at(method (x :: <character>);
+			x == $search-path-seperator;
+		      end,
+		      dylanpath);
+  for (dir in dirs)
+    add!(library-dirs, dir);
+  end for;
+  		       
+  *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
+
   let state
       = make(<main-unit-state>,
              lid-file: lid-file,
@@ -1222,24 +1298,11 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	     log-dependencies: log-dependencies,
 	     target: target,
 	     no-binaries: no-binaries,
-	     delayed-binaries: delayed-binaries);
+	     cc-override: cc-override,
+	     override-files: override-files);
   let worked? = compile-library(state);
   exit(exit-code: if (worked?) 0 else 1 end);
 end method main;
-
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif
-
 
 #if (mindy)
 collect-garbage(purify: #t);
