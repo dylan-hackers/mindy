@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.50 1995/05/04 07:04:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.51 1995/05/05 08:50:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,7 +101,7 @@ define module compile-time-values
     <literal-boolean>, <literal-true>, <literal-false>,
     <literal-sequence>, literal-contents,
     <literal-list>, literal-tail, <literal-empty-list>,
-    <literal-vector>, <literal-string>;
+    <literal-vector>, <literal-simple-object-vector>, <literal-string>;
 end;
 
 
