@@ -33,12 +33,18 @@ DYLAN_FILES = \
 	dylan/thread.dylan \
 	gobbledygook.dylan
 
-foo: output.o heap.o ${LIBS}
-	${CC} ${CFLAGS} -o foo output.o heap.o ${LIBS}
+C_FILES = $(patsubst %.dylan,%.c,$(DYLAN_FILES)) unit-init.c
 
-output.o: output.c
+O_FILES = $(patsubst %.c,%.o,$(C_FILES)) inits.o heap.o
 
-heap.o: heap.s
+foo: ${O_FILES} ${LIBS}
+	${CC} ${CFLAGS} -o foo ${O_FILES} ${LIBS}
 
-output.c heap.s: ../compiler/foo.dbc ${DYLAN_FILES}
+inits.c: gen-inits
+	gen-inits unit
+
+${C_FILES} heap.s: ../compiler/foo.dbc ${DYLAN_FILES}
 	time mindy -f ../compiler/foo.dbc ${DYLAN_FILES}
+
+clean:
+	rm -f ${C_FILES} inits.c heap.s ${O_FILES} foo core
