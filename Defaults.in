@@ -12,7 +12,7 @@ $buildroot = "@builddir@";
 $prefix = "@prefix@";
 $destdir = $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";
-$libdir = "@libdir@";
+$libdir = "@libdir@/dylan";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
