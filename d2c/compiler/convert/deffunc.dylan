@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.40 1995/11/14 15:45:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.41 1995/11/22 15:40:40 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -600,7 +600,7 @@ define method ct-add-method
   block (return)
     for (old-meth in old-methods)
       if (meth-specs = old-meth.function-defn-signature.specializers)
-	compiler-error("%s is multiply defined -- ignoring extra definition.",
+	compiler-warning("%s is multiply defined -- ignoring extra definition.",
 		       meth.defn-name);
 	return();
       end;
