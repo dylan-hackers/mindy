@@ -1,7 +1,0 @@
-&makegen_include("../common-Makegen");
-
-$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format-out -L.";
-
-&emit_library_rule('base-file-system', '$(BUILDROOT)/force.timestamp',
-		   '', 'compile', 'compile-mindy', 'install');
-
