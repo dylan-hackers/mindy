@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.48 1994/11/03 23:51:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.49 1994/11/04 13:14:08 wlott Exp $
 
 //======================================================================
 //
@@ -48,7 +48,7 @@ define module Builtin-Stuff
     <false>, <fixed-integer>, <float>, <function>,
     <generic-function>,
     <integer>,
-    <list>, <lock>,
+    <limited-integer>, <list>, <lock>,
     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
     <mutable-sequence>,
     <number>,
@@ -56,9 +56,9 @@ define module Builtin-Stuff
     <pair>,
     <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
-    <slot-descriptor>, <spinlock>, <string>, <symbol>,
+    <slot-descriptor>, <spinlock>, <string>, <subclass>, <symbol>,
     <thread>, <true>, <type>,
-    <unicode-string>,
+    <unicode-string>, <union>,
     <vector>,
     <weak-pointer>,
     $permanent-hash-state,
@@ -77,18 +77,20 @@ define module Builtin-Stuff
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     kill-thread,
-    limited, list, locked?, logand, logbit?, logior, lognot, logxor,
+    limited, limited-integer-class, limited-integer-min, limited-integer-max,
+    list, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, merge-hash-codes, method-specializers,
     negative, numerator,
     object-class, object-hash,
     pair, prin1, print, putc, puts,
     raw-exit, release-lock, remove-method, round, round/,
-    signal-event, singleton, size, slot-allocation, slot-descriptors,
-    slot-getter, slot-getter-method, slot-initialized?, slot-name, slot-setter,
-    slot-setter-method, slot-type, slot-value, slot-value-setter, spawn-thread,
-    sorted-applicable-methods, state-valid?, subtype?,
+    signal-event, singleton, singleton-object, size, slot-allocation,
+    slot-descriptors, slot-getter, slot-getter-method, slot-initialized?,
+    slot-name, slot-setter, slot-setter-method, slot-type, slot-value,
+    slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
+    subclass-of, subtype?,
     tail, tail-setter, truncate, truncate/,
-    union,
+    union, union-members,
     values, vector,
     wait-for-event, weak-pointer-object,
     fd-close, fd-error-string, fd-input-available?, fd-open,
@@ -307,7 +309,13 @@ define module Introspection
 	     class-name, function-name,
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
-	     slot-type, slot-value, slot-value-setter},
+	     slot-type, slot-value, slot-value-setter,
+
+	     singleton-object,
+	     <subclass>, subclass-of,
+	     <limited-integer>, limited-integer-class, limited-integer-min,
+	     limited-integer-max,
+	     <union>, union-members},
     export: all;
 end;
 
