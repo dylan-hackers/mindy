@@ -11,13 +11,18 @@ define class <state> (<object>)
 end;
 
 define method build-initial-heap
-    (roots :: <vector>, stream :: <stream>, output-info :: <output-info>)
+    (units :: <vector>, stream :: <stream>, output-info :: <output-info>)
     => ();
   let state = make(<state>, stream: stream, output-info: output-info);
-  format(stream, "\t.data\n\t.align\t8\n\t.export\troots, DATA\nroots");
-  for (ctv in roots, index from 0)
-    spew-reference(ctv, $general-rep, format-to-string("roots[%d]", index),
-		   state);
+  format(stream, "\t.data\n\t.align\t8\n");
+  for (unit in units)
+    let prefix = unit[0];
+    let roots = unit[1];
+    format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots", prefix, prefix);
+    for (ctv in roots, index from 0)
+      spew-reference(ctv, $general-rep, format-to-string("roots[%d]", index),
+		     state);
+    end;
   end;
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
