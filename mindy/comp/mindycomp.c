@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.14 1995/12/10 02:25:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.15 1996/10/06 12:58:23 nkramer Exp $
 *
 * This file is the main driver.
 *
@@ -308,8 +308,26 @@ void main(int argc, char *argv[])
 
     yyin = fopen(source_name, "r");
     if (yyin == NULL) {
-	perror(source_name);
-	exit(1);
+        /* Try the same filename but in the current directory */
+        /* Start ptr at the null termination, and work backwards to a 
+	   path separator. */
+        char *ptr = source_name + strlen(source_name);
+        for ( ; ptr != source_name; ptr--) {
+	    if (*ptr == '/' || *ptr == '\\') {
+	        /* We're pointing at the path separator, which is too far */
+	        ptr++;
+	        break;
+	    }
+	}
+	/* If ptr is a different string than source_name, and it isn't
+	   the empty string... */
+	if (ptr != source_name && *ptr != 0) {
+	    yyin = fopen(ptr, "r");
+	}
+	if (yyin == NULL) {
+	    perror(source_name);
+	    exit(1);
+	}
     }
 
     current_file = source_name;
