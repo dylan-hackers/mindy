@@ -4,7 +4,9 @@ $duimport = "-L../../../platform/gtk+/gtk+ -L../../../platform/gtk+/gtk-duim";
 $D2CFLAGS
     = $d2c_runtime
     . " -L../../../d2c/runtime/random"
+    . " -L../../../common/threads"
     . " -L../../../common/common-dylan"
+    . " -L../../../common/collections"
     . " -L../../../common/io"
     . " -L../../../common/format"
     . " -L../../../common/format-out"

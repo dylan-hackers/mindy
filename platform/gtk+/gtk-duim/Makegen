@@ -1,6 +1,8 @@
 $D2CFLAGS
     = $d2c_runtime
-    . "-L../../../common/common-dylan -L../../../common/threads ";
+    . ' -L../../../common/common-dylan'
+    . ' -L../../../common/collections'
+    . ' -L../../../common/threads';
 
 $COPTS = $gtk_cflags;
 
