@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.61 1995/05/12 15:38:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.62 1995/05/18 13:42:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,7 +42,8 @@ define module utils
     find-in, size-in,
     dformat, assert,
     <annotatable>, info, info-setter,
-    compiler-warning, compiler-error, key-of, list?, pair?;
+    compiler-warning, compiler-error, key-of, list?, pair?,
+    symcat;
 end;
 
 define module forwards
@@ -474,25 +475,34 @@ define module classes
   export
     cclass-name, closest-primary-superclass, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, new-slot-infos, unique-id, direct-type,
+    all-slot-infos, new-slot-infos, override-infos, unique-id, direct-type,
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
+    instance-slots-layout,
     <defined-cclass>,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
     slot-type, slot-type-setter, slot-getter, slot-read-only?,
-    slot-init-value, slot-init-value-setter,
-    slot-init-function, slot-init-function-setter,
-    slot-init-keyword, slot-init-keyword-required?,
-    slot-guaranteed-initialized?,
+    slot-guaranteed-initialized?, slot-init-value, slot-init-value-setter,
+    slot-init-function, slot-init-function-setter, slot-init-keyword,
+    slot-init-keyword-required?, slot-overrides,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     slot-positions, find-slot-offset,
 
+    <virtual-slot-info>, <constant-slot-info>, <class-slot-info>,
+    <each-subclass-slot-info>,
+
+    <override-info>, override-introduced-by, override-getter, override-slot,
+    override-init-value, override-init-value-setter,
+    override-init-function, override-init-function-setter,
+
+    <layout-table>, layout-length,
+
     <proxy>, proxy-for,
 
-    inherit-slots, assign-unique-ids, assign-slot-representations,
-    layout-instance-slots;
+    inherit-slots, inherit-overrides, assign-unique-ids,
+    assign-slot-representations, layout-instance-slots;
 end;
 
 define module c-representation
@@ -847,7 +857,8 @@ define module define-classes
   use definitions;
   use variables;
   use lexenv;
-  use parse-tree;
+  use parse-tree,
+    exclude: {<primitive>};
   use top-level-forms;
   use ctype;
   use classes;
@@ -858,7 +869,11 @@ define module define-classes
   use signature-interface;
   use source;
   use expand;
-  use front, import: {<slot-ref>, <slot-set>, <method-literal>};
+  use front,
+    import: {<slot-ref>, <slot-set>, <uninitialized-value>, <primitive>,
+	       <function-literal>, <method-literal>};
+  use representation;
+  use c-representation;
 end;
 
 define module top-level-expressions
