@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.29 1995/06/09 16:44:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.30 1995/06/10 12:38:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1926,7 +1926,7 @@ define method build-slot-posn-dispatch
 	ranges := list(entry);
 	prev := ranges;
       elseif (prev.head[2] == entry[2] & prev.head[3] == entry[3])
-	prev[1] := entry[1];
+	prev.head[1] := entry[1];
       else
 	let new = list(entry);
 	prev.tail := new;
