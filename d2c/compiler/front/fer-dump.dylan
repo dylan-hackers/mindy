@@ -1,12 +1,12 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.36 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.37 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 // Id stuff.
 
-define variable *id-table* = make(<table>);
+define variable *id-table* :: <object-table> = make(<table>);
 define constant $id-vector = make(<stretchy-vector>);
 
 define method reset-ids () => ();
