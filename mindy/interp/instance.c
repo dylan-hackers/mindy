@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.25 1994/10/18 00:31:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.26 1994/10/18 00:50:27 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1507,7 +1507,12 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 
 /* Introspection stuff. */
 
-static obj_t dylan_slot_descriptors(obj_t class)
+static obj_t dylan_class_slot_descriptors(obj_t class)
+{
+    return obj_Nil;
+}
+
+static obj_t dylan_dc_slot_descriptors(obj_t class)
 {
     return DC(class)->all_slots;
 }
@@ -1889,8 +1894,12 @@ void init_instance_functions(void)
 		  FALSE, obj_Nil, FALSE, obj_BooleanClass,
 		  dylan_slot_initialized_p);
 
+    define_method("slot-descriptors", list1(obj_ClassClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass,
+		  dylan_class_slot_descriptors);
     define_method("slot-descriptors", list1(obj_DefinedClassClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, dylan_slot_descriptors);
+		  obj_False, FALSE, obj_ObjectClass,
+		  dylan_dc_slot_descriptors);
     define_method("slot-name", list1(obj_SlotDescrClass), FALSE,
 		  obj_False, FALSE, obj_ObjectClass, dylan_slot_name);
     define_method("slot-allocation", list1(obj_SlotDescrClass), FALSE,
