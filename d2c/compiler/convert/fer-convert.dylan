@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.46 1995/11/16 00:15:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.47 1995/12/07 00:20:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -815,8 +815,10 @@ define method fer-convert-method
 			  make(<literal-false>);
 			end;
 	  if (default)
-	    add!(infos, make(<key-info>, key-name: param.param-keyword,
-			     default: default, type: type));
+	    add!(infos,
+		 make(<key-info>, key-name: param.param-keyword,
+		      default: default, type: type,
+		      required: ~cinstance?(default, type)));
 	    add!(vars, var);
 	  else
 	    let temp = make-local-var(builder, name.token-symbol, type);

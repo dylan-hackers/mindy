@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.43 1995/12/05 03:51:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.44 1995/12/07 00:21:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -447,14 +447,17 @@ define method compute-signature
       end;
     end,
     method make-key-info (param)
-      make(<key-info>,
-	   key-name: param.param-keyword,
-	   type: maybe-eval-type(param),
-	   default: if (param.param-default)
+      let type = maybe-eval-type(param);
+      let default = if (param.param-default)
 		      ct-eval(param.param-default, #f);
 		    else
 		      as(<ct-value>, #f);
-		    end);
+		    end;
+      let required? = ~(instance?(type, <unknown-ctype>)
+			  | default == #f
+			  | cinstance?(default, type));
+      make(<key-info>, key-name: param.param-keyword, type: type,
+	   default: default, required: required?);
     end;
   values(make(<signature>,
 	      specializers: map-as(<list>, maybe-eval-type,
