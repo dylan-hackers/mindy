@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.4 2001/02/08 21:53:06 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.5 2001/02/25 19:42:22 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -504,9 +504,27 @@ define method make-literal-constant
   make-literal-constant(builder, as(<ct-value>, value));
 end method;
 
+define method make-literal-constant
+    (builder :: <fer-builder>, value :: <symbol>)
+ => res :: <literal-constant>;
+  make-literal-constant(builder, make(<literal-symbol>, value: value));
+end method;
+
+define method make-literal-constant
+    (builder :: <fer-builder>, value == #t)
+ => res :: <literal-constant>;
+  make-literal-constant(builder, make(<literal-true>));
+end method;
+
+define method make-literal-constant
+    (builder :: <fer-builder>, value == #f)
+ => res :: <literal-constant>;
+  make-literal-constant(builder, make(<literal-false>));
+end method;
+
 define method make-definition-constant
     (builder :: <fer-builder>, defn :: <abstract-constant-definition>)
- => res :: <leaf>;
+ => res :: <definition-constant-leaf>;
   let value = ct-value(defn);
   unless (value)
     error("%s doesn't have a ct-value, so it can't be represented as a "
