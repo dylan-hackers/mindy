@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.20 2003/04/24 05:46:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.21 2003/05/12 15:10:15 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -232,12 +232,13 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
     = element(state.unit-header, #"float-precision", default: #f);
   if (float-precision)
     select (as-uppercase(float-precision) by \=)
+      "AUTO" => *float-precision* := #"auto";
       "SINGLE" => *float-precision* := #"single";
       "DOUBLE" => *float-precision* := #"double";
       "EXTENDED" => *float-precision* := #"extended";
       otherwise =>
-	compiler-error("float-precision: header option is %s, "
-                         "not \"single\", \"double\" or \"extended\".",
+	compiler-error("float-precision: header option is %s, not "
+                         "\"auto\", \"single\", \"double\" or \"extended\".",
                        float-precision);
     end select;
   end if;

@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.17 2003/04/24 05:46:00 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.18 2003/05/12 15:10:19 housel Exp $
 copyright: see below
 
 
@@ -492,7 +492,8 @@ define method atof (string :: <byte-string>,
 		    #key start :: <integer> = 0,
 		         end: finish :: <integer> = string.size)
     => (class :: one-of(#f, #"single", #"double", #"extended"),
-	value :: <ratio>);
+	value :: <ratio>,
+        scale :: <integer>);
   let class = #f;
   let posn = start;
   let sign = 1;
@@ -570,26 +571,35 @@ define method atof (string :: <byte-string>,
     end if;
   end block;
 
+  let scale = scale | 0;
   values(class,
 	 sign * mantissa
-	   * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
+	   * ratio(10,1) ^ (exponent-sign * exponent - scale),
+         scale);
 end method atof;
 
 define variable *float-precision*
-  :: one-of(#"single", #"double", #"extended") = #"double";
+  :: one-of(#"auto", #"single", #"double", #"extended") = #"double";
 
 // parse-fp-literal -- internal.
 // 
 define method parse-fp-literal
     (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
-  let (class, value) = atof(extract-string(source-location));
+  let (class, value, scale) = atof(extract-string(source-location));
   let class = class | *float-precision*;
 
   make(<literal-token>,
        source-location: source-location,
        kind: $literal-token,
        literal: make(select (class)
+                       #"auto" =>
+                         // follows FunDev behavior
+                         if (scale >= 8)
+                           <literal-double-float>;
+                         else
+                           <literal-single-float>;
+                         end;
 		       #"single" => <literal-single-float>;
 		       #"double" => <literal-double-float>;
 		       #"extended" => <literal-extended-float>;
