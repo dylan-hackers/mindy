@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.1 1994/03/24 21:49:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.2 1994/03/26 07:46:11 wlott Exp $
 *
 * This file does whatever.
 *
@@ -82,6 +82,7 @@ void init(void)
     init_func_functions();
     init_class_functions();
     init_print_functions();
+    init_input_functions();
 
     done_initializing_vars();
 
