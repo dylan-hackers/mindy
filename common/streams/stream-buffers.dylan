@@ -202,18 +202,21 @@ end method;
 define open generic copy-into-buffer!
     (buf :: <buffer>, buf-start :: <buffer-index>, source :: <sequence>, 
      #key start :: <integer>, // = 0,
-          end: src-end :: <integer>); // = source.size);
+          end: src-end :: false-or(<integer>)); // = source.size);
 
 define sealed method copy-into-buffer!
     (buf :: <buffer>, buf-start :: <buffer-index>,
      source :: type-union(<byte-string>, <byte-vector>, <buffer>),
      #key start :: <integer> = 0,
-          end: stop :: <integer> = source.size);
+          end: stop :: false-or(<integer>));
+  let source-size :: <integer> = source.size;
+  let stop :: <integer> = stop | source-size;
+
   // Do lots of bounds checking.
   if (start < 0)
     error("Bounds error in source -- %d.", start);
   end;
-  if (stop > source.size)
+  if (stop > source-size)
     error("Bounds error in source -- %d.", stop);
   end;
   if (start > stop)
