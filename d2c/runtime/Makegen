@@ -11,6 +11,7 @@ do compile_subdirs(
     'table-ext',
     'string-ext',
     'format-out',
+    'melange',
 );
 
 do install('include', 'runtime.h');
