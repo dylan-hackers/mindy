@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.17 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.18 1996/03/27 23:59:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -341,6 +341,11 @@ define sealed method print-object
 		fragment: object.macro-call-fragment);
 end method print-object;
 
+define sealed method print-message
+    (call :: <definition-macro-call-parse>, stream :: <stream>) => ();
+  format(stream, "``define %s'' macro", call.macro-call-word.token-symbol);
+end method print-message;
+
 // <body-style-definition-macro-call-parse> -- exported.
 //
 // A call to a body style definition macro.
@@ -573,6 +578,11 @@ end class <statement-parse>;
 
 define sealed domain make (singleton(<statement-parse>));
 
+define sealed method print-message
+    (call :: <statement-parse>, stream :: <stream>) => ();
+  format(stream, "``%s'' statement", call.macro-call-word.token-symbol);
+end method print-message;
+
 
 // <function-macro-call-parse> -- exported.
 //
@@ -583,6 +593,12 @@ define class <function-macro-call-parse>
 end class <function-macro-call-parse>;
 
 define sealed domain make (singleton(<function-macro-call-parse>));
+
+define sealed method print-message
+    (call :: <function-macro-call-parse>, stream :: <stream>) => ();
+  format(stream, "``%s'' function macro", call.macro-call-word.token-symbol);
+end method print-message;
+
 
 // <body-parse> -- exported.
 //
@@ -1347,9 +1363,21 @@ define class <property> (<object>)
   constant slot prop-comma :: false-or(<token>) = #f,
     init-keyword: comma:;
   //
+  // The source location for the comma.  We don't use the token's source
+  // location because we want to track it though macro expansions.
+  constant slot prop-comma-srcloc :: <source-location>
+      = make(<unknown-source-location>),
+    init-keyword: comma-srcloc:;
+  //
   // The keyword.
   constant slot prop-keyword :: <literal-token>,
     required-init-keyword: keyword:;
+  //
+  // The source location for the keyword.  We don't use the token's source
+  // location because we want to track it though macro expansions.
+  constant slot prop-keyword-srcloc :: <source-location>
+      = make(<unknown-source-location>),
+    init-keyword: keyword-srcloc:;
   //
   // And the associated property.
   constant slot prop-value :: <fragment>,
@@ -1366,13 +1394,3 @@ define sealed method print-object
 		value: prop.prop-value);
 end;
 
-
-
-// Seals for file parse-tree.dylan
-
-// <body-style-definition-macro-call-parse> -- subclass of <definition-macro-call-parse>
-define sealed domain make(singleton(<body-style-definition-macro-call-parse>));
-// <list-style-definition-macro-call-parse> -- subclass of <definition-macro-call-parse>
-define sealed domain make(singleton(<list-style-definition-macro-call-parse>));
-// <concatenating-pattern-variable-reference> -- subclass of <pattern-variable-reference>
-define sealed domain make(singleton(<concatenating-pattern-variable-reference>));

@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.16 1996/03/21 00:10:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.17 1996/03/27 23:59:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -373,85 +373,6 @@ define method trim-modifiers-pattern
     compiler-error("Can't find the macro name (%s) in the rule.", name);
   end if;
 end method trim-modifiers-pattern;
-
-
-// macro-expand.
-
-// macro-expand -- exported.
-//
-// Expand the form returning an <expression-parse>.  The real work is done
-// by macro-expand-aux which is separated out so that we can use it for
-// macro constraints.
-// 
-define method macro-expand (form :: <macro-call-parse>)
-    => expansion :: <expression-parse>;
-  parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form)));
-end method macro-expand;
-
-// macro-expand-aux -- internal.
-//
-// Does the real work of a macro expansion.  Find the definition and run its
-// main rules until one of them gives us a match.  Once we have a match,
-// compute the replacement and return it.
-// 
-define method macro-expand-aux (form :: <macro-call-parse>)
-    => replacement :: <fragment>;
-  let name = name-for-macro-call(form);
-  let var = find-variable(name);
-  unless (var)
-    error("syntax table and variable table inconsistent.");
-  end unless;
-  let defn = var.variable-definition;
-  unless (defn)
-    error("syntax table and variable table inconsistent.");
-  end unless;
-  let intermediate-words = defn.macro-intermediate-words;
-  block (return)
-    let fragment = form.macro-call-fragment;
-    for (rule in defn.macro-main-rule-set.rule-set-rules)
-      let results = match-rule(rule, form, fragment, intermediate-words);
-      unless (results == #"failed")
-	return(do-replacement(rule.rule-template, results, #f,
-			      defn.macro-auxiliary-rule-sets,
-			      intermediate-words, make(<uniquifier>)));
-      end unless;
-    end for;
-    compiler-error-location
-      (form, "Syntax error in %s macro.  None of the main rules matched.",
-       form.macro-call-word.token-symbol);
-  end block;
-end method macro-expand-aux;
-
-
-// name-for-macro-call -- internal.
-//
-// Return the <name> of the macro being called by this macro call parse.
-// 
-define generic name-for-macro-call (form :: <macro-call-parse>)
-    => name :: <basic-name>;
-
-// name-for-macro-call{type-union(<statement-parse>, <fn-macro-call-parse>)}
-//
-// For statement and function-macro calls, we just use the word as is.
-// 
-define method name-for-macro-call
-    (form :: type-union(<statement-parse>, <function-macro-call-parse>))
-    => name :: <basic-name>;
-  id-name(form.macro-call-word);
-end method name-for-macro-call;
-
-// name-for-macro-call{<definition-macro-call-parse>}
-//
-// For definition macro calls, we tack -definer onto the word.
-// 
-define method name-for-macro-call (form :: <definition-macro-call-parse>)
-    => name :: <basic-name>;
-  let define-word = form.macro-call-word;
-  make(<basic-name>,
-       module: define-word.token-module,
-       symbol: symcat(define-word.token-symbol, "-definer"));
-end method name-for-macro-call;
-
 
 
 // find-intermediate-words
@@ -1017,7 +938,7 @@ define class <pattern-binding> (<object>)
   constant slot pattern-binding-variable :: <pattern-variable>,
     required-init-keyword: variable:;
   //
-  // The fragment of a vector of fragments that this variable is bound to.
+  // The fragment or a vector of fragments that this variable is bound to.
   slot pattern-binding-value :: type-union(<fragment>, <simple-object-vector>),
     required-init-keyword: value:;
   //
@@ -1059,9 +980,9 @@ end method add-binding;
 // Scan the bindings set trying to find a binding for name.
 // 
 define method find-binding
-    (bindings :: <pattern-binding-set>, name :: <symbol>,
-     this-rule-set :: false-or(<symbol>))
-    => res :: false-or(<pattern-binding>);
+    (bindings :: <pattern-binding-set>, varref :: <pattern-variable-reference>,
+     name :: <symbol>, this-rule-set :: false-or(<symbol>))
+    => res :: <pattern-binding>;
   block (return)
     for (binding = bindings then binding.pattern-binding-next,
 	 while: binding)
@@ -1070,7 +991,8 @@ define method find-binding
 	return(binding);
       end if;
     end for;
-    #f;
+    compiler-error-location
+      (varref.patvarref-name, "Unbound pattern variable: %s", name);
   end block;
 end method find-binding;
 
@@ -1111,7 +1033,10 @@ end method consume-elementary-fragment;
 // 
 define method consume-elementary-fragment (fragment :: <elementary-fragment>)
     => (res :: <elementary-fragment>, remainder :: <fragment>);
-  values(fragment, make(<empty-fragment>));
+  values(fragment,
+	 make(<empty-fragment>,
+	      source-location:
+		source-location-after(fragment.source-location)));
 end method consume-elementary-fragment;
 
 // consume-elementary-fragment{<compound-fragment>}
@@ -1153,7 +1078,11 @@ define generic split-at-separator
 define method split-at-separator
     (fragment :: <fragment>, seperator :: <integer>)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
-  values(#f, fragment, make(<empty-fragment>));
+  values(#f,
+	 fragment,
+	 make(<empty-fragment>,
+	      source-location:
+		source-location-after(fragment.source-location)));
 end method split-at-separator;
 
 // split-at-separator{<token-fragment>}
@@ -1165,9 +1094,19 @@ define method split-at-separator
     (fragment :: <token-fragment>, seperator :: <integer>)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
   if (fragment.fragment-token.token-kind == seperator)
-    values(#t, make(<empty-fragment>), make(<empty-fragment>));
+    values(#t,
+	   make(<empty-fragment>,
+		source-location:
+		  source-location-before(fragment.source-location)),
+	   make(<empty-fragment>,
+		source-location:
+		  source-location-after(fragment.source-location)));
   else
-    values(#f, fragment, make(<empty-fragment>));
+    values(#f,
+	   fragment,
+	   make(<empty-fragment>,
+		source-location:
+		  source-location-after(fragment.source-location)));
   end if;
 end method split-at-separator;
 
@@ -1190,7 +1129,9 @@ define method split-at-separator
 	    & sub-fragment.fragment-token.token-kind == seperator)
 	return(#t,
 	       if (head-fragment == sub-fragment)
-		 make(<empty-fragment>);
+		 make(<empty-fragment>,
+		      source-location:
+			source-location-before(head-fragment.source-location));
 	       elseif (head-fragment.fragment-next == sub-fragment)
 		 head-fragment;
 	       else
@@ -1198,7 +1139,9 @@ define method split-at-separator
 		      tail: sub-fragment.fragment-prev);
 	       end if,
 	       if (sub-fragment == tail-fragment)
-		 make(<empty-fragment>);
+		 make(<empty-fragment>,
+		      source-location:
+			source-location-after(tail-fragment.source-location));
 	       elseif (sub-fragment == tail-fragment.fragment-prev)
 		 tail-fragment;
 	       else
@@ -1347,7 +1290,10 @@ define generic split-fragment-at
 define method split-fragment-at
     (fragment :: <fragment>, split-point == #f)
     => (before :: <fragment>, at-and-after :: <fragment>);
-  values(fragment, make(<empty-fragment>));
+  values(fragment,
+	 make(<empty-fragment>,
+	      source-location:
+		source-location-after(fragment.source-location)));
 end method split-fragment-at;
 
 // split-fragment-at{<empty-fragment>,<elementary-fragment>}
@@ -1383,7 +1329,10 @@ define method split-fragment-at
   //
   // Now make the split.
   if (split-point == head)
-    values(make(<empty-fragment>), fragment);
+    values(make(<empty-fragment>,
+		source-location:
+		  source-location-before(head.source-location)),
+	   fragment);
   else
     values(if (split-point == head.fragment-next)
 	     head;
@@ -1408,7 +1357,10 @@ define method split-fragment-at
     (fragment :: <elementary-fragment>, split-point :: <elementary-fragment>)
     => (before :: <fragment>, at-and-after :: <fragment>);
   if (fragment == split-point)
-    values(make(<empty-fragment>), fragment);
+    values(make(<empty-fragment>,
+		source-location:
+		  source-location-before(split-point.source-location)),
+	   fragment);
   else
     error("Splitting fragment at an elementary-fragment it doesn't contain.");
   end if;
@@ -1468,6 +1420,215 @@ define method trim-until-parsable
     end while;
   end block;
 end method trim-until-parsable;
+
+
+// Expansion generators.
+
+define class <expansion-generator> (<object>)
+  //
+  // The <macro-call-parse> being expanded via this generator.
+  constant slot generator-call :: <macro-call-parse>,
+    required-init-keyword: call:;
+  //
+  // The macro-source for the expansion we are generating.
+  constant slot generator-source :: <macro-source>,
+    required-init-keyword: source:;
+  //
+  // The definition of the macro being expanded.
+  constant slot generator-macro-defn :: <macro-definition>,
+    required-init-keyword: definition:;
+  //
+  // The uniquifier we are using for this expansion.
+  constant slot generator-uniquifier :: <uniquifier> = make(<uniquifier>),
+    init-keyword: uniquifier:;
+  //
+  // The fragment we are currently working on generating.  We start with
+  // it being some random empty fragment and then overwrite it in the
+  // initialize method with an empty-fragment with a reasonable source
+  // location.  This way it is guaranteed to be initialized.
+  slot generator-fragment :: <fragment> = make(<empty-fragment>);
+  //
+  // Stack of pending fragments.
+  slot generator-fragment-stack :: <list> = #();
+  //
+  // The index for the next token.
+  slot generator-next-token :: <integer> = 0;
+  //
+  // The current section marker.
+  slot generator-section :: <section-marker> = make(<section-marker>);
+end class <expansion-generator>;
+
+define sealed domain make (singleton(<expansion-generator>));
+define sealed domain initialize (<expansion-generator>);
+
+
+define method initialize
+    (generator :: <expansion-generator>, #next next-method, #key) => ();
+  next-method();
+  generator.generator-fragment := generate-empty-fragment(generator);
+end method initialize;
+
+
+define method generate-empty-fragment (generator :: <expansion-generator>)
+    => res :: <empty-fragment>;
+  make(<empty-fragment>,
+       source-location:
+	 source-location-after
+	   (make(<simple-macro-source-location>,
+		 source: generator.generator-source,
+		 came-from: make(<unknown-source-location>),
+		 token: generator.generator-next-token,
+		 section: generator.generator-section)));
+end method generate-empty-fragment;
+
+
+define method start-sub-fragment
+    (generator :: <expansion-generator>) => ();
+  generator.generator-fragment-stack
+    := pair(generator.generator-fragment, generator.generator-fragment-stack);
+  generator.generator-fragment := generate-empty-fragment(generator);
+end method start-sub-fragment;
+
+
+define method finish-sub-fragment (generator :: <expansion-generator>)
+    => res :: <fragment>;
+  let res = generator.generator-fragment;
+  let stack = generator.generator-fragment-stack;
+  generator.generator-fragment := stack.head;
+  generator.generator-fragment-stack := stack.tail;
+  res;
+end method finish-sub-fragment;
+
+
+define method generate-fragment
+    (generator :: <expansion-generator>, fragment :: <fragment>) => ();
+  generator.generator-fragment
+    := append-fragments!(generator.generator-fragment, fragment);
+end method generate-fragment;
+
+
+define method generate-token-source-location
+    (generator :: <expansion-generator>,
+     #key came-from :: <source-location> = make(<unknown-source-location>))
+    => res :: <macro-source-location>;
+  let index = generator.generator-next-token;
+  generator.generator-next-token := index + 1;
+  make(<simple-macro-source-location>,
+       source: generator.generator-source,
+       came-from: came-from,
+       token: index,
+       section: generator.generator-section);
+end method generate-token-source-location;
+
+
+define method generate-token
+    (generator :: <expansion-generator>, token :: <token>,
+     came-from :: <source-location>)
+    => ();
+  generate-fragment
+    (generator,
+     make(<token-fragment>,
+	  source-location:
+	    generate-token-source-location(generator, came-from: came-from),
+	  token: token));
+end method generate-token;
+
+
+define method nuke-separator (generator :: <expansion-generator>) => ();
+  let fragment = generator.generator-fragment;
+  let last = last-elementary-fragment(fragment);
+  assert(instance?(last, <token-fragment>));
+  generator.generator-fragment := split-fragment-at(fragment, last);
+  generator.generator-next-token := generator.generator-next-token - 1;
+end method nuke-separator;
+
+
+define method generate-new-section (generator :: <expansion-generator>) => ();
+  generator.generator-section := make(<section-marker>);
+end method generate-new-section;
+
+
+
+// macro-expand.
+
+// macro-expand -- exported.
+//
+// Expand the form returning an <expression-parse>.  The real work is done
+// by macro-expand-aux which is separated out so that we can use it for
+// macro constraints.
+// 
+define method macro-expand (form :: <macro-call-parse>)
+    => expansion :: <expression-parse>;
+  parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form)));
+end method macro-expand;
+
+// macro-expand-aux -- internal.
+//
+// Does the real work of a macro expansion.  Find the definition and run its
+// main rules until one of them gives us a match.  Once we have a match,
+// compute the replacement and return it.
+// 
+define method macro-expand-aux (form :: <macro-call-parse>)
+    => replacement :: <fragment>;
+  let name = name-for-macro-call(form);
+  let var = find-variable(name);
+  unless (var)
+    error("syntax table and variable table inconsistent.");
+  end unless;
+  let defn = var.variable-definition;
+  unless (defn)
+    error("syntax table and variable table inconsistent.");
+  end unless;
+  let intermediate-words = defn.macro-intermediate-words;
+  block (return)
+    let fragment = form.macro-call-fragment;
+    for (rule in defn.macro-main-rule-set.rule-set-rules)
+      let results = match-rule(rule, form, fragment, intermediate-words);
+      unless (results == #"failed")
+	let generator = make(<expansion-generator>, call: form,
+			     source:
+			       make(<macro-source>,
+				    description: format-to-string("%s", form),
+				    source-location: form.source-location),
+			     definition: defn);
+	expand-template(generator, rule.rule-template, results, #f);
+	return(generator.generator-fragment);
+      end unless;
+    end for;
+    compiler-error-location
+      (form, "Syntax error in %s.  None of the main rules matched.", form);
+  end block;
+end method macro-expand-aux;
+
+
+// name-for-macro-call -- internal.
+//
+// Return the <name> of the macro being called by this macro call parse.
+// 
+define generic name-for-macro-call (form :: <macro-call-parse>)
+    => name :: <basic-name>;
+
+// name-for-macro-call{type-union(<statement-parse>, <fn-macro-call-parse>)}
+//
+// For statement and function-macro calls, we just use the word as is.
+// 
+define method name-for-macro-call
+    (form :: type-union(<statement-parse>, <function-macro-call-parse>))
+    => name :: <basic-name>;
+  id-name(form.macro-call-word);
+end method name-for-macro-call;
+
+// name-for-macro-call{<definition-macro-call-parse>}
+//
+// For definition macro calls, we tack -definer onto the word.
+// 
+define method name-for-macro-call (form :: <definition-macro-call-parse>)
+    => name :: <basic-name>;
+  let define-word = form.macro-call-word;
+  make(<basic-name>,
+       module: define-word.token-module,
+       symbol: symcat(define-word.token-symbol, "-definer"));
+end method name-for-macro-call;
 
 
 
@@ -1917,7 +2078,10 @@ define method match-wildcard
 	  end if;
       let results = add-binding(pattern, matched-fragment, results);
       if (split == tail)
-	continue(make(<empty-fragment>), fail, results);
+	continue(make(<empty-fragment>,
+		      source-location:
+			source-location-after(fragment.source-location)),
+		 fail, results);
       else
 	let next = split.fragment-next;
 	let remaining-fragment
@@ -1931,7 +2095,12 @@ define method match-wildcard
     end method match-wildcard-aux;
   continue(fragment,
 	   curry(match-wildcard-aux, head),
-	   add-binding(pattern, make(<empty-fragment>), results));
+	   add-binding(pattern,
+		       make(<empty-fragment>,
+			    source-location:
+			      source-location-before
+			        (fragment.source-location)),
+		       results));
 end method match-wildcard;
 
 // match-wildcard{<empty-fragment>}
@@ -1954,11 +2123,17 @@ define method match-wildcard
     (pattern :: <pattern-variable>, fragment :: <elementary-fragment>,
      fail :: <function>, continue :: <function>,
      results :: <pattern-binding-set>)
+  let srcloc = fragment.source-location;
   continue(fragment,
-	   method ()	     continue(make(<empty-fragment>), fail,
-		      add-binding(pattern, fragment, results));
+	   method ()
+	     continue(make(<empty-fragment>,
+			   source-location: source-location-after(srcloc)),
+		      fail, add-binding(pattern, fragment, results));
 	   end method,
-	   add-binding(pattern, make(<empty-fragment>), results));
+	   add-binding(pattern,
+		       make(<empty-fragment>,
+			    source-location: source-location-before(srcloc)),
+		       results));
 end method match-wildcard;
 
 // extract-constrained-fragment
@@ -1977,7 +2152,9 @@ define method extract-constrained-fragment
       let (expr, expr-fragment, remaining)
 	= trim-until-parsable(fragment, #f, parse-expression);
       if (expr)
-	values(make-parsed-fragment(expr), remaining);
+	values(make-parsed-fragment
+		 (expr, source-location: expr-fragment.source-location),
+	       remaining);
       else
 	values(#f, #f);
       end if;
@@ -2002,7 +2179,7 @@ define method extract-constrained-fragment
 	    let token = name-frag.fragment-token;
 	    let kind = token.token-kind;
 	    if (kind >= $define-token & kind <= $quoted-name-token)
-	      return(make(<token-fragment>, token: token), after-name);
+	      return(name-frag, after-name);
 	    end if;
 	  end if;
 	end if;
@@ -2023,7 +2200,9 @@ define method extract-constrained-fragment
       let (body, body-fragment, remaining)
 	= trim-until-parsable(fragment, word, parse-body);
       if (body)
-	values(make-parsed-fragment(body), remaining);
+	values(make-parsed-fragment
+		 (body, source-location: body-fragment.source-location),
+	       remaining);
       else
 	values(#f, #f);
       end if;
@@ -2047,7 +2226,10 @@ define method extract-constrained-fragment
       let (paramlist, paramlist-fragment, remaining)
 	= trim-until-parsable(fragment, #f, parse-parameter-list);
       if (paramlist)
-	values(make-parsed-fragment(paramlist), remaining);
+	values(make-parsed-fragment
+		 (paramlist,
+		  source-location: paramlist-fragment.source-location),
+	       remaining);
       else
 	values(#f, #f);
       end if;
@@ -2058,7 +2240,9 @@ define method extract-constrained-fragment
       let (varlist, varlist-fragment, remaining)
 	= trim-until-parsable(fragment, #f, parse-variable-list);
       if (varlist)
-	values(make-parsed-fragment(varlist), remaining);
+	values(make-parsed-fragment
+		 (varlist, source-location: varlist-fragment.source-location),
+	       remaining);
       else
 	values(#f, #f);
       end if;
@@ -2075,7 +2259,10 @@ define method extract-constrained-fragment
     // If someone called us with a wildcard constraint that means that they
     // know that the entire fragment must match, so lets just accommodate them.
     #"*" =>
-      values(fragment, make(<empty-fragment>));
+      values(fragment,
+	     make(<empty-fragment>,
+		  source-location:
+		    source-location-after(fragment.source-location)));
 
     #f =>
       compiler-error-location
@@ -2129,9 +2316,11 @@ define method match
 	      end method append!;
 	for (prop in plist)
 	  if (prop.prop-comma)
-	    append!(make(<token-fragment>, token: prop.prop-comma));
+	    append!(make(<token-fragment>, token: prop.prop-comma,
+			 source-location: prop.prop-comma-srcloc));
 	  end if;
-	  append!(make(<token-fragment>, token: prop.prop-keyword));
+	  append!(make(<token-fragment>, token: prop.prop-keyword,
+		       source-location: prop.prop-keyword-srcloc));
 	  let (val, remaining)
 	    = extract-constrained-fragment(restvar, prop.prop-value,
 					   intermediate-words);
@@ -2141,7 +2330,7 @@ define method match
 	  //
 	  // We copy the fragment because it would be impolite to destructivly
 	  // modify the fragment found in the property list.
-	  append!(copy-fragment(val));
+	  append!(copy-fragment(val, preserve-source-locations: #t));
 	end for;
 	results := add-binding(restvar, frag, results);
       end if;
@@ -2212,7 +2401,7 @@ define method match
 	      end if;
 	    end for;
 	    //
-	    // Wasn't there, so use the default or fail if there isn't one.
+	    // It wasn't there, so use the default or fail if there isn't one.
 	    // Note: the default is *not* supposed to be subject to the
 	    // constraint.
 	    if (key.patkey-default)
@@ -2229,244 +2418,342 @@ define method match
     // Wow, everything worked.  So continue with the empty fragment (because
     // property-lists have to match everything) and the bindings we have
     // accumulated.
-    continue(make(<empty-fragment>), fail, results);
+    continue(make(<empty-fragment>,
+		  source-location:
+		    source-location-after(fragment.source-location)),
+	     fail, results);
   end block;
 end method match;
 
 
 
-// do-replacement
-//
-// Compute the replacement for some rhs, recursivly matching and expanding
-// auxiliary rules.
-// 
-define method do-replacement
-    (template :: <template>, bindings :: <pattern-binding-set>,
-     this-rule-set :: false-or(<symbol>),
-     aux-rule-sets :: <simple-object-vector>,
-     intermediate-words :: <simple-object-vector>,
-     uniquifier :: <uniquifier>)
-    => res :: <fragment>;
-  //
-  // First, expand out any recursive rules.
-  for (binding = bindings then binding.pattern-binding-next,
-       while: binding)
-    let name = binding.pattern-binding-variable.patvar-name | this-rule-set;
-    unless (name)
-      error("Can't use ... in the main rule set.");
-    end unless;
-    let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
-    if (aux-rule-set)
-      let value = binding.pattern-binding-value;
-      if (instance?(value, <simple-object-vector>))
-	for (index from 0 below value.size)
-	  block (return)
-	    for (rule in aux-rule-set.rule-set-rules)
-	      let replacement
-		= match-rule(rule, #f, value[index], intermediate-words);
-	      unless (replacement == #"failed")
-		value[index]
-		  := do-replacement(rule.rule-template, replacement, name,
-				    aux-rule-sets, intermediate-words,
-				    uniquifier);
-		return();
-	      end unless;
-	    end for;
-	    compiler-error-location
-	      (binding.pattern-binding-variable,
-	       "None of the rules for auxiliary rule set %s matched", name);
-	  end block;
-	end for;
-      else
-	block (return)
-	  for (rule in aux-rule-set.rule-set-rules)
-	    let replacement = match-rule(rule, #f, value, intermediate-words);
-	    unless (replacement == #"failed")
-	      binding.pattern-binding-value
-		:= do-replacement(rule.rule-template, replacement, name,
-				  aux-rule-sets, intermediate-words,
-				  uniquifier);
-	      return();
-	    end unless;
-	  end for;
-	  compiler-error
-	    ("None of the rules for auxiliary rule set %s matched.", name);
-	end block;
-      end if;
-    end if;
-  end for;
-  //
-  // Produce a new fragment built from the template.
-  expand-template(template, bindings, this-rule-set, uniquifier);
-end method do-replacement;
-
+// Expanders.
 
 define generic expand-template
-    (template :: <template>, bindings :: <pattern-binding-set>,
-     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-
+    (generator :: <expansion-generator>, template :: <template>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>))
+    => ();
 
 define method expand-template
-    (template :: <literal-template>, bindings :: <pattern-binding-set>,
-     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-  let results = make(<empty-fragment>);
+    (generator :: <expansion-generator>, template :: <literal-template>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>))
+    => ();
   for (piece in template.template-elements,
-       results = make(<empty-fragment>)
-	 then append-element!(results, piece, bindings, this-rule-set,
-			      uniquifier))
-  finally
-    results;
+       prev-separator? = #f
+	 then append-element!(generator, piece, bindings, this-rule-set,
+			      prev-separator?))
   end for;
 end method expand-template;
 
+
 define generic append-element!
-    (fragment :: <fragment>,
+    (generator :: <expansion-generator>,
      element :: type-union(<token>, <bracketed-element>,
 			   <pattern-variable-reference>),
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+
+
+define method find-atomic-value
+    (varref :: <pattern-variable-reference>, bindings :: <pattern-binding-set>,
+     name :: <symbol>, this-rule-set :: false-or(<symbol>))
+    => res :: <fragment>;
+  let binding = find-binding(bindings, varref, name, this-rule-set);
+  let var = binding.pattern-binding-variable;
+  if (instance?(var, <pattern-keyword>) & var.patkey-all?)
+    compiler-error-location
+      (varref.patvarref-name,
+       "%s was bound using ?? so must be referenced with ??, not ?",
+       name);
+  end if;
+  binding.pattern-binding-value;
+end method find-atomic-value;
+
 
 define method append-element!
-    (fragment :: <fragment>, piece :: <simple-pattern-variable-reference>,
+    (generator :: <expansion-generator>,
+     varref :: <simple-pattern-variable-reference>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-  let binding = find-binding(bindings, piece.patvarref-name.token-symbol,
-			     this-rule-set);
-  if (binding)
-    let var = binding.pattern-binding-variable;
-    if (instance?(var, <pattern-keyword>) & var.patkey-all?)
-      compiler-error-location
-	(piece.patvarref-name,
-	 "%s was bound using ??, so must be referenced with ??",
-	 piece.patvarref-name);
-    else
-      let value = binding.pattern-binding-value;
-      if (value.more?)
-	append-fragments!(fragment, copy-fragment(value));
-      else
-	maybe-nuke-separator(fragment);
-      end if;
-    end if;
-  else
-    compiler-error-location
-      (piece.patvarref-name, "Unbound pattern variable: %s",
-       piece.patvarref-name);
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+  generate-new-section(generator);
+  let name = varref.patvarref-name.token-symbol;
+  let value = find-atomic-value(varref, bindings, name, this-rule-set);
+  let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
+  let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
+  let orig-token = generator.generator-next-token;
+  expand-value(generator, value, aux-rule-set);
+  if (prev-was-separator? & orig-token == generator.generator-next-token)
+    nuke-separator(generator);
   end if;
+  generate-new-section(generator);
+  #f;
 end method append-element!;
-    
+
+
 define method append-element!
-    (fragment :: <fragment>, piece :: <ellipsis-pattern-variable-reference>,
+    (generator :: <expansion-generator>,
+     varref :: <ellipsis-pattern-variable-reference>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
   unless (this-rule-set)
     compiler-error-location
-      (piece.patvarref-name, "Can't use ... in the main rule set.");
+      (varref.patvarref-name, "Can't use ... in the main rule set.");
   end unless;
-  let binding = find-binding(bindings, this-rule-set, this-rule-set);
-  unless (binding)
-    compiler-error-location
-      (piece.patvarref-name, "Unbound pattern variable: ...");
-  end unless;
-  let value = binding.pattern-binding-value;
-  if (value.more?)
-    append-fragments!(fragment, copy-fragment(value));
-  else
-    maybe-nuke-separator(fragment);
+  generate-new-section(generator);
+  let value
+    = find-atomic-value(varref, bindings, this-rule-set, this-rule-set);
+  let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
+  let aux-rule-set = find-aux-rule-set(this-rule-set, aux-rule-sets);
+  let orig-token = generator.generator-next-token;
+  expand-value(generator, value, aux-rule-set);
+  if (prev-was-separator? & orig-token == generator.generator-next-token)
+    nuke-separator(generator);
   end if;
+  generate-new-section(generator);
+  #f;
 end method append-element!;
   
 
 define method append-element!
-    (fragment :: <fragment>, piece :: <sequence-pattern-variable-reference>,
+    (generator :: <expansion-generator>,
+     varref :: <sequence-pattern-variable-reference>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-  let binding = find-binding(bindings, piece.patvarref-name.token-symbol,
-			     this-rule-set);
-  unless (binding)
-    compiler-error-location
-      (piece.patvarref-name, "Unbound pattern variable: %s",
-       piece.patvarref-name);
-  end unless;
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+  let name = varref.patvarref-name.token-symbol;
+  let binding = find-binding(bindings, varref, name, this-rule-set);
   let var = binding.pattern-binding-variable;
   unless (instance?(var, <pattern-keyword>) & var.patkey-all?)
     compiler-error-location
-      (piece.patvarref-name,
-       "%s was bound using ?, so must be referenced with ?",
-       piece.patvarref-name);
+      (varref.patvarref-name,
+       "%s was bound using ? so must be referenced with ?, not ??",
+       name);
   end unless;
-  let value = binding.pattern-binding-value;
-  if (value.empty?)
-    maybe-nuke-separator(fragment);
-  else
-    let separator = piece.patvarref-separator;
-    for (frag in value, first? = #t then #f)
-      if (separator & ~first?)
-	fragment := append-fragments!(fragment,
-				      make(<token-fragment>,
-					   token: separator));
-      end if;
-      fragment := append-fragments!(fragment, copy-fragment(frag));
-    end for;
-    fragment;
-  end if;
-end method append-element!;
-
-define method maybe-nuke-separator
-    (fragment :: <fragment>) => res :: <fragment>;
-  if (fragment.more?)
-    let last = last-elementary-fragment(fragment);
-    if (instance?(last, <token-fragment>))
-      let token = last.fragment-token;
-      select (token.token-kind)
-	$minus-token, $equal-token, $double-equal-token,
-	$other-binary-operator-token, $comma-token, $semicolon-token =>
-	  split-fragment-at(fragment, last);
-	otherwise =>
-	  fragment;
-      end select;
-    else
-      fragment;
+  let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
+  let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
+  let separator = varref.patvarref-separator;
+  let orig-token = generator.generator-next-token;
+  for (value in binding.pattern-binding-value,
+       first? = #t then #f)
+    generate-new-section(generator);
+    if (separator & ~first?)
+      generate-token(generator, separator, separator.source-location);
+      generate-new-section(generator);
     end if;
-  else
-    fragment;
+    expand-value(generator, value, aux-rule-set);
+  end for;
+  if (prev-was-separator? & orig-token == generator.generator-next-token)
+    nuke-separator(generator);
   end if;
-end method maybe-nuke-separator;
+  generate-new-section(generator);
+  #f;
+end method append-element!;
 
 
 define method append-element!
-    (fragment :: <fragment>, piece :: <bracketed-element>,
+    (generator :: <expansion-generator>,
+     varref :: <concatenating-pattern-variable-reference>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-  append-fragments!(fragment,
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+  generate-new-section(generator);
+  start-sub-fragment(generator);
+  let name-string-or-symbol = varref.patvarref-name;
+  let name
+    = select (name-string-or-symbol.token-kind)
+	$string-token =>
+	  as(<symbol>, name-string-or-symbol.token-literal.literal-value);
+	$symbol-token =>
+	  name-string-or-symbol.token-literal.literal-value;
+	otherwise =>
+	  name-string-or-symbol.token-symbol;
+      end select;
+  let value = find-atomic-value(varref, bindings, name, this-rule-set);
+  let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
+  let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
+  expand-value(generator, value, aux-rule-set);
+  let fragment = finish-sub-fragment(generator);
+  unless (instance?(fragment, <token-fragment>))
+    compiler-error-location
+      (varref.patvarref-name,
+       "Pattern variable %s is not bound to a single NAME token.", 
+       name);
+  end unless;
+  let token = fragment.fragment-token;
+  unless (token.token-kind >= $define-token
+	    & token.token-kind <= $quoted-name-token)
+    compiler-error-location
+      (varref.patvarref-name,
+       "Pattern variable %s is not bound to a single NAME token.", 
+       name);
+  end unless;
+  let orig = as(<string>, token.token-symbol);
+  let with-suffix
+    = if (varref.patvarref-suffix)
+	concatenate(orig, varref.patvarref-suffix);
+      else
+	orig;
+      end if;
+  let string
+    = if (varref.patvarref-prefix)
+	concatenate(varref.patvarref-prefix, with-suffix);
+      else
+	with-suffix;
+      end if;
+  let srcloc = fragment.source-location;
+  let new-token
+    = select (name-string-or-symbol.token-kind)
+	$string-token =>
+	  make(<literal-token>,
+	       source-location: srcloc,
+	       kind: $string-token,
+	       literal: as(<ct-value>, string));
+	$symbol-token =>
+	  make(<literal-token>,
+	       source-location: srcloc,
+	       kind: $symbol-token,
+	       literal: as(<ct-value>, as(<symbol>, string)));
+	otherwise =>
+	  let symbol = as(<symbol>, string);
+	  let module = token.token-module;
+	  let new-kind = syntax-for-name(module.module-syntax-table, symbol);
+	  make(<identifier-token>, source-location: srcloc,
+	       kind: new-kind, symbol: symbol, module: module,
+	       uniquifier: generator.generator-uniquifier);
+      end select;
+  generate-fragment(generator,
+		    make(<token-fragment>,
+			 source-location: srcloc,
+			 token: new-token));
+  generate-new-section(generator);
+end method append-element!;
+    
+
+
+define generic expand-value
+    (generator :: <expansion-generator>, value :: <fragment>,
+     aux-rule-set :: false-or(<auxiliary-rule-set>))
+    => ();
+
+define method expand-value
+    (generator :: <expansion-generator>, value :: <fragment>,
+     aux-rule-set :: <auxiliary-rule-set>)
+    => ();
+  block (return)
+    let intermediate-words
+      = generator.generator-macro-defn.macro-intermediate-words;
+    for (rule in aux-rule-set.rule-set-rules)
+      let results = match-rule(rule, #f, value, intermediate-words);
+      unless (results == #"failed")
+	expand-template(generator, rule.rule-template, results,
+			aux-rule-set.rule-set-name);
+	return();
+      end unless;
+    end for;
+    let call = generator.generator-call;
+    compiler-error-location
+      (call,
+       "Syntax error in %s.  None of the auxiliary rules for %s matched.",
+       call, aux-rule-set.rule-set-name);
+  end block;
+end method expand-value;
+
+define method expand-value
+    (generator :: <expansion-generator>, value :: <fragment>,
+     aux-rule-set == #f)
+    => ();
+  expand-fragment(generator, value);
+end method expand-value;
+
+define generic expand-fragment
+    (generator :: <expansion-generator>, fragment :: <fragment>) => ();
+
+define method expand-fragment
+    (generator :: <expansion-generator>, fragment :: <empty-fragment>) => ();
+end method expand-fragment;
+
+define method expand-fragment
+    (generator :: <expansion-generator>, fragment :: <compound-fragment>)
+    => ();
+  let stop = fragment.fragment-tail.fragment-next;
+  for (subfrag = fragment.fragment-head then subfrag.fragment-next,
+       until: subfrag == stop)
+    expand-fragment(generator, subfrag);
+  end for;
+end method expand-fragment;
+
+define method expand-fragment
+    (generator :: <expansion-generator>, fragment :: <bracketed-fragment>)
+    => ();
+  let left-srcloc
+    = (generate-token-source-location
+	 (generator, came-from: fragment.fragment-left-srcloc));
+  start-sub-fragment(generator);
+  expand-fragment(generator, fragment.fragment-contents);
+  let contents = finish-sub-fragment(generator);
+  let right-srcloc
+    = (generate-token-source-location
+	 (generator, came-from: fragment.fragment-right-srcloc));
+  generate-fragment(generator,
 		    make(<bracketed-fragment>,
-			 left-token: piece.bracketed-element-left-token,
-			 contents:
-			   expand-template(piece.bracketed-element-guts,
-					   bindings, this-rule-set,
-					   uniquifier),
-			 right-token: piece.bracketed-element-right-token));
+			 left-token: fragment.fragment-left-token,
+			 left-srcloc: left-srcloc,
+			 contents: contents,
+			 right-token: fragment.fragment-right-token,
+			 right-srcloc: right-srcloc));
+end method expand-fragment;
+
+define method expand-fragment
+    (generator :: <expansion-generator>, fragment :: <token-fragment>)
+    => ();
+  generate-token(generator, fragment.fragment-token, fragment.source-location);
+end method expand-fragment;
+
+
+define method append-element!
+    (generator :: <expansion-generator>, piece :: <bracketed-element>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+  let left-token = piece.bracketed-element-left-token;
+  let left-srcloc
+    = (generate-token-source-location
+	 (generator, came-from: left-token.source-location));
+  start-sub-fragment(generator);
+  expand-template(generator, piece.bracketed-element-guts, bindings,
+		  this-rule-set);
+  let contents = finish-sub-fragment(generator);
+  let right-token = piece.bracketed-element-right-token;
+  let right-srcloc
+    = (generate-token-source-location
+	 (generator, came-from: right-token.source-location));
+  generate-fragment(generator,
+		    make(<bracketed-fragment>,
+			 left-token: left-token,
+			 left-srcloc: left-srcloc,
+			 contents: contents,
+			 right-token: right-token,
+			 right-srcloc: right-srcloc));
+  #f;
 end method append-element!;
 
 define method append-element!
-    (fragment :: <fragment>, token :: <token>,
+    (generator :: <expansion-generator>, token :: <token>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
-  append-fragments!(fragment, make(<token-fragment>, token: token));
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
+  generate-token(generator, token, token.source-location);
+  token-is-separator?(token);
 end method append-element!;
 
 define method append-element!
-    (fragment :: <fragment>, token :: <identifier-token>,
+    (generator :: <expansion-generator>, token :: <identifier-token>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
   let kind = token.token-kind;
   let symbol = token.token-symbol;
   let module = token.token-module;
@@ -2479,39 +2766,67 @@ define method append-element!
   let new-token
     = make(<identifier-token>, source-location: token.source-location,
 	   kind: new-kind, symbol: symbol, module: module,
-	   uniquifier: uniquifier);
-  append-fragments!(fragment, make(<token-fragment>, token: new-token));
+	   uniquifier: generator.generator-uniquifier);
+  generate-token(generator, new-token, token.source-location);
+  token-is-separator?(new-token);
 end method append-element!;
 
 define method append-element!
-    (fragment :: <fragment>, token :: <operator-token>,
+    (generator :: <expansion-generator>, token :: <operator-token>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     uniquifier :: <uniquifier>)
-    => results :: <fragment>;
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <boolean>;
   let new-token
     = make(<operator-token>, source-location: token.source-location,
 	   kind: token.token-kind, symbol: token.token-symbol,
-	   module: token.token-module, uniquifier: uniquifier);
-  append-fragments!(fragment, make(<token-fragment>, token: new-token));
+	   module: token.token-module,
+	   uniquifier: generator.generator-uniquifier);
+  generate-token(generator, new-token, token.source-location);
+  token-is-separator?(new-token);
 end method append-element!;
 
 
+define method token-is-separator? (token :: <token>) => res :: <boolean>;
+  select (token.token-kind)
+    $minus-token, $equal-token, $double-equal-token,
+    $other-binary-operator-token, $comma-token, $semicolon-token =>
+      #t;
+    otherwise =>
+      #f;
+  end select;
+end method token-is-separator?;
+
+
+
 define method expand-template
-    (template :: <procedural-template>, bindings :: <pattern-binding-set>,
-     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
-    => results :: <fragment>;
+    (generator :: <expansion-generator>, template :: <procedural-template>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>))
+    => ();
+  generate-new-section(generator);
   let var = find-variable(id-name(template.template-name));
   let expander = var & var.variable-fragment-expander;
   unless (expander)
     compiler-error-location
       (template.template-name, "Unknown procedural template expander: %s",
-       template.template-name);
+       template.template-name.token-symbol);
   end unless;
+  let desc = generator.generator-source.macro-source-description;
+  let srcloc = generator.generator-source.source-location;
   apply(expander,
+	generator,
 	map(method (argument :: <template>) => frag :: <fragment>;
-	      expand-template(argument, bindings, this-rule-set, uniquifier);
+	      let generator = make(<expansion-generator>,
+				   call: generator.generator-call,
+				   source:
+				     make(<macro-source>, description: desc,
+					  source-location: srcloc),
+				   definition: generator.generator-macro-defn,
+				   uniquifier: generator.generator-uniquifier);
+	      expand-template(generator, argument, bindings, this-rule-set);
+	      generator.generator-fragment;
 	    end method,
 	    template.template-arguments));
+  generate-new-section(generator);
 end method expand-template;
 
 
@@ -2724,7 +3039,6 @@ add-make-dumper
 	       list(varref-id, id:, #f)));
 
 
-
 
 // Testing code.
 
@@ -2877,4 +3191,5 @@ define method recursively-macro-expand
        body: recursively-macro-expand(thing.uwp-body),
        cleanup: recursively-macro-expand(thing.uwp-cleanup));
 end method recursively-macro-expand;
+
 

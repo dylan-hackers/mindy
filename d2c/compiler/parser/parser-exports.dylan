@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.5 1996/03/21 03:01:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.6 1996/03/27 23:59:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,8 +21,34 @@ define module tokenize
   use tokens;
   use source;
 
-  export <tokenizer>, get-token, unget-token, note-potential-end-point;
+  export
+    <tokenizer>, get-token, unget-token, note-potential-end-point;
 end module tokenize;
+
+define module source-utilities
+  use common;
+  use utils;
+  use source;
+  use od-format;
+  use compile-time-values;
+
+  export
+    <macro-source>, macro-source-description,
+
+    <section-marker>,
+
+    <macro-source-location>, macro-srcloc-source,
+
+    <simple-macro-source-location>, macro-srcloc-came-from,
+    macro-srcloc-token, macro-srcloc-section,
+
+    <compound-macro-source-location>, macro-srcloc-first, macro-srcloc-last,
+
+    source-location-before, source-location-after,
+    source-location-between, source-location-spanning, 
+    simplify-source-location;
+
+end module source-utilities;
 
 define module lexer
   use common;
@@ -48,6 +74,7 @@ define module fragments
   use source;
   use tokens;
   use tokenize;
+  use source-utilities;
 
   export
     <fragment>,
@@ -55,8 +82,8 @@ define module fragments
     <compound-fragment>, fragment-head, fragment-tail,
     <elementary-fragment>, fragment-prev, fragment-next,
     <token-fragment>, fragment-token,
-    <bracketed-fragment>, fragment-left-token, fragment-contents,
-    fragment-right-token,
+    <bracketed-fragment>, fragment-left-token, fragment-left-srcloc,
+    fragment-contents, fragment-right-token, fragment-right-srcloc,
 
     copy-fragment, append-fragments!,
 
@@ -219,8 +246,10 @@ define module parse-tree
 
     <unhygienic-pattern-variable-reference>,
 
-    <property>, prop-comma, prop-keyword, prop-value;
+    <property>, prop-comma, prop-comma-srcloc,
+    prop-keyword, prop-keyword-srcloc, prop-value;
 end;
+
 
 define module parser
   use common;
@@ -233,6 +262,7 @@ define module parser
   use fragments;
   use tokenize;
   use parse-tree;
+  use source-utilities;
 
   export
     make-parsed-fragment,
@@ -265,9 +295,12 @@ define module macros
   use parse-tree;
   use parser;
   use od-format;
+  use source-utilities;
 
   export
     <macro-definition>, macro-expand, recursively-macro-expand,
+
+    <expansion-generator>, generate-token-source-location, generate-fragment,
 
     define-procedural-expander;
 end;
