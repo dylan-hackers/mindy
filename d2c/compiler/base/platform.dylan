@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.8 1996/08/22 18:31:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.9 1996/09/04 16:47:10 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -68,9 +68,9 @@ define sealed class <target-environment> (<object>)
   constant slot move-file-command :: <byte-string>,
     required-init-keyword: #"move-file-command";
 
-  // see Make for the default values...
-  constant slot link-like-a-windows-machine? :: <boolean> = #f,
-    init-keyword: #"link-like-a-windows-machine?";
+  constant slot path-separator :: <character>,
+    required-init-keyword: #"path-separator";
+
   constant slot link-doesnt-search-for-libs? :: <boolean> = #f,
     init-keyword: #"link-doesnt-search-for-libs?";
   constant slot import-directive-required? :: <boolean> = #f,
@@ -96,6 +96,16 @@ define function string-to-boolean (string :: <string>) => bool :: <boolean>;
   end block;
 end function string-to-boolean;
 
+define function string-to-character (string :: <string>)
+ => char :: <character>;
+  if (string.size ~== 1)
+    error("If string.size isn't 1, how do you expect me to convert it\n"
+	    "to a character? (string=%s)", string);
+  else
+    string.first;
+  end if;
+end function string-to-character;
+
 // Construct a sequence of keyword/values, and pass it to make().  Not
 // only will this work, it will even catch duplicate and missing
 // keywords (although the error message might not be readily
@@ -114,6 +124,7 @@ define function add-target!
   for (val keyed-by key in header)
     let val = substring-replace(val, "\\t", "\t");
     let val = substring-replace(val, "\\n", "\n");
+    let val = substring-replace(val, "\\\\", "\\");
     
     if (key == #"inherit-from")
       // Make sure we don't actually do the keyword-append until after
@@ -131,11 +142,13 @@ define function add-target!
       select (key)
 	#"target-name" =>
 	  keyword-values := add!(keyword-values, as(<symbol>, val));
-	#"link-like-a-windows-machine?", #"link-doesnt-search-for-libs?",
-	#"import-directive-required?", #"supports-debugging?" =>
+	#"link-doesnt-search-for-libs?", #"import-directive-required?", 
+	#"supports-debugging?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));
+	#"path-separator" =>
+	  keyword-values := add!(keyword-values, string-to-character(val));
 	otherwise =>
 	  keyword-values := add!(keyword-values, val);
       end select;
