@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.90 1995/10/16 17:54:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.91 1995/10/30 13:10:10 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -111,7 +111,8 @@ define module od-format
     <identity-preserving-mixin>,
     maybe-dump-reference,
     load-external-definition,
-    add-make-dumper;
+    add-make-dumper,
+    state-stack, state-stack-setter;
 
 end;
 
@@ -129,36 +130,6 @@ define module forwards
     <cclass>,
     <abstract-variable>,
     expand;
-end;
-
-define module source
-  use common;
-  use System;
-  use File-Descriptors;
-
-  use utils;
-
-  export
-    <source-location>, source-location-span,
-    <source-location-mixin>, source-location,
-
-    <source-file>, contents,
-    <file-source-location>, source-file,
-    start-posn, start-line, start-column,
-    end-posn, end-line, end-column,
-
-    extract-string;
-end;
-
-define module header
-  use common;
-  use System;
-
-  use utils;
-  use source;
-
-  export
-    <header>, parse-header;
 end;
 
 define module compile-time-values
@@ -185,6 +156,38 @@ define module compile-time-values
     <literal-simple-object-vector>,
     <literal-string>,
     *compiler-dispatcher*;
+end;
+
+define module source
+  use common;
+  use System;
+  use File-Descriptors;
+
+  use utils;
+  use od-format;
+  use compile-time-values;
+
+  export
+    <source-location>, source-location-span,
+    <source-location-mixin>, source-location,
+
+    <source-file>, contents,
+    <file-source-location>, source-file,
+    start-posn, start-line, start-column,
+    end-posn, end-line, end-column,
+
+    extract-string;
+end;
+
+define module header
+  use common;
+  use System;
+
+  use utils;
+  use source;
+
+  export
+    <header>, parse-header;
 end;
 
 
@@ -471,6 +474,8 @@ end;
 define module policy
   use common;
   use utils;
+  use od-format;
+  use compile-time-values;
 
   export <policy>, $Default-Policy;
 end;
@@ -756,7 +761,8 @@ define module builder-interface
     <fer-builder>, build-let, make-unknown-call, make-literal-constant,
     make-definition-constant, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
-    build-unwind-protect-body, build-function-body, make-function-literal, 
+    build-unwind-protect-body, build-function-body, make-function-literal,
+    make-initial-var,
 
     <fer-component>, <nlx-info>;
 end;
@@ -766,6 +772,7 @@ define module flow
   use utils;
   use ctype;
   use source;
+  use od-format;
   use forwards, import: {<abstract-variable>}, export: all;
   export 
     <region>, <linear-region>, <simple-region>, <compound-region>,
@@ -1044,15 +1051,12 @@ end;
 define module top-level-expressions
   use common;
   use utils;
-  use tokens;
   use parse-tree;
   use top-level-forms;
   use lexenv;
   use builder-interface;
   use fer-convert;
   use expand;
-
-  export <magic-interal-primitives-placeholder>;
 end;
 
 define module cheese
@@ -1110,7 +1114,6 @@ define module cback
   use flow;
   use front;
   use top-level-forms;
-  use top-level-expressions;
   use define-functions;
   use define-constants-and-variables;
   use ctype;
@@ -1182,6 +1185,24 @@ define module misc-dump
   use classes;
   use variables;
   use names;
+end;
+
+define module fer-od
+  use common;
+  use standard-io;
+  use utils;
+  use source;
+  use policy;
+  use od-format;
+  use compile-time-values;
+  use ctype;
+  use classes;
+  use variables;
+  use names;
+  use front;
+  use flow;
+  use builder-interface;
+  
 end;
 
 define module main
