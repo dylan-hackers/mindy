@@ -10,7 +10,7 @@
 #define TARGET "x86-win32-vc"
 #define LIBDIR "c:\\dylan\\lib"
 #define BINDIR "c:\\dylan\\bin"
-#define VERSION "2.3.6pre2"
+#define VERSION "2.3.10pre1"
 
 #endif
 
