@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.7 1996/08/22 18:28:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.8 1997/02/04 14:38:57 nkramer Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -27,4 +27,4 @@ ctfunc.dylan
 data-flow.dylan
 control-flow.dylan
 signature.dylan
-target.dylan
+platform.dylan
