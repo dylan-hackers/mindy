@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.10 1994/10/05 21:04:25 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.11 1994/10/20 03:04:01 wlott Exp $
 *
 * This file implements the printer framework.
 *
@@ -107,7 +107,7 @@ static void vvformat(char *fmt, va_list ap)
     for (i = 0; i < args; i++)
 	SOVEC(vec)->contents[i] = va_arg(ap, obj_t);
 
-    vformat(fmt, SOVEC(vec)->contents);
+    vformat(fmt, SOVEC(vec)->contents, args);
 }
 #if _USING_PROTOTYPES_
 void format(char *fmt, ...)
@@ -179,44 +179,57 @@ void print_number_in_binary(int number)
 	print_nonzero_in_binary(number);
 }
 
-
-void vformat(char *fmt, obj_t *args)
+void vformat(char *fmt, obj_t *args, int nargs)
 {
     while (*fmt != '\0') {
 	if (*fmt == '%') {
 	    switch (*++fmt) {
               case 'd':
 	      case 'D':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%ld", fixnum_value(*args++));
 		break;
               case 'b':
 	      case 'B':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
 		print_number_in_binary(fixnum_value(*args++));
 		break;
               case 'o':
 	      case 'O':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%lo", fixnum_value(*args++));
 		break;
               case 'x':
 	      case 'X':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%lx", fixnum_value(*args++));
 		break;
 	      case 'c':
 	      case 'C':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		check_type(*args, obj_CharacterClass);
 		fputc(char_int(*args++), stdout);
 		break;
 	      case '=':
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		prin1(*args++);
 		break;
 	      case 's':
 	      case 'S':
 		/* Gotta somehow have two cases,          */
 		/* one for strings and another for errors */
+		if (--nargs < 0)
+		    error("Not enough arguments to format");
 		if (instancep(*args, obj_ByteStringClass)) {
 		  fputs((char *)string_chars(*args++), stdout);
 		}
@@ -283,7 +296,7 @@ static void dylan_format(struct thread *thread, int nargs)
 
     check_type(fmt, obj_ByteStringClass);
 
-    vformat((char *)string_chars(fmt), args+1);
+    vformat((char *)string_chars(fmt), args+1, nargs-1);
 
     old_sp = pop_linkage(thread);
     thread->sp = old_sp;

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.8 1994/10/05 21:01:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.9 1994/10/20 03:05:20 wlott Exp $
 *
 * This file implements the stuff to signal errors from C code.
 *
@@ -82,7 +82,7 @@ static void verror(char *msg, va_list ap)
 	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
 	
 	printf("error: ");
-	vformat(msg, SOVEC(cond)->contents);
+	vformat(msg, SOVEC(cond)->contents, nargs);
 	putchar('\n');
 	exit(1);
     }

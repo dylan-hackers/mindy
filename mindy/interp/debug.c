@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.36 1994/10/05 21:01:33 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.37 1994/10/20 03:05:21 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -417,7 +417,7 @@ static void explain_condition(struct thread *thread, obj_t condition)
 	char *fmt = (char *)string_chars(SOVEC(condition)->contents[0]);
 
 	putchar('\n');
-	vformat(fmt, SOVEC(condition)->contents+1);
+	vformat(fmt, SOVEC(condition)->contents+1, SOVEC(condition)->length-1);
 	printf("\n\n");
     }
     else if (debugger_report_var == NULL
