@@ -543,9 +543,47 @@ define function parse-c-file
   // XXX - We need to accept a parameter which knows about sizeof and
   // the header search path.
   *show-parse-progress?* := #t;
-  let state = parse(repository, list(filename), verbose: #t);
+  let defines = make(<string-table>);
+  for (i from 0 below $default-defines.size by 2)
+    defines[$default-defines[i]] := $default-defines[i + 1];
+  end for;
+  let state = parse(repository, list(filename), defines: defines, verbose: #t);
   state.hackish-output-list;
 end function;
+
+define constant $default-defines
+  = #["const", "",
+      "volatile", "",
+      "__STDC__", "",
+
+      // The following six declarations should be removed someday, as soon as 
+      // we fix a bug in MINDY.
+      //"__GNUC__", "2",
+      //"__GNUC_MINPR__", "7",
+      //"__signed__", "",
+      //"__const", "",
+      //"__CONSTVALUE", "",
+      //"__CONSTVALUE2", "",
+
+      // Parameterized macros which remove various GCC extensions from our
+      // source code. The last item in the list is the right-hand side of
+      // the define; all the items preceding it are named parameters.
+      "__attribute__", #(#("x"), ""), 
+      "__signed__", "", 
+      "__inline__", "",
+      "inline", "",
+      "__inline", "",
+
+      "__ELF__", "",
+      "unix", "",
+      "i386", "",
+      "linux", "",
+      "__unix__", "",
+      "__i386__", "",
+      "__linux__", "",
+      "__unix", "",
+      "__i386", "",
+      "__linux", ""];
 
 
 // Seals for file c-parser-interface.dylan
