@@ -1,5 +1,5 @@
 module: symbol-browser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/symbol-browser.dylan,v 1.1 2004/04/13 20:59:24 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/symbol-browser.dylan,v 1.2 2004/04/13 21:49:11 gabor Exp $
 
 
 // TODO: use CWGetBrowseOptions
@@ -527,10 +527,10 @@ c-system-include("MWLangDefs.h");
 
 define function write-browse-header(vec :: <cw-vector>) => vec :: <cw-vector>;
 	write-4(c-int-expr("BROWSE_HEADER"), vec);
-	write-4(c-int-expr("BROWSE_VERSION"), vec);
+	write-4(c-int-expr("BROWSE_VERSION_V2"), vec);
 	write-2(c-int-expr("langUnknown"), vec);
 	write-2(0, vec);	// uses_name_table
-	write-4(c-int-expr("BROWSE_EARLIEST_COMPATIBLE_VERSION"), vec);
+	write-4(c-int-expr("BROWSE_EARLIEST_COMPATIBLE_VERSION_V2"), vec);
 
 	for (reserved from 0 below 15)
 		write-4(0, vec);
