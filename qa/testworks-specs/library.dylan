@@ -16,6 +16,7 @@ end library testworks-specs;
 
 define module testworks-specs
   use common-dylan;
+  use common-extensions;
   use testworks;
 
   // The macros

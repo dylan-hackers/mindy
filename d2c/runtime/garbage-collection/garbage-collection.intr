@@ -1,6 +1,6 @@
 module: garbage-collection
 
 define interface
-  #include "gc/include/gc.h",
+  #include "gc/gc.h",
   import: all;
 end interface;

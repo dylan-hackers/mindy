@@ -17,8 +17,7 @@ define module testworks
   use common-dylan;
   use simple-io,
     import: { format-out };
-  //use threads,
-  use common-extensions,
+  use threads,
     import: { dynamic-bind };
 
   // Debugging options

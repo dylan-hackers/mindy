@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.11 2002/09/13 19:52:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.12 2002/10/31 10:17:10 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -331,14 +331,14 @@ define method %make-method
      rest-value :: <type>,
      function :: <method>)
     => result :: <method>;
-  local method assert (condition :: <boolean>) => ();
+  local method lassert (condition :: <boolean>) => ();
 	  condition | lose("internal assertion inside %make-method failed.");
-	end method assert;
-  assert(specializers.size == function.function-specializers.size);
-  do(compose(assert, subtype?), specializers, function.function-specializers);
-  assert(fixed-values.size == function.function-values.size);
-  do(compose(assert, subtype?), fixed-values, function.function-values);
-  assert(subtype?(rest-value, function.function-rest-value));
+	end method lassert;
+  lassert(specializers.size == function.function-specializers.size);
+  do(compose(lassert, subtype?), specializers, function.function-specializers);
+  lassert(fixed-values.size == function.function-values.size);
+  do(compose(lassert, subtype?), fixed-values, function.function-values);
+  lassert(subtype?(rest-value, function.function-rest-value));
   make(<dynamic-method>,
        function-name: function.function-name,
        general-entry: %%primitive(main-entry, general-call),

@@ -26,7 +26,6 @@ define library common-extensions
   export
     common-extensions,
     finalization,
-    threads,
     simple-io,
     simple-random,
     simple-profiling,
@@ -69,42 +68,32 @@ end module;
 
 define module functional-extensions
   use dylan;
-  use Magic, import: {%element, %element-setter};
-  use extensions, exclude: { position, assert };
+  use extensions, exclude: { position };
   use common-extensions, import: { find-element };
-  export with-bounds-checks, without-bounds-checks,
-    find-value, // assert already in common-extensions 
-    with-keywords-removed, dynamic-bind,
-    <synchronization>, <exclusive-lock>,
-    <semaphore>, <recursive-lock>,
-    <read-write-lock>,
-    <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!, current-thread,
-    <notification>, wait-for, release-all,
+  export 
+    find-value,
+    with-keywords-removed, 
     put-property!, get-property, \remove-property!,
-    element-range-error, \profiling;
+    \profiling;
 end module;
 
-define module threads
-  use functional-extensions, 
-    export: { dynamic-bind,
-    <synchronization>, <exclusive-lock>,
-    <semaphore>, <recursive-lock>,
-    <read-write-lock>,
-    <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!, current-thread,
-    <notification>, wait-for };
-end module threads;
                                       
 
 define module common-extensions
   use dylan;
   use system, import: { copy-bytes }, export: { copy-bytes };
   use extensions,
-    exclude: { assert },
-    rename: {$not-supplied => $unsupplied,
-	     on-exit => register-exit-application-function},
+    rename: {on-exit => register-exit-application-function},
     export: {$unsupplied,
+             supplied?,
+             unsupplied?,
+             unsupplied,
+             $unfound,
+             found?,
+             unfound?,
+             unfound,
+             \assert,
+             \debug-assert,
              integer-length,
 	     false-or,
 	     one-of,
@@ -140,13 +129,6 @@ define module common-extensions
 
     /* Unsupplied, unfound */
     //$unsupplied,
-    supplied?,
-    unsupplied?,
-    unsupplied,
-    $unfound,
-    found?,
-    unfound?,
-    unfound,
 
     /* Collections */
     //<object-deque>,
@@ -165,9 +147,7 @@ define module common-extensions
     condition-to-string,
 
     /* Debugging */
-    \assert,
     debug-message,
-    \debug-assert,
 
     /* Types */
     //false-or,
@@ -177,6 +157,8 @@ define module common-extensions
     /* Ignoring */
     //ignore,
     ignorable,
+
+    \table-definer,
 
     /* Converting to and from numbers */
     float-to-string,
@@ -191,15 +173,4 @@ define module common-extensions
     exit-application;
     //register-exit-application-function,
 
-#if (~mindy)
-  export
-    \table-definer,
-    \iterate,
-    \when;
-
-  export
-    \%iterate-aux,
-    \%iterate-param-helper,
-    \%iterate-value-helper;
-#endif
 end module;

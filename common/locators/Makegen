@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = "$D2CFLAGS -L../common-dylan";
+$D2CFLAGS = "$D2CFLAGS -L../common-dylan -L../threads";
 
 if ($features{'compiled_for_win32'}) {
     $lid_file = 'win32-locators';

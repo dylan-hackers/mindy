@@ -1,4 +1,4 @@
-$D2CFLAGS = $d2c_runtime . ' -L../../../../common/common-dylan -L../../../../qa/testworks -L../../../../qa/testworks-specs';
+$D2CFLAGS = $d2c_runtime . " -L$buildroot/common/threads -L../../../../common/common-dylan -L../../../../qa/testworks -L../../../../qa/testworks-specs";
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
 if ($host_platform{'integer_length'} >= 64) {

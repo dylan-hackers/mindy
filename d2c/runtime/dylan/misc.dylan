@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.4 2002/03/13 22:54:22 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.5 2002/10/31 10:17:10 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -34,15 +34,27 @@ module: dylan-viscera
 // have side-effects in the expression that is passed to assert(),
 // because if we ever turn assertions off, that would mean the program
 // runs differently in debug mode than it does in release mode.
-//
-define function assert (value) => ();
-  unless (value)
-    let err = make(<simple-error>, format-string: "Assertion failed.");
-    invoke-debugger(*debugger*, err);
-    error(err);
-  end;
-end function assert;
 
+define macro assert
+    { assert( ?clauses ) }
+     => { ?clauses }
+clauses:
+  { ?ok:expression }
+    => { if( ~ ?ok ) error( "An assertion failed" ) end if; }
+  { ?ok:expression, ?message:expression }
+    => { if( ~ ?ok ) error( ?message ) end if; }
+  { ?ok:expression, ?message:expression, ?args:* }
+    => { if( ~ ?ok ) error(?message, ?args) end if; }
+end macro assert;
+
+define macro debug-assert
+  { debug-assert(?value:expression, ?format-string:expression, ?format-args:*)}
+    =>{ assert(?value, ?format-string, ?format-args) }
+    { debug-assert(?value:expression, ?message:expression) }
+    =>{ assert(?value, ?message) }
+    { debug-assert(?value:expression) }
+    =>{ assert(?value) }
+end macro debug-assert;
 
 // <not-supplied-marker> -- internal.
 //
@@ -57,7 +69,42 @@ end;
 // 
 define constant $not-supplied :: <not-supplied-marker>
     = make(<not-supplied-marker>);
+define constant $unsupplied = $not-supplied;
 
+define method unsupplied?( object :: <object> )
+=> ( unsupplied? :: <boolean> )
+    object = $unsupplied;
+end method unsupplied?;
+
+define method supplied?( object :: <object> )
+=> ( unsupplied? :: <boolean> )
+    ~ unsupplied?( object );
+end method supplied?;
+
+define method unsupplied()
+=> ( unsupplied-marker :: <object> )
+    $unsupplied;
+end method unsupplied;
+
+define class <not-found-marker> (<object>)
+end;
+
+define constant $unfound = make(<not-found-marker>);
+
+define function found?( object :: <object> )
+=> ( found? :: <boolean> )
+    ~ unfound?( object );
+end function found?;
+
+define function unfound?( object :: <object> )
+=> ( unfound? :: <boolean> )
+    object = $unfound;
+end function unfound?;
+
+define function unfound()
+=> ( unfound-marker :: <object> )
+    $unfound;
+end function unfound;
 
 // <never-returns> -- exported from Extensions.
 //
@@ -94,6 +141,37 @@ end method object-address;
 
 define inline method ignore (#rest noise) => ();
 end method ignore;
+
+define macro without-bounds-checks
+  {without-bounds-checks () ?:body end}
+    => {without-bounds-checks ?body end}
+
+  {without-bounds-checks ?:body end}
+    => {let ?=element = %element;
+        let ?=element-setter = %element-setter;
+        ?body}
+end;
+
+define macro with-bounds-checks
+  {with-bounds-checks () ?:body end}
+    => {with-bounds-checks ?body end}
+
+  {with-bounds-checks ?:body end}
+    => {let ?=element = element;
+        let ?=element-setter = element-setter;
+        ?body}
+end;
+
+// element-range-error
+// Just throws an error on the sequence. 
+// Should declare an <element-range-error> class and instantiate it
+
+define method element-range-error
+    (sequence :: <sequence>, index :: <integer>)
+ => ()
+  error( "range error (element %d of %=)", index, sequence );
+end method;
+
 
 
 %%primitive(magic-internal-primitives-placeholder);

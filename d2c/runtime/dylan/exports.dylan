@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.24 2002/04/06 01:29:50 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.25 2002/10/31 10:17:10 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -135,7 +135,11 @@ define module Dylan
 
 	     // Statements
 	     \if, \unless, \case, \select, \while, \until, \for, \begin,
-	     \block, \method,
+	     \block, \method, \when, \iterate, 
+
+             // why do we have to export these?
+             \%iterate-aux, \%iterate-param-helper, \%iterate-value-helper,
+
 
 	     // Function-macro operators
 	     \:=, \&, \|,
@@ -179,7 +183,12 @@ define module Extensions
 	     <byte>, <byte-vector>,
 
 	     // Misc other stuff.
-	     $not-supplied, ignore, functional-==, key-exists?, assert,
+	     $not-supplied, $unsupplied, unsupplied?,
+             supplied?, unsupplied, $unfound, unfound?,
+             found?, unfound,
+             ignore, functional-==, key-exists?, assert,
+             debug-assert, \with-bounds-checks, 
+             \without-bounds-checks, element-range-error,
 	     exit, on-exit, limited-collection-definer,
 	     limited-vector-class, element-type, %elem, %elem-setter,
 	     limited-sv-class, ssv-data, ssv-data-setter, lsv-data-type,

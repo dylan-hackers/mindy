@@ -9,7 +9,6 @@ define library common-dylan
   use common-extensions,
     export: { common-extensions,
               finalization,
-              threads,
 	      simple-random,
 	      simple-profiling,
 	      simple-debugging,
@@ -17,6 +16,8 @@ define library common-dylan
 	      byte-vector,
 		  transcendentals,
               functional-extensions };
+
+  use threads, export: { threads };
 
   use transcendental,
      import: { transcendental => transcendentals },
@@ -90,5 +91,5 @@ end module streams-protocol;
 define module common-dylan-internals
   use common-dylan;
   use locators-protocol;
-  use streams-protocol;
+  use streams-protocol, export: all;
 end module common-dylan-internals;

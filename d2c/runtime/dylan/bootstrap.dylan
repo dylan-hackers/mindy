@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.23 2002/04/06 08:22:35 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.24 2002/10/31 10:17:09 andreas Exp $
 copyright: see below
 module: bootstrap
 
@@ -179,7 +179,10 @@ define module dylan-viscera
 
     // Statements
     \if, \unless, \case, \select, \while, \until, \for, \begin,
-    \block, \method,
+    \block, \method, \when, \iterate,
+
+    // why do we have to export these?
+    \%iterate-aux, \%iterate-param-helper, \%iterate-value-helper,
 
     // Function-macro operators
     \:=, \&, \|,
@@ -194,14 +197,17 @@ define module dylan-viscera
     *warning-output*, *gdb-output*,
     <debugger>, invoke-debugger, *debugger*,
     <byte>, <byte-vector>,
-    $not-supplied, ignore,
+    $not-supplied, $unsupplied, unsupplied?,
+    supplied?, unsupplied, $unfound, unfound?,
+    found?, unfound, ignore,
     <simple-condition>, <format-string-condition>,
-    functional-==, key-exists?, assert, 
+    functional-==, key-exists?, assert, debug-assert, 
     limited-collection-definer, limited-vector-class, element-type, 
     %elem, %elem-setter, limited-sv-class, ssv-data, ssv-data-setter,
     lsv-data-type, lsv-fill, %main, main,
     <stretchy-sequence>, <simple-object-deque>, <stretchy-object-vector>,
-    <simple-object-table>,
+    <simple-object-table>, \with-bounds-checks, \without-bounds-checks,
+    element-range-error,
 
     // Cheap IO
     format, print-message, print, write-integer, puts,

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.38 2002/09/20 23:43:50 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.39 2002/10/31 10:17:09 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -82,7 +82,7 @@ define module common
 	     $minimum-integer, <byte-character>, $not-supplied,
 	     report-condition, condition-format,
              <format-string-condition>, <never-returns>,
-             <ratio>, numerator, denominator, key-exists?, assert,
+             <ratio>, numerator, denominator, key-exists?, \assert,
 #if (mindy)
              *debug-output*, main},
 #else

@@ -11,7 +11,7 @@ define module dylan-test-suite
   //use dylan-extensions,
   use dylan;
   use extensions;
-  use common-dylan, exclude: {assert};
+  use common-dylan;
   use testworks;
   use testworks-specs;
 

@@ -1,6 +1,6 @@
 $D2C = '$(BUILDROOT)/d2c/compiler/main/d2c';
 
-$D2CFLAGS = $d2c_runtime . '-p$(SRCROOT)/d2c/compiler/platforms.descr -L../../testworks -L../../testworks/tests -L../../testworks-specs -L../../../common/common-dylan -L../../../d2c/runtime/random ';
+$D2CFLAGS = $d2c_runtime . '-p$(SRCROOT)/d2c/compiler/platforms.descr -L../../testworks -L../../testworks/tests -L../../testworks-specs -L../../../common/common-dylan -L../../../d2c/runtime/random -L../../../common/threads ';
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
 do emit_library_rule(
