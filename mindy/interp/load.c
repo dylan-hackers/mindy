@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.24 1994/10/05 21:03:48 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.25 1994/10/28 18:53:16 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -1016,6 +1016,11 @@ void load_library(obj_t name)
 		    *dst++ = tolower(*src);
 		else
 		    *dst++ = *src;
+	    strcpy(dst, "-lib.dbc");
+	    if (access(path, R_OK) == 0) {
+		load(path);
+		return;
+	    }
 	    strcpy(dst, ".dbc");
 	    if (access(path, R_OK) == 0) {
 		load(path);
