@@ -683,7 +683,8 @@ define method pointer-to
   else
     let new-type
       = select (target-type.true-type by instance?)
-	  <pointer-declaration>, 
+	  <pointer-declaration>,
+	  <enum-declaration>,
 	  <predefined-type-declaration> =>
 	    make(<pointer-declaration>, name: anonymous-name(),
 		 referent: target-type);
