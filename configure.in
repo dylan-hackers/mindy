@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.14 1995/09/13 23:34:27 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.15 1995/09/14 19:31:14 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -266,11 +266,6 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
-# If boolean is not already a typdef, #define it to be "int"
-#
-AC_CHECK_TYPE(boolean, int)
-
-
 #--------------------------------------------------------------------
 #	If a system doesn't have an opendir function (man, that's old!)
 #	then we have to supply a different version of dirent.h which
@@ -339,6 +334,17 @@ AC_MSG_RESULT(don't need matherr))
 LIBS="${LIBS-} -lm"
 AC_CHECK_LIB(dld, shl_load)
 AC_REPLACE_FUNCS(rint)
+
+#--------------------------------------------------------------------
+#	Check for GNU Readline library
+#--------------------------------------------------------------------
+
+AC_ARG_ENABLE(readline, GNU Readline,
+              [if test $enableval = yes; then
+                   AC_DEFINE(HAVE_LIBREADLINE)
+		   echo "Using GNU Readline"
+                   LIBS="${LIBS-} -lreadline -ltermcap"
+               fi])
 
 #--------------------------------------------------------------------
 #	Check to see whether we know how to read the number of bytes
