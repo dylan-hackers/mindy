@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.109 2003/01/26 14:03:49 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.110 2003/01/26 18:14:12 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -48,7 +48,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=25
+CURRENT_BOOTSTRAP_COUNTER=26
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------
@@ -485,6 +485,8 @@ AC_ARG_WITH(gc-prefix, [  --with-gc-prefix=PFX    Prefix where Boehm gc is insta
 if test "x$gc_prefix" != x; then
   GC_CFLAGS="-I$gc_prefix/include"
   GC_LIBS="-L$gc_prefix/lib -lgc"
+else
+  GC_LIBS="-lgc"
 fi
 save_CPPFLAGS="$CPPFLAGS"
 save_LIBS="$LIBS"
