@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.4 1999/01/06 06:52:02 igor Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.5 1999/01/06 08:43:43 igor Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -156,6 +156,7 @@ $#ARGV == 0 || die "Usage: $0 [-pPlatforms.descr] directory\n";
 chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n";
 
 $lidfile_hit_eof = 0;
+$lidfile_line = 1;
 
 do set_default_defaults();
 do find_Defaults_file();
@@ -513,6 +514,7 @@ sub parse_dylan_header {
     local($last_keyword); # for multi-line values
 
     while (<LIDFILE>) {
+	$lidfile_line = $lidfile_line + 1;
 	# remember, in Perl "." is any character other than newline.
 	# Also, Perl handles all newline hassles by turning win32
 	# style CRLFs into LFs (\n's) before it shows us the string.
@@ -527,7 +529,7 @@ sub parse_dylan_header {
 	    $contents{$last_keyword} .= ' ' . $1;
 	} else {
 	    /^([-A-Za-z0-9_!&*<>|^\$\%\@\?]+):\s+(.*)\s+$/
-		|| die "Bad keyword line in $lid_file\n";
+		|| die "Bad keyword line in $lid_file, line $lidfile_line\n";
 	    local($keyword) = $1;
 	    local($value) = $2;
 	    if ($value eq '#f' | $value eq '#F') {
@@ -563,6 +565,7 @@ sub parse_lid_file {
     # a .o in the Lid file is a hack to get a foreign .o put in the archive.
     # Just ignore em, since there should be a seperate C rule to clean, etc.
     while (<LIDFILE>) {
+	$lidfile_line = $lidfile_line + 1;
         if ($_ !~ m/.*$dot_obj$/) {
   	    chop; # kill newline
 	    $contents{'files'} .= " $_";
