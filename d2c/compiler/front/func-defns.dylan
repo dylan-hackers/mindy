@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.2 1999/02/25 07:01:52 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -75,13 +75,22 @@ define class <implicit-generic-definition>
   inherited slot generic-defn-sealed?, init-value: #t;
 end;
 
+define constant <inline-type>
+  = one-of(#"not-inline", #"default-inline", #"may-inline",
+	   #"inline", #"inline-only");
+
 define open abstract class <abstract-method-definition> (<function-definition>)
   //
-  // The <function-literal> to clone when inlining this method, #f if we can't
-  // inline it, and #"not-computed-yet" if we haven't tried yet.
+  // The <function-literal> to clone when inlining this method,
+  // a closure to call to compute it if we haven't yet, or #f if we can't
+  // inline it.
   slot %method-defn-inline-function
     :: type-union(<function-literal>, <function>, <false>) = #f,
     init-keyword: inline-function:;
+  
+  // Categorization of how strongly the user wanted this method inlined
+  slot method-defn-inline-type :: <inline-type> = #"default-inline",
+    init-keyword: inline-type:;
 end;
 
 define method method-defn-inline-function
@@ -95,6 +104,20 @@ define method method-defn-inline-function
   end if;
 end method method-defn-inline-function;
 
+// For dump output, there's no point in computing or dumping the
+// inline function literal if the user has asked us not to do
+// cross-library inlining.
+// 
+define method method-defn-inline-function-dump
+    (defn :: <abstract-method-definition>)
+    => res :: false-or(<function-literal>);
+  let inline-type = defn.method-defn-inline-type;
+  if (inline-type == #"not-inline" | inline-type == #"default-inline")
+    #f;
+  else
+    defn.method-defn-inline-function;
+  end if;
+end method method-defn-inline-function-dump;
 
 define method defn-type (defn :: <abstract-method-definition>)
     => res :: <cclass>;
@@ -881,8 +904,10 @@ add-make-dumper(#"seal-info", *compiler-dispatcher*, <seal-info>,
 
 define constant $abstract-method-definition-slots
   = concatenate($function-definition-slots,
-		list(method-defn-inline-function, inline-function:,
-		       %method-defn-inline-function-setter));
+		list(method-defn-inline-function-dump, inline-function:,
+		     %method-defn-inline-function-setter,
+		     method-defn-inline-type, inline-type:,
+		     method-defn-inline-type-setter));
 
 define method set-method-defn-of
     (gf :: false-or(<generic-definition>), meth :: <method-definition>) => ();
@@ -891,12 +916,7 @@ define method set-method-defn-of
     ct-add-method(gf, meth);
   end;
 end;
-/*
-define constant hackola = method (x, y)
-  dformat("Dumping defn for method on %=\n",
-  	  x.defn-name.method-name-generic-function.name-symbol);
-end method;
-*/
+
 define constant $method-definition-slots
   = concatenate($abstract-method-definition-slots,
 		list(method-defn-of, #f, set-method-defn-of,
