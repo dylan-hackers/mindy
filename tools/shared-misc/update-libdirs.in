@@ -265,31 +265,15 @@ sub use_library {
     return if(defined $runtime_libraries{$used});
 
     if(defined $used_from_dir{$dir}) {
-	my $need = 1;
-	foreach my $lib (split / /, $used_from_dir{$dir}) {
-	    if($lib eq $used) {
-		$need = 0;
-	    }
-	}
-	if($need) {
-	    $used_from_dir{$dir} .= " $used";
-	}
+	$used_from_dir{$dir} .= " $used";
     } else {
 	$used_from_dir{$dir} = $used;
     }
     
     if(defined $used_from_library{$library}) {
-	my $need = 1;
-	foreach my $lib (split / /, $used_from_library{$library}) {
-	    if($lib eq $used) {
-		$need = 0;
-	    }
-	}
-	if($need) {
-	    $used_from_library{$library} .= " $used";
-	}
+	$used_from_library{$library} .= " $used";
     } else {
-	$used_from_dir{$library} = $used;
+	$used_from_library{$library} = $used;
     }
 }
 
@@ -312,9 +296,7 @@ sub update_directory_makegen {
 
     foreach my $lib (&library_closure(split / /,$used_from_dir{$makegendir})) {
 	my $dir = $library_dir{$lib};
-	if(defined $dir
-	   && $dir ne $makegendir
-	   && !defined $libdirs{$dir}) {
+	if(defined $dir && !defined $libdirs{$dir}) {
 	    push @libdirs, $dir;
 	    $libdirs{$dir} = 1;
 	}
@@ -337,6 +319,7 @@ sub update_directory_makegen {
 	    print MAKEGEN_TMP "    = \$d2c_runtime";
 	    foreach my $dir (@libdirs) {
 		$dir = File::Spec->abs2rel($dir, $makegendir);
+		if($dir eq '') { $dir = '.'; }
 		print MAKEGEN_TMP "\n    . ' -L$dir'";
 	    }
 	    print MAKEGEN_TMP ";\n";
@@ -352,7 +335,8 @@ sub update_directory_makegen {
     if($d2cflags_found) {
 	rename $makegen_tmp, $makegen || die "unable to replace $makegen";
     } else {
-	print STDERR "$makegen: Did not locate an assignment to \$D2CFLAGS\n";
+	print STDERR "$makegen: Did not locate an assignment to \$D2CFLAGS";
+	print STDERR " (libraries used: $used_from_dir{$makegendir})\n";
 	unlink $makegen_tmp;
     }
 }
