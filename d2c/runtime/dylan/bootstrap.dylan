@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.37 1997/01/13 03:26:21 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.38 1997/05/09 23:04:26 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -175,7 +175,7 @@ define module dylan-viscera
     functional-==, key-exists?, assert, 
     limited-collection-definer, limited-vector-class, element-type, 
     %elem, %elem-setter, limited-sv-class, ssv-data, ssv-data-setter,
-    lsv-data-type, lsv-fill,
+    lsv-data-type, lsv-fill, %main, main,
 
     // Cheap IO
     format, print-message, print, write-integer, write,
