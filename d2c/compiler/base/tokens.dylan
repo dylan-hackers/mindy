@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.2 2000/01/24 04:56:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.3 2000/03/15 04:09:27 andreas Exp $
 copyright: see below
 
 
@@ -237,8 +237,8 @@ define constant $operator-info :: <self-organizing-list>
       table[#">"] := #(2 . #"left");
       table[#"<="] := #(2 . #"left");
       table[#">="] := #(2 . #"left");
-      table[#"&"] := #(1 . #"right");
-      table[#"|"] := #(1 . #"right");
+      table[#"&"] := #(1 . #"left");
+      table[#"|"] := #(1 . #"left");
       table[#":="] := #(0 . #"right");
       table;
     end;
