@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.7 2003/02/18 10:19:49 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.8 2003/02/18 15:59:30 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -69,7 +69,7 @@ define class <state> (<object>)
   // Table mapping blocks to the set of clusters we need at the end of that
   // block.  Used to determine what clusters should be on the stack at an
   // exit.
-  slot block-wants :: <object-table> = make(<object-table>);
+  constant slot block-wants :: <object-table> = make(<object-table>);
 end;
 
 define sealed domain make (singleton(<state>));
@@ -376,7 +376,6 @@ end;
 define method analyze
     (region :: <return>, want :: <list>, state :: <state>)
     => want :: <list>;
-  want == #() | error("want something from a <return>?");
   analyze(region.depends-on, #(), state);
 end;
 
