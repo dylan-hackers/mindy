@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.3 1994/04/13 17:09:06 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.4 1994/06/02 19:46:56 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -94,34 +94,30 @@ end method class-for-copy;
 
 /* ---------------- */
 
-// member? returns #f if the object couldn't be found, and the object
-// that satisfies test if it could. member? also works correctly on
-// circular lists.
-
-define method member? (value, l :: <list>, #key test: test = \==) 
-                 => found-or-false;
+define method member? (value, l :: <list>, #key test: test = \==)
+                 => true-or-false;
   let done        = #f;
-  let result      = #f;
   let lapped-slow = #f;                // Has fast lapped slow?
 
-  for (slow = l        then tail (slow),
-       fast = tail (l) then if (lapped-slow) fast;
-			    else tail (tail (fast))
-			    end if,
-       until done | slow == #() )
+  block (return)
+    for (slow = l        then tail (slow),
+	 fast = tail (l) then if (lapped-slow) fast;
+			      else tail (tail (fast))
+			      end if,
+	 until done | slow == #() )
 
-    if (test (value, head (slow)))
-      done   := #t;
-      result := head (slow);
-    elseif (fast == slow)
-      done   := lapped-slow;    // Since fast goes twice the speed,
-	                        // need to give slow a chance to
-	                        // catch up.
-      lapped-slow := #t;
-    end if;
-  end for;
+      if (test (value, head (slow)))
+	return(#t);
+      elseif (fast == slow)
+	done   := lapped-slow;    // Since fast goes twice the speed,
+	                          // need to give slow a chance to
+	                          // catch up.
+	lapped-slow := #t;
+      end if;
+    end for;
 
-  result;
+    #f;     // If we've gotten this far, the for loop didn't find the element
+  end block;
 end method member?;
 
 /* ---------------- */
