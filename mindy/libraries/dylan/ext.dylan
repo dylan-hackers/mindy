@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.6 1994/11/22 16:56:19 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.7 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -38,30 +38,19 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dyla
 ///
 define constant one-of =
   method (thing, #rest more-things) => result :: <type>;
-    reduce(union, singleton(thing), map(singleton, more-things));
+    reduce(type-union, singleton(thing), map(singleton, more-things));
   end;
 
-/// Type-or -- Exported.
-///
-/// Type-or takes any number of types as arguments and returns a type that is
-/// the union of all the argument types.
-///
-define constant type-or =
-  method (type :: <type>, #rest more-types) => result :: <type>;
-  // Make sure all of more-types are <type>s.
-    do(rcurry(check-type, <type>), more-types);
-  // Make a union out of them.
-    reduce(union, type, more-types);
-  end;
-
-/// false-or -- Exported.
-///
-/// False-or takes a type and returns a type that is the union of the argument
-/// type and the type singleton(#f).
-///
+// false-or -- Exported.
+//
+// False-or takes a type and returns a type that is the union of the argument
+// type and the type singleton(#f).
+// There are two copies of false-or, one for the Dylan module and one for 
+// the rest of the world.
+//
 define constant false-or
     = method (type :: <type>) => new-type :: <type>;
-	union(type, singleton(#f));
+	type-union(type, singleton(#f));
       end;
 
 /// Ignore -- Exported.
