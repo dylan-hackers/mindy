@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.7 2001/01/07 14:24:03 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.8 2001/05/26 17:01:20 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -2597,6 +2597,22 @@ define function expand-rule-set-reference
   generate-new-section(generator);
   #f;
 end;
+
+
+define method append-element!
+    (generator :: <expansion-generator>,
+     varref :: <unhygienic-pattern-variable-reference>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <false>;
+  let token = varref.patvarref-name;
+  let token = make(<identifier-token>,
+         	   source-location: token.source-location,
+         	   kind: token.token-kind,
+         	   symbol: token.token-symbol,
+         	   module: *Current-Module*);
+  generate-token(generator, token, token.source-location);
+end method append-element!;
 
 
 define method append-element!
