@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.46 1996/01/03 21:37:02 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.47 1996/01/09 19:45:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -532,12 +532,15 @@ define method compute-cclass (defn :: <real-class-definition>)
     //
     // Check that everything is okay with the abstract adjective.
     if (defn.class-defn-abstract?)
-      unless (every?(abstract?, supers))
-	compiler-warning("Abstract classes can only inherit from other "
-			   "abstract classes -- ignoring abstract abjective.");
-	defn.class-defn-abstract? := #f;
-      end;
-    end;
+      for (super in supers)
+	unless (super.abstract?)
+	  compiler-warning("Abstract class %s can't inherit from non-abstract "
+			     "class %s -- ignoring abstract abjective.",
+			   defn.defn-name, super);
+	  defn.class-defn-abstract? := #f;
+	end unless;
+      end for;
+    end if;
     //
     // Check that everything is okay with the functional adjective.
     if (defn.class-defn-functional?)
