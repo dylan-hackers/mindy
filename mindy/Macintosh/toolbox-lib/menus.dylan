@@ -1,6 +1,8 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: see below
+copyright: (c)1999 Patrick Beard
+
+// Menu Manager.
 
 define class <MenuBarHandle> (<Handle>) end class;
 define class <MenuHandle> (<Handle>) end class;

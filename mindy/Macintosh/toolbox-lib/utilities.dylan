@@ -1,6 +1,8 @@
 module: toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: see below
+copyright: (c)1999 Patrick Beard
+
+// InterfaceLib
 
 define constant *InterfaceLib* = load-object-file(#("InterfaceLib"));
 

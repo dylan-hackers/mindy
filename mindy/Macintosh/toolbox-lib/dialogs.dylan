@@ -1,6 +1,8 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: see below
+copyright: (c)1999 Patrick Beard
+
+// Dialogs.
 
 define constant <DialogPtr> = <GrafPtr>;
 define constant <ModalFilterUPP> = <UniversalProcPtr>;
