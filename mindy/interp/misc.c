@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.18 1996/03/07 17:44:37 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.19 1996/03/15 23:05:27 bfw Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -148,6 +148,33 @@ static obj_t dylan_get_time_of_day (void)
     return make_bignum(time(NULL));
 }
 
+static obj_t dylan_get_local_timezone (void)
+{
+  tzset();
+
+  return make_fixnum(timezone);
+}
+
+static obj_t dylan_local_daylight_savings_time (void)
+{
+  time_t timer;
+  struct tm *t;
+
+  timer = time(NULL);
+  t = localtime(&timer);
+
+  /* tm_isdst slot of a struct tm:
+   * 1  => Summer DST in effect
+   * 0  => Summer DST not in effect
+   * -1 => information not available
+   */
+
+  if (t->tm_isdst > 0)
+    return obj_True;
+  else
+    return obj_False;
+}
+
 static obj_t dylan_system(obj_t command)
 {
     return make_fixnum(system(string_chars(command)));
@@ -180,6 +207,11 @@ void init_misc_functions(void)
 		    FALSE, obj_ObjectClass, dylan_exit);
     define_function("get-time-of-day", obj_Nil, FALSE, 
 		    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
+    define_function("get-local-timezone", obj_Nil, FALSE, obj_False,
+                    FALSE, obj_BignumClass, dylan_get_local_timezone);
+    define_function("local-daylight-savings-time?", obj_Nil, FALSE,
+                    obj_False, FALSE, obj_BooleanClass,
+                    dylan_local_daylight_savings_time);
     define_function("system", list1(obj_ByteStringClass), FALSE, obj_False,
 		    FALSE, obj_FixnumClass, dylan_system);
     define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
