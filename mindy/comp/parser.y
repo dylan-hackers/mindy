@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.19 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.20 1996/02/13 20:49:22 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -612,11 +612,18 @@ condition_body:
 
 for_header:
 	UNTIL expression
-	{ free($1); $$ = make_for_header($2); }
+	{ fprintf(stderr, 
+		  "Warning (line %d): Use UNTIL: instead "
+		  "of UNTIL inside for loop\n", $1->line);
+	  free($1); $$ = make_for_header($2); }
     |	UNTIL_KEYWORD expression
 	{ free($1); $$ = make_for_header($2); }
     |	WHILE expression
-	{ $$ = make_for_header(make_not($1->line, $2)); free($1); }
+	{ fprintf(stderr, 
+		  "Warning (line %d): Use WHILE: instead "
+		  "of WHILE in for loop\n", $1->line);
+	  $$ = make_for_header(make_not($1->line, $2)); free($1); 
+        }
     |	WHILE_KEYWORD expression
 	{ $$ = make_for_header(make_not($1->line, $2)); free($1); }
     |	for_clause
