@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.5 1994/12/15 21:49:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.6 1994/12/16 11:54:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,7 +34,7 @@ end;
 define method fer-convert (builder :: <fer-builder>, form :: <constituent>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
     => ();
-  let expansion = expand(form);
+  let expansion = expand(form, lexenv);
   if (expansion)
     fer-convert-body(builder, expansion, lexenv, target-vars);
   else
@@ -164,7 +164,7 @@ define constant $arg-names
 define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
     => ();
-  let expansion = expand(form);
+  let expansion = expand(form, lexenv);
   if (expansion)
     fer-convert-body(builder, expansion, lexenv, target-vars);
   else
@@ -195,7 +195,7 @@ end;
 define method fer-convert (builder :: <fer-builder>, form :: <dot>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
     => ();
-  let expansion = expand(form);
+  let expansion = expand(form, lexenv);
   if (expansion)
     fer-convert-body(builder, expansion, lexenv, target-vars);
   else
@@ -233,7 +233,7 @@ end;
 define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
     => ();
-  let expansion = expand(form);
+  let expansion = expand(form, lexenv);
   if (expansion)
     fer-convert-body(builder, expansion, lexenv, target-vars);
   else
