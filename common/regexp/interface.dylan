@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.5 1996/03/30 02:22:37 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.6 1997/01/16 14:58:58 nkramer Exp $
 
 //======================================================================
 //
@@ -35,6 +35,105 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,
 // Functions that aren't exported are marked as such.  Everything else
 // is exported.
 
+
+// Caching
+//
+// Parsing a regexp is not cheap, so we cache the parsed regexps and
+// only parse a string if we haven't seen it before.  Because in
+// practice almost all regexp strings are string literals, we're free
+// to choose == or = depending on whatever's fastest.  However,
+// because a string is parsed differently depending on whether the
+// search is case sensitive or not, we also have to keep track of that
+// information as well.  (The case dependent parse boils down to the
+// parse creating a <character-set>, which must be either case
+// sensitive or case insensitive)
+//
+// ### Currently, only regexp-position uses this cache, because the
+// other functions are still using make-regexp-positioner.  With
+// caching, that make-regexp-whatever stuff should probably go.
+
+// <cache-key> -- internal
+//
+// What we use for keys in the *regexp-cache*.
+//
+define class <cache-key> (<object>)
+  constant slot regexp-string :: <string>, 
+    required-init-keyword: #"regexp-string";
+  constant slot character-set-type :: <class>, 
+    required-init-keyword: #"character-set-type";
+end class <cache-key>;
+
+// <cache-element> -- internal
+//
+// What we use for elements in a *regexp-cache*
+//
+define class <cache-element> (<object>)
+  constant slot parse-tree :: <parsed-regexp>,
+    required-init-keyword: #"parse-tree";
+  constant slot last-group :: <integer>,
+    required-init-keyword: #"last-group";
+end class <cache-element>;
+
+// <regexp-cache> -- internal
+//
+// Maps <cache-key> to <cache-element>.  ### Ideally, we'd be using
+// weak pointers to these strings.  In practice, however, most of the
+// regexp strings are literals, so this isn't usually a drawback.
+//
+// For speed, we compare strings with == rather than = (thus
+// object-table).  Again, because in practice we're dealing mostly
+// with literals, == and = should be almost identical.
+//
+define class <regexp-cache> (<table>) end;
+
+// table-protocol{<regexp-cache>} -- method on imported G.F.
+//
+define method table-protocol (table :: <regexp-cache>) 
+ => (equal? :: <function>, hash :: <function>);
+  values(method (key1 :: <cache-key>, key2 :: <cache-key>) // equal?
+	  => res :: <boolean>;
+	   key1.regexp-string == key2.regexp-string
+	     & key1.character-set-type == key2.character-set-type;
+	 end method,
+	 method (key :: <cache-key>) => (id :: <integer>, state); // hash()
+	   let (string-id, string-state) = object-hash(key.regexp-string);
+	   let (set-type-id, set-type-state) 
+	     = object-hash(key.character-set-type);
+	   merge-hash-codes(string-id, string-state, 
+			    set-type-id, set-type-state, ordered: #t);
+	 end method);
+end method table-protocol;
+
+// *regexp-cache* -- internal
+//
+// The only instance of <regexp-cache>.
+//
+define constant *regexp-cache* = make(<regexp-cache>);
+
+// parse-or-use-cached -- internal
+//
+// Tries to use the cached version of the regexp, and if not possible,
+// parses it and adds it to the cache.
+//
+define inline function parse-or-use-cached 
+    (regexp :: <string>, character-set-type :: <class>) 
+ => (parsed-regexp :: <parsed-regexp>, last-group :: <integer>);
+  let key = make(<cache-key>, regexp-string: regexp, 
+		 character-set-type: character-set-type); 
+  let (cached?, cached-value) = key-exists?(*regexp-cache*, key);
+  if (cached?)
+    values(cached-value.parse-tree, cached-value.last-group);
+  else
+    let (parsed-regexp, last-group) = parse(regexp, character-set-type);
+    *regexp-cache*[key] := make(<cache-element>, parse-tree: parsed-regexp,
+				last-group: last-group);
+    values(parsed-regexp, last-group);
+  end if;
+end function parse-or-use-cached;
+
+
+// Regexp functions
+
 // Find the position of a regular expression inside a string.  If the
 // regexp is not found, return #f, otherwise return a variable number
 // of marks.
@@ -55,7 +154,8 @@ define method regexp-position
 		       else
 			 <case-insensitive-character-set>;
 		       end if;
-  let (parsed-regexp, last-group) = parse(regexp, char-set-class);
+  let (parsed-regexp, last-group) 
+    = parse-or-use-cached(regexp, char-set-class);
 
   let (matched, marks)
     = if (parsed-regexp.is-anchored?)
