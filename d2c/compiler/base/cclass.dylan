@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.5 1995/05/04 07:06:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.6 1995/05/05 14:42:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -138,6 +138,9 @@ define method print-object (cclass :: <cclass>, stream :: <stream>) => ();
   pprint-fields(cclass, stream, name: cclass.cclass-name);
 end;
 
+define method print-message (cclass :: <cclass>, stream :: <stream>) => ();
+  write(as(<string>, cclass.cclass-name.name-symbol), stream);
+end;
 
 
 define constant <slot-allocation>
@@ -609,6 +612,9 @@ define method layout-slots-for (class :: <cclass>) => ();
 	  := copy-layout-table(critical-super.instance-slots-layout);
 	class.each-subclass-slots-count
 	  := critical-super.each-subclass-slots-count;
+	for (slot in critical-super.all-slot-infos)
+	  inherit-layout(slot, class, critical-super);
+	end;
 	critical-super.all-slot-infos;
       end;
   //
@@ -616,6 +622,31 @@ define method layout-slots-for (class :: <cclass>) => ();
     unless (member?(slot, processed))
       layout-slot(slot, class);
     end;
+  end;
+end;
+
+define method inherit-layout
+    (slot :: <slot-info>, class :: <cclass>, super :: <cclass>) => ();
+  // Default method -- do nothing.
+end;
+
+define method inherit-layout
+    (slot :: union(<instance-slot-info>, <each-subclass-slot-info>),
+     class :: <cclass>, super :: <cclass>)
+    => ();
+  for (remaining = slot.slot-positions then remaining.tail,
+       until: csubtype?(class, remaining.head.head))
+  finally
+    let this-offset = remaining.head.tail;
+    for (remaining = remaining then remaining.tail,
+	 until: csubtype?(super, remaining.head.head))
+    finally
+      let super-offset = remaining.head.tail;
+      unless (this-offset == super-offset)
+	slot.slot-positions := pair(pair(class, super-offset),
+				    slot.slot-positions);
+      end;
+    end
   end;
 end;
 
