@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.29 1995/12/07 14:19:23 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.30 1995/12/07 14:22:39 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -989,6 +989,7 @@ end;
 define method really-make-canonical-singleton
     (thing :: <literal-integer>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
+  let value = thing.literal-value;
   make(<limited-integer-ctype>,
        base-class: base-class-hint | ct-value-cclass(thing),
        low-bound: value, high-bound: value);
