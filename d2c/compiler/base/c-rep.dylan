@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.13 1995/05/21 03:04:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.14 1995/05/29 20:56:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -367,20 +367,26 @@ define method assign-representations (class :: <cclass>) => ();
 	let speed-rep = pick-representation(type, #"speed");
 	if (instance?(speed-rep, <data-word-representation>))
 	  local
-	    method dup-rep (rep :: <data-word-representation>)
+	    method dup-rep (rep :: <data-word-representation>,
+			    more-gen :: <c-representation>,
+			    to-more-gen, from-more-gen)
 	      make(<data-word-representation>,
-		   more-general: $general-rep,
-		   to-more-general: #f,
-		   from-more-general: rep.representation-from-more-general,
+		   more-general: more-gen,
+		   to-more-general: to-more-gen,
+		   from-more-general: from-more-gen,
 		   alignment: rep.representation-alignment,
 		   size: rep.representation-size,
 		   c-type: rep.representation-c-type,
 		   class: class,
 		   data-word-member: rep.representation-data-word-member);
 	    end;
-	  class.speed-representation := dup-rep(speed-rep);
+	  class.speed-representation
+	    := dup-rep(speed-rep, $general-rep, #f,
+		       concatenate("%s.dataword.",
+				   speed-rep.representation-data-word-member));
 	  class.space-representation
-	    := dup-rep(pick-representation(type, #"space"));
+	    := dup-rep(pick-representation(type, #"space"),
+		       class.speed-representation, #t, #t);
 	else
 	  class.speed-representation := $heap-rep;
 	  class.space-representation := $heap-rep;    
