@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.10 1995/01/06 21:21:07 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.11 1995/01/10 16:24:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -463,6 +463,26 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
 		  #"leaf", #"argument");
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 make-mv-operation(builder, list(function, argument)));
+end;
+
+define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  let operands = form.primitive-operands;
+  let ops = make(<list>, size: operands.size);
+  for (arg in operands, op-ptr = ops then op-ptr.tail, index from 0)
+    let name = if (index < $arg-names.size)
+		 $arg-names[index];
+	       else
+		 as(<symbol>, format-to-string("arg%d", index));
+	       end;
+    op-ptr.head := fer-convert(builder, arg, make(<lexenv>, inside: lexenv),
+			       #"leaf", name);
+  end;
+  deliver-result
+    (builder, lexenv.lexenv-policy, source, want, datum,
+     make-primitive-operation(builder, form.primitive-name.token-symbol, ops));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
