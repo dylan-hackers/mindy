@@ -1,4 +1,5 @@
-module: dylan-viscera
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/library-demo/library-demo.dylan,v 1.3 1995/11/14 14:39:44 wlott Exp $
+module: dylan-user
 
 write("Hello, World.\n");
 
