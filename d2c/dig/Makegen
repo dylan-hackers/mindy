@@ -1,0 +1,19 @@
+
+$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
+    . '-L../runtime/dylan -L../runtime/streams '
+    . '-L../runtime/print -L../runtime/format '
+    . '-L../runtime/random -L../runtime/coll-ext '
+    . '-L../runtime/string-ext -L../runtime/extern '
+    . '-L../runtime/table-ext -L../runtime/standard-io';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+push(@compile_dependencies, 'dig');
+push(@files_to_clean, 'dig');
+
+print "dig-support.o: dig-support.c dig-support.h\n\t\gcc \$(CFLAGS) -c \$(SRCDIR)/dig-support.c\n";
+
+do emit_library_rule(
+    'dig', '$(BUILDROOT)/force.timestamp dig-support.o',
+    ''
+);
+
