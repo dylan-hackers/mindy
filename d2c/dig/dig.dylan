@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.6 1996/09/15 15:52:00 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.7 1996/10/07 21:42:11 rgs Exp $
 
 //========================================================================
 //
@@ -208,7 +208,7 @@ define inline method send-gdb-command
   end if;
 
   if ($dig-debug)
-    write-line(*standard-output*, command);
+    format(*standard-output*, "Sending: <<%s>>\n", command);
     force-output(*standard-output*);
   end if;
     
@@ -237,10 +237,10 @@ define method receive-gdb-response
       while (#t)
 	while (stream-input-available?($from-gdb))
 	  let char = read-element($from-gdb);
-	  if ($dig-debug)
-	    format(*standard-output*, "!%c", char);
-	    force-output(*standard-output*);
-	  end if;
+//	  if ($dig-debug)
+//	    format(*standard-output*, "!%c", char);
+//	    force-output(*standard-output*);
+//	  end if;
 	  add!(line, char);
 	  if (echo)
 	    write-element(*standard-output*, char);
@@ -260,8 +260,8 @@ define method receive-gdb-response
 	    end if;
 	    add!(input, str);
 	    let result = apply(concatenate, input);
-	    if ($dig-debug)
-	      format(*standard-output*, "+++\n%s+++\n", result);
+	    if ($dig-debug & ~echo)
+	      format(*standard-output*, "Received: <<%s>>>\n", result);
 	      force-output(*standard-output*);
 	    end if;
 	    return(result);
@@ -282,10 +282,10 @@ define method receive-gdb-response
       // wait for any input.
       while (#t)
 	let char = read-element($from-gdb);
-	if ($dig-debug)
-	  format(*standard-output*, "!%c", char);
-	  force-output(*standard-output*);
-	end if;
+//	if ($dig-debug)
+//	  format(*standard-output*, "!%c", char);
+//	  force-output(*standard-output*);
+//	end if;
 	add!(line, char);
 	if (echo)
 	  write-element(*standard-output*, char);
@@ -305,8 +305,8 @@ define method receive-gdb-response
 	  end if;
 	  add!(input, str);
 	  let result = apply(concatenate, input);
-	  if ($dig-debug)
-	    format(*standard-output*, "+++\n%s+++\n", result);
+	  if ($dig-debug & ~echo)
+	    format(*standard-output*, "Received: <<%s>>\n", result);
 	    force-output(*standard-output*);
 	  end if;
 	  return(result);
@@ -427,7 +427,7 @@ define method invoke-dylan-function
       end for;
       let value
 	= do-gdb-command("p gdb_invoke_function"
-			   "((descriptor_t)dylan_apply_safely, %d)",
+			   "((descriptor_t)dylan_apply_safely_fun, %d)",
 			 size(arg-pushers));
       if (check-seg-fault(value))
 	0;
