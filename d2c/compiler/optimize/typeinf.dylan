@@ -1,5 +1,5 @@
 module: cheese
-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.1 1996/03/18 01:50:32 wlott Exp $
+header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.2 1996/03/20 14:20:57 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -455,12 +455,5 @@ end method record-guessed-type-region;
 define method record-guessed-type-region
     (component :: <component>, region :: <exit>) => ();
   // Do nothing.
-end method record-guessed-type-region;
-
-define method record-guessed-type-region
-    (component :: <component>, region :: <return>) => ();
-  unless (values-subtype?(region.returned-type, region.guessed-returned-type))
-    reoptimize(component, region);    
-  end unless;
 end method record-guessed-type-region;
 
