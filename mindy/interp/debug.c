@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.41 1995/03/12 16:41:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.42 1995/04/19 13:13:11 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -580,12 +580,35 @@ static int get_string(obj_t obj, obj_t *str)
     }
     return 0;
 }
-static int get_variable(obj_t obj, obj_t *sym)
+static int get_variable(obj_t obj, obj_t *sym, obj_t *mod, obj_t *lib)
 {
-    if (obj != obj_Nil
-     && arg_kind(obj) == symbol("variable")
-     && instancep(arg_value(obj), obj_SymbolClass)) {
-        *sym = arg_value(obj);
+    if (obj != obj_Nil && arg_kind(obj) == symbol("variable")) {
+	obj_t var = arg_value(obj);
+        *sym = HEAD(var);
+	var = TAIL(var);
+
+	if (mod != NULL) {
+	    if (var != obj_Nil) {
+		*mod = HEAD(var);
+		var = TAIL(var);
+	    }
+	    else
+		*mod = obj_False;
+	}
+	else
+	    if (var != obj_Nil)
+		return 0;
+
+	if (lib != NULL) {
+	    if (var != obj_Nil)
+		*lib = HEAD(var);
+	    else
+		*lib = obj_False;
+	}
+	else
+	    if (var != obj_Nil)
+		return 0;
+
 	return 1;
     }
     return 0;
@@ -594,7 +617,7 @@ static int get_name(obj_t obj, char **name)
 {
     obj_t named;
     if (get_symbol(obj, &named)
-     || get_variable(obj, &named)) {
+     || get_variable(obj, &named, NULL, NULL)) {
         *name = sym_name(named);
 	return 1;
     }
@@ -784,7 +807,7 @@ static void library_cmd(obj_t args)
 	else
 	    printf("No library currently selected\n");
     } else if (get_symbol(first_arg(args), &sym)
-	    || get_variable(first_arg(args), &sym)) {
+	    || get_variable(first_arg(args), &sym, NULL, NULL)) {
         should_be_no_args(rest_args(args));
 	lib = find_library(sym, FALSE);
 	if (lib) {
@@ -792,8 +815,7 @@ static void library_cmd(obj_t args)
 	    CurModule = find_module(lib, symbol("Dylan-User"), FALSE, FALSE);
 	}
 	else {
-	    printf("No library named ");
-	    print(sym);
+	    printf("No library named %s\n", sym_name(sym));
 	}
     } else {
 	printf("Syntax error.\n");
@@ -803,7 +825,8 @@ static void library_cmd(obj_t args)
 static void module_cmd(obj_t args)
 {
     struct module *module;
-    obj_t sym;
+    struct library *lib;
+    obj_t sym, lib_sym;
 
     if (CurLibrary == NULL) {
 	printf("No library currently selected.\n");
@@ -817,17 +840,33 @@ static void module_cmd(obj_t args)
 	    format("The current module is %s\n", module_name(CurModule));
 	else
 	    printf("No module currently selected.\n");
-    } else if (get_symbol(first_arg(args), &sym)
-	    || get_variable(first_arg(args), &sym)) {
+    }
+    else if (get_symbol(first_arg(args), &sym)
+	     || get_variable(first_arg(args), &sym, &lib_sym, NULL)) {
         should_be_no_args(rest_args(args));
-	module = find_module(CurLibrary, sym, FALSE, FALSE);
-	if (module)
-	    CurModule = module;
-	else {
-	    printf("No module named ");
-	    print(sym);
+
+	if (lib_sym != obj_False) {
+	    lib = find_library(lib_sym, FALSE);
+	    if (lib == NULL) {
+		printf("No library named %s\n", sym_name(lib_sym));
+		return;
+	    }
 	}
-    } else {
+	else
+	    lib = CurLibrary;
+
+	module = find_module(lib, sym, FALSE, FALSE);
+	if (module) {
+	    CurLibrary = lib;
+	    CurModule = module;
+	}
+	else {
+	    printf("No module named %s in library %s\n",
+		   sym_name(sym),
+		   sym_name(library_name(lib)));
+	}
+    }
+    else {
     	printf("Syntax error.\n");
     }
 }
@@ -922,8 +961,14 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
     }
     else if (kind == symbol("variable")) {
 	/* Variable reference. */
-	obj_t name = arg_value(expr);
-	if (CurFrame != NULL && CurFrame->locals != obj_False) {
+	obj_t name, mod_sym, lib_sym;
+	struct module *mod;
+	struct library *lib;
+
+	get_variable(expr, &name, &mod_sym, &lib_sym);
+
+	if (mod_sym == obj_False && lib_sym == obj_False
+	      && CurFrame != NULL && CurFrame->locals != obj_False) {
 	    obj_t list = CurFrame->locals;
 	    while (list != obj_Nil) {
 		obj_t vec = HEAD(list);
@@ -952,26 +997,65 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 		list = TAIL(list);
 	    }
 	}
-	if (CurModule == NULL) {
-	    if (*okay) {
-		printf("No module currently selected\n");
-		*okay = FALSE;
+
+	if (mod_sym != obj_False) {
+	    if (lib_sym != obj_False) {
+		lib = find_library(lib_sym, FALSE);
+		if (lib == NULL) {
+		    if (*okay) {
+			printf("No library named %s\n", sym_name(lib_sym));
+			*okay = FALSE;
+		    }
+		    return;
+		}
+	    }
+	    else if ((lib = CurLibrary) == NULL) {
+		if (*okay) {
+		    printf("No library currently selected\n");
+		    *okay = FALSE;
+		}
+		return;
+	    }
+
+	    mod = find_module(lib, mod_sym, FALSE, FALSE);
+	    if (mod == NULL) {
+		if (*okay) {
+		    printf("No module named %s in library %s\n",
+			   sym_name(mod_sym),
+			   sym_name(library_name(lib)));
+		    *okay = FALSE;
+		}
+		return;
 	    }
 	}
 	else {
-	    struct variable *var = find_variable(CurModule, name,
-						 FALSE, FALSE);
+	    lib = CurLibrary;
+	    mod = CurModule;
+	    if (mod == NULL) {
+		if (*okay) {
+		    printf("No module currently selected\n");
+		    *okay = FALSE;
+		}
+		return;
+	    }
+	}
+
+	{
+	    struct variable *var = find_variable(mod, name, FALSE, FALSE);
 	    if (var == NULL) {
-		printf("no variable named %s in module %s\n",
+		printf("no variable named %s in module %s, library %s\n",
 		       sym_name(name),
-		       sym_name(module_name(CurModule)));
+		       sym_name(module_name(mod)),
+		       sym_name(library_name(lib)));
 		*okay = FALSE;
 	    }
 	    else {
 		obj_t value = var->value;
 		if (value == obj_Unbound) {
-		    printf("variable %s in module %s is unbound\n",
-			   sym_name(name), sym_name(module_name(CurModule)));
+		    printf("variable %s in module %s, library %s is unbound\n",
+			   sym_name(name),
+			   sym_name(module_name(mod)),
+			   sym_name(library_name(lib)));
 		    *okay = FALSE;
 		}
 		else {
