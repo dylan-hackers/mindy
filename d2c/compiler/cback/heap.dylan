@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.47 1996/04/15 11:58:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.48 1996/04/15 18:30:40 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -838,6 +838,12 @@ end;
 define method spew-object
     (object :: <byte-character-ctype>, state :: <state>) => ();
   spew-instance(specifier-type(#"<byte-character-type>"), state);
+end;
+
+define method spew-object
+    (object :: <subclass-ctype>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<subclass>"), state,
+		subclass-of: object.subclass-of);
 end;
 
 define method spew-object
