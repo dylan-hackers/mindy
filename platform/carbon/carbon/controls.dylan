@@ -818,10 +818,12 @@ define constant $kDataBrowserTextType :: <integer> = c-expr(int: "kDataBrowserTe
 define constant $kDataBrowserIconAndTextType :: <integer> = c-expr(int: "kDataBrowserIconAndTextType");
 
 define method CreateDataBrowserControl
-    (window :: <WindowRef>, bounds :: <Rect*>, style :: <integer>, control :: <ControlRef>)
- => (result :: <OSStatus>)
-        as(<OSErr>, call-out("CreateDataBrowserControl", int:, ptr: window.raw-value, 
-          ptr: bounds.raw-value, int: style, int: control.raw-value));
+    (window :: <WindowRef>, bounds :: <Rect*>, style :: <integer>)
+ => (result :: <OSStatus>, control :: <ControlRef>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("CreateDataBrowserControl", int:, ptr: window.raw-value, 
+          ptr: bounds.raw-value, int: style, ptr: temp.raw-value)),
+         pointer-at(temp, class: <ControlRef>, offset: 0));
 end method CreateDataBrowserControl; 
 
 define functional class <DataBrowserListViewColumnDesc*>
@@ -837,13 +839,13 @@ end method content-size;
 define method propertyDesc-value
     (desc :: <DataBrowserListViewColumnDesc*>)
  => (result :: <DataBrowserTableViewColumnDesc*>)    
-  pointer-at(desc, offset: 0, class: <DataBrowserTableViewColumnDesc*>);
+  make(<DataBrowserTableViewColumnDesc*>, pointer: desc.raw-value);
 end method propertyDesc-value;
 
 define method headerBtnDesc-value
     (desc :: <DataBrowserListViewColumnDesc*>)
  => (result :: <DataBrowserListViewHeaderDesc*>)    
-  pointer-at(desc, offset: 4, class: <DataBrowserListViewHeaderDesc*>);
+  make(<DataBrowserListViewHeaderDesc*>, pointer: desc.raw-value + 4);
 end method headerBtnDesc-value;
 
 define functional class <DataBrowserPropertyDesc*>
