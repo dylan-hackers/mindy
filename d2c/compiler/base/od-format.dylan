@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.42 1996/03/20 01:44:03 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.43 1996/03/27 23:52:31 wlott Exp $
 
 /*
 
@@ -569,8 +569,13 @@ begin
 
   // Macros
   //
-  register-object-id(#"main-rule-set", #x110);
-  register-object-id(#"aux-rule-set", #x111);
+  register-object-id(#"macro-source", #x110);
+  register-object-id(#"macro-section-marker", #x111);
+  register-object-id(#"simple-macro-source-location", #x112);
+  register-object-id(#"compound-macro-source-location", #x113);
+
+  register-object-id(#"main-rule-set", #x118);
+  register-object-id(#"aux-rule-set", #x119);
 
   register-object-id(#"body-style-define-rule", #x120);
   register-object-id(#"list-style-define-rule", #x121);
