@@ -1,18 +1,30 @@
 Module: ansi-c-test
 
-define method print-c-type (type :: <c-type>) => ()
+//=========================================================================
+//  Utility functions
+//=========================================================================
+
+define function test-section-header (name :: <string>) => ()
+  format(*standard-output*, "----- %s -----\n", name);
+  force-output(*standard-output*);
+end;  
+
+define function print-c-type (type :: <c-type>) => ()
   format(*standard-output*, "%s\n", format-c-type(type));
   force-output(*standard-output*);
 end;
 
-define method print-c-declaration (decl :: <c-declaration>) => ()
+define function print-c-declaration (decl :: <c-declaration>) => ()
   format(*standard-output*, "%s\n", format-c-declaration(decl));
   force-output(*standard-output*);
 end;
 
-define method main(appname, #rest args)
+//=========================================================================
+//  C Types & Declarations
+//=========================================================================
 
-  format(*standard-output*, "----- C Types -----\n");
+define function test-c-types-and-declarations () => ()
+  test-section-header("C Types");
 
   print-c-type($c-int-type);
   print-c-type(make(<c-pointer-type>, referent: $c-signed-long-type));
@@ -113,7 +125,7 @@ define method main(appname, #rest args)
   force-output(*standard-output*);
 
   // Now print some complete declarations
-  format(*standard-output*, "----- C Declarations -----\n");
+  test-section-header("C Declarations");
 
   // Tagged type declarations
   print-c-declaration(make(<c-tagged-type-declaration>, type: struct));
@@ -144,4 +156,59 @@ define method main(appname, #rest args)
   print-c-declaration(make(<c-string-define>, name: "d2", value: "Hi!"));
   print-c-declaration(make(<c-type-alias-define>, name: "d3", type: struct));
   print-c-declaration(make(<c-unknown-define>, name: "d4"));
+end function test-c-types-and-declarations;
+
+//=========================================================================
+//  C Type Repositories
+//=========================================================================
+
+define function test-c-type-repositories () => ()
+  test-section-header("C Type Repository");
+
+  let r = make(<c-type-repository>);
+  local
+    method add-type(type :: <c-type>) => (type :: <c-type>)
+      format(*standard-output*, "Checking repository for '%s'... ",
+	     format-c-type(type));
+      force-output(*standard-output*);
+      let canonical = find-canonical-c-type(r, type);
+      format(*standard-output*,
+	     if (type == canonical)
+	       "already canonical.\n"
+	     else
+	       "found.\n"
+	     end);
+      force-output(*standard-output*);
+      canonical;
+    end,
+    method add-pointer-to-type(type :: <c-type>) => (type :: <c-type>)
+      format(*standard-output*, "Finding pointer to '%s'.\n",
+	     format-c-type(type));
+      force-output(*standard-output*);
+      find-canonical-pointer-to-c-type(r, type);
+    end;
+
+  add-type($c-char-type);
+  add-type($c-int-type);
+  add-type($c-void-type);
+
+  add-pointer-to-type($c-char-type);
+  let t1 = add-type(make(<c-pointer-type>, referent: $c-char-type));
+  let t2 = add-type(make(<c-pointer-type>, referent: $c-int-type));
+
+  add-type(make(<c-typedef-type>, name: "foo", type: $c-int-type));
+  add-type(make(<c-typedef-type>, name: "foo", type: $c-int-type));
+  add-type(make(<c-typedef-type>, name: "bar", type: $c-int-type));
+
+  //let t3 = 
+end function test-c-type-repositories;
+
+
+//=========================================================================
+//  Test program
+//=========================================================================
+
+define method main(appname, #rest args)
+  test-c-types-and-declarations();
+  test-c-type-repositories();
 end;
