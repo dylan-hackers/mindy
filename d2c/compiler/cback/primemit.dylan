@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.18 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.19 2003/07/11 03:17:27 housel Exp $
 copyright: see below
 
 
@@ -2320,10 +2320,18 @@ define-primitive-emitter
      contact-bgh-unless-empty(temps);
      let classes = vec.derived-type.find-direct-classes;
      assert(classes ~== #f & classes ~== #());
-     let offset = dylan-slot-offset(classes.first, #"%element");
-     for (class in classes.tail)
-       assert(offset == dylan-slot-offset(class, #"%element"));
-     end for;
+     local
+       method vector-slot-offset
+           (cclass :: <cclass>) => (res :: false-or(<integer>));
+         find-slot-offset(cclass.vector-slot, cclass);
+       end;
+     let offset = vector-slot-offset(classes.first);
+     unless (offset
+               & every?(method(class) offset = vector-slot-offset(class) end,
+                        classes))
+       error("vector slot not at a constant offset for argument"
+               " of %%primitive vector-elements");
+     end;
      deliver-result
        (results,
 	stringify("((void *)((char *)", vec-expr, " + ", offset, "))"),

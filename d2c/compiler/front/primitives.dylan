@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.12 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.13 2003/07/11 03:17:27 housel Exp $
 copyright: see below
 
 
@@ -618,8 +618,7 @@ define-primitive
 
 define-primitive
   (#"vector-elements",
-   #(#(union:, #"<buffer>", #"<byte-vector>", #"<byte-string>",
-       #"<unicode-string>")),
+   #(#"<vector>"),
    #"<raw-pointer>",
    cseable: #t);
 
