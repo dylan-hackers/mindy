@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/support.dylan,v 1.2 2000/01/24 04:56:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/support.dylan,v 1.3 2004/04/18 21:23:55 gabor Exp $
 copyright: see below
 
 
@@ -7,7 +7,7 @@ copyright: see below
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -733,7 +733,7 @@ define method parse
 	= truncate/(action, ash(1, $action-bits));
       select (action-kind)
 	$error-action =>
-	  compiler-fatal-error("Parse error at or before %s", lookahead);
+	  compiler-fatal-error-location(lookahead-srcloc, "Parse error at or before %s", lookahead);
 
 	$accept-action =>
 	  if (debug?)
