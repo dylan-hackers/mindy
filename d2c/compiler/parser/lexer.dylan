@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.8 2000/11/03 04:19:34 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.9 2001/03/30 14:03:22 bruce Exp $
 copyright: see below
 
 
@@ -645,36 +645,43 @@ define method add-transition
   // entries.  If so, it means someone messed up editing the
   // state machine.
   // 
-  select (on by instance?)
-    <integer> =>
+
+  local
+    method add-integer-transition(on :: <integer>) => ();
       if (table[on])
-	error("input %= transitions to both %= and %=",
+	error("lexer input %= transitions to both %= and %=",
 	      as(<character>, on), table[on], new-state);
       else
 	table[on] := new-state;
       end if;
+    end;
+
+  select (on by instance?)
+    <integer> =>
+      add-integer-transition(on);
     <character> =>
-      add-transition(table, as(<integer>, on), new-state);
+      add-integer-transition(as(<integer>, on));
     <byte-string> =>
       let last = #f;
       let range = #f;
       for (char in on)
 	if (range)
 	  if (last)
-	    for (i from as(<integer>, last) + 1 to as(<integer>, char))
-	      add-transition(table, i, new-state);
+	    let last-char :: <character> = last;
+	    for (i from as(<integer>, last-char) + 1 to as(<integer>, char))
+	      add-integer-transition(i);
 	    end for;
 	    last := #f;
 	  else
-	    add-transition(table, as(<integer>, '-'), new-state);
-	    add-transition(table, as(<integer>, char), new-state);
+	    add-integer-transition(as(<integer>, '-'));
+	    add-integer-transition(as(<integer>, char));
 	    last := char;
 	  end if;
 	  range := #f;
 	elseif (char == '-')
 	  range := #t;
 	else 
-	  add-transition(table, as(<integer>, char), new-state);
+	  add-integer-transition(as(<integer>, char));
 	  last := char;
 	end if;
       end for;
@@ -704,28 +711,72 @@ end method state;
 define method compile-state-machine (#rest states)
     => start-state :: <state>;
   //
-  // make a hash table mapping state names to states.
+  // make a sorted table mapping state names to states.
   // 
-  let state-table = make(<table>);
-  for (state in states)
-    if (element(state-table, state.name, default: #f))
-      error("State %= multiply defined.", state.name);
-    else
-      state-table[state.name] := state;
-    end if;
-  end for;
+  let state-table :: <simple-object-vector> =
+    sort!(as(<simple-object-vector>, states),
+	  test: method (a :: <state>, b :: <state>)
+		  as(<byte-string>, a.name) < as(<byte-string>, b.name)
+		end);
+
+  // check that all state names are unique
+  // and find the start state for later
+
+  let start-state = #f;
+  if (state-table.size > 0)
+    let prev :: <state> = state-table[0];
+    for (curr :: <state> in state-table)
+      if (curr.name == prev.name & curr ~== prev)
+	error("State %= multiply defined.", curr.name);
+      end;
+      if (curr.name == #"start")
+	start-state := curr;
+      end;
+      prev := curr;
+    end;
+  end if;
+
+  if (~start-state)
+    error("No start state supplied in lexer");
+  end;
+
   //
   // Now that we have a table mapping state names to states, change the
   // entries in the transition tables to refer to the new state
   // object themselves instead of just to the new state name.
   // 
-  for (state in states)
+  let cached-state :: <state> = state-table[0];
+  for (state in state-table)
     let table = state.transitions;
     if (table)
       for (i from 0 below 128)
-	let new-state = table[i];
-	if (new-state)
-	  table[i] := state-table[new-state];
+	let symbol :: false-or(<symbol>) = table[i];
+	if (symbol)
+	  let symbol-name = as(<byte-string>, symbol);
+
+	  table[i] := // Binary search
+	    block (found)
+	      if (symbol == cached-state.name)
+		found(cached-state);
+	      end;
+
+	      let left = 0;
+	      let right = state-table.size - 1;
+	      while (left <= right)
+		let mid = ash(left + right, -1);
+		let mid-elem :: <state> = state-table[mid];
+		let mid-name = as(<byte-string>, mid-elem.name);
+		if (symbol-name < mid-name)
+		  right := mid - 1;
+		elseif (symbol-name > mid-name)
+		  left := mid + 1;
+		else
+		  cached-state := mid-elem;
+		  found(mid-elem);
+		end;
+	      end while;
+	      error("Symbol %= not found in binary search", symbol);
+	    end block;
 	end if;
       end for;
     end if;
@@ -733,7 +784,7 @@ define method compile-state-machine (#rest states)
   //
   // Return the start state, 'cause that is what we want
   // $Initial-State to hold.
-  element(state-table, #"start");
+  start-state;
 end method compile-state-machine;
 
 
@@ -1350,13 +1401,17 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
       // 
       if (posn < length)
 	let table = state.transitions;
-	let char :: <byte> = contents[posn];
-	let new-state = table & char < 128 & table[char];
-	if (new-state)
-	  repeat(new-state, posn + 1);
+	if (table)
+	  let char :: <byte> = contents[posn];
+	  let new-state = char < 128 & table[char];
+	  if (new-state)
+	    repeat(new-state, posn + 1);
+	  else
+	    maybe-done();
+	  end if;
 	else
-	  maybe-done();
-	end if;
+	    maybe-done();
+	end;
       else
 	maybe-done();
       end if;
