@@ -31,13 +31,14 @@ chdir "Contents" or die "Can't chdir to directory Contents: $!";
 	<string>6.0</string>
 	<key>CFBundleExecutable</key>
 	<string>$appname</string>
-	<key>CFBundleVersion</key>
-	<string>0.0.1d1</string>
+	<key>CFBundleName<key>
+	<string>$appname</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+        <key>CFBundleVersion</key>
+        <string>36</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-        
-        <key>CFBundlePackageName</key>
-	<string>$appname</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
@@ -62,6 +63,7 @@ chdir "Resources" or die "Can't chdir to directory Resources: $!";
 mkdir "English.lproj", 0777 or die "Can't create directory English.lproj: $!";
 chdir "English.lproj" or die "Can't chdir to directory English.lproj: $!";
  
+# This can fail quite happily 
 system "mv \"../../../../$appname.rsrc\" \"$appname.rsrc\"";
  
  
