@@ -1,4 +1,6 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.94 2002/05/15 04:55:40 brent Exp $
+
+
+dnl	$Header: /scm/cvs/src/configure.in,v 1.95 2002/07/16 17:31:24 robmyers Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -601,7 +603,7 @@ AC_TRY_LINK([#include <time.h>], [int a = daylight; long b = timezone;],
 AC_FUNC_CHECK(sigaction, sigaction=1, sigaction=0)
 if test $sigaction = 0; then
   AC_DEFINE(NO_SIGACTION)
-  LIBOBJS="${LIBOBJS-} sigaction.o"
+  AC_LIBOBJ([sigaction])
   AC_FUNC_CHECK(sigsetmask, sigsetmask=1, sigsetmask=0)
   AC_FUNC_CHECK(sigrelse, sigrelse=1, sigrelse=0)
   if test $sigsetmask = 1; then
@@ -682,7 +684,7 @@ if test $tcl_ok = 0; then
 fi
 AC_EGREP_HEADER(setsid, unistd.h, tcl_ok=1, tcl_ok=0)
 if test $tcl_ok = 0; then
-    LIBOBJS="${LIBOBJS-} setsid.o"
+    AC_LIBOBJ([setsid])
 fi
 AC_CHECK_HEADER(sys/time.h, , AC_DEFINE(NO_SYS_TIME_H))
 AC_CHECK_HEADER(sys/wait.h, , AC_DEFINE(NO_SYS_WAIT_H))
@@ -721,7 +723,7 @@ int main()
 {
     exit(strstr("\0test", "test") ? 1 : 0);
 }
-],  , [LIBOBJS="${LIBOBJS-} strstr.o"], [LIBOBJS="${LIBOBJS-} strstr.o"])
+],  , [AC_LIBOBJ([strstr])], [AC_LIBOBJ([strstr]) ])
 
 #--------------------------------------------------------------------
 #	Check for strtoul function.  This is tricky because under some
@@ -744,7 +746,7 @@ int main()
     exit(0);
 }], , tcl_ok=0, tcl_ok=0)
 if test $tcl_ok = 0; then
-    LIBOBJS="${LIBOBJS-} strtoul.o"
+    AC_LIBOBJ([strtoul.])
 fi
 
 #--------------------------------------------------------------------
@@ -767,7 +769,7 @@ int main()
     exit(0);
 }], , tcl_ok=0, tcl_ok=0)
 if test $tcl_ok = 0; then
-    LIBOBJS="${LIBOBJS-} strtod.o"
+    AC_LIBOBJ([strtod.o])
 fi
 
 #--------------------------------------------------------------------
@@ -832,7 +834,7 @@ AC_TRY_COMPILE([#include <math.h>], [
 struct exception x;
 x.type = DOMAIN;
 x.type = SING;
-], [LIBOBJS="${LIBOBJS-} matherr.o"
+], [AC_LIBOBJ([matherr])
     AC_DEFINE(NEED_MATHERR) 
     AC_MSG_RESULT(need matherr)],
 AC_MSG_RESULT(don't need matherr))
@@ -870,7 +872,7 @@ AC_CHECK_LIB(dld, shl_load, [AC_DEFINE(HAVE_LIBDLD)
 			     LIBS="$LIBS -ldld"])
 AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
 			 AC_DEFINE(HAVE_LIBDLD)
-                         LIBOBJS="${LIBOBJS-} shl.o"
+                         AC_LIBOBJ([shl])
 			 LIBS="$LIBS -ldl"])
 
 #--------------------------------------------------------------------
