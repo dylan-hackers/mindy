@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.6 1995/11/22 14:28:27 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.7 1995/12/06 11:45:45 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -118,6 +118,7 @@ define %%module dylan-viscera
     <buffer-index>,
     $maximum-buffer-size,
     copy-bytes,
+    buffer-address,
 
     // Extensions
     <fixed-integer>, <extended-integer>, <byte-character>,
