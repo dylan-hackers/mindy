@@ -6,7 +6,8 @@
 if (! $features{'compiled_for_solaris'} 
     && ! $features{'compiled_for_win32'}
     && ! $features{'compiled_for_openbsd'}
-    && ! $features{'compiled_for_freebsd'}) {
+    && ! $features{'compiled_for_freebsd'}
+    && ! $features{'compiled_for_darwin'}) {
     &emit_library_rule('Versioner', '$(BUILDROOT)/force.timestamp', '',
 	 	       'compile', 'install');
 }
