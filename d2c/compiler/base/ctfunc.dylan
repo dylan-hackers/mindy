@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.10 1996/02/08 23:53:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.11 1996/02/16 03:41:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -44,8 +44,7 @@ define constant $ct-function-dump-slots =
        ct-function-name, name:, #f,
        ct-function-signature, signature:, #f,
        ct-function-definition, definition:, ct-function-definition-setter,
-       ct-function-closure-var-types, closure-var-types:, #f,
-       ct-value-heap-labels, heap-labels:, #f);
+       ct-function-closure-var-types, closure-var-types:, #f);
 
 
 
@@ -146,8 +145,7 @@ add-make-dumper
 
 
 
-define class <ct-entry-point> 
-    (<ct-value>, <annotatable>, <identity-preserving-mixin>)
+define class <ct-entry-point> (<ct-value>, <identity-preserving-mixin>)
   //
   // The function this is an entry point for.
   slot ct-entry-point-for :: <ct-function>,
@@ -175,9 +173,11 @@ define method ct-value-cclass (ctv :: <ct-entry-point>) => res :: <cclass>;
   specifier-type(#"<raw-pointer>");
 end;
 
-add-make-dumper(#"ct-entry-point", *compiler-dispatcher*,
-  <ct-entry-point>,
-  list(ct-entry-point-for, for:, #f,
-       ct-entry-point-kind, kind:, #f),
-  load-external: #t
-);
+add-make-dumper(#"ct-entry-point", *compiler-dispatcher*, <ct-entry-point>,
+		list(ct-entry-point-for, for:, #f,
+		     ct-entry-point-kind, kind:, #f),
+		dump-side-effect:
+		  method (ep :: <ct-entry-point>, buf :: <dump-buffer>) => ();
+		    signal("Yes, a <ct-entry-point> was actually dumped.");
+		  end method,
+		load-external: #t);
