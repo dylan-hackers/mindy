@@ -5,7 +5,7 @@ synopsis: Implements character tests that are in C's ctype library,
           sanity while stepping through all possible characters)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.2 1996/07/12 16:38:30 dwatson Exp $
 
 //======================================================================
 //
@@ -62,9 +62,12 @@ end method whitespace?;
 
 // isupper
 //
-define method uppercase? (c :: <character>) => answer :: <boolean>;
-  c >= 'A' & c <= 'Z';
-end method uppercase?;
+// This has been moved to %Hash-Tables in order to prevent circular library
+// definitions.
+//
+//define method uppercase? (c :: <character>) => answer :: <boolean>;
+//  c >= 'A' & c <= 'Z';
+//end method uppercase?;
 
 // islower
 //
