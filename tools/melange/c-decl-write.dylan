@@ -552,10 +552,21 @@ define method write-declaration
      stream :: <stream>)
  => ();
   if (~decl.equated?)
-    // Just use the "equivalent" pointer type.  We probably will want to change
-    // this later.
-    format(stream, "define constant %s = %s;\n\n",
-	   decl.dylan-name, decl.pointer-equiv.dylan-name);
+    // Create a new class -- we must insure that the class is a subclass of
+    // both the appropriate pointer class and of <c-vector>.  
+    let supers = decl.superclasses | list(decl.pointer-equiv.dylan-name,
+					  "<c-vector>");
+					  
+    format(stream, "define class %s (%s) end class;\n\n",
+	   decl.dylan-name,
+	   as(<byte-string>, apply(join, ", ", supers)));
+    // We will eventually want to declare a size.  However, since the
+    // declarations sometimes lie about the true size, we must not do so until
+    // we have adequate mechanisms for changing the default.
+//    if (decl.length)
+//      format(stream, "define method size (%s)\n  %=;\nend method;\n\n",
+//	     decl.dylan-name, decl.length);
+//    end if;
   end if;
 end method write-declaration;
 
@@ -570,7 +581,7 @@ define method write-declaration
  => ();
   // We must special case this one since there are so many declarations of the
   // form "typedef struct foo foo".
-  if (~decl.equated? & decl.dylan-name ~= decl.type.dylan-name)
+  if (~decl.equated? & decl.simple-name ~= decl.type.simple-name)
     format(stream, "define constant %s = %s;\n\n",
 	   decl.dylan-name, decl.type.dylan-name);
   end if;
