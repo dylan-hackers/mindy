@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.134 1996/11/18 23:50:06 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.135 1996/12/02 14:07:39 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1225,6 +1225,14 @@ define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
   new-line(file.file-body-stream);
+
+  // If dynamic, force module var to be allocated now.  Otherwise the client
+  // libraries will create it on demand, referencing its init-value which is
+  // not a fixed name.
+  if (defn.defn-dynamic?)
+    get-info-for(defn, file);
+  end if;
+
   let ctv = defn.ct-value;
   if (ctv)
     if (*emit-all-function-objects?*)
