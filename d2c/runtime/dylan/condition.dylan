@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.17 1996/07/23 17:25:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.18 1996/10/07 21:48:34 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -674,17 +674,17 @@ define method gdb-print-object (obj :: <object>) => ();
   end block;
 end method gdb-print-object;
 
+// WRETCHED HACK: By putting the function in an <object> variable, we
+// guarantee that it will be dumped on the heap and that it will have a
+// general representation.
+//
+define variable apply-safely-fun :: <object> = apply-safely;
+
 // This debugging support routine does a normal apply, but also traps
 // all errors (sending the error message to the standard error
 // output).  The debugger can thus call this function without worrying
 // about an unexpected error messing up the call stack.  
 //
-// WRETCHED HACK: The generic functions is intentionally left open in
-// order to assure that the compiler will include the full generic in
-// the image.
-//
-define open generic apply-safely (fun :: <function>, #rest arguments);
-
 define method apply-safely (fun :: <function>, #rest arguments)
   block ()
     apply(fun, arguments);
@@ -697,3 +697,8 @@ end method apply-safely;
 define method seg-fault-error () => res :: <never-returns>;
   error("GDB encountered a seg fault -- invalid data.");
 end;
+
+// WRETCHED HACK: We put this in an <object> variable so that we will have a
+// sample of an integer in the general representation.
+//
+define variable gdb-integer-value :: <object> = 1;
