@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.35 2002/03/10 15:30:59 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.36 2002/03/24 19:57:34 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -382,7 +382,8 @@ define module header
   use source;
 
   export
-    <header>, parse-header, find-newline;
+    <header>, parse-header, find-newline,
+    header-add, header-add-new, header-concatenate;
 end;
 
 
@@ -699,7 +700,7 @@ define module classes
     slot-init-keyword-required?, slot-overrides,
     <meta-slot-info>, referred-slot-info,
 
-    <position-table>, get-direct-position, get-general-position,
+    <position-table>, get-direct-position,
     get-universal-position, <slot-position>,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
@@ -707,7 +708,8 @@ define module classes
 
     <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
-    <virtual-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
+    <virtual-slot-info>,
+    <indirect-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
     associated-meta-slot, associated-meta-slot-setter,
 
     <override-info>, override-introduced-by, override-introduced-by-setter, 
@@ -740,7 +742,7 @@ define module classes
     calculate-type-inclusion-matrix,
 
     // For dumper...
-    <limited-cclass>, each-subclass-slots-count;
+    <limited-cclass>;
 end;
 
 define module type-dump
