@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.11 1994/11/28 07:16:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.12 1995/03/12 16:31:05 nkramer Exp $
 *
 * This file is the main driver.
 *
@@ -320,7 +320,7 @@ void main(int argc, char *argv[])
     if (strcmp(output_name, "-") == 0)
         file = stdout;
     else
-        file = fopen(output_name, "w");
+        file = fopen(output_name, "wb");
 
     if (file == NULL) {
 	perror(output_name);
@@ -338,3 +338,33 @@ void main(int argc, char *argv[])
 
     exit(0);
 }
+
+/* Try to keep this consistent with interp/mindy.c */
+
+#undef malloc
+void *check_malloc(size_t sz, char *file, int line)
+{
+    void *ret = malloc(sz);
+    if (ret == 0) 
+	lose("malloc failed -- out of memory in %s line %d", file, line);
+    return ret;
+}
+
+#undef calloc
+void *check_calloc(size_t nobj, size_t sz, char *file, int line)
+{
+    void *ret = calloc(nobj, sz);
+    if (ret == 0) 
+	lose("calloc failed -- out of memory in %s line %d", file, line);
+    return ret;
+}
+
+#undef realloc
+void *check_realloc(void *ptr, size_t sz, char *file, int line)
+{
+    void *ret = realloc(ptr, sz);
+    if (ret == 0) 
+	lose("realloc failed -- out of memory in %s line %d", file, line);
+    return ret;
+}
+

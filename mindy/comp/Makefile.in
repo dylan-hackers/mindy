@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.5 1994/10/26 19:47:21 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.6 1995/03/12 16:29:02 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -93,89 +93,90 @@ install: mindycomp
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
 
-compile.o :  ${SRCDIR}/compile.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-             ${SRCDIR}/src.h ${SRCDIR}/dump.h ${SRCDIR}/lexenv.h \
-             ${SRCDIR}/envanal.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
-             ${SRCDIR}/compile.h ${SRCDIR}/byteops.h ${SRCDIR}/info.h \
-             ${SRCDIR}/lose.h
+compile.o:  ${SRCDIR}/compile.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+              ${SRCDIR}/src.h ${SRCDIR}/dump.h ${SRCDIR}/lexenv.h \
+              ${SRCDIR}/envanal.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
+              ${SRCDIR}/compile.h ${SRCDIR}/byteops.h ${SRCDIR}/info.h \
+              ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/compile.c
 
-dump.o :  ${SRCDIR}/dump.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-          ${SRCDIR}/mindycomp.h ${SRCDIR}/src.h ${SRCDIR}/literal.h \
-          ${SRCDIR}/sym.h ${SRCDIR}/fileops.h ${SRCDIR}/compile.h \
-          ${SRCDIR}/dump.h ${SRCDIR}/version.h ${SRCDIR}/envanal.h \
-          ${SRCDIR}/lose.h
+dump.o:  ${SRCDIR}/dump.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+           ${SRCDIR}/mindycomp.h ${SRCDIR}/src.h ${SRCDIR}/literal.h \
+           ${SRCDIR}/sym.h ${SRCDIR}/fileops.h ${SRCDIR}/compile.h \
+           ${SRCDIR}/dump.h ${SRCDIR}/version.h ${SRCDIR}/envanal.h \
+           ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/dump.c
 
-dup.o :  ${SRCDIR}/dup.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-         ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
-         ${SRCDIR}/lose.h ${SRCDIR}/dup.h
+dup.o:  ${SRCDIR}/dup.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+          ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
+          ${SRCDIR}/lose.h ${SRCDIR}/dup.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/dup.c
 
-envanal.o :  ${SRCDIR}/envanal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-             ${SRCDIR}/src.h ${SRCDIR}/lexenv.h ${SRCDIR}/envanal.h \
-             ${SRCDIR}/sym.h ${SRCDIR}/lose.h
+envanal.o:  ${SRCDIR}/envanal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+              ${SRCDIR}/src.h ${SRCDIR}/lexenv.h ${SRCDIR}/envanal.h \
+              ${SRCDIR}/sym.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/envanal.c
 
-expand.o :  ${SRCDIR}/expand.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-            ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/dup.h \
-            ${SRCDIR}/free.h ${SRCDIR}/sym.h ${SRCDIR}/expand.h \
-            ${SRCDIR}/info.h ${SRCDIR}/lose.h
+expand.o:  ${SRCDIR}/expand.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/dup.h \
+             ${SRCDIR}/free.h ${SRCDIR}/sym.h ${SRCDIR}/expand.h \
+             ${SRCDIR}/info.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/expand.c
 
-free.o :  ${SRCDIR}/free.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-          ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
-          ${SRCDIR}/lose.h
+free.o:  ${SRCDIR}/free.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+           ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
+           ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/free.c
 
-header.o :  ${SRCDIR}/header.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-            ${SRCDIR}/header.h
+header.o:  ${SRCDIR}/header.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/header.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/header.c
 
-info.o :  ${SRCDIR}/info.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-          ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/info.h
+info.o:  ${SRCDIR}/info.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+           ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/info.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/info.c
 
-lexenv.o :  ${SRCDIR}/lexenv.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-            ${SRCDIR}/src.h ${SRCDIR}/lexenv.h
+lexenv.o:  ${SRCDIR}/lexenv.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/src.h ${SRCDIR}/lexenv.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lexenv.c
 
-lexer.tab.o :  ${SRCDIR}/lexer.tab.c ${SRCDIR}/./lexer.h ${SRCDIR}/./src.h \
-               ${SRCDIR}/./parser.tab.h
+lexer.tab.o:  ${SRCDIR}/lexer.tab.c ${SRCDIR}/lexer.h ${SRCDIR}/src.h \
+                ${SRCDIR}/parser.tab.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lexer.tab.c
 
-literal.o :  ${SRCDIR}/literal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-             ${SRCDIR}/literal.h ${SRCDIR}/lose.h
+literal.o:  ${SRCDIR}/literal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+              ${SRCDIR}/literal.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/literal.c
 
-lose.o :  ${SRCDIR}/lose.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/lose.h
+lose.o:  ${SRCDIR}/lose.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lose.c
 
-mindycomp.o :  ${SRCDIR}/mindycomp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-               ${SRCDIR}/mindycomp.h ${SRCDIR}/parser.h ${SRCDIR}/src.h \
-               ${SRCDIR}/print.h ${SRCDIR}/expand.h ${SRCDIR}/envanal.h \
-               ${SRCDIR}/lexer.h ${SRCDIR}/header.h ${SRCDIR}/sym.h \
-               ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h
+mindycomp.o:  ${SRCDIR}/mindycomp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+                ${SRCDIR}/mindycomp.h ${SRCDIR}/parser.h ${SRCDIR}/src.h \
+                ${SRCDIR}/print.h ${SRCDIR}/expand.h ${SRCDIR}/envanal.h \
+                ${SRCDIR}/lexer.h ${SRCDIR}/header.h ${SRCDIR}/sym.h \
+                ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/mindycomp.c
 
-parser.tab.o :  ${SRCDIR}/parser.tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindycomp.h \
-                ${SRCDIR}/./header.h ${SRCDIR}/./parser.h ${SRCDIR}/./lexer.h \
-                ${SRCDIR}/./literal.h ${SRCDIR}/./src.h ${SRCDIR}/./sym.h
+parser.tab.o:  ${SRCDIR}/parser.tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+                 ${SRCDIR}/header.h ${SRCDIR}/parser.h ${SRCDIR}/lexer.h \
+                 ${SRCDIR}/literal.h ${SRCDIR}/src.h ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/parser.tab.c
 
-print.o :  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-           ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
-           ${SRCDIR}/print.h ${SRCDIR}/lose.h
+print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+            ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
+            ${SRCDIR}/print.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/print.c
 
-src.o :  ${SRCDIR}/src.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-         ${SRCDIR}/sym.h ${SRCDIR}/lexer.h ${SRCDIR}/literal.h \
-         ${SRCDIR}/src.h ${SRCDIR}/info.h ${SRCDIR}/lose.h
+src.o:  ${SRCDIR}/src.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+          ${SRCDIR}/sym.h ${SRCDIR}/lexer.h ${SRCDIR}/literal.h \
+          ${SRCDIR}/src.h ${SRCDIR}/info.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/src.c
 
-sym.o :  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
-         ${SRCDIR}/sym.h
+sym.o:  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+          ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/sym.c
 
-version.o :  ${SRCDIR}/version.c ${SRCDIR}/version.h
+version.o:  ${SRCDIR}/version.c ${SRCDIR}/version.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/version.c
+

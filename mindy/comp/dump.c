@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.21 1994/11/28 07:56:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.22 1995/03/12 16:29:30 nkramer Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -396,7 +396,7 @@ static void dump_component(struct component *c)
     struct block *block;
     int bytes;
 
-    if (c->nconstants < 256 && c->bytes < (1<<16)) {
+    if (c->nconstants <= UCHAR_MAX && c->bytes <= USHRT_MAX) {
 	dump_op(fop_SHORT_COMPONENT);
 	dump_byte(c->nconstants);
 	dump_short(c->bytes);
