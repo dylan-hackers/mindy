@@ -560,7 +560,7 @@ define method try-cpp
 	    cpp-include(state, pos);
 	  end if;
 	"include_next" =>
-	  signal("Warning: doing the wrong thing with #include_next.");
+	  //signal("Warning: doing the wrong thing with #include_next.");
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
 	    cpp-include(state, pos);
 	  end if;
