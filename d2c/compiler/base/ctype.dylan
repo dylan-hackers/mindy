@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.17 1995/06/01 14:30:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.18 1995/08/22 14:07:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1162,7 +1162,7 @@ define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
 	       (stream,
 		prefix: "(",
 		body: method (stream)
-			for (type in type.positional-types,
+			for (pos-type in type.positional-types,
 			     count from 0)
 			  unless (count == 0)
 			    write(", ", stream);
@@ -1171,7 +1171,7 @@ define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
 			  if (count == type.min-values)
 			    write("#optional ", stream);
 			  end;
-			  print(type, stream);
+			  print(pos-type, stream);
 			end;
 			unless (type.rest-value-type == empty-ctype())
 			  unless (type.positional-types == #())
