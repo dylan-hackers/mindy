@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.22 1996/01/14 18:09:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.23 1996/02/09 00:04:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -557,6 +557,73 @@ define-primitive-emitter
      deliver-result(defines, "initial_symbols", *heap-rep*, #f, file);
    end);
    
+
+
+// Slot access primitives.
+
+define-primitive-emitter
+  (#"ref-slot",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let instance-dep = operation.depends-on;
+     let instance = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
+     let repsym-dep = instance-dep.dependent-next;
+     let repsym-leaf = repsym-dep.source-exp;
+     unless (instance?(repsym-leaf, <literal-constant>)
+	       & instance?(repsym-leaf.value, <literal-symbol>))
+       error("Representation spec in ref-slot isn't a literal symbol.");
+     end unless;
+     let repsym = repsym-leaf.value.literal-value;
+     let rep = select (repsym)
+		 #"general" => *general-rep*;
+		 #"heap" => *heap-rep*;
+	       end select;
+     let offset-dep = repsym-dep.dependent-next;
+     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+
+     spew-pending-defines(file);
+     
+     deliver-result(defines,
+		    stringify("SLOT(", instance, ", ",
+			      rep.representation-c-type, ", ",
+			      offset, ')'),
+		    rep, #f, file);
+   end method);
+
+define-primitive-emitter
+  (#"set-slot",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let newval-dep = operation.depends-on;
+     let instance-dep = newval-dep.dependent-next;
+     let repsym-dep = instance-dep.dependent-next;
+     let offset-dep = repsym-dep.dependent-next;
+     let repsym-leaf = repsym-dep.source-exp;
+     unless (instance?(repsym-leaf, <literal-constant>)
+	       & instance?(repsym-leaf.value, <literal-symbol>))
+       error("Representation spec in ref-slot isn't a literal symbol.");
+     end unless;
+     let repsym = repsym-leaf.value.literal-value;
+     let rep = select (repsym)
+		 #"general" => *general-rep*;
+		 #"heap" => *heap-rep*;
+	       end select;
+     let newval = ref-leaf(rep, newval-dep.source-exp, file);
+     let instance = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
+     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+
+     format(file.file-guts-stream,
+	    "SLOT(%s, %s, %s) = %s;\n",
+	    instance, rep.representation-c-type, offset, newval);
+
+     deliver-results(defines, #[], #f, file);
+   end method);
+
+
 
 
 // NLX primitives.
