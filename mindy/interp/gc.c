@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.7 2001/10/19 02:59:38 brent Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.8 2003/08/21 00:49:08 bruce Exp $
 *
 * This file is the garbage collector.
 *
@@ -67,7 +67,7 @@ extern void scavenge_c_roots(void);
 /* A 'DWORD' is 64 bits in a 32-bit arch and 128 bits in a 64-bit arch */
 #define ALIGN_DWORD(p) (((p)+(sizeof(void *)*2)-1) & ~((sizeof(void *)*2)-1))
 
-#ifdef hpux
+#ifdef was_hpux
 #define PURIFY 1
 #endif
 
