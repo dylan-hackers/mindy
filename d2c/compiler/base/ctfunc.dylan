@@ -1,9 +1,10 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.5 1995/06/10 15:58:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.6 1995/10/13 15:04:26 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
-define class <ct-function> (<ct-value>, <annotatable>)
+define class <ct-function> 
+    (<ct-value>, <annotatable>, <identity-preserving-mixin>)
   //
   // Some string useful for describing this function.  Used only for printing
   // and error messages.
@@ -37,6 +38,18 @@ define method ct-value-cclass (ctv :: <ct-function>) => res :: <cclass>;
   specifier-type(#"<raw-function>");
 end;
 
+
+define constant $ct-function-dump-slots =
+  list(ct-function-name, name:, #f,
+       ct-function-signature, signature:, #f,
+       ct-function-definition, definition:, #f,
+       ct-function-closure-var-types, closure-var-types:, #f);
+
+add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-function>,
+		$ct-function-dump-slots,
+		load-external: #t);
+
+
 define class <ct-generic-function> (<ct-function>, <eql-ct-value>)
 end;
 
@@ -44,6 +57,12 @@ define method ct-value-cclass (ctv :: <ct-generic-function>)
     => res :: <cclass>;
   specifier-type(#"<generic-function>");
 end;
+
+add-make-dumper(#"ct-generic-function", *compiler-dispatcher*,
+		<ct-generic-function>, $ct-function-dump-slots,
+		load-external: #t);
+
+
 
 define class <ct-method> (<ct-function>)
   //
@@ -57,8 +76,17 @@ define method ct-value-cclass (ctv :: <ct-method>) => res :: <cclass>;
   specifier-type(#"<method>");
 end;
 
+add-make-dumper(#"ct-method", *compiler-dispatcher*,
+  <ct-method>,
+  concatenate(
+    $ct-function-dump-slots,
+    list(ct-method-hidden?, hidden:, #f)),
+    load-external: #t
+);
 
-define class <ct-entry-point> (<ct-value>, <annotatable>)
+
+define class <ct-entry-point> 
+    (<ct-value>, <annotatable>, <identity-preserving-mixin>)
   //
   // The function this is an entry point for.
   slot ct-entry-point-for :: <ct-function>,
@@ -86,3 +114,9 @@ define method ct-value-cclass (ctv :: <ct-entry-point>) => res :: <cclass>;
   specifier-type(#"<raw-pointer>");
 end;
 
+add-make-dumper(#"ct-entry-point", *compiler-dispatcher*,
+  <ct-entry-point>,
+  list(ct-entry-point-for, for:, #f,
+       ct-entry-point-kind, kind:, #f),
+  load-external: #t
+);
