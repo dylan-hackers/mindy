@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.3 1995/11/16 03:35:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.4 1995/11/17 02:30:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -114,6 +114,6 @@ define %%module dylan-viscera
     $not-supplied,
     false-or, one-of, <never-returns>,
     format, print-message, print, write-integer, write,
-    report-condition,
-    *format-function*, *debug-output*, *debugger*;
+    report-condition, condition-format, *warning-output*,
+    <debugger>, invoke-debugger, *debugger*;
 end;

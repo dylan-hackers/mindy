@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.5 1995/11/16 04:18:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.6 1995/11/17 02:32:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -133,10 +133,10 @@ define module Extensions
 	     format, print-message, print, write-integer, write,
 
 	     // Condition extensions.
-	     report-condition,
+	     report-condition, condition-format, *warning-output*,
 
 	     // Debugger Hooks
-	     *format-function*, *debug-output*, *debugger*
+	     <debugger>, invoke-debugger, *debugger*
     },
     export: all;
 end;
