@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.6 2002/01/03 16:34:38 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.7 2002/01/04 15:51:23 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -100,7 +100,7 @@ define class <local-designator-class-definition>
     required-init-keyword: pack:;
   //
   // The c-rep key
-  slot class-defn-c-rep :: false-or(<expression-parse>),
+  slot class-defn-c-rep :: false-or(<symbol>),
     required-init-keyword: c-rep:;
   //
   // The import type
@@ -171,7 +171,7 @@ define method process-top-level-form
   let class-referenced-type
     = referenced-type-frag & expression-from-fragment(referenced-type-frag);
   let class-pack = pack-frag & expression-from-fragment(pack-frag);
-  let class-c-rep = c-rep-frag & expression-from-fragment(c-rep-frag);
+  let class-c-rep = c-rep-frag & extract-keyword(c-rep-frag);
   let class-import-type
     = import-type-frag & expression-from-fragment(import-type-frag);
   let class-export-type
@@ -342,12 +342,61 @@ define method compute-cclass
     => (cclass-class :: false-or(<class>), init-args :: <sequence>);
   let (cclass-class, init-args) = next-method();
 
-  if(cclass-class)
+  if (cclass-class)
+    let direct-superclasses
+      = apply(method(#key direct-superclasses, #all-keys)
+                direct-superclasses
+              end,
+              init-args);
+
+    let designator-super = #f;
+    for(super in direct-superclasses)
+      if(instance?(super, <cdclass>))
+        if(designator-super)
+          compiler-error-location(defn,
+                                  "designator-class %s inherits from more "
+                                    "one designator-class superclass",
+                                  defn.defn-name);
+        else
+          designator-super := super;
+        end if;
+      end if;
+    end for;
+
+    let designated-representation
+      = (defn.class-defn-c-rep & c-rep(defn.class-defn-c-rep))
+      | (designator-super & designator-super.designated-representation);
+    let referenced-type
+      = (defn.class-referenced-type
+           & ct-eval(defn.class-referenced-type, #f))
+      | (designator-super & designator-super.referenced-type);
+    let pointer-type-superclass
+      = (defn.class-defn-pointer-type-superclass
+           & ct-eval(defn.class-defn-pointer-type-superclass, #f))
+      | (designator-super & designator-super.pointer-type-superclass);
+    let import-type
+      = (defn.class-defn-import-type
+           & ct-eval(defn.class-defn-import-type, #f))
+      | (designator-super & designator-super.import-type);
+    let export-type
+      = (defn.class-defn-export-type
+           & ct-eval(defn.class-defn-export-type, #f))
+      | (designator-super & designator-super.export-type);
+
+    if (referenced-type & ~instance?(referenced-type, <cdclass>))
+      compiler-error-location(defn,
+                              "the referenced-type for a designator-class "
+                                "must be a designator-class");
+    end if;
+    
     values(<defined-cdclass>,
            apply(list,
-                 pointer-type-superclass:
-                   defn.class-defn-pointer-type-superclass
-                     & ct-eval(defn.class-defn-pointer-type-superclass, #f),
+                 representation: designated-representation,
+                 referenced-type: referenced-type,
+                 pointer-type-superclass: pointer-type-superclass,
+                 import-type: import-type,
+                 export-type: export-type,
+                 pointer-type-superclass: pointer-type-superclass,
                  init-args));
   else
     values(#f, #());
