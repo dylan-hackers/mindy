@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.48 1996/01/14 18:03:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.49 1996/01/19 20:16:27 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,8 +34,6 @@ operation
     disable-catcher
 
 variable-info
-    module-var-info
-	module-almost-constant-var-info
     debug-named-info {abstract}
         lexical-var-info [source-location-mixin]
 	values-cluster-info
