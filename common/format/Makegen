@@ -2,7 +2,12 @@
 
 $D2CFLAGS = $D2CFLAGS . ' -L../streams -L../print';
 
-do emit_library_rule(
+&emit_library_rule(
     'Format', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
     'install'
+);
+
+&emit_library_rule(
+    'Debugger-Format', '$(BUILDROOT)/force.timestamp', '', 'no-d2c',
+    'compile-mindy', ''
 );
