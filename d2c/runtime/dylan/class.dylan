@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.6 1995/12/05 22:12:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.7 1995/12/09 20:58:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -323,6 +323,19 @@ define method find-closest-primary-superclass (class :: <class>)
 end;
 
 */
+
+
+// Slot methods.
+
+// slot-initialized? -- exported.
+//
+// Return #t if the slot has been initialized, and #f if not.
+// 
+define method slot-initialized?
+    (instance :: <object>, getter :: <generic-function>)
+    => res :: <boolean>;
+  error("### runtime slot-initialized? not yet implemented.");
+end;
 
 
 // Type system methods.
