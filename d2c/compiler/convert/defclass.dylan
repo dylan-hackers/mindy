@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.33 2002/04/07 10:11:00 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.34 2002/04/08 22:50:09 gabor Exp $
 copyright: see below
 
 
@@ -1030,7 +1030,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 			  direct-superclasses: super-metas,
 			  not-functional: #t,
 			  functional: #f,
-			  sealed: #f,
+			  sealed: #t,
 			  abstract: #t,
 			  primary: #f,
 			  slots: associated-esc-infos,
