@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.7 2000/08/27 04:00:04 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.8 2000/11/03 04:19:34 dauclair Exp $
 copyright: see below
 
 
@@ -744,8 +744,8 @@ end method compile-state-machine;
 define constant $Initial-State
   = compile-state-machine
       (state(#"start", #f,
-	     pair(" \t\f\r", #"whitespace"),
-	     pair('\n', #"newline"),
+	     pair(" \t\f", #"whitespace"),
+	     pair("\n\r", #"newline"),
 	     pair('/', #"slash"),
 	     pair('#', #"sharp"),
 	     pair('(', #"lparen"),
@@ -1253,7 +1253,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	    state := #"seen-slash";
 	  elseif (char == '*')
 	    state := #"seen-star";
-	  elseif (char == '\n')
+	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := posn;
 	    state := #"seen-nothing";
@@ -1269,7 +1269,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	  elseif (char == '*')
 	    depth := depth + 1;
 	    state := #"seen-nothing";
-	  elseif (char == '\n')
+	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := posn;
 	    state := #"seen-nothing";
@@ -1291,7 +1291,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	    end if;
 	  elseif (char == '*')
 	    state := #"seen-star";
-	  elseif (char == '\n')
+	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := posn;
 	    state := #"seen-nothing";
@@ -1301,7 +1301,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	#"seen-slash-slash" =>
 	  // We've seen a //, so skip until the end of the line.
 	  //
-	  if (char == '\n')
+	  if (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := posn;
 	    state := #"seen-nothing";
@@ -1383,7 +1383,8 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	    lexer.line-start := result-end;
 	  #"end-of-line-comment" =>
 	    for (i :: <integer> from result-end below length,
-		 until: (contents[i] == as(<integer>, '\n')))
+		 until: (contents[i] == as(<integer>, '\n')
+			| contents[i] == as(<integer>, '\r')))
 	    finally
 	      result-end := i;
 	    end for;
