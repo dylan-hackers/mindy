@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.5 1996/01/12 02:10:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.6 1996/02/23 00:01:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -79,13 +79,13 @@ end;
 // The fact that we are a functional class should automatically define this,
 // but it doesn't yet.
 //
-define sealed inline method functional-== (a :: <ratio>, b :: <ratio>)
+define inline method functional-==
+    (class == <ratio>, a :: <ratio>, b :: <ratio>)
     => res :: <boolean>;
   a.numerator == b.numerator & a.denominator == b.denominator;
 end;
 
-seal generic functional-== (<ratio>, <object>);
-seal generic functional-== (<object>, <ratio>);
+seal generic functional-== (singleton(<ratio>), <object>, <object>);
 
 define inline method \< (a :: <ratio>, b :: <ratio>)
     => res :: <boolean>;
