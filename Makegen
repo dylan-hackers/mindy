@@ -1,0 +1,81 @@
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/Makegen,v 1.1 1997/05/09 22:34:21 ram Exp $
+##
+##  This is the makegen file for the entire Dylan tree.
+##
+
+## When bootstrapping stuff is compiled in a different order because the
+## dependencies are different.  Also, when bootstrapping, we suppress actually
+## running d2c.  See the d2c-compile target to actually bootstrap.
+
+
+## Make force.timestamp if not there yet.
+push(@compile_commands, "\$(MAKE) force.timestamp");
+print <<'EOF'
+
+force.timestamp:
+	touch force.timestamp
+
+EOF
+;
+
+&compile_subdirs("mindy");
+if ($stage2) {
+    &compile_subdirs("d2c", "common", "tools");
+}
+else {
+    &compile_subdirs("common", "tools", "d2c");
+}    
+
+&compile_subdirs("tests");
+
+push(@install_dependencies, "installdirs");
+    
+if ($features{'compiled_for_unix'}) {
+    print <<"EOF"
+d2c-compile: default
+	(cd common; \$(MAKE))
+	(cd d2c; \$(MAKE) d2c-compile)
+
+installdirs:
+	$srcdir/mkinstalldirs $bindir $libdir $libdir/elisp $includedir \\
+	   $sysconfdir
+EOF
+;
+} elsif ($features{'compiled_for_win32'}) {
+    print <<"EOF"
+installdirs:
+	-mkdir $bindir
+	-mkdir $libdir
+       	-mkdir $libdir\\elisp
+       	-mkdir $includedir
+	-mkdir $sysconfdir
+EOF
+;
+} else {
+    &unknown_platform_error();
+}

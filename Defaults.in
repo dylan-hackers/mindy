@@ -1,0 +1,42 @@
+# @configure_input@
+# but you may want to hand-edit it anyway to cross-compile, etc.
+#
+# This file is included by the gen-makefile Perl script which creates the
+# makefiles used to compile with d2c.
+
+$target_name = '@d2c_target@';
+$host_name = '@d2c_host@';
+
+$srcroot = "@srcdir@";
+$buildroot = "@builddir@";
+$prefix = "@prefix@";
+$destdir = "@exec_prefix@";
+$D2CDIR = $destdir;
+$sysconfdir = "@sysconfdir@";
+$includedir = "@includedir@";
+$gen_makefile = "$buildroot/gen-makefile";
+
+$INSTALL = "@INSTALL@";
+
+# INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
+# particular, INSTALL_PROGRAM doesn't force executability.
+$install_data = "@INSTALL@";
+$install_program = "@INSTALL@ -m oug+rx";
+
+$D2C = "@D2C@ -T$target_name";
+if ($host_name ne $target_name) {
+  $D2C = "$D2C -no-binaries";
+};
+
+$stage2 = @stage2@;
+$MC = '@MC@';
+$MINDY = '@MINDY@';
+$DYLANPATH = @DYLANPATH@;
+$CC = 'gcc';
+$CFLAGS = '-O4 -finline-functions';
+$CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
+
+if (!$stage2) {
+  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen.dbc";
+  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
+};
