@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.6 1998/12/04 21:29:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.7 1999/01/15 19:46:18 housel Exp $
 
 //======================================================================
 //
@@ -695,11 +695,11 @@ lcurly-element (NON-CURLY)
   #f;
 %
 
-curly-list (lcurly-element)
+curly-list ()
   #f;
 %
 
-curly-list (lcurly-element curly-list)
+curly-list (curly-list lcurly-element)
   #f;
 %
 
@@ -713,6 +713,11 @@ declaration (inline-declaration)
   // better be able to handle them. They also occur in Gtk+.
   parse-warning(%1, "ignoring inline function declaration");
   #f;
+%
+
+inline-declaration (inline-specifiers declaration-specifiers
+                    extended-declarator-list <semicolon-token>)
+  %1;
 %
 
 inline-declaration (inline-specifiers declaration-specifiers
