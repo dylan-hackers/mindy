@@ -1,11 +1,11 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.2 2002/01/03 16:29:38 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.3 2002/03/17 11:43:34 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -102,3 +102,6 @@ define constant $maximum-unsigned-machine-word :: <machine-word>
   = as(<machine-word>, -1);
 define constant $minimum-unsigned-machine-word :: <machine-word>
   = as(<machine-word>, 0);
+
+define sealed domain make (singleton(<machine-word>));
+define sealed domain initialize (<machine-word>);
