@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.50 2003/10/03 22:49:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.51 2003/12/17 18:13:06 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -2923,6 +2923,16 @@ define method emit-assignment
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
+
+  unless (slot-rep)
+    compiler-error-location(source-location,
+                            "slot %s has no representation", slot);
+  end;
+  unless (slot-rep.representation-c-type)
+    compiler-error-location(source-location,
+                            "representation %s for slot %s has no C type",
+                            slot-rep.representation-name, slot);
+  end;
 
   let instance-leaf = op.depends-on.source-exp;
   let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
