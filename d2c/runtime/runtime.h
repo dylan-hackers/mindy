@@ -33,7 +33,12 @@ typedef struct descriptor {
     } dataword;
 } descriptor_t;
 
+#if __GNUC__ > 2
+/* utter hack to make GCC3 happy on innocuous function in runtime/dylan/func.c */
+#define SLOT(ptr, type, offset) (*(type *)({long t=offset;(char *)ptr + t;}))
+#else
 #define SLOT(ptr, type, offset) (*(type *)((char *)ptr + offset))
+#endif
 
 typedef descriptor_t *(*entry_t)();
 
