@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.9 2002/03/10 12:31:22 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.10 2002/03/11 08:24:02 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -65,6 +65,49 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   format(*debug-output*, "Compiling library %s\n", lib-name);
   state.unit-lib := find-library(as(<symbol>, lib-name), create: #t);
 
+  // Handle a very simple form of "-exports" logic in single-file-mode.
+  // To wit:  If the .dylan file contains the entries "use-libraries:" 
+  // and "use-modules:", then load these libraries and modules in preference
+  // to the hard-coded values in this file.
+  //
+  // You must have both lines, or neither.  You can't have one without
+  // the other.  Entries in each line must be comma-separated.
+  //
+  // Example:
+  //   use-libraries:  common-dylan, io
+  //   use-modules:  common-dylan, format-out
+  //
+  local method build-export-list(list-data :: <byte-string>)
+		=> result :: <byte-string>;
+    let list-head :: <byte-string> = "";
+    for (val in split-at(method (x :: <character>) x = ',' end, list-data))
+      list-head := concatenate(list-head, format-to-string(" use %s; ", val));
+    end for;
+    list-head := concatenate(list-head, "end; ");
+  end method build-export-list;
+
+  let lib-string = format-to-string("define library %s ", lib-name);
+  let mod-string = format-to-string("define module %s ", lib-name);
+  let lib-list :: false-or(<byte-string>) =
+    element(state.unit-header, #"use-libraries", default: #f);
+  let mod-list :: false-or(<byte-string>) =
+    element(state.unit-header, #"use-modules", default: #f);
+
+  if (lib-list)
+    format(*debug-output*, "Using custom library import list...\n");
+    lib-string := concatenate(lib-string, build-export-list(lib-list));
+  else
+    lib-string := concatenate(lib-string, format-to-string("use common-dylan; use io; end; "));
+  end if;
+
+  if (mod-list)
+    mod-string := concatenate(mod-string, build-export-list(mod-list));
+  else
+    mod-string := concatenate(mod-string, format-to-string("use common-dylan; use format-out; end; "));
+  end if;
+    
+  let libmod-declaration = as(<byte-vector>, format-to-string("%s %s\n\n", lib-string, mod-string));
+
   // XXX these two look suspicious
   // second one is ok, default is now according to DRM
   *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
@@ -73,7 +116,7 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
 
   state.unit-mprefix := as-lowercase(lib-name);
 
-  let libmod-declaration = as(<byte-vector>, format-to-string("define library %s use common-dylan; use io; end; define module %s use common-dylan; use format-out; end;\n\n", lib-name, lib-name));
+  //let libmod-declaration = as(<byte-vector>, format-to-string("define library %s use common-dylan; use io; end; define module %s use common-dylan; use format-out; end;\n\n", lib-name, lib-name));
 
   block ()
     let tokenizer = make(<lexer>, 
