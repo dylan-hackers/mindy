@@ -13,7 +13,7 @@ define library Random
   export random;
 end library Random;
 
-define module new-Random
+define module Random
   use dylan;
   use extensions;
   use transcendental;
