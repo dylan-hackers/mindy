@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.42 1996/01/12 00:58:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.43 1996/01/25 00:29:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,7 +193,7 @@ define method compile-library
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
     let (tokenizer, mod) = file-tokenizer(lib, concatenate(source-path, file));
-    complete-module(mod);
+    use-module(mod);
     block ()
       *Current-Library* := lib;
       *Current-Module* := mod;
