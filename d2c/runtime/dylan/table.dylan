@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.6 1996/02/19 20:23:04 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.7 1996/03/08 05:22:35 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -452,11 +452,10 @@ end method string-hash;
 //
 define method string-hash (s :: <byte-string>)
  => (id :: <integer>, state :: <object>);
-  for (id = 0 then merge-hash-codes(id, $permanent-hash-state,
-				    as(<integer>, s[i]),
-				    $permanent-hash-state,
-				    ordered: #t),
-       i from 0 below s.size)
+  for (id :: <integer> = 0
+	 then merge-hash-codes(id, $permanent-hash-state, as(<integer>, s[i]),
+			       $permanent-hash-state, ordered: #t),
+       i :: <integer> from 0 below s.size)
   finally
     values(id, $permanent-hash-state);
   end for;
