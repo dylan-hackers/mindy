@@ -1,0 +1,6 @@
+do emit_library_rule(
+    'StringExt',
+    '../dylan/dylan.lib.du ../coll-ext/collection-extensions.lib.du',
+    '-L../dylan -L../coll-ext',
+    'compile', 'install'
+);
