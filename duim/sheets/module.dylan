@@ -562,5 +562,3 @@ define module duim-sheets-internals
   //--- Work around the fact that 'port-setter' is overloaded...
   export %port-setter;
 end module duim-sheets-internals;
-
-

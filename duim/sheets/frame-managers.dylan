@@ -11,7 +11,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 //--- Should these be added to the display instead of the port?
 define open abstract primary class <basic-frame-manager> (<frame-manager>)
-  /*sealed*/ slot port :: false-or(<port>) = #f,
+  sealed slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   sealed slot frame-manager-frames  :: <stretchy-object-vector> = make(<stretchy-vector>);
@@ -537,5 +537,3 @@ define method get-frame-manager-and-owner
     values(framem, find-display(port: _port))
   end
 end method get-frame-manager-and-owner;
-
-

@@ -120,7 +120,7 @@ end protocol <<medium-protocol>>;
 
 // This must come before <basic-sheet> in the CPL
 define open abstract class <sheet-with-medium-mixin> (<abstract-sheet>)
-  /*sealed*/ slot sheet-medium :: false-or(<medium>) = #f;
+  sealed slot sheet-medium :: false-or(<medium>) = #f;
 end class <sheet-with-medium-mixin>;
 
 define thread-slot sheet-medium :: false-or(<abstract-medium>) of <abstract-sheet>;
@@ -233,7 +233,7 @@ define constant $medium-region-cached  :: <integer> = #o10;
 define constant $medium-fully-cached   :: <integer> = #o17;	// the sum of the above
 
 define open abstract primary class <basic-medium> (<medium>)
-  /*sealed*/ slot port :: false-or(<port>) = #f,
+  sealed slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   // Default foreground, background, and text style to #f so that
@@ -266,7 +266,7 @@ define open abstract primary class <basic-medium> (<medium>)
     setter: %transform-setter;
   sealed slot medium-device-transform :: <transform> = $identity-transform;
   sealed slot medium-+Y-upward? :: <boolean> = #f;
-  /*sealed*/ slot medium-sheet :: false-or(<sheet>) = #f,
+  sealed slot medium-sheet :: false-or(<sheet>) = #f,
     init-keyword: sheet:;
   sealed slot medium-drawable = #f,
     init-keyword: drawable:;
