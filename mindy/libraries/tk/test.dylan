@@ -193,10 +193,8 @@ define method main(program-name :: <string>, #rest args)
 					do(print-a-config, configuration(m1));
 		       end method);
 
-  let c2 = make(<canvas>, before: m1, pack: #f);
   let t1 = make(<text>, before: m1, side: "top",
 		relief: "sunken", fill: "both");
-  create-window(c2, 0, 0, window: t1);
   let t1-insert = make(<text-mark>, in: t1, name: "insert");
   let keyvar = make(<active-variable>, value: "",
 		    command: curry(format, *tty*, "Key code: %s\n"));
