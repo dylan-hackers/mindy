@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.2 1998/09/09 13:40:13 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.3 1998/11/11 03:49:03 housel Exp $
 
 //======================================================================
 //
@@ -893,9 +893,9 @@ define constant $rot-mask
 // Note that this hash is completely arbitrary.  Nobody expects to able to
 // regenerate this hash.  We could use a random number if we had a handy one.
 //
-// What we do do is do a logxor & rotate hack on 100 words in the buffer,
-// starting at an index determined by the object-hash (e.g. address) of the
-// state.  Use of a large prime increment ensures that the hashed words will be
+// What we do do is do a logxor & rotate hack on 100 words in the
+// buffer, starting at an index determined by the time the state.  Use
+// of a large prime increment ensures that the hashed words will be
 // scattered about the data.
 //
 define method compute-unit-hash (state :: <dump-state>)
@@ -905,7 +905,7 @@ define method compute-unit-hash (state :: <dump-state>)
 #else
   let res = call-out("time", int:, int: 0);
 #endif
-  let hash-idx = object-hash(state) * $word-bytes;
+  let hash-idx = res * $word-bytes;
   for (wot in state.all-dump-buffers)
     let buf = wot.head;
     let len = wot.tail;

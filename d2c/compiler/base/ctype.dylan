@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.1 1998/05/03 19:55:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.2 1998/11/11 03:49:02 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -621,10 +621,10 @@ define sealed domain initialize (<union-table>);
 define method table-protocol(table :: <union-table>)
     => (test :: <function>, hash :: <function>);
   values(\=,
-  	 method(key :: <list>)
+  	 method(key :: <list>, initial-state)
 	   for(elt :: <ctype> in key,
 	       res :: <integer> = 0 then \+(res, elt.type-hash))
-	   finally values(res, $permanent-hash-state);
+	   finally values(res, initial-state);
 	   end for;
 	 end method);
 end;
@@ -911,14 +911,13 @@ define sealed domain initialize (<limited-integer-table>);
 define method table-protocol (table :: <limited-integer-table>)
     => (test :: <function>, hash :: <function>);
   values(\=,
-	 method (key :: <vector>)
-	   let (min-id, min-state) = equal-hash(key.second);
-	   let (base&min-id, base&min-state)
-	     = merge-hash-codes(key.first.type-hash, $permanent-hash-state,
-				min-id, min-state, ordered: #t);
-	   let (max-id, max-state) = equal-hash(key.third);
-	   merge-hash-codes(base&min-id, base&min-state,
-			    max-id, max-state, ordered: #t);
+	 method (key :: <vector>, initial-state)
+	   let (min-id, min-state) = equal-hash(key.second, initial-state);
+	   let base&min-id
+	     = merge-hash-ids(key.first.type-hash, min-id, ordered: #t);
+	   let (max-id, max-state) = equal-hash(key.third, min-state);
+	   let id = merge-hash-ids(base&min-id, max-id, ordered: #t);
+	   values(id, max-state);
 	 end);
 end;
 
@@ -1178,15 +1177,14 @@ define sealed domain initialize (<limited-collection-table>);
 define method table-protocol (table :: <limited-collection-table>)
     => (test :: <function>, hash :: <function>);
   values(\=,
-	 method (key :: <vector> /* of base, element, size/dimensions */)
-	   let types-id = merge-hash-codes(key.first.type-hash,
-					   $permanent-hash-state,
-					   key.second.type-hash,
-					   $permanent-hash-state,
-					   ordered: #t);
-	   let (size-hash, size-state) = equal-hash(key.third);
-	   merge-hash-codes(types-id, $permanent-hash-state,
-			    size-hash, size-state, ordered: #t);
+	 method (key :: <vector> /* of base, element, size/dimensions */,
+		 initial-state)
+	   let types-id = merge-hash-ids(key.first.type-hash,
+					 key.second.type-hash,
+					 ordered: #t);
+	   let (size-hash, size-state) = equal-hash(key.third, initial-state);
+	   let id = merge-hash-ids(types-id, size-hash, ordered: #t);
+	   values(id, size-state);
 	 end);
 end;
 
@@ -2037,25 +2035,18 @@ define generic specifier-type (spec :: <type-specifier>)
 define constant $cache-size = 997;  // The 168'th prime
 
 define constant $specifier-type-cache
-  = make(<vector>, size: ash($cache-size, 1));
+  = make(<object-table>, size: $cache-size);
 
 
 define method specifier-type (spec :: <type-specifier>)
     => res :: <values-ctype>;
-  let (id, state) = object-hash(spec);
-  let index = ash(modulo(id, $cache-size), 1);
-  if ($specifier-type-cache[index] == spec)
-    $specifier-type-cache[index + 1];
+  let res = element($specifier-type-cache, spec, default: #f);
+  if (res)
+    res;
   else
     // Fully eval the specializer before updating the cache.
     let new = slow-specifier-type(spec);
-    // If the state is no longer valid, recompute the index.
-    // ### Except that we can't do this, because state-valid? isn't exported.
-    //unless (state-valid?(state))
-    //  index := ash(floor/(object-hash(spec), $cache-size), 1);
-    //end;
-    $specifier-type-cache[index] := spec;
-    $specifier-type-cache[index + 1] := new;
+    element($specifier-type-cache, spec) := new;
   end;
 end;
 

@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.1 1998/05/03 19:55:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.2 1998/11/11 03:49:01 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -475,11 +475,13 @@ define sealed inline method table-protocol (table :: <literal-pair-memo-table>)
 	   key1.literal-head == key2.literal-head
 	     & key1.literal-tail == key2.literal-tail;
 	 end,
-	 method (key :: <literal-pair>) => (id :: <integer>, state);
-	   let (head-id, head-state) = object-hash(key.literal-head);
-	   let (tail-id, tail-state) = object-hash(key.literal-tail);
-	   merge-hash-codes(head-id, head-state, tail-id, tail-state,
-			    ordered: #t);
+	 method (key :: <literal-pair>, state) => (id :: <integer>, state);
+	   let (head-id, head-state)
+	     = object-hash(key.literal-head, state);
+	   let (tail-id, tail-state)
+	     = object-hash(key.literal-tail, head-state);
+	   let id = merge-hash-ids(head-id, tail-id, ordered: #t);
+	   values(id, tail-state);
 	 end);
 end;
 
@@ -590,15 +592,15 @@ define method shallow-equal
   end if;
 end method shallow-equal;
       
-define method shallow-hash (vec :: <simple-object-vector>)
+define method shallow-hash (vec :: <simple-object-vector>, state :: <object>)
     => (id :: <integer>, state :: <object>);
-  let (current-id, current-state) = values(0, $permanent-hash-state);
+  let (current-id, current-state) = values(0, state);
   for (i from 0 below vec.size)
-    let (id, state) = object-hash(vec[i]);
-    let (captured-id, captured-state) 
-      = merge-hash-codes(current-id, current-state, id, state, ordered: #t);
+    let (id, state) = object-hash(vec[i], current-state);
+    let captured-id
+      = merge-hash-ids(current-id, id, ordered: #t);
     current-id := captured-id;
-    current-state := captured-state;
+    current-state := state;
   end for;
   values(current-id, current-state);
 end method shallow-hash;
