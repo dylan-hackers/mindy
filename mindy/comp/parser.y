@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.12 1994/06/27 16:49:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.13 1994/07/11 20:02:45 dpierce Exp $
 *
 * This file is the grammar.
 *
@@ -87,7 +87,7 @@ static void pop_yacc_recoveries(int count);
     struct superclass_list *superclass_list;
     struct class_guts *class_guts;
     struct slot_spec *slot_spec;
-    struct keyword_spec *keyword_spec;
+    struct initarg_spec *initarg_spec;
     boolean bool;
     struct inherited_spec *inherited_spec;
     enum slot_allocation slot_allocation;
@@ -243,7 +243,7 @@ static void pop_yacc_recoveries(int count);
 %type <superclass_list> superclasses
 %type <class_guts> class_guts_opt class_guts
 %type <slot_spec> slot_spec
-%type <keyword_spec> keyword_spec
+%type <initarg_spec> initarg_spec
 %type <bool> required_opt
 %type <inherited_spec> inherited_spec
 %type <slot_allocation> allocation
@@ -671,20 +671,20 @@ class_guts_opt:
 class_guts:
 	slot_spec
 	{ $$ = add_slot_spec(make_class_guts(), $1); }
-    |	keyword_spec
-	{ $$ = add_keyword_spec(make_class_guts(), $1); }
+    |	initarg_spec
+	{ $$ = add_initarg_spec(make_class_guts(), $1); }
     |	inherited_spec
 	{ $$ = add_inherited_spec(make_class_guts(), $1); }
     |	class_guts SEMI slot_spec
 	{ free($2); $$ = add_slot_spec($1, $3); }
-    |	class_guts SEMI keyword_spec
-	{ free($2); $$ = add_keyword_spec($1, $3); }
+    |	class_guts SEMI initarg_spec
+	{ free($2); $$ = add_initarg_spec($1, $3); }
     |	class_guts SEMI inherited_spec
 	{ free($2); $$ = add_inherited_spec($1, $3); }
 ;
 
 slot_spec:
-	flags allocation SLOT symbol_opt slot_type_opt property_list_opt
+	flags allocation SLOT SYMBOL slot_type_opt property_list_opt
 	{
 	    int line = $3->line;
 	    free($3);
@@ -692,9 +692,9 @@ slot_spec:
 	}
 ;
 
-keyword_spec:
+initarg_spec:
 	required_opt KEYWORD_RESERVED_WORD KEYWORD property_list_opt
-	{ free($2); $$ = make_keyword_spec($1, $3, $4); }
+	{ free($2); $$ = make_initarg_spec($1, $3, $4); }
 ;
 
 required_opt:
