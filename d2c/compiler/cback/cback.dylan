@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.30 1995/05/03 07:19:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.31 1995/05/03 09:44:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -874,17 +874,12 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 end;
 
 define method emit-assignment
-    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
+    (results :: false-or(<definition-site-variable>),
+     call :: union(<unknown-call>, <error-call>),
      output-info :: <output-info>)
     => ();
-  emit-call(results, call, call.depends-on.source-exp, output-info);
-end;
-
-define method emit-call
-    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
-     function :: <leaf>, output-info :: <output-info>)
-    => ();
   let setup-stream = make(<byte-string-output-stream>);
+  let function = call.depends-on.source-exp;
   let func = ref-leaf($heap-rep, function, output-info);
   
   let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
@@ -906,25 +901,56 @@ define method emit-call
   end;
 end;
 
-define method emit-call
-    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
-     function :: <lambda>, output-info :: <output-info>)
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>), call :: <known-call>,
+     output-info :: <output-info>)
+    => ();
+  emit-known-call(results, call.depends-on.source-exp,
+		  call.depends-on.dependent-next, output-info);
+end;
+
+define method emit-known-call
+    (results :: false-or(<definition-site-variable>),
+     function :: <definition-constant-leaf>,
+     arguments :: false-or(<dependency>), output-info :: <output-info>)
+  emit-known-call(results, function.const-defn, arguments, output-info);
+end;
+
+define method emit-known-call
+    (results :: false-or(<definition-site-variable>),
+     function :: <abstract-method-definition>,
+     arguments :: false-or(<dependency>), output-info :: <output-info>)
+    => ();
+  emit-known-call(results, function.method-defn-leaf, arguments, output-info);
+end;
+
+define method emit-known-call
+    (results :: false-or(<definition-site-variable>),
+     function :: <hairy-method-literal>,
+     arguments :: false-or(<dependency>), output-info :: <output-info>)
+    => ();
+  emit-known-call(results, function.main-entry, arguments, output-info);
+end;
+
+define method emit-known-call
+    (results :: false-or(<definition-site-variable>), function :: <lambda>,
+     arguments :: false-or(<dependency>), output-info :: <output-info>)
     => ();
   let func-info = get-info-for(function, output-info);
   let stream = make(<byte-string-output-stream>);
   let name = func-info.lambda-info-main-entry-name;
   let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
   format(stream, "%s(%s", name, sp);
-  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+  for (arg-dep = arguments then arg-dep.dependent-next,
        rep in func-info.lambda-info-argument-representations)
     unless (arg-dep)
-      error("Not enough arguments in a direct call of a lambda?");
+      error("Not enough arguments in a known call?");
     end;
       write(", ", stream);
       write(ref-leaf(rep, arg-dep.source-exp, output-info), stream);
   finally
     if (arg-dep)
-      error("Too many arguments in a direct call of a lambda?");
+      error("Too many arguments in a known call?");
     end;
   end;
   write(')', stream);

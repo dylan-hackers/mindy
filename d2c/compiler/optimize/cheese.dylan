@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.45 1995/05/03 07:21:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.46 1995/05/03 09:44:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -427,34 +427,11 @@ end;
 
 // Call optimization.
 
-// Calls are processed in the following way:
+// <unknown-call> optimization.
 //
-// All calls start out as <unknown-call>s.  As we find things out about the
-// function and the call, we change the kind of call and possibly the
-// arguments as well.  Specifically:
+// Basically, we check the arguments against the signature and try to change
+// into a <known-call> if we can and an <error-call> if we have to.
 //
-//   If the call is to a lambda:
-//     Check the syntax, and change it into either an error call of a local
-//     call.
-//   If the call is to a hairy method literal
-//     Check the syntax and see if we can replace it with a call to the
-//     main entry.  If the syntax is bad, change it to an error call.  If
-//     we can change it to the main entry, do so.  If neither, leave it alone.
-//   If the call is to an exit-function.
-//     Convert it into a pitcher.
-//   If the call is to an abstract-method-definition
-//     If the defn has a method-defn-leaf
-//       process it like above except convert it into a known call instead of
-//       a local call when appropriate.
-//     otherwise
-//       check the syntax against what we know about the signature.  If we find
-//       any problems, change it to an error call.
-//   If the call is to a generic-definition
-//     Check to see if we can compile-time select a method.  If so, change to
-//     a call of that method definition.
-//   Otherwise
-//     Assert that the function is indeed a <function>.
-
 define method optimize (component :: <component>, call :: <unknown-call>)
     => ();
   let func-dep = call.depends-on;
@@ -465,13 +442,6 @@ define method optimize (component :: <component>, call :: <unknown-call>)
   optimize-unknown-call(component, call, func-dep.source-exp, #f);
 end;
 
-define method optimize
-    (component :: <component>, call :: union(<known-call>, <local-call>))
-    => ();
-  maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
-end;
-
-
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>, func :: <leaf>,
      inline-expansion :: false-or(<method-parse>))
@@ -480,7 +450,6 @@ define method optimize-unknown-call
   assert-type(component, call.dependents.dependent, call.depends-on,
 	      function-ctype());
 end;
-
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>, func :: <lambda>,
@@ -528,23 +497,14 @@ define method optimize-unknown-call
 	reoptimize(component, call);
       else
 	// The args are all okay, so assert the arg types and convert the call
-	// into either a <local-call> or a <known-call>.
+	// into a <known-call>.
 	let assign = call.dependents.dependent;
 	for (arg-dep = call.depends-on.dependent-next
 	       then arg-dep.dependent-next,
 	     arg-type in func.argument-types)
 	  assert-type(component, assign, arg-dep, arg-type);
 	end;
-	let func-dep = call.depends-on;
-	if (func-dep.source-exp == func)
-	  change-call-kind(component, call, <local-call>);
-	else
-	  remove-dependency-from-source(component, func-dep);
-	  func-dep.source-exp := func;
-	  func-dep.source-next := func.dependents;
-	  func.dependents := func-dep;
-	  change-call-kind(component, call, <known-call>);
-	end;
+	change-call-kind(component, call, <known-call>);
       end;
     end;
   end;
@@ -665,18 +625,18 @@ define method optimize-unknown-call
       new-func.dependents := func-dep;
       reoptimize(component, call);
     else
-      let new-args = make(<stretchy-vector>);
-      add!(new-args, func.main-entry);
+      let new-ops = make(<stretchy-vector>);
+      add!(new-ops, call.depends-on.source-exp);
       let assign = call.dependents.dependent;
       for (spec in sig.specializers,
 	   arg-dep = call.depends-on.dependent-next
 	     then arg-dep.dependent-next)
 	assert-type(component, assign, arg-dep, spec);
-	add!(new-args, arg-dep.source-exp);
+	add!(new-ops, arg-dep.source-exp);
       finally
 	if (sig.next?)
 	  // ### Need to actually deal with #next args.
-	  add!(new-args,
+	  add!(new-ops,
 	       make-literal-constant(builder, make(<literal-false>)));
 	end;
 	if (sig.key-infos)
@@ -705,7 +665,7 @@ define method optimize-unknown-call
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, rest-temp,
 	     make-unknown-call(builder, as(<list>, rest-args)));
-	  add!(new-args, rest-temp);
+	  add!(new-ops, rest-temp);
 	end;
 	if (sig.key-infos)
 	  for (keyinfo in sig.key-infos)
@@ -715,9 +675,9 @@ define method optimize-unknown-call
 		   | key-dep.source-exp.value.literal-value == key)
 	    finally
 	      if (key-dep)
-		add!(new-args, key-dep.dependent-next.source-exp);
+		add!(new-ops, key-dep.dependent-next.source-exp);
 	      else
-		add!(new-args,
+		add!(new-ops,
 		     make-literal-constant(builder, keyinfo.key-default));
 	      end;
 	    end;
@@ -725,17 +685,13 @@ define method optimize-unknown-call
 	end;
 	insert-before(component, assign, builder-result(builder));
 	let orig-func = call.depends-on.source-exp;
-	let new-call = make-unknown-call(builder, as(<list>, new-args));
+	let new-call = make-operation(builder, <known-call>,
+				      as(<list>, new-ops));
 	let call-dep = call.dependents;
 	call.dependents := #f;
 	new-call.dependents := call-dep;
 	call-dep.source-exp := new-call;
 	delete-dependent(component, call);
-	if (orig-func == func)
-	  change-call-kind(component, new-call, <local-call>);
-	else
-	  change-call-kind(component, new-call, <known-call>);
-	end;
       end;
     end;
   end;
@@ -816,10 +772,6 @@ define method optimize-unknown-call
       func-dep.source-next := new-func.dependents;
       new-func.dependents := func-dep;
       reoptimize(component, call);
-    else
-      // ### Check to see if the generic function has a discriminator
-      // function.  If so, change the function to it.
-      #f;
     end;
   end;
 end;    
@@ -854,6 +806,7 @@ define method optimize-unknown-call
   expand-exit-function(component, call, func, cluster);
 end;
 
+
 define method change-call-kind
     (component :: <component>, call :: <abstract-call>, new-kind :: <class>)
     => ();
@@ -874,6 +827,27 @@ define method change-call-kind
   call.dependents := #f;
   delete-dependent(component, call);
 end;
+
+
+// <known-call> optimization.
+//
+define method optimize (component :: <component>, call :: <known-call>)
+    => ();
+  let func-dep = call.depends-on;
+  unless (func-dep)
+    error("No function in a call?");
+  end;
+  // Dispatch of the thing we are calling.
+  optimize-known-call(component, call, func-dep.source-exp);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>, func :: <leaf>)
+    => ();
+  // Default method that does nothing.
+  #f;
+end;
+
 
 
 // <mv-call> optimization.
@@ -1089,12 +1063,9 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   // in a local call, let convert the lambda.
   if (lambda.visibility == #"local")
     let dependents = lambda.dependents;
-    if (dependents & dependents.source-next == #f)
-      let dependent = dependents.dependent;
-      if (instance?(dependent, <local-call>)
-	    & dependent.depends-on == dependents)
-	let-convert(component, lambda);
-      end;
+    if (dependents & dependents.source-next == #f
+	  & dependents.dependent.depends-on == dependents)
+      let-convert(component, lambda);
     end;
   end;
 end;
@@ -1240,7 +1211,7 @@ define method expand-cluster
 end;
 
 define method let-convert (component :: <component>, lambda :: <lambda>) => ();
-  let call :: <local-call> = lambda.dependents.dependent;
+  let call :: <known-call> = lambda.dependents.dependent;
   let call-assign :: <assignment> = call.dependents.dependent;
   let new-home = home-lambda(call-assign);
 
@@ -1665,9 +1636,10 @@ define method identify-tail-calls-in
 	end;
       end;
       let expr = assign.depends-on.source-exp;
-      if (instance?(expr, union(<known-call>, <local-call>)))
+      if (instance?(expr, <known-call>))
 	if (expr.depends-on.source-exp == home)
 	  // It's a self tail call.
+	  // ### Should also check to about calling things other than lambdas.
 	  convert-self-tail-call(component, home, expr);
 	end;
 	return();
