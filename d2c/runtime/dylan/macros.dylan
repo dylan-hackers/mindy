@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.16 2001/07/24 06:15:35 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.17 2002/01/25 04:18:36 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -226,6 +226,8 @@ define macro for
 
     { ?v:variable = ?e1:expression then ?e2:expression, ... }
       => { for-clause(?v = ?e1 then ?e2) ... }
+    { ?v:variable = ?e:expression, ... }
+      => { for-clause(?v = ?e) ... }
     { ?v:variable from ?e1:expression ?to, ... }
       => { for-clause(?v from ?e1 ?to) ... }
     { #key ?while:expression }
@@ -255,6 +257,10 @@ define macro for-clause
     // Explicit step clauses
     { for-clause(?v:variable = ?e1:expression then ?e2:expression) }
       => {, var1: ?v, init1: ?e1, next1: ?e2 }
+
+    // Constant or side-effect expression  clause
+    { for-clause(?v:variable = ?e:expression) }
+      => {, var2: ?v, next2: ?e}
 
     // Collection clauses without keyed-by
     { for-clause(?v:variable in ?c:expression using ?protocol:expression) }
