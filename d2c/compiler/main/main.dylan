@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.54 2001/07/07 17:30:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.55 2001/07/23 02:38:16 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1454,9 +1454,9 @@ define method show-compiler-info(stream :: <stream>) => ()
   //   2: 1 but with unit-prefix being ignored
   p("_DCI_DYLAN_LID_FORMAT_VERSION=2\n");
 
-  // Increment this value here (and CURRENT_BOOTSTRAP_COUNTER) in
-  // configure.in to force an automatic bootstrap.
-  p("_DCI_D2C_BOOTSTRAP_COUNTER=12\n");
+  // Increment CURRENT_BOOTSTRAP_COUNTER in configure.in to force an
+  // automatic bootstrap.
+  p("_DCI_D2C_BOOTSTRAP_COUNTER=%d\n", $bootstrap-counter);
 
   // The directory (relative to --prefix) where ./configure can find our
   // runtime libraries. This is used when bootstrapping.
