@@ -58,7 +58,8 @@ define method main(name, arguments)
   let platform
     = select(platform-name by \=)
         "x86-linux-gcc",
-        "x86-linux-gcc32" =>
+        "x86-linux-gcc32",
+        "x86-linux-gcc33" =>
           $i386-linux-platform;
         "ppc-linux-gcc" =>
           $ppc-linux-platform;
