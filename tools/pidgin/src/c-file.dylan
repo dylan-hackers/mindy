@@ -4,10 +4,6 @@ define class <c-file> (<object>)
   slot c-file-name :: false-or(<byte-string>),
     init-keyword: name:,
     init-value: #f;
-  slot c-file-system-header? :: <boolean>,
-    init-keyword: system-header?:,
-    init-value: #f;
-
   slot c-file-included-files :: <stretchy-vector>
     = make(<stretchy-vector>); // contains <c-file>s
   slot c-file-declarations :: <stretchy-vector>

@@ -146,7 +146,6 @@ define module c-file
   export
     <c-file>,
       c-file-name,
-      c-file-system-header?,
       c-file-included-files,
       c-file-declarations,
       add-c-declaration!,
