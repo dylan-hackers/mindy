@@ -86,9 +86,6 @@ The following are enhancements added since release 1.4:
    library has been removed.  Use <mutable-explicit-key-collection>
    instead.
 
-   The variable *random-state* is now exported from the Random
-   library.  See random.txt for details.
-
    In the Regular-expressions module of the String-Extensions library,
    the join() function now only works on byte strings.
 
