@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.14 1994/06/01 13:10:22 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.15 1994/06/01 18:12:28 nkramer Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -41,7 +41,7 @@ define method element(coll :: <collection>, key :: <object>,
       end if;
     finally
       if (default == no_default)
-	error("No such element in ~S: ~S", coll, key);
+	error("No such element in %=: %=", coll, key);
       else 
 	default;
       end if;
@@ -63,7 +63,7 @@ define method element-setter (new_value, collection :: <mutable-collection>,
 	return();
       end if;
     end for;
-    error("No such element in ~S: ~S", collection, key);
+    error("No such element in %=: %=", collection, key);
   end block;
 end method element-setter;
 
@@ -355,7 +355,7 @@ define method element(sequence :: <sequence>, key :: <integer>,
       if (this_key == key) return(elem) end if;
     finally
       if (default == no_default)
-	error("No such element in ~S: ~S", sequence, key);
+	error("No such element in %=: %=", sequence, key);
       else 
 	default;
       end if;
@@ -377,7 +377,7 @@ define method element-setter (new_value, sequence :: <mutable-sequence>,
 	return();
       end if;
     end for;
-    error("No such element in ~S: ~S", sequence, key);
+    error("No such element in %=: %=", sequence, key);
   end block;
 end method element-setter;
 
@@ -859,7 +859,7 @@ define method map-into(destination :: <stretchy-collection>,
 		       #rest more_collections) => <stretchy-collection>;
   let test1 = key-test(collection);
   if (~instance?(destination, <mutable-collection>))
-    error("~S is not a mutable collection.", destination);
+    error("%= is not a mutable collection.", destination);
   elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
     error("Can't map over collections with a different key tests");
   elseif (~ (test1 == key-test(destination)))
@@ -886,7 +886,7 @@ define method map-into(destination :: <stretchy-collection>,
 		       #rest more_sequences)
   let test1 = key-test(collection);
   if (~instance?(destination, <mutable-collection>))
-    error("~S is not a mutable collection.", destination);
+    error("%= is not a mutable collection.", destination);
   elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
     error("Can't map over collections with a different key tests");
   elseif (~ (test1 == key-test(destination)))
