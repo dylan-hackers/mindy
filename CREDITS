@@ -36,6 +36,11 @@ D: Grand Exalted Poobah of .cvsignore files, miscellaneous cleanups.
 D: Interstate server repair team.
 D: 64-bit ports of Mindy and d2c (in progress).
 
+N: Brent Fulgham
+E: bfulgham@debian.org
+D: Debian maintainer, various Linux and cygnus porting work.  Ongoing
+D: bug fixes, unfortunately offset by bug creation tendencies.
+
 N: Gabor Greif
 E: gabor@mac.com
 D: Merciless Czar of microoptimizations.
@@ -59,7 +64,7 @@ D: Lots of low-level compiler fixes.
 N: Bruce Hoult
 E: bruce@hoult.org
 D: PPC trampoline code, some optimizer bug fixes, some build fixes,
-D: some speed tuning.
+D: some speed tuning, more GC updates.
 
 N: Peter Housel
 E: housel@acm.org
@@ -88,6 +93,3 @@ N: Shaleh
 E: shaleh@livenet.net
 D: Debian advisor
 
-N: Ole J. Tetlie
-E: olet@ifi.uio.no
-D: Debian maintainer

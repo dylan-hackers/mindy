@@ -1,3 +1,11 @@
+Gwydion Dylan 2.3.5
+
+  Some measurable performance and build-time optimizations have been
+  incorporated into d2c.  The compiler now supports limited containers,
+  and a bug in class variable initialization has been fixed.  The
+  Common Dylan library implementation has expanded further, and support
+  for the myriad styles of end-of-line delimiters has been strengthened.
+
 Gwydion Dylan 2.3.4
   
   The cygnus port created in 2.3.3 has now been integrated into the
