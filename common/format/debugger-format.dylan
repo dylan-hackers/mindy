@@ -1,5 +1,5 @@
 module: debugger-format
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.dylan,v 1.1 1996/03/20 00:05:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.dylan,v 1.2 1996/03/20 05:02:03 wlott Exp $
 
 //======================================================================
 //
@@ -30,18 +30,20 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.
 define library debugger-format
   use Dylan;
   use Streams;
+  //
+  // We use the format library even though we don't reference anything in
+  // it to make sure it is loaded.  Otherwise, there won't be a <stream>
+  // method on condition-format and condition-force-output.
   use Format;
 end;
 
 define module debugger-format
   use Dylan;
   use Extensions;
-  use Streams;
   use Standard-IO;
-  use Format;
 end;
 
 
 *debug-output* := *standard-output*;
-*format-function* := format;
-*force-output-function* := force-output;
+*warning-output* := *standard-output*;
+
