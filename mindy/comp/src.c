@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.19 1994/06/27 16:49:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.20 1994/07/11 20:04:23 dpierce Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -95,10 +95,10 @@ struct to_part {
 struct class_guts {
     struct slot_spec *slots;
     struct slot_spec **slots_tail;
-    struct keyword_spec *keywords;
-    struct keyword_spec **keywords_tail;
-    struct inherited_spec *inherits;
-    struct inherited_spec **inherits_tail;
+    struct initarg_spec *initargs;
+    struct initarg_spec **initargs_tail;
+    struct inherited_spec *inheriteds;
+    struct inherited_spec **inheriteds_tail;
 };
 
 struct else_part {
@@ -1443,14 +1443,14 @@ struct constituent
     free(supers);
     if (guts) {
 	res->slots = guts->slots;
-	res->keywords = guts->keywords;
-	res->inherits = guts->inherits;
+	res->initargs = guts->initargs;
+	res->inheriteds = guts->inheriteds;
 	free(guts);
     }
     else {
 	res->slots = NULL;
-	res->keywords = NULL;
-	res->inherits = NULL;
+	res->initargs = NULL;
+	res->inheriteds = NULL;
     }
     res->tlf1 = NULL;
     res->tlf2 = NULL;
@@ -1495,10 +1495,10 @@ struct class_guts *make_class_guts(void)
 
     res->slots = NULL;
     res->slots_tail = &res->slots;
-    res->keywords = NULL;
-    res->keywords_tail = &res->keywords;
-    res->inherits = NULL;
-    res->inherits_tail = &res->inherits;
+    res->initargs = NULL;
+    res->initargs_tail = &res->initargs;
+    res->inheriteds = NULL;
+    res->inheriteds_tail = &res->inheriteds;
 
     return res;
 }
@@ -1531,10 +1531,10 @@ struct class_guts *add_slot_spec(struct class_guts *guts,
     return guts;
 }
 
-struct keyword_spec
-    *make_keyword_spec(boolean required, struct token *key,struct plist *plist)
+struct initarg_spec
+  *make_initarg_spec(boolean required, struct token *key, struct plist *plist)
 {
-    struct keyword_spec *res = malloc(sizeof(*res));
+    struct initarg_spec *res = malloc(sizeof(*res));
 
     /* The keyword token has a trailing : */
     key->chars[key->length-1] = '\0';
@@ -1542,15 +1542,16 @@ struct keyword_spec
     res->required = required;
     res->keyword = symbol(key->chars);
     res->plist = plist;
+    res->next = NULL;
 
     return res;
 }
 
-struct class_guts *add_keyword_spec(struct class_guts *guts,
-				    struct keyword_spec *spec)
+struct class_guts *add_initarg_spec(struct class_guts *guts,
+				    struct initarg_spec *spec)
 {
-    *guts->keywords_tail = spec;
-    guts->keywords_tail = &spec->next;
+    *guts->initargs_tail = spec;
+    guts->initargs_tail = &spec->next;
 
     return guts;
 }
@@ -1570,8 +1571,8 @@ struct inherited_spec *make_inherited_spec(struct id *name,
 struct class_guts *add_inherited_spec(struct class_guts *guts,
 				      struct inherited_spec *spec)
 {
-    *guts->inherits_tail = spec;
-    guts->inherits_tail = &spec->next;
+    *guts->inheriteds_tail = spec;
+    guts->inheriteds_tail = &spec->next;
 
     return guts;
 }
