@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.36 1995/06/06 00:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.37 1995/06/06 19:32:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -501,18 +501,30 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
 			   datum :: <result-datum>)
     => res :: <result>;
   let operands = form.mv-call-operands;
-  unless (operands.size == 2)
-    error("%%mv-call with other than two operands?");
+  let func = fer-convert(builder, operands[0], make(<lexenv>, inside: lexenv),
+			 #"leaf", #"function");
+  let clusters = #();
+  for (index from 1 below operands.size)
+    let name = as(<symbol>, format-to-string("cluster%d", index - 1));
+    let var = make-values-cluster(builder, name, wild-ctype());
+    clusters := pair(var, clusters);
+    fer-convert(builder, operands[index], make(<lexenv>, inside: lexenv),
+		#"assignment", var);
   end;
-  let function
-    = fer-convert(builder, operands[0], make(<lexenv>, inside: lexenv),
-		  #"leaf", #"function");
-  let cluster = make-values-cluster(builder, #"results", wild-ctype());
-  fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
-	      #"assignment", cluster);
+  let cluster
+    = if (clusters.tail == #())
+	clusters.head;
+      else
+	let temp = make-values-cluster(builder, #"composite", wild-ctype());
+	build-assignment(builder, lexenv.lexenv-policy, source, temp,
+			 make-operation(builder, <fer-primitive>,
+					reverse!(clusters),
+					name: #"merge-clusters"));
+	temp;
+      end;
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 make-operation(builder, <fer-mv-call>,
-				list(function, cluster),
+				list(func, cluster),
 				use-generic-entry: #f));
 end;
 
