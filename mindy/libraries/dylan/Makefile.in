@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.8 1995/10/24 00:35:49 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.9 1996/02/17 15:13:40 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -65,9 +65,10 @@ MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -lDylan
 
-OBJS = exports.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc list.dbc \
+OBJS = exports.dbc misc.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc \
+	list.dbc \
 	deque.dbc range.dbc stretchy.dbc ext.dbc table.dbc sort.dbc cond.dbc \
-	num.dbc ratio.dbc char.dbc func.dbc misc.dbc debug.dbc exit.dbc \
+	num.dbc ratio.dbc char.dbc func.dbc debug.dbc exit.dbc \
 	multilock.dbc semaphore.dbc extern.dbc transcendental.dbc
 
 dylan.dbc: ${OBJS}
