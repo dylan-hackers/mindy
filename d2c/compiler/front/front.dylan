@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.7 1995/01/10 22:56:26 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.8 1995/02/28 22:35:55 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,12 +8,16 @@ object
     annotatable {mixin}
 
 assignment
-    fer-assignment
+    fer-assignment [abstract]
+        set-assignment
+	let-assignment
 
 operation
     primitive
     abstract-call [annotatable] {abstract}
-        call
+        local-call
+        known-call
+        unknown-call
 	mv-call
 
 variable-info
@@ -32,7 +36,7 @@ leaf
     function-literal
 	method-literal
 	    lambda [method-region]
-	    hairy-method-literal
+	    hairy-method-literal [source-location-mixin]
         exit-function
 
 component
@@ -60,10 +64,24 @@ end class;
 // with expressions, since different uses of the expression can have different
 // policies.
 //
-define class <fer-assignment> (<assignment>)
+define abstract class <fer-assignment> (<assignment>)
   //
   // The policy environment this <operation> was converted in.
   slot policy :: <policy>, required-init-keyword: policy:;
+end class;
+
+// Marks a create-point for a lexical variable.  We allow there to be more than
+// one (useful for representing loops.)  Let-assignments should only be used on
+// lexical variables.
+//
+define class <let-assignment> (<fer-assignment>)
+end class;
+
+// An assignment that doesn't create a new "variable" (that would side-effect
+// any indirect value cell.)  Set-assignments can be used on temporary and
+// global variables as well as lexical ones.
+//
+define class <set-assignment> (<fer-assignment>)
 end class;
 
 
@@ -73,34 +91,38 @@ define class <primitive> (<operation>)
   slot name :: <symbol>, required-init-keyword: name:;
 end;
 
-// The <call> operation represents a non-local function call.
-// ### KIND may want to be encoded by subclassification.
+
+// The <abstract-call> operation represents any function call.
+// In Operands, the called function is first, followed by the args.
 //
 define abstract class <abstract-call> (<operation>, <annotatable>)
-  //
-  // In Operands, the called function is first, followed by real args, with any
-  // dummy state variables last.
-  //
-  // Our degree of knowledge about the called function:
-  //
-  // "known"
-  //        Function is a <function-constant>, summary information has been
-  //        incorporated.
-  //
-  // "unknown"
-  //        Function may be any leaf --- we don't know anything.
-  //
-  // "error"
-  //        Effect is similar to "unknown", but the call has been detected to
-  //        be illegal, and should be ignored by future optimization.
-  //
-  slot kind :: one-of(#"known", #"unknown", #"error"),
-       init-value: #"unknown";
 end class;
 
-define class <call> (<abstract-call>)
+// A syntactically correct call where the function is a fixed-arg method
+// literal.  Variable arg calls can be converted into fixed-arg local calls
+// (e.g. to the main entry of a function with keywords.)
+// 
+define class <local-call> (<abstract-call>)
 end class;
 
+// A syntactically correct call to a known global definition.  If the function
+// has non-fixed args, then actual args in the call will have been massaged
+// into the format expected by the function's main or generic entry.
+//
+define class <known-call> (<abstract-call>)
+end class;
+
+// An arbitrary function call where the function call might be computed and the
+// argument syntax might be incorrect.
+//
+define class <unknown-call> (<abstract-call>)
+end class;
+
+// In a MV-Call, there is one argument which must be a values cluster.  This
+// values cluster is spread out to form the actual arguments to the called
+// function.  If the resulting actual parameters are not syntactically legal
+// (e.g. not enough required args, etc.), then an error will be signalled.
+//
 define class <mv-call> (<abstract-call>)
 end class;
 
@@ -164,69 +186,45 @@ end class;
 
 /// Function literals:
 
-// An external entry point lambda.  The function it is an entry for is
-// in the Entry-Function.
-define constant $function-xep = ash(1, 0);
-
-// A top-level lambda, holding a compiled top-level form.  A top-level lambda
-// should have *no* references.  Entry-Function is a self-pointer.
-define constant $function-top-level = ash(1, 1);
-
-// Any thing we make a callable function object for.
-define constant $function-external = logior($function-xep, $function-top-level);
-
-// Represents a BLOCK cleanup clause.  Doesn't get an XEP even though it
-// appears as the arg to a funny function.
-define constant $function-cleanup = ash(1, 2);
-
-// A BLOCK exit function.
-//
-define constant $function-exit = ash(1, 3);
-
-// A helper function for a <hairy-method-literal>.
-//
-define constant $function-helper = ash(1, 4);
-
-// An anonymous method for a GF literal.
-//
-define constant $function-anonymous-method = ash(1, 5);
-
-// Any function that may have hidden references, so (for example), we don't
-// want to delete it if there are no apparent references, and we can't infer
-// anything about the argument types.
-//
-define constant $function-hidden-calls =
-    logior($function-external,
-	   logior($function-cleanup, 
-		  logior($function-helper, $function-anonymous-method)));
-
-
-// This function has been found to be uncallable, and has been
-// marked for deletion.
-define constant $function-deleted = ash(1, 6);
-
+define constant <function-visibility>
+  = one-of(#"global", #"local", #"deleted");
 
 define abstract class <function-literal> (<leaf>)
   inherited slot derived-type, init-value: <function>;
 
-  // Some combination of $function-XXX flags as decribed above.
-  slot fun-flags :: <fixed-integer>, init-value: 0;
-
-  // In a normal function, this is the external entry point (XEP) lambda for
-  // this function, if any.  Each function that is used other than in a local
-  // call has an XEP, and all of the non-local-call references are replaced
-  // with references to the XEP.
+  // An indication of what kind of references to this function can exist:
   //
-  // In an XEP lambda (indicated by the "External" kind), this is the function
-  // that the XEP is an entry-point for.  The body contains local calls to all
-  // the actual entry points in the function.
-  slot entry-function :: false-or(<function-literal>), init-value: #f;
+  // Local: all references are explicit dependents of the leaf.
+  // Global: some other references might exist, so assume the worst.
+  // Deleted: no references will ever exist from now on.
+  //
+  slot visibility :: <function-visibility>, init-value: #"local";
+
+  // This is the general-case used when we can't statically analyze a call, due
+  // to either the function or the arguments not being sufficiently constant.
+  // It checks the argument syntax and type restrictions, then calls the main
+  // entry.  No general entry is needed if we never generate a user-visible
+  // Dylan object for this function, which happens with local functions and
+  // sealed methods.  This is also false in methods that are themselves
+  // entry-points.
+  // 
+  slot general-entry :: false-or(<function-literal>), init-value: #f;
 
   // ??? arg documentation?
 end class;
 
 
 define abstract class <method-literal> (<function-literal>)
+
+  // The generic entry is similar 
+  // An entry point which takes Required fixed arguments followed by
+  // next-method info, followed by an argument context pointer and an argument
+  // count.  The required arguments are guaranteed to be of the correct type,
+  // and more args will only be supplied if they are syntactically legal.
+  // Keyword arg legality has already been done; unrecognized keywords are
+  // quietly ignored.  This can also be false when not needed.
+  //
+  slot generic-entry :: false-or(<lambda>), init-value: #f;
 
   // ??? inlinep/inline expansion?  An <expression>?  convert environment?
 end class;
@@ -256,10 +254,9 @@ define class <lambda> (<method-literal>, <method-region>)
   // variables are allocated in.  This is filled in by environment analysis.
   slot environment :: <environment>;
 
-  // If this lambda was ever a helper function for a <hairy-method-literal>
-  // or a method of a GF literal, then this is the associated
-  // <function-literal>.  This is a source-tracking breadcrumb.
-  slot subfunction-of :: false-or(<hairy-method-literal>), init-value: #f;
+  // If this function is or ever was an entry-point for some other function,
+  // then this is that function.
+  slot entry-for :: false-or(<function-literal>), init-value: #f;
 end class;
 
 
@@ -275,13 +272,6 @@ define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
 
   // The signature describing what arguments are actually used.
   slot signature :: <signature>, required-init-keyword: signature:;
-
-  // An entry point which takes Required fixed arguments followed by
-  // next-method info, followed by an argument context pointer and an argument
-  // count.  This entry point deals with listifying rest args and
-  // parsing keywords.  This is <false> we haven't bothered computing it
-  // yet.
-  slot more-entry :: false-or(<lambda>), init-value: #f;
 
   // The main entry-point into the function, which takes all arguments
   // including keywords as fixed arguments.  The format of the arguments must
@@ -310,13 +300,14 @@ define class <fer-component> (<component>)
   // that have new references to them.
   slot reanalyze-functions :: <list>, init-value: #();
 
+  // List of all of the <initial-variable>s currently in this component.  These
+  // are variables which we should attempt to SSA-convert.  If successful, the
+  // <initial-variable> is no longer used, and is deleted from this list.
+  slot initial-variables :: <list>, init-value: #();
+
   // If true, then there is stuff in this component that could benefit from
   // further FE optimization.
   slot reoptimize :: <boolean>, init-value: #t;
-
-  // If true, then the control flow in this component was messed up by FE
-  // optimizations.  The DFO should be recomputed.
-  slot reanalyze :: <boolean>, init-value: #f;
 
   // String that is some sort of name for the code in this component.
   slot name :: <byte-string>, init-value: "<unknown>";
