@@ -22,7 +22,7 @@ void delegate_signal(int signum)
 
 int delegate_gdb_signals(void)
 {
-#ifdef GD_PLATFORM_CYGNUS
+#ifndef SA_RESTART
     int SA_RESTART = 0;
 #endif
 
