@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.9 1995/12/07 16:19:30 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.10 1995/12/18 17:29:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -57,7 +57,7 @@ end method;
 
 add-od-loader(*compiler-dispatcher*, #"direct-instance-type",
   method (state :: <load-state>) => res :: <direct-instance-ctype>;
-    load-sole-subobject(state).direct-type;
+    direct-type(load-sole-subobject(state), loading?: #t);
   end method
 );
 
