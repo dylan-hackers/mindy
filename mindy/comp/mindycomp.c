@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.3 1994/04/09 14:09:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.4 1994/04/10 15:11:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -57,8 +57,8 @@ static void set_module(char *value)
 
 static char *find_extension(char *source)
 {
-    char *slash = rindex(source, '/');
-    char *dot = index(slash ? slash : source, '.');
+    char *slash = strrchr(source, '/');
+    char *dot = strchr(slash ? slash : source, '.');
 
     if (dot)
 	return dot+1;
