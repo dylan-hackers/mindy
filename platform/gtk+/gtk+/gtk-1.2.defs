@@ -506,12 +506,13 @@
 
 (define-object GtkWidget (GtkObject)
   (fields
-   ((include GtkRequisition) requisition)
-   ((include GtkAllocation) allocation)
    (uint state)
    (uint saved_state)
    (GtkStyle style)
-   (GdkWindow window)))
+   ((include GtkRequisition) requisition)
+   ((include GtkAllocation) allocation)
+   (GdkWindow window)
+   (GtkWidget parent)))
 
 (define-struct GtkAllocation
   (fields
