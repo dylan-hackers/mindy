@@ -1,0 +1,7 @@
+GNUmakefile
+garbage-collection-exports.c
+garbage-collection.c
+garbage-collection-init.c
+garbage-collection-heap.s
+cc-garbagecollection-files.mak
+garbagecollection-heap.s garbagecollection-init.c
