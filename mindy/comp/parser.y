@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.25 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.26 1996/03/07 17:39:27 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -964,7 +964,11 @@ return_type_list_head:
 ;
 
 return_type_element:
-	variable_name { free($1); $$ = NULL; }
+	variable_name 
+        { fprintf(stderr, 
+		  "Warning (line %d): Return value has name but no type\n",
+		  $1->line);
+	  free($1); $$ = NULL; }
     |	variable_name COLON_COLON expression { free($1); free($2); $$ = $3; }
 ;
 
