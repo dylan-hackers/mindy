@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.6 1994/05/19 22:35:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.7 1994/06/11 17:17:57 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -18,6 +18,7 @@
 
 %{
 #include <stdlib.h>
+#include <string.h>
 
 #include "mindy.h"
 #include "str.h"

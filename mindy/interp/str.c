@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.5 1994/06/11 02:23:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.6 1994/06/11 17:17:37 hallgren Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "mindy.h"
 #include "gc.h"
