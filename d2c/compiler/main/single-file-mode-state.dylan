@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.10 2002/03/11 08:24:02 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.11 2002/09/20 23:43:50 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -277,6 +277,9 @@ define method build-executable (state :: <single-file-mode-state>) => ();
   let linker-args = concatenate(" ", target.link-executable-flags);
   if(state.unit-profile? & target.link-profile-flags)
     linker-args := concatenate(linker-args, " ", target.link-profile-flags);
+  end if;
+  if(state.unit-debug? & target.link-debug-flags)
+    linker-args := concatenate(linker-args, " ", target.link-debug-flags);
   end if;
 
   local method add-archive (name :: <byte-string>) => ();

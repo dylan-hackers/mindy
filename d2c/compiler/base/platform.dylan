@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.9 2000/12/11 19:52:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.10 2002/09/20 23:43:50 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -166,6 +166,12 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot link-profile-flags
       :: false-or(<byte-string>) = #f,
     init-keyword: #"link-profile-flags";
+  constant /* exported */ slot link-debug-flags
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"link-debug-flags";
+  constant /* exported */ slot supports-asm-stabs-hack?
+      :: <boolean> = #f,
+    init-keyword: #"supports-asm-stabs-hack?";
   
 
   // if this is defined, we can build shared libraries
@@ -233,8 +239,10 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"shared-library-filename-suffix"] := #f;
 *valid-properties*[#"randomize-library-command"] := #f;
 *valid-properties*[#"link-shared-library-command"] := #f;
+*valid-properties*[#"link-debug-flags"] := #f;
 *valid-properties*[#"link-profile-flags"] := #f;
 *valid-properties*[#"link-doesnt-search-for-libs?"] := #f;
+*valid-properties*[#"supports-asm-stabs-hack?"] := #f;
 
 // Contains a table of tables, keyed by platform-name, each of which contains a
 // table of values keyed by property name.
@@ -371,8 +379,8 @@ define function add-platform! (header :: <header>)
 	  local-platform-info[key] := (name := as(<symbol>, val));
 	#"make-supports-phony-targets?", #"makefiles-can-rebuild-themselves?",
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
-	#"use-dbclink?", #"link-doesnt-search-for-libs?",
-	#"big-endian?" =>
+        #"use-dbclink?", #"link-doesnt-search-for-libs?",
+        #"big-endian?", #"supports-asm-stabs-hack?" =>
 	  local-platform-info[key] := string-to-boolean(val);
 	#"integer-length", #"integer-size", #"long-size", #"pointer-size", 
 	#"single-size", #"double-size", #"long-double-size", #"short-size" =>

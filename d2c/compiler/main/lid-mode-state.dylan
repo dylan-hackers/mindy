@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.5 2002/09/08 21:27:39 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.6 2002/09/20 23:43:50 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -647,6 +647,9 @@ define method build-executable (state :: <lid-mode-state>) => ();
   let linker-args = concatenate(" ", target.link-executable-flags);
   if(state.unit-profile? & target.link-profile-flags)
     linker-args := concatenate(linker-args, " ", target.link-profile-flags);
+  end if;
+  if(state.unit-debug? & target.link-debug-flags)
+    linker-args := concatenate(linker-args, " ", target.link-debug-flags);
   end if;
 
   local method add-archive (name :: <byte-string>) => ();

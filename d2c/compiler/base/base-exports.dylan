@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.37 2002/05/08 14:40:34 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.38 2002/09/20 23:43:50 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -429,6 +429,7 @@ define module platform
     link-shared-executable-command,
     link-executable-flags,
     link-profile-flags,
+    link-debug-flags,
     make-command,
     delete-file-command,
     compare-file-command,
