@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.13 1996/03/17 00:30:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.14 1996/03/20 19:26:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,23 +26,6 @@ define sealed method print-object
     (token :: <token>, stream :: <stream>) => ();
   pprint-fields(token, stream, kind: token.token-kind);
 end method print-object;
-
-// ### will flame out if the file can't be found, which is likely if the
-// location is in another library.
-// 
-define sealed method print-message
-    (wot :: <token>, stream :: <stream>) => ();
-  if (wot.token-kind == $eof-token)
-    write("EOF", stream);
-  else
-    let loc = wot.source-location;
-    if (instance?(loc, <file-source-location>))
-      print(extract-string(loc), stream);
-    else
-      print(wot, stream);
-    end;
-  end if;
-end method print-message;
 
 // The token-kind values.  Note: if you change these values in any way,
 // you *must* update the set of tokens in parser/parser.input correspondingly.
@@ -140,11 +123,6 @@ define sealed method print-object
   pprint-fields(token, stream, kind: token.token-kind,
 		symbol: token.token-symbol);
 end method print-object;
-
-define sealed method print-message
-    (wot :: <symbol-token>, stream :: <stream>) => ();
-  print(as(<string>, wot.token-symbol), stream);
-end;
 
 // <identifier-token> -- exported.
 //
@@ -308,6 +286,115 @@ define sealed method print-object
 end method print-object;
 
 
+// Print-message for tokens.
+
+define sealed method print-message
+    (wot :: <token>, stream :: <stream>) => ();
+  select (wot.token-kind)
+    $eof-token => write("EOF", stream);
+    $error-token => write("bogus token", stream);
+
+    $left-paren-token => write("left parenthesis", stream);
+    $right-paren-token => write("right parenthesis", stream);
+    $comma-token => write("comma", stream);
+    $dot-token => write("dot", stream);
+    $semicolon-token => write("semicolon", stream);
+    $left-bracket-token => write("left bracket", stream);
+    $right-bracket-token => write("right bracket", stream);
+    $left-brace-token => write("left brace", stream);
+    $right-brace-token => write("right brace", stream);
+    $double-colon-token => write("double colon", stream);
+    $minus-token => write("minus", stream);
+    $equal-token => write("equal", stream);
+    $double-equal-token => write("double equal", stream);
+    $arrow-token => write("arrow", stream);
+    $sharp-paren-token => write("sharp paren", stream);
+    $sharp-bracket-token => write("sharp bracket", stream);
+    $double-sharp-token => write("double sharp", stream);
+    $question-token => write("question mark", stream);
+    $double-question-token => write("double question mark", stream);
+    $question-equal-token => write("question mark equal", stream);
+    $ellipsis-token => write("ellipsis", stream);
+
+    $true-token => write("#t", stream);
+    $false-token => write("#f", stream);
+    $next-token => write("#next", stream);
+    $rest-token => write("#rest", stream);
+    $key-token => write("#key", stream);
+    $all-keys-token => write("#all-keys", stream);
+    $include-token => write("#include", stream);
+
+    $define-token => write("core word ``define''", stream);
+    $end-token => write("core word ``end''", stream);
+    $handler-token => write("core word ``handler''", stream);
+    $let-token => write("core word ``let''", stream);
+    $local-token => write("core word ``local''", stream);
+    $macro-token => write("core word ``macro''", stream);
+    $otherwise-token => write("core word ``otherwise''", stream);
+
+    $raw-ordinary-word-token =>
+      format(stream, "ordinary word ``%s''", wot.token-symbol);
+    $raw-begin-word-token =>
+      format(stream, "begin word ``%s''", wot.token-symbol);
+    $raw-function-word-token =>
+      format(stream, "function word ``%s''", wot.token-symbol);
+    $ordinary-define-body-word-token =>
+      format(stream, "ordinary define body word ``%s''", wot.token-symbol);
+    $begin-and-define-body-word-token =>
+      format(stream, "begin and define body word ``%s''", wot.token-symbol);
+    $function-and-define-body-word-token =>
+      format(stream, "function and define body word ``%s''", wot.token-symbol);
+    $ordinary-define-list-word-token =>
+      format(stream, "ordinary define list word ``%s''", wot.token-symbol);
+    $begin-and-define-list-word-token =>
+      format(stream, "begin and define list word ``%s''", wot.token-symbol);
+    $function-and-define-list-word-token =>
+      format(stream, "function and define list word ``%s''", wot.token-symbol);
+    $quoted-name-token =>
+      format(stream, "quoted name ``%s''", wot.token-symbol);
+
+    $constrained-name-token =>
+      format(stream, "constrained name ``%s:%s''",
+	     wot.token-symbol, wot.token-constraint);
+
+    $tilde-token =>
+      write("tilde", stream);
+    $other-binary-operator-token =>
+      format(stream, "binary operator ``%s''", wot.token-symbol);
+
+    $literal-token => write("literal", stream);
+    $string-token => write("string literal", stream);
+    $symbol-token => write("symbol literal", stream);
+
+    $parsed-definition-macro-call-token =>
+      write("parsed definition macro call", stream);
+    $parsed-special-definition-token =>
+      write("parsed definition", stream);
+    $parsed-local-declaration-token =>
+      write("parsed local declaration", stream);
+    $parsed-expression-token =>
+      write("parsed expression", stream);
+    $parsed-constant-token =>
+      write("parsed-constant", stream);
+    $parsed-macro-call-token =>
+      write("parsed macro call", stream);
+    $parsed-parameter-list-token =>
+      write("parsed parameter list", stream);
+    $parsed-variable-list-token =>
+      write("parsed variable list", stream);
+
+    $feature-if-token => write("#if", stream);
+    $feature-elseif-token => write("#elseif", stream);
+    $feature-else-token => write("#else", stream);
+    $feature-end-token => write("#end", stream);
+
+    otherwise =>
+      error("Unknown token kind.");
+  end select;
+end method print-message;
+
+
+
 // Syntax Tables.
 
 define constant <word-category>
@@ -443,9 +530,10 @@ define primary abstract open class <tokenizer> (<object>)
 end class <tokenizer>;
 
 define open generic get-token (tokenizer :: <tokenizer>)
-    => token :: <token>;
+    => (token :: <token>, srcloc :: <source-location>);
 
-define open generic unget-token (tokenizer :: <tokenizer>, token :: <token>)
+define open generic unget-token
+    (tokenizer :: <tokenizer>, token :: <token>, srcloc :: <source-location>)
     => ();
 
 define open generic note-potential-end-point (tokenizer :: <tokenizer>) => ();
