@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.9 1996/01/31 23:55:21 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.10 1996/04/13 21:15:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -435,11 +435,14 @@ define constant $slot-access-slots =
     list(slot-info, slot-info:, #f)
   );
 
-add-make-dumper(#"slot-ref-operation", *compiler-dispatcher*,
-		<slot-ref>, $slot-access-slots);
+add-make-dumper(#"heap-slot-ref-operation", *compiler-dispatcher*,
+		<heap-slot-ref>, $slot-access-slots);
 
-add-make-dumper(#"slot-set-operation", *compiler-dispatcher*,
-		<slot-set>, $slot-access-slots);
+add-make-dumper(#"data-word-ref-operation", *compiler-dispatcher*,
+		<data-word-ref>, $slot-access-slots);
+
+add-make-dumper(#"heap-slot-set-operation", *compiler-dispatcher*,
+		<heap-slot-set>, $slot-access-slots);
 
 
 add-make-dumper(#"truly-the-operation", *compiler-dispatcher*,

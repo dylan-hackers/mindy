@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.8 1996/03/28 00:02:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.9 1996/04/13 21:16:53 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -947,9 +947,12 @@ define method optimize-slot-ref
 	error("The slot is at a fixed offset, but the initialized flag "
 		"isn't?");
       end;
+      if (init?-offset == #"data-word")
+	error("The init? slot is in the data-word?");
+      end if;
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
       build-assignment(builder, policy, source, temp,
-		       make-operation(builder, <slot-ref>,
+		       make-operation(builder, <heap-slot-ref>,
 				      list(instance,
 					   make-literal-constant
 					     (builder,
@@ -966,15 +969,21 @@ define method optimize-slot-ref
     end;
     let value = make-local-var(builder, slot.slot-getter.variable-name,
 			       slot.slot-type);
-    build-assignment(builder, policy, source, value,
-		     make-operation(builder, <slot-ref>,
-				    pair(instance,
-					 pair(make-literal-constant
-						(builder,
-						 as(<ct-value>, offset)),
-					      args.tail)),
-				    derived-type: slot.slot-type,
-				    slot-info: slot));
+    build-assignment
+      (builder, policy, source, value,
+       if (offset == #"data-word")
+	 make-operation
+	   (builder, <data-word-ref>, list(instance),
+	    derived-type: slot.slot-type, slot-info: slot);
+       else
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    pair(instance,
+		 pair(make-literal-constant(builder, as(<ct-value>, offset)),
+		      args.tail)),
+	    derived-type: slot.slot-type,
+	    slot-info: slot);
+       end);
     unless (init?-slot | guaranteed-initialized?)
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
       build-assignment(builder, policy, source, temp,
@@ -1005,15 +1014,16 @@ define method optimize-slot-set
     let new = args.first;
     let builder = make-builder(component);
     let call-assign = call.dependents.dependent;
-    let op = make-operation(builder, <slot-set>,
-			    pair(args.first,
-				 pair(instance,
-				      pair(make-literal-constant
-					     (builder, as(<ct-value>, offset)),
-					   args.tail.tail))),
-			    slot-info: slot);
-    build-assignment(builder, call-assign.policy, call-assign.source-location,
-		     #(), op);
+    build-assignment
+      (builder, call-assign.policy, call-assign.source-location, #(),
+       make-operation
+	 (builder, <heap-slot-set>,
+	  pair(new,
+	       pair(instance,
+		    pair(make-literal-constant
+			   (builder, as(<ct-value>, offset)),
+			 args.tail.tail))),
+	  slot-info: slot));
     begin
       let init?-slot = slot.slot-initialized?-slot;
       if (init?-slot)
@@ -1023,7 +1033,7 @@ define method optimize-slot-set
 		  "isn't?");
 	end;
 	let true-leaf = make-literal-constant(builder, make(<literal-true>));
-	let init-op = make-operation(builder, <slot-set>,
+	let init-op = make-operation(builder, <heap-slot-set>,
 				     list(true-leaf, instance,
 					  make-literal-constant
 					    (builder,

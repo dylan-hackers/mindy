@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.27 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.28 1996/04/13 21:17:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -953,7 +953,7 @@ define method slot-initialized?-transformer
 
       replace-expression
 	(component, call.dependents,
-	 make-operation(builder, <slot-ref>,
+	 make-operation(builder, <heap-slot-ref>,
 			list(instance,
 			     make-literal-constant(builder,
 						   as(<ct-value>, offset))),
@@ -973,7 +973,7 @@ define method slot-initialized?-transformer
 			      slot.slot-type);
     build-assignment
       (builder, policy, source, temp,
-       make-operation(builder, <slot-ref>,
+       make-operation(builder, <heap-slot-ref>,
 		      list(instance,
 			   make-literal-constant(builder,
 						 as(<ct-value>, offset))),

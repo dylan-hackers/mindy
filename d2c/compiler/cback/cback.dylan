@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.116 1996/04/06 07:19:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.117 1996/04/13 21:20:59 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,13 +49,13 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //      declarations.  "Emit-tlf-gunk" also sometimes produces
 //      side-effects upon the current <file-state> -- i.e. adding a
 //      new "root".
-//   emit-copy(target :: <string>, target-rep :: <representation>,
-//             source :: <string>, source-rep :: <representation>,
+//   emit-copy(target :: <string>, target-rep :: <c-representation>,
+//             source :: <string>, source-rep :: <c-representation>,
 //             file :: <file-state>) => ();
 //      Writes out whatever code is necessary to copy "target"s data
 //      into "source".
 //   c-name-and-rep(leaf :: <abstract-variable>, file :: <file-state>)
-//     => (name :: <string>, rep :: <representation>);
+//     => (name :: <string>, rep :: <c-representation>);
 //      Looks up the "info" for the given variable and returns a legal
 //      C variable name and the "representation" of the variable.
 //   get-info-for(thing :: <annotatable>, file :: false-or(<file-state>));
@@ -799,7 +799,7 @@ end method defn-guaranteed-initialized?;
 // Encapsulates the back-end specific info for a <variable> or <definition>.
 //
 define class <backend-var-info> (<object>)
-  slot backend-var-info-rep :: <representation>,
+  slot backend-var-info-rep :: <c-representation>,
     required-init-keyword: representation:;
   slot backend-var-info-name :: false-or(<string>),
     required-init-keyword: name:;
@@ -873,7 +873,7 @@ end;
 define method c-name-and-rep (leaf :: <abstract-variable>,
 			      // ### Should really be ssa-variable
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(leaf, file);
   let name = info.backend-var-info-name;
   unless (name)
@@ -901,7 +901,7 @@ end;
 define method variable-representation (leaf :: <abstract-variable>,
 				       // ### Should really be ssa-variable
 				       file :: <file-state>)
-    => rep :: <representation>;
+    => rep :: <c-representation>;
   get-info-for(leaf, file).backend-var-info-rep;
 end;
 
@@ -926,12 +926,12 @@ define class <function-info> (<object>)
   slot function-info-argument-representations :: <simple-object-vector>,
     required-init-keyword: argument-reps:;
   //
-  // Representation of the result.  If a <representation>, then that single
+  // Representation of the result.  If a <c-representation>, then that single
   // value is returned.  If a sequence, then a structure of those values are
   // returned.  If #"doesn't-return" then it doesn't return.  If #"cluster",
   // it returns a cluster of values.
   slot function-info-result-representation
-    :: type-union(<representation>, <sequence>,
+    :: type-union(<c-representation>, <sequence>,
 	       one-of(#"doesn't-return", #"cluster")),
     required-init-keyword: result-rep:;
   //
@@ -1250,7 +1250,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   write(get-string(gstream), bstream);
   write("}\n\n", bstream);
 
-  unless (instance?(*double-rep*, <data-word-representation>))
+  unless (instance?(*double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<double-float>");
     format(bstream, "heapptr_t make_double_float(double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
@@ -1271,7 +1271,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     write("}\n\n", bstream);
   end;
 
-  unless (instance?(*long-double-rep*, <data-word-representation>))
+  unless (instance?(*long-double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<extended-float>");
     format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
@@ -1801,7 +1801,7 @@ define method emit-return
 end;
 
 define method emit-return
-    (return :: <return>, result-rep :: <representation>,
+    (return :: <return>, result-rep :: <c-representation>,
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
@@ -2373,10 +2373,14 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <slot-ref>, file :: <file-state>)
+     op :: <heap-slot-ref>, file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
+
+  let instance-leaf = op.depends-on.source-exp;
+  let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
+
   let expr
     = if (instance?(slot, <vector-slot-info>))
 	let (instance, offset, index)
@@ -2384,28 +2388,18 @@ define method emit-assignment
 	let c-type = slot-rep.representation-c-type;
 	stringify("SLOT(", instance, ", ", c-type, ", ",
 		  offset, " + ", index, " * sizeof(", c-type, "))");
+      elseif (instance?(instance-rep, <immediate-representation>)
+		& instance?(slot-rep, <immediate-representation>))
+	assert(instance-rep == slot-rep);
+	let (instance, offset)
+	  = extract-operands(op, file, instance-rep, *long-rep*);
+	instance;
       else
-	let instance-leaf = op.depends-on.source-exp;
-	let instance-rep
-	  = pick-representation(instance-leaf.derived-type, #"speed");
-    
-	if (instance?(instance-rep, <immediate-representation>)
-	      & instance?(slot-rep, <immediate-representation>))
-	  // Extracting the data-word.
-	  unless (instance-rep == slot-rep
-		    | (representation-data-word-member(instance-rep)
-			 = representation-data-word-member(slot-rep)))
-	    error("The instance and slot representations don't match in a "
-		    "data-word reference?");
-	  end;
-	  ref-leaf(instance-rep, instance-leaf, file);
-	else
-	  let (instance, offset)
-	    = extract-operands(op, file, *heap-rep*, *long-rep*);
-	  stringify("SLOT(", instance, ", ",
-		    slot-rep.representation-c-type, ", ",
-		    offset, ')');
-	end if;
+	let (instance, offset)
+	  = extract-operands(op, file, *heap-rep*, *long-rep*);
+	stringify("SLOT(", instance, ", ",
+		  slot-rep.representation-c-type, ", ",
+		  offset, ')');
       end if;
   if (slot.slot-read-only?)
     deliver-result(results, expr, slot-rep, #f, file);
@@ -2417,7 +2411,40 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <slot-set>, file :: <file-state>)
+     op :: <data-word-ref>, file :: <file-state>)
+    => ();
+  let slot = op.slot-info;
+  let slot-rep = slot.slot-representation;
+  assert(instance?(slot-rep, <c-data-word-representation>));
+  
+  let instance-leaf = op.depends-on.source-exp;
+  let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
+
+  let expr
+    = if (instance?(instance-rep, <general-representation>))
+	// The instance is currently being represented with the general
+	// representation, either because the instance has both heap slots and
+	// a data-word slot, or because we still need the type info.  We just
+	// use ref-leaf to extract the data word by lying about the
+	// representation.
+	ref-leaf(slot-rep, instance-leaf, file);
+      elseif (instance?(instance-rep, <c-data-word-representation>))
+	// Both the instance and slot are in data-words.  Make sure they
+	// are the same flavor of data-word, and then reference it.
+	assert(instance-rep.representation-data-word-member
+		 = slot-rep.representation-data-word-member);
+	ref-leaf(instance-rep, instance-leaf, file);
+      else
+	error("Trying to extract the data-word from something that doens't "
+		"have one.");
+      end if;
+
+  deliver-result(results, expr, slot-rep, #f, file);
+end method emit-assignment;
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
+     op :: <heap-slot-set>, file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
@@ -2525,7 +2552,7 @@ end;
 
 define method deliver-result
     (defines :: false-or(<definition-site-variable>), value :: <string>,
-     rep :: <representation>, now-dammit? :: <boolean>,
+     rep :: <c-representation>, now-dammit? :: <boolean>,
      file :: <file-state>)
     => ();
   if (defines)
@@ -2554,7 +2581,7 @@ end;
 
 define method deliver-single-result
     (var :: <abstract-variable>, // ### Should really be ssa-variable
-     source :: <string>, source-rep :: <representation>,
+     source :: <string>, source-rep :: <c-representation>,
      now-dammit? :: <boolean>, file :: <file-state>)
     => ();
   if (var.dependents)
@@ -2569,7 +2596,7 @@ end;
 
 define method deliver-single-result
     (var :: <initial-definition>, source :: <string>,
-     source-rep :: <representation>, now-dammit? :: <boolean>,
+     source-rep :: <c-representation>, now-dammit? :: <boolean>,
      file :: <file-state>)
     => ();
   spew-pending-defines(file);
@@ -2585,7 +2612,7 @@ define class <pending-define> (<object>)
     required-init-keyword: var:;
   constant slot pending-expr :: <byte-string>,
     required-init-keyword: expr:;
-  constant slot pending-rep :: <representation>,
+  constant slot pending-rep :: <c-representation>,
     required-init-keyword: rep:;
   slot pending-next :: false-or(<pending-define>),
     init-value: #f;
@@ -2593,7 +2620,7 @@ end class <pending-define>;
 
 define method add-pending-define
     (var :: <abstract-variable>, expr :: <byte-string>,
-     rep :: <representation>, file :: <file-state>)
+     rep :: <c-representation>, file :: <file-state>)
     => ();
   for (prev = #f then pending,
        pending = file.file-pending-defines then pending.pending-next,
@@ -2622,7 +2649,7 @@ define method spew-pending-defines (file :: <file-state>) => ();
 end method spew-pending-defines;
 
 define method ref-leaf
-    (target-rep :: <representation>, leaf :: <abstract-variable>,
+    (target-rep :: <c-representation>, leaf :: <abstract-variable>,
      file :: <file-state>)
     => res :: <string>;
   let (expr, rep)
@@ -2645,7 +2672,7 @@ define method ref-leaf
   conversion-expr(target-rep, expr, rep, file);
 end;
 
-define method ref-leaf (target-rep :: <representation>,
+define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <literal-constant>,
 			file :: <file-state>)
     => res :: <string>;
@@ -2653,7 +2680,7 @@ define method ref-leaf (target-rep :: <representation>,
   conversion-expr(target-rep, expr, rep, file);
 end;
 
-define method ref-leaf (target-rep :: <representation>,
+define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <definition-constant-leaf>,
 			file :: <file-state>)
     => res :: <string>;
@@ -2668,7 +2695,7 @@ define method ref-leaf (target-rep :: <representation>,
 		  info.backend-var-info-rep, file);
 end;
 
-define method ref-leaf (target-rep :: <representation>,
+define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <function-literal>,
 			file :: <file-state>)
     => res :: <string>;
@@ -2698,7 +2725,7 @@ define method ref-leaf (target-rep :: <representation>,
   conversion-expr(target-rep, expr, rep, file);
 end;
 
-define method ref-leaf (target-rep :: <representation>,
+define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <uninitialized-value>,
 			file :: <file-state>)
     => res :: <string>;
@@ -2712,7 +2739,7 @@ end;
 define method aux-c-expr-and-rep
     (lit :: <ct-value>, file :: <file-state>, prefix :: <string>,
      defn :: <object>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(lit, file);
   let name
     = (info.const-info-expr
@@ -2722,37 +2749,37 @@ define method aux-c-expr-and-rep
 end;
 
 define method c-expr-and-rep
-    (lit :: <ct-value>, rep-hint :: <representation>, file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+    (lit :: <ct-value>, rep-hint :: <c-representation>, file :: <file-state>)
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(lit, file, "literal", lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <ct-function>, rep-hint :: <representation>,
+    (lit :: <ct-function>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   maybe-emit-entries(lit, file);
   aux-c-expr-and-rep(lit, file, lit.ct-function-name.c-prefix, lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <literal-false>, rep-hint :: <representation>,
+    (lit :: <literal-false>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(lit, file, "false", lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <literal-true>, rep-hint :: <representation>,
+    (lit :: <literal-true>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(lit, file, "true", lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <literal-pair>, rep-hint :: <representation>,
+    (lit :: <literal-pair>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   // This is a messy special case.  There are situations in which we
   // pre-compute lists of methods and emit them as heap values.  Since
   // we can't be sure that nobody will call them directly, we must
@@ -2765,32 +2792,32 @@ define method c-expr-and-rep
 end method c-expr-and-rep;
 
 define method c-expr-and-rep
-    (lit :: <literal-empty-list>, rep-hint :: <representation>,
+    (lit :: <literal-empty-list>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(lit, file, "empty_list", lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <literal-symbol>, rep-hint :: <representation>,
+    (lit :: <literal-symbol>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep
     (lit, file, concatenate("sym_", as(<string>, lit.literal-value).c-prefix),
      lit);
 end;
 
 define method c-expr-and-rep
-    (lit :: <literal-string>, rep-hint :: <representation>,
+    (lit :: <literal-string>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(lit, file, "str", lit);
 end;
 
 define method c-expr-and-rep
-    (class :: <defined-cclass>, rep-hint :: <representation>,
+    (class :: <defined-cclass>, rep-hint :: <c-representation>,
      file :: <file-state>)
- => (name :: <string>, rep :: <representation>);
+ => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(class, file, class.cclass-name.c-prefix,
 		     class.class-defn);
 end;
@@ -2798,21 +2825,21 @@ end;
 define method c-expr-and-rep
     (lit :: <literal-true>, rep-hint :: <immediate-representation>,
      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   values("TRUE", rep-hint);
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-false>, rep-hint :: <immediate-representation>,
      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   values("FALSE", rep-hint);
 end;
 
 define method c-expr-and-rep (lit :: <literal-integer>,
-			      rep-hint :: <representation>,
+			      rep-hint :: <c-representation>,
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   let val = lit.literal-value;
   // Can't use stringify, because val is an extended integer.
   values(if (val == runtime-$minimum-integer)
@@ -2828,7 +2855,7 @@ end;
 define method c-expr-and-rep (lit :: <literal-single-float>,
 			      rep-hint :: <immediate-representation>,
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   values(float-to-string(lit.literal-value, 8),
 	 pick-representation(dylan-value(#"<single-float>"), #"speed"));
 end;
@@ -2836,7 +2863,7 @@ end;
 define method c-expr-and-rep (lit :: <literal-double-float>,
 			      rep-hint :: <immediate-representation>,
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   values(float-to-string(lit.literal-value, 16),
 	 pick-representation(dylan-value(#"<double-float>"), #"speed"));
 end;
@@ -2844,7 +2871,7 @@ end;
 define method c-expr-and-rep (lit :: <literal-extended-float>,
 			      rep-hint :: <immediate-representation>,
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   values(float-to-string(lit.literal-value, 35),
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
 end;
@@ -2902,9 +2929,9 @@ end;
 
 
 define method c-expr-and-rep (lit :: <literal-character>,
-			      rep-hint :: <representation>,
+			      rep-hint :: <c-representation>,
 			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    => (name :: <string>, rep :: <c-representation>);
   let char = lit.literal-value;
   values(if (char == '\0')
 	   "'\\0'";
@@ -2930,8 +2957,8 @@ define method c-expr-and-rep (lit :: <literal-character>,
 end;
 
 define method c-expr-and-rep
-    (ep :: <ct-entry-point>, rephint :: <representation>, file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+    (ep :: <ct-entry-point>, rephint :: <c-representation>, file :: <file-state>)
+    => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(ep.ct-entry-point-for, file);
   let name = main-entry-name(info, file);
   maybe-emit-prototype(name, info, file);
@@ -2940,8 +2967,8 @@ end;
 
 
 define generic emit-copy
-    (target :: <string>, target-rep :: <representation>,
-     source :: <string>, source-rep :: <representation>,
+    (target :: <string>, target-rep :: <c-representation>,
+     source :: <string>, source-rep :: <c-representation>,
      file :: <file-state>)
     => ();
 
@@ -2956,7 +2983,7 @@ end;
 
 define method emit-copy
     (target :: <string>, target-rep :: <general-representation>,
-     source :: <string>, source-rep :: <data-word-representation>,
+     source :: <string>, source-rep :: <c-data-word-representation>,
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;

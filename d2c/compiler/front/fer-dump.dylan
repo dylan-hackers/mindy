@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.37 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.38 1996/04/13 21:15:20 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -354,7 +354,7 @@ define method dump (op :: <slot-ref>, stream :: <stream>) => ();
   dump-operands(op.depends-on, stream);
 end;
 
-define method dump (op :: <slot-set>, stream :: <stream>) => ();
+define method dump (op :: <heap-slot-set>, stream :: <stream>) => ();
   write("SLOT-SET ", stream);
   let slot = op.slot-info;
   if (slot.slot-getter)

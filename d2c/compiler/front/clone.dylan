@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.6 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.7 1996/04/13 21:14:24 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -159,18 +159,27 @@ define method clone-expr
 end;
 
 define method clone-expr
-    (expr :: <slot-ref>, state :: <clone-state>)
-    => clone :: <slot-ref>;
-  make-operation(state.clone-builder, <slot-ref>,
+    (expr :: <heap-slot-ref>, state :: <clone-state>)
+    => clone :: <heap-slot-ref>;
+  make-operation(state.clone-builder, <heap-slot-ref>,
 		 clone-arguments(expr.depends-on, state),
 		 derived-type: expr.derived-type,
 		 slot-info: expr.slot-info);
 end;
 
 define method clone-expr
-    (expr :: <slot-set>, state :: <clone-state>)
-    => clone :: <slot-set>;
-  make-operation(state.clone-builder, <slot-set>,
+    (expr :: <data-word-ref>, state :: <clone-state>)
+    => clone :: <data-word-ref>;
+  make-operation(state.clone-builder, <data-word-ref>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 slot-info: expr.slot-info);
+end;
+
+define method clone-expr
+    (expr :: <heap-slot-set>, state :: <clone-state>)
+    => clone :: <heap-slot-set>;
+  make-operation(state.clone-builder, <heap-slot-set>,
 		 clone-arguments(expr.depends-on, state),
 		 slot-info: expr.slot-info);
 end;

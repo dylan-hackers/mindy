@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.55 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.56 1996/04/13 21:16:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -200,12 +200,29 @@ define abstract class <slot-access> (<operation>)
   slot slot-info :: <slot-info>, required-init-keyword: slot-info:;
 end;
 
-define class <slot-ref> (<slot-access>)
+define sealed domain make (singleton(<slot-access>));
+define sealed domain initialize (<slot-access>);
+
+define abstract class <slot-ref> (<slot-access>)
 end;
 
-define class <slot-set> (<slot-access>)
+define sealed domain make (singleton(<slot-ref>));
+
+define class <heap-slot-ref> (<slot-ref>)
+end;
+
+define sealed domain make (singleton(<heap-slot-ref>));
+
+define class <data-word-ref> (<slot-ref>)
+end;
+
+define sealed domain make (singleton(<data-word-ref>));
+
+define class <heap-slot-set> (<slot-access>)
   inherited slot derived-type, init-function: no-values-ctype;
 end;
+
+define sealed domain make (singleton(<heap-slot-set>));
 
 define class <truly-the> (<operation>)
   slot guaranteed-type :: <ctype>, required-init-keyword: guaranteed-type:;
@@ -595,10 +612,6 @@ define sealed domain make(singleton(<module-var-set>));
 // <self-tail-call> -- subclass of <operation>
 define sealed domain make(singleton(<self-tail-call>));
 define sealed domain initialize(<self-tail-call>);
-// <slot-ref> -- subclass of <slot-access>
-define sealed domain make(singleton(<slot-ref>));
-// <slot-set> -- subclass of <slot-access>
-define sealed domain make(singleton(<slot-set>));
 // <truly-the> -- subclass of <operation>
 define sealed domain make(singleton(<truly-the>));
 define sealed domain initialize(<truly-the>);
