@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.11 1995/03/23 22:07:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.12 1995/04/14 03:02:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -394,21 +394,23 @@ define method compute-cclass (defn :: <class-definition>)
       // Make sure we arn't trying to inherit from anything we can't.
       if (any?(not-functional?, supers))
 	compiler-warning("Functional classes can only inherit from other "
-			   "functional classes and abstract classes without any "
-			   "slots");
+			   "functional classes and abstract classes without "
+			   "any slots");
 	return(#f);
       end;
       //
-      // Add <functional-object> to our direct superclasses unless it is already
-      // there.
+      // Add <functional-object> to our direct superclasses unless it is
+      // already there.
       let functional-object = dylan-value(#"<functional-object>");
-      unless (find-key(functional-object, supers))
+      unless (member?(functional-object, supers))
 	let object = dylan-value(#"<object>");
-	let object-pos = find-key(object, supers);
+	let object-pos = find-key(supers, curry(\==, object));
 	if (object-pos)
-	  supers := concatenate(add(copy-sequence(supers, start: 0, end: object-pos),
-				    functional-object),
-				copy-sequence(supers, start: object-pos));
+	  supers
+	    := concatenate(add(copy-sequence(supers, start: 0,
+					     end: object-pos),
+			       functional-object),
+			   copy-sequence(supers, start: object-pos));
 	else
 	  supers := add(supers, functional-object);
 	end;
