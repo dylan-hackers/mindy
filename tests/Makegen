@@ -1,4 +1,6 @@
 
+$D2C = '$(BUILDROOT)/d2c/compiler/main/d2c';
+
 $D2CFLAGS = $d2c_runtime . '-L../common/streams -L../common/standard-io -L../common/print -L../common/format -L../d2c/runtime/random -L. -L../common/coll-ext -L../common/string-ext -L../common/table-ext -L../common/format-out -L../common/itime -L../common/regexp -L../common/matrix -L../common/time -L../common/getopt -L../d2c/runtime/melange';
 
 $shared = 0;
