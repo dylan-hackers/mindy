@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.31 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.32 1996/03/20 19:20:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -56,10 +56,14 @@ define module common
 	     $maximum-integer, ratio,
 	     false-or, one-of, <false>, <true>, ignore,
 	     $minimum-integer, <byte-character>, $not-supplied,
+	     report-condition, condition-format,
+             <format-string-condition>, <never-returns>,
+             <ratio>, numerator, denominator,
 #if (mindy)
              *debug-output*, main, key-exists?,
 #else
-             <ratio>, numerator, denominator,
+             *warning-output*,
+             <debugger>, *debugger*, invoke-debugger,
 #end
 	     <equal-table>, <string-table>, equal-hash},
     export: all;
@@ -82,12 +86,13 @@ define module utils
   use System, import: {copy-bytes};
 #else
   use Introspection, import: {class-name};
-  use System, import: {object-address, copy-bytes};
+  use System, import: {object-address, copy-bytes, \call-out};
 #end
 
   // Stuff defined in utils
   export
     write-class-name, write-address, pprint-fields,
+    integer-to-english, ordinal-suffix,
     find-in, size-in,
     dformat, assert,
     <annotatable>, info, info-setter,
@@ -101,7 +106,7 @@ define module od-format
 #if (mindy)
   use system, import: {get-time-of-day};
 #else
-  use system, import: {call-out};
+  use system, import: {\call-out};
 #end
   use standard-io;
   use introspection, import: {function-name};
@@ -223,16 +228,26 @@ end;
 define module source
   use common;
   use System, import: {copy-bytes};
+#if (mindy)
+  use System, import: {getcwd};
+#else
+  use System, import: {\call-out, buffer-address};
+#end
   use utils;
   use od-format;
   use compile-time-values;
 
   export
-    <source-location>, source-location-span,
     <source-location-mixin>, source-location,
+
+    <source-location>,
+    source-location-before, source-location-between, source-location-spanning, 
+    describe-source-location,
+
     <unknown-source-location>,
 
     <source-file>, contents, <file-contents>,
+
     <file-source-location>, source-file,
     start-posn, start-line, start-column,
     end-posn, end-line, end-column,
@@ -353,6 +368,8 @@ define module errors
   use standard-io;
   use tokens;
   export
+    <compiler-condition>, condition-at,
+    <compiler-warning>, <compiler-error>,
     compiler-warning, *warnings*, compiler-error,
     compiler-warning-location, compiler-error-location,
     extract-source;
