@@ -92,7 +92,13 @@ long double (frexpl)(long double x, int *exp);
 float (ldexpf)(float x, int exp);
 long double (ldexpl)(long double x, int exp);
 
+long double (logl)(long double x);
+long double (log2l)(long double x);
+long double (log10l)(long double x);
+
 double (rint)(double x);
+double (log2)(double x);
+
 float (fabsf)(float x);
 float (sinf)(float x);
 float (cosf)(float x);
@@ -104,6 +110,7 @@ float (atan2f)(float y, float x);
 float (expf)(float x);
 float (sqrtf)(float x);
 float (logf)(float x);
+float (log10f)(float x);
 float (log10f)(float x);
 float (powf)(float b, float x);
 float (sinhf)(float x);

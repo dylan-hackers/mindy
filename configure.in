@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.131 2003/06/12 15:09:31 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.132 2003/06/13 22:53:29 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -929,9 +929,9 @@ AC_CHECK_LIB(m, sin, LIBS="$LIBS -lm")
 #--------------------------------------------------------------------
 
 AC_REPLACE_FUNCS(rint)
-AC_CHECK_FUNCS(frexpf frexpl ldexpf ldexpl)
+AC_CHECK_FUNCS(frexpf frexpl ldexpf ldexpl logl log2l log10l log2)
 AC_CHECK_FUNCS(fabsf sinf cosf tanf asinf acosf atanf atan2f expf sqrtf)
-AC_CHECK_FUNCS(logf log10f powf sinhf coshf tanhf)
+AC_CHECK_FUNCS(logf log2f log10f powf sinhf coshf tanhf)
 
 #--------------------------------------------------------------------
 #	Check for GNU Readline library

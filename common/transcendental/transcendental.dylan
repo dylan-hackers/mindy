@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.7 2003/06/03 02:07:51 housel Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.8 2003/06/13 22:53:30 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -44,13 +44,13 @@ copyright: see below
 
 // We write out pi rather than use C's M_PI because not all C
 // compilers have M_PI.  Similarly for e.
-define constant $double-pi :: <double-float> 
-  = as(<double-float>, 3.14159265358979323846);
-define constant $single-pi :: <single-float> = as(<single-float>, $double-pi);
+define constant $double-pi :: <double-float> = 3.14159265358979323846d0;
+define constant $single-pi :: <single-float> = 3.14159265358979323846s0;
 
-define constant $double-e :: <double-float>
-  = as(<double-float>, 2.7182818284590452354);
-define constant $single-e :: <single-float> = as(<single-float>, $double-e);
+define constant $extended-e :: <extended-float>
+  = 2.7182818284590452353602874713526624977572x0;
+define constant $double-e :: <double-float> = 2.71828182845904523536d0;
+define constant $single-e :: <single-float> = 2.71828182845904523536s0;
 
 define generic sin (x :: <real>) => y :: <float>;
 define generic cos (x :: <real>) => y :: <float>;
@@ -114,22 +114,41 @@ end method;
 */
 
 define sealed inline method log
+    (x :: <extended-float>, #key base :: <real> = $extended-e)
+ => (y :: <extended-float>);
+  if (x.negative?) error("%= is negative", x) end;
+  if (base <= 1) error("Base %= is not greater than 1", base) end;
+  c-include("math.h");
+  select (base)
+    $extended-e, $double-e, $single-e =>
+      call-out("logl", long-double:, long-double: x);
+    2.0x0, 2.0d0, 2.0s0, 2 =>
+      call-out("log2l", long-double:, long-double: x);
+    10.0x0, 10.0d0, 10.0s0, 10 =>
+      call-out("log10l", long-double:, long-double: x);
+    otherwise =>
+      call-out("logl", long-double:, long-double: x)
+        / call-out("logl", long-double:,
+                   long-double: as(<extended-float>, base));
+  end select;
+end method log;
+
+define sealed inline method log
     (x :: <double-float>, #key base :: <real> = $double-e)
  => (y :: <double-float>);
   if (x.negative?) error("%= is negative", x) end;
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   c-include("math.h");
   select (base)
-    $double-e, $single-e => call-out("log", double:, double: x);
-
-#if (compiled-for-hpux) // #if (have-log2)
-    2, 2.0d0, 2.0s0 => call-out("log2", double:, double: x);
-#endif
-
-    10, 10.0d0, 10.0s0 => call-out("log10", double:, double: x);
+    $extended-e, $double-e, $single-e =>
+      call-out("log", double:, double: x);
+    2.0x0, 2.0d0, 2.0s0, 2 =>
+      call-out("log2", double:, double: x);
+    10.0x0, 10.0d0, 10.0s0, 10 =>
+      call-out("log10", double:, double: x);
     otherwise =>
-     call-out("log", double:, double: x)
-       / call-out("log", double:, double: as(<double-float>, base));
+      call-out("log", double:, double: x)
+        / call-out("log", double:, double: as(<double-float>, base));
   end select;
 end method log;
 
@@ -140,16 +159,15 @@ define sealed inline method log
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   c-include("math.h");
   select (base)
-    $double-e, $single-e => call-out("logf", float:, float: x);
-
-#if (compiled-for-hpux) // #if (have-log2)
-    2, 2.0d0, 2.0s0 => call-out("log2", float:, float: x);
-#endif
-
-    10, 10.0d0, 10.0s0 => call-out("log10f", float:, float: x);
+    $extended-e, $double-e, $single-e =>
+      call-out("logf", float:, float: x);
+    2.0x0, 2.0d0, 2.0s0, 2 =>
+      call-out("log2f", float:, float: x);
+    10.0x0, 10.0d0, 10.0s0, 10 =>
+      call-out("log10f", float:, float: x);
     otherwise =>
-     call-out("logf", float:, float: x)
-       / call-out("logf", float:, float: as(<single-float>, base));
+      call-out("logf", float:, float: x)
+        / call-out("logf", float:, float: as(<single-float>, base));
   end select;
 end method log;
 
@@ -159,21 +177,23 @@ define sealed inline method log
   if (x.negative?) error("%= is negative", x) end;
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   select (base)
-    $double-e, $single-e =>
+    $extended-e, $double-e, $single-e =>
       call-out("logf", float:, float: as(<single-float>, x));
-
-#if (compiled-for-hpux) // #if (have-log2)
-    2, 2.0d0, 2.0s0 => call-out("log2", float:,
-				float: as(<single-float>, x));
-#endif
-
-    10, 10.0d0, 10.0s0 => call-out("log10", float:,
-				   float: as(<single-float>, x));
+    2.0x0, 2.0d0, 2.0s0, 2 =>
+      call-out("log2f", float:, float: as(<single-float>, x));
+    10.0x0, 10.0d0, 10.0s0, 10 =>
+      call-out("log10f", float:, float: as(<single-float>, x));
     otherwise =>
-     call-out("logf", float:, float: as(<single-float>, x))
-       / call-out("logf", float:, float: as(<single-float>, base));
+      call-out("logf", float:, float: as(<single-float>, x))
+        / call-out("logf", float:, float: as(<single-float>, base));
   end select;
 end method log;
+
+define sealed inline method logn
+    (x :: <extended-float>, b :: <real>)
+ => (y :: <extended-float>);
+  log(x, base: b);
+end method logn;
 
 define sealed inline method logn
     (x :: <double-float>, b :: <real>)
