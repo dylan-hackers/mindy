@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.32 2002/03/24 20:03:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.33 2002/04/07 10:11:00 gabor Exp $
 copyright: see below
 
 
@@ -2726,20 +2726,15 @@ define method build-maker-function-body
 		 make-literal-constant(init-builder, #f));
 	    end if;
 	  end if;
-	<each-subclass-slot-info> =>
-	  // ### Add stuff to the deferred-evaluations function to init the
-	  // slot.  If the slot is keyword-initializable, add stuff to the
-	  // maker to check for that keyword and change the each-subclass
-	  // slot.
-	  //	  error("Can't deal with each-subclass slots yet.");
-	  #f;
+
+	<each-subclass-slot-info>,
 	<class-slot-info> =>
 	  // If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
 	  
 	  local
 	    method build-slot-init
-		(slot :: <class-slot-info>, leaf :: <leaf>, init?-leaf :: <leaf>) => ();
+		(slot :: <indirect-slot-info>, leaf :: <leaf>, init?-leaf :: <leaf>) => ();
 
 	      if (immediate-rep?) //еее???
 		add!(make-immediate-args, leaf);
@@ -2750,12 +2745,10 @@ define method build-maker-function-body
 		let posn
 		  = get-direct-position(associated.slot-positions, metaclass);
 		unless (posn)
-		  error("Couldn't find the position for %s",
-			slot-name);
+		  error("Couldn't find the position for %s", slot-name);
 		end unless;
 		if (posn == #"data-word")
-		  error("Class slot allocated in data word for %s?",
-			slot-name);
+		  error("Indirect slot allocated in data word for %s?", slot-name);
 		else
 		  let posn-leaf
 		    = make-literal-constant(maker-builder, posn);
@@ -2823,7 +2816,7 @@ define method build-maker-function-body
 		    make-literal-constant(maker-builder, cclass)));
 	    end if;
 	    end-body(maker-builder);
-	end if;
+	  end if;
       end select;
     end if;
   end for;
