@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.74 1995/11/07 12:48:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.75 1995/11/10 01:02:09 nkramer Exp $
 
 //======================================================================
 //
@@ -112,7 +112,8 @@ define module Builtin-Stuff
     sin, cos, tan, asin, acos, atan, atan2, 
     sinh, cosh, tanh,
     exp, log, sqrt,
-    $pi, $e;
+    $pi, $e,
+    init-keyword, keyword-required?;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -324,6 +325,7 @@ define module Introspection
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
 	     slot-type, slot-value, slot-value-setter,
+	     init-keyword, keyword-required?,
 
 	     object-address,
 
