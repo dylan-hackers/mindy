@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.30 1995/04/27 23:03:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.31 1995/04/27 23:54:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -491,6 +491,7 @@ define method maybe-expand-exit-function
   queue-dependent(component, assign);
   queue-dependent(component, pitcher);
   insert-exit-after(component, assign, catcher.target-region);
+  
 end;
 
 
@@ -661,6 +662,12 @@ define method replace-catcher-and-pitchers
     // Deleting the assignment causes the pitcher to be freed up and
     // queued the catcher for reoptimization.
     delete-and-unlink-assignment(component, pitcher-assign);
+  end;
+
+  // Now if there are no exits, flush the block.
+  let target = catcher.target-region;
+  unless (target.exits)
+    replace-subregion(component, target.parent, target, target.body);
   end;
 end;
 
@@ -1869,16 +1876,19 @@ define method insert-exit-after
     => ();
   let region = assignment.region;
   let region-parent = region.parent;
-  unless (assignment.next-op == #f
-	    & exit-useless?(region-parent, region, target))
+  let (before, after) = split-after(assignment);
+  if (exit-useless?(region-parent, region, target))
+    replace-subregion(component, region-parent, region, before);
+    after.parent := #f;
+    delete-stuff-in(component, after);
+  else
     let exit = make(<exit>, block: target, next: target.exits);
     target.exits := exit;
-    let (before, after) = split-after(assignment);
     let new = combine-regions(before, exit);
     replace-subregion(component, region-parent, region, new);
     after.parent := #f;
     delete-stuff-in(component, after);
-    delete-stuff-after(component, exit.parent, exit);
+    delete-stuff-after(component, new, exit);
   end;
 end;
 
