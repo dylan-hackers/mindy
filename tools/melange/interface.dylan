@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.14 2000/10/29 00:29:14 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.15 2003/01/28 21:49:48 andreas Exp $
 
 //======================================================================
 //
@@ -160,14 +160,16 @@ define method process-mappings
   // Note that duplicate renamings will be accepted the last rename/equate for
   // a type will supersede all others.
   for (mapping in options.renames)
-    rename(mapping.head.find-decl, as(<string>, mapping.tail));
+    let decl = mapping.head.find-decl;
+    decl & rename(decl, as(<string>, mapping.tail));
   end for;
   for (mapping in options.mappings)
-    remap(mapping.head.find-decl, as(<string>, mapping.tail));
+    let decl = mapping.head.find-decl;
+    decl & remap(decl, as(<string>, mapping.tail));
   end for;
   for (mapping in options.equates)
     let decl = mapping.head.find-decl;
-    equate(decl, as(<string>, mapping.tail));
+    decl & equate(decl, as(<string>, mapping.tail));
   end for;
 end method process-mappings;
 
@@ -186,32 +188,36 @@ define method process-imports
  => (imports :: <table>, import-all? :: <boolean>,
      file-imports :: <table>);
 
+  local method process-imports-aux(decl-sequence :: <sequence>,
+                                   import-table :: <table>)
+          for (import in decl-sequence) 
+            if (instance?(import, <pair>))
+              let decl = import.head.find-decl;
+              decl & (import-table[decl] := as(<string>, import.tail));
+            else
+              let decl = import.head.find-decl;
+              decl & (import-table[decl] := #t);
+            end if;
+          end for;
+        end method process-imports-aux;
+          
+
   let imports = make(<table>);
-  for (import in options.global-imports) 
-    if (instance?(import, <pair>))
-      imports[import.head.find-decl] := as(<string>, import.tail);
-    else
-      imports[import.find-decl] := #t;
-    end if;
-  end for;
+  process-imports-aux(options.global-imports, imports);
   let import-all? :: <boolean> = (options.global-import-mode ~== #"none");
     
   let file-imps = make(<string-table>);
   for (imp-sequence keyed-by file in options.file-imports)
     let new-table = (file-imps[file] := make(<table>));
-    for (import in imp-sequence) 
-      if (instance?(import, <pair>))
-	new-table[import.head.find-decl] := as(<string>, import.tail);
-      else
-	new-table[import.find-decl] := #t;
-      end if;
-    end for;
+    process-imports-aux(imp-sequence, new-table);
   end for;
 
   do(method (name)
        let decl = find-decl(name);
-       exclude-decl(decl);
-       imports[decl] := #f;
+       if(decl)
+         exclude-decl(decl);
+         imports[decl] := #f;
+       end if;
      end method, options.exclude);
   values(imports, import-all?, file-imps);
 end method process-imports;
@@ -328,7 +334,7 @@ define method process-clause
 					     state.container-options);
   apply(apply-container-options, decl, opts);
 
-  let find-decl = curry(find-slot, decl);
+  let find-decl = protect(curry(find-slot, decl));
   process-mappings(clause.container-options, find-decl);
   let (imports, import-all?) = process-imports(clause.container-options,
 					       find-decl);
@@ -362,7 +368,7 @@ define method process-clause
 					     state.container-options);
   apply(apply-container-options, decl, opts);
 
-  let find-decl = curry(find-slot, decl);
+  let find-decl = protect(curry(find-slot, decl));
   process-mappings(clause.container-options, find-decl);
   let (imports, import-all?) = process-imports(clause.container-options,
 					       find-decl);
@@ -503,7 +509,7 @@ define method process-parse-state
   // write-declaration but after declaration-closure, since each of these
   // depends upon the results of the last.
 
-  let find-decl = rcurry(parse-type, c-state);
+  let find-decl = protect(rcurry(parse-type, c-state));
   process-mappings(state.container-options, find-decl);
   do(rcurry(process-clause, state, c-state), state.clauses);
 
@@ -592,6 +598,19 @@ end method invoke-debugger;
 *warning-output* := *standard-error*;
 *debugger* := make(<better-debugger>);
 
+// establish a protection boundary against unhandled conditions,
+// returning a function that behaves just like the original function,
+// except that it returns #f when catching an unhandled condition
+//
+define function protect (f :: <function>) => (f* :: <function>)
+  method(#rest arguments)
+    block()
+      apply(f, arguments)
+    exception(<condition>)
+      #f
+    end block
+  end method
+end function protect;
 
 //----------------------------------------------------------------------
 // Built-in help.

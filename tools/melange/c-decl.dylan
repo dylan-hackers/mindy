@@ -125,6 +125,8 @@ define abstract class <declaration> (<object>)
     init-value: #f, init-keyword: #"dylan-name";
   slot map-type :: type-union(<string>, <false>), init-value: #f;
   slot declared? :: <boolean>, init-value: #f;
+  constant slot abstract-type? :: <boolean>, 
+    init-value: #f, init-keyword: abstract-type?:;
 end class <declaration>;
 
 define abstract class <typed> (<object>)
@@ -835,6 +837,7 @@ define constant signed-type = make(<incomplete-type-declaration>,
 				   name: "unknown-type");
 define constant void-type = make(<predefined-type-declaration>,
 				 dylan-name: "<void>",
+                                 abstract-type?: #t,
 				 name: "void-type", size: 0);
 
 define constant int-type = make(<integer-type-declaration>,

@@ -319,35 +319,37 @@ define method write-c-accessor-method
  => ();
   let real-type = true-type(slot-type.type);
   // Write getter method
-  format(stream,
-	 "define %s method %s\n"
-	 "    (ptr :: %s) => (result :: %s);\n"
-	 "  %s;\n"
-	 "end method %s;\n\n",
-	 slot-type.sealed-string, slot-name, compound-type.type-name,
-	 slot-type.mapped-name,
-	 import-value(slot-type, c-accessor(slot-type.type, offset,
-					    "ptr", slot-type.type-name)),
-	 slot-name);
-  register-written-name(written-names, slot-name, compound-type);
-
-  if (~slot-type.read-only
-	& ~instance?(real-type, <non-atomic-types>))
-    // Write setter method
+  unless(real-type.abstract-type?)
     format(stream,
-	   "define %s method %s-setter\n"
-	   "    (value :: %s, ptr :: %s) => (result :: %s);\n"
-	   "  %s := %s;\n"
-	   "  value;\n"
-	   "end method %s-setter;\n\n",
-	   slot-type.sealed-string, slot-name, slot-type.mapped-name,
-	   compound-type.type-name, slot-type.mapped-name,
-	   c-accessor(slot-type.type, offset,
-		      "ptr", slot-type.type-name),
-	   export-value(slot-type, "value"), slot-name);
-    register-written-name(written-names, concatenate(slot-name, "-setter"),
-			  compound-type);
-  end if;
+           "define %s method %s\n"
+             "    (ptr :: %s) => (result :: %s);\n"
+             "  %s;\n"
+             "end method %s;\n\n",
+           slot-type.sealed-string, slot-name, compound-type.type-name,
+           slot-type.mapped-name,
+           import-value(slot-type, c-accessor(slot-type.type, offset,
+                                              "ptr", slot-type.type-name)),
+           slot-name);
+    register-written-name(written-names, slot-name, compound-type);
+    
+    if (~slot-type.read-only
+          & ~instance?(real-type, <non-atomic-types>))
+      // Write setter method
+      format(stream,
+             "define %s method %s-setter\n"
+               "    (value :: %s, ptr :: %s) => (result :: %s);\n"
+               "  %s := %s;\n"
+               "  value;\n"
+               "end method %s-setter;\n\n",
+             slot-type.sealed-string, slot-name, slot-type.mapped-name,
+             compound-type.type-name, slot-type.mapped-name,
+             c-accessor(slot-type.type, offset,
+                        "ptr", slot-type.type-name),
+             export-value(slot-type, "value"), slot-name);
+      register-written-name(written-names, concatenate(slot-name, "-setter"),
+                            compound-type);
+    end if;
+  end unless;
 end method write-c-accessor-method;
 
 // write-c-bitfield-methods -- internal
@@ -1014,7 +1016,9 @@ define method write-declaration
  => ();
   // We must special case this one since there are so many declarations of the
   // form "typedef struct foo foo".
-  if (~decl.equated? & decl.simple-name ~= decl.type.simple-name)
+  if (~decl.equated? 
+        & decl.simple-name ~= decl.type.simple-name 
+        & ~decl.true-type.abstract-type?)
     format(stream, "define constant %s = %s;\n\n",
 	   decl.dylan-name, decl.type.dylan-name);
     register-written-name(written-names, decl.dylan-name, decl);
@@ -1080,42 +1084,44 @@ define method write-declaration
       format(stream, "define sealed domain make (singleton(%s));\n\n",
 	     decl.dylan-name)
     end if;
-    format(stream,
-	   "define method pointer-value\n"
-	     "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",
-	   decl.dylan-name, target-map);
-    write(stream,
-	  import-value(target-type,
-		       c-accessor(target-type,
-				  format-to-string
-				    ("index * %d",
-				     target-type.c-type-size),
-				  "ptr", target-type.type-name)));
-    format(stream, ";\nend method pointer-value;\n\n");
-
-    // Write setter method, if applicable.
-    unless (instance?(true-type(target-type), <non-atomic-types>))
+    unless(target-type.true-type.abstract-type?)
       format(stream,
-	     "define method pointer-value-setter\n"
-	       "    (value :: %s, ptr :: %s, #key index = 0)\n"
-	       " => (result :: %s);\n  ",
-	     target-map, decl.dylan-name, target-map);
+             "define method pointer-value\n"
+               "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",
+             decl.dylan-name, target-map);
       write(stream,
-	    c-accessor(target-type,
-		       format-to-string("index * %d",
-					target-type.c-type-size),
-		       "ptr", target-type.type-name));
-      format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
-	     export-value(target-type, "value"));
+            import-value(target-type,
+                         c-accessor(target-type,
+                                    format-to-string
+                                      ("index * %d",
+                                       target-type.c-type-size),
+                                    "ptr", target-type.type-name)));
+      format(stream, ";\nend method pointer-value;\n\n");
+      
+      // Write setter method, if applicable.
+      unless (instance?(true-type(target-type), <non-atomic-types>))
+        format(stream,
+               "define method pointer-value-setter\n"
+                 "    (value :: %s, ptr :: %s, #key index = 0)\n"
+                 " => (result :: %s);\n  ",
+               target-map, decl.dylan-name, target-map);
+        write(stream,
+              c-accessor(target-type,
+                         format-to-string("index * %d",
+                                          target-type.c-type-size),
+                         "ptr", target-type.type-name));
+        format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
+               export-value(target-type, "value"));
+      end unless;
     end unless;
 
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
-	   "define method content-size "
-	     "(value :: %s) "
-	     "=> (result :: <integer>);\n  %d;\n"
-	     "end method content-size;\n\n",
-	   subclass-type(decl.dylan-name), target-type.c-type-size);
+           "define method content-size "
+             "(value :: %s) "
+             "=> (result :: <integer>);\n  %d;\n"
+             "end method content-size;\n\n",
+           subclass-type(decl.dylan-name), target-type.c-type-size);
   end if;
 end method write-declaration;
 
