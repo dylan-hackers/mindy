@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.12 1995/04/30 05:55:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.13 1995/05/03 07:56:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -51,7 +51,8 @@ define abstract class <abstract-method-definition> (<function-definition>)
   // The leaf for this method, of #f if it is sufficiently hairy that
   // it can't me represented as a <method-literal>.  Filled in by fer
   // conversion.
-  slot method-defn-leaf :: union(<method-literal>, <false>);
+  slot method-defn-leaf :: union(<method-literal>, <false>),
+    init-value: #f;
   //
   // The <method-parse> if we are to inline this method, #f otherwise.
   slot method-defn-inline-expansion :: false-or(<method-parse>),
@@ -330,11 +331,13 @@ define method convert-generic-definition
     let temp = make-local-var(builder, #"gf", object-ctype());
     build-assignment
       (builder, policy, source, temp,
-       make-operation(builder,
-		      pair(dylan-defn-leaf(builder, #"%make-gf"),
-			   as(<list>, args))));
+       make-unknown-call(builder,
+			 pair(dylan-defn-leaf(builder, #"%make-gf"),
+			      as(<list>, args))));
     build-assignment(builder, policy, source, #(),
-		     make-set-operation(builder, defn, temp));
+		     make-operation(builder, <set>, list(temp), var: defn));
+  else
+    maybe-make-discriminator(builder, defn);
   end;
 end;  
 
@@ -357,7 +360,7 @@ define method convert-top-level-form
       let source = make(<source-location>);
       build-assignment
 	(builder, policy, source, #(),
-	 make-operation
+	 make-unknown-call
 	   (builder,
 	    list(dylan-defn-leaf(builder, #"add-method"),
 		 make-definition-leaf(builder, gf-defn),
@@ -368,3 +371,537 @@ define method convert-top-level-form
     end;
   end;
 end;
+
+
+
+// Generic function discriminator functions.
+
+define method maybe-make-discriminator
+    (builder :: <fer-builder>, gf :: <generic-definition>) => ();
+  if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
+	& every?(method (meth)
+		   ~meth.function-defn-hairy?
+		     & every?(method (method-spec, gf-spec)
+				method-spec == gf-spec
+				  | (instance?(method-spec, <cclass>)
+				       & method-spec.sealed?);
+			      end,
+			      meth.function-defn-signature.specializers,
+			      gf.function-defn-signature.specializers);
+		 end,
+		 gf.generic-defn-methods))
+    let policy = $Default-Policy;
+    let source = make(<source-location>);
+    let sig = gf.function-defn-signature;
+    let vars = make(<stretchy-vector>);
+    for (specializer in sig.specializers,
+	 index from 0)
+      let var = make-local-var(builder,
+			       as(<symbol>, format-to-string("arg%d", index)),
+			       specializer);
+      add!(vars, var);
+    end;
+    let rest-type = sig.rest-type | (sig.key-infos & object-ctype());
+    let rest-var = rest-type & make-local-var(builder, #"rest", rest-type);
+
+    let discriminator-sig
+      = make(<signature>,
+	     specializers: sig.specializers,
+	     rest-type: rest-type,
+	     key-infos: sig.key-infos & #(),
+	     all-keys: sig.key-infos ~= #f,
+	     returns: sig.returns);
+    let (leaf, lambda)
+      = build-hairy-method-body(builder, policy, source,
+				format-to-string("Discriminator for %s",
+						 gf.defn-name),
+				sig, vars,
+				#f, rest-var, sig.key-infos & #());
+    let nspecs = vars.size;
+    if (rest-var)
+      add!(vars, rest-var);
+    end;
+    let results = make-values-cluster(builder, #"results", wild-ctype());
+    build-discriminator-tree
+      (builder, policy, source, as(<list>, vars), rest-var ~= #f, results,
+       as(<list>, make(<range>, from: 0, below: nspecs)),
+       sort-methods(gf.generic-defn-methods,
+		    make(<vector>, size: nspecs, fill: #f),
+		    empty-ctype()),
+       gf);
+    build-return(builder, policy, source, lambda, results);
+    end-body(builder);
+  end;
+end;
+
+define method build-discriminator-tree
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     arg-vars :: <list>, rest? :: <boolean>, results :: <abstract-variable>,
+     remaining-discriminations :: <list>,
+     method-set :: <method-set>, gf :: <generic-definition>)
+    => ();
+  if (empty?(method-set.all-methods))
+    build-assignment(builder, policy, source, results,
+		     make-error-operation(builder, "No applicable methods."));
+  elseif (empty?(remaining-discriminations))
+    if (~empty?(method-set.ordered-methods))
+      // ### Should have some way of propagating in the next method
+      // info given that we have it.
+      let func = make-definition-leaf(builder,
+				      method-set.ordered-methods.first);
+      if (rest?)
+	let apply-leaf = dylan-defn-leaf(builder, #"apply");
+	build-assignment
+	  (builder, policy, source, results,
+	   make-unknown-call(builder, pair(apply-leaf, pair(func, arg-vars))));
+      else
+	build-assignment(builder, policy, source, results,
+			 make-unknown-call(builder, pair(func, arg-vars)));
+      end;
+    elseif (~empty?(method-set.ambiguous-methods))
+      let op = make-error-operation(builder, "Ambiguous method.");
+      build-assignment(builder, policy, source, results, op);
+    else
+      error("Where did all the methods go?");
+    end;
+  else
+    //
+    // Figure out which of the remaining positions would be the best one to
+    // specialize on.
+    let discriminate-on
+      = if (remaining-discriminations.tail == #())
+	  remaining-discriminations.head;
+	else
+	  let discriminate-on = #f;
+	  let max-distinct-specializers = 0;
+	  for (posn in remaining-discriminations)
+	    let distinct-specializers
+	      = count-distinct-specializers(method-set.all-methods, posn);
+	    if (distinct-specializers > max-distinct-specializers)
+	      max-distinct-specializers := distinct-specializers;
+	      discriminate-on := posn;
+	    end;
+	  end;
+	  discriminate-on;
+	end;
+    let remaining-discriminations
+      = remove(remaining-discriminations, discriminate-on);
+    //
+    // Divide up the methods based on that one argument.
+    let ranges = discriminate-on-one-arg(discriminate-on, method-set, gf);
+    //
+    // Extract the unique id for this argument.
+    let class-temp = make-local-var(builder, #"class", object-ctype());
+    let obj-class-leaf = dylan-defn-leaf(builder, #"%object-class");
+    build-assignment(builder, policy, source, class-temp,
+		     make-unknown-call(builder,
+				       list(obj-class-leaf,
+					    arg-vars[discriminate-on])));
+    let id-temp = make-local-var(builder, #"id", object-ctype());
+    let unique-id-leaf = dylan-defn-leaf(builder, #"unique-id");
+    build-assignment(builder, policy, source, id-temp,
+		     make-unknown-call(builder,
+				       list(unique-id-leaf, class-temp)));
+    let less-then = dylan-defn-leaf(builder, #"<");
+    //
+    // Recursivly build an if tree based on that division of the methods.
+    local
+      method split-range (min, max)
+	if (min == max)
+	  let method-set = ranges[min].third;
+	  let arg = arg-vars[discriminate-on];
+	  let temp = copy-variable(builder, arg);
+	  build-assignment
+	    (builder, policy, source, temp,
+	     make-operation(builder, <truly-the>, list(arg),
+			    derived-type: method-set.restriction-type));
+	  arg-vars[discriminate-on] := temp;
+	  build-discriminator-tree
+	    (builder, policy, source, arg-vars, rest?, results,
+	     remaining-discriminations, method-set, gf);
+	  arg-vars[discriminate-on] := arg;
+	else
+	  let half-way-point = ash(min + max, -1);
+	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
+	  let ctv = make(<literal-fixed-integer>,
+			 value: ranges[half-way-point].second + 1);
+	  let bound = make-literal-constant(builder, ctv);
+	  build-assignment(builder, policy, source, cond-temp,
+			   make-unknown-call(builder,
+					     list(less-then, id-temp, bound)));
+	  build-if-body(builder, policy, source, cond-temp);
+	  split-range(min, half-way-point);
+	  build-else(builder, policy, source);
+	  split-range(half-way-point + 1, max);
+	  end-body(builder);
+	end;
+      end;
+    split-range(0, ranges.size - 1);
+  end;
+end;
+
+
+define method count-distinct-specializers
+    (methods :: <list>, arg-posn :: <fixed-integer>)
+    => count :: <fixed-integer>;
+  // ### so what if we don't dispatch off the better args first?
+  1;
+end;
+
+
+define class <method-set> (<object>)
+  slot arg-classes :: <simple-object-vector>,
+    required-init-keyword: arg-classes:;
+  slot ordered-methods :: <list>,
+    required-init-keyword: ordered:;
+  slot ambiguous-methods :: <list>,
+    required-init-keyword: ambiguous:;
+  slot all-methods :: <list>,
+    required-init-keyword: all:;
+  slot restriction-type :: <ctype>,
+    required-init-keyword: restriction-type:;
+end;
+
+
+define method discriminate-on-one-arg
+    (discriminate-on :: <fixed-integer>, method-set :: <method-set>,
+     gf :: <generic-definition>)
+    => res :: <simple-object-vector>;
+  //
+  // For each method, associate it with all the direct classes for which that
+  // method will be applicable.  Applicable is an object table mapping class
+  // objects to sets of methods.  Actually, it maps to pairs where the head
+  // is the class again and the tail is the set because portable dylan doesn't
+  // include keyed-by.
+  let applicable = make(<object-table>);
+  let always-applicable = #();
+  let gf-spec = gf.function-defn-signature.specializers[discriminate-on];
+  for (meth in method-set.all-methods)
+    let specializer
+      = meth.function-defn-signature.specializers[discriminate-on];
+    let direct-classes = find-direct-classes(specializer);
+    if (direct-classes)
+      for (direct-class in direct-classes)
+	let entry = element(applicable, direct-class, default: #f);
+	if (entry)
+	  entry.tail := pair(meth, entry.tail);
+	else
+	  applicable[direct-class] := list(direct-class, meth);
+	end;
+      end;
+    elseif (specializer == gf-spec)
+      always-applicable := pair(meth, always-applicable);
+    end;
+  end;
+  //
+  // Grovel over the direct-class -> applicable-methods mapping producing
+  // an equivalent mapping that has direct classes with consecutive unique
+  // ids and equivalent method sets merged.
+  //
+  // Each entry in ranges is a vector of [min, max, method-set].  If max is
+  // #f then that means unbounded.  We maintain the invariant that there are
+  // no holes.
+  //
+  let ranges
+    = begin
+	let possible-direct-classes = find-direct-classes(gf-spec);
+	if (possible-direct-classes)
+	  for (direct-class in possible-direct-classes.tail,
+	       min-id = possible-direct-classes.head.unique-id
+		 then min(min-id, direct-class.unique-id),
+	       max-id = possible-direct-classes.head.unique-id
+		 then max(max-id, direct-class.unique-id))
+	  finally
+	    list(vector(min-id, max-id, #f));
+	  end;
+	else
+	  let arg-classes = copy-sequence(method-set.arg-classes);
+	  arg-classes[discriminate-on] := gf-spec;
+	  let method-set = sort-methods(always-applicable, arg-classes,
+					gf-spec);
+	  list(vector(0, #f, method-set));
+	end;
+      end;
+  for (entry in applicable)
+    let direct-class = entry.head;
+    let arg-classes = copy-sequence(method-set.arg-classes);
+    arg-classes[discriminate-on] := direct-class;
+    let method-set
+      = sort-methods(concatenate(entry.tail, always-applicable),
+		     arg-classes, direct-class.direct-type);
+    let this-id = direct-class.unique-id;
+    for (remaining = ranges then remaining.tail,
+	 prev = #f then remaining,
+	 while: begin
+		  let range :: <simple-object-vector> = remaining.head;
+		  let max = range.second;
+		  max & max < this-id;
+		end)
+    finally
+      let range :: <simple-object-vector> = remaining.head;
+      let other-set = range.third;
+      if (method-set = other-set)
+	other-set.restriction-type
+	  := ctype-union(other-set.restriction-type,
+			 method-set.restriction-type);
+      else
+	let min = range.first;
+	let max = range.second;
+	let new = if (this-id == max)
+		    if (remaining.tail == #())
+		      list(vector(this-id, this-id, method-set));
+		    else
+		      let next-range :: <simple-object-vector>
+			= remaining.tail.head;
+		      let next-set = next-range.third;
+		      if (method-set = next-set)
+			method-set.restriction-type
+			  := ctype-union(method-set.restriction-type,
+					 next-set.restriction-type);
+			pair(vector(this-id, next-range.second, method-set),
+			     remaining.tail.tail);
+		      else
+			pair(vector(this-id, this-id, method-set),
+			     remaining.tail);
+		      end;
+		    end;
+		  else
+		    pair(vector(this-id, this-id, method-set),
+			 pair(vector(this-id + 1, max, other-set),
+			      remaining.tail));
+		  end;
+	if (this-id == min)
+	  if (prev)
+	    let prev-range :: <simple-object-vector> = prev.head;
+	    let prev-set = prev-range.third;
+	    if (method-set = prev-set)
+	      prev-set.restriction-type
+		:= ctype-union(prev-set.restriction-type,
+			       method-set.restriction-type);
+	      prev-range.second = new.head.second;
+	      prev.tail := new.tail;
+	    else
+	      prev.tail := new;
+	    end;
+	  else
+	    ranges := new;
+	  end;
+	else
+	  range.second := this-id - 1;
+	  remaining.tail := new;
+	end;
+      end;
+    end;
+  end;
+  //
+  // Convert ranges into a vector and return it.
+  as(<simple-object-vector>, ranges);
+end;
+    
+
+// sort-methods
+//
+// This routine takes a set of methods and sorts them by some subset of the
+// arguments.
+// 
+define method sort-methods
+    (methods :: <list>, arg-classes :: <simple-object-vector>,
+     restriction-type :: <ctype>)
+    => res :: <method-set>;
+
+  // Ordered accumulates the methods we can tell the ordering of.  Each
+  // element in this list is either a method or a list of equivalent methods.
+  let ordered = #();
+
+  // Ambiguous accumulates the set of methods of which it is unclear which
+  // follows next after ordered.  These methods will all be mutually ambiguous
+  // or equivalent.
+  let ambiguous = #();
+
+  for (meth in methods)
+    block (done-with-method)
+      for (remaining = ordered then remaining.tail,
+	   prev = #f then remaining,
+	   until: remaining == #())
+	//
+	// Grab the method to compare this method against.  If the next element
+	// in ordered is a list of equivalent methods, grab the first one
+	// as characteristic.
+	let other
+	  = if (instance?(remaining.head, <pair>))
+	      remaining.head.head;
+	    else
+	      remaining.head;
+	    end;
+	select (compare-methods(meth, other, arg-classes))
+	  //
+	  // Our method is more specific, so insert it in the list of ordered
+	  // methods and go on to the next method.
+	  #"more-specific" =>
+	    if (prev)
+	      prev.tail := pair(meth, remaining);
+	    else
+	      ordered := pair(meth, remaining);
+	    end;
+	    done-with-method();
+	  #"less-specific" =>
+	    //
+	    // Our method is less specific, so we can't do anything at this
+	    // time.
+	    #f;
+	  #"unordered" =>
+	    //
+	    // Our method is equivalent.  Add it to the set of equivalent
+	    // methods, making such a set if necessary.
+	    if (instance?(remaining.head, <pair>))
+	      remaining.head := pair(meth, remaining.head);
+	    else
+	      remaining.head := list(meth, remaining.head);
+	    end;
+	    done-with-method();
+	  #"ambiguous" =>
+	    //
+	    // We know that the other method is more specific than anything
+	    // in the current ambiguous set, so throw it away making a new
+	    // ambiguous set.  Taking into account that we might have a set
+	    // of equivalent methods on our hands.
+	    remaining.tail := #();
+	    if (instance?(remaining.head, <pair>))
+	      ambiguous := pair(meth, remaining.head);
+	    else
+	      ambiguous := list(meth, remaining.head);
+	    end;
+	    done-with-method();
+	end;
+      finally
+	//
+	// Our method was less specific than any method in the ordered list.
+	// This either means that our method needs to be tacked onto the end
+	// of the ordered list, added to the ambiguous list, or ignored.
+	// Compare the method against all the methods in the ambiguous list
+	// to figure out which.
+	let ambiguous-with = #();
+	for (remaining = ambiguous then remaining.tail,
+	     until: remaining == #())
+	  select (compare-methods(meth, remaining.head, arg-classes))
+	    #"more-specific" =>
+	      #f;
+	    #"less-specific" =>
+	      done-with-method();
+	    #"unordered" =>
+	      ambiguous := pair(meth, ambiguous);
+	      done-with-method();
+	    #"ambiguous" =>
+	      ambiguous-with := pair(remaining.head, ambiguous-with);
+	  end;
+	end;
+	//
+	// Ambiguous-with is only #() if we are more specific than anything
+	// currently in the ambigous set.  So tack us onto the end of the
+	// ordered set.  Otherwise, set the ambigous set to us and everything
+	// we are ambiguous with.
+	if (ambiguous-with == #())
+	  if (prev)
+	    prev.tail := list(meth);
+	  else
+	    ordered := list(meth);
+	  end;
+	else
+	  ambiguous := pair(meth, ambiguous-with);
+	end;
+      end;
+    end;
+  end;
+
+  make(<method-set>, arg-classes: arg-classes, ordered: ordered,
+       ambiguous: ambiguous, all: methods, restriction-type: restriction-type);
+end;
+
+
+define method compare-methods
+    (meth1 :: <method-definition>, meth2 :: <method-definition>,
+     arg-classes :: <vector>)
+    => res :: one-of(#"more-specific", #"less-specific",
+		     #"unordered", #"ambiguous");
+  block (return)
+    let result = #"unordered";
+    for (arg-class in arg-classes,
+	 spec1 in meth1.function-defn-signature.specializers,
+	 spec2 in meth2.function-defn-signature.specializers)
+      //
+      // If this is an argument that we are actually sorting by,
+      if (arg-class)
+	//
+	// If the two specializers are the same, then this argument offers no
+	// ordering.
+	let this-one
+	  = unless (spec1 == spec2)
+	      if (csubtype?(spec1, spec2))
+		#"more-specific";
+	      elseif (csubtype?(spec2, spec1))
+		#"less-specific";
+	      elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
+		// Neither argument is a subclass of the other.  So we have to
+		// base it on the precedence list of the actual argument class.
+		let cpl = arg-class.precedence-list;
+		block (found)
+		  for (super in cpl)
+		    if (super == spec1)
+		      found(#"more-specific");
+		    elseif (super == spec2)
+		      found(#"less-specific");
+		    end;
+		  finally
+		    error("%= isn't applicable", arg-class);
+		  end;
+		end;
+	      else
+		// Neither argument is a subtype of the other and we have a
+		// non-class specializers.  That's ambiguous, folks.
+		return(#"ambiguous");
+	      end;
+	    end;
+	unless (result == this-one)
+	  if (result == #"unordered")
+	    result := this-one;
+	  else
+	    return(#"ambiguous");
+	  end;
+	end;
+      end;
+    end;
+    result;
+  end;
+end;
+
+
+// = on <method-set>s
+// 
+// Two method sets are ``the same'' if they have the same methods, the same
+// ordered methods (in the same order), and the same ambigous methods.
+// 
+define method \= (set1 :: <method-set>, set2 :: <method-set>)
+    => res :: <boolean>;
+  set1.ordered-methods = set2.ordered-methods
+    & same-unordered?(set1.all-methods, set2.all-methods)
+    & same-unordered?(set1.ambiguous-methods, set2.ambiguous-methods);
+end;
+
+// same-unordered?
+//
+// Return #t if the two lists have the same elements in any order.
+// We assume that there are no duplicates in either list.
+// 
+define method same-unordered? (list1 :: <list>, list2 :: <list>)
+    => res :: <boolean>;
+  list1.size == list2.size
+    & block (return)
+	for (elem in list1)
+	  unless (member?(elem, list2))
+	    return(#f);
+	  end;
+	end;
+	#t;
+      end;
+end;
+
