@@ -313,6 +313,9 @@ define constant preprocessor-match
   = make-regexp-positioner("^#[ \t]*(define|undef|include|ifdef|ifndef|if"
 			     "|else|line|endif|error|pragma)\\b",
 			   byte-characters-only: #t, case-sensitive: #t);
+define constant do-skip-matcher
+  = make-regexp-positioner("#|/\\*",
+			   byte-characters-only: #t, case-sensitive: #t);
 
 // Checks to see whether we are looking at a preproccessor directive.  If so,
 // we handle the directive and return #t.  The state may change drastically,
@@ -339,16 +342,17 @@ define method try-cpp
       // do-skip, even if their conditions would normally evaluate to true.
       //
       local method do-skip(pos, current-stack)
-	      for (i from pos below contents.size,
-		   until: contents[i] == '#')
-	      finally
-		if (~try-cpp(state, i))
-		  // We may get false matches -- if so, just move on
-		  do-skip(i + 1, current-stack);
-		elseif (current-stack == state.cpp-stack)
-		  do-skip(state.position, current-stack);
-		end if;
-	      end for;
+	      let i = do-skip-matcher(contents, start: pos);
+	      unless (i)
+		parse-error(state, "Unmatched #if in include file.")
+	      end;
+	      let i = skip-whitespace(contents, i);
+	      if (~try-cpp(state, i))
+		// We may get false matches -- if so, just move on
+		do-skip(i + 1, current-stack);
+	      elseif (current-stack == state.cpp-stack)
+		do-skip(state.position, current-stack);
+	      end if;
 	    end method do-skip;
 
       let word = copy-sequence(contents, start: word-start, end: word-end);
