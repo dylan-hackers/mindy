@@ -66,5 +66,11 @@ define module multistring-match
 #if (~mindy)
     multistring-checker-definer, multistring-positioner-definer,
 #endif
-    make-multistring-positioner, make-multistring-checker
+    make-multistring-positioner, make-multistring-checker,
+   
+    // XXX - These cope with a problem in d2c, whereby the functions that a
+    //       macro uses must be exported as well, if the user of the macro
+    //       is in a different library.  For status on this bug, check bug #162
+    //       at <http://www.randomhacks.com/dylan-cgi/bugs>.
+    compile-multistring, check-multistring, find-multistring
 end module multistring-match;
