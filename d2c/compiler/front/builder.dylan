@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.20 1995/10/30 13:07:11 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.21 1995/11/14 14:16:16 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -73,11 +73,11 @@ define generic build-block-body
 
 // Build a local exit, with the target represented by its <block-region>.
 // Probably not called during initial FER conversion, since it takes some work
-// to discover local exits.
+// to discover local exits.  Target #f means does-not-return.
 //
 define generic build-exit
     (builder :: <flow-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <block-region-mixin>)
+     source :: <source-location>, target :: false-or(<block-region-mixin>))
  => ();
 
 

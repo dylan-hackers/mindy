@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.41 1995/11/13 11:08:17 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.42 1995/11/14 14:17:33 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -265,9 +265,10 @@ end method;
 
 define method build-exit
     (builder :: <internal-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <block-region-mixin>)
+     source :: <source-location>, target :: false-or(<block-region-mixin>))
  => ();
   ignore(policy);
+  let target = target | builder.component;
   let res = make(<exit>, source-location: source,
 		 block: target, next: target.exits);
   target.exits := res;
