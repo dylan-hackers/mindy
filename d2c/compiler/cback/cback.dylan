@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.97 1996/02/09 01:37:43 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.98 1996/02/09 03:32:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -19,10 +19,6 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //      Encapsulates per-object-file state.  Keywords include "unit:".
 //      Operations include "file-unit".  It is also passed as a
 //      mutable parameter to most "emit-" functions.
-//   <unit-info>
-//      Holds information about a given compilation unit which should
-//      be preserved in the libarary dump file.  Keywords (and
-//      operations) include "unit-name" and "undumped-objects".
 //   <backend-var-info>
 //      Encapsulates info about either variables or <definition>s.
 //      Holds a representation and an optional name.
@@ -255,15 +251,6 @@ define class <unit-state> (<object>)
   slot unit-root-names :: <collection>,
     init-function: curry(make, <stretchy-vector>);
 end;
-
-// Information which needs to go into the library dump file.  Perhaps
-// this should be merged with <unit-state>.
-define class <unit-info> (<object>)
-  slot unit-name :: <byte-string>, required-init-keyword: #"unit-name";
-  slot undumped-objects :: <vector>,
-    init-function: method () make(<stretchy-vector>) end method,
-    init-keyword: #"undumped-objects";
-end class <unit-info>;
 
 define class <file-state> (<object>)
   //
