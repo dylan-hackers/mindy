@@ -12,12 +12,12 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.1 1994/05/03 12:09:36 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.2 1994/05/23 17:56:52 nkramer Exp $
 //
 
 /* -------------------------------------------------------------------
  *
- *  Implements <table>, <=table>, and <object-table>
+ *  Implements <table>, <equal-table>, and <object-table>
  *
  * ------------------------------------------------------------------- */
 
@@ -46,6 +46,9 @@ end method merge-hash-states;
  * ------------------------------------------------------------------- */
 
 // define constant $permanent-hash-state = #f;
+//
+// // Define no-default if it isn't already defined somewhere else.
+// define constant no-default = "no-default";
 //
 // define constant magic-hash-constant = #x3fffffff;
 //         // And'ed with hash id's to keep the size under control 
@@ -160,8 +163,8 @@ end class <object-table>;
 
 // Uses = as key comparison
 
-define class <=table> (<table>)
-end class <=table>;
+define class <equal-table> (<table>)
+end class <equal-table>;
 
 /* ---------------- */
 
@@ -212,63 +215,59 @@ end method initialize;
 
 /* ---------------- */
 
-// Without further information, there's no way of figuring out exactly
-// what key comparison the different tables are using, and so are
-// presumed to be using different tests.
+// key-test returns id? (==) on object-tables, and equal (=) on
+// equal-tables.
+
+define method key-test (ht :: <object-table>) => test :: <function>;
+  \==;
+end method key-test;
+
+
+define method key-test (ht :: <equal-table>) => test :: <function>;
+  \=;
+end method key-test;
+
+/* ---------------- */
+
+// Informally, two hash tables are = if they use the same key test,
+// have the same size, and all the elements in the first hash table
+// have matching elements in the second hash table.
+
+define constant not-in-ht2 = "not-in-ht2";
 
 define method \= (ht1 :: <table>, ht2 :: <table>)
-  #f;
-end method \=;
+  let test1 = key-test (ht1);
+  let test2 = key-test (ht2);
 
-
-// = on <object-table> and <=table> are exactly identical codewise except
-// that one uses = and the other uses ==.
-
-define method \= (ht1 :: <object-table>, ht2 :: <object-table>);
-  if (size (ht1) ~= size (ht2))
-    #f;
-  else
-    block (return)
-      for (elt1 keyed-by key1 in ht1, elt2 keyed-by key2 in ht2)
-	if ( (~ (key1 == key2)) | (elt1 ~= elt2))
-	  return(#f);
-	end
-      end;
-      #t;
-    end;
-  end if;
-end method \=;
-
-define method \= (ht1 :: <=table>, ht2 :: <=table>);
-  if (size (ht1) ~= size (ht2))
-    #f;
-  else
-    block (return)
-      for (elt1 keyed-by key1 in ht1, elt2 keyed-by key2 in ht2)
-	if ( (key1 ~= key2) | (elt1 ~= elt2))
-	  return(#f);
-	end
-      end;
-      #t;
-    end;
-  end if;
+  (test1 == test2) 
+    & size(ht1) = size(ht2) 
+    & block (return)
+	for (elt1 keyed-by key in ht1)
+	  let elt2 = element (ht2, key, default: not-in-ht2);
+	  if (elt2 == not-in-ht2 | ~test1 (elt1, elt2))
+	    return(#f);
+	  end if;
+	end for;
+      
+	#t;
+      end block;
 end method \=;
 
 /* ---------------- */
 
-// The only key-hash for <object-table>s
+// The only key-hash for <object-table>
 
 define method key-hash (ht :: <object-table>, key)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-// key-hash's for <=table>.
+// key-hash's for <equal-table>.
 
 // The default method for objects that don't have any 
 // better methods defined.
 
-define method key-hash (ht :: <=table>, key :: <object>) 
+define method key-hash (ht :: <equal-table>, key :: <object>) 
           => (id :: <integer>, state :: <object>);
   values (42, $permanent-hash-state);
 end method key-hash;
@@ -277,47 +276,47 @@ end method key-hash;
 // Call object-hash for characters, integers, symbols, classes,
 // functions, and conditions.
 
-define method key-hash (ht :: <=table>, key :: <character>)
+define method key-hash (ht :: <equal-table>, key :: <character>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <integer>)
+define method key-hash (ht :: <equal-table>, key :: <integer>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <symbol>)
+define method key-hash (ht :: <equal-table>, key :: <symbol>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <class>)
+define method key-hash (ht :: <equal-table>, key :: <class>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <function>)
+define method key-hash (ht :: <equal-table>, key :: <function>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <type>)
+define method key-hash (ht :: <equal-table>, key :: <type>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: singleton (#f))
+define method key-hash (ht :: <equal-table>, key :: singleton (#f))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: singleton (#t))
+define method key-hash (ht :: <equal-table>, key :: singleton (#t))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
 
-define method key-hash (ht :: <=table>, key :: <condition>)
+define method key-hash (ht :: <equal-table>, key :: <condition>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method key-hash;
@@ -326,7 +325,7 @@ end method key-hash;
 // key-hash for reals. Doesn't look like Mindy has good support for
 // reals.
 
-// define method key-hash (ht :: <=table>, key :: <real>)
+// define method key-hash (ht :: <equal-table>, key :: <real>)
 //           => (id :: <integer>, state :: <object>);
 //   key-hash (ht, truncate (abs (key)));
 // end method key-hash;
@@ -341,7 +340,7 @@ end method key-hash;
 // always put the element before the key when you merge hash codes,
 // you *can* use ordered: #t for merging them)
 
-define method key-hash (ht :: <=table>, col :: <collection>)
+define method key-hash (ht :: <equal-table>, col :: <collection>)
           => (id :: <integer>, state :: <object>);
   let (current-id, current-state) = values (0, $permanent-hash-state);
 
@@ -368,7 +367,7 @@ end method key-hash;
 
 /* ---------------- */
 
-define method key= (ht :: <=table>, key1, key2)
+define method key= (ht :: <equal-table>, key1, key2)
   key1 = key2;
 end method key=;
 
@@ -401,7 +400,7 @@ end method find-elt;
 // to avoid race conditions with the garbage collector.
 
 define method element (  ht :: <table>, key, 
-		         #key default: default = #f  )
+		         #key default: default = no-default )
   until (state-valid? (ht.merged-hash-state-slot))
     rehash (ht);
   end until;
@@ -426,9 +425,13 @@ define method element (  ht :: <table>, key,
        
     // Else, there was no garbage collection, and we're safe.
   elseif ( find-result = #f )
-    default;
+       if (default == no-default)
+	 error ("Element not found");
+       else 
+	 default;
+       end if;
   else
-    find-result.item-slot;
+       find-result.item-slot;
   end if;
 end method element;
 
@@ -649,9 +652,6 @@ define method size (ht :: <table>)
 end method size;
 
 /* ---------------- */
-
-// Seems to me the default empty? should call size, but it doesn't seem to.
-// This should be more efficient than using the iteration protocol.
 
 define method empty? (ht :: <table>)
   ht.item-count-slot = 0;
