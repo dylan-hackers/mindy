@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.4 1994/12/13 18:37:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.5 1994/12/14 20:18:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -575,9 +575,11 @@ define module define-functions
 
   export
     <generic-definition>,
-    <method-definition>,
+    <abstract-method-definition>,
+    <method-definition>, method-defn-of,
     <define-generic-tlf>,
-    <define-method-tlf>;
+    <define-method-tlf>,
+    implicitly-define-generic;
 end;
 
 define module define-constants-and-variables
@@ -614,6 +616,8 @@ define module define-classes
   use define-functions;
   use builder-interface;
   use fer-convert;
+  use signature;
+  use source;
 end;
 
 define module top-level-expressions
