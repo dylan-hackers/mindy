@@ -216,6 +216,12 @@
 // format string is so that we don't have unbalanced quotes in this
 // file.  Unbalanced quotes makes font-lock do really ugly things...)
 //
+// object-size-string: A format string used to declare the object size
+// for descriptor entries and initialized objects.  The first arg to
+// the format string will be the mangled-name-prefix, the second arg
+// will be the C name of the object's label, and the third will be the
+// object size in bytes.
+//
 // omit-colon-after-label-declarations?: If #f, puts a colon after
 // label declarations (when you first declare a label, not whenever
 // you reference it).  If #t, we don't put a colon there.  This is
@@ -397,6 +403,7 @@ supports-debugging?:		#t
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
 descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+object-size-string:		\t.size\t%s%s, %d\n
 
 // FreeBSD on Intel 80386 or higher
 //
@@ -416,6 +423,7 @@ supports-debugging?:		#t
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
 descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+object-size-string:		\t.size\t%s%s, %d\n
 
 
 // Consider this a template to be modified for supporting other platforms.
