@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.3 2000/01/24 04:57:48 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.4 2001/09/26 00:28:01 brent Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -107,7 +107,7 @@ static void dump_ref(int handle)
 {
     if (handle <= USHRT_MAX) {
 	dump_op(fop_SHORT_REF);
-	dump_short(handle);
+	dump_short((short)handle);
     }
     else {
 	dump_op(fop_REF);
@@ -139,7 +139,7 @@ static void dump_integer(long value)
     }
     else if (SHRT_MIN <= value && value <= SHRT_MAX) {
 	dump_op(fop_SIGNED_SHORT);
-	dump_short(value);
+	dump_short((short)value);
     }
     else if (INT_MIN <= value && value <= INT_MAX) {
 	dump_op(fop_SIGNED_INT);
@@ -284,7 +284,7 @@ static void dump_vector_header(int length)
 	    dump_byte(length-9);
 	else if (length-9-254 <= USHRT_MAX) {
 	    dump_byte(254);
-	    dump_short(length-9-254);
+	    dump_short((short)(length-9-254));
 	}
 	else {
 	    dump_byte(255);
@@ -401,7 +401,7 @@ static void dump_component(struct component *c)
     if (c->nconstants <= UCHAR_MAX && c->bytes <= USHRT_MAX) {
 	dump_op(fop_SHORT_COMPONENT);
 	dump_byte(c->nconstants);
-	dump_short(c->bytes);
+	dump_short((short)(c->bytes));
     }
     else {
 	dump_op(fop_COMPONENT);

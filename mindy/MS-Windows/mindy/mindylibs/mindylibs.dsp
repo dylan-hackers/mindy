@@ -39,6 +39,11 @@ MTL=midl.exe
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
+# Begin Special Build Tool
+ProjDir=.
+SOURCE="$(InputPath)"
+PostBuild_Cmds=$(ProjDir)\..\..\..\..\tools\win32-misc\dbclink.exe dylan-lib.dbc exports.dbc misc.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc list.dbc deque.dbc range.dbc stretchy.dbc ext.dbc table.dbc sort.dbc cond.dbc num.dbc ratio.dbc char.dbc func.dbc debug.dbc exit.dbc  multilock.dbc semaphore.dbc extern.dbc transcendental.dbc system.dbc	copy dylan-lib.dbc $(ProjDir)\..\..\..\libraries\dylan\dylan-lib.dbc
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "mindylibs - Win32 Debug"
 
