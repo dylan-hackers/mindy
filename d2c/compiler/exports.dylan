@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.119 1995/12/07 05:22:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.120 1995/12/10 15:23:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -349,7 +349,9 @@ define module lexer
   use variables;
 
   export
-    <lexer>;
+    <lexer>,
+
+    add-feature, remove-feature;
 end;
 
 define module fragments
@@ -1303,4 +1305,5 @@ define module main
   use string-conversions;
   use autodump;
   use standard-io;
+  use tokens;
 end;

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.39 1995/11/20 16:16:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.40 1995/12/10 15:24:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,6 +30,7 @@ add-od-loader(*compiler-dispatcher*, #"here-be-roots",
 // Compilation driver.
 
 define method file-tokenizer (lib :: <library>, name :: <byte-string>)
+    => (tokenizer :: <tokenizer>, module :: <module>);
   let source = make(<source-file>, name: name);
   let (header, start-line, start-posn) = parse-header(source);
   values(make(<lexer>,
@@ -40,6 +41,24 @@ define method file-tokenizer (lib :: <library>, name :: <byte-string>)
 		     as(<symbol>, header[#"module"]),
 		     create: #t));
 end;
+
+
+define method test-lexer (file :: <byte-string>) => ();
+  let (tokenizer, module) = file-tokenizer($dylan-library, file);
+  block (return)
+    *Current-Module* := module;
+    while (#t)
+      let token = get-token(tokenizer);
+      if (instance?(token, <eof-token>))
+	return();
+      else
+	format(*debug-output*, "%=\n", token);
+      end if;
+    end while;
+  cleanup
+    *Current-Module* := #f;
+  end block;
+end method test-lexer;
 
 
 define method strip-extension
@@ -108,8 +127,49 @@ define method parse-lid (lid-file :: <byte-string>)
 end;
 
 
-define method compile-library (lid-file :: <byte-string>) => ();
+define method split-at-whitespace (string :: <byte-string>)
+    => res :: <list>;
+  let size = string.size;
+  local
+    method scan (posn :: <fixed-integer>, results :: <list>)
+	=> res :: <list>;
+      if (posn == size)
+	results;
+      elseif (string[posn] <= ' ')
+	scan(posn + 1, results);
+      else
+	copy(posn + 1, posn, results);
+      end;
+    end method scan,
+    method copy (posn :: <fixed-integer>, start :: <fixed-integer>,
+		 results :: <list>)
+	=> res :: <list>;
+      if (posn == size | string[posn] <= ' ')
+	scan(posn,
+	     pair(copy-sequence(string, start: start, end: posn), results));
+      else
+	copy(posn + 1, start, results);
+      end;
+    end method copy;
+  reverse!(scan(0, #()));
+end method split-at-whitespace;
+
+define method process-feature (feature :: <byte-string>) => ();
+  if (feature.empty? | feature[0] ~== '~')
+    add-feature(as(<symbol>, feature));
+  else
+    remove-feature(as(<symbol>, copy-sequence(feature, start: 1)));
+  end if;
+end method process-feature;
+
+define method compile-library
+    (lid-file :: <byte-string>, command-line-features :: <list>) => ();
   let (header, files) = parse-lid(lid-file);
+
+  do(process-feature,
+     split-at-whitespace(element(header, #"features", default: "")));
+  do(process-feature, command-line-features);
+
   let lib-name = header[#"library"];
   format(*debug-output*, "Compiling library %s\n", lib-name);
   let lib = find-library(as(<symbol>, lib-name));
@@ -348,14 +408,34 @@ define method main (argv0, #rest args)
   else
     let library-dirs = make(<stretchy-vector>);
     let lid-file = #f;
+    let features = #();
     for (arg in args)
       if (arg.size >= 1 & arg[0] == '-')
-	if (arg.size >= 2 & arg[1] == 'L')
-	  if (arg.size > 2)
-	    add!(library-dirs, copy-sequence(arg, start: 2));
-	  else
-	    error("Directory not supplied with -L.");
-	  end;
+	if (arg.size >= 2)
+	  select (arg[1])
+	    'L' =>
+	      if (arg.size > 2)
+		add!(library-dirs, copy-sequence(arg, start: 2));
+	      else
+		error("Directory not supplied with -L.");
+	      end;
+	    'D' =>
+	      if (arg.size > 2)
+		features := pair(copy-sequence(arg, start: 2), features);
+	      else
+		error("Feature to define not supplied with -D.");
+	      end;
+	    'U' =>
+	      if (arg.size > 2)
+		let feature = copy-sequence(arg, start: 1);
+		feature[0] := '~';
+		features := pair(feature, features);
+	      else
+		error("Feature to undefine not supplied with -U.");
+	      end;
+	    otherwise =>
+	      error("Bogus switch: %s", arg);
+	  end select;
 	else
 	  error("Bogus switch: %s", arg);
 	end;
@@ -371,6 +451,6 @@ define method main (argv0, #rest args)
     unless (lid-file)
       incorrect-usage();
     end;
-    compile-library(lid-file);
+    compile-library(lid-file, reverse!(features));
   end if;
 end method main;
