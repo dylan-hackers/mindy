@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.5 2003/10/18 04:24:08 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.6 2004/06/06 12:40:04 andreas Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -211,7 +211,7 @@ define method random-float
   let max-value = as(<float>, arg);
   let random-num = as(<float>, random-bits(state: state));
   let random-bits-max-value
-    = as(<float>, ash(1, $random-bits-count - 1));
+    = as(<float>, ash(1, $random-bits-count));
   (random-num / random-bits-max-value) * max-value;
 end method random-float;
 
