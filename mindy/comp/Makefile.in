@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.7 2000/01/24 04:57:40 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.8 2000/10/31 14:18:48 dauclair Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -38,6 +38,7 @@ SHELL	=	/bin/sh
 
 prefix	=		@prefix@
 exec_prefix	=	@exec_prefix@
+exe_ext = @exe_ext@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
@@ -74,7 +75,7 @@ SRCS = mindycomp.c parser-tab.c lexer-tab.c src.c sym.c print.c expand.c \
 	literal.c info.c lose.c lexenv.c envanal.c compile.c header.c \
 	dump.c free.c dup.c feature.c
 
-mindycomp: ${OBJS}
+mindycomp$(exe_ext): ${OBJS}
 	${CC} ${OBJS} -DVERSION=\""`/bin/date`"\" ${SRCDIR}/version.c ${LIBS} -o ,$@
 	mv ,$@ $@
 
@@ -89,13 +90,13 @@ ${SRCDIR}/lexer-tab.c: ${SRCDIR}/lexer.l
 	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer-tab.c
 
 clean:
-	rm -f ${OBJS} version.o mindycomp *~ \#* core
+	rm -f ${OBJS} version.o mindycomp$(exe_ext) *~ \#* core
 
 realclean:
-	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp Makefile *~ \#* core
+	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp$(exe_ext) Makefile *~ \#* core
 
-install: mindycomp
-	${INSTALL_PROGRAM} mindycomp ${DESTDIR}${BINDIR}/mindycomp
+install: mindycomp$(exe_ext)
+	${INSTALL_PROGRAM} mindycomp$(exe_ext) ${DESTDIR}${BINDIR}/mindycomp$(exe_ext)
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
