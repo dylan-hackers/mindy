@@ -2,7 +2,7 @@ module: time-internal
 author: dwatson@cmu.edu
 synopsis: The Time-IO module.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time-io.dylan,v 1.1 1996/07/29 18:31:10 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time-io.dylan,v 1.2 1996/10/06 13:43:51 nkramer Exp $
  
 //======================================================================
 //
@@ -29,11 +29,11 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time-io.dylan,v 1.
 //
 //======================================================================
 
-define method string-format-time
-    (format :: <byte-string>, time :: <decoded-time>)
- => (string :: <object>);
+define method format-time
+    (stream :: <stream>, format :: <byte-string>, time :: <decoded-time>)
+ => ();
   let buffer = make(<c-string>, size: 500);
   strftime(buffer, 500, format, time);
   let string = as(<byte-string>, buffer);
-  string;
-end method string-format-time;
+  write(stream, string);
+end method format-time;
