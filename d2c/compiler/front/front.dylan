@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.20 1995/04/29 01:04:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.21 1995/05/01 06:56:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -301,14 +301,10 @@ end class;
 // are represented by special helper lambdas and <hairy-method-literal>
 // objects.
 //
-define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
-		       <annotatable>)
+define class <lambda> (<method-literal>, <method-region>, <annotatable>)
 
   // List of lexical varibles for args.
   slot prologue :: <prologue>, required-init-keyword: prologue:;
-
-  // The results this lambda produces.
-  inherited slot depends-on;
 
   // The result type of this function.
   slot result-type :: <values-ctype>, init-function: wild-ctype;

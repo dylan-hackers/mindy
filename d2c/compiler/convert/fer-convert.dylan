@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.19 1995/04/29 04:01:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.20 1995/05/01 06:56:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -686,10 +686,10 @@ define method build-general-method
 	values(make-values-cluster(builder, #"results", wild-ctype()),
 	       make-values-cluster(builder, #"temps", wild-ctype()));
       end;
-  let method-literal
+  let (method-literal, method-region)
     = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
 			      signature, fixed-vars, next-var, rest-var,
-			      keyword-vars, results);
+			      keyword-vars);
   if (non-const-arg-types?)
     build-region(builder, builder-result(arg-check-builder));
   end;
@@ -717,6 +717,7 @@ define method build-general-method
     build-assignment(builder, lexenv.lexenv-policy, source, results,
 		     make-operation(builder, as(<list>, args)));
   end;
+  build-return(builder, lexenv.lexenv-policy, source, method-region, results);
   end-body(builder);
 
   if (non-const-arg-types? | non-const-result-types?)
@@ -756,9 +757,8 @@ define generic build-hairy-method-body
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
      rest-var :: union(<abstract-variable>, <false>),
-     keyword-vars :: union(<sequence>, <false>),
-     result-vars :: <var-or-vars>)
-    => res :: <leaf>;
+     keyword-vars :: union(<sequence>, <false>))
+    => (literal :: <method-literal>, region :: <method-region>);
 
 define method build-hairy-method-body
     (builder :: <fer-builder>,
@@ -768,11 +768,11 @@ define method build-hairy-method-body
      fixed-vars :: <sequence>,
      next-var :: <false>,
      rest-var :: <false>,
-     keyword-vars :: <false>,
-     result-vars :: <var-or-vars>)
-    => res :: <leaf>;
-  build-method-body(builder, policy, source, as(<list>, fixed-vars),
-		    result-vars);
+     keyword-vars :: <false>)
+    => (literal :: <method-literal>, region :: <method-region>);
+  let lambda = build-method-body(builder, policy, source,
+				 as(<list>, fixed-vars));
+  values(lambda, lambda);
 end;
 
 define method build-hairy-method-body
@@ -783,9 +783,8 @@ define method build-hairy-method-body
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
      rest-var :: union(<abstract-variable>, <false>),
-     keyword-vars :: union(<sequence>, <false>),
-     result-vars :: <var-or-vars>)
-    => res :: <leaf>;
+     keyword-vars :: union(<sequence>, <false>))
+    => (literal :: <method-literal>, region :: <method-region>);
   let vars = map-as(<stretchy-vector>, identity, fixed-vars);
   let body-builder = make-builder(builder);
   if (next-var)
@@ -827,10 +826,12 @@ define method build-hairy-method-body
     end;
   end;
   let method-leaf = build-method-body(builder, policy, source,
-				      as(<list>, vars), result-vars);
+				      as(<list>, vars));
   build-region(builder, builder-result(body-builder));
 
-  make-hairy-method-literal(builder, policy, source, signature, method-leaf);
+  values(make-hairy-method-literal(builder, policy, source,
+				   signature, method-leaf),
+	 method-leaf);
 end;
 
 /*

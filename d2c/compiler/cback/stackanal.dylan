@@ -10,9 +10,7 @@ end;
 define method analize-stack-usage (lambda :: <lambda>)
     => (max-depth :: <fixed-integer>);
   let state = make(<state>);
-  let want = analize(lambda.body,
-		     analize(lambda.depends-on, #(), state),
-		     state);
+  let want = analize(lambda.body, #(), state);
   unless (want == #())
     error("We start the lambda wanting stuff?");
   end;
@@ -153,12 +151,18 @@ define method analize
   for (ancestor = region.parent then ancestor.parent,
        until: ancestor == #f | ancestor == target)
   finally
-    if (ancestor)
+    if (ancestor & ~instance?(ancestor, <component>))
       state.block-wants[target];
     else
       #();
     end;
   end;
+end;
+
+define method analize
+    (region :: <return>, want :: <list>, state :: <state>, #next next-method)
+    => want :: <list>;
+  analize(region.depends-on, #(), state);
 end;
 
 define method analize

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.25 1995/04/30 13:40:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.26 1995/05/01 06:56:01 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -367,6 +367,10 @@ define class <lambda-info> (<object>)
     required-init-keyword: main-entry-name:;
   slot lambda-info-prototype :: <byte-string>,
     required-init-keyword: prototype:;
+  slot lambda-info-result-representation
+    :: type-or(<representation>, <list>,
+	       one-of(#"doesn't-return", #"cluster", #"void")),
+    required-init-keyword: result-rep:;
 end;
 
 define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
@@ -387,32 +391,46 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 
   let stream = make(<byte-string-output-stream>);
   let name = new-global(output-info);
-  let result = lambda.depends-on;
-  if (~result)
-    write("void", stream);
-  elseif (~result.dependent-next)
-    let var = result.source-exp;
-    if (instance?(var.var-info, <values-cluster-info>))
-      write("descriptor_t *", stream);
-    else
-      let rep = variable-representation(var, output-info);
-      write(rep.representation-c-type, stream);
-    end;
-  else
-    let header = output-info.output-info-header-stream;
-    format(header, "struct %s_results {\n", name);
-    indent(header, $indentation-step);
-    for (dep = result then dep.dependent-next,
-	 index from 0,
-	 while: dep)
-      let var = dep.source-exp;
-      let rep = variable-representation(var, output-info);
-      format(header, "%s R%d;\n", rep.representation-c-type, index);
-    end;
-    indent(header, -$indentation-step);
-    format(header, "};\n");
-    format(stream, "struct %s_results", name);
-  end;
+  let result-type = lambda.result-type;
+  let result-rep
+    = if (result-type == empty-ctype())
+	write("void", stream);
+	#"doesn't-return";
+      else
+	let min-values = result-type.min-values;
+	let positionals = result-type.positional-types;
+	let rest-type = result-type.rest-value-type;
+	if (min-values == positionals.size & rest-type == empty-ctype())
+	  if (min-values == 0)
+	    write("void", stream);
+	    #"void";
+	  elseif (min-values == 1)
+	    let rep = pick-representation(result-type, #"speed");
+	    write(rep.representation-c-type, stream);
+	    rep;
+	  else
+	    let header = output-info.output-info-header-stream;
+	    format(header, "struct %s_results {\n", name);
+	    indent(header, $indentation-step);
+	    let reps
+	      = map(method (type, index)
+		      let rep = pick-representation(type, #"speed");
+		      format(header, "%s R%d;\n",
+			     rep.representation-c-type, index);
+		      rep;
+		    end,
+		    positionals,
+		    make(<range>, from: 0));
+	    indent(header, -$indentation-step);
+	    format(header, "};\n");
+	    format(stream, "struct %s_results", name);
+	    reps;
+	  end;
+	else
+	  write("descriptor_t *", stream);
+	  #"cluster";
+	end;
+      end;
 
   format(stream, " %s(descriptor_t *orig_sp", name);
   if (defines)
@@ -432,7 +450,8 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
   make(<lambda-info>,
        lambda: lambda,
        main-entry-name: name,
-       prototype: stream.string-output-stream-string);
+       prototype: stream.string-output-stream-string,
+       result-rep: result-rep);
 end;
 
 
@@ -521,6 +540,10 @@ end;
 
 define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     => ();
+  output-info.output-info-next-local := 0;
+  output-info.output-info-cur-stack-depth := 0;
+  assert(output-info.output-info-local-vars.size == 0);
+
   let lambda-info = get-info-for(lambda, output-info);
   let prototype = lambda-info.lambda-info-prototype;
   format(output-info.output-info-header-stream, "static %s;\n", prototype);
@@ -536,40 +559,6 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
   end;
 
   emit-region(lambda.body, output-info);
-  let result = lambda.depends-on;
-  if (result)
-    let stream = make(<byte-string-output-stream>);
-    if (~result.dependent-next)
-      let var = result.source-exp;
-      if (instance?(var.var-info, <values-cluster-info>))
-	let (bottom-name, top-name) = consume-cluster(var, output-info);
-	assert(bottom-name = "orig_sp");
-	write("return cluster_0_top;\n", stream);
-      else
-	let rep = variable-representation(var, output-info);
-	format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
-      end;
-    else
-      let temp = new-local(output-info);
-      format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
-	     lambda-info.lambda-info-main-entry-name, temp);
-      let stream = output-info.output-info-guts-stream;
-      for (dep = result then dep.dependent-next,
-	   index from 0,
-	   while: dep)
-	let var = dep.source-exp;
-	let rep = variable-representation(var, output-info);
-	format(stream, "%s.R%d = %s;\n",
-	       temp, index, ref-leaf(rep, var, output-info));
-      end;
-      format(stream, "return %s;\n", temp);
-    end;
-    spew-pending-defines(output-info);
-    write(stream.string-output-stream-string,
-	  output-info.output-info-guts-stream);
-  else
-    spew-pending-defines(output-info);
-  end;
 
   write(output-info.output-info-vars-stream.string-output-stream-string,
 	stream);
@@ -682,6 +671,85 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
   end;
 end;
 
+define method emit-region (return :: <return>, output-info :: <output-info>)
+    => ();
+  /* ### emit-joins(region.join-region, output-info); */
+  spew-pending-defines(output-info);
+  let lambda :: <lambda> = return.block-of;
+  let lambda-info = get-info-for(lambda, output-info);
+  let result-rep = lambda-info.lambda-info-result-representation;
+  emit-return(return, result-rep, output-info);
+end;
+
+define method emit-return
+    (return :: <return>, result-rep == #"doesn't-return",
+     output-info :: <output-info>)
+    => ();
+  error("have a return region for lambda that doesn't return?");
+end;
+
+define method emit-return
+    (return :: <return>, result-rep == #"void", output-info :: <output-info>)
+    => ();
+  let stream = output-info.output-info-guts-stream;
+  write("return;\n", stream);
+end;
+
+define method emit-return
+    (return :: <return>, result-rep == #"cluster",
+     output-info :: <output-info>)
+    => ();
+  let stream = output-info.output-info-guts-stream;
+  let results = return.depends-on;
+  if (results & instance?(results.source-exp, <abstract-variable>)
+	& instance?(results.source-exp.var-info, <values-cluster-info>))
+    let (bottom-name, top-name)
+      = consume-cluster(results.source-exp, output-info);
+    unless (bottom-name = "orig_sp")
+      error("Delivering a cluster that isn't at the bottom of the frame?");
+    end;
+    format(stream, "return %s;\n", top-name);
+  else
+    for (dep = results then dep.dependent-next,
+	 count from 0,
+	 while: dep)
+      format(stream, "orig_sp[%d] = %s;\n", count,
+	     ref-leaf($general-rep, dep.source-exp, output-info));
+    finally
+      format(stream, "return orig_sp + %d;\n", count);
+    end;
+  end;
+end;
+
+define method emit-return
+    (return :: <return>, result-rep :: <representation>,
+     output-info :: <output-info>)
+    => ();
+  let stream = output-info.output-info-guts-stream;
+  format(stream, "return %s;\n",
+	 ref-leaf(result-rep, return.depends-on.source-exp, output-info));
+end;
+
+define method emit-return
+    (return :: <return>, result-reps :: <list>, output-info :: <output-info>)
+    => ();
+  let stream = output-info.output-info-guts-stream;  
+  let temp = new-local(output-info);
+  let lambda = return.block-of;
+  let lambda-info = get-info-for(lambda, output-info);
+  let name = lambda-info.lambda-info-main-entry-name;
+  format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
+	 name, temp);
+  for (rep in result-reps,
+       index from 0,
+       dep = return.depends-on then dep.dependent-next)
+    format(stream, "%s.R%d = %s;\n",
+	   temp, index, ref-leaf(rep, dep.source-exp, output-info));
+  end;
+  format(stream, "return %s;\n", temp);
+end;
+
+
 define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
     => ();
   spew-pending-defines(output-info);
@@ -698,7 +766,7 @@ define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
       error("Pitcher to the component?");
     end;
 
-    let (top-name, bottom-name)
+    let (bottom-name, top-name)
       = consume-cluster(pitcher.depends-on.source-exp, output-info);
     format(stream, "pitch(%s, %s);\n", bottom-name, top-name);
   end;
@@ -746,7 +814,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 
       deliver-results(defines,
 		      vector(pair(ref-leaf(rep, var, output-info), rep)),
-		      output-info);
+		      #f, output-info);
     end;
   end;
 end;
@@ -768,7 +836,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
       format(stream, "if (!%s_initialized) abort();\n", name);
     end;
   end;
-  deliver-results(defines, vector(pair(name, rep)), output-info);
+  deliver-results(defines, vector(pair(name, rep)), #f, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -782,7 +850,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		     variable-representation(defines, output-info)
 		   end;
     let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
-    deliver-results(defines, vector(pair(expr, rep)), output-info);
+    deliver-results(defines, vector(pair(expr, rep)), #f, output-info);
   end;
 end;
 
@@ -794,7 +862,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
   deliver-results(defines,
 		  vector(pair(info.backend-var-info-name,
 			      info.backend-var-info-rep)),
-		  output-info);
+		  #f, output-info);
 end;
 
 define method emit-assignment
@@ -853,11 +921,18 @@ define method emit-call
   end;
   write(')', stream);
   let call = string-output-stream-string(stream);
-  spew-pending-defines(output-info);
-  if (~function.depends-on | ~results)
+  let result-rep = func-info.lambda-info-result-representation;
+  if (results == #f | result-rep == #"void")
     format(output-info.output-info-guts-stream, "%s;\n", call);
-    deliver-results(results, #[], output-info);
-  elseif (function.depends-on.dependent-next)
+    deliver-results(results, #[], #f, output-info);
+  elseif (result-rep == #"doesn't-return")
+    error("Trying to get some values back from a function that "
+	    "doesn't return?");
+  elseif (result-rep == #"cluster")
+    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
+    deliver-cluster(results, #f, sp, new-sp, function.result-type,
+		    output-info);
+  elseif (instance?(result-rep, <list>))
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
 	   name, temp);
@@ -871,16 +946,9 @@ define method emit-call
 	   pair(format-to-string("%s.R%d", temp, index),
 		rep));
     end;
-    deliver-results(results, result-exprs, output-info);
-  elseif (instance?(function.depends-on.source-exp.var-info,
-		      <values-cluster-info>))
-    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
-    deliver-cluster(results, #f, sp, new-sp, function.result-type,
-		    output-info);
+    deliver-results(results, result-exprs, #f, output-info);
   else
-    let rep = variable-representation(function.depends-on.source-exp,
-				      output-info);
-    deliver-results(results, vector(pair(call, rep)), output-info);
+    deliver-results(results, vector(pair(call, result-rep)), #t, output-info);
   end;
 end;
 
@@ -944,7 +1012,7 @@ define method emit-assignment
       format(stream, "%s_initialized = TRUE;\n", target);
     end;
   end;
-  deliver-results(defines, #[], output-info);
+  deliver-results(defines, #[], #f, output-info);
 end;
 
 define method emit-assignment
@@ -972,7 +1040,7 @@ define method emit-assignment
       end;
     end;
   end;
-  deliver-results(results, #[], output-info);
+  deliver-results(results, #[], #f, output-info);
 end;
 
 
@@ -1012,15 +1080,16 @@ define method deliver-cluster
 	  else
 	    format-to-string("%s[%d]", name, index);
 	  end;
-      deliver-single-result(var, source, $general-rep, output-info, #t);
+      deliver-single-result(var, source, $general-rep, #t, output-info);
     end;
     format(stream, "sp = %s;\n", name);
   end;
 end;
 
-define method deliver-results (defines :: false-or(<definition-site-variable>),
-			       values :: <vector>,
-			       output-info :: <output-info>)
+define method deliver-results
+    (defines :: false-or(<definition-site-variable>), values :: <vector>,
+     now-dammit? :: <boolean>, output-info :: <output-info>)
+    => ();
   let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
     let (bottom-name, top-name) = produce-cluster(defines, output-info);
@@ -1033,7 +1102,7 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
     for (var = defines then var.definer-next,
 	 val in values,
 	 while: var)
-      deliver-single-result(var, val.head, val.tail, output-info, #f);
+      deliver-single-result(var, val.head, val.tail, now-dammit?, output-info);
     finally
       if (var)
 	let false = make(<literal-false>);
@@ -1042,7 +1111,7 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
 	  let target-rep = variable-representation(var, output-info);
 	  let (source-name, source-rep)
 	    = c-expr-and-rep(false, target-rep, output-info);
-	  deliver-single-result(var, source-name, source-rep, output-info, #f);
+	  deliver-single-result(var, source-name, source-rep, #f, output-info);
 	end;
       end;
     end;
@@ -1052,7 +1121,7 @@ end;
 define method deliver-single-result
     (var :: <abstract-variable>, // ### Should really be ssa-variable
      source :: <string>, source-rep :: <representation>,
-     output-info :: <output-info>, now-dammit? :: <boolean>)
+     now-dammit? :: <boolean>, output-info :: <output-info>)
     => ();
   if (var.dependents)
     if (now-dammit? | var.dependents.source-next)
@@ -1066,11 +1135,11 @@ end;
 
 define method deliver-single-result
     (var :: <initial-definition>, source :: <string>,
-     source-rep :: <representation>, output-info :: <output-info>,
-     now-dammit? :: <boolean>)
+     source-rep :: <representation>, now-dammit? :: <boolean>,
+     output-info :: <output-info>)
     => ();
-  deliver-single-result(var.definition-of, source, source-rep, output-info,
-			now-dammit?);
+  deliver-single-result(var.definition-of, source, source-rep, now-dammit?,
+			output-info);
 end;
 
 
@@ -1113,7 +1182,7 @@ define method default-primitive-emitter
     write(op, stream);
   end;
   write(");\n", stream);
-  deliver-results(defines, #[], output-info);
+  deliver-results(defines, #[], #f, output-info);
 end;
 
 define-primitive
@@ -1140,7 +1209,7 @@ define-primitive
        let expr = ref-leaf($general-rep, dep.source-exp, output-info);
        add!(results, pair(expr, $general-rep));
      end;
-     deliver-results(defines, results, output-info);
+     deliver-results(defines, results, #f, output-info);
    end);
 
 
@@ -1155,7 +1224,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s == %s)", x, y),
 				 $boolean-rep)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1169,7 +1238,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s < %s)", x, y),
 				 $boolean-rep)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1183,7 +1252,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s + %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1197,7 +1266,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s * %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1211,7 +1280,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s - %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1223,7 +1292,7 @@ define-primitive
      let x = extract-operands(operation, output-info, *long-rep*);
      deliver-results(defines,
 		     vector(pair(format-to-string("(- %s)", x), *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1240,7 +1309,7 @@ define-primitive
 				 *long-rep*),
 			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1257,7 +1326,7 @@ define-primitive
 				 *long-rep*),
 			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1274,7 +1343,7 @@ define-primitive
 				 *long-rep*),
 			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1291,7 +1360,7 @@ define-primitive
 				 *long-rep*),
 			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1305,7 +1374,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s | %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1319,7 +1388,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s ^ %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1333,7 +1402,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s & %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1345,7 +1414,7 @@ define-primitive
      let x = extract-operands(operation, output-info, *long-rep*);
      deliver-results(defines,
 		     vector(pair(format-to-string("(~ %s)", x), *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 define-primitive
@@ -1359,7 +1428,7 @@ define-primitive
      deliver-results(defines,
 		     vector(pair(format-to-string("fixnum_ash(%s, %s)", x, y),
 				 *long-rep*)),
-		     output-info);
+		     #f, output-info);
    end);
 
 

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.43 1995/04/30 05:57:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.44 1995/05/01 06:56:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -584,12 +584,13 @@ end;
 define module builder-interface
   create
     <flow-builder>, make-builder, builder-result, end-body, build-region,
-    build-if-body, build-else, build-block-body, build-exit, build-loop-body,
-    build-assignment, build-join, make-operation, <fer-builder>, build-let,
-    make-primitive-operation, make-mv-operation, make-set-operation,
-    make-literal-constant, make-definition-leaf, make-lexical-var,
-    make-ssa-var, make-local-var, make-values-cluster, copy-variable,
-    make-exit-function, build-method-body, make-hairy-method-literal,
+    build-if-body, build-else, build-block-body, build-exit, build-return,
+    build-loop-body, build-assignment, build-join, make-operation,
+    <fer-builder>, build-let, make-primitive-operation, make-mv-operation,
+    make-set-operation, make-literal-constant, make-definition-leaf,
+    make-lexical-var, make-ssa-var, make-local-var, make-values-cluster,
+    copy-variable, make-exit-function, build-method-body,
+    make-hairy-method-literal,
 
     <fer-component>;
 end;
@@ -604,7 +605,7 @@ define module flow
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <empty-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
-    <block-region>, <method-region>, <loop-region>, <exit>,
+    <block-region>, <method-region>, <loop-region>, <exit>, <return>,
     <component>,
 
     parent, parent-setter, first-assign, first-assign-setter, last-assign,
@@ -612,15 +613,16 @@ define module flow
     join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, block-of, block-of-setter,
-    next-exit, next-exit-setter,
+    next-exit, next-exit-setter, returned-type, returned-type-setter,
     initial-definitions, initial-definitions-setter,
     reoptimize-queue, reoptimize-queue-setter,
     all-methods, all-methods-setter,
 
-    <expression>, <dependency>, <dependent-mixin>, <leaf>, <variable-info>,
-    <definition-site-variable>, <ssa-variable>, <initial-definition>,
-    <multi-definition-variable>, <initial-variable>, <global-variable>,
-    <operation>, <join-operation>, <abstract-assignment>, <assignment>,
+    <expression>, <dependency>, <queueable-mixin>, <dependent-mixin>,
+    <leaf>, <variable-info>, <definition-site-variable>,
+    <ssa-variable>, <initial-definition>, <multi-definition-variable>,
+    <initial-variable>, <global-variable>, <operation>,
+    <join-operation>, <abstract-assignment>, <assignment>,
     <join-assignment>,
 
     dependents, derived-type, source-exp, source-next, dependent,
@@ -683,7 +685,8 @@ define module front
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
-    <function-literal>, <method-literal>,
+    <function-literal>, visibility, visibility-setter,
+    <method-literal>,
     <lambda>, prologue, result-type, result-type-setter,
     self-call-block, self-call-block-setter,
     self-tail-calls, self-tail-calls-setter, environment,
@@ -718,7 +721,7 @@ define module fer-convert
     exclude: {<assignment>},
     rename: {<expression> => <fer-expression>},
     export: all;
-  use front, import: {catcher};
+  use front, import: {catcher, <method-literal>};
   use builder-interface, export: all;
   use ctype;
   use lexenv, export: all;
