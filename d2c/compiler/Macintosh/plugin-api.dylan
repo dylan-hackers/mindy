@@ -2,7 +2,7 @@ module: plugin-api
 file: plugin-api.dylan
 author: gabor@mac.com
 synopsis: CW plugin interface.
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.3 2004/04/14 20:59:39 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.4 2004/04/16 03:07:27 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -34,8 +34,8 @@ copyright: see below
 c-system-include("Files.h");
 c-system-include("TextUtils.h");
 c-system-include("DropInCompilerLinker.h");
-c-decl("extern FSSpec fsSpec(const CWFileSpec*);");
-c-decl("extern CWFileSpec fileRef(const FSSpec*);");
+c-decl("extern FSSpec fsSpec(const CWFileSpec*, OSErr*);");
+c-decl("extern CWFileSpec fileRef(const FSSpec*, OSErr*);");
 
 define macro standard-seals-for
 	{ standard-seals-for(?:name) }
@@ -198,7 +198,10 @@ define macro with-fss
   =>
   {
     c-local-decl("FSSpec " ?spec ";");
-    call-out(?spec " = fsSpec", void:, ptr: c-ptr-expr("&" ?ref));
+    check-mac-os(?=plug,
+                 with-c-variable-and-ptr("OSErr", err, err-ptr)
+                   call-out(?spec " = fsSpec", void:, ptr: c-ptr-expr("&" ?ref), ptr: err-ptr);
+                 end);
     call-out("p2cstrcpy", void:, ptr: c-ptr-expr(?spec ".name"), ptr: c-ptr-expr(?spec ".name"));
     ?body
   }
@@ -209,7 +212,10 @@ define macro with-cwspec
   =>
   {
     c-local-decl("CWFileSpec " ?ref ";");
-    call-out(?ref " = fileRef", void:, ptr: c-ptr-expr("&" ?spec));
+    check-mac-os(?=plug,
+                 with-c-variable-and-ptr("OSErr", err, err-ptr)
+                   call-out(?ref " = fileRef", void:, ptr: c-ptr-expr("&" ?spec), ptr: err-ptr);
+                 end);
     ?body
   }
 end;
