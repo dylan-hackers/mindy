@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.76 1995/12/07 15:53:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.77 1996/01/07 23:03:24 rgs Exp $
 
 //======================================================================
 //
@@ -90,7 +90,7 @@ define module Builtin-Stuff
     slot-descriptors, slot-getter, slot-getter-method, slot-initialized?,
     slot-name, slot-setter, slot-setter-method, slot-type, slot-value,
     slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
-    subclass-of, subtype?, system,
+    subclass-of, subtype?, system, symbol-hash,
     tail, tail-setter, truncate, truncate/,
     union, union-members,
     values, vector,
@@ -313,7 +313,8 @@ end;
 
 define module Hash-Tables
   use Dylan;
-  use Builtin-Stuff, import: {state-valid?, pointer-hash, float-hash};
+  use Builtin-Stuff,
+    import: {state-valid?, pointer-hash, float-hash, symbol-hash};
   use Extensions;
 end;
 

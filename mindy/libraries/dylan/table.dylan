@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.21 1996/01/02 01:16:01 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.22 1996/01/07 23:03:24 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -212,6 +212,11 @@ define method object-hash (key :: <object>)
   pointer-hash(key);
 end method object-hash;
 
+define method object-hash (key :: <symbol>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  values(key.symbol-hash, $permanent-hash-state);
+end method object-hash;
+
 // The largest <fixed-integer> prime.
 //
 define constant $really-big-prime = 1073741789;
@@ -340,7 +345,10 @@ end method value-hash;
 
 define method value-hash (key :: <symbol>)
  => (id :: <fixed-integer>, state :: <hash-state>);
-  string-hash(as(<string>, key));
+  // We have introduced a special object-hash for symbols which is GC
+  // independent.  This may not be true of all implementations, so be
+  // careful. 
+  object-hash(key);
 end method value-hash;
 
 define method value-hash (key == #f)
