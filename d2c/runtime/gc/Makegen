@@ -429,8 +429,8 @@ EOF
 	# libgc.a .  Somehow the HP doesn't seem to mind, but Solaris
 	# does.
 	print <<'EOF';
-libgc.a : $(OBJS)
-	ar qc libgc.a $(OBJS)
+libgc.a : $(OBJS) dyn_load.o
+	ar qc libgc.a $(OBJS) dyn_load.o
 EOF
     }
     push(@compile_dependencies, "libgc$dot_lib");
