@@ -1,44 +1,81 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.11 1996/05/01 12:39:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.12 1996/05/09 02:15:58 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
 // Call optimization.
 
-// <unknown-call> optimization.
+
+// General (unknown & mv) call optimization.
+
+// optimize{<unknown-call>}
 //
-// Basically, we check the arguments against the signature and try to change
-// into a <known-call> if we can and an <error-call> if we have to.
-//
+// Dispatch off the kind of function.
+// 
 define method optimize
     (component :: <component>, call :: <unknown-call>) => ();
-  let func-dep = call.depends-on;
-  unless (func-dep)
-    error("No function in a call?");
-  end;
-  // Dispatch of the thing we are calling.
-  optimize-unknown-call-leaf(component, call, func-dep.source-exp);
+  optimize-general-call-leaf(component, call, call.depends-on.source-exp);
 end;
 
+// optimize{<mv-call>}
+//
+// If the cluster feeding the mv call has a fixed number of values, then
+// convert the <mv-call> into an <unknown-call>.  Otherwise, dispatch of
+// the kind of function.
+// 
+define method optimize (component :: <component>, call :: <mv-call>) => ();
+  let cluster
+    = if (call.use-generic-entry?)
+	call.depends-on.dependent-next.dependent-next.source-exp;
+      else
+	call.depends-on.dependent-next.source-exp;
+      end;
+  if (maybe-expand-cluster(component, cluster))
+    change-call-kind(component, call, <unknown-call>,
+		     use-generic-entry: call.use-generic-entry?);
+  else
+    optimize-general-call-leaf(component, call, call.depends-on.source-exp);
+  end if;
+end method optimize;
 
-define generic optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
+
+// optimize-general-call-leaf, -defn, and -ctv -- internal.
+//
+// Improve the call in various ways depending on the kind of function
+// being called.  There are three different generic functions to keep
+// the number of methods to select between down.
+//
+define generic optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>, func :: <leaf>)
+    => ();
+//
+define generic optimize-general-call-defn
+    (component :: <component>, call :: <general-call>, defn :: <definition>)
+    => ();
+//
+define generic optimize-general-call-ctv
+    (component :: <component>, call :: <general-call>, ctv :: <ct-value>)
     => ();
 
-define method optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
-    => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end;
 
-define method optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>, func :: <ssa-variable>)
+// optimize-general-call-leaf{<leaf>}
+//
+// Just add a type assertion that the function is really a function.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>, func :: <leaf>)
+    => ();
+  assert-function-type(component, call);
+end method optimize-general-call-leaf;
+
+// optimize-general-call-leaf{<ssa-variable>}
+//
+// If the function is an ssa-variable, check it see if the definition of the
+// ssa-variable is a use of the make-next-method primitive.  If so, then
+// change this call into code to invoke the next method.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>, func :: <ssa-variable>)
     => ();
   let func = func.definer.depends-on.source-exp;
   if (instance?(func, <primitive>)
@@ -46,272 +83,240 @@ define method optimize-unknown-call-leaf
     assert(~call.use-generic-entry?);
     expand-next-method-call-ref
       (component, call.dependents,
-       listify-dependencies(call.depends-on.dependent-next),
+       select (call by instance?)
+	 <unknown-call> =>
+	   listify-dependencies(call.depends-on.dependent-next);
+	 <mv-call> =>
+	   call.depends-on.dependent-next.source-exp;
+       end select,
        func);
   else
     // Assert that the function is a function.
-    assert-type(component, call.dependents.dependent, call.depends-on,
-		if (call.use-generic-entry?)
-		  specifier-type(#"<method>");
-		else
-		  function-ctype();
-		end);
+    assert-function-type(component, call);
   end;
-end method optimize-unknown-call-leaf;
+end method optimize-general-call-leaf;
 
-define method optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>,
+// optimize-general-call-leaf{<function-literal>}
+//
+// Compare the call against function signature and change to a known call if
+// possible and an error call if we can tell that it is invalid.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>,
      func :: <function-literal>)
     => ();
   maybe-restrict-type(component, call, func.main-entry.result-type);
-  maybe-change-to-known-or-error-call(component, call, func.signature,
-				      func.main-entry.name);
+  maybe-change-to-known-or-error-call
+    (component, call, func.signature, func.main-entry.name, #f, #f);
 end;
 
-define method optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>,
+// optimize-general-call-leaf{<definition-constant-leaf>}
+//
+// Dispatch off the kind of definition.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>,
      func :: <definition-constant-leaf>)
     => ();
-  optimize-unknown-call-defn(component, call, func.const-defn);
+  optimize-general-call-defn(component, call, func.const-defn);
 end;
 
-define method optimize-unknown-call-leaf
+// optimize-general-call-leaf{<unknown-call>,<literal-constant>}
+//
+// Dispatch off the kind of ctv.
+// 
+define method optimize-general-call-leaf
     (component :: <component>, call :: <unknown-call>,
      func :: <literal-constant>)
     => ();
-  optimize-unknown-call-ctv(component, call, func.value);
-end method optimize-unknown-call-leaf;
+  optimize-general-call-ctv(component, call, func.value);
+end method optimize-general-call-leaf;
 
-define method optimize-unknown-call-leaf
-    (component :: <component>, call :: <unknown-call>,
-     func :: <exit-function>)
+// optimize-general-call-leaf{<mv-call>,<literal-constant>}
+//
+// If we are mv-calling values, just return the cluster.  This saves the
+// optimizer the work of inlining values and then eventually reducing it to
+// just the argument cluster.  Otherwise, just dispatch off the kind of
+// ctv.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <mv-call>, func :: <literal-constant>)
     => ();
-  let builder = make-builder(component);
-  let call-dependency = call.dependents;
-  let assign = call-dependency.dependent;
-  let policy = assign.policy;
-  let source = assign.source-location;
+  if (func.value == dylan-value(#"values"))
+    assert(~call.use-generic-entry?);
+    replace-expression
+      (component, call.dependents, call.depends-on.dependent-next.source-exp);
+  else
+    optimize-general-call-ctv(component, call, func.value);
+  end if;
+end method optimize-general-call-leaf;
 
-  let values = make(<stretchy-vector>);
-  for (dep = call.depends-on.dependent-next then dep.dependent-next,
-       while: dep)
-    add!(values, dep.source-exp);
+// optimize-general-call-leaf{<exit-function>}
+//
+// Build a cluster out of the arguments (unless they already are a cluster,
+// of course) and replace the call with a throw.
+// 
+define method optimize-general-call-leaf
+    (component :: <component>, call :: <general-call>, func :: <exit-function>)
+    => ();
+  if (call.use-generic-entry?)
+    error("Trying to call the generic entry for an exit function?");
   end;
-  let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
-  build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, <primitive>, as(<list>, values),
-				  name: #"values"));
-  insert-before(component, assign, builder-result(builder));
-  expand-exit-function(component, call, func, cluster);
-end method optimize-unknown-call-leaf;
 
+  let builder = make-builder(component);
 
+  let cluster
+    = select (call by instance?)
+	<unknown-call> =>
+	  let assign = call.dependents.dependent;
 
-define generic optimize-unknown-call-defn
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <definition>)
-    => ();
+	  let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
+	  build-assignment
+	    (builder, assign.policy, assign.source-location, cluster,
+	     make-operation
+	       (builder, <primitive>,
+		listify-dependencies(call.depends-on.dependent-next),
+		name: #"values"));
+	  insert-before(component, assign, builder-result(builder));
+	  cluster;
 
-define method optimize-unknown-call-defn
-    (component :: <component>, call :: <unknown-call>,
+	<mv-call> =>
+	  call.depends-on.dependent-next.source-exp;
+      end select;
+  
+  replace-expression
+    (component, call.dependents,
+     make-operation
+       (builder, <throw>, list(func.depends-on.source-exp, cluster),
+	nlx-info: func.nlx-info));
+end method optimize-general-call-leaf;
+
+// optimize-general-call-defn{<abstract-constant-definition>}
+//
+// Assert that the constant is a function.
+// 
+define method optimize-general-call-defn
+    (component :: <component>, call :: <general-call>,
      defn :: <abstract-constant-definition>)
     => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end;
+  assert-function-type(component, call);
+end method optimize-general-call-defn;
 
-define method optimize-unknown-call-defn
-    (component :: <component>, call :: <unknown-call>,
+// optimize-general-call-defn{<function-definition>}
+//
+// Propagate the result type.
+// 
+define method optimize-general-call-defn
+    (component :: <component>, call :: <general-call>,
      defn :: <function-definition>)
     => ();
   maybe-restrict-type(component, call, defn.function-defn-signature.returns);
-end method optimize-unknown-call-defn;
+end method optimize-general-call-defn;
 
-define method optimize-unknown-call-defn
-    (component :: <component>, call :: <unknown-call>,
+// optimize-general-call-defn{<generic-definition>}
+//
+// Propagate the result type and then defer to optimize-generic to do the
+// rest of the optimization.
+// 
+define method optimize-general-call-defn
+    (component :: <component>, call :: <general-call>,
      defn :: <generic-definition>)
     => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
+  optimize-generic(component, call, defn);
+end method optimize-general-call-defn;
 
-  if (call.use-generic-entry?)
-    error("Trying to pass a generic function next-method information?");
-  end;
-
-  let bogus? = #f;
-  let arg-leaves = #();
-  let arg-types = #();
-  block (return)
-    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-	 count from 0,
-	 gf-spec in sig.specializers)
-      unless (arg-dep)
-	compiler-warning-location
-	  (call.dependents.dependent,
-	   "Not enough arguments in call of %s.\n"
-	     "  Wanted %s %d, but only got %d.",
-	   defn.defn-name,
-	   if (sig.rest-type | sig.key-infos)
-	     "at least";
-	   else
-	     "exactly";
-	   end,
-	   sig.specializers.size,
-	   count);
-	bogus? := #t;
-	return();
-      end;
-      let arg-leaf = arg-dep.source-exp;
-      let arg-type = arg-leaf.derived-type;
-      unless (ctypes-intersect?(arg-type, gf-spec))
-	compiler-warning-location
-	  (call.dependents.dependent,
-	   "Wrong type for %s argument in call of %s.\n"
-	     "  Wanted %s, but got %s.",
-	   integer-to-english(count + 1, as: #"ordinal"),
-	   defn.defn-name,
-	   gf-spec,
-	   arg-dep.source-exp.derived-type);
-	bogus? := #t;
-      end;
-      arg-leaves := pair(arg-leaf, arg-leaves);
-      arg-types := pair(arg-type, arg-types);
-    finally
-      if (arg-dep)
-	unless (sig.key-infos | sig.rest-type)
-	  for (arg-dep = arg-dep then arg-dep.dependent-next,
-	       have from count,
-	       while: arg-dep)
-	  finally
-	    compiler-warning-location
-	      (call.dependents.dependent,
-	       "Too many arguments in call of %s.\n"
-		 "  Wanted exactly %d, but got %d.",
-	       defn.defn-name,
-	       count, have);
-	    bogus? := #t;
-	  end;
-	end;
-	for (arg-dep = arg-dep then arg-dep.dependent-next,
-	     while: arg-dep)
-	  arg-leaves := pair(arg-dep.source-exp, arg-leaves);
-	end;
-      end;
-    end;
-  end;
-  if (bogus?)
-    change-call-kind(component, call, <error-call>);
-  else
-    optimize-generic(component, call, defn, reverse!(arg-types),
-		     reverse!(arg-leaves));
-  end if;
-end method optimize-unknown-call-defn;
-
-define method optimize-unknown-call-defn
-    (component :: <component>, call :: <unknown-call>,
+// optimize-general-call-defn{<abstract-method-definition>}
+//
+// Change the call to a known or error call based on the argument types.
+//
+define method optimize-general-call-defn
+    (component :: <component>, call :: <general-call>,
      defn :: <abstract-method-definition>)
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
-  select (compare-unknown-call-against-signature(call, sig, defn.defn-name))
-    #"bogus" =>
-      if (call.use-generic-entry?)
-	error("bogus call w/ next?");
-      end;
-      change-call-kind(component, call, <error-call>);
+  maybe-change-to-known-or-error-call
+    (component, call, sig, defn.defn-name, defn.method-defn-inline-function,
+     defn.function-defn-hairy?);
+end method optimize-general-call-defn;
 
-    #"valid" =>
-      let inline-function = defn.method-defn-inline-function;
-      if (inline-function)
-	let old-head = component.reoptimize-queue;
-	let new-func = clone-function(component, inline-function);
-	reverse-queue(component, old-head);
-	replace-expression(component, call.depends-on, new-func);
-      elseif (~defn.function-defn-hairy?)
-	convert-to-known-call(component, sig, call);
-      end;
-
-    #"can't tell" =>
-      #f;
-  end;
-end;
-
-
-define generic optimize-unknown-call-ctv
-    (component :: <component>, call :: <unknown-call>, ctv :: <ct-value>)
+// optimize-general-call-ctv{<ct-value>}
+//
+// Assert that the function is a function.  It isn't, but this is a handy
+// way of generating an error message.
+//
+define method optimize-general-call-ctv
+    (component :: <component>, call :: <general-call>, ctv :: <ct-value>)
     => ();
+  assert-function-type(component, call);
+end method optimize-general-call-ctv;
 
-define method optimize-unknown-call-ctv
-    (component :: <component>, call :: <unknown-call>, ctv :: <ct-value>)
-    => ();
-  // Assert that the function is a function.  It isn't, but this is a handy
-  // way of generating an error message.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end method optimize-unknown-call-ctv;
-
-define method optimize-unknown-call-ctv
-    (component :: <component>, call :: <unknown-call>, ctv :: <ct-function>)
+// optimize-general-call-ctv{<ct-function>}
+//
+// If there is a definition that corresponds to this generic function, dispatch
+// off of it.  Otherwise, try changing into a known or error call.
+define method optimize-general-call-ctv
+    (component :: <component>, call :: <general-call>, ctv :: <ct-function>)
     => ();
   let defn = ctv.ct-function-definition;
   if (defn)
-    optimize-unknown-call-defn(component, call, defn);
+    optimize-general-call-defn(component, call, defn);
   else
     assert(~instance?(ctv, <ct-generic-function>));
     let sig = ctv.ct-function-signature;
     maybe-restrict-type(component, call, sig.returns);
-    maybe-change-to-known-or-error-call(component, call, sig,
-					ctv.ct-function-name);
+    maybe-change-to-known-or-error-call
+      (component, call, sig, ctv.ct-function-name, #f, #f);
   end;
-end method optimize-unknown-call-ctv;
+end method optimize-general-call-ctv;
 
 
 /// Generic function optimization
 
+// optimize-generic -- internal.
+//
+// Called by optimize-general-call-defn when given a <generic-definition>.
+//
 define method optimize-generic
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <generic-definition>, arg-types :: <list>,
-     arg-leaves :: <list>)
+    (component :: <component>, call :: <general-call>,
+     defn :: <generic-definition>)
     => ();
+  if (call.use-generic-entry?)
+    error("Trying to pass a generic function next-method information?");
+  end;
+
   block (return)
-    if (maybe-transform-call(component, call))
+    let sig = defn.function-defn-signature;
+
+    let call-is
+      = compare-call-against-signature(call, sig, #f, defn.defn-name);
+
+    if (call-is == #"bogus")
+      change-call-kind(component, call, <error-call>);
       return();
     end if;
-    local
-      method change-to-error ()
-	if (instance?(call, <known-call>))
-	  // We can't just change a <known-call> into an <error-call> because
-	  // all the #rest args are lumped into a vector.
-	  let builder = make-builder(component);
-	  let new-call
-	    = make-operation(builder, <error-call>,
-			     pair(call.depends-on.source-exp, arg-leaves));
-	  replace-expression(component, call.dependents, new-call);
-	else
-	  change-call-kind(component, call, <error-call>);
-	end;
-	return();
-      end method change-to-error;
 
-    let (definitely, maybe) = ct-applicable-methods(defn, arg-types);
+    maybe-restrict-type(component, call, sig.returns);
+
+    if (call-is == #"valid" & instance?(call, <unknown-call>)
+	  & maybe-transform-call(component, call))
+      return();
+    end if;
+
+    let positional-arg-types
+      = extract-positional-arg-types(call, sig.specializers.size);
+    let (definitely, maybe)
+      = ct-applicable-methods(defn, positional-arg-types);
     if (definitely == #f)
       return();
     end if;
 
+    // If there are no applicable methods, then puke.
     let applicable = concatenate(definitely, maybe);
-
     if (applicable == #())
-      no-applicable-methods-warning(call, defn, arg-types);
-      change-to-error();
+      no-applicable-methods-warning(call, defn, positional-arg-types);
+      change-call-kind(component, call, <error-call>);
+      return();
     end if;
 
     // Improve the result type based on the actually applicable methods.
@@ -323,122 +328,158 @@ define method optimize-generic
       maybe-restrict-type(component, call, result-type);
     end for;
 
-    // Blow out of here if applicable isn't a valid set of methods.
+    // Blow out of here if we can't tell exactly what methods are (or can
+    // be) applicable.
     unless (maybe == #() | (maybe.tail == #() & definitely == #()))
       return();
     end unless;
 
-    // Compute the set of valid keywords.
-    let sig = defn.function-defn-signature;
-    let valid-keys
-      = if (sig.key-infos)
-	  if (sig.all-keys?)
-	    #"all";
-	  else
-	    block (return)
-	      reduce(method (keys :: <simple-object-vector>,
-			     meth :: <method-definition>)
-			 => res :: <simple-object-vector>;
-		       let sig = meth.function-defn-signature;
-		       if (sig.all-keys?)
-			 return(#"all");
-		       end if;
-		       union(keys, map(key-name, sig.key-infos));
-		     end method,
-		     #[],
-		     applicable);
-	    end block;
-	  end if;
-	else
-	  #f;
-	end if;
-
-    // Check the keyword arguments for validity.
-    if (valid-keys)
-      let bogus? = #f;
-      for (remaining = arg-leaves then remaining.tail,
-	   fixed in arg-types,
-	   index from 0)
-      finally
-	for (remaining = remaining then remaining.tail.tail,
-	     index from index by 2,
-	     until: remaining == #())
-	  let key-leaf = remaining.head;
-	  
-	  if (~instance?(key-leaf, <literal-constant>))
-	    unless (ctypes-intersect?(key-leaf.derived-type,
-				      specifier-type(#"<symbol>")))
-	      compiler-warning-location
-		(call.dependents.dependent,
-		 "Bogus keyword as %s argument in call of %s",
-		 integer-to-english(index + 1, as: #"ordinal"),
-		 defn.defn-name);
-	      bogus? := #t;
-	    end;
-	  elseif (instance?(key-leaf.value, <literal-symbol>))
-	    unless (valid-keys == #"all"
-		      | member?(key-leaf.value.literal-value, valid-keys))
-	      compiler-warning-location
-		(call.dependents.dependent,
-		 "Unrecognized keyword (%s) as %s argument in call of %s",
-		 key-leaf.value.literal-value,
-		 integer-to-english(index + 1, as: #"ordinal"),
-		 defn.defn-name);
-	      bogus? := #t;
-	    end;
-	  else
-	    compiler-warning-location
-	      (call.dependents.dependent,
-	       "Bogus keyword (%s) as %s argument in call of %s",
-	       key-leaf.value,
-	       integer-to-english(index + 1, as: #"ordinal"),
-	       defn.defn-name);
-	    bogus? := #t;
-	  end;
-
-	  if (remaining.tail == #())
-	    compiler-warning-location
-	      (call.dependents.dependent,
-	       "Odd number of keyword/value arguments in call of %s.",
-	       defn.defn-name);
-	    change-to-error();
-	  end if;
-	end for;
-      end for;
-      if (bogus?)
-	change-to-error();
+    // Sort the applicable methods.
+    let (ordered, ambiguous) = sort-methods(applicable, #f);
+    if (ordered)
+      if (ordered == #())
+	ambiguous-method-warning(call, defn, ambiguous, positional-arg-types);
+	change-call-kind(component, call, <error-call>);
+	return();
+      else
+	maybe-restrict-type
+	  (component, call, ordered.head.function-defn-signature.returns);
       end if;
     end if;
 
-    // Sort the applicable methods.
-    let (ordered, ambiguous) = sort-methods(applicable, #f);
+    // What we can do from here on depends on whether we are a mv-call or an
+    // unknown-call.
 
-    if (ordered == #f)
-      // We can't tell jack about how to order the methods.  So just change
-      // to a known call of the discriminator if possible.
-      return();
-    end if;
+    select (call by instance?)
+      <mv-call> =>
+	
+	// The function takes keyword arguments, we have no way to validate
+	// them.  And if ordered is #f, we can't tell what method to call.
+	// Either way, we can't select a method.
+	unless (sig.key-infos | ordered == #f)
 
-    if (ordered == #())
-      // It's ambiguous which is the most specific method.  So bitch.
-      ambiguous-method-warning(call, defn, ambiguous, arg-types);
-      change-to-error();
-    end if;
-    
-    // Change to an unknown call of the most specific method.
-    let builder = make-builder(component);
-    let assign = call.dependents.dependent;
-    let policy = assign.policy;
-    let source = assign.source-location;
-    let new-func = build-defn-ref(builder, policy, source, ordered.head);
-    let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
-    insert-before(component, assign, builder-result(builder));
-    let new-call = make-unknown-call(builder, new-func, next-leaf, arg-leaves);
-    replace-expression(component, call.dependents, new-call);
+	  // Change to an mv-call of the most specific method.
+	  let builder = make-builder(component);
+	  let assign = call.dependents.dependent;
+	  let policy = assign.policy;
+	  let source = assign.source-location;
+	  let new-func = build-defn-ref(builder, policy, source, ordered.head);
+	  let next-leaf
+	    = make-next-method-info-leaf(builder, ordered, ambiguous);
+	  insert-before(component, assign, builder-result(builder));
+	  let cluster = call.depends-on.dependent-next.source-exp;
+	  let new-call = make-operation(builder, <mv-call>,
+					list(new-func, next-leaf, cluster),
+					use-generic-entry: #t);
+	  replace-expression(component, call.dependents, new-call);
+	end unless;
+
+      <unknown-call> =>
+
+	// If the function takes keywords, we can only select the method if
+	// we can tell that all the keywords are in fact keywords.
+	if (sig.key-infos)
+
+	  // First, compute the set of recognized keywords.
+	  let recognized
+	    = if (sig.all-keys?)
+		#"all";
+	      else
+		block (return)
+		  reduce(method (keys :: <simple-object-vector>,
+				 meth :: <method-definition>)
+			     => res :: <simple-object-vector>;
+			   let sig = meth.function-defn-signature;
+			   if (sig.all-keys?)
+			     return(#"all");
+			   end if;
+			   union(keys, map(key-name, sig.key-infos));
+			 end method,
+			 #[],
+			 applicable);
+		end block;
+	      end if;
+	  
+	  // Now check each keyword/value argument.
+	  let bogus? = #f;
+	  let cant-tell? = #f;
+	  for (dep = call.depends-on.dependent-next then dep.dependent-next,
+	       index from 0 below sig.specializers.size)
+	  finally
+	    for (dep = dep then dep.dependent-next.dependent-next,
+		 index from index by 2,
+		 while: dep)
+	      let key-leaf = dep.source-exp;
+
+	      if (instance?(key-leaf, <literal-constant>))
+		let ctv = key-leaf.value;
+		assert(instance?(ctv, <literal-symbol>));
+		unless (recognized == #"all"
+			  | member?(ctv.literal-value, recognized))
+		  compiler-warning-location
+		    (call.dependents.dependent,
+		     "Unrecognized keyword (%s) as the %s argument"
+		       " in call of %s",
+		     key-leaf.value.literal-value,
+		     integer-to-english(index + 1, as: #"ordinal"),
+		     defn.defn-name);
+		  bogus? := #t;
+		end unless;
+	      else
+		cant-tell? := #t;
+	      end if;
+	    end for;
+	  end for;
+	  if (bogus?)
+	    change-call-kind(component, call, <error-call>);
+	    return();
+	  elseif (cant-tell?)
+	    return();
+	  end if;
+	end if;
+	
+	// Change to an unknown call of the most specific method.
+	let builder = make-builder(component);
+	let assign = call.dependents.dependent;
+	let policy = assign.policy;
+	let source = assign.source-location;
+	let new-func = build-defn-ref(builder, policy, source, ordered.head);
+	let next-leaf
+	  = make-next-method-info-leaf(builder, ordered, ambiguous);
+	insert-before(component, assign, builder-result(builder));
+	let new-call
+	  = (make-unknown-call
+	       (builder, new-func, next-leaf,
+		listify-dependencies(call.depends-on.dependent-next)));
+	replace-expression(component, call.dependents, new-call);
+    end select;
   end block;
 end method optimize-generic;
 
 
+define method extract-positional-arg-types
+    (call :: <unknown-call>, count :: <integer>) => types :: <list>;
+  for (dep = call.depends-on.dependent-next then dep.dependent-next,
+       index from 0 below count,
+       types = #() then pair(dep.source-exp.derived-type, types))
+  finally
+    reverse!(types);
+  end for;
+end method extract-positional-arg-types;
+
+define method extract-positional-arg-types
+    (call :: <mv-call>, count :: <integer>) => types :: <list>;
+  let cluster-type = call.depends-on.dependent-next.source-exp.derived-type;
+  let types = cluster-type.positional-types;
+  if (types.size < count)
+    concatenate(types,
+		make(<list>, size: count - types.size,
+		     fill: cluster-type.rest-value-type));
+  else
+    copy-sequence(types, end: count);
+  end if;
+end method extract-positional-arg-types;
+    
 
 
 define method ambiguous-method-warning
@@ -458,9 +499,9 @@ define method ambiguous-method-warning
   for (meth in ambiguous)
     format(stream, "    %s\n", meth.defn-name);
   end;
-  compiler-warning-location
+  compiler-error-location
     (call.dependents.dependent,
-     "Can't pick between\n%s\n  when given arguments of types:\n%s",
+     "Can't order\n%s\n  when given positional arguments of types:\n%s",
      stream.string-output-stream-string,
      arg-types-string);
 end;
@@ -479,7 +520,7 @@ define method no-applicable-methods-warning
   end;
   write(")", stream);
   let arg-types-string = stream.string-output-stream-string;
-  compiler-warning-location
+  compiler-error-location
     (call.dependents.dependent,
      "No applicable methods for argument types\n%s\n  in call of %s",
      arg-types-string,
@@ -519,14 +560,30 @@ define method make-next-method-info-leaf
   end;
 end;
 
+
 
 // Call manipulation utilities.
 
+define method assert-function-type
+    (component :: <component>, call :: <general-call>) => ();
+  //
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
+end method assert-function-type;
+
+
 define method maybe-change-to-known-or-error-call
-    (component :: <component>, call :: <unknown-call>, sig :: <signature>,
-     func-name :: type-union(<name>, <string>))
+    (component :: <component>, call :: <general-call>, sig :: <signature>,
+     func-name :: type-union(<name>, <string>),
+     inline-function :: false-or(<function-literal>),
+     hairy? :: <boolean>)
     => ();
-  select (compare-unknown-call-against-signature(call, sig, func-name))
+  select (compare-call-against-signature(call, sig, #t, func-name))
     #"bogus" =>
       if (call.use-generic-entry?)
 	error("bogus call w/ next?");
@@ -534,7 +591,14 @@ define method maybe-change-to-known-or-error-call
       change-call-kind(component, call, <error-call>);
 
     #"valid" =>
-      convert-to-known-call(component, sig, call);
+      if (inline-function)
+	let old-head = component.reoptimize-queue;
+	let new-func = clone-function(component, inline-function);
+	reverse-queue(component, old-head);
+	replace-expression(component, call.depends-on, new-func);
+      elseif (~hairy?)
+	convert-to-known-call(component, sig, call);
+      end;
 
     #"can't tell" =>
       #f;
@@ -542,8 +606,13 @@ define method maybe-change-to-known-or-error-call
 end;
 
 
-define method compare-unknown-call-against-signature
-    (call :: <unknown-call>, sig :: <signature>,
+define generic compare-call-against-signature
+    (call :: <general-call>, sig :: <signature>, check-keywords? :: <boolean>,
+     func-name :: type-union(<name>, <string>))
+    => res :: one-of(#"bogus", #"valid", #"can't tell");  
+
+define method compare-call-against-signature
+    (call :: <unknown-call>, sig :: <signature>, check-keywords? :: <boolean>,
      func-name :: type-union(<name>, <string>))
     => res :: one-of(#"bogus", #"valid", #"can't tell");
 
@@ -582,7 +651,7 @@ define method compare-unknown-call-against-signature
       unless (ctypes-intersect?(arg-dep.source-exp.derived-type, spec))
 	compiler-warning-location
 	  (call.dependents.dependent,
-	   "Wrong type for %s argument in call of %s.\n"
+	   "Wrong type for the %s argument in call of %s.\n"
 	     "  Wanted %s, but got %s",
 	   integer-to-english(count + 1, as: #"ordinal"),
 	   func-name,
@@ -611,7 +680,7 @@ define method compare-unknown-call-against-signature
 				      specifier-type(#"<symbol>")))
 	      compiler-warning-location
 		(call.dependents.dependent,
-		 "Bogus keyword as %s argument in call of %s",
+		 "Bogus keyword as the %s argument in call of %s",
 		 integer-to-english(count + 1, as: #"ordinal"),
 		 func-name);
 	      bogus? := #t;
@@ -637,10 +706,11 @@ define method compare-unknown-call-against-signature
 		found-key? := #t;
 	      end if;
 	    end for;
-	    unless (found-key? | sig.all-keys? | call.use-generic-entry?)
+	    unless (found-key? | sig.all-keys? | call.use-generic-entry?
+		      | ~check-keywords?)
 	      compiler-warning-location
 		(call.dependents.dependent,
-		 "Unrecognized keyword (%s) as %s argument in call of %s",
+		 "Unrecognized keyword (%s) as the %s argument in call of %s",
 		 key,
 		 integer-to-english(count + 1, as: #"ordinal"),
 		 func-name);
@@ -649,7 +719,7 @@ define method compare-unknown-call-against-signature
 	  else
 	    compiler-warning-location
 	      (call.dependents.dependent,
-	       "Bogus keyword (%s) as %s argument in call of %s",
+	       "Bogus keyword (%s) as the %s argument in call of %s",
 	       leaf.value,
 	       integer-to-english(count + 1, as: #"ordinal"),
 	       func-name);
@@ -686,7 +756,7 @@ define method compare-unknown-call-against-signature
 				    sig.rest-type))
 	    compiler-warning-location
 	      (call.dependents.dependent,
-	       "Wrong type for %s argument in call of %s.\n"
+	       "Wrong type for the %s argument in call of %s.\n"
 		 "  Wanted %s, but got %s",
 	       integer-to-english(count + 1, as: #"ordinal"),
 	       func-name,
@@ -719,8 +789,148 @@ define method compare-unknown-call-against-signature
   else
     #"can't tell";
   end;
-end;
+end method compare-call-against-signature;
 
+define method compare-call-against-signature
+    (call :: <mv-call>, sig :: <signature>, check-keywords? :: <boolean>,
+     func-name :: type-union(<name>, <string>))
+    => res :: one-of(#"bogus", #"valid", #"can't tell");
+
+  block (return)
+
+    let (next-method-info, cluster)
+      = if (call.use-generic-entry?)
+	  let dep = call.depends-on.dependent-next;
+	  values(dep.source-exp, dep.dependent-next.source-exp);
+	else
+	  values(#f, call.depends-on.dependent-next.source-exp);
+	end;
+    let cluster-type = cluster.derived-type;
+
+    let bogus? = #f;
+    for (gf-spec in sig.specializers,
+	 index from 0)
+      let arg-type = element(cluster-type.positional-types, index,
+			     default: cluster-type.rest-value-type);
+      if (arg-type == empty-ctype())
+	// Can't have enough arguments.
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Not enough arguments in call of %s.\n"
+	     "  Wanted %s %d, but got no more than %d.",
+	   func-name,
+	   if (sig.rest-type | sig.key-infos)
+	     "at least";
+	   else
+	     "exactly";
+	   end,
+	   sig.specializers.size,
+	   index);
+	return(#"bogus");
+      elseif (~ctypes-intersect?(arg-type, gf-spec))
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Wrong type for %s argument in call of %s.\n"
+	     "  Wanted %s, but got %s.",
+	   integer-to-english(index + 1, as: #"ordinal"),
+	   func-name,
+	   gf-spec,
+	   arg-type);
+	bogus? := #t;
+      end;
+    end for;
+
+    if (sig.key-infos & (check-keywords? | ~call.use-generic-entry?))
+      //
+      // The function takes keyword arguments and we have to either check
+      // or validate them.  But we have no way of doing that at compile
+      // time as long as the call remains an mv-call.
+      if (bogus?)
+	return(#"bogus");
+      else
+	return(#"can't tell");
+      end if;
+    end if;
+    
+    if (sig.rest-type)
+      //
+      // The function takes a variable number of arguments.  Make sure all
+      // the arguments past the positionals are of the rest-type.
+      unless (sig.rest-type == object-ctype())
+	for (index from sig.specializers.size
+	       below cluster-type.positional-types.size)
+	  let arg-type = cluster-type.positional-types[index];
+	  unless (ctypes-intersect?(arg-type, sig.rest-type))
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Wrong type for %s argument in call of %s.\n"
+		 "  Wanted %s, but got %s.",
+	       integer-to-english(index + 1, as: #"ordinal"),
+	       func-name,
+	       sig.rest-type,
+	       arg-type);
+	    bogus? := #t;
+	  end unless;
+	end for;
+	unless (ctypes-intersect?(cluster-type.rest-value-type, sig.rest-type))
+	  compiler-warning-location
+	    (call.dependents.dependent,
+	     "Wrong type for the %s argument and on in call of %s.\n"
+	       "  Wanted %s, but got %s.",
+	     integer-to-english
+	       (cluster-type.positional-types.size + 1, as: #"ordinal"),
+	     func-name,
+	     sig.rest-type,
+	     cluster-type.rest-value-type);
+	  bogus? := #t;
+	end unless;
+      end unless;
+
+      if (bogus?)
+	#"bogus";
+      elseif (cluster-type.min-values < sig.specializers.size)
+	#"can't tell";
+      else
+	#"valid";
+      end if;
+	
+    else
+      //
+      // There are a fixed number of values.  Make sure we don't have too
+      // many.
+      if (cluster-type.min-values > sig.specializers.size)
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Too many arguments in call of %s.\n"
+	     "  Wanted exactly %d, but got at least %d.",
+	   func-name,
+	   sig.specializers.size,
+	   cluster-type.min-values);
+	#"bogus";
+      elseif (bogus?)
+	#"bogus";
+      else
+	//
+	// The call can't be guaranteed valid, because for it to be valid it
+	// would have to have exactly the correct number of arguments.  But
+	// if it had exactly the correct number of arguments, the stuff to
+	// spread the cluster out into a fixed number of single-value variables
+	// would have picked it off.
+	#"can't tell";
+      end if;
+    end if;
+  end block;
+end method compare-call-against-signature;
+
+
+
+// convert-to-known-call -- internal.
+//
+// Convert the call to a known call.  The call is known to be valid.
+// 
+define generic convert-to-known-call
+    (component :: <component>, sig :: <signature>, call :: <general-call>)
+    => ();
 
 define method convert-to-known-call
     (component :: <component>, sig :: <signature>, call :: <unknown-call>)
@@ -814,6 +1024,78 @@ define method convert-to-known-call
   end;
 end;
 
+define method convert-to-known-call
+    (component :: <component>, sig :: <signature>, call :: <mv-call>)
+    => ();
+  let (next-method-info, cluster)
+    = if (call.use-generic-entry?)
+	let dep = call.depends-on.dependent-next;
+	values(dep.source-exp, dep.dependent-next.source-exp);
+      else
+	values(#f, call.depends-on.dependent-next.source-exp);
+      end;
+
+  let assign = call.dependents.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+
+  let builder = make-builder(component);
+  
+
+  let vars = make(<stretchy-vector>);
+  let args = make(<stretchy-vector>);
+
+  // Add the original function to the arguments.
+  add!(args, call.depends-on.source-exp);
+
+  // Add variables for all the fixed arguments.
+  for (spec in sig.specializers)
+    let var = make-local-var(builder, #"temp", spec);
+    add!(vars, var);
+    add!(args, var);
+  end for;
+
+  // If there is a #next parameter, add something for it.
+  if (sig.next?)
+    if (next-method-info)
+      add!(args, next-method-info);
+    else
+      add!(args, make-literal-constant(builder, as(<ct-value>, #())));
+    end;
+  end;
+
+  // There must be a rest var for us to be making a known call out of a
+  // mv-call.  Not only that, but it better be <object> because we can't check
+  // the types of the rest arguments.
+  assert(sig.rest-type == object-ctype());
+
+  // Add a variable for the rest.
+  let var = make-local-var(builder, #"temp", object-ctype());
+  add!(vars, var);
+  add!(args, var);
+
+  // There can't be any keyword arguments.
+  assert(sig.key-infos == #f | sig.key-infos.empty?);
+
+  // Use canonicalize-results to split the cluster up.
+  build-assignment
+    (builder, policy, source, as(<list>, vars),
+     make-operation
+       (builder, <primitive>,
+	list(cluster,
+	     make-literal-constant
+	       (builder, as(<ct-value>, sig.specializers.size))),
+	name: #"canonicalize-results"));
+
+  // Insert the assignment.
+  insert-before(component, assign, builder-result(builder));
+
+  // Replace the call.
+  replace-expression
+    (component, call.dependents,
+     make-operation(builder, <known-call>, as(<list>, args)));
+end method convert-to-known-call;
+    
 
 
 define method change-call-kind
@@ -841,6 +1123,7 @@ end;
 
 
 // Known call optimization.
+
 
 define method optimize
     (component :: <component>, call :: <known-call>) => ();
@@ -1065,257 +1348,6 @@ define method optimize-slot-set
 end;
 
 
-// <error-call> optimization.
-//
-// We only make <error-call>s when we want to give up.
-// 
-define method optimize (component :: <component>, call :: <error-call>) => ();
-end;
-
-
-// <mv-call> optimization.
-//
-// If the cluster feeding the mv call has a fixed number of values, then
-// convert the <mv-call> into an <unknown-call>.  Otherwise, dispatch of
-// the kind of function.
-// 
-define method optimize (component :: <component>, call :: <mv-call>) => ();
-  let cluster
-    = if (call.use-generic-entry?)
-	call.depends-on.dependent-next.dependent-next.source-exp;
-      else
-	call.depends-on.dependent-next.source-exp;
-      end;
-  if (maybe-expand-cluster(component, cluster))
-    change-call-kind(component, call, <unknown-call>,
-		     use-generic-entry: call.use-generic-entry?);
-  else
-    optimize-mv-call-leaf
-      (component, call, cluster, call.depends-on.source-exp);
-  end if;
-end method optimize;
-
-
-define generic optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <leaf>)
-    => ();
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <leaf>)
-    => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end method optimize-mv-call-leaf;
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <ssa-variable>)
-    => ();
-  let func = func.definer.depends-on.source-exp;
-  if (instance?(func, <primitive>)
-	& func.primitive-name == #"make-next-method")
-    assert(~call.use-generic-entry?);
-    expand-next-method-call-ref
-      (component, call.dependents, cluster, func);
-  else
-    // Assert that the function is a function.
-    assert-type(component, call.dependents.dependent, call.depends-on,
-		if (call.use-generic-entry?)
-		  specifier-type(#"<method>");
-		else
-		  function-ctype();
-		end);
-  end;
-end method optimize-mv-call-leaf;
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <function-literal>)
-    => ();
-  maybe-restrict-type(component, call, func.main-entry.result-type);
-end method optimize-mv-call-leaf;
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <definition-constant-leaf>)
-    => ();
-  optimize-mv-call-defn(component, call, cluster, func.const-defn);
-end;
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <literal-constant>)
-    => ();
-  if (func.value == dylan-value(#"values"))
-    replace-expression(component, call.dependents, cluster);
-  else
-    optimize-mv-call-ctv(component, call, cluster, func.value);
-  end if;
-end method optimize-mv-call-leaf;
-
-define method optimize-mv-call-leaf
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     func :: <exit-function>)
-    => ();
-  expand-exit-function(component, call, func, cluster);
-end method optimize-mv-call-leaf;
-
-
-define generic optimize-mv-call-defn
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     defn :: <definition>)
-    => ();
-
-define method optimize-mv-call-defn
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     defn :: <abstract-constant-definition>)
-    => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end;
-
-define method optimize-mv-call-defn
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     defn :: <function-definition>)
-    => ();
-  maybe-restrict-type(component, call, defn.function-defn-signature.returns);
-end method optimize-mv-call-defn;
-
-define method optimize-mv-call-defn
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     defn :: <generic-definition>)
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-
-  if (call.use-generic-entry?)
-    error("Trying to pass a generic function next-method information?");
-  end;
-
-  block (return)
-    for (spec in sig.specializers,
-	 index from 0,
-	 arg-types = #()
-	   then pair(defaulted-type(cluster.derived-type, index), arg-types))
-    finally
-      let arg-types = reverse!(arg-types);
-      let (definitely, maybe) = ct-applicable-methods(defn, arg-types);
-      if (definitely == #f)
-	return();
-      end if;
-      
-      let applicable = concatenate(definitely, maybe);
-      
-      if (applicable == #())
-	no-applicable-methods-warning(call, defn, arg-types);
-	return();
-      end if;
-      
-      // Improve the result type based on the actually applicable methods.
-      for (meth in applicable,
-	   result-type = empty-ctype()
-	     then values-type-union(result-type,
-				    meth.function-defn-signature.returns))
-      finally
-	maybe-restrict-type(component, call, result-type);
-      end for;
-      
-      // Blow out of here if applicable isn't a valid set of methods.
-      unless (maybe == #() | (maybe.tail == #() & definitely == #()))
-	return();
-      end unless;
-
-      // Sort the applicable methods.
-      let (ordered, ambiguous) = sort-methods(applicable, #f);
-
-      if (ordered == #f)
-	// We can't tell jack about how to order the methods.  So just change
-	// to a known call of the discriminator if possible.
-	return();
-      end if;
-
-      if (ordered == #())
-	// It's ambiguous which is the most specific method.  So bitch.
-	ambiguous-method-warning(call, defn, ambiguous, arg-types);
-	return();
-      end if;
-    
-      // Change to an mv-call of the most specific method.
-      let builder = make-builder(component);
-      let assign = call.dependents.dependent;
-      let policy = assign.policy;
-      let source = assign.source-location;
-      let new-func = build-defn-ref(builder, policy, source, ordered.head);
-      let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
-      insert-before(component, assign, builder-result(builder));
-      let new-call = make-operation(builder, <mv-call>,
-				    list(new-func, next-leaf, cluster),
-				    use-generic-entry: #t);
-      replace-expression(component, call.dependents, new-call);
-    end for;
-  end block;
-end method optimize-mv-call-defn;
-
-
-define method optimize-mv-call-defn
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     defn :: <abstract-method-definition>)
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  //
-  // We do not do any inlining, because as long as it is an mv-call we are
-  // going to have to use the general/generic entry.  So there is nothing to
-  // be gained by inlining (we'll have a full call either way).
-end;
-
-
-define generic optimize-mv-call-ctv
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     ctv :: <ct-value>)
-    => ();
-
-define method optimize-mv-call-ctv
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     ctv :: <ct-value>)
-    => ();
-  // Assert that the function is a function.  It isn't, but this is a handy
-  // way of generating an error message.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end method optimize-mv-call-ctv;
-
-define method optimize-mv-call-ctv
-    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
-     ctv :: <ct-function>)
-    => ();
-  let defn = ctv.ct-function-definition;
-  if (defn)
-    optimize-mv-call-defn(component, call, cluster, defn);
-  else
-    assert(~instance?(ctv, <ct-generic-function>));
-    let sig = ctv.ct-function-signature;
-    maybe-restrict-type(component, call, sig.returns);
-  end;
-end method optimize-mv-call-ctv;
-
-
 // next-method invocation magic.
 
 define method expand-next-method-call-ref
@@ -1486,5 +1518,6 @@ define method expand-next-method-call-ref
   end-body(builder); // the no-next-method test.
 
   insert-before(component, assign, builder-result(builder));
-  replace-expression(component, dep, op); 
+  replace-expression(component, dep, op);
 end method expand-next-method-call-ref;
+
