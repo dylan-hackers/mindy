@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.4 1995/12/09 02:47:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.5 1995/12/11 21:03:14 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -23,9 +23,11 @@ define method initialize
   table.resize-threshold := floor/(size * 3, 2);
 end method initialize;
 
-define method symbol-hash (str :: <byte-string>) => (result :: <integer>);
-  for (hash = 0 then abs(logxor(logior(ash(hash, 5), ash(hash, -27)),
-				logior(as(<integer>, char), #x20))),
+define method symbol-hash
+    (str :: <byte-string>) => (result :: <fixed-integer>);
+  for (hash :: <fixed-integer> = 0
+	 then abs(logxor(logior(ash(hash, 5), ash(hash, -27)),
+			 logior(as(<fixed-integer>, char), #x20))),
        char in str)
   finally
     hash;
@@ -97,8 +99,8 @@ define sealed method make
     (class == <symbol>, #next next-method, #key string :: <string>)
  => (res :: <symbol>);
 //  let string :: <byte-string> = as(<byte-string>, string);
-  let hash :: <integer> = symbol-hash(string);
-  let cell-index :: <integer> = modulo(hash, $symbol-table.cell-count);
+  let hash :: <fixed-integer> = symbol-hash(string);
+  let cell-index :: <fixed-integer> = modulo(hash, $symbol-table.cell-count);
 
   block (return)
     for (sym = $symbol-table.cells[cell-index]
