@@ -52,7 +52,7 @@ rcs-header: $Header:
 // compilation environment for a Sparc Solaris machine (sun4_55).
 //======================================================================
 
-// default defines came from "gcc -v anyfile.c"
+// default defines came from "gcc -dM -E -o - dummy.c"
 //
 define constant $default-defines
   = #["const", "",
@@ -70,7 +70,9 @@ define constant $default-defines
       "__unix", "",
 // Both gcc and Solaris cc support 64-bits long long int
 //      "_NO_LONGLONG", "",
-      "__STDC__", ""
+      "__STDC__", "",
+      "__PTRDIFF_TYPE__", "int",
+      "__SIZE_TYPE__", "unsigned int"
 ];
 
   
