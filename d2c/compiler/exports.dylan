@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.99 1995/11/09 17:34:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.100 1995/11/09 23:36:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -646,7 +646,9 @@ define module c-representation
     representation-to-more-general, representation-from-more-general,
     representation-c-type,
 
-    <general-representation>, <immediate-representation>,
+    <general-representation>,
+    <heap-representation>,
+    <immediate-representation>,
 
     <data-word-representation>, representation-class,
     representation-data-word-member,
