@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.34 1995/12/16 02:35:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.35 1995/12/18 17:28:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -174,7 +174,7 @@ end;
 ///   limited-int -- #f, 'cause singleton integers don't exist due to
 ///     canonicalization.
 ///   class -- subtype?(base-class, class)
-///   direct -- subtype?(singleton.base-class, direct)
+///   direct -- singleton.base-class == direct.base-class)
 ///   byte-char -- is the singleton a byte-character?
 ///   heap-instance -- subtype?(base-class, heap-inst)
 /// limited integer:
@@ -183,7 +183,7 @@ end;
 ///   limited integer -- the base classes are subtype? and the ranges are in
 ///     order
 ///   class -- subtype?(base-class, class)
-///   direct -- subtype?(limint.base-class, direct)
+///   direct -- limint.base-class == direct.base-class
 ///   byte-char -- #f
 ///   heap-instance -- subtype?(base-class, heap-inst)
 /// class:
@@ -192,7 +192,7 @@ end;
 ///   limited integer -- #f, 'cause infinate bound limited integers are
 ///     canonicalized back to the base class.
 ///   class -- check the class precedence list
-///   direct -- class == direct.base-class, sealed, and no subclasses
+///   direct -- #f, 'cause direct-type(leaf-class) => leaf-class
 ///   byte-char -- #f
 ///   heap-instance -- #t if the class is guarenteed to be heap allocated.
 /// Direct:
@@ -205,8 +205,8 @@ end;
 /// byte-char:
 ///   singleton -- #f.
 ///   limited-int -- #f.
-///   class -- subtype?(base-class, class)
-///   direct -- subtype?(base-class, direct)
+///   class -- subtype?(bchar.base-class, class)
+///   direct -- bchar.base-class == direct.base-class
 ///   byte-char -- can't happen, cause == types are picked off.
 ///   heap-instance -- #t iff the base-class is heap allocated.
 /// heap-instance:
@@ -908,6 +908,13 @@ define method print-message
     (type :: <direct-instance-ctype>, stream :: <stream>) => ();
   format(stream, "direct-instances-of(%s)", type.base-class);
 end;
+
+define method csubtype-dispatch
+    (type1 :: <limited-ctype>, type2 :: <direct-instance-ctype>)
+    => result :: <boolean>;
+  type1.base-class == type2.base-class;
+end method csubtype-dispatch;
+
 
 
 //// Singleton types:
