@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.18 1996/03/27 23:59:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.19 1996/04/08 08:28:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1191,8 +1191,8 @@ define class <pattern-keyword> (<pattern-variable>)
   // are all effectivly at-end.
   inherited slot patvar-at-end?, init-value: #t;
   //
-  // The default expression, or #f if none.
-  constant slot patkey-default :: false-or(<expression-parse>),
+  // The default, or #f if none.
+  constant slot patkey-default :: false-or(<template>),
     required-init-keyword: default:;
   //
   // #t if the word should be bound to a sequence of all the occurences of the

@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.18 1996/04/06 07:17:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.19 1996/04/08 08:28:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -939,7 +939,8 @@ define class <pattern-binding> (<object>)
     required-init-keyword: variable:;
   //
   // The fragment or a vector of fragments that this variable is bound to.
-  slot pattern-binding-value :: type-union(<fragment>, <simple-object-vector>),
+  slot pattern-binding-value
+      :: type-union(<fragment>, <template>, <simple-object-vector>),
     required-init-keyword: value:;
   //
   // Link for chaining pattern bindings together.
@@ -966,7 +967,7 @@ define constant <pattern-binding-set>
 // 
 define method add-binding
     (variable :: <pattern-variable>,
-     value :: type-union(<fragment>, <simple-object-vector>),
+     value :: type-union(<fragment>, <template>, <simple-object-vector>),
      bindings :: <pattern-binding-set>)
     => res :: <pattern-binding-set>;
   make(<pattern-binding>,
@@ -2377,7 +2378,7 @@ define method match
 	  // If the keyword wasn't supplied and there is a default, then
 	  // act like the default showed up once.
 	  if (empty?(this-result) & key.patkey-default)
-	    add!(this-result, make-parsed-fragment(key.patkey-default));
+	    add!(this-result, key.patkey-default);
 	  end if;
 	  //
 	  // Bind it up.
@@ -2405,8 +2406,7 @@ define method match
 	    // Note: the default is *not* supposed to be subject to the
 	    // constraint.
 	    if (key.patkey-default)
-	      let frag = make-parsed-fragment(key.patkey-default);
-	      results := add-binding(key, frag, results);
+	      results := add-binding(key, key.patkey-default, results);
 	    else
 	      return(fail());
 	    end if;
@@ -2458,7 +2458,7 @@ define generic append-element!
 define method find-atomic-value
     (varref :: <pattern-variable-reference>, bindings :: <pattern-binding-set>,
      name :: <symbol>, this-rule-set :: false-or(<symbol>))
-    => res :: <fragment>;
+    => res :: type-union(<fragment>, <template>);
   let binding = find-binding(bindings, varref, name, this-rule-set);
   let var = binding.pattern-binding-variable;
   if (instance?(var, <pattern-keyword>) & var.patkey-all?)
@@ -2634,9 +2634,27 @@ end method append-element!;
 
 
 define generic expand-value
-    (generator :: <expansion-generator>, value :: <fragment>,
+    (generator :: <expansion-generator>,
+     value :: type-union(<fragment>, <template>),
      aux-rule-set :: false-or(<auxiliary-rule-set>))
     => ();
+
+define method expand-value
+    (generator :: <expansion-generator>, value :: <template>,
+     aux-rule-set :: false-or(<auxiliary-rule-set>))
+    => ();
+  let desc = generator.generator-source.macro-source-description;
+  let srcloc = generator.generator-source.source-location;
+  let newsrc = make(<macro-source>, description: desc,
+		    source-location: srcloc);
+  let sub-generator = make(<expansion-generator>,
+			   call: generator.generator-call,
+			   source: newsrc,
+			   definition: generator.generator-macro-defn,
+			   uniquifier: generator.generator-uniquifier);
+  expand-template(sub-generator, value, #f, #f);
+  expand-value(generator, sub-generator.generator-fragment, aux-rule-set);
+end method expand-value;
 
 define method expand-value
     (generator :: <expansion-generator>, value :: <fragment>,
@@ -3023,20 +3041,6 @@ add-make-dumper
   (#"unhygienic-pattern-variable-reference", *compiler-dispatcher*,
    <unhygienic-pattern-variable-reference>,
    $pattern-variable-reference-slots);
-
-
-define constant $expression-parse-slots
-  = list(source-location, source-location:, #f);
-
-add-make-dumper
-  (#"literal-ref-parse", *compiler-dispatcher*, <literal-ref-parse>,
-   concatenate($expression-parse-slots,
-	       list(litref-literal, literal:, #f)));
-
-add-make-dumper
-  (#"varref-parse", *compiler-dispatcher*, <varref-parse>,
-   concatenate($expression-parse-slots,
-	       list(varref-id, id:, #f)));
 
 
 

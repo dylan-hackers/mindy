@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.33 1996/04/06 07:17:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.34 1996/04/08 08:27:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1935,34 +1935,112 @@ pattern-keywords-aux (pattern-keywords-aux COMMA pattern-keyword)
 
 :type pattern-keyword <pattern-keyword>
 
-pattern-keyword (QUESTION NAME default-opt)
+pattern-keyword (QUESTION NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
 	 simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, default: %3);
 %
 
-pattern-keyword (QUESTION CONSTRAINED-NAME default-opt)
+pattern-keyword (QUESTION CONSTRAINED-NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
 	 simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, constraint: %2.token-constraint, default: %3);
 %
 
-pattern-keyword (DOUBLE-QUESTION NAME default-opt)
+pattern-keyword (DOUBLE-QUESTION NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
 	 simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, default: %3, all: #t);
 %
 
-pattern-keyword (DOUBLE-QUESTION CONSTRAINED-NAME default-opt)
+pattern-keyword (DOUBLE-QUESTION CONSTRAINED-NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
 	 simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, constraint: %2.token-constraint,
        default: %3, all: #t);
 %
+
+
+:type macro-default-opt |false-or(<literal-template>)|
+
+macro-default-opt ()
+  #f;
+%
+
+macro-default-opt (EQUAL macro-default-elements)
+  make(<literal-template>, elements: as(<simple-object-vector>, %2));
+%
+
+
+:type macro-default-elements <stretchy-vector>
+
+macro-default-elements ()
+  stretchy-vector();
+%
+
+macro-default-elements (macro-default-elements macro-default-element)
+  add!(%1, %2);
+%
+
+
+:type macro-default-element
+    |type-union(<token>, <pattern-variable-reference>, <bracketed-element>)|
+
+macro-default-element (simple-template-element)
+  %1;
+%
+
+macro-default-element (LEFT-PAREN bracketed-macro-default-opt RIGHT-PAREN)
+  make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
+%
+
+macro-default-element (LEFT-BRACKET bracketed-macro-default-opt RIGHT-BRACKET)
+  make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
+%
+
+macro-default-element (LEFT-BRACE bracketed-macro-default-opt RIGHT-BRACE)
+  make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
+%
+
+macro-default-element (SHARP-PAREN bracketed-macro-default-opt RIGHT-PAREN)
+  make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
+%
+
+macro-default-element (SHARP-BRACKET bracketed-macro-default-opt RIGHT-BRACKET)
+  make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
+%
+
+
+:type bracketed-macro-default-opt <template>
+
+bracketed-macro-default-opt (bracketed-macro-default-elements)
+  make(<literal-template>, elements: as(<simple-object-vector>, %1));
+%
+
+
+:type bracketed-macro-default-elements <stretchy-vector>
+
+bracketed-macro-default-elements ()
+  stretchy-vector();
+%
+
+bracketed-macro-default-elements
+    (bracketed-macro-default-elements macro-default-element)
+  add!(%1, %2);
+%
+
+bracketed-macro-default-elements (bracketed-macro-default-elements COMMA)
+  add!(%1, %2);
+%
+
+bracketed-macro-default-elements (bracketed-macro-default-elements SEMICOLON)
+  add!(%1, %2);
+%
+
 
 :type template-opt <literal-template>
 
@@ -1983,23 +2061,7 @@ template-elements (template-elements template-element)
 :type template-element
     |type-union(<token>, <pattern-variable-reference>, <bracketed-element>)|
 
-template-element (NAME)
-  %1;
-%
-
-template-element (SYMBOL)
-  %1;
-%
-
-template-element (LITERAL)
-  %1;
-%
-
-template-element (STRING)
-  %1;
-%
-
-template-element (OPERATOR)
+template-element (simple-template-element)
   %1;
 %
 
@@ -2008,22 +2070,6 @@ template-element (SEMICOLON)
 %
 
 template-element (COMMA)
-  %1;
-%
-
-template-element (SHARP-WORD)
-  %1;
-%
-
-template-element (DOT)
-  %1;
-%
-
-template-element (DOUBLE-COLON)
-  %1;
-%
-
-template-element (ARROW)
   %1;
 %
 
@@ -2045,10 +2091,6 @@ template-element (SHARP-PAREN template-opt RIGHT-PAREN)
 
 template-element (SHARP-BRACKET template-opt RIGHT-BRACKET)
   make(<bracketed-element>, left-token: %1, guts: %2, right-token: %3);
-%
-
-template-element (PARSED-CONSTANT)
-  %1;
 %
 
 template-element (QUESTION NAME)
@@ -2123,7 +2165,51 @@ template-element (ELLIPSIS)
   make(<ellipsis-pattern-variable-reference>, name: %1);
 %
 
-template-element (QUESTION-EQUAL NAME)
+
+:type simple-template-element
+    |type-union(<token>, <pattern-variable-reference>)|
+
+simple-template-element (NAME)
+  %1;
+%
+
+simple-template-element (SYMBOL)
+  %1;
+%
+
+simple-template-element (LITERAL)
+  %1;
+%
+
+simple-template-element (STRING)
+  %1;
+%
+
+simple-template-element (OPERATOR)
+  %1;
+%
+
+simple-template-element (SHARP-WORD)
+  %1;
+%
+
+simple-template-element (DOT)
+  %1;
+%
+
+simple-template-element (DOUBLE-COLON)
+  %1;
+%
+
+simple-template-element (ARROW)
+  %1;
+%
+
+simple-template-element (PARSED-CONSTANT)
+  %1;
+%
+
+simple-template-element (QUESTION-EQUAL NAME)
   make(<unhygienic-pattern-variable-reference>, name: %2);
 %
 
