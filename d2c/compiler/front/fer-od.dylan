@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.3 1995/11/14 14:18:04 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.4 1995/11/14 21:58:02 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,7 +48,8 @@ end method;
 
 // For simple regions, call fer-dump-od on each assignment.  Note that there is
 // only one OD object kind for both simple and compound, but we need different
-// dump methods because the subobjects are threaded differently.
+// dump methods because the subobjects are threaded differently.  We squelch
+// prologue operations, since they are reinserted by the builder.
 //
 define method fer-dump-od 
   (obj :: <simple-region>, component :: <fer-component>, buf :: <dump-state>)
@@ -56,7 +57,11 @@ define method fer-dump-od
   ignore(component);
   let start = buf.current-pos;
   dump-definition-header(#"linear-region", buf, subobjects: #t);
-  for (assign = obj.first-assign then assign.next-op, while: assign)
+  let fass = obj.first-assign;
+  if (instance?(fass.depends-on.source-exp, <prologue>))
+    fass := fass.next-op;
+  end;
+  for (assign = fass then assign.next-op, while: assign)
     fer-dump-od(assign, component, buf);
   end;
   dump-end-entry(start, buf);
@@ -165,9 +170,10 @@ add-od-loader(*compiler-dispatcher*, #"block-region",
     let self = load-object-dispatch(state);
     resolve-forward-ref(self, res);
     load-object-dispatch(state);
-    let res = end-body(builder);
+    assert(res == end-body(builder));
     res.info := dinfo;
     assert-end-object(state);
+    res;
   end method
 );
 
@@ -486,12 +492,7 @@ add-make-dumper(#"uninitialized-value-leaf", *compiler-dispatcher*,
 		<uninitialized-value>, #());
 
 add-make-dumper(#"nlx-info", *compiler-dispatcher*, <nlx-info>,
-  list(nlx-hidden-references?, hidden-references:, #f,
-       nlx-catch, catch:, #f,
-       nlx-make-catcher, make-catcher:, #f,
-       nlx-exit-function, exit-function:, #f,
-       nlx-disable-catchers, disable-catchers:, #f,
-       nlx-throws, throws:, #f)
+  list(nlx-hidden-references?, hidden-references:, #f)
 );
 
 
@@ -599,8 +600,8 @@ add-od-loader(*compiler-dispatcher*, #"fer-lambda",
     				  name, arg-vars, result-type, hidden);
     resolve-forward-ref(self, res);
     load-object-dispatch(state);
-    assert-end-object(state);
     end-body(builder);
+    assert-end-object(state);
     res;
   end method
 );
