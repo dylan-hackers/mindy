@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.11 1995/04/30 05:55:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.12 1995/05/03 07:55:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -304,7 +304,9 @@ define class <singleton> (<type>) end;
 define class <union> (<type>) end;
 define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
-define class <class> (<type>) end;
+define class <class> (<type>)
+  slot unique-id :: <fixed-integer>;
+end;
 
 define abstract open class <number> (<object>) end;
 define abstract open class <complex> (<number>) end;
@@ -369,37 +371,29 @@ end;
 
 // Functions that need to be defined.
 
-define generic \== (x, y) => res :: <boolean>;
-define generic apply (function, #rest args);
-define generic values (#rest values);
-define generic %make-method (specializers :: <list>, result-types :: <list>,
-			     rest-result-type :: <type>, entry :: <method>)
+define open generic apply (function, #rest args);
+define open generic values (#rest values);
+define open generic %make-method
+    (specializers :: <list>, result-types :: <list>,
+     rest-result-type :: <type>, entry :: <method>)
     => res :: <method>;
-define generic list (#rest things) => res :: <list>;
-define generic vector (#rest things) => res :: <simple-object-vector>;
-define generic %make-rest-arg (context, count) => res :: <sequence>;
-define generic %make-next-method (info, #rest args) => res :: <function>;
-define generic %extract-keywords (context, count, ignore-unknown,
-				  #rest keys-and-defaults) => (#rest values);
-define generic %check-arg-count (nargs, nreq, more?) => ();
-define generic %arg (context, index) => res;
-define generic %more-arg-context (context, count, nreq) => (context, count);
-define generic %make-gf () => res :: <generic-function>;
-define generic add-method (gf :: <generic-function>, meth :: <method>)
+define open generic list (#rest things) => res :: <list>;
+define open generic vector (#rest things) => res :: <simple-object-vector>;
+define open generic %make-gf () => res :: <generic-function>;
+define open generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
-define generic check-type (value, type :: <type>) => value;
-define generic error (msg, #rest args) => res :: type-or();
-define generic make (class :: <class>, #key) => thing;
+define open generic check-type (value, type :: <type>) => value;
+define open generic error (msg, #rest args) => res :: type-or();
+define open generic make (class :: <class>, #key) => thing;
+define open generic \< (x, y) => res :: <boolean>;
+
+define open generic value (x) => value :: <object>;
+define open generic value-setter (x, y) => value;
 
 
-// Other functions that we would like to use.
+// Methods that are nice to have by default.
 
-define generic \+ (x, y) => res;
-define generic \- (x, y) => res;
-define generic \* (x, y) => res;
-define generic \= (x, y) => res;
-define generic \~= (x, y) => res;
-define generic \< (x, y) => res;
-define generic \<= (x, y) => res;
-define generic \> (x, y) => res;
-define generic \>= (x, y) => res;
+define inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
+    => res :: <boolean>;
+  %%primitive fixnum-< (x, y);
+end;
