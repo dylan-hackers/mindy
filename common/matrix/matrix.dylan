@@ -2,7 +2,7 @@ module: Matrix
 author: Russ Schaaf (rsbe@cs.cmu.edu)
 synopsis: Matrix and other linear algebra functions
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/matrix/matrix.dylan,v 1.2 2000/01/24 04:54:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/matrix/matrix.dylan,v 1.3 2000/10/20 14:52:51 housel Exp $
  
 //======================================================================
 //
@@ -95,7 +95,7 @@ define method matrix(#rest row-vectors) => mat :: <matrix>;
   if (every?(method (x) x.size == row-size; end, row-vectors))
     mat.components := reduce1(concatenate, row-vectors);
   else
-    error("All row vectors must have the same size\n");
+    error("All row vectors must have the same size");
   end if;
   mat;
 end method matrix;
@@ -145,7 +145,7 @@ end method identity-matrix;
 define method \+ (matrix1 :: <matrix>, matrix2 :: <matrix>)
  => summation-matrix :: <matrix>;
   if (matrix1.dimensions ~= matrix2.dimensions)
-    error("You can not add matrices of different dimensions.\n");
+    error("You can not add matrices of different dimensions.");
   else
     let temp-mat = make(<matrix>, dimensions: dimensions(matrix1));
     map-into(temp-mat, \+, matrix1, matrix2);
@@ -225,7 +225,7 @@ define method \* (matrix1 :: <matrix>, matrix2 :: <matrix>)
   let rows2 = dimension(matrix2, 0);
   let columns2 = dimension(matrix2, 1);
   if (columns1 ~= rows2)
-    error("You cannot multiply two matrices of dimensions NxM and PxQ where M != P.\n");  
+    error("You cannot multiply two matrices of dimensions NxM and PxQ where M != P.");
   else 
     let temp-mat = make(<matrix>, dimensions: list(rows1,columns2), 
                    fill: 0 );
@@ -404,7 +404,7 @@ define method inverse (matrix1 :: <matrix>)
 	end;
 	#f;
       end)
-    error("Matrix with determinant of zero can not be inverted.\n");
+    error("Matrix with determinant of zero can not be inverted.");
   end;
 
   // Find diagonal matrix on the left (non-zero elements along the diagonal
@@ -448,7 +448,7 @@ define method det (matrix1 :: <matrix>)
   let rows = dimension(matrix1, 0);
   let columns = dimension(matrix1, 1);
   if (rows ~= columns)
-    error("Matrix must be square to have a determinant.\n");
+    error("Matrix must be square to have a determinant.");
   end if;
   
   let temp-mat = make(<matrix>, dimensions: dimensions(matrix1));

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.6 2000/06/30 12:41:21 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.7 2000/10/20 14:56:29 housel Exp $
 
 //======================================================================
 //
@@ -1424,7 +1424,7 @@ define /* exported */ method add-od-loader
  => ();
   let etype = $object-id-registry[name];
   unless (dispatcher.table[etype] == undefined-entry-type)
-    signal("Already an OD loader for etype %=\n", etype);
+    signal("Already an OD loader for etype %=", etype);
   end;
   dispatcher.table[etype] := func;
 end method;
