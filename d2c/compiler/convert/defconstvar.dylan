@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.8 2001/06/22 23:06:23 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.9 2001/12/23 02:35:20 andreas Exp $
 copyright: see below
 
 
@@ -268,6 +268,49 @@ define method process-aux(form :: <define-binding-parse>,
   add!(*Top-Level-Forms*, tlf);
 end;
 
+define method process-aux(form :: <define-binding-parse>,
+			  tlf-class == <define-constant-method-tlf>,
+			  defn-class :: <class>)
+	=> ();
+
+  let (variables :: <variable-list>, expr :: <method-ref-parse>, source :: <source-location>)
+    = values(form.defbinding-variables, form.defbinding-expression, form.source-location);
+
+  let (inline-type-frag, movable?-frag, flushable?-frag)
+    = extract-properties(expr.method-ref-options,
+                         #"inline-type", #"movable", #"flushable");
+  let inline-type
+    = inline-type-frag & extract-identifier(inline-type-frag).token-symbol;
+  let movable? = movable?-frag & extract-boolean(movable?-frag);
+  let flushable? = flushable?-frag & extract-boolean(flushable?-frag);
+
+  local method make-and-note-defn (param :: <parameter>)
+	  let name = param.param-name;
+	  let defn = make(defn-class,
+			  name: make(<basic-name>,
+				     symbol: name.token-symbol,
+				     module: *Current-Module*),
+			  source-location: source,
+			  library: *Current-Library*,
+                          inline-type: inline-type | #"default-inline",
+                          movable: movable?,
+                          flushable: flushable? | movable?);
+	  note-variable-definition(defn);
+	  defn;
+	end;
+
+  let required-defns = map(make-and-note-defn, variables.varlist-fixed);
+  let rest-param = variables.varlist-rest;
+  let rest-defn = rest-param & make-and-note-defn(rest-param);
+  let tlf = make(tlf-class,
+		 variables: variables,
+		 expression: expr,
+		 required-defns: required-defns,
+		 rest-defn: rest-defn,
+		 source-location: source);
+  add!(*Top-Level-Forms*, tlf);
+end;
+
 
 // Compile-time value stuff.
 
@@ -399,6 +442,8 @@ define method finalize-top-level-form
             " after creating a ct-value.",
 	    tlf.tlf-required-defns[0].defn-name);
     end;
+  elseif (defn.method-defn-inline-type ~== #"not-inline")
+    defn.%method-defn-inline-function := rcurry(expand-inline-function, tlf.tlf-expression.method-ref-method);
   end;
 end;
 

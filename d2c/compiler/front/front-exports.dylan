@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.7 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.8 2001/12/23 02:35:20 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -208,6 +208,7 @@ define module function-definitions
     <implicit-generic-definition>,
 
     <abstract-method-definition>, method-defn-inline-function,
+    %method-defn-inline-function-setter,
     <inline-type>, method-defn-inline-type,
 
     <method-definition>, method-defn-congruent?, method-defn-of,

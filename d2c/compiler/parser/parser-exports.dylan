@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.4 2000/10/17 09:01:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.5 2001/12/23 02:35:21 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -189,7 +189,7 @@ define module parse-tree
 
     <if-parse>, if-condition, if-consequent, if-alternate,
 
-    <method-ref-parse>, method-ref-method,
+    <method-ref-parse>, method-ref-method, method-ref-options,
 
     <callback-method-ref-parse>,
 

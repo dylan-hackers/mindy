@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.8 2001/09/17 11:47:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.9 2001/12/23 02:35:20 andreas Exp $
 copyright: see below
 
 
@@ -232,6 +232,7 @@ define module define-functions
   export
     *implicitly-define-next-method*,
     compute-signature,
+    expand-inline-function,
     implicitly-define-generic;
 end;
 
