@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.30 2001/12/12 05:17:48 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.31 2002/01/04 15:48:29 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1215,12 +1215,6 @@ define method spew-object
 		       sharable: #t),
 		size: as(<ct-value>, object.size-of),
 		alignment: as(<ct-value>, object.alignment-of),
-		c-rep:
-		  as(<ct-value>,
-		     begin
-		       let rep = object.designated-representation;
-		       rep & rep.representation-name;
-		     end),
 		referenced-type: object.referenced-type | as(<ct-value>, #f),
 		class-struct-slot-descriptors:
 		  make(<literal-simple-object-vector>,
