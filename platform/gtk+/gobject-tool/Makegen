@@ -4,4 +4,4 @@ $D2CFLAGS
 
 &emit_library_rule('gobject-tool', '$(BUILDROOT)/force.timestamp',
 		   '-L../../../tools/pidgin/src', 
-	           'compile', 'install');
+	           'compile');
