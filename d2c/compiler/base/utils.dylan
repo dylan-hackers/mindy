@@ -1,25 +1,119 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.24 1996/02/20 16:00:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.25 1996/03/20 19:27:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-#if (mindy)
 
-remove-method(print-object,
-	      find-method(print-object,
-			  list(<object>, <stream>)));
-
-define method print-object (object, stream :: <stream>) => ();
-  write('{', stream);
-  write-class-name(object, stream);
-  write(' ', stream);
-  write-address(object, stream);
-  write('}', stream);
-end;
-
+// Turn on pretty printing.
+//
 *default-pretty?* := #t;
 
-#end
+
+// Pretty format.
+
+// pretty format
+//
+// User for error message printing.  Turns each space in the control string
+// into a conditional newline, and turns literal newlines into a mandatory
+// newline and 2 space indent.
+//
+define method pretty-format
+    (stream :: <stream>, string :: <byte-string>, #rest args)
+    => ();
+  let length = string.size;
+  local
+    method scan-for-newline (start, posn, arg-index)
+      if (posn == length)
+	maybe-logical-block(start, posn, arg-index);
+      else
+	let char = string[posn];
+	if (char == '%')
+	  scan-for-newline(start, posn + 2, arg-index);
+	elseif (char == '\n')
+	  let arg-index = maybe-logical-block(start, posn, arg-index);
+	  scan-for-end-of-indent(posn, posn + 1, arg-index);
+	else
+	  scan-for-newline(start, posn + 1, arg-index);
+	end if;
+      end if;
+    end method scan-for-newline,
+    method scan-for-end-of-indent (start, posn, arg-index)
+      if (posn == length | string[posn] ~== ' ')
+	write(string, stream, start: start, end: posn);
+	scan-for-newline(posn, posn, arg-index);
+      else
+	scan-for-end-of-indent(start, posn + 1, arg-index);
+      end if;
+    end method scan-for-end-of-indent,
+    method maybe-logical-block (start, stop, arg-index)
+      if (start == stop)
+	arg-index;
+      else
+	let result = arg-index;
+	pprint-logical-block
+	  (stream,
+	   body: method (stream)
+		   result := scan-for-space(stream, start, start, stop,
+					    arg-index);
+		 end);
+	result;
+      end if;
+    end method maybe-logical-block,
+    method scan-for-space (stream, start, posn, stop, arg-index)
+      if (posn == stop)
+	maybe-spew(stream, start, posn);
+	arg-index;
+      else
+	let char = string[posn];
+	if (char == ' ')
+	  scan-for-end-of-spaces(#"fill", stream, start, posn + 1, stop,
+				 arg-index);
+	elseif (char == '%')
+	  maybe-spew(stream, start, posn);
+	  let directive = string[posn + 1];
+	  if (directive == '%')
+	    scan-for-space(stream, posn + 1, posn + 2, stop, arg-index);
+	  elseif (directive == '\n')
+	    maybe-spew(stream, start, posn);
+	    scan-for-end-of-spaces(#"mandatory", stream, posn + 2, posn + 2,
+				   stop, arg-index);
+	  else
+	    format(stream, copy-sequence(string, start: posn, end: posn + 2),
+		   args[arg-index]);
+	    scan-for-space(stream, posn + 2, posn + 2, stop, arg-index + 1);
+	  end;
+	else
+	  scan-for-space(stream, start, posn + 1, stop, arg-index);
+	end;
+      end;
+    end,
+    method scan-for-end-of-spaces(kind, stream, start, posn, stop, arg-index)
+      if (posn < length & string[posn] == ' ')
+	scan-for-end-of-spaces(kind, stream, start, posn + 1, stop, arg-index);
+      else
+	maybe-spew(stream, start, posn);
+	pprint-newline(kind, stream);
+	scan-for-space(stream, posn, posn, stop, arg-index);
+      end;
+    end,
+    method maybe-spew (stream, start, stop)
+      unless (start == stop)
+	write(string, stream, start: start, end: stop);
+      end;
+    end;
+  scan-for-newline(0, 0, 0);
+end;
+
+// condition-format{<stream>,<byte-string>} -- method on imported GF.
+//
+// Shadow the <stream>,<string> method with one that uses pretty-format.
+// This is kinda sleezy, but, hey, it works.
+// 
+define method condition-format
+    (stream :: <stream>, control-string :: <byte-string>, #rest args)
+    => ();
+  apply(pretty-format, stream, control-string, args);
+end method condition-format;
 
 
 // printing utilities.
@@ -73,6 +167,157 @@ define method pprint-fields (thing, stream, #rest fields) => ();
 	   end,
      suffix: "}");
 end;
+
+
+define constant $thousand-cardinals
+  = #[#f, "thousand", "million", "billion"];
+define constant $ten-cardinals
+  = #[#f, "ten", "twenty", "thirty", "forty",
+      "fifty", "sixty", "seventy", "eighty", "ninety"];
+define constant $unit-cardinals
+  = #["zero", "one", "two", "three", "four", "five", "six", "seven",
+      "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+      "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+
+define constant $thousand-ordinals
+  = #[#f, "thousandth", "millionth", "billionth"];
+define constant $ten-ordinals
+  = #[#f, "tenth", "twentieth", "thirtieth", "fortieth",
+      "fiftieth", "sixtieth", "seventieth", "eightieth", "ninetieth"];
+define constant $unit-ordinals
+  = #["zeroth", "first", "second", "third", "fourth", "fifth", "sixth",
+      "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth",
+      "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth",
+      "eighteenth", "nineteenth"];
+
+define method integer-to-english
+    (int :: <integer>,
+     #key as :: one-of(#"cardinal", #"ordinal") = #"cardinal")
+    => res :: <byte-string>;
+  let pieces = make(<stretchy-vector>);
+  let length = 0;
+  local
+    method add (piece :: <byte-string>) => ();
+      add!(pieces, piece);
+      length := length + piece.size;
+    end method add,
+    method ten-powers (int :: <integer>, cardinal? :: <boolean>) => ();
+      // Handle 0 <= x < 100.
+      if (int < 20)
+	add(if (cardinal?) $unit-cardinals else $unit-ordinals end[int]);
+      else
+	let (tens, units) = truncate/(int, 10);
+	if (units.zero?)
+	  add(if (cardinal?) $ten-cardinals else $ten-ordinals end[tens]);
+	else
+	  add($ten-cardinals[tens]);
+	  add(if (cardinal?) $unit-cardinals else $unit-ordinals end[units]);
+	end if;
+      end if;
+    end method ten-powers,
+    method hundred-powers (int :: <integer>, cardinal? :: <boolean>) => ();
+      // Handle 0 <= x < 10000.
+      let (hundreds, units) = truncate/(int, 100);
+      if (hundreds.zero?)
+	ten-powers(units, cardinal?);
+      else
+	ten-powers(hundreds, #t);
+	if (units.zero?)
+	  add(if (cardinal?) "hundred" else "hundredth" end);
+	else
+	  add("hundred");
+	  ten-powers(units, cardinal?);
+	end if;
+      end if;
+    end method hundred-powers,
+    method thousand-powers
+	(int :: <integer>, thousand-index :: <integer>, cardinal? :: <boolean>)
+	=> ();
+      let (millions, mod-million) = truncate/(int, 1000000);
+      let (hundreds, units) = truncate/(mod-million, 100);
+      if (hundreds < 100 & ~zero?(remainder(hundreds, 10)))
+	//
+	// mod-millions is < 10000, so we want to generate something like
+	// fifty six hundred instead of five thousand six hundred.  The
+	// ~zero? test keeps us from generated fifty hundred over five
+	// thousand.  It also guarantees that mod-millions isn't zero, so
+	// we don't have to deal with that case.
+	unless (millions.zero?)
+	  thousand-powers(millions, thousand-index + 2, #t);
+	end;
+	if (thousand-index.zero?)
+	  hundred-powers(mod-million, cardinal?);
+	else
+	  hundred-powers(mod-million, #t);
+	  if (cardinal?)
+	    add($thousand-cardinals[thousand-index]);
+	  else
+	    add($thousand-ordinals[thousand-index]);
+	  end;
+	end if;
+      else
+	//
+	// either mod-millions is >= 10000 or there is a zero in the hundreds
+	// column.
+	let (thousands, units) = truncate/(int, 1000);
+	if (thousands.zero?)
+	  if (thousand-index.zero?)
+	    hundred-powers(units, cardinal?);
+	  elseif (~units.zero?)
+	    hundred-powers(units, #t);
+	    if (cardinal?)
+	      add($thousand-cardinals[thousand-index]);
+	    else
+	      add($thousand-ordinals[thousand-index]);
+	    end;
+	  end if;
+	else
+	  if (units.zero?)
+	    thousand-powers(thousands, thousand-index + 1, cardinal?);
+	  else
+	    thousand-powers(thousands, thousand-index + 1, #t);
+	    if (thousand-index.zero?)
+	      hundred-powers(units, cardinal?);
+	    else
+	      hundred-powers(units, #t);
+	      if (cardinal?)
+		add($thousand-cardinals[thousand-index]);
+	      else
+		add($thousand-ordinals[thousand-index]);
+	      end;
+	    end if;
+	  end if;
+	end if;
+      end if;
+    end method thousand-powers;
+  if (int < 0)
+    add("negative");
+    thousand-powers(-int, 0, as == #"cardinal");
+  else
+    thousand-powers(int, 0, as == #"cardinal");
+  end if;
+  let result = make(<byte-string>, size: length + pieces.size - 1, fill: ' ');
+  for (piece :: <byte-string> in pieces,
+       index = 0 then index + piece.size + 1)
+    copy-bytes(result, index, piece, 0, piece.size);
+  end for;
+  result;
+end method integer-to-english;
+
+define method ordinal-suffix (int :: <integer>) => res :: <byte-string>;
+  let last-two-digits = remainder(int, 100);
+  let (penultimate-digit, last-digit) = truncate/(last-two-digits, 10);
+  if (penultimate-digit == 1 | last-digit == 0 | last-digit >= 4)
+    "th";
+  elseif (last-digit == 1)
+    "st";
+  elseif (last-digit == 2)
+    "nd";
+  else
+    "rd";
+  end if;
+end method ordinal-suffix;
+  
 
 
 
@@ -186,10 +431,37 @@ end;
 
 
 #if (mindy)
+
 *debug-output* := make(<flush-happy-stream>, target: *debug-output*);
+
 #else
+
 define variable *debug-output* :: <stream>
   = make(<flush-happy-stream>, target: *standard-output*);
+
+#end
+
+
+// Debugger hooks
+
+#if (~mindy)
+
+define class <pretty-debugger> (<debugger>)
+end class <pretty-debugger>;
+
+define method invoke-debugger
+    (debugger :: <pretty-debugger>, condition :: <condition>)
+    => res :: <never-returns>;
+  format(*debug-output*, "%s\n", condition);
+  force-output(*debug-output*);
+  call-out("abort", void:);
+end;
+  
+method ()
+  *warning-output* := *debug-output*;
+  *debugger* := make(<pretty-debugger>);
+end method();
+
 #end
 
 
@@ -224,7 +496,7 @@ define method find-in
 end method;
 
 
-define method size-in(next :: <function>, coll) => <integer>;
+define method size-in (next :: <function>, coll) => res :: <integer>;
   for (cur = coll then coll.next, len from 0, while: cur)
     finally len;
   end;
@@ -247,12 +519,12 @@ define constant assert
 
 define generic key-of
   (value, collection :: <collection>, #key test :: <function>, default)
- => res;
+ => res :: <object>;
 
 define method key-of
     (value, coll :: <collection>,
      #key test :: <function> = \==, default = #f)
- => res;
+ => res :: <object>;
   find-key(coll,
 	   method (x) test(value, x) end,
 	   failure: default)
@@ -261,7 +533,7 @@ end method;
 define method key-of
     (value, coll :: <list>,
      #key  test :: <function> = \==, default = #f)
- => res;
+ => res :: <object>;
   block (done)
     for (els = coll then els.tail,
          pos :: <integer> from 0,
