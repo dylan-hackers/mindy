@@ -276,11 +276,16 @@ $(OBJS) test.o dyn_load.o dyn_load_sunos53.o: $(srcdir)/gc_priv.h $(srcdir)/gc_h
 
 mark.o typd_mlc.o finalize.o: $(srcdir)/gc_mark.h
 
-libgc.sl: $(OBJS) dyn_load.o
+EOF
+
+print "libgc$dot_lib: \$(OBJS) dyn_load.o\n";
+    print <<'EOF';
 	rm -f on_sparc_sunos5
 	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
 	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(OBJS) dyn_load.o
-	./if_not_there on_sparc_sunos5 $lib_linker libgc$dot_lib \$(OBJS) dyn_load.o
+EOF
+print "\t./if_not_there on_sparc_sunos5 \$(AR) rus libgc$dot_lib \$(OBJS) dyn_load.o\n";
+    print <<'EOF';
 	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
 #	ignore ranlib failure; that usually means it doesn't exist, and isn't needed
 
@@ -424,15 +429,6 @@ gctest_dyn_link: test.o libgc.so
 
 
 EOF
-    if ($features{'compiled_for_sparc'} && $features{'compiled_for_solaris'}) {
-	# This makefile doesn't appear to generate a target for
-	# libgc.a .  Somehow the HP doesn't seem to mind, but Solaris
-	# does.
-	print <<'EOF';
-libgc.a : $(OBJS) dyn_load.o
-	ar qc libgc.a $(OBJS) dyn_load.o
-EOF
-    }
     push(@compile_dependencies, "libgc$dot_lib");
 
     do install('lib', "libgc$dot_lib");
@@ -445,3 +441,7 @@ EOF
 } else {
     &unknown_platform_error();
 }
+
+
+
+
