@@ -16,7 +16,8 @@ end;
 // know about the new class too, it is simpler to rely on subclassing
 // <format-string-condition>.
 define method make
-    (class :: subclass(<stream-error>), 
+    (class :: subclass(<stream-error>),
+     #next next-method,
      #rest args, 
      #key stream :: <stream>, 
           format-string, 
@@ -36,7 +37,8 @@ define class <end-of-stream-error> (<stream-error>)
 end class <end-of-stream-error>;
 
 define method make
-    (class == <end-of-stream-error>, #key stream :: <stream>)
+    (class == <end-of-stream-error>, #next next-method,
+     #key stream :: <stream>)
  => (error :: <end-of-stream-error>)
   next-method(class,
 	      stream: stream,
@@ -131,24 +133,26 @@ define method read-into!
      #key start = 0, on-end-of-stream = unsupplied())
  => (count)
   let limit = min(n + start, sequence.size);
-  iterate loop (i = start)
-    if (i < limit)
-      let elt = read-element(stream, on-end-of-stream: unfound());
-      if (found?(elt))
-	sequence[i] := elt;
-	loop(i + 1);
-      elseif (supplied?(on-end-of-stream))
-	i - start
+  local
+    method loop (i)
+      if (i < limit)
+        let elt = read-element(stream, on-end-of-stream: unfound());
+        if (found?(elt))
+          sequence[i] := elt;
+          loop(i + 1);
+        elseif (supplied?(on-end-of-stream))
+          i - start
+        else
+          signal(make(<incomplete-read-error>,
+                      stream: stream,
+                      count: i - start, // seems kinda redundant...
+                      sequence: copy-sequence(sequence, start: start, end: i)))
+        end
       else
-	signal(make(<incomplete-read-error>,
-		    stream: stream,
-		    count: i - start, // seems kinda redundant...
-		    sequence: copy-sequence(sequence, start: start, end: i)))
-      end
-    else
-      i - start
-    end if;
-  end;
+        i - start
+      end if;
+    end;
+  loop(start);
 end method read-into!;
 
 

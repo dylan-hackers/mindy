@@ -6,7 +6,6 @@ define library common-dylan
   use threads, export: { threads };
 
   use melange-support;
-  use streams;
   use table-extensions;
   use random;
   use transcendental,
@@ -24,6 +23,7 @@ define library common-dylan
     // simple-debugging,
     simple-io,
     byte-vector,
+    functional-objects-extras,
     functional-extensions;
 end library;
 
@@ -35,8 +35,9 @@ define module functional-extensions
   export 
     find-value;
   export
-    with-bounds-checks,
-    without-bounds-checks;
+    element-range-check,
+    \with-bounds-checks,
+    \without-bounds-checks;
 end module;
 
 define module c-support
@@ -134,13 +135,14 @@ define module common-extensions
     export: {<string-table>};
   use transcendentals, import: { logn };
   use c-support;
-  use streams, import: { <stream> },
-    export: {<stream>};
   use simple-profiling,
     export: { \profiling, 
 	      profiling-type-result };
 
   create
+    <closable-object>,
+    close,
+    <stream>,
     true?,
     false?,
     position,
@@ -240,6 +242,9 @@ define module locators-protocol
 end module locators-protocol;
 
 define module streams-protocol
+  use common-extensions,
+    import: { <stream>, close },
+    export: all;
   // Conditions
   create <stream-error>,
            stream-error-stream,
@@ -280,12 +285,24 @@ define module streams-protocol
          adjust-stream-position;
 end module streams-protocol;
 
+define module functional-objects-extras
+  use common-extensions,
+    import: { <closable-object> },
+    export: all;
+  use cheap-io,
+    import: { puts => write-console },
+    export: all;
+  create <locator-defaults>,
+         <server-locator>,
+	 <physical-locator>;
+end module functional-objects-extras;
+
 define module common-dylan-internals
   use common-dylan;
   use extensions;
+  use functional-objects-extras;
   use system, import: { copy-bytes => %copy-bytes, vector-elements-address };
   use magic, import: { %element, %element-setter };
-  use cheap-io, import: { puts => write-console };
   use introspection, rename: { subclass-of => subclass-class };
   use machine-words;
   use melange-support;

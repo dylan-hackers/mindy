@@ -15,11 +15,8 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 define open abstract class <closable-object> (<object>)
 end class <closable-object>;
 
-/* Defined in our streams library, which needs to be built
-   without common-dylan for bootstapping. Clean up later.
 define open abstract class <stream> (<closable-object>)
 end class <stream>;
-*/
 
 define open abstract class <locator-defaults> (<object>)
 end class <locator-defaults>;
