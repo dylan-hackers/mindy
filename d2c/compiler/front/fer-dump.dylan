@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.17 1995/05/01 06:54:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.18 1995/05/03 07:23:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -329,12 +329,45 @@ define method dump (name :: <basic-name>, stream :: <stream>) => ();
   write(as(<string>, name.name-symbol), stream);
 end;
 
+define method dump (name :: <method-name>, stream :: <stream>) => ();
+  pprint-logical-block
+    (stream,
+     body: method (stream)
+	     dump(name.method-name-generic-function, stream);
+	     pprint-logical-block
+	       (stream,
+		prefix: "{",
+		body: method (stream)
+			for (spec in name.method-name-signature.specializers,
+			     first? = #t then #f)
+			  unless (first?)
+			    write(", ", stream);
+			    pprint-newline(#"fill", stream);
+			  end;
+			  dump(spec, stream);
+			end;
+		      end,
+		suffix: "}");
+	   end);
+end;
+
 define method dump (leaf :: <literal-constant>, stream :: <stream>) => ();
   dump(leaf.value, stream);
+  format(stream, "[%d]", leaf.id);
 end;
 
 define method dump (ct-value :: <ct-value>, stream :: <stream>) => ();
   print(ct-value, stream, level: 1, length: 3);
+end;
+
+define method dump (lit :: type-or(<literal-number>, <literal-symbol>,
+				   <literal-character>),
+		    stream :: <stream>) => ();
+  print(lit.literal-value, stream);
+end;
+
+define method dump (lit :: <literal-string>, stream :: <stream>) => ();
+  print(lit.literal-contents, stream);
 end;
 
 define method dump (ct-value :: <cclass>, stream :: <stream>) => ();
