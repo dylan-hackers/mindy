@@ -4,7 +4,6 @@ define library my-simple
 
 	use dylan;
 	use carbon;
-	use format;
 	use simple;
 	
 end library my-simple;
@@ -16,6 +15,7 @@ define module my-simple
 	
 	use mac-types;
         use dialogs;
+        use controls;
 	use events;
         use memory;
 	use quickdraw;

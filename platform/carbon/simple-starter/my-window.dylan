@@ -6,57 +6,24 @@ module: my-simple
 define class <my-window> (<simple-window>)
 end class <my-window>;
 
+define method initialize(	window :: <my-window>,
+                                #key all-keys )
+=> ( window :: <my-window> )
+    
+    next-method();
+    let bounds :: <Rect> = make( <Rect>, top: 50, left: 50, right: 230, bottom: 70 );
+    let control :: <ControlHandle> = NewControl( window.windowRef, bounds, 
+                                                as( <pascal-string>, "Button" ),
+                                                #t, 0, 0, 255, $pushButProc, 0 );
+    window;
+    
+end method initialize;
+
 define method draw( window :: <my-window> )
 => ()
 
-	let r = make( <Rect>, top: 0, left: 0, right: 2000, bottom: 2000 );
-	EraseRect( r );
-	MoveTo( 50, 50 );
-	DrawString( as( <pascal-string>, "Hello!" ) );
-
-	values();
+    DrawControls( window.windowRef );	//- Should use UpdateControls!
+    values();
 
 end method draw;
 
-
-define method window-click( window :: <my-window>, event :: <EventRecord>, localPoint :: <Point> )
-=> ()
-
-	let r = make( <Rect>, top: 0, left: 0, right: 2000, bottom: 2000 );
-
-	focus( window );
-
-	InvertRect( r );
-
-	values();
-
-end method window-click;
-
-
-define method window-idle( window :: <my-window>, event :: <EventRecord> )
-=> ()
-
-	focus( window );
-
-	let col = make( <RGBColor> );
-	let r = make( <Rect>, top: 10, left: 10, right: 20, bottom: 20 );
-	
-	if( modulo( event.event-when, 60 ) < 30 )
-		col.red := 65535;
-		col.green := 0;
-		col.blue := 0;
-	else
-		col.red := 0;
-		col.green := 0;
-		col.blue := 65535;
-	end if;
-	
-	RGBForeColor( col );
-	PaintRect( r );
-
-         QDFlushPortBuffer( window.grafPort, 
-                            GetPortVisibleRegion( window.grafPort, NewRgn() ) );
-
-	values();
-
-end method window-idle;
