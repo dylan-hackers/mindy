@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.29 1996/05/12 22:55:27 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.30 1996/06/11 14:39:55 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -52,53 +52,48 @@ static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and
 static char stdin_buffer[stdin_buffer_size];
 static char *stdin_buffer_start = &(stdin_buffer[0]);
 static int stdin_char_count = 0;
+static boolean stdin_hit_eof = FALSE;
 static HANDLE stdin_buffer_empty, stdin_buffer_not_empty;   /* Events */
 
-/* Invoked as a thread by stdin_consumer
- */
+boolean hit_control_C = FALSE;
+
 static DWORD stdin_producer (LPDWORD unused_param)
 {
     char local_buffer[stdin_buffer_size];
-    while (1) {
+    while (!stdin_hit_eof) {
         int chars_read;
         WaitForSingleObject(stdin_buffer_empty, INFINITE);
         chars_read = read(0, (void *) local_buffer, stdin_buffer_size);
         EnterCriticalSection(&stdin_buffer_mutex); {
-            memcpy(stdin_buffer, local_buffer, chars_read);
-            stdin_buffer_start = &(stdin_buffer[0]);
-	    stdin_char_count = chars_read;
-            ResetEvent(stdin_buffer_empty); /* Set to false */
-            SetEvent(stdin_buffer_not_empty); /* Set to true */
+	    if (chars_read == 0) {
+		if (hit_control_C) {
+		    hit_control_C = FALSE;
+		} else {
+		    stdin_hit_eof = TRUE;
+		    /* Now wake up any waiting consumers */
+		    SetEvent(stdin_buffer_not_empty); 
+		}
+	    } else if (chars_read == -1) {
+		lose("chars_read == -1");
+	    } else {
+		memcpy(stdin_buffer, local_buffer, chars_read);
+		stdin_buffer_start = &(stdin_buffer[0]);
+		stdin_char_count = chars_read;
+		ResetEvent(stdin_buffer_empty); /* Set to false */
+		SetEvent(stdin_buffer_not_empty); /* Set to true */
+	    }
 	} LeaveCriticalSection(&stdin_buffer_mutex);
     }
-    return 0;    /* This line never reached */
+    return 0;
 }
 
-static int stdin_consumer (char *buffer, int max_chars)
+int read_stdin (char *buffer, int max_chars)
 {
-    static int producer_initialized = FALSE;
     int chars_to_read;
-
-    /* We delay spawning the stdin_producer thread until now as a
-       kludge to prevent it from interfering with other parts of Mindy
-       which bypass it and access stdin directly.  (If they do that
-       while stdin_producer is running, they won't get what the user
-       most recently typed)
-       */
-    if (!producer_initialized) {
-	DWORD thread_id;
-	HANDLE thread_handle;
-	thread_handle 
-	    = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) stdin_producer, 
-			   NULL, 0, &thread_id);
-	if (thread_handle == NULL) 
-	    lose("Can't create stdin_producer thread");
-	producer_initialized = TRUE;
-    }
-
     WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
     EnterCriticalSection(&stdin_buffer_mutex); {
-                /* min(stdin_char_count, max_chars) */
+        if (stdin_hit_eof)
+	    stdin_hit_eof = FALSE;
         chars_to_read
 	    = (stdin_char_count < max_chars) ? stdin_char_count : max_chars;
 	memcpy((void *) buffer, stdin_buffer_start, chars_to_read);
@@ -112,11 +107,35 @@ static int stdin_consumer (char *buffer, int max_chars)
     return chars_to_read;
 }
 
+/* This is the same as read_stdin except it always takes one character
+ */
+int mindy_getchar (void)
+{
+    int res;
+    WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
+    EnterCriticalSection(&stdin_buffer_mutex); {
+                /* min(stdin_char_count, max_chars) */
+	if (stdin_hit_eof) {
+	    stdin_hit_eof = FALSE;
+	    res = EOF;
+	} else {
+	    res = *stdin_buffer_start;
+	    stdin_buffer_start++;
+	    stdin_char_count--;
+	    if (stdin_char_count == 0) {
+		SetEvent(stdin_buffer_empty);
+		ResetEvent(stdin_buffer_not_empty);
+	    }
+	}
+    } LeaveCriticalSection(&stdin_buffer_mutex);
+    return res;
+}
+
 static boolean stdin_input_available (void)
 {
     int answer;
     EnterCriticalSection(&stdin_buffer_mutex); {
-        answer = stdin_char_count;
+        answer = stdin_char_count || stdin_hit_eof;
     } LeaveCriticalSection(&stdin_buffer_mutex);
     return answer;
 }
@@ -219,8 +238,8 @@ static void maybe_read(struct thread *thread)
     else {
 #if WIN32
         if (isatty(fd)) 
-	    res = stdin_consumer(buffer_data(fp[-8]) + fixnum_value(fp[-7]),
-		                 fixnum_value(fp[-6]));
+	    res = read_stdin(buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+			     fixnum_value(fp[-6]));
         else 
 #endif
 	res = read(fd,
@@ -972,6 +991,17 @@ void init_fd_functions(void)
 	stdin_buffer_not_empty = CreateEvent(NULL, TRUE, FALSE, NULL);
 	       /* These are nameless "manual reset" events */
 	InitializeCriticalSection(&stdin_buffer_mutex);
+	{
+	    DWORD thread_id;
+	    HANDLE thread_handle;
+	    thread_handle 
+		= CreateThread(NULL, 0, 
+			       (LPTHREAD_START_ROUTINE) stdin_producer, 
+			       NULL, 0, &thread_id);
+	    if (thread_handle == NULL) 
+		lose("Can't create stdin_producer thread");
+	}
+
     }
 #endif
 }

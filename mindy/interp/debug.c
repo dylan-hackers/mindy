@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.49 1996/04/24 14:13:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.50 1996/06/11 14:39:55 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -54,6 +54,7 @@
 #include "gc.h"
 #include "brkpt.h"
 #include "instance.h"
+#include "parser.h"
 #include "../comp/byteops.h"
 
 struct library *CurLibrary = NULL;
@@ -765,6 +766,10 @@ static boolean backtrace_punted;
 
 static void punt_backtrace(void)
 {
+#ifdef WIN32
+    extern boolean hit_control_C;
+    hit_control_C = TRUE;
+#endif
     backtrace_punted = TRUE;
 }
 
@@ -2508,14 +2513,15 @@ static void maybe_print_frame(void)
 
 static void blow_off_cmd(void)
 {
-
+#ifdef WIN32
+    extern boolean hit_control_C;
+    hit_control_C = TRUE;
+#endif
     longjmp(BlowOffCmd, TRUE);
 }
 
 void invoke_debugger(enum pause_reason reason)
 {
-    extern obj_t parse_command(FILE *input);
-
     Continue = FALSE;
 
     explain_reason(reason);
@@ -2536,6 +2542,8 @@ void invoke_debugger(enum pause_reason reason)
 	thread_set_current(NULL);
 
 	while (!Continue) {
+	    char buffer[1001];   /* an extra byte for the null terminator */
+	    int chars_read;
 
 	    maybe_print_frame();
 
@@ -2545,22 +2553,15 @@ void invoke_debugger(enum pause_reason reason)
 	    } else
 	        set_interrupt_handler(blow_off_cmd);
 
-#ifndef HAVE_LIBREADLINE
-	    printf("mindy> ");
-	    fflush(stdout);
-#endif
-
-	    do_cmd(parse_command(stdin));
-
-#ifdef HAVE_LIBREADLINE
-	    if (yyeof()) {
-		printf("\n");
-	        quit_cmd(obj_Nil);
+	    chars_read = mindy_readline("mindy> ", buffer, 1000);
+	    if (chars_read == 1000) {
+		fprintf(stderr, "Line too long; ignored.\n");
+	    } else if (chars_read == 0) {
+		quit_cmd(obj_Nil);
+	    } else {
+		buffer[chars_read] = 0;
+		do_cmd(parse_command(buffer));
 	    }
-#else		
-	    if (feof(stdin))
-	        quit_cmd(obj_Nil);
-#endif
 	}
 
 	Continue = FALSE;
