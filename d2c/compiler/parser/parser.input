@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.5 1994/12/17 02:32:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.6 1995/01/10 16:26:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -906,6 +906,11 @@ statement (<method-token> method-body <end-token>)
 
 statement (<mv-call-token> <left-paren-token> arguments <right-paren-token>)
   make(<mv-call>, operands: as(<simple-object-vector>, %3));
+%
+
+statement (<primitive-token> <identifier-token>
+	   <left-paren-token> arguments-opt <right-paren-token>)
+  make(<primitive>, name: %2, operands: %4);
 %
 
 statement (<set-token> <left-paren-token> expression <comma-token> expression
