@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.5 1996/04/14 19:45:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.6 1996/09/12 20:36:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,7 @@ define library compiler-convert
   use compiler-parser;
 
   export
-    define-classes;
+    define-classes, define-functions;
 end library compiler-convert;
 
 
@@ -192,6 +192,7 @@ define module define-functions
   use fer-convert;
 
   export
+    *implicitly-define-next-method*,
     compute-signature,
     implicitly-define-generic;
 end;

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.71 1996/07/18 15:03:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.72 1996/09/12 20:36:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -94,6 +94,14 @@ define class <define-method-parse> (<definition-parse>)
     required-init-keyword: options:;
 end class <define-method-parse>;
 
+// *implicitly-define-next-method* -- exported.
+//
+// When set to #t, implicitly define next-method.  When set to #f, don't.
+// This switch is available for those who don't want to pay the cost of
+// implicitly defined next methods in every method definition.
+//
+define variable *implicitly-define-next-method* :: <boolean> = #f;
+
 define-procedural-expander
   (#"make-define-method",
    method (generator :: <expansion-generator>, name-frag :: <fragment>,
@@ -111,6 +119,16 @@ define-procedural-expander
 	   method-expr.method-ref-method;
 	 end for;
      method-parse.method-name := extract-name(name-frag);
+     if (*implicitly-define-next-method*)
+       let params = method-parse.method-parameters;
+       unless (params.paramlist-next)
+	 params.paramlist-next
+	   := make(<identifier-token>,
+		   kind: $raw-ordinary-word-token,
+		   symbol: #"next-method",
+		   module: *current-module*);
+       end unless;
+     end if;
      generate-fragment
        (generator,
 	make-parsed-fragment

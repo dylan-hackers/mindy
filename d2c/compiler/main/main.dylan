@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.90 1996/09/04 16:47:18 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.91 1996/09/12 20:38:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -352,14 +352,14 @@ end method pick-which-file;
 define function boolean-header-element 
     (name :: <symbol>, default :: <boolean>, state :: <main-unit-state>) 
  => res :: <boolean>;
-  let found = element(state.unit-header, #"dynamic", default: #f);
+  let found = element(state.unit-header, name, default: #f);
   if (found)
     select (as-uppercase(found) by \=)
       "YES" => #t;
       "NO" => #f;
       otherwise => 
-          compiler-error("Dynamic: header option is %s, not \"yes\" or \"no\".",
-	  		 found);
+	compiler-error("%s: header option is %s, not \"yes\" or \"no\".",
+		       name, found);
     end select;
   else
     default;
@@ -385,6 +385,8 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
            | as-lowercase(lib-name);
 
     *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
+    *implicitly-define-next-method*
+      := boolean-header-element(#"implicitly-define-next-method", #f, state);
 
     for (file in state.unit-files)
       let extension = file.filename-extension;
