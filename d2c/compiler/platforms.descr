@@ -4,6 +4,7 @@
 // Microsoft Windows '95 or NT on Intel 80386 or higher
 //
 target-name:                    x86-win32
+integer-length:			32
 default-features:               compiled-for-x86-win32 newlines-are-CRLF
 				C-compiler-is-VC 
 heap-preamble:                  \t.data\n\t.balign 8\t
@@ -63,6 +64,7 @@ supports-debugging?:            #t
 // HP/UX on HP PA-RISC processors
 //
 target-name:                    hppa-hpux
+integer-length:			32
 default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
 heap-preamble:                  \t.data\n\t.align 8\t
 align-directive:                .align
