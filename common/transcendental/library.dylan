@@ -1,7 +1,7 @@
 module: Dylan-User
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Definition of the Transcendental library.
-rcs-header: $Header: /scm/cvs/src/common/transcendental/library.dylan,v 1.3 2002/08/04 05:52:08 brent Exp $
+rcs-header: $Header: /scm/cvs/src/common/transcendental/library.dylan,v 1.4 2003/05/31 02:35:58 housel Exp $
 
 //======================================================================
 //
@@ -56,8 +56,7 @@ define module Transcendental
     $double-pi, $single-pi, $double-e, $single-e,
     sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
     log, logn, exp, sqrt, isqrt
-  #if (compiled-for-hpux)
-     // ### Need to implement these for x86
+  #if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
     , asinh, acosh, atanh
   #endif
     ;

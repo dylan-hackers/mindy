@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.5 2002/08/04 05:52:08 brent Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.6 2003/05/31 02:35:58 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -34,10 +34,6 @@ copyright: see below
 // A quick and dirty Transcendental library, implemented by calling
 // out to C.
 
-/// ### I want to inline these functions, but then we end up with calls to
-/// sin & co. in C files that don't have #include <math.h>
-/// Solution?
-
 /// Not quite complete yet:
 /// ### Possibly don't catch all errors at the dylan level.
 /// ### Need to deal with extended integers (?)
@@ -45,13 +41,6 @@ copyright: see below
 /// ### Not sure that the \^ we already have from the dylan module is
 ///     conformant with the spec that the rest of this file is implemented
 ///     from.
-
-/// andreas:
-/// A lot of this looks broken, such as all foof single precison calls.
-/// We probably have to do a lot of testing in configure to find out
-/// what functions are there and what not.
-
-c-include("math.h");
 
 // We write out pi rather than use C's M_PI because not all C
 // compilers have M_PI.  Similarly for e.
@@ -87,7 +76,7 @@ define generic isqrt (x :: <integer>) => y :: <integer>;
 // (see runtime/dylan/num.dylan)
 
 /*
-define sealed method \^ (b :: <integer>, x :: <real>)
+define sealed inline method \^ (b :: <integer>, x :: <real>)
  => y :: <single-float>;
   if (b.zero? & ~x.positive?)
     error("Exponent must be positive if base is zero"); 
@@ -95,10 +84,11 @@ define sealed method \^ (b :: <integer>, x :: <real>)
   if (b.negative? & ~x.integral?)
     error("Exponent must be an integer if base is negative.");
   end;
+  c-include("math.h");
   call-out("powf", float:, float: as(<single-float>, b), float: x);
 end method;
 
-define sealed method \^ (b :: <single-float>, x :: <real>)
+define sealed inline method \^ (b :: <single-float>, x :: <real>)
  => y :: <single-float>;
   if (b.zero? & ~x.positive?)
     error("Exponent must be positive if base is zero"); 
@@ -106,10 +96,11 @@ define sealed method \^ (b :: <single-float>, x :: <real>)
   if (b.negative? & ~x.integral?)
     error("Exponent must be an integer if base is negative.");
   end;
+  c-include("math.h");
   call-out("powf", float:, float: b, float: x);
 end method;
 
-define sealed method \^ (b :: <double-float>, x :: <real>)
+define sealed inline method \^ (b :: <double-float>, x :: <real>)
  => y :: <double-float>;
   if (b.zero? & ~x.positive?)
     error("Exponent must be positive if base is zero"); 
@@ -117,15 +108,17 @@ define sealed method \^ (b :: <double-float>, x :: <real>)
   if (b.negative? & ~x.integral?)
     error("Exponent must be an integer if base is negative.");
   end;
+  c-include("math.h");
   call-out("pow", double:, double: b, double: x);
 end method;
 */
 
-define sealed method log (x :: <double-float>,
-			  #key base :: <real> = $double-e)
- => y :: <double-float>;
+define sealed inline method log
+    (x :: <double-float>, #key base :: <real> = $double-e)
+ => (y :: <double-float>);
   if (x.negative?) error("%= is negative", x) end;
   if (base <= 1) error("Base %= is not greater than 1", base) end;
+  c-include("math.h");
   select (base)
     $double-e, $single-e => call-out("log", double:, double: x);
 
@@ -134,35 +127,41 @@ define sealed method log (x :: <double-float>,
 #endif
 
     10, 10.0d0, 10.0s0 => call-out("log10", double:, double: x);
-    otherwise => call-out("log", double:, double: x) / call-out("log", double:, double: base);
+    otherwise =>
+     call-out("log", double:, double: x)
+       / call-out("log", double:, double: as(<double-float>, base));
   end select;
 end method log;
 
-define sealed method log (x :: <single-float>,
-			  #key base :: <real> = $double-e)
+define sealed inline method log
+    (x :: <single-float>, #key base :: <real> = $double-e)
  => y :: <single-float>;
   if (x.negative?) error("%= is negative", x) end;
   if (base <= 1) error("Base %= is not greater than 1", base) end;
+  c-include("math.h");
   select (base)
-    $double-e, $single-e => call-out("log", float:, float: x);
+    $double-e, $single-e => call-out("logf", float:, float: x);
 
 #if (compiled-for-hpux) // #if (have-log2)
     2, 2.0d0, 2.0s0 => call-out("log2", float:, float: x);
 #endif
 
-    10, 10.0d0, 10.0s0 => call-out("log10", float:, float: x);
-    otherwise => call-out("log", float:, float: x) / call-out("log", double:, double: base);
+    10, 10.0d0, 10.0s0 => call-out("log10f", float:, float: x);
+    otherwise =>
+     call-out("logf", float:, float: x)
+       / call-out("logf", float:, float: as(<single-float>, base));
   end select;
 end method log;
 
-define sealed method log (x :: <integer>,
-			  #key base :: <real> = $double-e)
- => y :: <single-float>;
+define sealed inline method log
+    (x :: <integer>, #key base :: <real> = $double-e)
+ => (y :: <single-float>);
   if (x.negative?) error("%= is negative", x) end;
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   select (base)
-    $double-e, $single-e => call-out("log", float:,
-				       float: as(<single-float>, x));
+    $double-e, $single-e =>
+      call-out("logf", float:, float: as(<single-float>, x));
+
 #if (compiled-for-hpux) // #if (have-log2)
     2, 2.0d0, 2.0s0 => call-out("log2", float:,
 				float: as(<single-float>, x));
@@ -170,279 +169,331 @@ define sealed method log (x :: <integer>,
 
     10, 10.0d0, 10.0s0 => call-out("log10", float:,
 				   float: as(<single-float>, x));
-    otherwise => call-out("log", float:, float: as(<single-float>, x)) / call-out("log", double:, double: base);
+    otherwise =>
+     call-out("logf", float:, float: as(<single-float>, x))
+       / call-out("logf", float:, float: as(<single-float>, base));
   end select;
 end method log;
 
-// Natural log function, added to support Functional Object's API.
-// 8-3-2002 <bfulgham@debian.org>
-define sealed method logn (x :: <double-float>, b :: <real>)
- => y :: <double-float>;
+define sealed inline method logn
+    (x :: <double-float>, b :: <real>)
+ => (y :: <double-float>);
   log(x, base: b);
 end method logn;
 
-define sealed method logn (x :: <single-float>, b :: <real>)
- => y :: <single-float>;
+define sealed inline method logn
+    (x :: <single-float>, b :: <real>)
+ => (y :: <single-float>);
   log(x, base: b);
 end method logn;
 
-define sealed method logn (x :: <integer>,  b :: <real>)
- => y :: <single-float>;
+define sealed inline method logn
+    (x :: <integer>,  b :: <real>)
+ => (y :: <single-float>);
   log(x, base: b);
 end method logn;
 
-// End natural log methods
-
-define sealed method isqrt (x :: <integer>) => y :: <integer>;
+define sealed inline method isqrt (x :: <integer>) => y :: <integer>;
   if (x.negative?) error("%= is negative", x) end;
+  c-include("math.h");
   floor(call-out("sqrt", float:, float: as(<single-float>, x)));
 end method isqrt;
 
-define sealed method sqrt (x :: <integer>) => y :: <single-float>;
+define sealed inline method sqrt (x :: <integer>) => y :: <single-float>;
   if (x.negative?) error("%= is negative", x) end;
+  c-include("math.h");
   call-out("sqrtf", float:, float: as(<single-float>, x));
 end method sqrt;
 
-define sealed method sqrt (x :: <single-float>) => y :: <single-float>;
+define sealed inline method sqrt (x :: <single-float>) => y :: <single-float>;
   if (x.negative?) error("%= is negative", x) end;
+  c-include("math.h");
   call-out("sqrtf", float:, float: x);
 end method sqrt;
 
-define sealed method sqrt (x :: <double-float>) => y :: <double-float>;
+define sealed inline method sqrt (x :: <double-float>) => y :: <double-float>;
   if (x.negative?) error("%= is negative", x) end;
+  c-include("math.h");
   call-out("sqrt", double:, double: x);
 end method sqrt;
 
-define sealed method exp (x :: <integer>) => y :: <single-float>;
+define sealed inline method exp (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("expf", float:, float: as(<single-float>, x));
 end method exp;
 
-define sealed method exp (x :: <single-float>) => y :: <single-float>;
+define sealed inline method exp (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("expf", float:, float: x);
 end method exp;
 
-define sealed method exp (x :: <double-float>) => y :: <double-float>;
+define sealed inline method exp (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("exp", double:, double: x);
 end method exp;
 
-define sealed method sin (x :: <integer>) => y :: <single-float>;
+define sealed inline method sin (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("sinf", float:, float: as(<single-float>, x));
 end method sin;
 
-define sealed method sin (x :: <single-float>) => y :: <single-float>;
+define sealed inline method sin (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("sinf", float:, float: x);
 end method sin;
 
-define sealed method sin (x :: <double-float>) => y :: <double-float>;
+define sealed inline method sin (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("sin", double:, double: x);
 end method sin;
 
-define sealed method cos (x :: <integer>) => y :: <single-float>;
+define sealed inline method cos (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("cosf", float:, float: as(<single-float>, x));
 end method cos;
 
-define sealed method cos (x :: <single-float>) => y :: <single-float>;
+define sealed inline method cos (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("cosf", float:, float: x);
 end method cos;
 
-define sealed method cos (x :: <double-float>) => y :: <double-float>;
+define sealed inline method cos (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("cos", double:, double: x);
 end method cos;
 
-define sealed method tan (x :: <integer>) => y :: <single-float>;
+define sealed inline method tan (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("tanf", float:, float: as(<single-float>, x));
 end method tan;
 
-define sealed method tan (x :: <single-float>) => y :: <single-float>;
+define sealed inline method tan (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("tanf", float:, float: x);
 end method tan;
 
-define sealed method tan (x :: <double-float>) => y :: <double-float>;
+define sealed inline method tan (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("tan", double:, double: x);
 end method tan;
 
-define sealed method asin (x :: <integer>) => y :: <single-float>;
+define sealed inline method asin (x :: <integer>) => y :: <single-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("asinf", float:, float: as(<single-float>, x));
 end method asin;
 
-define sealed method asin (x :: <single-float>) => y :: <single-float>;
+define sealed inline method asin (x :: <single-float>) => y :: <single-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("asinf", float:, float: x);
 end method asin;
 
-define sealed method asin (x :: <double-float>) => y :: <double-float>;
+define sealed inline method asin (x :: <double-float>) => y :: <double-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("asin", double:, double: x);
 end method asin;
 
-define sealed method acos (x :: <integer>) => y :: <single-float>;
+define sealed inline method acos (x :: <integer>) => y :: <single-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("acosf", float:, float: as(<single-float>, x));
 end method acos;
 
-define sealed method acos (x :: <single-float>) => y :: <single-float>;
+define sealed inline method acos (x :: <single-float>) => y :: <single-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("acosf", float:, float: x);
 end method acos;
 
-define sealed method acos (x :: <double-float>) => y :: <double-float>;
+define sealed inline method acos (x :: <double-float>) => y :: <double-float>;
   if (x < -1 | x > 1) error("%= is not in the range [-1, 1]", x) end;
+  c-include("math.h");
   call-out("acos", double:, double: x);
 end method acos;
 
-define sealed method atan (x :: <integer>) => y :: <single-float>;
+define sealed inline method atan (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("atanf", float:, float: as(<single-float>, x));
 end method atan;
 
-define sealed method atan (x :: <single-float>) => y :: <single-float>;
+define sealed inline method atan (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("atanf", float:, float: x);
 end method atan;
 
-define sealed method atan (x :: <double-float>) => y :: <double-float>;
+define sealed inline method atan (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("atan", double:, double: x);
 end method atan;
 
-define sealed method atan2 (y :: <integer>, x :: <integer>)
+define sealed inline method atan2 (y :: <integer>, x :: <integer>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2f", float:, float: as(<single-float>, y),
 	   float: as(<single-float>, x));
 end method atan2;
 
-define sealed method atan2 (y :: <single-float>, x :: <single-float>)
+define sealed inline method atan2 (y :: <single-float>, x :: <single-float>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2f", float:, float: y, float: x);
 end method atan2;
 
-define sealed method atan2 (y :: <double-float>, x :: <double-float>)
+define sealed inline method atan2 (y :: <double-float>, x :: <double-float>)
  => z :: <double-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2", double:, double: y, double: x);
 end method atan2;
 
-define sealed method atan2 (y :: <double-float>, x :: <integer>)
+define sealed inline method atan2 (y :: <double-float>, x :: <integer>)
  => z :: <double-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2", double:, double: y, double: as(<double-float>, x));
 end method atan2;
 
-define sealed method atan2 (y :: <single-float>, x :: <integer>)
+define sealed inline method atan2 (y :: <single-float>, x :: <integer>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2f", float:, float: y, float: as(<single-float>, x));
 end method atan2;
 
-define sealed method atan2 (y :: <integer>, x :: <single-float>)
+define sealed inline method atan2 (y :: <integer>, x :: <single-float>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2f", float:, float: as(<single-float>, y),
 	   float: x);
 end method atan2;
 
-define sealed method atan2 (y :: <integer>, x :: <double-float>)
+define sealed inline method atan2 (y :: <integer>, x :: <double-float>)
  => z :: <double-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2", double:, double: as(<double-float>, y),
 	   double: x);
 end method atan2;
 
-define sealed method atan2 (y :: <double-float>, x :: <single-float>)
+define sealed inline method atan2 (y :: <double-float>, x :: <single-float>)
  => z :: <double-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2", double:, double: y, double: as(<double-float>, x));
 end method atan2;
 
-define sealed method atan2 (y :: <single-float>, x :: <double-float>)
+define sealed inline method atan2 (y :: <single-float>, x :: <double-float>)
  => z :: <double-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
+  c-include("math.h");
   call-out("atan2", double:, double: as(<double-float>, y), double: x);
 end method atan2;
 
-define sealed method sinh (x :: <integer>) => y :: <single-float>;
+define sealed inline method sinh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("sinf", float:, float: as(<single-float>, x));
 end method sinh;
 
-define sealed method sinh (x :: <single-float>) => y :: <single-float>;
+define sealed inline method sinh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("sinf", float:, float: x);
 end method sinh;
 
-define sealed method sinh (x :: <double-float>) => y :: <double-float>;
+define sealed inline method sinh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("sinh", double:, double: x);
 end method sinh;
 
-define sealed method cosh (x :: <integer>) => y :: <single-float>;
+define sealed inline method cosh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("cosf", float:, float: as(<single-float>, x));
 end method cosh;
 
-define sealed method cosh (x :: <single-float>) => y :: <single-float>;
+define sealed inline method cosh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("cosf", float:, float: x);
 end method cosh;
 
-define sealed method cosh (x :: <double-float>) => y :: <double-float>;
+define sealed inline method cosh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("cosh", double:, double: x);
 end method cosh;
 
-define sealed method tanh (x :: <integer>) => y :: <single-float>;
+define sealed inline method tanh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   call-out("tanf", float:, float: as(<single-float>, x));
 end method tanh;
 
-define sealed method tanh (x :: <single-float>) => y :: <single-float>;
+define sealed inline method tanh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   call-out("tanf", float:, float: x);
 end method tanh;
 
-define sealed method tanh (x :: <double-float>) => y :: <double-float>;
+define sealed inline method tanh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("tanh", double:, double: x);
 end method tanh;
 
 
-// Inverse hyperbolic trig functions are not implemented for x86 because C
-// doesn't have them, and we haven't yet felt up to writing our own.
+// Inverse hyperbolic trig functions are not implemented for some
+// platforms, and we haven't yet felt up to writing our own.
 // 
-// Linux math lib has them, so include them.
 
-#if (compiled-for-hpux | compiled-for-linux | compiled-for-beos)
+#if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
 
 define sealed method asinh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,
      call-out("asinh", double:, double: as(<double-float>, x)));
 end method asinh;
 
 define sealed method asinh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,  
      call-out("asinh", double:, double: as(<double-float>, x)));
 end method asinh;
 
 define sealed method asinh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("asinh", double:, double: x);
 end method asinh;
 
 define sealed method acosh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,
      call-out("acosh", double:, double: as(<double-float>, x)));
 end method acosh;
 
 define sealed method acosh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,
      call-out("acosh", double:, double: as(<double-float>, x)));
 end method acosh;
 
 define sealed method acosh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("acosh", double:, double: x);
 end method acosh;
 
 define sealed method atanh (x :: <integer>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,
      call-out("atanh", double:, double: as(<double-float>, x)));
 end method atanh;
 
 define sealed method atanh (x :: <single-float>) => y :: <single-float>;
+  c-include("math.h");
   as(<single-float>,
      call-out("atanh", double:, double: as(<double-float>, x)));
 end method atanh;
 
 define sealed method atanh (x :: <double-float>) => y :: <double-float>;
+  c-include("math.h");
   call-out("atanh", double:, double: x);
 end method atanh;
 
