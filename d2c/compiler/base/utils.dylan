@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.8 1995/04/26 07:03:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.9 1995/05/18 13:26:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -338,4 +338,9 @@ end;
 
 define method pair?(obj);
   instance?(obj, <pair>);
+end;
+
+
+define method symcat (#rest things) => res :: <symbol>;
+  as(<symbol>, apply(concatenate, "", map(curry(as, <string>), things)));
 end;
