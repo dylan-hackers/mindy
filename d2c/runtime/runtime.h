@@ -35,6 +35,6 @@ extern heapptr_t initial_symbols;
 
 extern void not_reached(void);
 
-#ifdef win32
+#ifdef WIN32
    double rint(double x);
 #endif
