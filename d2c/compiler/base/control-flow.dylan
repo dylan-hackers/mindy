@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.6 1995/04/21 19:34:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.7 1995/04/24 03:13:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,7 +60,7 @@ end class;
 
 define method make (class == <compound-region>,
 		    #next next-method, #key regions)
-  let regions = choose(complement(curry(instance?, <empty-region>)), regions);
+  let regions = choose(complement(rcurry(instance?, <empty-region>)), regions);
   if (empty?(regions))
     make(<empty-region>);
   else
@@ -108,8 +108,8 @@ end;
 //
 define class <block-region-mixin> (<region>)
   //
-  // All the exits to this block.
-  slot exits :: <list>, init-value: #();
+  // Chain of all the exits to this block, threaded though exit-next.
+  slot exits :: false-or(<exit>), init-value: #f;
 end;
 
 // A <block-region> wraps code which can exit to its endpoint.  The phi
@@ -139,6 +139,7 @@ end;
 // 
 define class <exit> (<region>)
   slot block-of :: <block-region-mixin>, required-init-keyword: block:;
+  slot next-exit :: false-or(<exit>), required-init-keyword: next:;
 end;
 
 
