@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.40 1996/03/08 05:30:10 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.41 1996/03/17 01:08:37 wlott Exp $
 
 /*
 
@@ -534,7 +534,7 @@ begin
   register-object-id(#"function-macro-definition", #x00CC);
   register-object-id(#"statement-macro-definition", #x00CD);
   register-object-id(#"seal-info", #x00CE);
-  register-object-id(#"seal-generic", #x00CF);
+  register-object-id(#"sealed-domain", #x00CF);
 
   register-object-id(#"backend-var-info", #x00D0);
   // register-object-id(#"function-info", #x00D1);  ### Needed?
@@ -560,171 +560,48 @@ begin
   // Tokens
   //
   register-object-id(#"token", #x100);
-  register-object-id(#"eof-token", #x101);
-  register-object-id(#"error-token", #x102);
-  register-object-id(#"symbol-token", #x103);
-  register-object-id(#"identifier-token", #x104);
-  register-object-id(#"word-token", #x105);
-  register-object-id(#"name-token", #x106);
-  register-object-id(#"simple-name-token", #x107);
-  register-object-id(#"quoted-name-token", #x108);
-  register-object-id(#"begin-word-token", #x109);
-  register-object-id(#"define-word-token", #x10A);
-  register-object-id(#"define-bindings-word-token", #x10B);
-  register-object-id(#"constrained-name-token", #x10C);
-  register-object-id(#"core-word-token", #x10D);
-  register-object-id(#"begin-token", #x10E);
-  register-object-id(#"bind-exit-token", #x10F);
-  register-object-id(#"class-token", #x110);
-  register-object-id(#"cleanup-token", #x111);
-  register-object-id(#"constant-token", #x112);
-  register-object-id(#"create-token", #x113);
-  register-object-id(#"define-token", #x114);
-  register-object-id(#"else-token", #x115);
-  register-object-id(#"end-token", #x116);
-  register-object-id(#"export-token", #x117);
-  register-object-id(#"finally-token", #x118);
-  register-object-id(#"for-token", #x119);
-  register-object-id(#"from-token", #x11A);
-  register-object-id(#"generic-token", #x11B);
-  register-object-id(#"handler-token", #x11C);
-  register-object-id(#"if-token", #x11D);
-  register-object-id(#"in-token", #x11E);
-  register-object-id(#"let-token", #x11F);
-  register-object-id(#"library-token", #x120);
-  register-object-id(#"local-token", #x121);
-  register-object-id(#"macro-token", #x122);
-  register-object-id(#"module-token", #x123);
-  register-object-id(#"method-token", #x124);
-  register-object-id(#"mv-call-token", #x125);
-  register-object-id(#"otherwise-token", #x126);
-  register-object-id(#"primitive-token", #x127);
-  register-object-id(#"seal-token", #x128);
-  register-object-id(#"set-token", #x129);
-  register-object-id(#"use-token", #x12A);
-  register-object-id(#"uwp-token", #x12B);
-  register-object-id(#"variable-token", #x12C);
-  register-object-id(#"while-token", #x12D);
-  register-object-id(#"keyword-token", #x12E);
-  register-object-id(#"abstract-literal-token", #x12F);
-  register-object-id(#"literal-token", #x130);
-  register-object-id(#"string-token", #x131);
-  register-object-id(#"operator-token", #x132);
-  register-object-id(#"binary-operator-token", #x133);
-  register-object-id(#"simple-binary-operator-token", #x134);
-  register-object-id(#"unary-operator-token", #x135);
-  register-object-id(#"punctuation-token", #x136);
-  register-object-id(#"left-paren-token", #x137);
-  register-object-id(#"right-paren-token", #x138);
-  register-object-id(#"comma-token", #x139);
-  register-object-id(#"dot-token", #x13A);
-  register-object-id(#"semicolon-token", #x13B);
-  register-object-id(#"left-bracket-token", #x13C);
-  register-object-id(#"right-bracket-token", #x13D);
-  register-object-id(#"left-brace-token", #x13E);
-  register-object-id(#"right-brace-token", #x13F);
-  register-object-id(#"double-colon-token", #x140);
-  register-object-id(#"minus-token", #x141);
-  register-object-id(#"tilde-token", #x142);
-  register-object-id(#"equal-token", #x143);
-  register-object-id(#"double-equal-token", #x144);
-  register-object-id(#"arrow-token", #x145);
-  register-object-id(#"sharp-paren-token", #x146);
-  register-object-id(#"sharp-bracket-token", #x147);
-  register-object-id(#"question-token", #x148);
-  register-object-id(#"double-question-token", #x149);
-  register-object-id(#"ellipsis-token", #x14A);
-  register-object-id(#"sharp-word-token", #x14B);
-  register-object-id(#"true-token", #x14C);
-  register-object-id(#"false-token", #x14D);
-  register-object-id(#"next-token", #x14E);
-  register-object-id(#"rest-token", #x14F);
-  register-object-id(#"key-token", #x150);
-  register-object-id(#"all-keys-token", #x151);
+  register-object-id(#"identifier-token", #x101);
+  register-object-id(#"uniquifier", #x102);
+  register-object-id(#"operator-token", #x103);
+  register-object-id(#"constrained-name-token", #x104);
+  register-object-id(#"literal-token", #x105);
+  register-object-id(#"pre-parsed-token", #x106);
 
-  // Parse-tree components
+  // Macros
   //
-  register-object-id(#"property", #x180);
-  register-object-id(#"bindings", #x181);
-  register-object-id(#"parameter-list", #x182);
-  register-object-id(#"parameter", #x183);
-  register-object-id(#"keyword-parameter", #x184);
-  register-object-id(#"method-parse", #x185);
-  // register-object-id(#"case-clause", #x186); -- no longer used.
-  register-object-id(#"property-set", #x187);
-  register-object-id(#"use-clause", #x188);
-  register-object-id(#"export-clause", #x189);
-  register-object-id(#"create-clause", #x18A);
-  register-object-id(#"for-clause", #x18B);
-  register-object-id(#"for-while-clause", #x18C);
-  register-object-id(#"for-var-clause", #x18D);
-  register-object-id(#"for-in-clause", #x18E);
-  register-object-id(#"for-step-clause", #x18F);
-  register-object-id(#"for-from-clause", #x190);
-  register-object-id(#"classopt", #x191);
-  register-object-id(#"constituent", #x192);
-  register-object-id(#"defining-form", #x193);
-  register-object-id(#"define-class-parse", #x194);
-  register-object-id(#"define-constant-parse", #x195);
-  register-object-id(#"define-generic-parse", #x196);
-  register-object-id(#"seal-generic-parse", #x197);
-  register-object-id(#"define-library-parse", #x198);
-  register-object-id(#"define-method-parse", #x199);
-  register-object-id(#"define-module-parse", #x19A);
-  register-object-id(#"define-variable-parse", #x19B);
-  register-object-id(#"define-parse", #x19C);
-  register-object-id(#"define-bindings-parse", #x19D);
-  register-object-id(#"define-macro-parse", #x19E);
-  register-object-id(#"define-define-macro-parse", #x19F);
-  register-object-id(#"define-define-bindings-macro-parse", #x1A0);
-  register-object-id(#"define-statement-macro-parse", #x1A1);
-  register-object-id(#"define-function-macro-parse", #x1A2);
-  register-object-id(#"local-declaration", #x1A3);
-  register-object-id(#"let", #x1A4);
-  register-object-id(#"let-handler", #x1A5);
-  register-object-id(#"local", #x1A6);
-  register-object-id(#"expression", #x1A7);
-  register-object-id(#"literal-ref", #x1A8);
-  register-object-id(#"binop-series", #x1A9);
-  register-object-id(#"funcall", #x1AA);
-  register-object-id(#"dot", #x1AB);
-  register-object-id(#"varref", #x1AC);
-  register-object-id(#"macro-statement", #x1AD);
-  register-object-id(#"assignment", #x1AE);
-  register-object-id(#"begin", #x1AF);
-  register-object-id(#"bind-exit", #x1B0);
-  register-object-id(#"for", #x1B1);
-  register-object-id(#"if", #x1B2);
-  register-object-id(#"method-ref", #x1B3);
-  register-object-id(#"mv-call", #x1B4);
-  register-object-id(#"primitive", #x1B5);
-  register-object-id(#"uwp", #x1B6);
-  register-object-id(#"rule", #x1B7);
-  register-object-id(#"abstract-define-rule", #x1B8);
-  register-object-id(#"define-rule", #x1B9);
-  register-object-id(#"define-bindings-rule", #x1BA);
-  register-object-id(#"statement-rule", #x1BB);
-  register-object-id(#"function-rule", #x1BC);
-  register-object-id(#"pattern", #x1BD);
-  register-object-id(#"pattern-list", #x1BE);
-  register-object-id(#"pattern-sequence", #x1BF);
-  register-object-id(#"simple-pattern", #x1C0);
-  register-object-id(#"variable-pattern", #x1C1);
-  register-object-id(#"bound-variable-pattern", #x1C2);
-  register-object-id(#"identifier-pattern", #x1C3);
-  register-object-id(#"literal-pattern", #x1C4);
-  register-object-id(#"otherwise-pattern", #x1C5);
-  register-object-id(#"arrow-pattern", #x1C6);
-  register-object-id(#"details-pattern", #x1C7);
-  register-object-id(#"pattern-variable", #x1C8);
-  register-object-id(#"property-list-pattern", #x1C9);
-  register-object-id(#"pattern-keyword", #x1CA);
-  register-object-id(#"auxiliary-rule-set", #x1CB);
-  register-object-id(#"auxiliary-rule", #x1CC);
-  register-object-id(#"template", #x1CD);
-  register-object-id(#"paren-template", #x1CE);
-  register-object-id(#"pattern-variable-reference", #x1CF);
+  register-object-id(#"main-rule-set", #x110);
+  register-object-id(#"aux-rule-set", #x111);
 
+  register-object-id(#"body-style-define-rule", #x120);
+  register-object-id(#"list-style-define-rule", #x121);
+  register-object-id(#"statement-rule", #x122);
+  register-object-id(#"function-rule", #x123);
+  register-object-id(#"auxiliary-rule", #x124);
+
+  register-object-id(#"empty-pattern", #x130);
+  register-object-id(#"semicolon-pattern", #x131);
+  register-object-id(#"comma-pattern", #x132);
+  register-object-id(#"sequential-pattern", #x133);
+  register-object-id(#"bracketed-pattern", #x134);
+  register-object-id(#"variable-pattern", #x135);
+  register-object-id(#"bindings-pattern", #x136);
+  register-object-id(#"name-pattern", #x137);
+  register-object-id(#"arrow-pattern", #x138);
+  register-object-id(#"pattern-variable", #x139);
+  register-object-id(#"property-list-pattern", #x13A);
+  register-object-id(#"pattern-keyword", #x13B);
+
+  register-object-id(#"procedural-template", #x140);
+  register-object-id(#"literal-template", #x141);
+  register-object-id(#"bracketed-element", #x142);
+  register-object-id(#"simple-pattern-variable-reference", #x143);
+  register-object-id(#"ellipsis-pattern-variable-reference", #x144);
+  register-object-id(#"concatenating-pattern-variable-reference", #x145);
+  register-object-id(#"sequence-pattern-variable-reference", #x146);
+  register-object-id(#"unhygienic-pattern-variable-reference", #x147);
+
+  register-object-id(#"literal-ref-parse", #x150);
+  register-object-id(#"varref-parse", #x151);
 end;
 
 
@@ -854,7 +731,7 @@ end method;
 // Rounds a byte offset up to the next word boundary.
 // ### assumes 4byte words.
 //
-define method round-to-word(x :: <integer>) => <integer>;
+define method round-to-word (x :: <integer>) => res :: <integer>;
   logand(x + 3, -4);
 end method;
 
@@ -891,6 +768,8 @@ define /* exported */ class <dump-buffer> (<object>)
   slot dump-stack :: <list>, init-value: #();
 end class;
 
+define sealed domain make (singleton(<dump-buffer>));
+define sealed domain initialize (<dump-buffer>);
 
 // The current "file position" in the dump.  User primarily to record object
 // starting positions.
@@ -925,6 +804,7 @@ define /* exported */ class <dump-state> (<dump-buffer>)
   slot next-extern-id :: <integer>, init-value: 0;
 end class;
 
+define sealed domain make (singleton(<dump-state>));
 
 //
 // Actually dump an object.
@@ -1255,7 +1135,7 @@ end method;
 //
 define /* exported */ method label-next-object
   (id :: <integer>, buf :: <dump-state>)
- => <integer>;
+ => res :: <integer>;
   let lidx = buf.dump-local-index;
   assert(id >= 0 & id < lidx.size);
   assert(lidx[id] == #f);
@@ -1300,6 +1180,8 @@ define class <data-unit> (<object>)
   slot local-index :: <simple-object-vector>;
 end class;
 
+define sealed domain make (singleton(<data-unit>));
+define sealed domain initialize (<data-unit>);
 
 // Table mapping data unit names to a list of pairs (unit-type . data-unit)
 //
@@ -1365,6 +1247,8 @@ define /* exported */ class <load-state> (<object>)
   slot load-stack :: <list>, init-value: #();
 end class;
 
+define sealed domain make (singleton(<load-state>));
+define sealed domain initialize (<load-state>);
 
 // This method automatically updates the label-index slot when the
 // position-offset changes.
@@ -1409,6 +1293,8 @@ define /* exported */ class <dispatcher> (<object>)
     			 fill: undefined-entry-type);
 end class;
 
+define sealed domain make (singleton(<dispatcher>));
+define sealed domain initialize (<dispatcher>);
 
 // If initialize-from: is specified, fill the dispatcher from that other
 // dispatcher.  By default, dispatchers are initialized from
@@ -1551,7 +1437,12 @@ define method check-unit-header
 end method;
 
 
-define class <empty-object> (<object>) end;
+define class <empty-object> (<object>)
+end class <empty-object>;
+
+define sealed domain make (singleton(<empty-object>));
+define sealed domain initialize (<empty-object>);
+
 define constant $empty-object :: <empty-object> = make(<empty-object>);
 
 
@@ -1654,7 +1545,12 @@ end method;
 
 // The $end-object, used to mark loading an end header.
 //
-define class <end-object> (<object>) end;
+define class <end-object> (<object>)
+end;
+
+define sealed domain make (singleton(<end-object>));
+define sealed domain initialize (<end-object>);
+
 define /* exported */ constant $end-object :: <end-object>
   = make(<end-object>);
 
@@ -1875,7 +1771,7 @@ end method;
 // ### should really be a word vector.
 //
 define constant load-word-vector = method (state :: <load-state>) 
- => <simple-object-vector>;
+ => res :: <simple-object-vector>;
   let buffer = state.od-buffer;
   let nwords = buffer-word(buffer, state.od-next);
   state.od-next := state.od-next + $word-bytes;
@@ -1915,6 +1811,8 @@ define /* exported */ class <forward-ref> (<object>)
   slot patchers :: <list>, init-value: #();
 end class;
 
+define sealed domain make (singleton(<forward-ref>));
+define sealed domain initialize (<forward-ref>);
 
 // Anything that isn't a <forward-ref> is resolved, and is itself.
 //
@@ -1994,6 +1892,8 @@ define abstract class <basic-handle> (<object>)
     init-keyword: dump-state:;
 end class;
 
+define sealed domain make (singleton(<basic-handle>));
+define sealed domain initialize (<basic-handle>);
 
 // Handle on an object that has been loaded from another data unit and marked
 // as external by the loader method using note-external-definition-loaded.
@@ -2007,6 +1907,7 @@ define class <extern-handle> (<basic-handle>)
   slot local-id :: <integer>, required-init-keyword: local-id:;
 end class;
 
+define sealed domain make (singleton(<extern-handle>));
 
 // Represents an object created in this current program.  Note that the object
 // may actually have external reference semantics in the case where we are
@@ -2016,6 +1917,7 @@ end class;
 define class <local-handle> (<basic-handle>)
 end class;
 
+define sealed domain make (singleton(<local-handle>));
 
 // This mixin is inherited by objects that want to preserve object identity,
 // either within or across data unit boundaries (local or external references.
@@ -2252,6 +2154,8 @@ define class <make-info> (<object>)
     required-init-keyword: dump-side-effect:;
 end class;
 
+define sealed domain make (singleton(<make-info>));
+define sealed domain initialize (<make-info>);
 
 // Table mapping classes to <make-info> objects.
 //

@@ -1,5 +1,5 @@
 module: policy
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.3 1996/02/06 15:42:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.4 1996/03/17 01:08:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,10 +16,9 @@ define class <policy> (<identity-preserving-mixin>)
   slot debug :: <single-float>, required-init-keyword: debug:;
 end class;
 
-#if (~mindy)
-seal generic make (singleton(<policy>));
-seal generic initialize (<policy>);
-#end
+define sealed domain make (singleton(<policy>));
+define sealed domain initialize (<policy>);
+
 
 define method print-object (policy :: <policy>, stream :: <stream>) => ();
   pprint-fields(policy, stream,
