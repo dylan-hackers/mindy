@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.46 2003/06/18 01:04:24 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.47 2003/06/24 17:39:26 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -599,7 +599,7 @@ sub parse_dylan_header {
         # Also, Perl handles all newline hassles by turning win32
         # style CRLFs into LFs (\n's) before it shows us the string.
 	
-        if ( ($target_name eq 'x86-cygnus-gcc') || ($target_name eq 'x86-win32-vc')) {
+        if ( ($target_name =~ /x86-cygnus-gcc*/) || ($target_name eq 'x86-win32-vc') || ($target_name =~ /x86-mingw32-gcc*/)) {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
 
@@ -653,7 +653,7 @@ sub parse_lid_file {
     while (<LIDFILE>) {
         $lidfile_line = $lidfile_line + 1;
 
-        if ( ($target_name eq 'x86-cygnus-gcc') || ($target_name eq 'x86-win32-vc')) {
+        if ( ($target_name =~ /x86-cygnus-gcc*/) || ($target_name eq 'x86-win32-vc') || ($target_name =~ /x86-mingw32-gcc*/) ) {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
 
@@ -1121,7 +1121,9 @@ sub install_one_file {
 	}
 
     print "\n$to_file: $from_file\n";
-    if ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
+    if ( ($host_platform{'default_features'} =~ /compiled-for-win32/i) 
+    	|| ($host_platform{'default_features'} =~ /compiled-for-mingw32/i))
+    {
         # Host is a win32 platform
         local ($rule) = "\tcopy $from_file $to_file\n\n";
         $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
