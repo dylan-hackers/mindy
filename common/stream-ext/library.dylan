@@ -1,8 +1,8 @@
 module: Dylan-User
-author: Russ Schaaf (rsbe@andrew.cmu.edu)
+author: Russ Schaaf (rsbe@andrew.cmu.edu), Nick Kramer, William Lott
 synopsis:   Extensions to the streams library
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/library.dylan,v 1.1 1996/03/15 06:43:03 rsbe Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/library.dylan,v 1.2 1996/09/04 16:47:30 nkramer Exp $
 
 //======================================================================
 //
@@ -33,20 +33,30 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/library.dyla
 define library stream-extensions
   use dylan;
   use streams;
-  export stream-extensions;
+  export
+    stream-extensions, indenting-streams, combination-streams;
 end library stream-extensions;
 
 define module stream-extensions
   use dylan;
   use extensions;
   use streams;
-  export <end-of-stream-error>,
-	 <incomplete-read-error>,
-	 read-to,
-	 read-through,
-	 read-to-end,
-	 skip-through,
-	 new-line,
-	 read-as-list,
-	 read-line-into!;
+  export read-as-list;
 end module stream-extensions;
+
+define module indenting-streams
+  use dylan;
+  use extensions;
+  use streams;
+  use system, import: {copy-bytes};
+  export
+    <indenting-stream>, indent;
+end module indenting-streams;
+
+define module combination-streams
+  use dylan;
+  use extensions;
+  use streams;
+  export
+    <combination-stream>, <combination-file-stream>;
+end module combination-streams;
