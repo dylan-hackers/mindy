@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.6 1995/05/21 00:37:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.7 1995/05/26 10:50:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -807,16 +807,6 @@ define method note-variable-definition (defn :: <implicit-definition>,
     end;
   end;
 end;
-
-
-// Transformer instillation
-
-define method define-transformer
-    (name :: <symbol>, transformer :: <function>) => ();
-  let var = dylan-var(name, create: #t);
-  var.variable-transformers := pair(transformer, var.variable-transformers);
-end;
-
 
 
 // Initilization stuff.
