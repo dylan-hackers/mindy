@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.7 1996/02/16 02:40:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.8 1996/02/21 02:49:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -226,7 +226,8 @@ define module define-functions
   use tokens;
   use names;
   use definitions;
-  use forward-defn-classes;
+  use forward-defn-classes,
+    export: {<abstract-method-definition>};
   use variables;
   use parse-tree,
     exclude: {<mv-call>};
@@ -289,7 +290,8 @@ define module define-constants-and-variables
   use od-format;
 
   export
-    <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn;
+    <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn,
+    expand-until-method-ref;
 end;
 
 define module define-classes
@@ -309,6 +311,7 @@ define module define-classes
   use classes;
   use compile-time-eval;
   use define-functions;
+  use define-constants-and-variables;
   use builder-interface;
   use fer-convert;
   use signature-interface;
