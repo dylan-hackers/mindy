@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.7 1994/11/06 20:11:18 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.8 1994/11/14 18:29:23 wlott Exp $
 
 //======================================================================
 //
@@ -78,12 +78,13 @@ end as-uppercase!;
 // Provide a type error rather than a no applicable methods error when
 // someone tries to put something illegal into a <string>
 //
-define method element-setter (new, string :: <byte-string>, index :: <integer>)
+define method element-setter
+    (new, string :: <byte-string>, index :: <fixed-integer>)
   error(make(<type-error>, value: new, type: <byte-character>));
 end;
 
 define method element-setter 
-    (new, string :: <unicode-string>, index :: <integer>)
+    (new, string :: <unicode-string>, index :: <fixed-integer>)
   error(make(<type-error>, value: new, type: <character>));
 end;
 
