@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.61 1995/03/02 19:15:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.62 1995/03/02 19:41:06 wlott Exp $
 
 //======================================================================
 //
@@ -124,7 +124,7 @@ end Builtin-Stuff;
 define module extras
   create
     *format-function*, *force-output-function*, *debug-output*,
-    report-condition;
+    report-condition, ratio;
 end;
 
 
