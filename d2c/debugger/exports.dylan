@@ -6,6 +6,9 @@ define library debugger
   use io;
   use melange-support;
   use command-processor;
+  use collection-extensions;
+  use string-extensions;
+
 end library debugger;
 
 define module debugger
@@ -21,4 +24,6 @@ define module debugger
   use system;
   use melange-support;
   use command-processor;
+  use subseq;
+  use string-hacking;
 end module debugger;

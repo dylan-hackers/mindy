@@ -10,24 +10,34 @@ end class <foo>;
 define constant $dll-handle = dlopen(as(<c-string>, $null-pointer), $RTLD-LAZY);
 
 define method inspect(symbol-name :: <string>)
-  if($dll-handle == as(<dll-handle>, $null-pointer))
-    format-out("An error occurred dlopen()ing 0.\n");
+  if(symbol-name[0] = '0' & symbol-name[1] = 'x')
+    inspect-at-address(as(<raw-pointer>, 
+                          string-to-integer(copy-sequence(symbol-name, start: 2), 
+                                            base: 16)));
   else
-    let object-address =
-      dlsym($dll-handle, export-value(<c-string>, symbol-name));
-    if(object-address == as(<raw-pointer>, $null-pointer))
-      format-out("dlsym returned NULL.\n");
+    if($dll-handle == as(<dll-handle>, $null-pointer))
+      format-out("An error occurred dlopen()ing 0.\n");
     else
-      block()
-        dump-object(object-at(object-address));
-      exception(condition :: <condition>)
-        condition-format(*standard-output*, "%s\r\n", condition);
-        force-output(*standard-output*);
-        #f
-      end block
-    end if;
-  end;
+      let object-address =
+        dlsym($dll-handle, export-value(<c-string>, symbol-name));
+      if(object-address == as(<raw-pointer>, $null-pointer))
+        format-out("dlsym returned NULL.\n");
+      else
+        inspect-at-address(object-address);
+      end if;
+    end;
+  end if;
 end;
+
+define function inspect-at-address(object-address :: <raw-pointer>)
+  block()
+    dump-object(object-at(object-address));
+  exception(condition :: <condition>)
+    condition-format(*standard-output*, "%s\r\n", condition);
+    force-output(*standard-output*);
+    #f
+  end block
+end function inspect-at-address;
 
 make(<command>, name: "Inspect", command: inspect);
 
