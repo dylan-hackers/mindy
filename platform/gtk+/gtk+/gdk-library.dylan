@@ -18,6 +18,5 @@ define module gdk-extra
     <GdkAtom>,
     <GdkModifierType*>,
     <GdkWindow**>,
-    <GdkGC**>,
-    size-of-referenced-type;
+    <GdkGC**>;
 end module;
