@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.14 1995/12/14 00:09:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.15 1995/12/15 05:32:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -141,7 +141,8 @@ define module Extensions
 	     false-or, one-of, <never-returns>,
 
 	     // Condition extensions.
-	     report-condition, condition-format, *warning-output*,
+	     <format-string-condition>, report-condition, condition-format,
+	     *warning-output*,
 
 	     // Debugger Hooks
 	     <debugger>, invoke-debugger, *debugger*,
