@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.7 1994/06/27 16:32:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.8 1994/07/26 00:40:23 wlott Exp $
 *
 * This file implements strings.
 *
@@ -117,6 +117,9 @@ static obj_t dylan_str_make(obj_t class, obj_t size, obj_t fill)
     if (!instancep(size, obj_IntegerClass))
 	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
+
+    if (len < 0)
+	error("Bogus size: for make %=: %=", class, size);
 
     if (!instancep(fill, obj_CharacterClass))
 	error("Bogus fill: for make %=: %=", class, fill);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.6 1994/06/27 16:31:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.7 1994/07/26 00:40:44 wlott Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -52,8 +52,17 @@ obj_t obj_BufferClass = NULL;
 
 static obj_t dylan_buffer_make(obj_t class, obj_t size)
 {
-    int len = fixnum_value(size);
-    obj_t res = alloc(obj_BufferClass, sizeof(struct buffer) + len);
+    int len;
+    obj_t res;
+
+    if (!instancep(size, obj_IntegerClass))
+	error("Bogus size: for make %=: %=", class, size);
+    len = fixnum_value(size);
+
+    if (len < 0)
+	error("Bogus size: for make %=: %=", class, size);
+
+    res = alloc(obj_BufferClass, sizeof(struct buffer) + len);
 
     obj_ptr(struct buffer *, res)->length = len;
 
