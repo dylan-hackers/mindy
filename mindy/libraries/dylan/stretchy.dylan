@@ -1,17 +1,30 @@
 module: dylan
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.9 1994/06/27 17:10:36 wlott Exp $
 
-//////////////////////////////////////////////////////////////////////
+//======================================================================
 //
-//  Copyright (C) 1993, 1994, Carnegie Mellon University
-//  All rights reserved.
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
-//  This code was produced by the Gwydion Project at Carnegie Mellon
-//  University.  If you are interested in using this code, contact
-//  "Scott.Fahlman@cs.cmu.edu" (Internet).
-//
-//////////////////////////////////////////////////////////////////////
-//
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.8 1994/06/11 02:15:01 wlott Exp $
+//======================================================================
 //
 //  This file implements stretchy-vectors.
 //

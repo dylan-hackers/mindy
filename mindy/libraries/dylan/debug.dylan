@@ -1,21 +1,33 @@
 module: dylan
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.7 1994/06/27 17:10:21 wlott Exp $
 
-//////////////////////////////////////////////////////////////////////
+//======================================================================
 //
-//  Copyright (C) 1994, Carnegie Mellon University
-//  All rights reserved.
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
-//  This code was produced by the Gwydion Project at Carnegie Mellon
-//  University.  If you are interested in using this code, contact
-//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//======================================================================
 //
-//////////////////////////////////////////////////////////////////////
+// This file contains the support routines used by the debugger.
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.6 1994/06/11 15:57:50 wlott Exp $
-//
-//  This file does whatever.
-//
-
 
 define method report-problem (problem)
   block ()

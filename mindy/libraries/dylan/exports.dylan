@@ -1,19 +1,33 @@
 module: dylan-user
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.38 1994/06/27 17:10:24 wlott Exp $
 
-//////////////////////////////////////////////////////////////////////
+//======================================================================
 //
-//  Copyright (C) 1994, Carnegie Mellon University
-//  All rights reserved.
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
-//  This code was produced by the Gwydion Project at Carnegie Mellon
-//  University.  If you are interested in using this code, contact
-//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//======================================================================
 //
-//////////////////////////////////////////////////////////////////////
-//
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.37 1994/06/19 01:25:49 nkramer Exp $
-//
-//  This file does whatever.
+//  This file contains the library and module definitions for the
+// Dylan library.
 //
 
 define library Dylan
