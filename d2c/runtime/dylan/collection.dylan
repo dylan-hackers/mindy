@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.8 1995/12/08 22:15:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.9 1995/12/09 02:45:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -127,10 +127,10 @@ define open generic key-test
     (collection :: <collection>) => (test-function :: <function>);
 
 
-define inline method class-for-copy (coll :: <mutable-collection>)
+define inline method type-for-copy (coll :: <mutable-collection>)
     => res :: <class>;
   coll.object-class;
-end method class-for-copy;
+end method type-for-copy;
 
 // Collection Methods.
 
@@ -183,7 +183,7 @@ end method do;
 define inline method map
     (proc :: <function>, collection :: <collection>, #rest more-collections)
     => res :: <collection>;
-  apply(map-as, class-for-copy(collection), proc, collection,
+  apply(map-as, type-for-copy(collection), proc, collection,
 	more-collections);
 end;
 
@@ -268,7 +268,10 @@ define inline method every?
   end block;
 end method every?;
 
-define inline method reduce
+// reduce and reduce1 can't be inline, or the compiler transform for them
+// won't trigger.
+// 
+define method reduce
     (proc :: <function>, init-value :: <object>, collection :: <collection>)
     => res :: <object>;
   for (res = init-value then proc(res, element),
@@ -278,7 +281,7 @@ define inline method reduce
   end for;
 end method reduce;
 
-define inline method reduce1
+define method reduce1
     (proc :: <function>, collection :: <collection>)
     => res :: <object>;
   for (res = #f then if (first?) element else proc(res, element) end,
@@ -300,7 +303,7 @@ define inline method choose
 	 then if (predicate(elem)) pair(elem, result) else result end if,
        elem in sequence)
   finally
-    as(class-for-copy(sequence), reverse!(result));
+    as(type-for-copy(sequence), reverse!(result));
   end for;
 end choose;
 
@@ -315,7 +318,7 @@ define inline method choose-by
        value-elem in value-seq,
        test-elem in test-seq)
   finally
-    as(class-for-copy(value-seq), reverse!(result));
+    as(type-for-copy(value-seq), reverse!(result));
   end for;
 end method;
 
@@ -562,7 +565,7 @@ define method remove
 			 end if,
        elem in sequence)
   finally
-    as(class-for-copy(sequence), reverse!(result));
+    as(type-for-copy(sequence), reverse!(result));
   end for;
 end remove;
 
@@ -574,7 +577,7 @@ define inline method remove!
 end method remove!;
 
 define method reverse (sequence :: <sequence>) => (result :: <sequence>);
-  let result = make(sequence.class-for-copy, size: sequence.size);
+  let result = make(sequence.type-for-copy, size: sequence.size);
   let (res-state, res-limit, res-next, res-done?, res-key, res-elem,
        res-elem-setter) = forward-iteration-protocol(result);
   let (source-state, source-limit, source-next, source-done?, source-key,
@@ -634,7 +637,7 @@ define method remove-duplicates
 			 end if,
        element in sequence)
   finally
-    as(class-for-copy(sequence), reverse!(result));
+    as(type-for-copy(sequence), reverse!(result));
   end for;
 end method remove-duplicates;
 
@@ -945,7 +948,7 @@ end method key-test;
 
 define inline method concatenate (sequence :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
-  apply(concatenate-as, sequence.class-for-copy, sequence, more-sequences);
+  apply(concatenate-as, sequence.type-for-copy, sequence, more-sequences);
 end;
 
 define method concatenate-as(cls :: <class>, sequence :: <sequence>,
@@ -981,7 +984,7 @@ end method concatenate-as;
 
 define inline method first
     (sequence :: <sequence>, #rest keys, #key default) => value :: <object>;
-  apply(element, 0, keys);
+  apply(element, sequence, 0, keys);
 end;
 
 define inline method first-setter
@@ -992,7 +995,7 @@ end;
 
 define inline method second
     (sequence :: <sequence>, #rest keys, #key default) => value :: <object>;
-  apply(element, 1, keys);
+  apply(element, sequence, 1, keys);
 end;
 
 define inline method second-setter
@@ -1003,7 +1006,7 @@ end;
 
 define inline method third
     (sequence :: <sequence>, #rest keys, #key default) => value :: <object>;
-  apply(element, 2, keys);
+  apply(element, sequence, 2, keys);
 end;
 
 define inline method third-setter
@@ -1024,7 +1027,7 @@ define method copy-sequence
   end case;
 
   let sz :: <fixed-integer> = last - start;
-  let result = make(class-for-copy(sequence), size: sz);
+  let result = make(type-for-copy(sequence), size: sz);
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(sequence);
 
