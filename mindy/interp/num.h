@@ -23,21 +23,45 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.5 1994/10/05 21:04:11 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.6 1994/11/03 22:19:27 wlott Exp $
 *
 \**********************************************************************/
 
 #define obj_is_fixnum(o) (!obj_is_ptr(o))
-
 #define fixnum_value(o) (((long)(o))>>1)
 #define make_fixnum(i) ((obj_t)(((long)(i))<<1))
 #define MAX_FIXNUM ((obj_t)((((unsigned long)~0)<<2)>>1))
 #define MIN_FIXNUM ((obj_t)~(((unsigned long)~0)>>1))
 
-extern obj_t obj_IntegerClass;
-extern obj_t obj_SingleFloatClass;     /* table.c needs the floats */
-extern obj_t obj_DoubleFloatClass;
-extern obj_t obj_ExtendedFloatClass;
+typedef unsigned char digit_t;
+
+struct bignum {
+    obj_t class;
+    int length;
+    digit_t digits[1];
+};
+
+#define BIGNUM(o) obj_ptr(struct bignum *, o)
+
+extern obj_t make_bignum(long value);
+#define as_bignum(i) (obj_is_fixnum(i)?make_bignum(fixnum_value(i)):(i))
+extern long bignum_value(obj_t x);
+extern int compare_bignums(obj_t x, obj_t y);
+extern obj_t add_bignums(obj_t x, obj_t y);
+extern obj_t subtract_bignums(obj_t x, obj_t y);
+extern obj_t negate_bignum(obj_t x);
+extern obj_t multiple_bignums(obj_t x, obj_t y);
+
+extern void print_bignum(obj_t bignum, int radix);
+
+
+struct ratio {
+    obj_t class;
+    obj_t numerator;
+    obj_t denominator;
+};
+
+#define RATIO(o) obj_ptr(struct ratio *, o)
 
 struct single_float {
     obj_t class;
@@ -63,5 +87,11 @@ struct extended_float {
 extern obj_t make_extended(long double value);
 #define extended_value(x) (obj_ptr(struct extended_float *, x)->value)
 
-extern boolean idp(obj_t x, obj_t y);
+extern obj_t obj_IntegerClass;
+extern obj_t obj_FixnumClass;
+extern obj_t obj_BignumClass;
+extern obj_t obj_SingleFloatClass;     /* table.c needs the floats */
+extern obj_t obj_DoubleFloatClass;
+extern obj_t obj_ExtendedFloatClass;
 
+extern boolean idp(obj_t x, obj_t y);

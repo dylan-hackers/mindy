@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.8 1994/10/05 21:04:16 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.9 1994/11/03 22:19:28 wlott Exp $
 *
 * This file contains <object>.
 *
@@ -32,7 +32,6 @@
 #include "../compat/std-c.h"
 
 #include "mindy.h"
-#include "num.h"
 #include "class.h"
 #include "bool.h"
 #include "list.h"

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.14 1994/10/05 21:02:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.15 1994/11/03 22:19:16 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -178,6 +178,17 @@ obj_t alloc(obj_t class, int bytes)
     return result;
 }
 
+void shrink(obj_t obj, int new_bytes)
+{
+#if CHECKGC
+    unsigned int *ptr = obj_ptr(unsigned int *, obj) - 2;
+
+    if (new_bytes > ptr[1])
+	lose("Can't shrink a %d byte object to %d bytes.", ptr[1], new_bytes);
+
+    ptr[1] = new_bytes;
+#endif    
+}
 
 struct forwarding_pointer {
     obj_t marker;

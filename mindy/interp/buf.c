@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.9 1994/10/05 21:01:15 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.10 1994/11/03 22:19:05 wlott Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -57,7 +57,7 @@ static obj_t dylan_buffer_make(obj_t class, obj_t size)
     int len;
     obj_t res;
 
-    if (!instancep(size, obj_IntegerClass))
+    if (!instancep(size, obj_FixnumClass))
 	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
@@ -156,15 +156,16 @@ void init_buffer_functions(void)
 {
     obj_t u;
 
-    define_method("element", list2(obj_BufferClass, obj_IntegerClass),
+    define_method("element", list2(obj_BufferClass, obj_FixnumClass),
 		  FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
-		  obj_IntegerClass, dylan_buffer_element);
+		  obj_FixnumClass, dylan_buffer_element);
     define_method("element-setter",
-		  list3(obj_IntegerClass, obj_BufferClass, obj_IntegerClass),
+		  list3(obj_FixnumClass, obj_BufferClass,
+			obj_FixnumClass),
 		  FALSE, obj_False, FALSE, obj_ObjectClass,
 		  dylan_buffer_element_setter);
     define_method("size", list1(obj_BufferClass), FALSE, obj_False, FALSE,
-		  obj_IntegerClass, dylan_buffer_size);
+		  obj_FixnumClass, dylan_buffer_size);
     define_method("make", list1(singleton(obj_BufferClass)), FALSE,
 		  list1(pair(symbol("size"), make_fixnum(4096))),
 		  FALSE, obj_BufferClass, dylan_buffer_make);
@@ -172,7 +173,7 @@ void init_buffer_functions(void)
     u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
     u = type_union(u, obj_BufferClass);
     define_method("copy-bytes",
-		  listn(5, u, obj_IntegerClass, u, obj_IntegerClass,
-			obj_IntegerClass),
+		  listn(5, u, obj_FixnumClass, u,
+			obj_FixnumClass, obj_FixnumClass),
 		  FALSE, obj_False, FALSE, u, dylan_memcpy);
 }

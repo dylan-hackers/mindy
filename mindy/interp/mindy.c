@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.11 1994/10/26 19:47:07 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.12 1994/11/03 22:19:24 wlott Exp $
 *
 * This file starts everything going.
 *
@@ -44,7 +44,6 @@
 #include "func.h"
 #include "debug.h"
 #include "load.h"
-#include "num.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {

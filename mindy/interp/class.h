@@ -23,15 +23,17 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.7 1994/10/05 21:01:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.8 1994/11/03 22:19:08 wlott Exp $
 *
 \**********************************************************************/
 
 /* If this enumeration changes, you must also update "type.h" */
 #ifndef type_Id_defined
 #define type_Id_defined
-enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union,
-	      id_NoneOf};
+enum type_Id {
+    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
+    id_Union, id_NoneOf
+};
 #endif
 
 extern obj_t obj_ClassClass;

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.6 1994/10/05 21:04:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.7 1994/11/03 22:19:40 wlott Exp $
 *
 \**********************************************************************/
 
@@ -31,11 +31,15 @@
 /* If this enumeration changes, you must also update "class.h" */
 #ifndef type_Id_defined
 #define type_Id_defined
-enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union,
-	      id_NoneOf};
+enum type_Id {
+    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
+    id_Union, id_NoneOf
+};
 #endif
 
 extern obj_t obj_TypeClass;
+
+#define TYPE(x) obj_ptr(struct type *, x)
 
 struct type {
     obj_t class;
@@ -50,13 +54,16 @@ extern boolean overlapp(obj_t type1, obj_t type2);
 /* Functions to create specializers. */
 extern obj_t singleton(obj_t object);
 extern obj_t subclass(obj_t object);
-extern obj_t limited_integer(obj_t min, obj_t max);
+extern obj_t limited_fixnum(obj_t min, obj_t max);
+extern obj_t limited_bignum(obj_t min, obj_t max);
 extern obj_t type_union(obj_t type1, obj_t type2);
+extern obj_t intersect_limited_fixnums(obj_t lim1, obj_t lim2);
+extern obj_t intersect_limited_bignums(obj_t lim1, obj_t lim2);
+extern obj_t restrict_limited_fixnums(obj_t val, obj_t lim1, obj_t lim2);
+extern obj_t restrict_limited_bignums(obj_t val, obj_t lim1, obj_t lim2);
+extern obj_t restrict_type(obj_t val, obj_t type);
 
 /* Extra dreck. */
 extern void init_class_type_stuff(obj_t class);
-extern obj_t intersect_limited_integers(obj_t lim1, obj_t lim2);
-extern obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2);
-extern obj_t restrict_type(obj_t val, obj_t type);
 
 extern void type_init_classes(void);

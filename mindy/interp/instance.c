@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.28 1994/10/25 20:23:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.29 1994/11/03 22:19:18 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1221,10 +1221,18 @@ static void process_inherited(obj_t class, obj_t inherited)
 		}
 		break;
 	      case alloc_CLASS:
+		if (INHD(inherited)->init_function_or_value != obj_Unbound)
+		  error("Can't init inherited class slot %=",
+			INHD(inherited)->name);
+		break;
 	      case alloc_CONSTANT:
+		if (INHD(inherited)->init_function_or_value != obj_Unbound)
+		  error("Can't init inherited constant slot %=",
+			INHD(inherited)->name);
+		break;
 	      case alloc_VIRTUAL:
 		if (INHD(inherited)->init_function_or_value != obj_Unbound)
-		    error("Can't init inherited slot %=",
+		    error("Can't init inherited virtual slot %=",
 			  INHD(inherited)->name);
 		break;
 	      default:
@@ -1892,7 +1900,7 @@ void init_instance_functions(void)
     obj_t obj_FalseClass = object_class(obj_False);
 
     define_function("make-slot",
-		    listn(5, obj_ObjectClass, obj_IntegerClass,
+		    listn(5, obj_ObjectClass, obj_FixnumClass,
 			  obj_FunctionClass,
 			  type_union(obj_FunctionClass, obj_FalseClass),
 			  type_union(obj_TypeClass, obj_FalseClass)),

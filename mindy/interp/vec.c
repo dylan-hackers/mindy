@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.10 1994/10/05 21:04:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.11 1994/11/03 22:19:41 wlott Exp $
 *
 * This file implements vectors.
 *
@@ -116,7 +116,7 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
     int len;
     obj_t *ptr;
 
-    if (!instancep(size, obj_IntegerClass))
+    if (!instancep(size, obj_FixnumClass))
 	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
@@ -285,17 +285,18 @@ void init_vec_functions(void)
 				      list1(obj_SimpleObjectVectorClass),
 				      obj_False, dylan_vector));
     define_method("element",
-		    list2(obj_SimpleObjectVectorClass, obj_IntegerClass),
+		    list2(obj_SimpleObjectVectorClass, obj_FixnumClass),
 		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
 		    obj_ObjectClass, dylan_sovec_element);
     define_method("element-setter",
 		  list3(obj_ObjectClass,
 			obj_SimpleObjectVectorClass,
-			obj_IntegerClass),
+			obj_FixnumClass),
 		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, dylan_sovec_element_setter);
     define_method("size", list1(obj_SimpleObjectVectorClass),
-		  FALSE, obj_False, FALSE, obj_IntegerClass, dylan_sovec_size);
+		  FALSE, obj_False, FALSE, obj_FixnumClass,
+		  dylan_sovec_size);
     define_method("make", list1(singleton(obj_VectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), obj_False)),
@@ -306,18 +307,18 @@ void init_vec_functions(void)
 		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
 
     define_method("element",
-		  list2(obj_ByteVectorClass, obj_IntegerClass),
+		  list2(obj_ByteVectorClass, obj_FixnumClass),
 		  FALSE, list1(pair(symbol("default"), obj_Unbound)),
-		  FALSE, obj_IntegerClass, dylan_bytevec_element);
+		  FALSE, obj_FixnumClass, dylan_bytevec_element);
     define_method("element-setter",
-		  list3(obj_IntegerClass,
+		  list3(obj_FixnumClass,
 			obj_ByteVectorClass,
-			obj_IntegerClass),
+			obj_FixnumClass),
 		  FALSE, obj_False, FALSE,
-		  obj_IntegerClass, dylan_bytevec_element_setter);
+		  obj_FixnumClass, dylan_bytevec_element_setter);
     define_method("size", list1(obj_ByteVectorClass),
 		  FALSE, obj_False, FALSE,
-		  obj_IntegerClass, dylan_bytevec_size);
+		  obj_FixnumClass, dylan_bytevec_size);
     define_method("make", list1(singleton(obj_ByteVectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), make_fixnum(0))),

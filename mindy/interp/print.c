@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.12 1994/10/26 15:06:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.13 1994/11/03 22:19:30 wlott Exp $
 *
 * This file implements the printer framework.
 *
@@ -189,28 +189,40 @@ void vformat(char *fmt, obj_t *args, int nargs)
 		if (--nargs < 0)
 		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%ld", fixnum_value(*args++));
+		if (obj_is_fixnum(*args))
+		    fprintf(stdout, "%ld", fixnum_value(*args++));
+		else
+		    print_bignum(*args++, 10);
 		break;
               case 'b':
 	      case 'B':
 		if (--nargs < 0)
 		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
-		print_number_in_binary(fixnum_value(*args++));
+		if (obj_is_fixnum(*args))
+		    print_number_in_binary(fixnum_value(*args++));
+		else
+		    print_bignum(*args++, 2);
 		break;
               case 'o':
 	      case 'O':
 		if (--nargs < 0)
 		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%lo", fixnum_value(*args++));
+		if (obj_is_fixnum(*args))
+		    fprintf(stdout, "%lo", fixnum_value(*args++));
+		else
+		    print_bignum(*args++, 8);
 		break;
               case 'x':
 	      case 'X':
 		if (--nargs < 0)
 		    error("Not enough arguments to format");
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%lx", fixnum_value(*args++));
+		if (obj_is_fixnum(*args))
+		    fprintf(stdout, "%lx", fixnum_value(*args++));
+		else
+		    print_bignum(*args++, 16);
 		break;
 	      case 'c':
 	      case 'C':

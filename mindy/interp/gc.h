@@ -23,12 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.h,v 1.4 1994/10/05 21:02:02 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.h,v 1.5 1994/11/03 22:19:17 wlott Exp $
 *
 \**********************************************************************/
 
 
 extern obj_t alloc(obj_t class, int bytes);
+extern void shrink(obj_t obj, int new_bytes);
 extern void scavenge(obj_t *addr);
 extern obj_t transport(obj_t obj, int bytes);
 

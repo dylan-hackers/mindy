@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.18 1994/10/05 21:04:47 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.19 1994/11/03 22:19:38 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -55,11 +55,15 @@ struct singleton {
     obj_t object;
 };
 
+#define SING(x) obj_ptr(struct singleton *, x)
+
 struct subclass {
     obj_t class;
     enum type_Id type_id;
     obj_t of;
 };
+
+#define SUBCLASS(x) obj_ptr(struct subclass *, x)
 
 struct lim_int {
     obj_t class;
@@ -68,11 +72,15 @@ struct lim_int {
     obj_t max;
 };
 
+#define LIMINT(x) obj_ptr(struct lim_int *, x)
+
 struct union_type {
     obj_t class;
     enum type_Id type_id;
     obj_t members;
 };
+
+#define UNION(x) obj_ptr(struct union_type *, x)
 
 struct none_of_type {
     obj_t class;
@@ -81,12 +89,14 @@ struct none_of_type {
     obj_t exclude;
 };
 
+#define NONEOF(x) obj_ptr(struct none_of_type *, x)
+
 
 /* instancep */
 
 static inline boolean singleton_instancep(obj_t thing, obj_t type)
 {
-    return idp(thing, obj_ptr(struct singleton *, type)->object);
+    return idp(thing, SING(type)->object);
 }
 
 static inline boolean class_instancep(obj_t thing, obj_t class)
@@ -108,24 +118,28 @@ static inline boolean class_instancep(obj_t thing, obj_t class)
 static inline boolean subclass_instancep(obj_t thing, obj_t subclass)
 {
     return instancep(thing, obj_ClassClass)
-	&& subtypep(thing, obj_ptr(struct subclass *, subclass)->of);
+	&& subtypep(thing, SUBCLASS(subclass)->of);
 }
 
-static inline boolean lim_int_instancep(obj_t thing, obj_t lim_int)
+static inline boolean limfix_instancep(obj_t thing, obj_t lim_int)
 {
-    obj_t min, max;
-
     if (!obj_is_fixnum(thing))
 	return FALSE;
-
-    min = obj_ptr(struct lim_int *, lim_int)->min;
-    if (min != obj_False && (long)thing < (long)min)
+    if ((long)thing < (long)(LIMINT(lim_int)->min))
 	return FALSE;
-
-    max = obj_ptr(struct lim_int *, lim_int)->max;
-    if (max != obj_False && (long)max < (long)thing)
+    if ((long)(LIMINT(lim_int)->max) < (long)thing)
 	return FALSE;
+    return TRUE;
+}
 
+static inline boolean limbig_instancep(obj_t thing, obj_t lim_int)
+{
+    if (object_class(thing) != obj_BignumClass)
+	return FALSE;
+    if (compare_bignums(thing, LIMINT(lim_int)->min) < 0)
+	return FALSE;
+    if (compare_bignums(LIMINT(lim_int)->max, thing) < 0)
+	return FALSE;
     return TRUE;
 }
 
@@ -133,7 +147,7 @@ static inline boolean union_instancep(obj_t thing, obj_t u)
 {
     obj_t remaining;
 
-    for (remaining = obj_ptr(struct union_type *, u)->members;
+    for (remaining = UNION(u)->members;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (instancep(thing, HEAD(remaining)))
@@ -145,10 +159,10 @@ static inline boolean none_of_instancep(obj_t thing, obj_t class)
 {
     obj_t remaining;
 
-    if (!instancep(thing, obj_ptr(struct none_of_type *, class)->base))
+    if (!instancep(thing, NONEOF(class)->base))
 	return FALSE;
 
-    for (remaining = obj_ptr(struct none_of_type *, class)->exclude;
+    for (remaining = NONEOF(class)->exclude;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (instancep(thing, HEAD(remaining)))
@@ -158,25 +172,28 @@ static inline boolean none_of_instancep(obj_t thing, obj_t class)
 
 boolean instancep(obj_t thing, obj_t type)
 {
-    enum type_Id type_id = obj_ptr(struct type *, type)->type_id;
+    enum type_Id type_id = TYPE(type)->type_id;
 
     switch (type_id) {
-    case id_Singleton:
+      case id_Singleton:
 	return singleton_instancep(thing, type);
 	break;
-    case id_Class:
+      case id_Class:
 	return class_instancep(thing, type);
 	break;
-    case id_SubClass:
+      case id_SubClass:
 	return subclass_instancep(thing, type);
 	break;
-    case id_LimInt:
-	return lim_int_instancep(thing, type);
+      case id_LimFixnum:
+	return limfix_instancep(thing, type);
 	break;
-    case id_Union:
+      case id_LimBignum:
+	return limbig_instancep(thing, type);
+	break;
+      case id_Union:
 	return union_instancep(thing, type);
 	break;
-    case id_NoneOf:
+      case id_NoneOf:
 	return none_of_instancep(thing, type);
 	break;
     }
@@ -189,21 +206,20 @@ boolean instancep(obj_t thing, obj_t type)
 
 static inline boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
 {
-    return idp(obj_ptr(struct singleton *, sing1)->object,
-	       obj_ptr(struct singleton *, sing2)->object);
+    return idp(SING(sing1)->object, SING(sing2)->object);
 }
 
 static inline boolean sing_type_subtypep(obj_t sing, obj_t type)
 {
-    return instancep(obj_ptr(struct singleton *, sing)->object, type);
+    return instancep(SING(sing)->object, type);
 }
 
 static inline boolean class_sing_subtypep(obj_t class, obj_t sing)
 {
-    obj_t o = obj_ptr(struct singleton *, sing)->object;
+    obj_t o = SING(sing)->object;
 
     if ((o == obj_Nil || o == obj_True || o == obj_False)
-	&& object_class(o) == class)
+	  && object_class(o) == class)
 	return TRUE;
     else
 	return FALSE;
@@ -211,7 +227,7 @@ static inline boolean class_sing_subtypep(obj_t class, obj_t sing)
 
 static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
 {
-    obj_t cpl = obj_ptr(struct class *, class1)->cpl;
+    obj_t cpl = CLASS(class1)->cpl;
     obj_t remaining;
 
     if (cpl == obj_False)
@@ -227,7 +243,7 @@ static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
 static inline boolean class_subclass_subtypep(obj_t class, obj_t subclass)
 {
     return class == obj_ClassClass
-	    && obj_ptr(struct subclass *, subclass)->of == obj_ClassClass;
+	    && SUBCLASS(subclass)->of == obj_ClassClass;
 }
 
 static inline boolean never_subtypep(obj_t type1, obj_t type2)
@@ -237,9 +253,9 @@ static inline boolean never_subtypep(obj_t type1, obj_t type2)
 
 static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
 {
-    obj_t class = obj_ptr(struct subclass *, sub)->of;
+    obj_t class = SUBCLASS(sub)->of;
 
-    if (obj_ptr(struct class *, class)->all_subclasses == obj_Nil)
+    if (CLASS(class)->all_subclasses == obj_Nil)
 	return instancep(class, type);
     else
 	return subtypep(obj_ClassClass, type);
@@ -247,49 +263,98 @@ static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
 
 static inline boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
-    return subtypep(obj_ptr(struct subclass *, sub1)->of,
-		    obj_ptr(struct subclass *, sub2)->of);
+    return subtypep(SUBCLASS(sub1)->of, SUBCLASS(sub2)->of);
 }
 
-static inline boolean lim_sing_subtypep(obj_t lim, obj_t sing)
+static inline boolean limfix_sing_subtypep(obj_t lim, obj_t sing)
 {
-    obj_t min;
+    obj_t min = LIMINT(lim)->min;
 
-    min = obj_ptr(struct lim_int *, lim)->min;
-
-    if (min == obj_False || min != obj_ptr(struct lim_int *, lim)->max
-	|| min != obj_ptr(struct singleton *, sing)->object)
+    if (min != LIMINT(lim)->max || min != SING(sing)->object)
 	return FALSE;
     else
 	return TRUE;
 }
 
-static inline boolean lim_lim_subtypep(obj_t lim1, obj_t lim2)
+static inline boolean limbig_sing_subtypep(obj_t lim, obj_t sing)
+{
+    obj_t thing = SING(sing)->object;
+
+    if (object_class(thing) == obj_BignumClass) {
+	obj_t min = LIMINT(lim)->min;
+	obj_t max = LIMINT(lim)->max;
+
+	if (min == obj_False || max == obj_False || compare_bignums(min, max)
+	    || compare_bignums(min, SING(sing)->object))
+	    return FALSE;
+	else
+	    return TRUE;
+    }
+    else
+	return FALSE;
+}
+
+static inline boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
-    min1 = obj_ptr(struct lim_int *, lim1)->min;
-    max1 = obj_ptr(struct lim_int *, lim1)->max;
-    min2 = obj_ptr(struct lim_int *, lim2)->min;
-    max2 = obj_ptr(struct lim_int *, lim2)->max;
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
 
-    if (min2 != obj_False && (min1 == obj_False || (long)min1 < (long)min2))
+    if ((long)min1 < (long)min2)
 	return FALSE;
-    if (max2 != obj_False && (max2 == obj_False || (long)max1 > (long)max2))
+    if ((long)max1 > (long)max2)
 	return FALSE;
     return TRUE;
 }
 
-static inline boolean lim_type_subtypep(obj_t lim, obj_t type)
+static inline boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
 {
-    return subtypep(obj_IntegerClass, type);
+    obj_t min1, min2, max1, max2;
+
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
+
+    if (min1 == obj_False) {
+	if (min2 != obj_False)
+	    return FALSE;
+    }
+    else {
+	if (min2 == obj_False || compare_bignums(min2, min1) < 0)
+	    return FALSE;
+    }
+
+    if (max1 == obj_False) {
+	if (max2 != obj_False)
+	    return FALSE;
+    }
+    else {
+	if (max2 == obj_False || compare_bignums(max2, max1) > 0)
+	    return FALSE;
+    }
+
+    return TRUE;
+}
+
+static inline boolean limfix_type_subtypep(obj_t lim, obj_t type)
+{
+    return subtypep(obj_FixnumClass, type);
+}
+
+static inline boolean limbig_type_subtypep(obj_t lim, obj_t type)
+{
+    return subtypep(obj_BignumClass, type);
 }
 
 static inline boolean union_type_subtypep(obj_t u, obj_t type)
 {
     obj_t remaining;
 
-    for (remaining = obj_ptr(struct union_type *, u)->members;
+    for (remaining = UNION(u)->members;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (!subtypep(HEAD(remaining), type))
@@ -301,7 +366,7 @@ static inline boolean type_union_subtypep(obj_t type, obj_t u)
 {
     obj_t remaining;
 
-    for (remaining = obj_ptr(struct union_type *, u)->members;
+    for (remaining = UNION(u)->members;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (subtypep(type, HEAD(remaining)))
@@ -311,20 +376,19 @@ static inline boolean type_union_subtypep(obj_t type, obj_t u)
 
 static inline boolean noneof_type_subtypep(obj_t n, obj_t type)
 {
-    return subtypep(obj_ptr(struct none_of_type *, n)->base, type);
+    return subtypep(NONEOF(n)->base, type);
 }
 
 static inline boolean lim_noneof_subtypep(obj_t type, obj_t n)
 {
     obj_t remaining;
 
-    if (!subtypep(type, obj_ptr(struct none_of_type *, n)->base)) return FALSE;
+    if (!subtypep(type, NONEOF(n)->base)) return FALSE;
 
-    for (remaining = obj_ptr(struct none_of_type *, n)->exclude;
+    for (remaining = NONEOF(n)->exclude;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
-	if (instancep(obj_ptr(struct singleton *, HEAD(remaining))->object,
-		      type))
+	if (instancep(SING(HEAD(remaining))->object, type))
 	    return FALSE;
     return TRUE;
 }
@@ -336,92 +400,122 @@ boolean subtypep(obj_t type1, obj_t type2)
     if (type1 == type2)
 	return TRUE;
 
-    type1_id = obj_ptr(struct type *, type1)->type_id;
-    type2_id = obj_ptr(struct type *, type2)->type_id;
+    type1_id = TYPE(type1)->type_id;
+    type2_id = TYPE(type2)->type_id;
 
     switch (type1_id) {
-    case id_Singleton:
+      case id_Singleton:
 	switch (type2_id) {
 	    /* singleton x mumble methods */
-	case id_Singleton:
+	  case id_Singleton:
 	    return sing_sing_subtypep(type1, type2);
 	    break;
-	case id_Class:
-	case id_SubClass:
-	case id_LimInt:
-	case id_NoneOf:
+	  case id_Class:
+	  case id_SubClass:
+	  case id_LimFixnum:
+	  case id_LimBignum:
+	  case id_NoneOf:
 	    return sing_type_subtypep(type1, type2);
 	    break;
-	case id_Union:
+	  case id_Union:
 	    return type_union_subtypep(type1, type2);
 	    break;
 	};
 	break;
-    case id_Class:
+      case id_Class:
 	switch (type2_id) {
 	    /* class x mumble methods */
-	case id_Singleton:
+	  case id_Singleton:
 	    return class_sing_subtypep(type1, type2);
 	    break;
-	case id_Class:
+	  case id_Class:
 	    return class_class_subtypep(type1, type2);
 	    break;
-	case id_SubClass:
+	  case id_SubClass:
 	    return class_subclass_subtypep(type1, type2);
 	    break;
-	case id_LimInt:
-	case id_NoneOf:
+	  case id_LimFixnum:
+	  case id_LimBignum:
+	  case id_NoneOf:
 	    return never_subtypep(type1, type2);
 	    break;
-	case id_Union:
+	  case id_Union:
 	    return type_union_subtypep(type1, type2);
 	    break;
 	};
 	break;
-    case id_SubClass:
+      case id_SubClass:
 	switch (type2_id) {
 	    /* subclass x mumble methods */
-	case id_Singleton:
-	case id_Class:
+	  case id_Singleton:
+	  case id_Class:
 	    return subclass_type_subtypep(type1, type2);
 	    break;
-	case id_SubClass:
+	  case id_SubClass:
 	    return subclass_subclass_subtypep(type1, type2);
 	    break;
-	case id_LimInt:
-	case id_NoneOf:
+	  case id_LimFixnum:
+	  case id_LimBignum:
+	  case id_NoneOf:
 	    return never_subtypep(type1, type2);
 	    break;
-	case id_Union:
+	  case id_Union:
 	    return type_union_subtypep(type1, type2);
 	    break;
 	}
 	break;
-    case id_LimInt:
+      case id_LimFixnum:
 	switch (type2_id) {
-	    /* limint x mumble methods */
-	case id_Singleton:
-	    return lim_sing_subtypep(type1, type2);
+	    /* limfixnum x mumble methods */
+	  case id_Singleton:
+	    return limfix_sing_subtypep(type1, type2);
 	    break;
-	case id_Class:
-	case id_SubClass:
-	    return lim_type_subtypep(type1, type2);
+	  case id_Class:
+	  case id_SubClass:
+	    return limfix_type_subtypep(type1, type2);
 	    break;
-	case id_LimInt:
-	    return lim_lim_subtypep(type1, type2);
+	  case id_LimFixnum:
+	    return limfix_limfix_subtypep(type1, type2);
 	    break;
-	case id_Union:
+	  case id_LimBignum:
+	    return never_subtypep(type1, type2);
+	    break;
+	  case id_Union:
 	    return type_union_subtypep(type1, type2);
 	    break;
-	case id_NoneOf:
+	  case id_NoneOf:
 	    return lim_noneof_subtypep(type1, type2);
 	    break;
 	}
 	break;
-    case id_Union:
+      case id_LimBignum:
+	switch (type2_id) {
+	    /* limint x mumble methods */
+	  case id_Singleton:
+	    return limbig_sing_subtypep(type1, type2);
+	    break;
+	  case id_Class:
+	  case id_SubClass:
+	    return limbig_type_subtypep(type1, type2);
+	    break;
+	  case id_LimFixnum:
+	    return never_subtypep(type1, type2);
+	    break;
+	  case id_LimBignum:
+	    return limbig_limbig_subtypep(type1, type2);
+	    break;
+	  case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	  case id_NoneOf:
+	    return lim_noneof_subtypep(type1, type2);
+	    break;
+	}
+	break;
+      case id_Union:
 	return union_type_subtypep(type1, type2);
 	break;
-    case id_NoneOf:
+      case id_NoneOf:
 	return noneof_type_subtypep(type1, type2);
 	break;
     }
@@ -439,7 +533,7 @@ static boolean class_class_overlapp(obj_t class1, obj_t class2)
     if (class1 == class2)
 	return TRUE;
 
-    for (remaining = obj_ptr(struct class *, class1)->all_subclasses;
+    for (remaining = CLASS(class1)->all_subclasses;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (subtypep(HEAD(remaining), class2))
@@ -454,13 +548,13 @@ static boolean class_type_overlapp(obj_t class, obj_t type)
 
 static boolean subclass_type_overlapp(obj_t subclass, obj_t type)
 {
-    obj_t class = obj_ptr(struct subclass *, subclass)->of;
+    obj_t class = SUBCLASS(subclass)->of;
     obj_t remaining;
 
     if (instancep(class, type))
 	return TRUE;
 
-    for (remaining = obj_ptr(struct class *, class)->all_subclasses;
+    for (remaining = CLASS(class)->all_subclasses;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (instancep(HEAD(remaining), type))
@@ -468,27 +562,52 @@ static boolean subclass_type_overlapp(obj_t subclass, obj_t type)
     return FALSE;
 }
 
-static boolean lim_lim_overlapp(obj_t lim1, obj_t lim2)
+static boolean limfix_limfix_overlapp(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
-    min1 = obj_ptr(struct lim_int *, lim1)->min;
-    max1 = obj_ptr(struct lim_int *, lim1)->max;
-    min2 = obj_ptr(struct lim_int *, lim2)->min;
-    max2 = obj_ptr(struct lim_int *, lim2)->max;
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
 
-    if (max1 != obj_False && min2 != obj_False && (long)max1 < (long)min2)
+    if ((long)max1 < (long)min2)
 	return FALSE;
 
-    if (max2 != obj_False && min1 != obj_False && (long)max2 < (long)min1)
+    if ((long)max2 < (long)min1)
 	return FALSE;
 
     return TRUE;
 }
 
-static boolean lim_class_overlapp(obj_t lim, obj_t class)
+static boolean limbig_limbig_overlapp(obj_t lim1, obj_t lim2)
 {
-    return class_class_overlapp(class, obj_IntegerClass);
+    obj_t min1, min2, max1, max2;
+
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
+
+    if (max1 != obj_False && min2 != obj_False
+	  && compare_bignums(max1, min2) <0)
+	return FALSE;
+
+    if (max2 != obj_False && min1 != obj_False
+	  && compare_bignums(max2, min1) < 0)
+	return FALSE;
+
+    return TRUE;
+}
+
+static boolean limfix_class_overlapp(obj_t lim, obj_t class)
+{
+    return class_class_overlapp(class, obj_FixnumClass);
+}
+
+static boolean limbig_class_overlapp(obj_t lim, obj_t class)
+{
+    return class_class_overlapp(class, obj_BignumClass);
 }
 
 static boolean lim_type_overlapp(obj_t lim, obj_t type)
@@ -500,7 +619,7 @@ static boolean union_type_overlapp(obj_t u, obj_t type)
 {
     obj_t remaining;
 
-    for (remaining = obj_ptr(struct union_type *, u)->members;
+    for (remaining = UNION(u)->members;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	if (overlapp(HEAD(remaining), type))
@@ -510,46 +629,58 @@ static boolean union_type_overlapp(obj_t u, obj_t type)
 
 static boolean noneof_type_overlapp(obj_t n, obj_t type)
 {
-    return overlapp(obj_ptr(struct none_of_type *, n)->base, type);
+    return overlapp(NONEOF(n)->base, type);
 }
 
-static boolean (*overlapp_table[6][6])(obj_t t1, obj_t t2) = {
+static boolean (*overlapp_table[7][7])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
 	sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,
-	sing_type_subtypep, sing_type_subtypep, sing_type_subtypep
+	sing_type_subtypep, sing_type_subtypep, sing_type_subtypep,
+	sing_type_subtypep
     },
     /* class x mumble methods */
     {
 	class_type_overlapp, class_class_overlapp, class_type_overlapp,
-	class_type_overlapp, class_type_overlapp, class_type_overlapp
+	class_type_overlapp, class_type_overlapp, class_type_overlapp,
+	class_type_overlapp
     },
     /* subclass x mumble methods */
     {
 	subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp,
-	subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp
+	subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp,
+	subclass_type_overlapp
     },
-    /* limint x mumble methods */
+    /* limfix x mumble methods */
     {
-	lim_type_overlapp, lim_class_overlapp, never_subtypep,
-	lim_lim_overlapp, lim_type_overlapp, lim_type_overlapp
+	lim_type_overlapp, limfix_class_overlapp, never_subtypep,
+	limfix_limfix_overlapp, never_subtypep, lim_type_overlapp,
+	lim_type_overlapp
+    },
+    /* limbig x mumble methods */
+    {
+	lim_type_overlapp, limbig_class_overlapp, never_subtypep,
+	never_subtypep, limbig_limbig_overlapp, lim_type_overlapp,
+	lim_type_overlapp
     },
     /* union x mumble methods */
     {
 	union_type_overlapp, union_type_overlapp, union_type_overlapp,
-	union_type_overlapp, union_type_overlapp, union_type_overlapp
+	union_type_overlapp, union_type_overlapp, union_type_overlapp,
+	union_type_overlapp
     },
     /* noneof x mumble methods */
     {
 	noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp,
-	noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp
+	noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp,
+	noneof_type_overlapp
     }
 };
 
 boolean overlapp(obj_t type1, obj_t type2)
 {
-    int type1_id = obj_ptr(struct type *, type1)->type_id;
-    int type2_id = obj_ptr(struct type *, type2)->type_id;
+    int type1_id = TYPE(type1)->type_id;
+    int type2_id = TYPE(type2)->type_id;
 
     return (overlapp_table[type1_id][type2_id])(type1, type2);
 }
@@ -561,8 +692,8 @@ obj_t singleton(obj_t object)
 {
     obj_t res = alloc(obj_SingletonClass, sizeof(struct singleton));
 
-    obj_ptr(struct singleton *, res)->type_id = id_Singleton;
-    obj_ptr(struct singleton *, res)->object = object;
+    SING(res)->type_id = id_Singleton;
+    SING(res)->object = object;
 
     return res;
 }
@@ -572,7 +703,7 @@ obj_t singleton(obj_t object)
 
 void init_class_type_stuff(obj_t class)
 {
-    obj_ptr(struct class *, class)->type_id = id_Class;
+    CLASS(class)->type_id = id_Class;
 }
 
 
@@ -582,8 +713,8 @@ obj_t subclass(obj_t of)
 {
     obj_t res = alloc(obj_SubclassClass, sizeof(struct subclass));
 
-    obj_ptr(struct subclass *, res)->type_id = id_SubClass;
-    obj_ptr(struct subclass *, res)->of = of;
+    SUBCLASS(res)->type_id = id_SubClass;
+    SUBCLASS(res)->of = of;
 
     return res;
 }
@@ -591,42 +722,89 @@ obj_t subclass(obj_t of)
 
 /* limited integer construction. */
 
-obj_t limited_integer(obj_t min, obj_t max)
+obj_t limited_fixnum(obj_t min, obj_t max)
 {
-    if (min == MIN_FIXNUM)
-	min = obj_False;
-    if (max == MAX_FIXNUM)
-	max = obj_False;
+    if (min == obj_False)
+	min = MIN_FIXNUM;
+    if (max == obj_False)
+	max = MAX_FIXNUM;
 
-    if (min != obj_False || max != obj_False) {
+    if (min != MIN_FIXNUM || max != MAX_FIXNUM) {
 	obj_t res = alloc(obj_LimIntClass, sizeof(struct lim_int));
 
-	obj_ptr(struct lim_int *, res)->type_id = id_LimInt;
-	obj_ptr(struct lim_int *, res)->min = min;
-	obj_ptr(struct lim_int *, res)->max = max;
+	LIMINT(res)->type_id = id_LimFixnum;
+	LIMINT(res)->min = min;
+	LIMINT(res)->max = max;
 
 	return res;
     }
     else
-	return obj_IntegerClass;
+	return obj_FixnumClass;
 }
 
-static obj_t merge_limited_integers(obj_t lim1, obj_t lim2)
+obj_t limited_bignum(obj_t min, obj_t max)
+{
+    if (min != obj_False || max != obj_False) {
+	obj_t res = alloc(obj_LimIntClass, sizeof(struct lim_int));
+
+	LIMINT(res)->type_id = id_LimBignum;
+	LIMINT(res)->min = as_bignum(min);
+	LIMINT(res)->max = as_bignum(max);
+
+	return res;
+    }
+    else
+	return obj_BignumClass;
+}
+
+static obj_t merge_limited_fixnums(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2, min, max;
 
-    min1 = obj_ptr(struct lim_int *, lim1)->min;
-    max1 = obj_ptr(struct lim_int *, lim1)->max;
-    min2 = obj_ptr(struct lim_int *, lim2)->min;
-    max2 = obj_ptr(struct lim_int *, lim2)->max;
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
 
-    if (max1 != obj_False && min2 != obj_False
-	  && (long)max1 < (long)min2 - (long)make_fixnum(1))
+    if (fixnum_value(max1) < fixnum_value(min2) - 1)
 	return obj_False;
 
-    if (max2 != obj_False && min1 != obj_False
-	  && (long)max2 < (long)min1 - (long)make_fixnum(1))
+    if (fixnum_value(max2) < fixnum_value(min1) - 1)
 	return obj_False;
+
+    if ((long)min1 < (long)min2)
+	min = min1;
+    else
+	min = min2;
+
+    if ((long)max1 > (long)max2)
+	max = max1;
+    else
+	max = max2;
+
+    return limited_fixnum(min, max);
+}
+
+static obj_t merge_limited_bignums(obj_t lim1, obj_t lim2)
+{
+    obj_t min1, min2, max1, max2, min, max;
+
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
+
+    if (max1 != obj_False && min2 != obj_False) {
+	obj_t min2_minus_1 = subtract_bignums(min2, make_bignum(1));
+	if (compare_bignums(max1, min2_minus_1) < 0)
+	    return obj_False;
+    }
+
+    if (max2 != obj_False && min1 != obj_False) {
+	obj_t min1_minus_1 = subtract_bignums(min1, make_bignum(1));
+	if (compare_bignums(max2, min1_minus_1) < 0)
+	    return obj_False;
+    }
 
     if (min1 != obj_False && min2 != obj_False)
 	if ((long)min1 < (long)min2)
@@ -644,30 +822,60 @@ static obj_t merge_limited_integers(obj_t lim1, obj_t lim2)
     else
 	max = obj_False;
 
-    return limited_integer(min, max);
+    return limited_bignum(min, max);
 }
 
 /* returns a new limited integer type which contains all elements common to
    lim1 and lim2.  If there are no common elements, obj_False is returned. */
-obj_t intersect_limited_integers(obj_t lim1, obj_t lim2)
+obj_t intersect_limited_fixnums(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2, min, max;
 
-    min1 = obj_ptr(struct lim_int *, lim1)->min;
-    max1 = obj_ptr(struct lim_int *, lim1)->max;
-    min2 = obj_ptr(struct lim_int *, lim2)->min;
-    max2 = obj_ptr(struct lim_int *, lim2)->max;
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
+
+    if ((long)max1 < (long)min2)
+	return obj_False;
+
+    if ((long)max2 < (long)min1)
+	return obj_False;
+
+    if ((long)min1 < (long)min2)
+	min = min2;
+    else
+	min = min1;
+
+    if ((long)max1 > (long)max2)
+	max = max2;
+    else
+	max = max1;
+
+    return limited_fixnum(min, max);
+}
+
+/* returns a new limited integer type which contains all elements common to
+   lim1 and lim2.  If there are no common elements, obj_False is returned. */
+obj_t intersect_limited_bignums(obj_t lim1, obj_t lim2)
+{
+    obj_t min1, min2, max1, max2, min, max;
+
+    min1 = LIMINT(lim1)->min;
+    max1 = LIMINT(lim1)->max;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
 
     if (max1 != obj_False && min2 != obj_False
-	  && (long)max1 < (long)min2)
+	  && compare_bignums(max1, min2) < 0)
 	return obj_False;
 
     if (max2 != obj_False && min1 != obj_False
-	  && (long)max2 < (long)min1)
+	  && compare_bignums(max2, min1) < 0)
 	return obj_False;
 
     if (min1 != obj_False || min2 != obj_False)
-	if (min1 == obj_False || (long)min1 < (long)min2)
+	if (min1 == obj_False || compare_bignums(min1, min2) < 0)
 	    min = min2;
         else
 	    min = min1;
@@ -675,46 +883,76 @@ obj_t intersect_limited_integers(obj_t lim1, obj_t lim2)
 	min = obj_False;
 
     if (max1 != obj_False || max2 != obj_False)
-	if (max1 == obj_False || (long)max1 > (long)max2)
+	if (max1 == obj_False || compare_bignums(max1, max2) > 0)
 	    max = max2;
 	else
 	    max = max1;
     else
 	max = obj_False;
 
-    return limited_integer(min, max);
+    return limited_bignum(min, max);
 }
 
 /* Return a new limited integer type containing the portion of lim1 which
    contains val but contains no items from lim2.  Lim1 may be "<integer>"
    rather than a limited integer, and we require, as a precondition,
    that lim2 does not contain val. */
-obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2)
+obj_t restrict_limited_fixnums(obj_t val, obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2, min, max;
 
-    if (obj_ptr(struct type *, lim1)->type_id == id_LimInt) {
-	min1 = obj_ptr(struct lim_int *, lim1)->min;
-	max1 = obj_ptr(struct lim_int *, lim1)->max;
-    } else
-	min1 = max1 = obj_False;
-    min2 = obj_ptr(struct lim_int *, lim2)->min;
-    max2 = obj_ptr(struct lim_int *, lim2)->max;
+    if (TYPE(lim1)->type_id == id_LimFixnum) {
+	min1 = LIMINT(lim1)->min;
+	max1 = LIMINT(lim1)->max;
+    }
+    else {
+	min1 = MIN_FIXNUM;
+	max1 = MAX_FIXNUM;
+    }
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
 
-    if ((min2 == obj_False || (long)min2 < (long)val) &&
-	(min1 == obj_False || (long)min1 < (long)max2))
-	min = (obj_t)((long)max2 + (long)make_fixnum(1));
+    if ((long)min2 < (long)val && (long)min1 < (long)max2)
+	min = make_fixnum(fixnum_value(max2) + 1);
     else
 	min = min1;
     
-    if ((max2 == obj_False || (long)max2 > (long)val) &&
-	(max1 == obj_False || (long)max1 > (long)min2))
-	max = (obj_t)((long)min2 - (long)make_fixnum(1));
+    if ((long)max2 > (long)val && (long)max1 > (long)min2)
+	max = make_fixnum(fixnum_value(min2) - 1);
     else
 	max = max1;
 
-    return limited_integer(min, max);
+    return limited_fixnum(min, max);
 }
+
+obj_t restrict_limited_bignums(obj_t val, obj_t lim1, obj_t lim2)
+{
+    obj_t min1, min2, max1, max2, min, max;
+
+    if (TYPE(lim1)->type_id == id_LimBignum) {
+	min1 = LIMINT(lim1)->min;
+	max1 = LIMINT(lim1)->max;
+    } else
+	min1 = max1 = obj_False;
+    min2 = LIMINT(lim2)->min;
+    max2 = LIMINT(lim2)->max;
+
+    if ((min2 == obj_False || compare_bignums(min2, val) < 0) &&
+	(min1 == obj_False || compare_bignums(min1, max2) < 0))
+	min = add_bignums(max2, make_bignum(1));
+    else
+	min = min1;
+    
+    if ((max2 == obj_False || compare_bignums(max2, val) > 0) &&
+	(max1 == obj_False || compare_bignums(max1, min2) > 0))
+	max = subtract_bignums(min2, make_bignum(1));
+    else
+	max = max1;
+
+    return limited_bignum(min, max);
+}
+
+
 
 /* none_of construction */
 
@@ -723,16 +961,15 @@ obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2)
    type. */
 obj_t restrict_type(obj_t exclude, obj_t type)
 {
-    if (obj_ptr(struct type *, type)->type_id == id_NoneOf) {
-	obj_ptr(struct none_of_type *, type)->exclude =
-	    pair(exclude, obj_ptr(struct none_of_type *,type)->exclude);
+    if (TYPE(type)->type_id == id_NoneOf) {
+	NONEOF(type)->exclude = pair(exclude, NONEOF(type)->exclude);
 	return type;
     } else {
 	obj_t res = alloc(obj_NoneOfClass, sizeof(struct none_of_type));
 
-	obj_ptr(struct none_of_type *, res)->type_id = id_NoneOf;
-	obj_ptr(struct none_of_type *, res)->base = type;
-	obj_ptr(struct none_of_type *, res)->exclude =
+	NONEOF(res)->type_id = id_NoneOf;
+	NONEOF(res)->base = type;
+	NONEOF(res)->exclude =
 	    pair(exclude, obj_Nil);
 
 	return res;
@@ -746,18 +983,22 @@ static obj_t make_union(obj_t members)
 {
     obj_t res = alloc(obj_UnionClass, sizeof(struct union_type));
 
-    obj_ptr(struct union_type *, res)->type_id = id_Union;
-    obj_ptr(struct union_type *, res)->members = members;
+    UNION(res)->type_id = id_Union;
+    UNION(res)->members = members;
 
     return res;
 }
 
 static obj_t canonicalize_union_member(obj_t type)
 {
-    if (obj_ptr(struct type *, type)->type_id == id_Singleton) {
-	obj_t object = obj_ptr(struct singleton *, type)->object;
+    if (TYPE(type)->type_id == id_Singleton) {
+	obj_t object = SING(type)->object;
 	if (obj_is_fixnum(object))
-	    return limited_integer(object, object);
+	    return limited_fixnum(object, object);
+	else if (object == obj_False || object == obj_True)
+	    return object_class(object);
+	else if (object_class(object) == obj_BignumClass)
+	    return limited_bignum(object, object);
 	else
 	    return type;
     }
@@ -767,9 +1008,13 @@ static obj_t canonicalize_union_member(obj_t type)
 
 static obj_t merge_members(obj_t type1, obj_t type2)
 {
-    if (obj_ptr(struct type *, type1)->type_id == id_LimInt
-	  && obj_ptr(struct type *, type2)->type_id == id_LimInt)
-	return merge_limited_integers(type1, type2);
+    enum type_Id id1 = TYPE(type1)->type_id;
+    enum type_Id id2 = TYPE(type2)->type_id;
+
+    if (id1 == id_LimFixnum && id2 == id_LimFixnum)
+	return merge_limited_fixnums(type1, type2);
+    else if (id1 == id_LimBignum && id2 == id_LimBignum)
+	return merge_limited_bignums(type1, type2);
     else if (subtypep(type1, type2))
 	return type2;
     else if (subtypep(type2, type1))
@@ -817,7 +1062,7 @@ static obj_t merge_unions(obj_t union1, obj_t union2)
     obj_t remaining;
     obj_t result = union2;
 
-    for (remaining = obj_ptr(struct union_type *, union1)->members;
+    for (remaining = UNION(union1)->members;
 	 remaining != obj_Nil;
 	 remaining = TAIL(remaining))
 	result = type_union(result, HEAD(remaining));
@@ -827,18 +1072,18 @@ static obj_t merge_unions(obj_t union1, obj_t union2)
 
 obj_t type_union(obj_t type1, obj_t type2)
 {
-    if (obj_ptr(struct type *, type1)->type_id == id_Union) {
-	if (obj_ptr(struct type *, type2)->type_id == id_Union)
+    if (TYPE(type1)->type_id == id_Union) {
+	if (TYPE(type2)->type_id == id_Union)
 	    return merge_unions(type1, type2);
 	else
 	    return merge_with_union(canonicalize_union_member(type2),
-				    obj_ptr(struct union_type *, type1)
+				    UNION(type1)
 				      ->members);
     }
     else {
-	if (obj_ptr(struct type *, type2)->type_id == id_Union)
+	if (TYPE(type2)->type_id == id_Union)
 	    return merge_with_union(canonicalize_union_member(type1),
-				    obj_ptr(struct union_type *, type2)
+				    UNION(type2)
 				      ->members);
 	else {
 	    obj_t t1 = canonicalize_union_member(type1);
@@ -871,13 +1116,63 @@ static obj_t dylan_subtypep(obj_t type1, obj_t type2)
 	return obj_False;
 }
 
-static obj_t dylan_limited_integer(obj_t class, obj_t min, obj_t max)
+static obj_t dylan_limited_fixnum(obj_t class, obj_t min, obj_t max)
+{
+    if (min != obj_False)
+	check_type(min, obj_FixnumClass);
+    if (max != obj_False)
+	check_type(max, obj_FixnumClass);
+    return limited_fixnum(min, max);
+}
+
+static obj_t dylan_limited_bignum(obj_t class, obj_t min, obj_t max)
 {
     if (min != obj_False)
 	check_type(min, obj_IntegerClass);
     if (max != obj_False)
 	check_type(max, obj_IntegerClass);
-    return limited_integer(min, max);
+    return limited_bignum(min, max);
+}
+
+static obj_t dylan_limited_integer(obj_t class, obj_t min, obj_t max)
+{
+    obj_t fix_min;
+    obj_t fix_max;
+    
+    if (min != obj_False) {
+	if (obj_is_fixnum(min))
+	    fix_min = min;
+	else {
+	    check_type(min, obj_IntegerClass);
+	    if (compare_bignums(min, as_bignum(MAX_FIXNUM)) > 0)
+		return limited_bignum(min, max);
+	    else if (compare_bignums(min, as_bignum(MIN_FIXNUM)) < 0)
+		fix_min = MIN_FIXNUM;
+	    else
+		fix_min = make_fixnum(bignum_value(min));
+	}
+    }
+    else
+	fix_min = MIN_FIXNUM;
+
+    if (max != obj_False) {
+	if (obj_is_fixnum(max))
+	    fix_max = max;
+	else {
+	    check_type(max, obj_IntegerClass);
+	    if (compare_bignums(max, as_bignum(MIN_FIXNUM)) < 0)
+		return limited_bignum(min, max);
+	    else if (compare_bignums(max, as_bignum(MAX_FIXNUM)) > 0)
+		fix_max = MAX_FIXNUM;
+	    else
+		fix_max = make_fixnum(bignum_value(max));
+	}
+    }
+    else
+	fix_max = MAX_FIXNUM;
+
+    return type_union(limited_fixnum(fix_min, fix_max),
+		      limited_bignum(min, max));
 }
 
 static obj_t dylan_limited_class(obj_t class, obj_t subclass_of)
@@ -901,41 +1196,42 @@ static obj_t dylan_make_singleton(obj_t class, obj_t object)
 static void print_singleton(obj_t singleton)
 {
     printf("{singleton ");
-    prin1(obj_ptr(struct singleton *, singleton)->object);
+    prin1(SING(singleton)->object);
     putchar('}');
 }
 
 static void print_subclass(obj_t subclass)
 {
     printf("{subclass of ");
-    prin1(obj_ptr(struct subclass *, subclass)->of);
+    prin1(SUBCLASS(subclass)->of);
     putchar('}');
 }
 
 static void print_limint(obj_t limint)
 {
-    printf("{limited integer ");
-    if (obj_ptr(struct lim_int *, limint)->min != obj_False)
-	printf("%ld<=", fixnum_value(obj_ptr(struct lim_int *, limint)->min));
+    printf("{limited %s integer ",
+	   LIMINT(limint)->type_id == id_LimFixnum ? "fixed" : "extended");
+    if (LIMINT(limint)->min != obj_False)
+	format("%d<=", LIMINT(limint)->min);
     putchar('x');
-    if (obj_ptr(struct lim_int *, limint)->max != obj_False)
-	printf("<=%ld", fixnum_value(obj_ptr(struct lim_int *, limint)->max));
+    if (LIMINT(limint)->max != obj_False)
+	format("<=%d", LIMINT(limint)->max);
     putchar('}');
 }
 
 static void print_union(obj_t union_type)
 {
     printf("{union ");
-    prin1(obj_ptr(struct union_type *, union_type)->members);
+    prin1(UNION(union_type)->members);
     putchar('}');
 }
 
 static void print_none_of(obj_t union_type)
 {
     printf("{none of ");
-    prin1(obj_ptr(struct none_of_type *, union_type)->base);
+    prin1(NONEOF(union_type)->base);
     printf(": ");
-    prin1(obj_ptr(struct none_of_type *, union_type)->exclude);
+    prin1(NONEOF(union_type)->exclude);
     putchar('}');
 }
 
@@ -1038,6 +1334,14 @@ void init_type_functions(void)
 		  list2(pair(symbol("min"), obj_False),
 			pair(symbol("max"), obj_False)),
 		  FALSE, obj_TypeClass, dylan_limited_integer);
+    define_method("limited", list1(singleton(obj_FixnumClass)), FALSE,
+		  list2(pair(symbol("min"), obj_False),
+			pair(symbol("max"), obj_False)),
+		  FALSE, obj_TypeClass, dylan_limited_fixnum);
+    define_method("limited", list1(singleton(obj_BignumClass)), FALSE,
+		  list2(pair(symbol("min"), obj_False),
+			pair(symbol("max"), obj_False)),
+		  FALSE, obj_TypeClass, dylan_limited_bignum);
     define_method("limited", list1(singleton(obj_ClassClass)), FALSE,
 		  list1(pair(symbol("subclass-of"), obj_Unbound)),
 		  FALSE, obj_TypeClass, dylan_limited_class);

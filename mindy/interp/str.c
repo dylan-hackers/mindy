@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.10 1994/10/05 21:04:28 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.11 1994/11/03 22:19:31 wlott Exp $
 *
 * This file implements strings.
 *
@@ -163,7 +163,7 @@ static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
     unsigned char *ptr;
     int fill_char;
 
-    if (!instancep(size, obj_IntegerClass))
+    if (!instancep(size, obj_FixnumClass))
 	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
@@ -191,7 +191,7 @@ static obj_t dylan_unicode_str_make(obj_t class, obj_t size, obj_t fill)
     int i;
     int fill_char;
 
-    if (!instancep(size, obj_IntegerClass))
+    if (!instancep(size, obj_FixnumClass))
 	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
@@ -324,23 +324,23 @@ void init_str_classes(void)
 void init_str_functions(void)
 {
     define_method("element",
-		    list2(obj_ByteStringClass, obj_IntegerClass),
+		    list2(obj_ByteStringClass, obj_FixnumClass),
 		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
 		    obj_ByteCharacterClass, dylan_byte_str_element);
     define_method("element",
-		    list2(obj_UnicodeStringClass, obj_IntegerClass),
+		    list2(obj_UnicodeStringClass, obj_FixnumClass),
 		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
 		    obj_CharacterClass, dylan_unicode_str_element);
     define_method("element-setter",
 		  list3(obj_ByteCharacterClass,
 			obj_ByteStringClass,
-			obj_IntegerClass),
+			obj_FixnumClass),
 		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, dylan_byte_str_element_setter);
     define_method("element-setter",
 		  list3(obj_CharacterClass,
 			obj_UnicodeStringClass,
-			obj_IntegerClass),
+			obj_FixnumClass),
 		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, dylan_unicode_str_element_setter);
 
@@ -348,9 +348,9 @@ void init_str_functions(void)
        but not for the general user defined instance of <string>.
     */
     define_method("size", list1(obj_ByteStringClass),
-		  FALSE, obj_False, FALSE, obj_IntegerClass, dylan_str_size);
+		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
     define_method("size", list1(obj_UnicodeStringClass),
-		  FALSE, obj_False, FALSE, obj_IntegerClass, dylan_str_size);
+		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
 
     /* make(<string>) returns a <byte-string>, even if fill happens to 
        be a unicode character.

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.32 1994/10/18 00:31:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.33 1994/11/03 22:19:13 wlott Exp $
 *
 * This file implements functions.
 *
@@ -397,21 +397,29 @@ static boolean
 	   the efficiency by a large margin. */
 	if (!subtypep(arg_class, specializer))
 	    if (instancep(arg, specializer)) {
-		if (obj_ptr(struct type *, specializer)->type_id == id_LimInt)
+		if (TYPE(specializer)->type_id == id_LimFixnum)
 		    *(cached_classes - 1) =
-			(obj_ptr(struct type *,arg_class)->type_id == id_LimInt
-			 ? intersect_limited_integers(arg_class,specializer)
+			(TYPE(arg_class)->type_id == id_LimFixnum
+			 ? intersect_limited_fixnums(arg_class,specializer)
+			 : specializer);
+		else if (TYPE(specializer)->type_id == id_LimBignum)
+		    *(cached_classes - 1) =
+			(TYPE(arg_class)->type_id == id_LimBignum
+			 ? intersect_limited_bignums(arg_class,specializer)
 			 : specializer);
 		else
 		    *(cached_classes - 1) = singleton(arg);
 		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 	    } else {
 		if (overlapp(arg_class, specializer)) {
-		    if (obj_ptr(struct type *,
-				specializer)->type_id == id_LimInt)
+		    if (TYPE(specializer)->type_id == id_LimFixnum)
 			*(cached_classes - 1) =
-			    restrict_limited_integers(arg, arg_class,
-						      specializer);
+			    restrict_limited_fixnums(arg, arg_class,
+						     specializer);
+		    else if (TYPE(specializer)->type_id == id_LimBignum)
+			*(cached_classes - 1) =
+			    restrict_limited_bignums(arg, arg_class,
+						     specializer);
 		    else
 			*(cached_classes - 1) = restrict_type(specializer,
 							      arg_class);
@@ -442,7 +450,7 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 
 	for (i = 0; i < max; i++, arg++, cache_class++) {
 	    boolean simple_arg = simple ||
-		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
+		TYPE(*cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
 		           : !instancep(*arg, *cache_class)) {
 		found = FALSE;
@@ -1143,7 +1151,7 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 
 	for (i = 0; i < max; i++, arg++, cache_class++) {
 	    boolean simple_arg = simple ||
-		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
+		TYPE(*cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
 		           : !instancep(*arg, *cache_class)) {
 		found = FALSE;
@@ -1829,7 +1837,7 @@ void init_func_functions(void)
     define_method("function-name", list1(obj_FunctionClass), FALSE, obj_False,
 		  FALSE, obj_ObjectClass, function_debug_name);
     define_function("make-generic-function",
-		    listn(7, obj_ObjectClass, obj_IntegerClass,
+		    listn(7, obj_ObjectClass, obj_FixnumClass,
 			  obj_ObjectClass,
 			  type_union(object_class(obj_False), obj_ListClass),
 			  obj_ObjectClass, obj_ListClass,
@@ -1852,21 +1860,21 @@ void init_func_functions(void)
     define_method("method-specializers", list1(obj_MethodClass), FALSE,
 		  obj_False, FALSE, obj_ObjectClass, method_specializers);
     define_generic_function("function-arguments", 1, FALSE, obj_False, FALSE,
-			    list3(obj_IntegerClass, obj_BooleanClass,
+			    list3(obj_FixnumClass, obj_BooleanClass,
 				  obj_ObjectClass),
 			    obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("function-arguments", list1(obj_FunctionClass),
 			       FALSE, obj_False, FALSE,
-			       list3(obj_IntegerClass, obj_BooleanClass,
+			       list3(obj_FixnumClass, obj_BooleanClass,
 				     obj_ObjectClass),
 			       obj_False, dylan_function_arguments));
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("function-arguments", list1(obj_MethodClass),
 			       FALSE, obj_False, FALSE,
-			       list3(obj_IntegerClass, obj_BooleanClass,
+			       list3(obj_FixnumClass, obj_BooleanClass,
 				     obj_ObjectClass),
 			       obj_False, dylan_method_arguments));
     define_method("sorted-applicable-methods", list1(obj_GFClass), TRUE,

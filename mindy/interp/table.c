@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.11 1994/10/05 21:04:38 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.12 1994/11/03 22:19:32 wlott Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -240,27 +240,27 @@ void init_table_functions(void)
     define_constant("object-hash",
 		    make_raw_function("object-hash", 1, FALSE, obj_False,
 				      FALSE,
-				      list2(obj_IntegerClass,
+				      list2(obj_FixnumClass,
 					    obj_HashStateClass),
 				      obj_False, dylan_object_hash));
     define_constant("float-hash",
 		    make_raw_function("float-hash", 1, FALSE, obj_False,
 				      FALSE,
-				      list2(obj_IntegerClass,
+				      list2(obj_FixnumClass,
 					    obj_HashStateClass),
 				      obj_False, dylan_float_hash));
     define_function("state-valid?", list1(obj_HashStateClass), FALSE,
 		    obj_False, FALSE, obj_BooleanClass, dylan_state_valid_p);
     define_constant("merge-hash-codes",
 		    make_raw_method("merge-hash-codes",
-				    listn(4, obj_IntegerClass,
+				    listn(4, obj_FixnumClass,
 					  obj_HashStateClass,
-					  obj_IntegerClass,
+					  obj_FixnumClass,
 					  obj_HashStateClass),
 				    FALSE,
 				    list1(pair(symbol("ordered"), obj_False)),
 				    FALSE, 
-				    list2(obj_IntegerClass,
+				    list2(obj_FixnumClass,
 					  obj_HashStateClass),
 				    obj_False, dylan_merge_hash_codes));
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.7 1994/10/05 21:03:42 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.8 1994/11/03 22:19:22 wlott Exp $
 *
 * This file implements lists.
 *
@@ -320,5 +320,5 @@ void init_list_functions(void)
 		    make_raw_function("list", 0, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, dylan_list));
     define_method("size", list1(obj_ListClass), FALSE, obj_False, FALSE,
-		  obj_IntegerClass, dylan_list_size);
+		  obj_FixnumClass, dylan_list_size);
 }

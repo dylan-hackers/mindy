@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.8 1994/10/05 21:01:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.9 1994/11/03 22:19:06 wlott Exp $
 *
 * This file implements characters.
 *
@@ -72,7 +72,7 @@ obj_t int_char(int c)
 
 /* Dylan routines. */
 
-static obj_t int_as_char(obj_t class, obj_t i)
+static obj_t fixnum_as_char(obj_t class, obj_t i)
 {
     int c = fixnum_value(i);
 
@@ -84,7 +84,7 @@ static obj_t int_as_char(obj_t class, obj_t i)
     }
 }
 
-static obj_t int_as_byte_char(obj_t class, obj_t i)
+static obj_t fixnum_as_byte_char(obj_t class, obj_t i)
 {
     int c = fixnum_value(i);
 
@@ -97,7 +97,7 @@ static obj_t int_as_byte_char(obj_t class, obj_t i)
 }
 
 
-static obj_t char_as_int(obj_t class, obj_t c)
+static obj_t char_as_fixnum(obj_t class, obj_t c)
 {
     return make_fixnum(char_int(c));
 }
@@ -167,12 +167,14 @@ void init_char_classes()
 
 void init_char_functions()
 {
-    define_method("as", list2(singleton(obj_CharacterClass), obj_IntegerClass),
-		  FALSE, obj_False, FALSE, obj_CharacterClass, int_as_char);
-    define_method("as", 
-		  list2(singleton(obj_ByteCharacterClass), obj_IntegerClass),
+    define_method("as", list2(singleton(obj_CharacterClass), obj_FixnumClass),
+		  FALSE, obj_False, FALSE, obj_CharacterClass, fixnum_as_char);
+    define_method("as",
+		  list2(singleton(obj_ByteCharacterClass), obj_FixnumClass),
 		  FALSE, obj_False, FALSE, obj_ByteCharacterClass, 
-		  int_as_byte_char);
+		  fixnum_as_byte_char);
     define_method("as", list2(singleton(obj_IntegerClass), obj_CharacterClass),
-		  FALSE, obj_False, FALSE, obj_IntegerClass, char_as_int);
+		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+    define_method("as", list2(singleton(obj_FixnumClass), obj_CharacterClass),
+		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
 }

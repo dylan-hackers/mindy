@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.37 1994/10/20 03:05:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.38 1994/11/03 22:19:09 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -549,7 +549,7 @@ static int get_fixnum(obj_t obj, int *num)
 {
     if (obj != obj_Nil
      && arg_kind(obj) == symbol("literal")
-     && instancep(arg_value(obj), obj_IntegerClass)) {
+     && instancep(arg_value(obj), obj_FixnumClass)) {
         *num = fixnum_value(arg_value(obj));
 	return 1;
     }
@@ -1397,7 +1397,7 @@ static struct thread *find_thread(obj_t tag)
 
     if (instancep(tag, obj_SymbolClass)) {
         ;
-    } else if (instancep(tag, obj_IntegerClass)) {
+    } else if (instancep(tag, obj_FixnumClass)) {
         id = fixnum_value(tag);
     } else {
         printf("Bogus thread identifier: ");

@@ -23,13 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.h,v 1.5 1994/10/05 21:04:18 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.h,v 1.6 1994/11/03 22:19:29 wlott Exp $
 *
 \**********************************************************************/
 
 
 extern obj_t obj_ObjectClass;
-extern obj_t obj_IntegerClass;
+extern obj_t obj_FixnumClass;
 
 #define object_class(o) \
-    (obj_is_ptr(o) ? obj_ptr(struct object *, o)->class : obj_IntegerClass)
+    (obj_is_ptr(o) ? obj_ptr(struct object *, o)->class \
+                   : obj_FixnumClass)
