@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.2 1994/03/30 06:07:22 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.3 1994/04/11 00:25:55 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -136,31 +136,6 @@ define method cerror (restart-descr, cond-or-string, #rest arguments)
   end;
 end;
 
-define method %break (string :: <string>, #rest arguments)
-  %break(make(<simple-warning>,
-	      format-string: string,
-	      format-arguments: arguments));
-end;
-
-define method %break (cond :: <condition>, #rest noise)
-  unless (empty?(noise))
-    error("Can only supply format arguments when supplying a format string.");
-  end;
-  block ()
-    invoke-debugger(cond);
-  exception (<simple-restart>, description: "Continue from break")
-    #f;
-  end;
-end;
-
-define method break (#rest arguments)
-  if (empty?(arguments))
-    %break("Break.");
-  else
-    apply(%break, arguments);
-  end;
-end;
-
 define method type-error (value, type)
   error(make(<type-error>, value: value, type: type));
 end;
@@ -192,6 +167,49 @@ end;
 
 define method default-handler (restart :: <restart>)
   error("No restart handler for ~S", restart);
+end;
+
+
+// Breakpoints.
+
+define class <breakpoint> (<simple-warning>)
+end;
+
+define method return-allowed? (cond :: <breakpoint>)
+  #t;
+end;
+
+define method return-query (cond :: <breakpoint>)
+  #f;
+end;
+
+define method return-description (cond :: <breakpoint>)
+  "Return #f";
+end;
+
+define method %break (string :: <string>, #rest arguments)
+  %break(make(<breakpoint>,
+	      format-string: string,
+	      format-arguments: arguments));
+end;
+
+define method %break (cond :: <condition>, #rest noise)
+  unless (empty?(noise))
+    error("Can only supply format arguments when supplying a format string.");
+  end;
+  block ()
+    invoke-debugger(cond);
+  exception (<simple-restart>, description: "Continue from break")
+    #f;
+  end;
+end;
+
+define method break (#rest arguments)
+  if (empty?(arguments))
+    %break("Break.");
+  else
+    apply(%break, arguments);
+  end;
 end;
 
 
