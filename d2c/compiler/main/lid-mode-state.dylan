@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.4 2002/01/07 21:33:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.5 2002/09/08 21:27:39 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -604,7 +604,7 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
   let stream
    = make(<file-stream>, locator: "inits.c", direction: #"output");
 #endif
-  format(stream, "#include <runtime.h>\n\n");
+  format(stream, "#include \"runtime.h\"\n\n");
   format(stream, 
 	"/* This file is machine generated.  Do not edit. */\n\n");
   let entry-function-name
