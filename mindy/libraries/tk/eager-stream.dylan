@@ -69,7 +69,7 @@ define method stream-extension-release-output-buffer
   end if;
   stream.buffer := #f;
 
-  for (i from next - 1 to 0 by -1, until buff[i] == newline-value)
+  for (i from next - 1 to 0 by -1, until: buff[i] == newline-value)
   finally
     if (i >= 0)
       // ERROR: fails if result-class is anything other than <byte-string>
