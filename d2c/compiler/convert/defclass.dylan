@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.8 1994/12/17 02:07:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.9 1995/01/06 21:18:07 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -323,9 +323,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 				rest-type: #f,
 				keys: #(),
 				all-keys?: #f,
-				returns:
-				  list(slot-type | make(<unknown-ctype>)),
-				returns-rest-type: #f),
+				returns: slot-type | make(<unknown-ctype>)),
 		hairy: hairy?,
 		sealed: slot-defn.slot-sealed?,
 		slot: slot-defn);
@@ -340,9 +338,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 				  rest-type: #f,
 				  keys: #(),
 				  all-keys?: #f,
-				  returns:
-				    list(slot-type | make(<unknown-ctype>)),
-				  returns-rest-type: #f),
+				  returns: slot-type | make(<unknown-ctype>)),
 		  hairy: hairy?,
 		  sealed: slot-defn.slot-sealed?,
 		  slot: slot-defn);
