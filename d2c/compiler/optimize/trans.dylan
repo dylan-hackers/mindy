@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.7 1995/06/14 12:16:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.8 1995/06/15 00:45:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -149,11 +149,14 @@ define method object-==-transformer
 	#t;
       elseif (x-functional == #t | y-functional == #t)
 	let builder = make-builder(component);
+	let assign = call.dependents.dependent;
+	let leaf
+	  = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			    #"functional-==");
+	insert-before(component, assign, builder-result(builder));
 	replace-expression
 	  (component, call.dependents,
-	   make-unknown-call
-	     (builder, dylan-defn-leaf(builder, #"functional-=="), #f,
-	      list(x, y)));
+	   make-unknown-call(builder, leaf, #f, list(x, y)));
 	#t;
       else
 	#f;
@@ -212,7 +215,12 @@ define method trivial-==-optimization
     => did-anything? :: <boolean>;
   local method origin (thing :: <expression>)
 	  if (instance?(thing, <ssa-variable>))
-	    origin(thing.definer.depends-on.source-exp);
+	    let assign = thing.definer;
+	    if (thing == assign.defines)
+	      origin(assign.depends-on.source-exp);
+	    else
+	      thing;
+	    end;
 	  else
 	    thing;
 	  end;
@@ -248,17 +256,17 @@ define method always-the-same?
 end;
 
 define method always-the-same?
-    (x :: <global-variable>, y :: <global-variable>) => res :: <boolean>;
-  instance?(x.var-info, <module-almost-constant-var-info>)
-    & x.var-info.var-defn == y.var-info.var-defn;
+    (x :: <definition-constant-leaf>, y :: <definition-constant-leaf>)
+    => res :: <boolean>;
+  x.const-defn.ct-value == y.const-defn.ct-value;
 end;
 
 define method always-the-same?
-    (x :: <definition-constant-leaf>, y :: <definition-constant-leaf>)
+    (x :: <module-var-ref>, y :: <module-var-ref>)
     => res :: <boolean>;
-  x.const-defn == y.const-defn;
+  let defn = x.variable;
+  instance?(defn, <abstract-constant-definition>) & defn == y.variable;
 end;
-
 
 
 define method check-type-transformer
@@ -313,7 +321,9 @@ define method apply-transformer
 	  build-assignment
 	    (builder, policy, source, cluster2,
 	     make-unknown-call
-	       (builder, dylan-defn-leaf(builder, #"values-sequence"), #f,
+	       (builder,
+		ref-dylan-defn(builder, policy, source, #"values-sequence"),
+		#f,
 		list(args.last)));
 	  let cluster3 = make-values-cluster(builder, #"args", wild-ctype());
 	  build-assignment
@@ -326,7 +336,9 @@ define method apply-transformer
 	  build-assignment
 	    (builder, policy, source, cluster,
 	     make-unknown-call
-	       (builder, dylan-defn-leaf(builder, #"values-sequence"), #f,
+	       (builder,
+		ref-dylan-defn(builder, policy, source, #"values-sequence"),
+		#f,
 		args));
 	  cluster;
 	end;
@@ -351,14 +363,14 @@ define method list-transformer
     let assign = call.dependents.dependent;
     let policy = assign.policy;
     let source = assign.source-location;
-    let pair-leaf = dylan-defn-leaf(builder, #"pair");
+    let pair-leaf = ref-dylan-defn(builder, policy, source, #"pair");
     let current-value = make-literal-constant(builder, as(<ct-value>, #()));
     for (arg in reverse!(args))
       let temp = make-local-var(builder, #"temp", object-ctype());
       build-assignment
 	(builder, policy, source, temp,
 	 make-unknown-call(builder, pair-leaf, #f,
-			   list(current-value, arg)));
+			   list(arg, current-value)));
       current-value := temp;
     end;
     insert-before(component, assign, builder-result(builder));
@@ -415,7 +427,7 @@ define method make-transformer
     build-assignment
       (builder, policy, source, #(),
        make-unknown-call
-	 (builder, dylan-defn-leaf(builder, #"initialize"), #f,
+	 (builder, ref-dylan-defn(builder, policy, source, #"initialize"), #f,
 	  pair(instance-var, init-keywords)));
     insert-before(component, assign, builder-result(builder));
     replace-expression(component, assign.depends-on, instance-var);
@@ -548,8 +560,8 @@ define method iteration-setup
 	    list(state, limit, next, done, curkey, curel,
 		 curel-setter, copy-state),
 	    make-unknown-call(builder,
-			      dylan-defn-leaf(builder,
-					      #"forward-iteration-protocol"),
+			      ref-dylan-defn(builder, policy, source,
+					     #"forward-iteration-protocol"),
 			      #f,
 			      list(coll)));
   vector(state, limit, next, done, curkey, curel, curel-setter, copy-state);
