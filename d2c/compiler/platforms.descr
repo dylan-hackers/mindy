@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.78 2003/07/24 13:42:51 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.79 2003/07/25 16:35:44 gabor Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -453,7 +453,7 @@ platform-name:			gcc
 default-features:		C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
+default-c-compiler-flags:	-I. -I%s -O1
 default-c-compiler-debug-flags:	-I. -I%s -gstabs1 -O -fno-inline-functions
 default-c-compiler-profile-flags:	-I. -I%s -pg -gstabs1 -O -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
@@ -465,42 +465,6 @@ link-debug-flags:               -gstabs1
 link-profile-flags:		-pg -gstabs1
 path-separator:        		/
 supports-asm-stabs-hack?:	#t
-
-// FIXME:  Temporary measure until gcc-3.0 is the default
-//
-// Beware: some versions of gcc 3 have an optimizer bug,
-// which requires -fno-strict-aliasing be active. Might be
-// fixed as of 3.2.3, or not.
-//
-platform-name:                 gcc30
-default-features:              C-compiler-is-GCC
-compile-c-command:              gcc-3.0 $(CCFLAGS) -c %s -o %s
-compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc-3.0 $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:      -I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
-default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions
-default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions
-assembler-command:             gcc-3.0 $(CCFLAGS) -c %s -o %s
-link-library-command:           ar qc %s %s
-link-executable-command: 	$(LIBTOOL) --mode=link gcc-3.0 -o %s %s %s
-link-shared-executable-command: $(LIBTOOL) --mode=link gcc-3.0 -o %s %s %s
-link-executable-flags:          $(GC_LIBS) -lm
-link-profile-flags:            -pg
-path-separator:                        /
-
-platform-name:			  gcc32
-default-features:		  C-compiler-is-GCC
-compile-c-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
-compile-c-for-shared-command:	  $(LIBTOOL) --mode=compile gcc-3.2 $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	  -I. -I%s -O2 -fomit-frame-pointer  -fno-strict-aliasing
-default-c-compiler-debug-flags:	  -I. -I%s -g -O -fno-inline-functions
-default-c-compiler-profile-flags: -I. -I%s -pg -g -O -fno-inline-functions
-assembler-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
-link-library-command:		  ar qc %s %s
-link-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
-link-shared-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
-link-executable-flags:		  $(GC_LIBS) -lm
-link-profile-flags:		  -pg
-path-separator:			  /
 
 platform-name:			beos-gcc
 default-features:		C-compiler-is-GCC
@@ -545,8 +509,47 @@ link-executable-flags:          $(GC_LIBS) -multiply_defined suppress
 path-separator:        		/
 
 
+// FIXME:  Temporary measure until gcc-3.0 is the default
+//
+// Beware: some versions of gcc 3 have an optimizer bug,
+// which requires -fno-strict-aliasing be active. Might be
+// fixed as of 3.2.3, or not.
+//
+
+
 // Combinations:
 
+platform-name:                 ppc-gcc30
+default-features:              C-compiler-is-GCC
+compile-c-command:              gcc-3.0 $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc-3.0 $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:      -I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
+default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions
+default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions
+assembler-command:             gcc-3.0 $(CCFLAGS) -c %s -o %s
+link-library-command:           ar qc %s %s
+link-executable-command: 	$(LIBTOOL) --mode=link gcc-3.0 -o %s %s %s
+link-shared-executable-command: $(LIBTOOL) --mode=link gcc-3.0 -o %s %s %s
+link-executable-flags:          $(GC_LIBS) -lm
+link-profile-flags:            -pg
+path-separator:                        /
+
+platform-name:			  ppc-gcc32
+default-features:		  C-compiler-is-GCC
+compile-c-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:	  $(LIBTOOL) --mode=compile gcc-3.2 $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:	  -I. -I%s -O2 -fomit-frame-pointer  -fno-strict-aliasing
+default-c-compiler-debug-flags:	  -I. -I%s -g -O -fno-inline-functions
+default-c-compiler-profile-flags: -I. -I%s -pg -g -O -fno-inline-functions
+assembler-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
+link-library-command:		  ar qc %s %s
+link-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
+link-shared-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
+link-executable-flags:		  $(GC_LIBS) -lm
+link-profile-flags:		  -pg
+path-separator:			  /
+
+/// x86
 platform-name:			x86-gcc32
 inherit-from:			x86 gcc
 default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
@@ -561,6 +564,15 @@ link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 link-executable-command:        gcc -static -o %s %s %s
 long-long-size:			8
 long-long-alignment:		4
+
+/// sparc
+platform-name:			sparc-gcc30
+inherit-from:			sparc gcc
+default-c-compiler-flags:	-I. -I%s -O1
+default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
+link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:	8
 
 
 // Fully supported platforms (i.e., we use these):
@@ -608,11 +620,11 @@ inherit-from:			gcc ppc-linux
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 
 platform-name:                 ppc-linux-gcc30
-inherit-from:                  gcc30 ppc-linux
+inherit-from:                  ppc-gcc30 ppc-linux
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc-3.0 -o %s %s -rpath %s
 
 platform-name:			ppc-linux-gcc32
-inherit-from:			gcc32 ppc-linux
+inherit-from:			ppc-gcc32 ppc-linux
 link-shared-library-command:	$(LIBTOOL) --mode=link gcc-3.2 -o %s %s -rpath %s
 
 // FreeBSD 2.x
@@ -678,6 +690,15 @@ link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 // Need to define default-features: below since all three of our
 // inherited 'platforms' also define a default-features. But later on
 // code relies on features that otherwise get stomped.
+
+platform-name:			sparc-solaris-gcc30
+inherit-from:			solaris sparc-gcc30
+default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
+long-double-size:               16
+long-double-alignment:          8
+long-double-mantissa-digits:	113
+minimum-long-double-float-exponent: -16381
+maximum-long-double-float-exponent: 16384
 
 platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
