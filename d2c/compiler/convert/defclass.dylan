@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.9 2000/10/17 09:15:27 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.10 2000/10/20 15:03:18 housel Exp $
 copyright: see below
 
 
@@ -2376,14 +2376,14 @@ define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <slot-info>)
     => res :: <method-literal>;
-  error("Unsupported slot type: %=\n", object-class(slot));
+  error("Unsupported slot type: %=", object-class(slot));
 end;
 
 define method build-setter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <slot-info>)
     => res :: <method-literal>;
-  error("Unsupported slot type: %=\n", object-class(slot));
+  error("Unsupported slot type: %=", object-class(slot));
 end;
 
 define method build-setter
