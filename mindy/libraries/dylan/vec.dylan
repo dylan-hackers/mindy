@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/vec.dylan,v 1.3 2000/01/24 04:58:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/vec.dylan,v 1.4 2001/09/21 06:15:40 housel Exp $
 
 //======================================================================
 //
@@ -503,3 +503,15 @@ define method element-setter (value, v :: <buffer>, index :: <integer>)
   error("%= is not an integer between 0 and 255.", value);
 end;
 
+
+//// Other special purpose methods
+
+define sealed method as
+    (class == <simple-object-vector>, collection :: <collection>)
+    => res :: <simple-object-vector>;
+  let res = make(<simple-object-vector>, size: collection.size);
+  for (index :: <integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end method as;
