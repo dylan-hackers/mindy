@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.68 1995/05/29 02:08:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.69 1995/05/29 03:15:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1833,6 +1833,12 @@ define method let-convert
   let call-policy = call-assign.policy;
   let call-source = call-assign.source-location;
 
+  // Extract the function body and replace it with an empty region.  This is
+  // so that when we drop the last reference to the function-literal leaf,
+  // that doesn't trigger a deletion walk of the entire body.
+  let function-body = function.body;
+  replace-subregion(component, function, function-body, make(<empty-region>));
+
   // Define a bunch of temporaries from the call args and insert it before
   // the call assignment.
   let arg-temps
@@ -1894,37 +1900,41 @@ define method let-convert
     end;
   end;
 
-  // If there are any returns,
+  // If there are any returns, change them into assignments of a cluster
+  // and change the call to a reference to that cluster.
   if (function.exits)
     let results-temp = make-values-cluster(builder, #"results", wild-ctype());
 
-    // Start a block for the returns to exit to.
+    // Wrap the function body in a block so we can return to it.
     let body-block = build-block-body(builder, call-policy, call-source);
+    build-region(builder, function-body);
+    end-body(builder);
+
+    // Insert that block before the original call site.
+    insert-before(component, call-assign, builder-result(builder));
 
     // Replace each return with an assignment of the result cluster
     // followed by an exit to the body-block.
-    for (return = function.exits then return.next-exit,
-	 while: return)
-      let builder = make-builder(component);
+    while (function.exits)
+      let return = function.exits;
       let source = return.source-location;
       let results = return.depends-on;
       if (results & instance?(results.source-exp, <abstract-variable>)
 	    & instance?(results.source-exp.var-info, <values-cluster-info>))
-	build-assignment(builder, call-policy, return.source-location,
+	build-assignment(builder, call-policy, source,
 			 results-temp, results.source-exp);
       else
 	// Make a values operation stealing the results from the return.
-	let values-op = make(<primitive>, derived-type: return.returned-type,
-			     name: #"values", depends-on: results);
+	let op = make(<primitive>, derived-type: return.returned-type,
+		      name: #"values", depends-on: results);
 	for (dep = results then dep.dependent-next,
 	     while: dep)
-	  dep.dependent := values-op;
+	  dep.dependent := op;
 	end;
 	return.depends-on := #f;
-	reoptimize(component, values-op);
+	reoptimize(component, op);
 	// Assign the result temp with the values call.
-	build-assignment(builder, call-policy, return.source-location,
-			 results-temp, values-op);
+	build-assignment(builder, call-policy, source, results-temp, op);
       end;
       build-exit(builder, call-policy, return.source-location, body-block);
 
@@ -1932,18 +1942,15 @@ define method let-convert
 			builder-result(builder));
       delete-stuff-in(component, return);
     end;
-    reoptimize(component, call-assign);
-    
-    // Insert the body block before the call assignment.
-    build-region(builder, function.body);
-    end-body(builder);
-    insert-before(component, call-assign, builder-result(builder));
 
-    // Replace the call with a reference to the result cluster.
+    // Replace the call with a reference to the result cluster.  We need to
+    // do this after replacing the returns because this triggers the deletion
+    // of the function while replacing returns will trigger a queueing of
+    // the function.
     replace-expression(component, call-assign.depends-on, results-temp);
   else
     // Insert the function body before the call assignment.
-    insert-before(component, call-assign, function.body);
+    insert-before(component, call-assign, function-body);
     // Insert an exit to the component after the call assignment.
     insert-exit-after(component, call-assign, component);
     // And delete the call assignment.
@@ -3546,8 +3553,7 @@ define method dropped-dependent
       local
 	method delete-function-region (region)
 	  if (region)
-	    remove!(component.all-function-regions, region);
-	    delete-queueable(component, region);
+	    delete-stuff-in(component, region);
 	  end;
 	end;
       delete-function-region(function.main-entry);
@@ -3711,6 +3717,12 @@ define method delete-stuff-in
 end;
 
 define method delete-stuff-in
+    (component :: <component>, region :: <block-region>) => ();
+  delete-queueable(component, region);
+  delete-stuff-in(component, region.body);
+end;
+
+define method delete-stuff-in
     (component :: <component>, region :: <exit>) => ();
   let block-region = region.block-of;
   for (scan = block-region.exits then scan.next-exit,
@@ -3735,6 +3747,13 @@ define method delete-stuff-in
     (component :: <component>, return :: <return>, #next next-method) => ();
   delete-dependent(component, return);
   next-method();
+end;
+
+define method delete-stuff-in
+    (component :: <component>, region :: <fer-function-region>) => ();
+  remove!(component.all-function-regions, region);
+  delete-queueable(component, region);
+  delete-stuff-in(component, region.body);
 end;
 
 
