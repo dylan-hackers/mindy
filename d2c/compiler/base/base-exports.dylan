@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.19 2001/01/25 03:50:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.20 2001/02/08 22:52:21 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -670,6 +670,7 @@ define module classes
     vector-slot-setter, data-word-slot,
     class-heap-fields, class-heap-fields-setter,
     <defined-cclass>, class-defn, class-defn-setter, bucket, row,
+    class-metaclass, <meta-cclass>,
 
     <cdclass>, size-of, alignment-of, designated-representation,
     referenced-type, pointer-type, pointer-type-setter, import-type,
@@ -680,6 +681,7 @@ define module classes
     slot-guaranteed-initialized?, slot-init-value, slot-init-value-setter,
     slot-init-function, slot-init-function-setter, slot-init-keyword,
     slot-init-keyword-required?, slot-overrides,
+    <meta-slot-info>, referred-slot-info,
 
     <position-table>, get-direct-position, get-general-position,
     get-universal-position, <slot-position>,
@@ -690,6 +692,7 @@ define module classes
     <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
     <virtual-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
+    associated-meta-slot, associated-meta-slot-setter,
 
     <override-info>, override-introduced-by, override-introduced-by-setter, 
     override-getter, override-slot,
