@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.3 2000/01/24 04:58:18 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.4 2000/10/21 19:45:53 dauclair Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -861,56 +861,64 @@ static void add_slot(obj_t class, obj_t new_slot, boolean inherited)
 	obj_t getter = SD(slot)->getter;
 	obj_t setter = SD(slot)->setter;
 
-	if (new_getter == getter)
-	    if (inherited)
+	if (new_getter == getter) {
+	    if (inherited) {
 		error("Can't inherit slot %= from both %= and %=",
 		      function_debug_name_or_self(getter), SD(slot)->creator,
 		      SD(new_slot)->creator);
-	    else
+	    } else {
 		error("Slot %= in %= clashes with the slot inherited from %=",
 		      function_debug_name_or_self(getter), class,
 		      SD(slot)->creator);
-	if (new_getter == setter)
-	    if (inherited)
+	    }
+        }
+	if (new_getter == setter) {
+	    if (inherited) {
 		error("The getter for slot %= inherited from %= clashes with "
 		      "the setter for slot %= inherited from %=",
 		      function_debug_name_or_self(new_getter),
 		      SD(new_slot)->creator,
 		      function_debug_name_or_self(getter), SD(slot)->creator);
-	    else
+	    } else {
 		error("The getter for slot %= in %= clashes with "
 		      "the setter for slot %= inherited from %=",
 		      function_debug_name_or_self(new_getter), class,
 		      function_debug_name_or_self(getter), SD(slot)->creator);
+	    }
+	}
 	if (new_setter != obj_False) {
-	    if (new_setter == getter)
-		if (inherited)
+	    if (new_setter == getter) {
+		if (inherited) {
 		    error("The setter for slot %= inherited from %= clashes "
 			  "with the getter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter),
 			  SD(new_slot)->creator,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
-		else
+		} else {
 		    error("The setter for slot %= in %= clashes "
 			  "with the getter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter), class,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
-	    if (new_setter == setter)
-		if (inherited)
+		}
+	    }
+	    if (new_setter == setter) {
+		if (inherited) {
 		    error("The setter for slot %= inherited from %= clashes "
 			  "with the setter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter),
 			  SD(new_slot)->creator,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
-		else
+		} else {
 		    error("The setter for slot %= in %= clashes "
 			  "with the setter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter), class,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
+		}
+	    }
 	}
     }
 

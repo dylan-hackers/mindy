@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.4 2000/01/24 04:58:15 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.5 2000/10/21 19:45:52 dauclair Exp $
 *
 * This file implements functions.
 *
@@ -430,19 +430,19 @@ static boolean
 	   This stuff has been worked out on a case by case basis.  It could
 	   certainly be made clearer, but this could potentially reduce
 	   the efficiency by a large margin. */
-	if (!subtypep(arg_class, specializer))
+	if (!subtypep(arg_class, specializer)) {
 	    if (instancep(arg, specializer)) {
-		if (TYPE(specializer)->type_id == id_LimFixnum)
+		if (TYPE(specializer)->type_id == id_LimFixnum) {
 		    *(cached_classes - 1) =
 			(TYPE(arg_class)->type_id == id_LimFixnum
 			 ? intersect_limited_fixnums(arg_class,specializer)
 			 : specializer);
-		else if (TYPE(specializer)->type_id == id_LimBignum)
+		} else if (TYPE(specializer)->type_id == id_LimBignum) {
 		    *(cached_classes - 1) =
 			(TYPE(arg_class)->type_id == id_LimBignum
 			 ? intersect_limited_bignums(arg_class,specializer)
 			 : specializer);
-		else
+		} else
 		    *(cached_classes - 1) = singleton(arg);
 		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 	    } else {
@@ -461,6 +461,7 @@ static boolean
 		    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 		}
 		return FALSE;
+	      }
 	    }
 	specializers = TAIL(specializers);
     }

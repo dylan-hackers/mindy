@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.4 2000/01/24 04:58:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.5 2000/10/21 19:45:53 dauclair Exp $
 *
 * This file is the garbage collector.
 *
@@ -153,11 +153,12 @@ static struct variable *print_messages_var = NULL;
 static void add_reference(struct ref_list *list, obj_t *ref)
 {
     if (list->alloc == list->used) {
-	if (list->refs == NULL)
+	if (list->refs == NULL) {
 	    list->refs = malloc(sizeof(obj_t *) * (list->alloc = 32));
-	else
+	} else {
 	    list->refs = realloc(list->refs,
 				 sizeof(obj_t *) * (list->alloc *= 2));
+        }
     }
     list->refs[list->used++] = ref;
 }
@@ -299,15 +300,16 @@ static void *raw_alloc(int bytes, struct space *space)
     bytes = ALIGN_DWORD(bytes);
 
     /* check to see if the object fits in the current block */
-    if ((char *)space->cur_fill + bytes > (char *)space->cur_end)
+    if ((char *)space->cur_fill + bytes > (char *)space->cur_end) {
 	/* check to see if it can fit in a block. */
-	if (bytes > BLOCK_SIZE - ALIGN_DWORD(sizeof(struct block)))
+	if (bytes > BLOCK_SIZE - ALIGN_DWORD(sizeof(struct block))) {
 	    /* it can't fit, so complain it is too large. */
 	    return NULL;
-	else
+	} else {
 	    /* extend the space by another block. */
 	    grow_space(space);
-
+        }
+    }
     result = space->cur_fill;
     space->cur_fill = (char *)result + bytes;
 
@@ -390,9 +392,9 @@ void scavenge(obj_t *addr)
 #endif
 	) {
 	obj_t class = obj_ptr(struct object *, obj)->class;
-	if (class == ForwardingMarker)
+	if (class == ForwardingMarker) {
 	    *addr = obj_ptr(struct forwarding_pointer *, obj)->new_value;
-	else {
+	} else {
 	    ASSERT_VALID_OBJ(class);
 	    *addr = obj_ptr(struct class *, class)->transport(obj);
 	}
@@ -422,12 +424,13 @@ obj_t transport(obj_t obj, int bytes, boolean read_only)
 
 #endif
 #if PURIFY
-    if (Purifying)
-	if (read_only)
+    if (Purifying) {
+	if (read_only) {
 	    new = raw_alloc(raw_bytes, ReadOnlySpace);
-	else
+	} else {
 	    new = raw_alloc(raw_bytes, StaticSpace);
-    else
+        }
+    } else
 #endif
 	new = raw_alloc(raw_bytes, NewSpace);
 
@@ -525,10 +528,10 @@ void collect_garbage(boolean purify)
 
     if (print_message) {
 #if PURIFY
-	if (purify)
+	if (purify) {
 	    sprintf(strbuf, "[Purifying with %d bytes (%d blocks) in use...",
 		    bytes_at_start, blocks_at_start);
-	else
+	} else
 #endif
 	    sprintf(strbuf, "[GCing with %d bytes (%d blocks) in use...",
 		    bytes_at_start, blocks_at_start);
