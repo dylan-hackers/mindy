@@ -6,6 +6,7 @@ define method usage()
 end method;
 
 define method main(name, arguments)
+  *warning-output* := *standard-error*;
   let arg-parser = make(<argument-list-parser>);
   add-option-parser-by-type(arg-parser,
                             <simple-option-parser>,
@@ -99,11 +100,6 @@ define method main(name, arguments)
       end for;
 
       format(*standard-output*, "Module: %s\n\n", module-name);
-
-      format(*standard-output*, "c-include(\"stddef.h\");\n");
-      for(file in includes)
-        format(*standard-output*, "c-include(\"%s\");\n", file);
-      end for;
 
       output-melange(mod, repository, *standard-output*);
     end if;
