@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.7 1995/12/09 02:43:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.8 1995/12/09 20:16:33 rgs Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -27,6 +27,7 @@ stretchy.dylan
 string.dylan
 buffer.dylan
 list.dylan
+range.dylan
 deque.dylan
 sort.dylan
 seals.dylan
