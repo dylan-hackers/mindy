@@ -331,6 +331,11 @@ define method change-call-kind
   queue-dependent(component, new);
 end;
 
+define method optimize (component :: <component>, call :: <known-call>) => ();
+  maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
+end;
+
+
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
   let deriver = element($primitive-type-derivers, primitive.name, default: #f);
@@ -354,18 +359,42 @@ end;
 define method optimize (component :: <component>, lambda :: <lambda>)
     => ();
   let results = lambda.depends-on;
-  if (results)
-    let result = results.source-exp;
-    if (instance?(result, <ssa-variable>)
-	  & instance?(result.var-info, <values-cluster-info>))
-      maybe-expand-cluster(component, result);
+  if (results & instance?(results.source-exp.var-info, <values-cluster-info>))
+    // We have to restrict the result type first, otherwise the single
+    // values cluster might be expanded away and we would end up just using
+    // the first value's type.
+    maybe-restrict-result-type(component, lambda,
+			       results.source-exp.derived-type);
+    if (maybe-expand-cluster(component, results.source-exp))
+      queue-dependents(component, lambda);
     end;
+  else
+    let types = make(<stretchy-vector>);
+    for (dep = results then dep.dependent-next,
+	 while: dep)
+      add!(types, dep.source-exp.derived-type);
+    end;
+    maybe-restrict-result-type(component, lambda,
+			       make-values-ctype(as(<list>, types), #f));
   end;
 end;
 
+define method maybe-restrict-result-type
+    (component :: <component>, lambda :: <lambda>, type :: <values-ctype>)
+    => ();
+  let old-type = lambda.result-type;
+  unless (old-type == type)
+    unless (values-subtype?(type, old-type))
+      error("result type became more general?");
+    end;
+    lambda.result-type := type;
+    queue-dependents(component, lambda);
+  end;
+end;    
 
 define method maybe-expand-cluster
-    (component :: <component>, cluster :: <ssa-variable>) => ();
+    (component :: <component>, cluster :: <ssa-variable>)
+    => did-anything? :: <boolean>;
   let return-type = cluster.derived-type;
   if (return-type.min-values == return-type.positional-types.size
 	& return-type.rest-value-type == empty-ctype())
@@ -392,6 +421,9 @@ define method maybe-expand-cluster
     assign.defines := new-defines;
     target.depends-on := new-depends-on;
     queue-dependent(component, assign);
+    #t;
+  else
+    #f;
   end;
 end;
 
@@ -399,36 +431,38 @@ end;
 
 // Type utilities.
 
-define method queue-dependent (component :: <component>,
-			       dependent :: <dependent-mixin>)
-    => ();
+define method queue-dependent
+    (component :: <component>, dependent :: <dependent-mixin>) => ();
   if (dependent.queue-next == #"absent")
     dependent.queue-next := component.reoptimize-queue;
     component.reoptimize-queue := dependent;
   end;
 end;
 
-
-define method maybe-restrict-type (component :: <component>,
-				   expr :: <expression>,
-				   type :: <values-ctype>)
-    => ();
-  let old-type = expr.derived-type;
-  unless (values-subtype?(old-type, type))
-    if (values-subtype?(type, old-type))
-      expr.derived-type := type;
-      for (dependency = expr.dependents then dependency.source-next,
-	   while: dependency)
-	queue-dependent(component, dependency.dependent);
-      end;
-    end;
+define method queue-dependents
+    (component :: <component>, expr :: <expression>) => ();
+  for (dependency = expr.dependents then dependency.source-next,
+       while: dependency)
+    queue-dependent(component, dependency.dependent);
   end;
 end;
 
-define method maybe-restrict-type (component :: <component>,
-				   var :: <abstract-variable>,
-				   type :: <values-ctype>,
-				   #next next-method)
+define method maybe-restrict-type
+    (component :: <component>, expr :: <expression>, type :: <values-ctype>)
+    => ();
+  let old-type = expr.derived-type;
+  unless (old-type == type)
+    unless (values-subtype?(type, old-type))
+      error("derived type became more general?");
+    end;
+    expr.derived-type := type;
+    queue-dependents(component, expr);
+  end;
+end;
+
+define method maybe-restrict-type
+    (component :: <component>, var :: <abstract-variable>,
+     type :: <values-ctype>, #next next-method)
     => ();
   next-method(component, var,
 	      values-type-intersection(type,
