@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.115 1996/03/17 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.116 1996/04/06 07:19:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1709,15 +1709,14 @@ define method emit-region (region :: <loop-region>,
 end;
 
 define method make-info-for
-    (block-region :: <block-region>, file :: <file-state>) => res;
+    (block-region :: <block-region>, file :: <file-state>) => res :: <object>;
   let id = file.file-next-block;
   file.file-next-block := id + 1;
   id;
 end;
 
-define method emit-region (region :: <block-region>,
-			   file :: <file-state>)
-    => ();
+define method emit-region
+    (region :: <block-region>, file :: <file-state>) => ();
   unless (region.exits)
     error("A block with no exits still exists?");
   end;
@@ -2674,7 +2673,27 @@ define method ref-leaf (target-rep :: <representation>,
 			file :: <file-state>)
     => res :: <string>;
   let ctv = leaf.ct-function;
-  if (ctv == #f) error("ref-leaf on a function without a CTV?") end if;
+  if (ctv == #f)
+    ctv := make(if (instance?(leaf, <method-literal>))
+		  <ct-method>;
+		else
+		  <ct-function>;
+		end,
+		name: leaf.main-entry.name,
+		signature: leaf.signature);
+    let ctv-info = get-info-for(ctv, file);
+    ctv-info.function-info-main-entry-name
+      := main-entry-name(get-info-for(leaf.main-entry, file), file);
+    if (leaf.general-entry)
+      ctv-info.function-info-general-entry-name
+	:= main-entry-name(get-info-for(leaf.general-entry, file), file);
+    end if;
+    if (instance?(leaf, <method-literal>) & leaf.generic-entry)
+      ctv-info.function-info-generic-entry-name
+	:= main-entry-name(get-info-for(leaf.generic-entry, file), file);
+    end;
+    leaf.ct-function := ctv;
+  end;
   let (expr, rep) = c-expr-and-rep(ctv, target-rep, file);
   conversion-expr(target-rep, expr, rep, file);
 end;
@@ -2913,7 +2932,10 @@ end;
 define method c-expr-and-rep
     (ep :: <ct-entry-point>, rephint :: <representation>, file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  values(stringify("((void *)", ep.entry-point-c-name, ')'), *ptr-rep*);
+  let info = get-info-for(ep.ct-entry-point-for, file);
+  let name = main-entry-name(info, file);
+  maybe-emit-prototype(name, info, file);
+  values(stringify("((void *)", name, ')'), *ptr-rep*);
 end;
 
 
