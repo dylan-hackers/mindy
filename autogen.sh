@@ -1,6 +1,15 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+if test `uname` -eq "Darwin"; then
+    LIBTOOL=glibtool;
+    LIBTOOLIZE=glibtoolize
+else
+    LIBTOOL=libtool
+    LIBTOOLIZE=libtoolize
+fi
+
+
 srcdir=`dirname $0`
 if test -z "$srcdir"; then srcdir=.; fi
 
@@ -14,11 +23,15 @@ DIE=0
         DIE=1
 }
 
-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
         echo
-        echo "You must have libtool installed to compile Gwydion Dylan."
-        echo "Get ftp://ftp.gnu.org/pub/gnu/libtool/libtool-1.3.2.tar.gz"
-        echo "(or a newer version if it is available)"
+        echo "You must have $LIBTOOL installed to compile Gwydion Dylan."
+	if test $LIBTOOL -eq glibtool; then
+	    echo "This should have come with Darwin/MacOS X"
+	else
+	    echo "Get ftp://ftp.gnu.org/pub/gnu/libtool/libtool-1.3.2.tar.gz"
+	    echo "(or a newer version if it is available)"
+	fi
         DIE=1
 }
 
@@ -36,7 +49,7 @@ echo processing...
 ( cd $srcdir
   aclocal $ACLOCAL_FLAGS
   #automake
-  libtoolize --force --copy
+  $LIBTOOLIZE --force --copy
   autoheader
   autoconf )
 
