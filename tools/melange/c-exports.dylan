@@ -18,7 +18,7 @@ define library melange-c
   use string-extensions;
   use collection-extensions;
   use table-extensions;
-  use new-streams;
+  use streams;
   use standard-io;
   use format;
   export c-lexer, c-declarations;
@@ -33,7 +33,7 @@ define module c-lexer
   use regular-expressions;
   use substring-search;
   use character-type;
-  use new-streams;
+  use streams;
   create cpp-parse;
   export
     default-cpp-table, include-path,
@@ -79,7 +79,7 @@ define module c-parse
   use extensions;
   use self-organizing-list;
   use c-lexer;
-  use new-streams;
+  use streams;
   use standard-io;
   create
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
@@ -98,7 +98,7 @@ define module c-declarations
   use extensions, exclude: {format};
   use table-extensions, exclude: {<string-table>};
   use regular-expressions;
-  use new-streams;
+  use streams;
   use format;
 
   // We completely encapsulate "c-parse" and only pass out the very few 
