@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include('../common-Makegen');
 
 do d2c_library("compiler-base", "base", 
                "base-exports params utils file-system od-format dylan-dump"
