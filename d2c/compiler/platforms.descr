@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.83 2003/08/12 07:04:24 bruce Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.84 2003/08/13 05:59:35 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -461,8 +461,8 @@ link-library-command:           ar qc %s %s
 link-executable-command: 	$(LIBTOOL) --mode=link gcc -o %s %s %s
 link-shared-executable-command: $(LIBTOOL) --mode=link gcc -o %s %s %s
 link-executable-flags:          $(GC_LIBS) -lm
-link-debug-flags:               -gstabs1
-link-profile-flags:		-pg -gstabs1
+link-debug-flags:               -g
+link-profile-flags:		-pg -g
 path-separator:        		/
 supports-asm-stabs-hack?:	#t
 
@@ -637,6 +637,12 @@ inherit-from:			gcc freebsd x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 long-long-size:			8
 long-long-alignment:		4
+
+platform-name:			x86-freebsd-elf-gcc32
+inherit-from:			freebsd x86-gcc32
+
+platform-name:			x86-freebsd-elf-gcc33
+inherit-from:			freebsd x86-gcc33
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha
