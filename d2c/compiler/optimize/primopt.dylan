@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.1 1995/06/04 21:37:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.2 1995/06/06 17:47:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -74,19 +74,24 @@ define-primitive-transformer
        // with individual assignments for each value.
        let builder = make-builder(component);
        let next-var = #f;
+       let let? = instance?(assign, <let-assignment>);
        for (var = defns then next-var,
 	    val-dep = primitive.depends-on
 	      then val-dep & val-dep.dependent-next,
 	    while: var)
 	 next-var := var.definer-next;
 	 var.definer-next := #f;
-	 build-assignment(builder, assign.policy, assign.source-location, var,
-			  if (val-dep)
-			    val-dep.source-exp;
-			  else
-			    make-literal-constant(builder,
-						  make(<literal-false>));
-			  end);
+	 let val = if (val-dep)
+		     val-dep.source-exp;
+		   else
+		     make-literal-constant(builder, make(<literal-false>));
+		   end;
+	 if (let?)
+	   build-let(builder, assign.policy, assign.source-location, var, val);
+	 else
+	   build-assignment(builder, assign.policy, assign.source-location,
+			    var, val);
+	 end;
        end;
        assign.defines := #f;
        // Insert the spred out assignments.
