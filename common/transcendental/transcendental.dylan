@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.1 1998/05/03 19:55:06 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.2 1998/07/21 17:27:50 andreas Exp $
 copyright: See below.
 
 //======================================================================
@@ -38,12 +38,16 @@ copyright: See below.
 
 /// Not quite complete yet:
 /// ### Possibly don't catch all errors at the dylan level.
-/// ### Need to implement log for arbitrary bases.
 /// ### Need to deal with extended integers (?)
 /// ### Need to implement asinh etc. for other than hp.
 /// ### Not sure that the \^ we already have from the dylan module is
 ///     conformant with the spec that the rest of this file is implemented
 ///     from.
+
+/// andreas:
+/// A lot of this looks broken, such as all foof single precison calls.
+/// We probably have to do a lot of testing in configure to find out
+/// what functions are there and what not.
 
 c-include("math.h");
 
@@ -121,9 +125,13 @@ define sealed method log (x :: <double-float>,
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   select (base)
     $double-e, $single-e => call-out("log", double:, double: x);
+
+#if (compiled-for-hpux) // #if (have-log2)
     2, 2.0d0, 2.0s0 => call-out("log2", double:, double: x);
+#endif
+
     10, 10.0d0, 10.0s0 => call-out("log10", double:, double: x);
-    otherwise => error("Haven't bothered to implement a real log yet. Base must be e, 2, or 10.");
+    otherwise => call-out("log", double:, double: x) / call-out("log", double:, double: base);
   end select;
 end method log;
 
@@ -134,9 +142,13 @@ define sealed method log (x :: <single-float>,
   if (base <= 1) error("Base %= is not greater than 1", base) end;
   select (base)
     $double-e, $single-e => call-out("log", float:, float: x);
+
+#if (compiled-for-hpux) // #if (have-log2)
     2, 2.0d0, 2.0s0 => call-out("log2", float:, float: x);
+#endif
+
     10, 10.0d0, 10.0s0 => call-out("log10", float:, float: x);
-    otherwise => error("Haven't bothered to implement a real log yet. Base must be e, 2, or 10.");
+    otherwise => call-out("log", float:, float: x) / call-out("log", double:, double: base);
   end select;
 end method log;
 
@@ -148,11 +160,14 @@ define sealed method log (x :: <integer>,
   select (base)
     $double-e, $single-e => call-out("log", float:,
 				       float: as(<single-float>, x));
+#if (compiled-for-hpux) // #if (have-log2)
     2, 2.0d0, 2.0s0 => call-out("log2", float:,
 				float: as(<single-float>, x));
+#endif
+
     10, 10.0d0, 10.0s0 => call-out("log10", float:,
 				   float: as(<single-float>, x));
-    otherwise => error("Haven't bothered to implement a real log yet. Base must be e, 2, or 10.");
+    otherwise => call-out("log", float:, float: as(<single-float>, x)) / call-out("log", double:, double: base);
   end select;
 end method log;
 
@@ -332,7 +347,7 @@ define sealed method sinh (x :: <single-float>) => y :: <single-float>;
 end method sinh;
 
 define sealed method sinh (x :: <double-float>) => y :: <double-float>;
-  call-out("sin", double:, double: x);
+  call-out("sinh", double:, double: x);
 end method sinh;
 
 define sealed method cosh (x :: <integer>) => y :: <single-float>;
@@ -344,7 +359,7 @@ define sealed method cosh (x :: <single-float>) => y :: <single-float>;
 end method cosh;
 
 define sealed method cosh (x :: <double-float>) => y :: <double-float>;
-  call-out("cos", double:, double: x);
+  call-out("cosh", double:, double: x);
 end method cosh;
 
 define sealed method tanh (x :: <integer>) => y :: <single-float>;
@@ -356,14 +371,16 @@ define sealed method tanh (x :: <single-float>) => y :: <single-float>;
 end method tanh;
 
 define sealed method tanh (x :: <double-float>) => y :: <double-float>;
-  call-out("tan", double:, double: x);
+  call-out("tanh", double:, double: x);
 end method tanh;
 
 
 // Inverse hyperbolic trig functions are not implemented for x86 because C
 // doesn't have them, and we haven't yet felt up to writing our own.
+// 
+// Linux math lib has them, so include them.
 
-#if (compiled-for-hpux)
+#if (compiled-for-hpux | compiled-for-linux)
 
 define sealed method asinh (x :: <integer>) => y :: <single-float>;
   as(<single-float>,
