@@ -63,7 +63,7 @@ define constant hyphenate-case-breaks =
       let old-status = #"neither";
       for (char in string,
 	   old-char = #f then char)
-	let status = if (~alphanumeric?(char))
+	let status = if (~alpha?(char))
 		       #"neither";
 		     elseif (~uppercase?(char))
 		       #"lower";
