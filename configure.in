@@ -1,4 +1,4 @@
-dnl     $Header: /scm/cvs/src/configure.in,v 1.3 1998/05/05 00:56:00 emk Exp $
+dnl     $Header: /scm/cvs/src/configure.in,v 1.4 1998/05/05 02:42:01 emk Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -62,13 +62,6 @@ AC_PREFIX_PROGRAM(d2c)
 
 builddir=`pwd`
 AC_SUBST(builddir)
-
-#--------------------------------------------------------------------
-# srcroot is used by mk-build-tree (it must be an absolute path)
-#--------------------------------------------------------------------
-
-srcroot=`(cd $srcdir; pwd)`
-AC_SUBST(srcroot)
 
 #--------------------------------------------------------------------
 # Get host and target system information.
@@ -560,6 +553,11 @@ AC_CHECK_FUNCS(_longjmp)
 dnl sinclude(mindy/distribution-options)
 dnl AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
 
+#--------------------------------------------------------------------
+# Make srcdir absolute to keep Mindy's build system from choking.
+#--------------------------------------------------------------------
+
+srcdir=`(cd $srcdir; pwd)`
 
 #--------------------------------------------------------------------
 #	Finally, output the Makefiles for each part of the
@@ -586,4 +584,4 @@ AC_OUTPUT(Defaults \
 
 ${INSTALL} -m uog+rx $srcdir/tools/shared-misc/mk-build-tree ./
 ${INSTALL} -m uog+rx $srcdir/tools/shared-misc/gen-makefile ./
-(PATH=`pwd`:${PATH}; export PATH; mk-build-tree -p$srcroot/d2c/compiler/platforms.descr)
+(PATH=`pwd`:${PATH}; export PATH; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
