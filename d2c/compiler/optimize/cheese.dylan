@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.100 1995/08/29 15:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.101 1995/08/30 18:24:51 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2013,7 +2013,8 @@ define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
   let old-type = expr.derived-type;
-  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
+  if (old-type == wild-ctype() 
+      | (~values-subtype?(old-type, type) & values-subtype?(type, old-type)))
     expr.derived-type := type;
     if (instance?(expr, <initial-definition>))
       let var = expr.definition-of;
