@@ -142,7 +142,7 @@ define method NewControl( window :: <WindowRef>, bounds :: <Rect*>, title :: <pa
 
 	make( <ControlHandle>, pointer: 
 		call-out( "NewControl", ptr:, ptr: window.raw-value, ptr: bounds.raw-value, 
-					ptr: title.raw-value, unsigned-char: if(visBool) 1 else 0 end, 
+					ptr: title.raw-value, unsigned-char: visBool, 
 					short: initialValue, short: minimumValue, short: maximumValue,
 					short: procID, long: controlReference ) );
 
@@ -546,4 +546,24 @@ define method EmbedControl( inControl :: <ControlHandle>, inContainer :: <Contro
   as(<OSErr>, call-out("EmbedControl", int:, ptr: inControl.raw-value, 
                         ptr: inContainer.raw-value));
 end method EmbedControl;
+
+
+define method GetBestControlRect(inControl :: <ControlHandle>, 
+                                  outRect :: <Rect*>)
+=> (result :: <OSErr>, baselineOffset :: <integer>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("GetBestControlRect", int:, ptr: inControl.raw-value, 
+                        ptr: outRect.raw-value, ptr: temp.raw-value)),
+     signed-short-at(temp, offset: 0));
+end method GetBestControlRect;
+
+define method ActivateControl( inControl :: <ControlHandle>)
+=> (result :: <OSErr>)
+  as(<OSErr>, call-out("ActivateControl", int:, ptr: inControl.raw-value));
+end method ActivateControl;
+
+define method DeactivateControl( inControl :: <ControlHandle>)
+=> (result :: <OSErr>)
+  as(<OSErr>, call-out("DeactivateControl", int:, ptr: inControl.raw-value));
+end method DeactivateControl;
 

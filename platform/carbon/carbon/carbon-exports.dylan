@@ -196,6 +196,7 @@ define module carbon
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls, EmbedControl,
     IsControlVisible, CreateRootControl, SetControlData, NewControlUserPaneDrawUPP,
+    GetBestControlRect, ActivateControl, DeactivateControl,
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,
@@ -278,13 +279,23 @@ define module carbon
 			MemError,
       
 // Menu Manager.
+    $noMark, $kMenuNoModifiers, $kMenuShiftModifier,
+    $kMenuOptionModifier, $kMenuControlModifier, $kMenuNoCommandModifier,
 		<MenuBarHandle>, <MenuHandle>, <MenuRef>,
 		GetNewMBar, SetMenuBar, DrawMenuBar, HiliteMenu,
 		MenuSelect, MenuKey,
-		GetMenuHandle, GetMenuItemText, EnableMenuItem, DisableMenuItem, CountMenuItems,
+		GetMenuHandle, GetMenuItemText, EnableMenuItem, 
+    DisableMenuItem, CountMenuItems,
 		DeleteMenu,
 		AppendResMenu,
     GetMBarHeight,
+    AcquireRootMenu, SetRootMenu,
+    CheckMenuItem, SetMenuItemText, GetItemMark, SetItemMark,
+    GetItemCmd, SetItemCmd, SetItemStyle, GetItemStyle,
+    GetMenuItemCommandID, SetMenuItemCommandID, GetMenuItemModifiers,
+    SetMenuItemModifiers, NewMenu, InsertMenuItem, DeleteMenuItem,
+    InsertMenu,DeleteMenu, ClearMenuBar,
+    IsValidMenu,
     
 // Navigation services
 		<NavEventUPP>, <NavPreviewUPP>, <NavObjectFilterUPP>,
@@ -434,5 +445,5 @@ define module carbon
     // Carbon methods
 		CreateNewWindow, CreateWindowFromResource, GetWindowPort, SetPortWindowPort,
     GetWindowPortBounds, GetWindowFromPort,
-    GetWindowBounds, SetWindowBounds;
+    GetWindowBounds, SetWindowBounds, GetWindowRegion, MoveWindowStructure;
 end module carbon;

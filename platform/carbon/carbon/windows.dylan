@@ -576,3 +576,17 @@ define method RepositionWindow(inWindow :: <WindowRef>,
 	as(<OSErr>, call-out("RepositionWindow", int:, ptr: inWindow.raw-value,
                         ptr: inParent.raw-value, int: positionMethod));
 end method RepositionWindow;
+
+
+define method GetWindowRegion(window :: <WindowRef>, 
+    inRegionCode :: <integer>, ioWinRgn :: <RgnHandle>)
+=> (result :: <OSStatus>)
+  as(<OSStatus>, call-out("GetWindowRegion", int:, ptr: window.raw-value,
+    int: inRegionCode, ptr: ioWinRgn.raw-value));
+end method GetWindowRegion;
+
+define method MoveWindowStructure(window :: <WindowRef>, h :: <integer>, v :: <integer>)
+=> (result :: <OSErr>)
+	as(<OSErr>, call-out("MoveWindowStructure", int:, ptr: window.raw-value, short: h, short:, v));
+end method MoveWindowStructure;
+
