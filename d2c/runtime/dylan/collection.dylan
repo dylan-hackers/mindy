@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.18 1996/02/20 18:15:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.19 1996/03/15 16:30:19 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -195,10 +195,15 @@ define method map-as
     let (init, limit, next-state, finished?, current-key, current-element)
       = forward-iteration-protocol(collection);
     let result = make(type, size: collection.size);
+
+    // We can just iterate normally across collection, but we can't
+    // iterate across result because we don't know that
+    // collection.key-sequence matches result.key-sequence
+
     for (state = init then next-state(collection, state),
 	 until: finished?(collection, state, limit))
       result[current-key(collection, state)]
-	:= current-element(collection, state);
+	:= proc(current-element(collection, state));
     end;
     result;
   else
