@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.14 2000/01/24 04:56:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.15 2000/07/18 22:19:00 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -934,7 +934,9 @@ define method spew-object
 	      end select;
 	    end for;
 	    add!($spewed-string-buffer, '"');
-	    write(stream, as(<byte-string>, $spewed-string-buffer));
+	    if(str.size > 0)
+	      write(stream, as(<byte-string>, $spewed-string-buffer));
+	    end if;
 	    $spewed-string-buffer.size := $spewed-string-initial-size;
 	end select;
 	write(stream, ",\n");
@@ -1389,29 +1391,31 @@ define method spew-instance
 	    error("Bogus length: %=", len-ctv);
 	  end;
 	  vector-size := as(<integer>, len-ctv.literal-value);
-	  format(stream, "{\n");
-	  indent(stream, $indentation-step);
-	  if (instance?(init-value, <sequence>))
-	    unless (init-value.size == vector-size)
-	      error("Size mismatch.");
-	    end;
-	    for (element in init-value,
-		 index from 0)
-	      spew-reference(element, field.slot-representation,
-			     stringify(name, '[', index, ']'),
+	  if(vector-size > 0)
+	    format(stream, "{\n");
+	    indent(stream, $indentation-step);
+	    if (instance?(init-value, <sequence>))
+	      unless (init-value.size == vector-size)
+		error("Size mismatch.");
+	      end;
+	      for (element in init-value,
+		   index from 0)
+		spew-reference(element, field.slot-representation,
+			       stringify(name, '[', index, ']'),
+			       state);
+		format(stream, ",\n");
+	      end;
+	    else
+	      for (index from 0 below vector-size)
+		spew-reference(init-value, field.slot-representation,
+			       stringify(name, '[', index, ']'),
 			     state);
-	      format(stream, ",\n");
+		format(stream, ",\n");
+	      end;
 	    end;
-	  else
-	    for (index from 0 below vector-size)
-	      spew-reference(init-value, field.slot-representation,
-			     stringify(name, '[', index, ']'),
-			     state);
-	      format(stream, ",\n");
-	    end;
-	  end;
-	  indent(stream, -$indentation-step);
-	  format(stream, "}");
+	    indent(stream, -$indentation-step);
+	    format(stream, "}");
+	  end if;
 	else
 	  spew-reference(init-value, field.slot-representation, name, state);
 	end;
@@ -1485,18 +1489,20 @@ define method spew-layout
 		       slots := slots + 1;
 		       stringify("SLOT", slots);
 		     end if;
-	  format(stream, "    %s %s",
-		 field.slot-representation.representation-c-type,
-		 name);
-	  if(instance?(field, <vector-slot-info>))
-	    format(stream, "[%d]", size);
-	  end if;
-	  if(getter)
-	    format(stream, ";\t /* %s */\n",
-		   getter.variable-name.clean-for-comment);
-	  else
-	    format(stream, ";\n");
-	  end if;
+	  unless(instance?(field, <vector-slot-info>) & size = 0)
+	    format(stream, "    %s %s",
+		   field.slot-representation.representation-c-type,
+		   name);
+	    if(instance?(field, <vector-slot-info>))
+	      format(stream, "[%d]", size);
+	    end if;
+	    if(getter)
+	      format(stream, ";\t /* %s */\n",
+		     getter.variable-name.clean-for-comment);
+	    else
+	      format(stream, ";\n");
+	    end if;
+	  end unless;
       end select;
     end for;
     format(stream, "}");
