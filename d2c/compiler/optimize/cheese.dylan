@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.25 1995/04/26 22:08:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.26 1995/04/27 01:02:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -906,12 +906,18 @@ define method maybe-restrict-type
     if (instance?(expr, <initial-definition>))
       let var = expr.definition-of;
       if (instance?(var, <initial-variable>))
-	let var-type = empty-ctype();
-	for (defn in var.definitions,
-	     var-type = empty-ctype()
-	       then ctype-union(var-type, defn.derived-type))
-	finally
-	  maybe-restrict-type(component, var, var-type);
+	block (return)
+	  let var-type = empty-ctype();
+	  for (defn in var.definitions)
+	    let (res, win) = values-type-union(var-type, defn.derived-type);
+	    if (win)
+	      var-type := res;
+	    else
+	      return();
+	    end;
+	  finally
+	    maybe-restrict-type(component, var, var-type);
+	  end;
 	end;
       end;
     end;
