@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.54 1996/08/22 18:33:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.55 1996/09/04 16:47:12 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -189,13 +189,11 @@ end;
 //
 define constant $descriptor-type-string
   = "\t.stabs \"<unknown>\",100,0,0,L$text0000\n"
-    "L$text0000\n"
+    "L$text0000:\n"
     "\t.stabs \"heapptr_t:t32=*33=xsheapobj:\",128,0,6,0\n"
     "\t.stabs \"descriptor:T34=s8heapptr:32,0,32;dataword:"
        "35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;\",128,0,0,0\n"
-    "\t.stabs \"descriptor_t:t34\",128,0,14,0\n"
-    "\t.SPACE $PRIVATE$\n"
-    "\t.SUBSPA $DATA$\n\n";
+    "\t.stabs \"descriptor_t:t34\",128,0,14,0\n";
 
 // build-local-heap -- exported.
 //
@@ -212,7 +210,8 @@ define method build-local-heap
   let prefix = unit.unit-prefix;
   let state = make(<local-state>, stream: stream, target: target,
 		   id-prefix: concatenate(prefix, "_L"));
-  // This debugging crap is only supported on the HP (at least for now)
+  // Debugging is currently only supported on systems that support
+  // stabs (what gdb uses)
   if (target.supports-debugging?)
     format(stream, "%s", $descriptor-type-string);
   end if;
