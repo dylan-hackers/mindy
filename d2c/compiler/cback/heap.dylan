@@ -395,9 +395,6 @@ end;
 
 define method spew-function
     (func :: <ct-function>, state :: <state>, #rest slots) => ();
-  unless (func.ct-function-closure-var-types == #())
-    error("Trying to dump a closure into the initial heap?");
-  end;
   let sig = func.ct-function-signature;
   let returns = sig.returns;
   let positionals = returns.positional-types;
@@ -431,6 +428,9 @@ end;
 
 define method spew-instance
     (class :: <cclass>, state :: <state>, #rest slots) => ();
+  if (class.abstract?)
+    error("Spewing an abstract class?");
+  end;
   let layout = class.instance-slots-layout;
   let fields = make(<vector>, size: layout.layout-length + 1, fill: #f);
   for (slot in class.all-slot-infos)
