@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.7 1995/03/23 22:10:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.8 1995/04/21 02:35:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -901,6 +901,10 @@ define method really-make-canonical-singleton
   ct-value-cclass(thing);
 end;
 
+
+
+define generic ct-value-cclass (ct-value :: <ct-value>) => res :: <cclass>;
+
 define method ct-value-cclass (object :: <literal-true>) => res :: <cclass>;
   dylan-value(#"<true>");
 end method;
@@ -913,15 +917,17 @@ define method ct-value-cclass (object :: <literal-symbol>) => res :: <cclass>;
   dylan-value(#"<symbol>");
 end method;
 
-define method ct-value-cclass (object :: <literal-character>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-character>)
+    => res :: <cclass>;
   dylan-value(#"<character>");
 end method;
 
-define method ct-value-cclass (object :: <literal-empty-list>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-empty-list>)
+    => res :: <cclass>;
   dylan-value(#"<empty-list>");
 end method;
 
-define method ct-value-cclass (object :: <pair>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-list>) => res :: <cclass>;
   dylan-value(#"<pair>");
 end method;
 
@@ -933,7 +939,8 @@ define method ct-value-cclass (object :: <literal-vector>) => res :: <cclass>;
   dylan-value(#"<simple-object-vector>");
 end method;
 
-define method ct-value-cclass (object :: <literal-fixed-integer>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-fixed-integer>)
+    => res :: <cclass>;
   dylan-value(#"<fixed-integer>");
 end method;
 
@@ -946,11 +953,13 @@ define method ct-value-cclass (object :: <literal-ratio>) => res :: <cclass>;
   dylan-value(#"<ratio>");
 end method;
 
-define method ct-value-cclass (object :: <literal-single-float>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-single-float>)
+    => res :: <cclass>;
   dylan-value(#"<single-float>");
 end method;
 
-define method ct-value-cclass (object :: <literal-double-float>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-double-float>)
+    => res :: <cclass>;
   dylan-value(#"<double-float>");
 end method;
 
@@ -958,6 +967,29 @@ define method ct-value-cclass (object :: <literal-extended-float>)
     => res :: <cclass>;
   dylan-value(#"<extended-float>");
 end method;
+
+define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
+  dylan-value(#"<class>");
+end;
+
+define method ct-value-cclass (object :: <union-ctype>) => res :: <cclass>;
+  dylan-value(#"<union>");
+end;
+
+define method ct-value-cclass (object :: <limited-integer-ctype>)
+    => res :: <cclass>;
+  dylan-value(#"<limited-integer>");
+end;
+
+define method ct-value-cclass (object :: <singleton-ctype>) => res :: <cclass>;
+  dylan-value(#"<singleton>");
+end;
+
+define method ct-value-cclass (object :: <byte-character-ctype>)
+    => res :: <cclass>;
+  dylan-value(#"<byte-character-type>");
+end;
+
 
 
 
