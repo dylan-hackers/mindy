@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.1 1998/05/03 19:55:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.2 1998/05/11 17:37:01 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,6 +42,8 @@ define class <main-unit-state> (<object>)
          required-init-keyword: log-dependencies:;
     slot unit-no-binaries :: <boolean>,
          required-init-keyword: no-binaries:;
+    slot unit-link-static :: <boolean>,
+         required-init-keyword: link-static:;
 
     // A facility for hacking around C compiler bugs by using a different
     // command for particular C compilations.  cc-override is a format string
@@ -323,19 +325,41 @@ end method process-feature;
 // There might be more than one possible object file suffix, so we try them
 // all, but if we find it under more than one suffix, we error.
 //
+// If the platform supports shared libraries (as indicated by the presence
+// of shared-library-filename-suffix in platforms.descr), and if the user
+// didn't specify '-static' on the command line, locate shared library
+// version first. 
 define method find-library-archive
-    (unit-name :: <byte-string>, target :: <platform>)
+    (unit-name :: <byte-string>, state :: <main-unit-state>)
  => path :: <byte-string>;
+  let target = state.unit-target;
   let libname = concatenate(target.library-filename-prefix, unit-name);
   let suffixes = split-at-whitespace(target.library-filename-suffix);
+
   let found = #();
-  for (suffix in suffixes)
-    let suffixed = concatenate(libname, suffix);
-    let path = find-file(suffixed, *data-unit-search-path*);
-    if (path)
-      found := pair(path, found);
+
+  let find = method (suffixes)
+	       let found = #();
+	       for (suffix in suffixes)
+		 let suffixed = concatenate(libname, suffix);
+		 let path = find-file(suffixed, *data-unit-search-path*);
+		 if (path)
+		   found := pair(path, found);
+		 end if;
+	       end for;
+	       found;
+	     end method;
+
+  if (target.shared-library-filename-suffix & ~state.unit-link-static)  
+    let shared-suffixes = split-at-whitespace(target.shared-library-filename-suffix);
+    found := find(shared-suffixes);
+    if (empty?(found))
+      found := find(suffixes);
     end if;
-  end for;
+  else
+    found := find(suffixes);
+  end if;
+
   if (empty?(found))
     error("Can't find object file for library %s.", unit-name);
   elseif (found.tail ~== #())
@@ -827,7 +851,7 @@ define method build-executable (state :: <main-unit-state>) => ();
 	    // If cross-compiling use -l -L search mechanism.
 	    dash-small-ells := stringify(" -l", name, dash-small-ells);
 	  else
-	    let archive = find-library-archive(name, state.unit-target);
+	    let archive = find-library-archive(name, state);
 	    unit-libs := stringify(' ', archive, unit-libs);
 	  end if;
 	end method add-archive;
@@ -1143,6 +1167,8 @@ define method incorrect-usage () => ();
   format(*standard-error*, 
 	 "    -no-binaries        Do not compile the generated C code\n");
   format(*standard-error*, 
+	 "    -static             Don't link against shared libraries\n");
+  format(*standard-error*, 
 	 "    -Ttarget            Generate code for the given target machine\n");
   format(*standard-error*, 
 	 "                        Often used with -no-binaries\n");
@@ -1210,6 +1236,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let targets-file = $default-targets-dot-descr;
   let cc-override = #f;
   let override-files = #();
+  let link-static = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
       if (arg.size >= 2)
@@ -1276,6 +1303,12 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	    end if;
 	  'g' =>
 	    *emit-all-function-objects?* := #t;
+	  's' =>
+	    if (arg = "-static")
+	      link-static := #t;
+	    else
+	      error("Bogus switch: %s", arg);
+	    end if;
 	  otherwise =>
 	    error("Bogus switch: %s", arg);
 	end select;
@@ -1323,6 +1356,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	     log-dependencies: log-dependencies,
 	     target: target,
 	     no-binaries: no-binaries,
+	     link-static: link-static,
 	     cc-override: cc-override,
 	     override-files: override-files);
   let worked? = compile-library(state);
