@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.11 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.12 1996/02/05 01:18:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1007,7 +1007,7 @@ define method match-empty (pattern :: <property-list-pattern>, fail, continue,
 				 results);
 	else
 	  if (key.patkey-all?)
-	    results := add-binding(pattern, #[], results);
+	    results := add-binding(key.patkey-name, #[], results);
 	  else
 	    return(fail());
 	  end;
@@ -1317,7 +1317,8 @@ define method match (pattern :: <property-list-pattern>,
 	for (prop in plist)
 	  block (okay)
 	    for (key in pattern.plistpat-keys)
-	      if (prop.prop-keyword.token-literal.literal-value == key.patkey-name)
+	      if (prop.prop-keyword.token-literal.literal-value
+		    == key.patkey-name)
 		okay();
 	      end;
 	    end;
@@ -1329,7 +1330,8 @@ define method match (pattern :: <property-list-pattern>,
 	if (key.patkey-all?)
 	  let this-result = make(<stretchy-vector>);
 	  for (prop in plist)
-	    if (prop.prop-keyword.token-symbol.literal-value == key.patkey-name)
+	    if (prop.prop-keyword.token-literal.literal-value
+		  == key.patkey-name)
 	      let piece = make(<piece>, token: prop.prop-value);
 	      let frag = make(<fragment>, head: piece, tail: piece);
 	      add!(this-result, frag);
