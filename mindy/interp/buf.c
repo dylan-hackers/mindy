@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.12 1995/03/12 16:41:37 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.13 1996/02/02 01:58:00 wlott Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -130,14 +130,9 @@ static obj_t trans_buffer(obj_t buffer)
 		     sizeof(struct buffer)
 		     + max(obj_ptr(struct buffer *, buffer)->length
 			   - sizeof(((struct buffer *)buffer)->data),
-			   sizeof(((struct buffer *)buffer)->data)));
+			   sizeof(((struct buffer *)buffer)->data)),
+		     TRUE);
 }
-
-void scavenge_buffer_roots(void)
-{
-    scavenge(&obj_BufferClass);
-}
-
 
 
 /* Init stuff. */
@@ -145,6 +140,7 @@ void scavenge_buffer_roots(void)
 void make_buffer_classes(void)
 {
     obj_BufferClass = make_builtin_class(scav_buffer, trans_buffer);
+    add_constant_root(&obj_BufferClass);
 }
 
 void init_buffer_classes(void)
