@@ -1,39 +1,113 @@
 module: heap
 
+// A catch-all object to quantify the state of the "heap output" process.
+// Almost every routine in this module accepts a "state" argument and
+// destructively modifies it as necessary to account for its actions.
+//
 define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
+  slot id-prefix :: <byte-string>, init-keyword: #"id-prefix", init-value: "L";
   slot next-id :: <integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
   slot symbols :: type-union(<literal-false>, <literal-symbol>),
     init-function: curry(make, <literal-false>);
 end;
 
+define class <local-state> (<state>)
+  slot undumped-objects :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>);
+end class <local-state>;
+
+// heap-object-referenced?, heap-object-dumped? -- Utility functions for heap
+// dumping.
+//
+
+define constant object-referenced-table :: <table> = make(<object-table>);
+define constant object-dumped-table :: <table> = make(<object-table>);
+
+define method heap-object-referenced? (object :: <ct-value>)
+  element(object-referenced-table, object, default: #f);
+end method heap-object-referenced?;
+
+define method heap-object-referenced?-setter
+    (value :: <boolean>, object :: <ct-value>);
+  element(object-referenced-table, object) := #t;
+end method heap-object-referenced?-setter;
+
+define method heap-object-dumped? (object :: <ct-value>)
+  element(object-dumped-table, object, default: #f);
+end method heap-object-dumped?;
+
+define method heap-object-dumped?-setter
+    (value :: <boolean>, object :: <ct-value>);
+  element(object-dumped-table, object) := #t;
+end method heap-object-dumped?-setter;
+
+
+// Top-level entry point for creating "the heap".  This is called after an
+// entire program is compiled, and writes data for every heap object in every
+// library. 
+//
 define method build-initial-heap (roots :: <vector>, stream :: <stream>)
     => ();
   let state = make(<state>, stream: stream);
   format(stream, "\t.data\n\t.align\t8\n");
+
   for (unit in roots)
-    let prefix :: <byte-string> = unit[0];
-    let roots :: <simple-object-vector> = unit[1];
-    format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
-    for (ctv in roots, index from 0)
-      spew-reference(ctv, *general-rep*,
-		     stringify(prefix, "_roots[", index, ']'),
-		     state);
-    end;
-  end;
+    for (obj in unit.undumped-objects)
+      if (~obj.heap-object-dumped?)
+	spew-object(obj, state);
+	obj.heap-object-dumped? := #t;
+      end if;
+    end for;
+  end for;
+
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
-    format(stream, "\n; %s\n\t.align\t8\n%s",
-	   object, object.ct-value-heap-label);
     spew-object(object, state);
   end;
+
   format(stream,
 	 "\n\n\t.align\t8\n\t.export\tinitial_symbols, DATA\n"
 	   "initial_symbols\n");
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
+define method build-local-heap
+    (prefix :: <byte-string>, roots :: <vector>, stream :: <stream>)
+ => (undumped :: <vector>);
+  let state = make(<local-state>, stream: stream, 
+		   id-prefix: concatenate(prefix, "_L"));
+  format(stream, "\t.data\n\t.align\t8\n");
+
+  format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
+  for (ctv in roots, index from 0)
+    spew-reference(ctv, *general-rep*,
+		   stringify(prefix, "_roots[", index, ']'),
+		   state);
+  end;
+
+  until (state.object-queue.empty?)
+    let object = pop(state.object-queue);
+    spew-object(object, state);
+  end;
+
+  state.undumped-objects;
+end method build-local-heap;
+
+//------------------------------------------------------------------------
+//  Spew-reference
+//
+// This function creates a reference to some object.  In the case of literals,
+// the "reference" may be the object's value, but it will usually simply be a
+// symbolic name for the object.  As a side effect, this routine will add the
+// object to the "to be dumped" queue if it has not already been scheduled for
+// dumping. 
+//
+// The "tag" is a string which typically describes the particular slot being
+// defined.  See "../base/rep.dylan" and "../base/c-rep.dylan" for hints
+// concerning the meaning of "rep".
+//------------------------------------------------------------------------
 
 define generic spew-reference
     (object :: false-or(<ct-value>), rep :: <representation>,
@@ -112,31 +186,69 @@ define method spew-reference
 end;
 
 
+// Object-name returns a name for an object -- generating it if necessary.  As
+// a side effect, it also checks whether the object has been dumped (or
+// scheduled for dumping) in this pass and queues it if not.
+//
 define method object-name (object :: <ct-value>, state :: <state>)
     => name :: <string>;
-  object.ct-value-heap-label
-    | begin
-	let name = stringify('L', state.next-id);
-	state.next-id := state.next-id + 1;
-	object.ct-value-heap-label := name;
-	push-last(state.object-queue, object);
-	name;
-      end;
+  let names = object.ct-value-heap-labels;
+  if (names.empty?)
+    push-last(state.object-queue, object);
+    let name = stringify(state.id-prefix, state.next-id);
+    state.next-id := state.next-id + 1;
+    object.heap-object-referenced? := #t;
+    object.ct-value-heap-labels := vector(name);
+    name;
+  else
+    if (~object.heap-object-referenced?)
+      format(state.stream, "\t.import\t%s, data\n", names.first);
+      object.heap-object-referenced? := #t;
+    end if;
+    names.first
+  end;
 end;
 
 define method object-name (object :: <ct-entry-point>, state :: <state>)
     => name :: <string>;
-  object.ct-value-heap-label
-    | begin
-	let name = object.entry-point-c-name;
-	format(state.stream, "\t.import\t%s, code\n", name);
-	object.ct-value-heap-label := name;
-	name;
-      end;
+  let name = object.entry-point-c-name;
+  if (~object.heap-object-referenced?)
+    format(state.stream, "\t.import\t%s, code\n", name);
+    object.heap-object-referenced? := #t;
+  end if;
+  let names = object.ct-value-heap-labels;
+  if (names.empty?)
+    object.ct-value-heap-labels := vector(name);
+    name;
+  else
+    names.first;
+  end;
 end;
 	
+// This method handles a very messy special case.  Names for generics must be
+// assigned in their home module, even though the generics themselves may or
+// may not be dumped, and are deferred 'til the global heap is dumped.  We
+// must, therefore use a different method of insuring that those generics
+// which are actually referenced are marked as "undumped".
+//
+define method object-name
+    (object :: <ct-open-generic>, state :: <state>, #next next)
+ => (name :: <string>);
+  if (~object.heap-object-referenced?)
+    push-last(state.object-queue, object);
+  end if;
+  next();
+end method object-name;
 
 
+//------------------------------------------------------------------------
+// Raw-bits
+//
+// This function converts a "compile-time value" into an integer which should
+// be a meaningful value within the low-level C code.  This is an extended
+// integer which require several words to store.
+//------------------------------------------------------------------------
+
 define generic raw-bits (ctv :: <literal>) => res :: <general-integer>;
 
 define method raw-bits (ctv :: <literal-true>) => res :: <general-integer>;
@@ -236,21 +348,63 @@ define method raw-bits-for-float
 end;
 
 
+//------------------------------------------------------------------------
+// Spew-object
+//
+// This function writes out the code for an object's value (as opposed to a
+// simple reference to that value).  This serves primarily as a front end to
+// "spew-instance" (described below) -- it computes the class of the object
+// and a set of field values, all of which will be passed on to spew-instance.
+//------------------------------------------------------------------------
+
 define generic spew-object (object :: <ct-value>, state :: <state>) => ();
 
+// Writes out all of the labels that have been assigned to this particular
+// object.  (Usually there's only one, but shared objects might have more.)
+//
+define method spew-labels (object :: <ct-value>, state :: <state>);
+  let stream = state.stream;
+  format(stream, "\n; %s\n\t.align\t8\n", object);
+  let labels = object.ct-value-heap-labels;
+  if (labels.empty?)
+//    error("No labels found in spew-labels -- why are we dumping this?:  %=", 
+//	  object);
+    // There was no label before, so we should allocate one.
+    let name = stringify(state.id-prefix, state.next-id);
+    state.next-id := state.next-id + 1;
+    object.ct-value-heap-labels := vector(name);
+    format(stream, "\t.export\t%s, DATA\n%s\n", name, name);
+  else
+    // There were one or more labels before, so we must dump them all.
+    for (label in labels)
+      format(stream, "\t.export\t%s, DATA\n%s\n", label, label);
+    end for;
+  end if;
+end method spew-labels;
 
 define method spew-object
     (object :: <ct-not-supplied-marker>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<not-supplied-marker>"), state);
+  if (instance?(state, <local-state>))
+    state.undumped-objects := add!(state.undumped-objects, object);
+  else
+    spew-labels(object, state);
+    spew-instance(specifier-type(#"<not-supplied-marker>"), state);
+  end if;
 end;
 
 define method spew-object
     (object :: <literal-boolean>, state :: <state>) => ();
-  spew-instance(object.ct-value-cclass, state);
+  if (instance?(state, <local-state>))
+    state.undumped-objects := add!(state.undumped-objects, object);
+  else
+    spew-labels(object, state);
+    spew-instance(object.ct-value-cclass, state);
+  end if;
 end;
 
 define method spew-object
     (object :: <literal-extended-integer>, state :: <state>) => ();
+  spew-labels(object, state);
   let digits = make(<stretchy-vector>);
   local
     method repeat (remainder :: <extended-integer>);
@@ -274,6 +428,7 @@ define method spew-object
 end;
 
 define method spew-object (object :: <literal-ratio>, state :: <state>) => ();
+  spew-labels(object, state);
   let num = as(<ratio>, object.literal-value);
   spew-instance(object.ct-value-cclass, state,
 		numerator:
@@ -283,20 +438,27 @@ define method spew-object (object :: <literal-ratio>, state :: <state>) => ();
 end;
 
 define method spew-object (object :: <literal-float>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-instance(object.ct-value-cclass, state, value: object);
 end;
 
 define method spew-object
     (object :: <literal-symbol>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<symbol>"), state,
-		symbol-string:
-		  as(<ct-value>, as(<string>, object.literal-value)),
-		symbol-next: state.symbols);
-  state.symbols := object;
+  if (instance?(state, <local-state>))
+    state.undumped-objects := add!(state.undumped-objects, object);
+  else
+    spew-labels(object, state);
+    spew-instance(specifier-type(#"<symbol>"), state,
+		  symbol-string:
+		    as(<ct-value>, as(<string>, object.literal-value)),
+		  symbol-next: state.symbols);
+    state.symbols := object;
+  end if;
 end;
 
 define method spew-object
     (object :: <literal-pair>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-instance(specifier-type(#"<pair>"), state,
 		head: object.literal-head,
 		tail: object.literal-tail);
@@ -304,12 +466,18 @@ end;
 
 define method spew-object
     (object :: <literal-empty-list>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<empty-list>"), state,
-		head: object, tail: object);
+  if (instance?(state, <local-state>))
+    state.undumped-objects := add!(state.undumped-objects, object);
+  else
+    spew-labels(object, state);
+    spew-instance(specifier-type(#"<empty-list>"), state,
+		  head: object, tail: object);
+  end if;
 end;
 
 define method spew-object
     (object :: <literal-simple-object-vector>, state :: <state>) => ();
+  spew-labels(object, state);
   let contents = object.literal-value;
   spew-instance(specifier-type(#"<simple-object-vector>"), state,
 		size: as(<ct-value>, contents.size),
@@ -321,6 +489,7 @@ define constant *spewed-string-size* = *spewed-string*.size;
 
 define method spew-object
     (object :: <literal-string>, state :: <state>) => ();
+  spew-labels(object, state);
   let str = object.literal-value;
   let class = specifier-type(#"<byte-string>");
   let fields = get-class-fields(class);
@@ -390,6 +559,7 @@ end method spew-object;
 
 define method spew-object
     (object :: <union-ctype>, state :: <state>) => ();
+  spew-labels(object, state);
   let mems = #();
   let sings = #();
   for (member in object.members)
@@ -410,6 +580,7 @@ end;
 
 define method spew-object
     (object :: <limited-integer-ctype>, state :: <state>) => ();
+  spew-labels(object, state);
   local method make-lit (x :: false-or(<general-integer>))
 	  if (x == #f)
 	    as(<ct-value>, x);
@@ -428,22 +599,26 @@ end;
 
 define method spew-object
     (object :: <singleton-ctype>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-instance(specifier-type(#"<singleton>"), state,
 		singleton-object: object.singleton-value);
 end;
 
 define method spew-object
     (object :: <byte-character-ctype>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-instance(specifier-type(#"<byte-character-type>"), state);
 end;
 
 define method spew-object
     (object :: <defined-cclass>, state :: <state>) => ();
+  spew-labels(object, state);
   let defn = object.class-defn;
   spew-instance(specifier-type(#"<class>"), state,
 		class-name:
-		  make(<literal-symbol>,
-		       value: object.cclass-name.name-symbol),
+		  make(<literal-string>,
+		       value: as(<byte-string>,
+				 object.cclass-name.name-symbol)),
 		unique-id:
 		  as(<ct-value>, object.unique-id | -1),
 		direct-superclasses:
@@ -478,6 +653,7 @@ end;
 
 define method spew-object
     (object :: <slot-info>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-instance(specifier-type(#"<slot-descriptor>"), state,
 		slot-allocation:
 		  as(<ct-value>,
@@ -510,17 +686,28 @@ define method spew-object
 end method spew-object;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-reference(object.proxy-for, *heap-rep*, "%object-class", state);
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-function(object, state,
 		general-entry:
 		  make(<ct-entry-point>, for: object, kind: #"general"));
 end;
 
+// Dumping of open generics is always deferred to the global dump
+// phase.  This method neatly encapsulates such behavior.
+//
+define method spew-object
+    (object :: <ct-open-generic>, state :: <local-state>) => ();
+  state.undumped-objects := add!(state.undumped-objects, object);
+end;
+
 define method spew-object
     (object :: <ct-generic-function>, state :: <state>) => ();
+  spew-labels(object, state);
   let defn = object.ct-function-definition;
   spew-function(object, state,
 		general-entry:
@@ -543,11 +730,13 @@ define method spew-object
 		generic-function-methods:
 		  make(<literal-list>,
 		       contents:
-			 remove(map(ct-value, generic-defn-methods(defn)), #f),
+			 remove(map(ct-value, generic-defn-methods(defn)),
+				#f), 
 		       sharable: #f));
 end;
 
 define method spew-object (object :: <ct-method>, state :: <state>) => ();
+  spew-labels(object, state);
   spew-function(object, state,
 		general-entry:
 		  if (object.ct-method-hidden?)
@@ -566,6 +755,10 @@ define method spew-object (object :: <ct-method>, state :: <state>) => ();
 		  make(<ct-entry-point>, for: object, kind: #"generic"));
 end;
 
+// Spew-function is a slightly lower-level front-end to "spew-instance".  It
+// automatically fills in the various slots which are common to all function
+// objects. 
+//
 define method spew-function
     (func :: <ct-function>, state :: <state>, #rest slots) => ();
   let sig = func.ct-function-signature;
@@ -601,6 +794,14 @@ define method spew-function
 end;
 
 
+
+// Spew-instance is the workhorse function which actually writes out the value
+// for an object.  Given a class and a sequence of slot values, it spews
+// assembly code which creates a new object instance and provides values for
+// each slot.  Slot values may be specified explicitly as a keyword/value in
+// "slots".  Any slot which is not explicitly specified will be filled in with
+// a default value.
+//
 define method spew-instance
     (class :: <cclass>, state :: <state>, #rest slots) => ();
   for (field in get-class-fields(class))
@@ -681,6 +882,11 @@ define method get-class-fields (class :: <cclass>)
   end if;
 end method get-class-fields;
 
+// Returns the value which should be used to initialize the heap for an
+// instance slot.  This value may be specified in the "slots" key/value
+// sequence, or it may be computed based upon the intial-value specification
+// for the slot.
+//
 define method find-init-value
     (class :: <cclass>, slot :: <instance-slot-info>,
      slots :: <simple-object-vector>)
@@ -697,6 +903,8 @@ define method find-init-value
       return(class);
     end if;
 
+    // Check to see whether the caller provided an explict value for this
+    // slot. 
     let getter = slot.slot-getter;
     let slot-name = getter & getter.variable-name;
     if (getter)
@@ -709,6 +917,12 @@ define method find-init-value
 	end;
       end;
     end;
+
+    // Find the default value for this slot in this class.  This involves
+    // searching the list of "overrides" to determine whether any "inherited
+    // slot" specification provided new default values for this slot in this
+    // class.  If not, we use the default value supplied in the initial slot
+    // defintion.
     for (override in slot.slot-overrides)
       let intro = override.override-introduced-by;
       if (intro == object-type | csubtype?(class, intro))
@@ -721,6 +935,7 @@ define method find-init-value
 	return(override.override-init-value);
       end;
     end;
+
     if (slot.slot-init-value == #t | slot.slot-init-function)
       compiler-warning("Init value for %s in %= not set up.",
 		       slot-name, class);
