@@ -17,7 +17,8 @@ define method build-initial-heap (roots :: <vector>, stream :: <stream>)
     let roots :: <simple-object-vector> = unit[1];
     format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
     for (ctv in roots, index from 0)
-      spew-reference(ctv, *general-rep*, format-to-string("roots[%d]", index),
+      spew-reference(ctv, *general-rep*,
+		     stringify(prefix, "_roots[", index, ']'),
 		     state);
     end;
   end;
@@ -115,7 +116,7 @@ define method object-name (object :: <ct-value>, state :: <state>)
     => name :: <string>;
   object.ct-value-heap-label
     | begin
-	let name = format-to-string("L%d", state.next-id);
+	let name = stringify('L', state.next-id);
 	state.next-id := state.next-id + 1;
 	object.ct-value-heap-label := name;
 	push-last(state.object-queue, object);
@@ -603,13 +604,13 @@ define method spew-instance
 	    for (element in init-value,
 		 index from 0)
 	      spew-reference(element, field.slot-representation,
-			     format-to-string("%s[%d]", name, index),
+			     stringify(name, '[', index, ']'),
 			     state);
 	    end;
 	  else
-	    for (i from 0 below len)
+	    for (index from 0 below len)
 	      spew-reference(init-value, field.slot-representation,
-			     format-to-string("%s[%d]", name, i),
+			     stringify(name, '[', index, ']'),
 			     state);
 	    end;
 	  end;

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.19 1995/12/07 17:45:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.20 1995/12/18 04:05:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -128,7 +128,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let nargs = extract-operands(operation, file, *long-rep*);
-     let expr = format-to-string("((void *)(orig_sp - %s))", nargs);
+     let expr = stringify("((void *)(orig_sp - ", nargs, "))");
      deliver-result(results, expr, *ptr-rep*, #f, file);
    end);
 
@@ -140,7 +140,7 @@ define-primitive-emitter
        => ();
      let (args, index) = extract-operands(operation, file,
 					  *ptr-rep*, *long-rep*);
-     let expr = format-to-string("(((descriptor_t *)%s)[%s])", args, index);
+     let expr = stringify("(((descriptor_t *)", args, ")[", index, "])");
      deliver-result(results, expr, *general-rep*, #t, file);
    end);
 
@@ -157,9 +157,9 @@ define-primitive-emitter
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
      let expr
-       = format-to-string("%s(%s, (descriptor_t *)%s + %s, %s - %s)",
-			  main-entry-name(mra-info, file), cur-top,
-			  args, nfixed, nargs, nfixed);
+       = stringify(main-entry-name(mra-info, file), '(', cur-top,
+		   ", (descriptor_t *)", args, " + ", nfixed, ", ",
+		   nargs, " - ", nfixed, ')');
      deliver-result(defines, expr, *heap-rep*, #t, file);
    end);
 
@@ -203,17 +203,15 @@ define-primitive-emitter
 	    top-name, bottom-name, top-name, nfixed);
      let results = make(<vector>, size: nfixed + 1);
      for (index from 0 below nfixed)
-       results[index] := pair(format-to-string("%s[%d]", bottom-name, index),
+       results[index] := pair(stringify(bottom-name, '[', index, ']'),
 			      *general-rep*);
      end;
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
      results[nfixed]
-       := pair(format-to-string("%s(%s, %s + %d, %s - %s - %d)",
-				main-entry-name(mra-info, file),
-				top-name,
-				bottom-name, nfixed,
-				top-name, bottom-name, nfixed),
+       := pair(stringify(main-entry-name(mra-info, file), '(', top-name, ", ",
+			 bottom-name, " + ", nfixed, ", ",
+			 top-name, " - ", bottom-name, " - ", nfixed, ')'),
 	       *heap-rep*);
      deliver-results(defines, results, #t, file);
    end);
@@ -290,7 +288,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let bytes = extract-operands(operation, file, *long-rep*);
-     deliver-result(defines, format-to-string("allocate(%s)", bytes),
+     deliver-result(defines, stringify("allocate(", bytes, ')'),
 		    *heap-rep*, #f, file);
    end);
 
@@ -520,10 +518,9 @@ define-primitive-emitter
      let arg = operation.depends-on.source-exp;
      let expr
        = if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
-	   format-to-string("!%s", ref-leaf(*boolean-rep*, arg, file));
+	   stringify('!', ref-leaf(*boolean-rep*, arg, file));
 	 else
-	   format-to-string("(%s == obj_False)",
-			    ref-leaf(*heap-rep*, arg, file));
+	   stringify('(', ref-leaf(*heap-rep*, arg, file), " == obj_False)");
 	 end;
      deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
@@ -536,7 +533,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *heap-rep*, *heap-rep*);
-     deliver-result(defines, format-to-string("(%s == %s)", x, y),
+     deliver-result(defines, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -546,9 +543,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let expr = format-to-string("(%s != NULL)",
-				 extract-operands(operation, file,
-						  *heap-rep*));
+     let expr = stringify('(', extract-operands(operation, file, *heap-rep*),
+			  " != NULL)");
      deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
 
@@ -614,7 +610,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s == %s)", x, y),
+     deliver-result(defines, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -626,7 +622,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s < %s)", x, y), *boolean-rep*,
+     deliver-result(defines, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -638,7 +634,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s + %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " + ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -650,7 +646,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s * %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " * ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -662,7 +658,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s - %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " - ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -673,7 +669,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(defines, format-to-string("(- %s)", x), *long-rep*,
+     deliver-result(defines, stringify("(- ", x, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -687,9 +683,8 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
-		     vector(pair(format-to-string("(%s / %s)", x, y),
-				 *long-rep*),
-			    pair(format-to-string("(%s %% %s)", x, y),
+		     vector(pair(stringify('(', x, " / ", y, ')'), *long-rep*),
+			    pair(stringify('(', x, " % ", y, ')'),
 				 *long-rep*)),
 		     #f, file);
    end);
@@ -702,7 +697,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s | %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " | ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -714,7 +709,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s ^ %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " ^ ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -726,7 +721,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s & %s)", x, y), *long-rep*,
+     deliver-result(defines, stringify('(', x, " & ", y, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -737,7 +732,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(defines, format-to-string("(~ %s)", x), *long-rep*,
+     deliver-result(defines, stringify("(~ ", x, ')'), *long-rep*,
 		    #f, file);
    end);
 
@@ -749,7 +744,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s << %s)", x, y),
+     deliver-result(defines, stringify('(', x, " << ", y, ')'),
 		    *long-rep*, #f, file);
    end);
 
@@ -761,7 +756,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s >> %s)", x, y),
+     deliver-result(defines, stringify('(', x, " >> ", y, ')'),
 		    *long-rep*, #f, file);
    end);
 
@@ -775,7 +770,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(results, format-to-string("((float)%s)", x),
+     deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
 
@@ -786,7 +781,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("((float)%s)", x),
+     deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
 
@@ -797,7 +792,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("((float)%s)", x),
+     deliver-result(results, stringify("((float)", x, ')'),
 		    *float-rep*, #f, file);
    end);
 
@@ -809,7 +804,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
+     deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -819,10 +814,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
-     deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
+     let (x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     deliver-result(results, stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -832,9 +825,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     let (x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -847,7 +839,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -859,8 +851,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
+     deliver-result(results, stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -872,7 +863,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s + %s)", x, y), *float-rep*,
+     deliver-result(results, stringify('(', x, " + ", y, ')'), *float-rep*,
 		    #f, file);
    end);
 
@@ -884,7 +875,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s * %s)", x, y), *float-rep*,
+     deliver-result(results, stringify('(', x, " * ", y, ')'), *float-rep*,
 		    #f, file);
    end);
 
@@ -896,7 +887,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s - %s)", x, y), *float-rep*,
+     deliver-result(results, stringify('(', x, " - ", y, ')'), *float-rep*,
 		    #f, file);
    end);
 
@@ -908,7 +899,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s / %s)", x, y), *float-rep*,
+     deliver-result(results, stringify('(', x, " / ", y, ')'), *float-rep*,
 		    #f, file);
    end);
 
@@ -919,7 +910,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("fabsf(%s)", x), *float-rep*,
+     deliver-result(results, stringify("fabsf(", x, ')'), *float-rep*,
 		    #f, file);
    end);
 
@@ -930,8 +921,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("(-%s)", x), *float-rep*,
-		    #f, file);
+     deliver-result(results, stringify("(-", x, ')'), *float-rep*, #f, file);
    end);
 
 define-primitive-emitter
@@ -941,7 +931,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("((long)floor(%s))", x),
+     deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -952,7 +942,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("((long)ceil(%s))", x),
+     deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -963,7 +953,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("((long)rint(%s))", x),
+     deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -977,7 +967,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(results, format-to-string("((double)%s)", x),
+     deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
 
@@ -988,7 +978,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("((double)%s)", x),
+     deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
 
@@ -999,7 +989,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("((double)%s)", x),
+     deliver-result(results, stringify("((double)", x, ')'),
 		    *double-rep*, #f, file);
    end);
 
@@ -1011,7 +1001,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
+     deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1024,7 +1014,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
+		    stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1036,7 +1026,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1049,7 +1039,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1062,7 +1052,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
+		    stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1074,7 +1064,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s + %s)", x, y), *double-rep*,
+     deliver-result(results, stringify('(', x, " + ", y, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1086,7 +1076,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s * %s)", x, y), *double-rep*,
+     deliver-result(results, stringify('(', x, " * ", y, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1098,7 +1088,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s - %s)", x, y), *double-rep*,
+     deliver-result(results, stringify('(', x, " - ", y, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1110,7 +1100,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s / %s)", x, y), *double-rep*,
+     deliver-result(results, stringify('(', x, " / ", y, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1121,7 +1111,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("fabsf(%s)", x), *double-rep*,
+     deliver-result(results, stringify("fabsf(", x, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1132,7 +1122,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("(-%s)", x), *double-rep*,
+     deliver-result(results, stringify("(-", x, ')'), *double-rep*,
 		    #f, file);
    end);
 
@@ -1143,7 +1133,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("((long)floor(%s))", x),
+     deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1154,7 +1144,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("((long)ceil(%s))", x),
+     deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1165,7 +1155,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("((long)rint(%s))", x),
+     deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1179,7 +1169,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(results, format-to-string("((long double)%s)", x),
+     deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1190,7 +1180,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *float-rep*);
-     deliver-result(results, format-to-string("((long double)%s)", x),
+     deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1201,7 +1191,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *double-rep*);
-     deliver-result(results, format-to-string("((long double)%s)", x),
+     deliver-result(results, stringify("((long double)", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1213,7 +1203,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
+     deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1226,7 +1216,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
+		    stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1238,7 +1228,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1251,7 +1241,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1264,7 +1254,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
+		    stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
    end);
 
@@ -1276,7 +1266,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s + %s)", x, y),
+     deliver-result(results, stringify('(', x, " + ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1288,7 +1278,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s * %s)", x, y),
+     deliver-result(results, stringify('(', x, " * ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1300,7 +1290,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s - %s)", x, y),
+     deliver-result(results, stringify('(', x, " - ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1312,7 +1302,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s / %s)", x, y),
+     deliver-result(results, stringify('(', x, " / ", y, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1323,7 +1313,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("fabsf(%s)", x),
+     deliver-result(results, stringify("fabsf(", x, ')'),
 		    *long-double-rep*, #f, file);
    end);
 
@@ -1334,7 +1324,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("(-%s)", x), *long-double-rep*,
+     deliver-result(results, stringify("(-", x, ')'), *long-double-rep*,
 		    #f, file);
    end);
 
@@ -1345,7 +1335,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("((long)floor(%s))", x),
+     deliver-result(results, stringify("((long)floor(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1356,7 +1346,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("((long)ceil(%s))", x),
+     deliver-result(results, stringify("((long)ceil(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1367,7 +1357,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-double-rep*);
-     deliver-result(results, format-to-string("((long)rint(%s))", x),
+     deliver-result(results, stringify("((long)rint(", x, "))"),
 		    *long-rep*, #f, file);
    end);
 
@@ -1381,7 +1371,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *long-rep*);
-     deliver-result(results, format-to-string("((void *)%s)", x),
+     deliver-result(results, stringify("((void *)", x, ')'),
 		    *ptr-rep*, #f, file);
    end);
 
@@ -1392,7 +1382,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let x = extract-operands(operation, file, *ptr-rep*);
-     deliver-result(results, format-to-string("((long)%s)", x),
+     deliver-result(results, stringify("((long)", x, ')'),
 		    *long-rep*, #f, file);
    end);
 
@@ -1404,7 +1394,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file, *ptr-rep*, *long-rep*);
      deliver-result(results,
-		    format-to-string("((void *)((char *)%s + %s))", x, y),
+		    stringify("((void *)((char *)", x, " + ", y, "))"),
 		    *ptr-rep*, #f, file);
    end);
 
@@ -1416,7 +1406,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
      deliver-result(results,
-		    format-to-string("((char *)%s - (char *)%s)", x, y),
+		    stringify("((char *)", x, " - (char *)", y, ')'),
 		    *long-rep*, #f, file);
    end);
 
@@ -1428,7 +1418,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
      deliver-result(results,
-		    format-to-string("((char *)%s < (char *)%s)", x, y),
+		    stringify("((char *)", x, " < (char *)", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1439,7 +1429,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
-     deliver-result(results, format-to-string("(%s == %s)", x, y),
+     deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
    end);
 
@@ -1459,9 +1449,8 @@ define-primitive-emitter
      spew-pending-defines(file);
      
      deliver-result(results,
-		    format-to-string("(*(%s *)((char *)%s + %s))",
-				     rep.representation-c-type,
-				     ptr, offset),
+		    stringify("(*(", rep.representation-c-type, " *)((char *)",
+			      ptr, " + ", offset, " ))"),
 		    rep, #f, file);
    end);
 
@@ -1496,10 +1485,9 @@ define-primitive-emitter
      let vec = operation.depends-on.source-exp;
      let vec-expr = extract-operands(operation, file, *heap-rep*);
      deliver-result(results,
-		    format-to-string("((void *)((char *)%s + %d))",
-				     vec-expr,
-				     dylan-slot-offset(vec.derived-type,
-						       #"%element")),
+		    stringify("((void *)((char *)", vec-expr, " + ",
+			      dylan-slot-offset(vec.derived-type, #"%element"),
+			      "))"),
 		    *ptr-rep*, #f, file);
    end);
 
@@ -1511,6 +1499,6 @@ define-primitive-emitter
        => ();
      let object = extract-operands(operation, file, *heap-rep*);
      deliver-result(results,
-		    format-to-string("((void *)%s)", object),
+		    stringify("((void *)", object, ')'),
 		    *ptr-rep*, #f, file);
    end);

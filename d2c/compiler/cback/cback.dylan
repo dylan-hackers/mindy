@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.86 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.87 1995/12/18 04:05:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -151,10 +151,10 @@ define class <unit-state> (<object>)
   // id number for the next global.
   slot unit-next-global :: <fixed-integer>, init-value: 0;
   //
-  //
   // keeps track of names used already.
   slot unit-global-table :: <dictionary>,
     init-function: method () make(<string-table>) end method;
+  //
   // Vector of the initial values for the roots vector.
   slot unit-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
@@ -310,12 +310,12 @@ define method new-local
     (file :: <file-state>,
      #key prefix :: <string> = "L_", modifier :: <string> = "anon")
  => res :: <string>;
-  let result = format-to-string("%s%s", prefix, modifier);
+  let result = stringify(prefix, modifier);
   if (key-exists?(file.file-local-table, result))
     let num = file.file-next-local;
     file.file-next-local := num + 1;
     new-local(file, prefix: prefix,
-	      modifier: format-to-string("%s_%d", modifier, num));
+	      modifier: stringify(modifier, '_', num));
   else
     file.file-local-table[result] := result;
   end if;
@@ -327,13 +327,12 @@ define method new-global
  => res :: <string>;
   let unit = file.file-unit;
 
-  let result = format-to-string("%s_%s%s", unit.unit-prefix,
-				prefix, modifier);
+  let result = stringify(unit.unit-prefix, '_', prefix, modifier);
   if (key-exists?(unit.unit-global-table, result))
     let num = unit.unit-next-global;
     unit.unit-next-global := num + 1;
     new-global(file, prefix: prefix,
-	       modifier: format-to-string("%s_%d", modifier, num));
+	       modifier: stringify(modifier, '_', num));
   else
     unit.unit-global-table[result] := result;
   end if;
@@ -347,7 +346,7 @@ define method new-root (init-value :: false-or(<ct-value>),
   let index = roots.size;
   add!(roots, init-value);
 
-  format-to-string("%s_roots[%d]", unit.unit-prefix, index);
+  stringify(unit.unit-prefix, "_roots[", index, ']');
 end;
 
 define method cluster-names (depth :: <fixed-integer>)
@@ -355,8 +354,8 @@ define method cluster-names (depth :: <fixed-integer>)
   if (zero?(depth))
     values("orig_sp", "cluster_0_top");
   else
-    values(format-to-string("cluster_%d_top", depth - 1),
-	   format-to-string("cluster_%d_top", depth));
+    values(stringify("cluster_", depth - 1, "_top"),
+	   stringify("cluster_", depth, "_top"));
   end;
 end;
 
@@ -1052,7 +1051,7 @@ define method pick-result-structure
   else
     let id = file.file-next-mv-result-struct;
     file.file-next-mv-result-struct := id + 1;
-    let name = format-to-string("mv_result_%d", id);
+    let name = stringify("mv_result_", id);
     let stream = file.file-body-stream;
     format(stream, "struct %s {\n", name);
     for (type in types, index from 0)
@@ -1428,12 +1427,13 @@ define method xep-expr-and-name
     (func :: <leaf>, generic-entry? :: <boolean>, file :: <file-state>)
     => (expr :: <string>, name :: false-or(<string>));
   spew-pending-defines(file);
-  values(format-to-string(if (generic-entry?)
-			    "GENERIC_ENTRY(%s)";
-			  else
-			    "GENERAL_ENTRY(%s)";
-			  end,
-			  ref-leaf(*heap-rep*, func, file)),
+  values(stringify(if (generic-entry?)
+		     "GENERIC_ENTRY(";
+		   else
+		     "GENERAL_ENTRY(";
+		   end,
+		   ref-leaf(*heap-rep*, func, file),
+		   ')'),
 	 #f);
 end;
 
@@ -1587,7 +1587,7 @@ define method emit-assignment
     for (rep in result-rep,
 	 index from 0)
       result-exprs[index]
-	:= pair(format-to-string("%s.R%d", temp, index), rep);
+	:= pair(stringify(temp, ".R", index), rep);
     end;
     deliver-results(results, result-exprs, #f, file);
   else
@@ -1720,8 +1720,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
   let function-info = get-info-for(expr.function, file);
   deliver-results(defines,
 		  map(method (rep, index)
-			pair(format-to-string("A%d", index),
-			     rep);
+			pair(stringify('A', index), rep);
 		      end,
 		      function-info.function-info-argument-representations,
 		      make(<range>, from: 0)),
@@ -1828,16 +1827,15 @@ define method emit-assignment
 	      let index = ref-leaf(*long-rep*,
 				   op.depends-on.dependent-next.source-exp,
 				   file);
-	      format-to-string("%d + %s * sizeof(%s)",
-			       offset, index, slot-rep.representation-c-type);
+	      stringify(offset, " + ", index,
+			" * sizeof(", slot-rep.representation-c-type, ')');
 	    else
-	      format-to-string("%d", offset);
+	      stringify(offset);
 	    end;
 	spew-pending-defines(file);
-	values(format-to-string("SLOT(%s, %s, %s)",
-				instance-expr,
-				slot-rep.representation-c-type,
-				offset-expr),
+	values(stringify("SLOT(", instance-expr, ", ",
+			 slot-rep.representation-c-type, ", ",
+			 offset-expr, ')'),
 	       ~slot.slot-read-only?);
       end;
   deliver-result(results, expr, slot-rep, now-dammit?, file);
@@ -1911,7 +1909,7 @@ define method deliver-cluster
       for (var = defines then var.definer-next,
 	   index from 0,
 	   while: var)
-	let source = format-to-string("%s[%d]", src-start, index);
+	let source = stringify(src-start, '[', index, ']');
 	deliver-single-result(var, source, *general-rep*, #t, file);
       end;
     end;
@@ -1927,7 +1925,7 @@ define method deliver-results
     let (bottom-name, top-name) = produce-cluster(defines, file);
     format(stream, "%s = %s + %d;\n", top-name, bottom-name, values.size);
     for (val in values, index from 0)
-      emit-copy(format-to-string("%s[%d]", bottom-name, index), *general-rep*,
+      emit-copy(stringify(bottom-name, '[', index, ']'), *general-rep*,
 		val.head, val.tail, file);
     end;
   else
@@ -1960,7 +1958,7 @@ define method deliver-result
       let stream = file.file-guts-stream;
       let (bottom-name, top-name) = produce-cluster(defines, file);
       format(stream, "%s = %s + 1;\n", top-name, bottom-name);
-      emit-copy(format-to-string("%s[0]", bottom-name), *general-rep*,
+      emit-copy(stringify(bottom-name, "[0]"), *general-rep*,
 		value, rep, file);
     else
       deliver-single-result(defines, value, rep, now-dammit?, file);
@@ -2122,6 +2120,7 @@ define method c-expr-and-rep (lit :: <literal-fixed-integer>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   let val = lit.literal-value;
+  // Can't use stringify, because val is an extended integer.
   values(if (val == runtime-$minimum-fixed-integer)
 	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
 	   // print it in hex (assuming 2's compliment).
@@ -2224,13 +2223,14 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 elseif (char == '\r')
 	   "'\\r'";
 	 elseif (char < ' ')
+	   // Can't use stringify, because it insists on decimal.
 	   format-to-string("'\\%o'", as(<integer>, char));
 	 elseif (char == '\'' | char == '\\')
-	   format-to-string("'\\%c'", char);
+	   stringify("'\\", char, '\'');
 	 elseif (char <= '~')
-	   format-to-string("'%c'", char);
+	   stringify('\'', char, '\'');
 	 else
-	   format-to-string("%d", as(<integer>, char));
+	   stringify(as(<integer>, char));
 	 end,
 	 pick-representation(dylan-value(#"<character>"), #"speed"));
 end;
@@ -2239,8 +2239,7 @@ define method c-expr-and-rep (ep :: <ct-entry-point>,
 			      rep-hint :: <representation>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  values(format-to-string("((void *)%s)",
-			  entry-point-c-name(ep, file)),
+  values(stringify("((void *)", entry-point-c-name(ep, file), ')'),
 	 *ptr-rep*);
 end;
 
