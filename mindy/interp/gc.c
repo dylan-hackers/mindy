@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.2 1998/12/17 08:56:06 igor Exp $
 *
 * This file is the garbage collector.
 *
@@ -171,10 +171,12 @@ void add_variable_root(obj_t *ref)
 
 /* Allocation stuff. */
 
+#if PURIFY
 static struct block *object_block(obj_t obj)
 {
     return (struct block *)((unsigned long)obj & ~(BLOCK_SIZE - 1));
 }
+#endif
 
 static int bytes_in_use(struct space *space)
 {
