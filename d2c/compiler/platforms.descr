@@ -53,6 +53,9 @@
 // align-directive: Assembler directive that tells it to align the
 // next structure on an N byte boundary
 //
+// align-arg-is-power-of-two?: True if the argument to the align-directive
+// is a power-of-two rather than a byte count.  The default is #f.
+//
 // word-directive: Assembler directive for outputting a 32-bit word.
 //
 // half-word-directive: Assembler directive for outputting a 16-bit integer.
@@ -112,6 +115,11 @@
 // link-shared-library-command: The same as link-library-command, but
 // for linking shared libraries. d2c won't try to generate a shared
 // library unless this is set.
+//
+// randomize-library-command: A format string that describes how to
+// invoke a command used for making a library linkable.  Arg1 is the
+// name of the library, with the appropriate extension already added.
+// There is no default randomize-library-command.
 //
 // link-executable-command: A format string that gives the beginning
 // of the command for linking an executable file.  Arg1 is the name of
@@ -385,6 +393,25 @@ default-features:		compiled-for-unix compiled-for-x86
 word-directive:			.long
 half-word-directive:		.hword
 make-command:			make
+supports-debugging?:		#t
+big-endian?:			#f
+descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
+descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+
+// FreeBSD on Intel 80386 or higher
+//
+platform-name:			x86-freebsd
+inherit-from:			generic-unix
+default-features:		compiled-for-unix compiled-for-x86
+				compiled-for-FreeBSD C-compiler-is-GCC
+default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
+mangled-name-prefix:            _
+word-directive:			.long
+half-word-directive:		.hword
+align-arg-is-power-of-two?:	#t
+make-command:			gmake
+link-executable-command:        gcc -g -o %s %s %s
+randomize-library-command:	ranlib %s
 supports-debugging?:		#t
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
