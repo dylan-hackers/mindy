@@ -6,11 +6,17 @@
 //
 // (*) with GCC and MSVC extensions.
 
+#if !defined SPECIFIC_TESTS
+
 #define TEST_BASIC_TYPES
 #define TEST_DECLARATORS
 #define TEST_TYPEDEFS
 #define TEST_ARRAYS
 #define TEST_FUNCTIONS
+#define TEST_ENUMS
+#define TEST_STRUCTS
+
+#endif // !defined SPECIFIC_TESTS
 
 
 //=========================================================================
@@ -135,12 +141,98 @@ int *(*function_return_6())(int, int);
 
 // Varargs torture test
 // We exercise all grammar rules creating varargs.
-int function_varargs_torture_1(int (...));     // abstract-declarator2 (#1)
-int function_varargs_torture_2(int (*)(...));  // abstract-declarator2 (#2)
-int function_varargs_torture_3(int a(...));    // declarator2
-int function_varargs_torture_4(int a(int b, ...)); // parameter-type-list 
+int function_varargs_torture_1(int (...));      // abstract-declarator2 (#1)
+int function_varargs_torture_2(int (*)(...));   // abstract-declarator2 (#2)
+int function_varargs_torture_3(int (*a)(...));  // declarator2
+int function_varargs_torture_4(int (*a)(int b, ...)); // parameter-type-list 
 
 // This works, but may not be ANSI C.
 //int function_varargs_torture_5(a, b, c);       // parameter-identifier-list
 
 #endif // TEST_FUNCTIONS
+
+
+//=========================================================================
+//  Enums
+//=========================================================================
+
+#if defined TEST_ENUMS
+
+// A simple, anonymous enumeration.
+enum {
+    enum_anonymous_0,
+    enum_anonymous_1
+};
+
+// A simple, named enumeration.
+enum enum_named {
+    enum_named_0,
+    enum_named_1,
+};
+
+// An enumeration with simple assignments
+enum enum_assignments {
+    enum_assignments_0,
+    enum_assignments_1,
+    enum_assignments_10 = 10,
+    enum_assignments_11
+};
+
+// An enumeration with expressions
+enum enum_math {
+    enum_math_6 = 1 + 5,
+    enum_math_7
+};
+
+// A comma-terminated enum
+enum enum_extra_comma {
+    enum_extra_comma_value_0,
+};
+
+#endif // TEST_ENUMS
+
+
+//=========================================================================
+//  Structs
+//=========================================================================
+
+#if defined TEST_STRUCTS
+
+struct struct_simple {
+    int a;
+    int b, *c;
+};
+
+struct struct_self_referential {
+    struct struct_self_referential *next;
+};
+
+typedef int struct_bitfields_int;
+struct struct_bitfields {
+    int a : 1;
+    signed int b : 1;
+    unsigned int c : 1;
+    int : 1;
+    struct_bitfields_int : 1;
+};
+
+struct struct_mixed {
+    int a, *b, c : 1, :1;
+    struct struct_mixed *next;
+};
+
+struct /* An anonymous struct */ {
+    int a;
+};
+
+struct struct_incomplete;
+
+struct struct_circular_1 {
+    struct struct_circular_2* next;
+};
+
+struct struct_circular_2 {
+    struct struct_circular_1* next;
+};
+
+#endif // TEST_STRUCTS
