@@ -2,6 +2,12 @@ GNUmakefile
 tableext-init.c
 library.c
 table-ext.c
-tableext-heap.s
+tableext-heap.c
 cc-tableext-files.mak
 .cvsignore
+.libs
+library.lo
+table-ext.lo
+tableext-init.lo
+tableext-heap.lo
+libtableext.la

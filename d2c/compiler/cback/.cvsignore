@@ -6,6 +6,7 @@ primemit.c
 heap.c
 stackanal.c
 cback-init.c
-cback-heap.s
+cback-heap.c
 .cvsignore
 cc-cback-files.mak
+.libs

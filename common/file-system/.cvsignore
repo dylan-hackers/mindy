@@ -3,5 +3,13 @@ file-system-exports.c
 posix-fs.c
 file-system.c
 fileSystem-init.c
-fileSystem-heap.s
+fileSystem-heap.c
 cc-fileSystem-files.mak
+.libs
+posix-io.lo
+file-system-exports.lo
+posix-fs.lo
+file-system.lo
+fileSystem-init.lo
+fileSystem-heap.lo
+libfileSystem.la

@@ -1,1 +1,13 @@
 *.c *.s *.mak GNUmakefile
+.libs
+common-extensions-exports.lo
+c-support.lo
+extensions.lo
+collections.lo
+commonext-init.lo
+commonext-heap.lo
+libcommonext.la
+common-dylan-exports.lo
+commondyl-init.lo
+commondyl-heap.lo
+libcommondyl.la

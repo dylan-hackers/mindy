@@ -13,6 +13,7 @@ cse.c
 constraint.c
 typeinf.c
 optimize-init.c
-optimize-heap.s
+optimize-heap.c
 cc-optimize-files.mak
 .cvsignore
+.libs

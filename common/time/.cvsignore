@@ -5,6 +5,15 @@ time-intr.c
 time.c
 time-io.c
 time-init.c
-time-heap.s
+time-heap.c
 cc-time-files.mak
 .cvsignore
+.libs
+library.lo
+time.lo
+time-intr.lo
+time-io.lo
+parse-time.lo
+time-init.lo
+time-heap.lo
+libtime.la

@@ -3,5 +3,11 @@ melange-init.c
 exports.c
 cc-melange-files.mak
 melange.c
-melange-heap.s
+melange-heap.c
 .cvsignore
+.libs
+exports.lo
+melange.lo
+melange-init.lo
+melange-heap.lo
+libmelange.la

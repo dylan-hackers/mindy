@@ -12,5 +12,6 @@ fer-builder.c
 fer-dump.c
 fer-od.c
 front-init.c
-front-heap.s
+front-heap.c
 .cvsignore
+.libs

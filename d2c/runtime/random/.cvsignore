@@ -2,6 +2,12 @@ GNUmakefile
 random-init.c
 exports.c
 random.c
-random-heap.s
+random-heap.c
 cc-random-files.mak
 .cvsignore
+.libs
+exports.lo
+random.lo
+random-init.lo
+random-heap.lo
+librandom.la

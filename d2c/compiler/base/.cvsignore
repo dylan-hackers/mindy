@@ -25,6 +25,7 @@ control-flow.c
 signature.c
 platform.c
 base-init.c
-base-heap.s
+base-heap.c
 cc-base-files.mak
 .cvsignore
+.libs

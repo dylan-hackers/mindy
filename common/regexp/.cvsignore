@@ -5,5 +5,13 @@ match.c
 parse.c
 interface.c
 cc-regexp-files.mak
-regexp-heap.s
+regexp-heap.c
 .cvsignore
+.libs
+library.lo
+match.lo
+parse.lo
+interface.lo
+regexp-init.lo
+regexp-heap.lo
+libregexp.la

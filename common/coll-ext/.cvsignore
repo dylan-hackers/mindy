@@ -8,5 +8,15 @@ cc-collext-files.mak
 sequence-diff.c
 sequence-utils.c
 collext-init.c
-collext-heap.s
-.cvsignore
+collext-heap.c
+.libs
+library.lo
+solist.lo
+subseq.lo
+vecsearch.lo
+sde-vector.lo
+sequence-diff.lo
+sequence-utils.lo
+collext-init.lo
+collext-heap.lo
+libcollext.la
