@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.24 1995/11/06 16:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.25 1995/11/08 19:52:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -387,3 +387,17 @@ define method convert-top-level-form
     fer-convert-defn-set(builder, lexenv.lexenv-policy, source, defn, leaf);
   end;
 end;
+
+
+// Dump/load stuff.
+
+define method dump-od (tlf :: <define-bindings-tlf>, state :: <dump-state>)
+    => ();
+  for (defn in tlf.tlf-required-defns)
+    dump-simple-object(#"define-binding-tlf", state, defn);
+  end;
+  if (tlf.tlf-rest-defn)
+    dump-simple-object(#"define-binding-tlf", state, tlf.tlf-rest-defn);
+  end;
+end;
+
