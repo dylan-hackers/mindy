@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/input.c,v 1.3 2000/01/24 04:58:18 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/input.c,v 1.4 2000/12/19 03:12:45 andreas Exp $
 *
 * This file implements getc.
 *
@@ -47,6 +47,15 @@
 
 #ifdef MACOS
 #	include<console.h>
+#endif
+
+#ifdef HAVE_READLINE_H
+#include <readline.h>
+#include <history.h>
+#endif
+#ifdef HAVE_READLINE_READLINE_H
+#include <readline/readline.h>
+#include <readline/history.h>
 #endif
 
 static int mindy_getchar ()

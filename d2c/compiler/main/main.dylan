@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.41 2000/12/11 19:52:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.42 2000/12/19 03:12:45 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1414,7 +1414,7 @@ define method show-help(stream :: <stream>) => ()
 "       -p, --platforms:   File containing platform descriptions.\n"
 "       --no-binaries:     Do not compile generated C files.\n"
 "       -g, --debug:       Generate debugging code.\n"
-"            --profile:    Generate profiling code.\n"
+"       --profile:         Generate profiling code.\n"
 "       -s, --static:      Force static linking.\n"
 "       -d, --break:       Debug d2c by breaking on errors.\n"
 "       --dump-transforms: Display detailed optimizer information.\n"

@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.14 2000/11/03 04:25:11 dauclair Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.15 2000/12/19 03:12:45 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -499,6 +499,14 @@ sub maybe_emit_d2c_defines {
 	if ($CC) {
 	    print("CC=$CC\n");
 	}
+	if($enable_debug) {
+	    $CFLAGS = $target_platform{'default_c_compiler_debug_flags'};
+	} elsif ($enable_profiling) {
+	    $CFLAGS = $target_platform{'default_c_compiler_profile_flags'};
+	} else {
+	    $CFLAGS = $target_platform{'default_c_compiler_flags'};
+	}
+	$CFLAGS =~ s/-I%s//;
 	print <<EOF;
 D2C = $D2C $compiler_debug_flags
 D2CFLAGS = $D2CFLAGS

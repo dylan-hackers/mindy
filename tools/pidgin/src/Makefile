@@ -27,6 +27,8 @@ ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan \
 ansi-c.lib.du: ansi-c.lid parser-utilities.lib.du
 	d2c $<
 
+c-ffi-output.lib.du: c-ffi-output.lid
+	d2c $<
 
 # c-parser library
 
@@ -46,7 +48,7 @@ c-parser.lib.du: c-parser.lid c-parser-exports.dylan \
 ansi-c-test.lid: ansi-c-test-exports.dylan ansi-c-test.dylan
 	touch $@
 
-ansi-c-test: ansi-c-test.lid ansi-c.lib.du c-parser.lib.du
+ansi-c-test: ansi-c-test.lid ansi-c.lib.du c-parser.lib.du c-ffi-output.lib.du
 	d2c $<
 
 # ansi-c-test application
