@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.66 1995/04/08 19:22:59 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.67 1995/04/20 12:54:58 nkramer Exp $
 
 //======================================================================
 //
@@ -98,10 +98,10 @@ define module Builtin-Stuff
     fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
     SEEK_SET, SEEK_CUR, SEEK_END, O_RDONLY,
-    O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, O_TRUNC, O_NONBLOCK,
+    O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, O_TRUNC, 
     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
-    EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
-    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EPIPE, EFBIG, // EWOULDBLOCK, 
+    EINVAL, ENFILE, EMFILE, ENOSPC, EROFS,
+    ENAMETOOLONG, EBADF, EINTR, EPIPE, EFBIG,
     <foreign-file>, <c-function>, <statically-typed-pointer>, signed-byte-at,
     signed-short-at, signed-long-at, unsigned-byte-at, unsigned-short-at,
     unsigned-long-at, signed-byte-at-setter, signed-short-at-setter,
@@ -258,7 +258,7 @@ define module File-Descriptors
 
 	     // Flags also for fcntl call.
 	     //
-	     O_APPEND, O_NONBLOCK,
+	     O_APPEND,
 
 	     // Open only modes.
 	     //
@@ -267,13 +267,13 @@ define module File-Descriptors
 	     // Open call.
 	     //
 	     O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, 
-	     O_TRUNC, O_NONBLOCK, 
+	     O_TRUNC,
 
 	     // Open errors.
 	     //
 	     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
-	     EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
-	     ENAMETOOLONG, EDQUOT,
+	     EINVAL, ENFILE, EMFILE, ENOSPC, EROFS,
+	     ENAMETOOLONG,
 
 	     // Close errors.
 	     //
@@ -282,7 +282,6 @@ define module File-Descriptors
 	     // Read errors (that are also not Open or Close errors).
 	     //
 	     EINTR,
-	     // EWOULDBLOCK,
 
 	     // Write errors (that are not also open, close, or read errors).
 	     //
