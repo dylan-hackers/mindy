@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.81 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.82 1996/02/14 00:25:16 nkramer Exp $
 
 //======================================================================
 //
@@ -63,6 +63,7 @@ define module Builtin-Stuff
     <vector>,
     <weak-pointer>,
     $permanent-hash-state, *print-GC-messages*,
+    abstract?,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
     binary-logand, binary-logior, binary-logxor, broadcast-event,
@@ -325,6 +326,7 @@ define module Introspection
   use Builtin-Stuff,
     import: {<defined-class>, <slot-descriptor>,
 	     class-name, function-name,
+	     abstract?,
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
 	     slot-type, slot-value, slot-value-setter,
