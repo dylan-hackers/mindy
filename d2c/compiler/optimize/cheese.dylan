@@ -379,6 +379,7 @@ define method optimize-unknown-call
 	dep.dependent := pitcher;
       end;
       call-dependency.source-exp := pitcher;
+      queue-dependent(component, assign);
       queue-dependent(component, pitcher);
       let exit = make(<exit>, block: block-region, next: block-region.exits);
       block-region.exits := exit;
