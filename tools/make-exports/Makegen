@@ -1,13 +1,4 @@
+
 $CPPFLAGS = '-I$(SRCDIR)';
-
-if ($win32) {
-    $binary_name = 'make-exports.exe';
-} else {
-    $binary_name = 'make-exports';
-} 
-   
-push(@compile_dependencies, $binary_name);
-push(@files_to_clean, $binary_name);
-
-do emit_library_rule('Make-exports', '$(BUILDROOT)/force.timestamp', '');
-do install ('bin', $binary_name);
+do emit_library_rule('Make-exports', '$(BUILDROOT)/force.timestamp', '', 
+		     'compile', 'install');
