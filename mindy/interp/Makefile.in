@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.13 2000/01/24 04:58:06 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.14 2000/10/31 14:26:43 dauclair Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -38,6 +38,7 @@ SHELL	=	/bin/sh
 
 prefix	=		@prefix@
 exec_prefix	=	@exec_prefix@
+exe_ext = @exe_ext@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
@@ -85,9 +86,9 @@ SRCS = parser-tab.c lexer.c \
 
 EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIME_INC}
 
-mindy: ${OBJS} ../compat/libcompat.a
-	${CC} ${OBJS} ${LIBS} -o ,mindy
-	mv -f ,mindy mindy
+mindy$(exe_ext): ${OBJS} ../compat/libcompat.a
+	${CC} ${OBJS} ${LIBS} -o ,$@
+	mv -f ,$@ $@
 
 ${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	${YACC} -d ${SRCDIR}/parser.y
@@ -96,19 +97,19 @@ ${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 
 ${SRCDIR}/parser-tab.h: ${SRCDIR}/parser-tab.c
 
-${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: $(EXTERN-INCLUDES) make-init.pl
+extern1.def extern2.def: $(EXTERN-INCLUDES) make-init.pl
 	$(PERL) make-init.pl $(EXTERN-INCLUDES)
-	mv ,extern1.def ${SRCDIR}/extern1.def
-	mv ,extern2.def ${SRCDIR}/extern2.def
+	mv ,extern1.def extern1.def
+	mv ,extern2.def extern2.def
 
 clean:
-	rm -f ${OBJS} mindy *~ \#* core
+	rm -f ${OBJS} mindy$(exe_ext) *~ \#* core
 
 realclean:
-	rm -f ${OBJS} mindy parser-tab.c parser-tab.h lexer-tab.c Makefile *~ \#* core extern[12].def
+	rm -f ${OBJS} mindy$(exe_ext) parser-tab.c parser-tab.h lexer-tab.c Makefile *~ \#* core extern[12].def
 
-install: mindy
-	${INSTALL_PROGRAM} mindy ${DESTDIR}${BINDIR}/mindy
+install: mindy$(exe_ext)
+	${INSTALL_PROGRAM} mindy$(exe_ext) ${DESTDIR}${BINDIR}/mindy$(exe_ext)
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
@@ -186,7 +187,7 @@ error.o:  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 
 ext-init.o:  ${SRCDIR}/ext-init.c ${SRCDIR}/mindy.h ${SRCDIR}/gc.h \
                ${SRCDIR}/bool.h ${SRCDIR}/extern.h ${SRCDIR}/error.h \
-               ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def
+               extern1.def extern2.def
 	${CC} -c ${CFLAGS} -fno-builtin ${SRCDIR}/ext-init.c
 
 extern.o:  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
