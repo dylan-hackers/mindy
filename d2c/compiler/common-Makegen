@@ -24,8 +24,8 @@ EOF
     return @makefile_targets;
 }
 
-$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
-    . '-L../../runtime/dylan -L../../../common/streams '
+$D2CFLAGS = $d2c_runtime
+    . '-L../../../common/streams '
     . '-L../../../common/standard-io -L../../../common/stream-ext '
     . '-L../../../common/print -L../../../common/format '
     . '-L../../runtime/random -L../../../common/coll-ext '

@@ -1,5 +1,5 @@
 
-$D2CFLAGS = '-L../dylan';
+$D2CFLAGS = $d2c_runtime;;
 
 do emit_library_rule(
     'Random', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
