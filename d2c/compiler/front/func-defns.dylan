@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.4 2000/10/17 08:45:03 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.5 2001/06/19 21:16:11 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -207,6 +207,7 @@ define method add-seal
      sloc :: false-or(<source-location-mixin>))
     => ();
   block (return)
+    let sloc = sloc | make(<unknown-source-location>);
     let specs = defn.function-defn-signature.specializers;
     if (specs.size ~== types.size)
       compiler-warning-location
@@ -225,8 +226,9 @@ define method add-seal
       unless (instance?(spec, <unknown-ctype>)
 		| csubtype?(type, spec))
 	compiler-warning-location
-	  (sloc, "bad type in seal: %s is not a subtype of gf type %s",
-	   type, spec);
+	  (sloc, "bad type in seal %s arg %d: "
+             "%s is not a subtype of gf type %s",
+           defn.defn-name, index, type, spec);
 	bogus? := #t;
       end;
     end;
