@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.1 1994/12/12 13:01:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.2 1994/12/16 11:50:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,14 +12,16 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // is a compile-time constant.  Otherwise, return #f.  We only use lexenv
 // to tell when a constant module variable has been locally shadowed.
 //
-define generic ct-eval (expr :: <expression>, lexenv :: <lexenv>)
+define generic ct-eval (expr :: <expression>,
+			lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
 
 // ct-mv-eval -- exported.
 //
 // Like ct-eval, but return all the values.
 // 
-define generic ct-mv-eval (expr :: <expression>, lexenv :: <lexenv>);
+define generic ct-mv-eval (expr :: <expression>,
+			   lexenv :: union(<false>, <lexenv>));
 
 
 // ct-eval(<expression>,...) -- exported method.
@@ -28,7 +30,8 @@ define generic ct-mv-eval (expr :: <expression>, lexenv :: <lexenv>);
 // Otherwise return the compile-time literal for #f, because the expression
 // constantly returns no values.
 // 
-define method ct-eval (expr :: <expression>, lexenv :: <lexenv>)
+define method ct-eval (expr :: <expression>,
+		       lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
   let (#rest results) = ct-mv-eval(expr, lexenv);
   if (empty?(results))
@@ -44,8 +47,9 @@ end;
 // The default method just retries with the expansion if there is one, and
 // bails if not.
 // 
-define method ct-mv-eval (expr :: <expression>, lexenv :: <lexenv>)
-  let (expansion) = expand(expr);
+define method ct-mv-eval (expr :: <expression>,
+			  lexenv :: union(<false>, <lexenv>))
+  let (expansion) = expand(expr, lexenv);
   if (expansion)
     ct-mv-eval-body(expansion, lexenv);
   else
@@ -57,7 +61,8 @@ end;
 //
 // Just return a compile-time literal.
 //
-define method ct-mv-eval (expr :: <literal>, lexenv :: <lexenv>)
+define method ct-mv-eval (expr :: <literal>,
+			  lexenv :: union(<false>, <lexenv>))
     => res :: <ct-value>;
   make(<ct-literal>, value: expr.lit-value);
 end;
@@ -67,10 +72,11 @@ end;
 // As long as the variable isn't bound in the lexenv, call ct-value on the
 // definition (assuming there is one).
 //
-define method ct-mv-eval (expr :: <varref>, lexenv :: <lexenv>)
+define method ct-mv-eval (expr :: <varref>,
+			  lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
   let name = expr.varref-name;
-  unless (find-binding(lexenv, name))
+  unless (lexenv & find-binding(lexenv, name))
     let var = find-variable(name.token-module, name.token-symbol);
     var & var.variable-definition & ct-value(var.variable-definition);
   end;
@@ -81,8 +87,9 @@ end;
 // If there is an expansion, eval it.  Otherwise, check it see if it is one
 // of the functions we know something about.
 // 
-define method ct-mv-eval (expr :: <funcall>, lexenv :: <lexenv>)
-  let (expansion) = expand(expr);
+define method ct-mv-eval (expr :: <funcall>,
+			  lexenv :: union(<false>, <lexenv>))
+  let (expansion) = expand(expr, lexenv);
   if (expansion)
     ct-mv-eval-body(expansion, lexenv);
   else
@@ -95,8 +102,9 @@ end;
 // If there is an expansion, eval it.  Otherwise, check it see if it is one
 // of the functions we know something about.
 // 
-define method ct-mv-eval (expr :: <dot>, lexenv :: <lexenv>)
-  let (expansion) = expand(expr);
+define method ct-mv-eval (expr :: <dot>,
+			  lexenv :: union(<false>, <lexenv>))
+  let (expansion) = expand(expr, lexenv);
   if (expansion)
     ct-mv-eval-body(expansion, lexenv);
   else
@@ -108,7 +116,8 @@ end;
 //
 // Just eval the body.
 //
-define method ct-mv-eval (expr :: <begin>, lexenv :: <lexenv>)
+define method ct-mv-eval (expr :: <begin>,
+			  lexenv :: union(<false>, <lexenv>))
   ct-mv-eval-body(expr.begin-body, lexenv);
 end;
 
@@ -120,7 +129,7 @@ end;
 // that is the best guess we can make about them not having side effects.
 //
 define method ct-mv-eval-body (body :: <simple-object-vector>,
-			       lexenv :: <lexenv>)
+			       lexenv :: union(<false>, <lexenv>))
   if (empty?(body))
     make(<ct-literal>, value: #f);
   else
@@ -144,7 +153,7 @@ end;
 define generic ct-mv-eval-funcall
     (function :: union(<expression>, <identifier-token>),
      args :: <simple-object-vector>,
-     lexenv :: <lexenv>);
+     lexenv :: union(<false>, <lexenv>));
 
 // ct-mv-eval-function -- internal method
 //
@@ -152,7 +161,7 @@ define generic ct-mv-eval-funcall
 //
 define method ct-mv-eval-funcall (function :: <expression>,
 				  args :: <simple-object-vector>,
-				  lexenv :: <lexenv>)
+				  lexenv :: union(<false>, <lexenv>))
   #f;
 end;
 
@@ -162,7 +171,7 @@ end;
 //
 define method ct-mv-eval-funcall (function :: <varref>,
 				  args :: <simple-object-vector>,
-				  lexenv :: <lexenv>)
+				  lexenv :: union(<false>, <lexenv>))
   ct-mv-eval-funcall(function.varref-name, args, lexenv);
 end;
 
@@ -187,9 +196,9 @@ define constant $expt-var = dylan-var(#"^", create: #t);
 // 
 define method ct-mv-eval-funcall (function :: <identifier-token>,
 				  args :: <simple-object-vector>,
-				  lexenv :: <lexenv>)
+				  lexenv :: union(<false>, <lexenv>))
   block (return)
-    if (find-binding(lexenv, function))
+    if (lexenv & find-binding(lexenv, function))
       return(#f);
     end;
     let args = map(method (arg) ct-eval(arg, lexenv) | return(#f) end, args);
