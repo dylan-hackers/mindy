@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.58 1996/11/08 04:30:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.59 1996/11/11 13:57:43 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1428,8 +1428,8 @@ end function object-size-from-length;
 // Proxies are magical and in fact, only have one slot: the class.  So we just
 // return the amount of storage needed to store the class.
 // 
-define function object-size (ctv :: <proxy>)
+define method object-size (ctv :: <proxy>)
     => size :: <integer>;
   *heap-rep*.representation-size;
-end function object-size;
+end method object-size;
 
