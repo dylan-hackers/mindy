@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.60 1996/03/21 03:01:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.61 1996/03/24 00:26:56 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -286,6 +286,15 @@ define method find-source-file
   end block;
 end method find-source-file;
 
+define constant $make-utility = "gmake";  // "make" should also work
+
+define method output-c-file-rule
+    (makefile :: <stream>, c-name :: <string>, o-name :: <string>) => ();
+  let cc-command
+    = format-to-string("$(CC) $(CCFLAGS) -c %s -o %s", c-name, o-name);
+  format(makefile, "%s : %s\n", o-name, c-name);
+  format(makefile, "\t%s\n", cc-command);
+end method output-c-file-rule;
 
 define method compile-library
     (lid-file :: <byte-string>, command-line-features :: <list>,
@@ -351,6 +360,23 @@ define method compile-library
   let unit = make(<unit-state>, prefix: unit-prefix);
   let objects-stream = make(<byte-string-output-stream>);
   let other-units = map-as(<simple-object-vector>, unit-name, *units*);
+
+  let makefile-name = format-to-string("cc-%s-files.mak", unit-prefix);
+  format(*debug-output*, "Creating %s\n", makefile-name);
+  let makefile = make(<file-stream>, name: makefile-name,
+		      direction: #"output", if-exists: #"overwrite");
+  format(makefile, "# Makefile for compiling the .c and .s files\n");
+  format(makefile, "# If you want to compile .dylan files, don't use "
+	   "this makefile.\n\n");
+  format(makefile, "CC = gcc\n");
+  format(makefile, "CCFLAGS = %s\n", $cc-flags);
+  format(makefile, "AR = /bin/ar\n\n");
+
+  format(makefile, "# We only know the ultimate target when we've finished"
+	   " building the rest\n");
+  format(makefile, "# of this makefile.  So we use this fake target...\n#\n");
+  format(makefile, "all : all-at-end-of-file\n\n");
+
   for (file in files, tlfs in tlf-vectors)
     block ()
       format(*debug-output*, "Processing %s\n", file);
@@ -394,12 +420,7 @@ define method compile-library
       end;
 
       let o-name = concatenate(base-name, ".o");
-      let cc-command
-	= format-to-string("gcc %s -c %s -o %s", $cc-flags, c-name, o-name);
-      format(*debug-output*, "%s\n", cc-command);
-      unless (zero?(system(cc-command)))
-	cerror("so what", "cc failed?");
-      end;
+      output-c-file-rule(makefile, c-name, o-name);
       format(objects-stream, " %s", o-name);
 
     exception (<simple-restart>,
@@ -407,7 +428,7 @@ define method compile-library
 		 vector(format-string: "Blow off compiling this file."))
       #f;
     end block;
-  end;
+  end for;
 
   let executable = element(header, #"executable", default: #f);
   let entry-point = element(header, #"entry-point", default: #f);
@@ -429,12 +450,7 @@ define method compile-library
     close(body-stream);
 
     let o-name = concatenate(unit-prefix, "-init.o");
-    let cc-command
-      = format-to-string("gcc %s -c %s -o %s", $cc-flags, c-name, o-name);
-    format(*debug-output*, "%s\n", cc-command);
-    unless (zero?(system(cc-command)))
-      cerror("so what", "cc failed?");
-    end;
+    output-c-file-rule(makefile, c-name, o-name);
     format(objects-stream, " %s", o-name);
   end;
 
@@ -445,25 +461,15 @@ define method compile-library
   close(heap-stream);
 
   let o-name = concatenate(unit-prefix, "-heap.o");
-  let cc-command
-    = format-to-string("gcc %s -c %s -o %s", $cc-flags, s-name, o-name);
-  format(*debug-output*, "%s\n", cc-command);
-  unless (zero?(system(cc-command)))
-    cerror("so what", "cc failed?");
-  end;
+  // Even though this isn't a .c file, we call the compiler the same
+  output-c-file-rule(makefile, s-name, o-name);
   format(objects-stream, " %s", o-name);
 
   let objects = string-output-stream-string(objects-stream);
   
   let ar-name = format-to-string("lib%s.a", unit-prefix);
-  begin
-    system(concatenate("rm -f ", ar-name));
-    let ar-command = format-to-string("/bin/ar qc %s%s", ar-name, objects);
-    format(*debug-output*, "%s\n", ar-command);
-    unless (zero?(system(ar-command)))
-      cerror("so what", "ar failed?");
-    end;
-  end;
+  format(makefile, "%s : %s\n", ar-name, objects);
+  format(makefile, "\t$(AR) qc %s%s\n", ar-name, objects);
 
   let linker-options = element(header, #"linker-options", default: #f);
   let unit-info = make(<unit-info>,
@@ -524,13 +530,10 @@ define method compile-library
 	end if;
 	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
-      let command
-	= concatenate("gcc -z ", flags, " -L/lib/pa1.1 -o ", executable,
-		      " inits.c heap.s", unit-libs);
-      format(*debug-output*, "%s\n", command);
-      unless (zero?(system(command)))
-	cerror("so what", "cc failed?");
-      end;
+      format(makefile, "%s : %s %s\n", executable, objects, ar-name);
+      format(makefile, "\t$(CC) -z %s -L/lib/pa1.1 -o %s inits.c heap.s %s\n", 
+	     flags, executable, unit-libs);
+      format(makefile, "all-at-end-of-file : %s\n", executable);
     end;
 
   else
@@ -549,17 +552,26 @@ define method compile-library
     dump-queued-methods(dump-buf);
 
     end-dumping(dump-buf);
+    format(makefile, "all-at-end-of-file : %s\n", ar-name);
   end;
 
   if (log-dependencies)
     spew-dependency-log(concatenate(unit-prefix, ".dep"));
   end if;
 
+  close(makefile);
+  let make-command = format-to-string("%s -f %s", $make-utility, 
+				      makefile-name);
+  format(*debug-output*, "%s\n", make-command);
+  unless (zero?(system(make-command)))
+    cerror("so what", "gmake failed?");
+  end;
+  
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
 
   format(*debug-output*, "Compilation finished with %d Warning%s\n",
 	 *warnings*, if (*warnings* == 1) "" else "s" end);
-end;
+end method compile-library;
 
 define constant $max-inits-per-function = 25;
 
