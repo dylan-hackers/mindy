@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.3 2001/01/09 22:08:43 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.4 2001/04/04 10:22:40 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -240,6 +240,7 @@ end;
 // the file and switch back and forth.
 // 
 define method contents (source :: <source-file>)
+ => contents :: <file-contents>;
   source.%contents
     | begin
 	let file = make(<file-stream>, locator: source.full-file-name);
@@ -425,6 +426,7 @@ end method highlight-line;
 
 
 define method compute-column (line :: <byte-string>, target :: <integer>)
+ => col :: <integer>;
   for (i from 0 below target,
        column = 0
 	 then if (line[i] == '\t')
@@ -446,8 +448,15 @@ end method compute-column;
 // 
 define method extract-string
     (source-location :: <file-source-location>,
-     #key start :: <integer> = source-location.start-posn,
-          end: finish :: <integer> = source-location.end-posn)
+     #key start :: <integer> = -1,
+          end: finish :: <integer> = -1)
+ => string :: <byte-string>;
+  if (start < 0)
+    start := source-location.start-posn;
+  end;
+  if (finish < 0)
+    finish := source-location.end-posn;
+  end;
   let len = finish - start;
   if (len.positive?)
     let result = make(<string>, size: len);
