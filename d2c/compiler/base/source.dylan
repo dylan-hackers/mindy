@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.4 2001/04/04 10:22:40 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.5 2001/09/17 09:02:42 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -205,12 +205,20 @@ define method fill-buffer (buf :: <buffer>, stream :: <stream>) => ();
   end; 
 end method fill-buffer;
 
+// <source> -- exported.
+//
+// Anything that gives us source code, be it a file, database
+// or user input.
+//
+define abstract class <source> (<identity-preserving-mixin>)
+end class <source>;
+
+define sealed domain make (singleton(<source>));
+define sealed domain initialize (<source>);
 
 // <source-file> -- exported.
 // 
-// preserve identity for space sharing...
-//
-define class <source-file> (<identity-preserving-mixin>)
+define class <source-file> (<source>)
   //
   // The name for this source file.
   constant slot full-file-name :: <byte-string>, 
@@ -273,6 +281,46 @@ end method extract-line;
 
 add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
 		list(full-file-name, name:, #f));
+
+
+// <source-buffer> -- exported.
+// 
+define class <source-buffer> (<source>)
+  //
+  // The name for this source buffer
+  constant slot buffer-name :: <byte-string> = "<anonymous source buffer>", 
+    init-keyword: #"name";
+  //
+  // The contents, or #f if we haven't read them in yet.
+  slot contents :: <buffer>,
+    required-init-keyword: #"buffer";
+end;
+
+define sealed domain make (singleton(<source-buffer>));
+define sealed domain initialize (<source-buffer>);
+
+define method print-object (sb :: <source-buffer>, stream :: <stream>) => ();
+  pprint-fields(sb, stream, name: sb.buffer-name);
+end;
+
+define method extract-line
+    (source :: <source-buffer>, line-start :: <integer>) => res :: <byte-string>;
+  let contents = source.contents;
+  for (index from line-start below contents.size,
+       until: contents[index] == as(<integer>, '\n')
+	      | contents[index] == as(<integer>, '\r'))
+  finally
+    let len = index - line-start;
+    let result = make(<byte-string>, size: len);
+    copy-bytes(result, 0, contents, line-start, len);
+    result;
+  end for;
+end method extract-line;
+
+
+
+add-make-dumper(#"source-buffer", *compiler-dispatcher*, <source-buffer>,
+		list(buffer-name, name:, #f));
 
 
 
