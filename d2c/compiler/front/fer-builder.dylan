@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.25 1995/05/03 04:52:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.26 1995/05/03 07:18:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -388,10 +388,13 @@ end method;
 
   
 define method make-operation
-    (builder :: <internal-builder>, operands :: <list>)
+    (builder :: <flow-builder>, class :: <class>, operands :: <list>,
+     #rest additional-make-arguments)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(builder, make(<unknown-call>), operands);
+  let op :: <operation> = apply(make, class, additional-make-arguments);
+  make-operand-dependencies(builder, op, operands);
+  op;
 end method;
 
 
@@ -412,26 +415,10 @@ define method make-builder(wot :: <internal-fer-builder>)
 end method;
 
 
-define method make-primitive-operation
-    (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
- => res :: <operation>;
-  make-operand-dependencies(builder, make(<primitive>, name: name), operands);
-end method;
-  
-
-define method make-mv-operation
-    (builder :: <fer-builder>, function :: <leaf>,
-     cluster :: <abstract-variable>)
- => res :: <operation>;
-  make-operand-dependencies(builder, make(<mv-call>),
-			    list(function, cluster));
-end method;
-
-
-define method make-set-operation
-    (builder :: <fer-builder>, defn :: <definition>, value :: <leaf>)
- => res :: <operation>;
-  make-operand-dependencies(builder, make(<set>, var: defn), value);
+define method make-unknown-call
+    (builder :: <fer-builder>, operands :: <list>)
+    => res :: <operation>;
+  make-operation(builder, <unknown-call>, operands);
 end;
 
 

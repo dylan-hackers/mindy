@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.9 1995/05/03 04:52:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.10 1995/05/03 07:16:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -127,7 +127,8 @@ define generic build-join
 // Get an <operation> to represent the application of the specified operands.
 //
 define generic make-operation
-    (builder :: <flow-builder>, operands :: <list>)
+    (builder :: <flow-builder>, class :: <class>, operands :: <list>,
+     #rest additional-make-arguments)
  => res :: <operation>;
 
 
@@ -152,25 +153,10 @@ define generic build-let
  => ();
 
 
-// Like MAKE-OPERATION, but creates a primitive operation.
+// Special purpose variant of MAKE-OPERATION because it occurs so often.
 // 
-define generic make-primitive-operation
-    (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
- => res :: <operation>;
-
-
-// Like MAKE-OPERATION, but creates an mv-call operation.
-//
-define generic make-mv-operation
-    (builder :: <fer-builder>, function :: <leaf>,
-     cluster :: <abstract-variable>)
- => res :: <operation>;
-
-
-// Like MAKE-OPERATION, but creates an set operation.
-//
-define generic make-set-operation
-    (builder :: <fer-builder>, defn :: <definition>, value :: <leaf>)
+define generic make-unknown-call
+    (builder :: <fer-builder>, operands :: <list>)
  => res :: <operation>;
 
 
