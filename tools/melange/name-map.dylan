@@ -210,3 +210,34 @@ define method map-name
   name;
 end method map-name;
 
+//----------------------------------------------------------------------
+// Fun-O c-ffi compatible methods for map-name
+//----------------------------------------------------------------------
+
+define method map-name
+    (selector == #"c-ffi",
+     category :: <symbol>, prefix :: <string>, name :: <string>,
+     sequence-of-classes :: <sequence>)
+ => (result :: <string>)
+   let buffer = make(<stretchy-vector>);
+
+  if (category == #"type")
+    add!(buffer, '<') 
+  elseif (category == #"constant")
+    add!(buffer, '$');
+  end if;
+
+  for (non-underline = #f then non-underline | char ~= '_',
+       char in hyphenate-case-breaks(name))
+    add!(buffer, if (non-underline & char == '_') '-' else char end if);
+  end for;
+
+  append!(buffer, prefix);
+  if (~empty?(sequence-of-classes) & category == #"variable")
+    // We have a slot getter name.
+    append!(buffer, "-value");
+  end if;
+
+  if (category == #"type") append!(buffer, "*>") end if;
+  as(<byte-string>, buffer);
+end method map-name;
