@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.16 1994/04/14 19:20:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.17 1994/04/15 14:55:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1672,6 +1672,7 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 			ptr += 4;
 		    }
 		}
+		sprintf(fill, "%d", i);
 		break;
 
 	      case 't':
