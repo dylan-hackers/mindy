@@ -1,7 +1,7 @@
 module: d2c-gnu
 
 define interface
-  #include "../../src/dig/win32-dig-support.h",
+  #include "win32-dig-support.h",
     equate: {"char *" => <c-string>},
     map: {"char *" => <byte-string>};
   function "ignore_interrupts";
