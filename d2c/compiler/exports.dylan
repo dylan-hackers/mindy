@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.46 1995/05/03 05:04:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.47 1995/05/03 07:19:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -465,7 +465,7 @@ define module classes
   export
     cclass-name, closest-primary-superclass, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, unique-id,
+    all-slot-infos, unique-id, direct-type,
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     <defined-cclass>,
@@ -587,10 +587,9 @@ define module builder-interface
     <flow-builder>, make-builder, builder-result, end-body, build-region,
     build-if-body, build-else, build-block-body, build-exit, build-return,
     build-loop-body, build-assignment, build-join, make-operation,
-    <fer-builder>, build-let, make-primitive-operation, make-mv-operation,
-    make-set-operation, make-literal-constant, make-definition-leaf,
-    make-lexical-var, make-ssa-var, make-local-var, make-values-cluster,
-    copy-variable, make-exit-function, build-method-body,
+    <fer-builder>, build-let, make-unknown-call, make-literal-constant,
+    make-definition-leaf, make-lexical-var, make-ssa-var, make-local-var,
+    make-values-cluster, copy-variable, make-exit-function, build-method-body,
     make-hairy-method-literal,
 
     <fer-component>;
@@ -679,6 +678,7 @@ define module front
     <catcher>, exit-function, exit-function-setter, target-region,
     <set>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
+    <truly-the>, guaranteed-type,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
@@ -724,7 +724,9 @@ define module fer-convert
     exclude: {<assignment>},
     rename: {<expression> => <fer-expression>},
     export: all;
-  use front, import: {catcher, <method-literal>};
+  use front,
+    rename: {<primitive> => <fer-primitive>},
+    import: {catcher, <method-literal>, <set>};
   use builder-interface, export: all;
   use ctype;
   use lexenv, export: all;
@@ -754,7 +756,7 @@ define module define-functions
   use compile-time-eval;
   use lexenv;
   use source;
-  use front, import: {<method-literal>};
+  use front, import: {<method-literal>, <truly-the>, <set>};
 
   export
     compute-signature,
@@ -785,7 +787,7 @@ define module define-constants-and-variables
   use builder-interface;
   use fer-convert;
   use source;
-  use front, import: {<method-literal>};
+  use front, import: {<method-literal>, <set>};
   use define-functions;
   use expand;
 
