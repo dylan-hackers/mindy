@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.19 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.20 1995/05/12 15:41:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -596,9 +596,6 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 		base-name: slot.slot-defn-getter-name,
 		signature: make(<signature>,
 				specializers: list(class-type),
-				rest-type: #f,
-				keys: #f,
-				all-keys?: #f,
 				returns: slot-type),
 		hairy: hairy?,
 		sealed: slot.slot-defn-sealed?,
@@ -609,9 +606,6 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 		  base-name: slot.slot-defn-setter-name,
 		  signature: make(<signature>,
 				  specializers: list(slot-type, class-type),
-				  rest-type: #f,
-				  keys: #f,
-				  all-keys?: #f,
 				  returns: slot-type),
 		  hairy: hairy?,
 		  sealed: slot.slot-defn-sealed?,
@@ -838,7 +832,7 @@ define method build-getter
   let region = build-function-body
     (builder, policy, source,
      format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
-     list(instance));
+     list(instance), #"best");
   let meth = make-method-literal
     (builder, #"global",
      make(<signature>, specializers: list(cclass), returns: type),
@@ -899,7 +893,7 @@ define method build-setter
   let region = build-function-body
     (builder, policy, source,
      format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
-     list(new, instance));
+     list(new, instance), #"best");
   let meth = make-method-literal
     (builder, #"global",
      make(<signature>, specializers: list(type, cclass), returns: type),

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.29 1995/05/12 12:39:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.30 1995/05/12 15:41:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -726,10 +726,10 @@ define method fer-convert-method
     = if (visibility == #"local" | non-const-arg-types?
 	    | non-const-result-types?)
 	build-lambda-body(builder, lexenv.lexenv-policy, source, name,
-			  as(<list>, vars));
+			  as(<list>, vars), #"best");
       else
 	build-function-body(builder, lexenv.lexenv-policy, source, name,
-			    as(<list>, vars));
+			    as(<list>, vars), #"best");
       end;
 
   build-region(builder, builder-result(body-builder));
@@ -799,7 +799,7 @@ define method fer-convert-method
 	   next: next & #t,
 	   rest-type: rest & object-ctype(),
 	   keys: keyword-infos & as(<list>, keyword-infos),
-	   all-keys?: paramlist.paramlist-all-keys?,
+	   all-keys: paramlist.paramlist-all-keys?,
 	   returns: make-values-ctype(as(<list>, result-types),
 	   			      rest-type));
 

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.12 1995/05/08 17:17:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.13 1995/05/12 15:41:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,11 +7,11 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define method file-tokenizer (lib :: <library>, name :: <byte-string>)
   let source = make(<source-file>, name: name);
   let (header, start-line, start-posn) = parse-header(source);
+  *Current-Module* := find-module(lib,
+				  as(<symbol>, header[#"module"]),
+				  create: #t);
   make(<lexer>,
        source: source,
-       module: find-module(lib,
-			   as(<symbol>, header[#"module"]),
-			   create: #t),
        start-posn: start-posn,
        start-line: start-line);
 end;
@@ -39,7 +39,7 @@ define method compile (#rest files) => res :: <component>;
   let builder = make-builder(component);
   let init-function
     = build-function-body(builder, $Default-Policy, make(<source-location>),
-			  "Top Level Initializations", #());
+			  "Top Level Initializations", #(), #"best");
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
   build-return(builder, $Default-Policy, make(<source-location>),
 	       init-function, #());
