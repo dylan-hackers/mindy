@@ -1224,13 +1224,14 @@ define sealed method update-list-control-items
   let items = gadget-items(gadget);
   let label-function = gadget-label-key(gadget);
   gtk-clist-clear(widget);
-  for (item in items)
-    let label = label-function(item);
-    with-c-string (string = label)
-      let string* = make(<C-string*>, element-count: 1);
-      string*[0] := string;
-      gtk-clist-append(widget, string*)
-    end
+  with-stack-structure(string* :: <C-string*>)
+    for (item in items)
+      let label = label-function(item);
+      with-c-string (string = label)
+	string*[0] := string;
+	gtk-clist-append(widget, pointer-cast(<gchar**>, string*))
+      end;
+    end;
   end
 end method update-list-control-items;
 
