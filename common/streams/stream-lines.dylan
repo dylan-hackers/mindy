@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading and writing by lines.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.4 2002/12/10 00:35:03 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.5 2002/12/11 15:33:24 andreas Exp $
 
 //======================================================================
 //
@@ -228,7 +228,7 @@ define sealed method read-line
           end;
         end method save-bytes;
       
-      for ()
+      while(#t)
         if (pos == buf.buffer-end)
           parts := save-bytes(buf, pos, parts);
           maybe-buf :=
@@ -256,7 +256,7 @@ define sealed method read-line
           buf.buffer-next := pos + 1;
         end;
         pos := pos + 1;
-      end for;
+      end while;
 
     end block; // done
 
