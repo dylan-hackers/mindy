@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.15 1995/11/15 17:24:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.16 1995/12/11 19:55:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2012,6 +2012,14 @@ core-word-token (<use-token>)
 %
 
 core-word-token (<set-token>)
+  %1;
+%
+
+core-word-token (<seal-token>)
+  %1;
+%
+
+core-word-token (<primitive-token>)
   %1;
 %
 
