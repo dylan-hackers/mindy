@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.6 1994/05/31 18:10:32 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.7 1994/06/01 18:11:19 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -218,13 +218,12 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     len = strlen(template);
     va_start(ap, template);
     for (ptr = template; *ptr != '\0'; ptr++) {
-	if (*ptr == '~') {
+	if (*ptr == '%') {
 	    len--;
 	    switch (*++ptr) {
-	      case '~':
+	      case '%':
 		break;
-	      case 's':
-	      case 'S':
+	      case '=':
 		len += strlen(sym_name(va_arg(ap, obj_t)));
 		break;
 	      default:
@@ -239,13 +238,12 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 
     va_start(ap, template);
     for(ptr = template; *ptr != '\0'; ptr++) {
-	if (*ptr == '~') {
+	if (*ptr == '%') {
 	    switch (*++ptr) {
-	      case '~':
-		*origin++ = '~';
+	      case '%':
+		*origin++ = '%';
 		break;
-	      case 's':
-	      case 'S':
+	      case '=':
 		{
 		    char *name = sym_name(va_arg(ap, obj_t));
 		    while (*name != '\0')
