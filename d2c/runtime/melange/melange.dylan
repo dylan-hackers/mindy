@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.3 1996/09/28 20:28:06 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.4 1996/09/28 21:02:26 rgs Exp $
 
 //======================================================================
 //
@@ -129,7 +129,7 @@ end method as;
 
 define sealed method as
     (class == <raw-pointer>, obj :: <statically-typed-pointer>)
- => (result :: <integer>);
+ => (result :: <raw-pointer>);
   obj.raw-value;
 end method as;
 
@@ -598,4 +598,4 @@ end method forward-iteration-protocol;
 //
 define open functional class <function-pointer>
     (<statically-typed-pointer>) 
-end class <function-pointe
+end class <function-pointer>;
