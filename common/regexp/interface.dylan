@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.3 1996/03/22 23:45:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.4 1996/03/26 22:46:21 nkramer Exp $
 
 //======================================================================
 //
@@ -398,7 +398,7 @@ define method split-string
     end while;
   end block;
   if (remove-empty-items)
-    apply(values, remove!(strings, "", test: char-==));
+    apply(values, remove!(strings, "", test: \=));
   else
     apply(values, strings);
   end if;
