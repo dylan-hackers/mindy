@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.25 1996/05/01 17:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.26 1996/05/11 16:16:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -124,7 +124,7 @@ define module Extensions
     import: {
 	     // More integers.
 	     <general-integer>, <extended-integer>,
-	     $maximum-integer, $minimum-integer,
+	     $maximum-integer, $minimum-integer, integer-length,
 
 	     // Ratios.
 	     <ratio>, ratio, numerator, denominator,

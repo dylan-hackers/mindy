@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.12 1996/05/11 14:49:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.13 1996/05/11 16:16:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -253,6 +253,9 @@ end;
 
 define sealed generic gcd (x :: <general-integer>, y :: <general-integer>)
     => res :: <general-integer>;
+
+define sealed generic integer-length (x :: <general-integer>)
+    => res :: <integer>;
 
 
 // Fixed Integers.
@@ -562,6 +565,30 @@ define method gcd (u :: <integer>, v :: <integer>)
     end;
   end;
 end;
+
+// integer-length(<integer>) -- exported from Extensions.
+//
+// Return the number of ``interesting'' bits in x.  The interesting bits
+// are all but the sign bits.
+//
+define method integer-length (x :: <integer>) => res :: <integer>;
+  local
+    method repeat (x :: <integer>, length :: <integer>, bits :: <integer>)
+	=> res :: <integer>;
+      if (bits.zero?)
+	length;
+      else
+	let shift = ash(bits, -1);
+	if (x < ash(1, shift))
+	  repeat(x, length, shift);
+	else
+	  repeat(ash(x, -bits), length + bits, shift);
+	end if;
+      end if;
+    end method repeat;
+  repeat(if (x.negative?) lognot(x) else x end, 0, $fixed-integer-bits);
+end method integer-length;
+
 
 
 // Float methods.

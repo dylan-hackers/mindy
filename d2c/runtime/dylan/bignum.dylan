@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.9 1996/04/16 17:26:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.10 1996/05/11 16:16:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1222,6 +1222,20 @@ define method ash (num :: <extended-integer>, shift :: <integer>)
     end;
   end;
 end;
+
+
+// Integer-length
+
+// integer-length{<extended-integer>}
+//
+// Return the number of ``interesting'' bits in x.  The interesting bits
+// are all but the sign bits.
+//
+define method integer-length (num :: <extended-integer>)
+    => res :: <integer>;
+  let len-1 = num.bignum-size - 1;
+  integer-length(as-signed(bignum-digit(num, len-1))) + len-1 * $digit-bits;
+end method integer-length;
 
 
 // Contagion methods.

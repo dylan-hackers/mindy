@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.23 1996/05/01 17:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.24 1996/05/11 16:16:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -162,7 +162,7 @@ define module dylan-viscera
 
     // Extensions
     <general-integer>, <extended-integer>,
-    $maximum-integer, $minimum-integer,
+    $maximum-integer, $minimum-integer, integer-length,
     <ratio>, ratio, numerator, denominator,
     <byte-character>, <true>, <false>,
     <equal-table>, equal-hash, 
