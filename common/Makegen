@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.25 2003/07/11 03:43:17 housel Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.26 2003/07/17 19:05:53 housel Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -21,16 +21,16 @@
 # libraries.
 @non_bootstrap_libraries =
     ('transcendental', 'threads', 'format-out', 'common-dylan', 'collections',
-     'io', 'file-system', 'time', 'date', 'system', 'locators', 'matrix',
-     'network');
+     'io', 'file-system', 'time', 'date', 'system', 'locators', 'matrix');
+    #'network'
     #'internal-time'
 
 &compile_subdirs(@bootstrap_libraries);
 unless ($enable_bootstrap) {
   &compile_subdirs(@non_bootstrap_libraries);
-  if($features{'compiled_for_unix'}) {
-    &compile_subdirs('command-processor');
-  }
+  #if($features{'compiled_for_unix'}) {
+  #  &compile_subdirs('command-processor');
+  #}
 }
 
 
