@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.33 1996/02/06 15:41:10 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.34 1996/02/07 01:29:29 wlott Exp $
 
 /*
 
@@ -922,7 +922,8 @@ end class;
 //
 // Actually dump an object.
 //
-define /* exported */ generic dump-od (obj :: <object>, buf :: <dump-buffer>)
+define /* exported */ open generic dump-od
+    (obj :: <object>, buf :: <dump-buffer>)
  => ();
 
 
