@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.5 1994/04/30 14:57:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.6 1994/04/30 15:18:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -128,8 +128,6 @@ static void dylan_invoke_debugger(struct thread *thread, int nargs)
 void init_misc_functions(void)
 {
     define_generic_function("main", 0, TRUE, obj_False,
-			    obj_Nil, obj_ObjectClass);
-    define_generic_function("exit", 1, FALSE, obj_False,
 			    obj_Nil, obj_ObjectClass);
     define_function("raw-exit", list1(obj_IntegerClass), FALSE, obj_False,
 		    obj_ObjectClass, dylan_exit);
