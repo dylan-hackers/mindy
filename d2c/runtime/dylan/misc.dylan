@@ -1,8 +1,19 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.11 1996/06/26 14:39:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.12 1996/09/15 15:33:40 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
+
+// assert -- exported from Extensions.  Users of assert() should not
+// have side-effects in the expression that is passed to assert(),
+// because if we ever turn assertions off, that would mean the program
+// runs differently in debug mode than it does in release mode.
+//
+define function assert (value) => ();
+  unless (value)
+    error("Assertion failed.");
+  end;
+end function assert;
 
 // <not-supplied-marker> -- internal.
 //

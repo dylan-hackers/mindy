@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.35 1996/08/14 15:52:10 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.36 1996/09/15 15:33:39 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -147,7 +147,7 @@ define module Extensions
 	     <byte>, <byte-vector>,
 
 	     // Misc other stuff.
-	     $not-supplied, ignore, functional-==, key-exists?
+	     $not-supplied, ignore, functional-==, key-exists?, assert
     },
     export: all;
 end;

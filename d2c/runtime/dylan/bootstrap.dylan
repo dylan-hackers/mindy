@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.33 1996/08/14 15:52:30 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.34 1996/09/15 15:33:40 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -172,7 +172,7 @@ define module dylan-viscera
     <byte>, <byte-vector>,
     $not-supplied, ignore,
     <format-string-condition>,
-    functional-==, key-exists?,
+    functional-==, key-exists?, assert,
 
     // Transcendentals
     $double-pi, $single-pi, $double-e, $single-e,
