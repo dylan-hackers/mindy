@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.4 2000/12/11 19:54:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.5 2000/12/12 00:01:28 andreas Exp $
 
 //======================================================================
 //
@@ -1181,6 +1181,10 @@ define method main (prog-name :: <string>, #rest args);
   receive-gdb-response();
   do-gdb-command("set confirm off");
   do-gdb-command("set height 10000");
+
+  do-gdb-command("break real_main"); // FIXME: force loading of shared library symbols
+  do-gdb-command("run");
+
   do-gdb-command("break dylanZdylan_visceraZinvoke_debugger_METH_GENERIC");
   do-gdb-command("break abort");
   command-loop();
