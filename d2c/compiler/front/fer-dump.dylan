@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.23 1995/05/05 09:25:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.24 1995/05/05 14:49:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -322,7 +322,7 @@ define method dump-expr (expr :: <expression>, stream :: <stream>) => ();
 end;
 
 define method dump-expr (expr :: <lambda>, stream :: <stream>) => ();
-  format(stream, "METHOD[%d]", expr.id);
+  format(stream, "METHOD %= [%d]", expr.name, expr.id);
 end;
 
 define method dump (var :: <abstract-variable>, stream :: <stream>) => ();
@@ -384,8 +384,8 @@ define method dump (lit :: type-or(<literal-number>, <literal-symbol>,
   print(lit.literal-value, stream);
 end;
 
-define method dump (ct-value :: <cclass>, stream :: <stream>) => ();
-  write(as(<string>, ct-value.cclass-name.name-symbol), stream);
+define method dump (ct-value :: <ctype>, stream :: <stream>) => ();
+  print-message(ct-value, stream);
 end;
 
 define method dump (leaf :: <definition-constant-leaf>, stream :: <stream>)
@@ -398,7 +398,7 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     format(stream, "METHOD [%d] ", lambda.id);
+	     format(stream, "METHOD %= [%d] ", lambda.name, lambda.id);
 	     pprint-logical-block
 	       (stream,
 		prefix: "(",
