@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.117 1996/04/13 21:20:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.118 1996/05/01 14:41:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2496,6 +2496,16 @@ define method deliver-cluster
       elseif (src-end ~= dst-end)
 	format(stream, "%s = %s;\n", dst-end, src-end);
       end;
+    elseif (defines.definer-next == #f)
+      let (name, rep) = c-name-and-rep(defines, file);
+      let (false, false-rep) = c-expr-and-rep(as(<ct-value>, #f), rep, file);
+      let source
+	= stringify('(', src-start, " == ", src-end, " ? ",
+		    conversion-expr(rep, false, false-rep, file), " : ",
+		    conversion-expr
+		      (rep, stringify(src-start, "[0]"), *general-rep*, file),
+		    ')');
+      deliver-single-result(defines, source, rep, #t, file);
     else
       let count = for (var = defines then var.definer-next,
 		       index from 0,
@@ -2820,6 +2830,20 @@ define method c-expr-and-rep
  => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep(class, file, class.cclass-name.c-prefix,
 		     class.class-defn);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-true>, rep-hint :: <heap-representation>,
+     file :: <file-state>)
+    => (name :: <string>, rep :: <c-representation>);
+  values("obj_True", rep-hint);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-false>, rep-hint :: <heap-representation>,
+     file :: <file-state>)
+    => (name :: <string>, rep :: <c-representation>);
+  values("obj_False", rep-hint);
 end;
 
 define method c-expr-and-rep
