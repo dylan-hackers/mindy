@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.16 1994/04/17 17:45:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.17 1994/04/18 05:43:53 wlott Exp $
 *
 * This file does whatever.
 *
@@ -922,12 +922,15 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     int i;
 
     BYTE_METHOD(res)->xep = method_xep;
-    BYTE_METHOD(res)->debug_name = obj_ptr(struct component *, component)->debug_name;
+    BYTE_METHOD(res)->debug_name = COMPONENT(component)->debug_name;
     BYTE_METHOD(res)->required_args = length(specializers);
     BYTE_METHOD(res)->restp = METHOD_INFO(method_info)->restp;
     BYTE_METHOD(res)->keywords = METHOD_INFO(method_info)->keys;
     BYTE_METHOD(res)->result_types = result_types;
-    BYTE_METHOD(res)->more_results_type = more_results_type;
+    if (more_results_type == obj_True)
+	BYTE_METHOD(res)->more_results_type = obj_ObjectClass;
+    else
+	BYTE_METHOD(res)->more_results_type = more_results_type;
     BYTE_METHOD(res)->specializers = specializers;
     BYTE_METHOD(res)->class_cache = obj_False;
     BYTE_METHOD(res)->iep = byte_method_iep;
@@ -1180,7 +1183,10 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     GF(res)->restp = restp;
     GF(res)->keywords = keywords;
     GF(res)->result_types = result_types;
-    GF(res)->more_results_type = more_results_type;
+    if (more_results_type == obj_True)
+	GF(res)->more_results_type = obj_ObjectClass;
+    else
+	GF(res)->more_results_type = more_results_type;
     GF(res)->methods = obj_Nil;
     GF(res)->cache = obj_Nil;
 
@@ -1207,7 +1213,10 @@ void set_gf_signature(obj_t gf, int req_args, boolean restp, obj_t keys,
     GF(gf)->restp = restp;
     GF(gf)->keywords = keys;
     GF(gf)->result_types = result_types;
-    GF(gf)->more_results_type = more_results_type;
+    if (more_results_type == obj_True)
+	GF(gf)->more_results_type = obj_ObjectClass;
+    else
+	GF(gf)->more_results_type = more_results_type;
     GF(gf)->methods = obj_Nil;
 
     while (methods != obj_Nil) {
@@ -1244,6 +1253,8 @@ static obj_t really_add_method(obj_t gf, obj_t method)
 obj_t add_method(obj_t gf, obj_t method)
 {
     obj_t gfkeys;
+    obj_t gfscan, methscan;
+    int i;
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
 	error("The method ~S has ~S required arguments, but the generic "
@@ -1296,7 +1307,108 @@ obj_t add_method(obj_t gf, obj_t method)
 	      function_debug_name_or_self(method),
 	      function_debug_name_or_self(gf));
 
-    /* ### Should also check the result types. */
+    gfscan = GF(gf)->result_types;
+    methscan = METHOD(method)->result_types;
+    i = 0;
+    while (gfscan != obj_Nil && methscan != obj_Nil) {
+	obj_t gftype = HEAD(gfscan);
+	obj_t methtype = HEAD(methscan);
+
+	if (!subtypep(methtype, gftype))
+	    error("Result ~S is an instance of ~S for generic function ~S, "
+		  "but is an instance of ~S for method ~S",
+		  make_fixnum(i),
+		  gftype,
+		  function_debug_name_or_self(gf),
+		  methtype,
+		  function_debug_name_or_self(method));
+
+	gfscan = TAIL(gfscan);
+	methscan = TAIL(methscan);
+	i++;
+    }
+
+    if (gfscan != obj_Nil) {
+	int gf_returns = i;
+	while (gfscan != obj_Nil) {
+	    gf_returns++;
+	    gfscan = TAIL(gfscan);
+	}
+	if (GF(gf)->more_results_type != obj_False)
+	    error("Generic function ~S returns at least ~S results, but "
+		  "method ~S only returns ~S",
+		  function_debug_name_or_self(gf),
+		  make_fixnum(gf_returns),
+		  function_debug_name_or_self(method),
+		  make_fixnum(i));
+	else
+	    error("Generic function ~S returns exactly ~S results, but "
+		  "method ~S only returns ~S",
+		  function_debug_name_or_self(gf),
+		  make_fixnum(gf_returns),
+		  function_debug_name_or_self(method),
+		  make_fixnum(i));
+    }
+    if (methscan != obj_Nil) {
+	obj_t gftype = GF(gf)->more_results_type;
+
+	if (gftype == obj_False) {
+	    int meth_returns = i;
+	    while (methscan != obj_Nil) {
+		methscan = TAIL(methscan);
+		meth_returns++;
+	    }
+	    if (METHOD(method)->more_results_type != obj_False)
+		error("Generic function ~S returns exactly ~S results, but "
+		      "method ~S returns at least ~S",
+		      function_debug_name_or_self(gf),
+		      make_fixnum(i),
+		      function_debug_name_or_self(method),
+		      make_fixnum(meth_returns));
+	    else
+		error("Generic function ~S returns exactly ~S results, but "
+		      "method ~S returns ~S",
+		      function_debug_name_or_self(gf),
+		      make_fixnum(i),
+		      function_debug_name_or_self(method),
+		      make_fixnum(meth_returns));
+	}
+	while (methscan != obj_Nil) {
+	    obj_t methtype = HEAD(methscan);
+
+	    if (!subtypep(methtype, gftype))
+		error("Result ~S is an instance of ~S for generic function "
+		      "~S, but is an instance of ~S for method ~S",
+		      make_fixnum(i),
+		      gftype,
+		      function_debug_name_or_self(gf),
+		      methtype,
+		      function_debug_name_or_self(method));
+
+	    methscan = TAIL(methscan);
+	    i++;
+	}
+    }
+
+    if (METHOD(method)->more_results_type != obj_False)
+	if (GF(gf)->more_results_type != obj_False) {
+	    if (!subtypep(METHOD(method)->more_results_type,
+			  GF(gf)->more_results_type))
+		error("Results ~S and on are instances of ~S for generic "
+		      "function ~S, but are instances of ~S for method ~S",
+		      make_fixnum(i),
+		      GF(gf)->more_results_type,
+		      function_debug_name_or_self(gf),
+		      METHOD(method)->more_results_type,
+		      function_debug_name_or_self(method));
+	}
+	else
+	    error("Generic function ~S returns exactly ~S results, but "
+		  "method ~S returns ~S or more",
+		  function_debug_name_or_self(gf),
+		  make_fixnum(i),
+		  function_debug_name_or_self(method),
+		  make_fixnum(i));
 
     return really_add_method(gf, method);
 }
@@ -1456,6 +1568,31 @@ static void print_func(obj_t func)
     else
 	printf("{anonymous %s 0x%08lx}", class_str, (unsigned long)func);
 }
+
+static void print_method(obj_t method)
+{
+    obj_t class = METHOD(method)->class;
+    obj_t class_name = obj_ptr(struct class *, class)->debug_name;
+    obj_t debug_name = METHOD(method)->debug_name;
+    char *class_str;
+
+    if (class_name != NULL && class_name != obj_False)
+	class_str = sym_name(class_name);
+    else
+	class_str = "unknown function";
+
+    if (debug_name != NULL && debug_name != obj_False) {
+	printf("{%s ", class_str);
+	prin1(debug_name);
+	putchar(' ');
+    }
+    else
+	printf("{anonymous %s 0x%08lx ", class_str, (unsigned long)method);
+
+
+    prin1(METHOD(method)->specializers);
+    putchar('}');
+}    
 
 
 /* GC stuff. */
@@ -1639,6 +1776,7 @@ void init_func_classes(void)
     init_builtin_class(obj_RawFunctionClass, "<builtin-function>",
 		       obj_FunctionClass, NULL);
     init_builtin_class(obj_MethodClass, "<method>", obj_FunctionClass, NULL);
+    def_printer(obj_MethodClass, print_method);
     init_builtin_class(obj_RawMethodClass, "<raw-method>",
 		       obj_MethodClass, NULL);
     init_builtin_class(obj_BuiltinMethodClass, "<builtin-method>",
