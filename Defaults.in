@@ -38,7 +38,7 @@ $recheck = "@recheck@";
 $shared = "@shared@" eq "yes";
 $static = "@static@" eq "yes";
 $INSTALL = "@INSTALL@";
-$LIBTOOL = "\@LIBTOOL";
+$LIBTOOL = '@LIBTOOL@';
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
 # particular, INSTALL_PROGRAM doesn't force executability.
