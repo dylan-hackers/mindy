@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.8 1994/05/19 23:23:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.9 1994/06/03 00:35:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -656,7 +656,7 @@ static obj_t dylan_xf_xf_not_equal(obj_t x, obj_t y)
 }
 
 
-static obj_t dylan_identity(obj_t thing)
+static obj_t dylan_as_identity(obj_t class, obj_t thing)
 {
     return thing;
 }
@@ -804,6 +804,7 @@ void init_num_functions(void)
     obj_t int_and_sf = list2(obj_IntegerClass, obj_SingleFloatClass);
     obj_t int_and_df = list2(obj_IntegerClass, obj_DoubleFloatClass);
     obj_t int_sing = singleton(obj_IntegerClass);
+    obj_t float_sing = singleton(obj_FloatClass);
     obj_t sf_sing = singleton(obj_SingleFloatClass);
     obj_t df_sing = singleton(obj_DoubleFloatClass);
     obj_t xf_sing = singleton(obj_ExtendedFloatClass);
@@ -961,7 +962,9 @@ void init_num_functions(void)
 		  dylan_xf_xf_not_equal);
     
     define_method("as", list2(int_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_IntegerClass, dylan_identity);
+		  FALSE, obj_False, obj_IntegerClass, dylan_as_identity);
+    define_method("as", list2(float_sing, obj_IntegerClass),
+		  FALSE, obj_False, obj_SingleFloatClass, dylan_int_as_sf);
     define_method("as", list2(sf_sing, obj_IntegerClass),
 		  FALSE, obj_False, obj_SingleFloatClass, dylan_int_as_sf);
     define_method("as", list2(df_sing, obj_IntegerClass),
@@ -969,8 +972,11 @@ void init_num_functions(void)
     define_method("as", list2(xf_sing, obj_IntegerClass),
 		  FALSE, obj_False, obj_ExtendedFloatClass, dylan_int_as_xf);
 
+    define_method("as", list2(float_sing, obj_FloatClass),
+		  FALSE, obj_False, obj_FloatClass, dylan_as_identity);
+
     define_method("as", list2(sf_sing, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_identity);
+		  FALSE, obj_False, obj_SingleFloatClass, dylan_as_identity);
     define_method("as", list2(df_sing, obj_SingleFloatClass),
 		  FALSE, obj_False, obj_DoubleFloatClass, dylan_sf_as_df);
     define_method("as", list2(xf_sing, obj_SingleFloatClass),
@@ -979,7 +985,7 @@ void init_num_functions(void)
     define_method("as", list2(sf_sing, obj_DoubleFloatClass),
 		  FALSE, obj_False, obj_SingleFloatClass, dylan_df_as_sf);
     define_method("as", list2(df_sing, obj_DoubleFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_identity);
+		  FALSE, obj_False, obj_DoubleFloatClass, dylan_as_identity);
     define_method("as", list2(xf_sing, obj_DoubleFloatClass),
 		  FALSE, obj_False, obj_DoubleFloatClass, dylan_df_as_xf);
 
@@ -988,5 +994,5 @@ void init_num_functions(void)
     define_method("as", list2(df_sing, obj_ExtendedFloatClass),
 		  FALSE, obj_False, obj_DoubleFloatClass, dylan_xf_as_df);
     define_method("as", list2(xf_sing, obj_ExtendedFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_identity);
+		  FALSE, obj_False, obj_DoubleFloatClass, dylan_as_identity);
 }
