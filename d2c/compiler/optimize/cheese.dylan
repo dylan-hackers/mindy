@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.80 1995/06/06 19:32:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.81 1995/06/07 15:24:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,8 +12,10 @@ define variable *print-shit* = #f;
 define method print-shit () => (); *print-shit* := #t; end;
 define method dont-print-shit () => (); *print-shit* := #f; end;
 
+define variable *optimize-ncalls* = 0;
 
 define method optimize-component (component :: <component>) => ();
+  reverse-queue(component, #f);
   let done = #f;
   until (done)
     if (*do-sanity-checks*)
@@ -21,24 +23,27 @@ define method optimize-component (component :: <component>) => ();
     end;
     if (*print-shit*) dump-fer(component) end;
     if (component.initial-definitions)
-      let init-defn = component.initial-definitions;
-      component.initial-definitions := init-defn.next-initial-definition;
-      init-defn.next-initial-definition := #f;
       if (*print-shit*)
-	format(*debug-output*,
-	       "\n********* considering %= for ssa conversion\n\n",
-	       init-defn.definition-of);
+	format(*debug-output*, "\n********* doing trivial ssa conversion\n\n");
       end;
-      maybe-convert-to-ssa(component, init-defn);
-    elseif (component.reoptimize-queue)
-      let dependent = component.reoptimize-queue;
-      component.reoptimize-queue := dependent.queue-next;
-      dependent.queue-next := #"absent";
+      while (component.initial-definitions)
+	let init-defn = component.initial-definitions;
+	component.initial-definitions := init-defn.next-initial-definition;
+	init-defn.next-initial-definition := #f;
+	maybe-convert-to-ssa(component, init-defn);
+      end;
+      if (*print-shit*) dump-fer(component) end;
+    end;
+    if (component.reoptimize-queue)
+      let queueable = component.reoptimize-queue;
+      component.reoptimize-queue := queueable.queue-next;
+      queueable.queue-next := #"absent";
       if (*print-shit*)
 	format(*debug-output*, "\n********** about to optimize %=\n\n",
-	       dependent);
+	       queueable);
       end;
-      optimize(component, dependent);
+      optimize(component, queueable);
+      *optimize-ncalls* := *optimize-ncalls* + 1;
     else
       local method try (function, what)
 	      if (what & *print-shit*)
@@ -61,6 +66,28 @@ define method optimize-component (component :: <component>) => ();
 	| try(build-external-entries, "building external entries")
 	| (done := #t);
     end;
+  end;
+end;
+
+
+define method reverse-queue
+    (component :: <component>, before :: false-or(<queueable-mixin>)) => ();
+  if (before)
+    unless (before.queue-next == #f
+	      | instance?(before.queue-next, <queueable-mixin>))
+      error("Can't reverse the part of the queue before %= because it "
+	      "isn't in the queue.",
+	    before);
+    end;
+  end;
+  let temp = #f;
+  for (remaining = component.reoptimize-queue then temp,
+       result = before then remaining,
+       until: remaining == before)
+    temp := remaining.queue-next;
+    remaining.queue-next := result;
+  finally
+    component.reoptimize-queue := result;
   end;
 end;
 
@@ -90,6 +117,7 @@ define method maybe-convert-to-ssa
       end;
     end;
     delete-definition(component, defn);
+    reoptimize(component, assign);
     for (dep = var.dependents then dep.source-next,
 	 while: dep)
       unless (dep.source-exp == var)
@@ -99,7 +127,6 @@ define method maybe-convert-to-ssa
       dep.source-exp := ssa;
       reoptimize(component, dep.dependent);
     end;
-    reoptimize(component, assign);
   end;
 end;
 
@@ -118,8 +145,7 @@ end;
 define method reoptimize
     (component :: <component>, dependent :: <queueable-mixin>) => ();
   if (dependent.queue-next == #"absent")
-    dependent.queue-next := component.reoptimize-queue;
-    component.reoptimize-queue := dependent;
+    add-to-queue(component, dependent);
   end;
 end;
 
@@ -661,12 +687,14 @@ define method optimize-unknown-call
 
     #"valid" =>
       if (defn.method-defn-inline-expansion)
+	let old-head = component.reoptimize-queue;
 	let builder = make-builder(component);
 	let lexenv = make(<lexenv>);
 	let new-func
 	  = fer-convert-method(builder, defn.method-defn-inline-expansion,
 			       format-to-string("%s", defn.defn-name), #f,
 			       #"local", lexenv, lexenv);
+	reverse-queue(component, old-head);
 	insert-before(component, call.dependents.dependent,
 		      builder-result(builder));
 	let func-dep = call.depends-on;
@@ -1473,15 +1501,46 @@ define method optimize
     (component :: <component>, function :: <function-literal>)
     => ();
 
-  // If there is exactly one reference and that reference is the function
-  // in a local call, let convert the function.
+  // For functions that are only locally visible, we can throw them away
+  // if we no longer need them.
   if (function.visibility == #"local")
-    let dependents = function.dependents;
-    if (dependents & dependents.source-next == #f)
-      let dependent = dependents.dependent;
-      if (dependent.depends-on == dependents
-	    & instance?(dependent, <known-call>))
-	let-convert(component, function.main-entry, dependent);
+    if (block (return)
+	  for (dep = function.dependents then dep.source-next,
+	       while: dep)
+	    unless (home-function-region(dep.dependent) == function.main-entry)
+	      return(#f);
+	    end;
+	  finally
+	    #t;
+	  end;
+	end)
+      // All the references to this function are inside this function, so
+      // there is no way any outside party can reference it -- hence we can
+      // nuke it.  First, we delete the body.
+      local
+	method delete-function-region (region)
+	  if (region)
+	    delete-stuff-in(component, region);
+	  end;
+	end;
+      delete-function-region(function.main-entry);
+      delete-function-region(function.general-entry);
+      if (instance?(function, <method-literal>))
+	delete-function-region(function.generic-entry);
+      end;
+      // Deleting the body should have flushed the remaining references.
+      assert(function.dependents == #f);
+      // And then we delete the function literal itself.
+      function.visibility := #"deleted";
+      remove!(component.all-function-literals, function);
+      delete-queueable(component, function);
+    elseif (function.dependents.source-next == #f)
+      // There is only one reference.  Let convert it if it is a known call.
+      // We don't have to check for self calls, because they will have
+      // been picked off up above.
+      let ref = function.dependents.dependent;
+      if (ref.depends-on == function.dependents & instance?(ref, <known-call>))
+	let-convert(component, function.main-entry, ref);
       end;
     end;
   end;
@@ -1661,6 +1720,8 @@ define method let-convert
     => ();
   let call-assign :: <assignment> = call.dependents.dependent;
   let new-home = home-function-region(call-assign);
+
+  assert(~(new-home == function));
 
   let builder = make-builder(component);
   let call-policy = call-assign.policy;
@@ -2235,8 +2296,8 @@ define method convert-self-tail-call
   end;
   assign.defines := #f;
   // Queue the assignment and self-tail-call operation.
-  reoptimize(component, assign);
   reoptimize(component, op);
+  reoptimize(component, assign);
 end;
 
 
@@ -3451,27 +3512,9 @@ end;
 define method dropped-dependent
     (component :: <component>, function :: <function-literal>) => ();
   if (function.visibility == #"local")
-    if (function.dependents == #f)
-      // Delete the function.
-      remove!(component.all-function-literals, function);
-      delete-queueable(component, function);
-      function.visibility := #"deleted";
-      local
-	method delete-function-region (region)
-	  if (region)
-	    delete-stuff-in(component, region);
-	  end;
-	end;
-      delete-function-region(function.main-entry);
-      delete-function-region(function.general-entry);
-      if (instance?(function, <method-literal>))
-	delete-function-region(function.generic-entry);
-      end;
-    elseif (function.dependents.source-next == #f)
-      // Only one reference left, so queue it for reoptimization so that
-      // it can be let converted.
-      reoptimize(component, function);
-    end;
+    // If we dropped a reference to the function literal, we might be
+    // able to nuke it.
+    reoptimize(component, function);
   end;
 end;
 
