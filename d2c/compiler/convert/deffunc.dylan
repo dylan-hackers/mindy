@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.66 1996/04/06 07:13:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.67 1996/05/01 12:43:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -472,9 +472,10 @@ define method compute-signature
 	  <ctype> =>
 	    ctype;
 	  otherwise =>
-	    // ### Should just be a warning.
-	    error("%= isn't a type.", ctype);
-	end;
+	    compiler-warning-location(type, "%s isn't a type", ctype);
+	    anything-non-constant? := #t;
+	    make(<unknown-ctype>);
+	end select;
       else
 	object-ctype();
       end;
@@ -577,8 +578,12 @@ define method expand-inline-function
     let component = make(<fer-component>);
     let builder = make-builder(component);
     let lexenv = make(<lexenv>);
+    let next-method-info
+      = (instance?(defn, <method-definition>)
+	   & static-next-method-info(defn));
     let leaf = fer-convert-method(builder, meth, name, #f, #"local",
-				  lexenv, lexenv);
+				  lexenv, lexenv,
+				  next-method-info: next-method-info);
     optimize-component(component, simplify-only: #t);
     leaf;
   end unless;
@@ -678,9 +683,11 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <real-define-method-tlf>) => ();
   let defn = tlf.tlf-defn;
   let lexenv = make(<lexenv>);
+  let next-method-info = static-next-method-info(defn);
   let leaf = fer-convert-method(builder, tlf.method-tlf-parse,
 				format-to-string("%s", defn.defn-name),
-				ct-value(defn), #"global", lexenv, lexenv);
+				ct-value(defn), #"global", lexenv, lexenv,
+				next-method-info: next-method-info);
   if (defn.function-defn-hairy? 
 	| defn.method-defn-of == #f
 	| defn.method-defn-of.function-defn-hairy?)
