@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.5 2000/10/20 14:57:40 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.6 2002/06/03 22:22:13 dauclair Exp $
 copyright: see below
 
 
@@ -32,7 +32,7 @@ copyright: see below
 
 // Turn on pretty printing.
 //
-*default-pretty?* := #t;
+*print-pretty* := #t;
 
 
 // Pretty format.

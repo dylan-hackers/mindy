@@ -2,7 +2,7 @@ module: pprint
 author: wlott@cs.cmu.edu
 synopsis: Most of Dick Water's pretty printer.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.3 2000/01/24 04:54:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.4 2002/06/03 22:22:12 dauclair Exp $
 
 //======================================================================
 //
@@ -33,7 +33,12 @@ rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.3 2000/01/24 04:
 //
 
 /// This file contains a more or less straight conversion of CMU Common Lisp's
-/// rewrite of the Dick Water's pretty printer code.
+/// rewrite of the Dick Water's pretty printer code.  See /Common Lisp, the
+/// Language, 2nd ed/ and Dick Water's article: "Some Useful Lisp Algorithms:
+/// Part 2" at the Mitsubishi Electric Research Laboratories site:
+/// http://www.merl.com/papers/TR93-17/, as well as documentation on the
+/// Pprint Module at http://www.gwydiondylan.org and http://www.fun-o.com
+/// to get a feel for the benefits of pretty-printing.
 ///
 
 
@@ -64,7 +69,7 @@ define constant <index> = limited(<integer>, min: 0);
 define constant <column> = limited(<integer>, min: 0);
 define constant <position> = <integer>;
 
-// <pretty-stream> -- exported.
+// <pretty-stream> -- internal
 //
 // Stream used for pretty printing.
 // 
@@ -309,7 +314,7 @@ end;
 // Actually copy the stuff into the buffer.  Bad things will happen if there
 // are any newlines in stuff.
 //
-// Assure-space-in-buffer is not guarenteed to return all the space we want
+// Assure-space-in-buffer is not guaranteed to return all the space we want
 // so we might have to iterate.
 // 
 define method append-raw-output
@@ -333,8 +338,9 @@ end;
 
 // <logical-block> -- internal.
 //
-// Object representing logical blocks.  Hence the name.  Okay, so this isn't
-// a very useful comment, but what else is there to say?
+// Object representing logical blocks.  A logical block represents a body
+// of text that should be kept together ... on one line, if possible, and, if
+// not, then indented as a block.
 //
 define class <logical-block> (<object>)
   //
@@ -1055,17 +1061,6 @@ define method output-line (stream :: <pretty-stream>, newline :: <newline>)
       end;
   write(target, buffer, start: 0, end: amount-to-print);
   let line-number = stream.pretty-stream-line-number + 1;
-  //  (when (and *print-lines* (>= line-number *print-lines*))
-  //	(write-string " .." target)
-  //	(let ((suffix-length (logical-block-suffix-length
-  //			      (car (pretty-stream-blocks stream)))))
-  //	  (unless (zerop suffix-length)
-  //	    (let* ((suffix (pretty-stream-suffix stream))
-  //		   (len (length suffix)))
-  //	      (write-string suffix target
-  //			    :start (- len suffix-length)
-  //			    :end len))))
-  //	(throw 'line-limit-abbreviation-happened t))
   new-line(target);
   stream.pretty-stream-line-number := line-number;
   stream.pretty-stream-buffer-start-column := 0;
@@ -1167,6 +1162,7 @@ define method pprint-logical-block
 		       suffix: suffix);
   close(stream);
 end;
+
 //
 // When called on a <pretty-stream>, just use it directly.
 // 

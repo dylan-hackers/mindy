@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.3 2000/12/20 12:34:02 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.4 2002/06/03 22:22:12 dauclair Exp $
 
 
 ///======================================================================
@@ -58,7 +58,7 @@ define abstract sealed class <print-stream> (<stream>)
   //
   // Print-level holds the maximum depth to which the user wants recursive
   // printing to go.
-  slot print-level :: false-or(<integer>) = *default-level*,
+  slot print-level :: false-or(<integer>) = *print-level*,
     init-keyword: #"level";
   //
   // Print-depth holds the current level of printing.  When incremeting this
@@ -69,15 +69,15 @@ define abstract sealed class <print-stream> (<stream>)
   // Print-length holds the maximum number of elements the user wants a
   // sequence to be printed.  This does not apply to some sequences, such as
   // strings.
-  slot print-length :: false-or(<integer>) = *default-length*,
+  slot print-length :: false-or(<integer>) = *print-length*,
     init-keyword: #"length";
   //
   // Print-pretty? holds whether the user wants pretty printing.
-  slot print-pretty? :: <boolean> = *default-pretty?*,
+  slot print-pretty? :: <boolean> = *print-pretty*,
     init-keyword: #"pretty?";
   //
   // Print-circle? holds whether the user wants pretty printing.
-  slot print-circle? :: <boolean> = *default-circle?*,
+  slot print-circle? :: <boolean> = *print-circle?*,
     init-keyword: #"circle?";
   //
   // Circular-first-pass? indicates to the print function whether it is on
@@ -256,13 +256,12 @@ define sealed method integer-to-string
      end);
 end;
 
-
-
-
 /// Print-{level,length,depth,pretty?,circle?} generics and default methods.
 ///
+// Doug Auclair ponders ... are these methods ever used?  They are not
+// in the common-dylan spec!
 
-/// print-length -- Exported.
+/// print-length -- internal.
 ///
 define sealed generic print-length (stream :: <stream>)
     => length :: false-or(<integer>);
@@ -273,7 +272,7 @@ define method print-length (stream :: <stream>)
 end method;
 
 
-/// print-level -- Exported.
+/// print-level -- internal.
 ///
 define sealed generic print-level (stream :: <stream>)
     => level :: false-or(<integer>);
@@ -284,7 +283,7 @@ define method print-level (stream :: <stream>)
 end method;
 
 
-/// print-depth -- Exported.
+/// print-depth -- internal.
 ///
 define sealed generic print-depth (stream :: <stream>)
     => depth :: <integer>;
@@ -295,7 +294,7 @@ define method print-depth (stream :: <stream>)
 end method;
 
 
-/// print-pretty? -- Exported.
+/// print-pretty? -- internal.
 ///
 define sealed generic print-pretty? (stream :: <stream>)
     => pretty? :: <boolean>;
@@ -306,7 +305,7 @@ define method print-pretty? (stream :: <stream>)
 end method;
 
 
-/// print-circle? -- Exported.
+/// print-circle? -- internal.
 ///
 define sealed generic print-circle? (stream :: <stream>)
     => circle? :: <boolean>;
@@ -316,18 +315,16 @@ define method print-circle? (stream :: <stream>)
   #f;
 end method;
 
-
-
 /// Print and global defaults.
 ///
 
 /// These provide the default values for the keywords to print.  #f means
 /// there are no bounds, special checks for circularity, or pretty printing.
 ///
-define variable *default-level* :: false-or(<integer>) = #f;
-define variable *default-length* :: false-or(<integer>) = #f;
-define variable *default-circle?* :: <boolean> = #f;
-define variable *default-pretty?* :: <boolean> = #f;
+define variable *print-level* :: false-or(<integer>) = #f;
+define variable *print-length* :: false-or(<integer>) = #f;
+define variable *print-circle?* :: <boolean> = #f;
+define variable *print-pretty* :: <boolean> = #f;
 
 /// What to print when the current depth exceeds the users requested print
 /// level limit.
