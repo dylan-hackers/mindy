@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Wrapper Streams.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/wrapper-streams.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/wrapper-streams.dylan,v 1.2 1999/05/25 01:21:22 housel Exp $
 
 //======================================================================
 //
@@ -52,7 +52,8 @@ define open generic outer-stream-setter (outer-stream :: <stream>,
 /// Default implementation
 ///
 
-define inline method close (stream :: <wrapper-stream>, #rest keys, #all-keys)
+define inline method close
+    (stream :: <wrapper-stream>, #rest keys, #key, #all-keys)
   apply(close, stream.inner-stream, keys);
 end method;
 

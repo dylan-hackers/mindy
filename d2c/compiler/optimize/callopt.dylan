@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.2 1999/02/25 07:03:07 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.3 1999/05/25 01:21:24 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1153,7 +1153,7 @@ end method convert-to-known-call;
 
 define method change-call-kind
     (component :: <component>, call :: <abstract-call>, new-kind :: <class>,
-     #rest make-keyword-args, #all-keys)
+     #rest make-keyword-args, #key, #all-keys)
     => ();
   let new = apply(make, new-kind, dependents: call.dependents,
 		  depends-on: call.depends-on,

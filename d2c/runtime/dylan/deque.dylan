@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.5 1999/04/11 05:15:52 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.6 1999/05/25 01:21:25 housel Exp $
 
 //======================================================================
 //
@@ -56,7 +56,8 @@ define open abstract class <deque> (<stretchy-sequence>, <mutable-sequence>)
 end class <deque>;
 
 define sealed inline method make
-    (cls == <deque>, #rest rest, #all-keys) => (res :: <simple-object-deque>) 
+    (cls == <deque>, #rest rest, #key, #all-keys)
+ => (res :: <simple-object-deque>) 
   apply(make, <simple-object-deque>, rest);
 end method make;
 

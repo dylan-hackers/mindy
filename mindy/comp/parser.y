@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.2 1998/10/18 07:47:08 housel Exp $
+* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.3 1999/05/25 01:21:26 housel Exp $
 *
 * This file is the grammar.
 *
@@ -902,11 +902,12 @@ gf_rest_parameters:
 
 gf_keyword_parameters_list:
 	KEY gf_keyword_parameters_opt { free($1); $$ = $2; }
-    |	ALL_KEYS { free($1); $$ = allow_all_keywords(make_param_list()); }
 ;
 
 gf_keyword_parameters_opt:
 	/* epsilon */ { $$ = allow_keywords(make_param_list()); }
+    |	COMMA ALL_KEYS
+	{ free($1); free($2); $$ = allow_all_keywords(make_param_list()); }
     |	gf_keyword_parameters { $$ = $1; }
 ;
 
@@ -1054,8 +1055,6 @@ rest_parameter:
 keyword_parameters_list:
 	KEY keyword_parameters_opt
 	{ free($1); $$ = $2; }
-    |	ALL_KEYS
-	{ free($1); $$ = allow_all_keywords(make_param_list()); }
 ;
 
 keyword_parameters_opt:

@@ -175,7 +175,7 @@ define class <text-tag> (<object>)
 end class <text-tag>;
 
 define method initialize
-    (object :: <text-tag>, #next next, #rest options, #all-keys);
+    (object :: <text-tag>, #next next, #rest options, #key, #all-keys);
   apply(put-tk-line, object.widget, " tag configure ", object.name,
 	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline",
 		      #"justify", #"lmargin1", #"lmargin2", #"offset",
@@ -185,7 +185,8 @@ define method initialize
 end method initialize;
 
 define method configure
-    (tag :: <text-tag>, #rest options, #all-keys) => (tag :: <text-tag>);
+    (tag :: <text-tag>, #rest options, #key, #all-keys)
+ => (tag :: <text-tag>);
   apply(put-tk-line, tag.widget, " tag configure ", tag.name,
 	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline",
 		      #"justify", #"lmargin1", #"lmargin2", #"offset",

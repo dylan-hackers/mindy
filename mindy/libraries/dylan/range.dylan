@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/range.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/range.dylan,v 1.2 1999/05/25 01:21:27 housel Exp $
 
 //======================================================================
 //
@@ -376,7 +376,7 @@ define constant range =
 // of one of the concrete subclasses <bounded-range> or
 // <unbounded-range>.
 //
-define method make (class-to-make == <range>, #rest keys, #all-keys)
+define method make (class-to-make == <range>, #rest keys, #key, #all-keys)
       => new-range :: <range>;
    apply (range, keys);
 end method;

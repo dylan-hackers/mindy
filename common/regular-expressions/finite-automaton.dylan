@@ -4,7 +4,7 @@ synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/finite-automaton.dylan,v 1.2 1998/11/11 02:36:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/regular-expressions/finite-automaton.dylan,v 1.3 1999/05/25 01:21:21 housel Exp $
 
 //======================================================================
 //
@@ -88,7 +88,7 @@ define variable machine = make(<stretchy-vector>);
 define variable state-count = 0;
 
 define method initialize(s :: <NFA-state>, #next next-method,
-			 #all-keys);
+			 #key, #all-keys);
   s.number := state-count;
   machine[s.number] := s;
   state-count := state-count + 1;

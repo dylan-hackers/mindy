@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/dump.dylan,v 1.2 1998/09/09 13:40:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/dump.dylan,v 1.3 1999/05/25 01:21:23 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -78,7 +78,7 @@ define method do-synchronize (stream :: <dump-state-stream>)
   synchronize(stream.target);
 end;
 
-define method close (stream :: <dump-state-stream>, #all-keys) => ();
+define method close (stream :: <dump-state-stream>, #key, #all-keys) => ();
 end;
 
 define method pprint-logical-block

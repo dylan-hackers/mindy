@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.2 1998/08/10 15:31:21 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.3 1999/05/25 01:21:22 housel Exp $
 
 //======================================================================
 //
@@ -68,7 +68,7 @@ end class;
 
 define sealed domain make (singleton(<fd-stream>));
 
-define sealed method close (stream :: <fd-stream>, #all-keys) => ();
+define sealed method close (stream :: <fd-stream>, #key, #all-keys) => ();
   if (stream.fd-direction == #"input")
     // Get buffer to make sure no one holds it.
     get-input-buffer(stream, wait?: #f);
@@ -487,7 +487,7 @@ define sealed method initialize
 end method;
 
 define sealed method close (stream :: <fd-file-stream>, #next next-method, 
-			    #all-keys)
+			    #key, #all-keys)
  => ();
   next-method();
   if ((stream.file-direction == #"input-output")

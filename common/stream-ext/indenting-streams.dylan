@@ -1,6 +1,6 @@
 module: indenting-streams
 author: William Lott
-rcs-header: $Header: /scm/cvs/src/common/stream-ext/indenting-streams.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/stream-ext/indenting-streams.dylan,v 1.2 1999/05/25 01:21:22 housel Exp $
 
 //======================================================================
 //
@@ -226,7 +226,7 @@ define method do-synchronize (stream :: <indenting-stream>)
   synchronize(stream.inner-stream);
 end;
 
-define method close (stream :: <indenting-stream>, #all-keys) => ();
+define method close (stream :: <indenting-stream>, #key, #all-keys) => ();
   force-output(stream);
 end;
 

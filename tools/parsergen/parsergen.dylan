@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.2 1998/11/11 15:54:33 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.3 1999/05/25 01:21:28 housel Exp $
 
 //======================================================================
 //
@@ -114,7 +114,8 @@ define class <token> (<terminal>)
   constant slot token-id :: <integer>, required-init-keyword: #"id";
 end class <token>;
 
-define method initialize (result :: <token>, #next next-method, #all-keys)
+define method initialize
+    (result :: <token>, #next next-method, #key, #all-keys)
   next-method();
   result.grammar-symbol-first := list(result);
 end method initialize;

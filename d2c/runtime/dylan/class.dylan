@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.3 1999/05/24 17:14:21 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.4 1999/05/25 01:21:25 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -552,10 +552,10 @@ define method compute-layout (class :: <class>) => ();
 
 // The default make method.
 
-define open generic make (type :: <type>, #rest supplied-keys, #all-keys)
+define open generic make (type :: <type>, #rest supplied-keys, #key, #all-keys)
     => instance;
 
-define method make (class :: <class>, #rest supplied-keys, #all-keys)
+define method make (class :: <class>, #rest supplied-keys, #key, #all-keys)
     => instance;
   if (class.class-abstract?)
     error("Can't make instances of %= because it is abstract.", class);
@@ -599,9 +599,10 @@ define method do-defered-evaluations (class :: <class>) => ();
   class.class-defered-evaluations := #f;
 end;
 
-define open generic initialize (instance :: <object>, #rest keys, #all-keys);
+define open generic initialize
+    (instance :: <object>, #rest keys, #key, #all-keys);
 
-define inline method initialize (instance :: <object>, #all-keys) => ();
+define inline method initialize (instance :: <object>, #key, #all-keys) => ();
 end;
 
 

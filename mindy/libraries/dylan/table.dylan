@@ -1,6 +1,6 @@
 module:	    %Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/table.dylan,v 1.2 1998/11/11 15:54:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/table.dylan,v 1.3 1999/05/25 01:21:27 housel Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -163,7 +163,7 @@ define abstract class <value-table> (<table>)
 end class <value-table>;
 
 define method make 
-    (c == <table>, #rest key-value-pairs, #all-keys)
+    (c == <table>, #rest key-value-pairs, #key, #all-keys)
  =>  table :: <object-table>;
   apply(make, <object-table>, key-value-pairs);
 end method make;

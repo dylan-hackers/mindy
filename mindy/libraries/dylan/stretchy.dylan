@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/stretchy.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/stretchy.dylan,v 1.2 1999/05/25 01:21:27 housel Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ define class <stretchy-vector> (<stretchy-collection>, <vector>)
 end class <stretchy-vector>;
 
 define method make
-    (cls == <stretchy-vector>, #rest keys, #all-keys)
+    (cls == <stretchy-vector>, #rest keys, #key, #all-keys)
  => vec :: <simple-stretchy-vector>;
   apply(make, <simple-stretchy-vector>, keys);
 end method;

@@ -60,7 +60,7 @@ define generic define-widget
 // Configure accepts pretty much the same options as initialize, and uses them
 // to change the state of the object.
 //
-define generic configure (widget :: <object>, #all-keys);
+define generic configure (widget :: <object>, #key, #all-keys);
 
 // Returns a complete list of options for the given widget.  Each option
 // consists of a sequence of the switch name, rdb name, rdb class, default,
@@ -87,7 +87,7 @@ define generic destroy-window (window :: <window>) => ();
 // Implements the general Tcl/TK "pack" command.
 //
 define generic pack
-    (window :: <window>, #all-keys) => (window :: <window>);
+    (window :: <window>, #key, #all-keys) => (window :: <window>);
 
 // Removes a window from the packer's knowledge -- (i.e. unmaps it.)
 //
@@ -293,7 +293,7 @@ end method tk-as;
 // to change the state of the object.
 //
 define method configure
-    (window :: <window>, #next next, #rest keys, #all-keys);
+    (window :: <window>, #next next, #rest keys, #key, #all-keys);
   let cls = window.object-class;
   let options = std-options(options-table[cls], #f, keys);
   apply(put-tk-line, window, " configure", options);

@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.3 1999/04/17 17:43:57 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.4 1999/05/25 01:21:22 housel Exp $
 
 //======================================================================
 //
@@ -222,7 +222,7 @@ end method;
 /// initialize
 ///
 define method initialize (stream :: <stream>, #next next-method,
-			  #all-keys)
+			  #key, #all-keys)
  => ();
   stream.outer-stream := stream;
   next-method();
@@ -306,9 +306,10 @@ end method make;
 
 /// close -- Exported.
 ///
-define open generic close (stream :: <stream>, #all-keys);
+define open generic close (stream :: <stream>, #key, #all-keys);
 
-define sealed method close (stream :: <simple-sequence-stream>, #all-keys);
+define sealed method close (stream :: <simple-sequence-stream>,
+			    #key, #all-keys);
   block ()
     lock-stream(stream);
     if (stream.direction ~== #"input")

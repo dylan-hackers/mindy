@@ -271,7 +271,7 @@ define method initialize
   object.buffer := make(<buffer>, size: size, end: size);
 end method initialize;
 
-define method close (stream :: <window-stream>, #all-keys) => ();
+define method close (stream :: <window-stream>, #key, #all-keys) => ();
   #f;
 end method close;
 

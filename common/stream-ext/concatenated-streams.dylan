@@ -1,6 +1,6 @@
 module: concatenated-streams
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/common/stream-ext/concatenated-streams.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/stream-ext/concatenated-streams.dylan,v 1.2 1999/05/25 01:21:22 housel Exp $
 
 //======================================================================
 //
@@ -160,7 +160,7 @@ define inline function do-combo-stream-function
 end function do-combo-stream-function;
 
 define inline method close 
-    (stream :: <concatenated-stream>, #rest keys, #all-keys) => ();
+    (stream :: <concatenated-stream>, #rest keys, #key, #all-keys) => ();
   stream.get-next-component-stream 
     := method () error("Combo-stream was closed!");  end method;
   apply(close, stream.inner-stream, keys);

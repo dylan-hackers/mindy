@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, adapted from code by Bill Chiles
 synopsis: <buffered-byte-string-output-stream> -- used inside d2c.
-RCS-header: $Header: /scm/cvs/src/common/streams/bbso-stream.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/bbso-stream.dylan,v 1.2 1999/05/25 01:21:22 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -218,7 +218,7 @@ end method;
 /// close
 ///
 define sealed method close (stream :: <buffered-byte-string-output-stream>,
-			    #all-keys) 
+			    #key, #all-keys) 
  => ();
   // Get the buffer to make sure no one is using it.
   get-output-buffer(stream, bytes: 0);

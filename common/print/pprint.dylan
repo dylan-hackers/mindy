@@ -2,7 +2,7 @@ module: pprint
 author: wlott@cs.cmu.edu
 synopsis: Most of Dick Water's pretty printer.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.1 1998/05/03 19:55:01 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.2 1999/05/25 01:21:19 housel Exp $
 
 //======================================================================
 //
@@ -254,7 +254,7 @@ define method do-synchronize (stream :: <pretty-stream>) => ();
   synchronize-output(stream.pretty-stream-target);
 end;
 
-define method close (stream :: <pretty-stream>, #all-keys) => ();
+define method close (stream :: <pretty-stream>, #key, #all-keys) => ();
   unless (stream.pretty-stream-closed?)
     maybe-output(stream, #f);
     expand-tabs(stream, #f);

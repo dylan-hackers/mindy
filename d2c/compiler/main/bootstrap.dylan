@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.dylan,v 1.1 1998/05/03 19:55:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.dylan,v 1.2 1999/05/25 01:21:23 housel Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -718,8 +718,8 @@ define open generic %instance? (value, type :: <type>) => res :: <boolean>;
 define open generic subtype? (type1 :: <type>, type2 :: <type>)
     => res :: <boolean>;
 define open generic error (msg, #rest args) => res :: type-union();
-define open generic make (class :: <class>, #all-keys) => thing;
-define open generic initialize (instance, #all-keys);
+define open generic make (class :: <class>, #key, #all-keys) => thing;
+define open generic initialize (instance, #key, #all-keys);
 define open generic \== (x, y) => res :: <boolean>;
 define open generic slow-functional-== (x, y) => res :: <boolean>;
 define open generic functional-== (class :: <class>, x, y) => res :: <boolean>;
@@ -844,11 +844,12 @@ define method instance?
   %instance?(object, type);
 end;
 
-define method make (class :: <class>, #rest keys, #all-keys) => res;
+define method make (class :: <class>, #rest keys, #key, #all-keys) => res;
   error("make not supported in the bootstrap.");
 end;
 
-define inline method initialize (object :: <object>, #rest keys, #all-keys)
+define inline method initialize
+    (object :: <object>, #rest keys, #key, #all-keys)
     => ();
 end;
 

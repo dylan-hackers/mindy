@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.2 1999/05/25 01:21:25 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1518,10 +1518,6 @@ key-parameter-list (KEY keyword-parameters-comma ALL-KEYS)
   make(<parameter-list>, keys: as(<simple-object-vector>, %2), all-keys: #t);
 %
 
-key-parameter-list (ALL-KEYS)
-  make(<parameter-list>, keys: #[], all-keys: #t);
-%
-
 :type parameters <stretchy-vector>
 
 parameters (parameter)
@@ -1909,10 +1905,6 @@ pattern-keywords-opt (pattern-keywords)
 %
 
 :type pattern-keywords <property-list-pattern>
-
-pattern-keywords (ALL-KEYS)
-  make(<property-list-pattern>, keys: #[], all-keys: #t);
-%
 
 pattern-keywords (pattern-keywords-aux)
   make(<property-list-pattern>, keys: as(<simple-object-vector>, %1));

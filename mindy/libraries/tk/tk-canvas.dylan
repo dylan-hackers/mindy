@@ -74,7 +74,7 @@ define method as (cls == <string>, value :: <canvas-tag>)
 end method as;
 
 define method configure
-    (item :: <tag-or-item>, #rest options, #all-keys)
+    (item :: <tag-or-item>, #rest options, #key, #all-keys)
  => (item :: <tag-or-item>);
   apply(put-tk-line, item.window, " itemconfigure ", item.name,
 	std-options(#[#"anchor", #"arrow", #"arrowshape", #"capstyle",

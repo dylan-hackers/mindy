@@ -159,7 +159,7 @@ define method add-cascade
 		    #f, rest));
 end method add-cascade;
 
-define method add-separator (menu :: <menu>, #rest rest, #key , #all-keys);
+define method add-separator (menu :: <menu>, #rest rest, #key, #all-keys);
   apply(put-tk-line, menu, " add separator ",
 	std-options(#[],
 		    #f, rest));
