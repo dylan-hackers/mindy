@@ -31,22 +31,22 @@ copyright: See below.
 define open class <wrapper-stream> (<stream>)
   // ### This slot's init keyword should be required, but right now
   // I can't un-require it in subclasses with d2c.
-  slot inner-stream :: <stream>, init-keyword: inner-stream:;
+  slot inner-stream :: false-or(<stream>), init-keyword: inner-stream:;
 end class;
 
 define open generic inner-stream (stream :: <wrapper-stream>) 
- => res :: <stream>;
+ => res :: false-or(<stream>);
 
-define open generic inner-stream-setter (inner-stream :: <stream>,
+define open generic inner-stream-setter (inner-stream :: false-or(<stream>),
 					 stream :: <wrapper-stream>)
- => res :: <stream>;
+ => res :: false-or(<stream>);
 
 define open generic outer-stream (stream :: <stream>)
- => res :: <stream>;
+ => res :: false-or(<stream>);
 
-define open generic outer-stream-setter (outer-stream :: <stream>,
+define open generic outer-stream-setter (outer-stream :: false-or(<stream>),
 					 stream :: <stream>)
- => res :: <stream>;
+ => res :: false-or(<stream>);
 
 /// Default implementation
 ///
