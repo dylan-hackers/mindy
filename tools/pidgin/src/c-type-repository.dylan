@@ -162,7 +162,7 @@ end;
 
 define inline method make
     (class :: subclass(<c-derived-type>),
-     #next next-method,
+     #next next-method, // XXX - do we want next-method here?
      #rest keys,
      #key repository,
      #all-keys)

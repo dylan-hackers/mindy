@@ -310,6 +310,7 @@ define class <c-pointer-type> (<c-pointer-valued-type>)
 end;
 
 define class <c-array-type> (<c-pointer-valued-type>)
+  // XXX - may want to change this to c-array-length.
   slot c-array-size :: false-or(<integer>),
     init-keyword: size:,
     init-value: #f;
