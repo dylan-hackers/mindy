@@ -29,4 +29,5 @@ define module d2c-gnu
   use string-conversions;
   use substring-search;
   use table-extensions;
+  use piped-exec;
 end module d2c-gnu;
