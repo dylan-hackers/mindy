@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.2 1998/10/05 02:46:01 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.3 1999/05/24 17:05:30 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -447,7 +447,7 @@ define-primitive-emitter
        format(stream, "%s(", func.value.literal-value);
      elseif(csubtype?(func.derived-type, specifier-type(#"<raw-pointer>")))
        format(stream, "((%s (*)())%s)(",
-	      result-rep.representation-c-type,
+	      if (result-rep) result-rep.representation-c-type else "void" end,
 	      ref-leaf(*ptr-rep*, func, file));
      else
        error("First argument to call-out must be a literal string "
@@ -701,6 +701,7 @@ define-primitive-emitter
      let rep = select (repsym)
 		 #"general" => *general-rep*;
 		 #"heap" => *heap-rep*;
+		 #"boolean" => *boolean-rep*;
 	       end select;
      let offset-dep = repsym-dep.dependent-next;
      let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
@@ -733,6 +734,7 @@ define-primitive-emitter
      let rep = select (repsym)
 		 #"general" => *general-rep*;
 		 #"heap" => *heap-rep*;
+		 #"boolean" => *boolean-rep*;
 	       end select;
      let newval = ref-leaf(rep, newval-dep.source-exp, file);
      let instance = ref-leaf(*heap-rep*, instance-dep.source-exp, file);
