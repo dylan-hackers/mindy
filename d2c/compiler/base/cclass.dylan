@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.31 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.32 1996/01/11 18:45:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -887,7 +887,8 @@ define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
   let offset = find-position(class.instance-slots-layout,
 			     rep.representation-size,
 			     rep.representation-alignment);
-  slot.slot-positions := pair(pair(class, offset), slot.slot-positions);
+  slot.slot-positions
+    := add-position-if-necessary(class, offset, slot.slot-positions);
 end;
 
 define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
@@ -900,16 +901,35 @@ define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout, 0,
 			     rep.representation-alignment);
-  slot.slot-positions := pair(pair(class, offset), slot.slot-positions);
+  slot.slot-positions
+    := add-position-if-necessary(class, offset, slot.slot-positions);
 end;
 
 define method layout-slot
     (slot :: <each-subclass-slot-info>, class :: <cclass>)
     => ();
   let posn = class.each-subclass-slots-count;
-  slot.slot-positions := pair(pair(class, posn), slot.slot-positions);
+  slot.slot-positions
+    := add-position-if-necessary(class, posn, slot.slot-positions);
   class.each-subclass-slots-count := posn + 1;
 end;
+
+define method add-position-if-necessary
+    (class :: <cclass>, offset :: <fixed-integer>, positions :: <list>)
+    => res :: <list>;
+  block (return)
+    for (entry :: <pair> in positions)
+      if (csubtype?(class, entry.head))
+	if (offset == entry.tail)
+	  return(positions);
+	else
+	  return(pair(pair(class, offset), positions));
+	end if;
+      end if;
+    end for;
+    pair(pair(class, offset), positions);
+  end block;
+end method add-position-if-necessary;
 
 
 // Compile time determination of slot offsets and other gunk.
