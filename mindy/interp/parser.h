@@ -23,14 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.3 1994/10/05 21:04:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.4 1995/03/13 21:42:33 nkramer Exp $
 *
 \**********************************************************************/
 
 #define YYSTYPE obj_t
 extern YYSTYPE yylval;
 
-#include "parser.tab.h"
+#include "parser-tab.h"
 
 extern YYSTYPE parse_command(FILE *input);
 

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.9 1995/03/12 16:44:50 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.10 1995/03/13 21:42:49 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -62,14 +62,14 @@ LIBS	=		../compat/libcompat.a @LIBS@
 ## end of configure written portion
 ##
 
-OBJS = parser.tab.o lexer.o \
+OBJS = parser-tab.o lexer.o \
 	bool.o class.o coll.o debug.o def.o error.o func.o gc.o init.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
 	obj.o print.o str.o sym.o thread.o type.o load.o value.o vec.o \
 	char.o handler.o instance.o input.o driver.o \
 	table.o fd.o buf.o weak.o brkpt.o extern.o ext-init.o
 
-SRCS = parser.tab.c lexer.c \
+SRCS = parser-tab.c lexer.c \
 	bool.c class.c coll.c debug.c def.c error.c func.c gc.c init.c \
 	interp.c list.c lose.c mindy.c misc.c module.c nlx.c num.c \
 	obj.c print.c str.c sym.c thread.c type.c load.c value.c vec.c \
@@ -82,10 +82,10 @@ mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy
 	mv -f ,mindy mindy
 
-${SRCDIR}/parser.tab.c: ${SRCDIR}/parser.y
+${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	${YACC} -d ${SRCDIR}/parser.y
-	mv y.tab.c ${SRCDIR}/parser.tab.c
-	mv y.tab.h ${SRCDIR}/parser.tab.h
+	mv y.tab.c ${SRCDIR}/parser-tab.c
+	mv y.tab.h ${SRCDIR}/parser-tab.h
 
 ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: ${SRCDIR}/$(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
 	$(PERL) ${SRCDIR}/make-init.pl ${SRCDIR}/$(EXTERN-INCLUDES)
@@ -96,7 +96,7 @@ clean:
 	rm -f ${OBJS} mindy *~ \#* core
 
 realclean:
-	rm -f ${OBJS} mindy parser.tab.c parser.tab.h lexer.tab.c Makefile *~ \#* core extern[12].def
+	rm -f ${OBJS} mindy parser-tab.c parser-tab.h lexer-tab.c Makefile *~ \#* core extern[12].def
 
 install: mindy
 	${INSTALL_PROGRAM} mindy ${BINDIR}/mindy
@@ -244,7 +244,7 @@ interp.o:  ${SRCDIR}/interp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 
 lexer.o:  ${SRCDIR}/lexer.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
             ${SRCDIR}/mindy.h ${SRCDIR}/lexer.h ${SRCDIR}/parser.h \
-            ${SRCDIR}/parser.tab.h ${SRCDIR}/list.h ${SRCDIR}/char.h \
+            ${SRCDIR}/parser-tab.h ${SRCDIR}/list.h ${SRCDIR}/char.h \
             ${SRCDIR}/str.h ${SRCDIR}/sym.h ${SRCDIR}/num.h \
             ${SRCDIR}/bool.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lexer.c
@@ -314,11 +314,11 @@ obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
 
-parser.tab.o:  ${SRCDIR}/parser.tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
-                 ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser.tab.h \
+parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
+                 ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser-tab.h \
                  ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
                  ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
-	${CC} -c ${CFLAGS} ${SRCDIR}/parser.tab.c
+	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
             ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
