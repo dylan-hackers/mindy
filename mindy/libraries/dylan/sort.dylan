@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.6 1995/11/16 13:54:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.7 1995/11/18 04:08:41 rgs Exp $
 
 //======================================================================
 //
@@ -327,21 +327,25 @@ end method merge-sort;
 // median-of-three -- internal
 //
 // Pick the index of the pivot point by picking the index corresponding to
-// median(vec[first], vec[middle], vec[last]).
+// median(vec[first], vec[middle], vec[last - 1]).  Note: In accordance with
+// convention, "last" is an exclusive bound.
 //
 define constant median-of-three = method 
     (vec :: <vector>, first :: <fixed-integer>, last :: <fixed-integer>,
      less-than :: <function>)
  => pivot-index :: <fixed-integer>;
+  let first-elem = vec[first];
+  let last-elem = vec[last - 1];
   let middle = truncate/(first + last, 2);
-  if (less-than(vec[first], vec[last]))
-    if (less-than(vec[middle], vec[last]))
+  let middle-elem = vec[middle];
+  if (less-than(first-elem, last-elem))
+    if (less-than(middle-elem, last-elem))
       middle;
     else 
       last;
     end if;
-  else  // vec[last] <= vec[first]
-    if (less-than(vec[middle], vec[first]))
+  else  // last-elem <= first-elem
+    if (less-than(middle-elem, first-elem))
       middle;
     else
       first;
@@ -366,10 +370,10 @@ end method;
 define method partition!(vector :: <vector>,
 			 #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
-  let pivot-key = median-of-three(vector, first, last, test);
+  let pivot-key = median-of-three(vector, first, last - 1, test);
   let pivot-element = vector[pivot-key];
   let small-key = first;
-  let large-key = pivot-key;
+  let large-key = last - 1;
   block (break-while)
     while (#t)
       while (test(vector[small-key], pivot-element))
