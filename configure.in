@@ -358,6 +358,7 @@ AC_OUTPUT(Makefile \
 	libraries/coll-ext/Makefile \
 	libraries/random/Makefile \
 	libraries/string-ext/Makefile \
+	libraries/tk/Makefile \
 	demos/Makefile \
 	demos/hello-world/Makefile \
 	demos/cat/Makefile \
