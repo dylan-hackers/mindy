@@ -1,18 +1,12 @@
 Building d2c for Macintosh on CodeWarrior.
 
-PROBLEM: Coercion of a variable of a type to the same type.
-SOLUTION: Remove the type cast.
-
-PROBLEM: Illegal initialization of struct with "" or {}.
-SOLUTION: Comment out initialization and add a 256 char dummy variable after the struct to 
-be safe.
-
 PROBLEM: CodeWarrior doesn't allow more than one file of the same name in the same project.
 SOLUTION: Rename the files with their library name as the prefix, or use sub-projects.
 
 PROBLEM: Some files have long names.
 SOLUTION: Use MACOS-9 and a suitable CVS client, rename the file on UN*X/PC, or grab the 
-tarball and decompress with a suitable utility.
+tarball and decompress with a suitable utility. D2c and CW plugin supports the .dyl
+extension, shortening from .dylan already helps sometimes.
 
 PROBLEM: file-locations and version files not present.
 SOLUTION: Use the pre-made ones from the d2c:compiler:Macintosh folder.
@@ -25,4 +19,23 @@ PROBLEM: Not all the files this project needs are obvious.
 SOLUTION: The runtime needs MacTextFileIO.c from mindy:Macintosh:... and mac-fds.c from 
 file-io.
 
-Any other questions to Rob Myers: yarrel@netscape.net/robmyers@mac.com.
+Any other questions to Rob Myers: robmyers@mac.com.
+
+---------------------------------------------------------------------------------------------
+
+Building the CW plugin on CodeWarrior ProX (X >= 6).
+
+0) Grab MrC 5.0d3 (or better) from the Apple MPW site. Install the plugin variant.
+
+1) Set up a global source tree "Generated" in the IDE. All output files go there.
+
+2) Import d2c:runtime:Macintosh:d2c-runtime-MrC.mcp.xml
+
+3) Rebuild the "Build all" target. Some files need the obvious treatment as detailed above.
+
+
+
+
+Any other questions to Gabor Greif: gabor@mac.com.
+
+---------------------------------------------------------------------------------------------
