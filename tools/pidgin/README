@@ -1,0 +1,22 @@
+This is a development version of Pidgin, a tool for parsing C headers and
+generating Dylan bindings. Many of the parts are designed to be reusable.
+
+This version is intended for review and public comment.
+
+Current status:
+
+ * ANSI C library
+   - C type model is mostly complete
+   - C declaration model is half done
+
+ * C parser
+   - Not yet integrated from Melange
+
+Please mail your feedback to <eric.kidd@pobox.com>. You can find more
+information about pidgin in the comp.lang.dylan newsgroup and on the
+Gwydion Dylan website at:
+
+  http://www.gwydiondylan.org/
+
+Eric Kidd
+26 March 1999
