@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.1 1994/06/06 17:58:46 dpierce Exp $
+//   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.2 1994/06/08 13:01:54 dpierce Exp $
 //
 // This file contains definitions of classes and functions for the
 // Dylan range collection class.  Ranges represent linear arithmetic
@@ -555,12 +555,12 @@ end method;
 // 
 // Trying to reduce an unbounded range will not terminate.
 //
-define method reduce (procedure, initial-value,
+define method reduce (procedure :: <function>, initial-value,
 		      range :: <unbounded-range>)
    error ("REDUCE not applicable for unbounded <range>");
 end method;
 //
-define method reduce1 (procedure, range :: <unbounded-range>)
+define method reduce1 (procedure :: <function>, range :: <unbounded-range>)
    error ("REDUCE1 not applicable for unbounded <range>");
 end method;
 
@@ -648,7 +648,7 @@ end method;
 
 // choose
 //
-define method choose (predicate, range :: <unbounded-range>)
+define method choose (predicate :: <function>, range :: <unbounded-range>)
    error ("CHOOSE not applicable for unbounded <range>");
 end method;
 
