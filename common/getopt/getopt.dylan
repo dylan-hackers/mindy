@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.8 1998/12/20 00:25:36 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.9 1998/12/20 23:54:38 emk Exp $
 
 //======================================================================
 //
@@ -14,7 +14,8 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.8 1998/12/20 00
 //  use, provided that the following conditions are observed:
 // 
 //  1. This copyright notice must be retained in full on any copies
-//     and on appropriate parts of any derivative works.
+//     and on appropriate parts of any derivative works. (Other names
+//     and years may be added, so long as no existing ones are removed.)
 // 
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,

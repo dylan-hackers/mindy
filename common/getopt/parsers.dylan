@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
-rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.1 1998/12/20 15:10:24 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.2 1998/12/20 23:54:38 emk Exp $
 
 //======================================================================
 //
@@ -14,7 +14,8 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.1 1998/12/20 1
 //  use, provided that the following conditions are observed:
 // 
 //  1. This copyright notice must be retained in full on any copies
-//     and on appropriate parts of any derivative works.
+//     and on appropriate parts of any derivative works. (Other names
+//     and years may be added, so long as no existing ones are removed.)
 // 
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
@@ -120,9 +121,8 @@ end method parse-option;
 //  <repeated-parameter-option-parser>
 //======================================================================
 //  Similar to the above, but these options may appear more than once.
-//  The final value is a list of parameter values from each appearance.
-//  Defaults to the empty list, of course. Duplicate values are
-//  discarded.
+//  The final value is a deque of parameter values in the order they
+//  appeared on the command line. It defaults to the empty deque.
 //  
 //  Examples:
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
@@ -133,7 +133,7 @@ end class <repeated-parameter-option-parser>;
 define method reset-option-parser
     (parser :: <repeated-parameter-option-parser>, #next next-method) => ()
   next-method();
-  parser.option-value := #();
+  parser.option-value := make(<deque> /* of: <string> */);
 end;
 
 define method parse-option
@@ -144,10 +144,7 @@ define method parse-option
   if (instance?(peek-argument-token(arg-parser), <equals-token>))
     get-argument-token(arg-parser);
   end if;
-  parser.option-value :=
-    add-new!(parser.option-value,
-	     get-argument-token(arg-parser).token-value,
-	     test: \=);
+  push-last(parser.option-value, get-argument-token(arg-parser).token-value);
 end method parse-option;
 
 

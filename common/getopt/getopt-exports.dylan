@@ -2,7 +2,7 @@ library: parse-arguments
 module: dylan-user
 author:  Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.5 1998/12/20 00:25:35 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.6 1998/12/20 23:54:37 emk Exp $
 
 //======================================================================
 //
@@ -14,7 +14,8 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.5 1998/
 //  use, provided that the following conditions are observed:
 // 
 //  1. This copyright notice must be retained in full on any copies
-//     and on appropriate parts of any derivative works.
+//     and on appropriate parts of any derivative works. (Other names
+//     and years may be added, so long as no existing ones are removed.)
 // 
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
