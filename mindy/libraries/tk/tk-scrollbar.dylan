@@ -33,8 +33,9 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <scrollbar> (<window>) end class;
 
 define-widget(<scrollbar>, "scrollbar",
-	      #"activeforeground", #"command", #"orient", #"repeatdelay",
-	      #"repeatinterval", #"width");
+	      #"activebackground", #"command", #"orient", #"repeatdelay",
+	      #"repeatinterval", #"width", #"troughcolor", #"jump",
+	      #"activerelief", #"elementborderwidth");
 
 define method scroll
     (widget :: <window>, #rest rest, #key orient = "vertical", #all-keys)
