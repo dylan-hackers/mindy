@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.6 1994/05/19 22:33:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.7 1994/05/19 23:11:26 wlott Exp $
 *
 * This file does whatever.
 *
@@ -430,7 +430,12 @@ static void dylan_sf_sf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
+#ifdef hpux
+    /* There is apparently no rint on the hps. */
+    int res = floor(x+0.5);
+#else
     int res = rint(x);
+#endif
 
     thread->sp = old_sp + 2;
 
@@ -543,7 +548,12 @@ static void dylan_df_df_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
+#ifdef hpux
+    /* There is apparently no rint on the hps. */
+    int res = floor(x+0.5);
+#else
     int res = rint(x);
+#endif
 
     thread->sp = old_sp + 2;
 
@@ -834,14 +844,14 @@ void init_num_functions(void)
 			     FALSE, FALSE)->value,
 	       make_raw_method("floor/", two_ints, FALSE, obj_False,
 			       two_ints, obj_False, dylan_int_int_floor));
-    add_method(find_variable(module_BuiltinStuff, symbol("round/"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("round/", two_ints, FALSE, obj_False,
-			       two_ints, obj_False, dylan_int_int_round));
     add_method(find_variable(module_BuiltinStuff, symbol("ceiling/"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("ceiling/", two_ints, FALSE, obj_False,
 			       two_ints, obj_False, dylan_int_int_ceil));
+    add_method(find_variable(module_BuiltinStuff, symbol("round/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("round/", two_ints, FALSE, obj_False,
+			       two_ints, obj_False, dylan_int_int_round));
     define_method("<", two_ints,
 		  FALSE, obj_False, obj_BooleanClass, dylan_int_int_less);
     define_method("=", two_ints,
@@ -877,11 +887,11 @@ void init_num_functions(void)
 			     FALSE, FALSE)->value,
 	       make_raw_method("floor", sf, FALSE, obj_False,
 			       int_and_sf, obj_False, dylan_sf_sf_floor));
-    add_method(find_variable(module_BuiltinStuff, symbol("round"),
+    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("ceiling", sf, FALSE, obj_False,
 			       int_and_sf, obj_False, dylan_sf_sf_ceil));
-    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
+    add_method(find_variable(module_BuiltinStuff, symbol("round"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("round", sf, FALSE, obj_False,
 			       int_and_sf, obj_False, dylan_sf_sf_round));
@@ -912,11 +922,11 @@ void init_num_functions(void)
 			     FALSE, FALSE)->value,
 	       make_raw_method("floor", df, FALSE, obj_False,
 			       int_and_df, obj_False, dylan_df_df_floor));
-    add_method(find_variable(module_BuiltinStuff, symbol("round"),
+    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("ceiling", df, FALSE, obj_False,
 			       int_and_df, obj_False, dylan_df_df_ceil));
-    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
+    add_method(find_variable(module_BuiltinStuff, symbol("round"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("round", df, FALSE, obj_False,
 			       int_and_df, obj_False, dylan_df_df_round));
