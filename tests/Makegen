@@ -39,3 +39,27 @@ do emit_library_rule(
 do emit_library_rule(
     'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
+
+# I only wrote this function because of the .\ for win32 vs. ./ for
+# Unix issue.
+sub emit_run_tests_rule {
+    local (@tests) = @_;
+    local ($test);
+    local ($extension) = $win32 ? ".exe" : "";
+    print "run_tests : ";
+    foreach $test (@tests) {
+	print "$test$extension ";
+    }
+    print "\n";
+
+    foreach $test (@tests) {
+	local ($test) = "." . ($win32 ? "\\" : "/") . $test;
+	print "\t$test\n";
+    }
+    push(@compile_dependencies, "run_tests");
+}
+
+do emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test', 
+		       'table-ext-test', 'random-test', 'matrix-test', 
+		       'coll-ext-test', 'print-test', 'format-test', 
+		       'format-out-test', 'time-test');
