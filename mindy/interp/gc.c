@@ -23,13 +23,17 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.22 1996/01/19 11:25:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.23 1996/01/22 23:00:40 wlott Exp $
 *
 * This file is the garbage collector.
 *
 \**********************************************************************/
 
 #include "../compat/std-c.h"
+
+#ifdef hpux
+#include <sys/mman.h>
+#endif
 
 #include "mindy.h"
 #include "class.h"
@@ -126,9 +130,17 @@ void *raw_alloc(int bytes)
 	    FreeBlocks = block->next;
 	}
 	else {
+#ifdef hpux
+	    block = mmap(NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE,
+			 MAP_ANONYMOUS | MAP_VARIABLE | MAP_PRIVATE,
+			 -1, 0);
+            if (block == (void *)-1)
+		lose("Heap is full!  Can't allocate %d bytes", bytes);
+#else
 	    block = malloc(BLOCK_SIZE);
             if (block == NULL)
 		lose("Heap is full!  Can't allocate %d bytes", bytes);
+#endif
 	    block->base = (char *)block + sizeof(struct block);
 	    block->end = (char *)block + BLOCK_SIZE;
 	}
