@@ -39,9 +39,12 @@ define class <variable-definition>
     init-value: #f, init-keyword: type-defn:;
 end;
 
-
-// Seals for file var-defns.dylan
-
-// <variable-definition> -- subclass of <bindings-definition>, <abstract-variable-definition>
 define sealed domain make(singleton(<variable-definition>));
 define sealed domain initialize(<variable-definition>);
+
+// definition-kind{<variable-definition>} -- method on exported GF
+//
+define method definition-kind
+    (defn :: <variable-definition>) => kind :: <byte-string>;
+  "variable";
+end method definition-kind;

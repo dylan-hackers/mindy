@@ -1,4 +1,7 @@
 module: function-definitions
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.4 1996/04/10 16:54:29 wlott Exp $
+copyright: Copyright (c) 1996  Carnegie Mellon University
+	   All rights reserved.
 
 define method defn-type (defn :: <function-definition>) => res :: <cclass>;
   dylan-value(#"<function>");
@@ -32,6 +35,13 @@ define open generic generic-defn-discriminator (gf :: <generic-definition>)
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
   dylan-value(#"<generic-function>");
 end;
+
+// definition-kind{<generic-definition>} -- method on exported GF
+//
+define method definition-kind
+    (defn :: <generic-definition>) => kind :: <byte-string>;
+  "generic function";
+end method definition-kind;
 
 define class <implicit-generic-definition>
     (<generic-definition>, <implicit-definition>)
@@ -77,6 +87,13 @@ define class <method-definition> (<abstract-method-definition>)
   slot method-defn-congruent? :: <boolean>,
     init-value: #f, init-keyword: congruent:;
 end;
+
+// definition-kind{<method-definition>} -- method on exported GF
+//
+define method definition-kind
+    (defn :: <method-definition>) => kind :: <byte-string>;
+  "method";
+end method definition-kind;
 
 define class <accessor-method-definition> (<method-definition>)
   slot accessor-method-defn-slot-info :: false-or(<slot-info>),
