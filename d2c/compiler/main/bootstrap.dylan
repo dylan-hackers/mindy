@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.19 1995/05/18 22:11:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.20 1995/05/18 23:19:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -418,6 +418,11 @@ define open generic value-setter (x, y) => value;
 
 
 // Methods that are nice to have by default.
+
+define constant catch
+  = method (saved-state :: <raw-pointer>, thunk :: <function>)
+      thunk(saved-state);
+    end;
 
 define inline method vector (#rest things) => res :: <simple-object-vector>;
   things;
