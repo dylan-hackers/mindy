@@ -1,5 +1,4 @@
 module:      helpers
-rcs-header:  $Header: /scm/cvs/src/common/file-system/helpers.dylan,v 1.1 2000/10/21 03:39:41 dauclair Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 // Some functions that help the implementation modules do their job
@@ -59,6 +58,52 @@ define method file-signal(#rest args) => err :: <file-system-error>;
 		" with arguments %=",
 	      format-arguments: args));
 end method file-signal;
+
+define function as-dir(path :: <pathname>) => directory :: <pathname>;
+  concatenate(path, $path-separator);
+end function as-dir;
+
+define function append(a :: <list>, b :: <string>) => c :: <list>;
+  reverse(pair(b, reverse(a)));
+end function append;
+
+//-------------------------------------------------------
+// c interfacing
+
+define macro with-pointer
+{
+ with-pointer(?ptr:variable = ?obj:expression)
+     ?:body 
+ end 
+} 
+  => {
+      let ptr = #f;
+      let obj = ?obj;
+      block()
+	ptr := create-pointer(object-class(obj), obj);
+	let ?ptr = ptr;
+	?body;
+      cleanup
+	if(ptr)
+	  destroy(ptr)
+	end if;
+      end block
+}
+end macro with-pointer;
+
+define function convert-to-string(c :: <statically-typed-pointer>)
+ => b :: <string>;
+  let char :: <character> = '*';
+  let str = make(<deque>);
+  for(index from 0, until: char = '\0')
+    char := as(<character>, unsigned-byte-at(c, offset: index));
+    push-last(str, char);
+  end for;
+  pop-last(str);
+  as(<string>, str);
+end function convert-to-string;
+
+define generic create-pointer(c :: <class>, obj);
 
 // -------------------------------------------------------
 // Internal fns

@@ -1,6 +1,5 @@
 module: base-file-system
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/common/file-system/Attic/base-file-system.dylan,v 1.1 2000/10/21 03:39:41 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -89,7 +88,6 @@ copyright: see below
 //			      filename.base-filename, 
 //			      filename.filename-extension)
 
-
 // Simple filename manipulations
 
 define constant <filename> = <byte-string>;
@@ -207,7 +205,6 @@ end function extensionless-filename;
 
 // ### Should have as-absolute-filename
 
-
 // Finding files
 
 // If found, returns the file stream open for input, and a path to the
@@ -257,7 +254,6 @@ define function fully-separated-path( path :: <filename> )
 	end if;
 end function fully-separated-path;
 
-
 // getcwd -- Mindy defines this in the System module.  d2c does not.
 
 #if (~mindy)
@@ -294,7 +290,6 @@ define function get-current-directory () => cwd :: <byte-string>;
   getcwd();
 end function get-current-directory;
 
-
 // File functions
 //
 // Currently implemented only on Unix and machines that have Unix-ish

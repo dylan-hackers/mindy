@@ -1,35 +1,54 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.1 2000/10/21 03:39:41 dauclair Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.2 2000/10/31 13:17:02 dauclair Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 define library file-system
   use dylan;
   use melange-support;
   use regular-expressions;
-//  use compiler-base, import: { file-system }, prefix: "base-";
   use streams;
   use format-out;
   use string-extensions;
+  use base-file-system;
 
   export file-system;
-  export base-file-system;
 end library;
 
+// These definitions come from the Common-Dylan document "System and I/O",
+// chapter 8, available from Functional Objects, inc
 define module file-system
+// section 8.2: types
   create <file-type>,
          <copy/rename-disposition>,
          <pathname>,
          <file-system-error>;
 
+// section 8.3: Manipulating files
+  create copy-file,
+         rename-file,
+         delete-file
+	 // not yet: , file-property-setter;
+	 ;
+
+// section 8.4: Manipulating directories
   create create-directory,
          delete-directory,
          do-directory,
-         ensure-directories-exist;
+         ensure-directories-exist,
+	 working-directory-setter;
 
-  create copy-file,
-         rename-file,
-         delete-file,
-         file-exists?;
+// section 8.5: Finding out file system information
+  create home-directory,
+	 root-directories,
+	 temp-directory,
+	 working-directory;
+
+// section 8.6: Finding out file information
+  create file-exists?
+  /** not yet: , file-properties,
+	 file-property,
+	 file-type
+   **/ ;
 end module file-system;
 
 // -------------------------------------------------------
@@ -47,50 +66,23 @@ define module types
 	     <file-system-error> };
 end module types;
 
-define module base-file-system
-  use dylan;
-  use extensions;
-  use System, import: {system};
-  use String-conversions;  // as(<string>, char)
-  // We use the Streams library to see if a file exists
-  use Streams, 
-    import: {<stream>, <file-stream>, <file-does-not-exist-error>, close}; 
-
-#if (mindy)
-  use System, import: {getcwd};
-#else
-  use System, 
-     import: {call-out, buffer-address, <buffer>};
-#endif
-
-  export
-     <filename>,
-     $search-path-separator,
-     search-path-separator?,
-     $a-path-separator,
-     path-separator?,
-     filename-prefix,
-     filename-extension,
-     base-filename,
-     pathless-filename,
-     extensionless-filename,
-     
-     get-current-directory,
-
-     find-file,
-     find-and-open-file,
-     
-     delete-file,
-     rename-file,
-     files-identical?;
-end module base-file-system;
-
 define module information
   use dylan;
   use file-system;
 
   use base-file-system, exclude: { delete-file, rename-file };
 end module information;
+
+define module dir-commands
+  use dylan;
+  use melange-support, export: all;
+  
+  export 
+    readdir, opendir, closedir, d-name,
+    lstat, stat$st-mode,
+    <dir>, <stat>, <anonymous-9>,
+    <virtual-dir>, <virtual-dirent>;
+end module dir-commands;
 
 define module helpers
   use dylan;
@@ -105,7 +97,8 @@ define module helpers
     try, try-call-out,
     file-signal,
     do-file-operation, 
-    $path-separator;
+    $path-separator,
+    append, as-dir, create-pointer, \with-pointer, convert-to-string;
 end module helpers;
 
 define module manipulating-files
@@ -119,23 +112,11 @@ define module manipulating-files
   use helpers;
 end module manipulating-files;
 
-define module dir-commands
-  use dylan;
-  use melange-support, export: all;
-  
-  export 
-    readdir, opendir, closedir, d-name, // d-ino, d-off, d-reclen,
-    // dd-fd, dd-loc, dd-size, 
-    lstat, stat$st-mode,
-    <dir>, <stat>, <anonymous-9>,
-    <virtual-dir>, <virtual-dirent>;
-end module dir-commands;
-
 define module manipulating-directories
   use dylan;
   use format-out;
-  use standard-io;
   use regular-expressions;
+  use standard-io;
 
   use file-system;
 
@@ -144,3 +125,15 @@ define module manipulating-directories
   use helpers;
   use dir-commands;
 end module manipulating-directories;
+
+define module directory-information
+  use dylan;
+
+  use file-system;
+
+  use base-file-system, import: { filename-prefix, get-current-directory };
+  use helpers;
+  use manipulating-directories;
+  use dir-commands;
+end module directory-information;
+

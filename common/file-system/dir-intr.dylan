@@ -1,10 +1,31 @@
 module: dir-commands
 
-// To create dir-intr.intr, execute the following line:
+// To create dir-intr.dylan, execute the following line:
 // melange -v --d2c -I/usr/include --shadow-structs dir-intr.intr dir-intr.dylan
 
 c-include("/usr/include/sys/stat.h");
 c-include("/usr/include/dirent.h");
+
+define functional class <anonymous-9> (<statically-typed-pointer>) end;
+
+define sealed domain make (singleton(<anonymous-9>));
+
+define method pointer-value
+    (ptr :: <anonymous-9>, #key index = 0)
+ => (result :: <integer>);
+  signed-byte-at(ptr, offset: index * 1);
+end method pointer-value;
+
+define method pointer-value-setter
+    (value :: <integer>, ptr :: <anonymous-9>, #key index = 0)
+ => (result :: <integer>);
+  signed-byte-at(ptr, offset: index * 1) := value;
+  value;
+end method pointer-value-setter;
+
+define method content-size (value :: subclass(<anonymous-9>)) => (result :: <integer>);
+  1;
+end method content-size;
 
 define constant <ulong-t> = <integer>;
 
@@ -119,27 +140,6 @@ end method tv-nsec;
 define constant <timestruc-t> = <timespec>;
 
 define constant <blkcnt-t> = <integer>;
-
-define functional class <anonymous-9> (<statically-typed-pointer>) end;
-
-define sealed domain make (singleton(<anonymous-9>));
-
-define method pointer-value
-    (ptr :: <anonymous-9>, #key index = 0)
- => (result :: <integer>);
-  signed-byte-at(ptr, offset: index * 1);
-end method pointer-value;
-
-define method pointer-value-setter
-    (value :: <integer>, ptr :: <anonymous-9>, #key index = 0)
- => (result :: <integer>);
-  signed-byte-at(ptr, offset: index * 1) := value;
-  value;
-end method pointer-value-setter;
-
-define method content-size (value :: subclass(<anonymous-9>)) => (result :: <integer>);
-  1;
-end method content-size;
 
 define functional class <anonymous-52> (<anonymous-9>, <c-vector>) end class;
 
@@ -442,22 +442,6 @@ define method st-pad4 (struct :: <virtual-stat>)
   stat$st-pad4(struct.c-type)
 end method st-pad4;
 
-define method fstat
-    (arg1 :: <integer>, arg2 :: <stat>)
- => (result :: <integer>);
-  let result-value
-    = call-out("fstat", int:, int: arg1, ptr: (arg2).raw-value);
-  values(result-value);
-end method fstat;
-
-define method stat
-    (arg1 :: <anonymous-9>, arg2 :: <stat>)
- => (result :: <integer>);
-  let result-value
-    = call-out("stat", int:, ptr: (arg1).raw-value, ptr: (arg2).raw-value);
-  values(result-value);
-end method stat;
-
 define method lstat
     (arg1 :: <anonymous-9>, arg2 :: <stat>)
  => (result :: <integer>);
@@ -465,210 +449,6 @@ define method lstat
     = call-out("lstat", int:, ptr: (arg1).raw-value, ptr: (arg2).raw-value);
   values(result-value);
 end method lstat;
-
-define method mknod
-    (arg1 :: <anonymous-9>, arg2 :: <mode-t>, arg3 :: <dev-t>)
- => (result :: <integer>);
-  let result-value
-    = call-out("mknod", int:, ptr: (arg1).raw-value, long: arg2, long: arg3);
-  values(result-value);
-end method mknod;
-
-define method fchmod
-    (arg1 :: <integer>, arg2 :: <mode-t>)
- => (result :: <integer>);
-  let result-value
-    = call-out("fchmod", int:, int: arg1, long: arg2);
-  values(result-value);
-end method fchmod;
-
-define method chmod
-    (arg1 :: <anonymous-9>, arg2 :: <mode-t>)
- => (result :: <integer>);
-  let result-value
-    = call-out("chmod", int:, ptr: (arg1).raw-value, long: arg2);
-  values(result-value);
-end method chmod;
-
-define method mkdir
-    (arg1 :: <anonymous-9>, arg2 :: <mode-t>)
- => (result :: <integer>);
-  let result-value
-    = call-out("mkdir", int:, ptr: (arg1).raw-value, long: arg2);
-  values(result-value);
-end method mkdir;
-
-define method umask
-    (arg1 :: <mode-t>)
- => (result :: <mode-t>);
-  let result-value
-    = call-out("umask", long:, long: arg1);
-  values(result-value);
-end method umask;
-
-define constant $_ST-FSTYPSZ = 16;
-
-define constant $S-IFMT = 61440;
-
-define constant $S-IAMB = 511;
-
-define constant $S-IFIFO = 4096;
-
-define constant $S-IFCHR = 8192;
-
-define constant $S-IFDIR = 16384;
-
-define constant $S-IFNAM = 20480;
-
-define constant $S-INSEM = 1;
-
-define constant $S-INSHD = 2;
-
-define constant $S-IFBLK = 24576;
-
-define constant $S-IFREG = 32768;
-
-define constant $S-IFLNK = 40960;
-
-define constant $S-IFSOCK = 49152;
-
-define constant $S-IFDOOR = 53248;
-
-define constant $S-ISUID = 2048;
-
-define constant $S-ISGID = 1024;
-
-define constant $S-ISVTX = 512;
-
-define constant $S-IREAD = 256;
-
-define constant $S-IWRITE = 128;
-
-define constant $S-IEXEC = 64;
-
-define constant $S-ENFMT = 1024;
-
-define constant $S-IRWXU = 448;
-
-define constant $S-IRUSR = 256;
-
-define constant $S-IWUSR = 128;
-
-define constant $S-IXUSR = 64;
-
-define constant $S-IRWXG = 56;
-
-define constant $S-IRGRP = 32;
-
-define constant $S-IWGRP = 16;
-
-define constant $S-IXGRP = 8;
-
-define constant $S-IRWXO = 7;
-
-define constant $S-IROTH = 4;
-
-define constant $S-IWOTH = 2;
-
-define constant $S-IXOTH = 1;
-
-define functional class <DIR> (<statically-typed-pointer>) end;
-
-define sealed domain make (singleton(<DIR>));
-
-define sealed method DIR$dd-fd
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 0);
-end method DIR$dd-fd;
-
-define sealed method DIR$dd-fd-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 0) := value;
-  value;
-end method DIR$dd-fd-setter;
-
-define sealed method DIR$dd-loc
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 4);
-end method DIR$dd-loc;
-
-define sealed method DIR$dd-loc-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 4) := value;
-  value;
-end method DIR$dd-loc-setter;
-
-define sealed method DIR$dd-size
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 8);
-end method DIR$dd-size;
-
-define sealed method DIR$dd-size-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 8) := value;
-  value;
-end method DIR$dd-size-setter;
-
-define sealed method DIR$dd-buf
-    (ptr :: <DIR>) => (result :: <anonymous-9>);
-  pointer-at(ptr, offset: 12, class: <anonymous-9>);
-end method DIR$dd-buf;
-
-define sealed method DIR$dd-buf-setter
-    (value :: <anonymous-9>, ptr :: <DIR>) => (result :: <anonymous-9>);
-  pointer-at(ptr, offset: 12, class: <anonymous-9>) := value;
-  value;
-end method DIR$dd-buf-setter;
-
-define method pointer-value (value :: <DIR>, #key index = 0) => (result :: <DIR>);
-  value + index * 16;
-end method pointer-value;
-
-define method content-size (value :: subclass(<DIR>)) => (result :: <integer>);
-  16;
-end method content-size;
-
-define class <virtual-DIR> (<object>)
-  slot c-type :: <DIR>, required-init-keyword: c-type:;
-  constant virtual slot dd-fd :: <integer>;
-  constant virtual slot dd-loc :: <integer>;
-  constant virtual slot dd-size :: <integer>;
-  constant virtual slot dd-buf :: <anonymous-9>;
-end class <virtual-DIR>;
-
-define method c-struct-size(of == <virtual-DIR>)
- => (ans :: <integer>);
-  content-size(<DIR>)
-end method c-struct-size;
-
-define method dd-fd (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-fd(struct.c-type)
-end method dd-fd;
-
-define method dd-loc (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-loc(struct.c-type)
-end method dd-loc;
-
-define method dd-size (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-size(struct.c-type)
-end method dd-size;
-
-define method dd-buf (struct :: <virtual-DIR>)
- => (ans :: <anonymous-9>);
-  DIR$dd-buf(struct.c-type)
-end method dd-buf;
-
-define method opendir
-    (arg1 :: <anonymous-9>)
- => (result :: <DIR>);
-  let result-value
-    = call-out("opendir", ptr:, ptr: (arg1).raw-value);
-  let result-value = make(<DIR>, pointer: result-value);
-  values(result-value);
-end method opendir;
 
 define functional class <anonymous-63> (<anonymous-9>, <c-vector>) end class;
 
@@ -761,6 +541,95 @@ define method d-name (struct :: <virtual-dirent>)
   dirent$d-name(struct.c-type)
 end method d-name;
 
+define functional class <DIR> (<statically-typed-pointer>) end;
+
+define sealed domain make (singleton(<DIR>));
+
+define sealed method DIR$dd-fd
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0);
+end method DIR$dd-fd;
+
+define sealed method DIR$dd-fd-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0) := value;
+  value;
+end method DIR$dd-fd-setter;
+
+define sealed method DIR$dd-loc
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 4);
+end method DIR$dd-loc;
+
+define sealed method DIR$dd-loc-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 4) := value;
+  value;
+end method DIR$dd-loc-setter;
+
+define sealed method DIR$dd-size
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 8);
+end method DIR$dd-size;
+
+define sealed method DIR$dd-size-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 8) := value;
+  value;
+end method DIR$dd-size-setter;
+
+define sealed method DIR$dd-buf
+    (ptr :: <DIR>) => (result :: <anonymous-9>);
+  pointer-at(ptr, offset: 12, class: <anonymous-9>);
+end method DIR$dd-buf;
+
+define sealed method DIR$dd-buf-setter
+    (value :: <anonymous-9>, ptr :: <DIR>) => (result :: <anonymous-9>);
+  pointer-at(ptr, offset: 12, class: <anonymous-9>) := value;
+  value;
+end method DIR$dd-buf-setter;
+
+define method pointer-value (value :: <DIR>, #key index = 0) => (result :: <DIR>);
+  value + index * 16;
+end method pointer-value;
+
+define method content-size (value :: subclass(<DIR>)) => (result :: <integer>);
+  16;
+end method content-size;
+
+define class <virtual-DIR> (<object>)
+  slot c-type :: <DIR>, required-init-keyword: c-type:;
+  constant virtual slot dd-fd :: <integer>;
+  constant virtual slot dd-loc :: <integer>;
+  constant virtual slot dd-size :: <integer>;
+  constant virtual slot dd-buf :: <anonymous-9>;
+end class <virtual-DIR>;
+
+define method c-struct-size(of == <virtual-DIR>)
+ => (ans :: <integer>);
+  content-size(<DIR>)
+end method c-struct-size;
+
+define method dd-fd (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-fd(struct.c-type)
+end method dd-fd;
+
+define method dd-loc (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-loc(struct.c-type)
+end method dd-loc;
+
+define method dd-size (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-size(struct.c-type)
+end method dd-size;
+
+define method dd-buf (struct :: <virtual-DIR>)
+ => (ans :: <anonymous-9>);
+  DIR$dd-buf(struct.c-type)
+end method dd-buf;
+
 define method readdir
     (arg1 :: <DIR>)
  => (result :: <dirent>);
@@ -770,40 +639,14 @@ define method readdir
   values(result-value);
 end method readdir;
 
-#if (compiled-for-cygnus)
-// cygnus does not support seekdir, telldir and mkfifo
-#else
-
-define method mkfifo
-    (arg1 :: <anonymous-9>, arg2 :: <mode-t>)
- => (result :: <integer>);
+define method opendir
+    (arg1 :: <anonymous-9>)
+ => (result :: <DIR>);
   let result-value
-    = call-out("mkfifo", int:, ptr: (arg1).raw-value, long: arg2);
+    = call-out("opendir", ptr:, ptr: (arg1).raw-value);
+  let result-value = make(<DIR>, pointer: result-value);
   values(result-value);
-end method mkfifo;
-
-define method telldir
-    (arg1 :: <DIR>)
- => (result :: <integer>);
-  let result-value
-    = call-out("telldir", long:, ptr: (arg1).raw-value);
-  values(result-value);
-end method telldir;
-
-define method seekdir
-    (arg1 :: <DIR>, arg2 :: <integer>)
- => ();
-  call-out("seekdir", void:, ptr: (arg1).raw-value, long: arg2);
-  values();
-end method seekdir;
-#endif
-
-define method rewinddir
-    (arg1 :: <DIR>)
- => ();
-  call-out("rewinddir", void:, ptr: (arg1).raw-value);
-  values();
-end method rewinddir;
+end method opendir;
 
 define method closedir
     (arg1 :: <DIR>)
@@ -812,8 +655,4 @@ define method closedir
     = call-out("closedir", int:, ptr: (arg1).raw-value);
   values(result-value);
 end method closedir;
-
-define constant $MAXNAMLEN = 512;
-
-define constant $DIRBUF = 1048;
 

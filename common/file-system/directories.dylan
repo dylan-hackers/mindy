@@ -45,6 +45,14 @@ define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
   closedir(dir*);
 end function do-directory;
 
+define function working-directory-setter(dir :: <pathname>) 
+ => ans :: <pathname>;
+  with-pointer(dir* = dir)
+    if(chdir(dir*) ~= 0) file-signal("chdir", "dir") end if;
+  end with-pointer;
+  dir;
+end function working-directory-setter;
+
 // -------------------------------------------------------
 // internal fns &c
 // -------------------------------------------------------
@@ -64,18 +72,7 @@ define function dir-element(dir :: <DIR>, path :: <pathname>)
   if(as(<integer>, file*) = 0) end-of-directory(); end if;
   let file = make(<virtual-dirent>, c-type: file*);
 
-  local method to-string(c :: <c-vector>) => s :: <string>;
-	  let char :: <character> = '*';
-	  let str = make(<deque>);
-	  for(index from 0, until: char = '\0')
-	    char := as(<character>, c[index]);
-	    push-last(str, char);
-	  end for;
-	  pop-last(str);
-	  as(<string>, str);
-	end;
-
-  let name = d-name(file).to-string;
+  let name = convert-to-string(d-name(file));
   let stat = stat-mode(concatenate(as-dir(path), name));
   let type = case
 	       is-dir?(stat) => #"directory";
@@ -109,19 +106,13 @@ define method is-regular-file?(mode :: <integer>) => (ans :: <boolean>)
   logand(mode, #xf000) = #x8000;
 end method is-regular-file?;
 
-define function value&destroy(fn :: <function>,
-			      ptr* :: <statically-typed-pointer>)
-  let ans = fn(ptr*);
-  destroy(ptr*);
-  ans;
-end function value&destroy;
-
 define function stat-mode(file :: <pathname>) => (bar :: <integer>)
-  let stat* = create-stat();
-  let str* = create-anon(file);
-  lstat(str*, stat*);
-  destroy(str*);
-  value&destroy(stat$st-mode, stat*);
+  with-pointer(stat* = <stat>)
+    with-pointer(str* = file)
+      lstat(str*, stat*);
+      stat$st-mode(stat*);
+    end with-pointer;
+  end with-pointer;
 end function stat-mode;
 
 define function create-down-to(dir :: <pathname>) => b :: <boolean>;
@@ -156,29 +147,23 @@ define function relative-path?(path :: <pathname>)
   path.size > 0 & path[0] ~= $path-separator[0];
 end function relative-path?;
 
-define function as-dir(path :: <pathname>) => directory :: <pathname>;
-  concatenate(path, $path-separator);
-end function as-dir;
-
 define function build-dir(#rest names) => directory :: <pathname>;
   apply(concatenate, map(as-dir, names));
 end function build-dir;
 
-define function append(a :: <list>, b :: <string>) => c :: <list>;
-  reverse(pair(b, reverse(a)));
-end function append;
-
-define function open-dir(dir :: <string>)
-  value&destroy(opendir, create-anon(dir));
+define function open-dir(path :: <string>)
+  with-pointer(dir = path)
+    opendir(dir);
+  end;
 end function open-dir;
 
-define function create-anon(s :: <string>) => (ans :: <anonymous-9>)
+define method create-pointer(c :: <class>, s :: <string>)
   create-c-type(<anonymous-9>, string: s);
-end function create-anon;
+end method create-pointer;
 
-define function create-stat() => (ans :: <stat>)
+define method create-pointer(c :: <class>, obj == <stat>)
   create-c-type(<stat>, size: content-size(<stat>));
-end function create-stat;
+end method create-pointer;
 
 define function create-c-type(c-type :: <class>, 
 			      #key size :: <integer> = 0, 
@@ -188,4 +173,37 @@ define function create-c-type(c-type :: <class>,
 				      end if);
   make(c-type, pointer: str*);
 end function create-c-type;
+
+//-------------------------------------------------------
+// mini-melange definitions to avoid big header file includes
+//-------------------------------------------------------
+
+define method unlink
+    (arg1 :: <anonymous-9>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("unlink", int:, ptr: (arg1).raw-value);
+  values(result-value);
+end method unlink;
+
+define constant $R-OK = 4;
+define constant $W-OK = 2;
+define constant $X-OK = 1;
+define constant $F-OK = 0;
+
+define method access
+    (arg1 :: <anonymous-9>, arg2 :: <integer>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("access", int:, ptr: (arg1).raw-value, int: arg2);
+  values(result-value);
+end method access;
+
+define method chdir
+    (arg1 :: <anonymous-9>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("chdir", int:, ptr: (arg1).raw-value);
+  values(result-value);
+end method chdir;
 

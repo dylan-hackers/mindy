@@ -1,5 +1,5 @@
 module:      types
-rcs-header:  $Header: /scm/cvs/src/common/file-system/types.dylan,v 1.1 2000/10/21 03:39:41 dauclair Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/types.dylan,v 1.2 2000/10/31 13:17:02 dauclair Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 // The types used by the file-system module, these types mirror the 
