@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.57 1995/05/08 15:19:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.58 1995/05/08 17:17:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -917,7 +917,7 @@ define module cback
   use primitives;
 
   export
-    <output-info>, output-info-results,
+    <output-info>,
     emit-tlf-gunk, emit-function, emit-region;
 end;
 
