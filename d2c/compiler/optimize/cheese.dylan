@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.32 1995/04/28 00:38:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.33 1995/04/28 02:32:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -189,7 +189,7 @@ define method optimize
   
   if (source-type == empty-ctype())
     insert-exit-after(component, assignment, component);
-    for (defn = assignment.defines then defn.definer-next,
+    for (defn = defines then defn.definer-next,
 	 while: defn)
       delete-definition(component, defn);
     end;
@@ -488,10 +488,14 @@ define method maybe-expand-exit-function
     dep.dependent := pitcher;
   end;
   call-dependency.source-exp := pitcher;
+  for (defn = assign.defines then defn.definer-next,
+       while: defn)
+    delete-definition(component, defn);
+  end;
+  assign.defines := #f;
   queue-dependent(component, assign);
   queue-dependent(component, pitcher);
   insert-exit-after(component, assign, catcher.target-region);
-  
 end;
 
 
@@ -570,14 +574,20 @@ end;
 define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
   let args = pitcher.depends-on;
   let type
-    = if (args & instance?(args.source-exp, <abstract-variable>)
-	    & instance?(args.source-exp.var-info, <values-cluster-info>))
-	args.source-exp.derived-type;
-      else
-	for (dep = args then dep.dependent-next,
-	     types = #() then pair(dep.source-exp.derived-type, types),
-	     while: dep)
-	finally
+    = block (return)
+	if (args & instance?(args.source-exp, <abstract-variable>)
+	      & instance?(args.source-exp.var-info, <values-cluster-info>))
+	  args.source-exp.derived-type;
+	else
+	  let types = #();
+	  for (dep = args then dep.dependent-next,
+	       while: dep)
+	    let type = dep.source-exp.derived-type;
+	    if (type == empty-ctype())
+	      return(type);
+	    end;
+	    types := pair(type, types);
+	  end;
 	  make-values-ctype(reverse!(types), #f);
 	end;
       end;
@@ -677,24 +687,27 @@ end;
 
 define method optimize (component :: <component>, lambda :: <lambda>)
     => ();
-  let results = lambda.depends-on;
-  if (results & instance?(results.source-exp.var-info, <values-cluster-info>))
-    // We have to restrict the result type first, otherwise the single
-    // values cluster might be expanded away and we would end up just using
-    // the first value's type.
-    maybe-restrict-result-type(component, lambda,
-			       results.source-exp.derived-type);
-    if (maybe-expand-cluster(component, results.source-exp))
-      queue-dependents(component, lambda);
+  unless (lambda.result-type == empty-ctype())
+    let results = lambda.depends-on;
+    if (results
+	  & instance?(results.source-exp.var-info, <values-cluster-info>))
+      // We have to restrict the result type first, otherwise the single
+      // values cluster might be expanded away and we would end up just using
+      // the first value's type.
+      maybe-restrict-result-type(component, lambda,
+				 results.source-exp.derived-type);
+      if (maybe-expand-cluster(component, results.source-exp))
+	queue-dependents(component, lambda);
+      end;
+    else
+      let types = make(<stretchy-vector>);
+      for (dep = results then dep.dependent-next,
+	   while: dep)
+	add!(types, dep.source-exp.derived-type);
+      end;
+      maybe-restrict-result-type(component, lambda,
+				 make-values-ctype(as(<list>, types), #f));
     end;
-  else
-    let types = make(<stretchy-vector>);
-    for (dep = results then dep.dependent-next,
-	 while: dep)
-      add!(types, dep.source-exp.derived-type);
-    end;
-    maybe-restrict-result-type(component, lambda,
-			       make-values-ctype(as(<list>, types), #f));
   end;
 
   // If there is exactly one reference and that reference is the function
@@ -901,37 +914,45 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
     end;
   end;
 
-  // Change the call to a reference to the results.
-  let results = lambda.depends-on;
-  if (results & instance?(results.source-exp.var-info, <values-cluster-info>))
-    results.dependent := call-assign;
-    call-assign.depends-on := results;
-  else
-    // Make a values operation for the lambda results.
-    let values-op = make(<primitive>, derived-type: lambda.result-type,
-			 dependents: call.dependents, name: #"values",
-			 depends-on: results);
-    // Change the results to feed into the values-op
-    for (dep = results then dep.dependent-next,
-	 while: dep)
-      dep.dependent := values-op;
-    end;
-    for (dep = call.dependents then dep.source-next,
-	 while: dep)
-      dep.source-exp := values-op;
-    end;
-    queue-dependent(component, values-op);
-    call-assign.depends-on.source-exp := values-op;
-  end;
-  queue-dependent(component, call-assign);
+  // Insert the lambda body before the call assignment.
+  insert-before(component, call-assign, lambda.body);
 
   // Queue the catchers for blocks in the new home that are exited to from the
   // lambda's body.
   queue-catchers(component, home-lambda(call-assign), lambda.body);
 
-  // Insert the lambda body before the call assignment (which is now the result
-  // assignment).
-  insert-before(component, call-assign, lambda.body);
+  if (lambda.result-type == empty-ctype())
+    // The lambda doesn't return.  So delete the call and everything after
+    // it.  We delete the stuff after the call by inserting an exit to
+    // the component (which triggers the dead code deleting).
+    insert-exit-after(component, call-assign, component);
+    delete-and-unlink-assignment(component, call-assign);
+  else
+    // Change the call to a reference to the results.
+    let results = lambda.depends-on;
+    if (results
+	  & instance?(results.source-exp.var-info, <values-cluster-info>))
+      results.dependent := call-assign;
+      call-assign.depends-on := results;
+    else
+      // Make a values operation for the lambda results.
+      let values-op = make(<primitive>, derived-type: lambda.result-type,
+			   dependents: call.dependents, name: #"values",
+			   depends-on: results);
+      // Change the results to feed into the values-op
+      for (dep = results then dep.dependent-next,
+	   while: dep)
+	dep.dependent := values-op;
+      end;
+      for (dep = call.dependents then dep.source-next,
+	   while: dep)
+	dep.source-exp := values-op;
+      end;
+      queue-dependent(component, values-op);
+      call-assign.depends-on.source-exp := values-op;
+    end;
+    queue-dependent(component, call-assign);
+  end;
 
   // Delete the lambda.
   component.all-methods := remove!(component.all-methods, lambda);
@@ -967,7 +988,7 @@ define method queue-catchers
     (component :: <component>, home :: <lambda>, region :: <exit>)
     => ();
   let target = region.block-of;
-  if (home-lambda(target) == home)
+  if (target ~= component & home-lambda(target) == home)
     queue-dependent(component, target.catcher);
   end;
 end;
@@ -1879,8 +1900,9 @@ end;
 define method dropped-dependent
     (component :: <component>, var :: <ssa-variable>) => ();
   // If the variable ended up with no references and doesn't need a type check,
-  // queue it for reoptimization so it gets deleted.
-  unless (var.dependents | var.needs-type-check?)
+  // queue it for reoptimization so it gets deleted.  But only if is still
+  // actually being defines.
+  unless (var.dependents | var.needs-type-check? | var.definer == #f)
     queue-dependent(component, var.definer);
   end;
 end;
@@ -1928,7 +1950,7 @@ define method insert-exit-after
     replace-subregion(component, region-parent, region, new);
     after.parent := #f;
     delete-stuff-in(component, after);
-    delete-stuff-after(component, new, exit);
+    delete-stuff-after(component, exit.parent, exit);
   end;
 end;
 
@@ -2093,7 +2115,7 @@ end;
 define method delete-stuff-after
     (component :: <component>, region :: <block-region>, after :: <region>)
     => ();
-  // There will be at least on exit (or the exit function), so the code
+  // There will be at least one exit (or the exit function), so the code
   // after the block is still reachable.
 end;
 
@@ -2101,7 +2123,7 @@ define method delete-stuff-after
     (component :: <component>, lambda :: <lambda>, after :: <region>)
     => ();
   // Deleting the stuff after a lambda means that the function doesn't return.
-  // So we change its return type to empty-ctype.
+  // So we change its return type to empty-ctype, and flush the results.
   maybe-restrict-result-type(component, lambda, empty-ctype());
 end;
 
@@ -2447,7 +2469,7 @@ define method replace-subregion
     if (scan == #())
       error("Replacing unknown region");
     end;
-    let before-split
+    let before-splice
       = if (prev)
 	  prev.tail := #();
 	  region;
@@ -2461,7 +2483,7 @@ define method replace-subregion
     end;
 
     let parent = region.parent;
-    let combo = combine-regions(before-split,
+    let combo = combine-regions(before-splice,
 				combine-regions(new, after-splice));
     unless (combo == region)
       replace-subregion(component, parent, region, combo);
