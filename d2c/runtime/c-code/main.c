@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.6 1996/08/07 13:43:16 nkramer Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.7 1996/08/12 14:00:34 nkramer Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,7 +13,11 @@ void not_reached(void)
     abort();
 }
 
-void main(int argc, char *argv[])
+/* Microsoft Visual C++ refuses to allow main() to come from a
+   library.  Thus, we need to put main() in inits.c and have it simply
+   call this function.  
+   */
+void real_main(int argc, char *argv[])
 {
     descriptor_t *sp = GC_malloc(64*1024);
 
@@ -146,6 +150,7 @@ gdb_print_genobj (descriptor_t obj)
 /* Most of these win32-only functions will go away as soon as we move
    from Visual C++ 4.0 to version 4.2. */
 #ifdef win32
+
 double rint(double x)
 {
   /* uh, this is wrong unless rounding to -infinity */
