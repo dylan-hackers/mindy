@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.5 2001/12/22 16:08:27 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.6 2001/12/23 04:16:32 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -92,11 +92,22 @@ end;
 //
 define inline method as-signed (digit :: <digit>)
     => res :: <integer>;
-  if (digit-sign-bit-set?(digit))
-    logior(ash(-1, $digit-bits), digit.value);
-  else
-    digit.value;
-  end;
+  ash(ash(digit.value,
+          $fixed-integer-bits - $digit-bits),
+      $digit-bits - $fixed-integer-bits);
+end;
+
+// as-signed-2 -- internal.
+//
+// Make a fixed integer by sign extendeding two digits.
+//
+define inline method as-signed-2 (digit-a :: <digit>, digit-b :: <digit>)
+    => res :: <integer>;
+  let raw = logior(ash(digit-a.value, $digit-bits), digit-b.value);
+  // Note: this is a no-op when $digit-bits is half of $fixed-integer-bits
+  ash(ash(raw,
+          $fixed-integer-bits - $digit-bits - $digit-bits),
+      $digit-bits + $digit-bits - $fixed-integer-bits);
 end;
 
 // as-unsigned -- internal.
@@ -353,10 +364,7 @@ define method as (class == <integer>, num :: <extended-integer>)
   if (len = 1)
     bignum-digit(num, 0).as-signed;
   elseif (len = 2)
-    // the digit size can't be bigger than half the native word size, so this
-    // is safe.
-    logior(bignum-digit(num, 0).as-unsigned, 
-           ash(bignum-digit(num, 1).as-signed, $digit-bits));
+    as-signed-2(bignum-digit(num, 1), bignum-digit(num, 0));
   elseif (num < $minimum-integer | num > $maximum-integer)
     // TODO: make extended constants for min/max
     error("%= can't be represented as a <integer>", num);
@@ -424,10 +432,7 @@ define inline method bignum-as-float
   if (len = 1)
     as(class, bignum-digit(num, 0).as-signed);
   elseif (len = 2)
-    // the digit size can't be bigger than half the native word size, so this
-    // is safe.
-    as(class, logior(bignum-digit(num, 0).as-unsigned, 
-                     ash(bignum-digit(num, 1).as-signed, $digit-bits)));
+    as(class, as-signed-2(bignum-digit(num, 1), bignum-digit(num, 0)));
   else
     local
       method repeat (index :: <integer>, result :: <float>)
@@ -876,16 +881,12 @@ define method floor/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let x-len = x.bignum-size;
   let y-len = y.bignum-size;
-  if (x-len <= 2 & y-len <= 2)
-    let xv = bignum-digit(x, x-len - 1).as-signed;
-    let yv = bignum-digit(y, y-len - 1).as-signed;
-    if (x-len = 2)
-      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
-    end;
-    if (y-len = 2)
-      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
-    end;
-    let (quo, rem) = floor/(xv, yv);
+  if (x-len + y-len = 2)
+    let (quo, rem) = floor/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  elseif (x-len <= 2 & y-len <= 2)
+    let (quo, rem) = floor/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
+                            as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
     let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
@@ -905,16 +906,12 @@ define method ceiling/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let x-len = x.bignum-size;
   let y-len = y.bignum-size;
-  if (x-len <= 2 & y-len <= 2)
-    let xv = bignum-digit(x, x-len - 1).as-signed;
-    let yv = bignum-digit(y, y-len - 1).as-signed;
-    if (x-len = 2)
-      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
-    end;
-    if (y-len = 2)
-      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
-    end;
-    let (quo, rem) = ceiling/(xv, yv);
+  if (x-len + y-len = 2)
+    let (quo, rem) = ceiling/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  elseif (x-len <= 2 & y-len <= 2)
+    let (quo, rem) = ceiling/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
+                              as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
     let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
@@ -934,16 +931,12 @@ define method round/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let x-len = x.bignum-size;
   let y-len = y.bignum-size;
-  if (x-len <= 2 & y-len <= 2)
-    let xv = bignum-digit(x, x-len - 1).as-signed;
-    let yv = bignum-digit(y, y-len - 1).as-signed;
-    if (x-len = 2)
-      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
-    end;
-    if (y-len = 2)
-      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
-    end;
-    let (quo, rem) = round/(xv, yv);
+  if (x-len + y-len = 2)
+    let (quo, rem) = round/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  elseif (x-len <= 2 & y-len <= 2)
+    let (quo, rem) = round/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
+                            as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
     let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
@@ -964,16 +957,12 @@ define method truncate/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let x-len = x.bignum-size;
   let y-len = y.bignum-size;
-  if (x-len <= 2 & y-len <= 2)
-    let xv = bignum-digit(x, x-len - 1).as-signed;
-    let yv = bignum-digit(y, y-len - 1).as-signed;
-    if (x-len = 2)
-      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
-    end;
-    if (y-len = 2)
-      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
-    end;
-    let (quo, rem) = truncate/(xv, yv);
+  if (x-len + y-len = 2)
+    let (quo, rem) = truncate/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  elseif (x-len <= 2 & y-len <= 2)
+    let (quo, rem) = truncate/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
+                               as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
     let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
@@ -1020,19 +1009,26 @@ define method gcd (x :: <extended-integer>, y :: <extended-integer>)
     => res :: <extended-integer>;
   let x-len = x.bignum-size;
   let y-len = y.bignum-size;
-  if (x-len = 1 & bignum-digit(x, 0).value.zero?)
+  let x-dig = bignum-digit(x, 0);
+  let y-dig = bignum-digit(y, 0);
+  if (x-len = 1 & x-dig.value.zero?)
     y;
-  elseif (y-len = 1 & bignum-digit(y, 0).value.zero?)
+  elseif (y-len = 1 & y-dig.value.zero?)
     x;
+  elseif (x-len + y-len = 2)
+    as(<extended-integer>,
+       gcd(x-dig.as-signed, y-dig.as-signed));
   elseif (x-len <= 2 & y-len <= 2)
-    let xv = bignum-digit(x, x-len - 1).as-signed;
-    let yv = bignum-digit(y, y-len - 1).as-signed;
-    if (x-len = 2)
-      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
-    end;
-    if (y-len = 2)
-      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
-    end;
+    let xv = if (x-len = 1)
+               x-dig.as-signed;
+             else
+               as-signed-2(bignum-digit(x, 1), x-dig);
+             end;
+    let yv = if (y-len = 1)
+               y-dig.as-signed;
+             else
+               as-signed-2(bignum-digit(y, 1), y-dig);
+             end;
     as(<extended-integer>, gcd(xv, yv));
   else
     let x = if (negative?(x)) -x else copy-bignum(x) end;
