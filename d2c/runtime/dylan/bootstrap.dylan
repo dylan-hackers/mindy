@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.8 2000/01/24 04:56:42 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.9 2000/05/09 20:02:18 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -143,7 +143,7 @@ define module dylan-viscera
     aref, aref-setter, first, second, third, first-setter, second-setter,
     third-setter, last, last-setter, head, tail, head-setter, tail-setter,
     add, add!, add-new, add-new!, remove, remove!, push, pop, push-last,
-    pop-last, reverse, reverse!, sort, sort!, intersection, union,
+    pop-last, reverse, reverse!, sort, sort!, intersection, difference, union,
     remove-duplicates, remove-duplicates!, copy-sequence, concatenate,
     concatenate-as, replace-subsequence!, subsequence-position,
     do, map, map-as, map-into, any?, every?, reduce, reduce1, choose,
