@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.58 1996/02/12 01:58:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.59 1996/02/19 20:24:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -149,7 +149,7 @@ define method print-message
     (tlf :: <seal-generic-tlf>, stream :: <stream>) => ();
   format(stream, "Seal Generic %s (", tlf.seal-generic-name);
   for (type in tlf.seal-generic-type-exprs, first? = #t then #f)
-    unless (first)
+    unless (first?)
       write(", ", stream);
     end;
     print-message(ct-eval(type, #f) | "???", stream);
