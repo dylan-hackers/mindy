@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.5 1996/02/17 21:26:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.6 1996/02/22 17:47:23 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -253,11 +253,14 @@ end method optimize-unknown-call-ctv;
 /// Generic function optimization
 
 define method optimize-generic
-    (component :: <component>, call :: <abstract-call>,
+    (component :: <component>, call :: <unknown-call>,
      defn :: <generic-definition>, arg-types :: <list>,
      arg-leaves :: <list>)
     => ();
   block (return)
+    if (maybe-transform-call(component, call))
+      return();
+    end if;
     local
       method change-to-error ()
 	if (instance?(call, <known-call>))
@@ -845,52 +848,8 @@ end;
 
 define method optimize
     (component :: <component>, call :: <known-call>) => ();
-  let func-dep = call.depends-on;
-  unless (func-dep)
-    error("No function in a call?");
-  end;
-  let func = func-dep.source-exp;
-  block (return)
-    for (transformer in find-transformers(func))
-      if (transformer.transformer-function(component, call))
-	return();
-      end;
-    end;
-    // Dispatch of the thing we are calling.
-    optimize-known-call-leaf(component, call, func);
-  end;
-end;
-
-define method find-transformers (func :: type-union(<leaf>, <definition>))
-    => res :: <list>;
-  #();
-end;
-
-define method find-transformers (func :: <definition-constant-leaf>)
-    => res :: <list>;
-  find-transformers(func.const-defn);
-end;
-
-define method find-transformers (func :: <literal-constant>)
-  let defn = func.value.ct-function-definition;
-  if (defn)
-    find-transformers(defn);
-  else
-    #();
-  end;
-end;
-
-define method find-transformers (defn :: <function-definition>)
-    => res :: <list>;
-  defn.function-defn-transformers;
-end;
-  
-define method find-transformers (defn :: <generic-definition>)
-    => res :: <list>;
-  choose(method (transformer)
-	   transformer.transformer-specializers == #f;
-	 end,
-	 defn.function-defn-transformers);
+  maybe-transform-call(component, call)
+    | optimize-known-call-leaf(component, call, call.depends-on.source-exp);
 end;
 
 
