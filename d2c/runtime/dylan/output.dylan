@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.5 1995/11/16 03:38:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.6 1995/11/17 02:35:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -63,7 +63,7 @@ define method print-message (sym :: <symbol>) => ();
 end;
 
 define method print-message (cond :: <condition>) => ();
-  report-condition(cond, *debug-output*);
+  report-condition(cond, #"cheap-IO");
 end;
 
 
