@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.36 1996/04/06 06:48:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.37 1996/04/10 16:49:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -342,7 +342,8 @@ define module tokens
     <literal-token>, token-literal,
     <pre-parsed-token>, token-parse-tree,
 
-    <syntax-table>, syntax-for-name, category-merge-okay?, merge-category;
+    <syntax-table>, syntax-for-name,
+    problem-with-category-merge, merge-category;
 end;
 
 define module header
@@ -419,7 +420,7 @@ define module definitions
   export
     <definition>, defn-name, defn-library, defn-type, ct-value,
     install-transformers, $definition-slots,
-    check-syntax-table-additions, make-syntax-table-additions,
+    definition-syntax-info, definition-kind,
     <abstract-constant-definition>, <abstract-variable-definition>,
     <implicit-definition>,
     <class-definition>, class-defn-maker-function,
@@ -439,6 +440,7 @@ define module variables
   use common;
 
   use utils;
+  use source;
   use errors;
   use compile-time-values;
   use tokens;
@@ -453,14 +455,14 @@ define module variables
     $Bootstrap-Module, add-bootstrap-export, define-bootstrap-module,
 
     find-library, library-name, note-library-definition,
-    find-module, use-module, module-name, module-syntax-table,
+    find-module, module-name, module-syntax-table,
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
     variable-ct-evaluator, variable-ct-evaluator-setter,
     variable-fragment-expander, variable-fragment-expander-setter,
     note-variable-definition,
-    <use>, <renaming>, orig-name, new-name,
+    <use>, <all-marker>, <renaming>, renaming-orig-name, renaming-new-name,
 
     module-home, variable-home,
     name-inherited-or-exported?,
