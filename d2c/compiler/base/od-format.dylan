@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.21 1995/11/20 03:20:00 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.22 1995/11/20 05:26:38 rgs Exp $
 
 /*
 
@@ -720,6 +720,20 @@ define method buffer-word-setter
  => <integer>;
   // ### big-endian 32 assumption.  Should be a primitive.
   let (rest, byte4) = floor/(new-val, 256);
+  let (rest, byte3) = floor/(as(<fixed-integer>, rest), 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
+  bbuf[i + 0] := byte1;
+  bbuf[i + 1] := byte2;
+  bbuf[i + 2] := byte3;
+  bbuf[i + 3] := as(<fixed-integer>, byte4);
+end method;
+
+define method buffer-word-setter
+    (new-val :: <fixed-integer>, bbuf :: <buffer>, i :: <buffer-index>)
+ => <integer>;
+  // ### big-endian 32 assumption.  Should be a primitive.
+  let (rest, byte4) = floor/(new-val, 256);
   let (rest, byte3) = floor/(rest, 256);
   // This assumes that the word is unsigned (i.e. new-val is a positive int)
   let (byte1, byte2) = floor/(rest, 256);
@@ -728,7 +742,6 @@ define method buffer-word-setter
   bbuf[i + 2] := byte3;
   bbuf[i + 3] := byte4;
 end method;
-
 
 // #### HACK to allow us to dump headers w/o creating bignums in mindy.  This
 // is particularly incorrect for e.g. end entries and references, since they
