@@ -173,7 +173,7 @@ end;
 define method format-c-define-value
     (decl :: <c-empty-define>)
  => (formatted :: <byte-string>)
-  " ";
+  "";
 end;
 
 
@@ -190,7 +190,7 @@ end;
 define method format-c-define-value
     (decl :: <c-integer-define>)
  => (formatted :: <byte-string>)
-  format-to-string("%d ", decl.c-integer-define-value);
+  format-to-string(" %d", decl.c-integer-define-value);
 end;
 
 
@@ -207,7 +207,7 @@ end;
 define method format-c-define-value
     (decl :: <c-string-define>)
  => (formatted :: <byte-string>)
-  concatenate("\"", decl.c-string-define-value, "\" ");
+  concatenate(" \"", decl.c-string-define-value, "\"");
 end;
 
 
@@ -227,7 +227,7 @@ end;
 define method format-c-define-value
     (decl :: <c-type-alias-define>)
  => (formatted :: <byte-string>)
-  concatenate(format-c-type(decl.c-type-alias-define-type), " ");
+  concatenate(" ", format-c-type(decl.c-type-alias-define-type));
 end;
 
 
@@ -242,5 +242,5 @@ end;
 define method format-c-define-value
     (decl :: <c-unknown-define>)
  => (formatted :: <byte-string>)
-  "... ";
+  " ...";
 end;
