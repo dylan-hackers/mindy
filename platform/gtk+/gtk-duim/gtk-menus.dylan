@@ -418,7 +418,7 @@ define sealed method make-gtk-mirror
 end method make-gtk-mirror;
 
 define sealed method make-menu-mirror-for-owner
-    (owner :: <sheet>, gadget :: <gtk-menu>, widget :: <GtkWidget*>)
+    (owner :: <sheet>, gadget :: <gtk-menu>, widget :: <GtkMenuItem*>)
  => (mirror :: <popup-menu-mirror>)
   let selection-owner = menu-record-selection?(gadget) & gadget;
   make(<popup-menu-mirror>, 
@@ -428,7 +428,7 @@ define sealed method make-menu-mirror-for-owner
 end method make-menu-mirror-for-owner;
 
 define sealed method make-menu-mirror-for-owner
-    (owner == #f, gadget :: <gtk-menu>, widget :: <GtkWidget*>)
+    (owner == #f, gadget :: <gtk-menu>, widget :: <GtkMenuItem*>)
  => (mirror :: <menu-mirror>)
   make(<menu-mirror>,
        widget: widget,
@@ -487,7 +487,10 @@ define sealed method make-gtk-menu-contents
   let seen-item? = #f;
   local
     method add-separator () => ()
-      ignoring("add-separator");
+      debug-message("adding separator to menu");
+      let separator = GTK-MENU-ITEM(gtk-menu-item-new());
+      gtk-menu-append(GTK-MENU(widget.submenu-value), separator);
+      gtk-widget-show(separator);
       need-separator? := #f;
       seen-item? := #f
     end method add-separator,
