@@ -203,13 +203,23 @@ define /* exported */ method check-cpp-expansion
 	end for;
 	let forbidden = pair(string, forbidden-expansions);
 	for (token in token-list.tail)
-	  if (~check-cpp-expansion(token.string-value, tokenizer,
-				   parameters: params-table,
-				   current-depth: current-depth + 1,
-				   forbidden-expansions: forbidden))
+	  unless (check-cpp-expansion(token.string-value, tokenizer,
+				      parameters: params-table,
+				      current-depth: current-depth + 1,
+				      forbidden-expansions: forbidden))
 	    // Successful call will have already pushed the expanded tokens
-	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
-	  end if;
+	    let cls = element(reserved-word-table,
+			      token.string-value, default: #f);
+	    if (cls)
+	      let reserved-word-token = make(cls,
+					     position: tokenizer.position,
+					     string: string-value(token),
+					     generator: tokenizer);
+	      push(tokenizer.unget-stack, reserved-word-token);
+	    else
+	      push(tokenizer.unget-stack, copy-token(token, tokenizer));
+	    end if;
+	  end unless;
 	finally
 	  #t;
 	end for;
@@ -224,7 +234,17 @@ define /* exported */ method check-cpp-expansion
 				    current-depth: current-depth + 1,
 				    forbidden-expansions: forbidden))
 	  // Successful call will have already pushed the expanded tokens
-	  push(tokenizer.unget-stack, copy-token(token, tokenizer));
+	  let cls = element(reserved-word-table,
+			    token.string-value, default: #f);
+	  if (cls)
+	    let reserved-word-token = make(cls,
+					   position: tokenizer.position,
+					   string: string-value(token),
+					   generator: tokenizer);
+	    push(tokenizer.unget-stack, reserved-word-token);
+	  else
+	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
+	  end if;
 	end unless;
       finally
 	#t;
