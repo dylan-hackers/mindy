@@ -1,5 +1,5 @@
-module: Dylan-User
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.1 1994/06/29 00:04:19 wlott Exp $
+module: Hello-World
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.2 1994/10/26 15:10:36 wlott Exp $
 
 //======================================================================
 //
@@ -31,8 +31,14 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.
 // Mindy invokes the generic function main with the command line arguments
 // as strings.  Given that we don't care what they are, we just ignore them.
 //
-// We just put this in the Dylan-User module, because there is no reason to
-// define out own module when the Dylan-User module is good enough.
+// We have to put this in its own module, because we need to use the Cheap-IO
+// module.  But the Dylan-User library is good enough.
+
+define module Hello-World
+  use Dylan;
+  use Cheap-IO;
+  use Extensions;
+end;
 
 define method main (#rest noise)
   puts("Hello, World.\n");
