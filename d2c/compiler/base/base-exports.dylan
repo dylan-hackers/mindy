@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.17 1996/02/09 20:37:03 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.18 1996/02/10 09:39:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -248,18 +248,6 @@ define module source
     extract-string;
 end;
 
-define module errors
-  use common;
-  use utils;
-  use source;
-  use standard-io;
-  use tokens;
-  export
-    compiler-warning, *warnings*, compiler-error,
-    compiler-warning-location, compiler-error-location,
-    extract-source;
-end module;
-
 define module header
   use common;
   use System, import: {copy-bytes};
@@ -323,6 +311,18 @@ define module tokens
     <tokenizer>, get-token, unget-token;
 
 end;
+
+define module errors
+  use common;
+  use utils;
+  use source;
+  use standard-io;
+  use tokens;
+  export
+    compiler-warning, *warnings*, compiler-error,
+    compiler-warning-location, compiler-error-location,
+    extract-source;
+end module;
 
 define module signature-interface
   create
