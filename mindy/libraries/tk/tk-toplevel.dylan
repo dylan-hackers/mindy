@@ -36,7 +36,7 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <toplevel> (<window>) end class;
 
 define-widget(<toplevel>, "toplevel",
-	      #"geometry", #"screen");
+	      #"width", #"height", #"screen", #"colormap", #"visual");
 
 // <Toplevel>s are at the top level, so it is meaningless to pack them.
 //
@@ -44,3 +44,12 @@ define method pack
     (window :: <toplevel>, #key, #all-keys) => (result :: <toplevel>);
   window;
 end method pack;
+
+define method tk-dialog (window :: <toplevel>, title :: <string>,
+			 text :: <string>, bitmap :: <string>,
+			 default :: <integer>, #rest buttons)
+ => button :: <integer>;
+  tk-as(<integer>, call-tk-function("tk_dialog ",
+				    apply(join-tk-args, window, title,
+					  text, bitmap, default, buttons)));
+end method tk-dialog;
