@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.33 2000/01/24 04:56:23 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.34 2000/01/31 00:01:24 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -526,9 +526,10 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
        & #t;
 
   // XXX these two look suspicious
+  // second one is ok, default is now according to DRM
   *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
   *implicitly-define-next-method*
-    := boolean-header-element(#"implicitly-define-next-method", #f, state);
+    := boolean-header-element(#"implicitly-define-next-method", #t, state);
 
   for (file in state.unit-files)
     let extension = file.filename-extension;
@@ -1464,7 +1465,7 @@ define method show-compiler-info(stream :: <stream>) => ()
 
   // Increment this value here (and CURRENT_BOOTSTRAP_COUNTER) in
   // configure.in to force an automatic bootstrap.
-  p("_DCI_D2C_BOOTSTRAP_COUNTER=3\n");
+  p("_DCI_D2C_BOOTSTRAP_COUNTER=4\n");
 
   // The directory (relative to --prefix) where ./configure can find our
   // runtime libraries. This is used when bootstrapping.
