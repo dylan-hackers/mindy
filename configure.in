@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.15 1995/09/14 19:31:14 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.16 1995/10/23 23:10:49 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -389,6 +389,14 @@ if test $select = 0; then
   echo "and you won't be able to compile without it.  Sorry."
 fi
 
+
+#--------------------------------------------------------------------
+#       See if _setjmp and _longjmp are defined.  If not, use
+#       setjmp and longjmp.
+#--------------------------------------------------------------------
+
+AC_CHECK_FUNCS(_setjmp)
+AC_CHECK_FUNCS(_longjmp)
 
 #--------------------------------------------------------------------
 #       Now we read this file to determine which libraries were 
