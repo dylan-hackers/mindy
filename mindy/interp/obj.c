@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.10 1994/11/28 04:20:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.11 1994/11/28 08:28:36 wlott Exp $
 *
 * This file contains <object>.
 *
@@ -49,7 +49,7 @@ static obj_t dylan_object_class(obj_t object)
 
 static obj_t dylan_object_address(obj_t object)
 {
-    return make_fixnum((long)object);
+    return make_bignum((long)object);
 }
 
 
