@@ -44,8 +44,47 @@ define method analize
 end;
 
 define method analize
-    (op :: type-or(<unknown-call>, <error-call>, <catch>), want :: <list>,
-     state :: <state>)
+    (op :: <known-call>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  //
+  // We might know that the function is returning some fixed number of values
+  // even when it returns a cluster.
+  if (op.dependents.dependent.defines
+	& function-returns-cluster?(op.depends-on.source-exp))
+    let new-depth = size(want) + 1;
+    if (new-depth > state.max-depth)
+      state.max-depth := new-depth;
+    end;
+  end;
+  // 
+  // Don't need to scan the depends-on, because we can't depend-on any
+  // clusters.
+  want;
+end;
+
+define method function-returns-cluster?
+    (leaf :: <function-literal>) => res :: <boolean>;
+  non-fixed-values?(leaf.signature);
+end;
+
+define method function-returns-cluster?
+    (leaf :: <literal-constant>) => res :: <boolean>;
+  non-fixed-values?(leaf.value.ct-function-signature);
+end;
+
+define method function-returns-cluster?
+    (leaf :: <definition-constant-leaf>) => res :: <boolean>;
+  non-fixed-values?(leaf.const-defn.function-defn-signature);
+end;
+
+define method non-fixed-values? (signature :: <signature>) => res :: <boolean>;
+  let returns = signature.returns;
+  ~(returns.min-values == returns.positional-types.size
+      & returns.rest-value-type == empty-ctype());
+end;
+
+define method analize
+    (op :: <abstract-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
   // If the result is used,
