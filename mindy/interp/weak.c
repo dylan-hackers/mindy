@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.9 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements weak pointers.
 *
@@ -153,7 +153,9 @@ void init_weak_functions(void)
     define_method("make", list1(singleton(obj_WeakPointerClass)), FALSE,
 		  list1(pair(symbol("object"), obj_Unbound)),
 		  FALSE, obj_WeakPointerClass, dylan_make_weak_pointer);
-    define_generic_function("weak-pointer-object", 1, FALSE, obj_False, FALSE,
+    define_generic_function("weak-pointer-object", 
+			    list1(obj_WeakPointerClass), 
+			    FALSE, obj_False, FALSE,
 			    list2(obj_ObjectClass, obj_BooleanClass),
 			    obj_False);
     add_method(find_variable(module_BuiltinStuff,symbol("weak-pointer-object"),

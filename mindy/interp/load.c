@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.29 1995/03/12 16:42:18 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.30 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -1152,7 +1152,8 @@ void scavenge_load_roots(void)
 
 void init_load_functions(void)
 {
-    define_generic_function("load", 1, FALSE, obj_False, FALSE,
+    define_generic_function("load", list1(obj_ByteStringClass),
+			    FALSE, obj_False, FALSE,
 			    obj_Nil, obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("load"),
 			     FALSE, FALSE)->value,

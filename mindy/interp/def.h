@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.h,v 1.4 1994/10/05 21:01:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.h,v 1.5 1996/02/15 19:19:46 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -33,7 +33,8 @@ extern void define_constant(char *name, obj_t value);
 extern void define_function(char *name, obj_t specializers, boolean restp,
 			    obj_t keys, boolean all_keys, obj_t result_type,
 			    obj_t (*func)());
-extern void define_generic_function(char *name, int req_args, boolean restp,
+extern void define_generic_function(char *name, obj_t specializers, 
+				    boolean restp,
 				    obj_t keys, boolean all_keys,
 				    obj_t res_types, obj_t more_results_type);
 extern void define_method(char *name, obj_t specializers, boolean restp,

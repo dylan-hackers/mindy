@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.27 1996/02/05 23:53:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.28 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -2034,12 +2034,12 @@ void init_num_classes(void)
     def_printer(obj_ExtendedFloatClass, print_xf);
 }
 
-#define add_transcendental_function(function)                           \
-    define_generic_function(#function, 1, FALSE, obj_False, FALSE,      \
-			    any_float, obj_False);                      \
-    define_method(#function, sf, FALSE, obj_False, FALSE,               \
-		  obj_SingleFloatClass, dylan_sf_##function);           \
-    define_method(#function, df, FALSE, obj_False, FALSE,               \
+#define add_transcendental_function(function)                              \
+    define_generic_function(#function, any_float, FALSE, obj_False, FALSE, \
+			    any_float, obj_False);                         \
+    define_method(#function, sf, FALSE, obj_False, FALSE,                  \
+		  obj_SingleFloatClass, dylan_sf_##function);              \
+    define_method(#function, df, FALSE, obj_False, FALSE,                  \
 		  obj_DoubleFloatClass, dylan_df_##function);
 
 void init_num_functions(void)
@@ -2051,6 +2051,7 @@ void init_num_functions(void)
     obj_t df = list1(obj_DoubleFloatClass);
     obj_t xf = list1(obj_ExtendedFloatClass);
     obj_t any_float = list1(obj_FloatClass);
+    obj_t any_real = list1(obj_RealClass);
     obj_t two_objs = list2(obj_ObjectClass, obj_ObjectClass);
     obj_t two_ints = list2(obj_IntegerClass, obj_IntegerClass);
     obj_t two_fis = list2(obj_FixnumClass, obj_FixnumClass);
@@ -2058,6 +2059,8 @@ void init_num_functions(void)
     obj_t two_sfs = list2(obj_SingleFloatClass, obj_SingleFloatClass);
     obj_t two_dfs = list2(obj_DoubleFloatClass, obj_DoubleFloatClass);
     obj_t two_xfs = list2(obj_ExtendedFloatClass, obj_ExtendedFloatClass);
+    obj_t two_reals = list2(obj_RealClass, obj_RealClass);
+    obj_t two_floats = list2(obj_FloatClass, obj_FloatClass);
     obj_t int_and_real = list2(obj_IntegerClass, obj_RealClass);
     obj_t int_and_sf = list2(obj_IntegerClass, obj_SingleFloatClass);
     obj_t int_and_df = list2(obj_IntegerClass, obj_DoubleFloatClass);
@@ -2076,21 +2079,21 @@ void init_num_functions(void)
     define_method("=", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_idp);
 
-    define_generic_function("truncate/", 2, FALSE, obj_False, FALSE,
+    define_generic_function("truncate/", two_reals, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("truncate", 1, FALSE, obj_False, FALSE,
+    define_generic_function("truncate", any_real, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("floor/", 2, FALSE, obj_False, FALSE,
+    define_generic_function("floor/", two_reals, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("floor", 1, FALSE, obj_False, FALSE,
+    define_generic_function("floor", any_real, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("ceiling/", 2, FALSE, obj_False, FALSE,
+    define_generic_function("ceiling/", two_reals, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("ceiling", 1, FALSE, obj_False, FALSE,
+    define_generic_function("ceiling", any_real, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("round/", 2, FALSE, obj_False, FALSE,
+    define_generic_function("round/", two_reals, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("round", 1, FALSE, obj_False, FALSE,
+    define_generic_function("round", any_real, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
 
     define_method("negative", fi, FALSE, obj_False, FALSE,
@@ -2381,7 +2384,7 @@ void init_num_functions(void)
     add_transcendental_function(log);
     add_transcendental_function(sqrt);
 
-    define_generic_function("atan2", 2, FALSE, obj_False, FALSE,      
+    define_generic_function("atan2", two_floats, FALSE, obj_False, FALSE,      
 			    any_float, obj_False);                             
     define_method("atan2", two_sfs, FALSE, obj_False, FALSE,  
 		  obj_SingleFloatClass, dylan_sf_atan2);     

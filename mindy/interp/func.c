@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.39 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.40 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -49,6 +49,7 @@
 #include "error.h"
 #include "def.h"
 #include "extern.h"
+#include "coll.h"
 #include "func.h"
 
 obj_t obj_FunctionClass = NULL;
@@ -134,6 +135,7 @@ struct function {
     boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
+    obj_t specializers;
 };
 
 #define FUNC(o) obj_ptr(struct function *, o)
@@ -184,6 +186,11 @@ obj_t function_keywords(obj_t func)
 boolean function_all_keywords_p(obj_t func)
 {
     return FUNC(func)->all_keys;
+}
+
+obj_t function_specializers(obj_t fn)
+{
+    return FUNC(fn)->specializers;
 }
 
 void invoke(struct thread *thread, int nargs)
@@ -324,11 +331,6 @@ struct method {
 };
 
 #define METHOD(o) obj_ptr(struct method *, o)
-
-obj_t method_specializers(obj_t method)
-{
-    return METHOD(method)->specializers;
-}
 
 static obj_t *push_keywords(obj_t *sp, obj_t keywords, obj_t *args, int nargs)
 {
@@ -1214,6 +1216,7 @@ struct gf {
     boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
+    obj_t specializers;
     obj_t methods;
     obj_t methods_clock;
     obj_t cache;
@@ -1393,11 +1396,12 @@ static void gf_xep(struct thread *thread, int nargs)
     }
 }
 
-obj_t make_generic_function(obj_t debug_name, int req_args, 
+obj_t make_generic_function(obj_t debug_name, obj_t specializers,
 			    boolean restp, obj_t keywords, boolean all_keys,
 			    obj_t result_types, obj_t more_results_type)
 {
     obj_t res = alloc(obj_GFClass, sizeof(struct gf));
+    int req_args = length(specializers);
 
     GF(res)->xep = gf_xep;
     GF(res)->debug_name = debug_name;
@@ -1410,6 +1414,7 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
 	GF(res)->more_results_type = obj_ObjectClass;
     else
 	GF(res)->more_results_type = more_results_type;
+    GF(res)->specializers = specializers;
     GF(res)->methods = obj_Nil;
     GF(res)->methods_clock = obj_False;
     GF(res)->cache = obj_Nil;
@@ -1417,27 +1422,39 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     return res;
 }
 
+static obj_t make_nondescript_specializers (int required_args)
+{
+    obj_t specializers = obj_Nil;
+    int i;
+
+    for (i=0; i<required_args; i++)
+	specializers = pair(obj_ObjectClass, specializers);
+
+    return specializers;
+}
+
 obj_t make_default_generic_function(obj_t debug_name, obj_t method)
 {
-    int reqargs = METHOD(method)->required_args;
     boolean restp = METHOD(method)->restp;
+    int req_args = METHOD(method)->required_args;
     obj_t keywords = METHOD(method)->keywords;
     boolean all_keys = METHOD(method)->all_keys;
+    obj_t specializers = make_nondescript_specializers(req_args);
 
     if (keywords != obj_False)
 	keywords = obj_Nil;
 
-    return make_generic_function(debug_name, reqargs, restp, keywords,
+    return make_generic_function(debug_name, specializers, restp, keywords,
 				 all_keys, obj_Nil, obj_ObjectClass);
 }
 
-void set_gf_signature(obj_t gf, int req_args, boolean restp, obj_t keys,
+void set_gf_signature(obj_t gf, obj_t specializers, boolean restp, obj_t keys,
 		      boolean all_keys, obj_t result_types,
 		      obj_t more_results_type)
 {
     obj_t methods = GF(gf)->methods;
 
-    GF(gf)->required_args = req_args;
+    GF(gf)->required_args = length(specializers);
     GF(gf)->restp = restp;
     GF(gf)->keywords = keys;
     GF(gf)->all_keys = all_keys;
@@ -1446,6 +1463,7 @@ void set_gf_signature(obj_t gf, int req_args, boolean restp, obj_t keys,
 	GF(gf)->more_results_type = obj_ObjectClass;
     else
 	GF(gf)->more_results_type = more_results_type;
+    GF(gf)->specializers = specializers;
     GF(gf)->methods = obj_Nil;
 
     while (methods != obj_Nil) {
@@ -1539,9 +1557,28 @@ obj_t add_method(obj_t gf, obj_t method)
 	error("%= accepts a variable number of arguments, but %= does not.",
 	      method, gf);
 
+    /* Check method specializers against GF */
+    gfscan = GF(gf)->specializers;
+    methscan = METHOD(method)->specializers;
+    i = 1;
+    while (gfscan != obj_Nil && methscan != obj_Nil) {
+	obj_t gftype = HEAD(gfscan);
+	obj_t methtype = HEAD(methscan);
+
+	if (!subtypep(methtype, gftype))
+	    error("Specializer %= is an instance of %= for %=, "
+		  "but is an instance of %= for %=",
+		  make_fixnum(i), gftype, gf, methtype, method);
+
+	gfscan = TAIL(gfscan);
+	methscan = TAIL(methscan);
+	i++;
+    }
+
+    /* Check method return types against GF */
     gfscan = GF(gf)->result_types;
     methscan = METHOD(method)->result_types;
-    i = 0;
+    i = 1;
     while (gfscan != obj_Nil && methscan != obj_Nil) {
 	obj_t gftype = HEAD(gfscan);
 	obj_t methtype = HEAD(methscan);
@@ -1622,7 +1659,8 @@ static obj_t dylan_make_gf(obj_t debug_name, obj_t required,
 			   obj_t restp, obj_t keywords, obj_t all_keys,
 			   obj_t res_types, obj_t more_res_type)
 {
-    return make_generic_function(debug_name, fixnum_value(required),
+    obj_t specializers = make_nondescript_specializers(fixnum_value(required));
+    return make_generic_function(debug_name, specializers,
 				 restp != obj_False, keywords,
 				 all_keys != obj_False, res_types,
 				 more_res_type);
@@ -1686,6 +1724,18 @@ static void dylan_method_arguments(obj_t self, struct thread *thread,
     else
 	vals[2] = obj_False;
 
+    do_return(thread, vals, vals);
+}
+
+static void dylan_function_return_values(obj_t self, struct thread *thread,
+					 obj_t *args)
+{
+    obj_t *vals = args-1;
+    obj_t func = *args;
+
+    thread->sp = vals + 2;
+    vals[0] = FUNC(func)->result_types;
+    vals[1] = FUNC(func)->more_results_type; 
     do_return(thread, vals, vals);
 }
 
@@ -2034,6 +2084,8 @@ void init_func_classes(void)
 
 void init_func_functions(void)
 {
+    obj_t type_or_singleton_false
+	= type_union(obj_TypeClass, singleton(obj_False));
     define_method("function-name", list1(obj_FunctionClass), FALSE, obj_False,
 		  FALSE, obj_ObjectClass, function_debug_name);
     define_function("make-generic-function",
@@ -2044,7 +2096,9 @@ void init_func_functions(void)
 			  type_union(object_class(obj_False), obj_TypeClass)),
 		    FALSE, obj_False, FALSE,
 		    list1(obj_GFClass), dylan_make_gf);
-    define_generic_function("add-method", 2, FALSE, obj_False, FALSE,
+    define_generic_function("add-method", 
+			    list2(obj_GFClass, obj_MethodClass), 
+			    FALSE, obj_False, FALSE,
 			    list2(obj_MethodClass,obj_ObjectClass), obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("add-method"),
 			     FALSE, FALSE)->value,
@@ -2057,9 +2111,10 @@ void init_func_functions(void)
     define_method("generic-function-mandatory-keywords", list1(obj_GFClass),
 		  FALSE, obj_False, FALSE, obj_ObjectClass,
 		  function_keywords);
-    define_method("method-specializers", list1(obj_MethodClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, method_specializers);
-    define_generic_function("function-arguments", 1, FALSE, obj_False, FALSE,
+    define_method("function-specializers", list1(obj_FunctionClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, function_specializers);
+    define_generic_function("function-arguments", list1(obj_FunctionClass), 
+			    FALSE, obj_False, FALSE,
 			    list3(obj_FixnumClass, obj_BooleanClass,
 				  obj_ObjectClass),
 			    obj_False);
@@ -2077,6 +2132,19 @@ void init_func_functions(void)
 			       list3(obj_FixnumClass, obj_BooleanClass,
 				     obj_ObjectClass),
 			       obj_False, dylan_method_arguments));
+    define_generic_function("function-return-values",
+			    list1(obj_FunctionClass), 
+			    FALSE, obj_False, FALSE,
+			    list2(obj_SeqClass, type_or_singleton_false),
+			    obj_False);
+    add_method(find_variable(module_BuiltinStuff, 
+			     symbol("function-return-values"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("function-return-values", 
+			       list1(obj_FunctionClass),
+			       FALSE, obj_False, FALSE,
+			       list2(obj_SeqClass, type_or_singleton_false),
+			       obj_False, dylan_function_return_values));
     define_method("sorted-applicable-methods", list1(obj_GFClass), TRUE,
 		  obj_False, FALSE, obj_ObjectClass, dylan_sorted_app_meths);
     define_method("applicable-method?", list1(obj_MethodClass), TRUE,

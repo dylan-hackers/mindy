@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.15 1995/11/07 12:48:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.16 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -168,10 +168,11 @@ static obj_t dylan_getenv(obj_t name)
 void init_misc_functions(void)
 {
 #if ! NO_ARGV_0
-    define_generic_function("main", 1, TRUE, obj_False, FALSE,
+    define_generic_function("main", list1(obj_ByteStringClass),
+			    TRUE, obj_False, FALSE,
 			    obj_Nil, obj_ObjectClass);
 #else
-    define_generic_function("main", 0, TRUE, obj_False, FALSE,
+    define_generic_function("main", obj_NIL, TRUE, obj_False, FALSE,
 			    obj_Nil, obj_ObjectClass);
 #endif
     define_function("raw-exit", list1(obj_FixnumClass), FALSE, obj_False,

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.12 1995/05/11 14:32:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.13 1996/02/15 19:19:46 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -78,11 +78,11 @@ extern void set_accessor_method_datum(obj_t method, obj_t datum);
 
 extern obj_t make_c_function(obj_t debug_name, void *pointer);
 
-extern obj_t make_generic_function(obj_t debug_name, int required_args,
+extern obj_t make_generic_function(obj_t debug_name, obj_t specializers,
 				   boolean restp, obj_t keys, boolean all_keys,
 				   obj_t result_types,obj_t more_results_type);
 extern obj_t make_default_generic_function(obj_t debug_name, obj_t method);
-extern void set_gf_signature(obj_t gf, int req_args, boolean restp,
+extern void set_gf_signature(obj_t gf, obj_t specializers, boolean restp,
 			     obj_t keys, boolean all_keys, obj_t result_types,
 			     obj_t more_results_type);
 
@@ -107,4 +107,4 @@ extern obj_t function_debug_name_or_self(obj_t func);
 extern obj_t function_keywords(obj_t func);
 extern boolean function_all_keywords_p(obj_t func);
 
-extern obj_t method_specializers(obj_t method);
+extern obj_t function_specializers(obj_t method);

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.11 1996/02/02 11:49:59 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.12 1996/02/15 19:19:46 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -201,7 +201,8 @@ func.o:  ${SRCDIR}/func.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/obj.h ${SRCDIR}/sym.h ${SRCDIR}/interp.h \
            ${SRCDIR}/vec.h ${SRCDIR}/type.h ${SRCDIR}/module.h \
            ${SRCDIR}/print.h ${SRCDIR}/driver.h ${SRCDIR}/error.h \
-           ${SRCDIR}/def.h ${SRCDIR}/extern.h ${SRCDIR}/func.h
+           ${SRCDIR}/def.h ${SRCDIR}/extern.h ${SRCDIR}/coll.h \
+           ${SRCDIR}/func.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/func.c
 
 gc.o:  ${SRCDIR}/gc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.15 1996/02/14 00:21:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.16 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements the stuff to install definitions.
 *
@@ -98,13 +98,14 @@ void define_function(char *name, obj_t specializers, boolean restp,
 					all_keys, result_type, func));
 }
 
-void define_generic_function(char *name, int req_args, boolean restp,
+void define_generic_function(char *name, obj_t specializers, boolean restp,
 			     obj_t keys, boolean all_keys, obj_t result_types,
 			     obj_t more_results_type)
 {
     obj_t namesym = symbol(name);
     struct variable *var;
-    obj_t gf = make_generic_function(namesym, req_args, restp, keys, all_keys,
+    obj_t gf = make_generic_function(namesym, specializers, 
+				     restp, keys, all_keys,
 				     result_types, more_results_type);
 
     define_variable(module_BuiltinStuff, namesym, var_GenericFunction);
@@ -201,14 +202,14 @@ static obj_t defgeneric(obj_t var_obj, obj_t signature, obj_t restp,
 	more_results_type = obj_ObjectClass;
 
     if (gf == obj_Unbound) {
-	var->value = make_generic_function(var->name, length(signature),
+	var->value = make_generic_function(var->name, signature,
 					   restp != obj_False, keywords,
 					   all_keys != obj_False, result_types,
 					   more_results_type);
 	var->function = func_Always;
     }
     else
-	set_gf_signature(gf, length(signature), restp != obj_False, keywords,
+	set_gf_signature(gf, signature, restp != obj_False, keywords,
 			 all_keys != obj_False, result_types,
 			 more_results_type);
 
@@ -237,17 +238,22 @@ static obj_t defslot(obj_t getter, obj_t setter)
     struct variable *var;
 
     if (setter != obj_False) {
+	obj_t specializers = list2(obj_ObjectClass, obj_ObjectClass);
 	var = obj_rawptr(setter);
 	if (var->value == obj_Unbound)
-	    var->value = make_generic_function(var->name, 2, FALSE, obj_False,
+	    var->value = make_generic_function(var->name, specializers,
+					       FALSE, obj_False,
 					       FALSE, obj_Nil,
 					       obj_ObjectClass);
     }
 
     var = obj_rawptr(getter);
-    if (var->value == obj_Unbound)
-	var->value = make_generic_function(var->name, 1, FALSE, obj_False,
+    if (var->value == obj_Unbound) {
+	obj_t specializers = list1(obj_ObjectClass);
+	var->value = make_generic_function(var->name, specializers,
+					   FALSE, obj_False,
 					   FALSE, obj_Nil, obj_ObjectClass);
+    }
 
     return var->name;
 }

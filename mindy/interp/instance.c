@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.43 1996/02/14 16:38:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.44 1996/02/15 19:19:46 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1393,7 +1393,7 @@ static void check_init_keyword_validity(obj_t class, obj_t initargs)
 	     scan = TAIL(scan)) {
 	    obj_t method = HEAD(scan);
 
-	    if (subtypep(class, HEAD(method_specializers(method)))) {
+	    if (subtypep(class, HEAD(function_specializers(method)))) {
 		obj_t keys = function_keywords(method);
 
 		if (function_all_keywords_p(method)) {
@@ -2001,13 +2001,15 @@ void init_instance_functions(void)
 		    list2(pair(symbol("init-function"), obj_Unbound),
 			  pair(symbol("init-value"), obj_Unbound)),
 		    FALSE, obj_InheritedDescrClass, make_inherited_descr);
-    define_generic_function("make", 1, FALSE, obj_Nil, TRUE,
+    define_generic_function("make", list1(obj_ClassClass), 
+			    FALSE, obj_Nil, TRUE,
 			    obj_Nil, obj_ObjectClass);
     define_method("make", list1(obj_ClassClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_make);
     define_method("make", list1(obj_DefinedClassClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_make_instance);
-    define_generic_function("initialize", 1, FALSE, obj_Nil, TRUE,
+    define_generic_function("initialize", list1(obj_ObjectClass), 
+			    FALSE, obj_Nil, TRUE,
 			    obj_Nil, obj_ObjectClass);
     define_method("initialize", list1(obj_ObjectClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_init);
@@ -2038,7 +2040,9 @@ void init_instance_functions(void)
 		  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter_method);
     define_method("slot-type", list1(obj_SlotDescrClass), FALSE,
 		  obj_False, FALSE, obj_ObjectClass, dylan_slot_type);
-    define_generic_function("slot-value", 2, FALSE, obj_False, FALSE,
+    define_generic_function("slot-value", 
+			    list2(obj_SlotDescrClass, obj_ObjectClass), 
+			    FALSE, obj_False, FALSE,
 			    list2(obj_ObjectClass, obj_BooleanClass),
 			    obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("slot-value"),
