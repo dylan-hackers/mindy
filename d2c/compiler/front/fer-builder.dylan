@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.7 1995/01/10 16:24:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.8 1995/02/28 22:38:55 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -221,15 +221,11 @@ define method build-loop-body
   push-body(builder, make(<loop-region>, source-location: source));
 end method;
 
-
-define method build-assignment
-    (builder :: <internal-builder>, policy :: <policy>,
-     source :: <source-location>,
+define method build-assignment-aux
+    (res :: <assignment>, builder :: <internal-builder>,
      target-vars :: type-or(<leaf>, <list>),
      source-exp :: <expression>)
- => ();
-  let res = make(<fer-assignment>, source-location: source, policy: policy,
-  		 expression: source-exp);
+
   let dep = make(<dependency>, source-exp: source-exp,
   		 source-next: source-exp.dependents,
 		 dependent: res);
@@ -256,6 +252,18 @@ define method build-assignment
   add-body-assignment(builder, res);
 end method;		
 
+
+define method build-assignment
+    (builder :: <internal-builder>, policy :: <policy>,
+     source :: <source-location>,
+     target-vars :: type-or(<leaf>, <list>),
+     source-exp :: <expression>)
+ => ();
+  build-assignment-aux
+    (make(<set-assignment>, source-location: source, policy: policy,
+          expression: source-exp),
+     builder, target-vars, source-exp);
+end method;
 
 // Make a join operation and a join assignment.  Add the assignment to the
 // builder.
@@ -285,7 +293,7 @@ define method make-operation
     (builder :: <internal-builder>, operands :: <list>)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(make(<call>), operands);
+  make-operand-dependencies(make(<unknown-call>), operands);
 end method;
 
 
@@ -328,8 +336,10 @@ define method build-let
      target-vars :: type-or(<leaf>, <list>),
      source-exp :: <expression>)
  => ();
-  // ### lex var create point notation needed.
-  build-assignment(builder, policy, source, target-vars, source-exp);
+  build-assignment-aux
+    (make(<let-assignment>, source-location: source, policy: policy,
+          expression: source-exp),
+     builder, target-vars, source-exp);
 end method;
 
 
@@ -450,7 +460,9 @@ define method build-method-body
 			  else
 			    list(result-vars);
 			  end);
+  let comp = builder.component;
   push-body(builder, leaf);
+  comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
   leaf;
 end method;
 
@@ -460,8 +472,11 @@ define method make-hairy-method-literal
      signature :: <signature>, main-entry :: <leaf>)
  => res :: <leaf>;
   ignore(policy);
-  make(<hairy-method-literal>,
-       signature: signature,
-       source-location: source,
-       main-entry: main-entry);
+  let res
+    = make(<hairy-method-literal>,
+	   signature: signature,
+	   source-location: source,
+	   main-entry: main-entry);
+  let comp = builder.component;
+  comp.reanalyze-functions := pair(res, comp.reanalyze-functions);
 end;
