@@ -1,6 +1,6 @@
 
 $stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/standard-io -L../runtime/print -L../runtime/format -L../runtime/random -L. -L../runtime/coll-ext -L../runtime/string-ext -L../runtime/table-ext';
+$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/standard-io -L../runtime/print -L../runtime/format -L../runtime/random -L. -L../runtime/coll-ext -L../runtime/string-ext -L../runtime/table-ext -L../runtime/melange';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
 do emit_library_rule(
