@@ -54,6 +54,16 @@ for (dir in hp-include-directories)
   push-last(include-path, dir);
 end for;
 
+
+// These constants should be moved here in the future.  Until the module
+// declarations can be sufficiently rearranged to allow their definition
+// here, they will remain commented out.  -- panda
+//
+// define constant c-type-size = unix-type-size;
+// define constant c-type-alignment = unix-type-alignment;
+// define constant $default-alignment :: <integer> = 4;
+
+
 define constant $integer-size :: <integer> = 4;
 define constant $short-int-size :: <integer> = 2;
 define constant $long-int-size :: <integer> = 4;
