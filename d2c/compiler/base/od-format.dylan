@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.29 1996/01/27 20:10:36 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.30 1996/01/31 23:57:06 ram Exp $
 
 /*
 
@@ -2208,6 +2208,8 @@ define class <make-info> (<object>)
     required-init-keyword: obj-class:;
   slot obj-name :: <symbol>,
     required-init-keyword: obj-name:;
+  slot dump-side-effect :: false-or(<method>),
+    required-init-keyword: dump-side-effect:;
 end class;
 
 
@@ -2241,6 +2243,9 @@ define method dump-od (obj :: <object>, buf :: <dump-buffer>) => ();
             | maybe-dump-reference(obj, buf))
     apply(dump-simple-object, found.obj-name, buf,
           map(method (fun) obj.fun end, found.accessor-funs));
+    if (found.dump-side-effect)
+      found.dump-side-effect(obj, buf);
+    end if;
   end if;
 end method;
 
@@ -2297,7 +2302,8 @@ define /* exported */ method add-make-dumper
   (name :: <symbol>, dispatcher :: <dispatcher>,
    obj-class :: <class>, slots :: <list>,
    #key load-external :: <boolean>, dumper-only :: <boolean>,
-        load-side-effect :: false-or(<method>))
+        load-side-effect :: false-or(<method>),
+        dump-side-effect :: false-or(<method>))
  => ();
   let acc = make(<stretchy-vector>);
   let key = make(<stretchy-vector>);
@@ -2322,7 +2328,8 @@ define /* exported */ method add-make-dumper
 	 init-keys: as(<simple-object-vector>, key),
          setter-funs: as(<simple-object-vector>, set),
 	 obj-class: obj-class,
-	 obj-name: name);
+	 obj-name: name,
+	 dump-side-effect: dump-side-effect);
 
   *make-dumpers*[obj-class] := info;
 
