@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/char.dylan,v 1.3 2003/09/30 16:30:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/char.dylan,v 1.4 2003/10/18 04:13:27 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -81,6 +81,12 @@ define sealed domain functional-== (singleton(<character>), <object>, <object>);
 // 
 define sealed inline method as (class == <character>, code :: <integer>)
     => res :: <character>;
+  make(<character>, code: code);
+end;
+
+define sealed inline method as
+    (type :: <byte-character-type>, code :: <integer>)
+    => res :: <byte-character>;
   make(<character>, code: code);
 end;
 
