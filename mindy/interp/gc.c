@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.17 1994/11/18 04:09:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.18 1994/12/07 18:48:37 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -65,7 +65,7 @@ extern void scavenge_brkpt_roots(void);
 extern void scavenge_table_roots(void);
 extern void scavenge_c_roots(void);
 
-#define CHECKGC 1
+#define CHECKGC 0
 
 boolean TimeToGC = FALSE;
 
