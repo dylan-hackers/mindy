@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.2 1998/09/30 17:45:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.3 1998/12/17 08:58:45 igor Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -65,12 +65,12 @@ static struct variable *ne_var = NULL;
 
 /* Various utility routines. */
 
-inline static int decode_byte(struct thread *thread)
+__inline__ static int decode_byte(struct thread *thread)
 {
     return ((unsigned char *)(thread->component))[thread->pc++];
 }
 
-inline static int decode_int4(struct thread *thread)
+__inline__ static int decode_int4(struct thread *thread)
 {
     int byte1 = decode_byte(thread);
     int byte2 = decode_byte(thread);
@@ -80,7 +80,7 @@ inline static int decode_int4(struct thread *thread)
     return byte1 | (byte2 << 8) | (byte3 << 16) | (byte4 << 24);
 }
 
-inline static int decode_arg(struct thread *thread)
+__inline__ static int decode_arg(struct thread *thread)
 {
     int arg = decode_byte(thread);
 
@@ -671,7 +671,7 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-inline void interpret_byte(int byte, struct thread *thread)
+__inline__ void interpret_byte(int byte, struct thread *thread)
 {
     switch (byte) {
       case op_BREAKPOINT:
