@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.9 1994/04/10 18:59:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.10 1994/04/11 00:21:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -223,7 +223,7 @@ void set_c_continuation(struct thread *thread,
     thread->pc = 0;
 }
 
-void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
+void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
     if (Tracing)
 	trace_return(old_sp, vals, thread->sp - vals);
@@ -247,11 +247,15 @@ void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 	else
 	    lose("Attempt to return, but no continuation established.\n");
     }
-#ifndef sparc
-    go_on();
-#endif
 }
 
+#ifndef sparc
+void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
+{
+    do_return_setup(thread, old_sp, vals);
+    go_on();
+}
+#endif
 
 
 /* Methods */

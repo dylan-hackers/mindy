@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.1 1994/03/24 21:49:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.2 1994/04/11 00:23:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -74,6 +74,11 @@ extern void set_c_continuation(struct thread *thread,
 			       void cont(struct thread *thread, obj_t *vals));
 extern obj_t *pop_linkage(struct thread *thread);
 extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
+#ifdef sparc
+#define void do_return_setup do_return
+#else
+extern void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals);
+#endif
 
 extern obj_t function_debug_name(obj_t func);
 extern obj_t function_debug_name_or_self(obj_t func);
