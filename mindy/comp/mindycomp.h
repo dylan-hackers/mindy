@@ -25,15 +25,13 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.h,v 1.2 2000/01/24 04:58:04 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.h,v 1.3 2001/06/23 00:07:46 brent Exp $
 *
 \**********************************************************************/
 
 #ifdef WIN32
 #   define boolean unsigned char
-#   define LIBDIR ""
-#   define BINDIR ""
-#   define VERSION "1.5"
+#   include "mindy-w32.h"
 #else
 #   define boolean int
 #endif

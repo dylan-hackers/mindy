@@ -32,6 +32,10 @@
 #ifndef MINDY_CYGWIN_H
 #define MINDY_CYGWIN_H
 
+#ifdef WIN32
+#include "mindy-w32.h"
+#endif
+
 const char* open_for(void);
 int flags_for(int);
 int cygwin(void);
