@@ -62,7 +62,7 @@ clean:
 \t-rm *.o *.s *.a *.c *.mak *~ $libname.lib.du
 
 install:
-\t@INSTALL@ lib$libname.a $libname.lib.du @libdir@/dylan
+\t@INSTALL@ lib$libname.a $libname.lib.du @libdir@/dylan/@version/dylan-user
 EOD
 		 
 sub write_file {
