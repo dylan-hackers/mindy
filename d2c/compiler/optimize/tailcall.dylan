@@ -1,11 +1,11 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.2 2000/01/24 04:56:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.3 2002/03/07 23:42:59 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -31,7 +31,7 @@ copyright: see below
 
 // Tail call identification.
 
-define method identify-tail-calls (component :: <component>) => ();
+define function identify-tail-calls (component :: <component>) => ();
   for (function in component.all-function-regions)
     for (return = function.exits then return.next-exit,
 	 while: return)
@@ -76,7 +76,7 @@ define method identify-tail-calls-before
 	if (prev)
 	  identify-tail-calls-in(component, home, results, prev);
 	else
-	  identify-tail-calls-before(component, home, results, in.parent, in);
+          identify-tail-calls-before(component, home, results, in.parent, in); // ### GGR: next-method? FIXME
 	end;
 	return();
       end;
@@ -98,6 +98,10 @@ define method identify-tail-calls-before
     => ();
 end;
 
+define generic identify-tail-calls-in
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), region :: <region>)
+    => ();
   
 define method identify-tail-calls-in
     (component :: <component>, home :: <fer-function-region>,
@@ -118,8 +122,34 @@ define method identify-tail-calls-in
       if (instance?(expr, <known-call>))
 	let func = expr.depends-on.source-exp;
 	if (instance?(func, <function-literal>) & func.main-entry == home)
+	  assert(home.literal == func);
 	  // It's a self tail call.
 	  convert-self-tail-call(component, home, expr);
+	elseif (home.literal == func) // this can be removed after a while FIXME
+	  // ... or better, make this the primary check.
+	  error("home.literal == func, but instance?(func, <function-literal>) & func.main-entry == home failed?");
+	elseif (instance?(func, <definition-constant-leaf>))
+	  let const-defn :: <abstract-method-definition> = func.const-defn;
+	  let ctv = const-defn.ct-value;
+	  // now, the ctv is a <ct-function>, but that does not reference the <function-literal>
+	  // so we have to go the other way.
+	  let lit = home.literal;
+	  let lit-ctv = lit.ct-function;
+	  if (ctv == lit-ctv & ctv)
+	    // It's a self tail call.
+	    convert-self-tail-call(component, home, expr);
+	  end if;
+	elseif (instance?(func, <literal-constant>))
+	  let ctv = func.value;
+	  let lit = home.literal;
+	  if (lit)
+	    let lit-ctv = lit.ct-function;
+	    if (ctv == lit-ctv & ctv)
+	      // It's a self tail call.
+	      compiler-warning("DID IT"); // does not seem to occur... FIXME
+	      convert-self-tail-call(component, home, expr);
+	    end if;
+	  end if;
 	end;
 	return();
       end;
