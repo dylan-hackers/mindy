@@ -54,11 +54,11 @@ end function working-directory;
 // hand-generated code (stolen from melange to avoid conflicts with stdio.h)
 // -------------------------------------------------------
 define method getenv
-    (arg1 :: <anonymous-9>)
- => (result :: <anonymous-9>);
+    (arg1 :: <char*>)
+ => (result :: <char*>);
   let result-value
     = call-out("getenv", ptr:, ptr: (arg1).raw-value);
-  let result-value = make(<anonymous-9>, pointer: result-value);
+  let result-value = make(<char*>, pointer: result-value);
   values(result-value);
 end method getenv;
 

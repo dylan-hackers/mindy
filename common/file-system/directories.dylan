@@ -77,9 +77,8 @@ end function end-of-directory;
 define function dir-element(dir :: <DIR>, path :: <pathname>)
  => (name :: <string>, type :: <file-type>)
   if(as(<integer>, dir) = 0) end-of-directory(); end if;
-  let file* = readdir(dir);
-  if(as(<integer>, file*) = 0) end-of-directory(); end if;
-  let file = make(<virtual-dirent>, c-type: file*);
+  let file = readdir(dir);
+  if(as(<integer>, file) = 0) end-of-directory(); end if;
 
   let name = convert-to-string(d-name(file));
   let stat = stat-mode(concatenate(as-dir(path), name));
@@ -90,39 +89,6 @@ define function dir-element(dir :: <DIR>, path :: <pathname>)
 	     end case;
   values(name, type);
 end function dir-element;
-
-define method is-dir?(file :: <pathname>) => (ans :: <boolean>)
-  is-dir?(stat-mode(file));
-end method is-dir?;
-
-define method is-link?(file :: <pathname>) => (ans :: <boolean>)
-  is-link?(stat-mode(file));
-end method is-link?;
-
-define method is-regular-file?(file :: <pathname>) => (ans :: <boolean>)
-  is-regular-file?(stat-mode(file));
-end method is-regular-file?;
-
-define method is-dir?(mode :: <integer>) => (ans :: <boolean>)
-  logand(mode, #xf000) = #x4000;
-end method is-dir?;
-
-define method is-link?(mode :: <integer>) => (ans :: <boolean>)
-  logand(mode, #xf000) = #xa000;
-end method is-link?;
-
-define method is-regular-file?(mode :: <integer>) => (ans :: <boolean>)
-  logand(mode, #xf000) = #x8000;
-end method is-regular-file?;
-
-define function stat-mode(file :: <pathname>) => (bar :: <integer>)
-  with-pointer(stat* = <stat>)
-    with-pointer(str* = file)
-      lstat(str*, stat*);
-      stat$st-mode(stat*);
-    end with-pointer;
-  end with-pointer;
-end function stat-mode;
 
 define function create-down-to(dir :: <pathname>) => b :: <boolean>;
   let (#rest dirs) = split($path-separator, dir);
@@ -167,7 +133,7 @@ define function open-dir(path :: <string>)
 end function open-dir;
 
 define method create-pointer(c :: <class>, s :: <string>)
-  create-c-type(<anonymous-9>, string: s);
+  create-c-type(<char*>, string: s);
 end method create-pointer;
 
 define method create-pointer(c :: <class>, obj == <stat>)
@@ -188,7 +154,7 @@ end function create-c-type;
 //-------------------------------------------------------
 
 define method unlink
-    (arg1 :: <anonymous-9>)
+    (arg1 :: <char*>)
  => (result :: <integer>);
   let result-value
     = call-out("unlink", int:, ptr: (arg1).raw-value);
@@ -201,7 +167,7 @@ define constant $X-OK = 1;
 define constant $F-OK = 0;
 
 define method access
-    (arg1 :: <anonymous-9>, arg2 :: <integer>)
+    (arg1 :: <char*>, arg2 :: <integer>)
  => (result :: <integer>);
   let result-value
     = call-out("access", int:, ptr: (arg1).raw-value, int: arg2);
@@ -209,7 +175,7 @@ define method access
 end method access;
 
 define method chdir
-    (arg1 :: <anonymous-9>)
+    (arg1 :: <char*>)
  => (result :: <integer>);
   let result-value
     = call-out("chdir", int:, ptr: (arg1).raw-value);

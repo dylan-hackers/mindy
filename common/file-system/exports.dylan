@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.3 2003/03/07 18:08:04 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.4 2003/07/21 18:43:08 andreas Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 define library file-system
@@ -68,17 +68,6 @@ define module types
 	     <file-system-error> };
 end module types;
 
-define module dir-commands
-  use dylan;
-  use melange-support, export: all;
-  
-  export 
-    readdir, opendir, closedir, d-name,
-    lstat, stat$st-mode,
-    <dir>, <stat>, <anonymous-9>,
-    <virtual-dir>, <virtual-dirent>;
-end module dir-commands;
-
 define module helpers
   use dylan;
   use streams, export: all;
@@ -95,6 +84,21 @@ define module helpers
     $path-separator,
     append, as-dir, create-pointer, \with-pointer, convert-to-string;
 end module helpers;
+
+define module dir-commands
+  use dylan;
+  use melange-support, export: all;
+  use helpers;
+  use file-system, import: { <pathname> };
+  
+  export 
+    readdir, opendir, closedir, d-name,
+    lstat, st-mode,
+    <dir>, <stat>, <char*>,
+    $S-IFMT, $S-IFLNK, $S-IFREG, $S-IFDIR,
+
+    is-dir?, is-link?, is-regular-file?, stat-mode;
+end module dir-commands;
 
 define module information
   use dylan;

@@ -21,5 +21,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../format-out'
     . ' -L../base-file-system';
 
+&emit_melange_rule('dir-intr');
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');
