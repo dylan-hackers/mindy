@@ -51,12 +51,22 @@ The following are enhancements added since release 1.4:
    class, has been added to the Introspections module of the Dylan
    library.
 
+   The function instantiable?, which tells you if a class is either
+   concrete or has an applicable method on make which is not the
+   default make method, has been added to the Introspections module of
+   the Dylan library.
+
+   The functions load-file and load-library have been added to the
+   Extensions module.  See mindy.txt for details.
+
    Mindy will now return an exit status of 1 if the debugger "quit"
    command was used to exit the interpretter.
 
    Mindycomp now gives warning messages when "while" or "until" are
-   used inside a for loop (you should use "while:" or "until:"), or
+   used inside a for loop (you should use "while:" or "until:"), or  
    when the "foo: (default)" keyword default syntax is used.
+   Mindycomp also gives warning messages when the exception name in an
+   exception clause is not surrounded by parentheses.
 
    Mindycomp now gives warning messages when function return values
    have names but not types.
@@ -82,8 +92,9 @@ The following are enhancements added since release 1.4:
    In the Regular-expressions module of the String-Extensions library,
    the join() function now only works on byte strings.
 
-   Added the Inspector library, which contains code for interactively
-   examining Dylan objects.  See inspector.txt for details.
+   Added the inspect and xinspect commands to the debugger, which
+   allow interactive examining of Dylan objects.  See debug.txt and
+   inspector.txt for details.
 
    Added the Matrix library, which contains standard matrix
    manipulations like matrix multiply and gaussian elimination.  See
@@ -114,6 +125,14 @@ The following are bug fixes since release 1.4:
    In the Regular-expressions module of the String-Extensions library,
    the split() function will now remove empty items correctly in all
    cases.
+
+   Regular expressions functions will now signal an <illegal-regexp>
+   error when given a regular expression that is parsable but would be
+   uninterpretable.  See String-extensions.txt for details.
+
+   Fixed a bug in the Regular-expressions module of the
+   String-Extensions library where escaped characters would be unescaped
+   once too many times.
 
    Fill! now returns a value of the correct type.
 
