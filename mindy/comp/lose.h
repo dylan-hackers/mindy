@@ -23,8 +23,8 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.h,v 1.3 1994/10/05 20:55:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.h,v 1.4 1996/05/11 21:32:06 nkramer Exp $
 *
 \**********************************************************************/
 
-extern void lose _ANSI_ARGS_((char *fmt, ...));
+extern void lose (char *fmt, ...);

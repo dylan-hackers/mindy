@@ -23,12 +23,15 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.11 1995/09/14 19:32:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.12 1996/05/11 21:32:06 nkramer Exp $
 *
 \**********************************************************************/
 
 #ifdef WIN32
 #   define boolean unsigned char
+#   define LIBDIR ""
+#   define BINDIR ""
+#   define VERSION "1.5"
 #else
 #   define boolean int
 #endif
@@ -38,8 +41,8 @@
 extern char *current_file;
 extern boolean GiveWarnings;
 
-extern void error _ANSI_ARGS_((int line, char *msg, ...));
-extern void warn _ANSI_ARGS_((int line, char *msg, ...));
+extern void error (int line, char *msg, ...);
+extern void warn (int line, char *msg, ...);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
