@@ -1,6 +1,6 @@
 module: File-system
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.2 1996/08/10 20:11:05 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.3 1996/09/04 16:47:11 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,7 +46,10 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 //    pathless-filename -- Everything in the filename after the
 //    filename-prefix.
 
-//    filename-basename -- That part of the filename between the last
+//    extensionless-filename -- Everything in the filename before the
+//    filename-extension.
+
+//    base-filename -- That part of the filename between the last
 //    path separator and the filename-extension.
 
 //    filename-extension -- Everything including and after the final
@@ -57,7 +60,7 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 
 //    For all filenames, 
 //       filename = concatenate(filename.filename-prefix, 
-//			      filename.filename-basename, 
+//			      filename.base-filename, 
 //			      filename.filename-extension)
 
 
@@ -163,6 +166,11 @@ define function pathless-filename (filename :: <filename>)
  => pathless-filename :: <filename>;
   copy-sequence(filename, start: filename.end-of-prefix);
 end function pathless-filename;
+
+define function extensionless-filename (filename :: <filename>)
+ => extensionless :: <filename>;
+  copy-sequence(filename, end: filename.start-of-extension);
+end function extensionless-filename;
 
 // ### Should have as-absolute-filename
 
