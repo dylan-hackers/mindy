@@ -1,0 +1,79 @@
+/**********************************************************************\
+*
+*  Copyright (C) 1994, Carnegie Mellon University
+*  All rights reserved.
+*
+*  This code was produced by the Gwydion Project at Carnegie Mellon
+*  University.  If you are interested in using this code, contact
+*  "Scott.Fahlman@cs.cmu.edu" (Internet).
+*
+***********************************************************************
+*
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.1 1994/03/24 21:49:24 wlott Exp $
+*
+* This file does whatever.
+*
+\**********************************************************************/
+
+
+extern obj_t obj_FunctionClass;
+
+struct method_info {
+    obj_t class;
+    boolean restp;
+    obj_t keys;
+    obj_t component;
+    int n_closure_vars;
+};
+
+#define METHOD_INFO(o) obj_ptr(struct method_info *, o)
+
+extern obj_t make_raw_function(char *debug_name, int required_args,
+			       boolean restp, obj_t keywords,
+			       obj_t result_types, obj_t more_results_type,
+			       void xep(struct thread *thread, int nargs));
+
+extern obj_t make_raw_method(char *debug_name, obj_t specializers,
+			     boolean restp, obj_t keywords,
+			     obj_t result_types, obj_t more_results_type,
+			     void iep(obj_t self, struct thread *thread,
+				      obj_t *args));
+extern void set_method_iep(obj_t method,
+			   void iep(obj_t self, struct thread *thread,
+				    obj_t *args));
+extern obj_t make_builtin_method(char *debug_name, obj_t specializers,
+				 boolean restp, obj_t keywords,
+				 obj_t result_type, obj_t func());
+extern obj_t make_method_info(boolean rest_p, obj_t keys, obj_t component,
+			      int n_closure_vars);
+extern obj_t make_byte_method(obj_t method_info, obj_t specializers,
+			      obj_t result_types, obj_t more_results_type,
+			      obj_t *lexenv);
+
+extern obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
+				  boolean setter, obj_t datum,
+				  void iep(obj_t self, struct thread *thread,
+					   obj_t *args));
+extern obj_t accessor_method_datum(obj_t method);
+extern void set_accessor_method_datum(obj_t method, obj_t datum);
+
+extern obj_t make_generic_function(obj_t debug_name, int required_args,
+				   boolean restp, obj_t keywords,
+				   obj_t result_types,obj_t more_results_type);
+extern obj_t make_default_generic_function(obj_t debug_name, obj_t method);
+extern void set_gf_signature(obj_t gf, int req_args, boolean restp,
+			     obj_t keywords, obj_t result_types,
+			     obj_t more_results_type);
+
+extern obj_t generic_function_methods(obj_t gf);
+extern obj_t add_method(obj_t gf, obj_t method);
+
+extern void invoke(struct thread *thread, int nargs);
+extern obj_t *push_linkage(struct thread *thread, obj_t *args);
+extern void set_c_continuation(struct thread *thread,
+			       void cont(struct thread *thread, obj_t *vals));
+extern obj_t *pop_linkage(struct thread *thread);
+extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
+
+extern obj_t function_debug_name(obj_t func);
+extern obj_t function_debug_name_or_self(obj_t func);
