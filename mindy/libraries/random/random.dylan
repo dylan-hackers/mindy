@@ -17,8 +17,9 @@ define module Random
   use dylan;
   use extensions;
   use transcendental;
+  use threads;
   export
-    random, <random-state>, *random-state*, random-bits,
+    random, <random-state>, random-bits,
     random-float, random-gaussian, random-exponential;
 end module Random;
 
@@ -58,6 +59,10 @@ define sealed class <random-state> (<object>)
 		   end method;
 end class <random-state>;
 
+define class <threadsafe-random-state> (<random-state>)
+  slot mutex :: <spinlock>, init-function: method () make(<spinlock>) end;
+end class <threadsafe-random-state>;
+
 // Seed with the system clock
 //
 define method make (cls == <random-state>, #next next-method, #all-keys)
@@ -91,13 +96,20 @@ end method shallow-copy;
 //
 define method random-chunk (state :: <random-state>)
  => number :: <fixed-integer>;
+  if (instance?(state, <threadsafe-random-state>)) 
+    grab-lock(state.mutex);
+  end if;
   let seed = state.state-seed;
   let j = state.state-j;
   let k = state.state-k;
   state.state-j := if (j = 0) random-max else j - 1 end;
   state.state-k := if (k = 0) random-max else k - 1 end;
   let a = (random-upper-bound - seed[state.state-j]) - seed[state.state-k];
-  seed[k] := if (a < 0) -a else random-upper-bound - a end;
+  let return-val = (seed[k] := if (a < 0) -a else random-upper-bound - a end);
+  if (instance?(state, <threadsafe-random-state>))
+    release-lock(state.mutex);
+  end if;
+  return-val;
 end method random-chunk;
 
 // Random integers:
@@ -119,8 +131,8 @@ define constant random-fixnum-max
 
 // Interface to the outside world:
 
-define method random (arg :: <integer>) => random-number :: <integer>;
-  let state = *random-state*;
+define method random (arg :: <integer>, #key state = *random-state*) 
+ => random-number :: <integer>;
   let shift = random-chunk-length - random-integer-overlap;
   if (arg <= random-fixnum-max)
     remainder(random-chunk(state), arg);
@@ -139,7 +151,8 @@ end method random;
 define constant $bits-returned-by-random-bits-function
   = random-chunk-length - random-integer-extra-bits;
 
-define method random-bits () => bits :: <fixed-integer>;
+define method random-bits (#key state = *random-state*) 
+ => bits :: <fixed-integer>;
   ash(random-chunk(*random-state*), - random-integer-extra-bits);
 end method random-bits;
 
@@ -147,9 +160,9 @@ end method random-bits;
 // because of all the weird insights into the float representation.
 //
 define method random-float
-    (arg :: <number>) => number :: <float>;
+    (arg :: <number>, #key state = *random-state*) => number :: <float>;
   let max-value = as(<float>, arg);
-  let random-num = as(<float>, random-bits());
+  let random-num = as(<float>, random-bits(state: state));
   let random-bits-max-value
     = as(<float>, ash(1, $bits-returned-by-random-bits-function - 1));
   (random-num / random-bits-max-value) * max-value;
@@ -177,10 +190,12 @@ end method random-float;
 // linear transformation to adjust to the real mean and sigma of the
 // desired distribution.
 // 
-define method random-gaussian (#key mean = 0, sigma = 1)
+define method random-gaussian (#key mean = 0, sigma = 1, 
+			       state = *random-state*)
  => random :: <float>;
   let unit-gaussian
-    = sqrt(-2 * log(random-float(1.0))) * cos(2 * pi * random-float(1.0));
+    = sqrt(-2 * log(random-float(1.0, state: state))) 
+              * cos(2 * pi * random-float(1.0, state: state));
    sigma * unit-gaussian + mean;
 end method random-gaussian;
 
@@ -205,9 +220,9 @@ end method random-gaussian;
 // distribution to a number generated from a unit uniform
 // distribution.
 //
-define method random-exponential (#key lambda = 1)
+define method random-exponential (#key lambda = 1, state = *random-state*)
       => random :: <double-float>;
-  - log(random-float(1.0) / lambda);
+  - log(random-float(1.0, state: state) / lambda);
 end method random-exponential;
 
 
