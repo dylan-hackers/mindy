@@ -42,6 +42,7 @@ define constant tautologies =
     #"characters",
     #"symbols",
     #"collections",
+    #"limited collections",
     #"sequences",
     #"arrays",
     #"deques",
@@ -260,6 +261,78 @@ define method tautology(arg == #"collections")
   key-test(vector())
     | signal("no key-test for vector()!\n");
 end method;
+
+define constant <type1> = limited(<vector>, of: <byte-character>);
+define constant <type2> = limited(<vector>, of: <byte-character>, size: 3);
+define constant <type3> = limited(<vector>, of: <integer>);
+define constant <type4> = limited(<stretchy-vector>, of: <byte-character>);
+define limited-collection <int-vector> (<vector>) of <integer> = 0;
+define limited-collection <stretchy-chars> (<stretchy-vector>)
+  of <byte-character> = ' ';
+define class <stretchy-byte-string> (<stretchy-chars>, <string>)
+end class <stretchy-byte-string>;
+
+define method test-limited-coll (coll :: <type1>)
+  <type1>;
+end method test-limited-coll;
+
+define method test-limited-coll (coll :: <type2>)
+  <type2>;
+end method test-limited-coll;
+
+define method test-limited-coll (coll :: <type3>)
+  <type3>;
+end method test-limited-coll;
+
+define method test-limited-int (int :: limited(<integer>, min: 0, max: 3))
+  "foo";
+end method;
+
+define method test-limited-int (int :: limited(<integer>, min: 5, max: 10))
+  "bar";
+end method;
+
+define method tautology(arg == #"limited collections")
+  let int-vec = as(<int-vector>, #[5, 3, 2]);
+  (test-limited-int(8) = "bar"
+    | signal("function-dispacth on 8 yields: %=\n", test-limited-int(8)));
+  (instance?("foo", <type1>)
+     | signal("instance?(\"foo\", %=) is false!\n", <type1>));
+  (instance?("foo", <type2>)
+     | signal("instance?(\"foo\", %=) is false!\n", <type2>));
+  (instance?("foobar", <type2>)
+     & signal("instance?(\"foobar\", %=) is true!\n", <type2>));
+  (instance?("foo", <type3>)
+     & signal("instance?(\"foo\", %=) is true!\n", <type3>));
+  (instance?(int-vec, <type3>)
+     | signal("instance?(%=, %=) is false!\n", int-vec, <type3>));
+  (instance?(int-vec, <type1>)
+     & signal("instance?(%=, %=) is true!\n", int-vec, <type1>));
+  (subtype?(<type2>, <type1>)
+     | signal("subtype?(%=, %=) is false!\n", <type2>, <type1>));
+  (subtype?(<type1>, <type2>)
+     & signal("subtype?(%=, %=) is true!\n", <type1>, <type2>));
+  (subtype?(<type3>, <type1>)
+     & signal("subtype?(%=, %=) is true!\n", <type3>, <type1>));
+  (test-limited-coll("foo") ~== <type2>
+     & signal("function dispatch on \"foo\" yields %=\n",
+	      test-limited-coll("foo")));
+  (test-limited-coll("foobar") ~== <type1>
+     & signal("function dispatch on \"foobar\" yields %=\n",
+	      test-limited-coll("foobar")));
+  let stretchy :: <stretchy-byte-string> = as(<stretchy-byte-string>, "foo");
+  (instance?(stretchy, <type1>)
+     | signal("instance?(%=,  %=) is false!\n", stretchy, <type1>));
+  // Stretchy collections can't match a "size" restriction
+  (instance?(stretchy, <type2>)
+     & signal("instance?(%=, %=) is not false!\n", stretchy, <type2>));
+  add!(stretchy, 'd');
+  (stretchy = "food" | signal("%d ~= \"food\"\n"));
+  (instance?(stretchy, <type2>)
+     & signal("instance?(%=, %=) is true!\n", stretchy, <type2>));
+  (instance?(stretchy, <type4>)
+     | signal("instance?(%=, %=) is false!\n", stretchy, <type4>));
+end method tautology;
 
 define method tautology(arg == #"sequences")
   let numbers = #(3, 4, 5);
