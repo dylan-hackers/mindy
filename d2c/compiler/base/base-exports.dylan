@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.46 2003/07/16 15:03:36 scotek Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.47 2004/05/11 21:54:04 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -788,6 +788,7 @@ define module c-representation
     <general-representation>,
     <heap-representation>,
     <immediate-representation>,
+    <magic-representation>,
     <c-data-word-representation>,
 
     representation-class,

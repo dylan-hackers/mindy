@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.52 2003/12/21 14:26:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.53 2004/05/11 21:54:06 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -3703,6 +3703,17 @@ define method emit-copy
   target ~= expr & format(stream, "%s = %s;\n", target, expr);
 end;
 
+define method emit-copy
+    (target :: <string>, target-rep :: <c-data-word-representation>,
+     source :: <string>, source-rep :: <magic-representation>,
+     file :: <file-state>)
+    => ();
+  let stream = file.file-guts-stream;
+  let c-type-string = source-rep.representation-c-type;
+  format(stream, "%s = allocate(sizeof(%s)); *((%s*)%s) = %s;\n", 
+         target, c-type-string, c-type-string, target, source);
+end;
+
 
 
 // conversion-expr
@@ -3733,8 +3744,8 @@ define method conversion-expr
     let to-more-general = source-rep.representation-to-more-general;
     conversion-expr(target-rep,
 		    select (to-more-general)
-		      #t => source;
-		      #f => error("Can't happen.");
+                      #t => source;
+                      #f => error("Tried to convert %= from %= to %=, and can't.", source, source-rep, target-rep);
 		      otherwise => format-to-string(to-more-general, source);
 		    end,
 		    source-rep.more-general-representation,
@@ -3745,7 +3756,7 @@ define method conversion-expr
 				       source, source-rep, file);
     select (from-more-general)
       #t => more-general;
-      #f => error("Can't happen.");
+      #f => error("Tried to convert %= from %= to %=, and can't.", source, source-rep, target-rep);
       otherwise => format-to-string(from-more-general, more-general);
     end;
   end;
