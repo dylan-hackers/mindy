@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.21 2001/07/07 17:26:12 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.22 2001/07/21 07:28:43 housel Exp $
 copyright: see below
 
 
@@ -326,7 +326,7 @@ define class <keyword-defn> (<object>)
   slot keyword-defn-type :: false-or(<expression-parse>),
     init-value: #f, init-keyword: type:;
   //
-  // The <override-info> for this override, or #f if we haven't computed it
+  // The <keyword-info> for this keyword, or #f if we haven't computed it
   // or don't know enough about the class to compute it at all.
   slot keyword-defn-info :: false-or(<keyword-info>),
     init-value: #f;
@@ -663,8 +663,8 @@ end method process-slot;
 
 define method process-slot
     (class-name :: <symbol>, class-functional? :: <boolean>,
-     slots :: <stretchy-vector>, overrides :: <stretchy-vector>, keywords :: <stretchy-vector>,
-     slot :: <inherited-slot-parse>)
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     keywords :: <stretchy-vector>, slot :: <inherited-slot-parse>)
     => ();
   let (init-value-frag, init-expr-frag, init-function-frag)
     = extract-properties(slot.inherited-slot-parse-options,
@@ -715,8 +715,8 @@ end method process-slot;
 
 define method process-slot
     (class-name :: <symbol>, class-functional? :: <boolean>,
-     slots :: <stretchy-vector>, overrides :: <stretchy-vector>, keywords :: <stretchy-vector>,
-     slot :: <init-arg-parse>)
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     keywords :: <stretchy-vector>, slot :: <init-arg-parse>)
  => ();
   let (required?-frag, type-frag, init-value-frag, init-function-frag, init-expr-frag)
     = extract-properties(slot.init-arg-parse-options,
@@ -1053,9 +1053,9 @@ end;
 define method compute-keyword
     (keyword :: <keyword-defn>) => info :: <keyword-info>;
   //
-  // Note: we don't pass in anything for the init-value or init-function,
-  // because we need to compile-time-eval those, which we can't do until
-  // tlf-finalization time.
+  // Note: we don't pass in anything for the type, init-value, or
+  // init-function, because we need to compile-time-eval those, which we
+  // can't do until tlf-finalization time.
   let info = make(<keyword-info>,
 		  symbol: keyword.keyword-defn-symbol,
 		  required?: keyword.keyword-defn-required?,
@@ -1120,6 +1120,46 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 	let init-val = ct-eval(override.override-defn-init-value, #f);
 	if (init-val)
 	  info.override-init-value := init-val;
+	end;
+      end;
+    end;
+  end;
+
+ // Finalize the initialization argument keywords too.
+  for (keyword in defn.class-defn-keywords)
+    // Fill in the <keyword-info> with the init value.
+    let info = keyword.keyword-defn-info;
+    if (info)
+      let keyword-type
+        = if (keyword.keyword-defn-type)
+            let type = ct-eval(keyword.keyword-defn-type, #f);
+            if (instance?(type, <ctype>))
+              type;
+            else
+              make(<unknown-ctype>);
+            end;
+          else
+            object-ctype();
+          end;
+      info.keyword-type := keyword-type;
+
+      if (keyword.keyword-defn-init-function)
+	let (ctv, change-to-init-value?)
+	  = maybe-define-init-function(keyword.keyword-defn-init-function, 
+                                       #f,
+				       tlf);
+	if (ctv)
+	  if (change-to-init-value?)
+	    info.keyword-init-function := #f;
+	    info.keyword-init-value := ctv;
+	  else
+	    info.keyword-init-function := ctv;
+	  end if;
+	end if;
+      elseif (keyword.keyword-defn-init-value)
+	let init-val = ct-eval(keyword.keyword-defn-init-value, #f);
+	if (init-val)
+	  info.keyword-init-value := init-val;
 	end;
       end;
     end;
@@ -1247,7 +1287,7 @@ end method finalize-slot;
 
 
 define method maybe-define-init-function
-    (expr :: <expression-parse>, getter-name :: <basic-name>,
+    (expr :: <expression-parse>, getter-name :: false-or(<basic-name>),
      tlf :: <define-class-tlf>)
     => (ctv :: false-or(<ct-value>), change-to-init-value? :: <boolean>);
   let init-val = ct-eval(expr, #f);
@@ -1299,8 +1339,11 @@ define method maybe-define-init-function
 		  new-signature);
 	  end if;
 	  let name
-	    = make(<derived-name>, how: #"init-function", 
-	    	   base: getter-name);
+            = if(getter-name)
+                make(<derived-name>, how: #"init-function", base: getter-name);
+              else
+                make(<anonymous-name>, location: source-location(tlf));
+              end;
 	  let init-func-defn
 	    = make(<init-function-definition>, name: name,
 		   library: tlf.tlf-defn.defn-library,
@@ -1359,6 +1402,14 @@ define method class-defn-deferred-evaluations-function
 		 let info = override-defn.override-defn-info;
 		 if (info.override-init-value == #t
 		       | info.override-init-function == #t)
+		   return(#t);
+		 end;
+	       end;
+	       // And for initialization argument keywords
+	       for (keyword-defn in defn.class-defn-keywords)
+		 let info = keyword-defn.keyword-defn-info;
+		 if (info.keyword-init-value == #t
+		       | info.keyword-init-function == #t)
 		   return(#t);
 		 end;
 	       end;
@@ -1893,28 +1944,252 @@ define method make-descriptors-leaf
   var;
 end;
 
+define class <initkey-info> (<object>)
+  constant slot initkey-keyword-info :: <keyword-info>,
+    required-init-keyword: keyword-info:;
+  constant slot initkey-var :: <abstract-variable>,
+    required-init-keyword: var:;
+  constant slot initkey-supplied?-var :: false-or(<abstract-variable>),
+    required-init-keyword: supplied?-var:;
+end class;
+
 define method build-key-defaulter-function-body
     (tl-builder :: <fer-builder>, defn :: <class-definition>)
-    => (maker-region :: <fer-function-region>,
+    => (defaulter-region :: <fer-function-region>,
 	signature :: <signature>);
-  let key-infos = make(<stretchy-vector>);
-  let defaulter-builder = make-builder(tl-builder);
+  let builder = make-builder(tl-builder);
   let cclass :: <cclass> = defn.ct-value;
+  let keyword-infos = cclass.all-keyword-infos;
 
   let policy = $Default-Policy;
   let source = defn.source-location;
 
   let sov-type = specifier-type(#"<simple-object-vector>");
-  let arg = make-local-var(defaulter-builder, #"keys", sov-type);
+  let arg = make-local-var(builder, #"keys", sov-type);
 
   let defaulter-region
-    = build-function-body(tl-builder, policy, source, #f,
+    = build-function-body(builder, policy, source, #f,
 			  make(<derived-name>, how: #"key-defaulter",
 			       base: defn.defn-name),
 			  list(arg),
 			  sov-type, #t);
-  build-return(tl-builder, policy, source, defaulter-region, arg);
-  end-body(tl-builder);
+
+  //
+  // Create value and supplied? local variables for each keyword
+  local
+    method make-initkey-info
+        (info :: <keyword-info>)
+     => (initkey-info :: <initkey-info>);
+      let key = info.keyword-symbol;
+      let type = info.keyword-type;
+      let var = make-local-var(builder, key, type);
+      let default = info.keyword-init-value;
+      let default-bogus?
+        = default & ~cinstance?(info.keyword-init-value, type);
+      let needs-supplied?-var? = info.keyword-needs-supplied?-var;
+      let supplied?-var
+        = if (default-bogus? | needs-supplied?-var?)
+            make-local-var(builder, as(<symbol>,
+                                       concatenate(as(<string>, key),
+                                                   "-supplied?")),
+                           dylan-value(#"<boolean>"));
+	    else
+	      #f;
+          end;
+      build-assignment
+        (builder, policy, source, var,
+         if (default & ~default-bogus?)
+           make-literal-constant(builder, default);
+         else
+           make(<uninitialized-value>, derived-type: type.ctype-extent);
+         end);
+      make(<initkey-info>,
+           keyword-info: info,
+           var: var,
+           supplied?-var: supplied?-var);
+    end method;
+  let initkey-infos = map(make-initkey-info, keyword-infos);
+
+  //
+  // Loop over the keyword arguments starting from the leftmost
+  // end so that the rightmost instance of a repeated keyword wins out
+  let arg-size-var
+    = make-local-var(builder, #"keys-size", dylan-value(#"<integer>"));
+  build-assignment(builder, policy, source,
+                   arg-size-var,
+                   make-unknown-call
+                     (builder,
+                      ref-dylan-defn(builder, policy, source, #"size"),
+                      #f, list(arg)));
+
+  let index-var
+    = make-local-var(builder, #"index", dylan-value(#"<integer>"));
+  build-assignment
+    (builder, policy, source, index-var,
+     make-unknown-call
+       (builder, ref-dylan-defn(builder, policy, source, #"-"), #f,
+        list(arg-size-var, make-literal-constant (builder, 2))));
+
+  let others-var
+    = make-local-var(builder, #"others", dylan-value(#"<list>"));
+  build-assignment
+    (builder, policy, source, others-var, make-literal-constant(builder, #()));
+
+  //
+  // Loop over the keyword arguments vector
+  let done-block = build-block-body(builder, policy, source);
+  build-loop-body(builder, policy, source);
+
+  let done-var = make-local-var(builder, #"done?", object-ctype());
+  build-assignment
+    (builder, policy, source, done-var,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"<"),
+                       #f,
+                       list(index-var, make-literal-constant(builder, 0))));
+  build-if-body(builder, policy, source, done-var);
+  build-exit(builder, policy, source, done-block);
+  build-else(builder, policy, source);
+
+  // Fetch keyword/value pair from the arguments vector
+  let key-var = make-local-var(builder, #"key", dylan-value(#"<symbol>"));
+  build-assignment
+    (builder, policy, source, key-var,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"%element"),
+                       #f, list(arg, index-var)));
+
+  let temp = make-local-var(builder, #"temp", dylan-value(#"<integer>"));
+  build-assignment
+    (builder, policy, source, temp,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"+"),
+                       #f, list(index-var,
+                                make-literal-constant(builder, 1))));
+  let val-var = make-local-var(builder, #"value", object-ctype());
+  build-assignment
+    (builder, policy, source, val-var,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"%element"),
+                       #f, list(arg, temp)));
+
+  //
+  // Build if-checks for each keyword
+  for(info in initkey-infos)
+    let keyword-info = info.initkey-keyword-info;
+
+    let cond = make-local-var(builder, #"condition", object-ctype());
+    build-assignment
+      (builder, policy, source, cond,
+       make-unknown-call
+         (builder,
+          ref-dylan-defn(builder, policy, source, #"=="),
+          #f,
+          list(key-var,
+               make-literal-constant(builder, keyword-info.keyword-symbol))));
+    build-if-body(builder, policy, source, cond);
+
+    build-assignment(builder, policy, source, info.initkey-var, val-var);
+    if(info.initkey-supplied?-var)
+      build-assignment(builder, policy, source,
+                       info.initkey-supplied?-var,
+                       make-literal-constant(builder, #t));
+    end if;
+    build-else(builder, policy, source);
+  end for;
+
+  //
+  // Add unknown keywords to the others list
+  let pair-leaf = ref-dylan-defn(builder, policy, source, #"pair");
+  build-assignment
+    (builder, policy, source, others-var,
+     make-unknown-call(builder, pair-leaf, #f,
+                       list(val-var, others-var)));
+  build-assignment
+    (builder, policy, source, others-var,
+     make-unknown-call(builder, pair-leaf, #f,
+                       list(key-var, others-var)));
+
+  for(i from 0 below initkey-infos.size)
+    end-body(builder);
+  end for;
+
+  //
+  // Decrement the loop counter
+  build-assignment
+    (builder, policy, source, index-var,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"-"),
+                       #f,
+                       list(index-var, make-literal-constant(builder, 2))));
+  end-body(builder); // if
+  end-body(builder); // loop
+  end-body(builder); // block
+
+  //
+  // Check for required but absent keywords and for init-functions that
+  // might need to be called.
+  for(info in initkey-infos)
+    let keyword-info = info.initkey-keyword-info;
+
+    if(keyword-info.keyword-required? | keyword-info.keyword-init-function)
+      if(info.initkey-supplied?-var)
+        build-if-body(builder, policy, source, info.initkey-supplied?-var);
+      else
+        let supplied?-var
+          = make-local-var(builder, #"supplied?", object-ctype());
+
+        build-assignment
+          (builder, policy, source, supplied?-var,
+           make-operation(builder, <primitive>,
+                          list(info.initkey-var), name: #"initialized?"));
+        build-if-body(builder, policy, source, supplied?-var);
+      end if;
+      build-else(builder, policy, source);
+
+      if(keyword-info.keyword-init-function)
+        let init-func-leaf
+          = make-literal-constant(builder, keyword-info.keyword-init-function);
+        build-assignment
+          (builder, policy, source, info.initkey-var,
+           make-unknown-call(builder, init-func-leaf, #f, #()));
+      else
+        build-assignment
+          (builder, policy, source, #(),
+           make-error-operation
+             (builder, policy, source,
+              #"missing-required-init-keyword-error",
+              make-literal-constant(builder, keyword-info.keyword-symbol),
+              make-literal-constant(builder, cclass)));
+      end if;
+
+      end-body(builder);
+    end if;
+  end for;
+
+  //
+  // Combine known keyword/value pairs with others into a vector
+  let apply-args = list(others-var);
+  for(info in initkey-infos)
+    let keyword-info = info.initkey-keyword-info;
+    
+    apply-args
+      := pair(make-literal-constant(builder, keyword-info.keyword-symbol),
+              pair(info.initkey-var, apply-args));
+  end for;
+
+  //
+  // The optimizer will take care of this
+  let vector-leaf = ref-dylan-defn(builder, policy, source, #"vector");
+  let vec-var = make-local-var(builder, #"vec", sov-type);
+  build-assignment
+    (builder, policy, source, vec-var,
+     make-unknown-call(builder,
+                       ref-dylan-defn(builder, policy, source, #"apply"),
+                       #f, pair(vector-leaf, apply-args)));
+
+  build-return(builder, policy, source, defaulter-region, vec-var);
+  end-body(builder);
   values(defaulter-region,
 	 make(<signature>, specializers: list(sov-type), returns: sov-type));
 end method;
@@ -2161,7 +2436,8 @@ define method build-maker-function-body
 	  let key = slot.slot-init-keyword;
 	  if (key)
 	    let default = ~(init-value == #t) & init-value;
-	    let key-info = add-key-info!(key, key-infos, slot, type, override, default);
+	    let key-info
+              = add-key-info!(key, key-infos, slot, type, override, default);
 	    let init-value-var
 	      = make-local-var(maker-builder,
 			       symcat(slot-name, "-init-value"),
@@ -2209,16 +2485,16 @@ define method build-maker-function-body
 				      derived-type: type.ctype-extent));
 	      end;
 	      end-body(maker-builder);
-	      build-slot-init(slot, init-value-var);
-	      build-slot-init(slot.slot-initialized?-slot,
-			      if (init-value | init-function)
+              build-slot-init(slot, init-value-var);
+              build-slot-init(slot.slot-initialized?-slot,
+                              if (init-value | init-function)
 				make-literal-constant(init-builder, #t);
-			      else
-				supplied?-arg;
-			      end);
-	    end;
-	  else
-	    if (init-value | init-function)
+                              else
+                                supplied?-arg;
+                              end);
+            end;
+          else
+            if (init-value | init-function)
 	      let init-value-var
 		= make-local-var(maker-builder,
 				 symcat(slot-name, "-init-value"),
