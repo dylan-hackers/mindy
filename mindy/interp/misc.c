@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.11 1994/11/03 22:19:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.12 1994/12/16 12:12:11 wlott Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -43,6 +43,7 @@
 #include "sym.h"
 #include "def.h"
 #include "num.h"
+#include "error.h"
 
 static struct variable *generic_apply_var = NULL;
 
@@ -78,6 +79,9 @@ static void dylan_apply(struct thread *thread, int nargs)
 	*dst++ = *src;
     }
     else {
+	/* Make sure the function is a function. */
+	check_type(*src, obj_FunctionClass);
+
 	/* Copy the function and the first n-1 args down the stack. */
 	while (src < end)
 	    *dst++ = *src++;
