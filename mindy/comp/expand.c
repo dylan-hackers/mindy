@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.22 1994/12/17 01:23:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.23 1996/02/14 00:24:23 nkramer Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -1130,12 +1130,18 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 	struct arglist *defclass_args = make_argument_list();
 	struct body *body = make_body();
 	struct expr *expr;
+	struct expr *abstract_expr;
 	
 	add_argument(defclass_args, make_argument(make_varref(dup_id(c->name))));
 
 	expand_slots(body, defclass_args, c);
 	expand_initargs(body, defclass_args, c);
 	expand_inheriteds(body, defclass_args, c);
+
+	abstract_expr 
+	    = make_literal_ref((c->flags & flag_ABSTRACT) 
+			         ? make_true_literal() : make_false_literal());
+	add_argument(defclass_args, make_argument(abstract_expr));
 
 	expr = make_varref(id(sym_DefineClass2));
 	add_expr(body, make_function_call(expr, defclass_args));
