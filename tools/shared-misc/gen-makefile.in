@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.41 2003/02/18 14:26:27 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.42 2003/04/07 12:17:25 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1044,7 +1044,7 @@ sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
 
-    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
     foreach $header (@headers) {
        print " \$(SRCDIR)/$header";
     }
@@ -1052,9 +1052,9 @@ sub emit_melange_rule {
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
-    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan, && mv \$(SRCDIR)/$basefile.dylan, \$(SRCDIR)/$basefile.dylan \n\n";
-    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
-    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
+    print "\$(SRCDIR)/$basefile.intr $basefile.dylan, && mv $basefile.dylan, $basefile.dylan \n\n";
+    push(@compile_dependencies, "$basefile.dylan");
+    push(@files_to_clean, "$basefile.dylan");
 }
 
 # emit_parsergen_rule($base_file_name) -- exported
@@ -1214,12 +1214,11 @@ sub install_library {
 #
 sub emit_mindycomp_rule {
     local($source, $flags) = @_;
-# one day, we want to move all generated file to builddir. Not yet, though.
-#    if (-e "$srcdir/$source.dylan") {
+    if (-e "$srcdir/$source.dylan") {
       $da_source = "\$(SRCDIR)/$source.dylan";
-#    } else {
-#      $da_source = "$source.dylan";
-#    }
+    } else {
+      $da_source = "$source.dylan";
+    }
     print "$source.dbc: $da_source\n";
     print "\t\$(MC) $flags ";
     print "-o $source.dbc $da_source\n";
