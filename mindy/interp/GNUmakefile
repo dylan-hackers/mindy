@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.9 1994/04/04 17:52:33 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.10 1994/04/09 13:34:15 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -22,7 +22,7 @@ OBJS = bool.o class.o coll.o debug.o def.o error.o func.o gc.o init.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
 	obj.o print.o str.o sym.o thread.o type.o load.o value.o vec.o \
 	char.o lexer.o parser.tab.o handler.o instance.o input.o driver.o \
-	table.o fd.o buf.o
+	table.o fd.o buf.o weak.o
 SRCS = $(patsubst %.o,%.c,$(OBJS))
 
 LDLIBS = -lfl
@@ -33,10 +33,16 @@ mindy: $(OBJS)
 
 lexer.c: lexer.l
 
+lexer.o: lexer.c
+	$(subst -Wall ,,$(COMPILE.c)) $< $(OUTPUT_OPTION)
+
 parser.tab.c: parser.y
 	bison -d $< -o $@
 
 parser.tab.h: parser.tab.c
+
+parser.tab.o: parser.tab.c
+	$(subst -Wall ,,$(COMPILE.c)) $< $(OUTPUT_OPTION)
 
 clean:
 	rm -f ${OBJS} parser.tab.c parser.tab.h lexer.c mindy Depends
