@@ -77,6 +77,7 @@ define abstract class <parse-state> (<object>)
   slot structs :: <table>;
   slot tokenizer :: <tokenizer>, required-init-keyword: #"tokenizer";
   slot pointers :: <table>;
+  slot vectors :: <table>;
   slot verbose :: <boolean>;
 end class <parse-state>;
 
@@ -102,11 +103,27 @@ define method initialize (value :: <parse-file-state>, #key)
   value.objects := make(<string-table>);
   value.structs := make(<string-table>);
   value.pointers := make(<object-table>);
+  value.vectors := make(<my-sequence-table>);
   value.pointers[void-type] := make(<pointer-declaration>, referent: void-type,
 				    dylan-name: "<machine-pointer>",
 				    equated: #t,
 				    name: "statically-typed-pointer");
 end method initialize;
+
+// table that chains the elements of a sequence as key
+// wonder why this isn't built in. Also wonder why
+// equal-hash isn't defined for general objects, even
+// though \= is defined for them.
+//
+define class <my-sequence-table> (<value-table>)
+end class <my-sequence-table>;
+
+define sealed inline method table-protocol (ht :: <my-sequence-table>)
+ => (key-test :: <function>, key-hash :: <function>);
+  values(\=, curry(sequence-hash, object-hash));
+end method table-protocol;
+
+
 
 // Push-include-level informs the <parse-state> that it is now processing a
 // recursive include file and should therefore treat declarations somewhat
@@ -162,10 +179,12 @@ define method initialize
     value.objects := parent.objects;
     value.structs := parent.structs;
     value.pointers := parent.pointers;
+    value.vectors := parent.vectors;
   else
     value.objects := make(<string-table>);
     value.structs := make(<string-table>);
     value.pointers := make(<object-table>);
+    value.vectors := make(<my-sequence-table>);
   end if;
 end method initialize;
 
@@ -315,8 +334,7 @@ define method process-declarator
       // Vector types are represented the same as the corresponding pointer
       // types, but are accessed differently, so make sure that we share names
       // with the corresponding pointer type.
-      let decl = make(<vector-declaration>, length: length, 
-		      name: anonymous-name(), equiv: pointer-to(tp, state));
+      let decl = vector-of(tp, state, length: length);
       process-declarator(decl, declarator.tail.tail, state);
     (declarator.head == #"function") =>
       // rgs: For now, we simple equate all function types to

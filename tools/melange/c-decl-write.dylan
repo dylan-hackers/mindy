@@ -996,7 +996,7 @@ define method write-declaration
       // (de)allocation), we'll trustingly ask the class its size 
       // (particularly if it's anonymous). 
       if (decl.length) 
-  	  format(stream, "define method content-size (value == %s) " 
+  	  format(stream, "define inline method content-size (value == %s) " 
 	  	   " => (result :: <integer>);\n" 
 		   "  %=;\nend method content-size;\n\n", 
 	         decl.dylan-name, decl.length); 

@@ -692,7 +692,8 @@ define method pointer-to
 	  <enum-declaration>,
 	  <predefined-type-declaration> =>
 	    make(<pointer-declaration>, 
-                 name: concatenate(target-type.simple-name, "*"),
+//                 name: concatenate(target-type.simple-name, "*"),
+                 name: anonymous-name(),
 		 referent: target-type);
 	  otherwise =>
 	    // Pointers to struct types are the same as the types themselves.
@@ -705,6 +706,32 @@ define method pointer-to
     new-type;
   end if;
 end method pointer-to;
+
+define method vector-of
+    (target-type :: <type-declaration>, state :: <parse-state>, #key length = #f)
+ => (vector-type :: <vector-declaration>);
+  let found-type = element(state.vectors, 
+                           vector(target-type, length), 
+                           default: #f);
+  if (found-type)
+    found-type;
+  else
+    let new-type
+      = make(<vector-declaration>, length: length, 
+/*
+             name: if(length)
+                     format-to-string("%s<@%=>", 
+                                      target-type.simple-name, length)
+                   else
+                     format-to-string("%s<@>", target-type.simple-name)
+                   end if,
+*/
+             name: anonymous-name(),
+             equiv: pointer-to(target-type, state));
+    state.vectors[vector(target-type, length)] := new-type;
+    new-type;
+  end if;
+end method vector-of;
 
 //------------------------------------------------------------------------
 
