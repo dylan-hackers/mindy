@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.6 1995/03/13 21:30:41 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.7 1996/02/13 20:47:56 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -93,7 +93,7 @@ dashes.txt : ${SRCDIR}/dashes.src
 	cp ${SRCDIR}/dashes.src ./dashes.txt
 
 clean:
-	rm -f ${OBJS} *~ \#* core
+	rm -f ${OBJS} *~ \#* *.dbc core
 
 realclean:
 	rm -f ${OBJS} Makefile *~ \#* core
