@@ -1,5 +1,5 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.6 2003/04/04 19:01:36 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.7 2003/04/04 19:20:20 gabor Exp $
 copyright: see below
 
 
@@ -162,9 +162,9 @@ define method build-xep
 
 
   let ct-func = function.ct-function;
-  ct-func | compiler-warning("has no ct-func: %=", function); //### FIXME
+// GGR: for later debugging  ct-func | compiler-warning("has no ct-func: %=", function); //### FIXME
   let defn = ct-func & ct-func.ct-function-definition;
-  (ct-func & ~defn) & compiler-warning("has no defn: %=, %=", function, ct-func); //### FIXME
+// GGR: for later debugging  (ct-func & ~defn) & compiler-warning("has no defn: %=, %=", function, ct-func); //### FIXME
   let loc = if (defn) defn.source-location else make(<source-location>) end;
 
   aux-build-xep(function, function.signature, component, main-entry.name,
