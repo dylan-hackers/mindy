@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.7 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.8 1996/01/15 12:09:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -139,14 +139,14 @@ define method dump-simple-region (name, buf, component, #rest stuff)
 end method;
 
 
-// block: component, source, info, "self", body.
+// block: component, source, "self", body.
 //
 define method fer-dump-od
     (obj :: <block-region>, component :: <fer-component>, buf :: <dump-state>)
  => ();
   if (maybe-dump-reference(obj, buf))
     dump-simple-region(#"block-region", buf, component, obj.source-location,
-  		       obj.info, obj, obj.body);
+  		       obj, obj.body);
   end if;
 end method;
 
@@ -166,12 +166,10 @@ add-od-loader(*compiler-dispatcher*, #"block-region",
     let builder = load-object-dispatch(state);
     let res = build-block-body(builder, $default-policy,
     			       load-object-dispatch(state));
-    let dinfo = load-object-dispatch(state);
     let self = load-object-dispatch(state);
     resolve-forward-ref(self, res);
     load-object-dispatch(state);
     assert(res == end-body(builder));
-    res.info := dinfo;
     assert-end-object(state);
     res;
   end method
@@ -385,11 +383,11 @@ add-make-dumper(#"prologue-operation", *compiler-dispatcher*, <prologue>,
 
 add-make-dumper(#"primitive-operation", *compiler-dispatcher*, <primitive>,
 		concatenate($operation-slots,
-			    list(name, name:, #f,
-				 info, info:, #f)));
+			    list(primitive-name, name:, #f,
+				 primitive-info, info:, #f)));
 
 define constant $abstract-call-slots =
-  concatenate($operation-slots, list(info, info:, #f));
+  $operation-slots;
 
 
 add-make-dumper(#"known-call-operation", *compiler-dispatcher*,
