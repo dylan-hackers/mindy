@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.10 1996/03/18 02:50:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -16,22 +16,22 @@ define method format (str :: <byte-string>, #rest args) => ();
 	  end;
 	  let char = str[index];
 	  select (char)
-	    'd' =>
+	    'd', 'D' =>
 	      write-integer(args[next-arg], 10);
 	      scan(index + 1, next-arg + 1);
-	    'b' =>
+	    'b', 'B' =>
 	      write-integer(args[next-arg], 2);
 	      scan(index + 1, next-arg + 1);
-	    'o' =>
+	    'o', 'O' =>
 	      write-integer(args[next-arg], 8);
 	      scan(index + 1, next-arg + 1);
-	    'x' =>
+	    'x', 'X' =>
 	      write-integer(args[next-arg], 16);
 	      scan(index + 1, next-arg + 1);
-	    'c' =>
+	    'c', 'C' =>
 	      write(check-type(args[next-arg], <byte-character>));
 	      scan(index + 1, next-arg + 1);
-	    's' =>
+	    's', 'S' =>
 	      print-message(args[next-arg]);
 	      scan(index + 1, next-arg + 1);
 	    '=' =>
