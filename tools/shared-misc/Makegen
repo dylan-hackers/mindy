@@ -14,8 +14,10 @@ if ($features{'compiled_for_win32'}) {
     do rename_and_install('bin', 'gen-makefile', 'gen-makefile.perl');
     do rename_and_install('bin', 'mk-build-tree', 'mk-build-tree.perl');
     do rename_and_install('bin', 'line-count', 'line-count.perl');
+    do rename_and_install('bin', 'make-dylan-app', 'make-dylan-app.perl');
 } else {
     do install_executable($bindir, 'gen-makefile');
     do install_executable($bindir, 'mk-build-tree');
     do install_executable($bindir, 'line-count');
+    do install_executable($bindir, 'make-dylan-app');
 }

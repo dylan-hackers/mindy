@@ -1,0 +1,69 @@
+#!@PERL@ -w
+
+use strict;
+
+unless (@ARGV == 1) {
+    print <<EOD;
+Usage:
+  make-dylan-app appname
+EOD
+    exit 1;
+}
+
+my $appname = $ARGV[0];
+
+mkdir $appname, 0777 or die "Can't create directory $appname: $!";
+chdir $appname or die "Can't chdir to directory $appname: $!";
+
+&write_file("$appname.lid", <<"EOD");
+library: $appname
+executable: $appname
+entry-point: $appname:%main
+
+$appname-exports.dylan
+$appname.dylan
+EOD
+
+&write_file("$appname-exports.dylan", <<"EOD");
+library: $appname
+module: dylan-user
+
+define library $appname
+  use dylan;
+  use streams;
+  use format;
+  use standard-io;
+end library;
+
+define module $appname
+  use dylan;
+  use extensions;
+  use streams;
+  use format;
+  use standard-io;
+end module;
+EOD
+
+&write_file("$appname.dylan", <<"EOD");
+library: $appname
+module: $appname
+author: 
+copyright: 
+
+define method main(appname, #rest arguments)
+  // insert code here ...
+
+  // XXX - This is temporary, and only here because of bugs in
+  // the compiler and runtime environment.
+  force-output(*standard-error*);
+  force-output(*standard-output*);
+  exit(exit-code: 0);
+end method main;
+EOD
+
+sub write_file {
+    my ($filename, $contents) = @_;
+    open(OUTPUT, ">$filename") or die "Can't create $filename: $!";
+    print OUTPUT $contents;
+    close OUTPUT;
+}
