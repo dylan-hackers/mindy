@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.50 1995/05/05 14:43:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.51 1995/05/05 16:56:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -158,8 +158,7 @@ define method side-effect-free? (expr :: <truly-the>) => res :: <boolean>;
   #t;
 end;
 
-define method side-effect-free?
-    (var :: <abstract-variable>) => res :: <boolean>;
+define method side-effect-free? (var :: <leaf>) => res :: <boolean>;
   #t;
 end;
 
@@ -172,14 +171,6 @@ define method side-effect-free?
   end;
 end;
 
-define method side-effect-free? (const :: <constant>) => res :: <boolean>;
-  #t;
-end;
-
-define method side-effect-free?
-    (func :: <function-literal>) => res :: <boolean>;
-  #t;
-end;
 
 
 define method pure-single-value-expression? (expr :: <expression>)
@@ -582,8 +573,7 @@ define method optimize-unknown-call
 	  end;
 	end;
 	if (known?)
-	  // Now make sure all the required keywords are supplied and all the
-	  // unsupplied keywords are defaultable.
+	  // Now make sure all the required keywords are supplied.
 	  for (keyinfo in sig.key-infos)
 	    block (found-key)
 	      for (key-dep = arg-dep
@@ -597,8 +587,6 @@ define method optimize-unknown-call
 		compiler-warning("Required keyword %= unsupplied.",
 				 keyinfo.key-name);
 		bogus? := #t;
-	      elseif (~keyinfo.key-default)
-		known? := #f;
 	      end;
 	    end;
 	  end;
@@ -684,11 +672,22 @@ define method optimize-unknown-call
 		 until: key-dep == #f
 		   | key-dep.source-exp.value.literal-value == key)
 	    finally
-	      if (key-dep)
-		add!(new-ops, key-dep.dependent-next.source-exp);
-	      else
-		add!(new-ops,
-		     make-literal-constant(builder, keyinfo.key-default));
+	      let leaf
+		= if (key-dep)
+		    key-dep.dependent-next.source-exp;
+		  else
+		    let default = keyinfo.key-default;
+		    if (default)
+		      make-literal-constant(builder, default);
+		    else
+		      make(<uninitialized-value>,
+			   derived-type: keyinfo.key-type);
+		    end;
+		  end;
+	      add!(new-ops, leaf);
+	      if (keyinfo.key-supplied?-var)
+		let supplied? = as(<ct-value>, key-dep & #t);
+		add!(new-ops, make-literal-constant(builder, supplied?));
 	      end;
 	    end;
 	  end;
