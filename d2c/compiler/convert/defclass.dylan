@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.61 1996/03/20 19:15:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.62 1996/03/21 03:01:10 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2680,3 +2680,29 @@ add-make-dumper(#"init-function-definition", *compiler-dispatcher*,
 		<init-function-definition>,
 		$abstract-method-definition-slots,
 		load-external: #t);
+
+// Seals for file compiler/convert/defclass.dylan
+
+// <define-class-parse> -- subclass of <definition-parse>
+define sealed domain make(singleton(<define-class-parse>));
+define sealed domain initialize(<define-class-parse>);
+// <slot-parse> -- subclass of <abstract-slot-parse>
+define sealed domain make(singleton(<slot-parse>));
+// <inherited-slot-parse> -- subclass of <abstract-slot-parse>
+define sealed domain make(singleton(<inherited-slot-parse>));
+// <init-arg-parse> -- subclass of <abstract-slot-parse>
+define sealed domain make(singleton(<init-arg-parse>));
+// <real-class-definition> -- subclass of <class-definition>
+define sealed domain make(singleton(<real-class-definition>));
+define sealed domain initialize(<real-class-definition>);
+// <local-class-definition> -- subclass of <real-class-definition>
+define sealed domain make(singleton(<local-class-definition>));
+// <slot-defn> -- subclass of <object>
+define sealed domain make(singleton(<slot-defn>));
+define sealed domain initialize(<slot-defn>);
+// <override-defn> -- subclass of <object>
+define sealed domain make(singleton(<override-defn>));
+define sealed domain initialize(<override-defn>);
+// <init-function-definition> -- subclass of <abstract-method-definition>
+define sealed domain make(singleton(<init-function-definition>));
+define sealed domain initialize(<init-function-definition>);

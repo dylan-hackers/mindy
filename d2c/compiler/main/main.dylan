@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.59 1996/03/20 19:14:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.60 1996/03/21 03:01:10 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -761,3 +761,9 @@ end method %main;
 #if (mindy)
 collect-garbage(purify: #t);
 #end
+
+// Seals for file compiler/main/main.dylan
+
+// <unit-info> -- subclass of <object>
+define sealed domain make(singleton(<unit-info>));
+define sealed domain initialize(<unit-info>);
