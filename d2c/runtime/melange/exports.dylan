@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.3 1998/12/04 21:22:05 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.4 1999/04/15 14:40:59 andreas Exp $
 
 //======================================================================
 //
@@ -45,6 +45,7 @@ define module melange-support
     signed-short-at-setter, unsigned-short-at, unsigned-short-at-setter,
     signed-long-at, signed-long-at-setter, unsigned-long-at,
     unsigned-long-at-setter, longlong-at, longlong-at-setter,
+    unsigned-longlong-at, unsigned-longlong-at-setter,
     float-at, float-at-setter, double-at, double-at-setter,
     long-double-at, long-double-at-setter, pointer-at, pointer-at-setter,
 
