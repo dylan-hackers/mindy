@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.93 1996/01/27 20:19:17 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.94 1996/01/30 13:08:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -746,21 +746,49 @@ define method emit-prologue
 	 dylan-slot-offset(specifier-type(#"<method>"), #"generic-entry"));
 end;
 
+define constant $max-inits-per-function = 25;
+
+define method emit-init-functions
+    (init-functions :: <vector>, start :: <integer>, finish :: <integer>,
+     file :: <file-state>)
+    => body :: <byte-string>;
+  let stream = make-indenting-string-stream(indentation: $indentation-step);
+  if (finish - start <= $max-inits-per-function)
+    for (index from start below finish)
+      let init-function = init-functions[index];
+      let main-entry = init-function.main-entry;
+      let func-info = get-info-for(main-entry, file);
+      format(stream, "/* %s */\n", main-entry.name);
+      format(stream, "%s(sp);\n\n", main-entry-name(func-info, file));
+    end for;
+  else
+    for (divisions = finish - start
+	   then ceiling/(divisions, $max-inits-per-function),
+	 while: divisions > $max-inits-per-function)
+    finally
+      for (divisions from divisions above 0 by -1)
+	let count = ceiling/(finish - start, divisions);
+	let name = format-to-string("%s_init_%d_%d",
+				    file.file-unit.unit-prefix,
+				    start, start + count - 1);
+	format(file.file-body-stream,
+	       "static void %s(descriptor_t *sp)\n{\n%s}\n\n",
+	       name,
+	       emit-init-functions(init-functions, start, start + count,
+				   file));
+	format(stream, "%s(sp);\n", name);
+	start := start + count;
+      end for;
+    end for;
+  end if;
+  stream.string-output-stream-string;
+end method emit-init-functions;
+
 define method emit-epilogue
     (init-functions :: <vector>, file :: <file-state>) => ();
-  let bstream = file.file-body-stream;
-  let gstream = file.file-guts-stream;
-
-  format(bstream, "void %s_init(descriptor_t *sp)\n{\n",
-	 file.file-unit.unit-prefix);
-  for (init-function in init-functions)
-    let main-entry = init-function.main-entry;
-    let func-info = get-info-for(main-entry, file);
-    format(gstream, "/* %s */\n", main-entry.name);
-    format(gstream, "%s(sp);\n\n", main-entry-name(func-info, file));
-    write(gstream.string-output-stream-string, bstream);
-  end;
-  write("}\n", bstream);
+  format(file.file-body-stream, "void %s_init(descriptor_t *sp)\n{\n%s}\n",
+	 file.file-unit.unit-prefix,
+	 emit-init-functions(init-functions, 0, init-functions.size, file));
 end;
 
 define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
