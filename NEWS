@@ -1,3 +1,13 @@
+Gwydion Dylan 2.3.10
+
+  For this release, we have further improved Common Dylan compliance,
+  exception reporting, the Melange tool, introspection, and runtime error
+  checking.  We have removed the Boehm/Demers/Weiser garbage collector from
+  our distribution, and rely on an externally-provided version.  There
+  are workarounds for problems encountered with some versions of gcc 3.x.
+  Support for the HP/UX PA-RISC platform has been revived, and an alpha
+  version of support for the MacOS X Cocoa framework is now included.
+
 Gwydion Dylan 2.3.9
 
   Besides the obvious ton of bugfixes, we have now working class and
