@@ -3,7 +3,7 @@ author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.2 1995/12/06 11:47:02 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.3 1995/12/06 19:58:52 ram Exp $
 
 
 %%primitive c-include ("string.h");
@@ -64,7 +64,7 @@ define method copy-bytes
      src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("mmove", void:,
+    ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
      int: send - sstart);
@@ -75,7 +75,7 @@ define method copy-bytes
      src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("mmove", void:,
+    ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
      int: send - sstart);
@@ -86,7 +86,7 @@ define method copy-bytes
      src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("mmove", void:,
+    ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
      int: send - sstart);
@@ -97,7 +97,7 @@ define method copy-bytes
      src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("mmove", void:,
+    ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
      int: send - sstart);
