@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.15 1994/06/11 02:23:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.16 1994/06/11 18:08:28 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -81,7 +81,7 @@ static inline boolean class_instancep(obj_t thing, obj_t class)
 
     static obj_t c1_cache[32], c2_cache[32];
     static boolean result_cache[32];
-    register int cacheloc = (((int)thing_class ^ (int)class) >> 4) & 31;
+    register int cacheloc = (((long)thing_class ^ (long)class) >> 4) & 31;
 
     if (c1_cache[cacheloc] == thing_class && c2_cache[cacheloc] == class)
 	return result_cache[cacheloc];
