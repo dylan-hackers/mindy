@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.15 1996/06/24 23:16:47 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.16 1996/07/18 15:04:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -641,8 +641,11 @@ define method unrecognized-keyword-error (key :: <symbol>)
   error("Unrecognized keyword: %=.", key);
 end;
 
-define method no-applicable-methods-error () => res :: <never-returns>;
-  error("No applicable methods.");
+define method no-applicable-methods-error
+    (function :: <generic-function>, arguments :: <simple-object-vector>)
+    => res :: type-union();
+  error("No applicable methods in call of %= when given arguments:\n  %=",
+	function, arguments);
 end;
 
 define method ambiguous-method-error (methods :: <list>)

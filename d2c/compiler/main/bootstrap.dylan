@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.57 1996/05/29 23:33:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.58 1996/07/18 15:04:28 wlott Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -774,8 +774,11 @@ define method unrecognized-keyword-error (key :: <symbol>)
   error("Unrecognized keyword: %=.", key);
 end;
 
-define method no-applicable-methods-error () => res :: type-union();
-  error("No applicable methods.");
+define method no-applicable-methods-error
+    (func :: <generic-function>, arguments :: <simple-object-vector>)
+    => res :: type-union();
+  error("No applicable methods in call of %= when given arguments:\n  %=",
+	func, arguments);
 end;
 
 define method ambiguous-method-error (methods :: <list>)

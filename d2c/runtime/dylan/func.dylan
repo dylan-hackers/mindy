@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.30 1996/06/24 20:02:12 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.31 1996/07/18 15:04:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -762,7 +762,8 @@ define constant gf-call
 	  let arg = %%primitive(extract-arg, arg-ptr, index);
 	  %check-type(arg, specializer);
 	end;
-	no-applicable-methods-error();
+	no-applicable-methods-error
+	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
       else
 	let meth = sam.head;
 	if (instance?(meth, <pair>))

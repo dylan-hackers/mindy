@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.70 1996/07/12 02:29:46 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.71 1996/07/18 15:03:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -874,10 +874,23 @@ define method build-discriminator-tree
      method-set :: <method-set>, gf :: <generic-definition>)
     => ();
   if (empty?(method-set.all-methods))
+    let vec = make-local-var(builder, #"args", object-ctype());
+    let vector-leaf = ref-dylan-defn(builder, policy, source, #"vector");
+    build-assignment
+      (builder, policy, source, vec,
+       if (rest-var)
+	 let apply-leaf = ref-dylan-defn(builder, policy, source, #"apply");
+	 make-unknown-call
+	   (builder, apply-leaf, #f, pair(vector-leaf, arg-vars));
+       else
+	 make-unknown-call(builder, vector-leaf, #f, arg-vars);
+       end if);
     build-assignment
       (builder, policy, source, results,
        make-error-operation
-	 (builder, policy, source, #"no-applicable-methods-error"));
+	 (builder, policy, source, #"no-applicable-methods-error",
+	  build-defn-ref(builder, policy, source, gf),
+	  vec));
   elseif (empty?(remaining-discriminations))
     let ordered = method-set.ordered-methods;
     let ordered-ctvs = map(ct-value, ordered.tail);
