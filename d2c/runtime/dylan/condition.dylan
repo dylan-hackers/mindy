@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.13 2003/02/17 17:36:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.14 2003/04/12 19:17:40 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -375,12 +375,12 @@ end method cerror;
 // check-type, then it would forever repeat itself, and the compiler is slow
 // enough already.
 //
-define method check-type
+define function check-type
     (object :: <object>, type :: <type>) => object :: <object>;
   %check-type(object, type, $unknown-source-location);
 end;
 //
-define inline method %check-type
+define inline function %check-type
     (object :: <object>, type :: <type>, source :: <source-location>) 
  => object :: <object>;
   if (instance?(object, type))
