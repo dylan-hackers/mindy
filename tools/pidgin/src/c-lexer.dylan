@@ -1138,10 +1138,10 @@ define method lex-identifier
 	   generator: tokenizer);
     otherwise =>
       let default = <identifier-token>;
-//	= if (string.first == '#') <cpp-token> else <identifier-token> end if;
       let cls = if(~cpp-line)
 		  element(reserved-word-table, string, default: default);
 		else
+		  // XXX - I don't trust this.
 		  default;
 		end if;
       make(cls, position: position, string: string, generator: tokenizer);
