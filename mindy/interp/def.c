@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.13 1994/10/05 21:01:41 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.14 1994/10/20 03:05:36 wlott Exp $
 *
 * This file implements the stuff to install definitions.
 *
@@ -52,6 +52,7 @@ static void maybe_copy_methods(obj_t new_gf, obj_t old_gf)
     if (old_gf == obj_Unbound)
 	return;
     check_type(new_gf, obj_GFClass);
+    check_type(old_gf, obj_GFClass);
 
     methods = generic_function_methods(old_gf);
 
@@ -131,6 +132,8 @@ void define_method(char *name, obj_t specializers, boolean restp,
 	var->value = gf;
 	var->function = func_Always;
     }
+    else
+	check_type(gf, obj_GFClass);
     add_method(gf, method);
 }
 
@@ -177,6 +180,8 @@ static obj_t defmethod(obj_t var_obj, obj_t method)
 	var->value = gf;
 	var->function = func_Always;
     }
+    else
+	check_type(gf, obj_GFClass);
     old = add_method(gf, method);
 
     if (old != obj_False)
