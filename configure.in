@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.85 2002/01/03 16:25:23 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.86 2002/02/28 14:57:57 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -232,8 +232,8 @@ MC=$builddir/mindy/comp/mindycomp
 
 # Set DYLANPATH so that we can find the uninstalled libraries.
 DYLANPATH=""
-for dir in coll-ext format format-out internal-time matrix print \
-    regexp standard-io stream-ext streams string-ext table-ext time \
+for dir in collection-extensions format format-out internal-time matrix print \
+    regular-expressions standard-io stream-ext streams string-ext table-ext time \
     transcendental getopt
 do DYLANPATH=${DYLANPATH}":"$builddir/common/$dir
 done
