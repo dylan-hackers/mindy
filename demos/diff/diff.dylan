@@ -63,17 +63,17 @@ end method print-line-nums;
 
 define method print-entry
     (entry :: <insert-entry>, file1 :: <sequence>, file2 :: <sequence>) => ();
-  format(*standard-output*, "%da", entry.dest-line + 1);
-  print-line-nums(entry.source-line, entry.source-line + entry.line-count - 1);
+  format(*standard-output*, "%da", entry.dest-index + 1);
+  print-line-nums(entry.source-index, entry.source-index + entry.element-count - 1);
   format(*standard-output*, "\n");
-  print-lines("> ", file2, entry.source-line, entry.line-count);
+  print-lines("> ", file2, entry.source-index, entry.element-count);
 end method print-entry;
 
 define method print-entry
     (entry :: <delete-entry>, file1 :: <sequence>, file2 :: <sequence>) => ();
-  print-line-nums(entry.dest-line, entry.dest-line + entry.line-count - 1);
+  print-line-nums(entry.dest-index, entry.dest-index + entry.element-count - 1);
   format(*standard-output*, "d\n");
-  print-lines("< ", file1, entry.dest-line, entry.line-count);
+  print-lines("< ", file1, entry.dest-index, entry.element-count);
 end method print-entry;
 
 define method print-diffs 
@@ -85,17 +85,17 @@ define method print-diffs
     // a delete with a corresponding insert), treat them specially.
     if (pointer.tail ~= #() & instance?(entry, <delete-entry>) 
 	  & instance?(pointer.tail.head, <insert-entry>)
-	  & (entry.dest-line + entry.line-count - 1
-	       = pointer.tail.head.dest-line))
+	  & (entry.dest-index + entry.element-count - 1
+	       = pointer.tail.head.dest-index))
       let entry2 = pointer.tail.head;
-      print-line-nums(entry.dest-line, entry.dest-line + entry.line-count - 1);
+      print-line-nums(entry.dest-index, entry.dest-index + entry.element-count - 1);
       format(*standard-output*, "c");
-      print-line-nums(entry2.source-line, 
-		      entry2.source-line + entry.line-count - 1);
+      print-line-nums(entry2.source-index, 
+		      entry2.source-index + entry.element-count - 1);
       format(*standard-output*, "\n");
-      print-lines("< ", file1, entry.dest-line, entry.line-count);
+      print-lines("< ", file1, entry.dest-index, entry.element-count);
       format(*standard-output*, "---\n");
-      print-lines("> ", file2, entry2.source-line, entry2.line-count);
+      print-lines("> ", file2, entry2.source-index, entry2.element-count);
       pointer := pointer.tail;
     else
       print-entry(entry, file1, file2);
