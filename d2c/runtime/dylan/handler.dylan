@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/handler.dylan,v 1.2 2000/01/24 04:56:47 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/handler.dylan,v 1.3 2001/05/14 23:27:49 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -6,7 +6,7 @@ module: dylan-viscera
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -68,9 +68,9 @@ define sealed domain initialize (<handler>);
 //
 // Push a new handler onto the current thread's chain of active handlers.  The
 // compiler inserts calls to this function at ``let handler'' local
-// declaractions.
+// declarations.
 //
-define method push-handler
+define function push-handler
     (type :: <type>, function :: <function>,
      #key test :: false-or(<function>), init-arguments :: <sequence> = #())
     => ();
@@ -89,7 +89,7 @@ end;
 // handlers.  The compiler inserts calls to this function at the end of the
 // block for each ``let handler'' local declaration.
 //
-define method pop-handler () => ();
+define function pop-handler () => ();
   let thread = this-thread();
   thread.cur-handler := thread.cur-handler.handler-prev;
 end;
@@ -97,10 +97,10 @@ end;
 
 // do-handlers -- exported from Dylan.
 //
-// Iterate though the handlers calling the supplied function with the
+// Iterate through the handlers calling the supplied function with the
 // details of each one.
 //
-define method do-handlers (function :: <function>)
+define function do-handlers (function :: <function>)
   for (h :: false-or(<handler>) = this-thread().cur-handler
 	 then h.handler-prev,
        while: h)
@@ -109,4 +109,4 @@ define method do-handlers (function :: <function>)
 	     h.handler-function,
 	     h.handler-init-arguments);
   end for;
-end method do-handlers;
+end function do-handlers;
