@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.33 1995/05/05 14:41:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.34 1995/05/05 16:55:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -876,6 +876,20 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		  #f, output-info);
 end;
 
+define method emit-assignment (results :: false-or(<definition-site-variable>),
+			       leaf :: <uninitialized-value>,
+			       output-info :: <output-info>)
+    => ();
+  if (results)
+    let rep = variable-representation(results, output-info);
+    if (rep == $general-rep)
+      deliver-results(results, vector(pair("0", $heap-rep)), #f, output-info);
+    else
+      deliver-results(results, vector(pair("0", rep)), #f, output-info);
+    end;
+  end;
+end;
+
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
      call :: union(<unknown-call>, <error-call>),
@@ -1654,6 +1668,17 @@ define method ref-leaf (target-rep :: <representation>,
   let info = get-info-for(leaf.const-defn, output-info);
   conversion-expr(target-rep, info.backend-var-info-name,
 		  info.backend-var-info-rep, output-info);
+end;
+
+define method ref-leaf (target-rep :: <representation>,
+			leaf :: <uninitialized-value>,
+			output-info :: <output-info>)
+    => res :: <string>;
+  if (target-rep == $general-rep)
+    conversion-expr(target-rep, "0", $heap-rep, output-info);
+  else
+    "0";
+  end;
 end;
 
 define method c-expr-and-rep (lit :: <ct-value>,
