@@ -42,7 +42,7 @@ define sealed method make
           relative? :: <boolean> = #f,
           directory :: false-or(<posix-directory-locator>) = #f,
           name :: false-or(<string>))
- => (locator :: <microsoft-file-locator>)
+ => (locator :: <posix-directory-locator>)
   if (server)
     locator-error("Cannot specify server for posix directory locator: %=",
 		  server)
