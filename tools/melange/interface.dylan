@@ -1,12 +1,12 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.33 2003/12/17 18:07:30 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.34 2004/04/26 11:51:17 cpage Exp $
 
 //======================================================================
 //
 // Copyright (c) 1994, 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -687,8 +687,9 @@ end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
   format(stream,
-"Usage:\n\n"
-"melange [-v] [--mindy|--d2c] -Iincdir... infile [outfile]\n");
+"Usage: melange [-v] [--mindy|--d2c|--Ttarget] [-Ddef[=val]...] [-Uundef...]\n"
+"               [-Iincdir...] [--framework name...] [--no-struct-accessors]\n"
+"               [-m modulefile]  infile [outfile]\n");
 end method show-usage;
 
 define method show-usage-and-exit() => ()
@@ -700,11 +701,46 @@ define method show-help(stream :: <stream>) => ()
   show-copyright(stream);
   format(stream, "\n");
   show-usage(stream);
+  format(stream, "\n"
+"  -v, --verbose:         Print progress messages while parsing.\n"
+"  --mindy:               Generate output for use only with Mindy.\n"
+"  --d2c:                 Generate output for use only with d2c.\n"
+"  -T, --target:          Generate output for use only with the named target.\n"
+"  -D, --define:          Define a C preprocessor symbol for use by C headers.\n"
+"                         If no value is given, defaults to 1.\n"
+"  -U, --undefine:        Prevent definition of a default preprocessor symbol.\n"
+"                         (Default symbols are listed below.)\n"
+"  -I, --includedir:      Extra directories to search for C headers.\n"
+"  --framework:           The name of a framework bundle to search for C headers.\n"
+"                         (Note: Parent framework names must be given before child\n"
+"                         framework names.)\n"
+"  --no-struct-accessors: Do not generate accessor functions for C struct members.\n"
+"  -m, --module-file:     Create a Dylan interchange file with a module definition\n"
+"                         that exports interface names.\n"
+"  --help                 Show this help text.\n"
+"  --version              Show version number.\n"
+"\n");
   format(stream,
-"       -v, --verbose:    Print progress messages while parsing.\n"
-"       --mindy:          Generate output for use only with Mindy.\n"
-"       --d2c:            Generate output for use only with d2c.\n"
-"       -I, --includedir: Extra directories to search for C headers.\n");
+"  Default C preprocessor symbols:\n\n");
+  for (i from 0 below $default-defines.size by 2)
+    let name = $default-defines[i];
+    let value = $default-defines[i + 1];
+    
+    if (instance?(value, <string>))
+      // Print a simple macro: NAME value
+      format(stream,
+"    %s %s\n", name, value);
+    elseif (instance?(value, <list>))
+      // Print a parameterized macro: NAME(arg1, arg2) value
+      format(stream,
+"    %s(", name);
+      for (arg in value[0],
+           fmt = "%s" then ", %s")
+        format(stream, fmt, arg);
+      end for;
+      format(stream, ") %s\n", value[1]);
+    end if;
+  end for;
 end method show-help;
 
 
@@ -833,7 +869,7 @@ define method main (program, #rest args)
   	push(include-path, "./");
   #endif
   
-  // Handle -framework
+  // Handle --framework
   //NOTE: Parent frameworks of child frameworks must be given, 
   //	and must be given before their child frameworks
   for (dir in framework-dirs)
