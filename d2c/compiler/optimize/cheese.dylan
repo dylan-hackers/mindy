@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.123 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.124 1996/03/13 03:12:15 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,7 +363,7 @@ define method optimize
     else
       // We are extracting some number of values out of a cluster.  Expand
       // the cluster into that number of variables.
-      for (nvals from 0,
+      for (nvals :: <integer> from 0,
 	   defn = defines then defn.definer-next,
 	   names = #() then pair(defn.var-info.debug-name, names),
 	   while: defn)
@@ -394,7 +394,7 @@ define method optimize
 
     // Propagate type information to the defined variables.
     for (var = defines then var.definer-next,
-	 index from 0 below source-type.min-values,
+	 index :: <integer> from 0 below source-type.min-values,
 	 positionals = source-type.positional-types then positionals.tail,
 	 while: var)
       //
