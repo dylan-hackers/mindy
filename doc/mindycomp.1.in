@@ -1,0 +1,33 @@
+.\" @(#)mindycomp.1		-*- nroff -*-
+.TH MINDYCOMP 1 "03 March 2001" "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+mindycomp \- A Dylan Byte-code Compiler
+.SH SYNOPSIS
+.B mindycomp
+.B [\| -D[Options] \|]
+.I input-file\c
+.I output-file\c
+\|]
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.B mindycomp
+is a batch compiler for the Mindy Dylan interpreter.  It accepts a subset
+of the full Dylan language, and compiles it into a bytecode representation
+that can be run using the Mindy(1) interpreter.
+
+.SH SEE ALSO
+mindy(1), mindyexec(1), dylan(7), gwydion(7).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The Gwydion Group at CMU and the current Gwydion Dylan maintainers. See the
+CREDITS file in the Gwydion Dylan distribution for more information.
+
