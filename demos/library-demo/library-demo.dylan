@@ -1,4 +1,4 @@
-module: dylan
+module: dylan-viscera
 
 write("Hello, World.\n");
 
@@ -11,5 +11,4 @@ define method fact (x :: <integer>) => res :: <integer>;
 end;
 
 format("fact(5) = %=\n", fact(5));
-
-format("fact(#e50) = %=\n", fact(#e50));
+format("fact(10) = %=\n", fact(10));
