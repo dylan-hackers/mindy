@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.53 1996/02/06 15:46:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.54 1996/02/09 00:03:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1166,12 +1166,24 @@ define method convert-top-level-form
 	      build-add-method(slot-defn.slot-defn-setter-name, meth);
 	    end;
 	  else
-	    build-getter(tl-builder, slot-defn.slot-defn-getter.ct-value,
-			 slot-defn, slot-info);
-	    if (slot-defn.slot-defn-setter)
-	      build-setter(tl-builder, slot-defn.slot-defn-setter.ct-value,
-			   slot-defn, slot-info);
+	    begin
+	      let getter = slot-defn.slot-defn-getter.ct-value;
+	      let getter-standin = slot-accessor-standin(slot-info, #"getter");
+	      if (getter-standin)
+		getter.ct-accessor-standin := getter-standin;
+	      else
+		build-getter(tl-builder, getter, slot-defn, slot-info);
+	      end if;
 	    end;
+	    if (slot-defn.slot-defn-setter)
+	      let setter = slot-defn.slot-defn-setter.ct-value;
+	      let setter-standin = slot-accessor-standin(slot-info, #"setter");
+	      if (setter-standin)
+		setter.ct-accessor-standin := setter-standin;
+	      else
+		build-setter(tl-builder, setter, slot-defn, slot-info);
+	      end if;
+	    end if;
 	  end if;
 	end unless;
       end for;
@@ -1782,6 +1794,35 @@ define method convert-init-function
 			make(<signature>, specializers: #()),
 			func-region);
 end;
+
+
+define method slot-accessor-standin
+    (slot :: <instance-slot-info>, kind :: one-of(#"getter", #"setter"))
+    => standin :: false-or(<ct-function>);
+  if (instance?(slot, <vector-slot-info>))
+    #f;
+  else
+    let rep = slot.slot-representation;
+    let standin-name :: false-or(<symbol>)
+      = if (rep == *general-rep*)
+	  symcat("general-rep-", kind);
+	elseif (rep == *heap-rep*)
+	  symcat("heap-rep-", kind);
+	else
+	  #f;
+	end if;
+    if (standin-name)
+      let defn = dylan-defn(standin-name);
+      if (defn)
+	defn.ct-value;
+      else
+	#f;
+      end if;
+    else
+      #f;
+    end if;
+  end if;
+end method slot-accessor-standin;
 
 
 define method build-getter
