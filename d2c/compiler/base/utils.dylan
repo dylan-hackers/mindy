@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.3 1994/12/17 01:41:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.4 1995/01/06 21:23:06 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -254,6 +254,10 @@ define constant assert
 	error("Assertion failed.");
       end;
     end;
+
+define constant compiler-warning = method (#rest args);
+  apply(signal, args);
+end;
 
 
 define generic key-of
