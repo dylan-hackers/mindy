@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.1 1996/04/07 17:20:27 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.2 1996/04/07 17:42:46 nkramer Exp $
 
 //======================================================================
 //
@@ -82,9 +82,9 @@ define method show-object (object :: <object>) => ();
 	      count := count + 1;
 	      string 
 		:= substring-replace(string, "#!",
-				     concatenate("{",
+				     concatenate("[",
 						 integer-to-string(count),
-						 "}"),
+						 "] "),
 				     count: 1);
 	    end for;
 	    string;
