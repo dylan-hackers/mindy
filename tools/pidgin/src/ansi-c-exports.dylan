@@ -5,14 +5,20 @@ define library ansi-c
   use format;
 
   export
-    c-types;
+    c-types,
+    c-declarations;
 end library;
 
-define module c-types
-  use dylan;
-  use extensions;
+define module outside-dependencies
+  use dylan, export: all;
+  use extensions, export: all;
   use format,
-    import: {format-to-string};
+    import: {format-to-string},
+    export: all;
+end;
+
+define module c-types
+  use outside-dependencies;
 
   export
     <c-type>,
@@ -93,3 +99,33 @@ define module c-types
     $c-double-type,
     $c-long-double-type;
 end module;
+
+define module c-declarations
+  use outside-dependencies;
+  use c-types;
+
+  export
+    <c-declaration>,
+      c-declaration-name,
+      c-declaration-type,
+    <c-tagged-type-declaration>,
+      c-tagged-type-declaration-type,
+    <c-typedef-declaration>,
+      c-typedef-declaration-type,
+    <c-variable-declaration>,
+      c-variable-name,
+      c-variable-type,
+      c-variable-extern?,
+    <c-define>,
+      c-define-name,
+    <c-integer-define>,
+      c-integer-define-value,
+    <c-string-define>,
+      c-string-define-value,
+    <c-type-alias-define>,
+      c-type-alias-define-type,
+    <c-unknown-define>;
+
+  export
+    format-c-declaration;
+end;
