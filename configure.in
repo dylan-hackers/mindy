@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.36 1999/05/21 21:43:22 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.37 1999/05/24 17:18:33 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -32,7 +32,7 @@ AC_CONFIG_HEADER(config.h)
 # to decide when d2c needs a full bootstrap.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=1
+CURRENT_BOOTSTRAP_COUNTER=2
 
 #--------------------------------------------------------------------
 # Try to guess the right prefix based on a previous installation.
