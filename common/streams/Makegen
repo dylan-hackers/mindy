@@ -6,3 +6,7 @@ $CPPFLAGS = '-I$(SRCROOT)/runtime';
 do emit_library_rule(
     'streams', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
+
+do emit_library_rule(
+    'new-streams', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);
