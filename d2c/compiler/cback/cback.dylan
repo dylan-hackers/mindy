@@ -150,10 +150,12 @@ define class <output-info> (<object>)
     init-function: make-indenting-string-stream;
   //
   slot output-info-vars-stream :: <stream>,
-    init-function: make-indenting-string-stream;
+    init-function: curry(make-indenting-string-stream,
+			 indentation: $indentation-step);
   //
   slot output-info-guts-stream :: <stream>,
-    init-function: make-indenting-string-stream;
+    init-function: curry(make-indenting-string-stream,
+			 indentation: $indentation-step);
   //
   slot output-info-local-vars :: <object-table>,
     init-function: curry(make, <object-table>);
@@ -446,7 +448,6 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
 
   let stream = output-info.output-info-body-stream;
   format(stream, "static %s\n{\n", prototype);
-  indent(stream, $indentation-step);
 
   emit-region(lambda.body, output-info);
   let result = lambda.depends-on;
@@ -481,7 +482,6 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
   write('\n', stream);
   write(output-info.output-info-guts-stream.string-output-stream-string,
 	stream);
-  indent(stream, -$indentation-step);
   write("}\n\n", stream);
 end;
 
@@ -539,10 +539,11 @@ define method emit-region (region :: <block-region>,
   let stream = output-info.output-info-guts-stream;
   emit-region(region.body, output-info);
   /* ### emit-joins(region.join-region, output-info); */
-  unless (empty?(region.exits))
-    indent(stream, ash($indentation-step, -2));
+  if (region.exits)
+    let half-step = ash($indentation-step, -1);
+    indent(stream, - half-step);
     format(stream, "block%d:\n", region.block-id);
-    indent(stream, ash($indentation-step, 2));
+    indent(stream, half-step);
   end;
 end;
 
@@ -569,7 +570,7 @@ end;
 define method block-id (region :: <block-region>)
     => id :: false-or(<fixed-integer>);
   let parent-id = region.parent.block-id;
-  if (empty?(region.exits))
+  if (~region.exits)
     parent-id;
   elseif (parent-id)
     parent-id + 1;
@@ -669,6 +670,33 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <prologue>,
 			       output-info :: <output-info>)
     => ();
+end;
+
+define method emit-assignment (defines :: false-or(<definition-site-variable>),
+			       expr :: <catcher>,
+			       output-info :: <output-info>)
+    => ();
+end;
+
+define method emit-assignment
+    (pitcher-defines :: false-or(<definition-site-variable>),
+     pitcher :: <pitcher>, output-info :: <output-info>)
+    => ();
+  let args = pitcher.depends-on;
+  let catcher-defines = pitcher.catcher.dependents.dependent.defines;
+
+  if (args & instance?(args.source-exp, <abstract-variable>)
+	& instance?(args.source-exp.var-info, <values-cluster-info>))
+    emit-assignment(catcher-defines, args.source-exp, output-info);
+  else
+    let results = make(<stretchy-vector>);
+    for (dep = pitcher.depends-on then dep.dependent-next,
+	 while: dep)
+      let expr = ref-leaf($general-rep, dep.source-exp, output-info);
+      add!(results, pair(expr, $general-rep));
+    end;
+    deliver-results(catcher-defines, results, output-info);
+  end;
 end;
 
 define method deliver-results (defines :: false-or(<definition-site-variable>),
