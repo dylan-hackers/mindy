@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.17 1996/06/07 00:20:53 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.18 1996/06/07 00:51:39 bfw Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -180,8 +180,8 @@ static obj_t dylan_buf_buf_memcpy(obj_t dst, obj_t dst_off,
 static obj_t dylan_unicode_memcpy(obj_t dst, obj_t dst_off, obj_t src,
 				  obj_t src_off, obj_t count)
 {
-    memmove(buffer_data(dst) + 2*fixnum_value(dst_off),
-	    buffer_data(src) + 2*fixnum_value(src_off),
+    memmove(vector_data(dst) + 2*fixnum_value(dst_off),
+	    vector_data(src) + 2*fixnum_value(src_off),
 	    2*fixnum_value(count));
     return dst;
 }
