@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.42 2001/10/30 09:59:46 david Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.43 2001/12/16 17:35:24 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -91,6 +91,12 @@ big-endian?:			#t
 platform-name:			ppc
 inherit-from:			32-bit
 default-features:		compiled-for-ppc
+big-endian?:			#t
+
+// s390:
+platform-name:			s390
+inherit-from:			32-bit
+default-features:		compiled-for-s390
 big-endian?:			#t
 
 // HP-PA RISC processor:
@@ -474,6 +480,10 @@ link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			sparc-linux-gcc
 inherit-from:			gcc linux sparc
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
+platform-name:			s390-linux-gcc
+inherit-from:			gcc linux s390
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			MacOS-ppc

@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.81 2001/09/17 17:15:38 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.82 2001/12/16 17:35:23 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -96,6 +96,7 @@ case $1 in
     powerpc-*-linux-gnu*) $2=ppc-linux-gcc ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
+    s390*-*-linux-gnu*) $2=s390-linux-gcc ;;
     hppa*-hp-hpux*) $2=hppa-hpux-gcc ;;
     sparc*-solaris*) $2=sparc-solaris-gcc ;;
     sparc*-openbsd*) $2=sparc-openbsd-gcc ;;
