@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.18 1994/04/15 02:32:08 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.19 1994/04/15 14:54:34 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -48,7 +48,7 @@ define module Builtin-Stuff
     $permanent-hash-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
-    broken?, broadcast-event,
+    broadcast-event,
     direct-subclasses, direct-superclasses,
     ceiling/, current-handler,
     do-next-method,
@@ -62,7 +62,7 @@ define module Builtin-Stuff
     limited, list, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, merge-hash-codes, method-specializers,
     negative,
-    object, object-class, object-hash,
+    object-class, object-hash,
     pair, prin1, print, putc, puts,
     release-lock, remove-method, round/,
     signal-event, singleton, size, slot-initialized?, spawn-thread,
@@ -71,7 +71,7 @@ define module Builtin-Stuff
     union, fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write,
     values, vector,
-    wait-for-event;
+    wait-for-event, weak-pointer-object;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -176,7 +176,7 @@ define module Extensions
   use Builtin-Stuff,
     import: (main, format, prin1, print, putc, puts, getc,
 	     <boolean>, <true>, <false>,
-	     <weak-pointer>, broken?, object),
+	     <weak-pointer>, weak-pointer-object),
     export: all;
 end Extensions;
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.2 1994/04/09 15:39:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.3 1994/04/15 14:55:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -27,6 +27,8 @@
 #include "sym.h"
 #include "module.h"
 #include "error.h"
+#include "thread.h"
+#include "func.h"
 #include "weak.h"
 
 
@@ -58,15 +60,19 @@ obj_t dylan_make_weak_pointer(obj_t class, obj_t object)
 	return make_weak_pointer(object);
 }
 
-obj_t dylan_weak_pointer_object(obj_t weakptr)
+void dylan_weak_pointer_object(obj_t meth, struct thread *thread, obj_t *args)
 {
-    return WEAK(weakptr)->object;
+    obj_t weak = args[0];
+    obj_t *old_sp = args-1;
+
+    old_sp[0] = WEAK(weak)->object;
+    old_sp[1] = WEAK(weak)->broken ? obj_True : obj_False;
+
+    thread->sp = old_sp + 2;
+
+    do_return(thread, old_sp, old_sp);
 }
 
-obj_t dylan_weak_pointer_broken(obj_t weakptr)
-{
-    return WEAK(weakptr)->broken ? obj_True : obj_False;
-}
 
 
 /* GC routines. */
@@ -130,8 +136,13 @@ void init_weak_functions(void)
     define_method("make", list1(singleton(obj_WeakPointerClass)), FALSE,
 		  list1(pair(symbol("object"), obj_Unbound)),
 		  obj_WeakPointerClass, dylan_make_weak_pointer);
-    define_method("object", list1(obj_WeakPointerClass), FALSE, obj_False,
-		  obj_ObjectClass, dylan_weak_pointer_object);
-    define_method("broken?", list1(obj_WeakPointerClass), FALSE, obj_False,
-		  obj_BooleanClass, dylan_weak_pointer_broken);
+    define_generic_function("weak-pointer-object", 1, FALSE, obj_False,
+			    list2(obj_ObjectClass, obj_BooleanClass),
+			    obj_False);
+    add_method(find_variable(module_BuiltinStuff,symbol("weak-pointer-object"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("weak-pointer-object",
+			       list1(obj_WeakPointerClass), FALSE, obj_False,
+			       list2(obj_ObjectClass, obj_BooleanClass),
+			       obj_False, dylan_weak_pointer_object));
 }
