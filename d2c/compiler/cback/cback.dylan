@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.36 2002/04/07 10:09:01 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.37 2002/04/13 01:35:07 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -2861,13 +2861,18 @@ define method deliver-cluster
       end;
     elseif (defines.definer-next == #f)
       let (name, rep) = c-name-and-rep(defines, file);
-      let (false, false-rep) = c-expr-and-rep(as(<ct-value>, #f), rep, file);
+      let guts = conversion-expr
+		   (rep, stringify(src-start, "[0]"), *general-rep*, file);
       let source
-	= stringify('(', src-start, " == ", src-end, " ? ",
-		    conversion-expr(rep, false, false-rep, file), " : ",
-		    conversion-expr
-		      (rep, stringify(src-start, "[0]"), *general-rep*, file),
-		    ')');
+	= if (min-values > 0)
+	    guts
+	  else
+	    let (false, false-rep) = c-expr-and-rep(as(<ct-value>, #f), rep, file);
+	    stringify('(', src-start, " == ", src-end, " ? ",
+		      conversion-expr(rep, false, false-rep, file), " : ",
+		      guts,
+		      ')')
+	  end;
       deliver-single-result(defines, source, rep, #t, file);
     else
       let count = for (var = defines then var.definer-next,
