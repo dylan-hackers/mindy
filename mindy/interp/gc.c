@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.26 1996/06/11 14:49:17 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.27 1996/10/23 14:38:47 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -106,7 +106,8 @@ static boolean Purifying = FALSE;
 static int BytesConsedBetweenGCs = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
 
 static struct space _Dynamic0Space
-     = {0, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, 1, NULL};
+     = {0, NULL, NULL, NULL, NULL, 0, DEFAULT_BYTES_CONSED_BETWEEN_GCS,
+	    NULL, NULL, 1, NULL};
 #define Dynamic0Space (&_Dynamic0Space)
 static struct space _Dynamic1Space 
     = {0, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, 1, NULL};
