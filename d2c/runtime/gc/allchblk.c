@@ -105,6 +105,8 @@ unsigned char flags;
 #else
 #   define LAST_TRIP 1
 #endif
+
+word GC_max_hblk_size = HBLKSIZE;
 	
 /*
  * Allocate (and return pointer to) a heap block
@@ -133,6 +135,8 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
     int trip_count = 0;
 
     size_needed = HBLKSIZE * OBJ_SZ_TO_BLOCKS(sz);
+    if ((word)size_needed >  GC_max_hblk_size)
+	GC_max_hblk_size = size_needed;
 
     /* search for a big enough block in free list */
 	hbp = GC_savhbp;
@@ -159,7 +163,9 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 #	    ifdef PRESERVE_LAST
 		if (size_avail != size_needed
 		    && !GC_incremental
-		    && GC_in_last_heap_sect(hbp) && GC_should_collect()) {
+		    && (word)size_needed <= GC_max_hblk_size/2
+		    && GC_in_last_heap_sect((ptr_t)hbp)
+		    && GC_should_collect()) {
 		    continue;
 		} 
 #	    endif
@@ -296,6 +302,7 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 	
     /* Notify virtual dirty bit implementation that we are about to write. */
     	GC_write_hint(thishbp);
+	/* This should deal better with large blocks.	*/
     
     /* Add it to map of valid blocks */
     	if (!GC_install_counts(thishbp, (word)size_needed)) return(0);

@@ -53,7 +53,6 @@ ptr_t GC_scratch_alloc(bytes)
 register word bytes;
 {
     register ptr_t result = scratch_free_ptr;
-    register word bytes_needed = bytes;
 
 #   ifdef ALIGN_DOUBLE
 #	define GRANULARITY (2 * sizeof(word))
@@ -90,7 +89,7 @@ register word bytes;
 	    bytes_to_get = bytes;
 #	    ifdef USE_MMAP
 		bytes_to_get += GC_page_size - 1;
-		bytes_to_get &= (GC_page_size - 1);
+		bytes_to_get &= ~(GC_page_size - 1);
 #	    endif
             return((ptr_t)GET_MEM(bytes_to_get));
         }
@@ -126,7 +125,7 @@ hdr * hhdr;
  
 void GC_init_headers()
 {
-    register int i;
+    register unsigned i;
     
     GC_all_nils = (bottom_index *)GC_scratch_alloc((word)sizeof(bottom_index));
     BZERO(GC_all_nils, sizeof(bottom_index));
