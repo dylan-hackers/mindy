@@ -62,4 +62,5 @@ sub emit_run_tests_rule {
 do emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test', 
 		       'table-ext-test', 'random-test', 'matrix-test', 
 		       'coll-ext-test', 'print-test', 'format-test', 
-		       'format-out-test', 'time-test');
+		       'format-out-test');
+# time-test removed because it is broken.
