@@ -1,4 +1,7 @@
 
+# Must be properly quoted for nmake
+$GwydionDir = '^%GwydionDir^%';
+
 # Installs a batch file which calls the Perl script with the argument
 # we give here, plus the same arguments that the batch file was called
 # with
@@ -7,7 +10,7 @@ sub install_one_arg_wrapper {
     local ($dst) = "\$(DESTDIR)/bin";
     print "$dst/$name.bat :\n";
     $dst =~ tr|/|\\|;  # translate / to \ for batch files
-    print "\t", 'echo @', "$cmd %GwydionDir%\\bin\\$name$ext $arg1", 
+    print "\t", 'echo @', "$cmd $GwydionDir\\bin\\$name$ext $arg1", 
         ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
     push(@install_dependencies, "$dst/$name.bat");
 }
@@ -33,13 +36,13 @@ sub install_perl_scripts {
 sub install_rcs_wrappers {
     local (@names) = @_;
     local ($name);
-    local ($rcsdir) = "\$(DESTDIR)\\rcs-bin";
+    local ($rcsdir) = "$GwydionDir\\rcs-bin";
     foreach $name (@names) {
 	local ($dst) = "\$(DESTDIR)/bin";
 	print "$dst/$name.bat :\n";
 	$dst =~ tr|/|\\|;  # translate / to \ for batch files
 	print "\t", 'echo @', 
-	    "perl %GwydionDir%\\bin\\rcs-wrapper.perl $rcsdir\\$name.exe", 
+	    "perl $GwydionDir\\bin\\rcs-wrapper.perl $rcsdir\\$name.exe", 
             ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
 	push(@install_dependencies, "$dst/$name.bat");
     }
@@ -51,7 +54,7 @@ sub install_backslash_wrapper {
     print "$dst/$newname.bat :\n";
     $dst =~ tr|/|\\|;  # translate / to \ for batch files
     print "\t", 'echo @', 
-	    "perl %GwydionDir%\\bin\\backslash-wrapper.perl $wrapped", 
+	    "perl $GwydionDir\\bin\\backslash-wrapper.perl $wrapped", 
             ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$newname.bat\n";
     push(@install_dependencies, "\$(DESTDIR)/bin/$newname.bat");
 }
@@ -69,7 +72,7 @@ do install_perl_scripts('configure',
 # rcsupdate needs the path to co.exe
 do install_from_src('bin', 'rcsupdate.perl');
 do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
-			   '$(DESTDIR)\\rcs-bin\\co.exe');
+			   "$GwydionDir\\rcs-bin\\co.exe");
 
 # gen-makefile.perl is in shared-misc, which doesn't do wrappers
 do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
