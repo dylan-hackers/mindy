@@ -119,6 +119,9 @@ define method find-framework( name :: <string> )
         if( framework-exists?( framework-headers-path, name ) )
             *frameworks*[ as( <symbol>, name ) ] := 
                     framework-headers-path;
+						// Add it to the end of the normal include paths as well
+						// so non-prefixed includes within framework headers can be found
+						push-last( include-path, framework-headers-path );
             // Guess that it has a frameworks directory and add this
             // It's a little wasteful, but it isolates us from file-system
             // And the path won't be added if we don't find a header
