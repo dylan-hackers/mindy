@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.21 1995/04/26 03:26:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.22 1995/04/26 05:45:18 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -339,7 +339,7 @@ define method optimize-unknown-call
     => ();
   // Convert it into either a known or an error call.
   let assign = call.dependents.dependent;
-  for (arg-dep = func.depends-on.dependent-next then arg-dep.dependent-next,
+  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        var = func.prologue.dependents.dependent.defines
 	 then var.definer-next,
        while: arg-dep & var)
@@ -349,7 +349,7 @@ define method optimize-unknown-call
       compiler-warning("Wrong number of arguments.");
       change-call-kind(component, call, <error-call>);
     else
-      change-call-kind(component, call, <known-call>);
+      change-call-kind(component, call, <local-call>);
     end;
   end;
 end;
@@ -400,7 +400,7 @@ define method optimize-unknown-call
   end;
 end;
 
-define method optimize (component :: <component>, call :: <known-call>) => ();
+define method optimize (component :: <component>, call :: <local-call>) => ();
   maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
 end;
 
@@ -553,7 +553,7 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   let dependents = lambda.dependents;
   if (dependents & dependents.source-next == #f)
     let dependent = dependents.dependent;
-    if (instance?(dependent, <known-call>)
+    if (instance?(dependent, <local-call>)
 	  & dependent.depends-on == dependents)
       let-convert(component, lambda);
     end;
@@ -686,7 +686,7 @@ define method expand-cluster
 end;
 
 define method let-convert (component :: <component>, lambda :: <lambda>) => ();
-  let call :: <known-call> = lambda.dependents.dependent;
+  let call :: <local-call> = lambda.dependents.dependent;
   let call-assign :: <assignment> = call.dependents.dependent;
 
   // Change the args to be feeding into a newly allocated values-op
