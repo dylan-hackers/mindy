@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Random functionality for working with strings
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/string-hacking.dylan,v 1.3 1996/03/30 02:23:48 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/string-hacking.dylan,v 1.4 1996/07/12 16:46:28 dwatson Exp $
 
 //======================================================================
 //
@@ -48,48 +48,6 @@ end method predecessor;
 define method successor (c :: <character>) => c2 :: <character>;
   as(<character>, as(<integer>, c) + 1);
 end method successor;
-
-define method case-insensitive-equal (o1 :: <object>, o2 :: <object>)
- => answer :: <boolean>;
-  #f;
-end method case-insensitive-equal;
-
-// This is useful for converting from uppercase to lowercase
-//
-define constant a-minus-A 
-  = as(<integer>, 'a') - as(<integer>, 'A');
-
-// Only works for ASCII and Unicode, and the case folding part works
-// only for English.
-//
-// The idea is to do equality checks first, and only if they are
-// somehow equal do further computation to see if the equality
-// actually meant anything.
-//
-define method case-insensitive-equal (c1 :: <character>, c2 :: <character>)
- => answer :: <boolean>;
-  c1 == c2
-    | (as(<integer>, c1)
-	  == as(<integer>, c2) + a-minus-A & uppercase?(c2))
-    | (as(<integer>, c1) + a-minus-A
-	 == as(<integer>, c2) & uppercase?(c1));
-end method case-insensitive-equal;
-
-define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
- => answer :: <boolean>;
-  if (s1.size ~== s2.size)
-    #f;
-  else
-    block (return)
-      for (c1 in s1, c2 in s2)
-	if (~ case-insensitive-equal(c1, c2))
-	  return(#f);
-	end if;
-      end for;
-      #t;
-    end block;
-  end if;
-end method case-insensitive-equal;
 
 // -----------------------------------------------------------------
 
