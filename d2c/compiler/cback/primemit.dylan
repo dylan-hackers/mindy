@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.28 1996/05/29 23:32:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.29 1996/07/11 16:16:15 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1673,3 +1673,117 @@ define-primitive-emitter
 		    stringify("((void *)", object, ')'),
 		    *ptr-rep*, #f, file);
    end);
+
+
+// Code moveability
+
+// A list of primitives which can safely be moved around in C code.
+// It is always safe to not list a primitive here.
+//
+define constant $sequence-of-moveable-primitives 
+  = #[#"extract-args",
+      #"merge-clusters",             // Value primitives.
+      #"values",
+      #"allocate",                   // Allocation primitives.
+      #"allocate-with-data-word",
+      #"make-immediate",
+      #"c-string",                   // Foreign code interface primitives.
+      #"as-boolean",                 // Predicate primitives
+      #"not",
+      #"==",
+      #"initialized?",
+      #"initial-symbols",
+      #"ref-slot",                   // Slot access primitives.
+      #"set-slot",
+      #"unwind-stack",               // NLX primitives.
+      #"fixnum-=",                   // Fixnum primitives.
+      #"fixnum-<",
+      #"fixnum-+",
+      #"fixnum-*",
+      #"fixnum--",
+      #"fixnum-negative",
+      #"fixnum-divide",
+      #"fixnum-logior",
+      #"fixnum-logxor",
+      #"fixnum-logand",
+      #"fixnum-lognot",
+      #"fixnum-shift-left",
+      #"fixnum-shift-right",
+      #"fixed-as-single",            // Single float primitives.
+      #"double-as-single",
+      #"extended-as-single",
+      #"single-<",
+      #"single-<=",
+      #"single-=",
+      #"single-==",
+      #"single-~=",
+      #"single-+",
+      #"single-*",
+      #"single--",
+      #"single-/",
+      #"single-abs",
+      #"single-negative",
+      #"single-floor",
+      #"single-ceiling",
+      #"single-round",
+      #"fixed-as-double",            // Double float primitives.
+      #"single-as-double",
+      #"extended-as-double",
+      #"double-<",
+      #"double-<=",
+      #"double-=",
+      #"double-==",
+      #"double-~=",
+      #"double-+",
+      #"double-*",
+      #"double--",
+      #"double-/",
+      #"double-abs",
+      #"double-negative",
+      #"double-floor",
+      #"double-ceiling",
+      #"double-round",
+      #"fixed-as-extended",          // Extended float primitives.
+      #"single-as-extended",
+      #"double-as-extended",
+      #"extended-<",
+      #"extended-<=",
+      #"extended-=",
+      #"extended-==",
+      #"extended-~=",
+      #"extended-+",
+      #"extended-*",
+      #"extended--",
+      #"extended-/",
+      #"extended-abs",
+      #"extended-negative",
+      #"extended-floor",
+      #"extended-ceiling",
+      #"extended-round",
+      #"make-raw-pointer",           // raw pointer operations.
+      #"raw-pointer-address",
+      #"pointer-+",
+      #"pointer--",
+      #"pointer-<",
+      #"pointer-=",
+      #"pointer-deref",
+      #"pointer-deref-setter",
+      #"vector-elements",
+      #"object-address"];
+
+define constant *moveable-primitives-table* 
+  = begin
+      let table = make(<object-table>);
+      for (prim-name in $sequence-of-moveable-primitives)
+	table[prim-name] := #t;
+      end for;
+      table;
+    end;
+
+define method c-code-moveable? (exp :: <expression>) => answer :: <boolean>;
+  #f;
+end method c-code-moveable?;
+
+define method c-code-moveable? (prim :: <primitive>) => answer :: <boolean>;
+  element(*moveable-primitives-table*, prim.primitive-name, default: #f);
+end method c-code-moveable?;
