@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.11 1995/10/13 15:11:17 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.12 1995/10/17 04:28:15 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -83,6 +83,11 @@ define class <module> (<object>)
   // Hash table mapping names to variables for variables accessable
   // in this module.
   slot variables :: <object-table>,
+    init-function: curry(make, <object-table>);
+  //
+  // Reverse hash-table for mapping variables to names.  Since duplication is
+  // possible, each element is a sequence of names.
+  slot variable-names :: <object-table>,
     init-function: curry(make, <object-table>);
   //
   // Hash table mapping names to variables for all variables exported
@@ -494,6 +499,8 @@ define method note-module-definition (lib :: <library>, name :: <symbol>,
     else
       let new = make(<variable>, name: name, home: mod, exported: #t);
       mod.variables[name] := new;
+      mod.variable-names[new] := pair(name, element(mod.variable-names, new,
+						    default: #()));
       mod.exported-variables[name] := new;
       add!(new.accessing-modules, mod);
     end;
@@ -518,6 +525,8 @@ define method note-module-definition (lib :: <library>, name :: <symbol>,
     else
       let new = make(<variable>, name: name, home: mod, created: #t);
       mod.variables[name] := new;
+      mod.variable-names[new] := pair(name, element(mod.variable-names, new,
+						    default: #()));
       mod.exported-variables[name] := new;
       add!(new.accessing-modules, mod);
     end;
@@ -581,6 +590,9 @@ define method complete-module (mod :: <module>) => ();
 	// import is being re-exported.
 	//
 	mod.variables[new-name] := var;
+	mod.variable-names[var] := pair(new-name,
+					element(mod.variable-names, var,
+						default: #()));
 	if (u.exports == #t | member?(new-name, u.exports))
 	  mod.exported-variables[new-name] := var;
 	end;
@@ -698,6 +710,8 @@ define method find-variable (name :: <basic-name>, #key create: create?)
   elseif (create?)
     let new = make(<variable>, name: sym, home: mod);
     mod.variables[sym] := new;
+    mod.variable-names[new] := pair(sym, element(mod.variable-names, new,
+						 default: #()));
     add!(new.accessing-modules, mod);
     new;
   else
@@ -770,11 +784,10 @@ define method note-variable-definition (defn :: <definition>)
   // syntax tables of modules that can access this variable.
   //
   for (accessing-module in var.accessing-modules)
-    for (imported-var keyed-by imported-name in accessing-module.variables)
-      if (imported-var == var)
-	check-syntax-table-additions(accessing-module.module-syntax-table,
-				     defn, imported-name);
-      end;
+    for (imported-name in element(accessing-module.variable-names, var,
+				  default: #()))
+      check-syntax-table-additions(accessing-module.module-syntax-table,
+				   defn, imported-name);
     end;
   end;
   //
@@ -782,11 +795,10 @@ define method note-variable-definition (defn :: <definition>)
   //
   var.variable-definition := defn;
   for (accessing-module in var.accessing-modules)
-    for (imported-var keyed-by imported-name in accessing-module.variables)
-      if (imported-var == var)
-	make-syntax-table-additions(accessing-module.module-syntax-table,
-				    defn, imported-name);
-      end;
+    for (imported-name in element(accessing-module.variable-names, var,
+				  default: #()))
+      make-syntax-table-additions(accessing-module.module-syntax-table,
+				  defn, imported-name);
     end;
   end;
   //
