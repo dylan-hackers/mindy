@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.29 1995/04/23 02:59:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.30 1995/04/24 03:14:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -610,6 +610,7 @@ define module flow
     join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, block-of, block-of-setter,
+    next-exit, next-exit-setter,
     initial-definitions, initial-definitions-setter,
     reoptimize-queue, reoptimize-queue-setter,
     all-methods, all-methods-setter,
@@ -663,7 +664,7 @@ define module front
   export
     dump-fer, id, optimize-component,
 
-    <primitive>, name, <prologue>,
+    <primitive>, name, <prologue>, <catcher>, <pitcher>,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
@@ -673,7 +674,9 @@ define module front
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
     <function-literal>, <method-literal>, <lambda>, prologue, result-type,
-    <hairy-method-literal>;
+    <hairy-method-literal>,
+
+    <fer-exit-block-region>, catcher;
     
 end;
 
@@ -695,6 +698,7 @@ define module fer-convert
     rename: {<expression> => <fer-expression>,
 	     <assignment> => <fer-assignment>},
     export: all;
+  use front, import: {catcher};
   use builder-interface, export: all;
   use ctype;
   use lexenv, export: all;
