@@ -25,7 +25,7 @@ define method set-mirror-parent
   debug-message("Adding %= to menu %=",
 		gadget-label(mirror-sheet(child)),
 		gadget-label(mirror-sheet(parent)));
-  gtk-menu-append(GTK-MENU(mirror-widget(parent)),
+  gtk-menu-append(GTK-MENU(mirror-widget(parent).submenu-value),
 		  mirror-widget(child))
 end method set-mirror-parent;
     
@@ -36,8 +36,8 @@ define method set-mirror-parent
   let menu = GTK-MENU(gtk-menu-new());
   debug-message("Creating submenu for %s",
 		gadget-label(mirror-sheet(child)));
-  gtk-menu-item-set-submenu(GTK-MENU-ITEM(widget), menu);
-  gtk-menu-append(GTK-MENU(mirror-widget(parent)),
+  gtk-menu-item-set-submenu(widget, menu);
+  gtk-menu-append(GTK-MENU(mirror-widget(parent).submenu-value),
 		  widget)
 end method set-mirror-parent;
     
@@ -49,10 +49,10 @@ define method set-mirror-parent
     if (child.mirror-sheet.gadget-label = "Help")
       gtk-menu-item-right-justify(widget)
     end;
-    let menu = gtk-menu-new();
+    let menu = GTK-MENU(gtk-menu-new());
     debug-message("Creating submenu for menu bar");
-    gtk-menu-item-set-submenu(GTK-MENU-ITEM(widget), menu);
-    gtk-menu-bar-append(GTK-MENU-BAR(mirror-widget(parent)),
+    gtk-menu-item-set-submenu(widget, menu);
+    gtk-menu-bar-append(mirror-widget(parent),
 			widget)
   else
     next-method()
@@ -305,7 +305,7 @@ end method class-for-make-pane;
 define sealed method make-gtk-mirror
     (gadget :: <gtk-menu-bar>)
  => (mirror :: <gadget-mirror>)
-  let widget = gtk-menu-bar-new();
+  let widget = GTK-MENU-BAR(gtk-menu-bar-new());
   make(<gadget-mirror>,
        widget: widget,
        sheet:  gadget)
