@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.49 2002/03/11 05:00:49 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.50 2002/07/13 05:03:23 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -473,6 +473,7 @@ path-separator:        		/
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-double-size:		12
 
 platform-name:			x86-bsdi-gcc
 inherit-from:			gcc bsdi x86
