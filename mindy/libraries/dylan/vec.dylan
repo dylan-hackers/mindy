@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.6 1994/04/19 21:20:06 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.7 1994/04/21 01:32:24 rgs Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -216,7 +216,7 @@ define method subsequence-position(big :: <vector>, pattern :: <vector>,
     1 =>
       let ch = pattern[0];
       for (key from 0 below sz,
-	   until test(big[key], ch))
+	   until test(big[key], ch) & (count := count - 1) <= 0)
       finally
 	if (key < sz) key end if;
       end for;
@@ -224,7 +224,8 @@ define method subsequence-position(big :: <vector>, pattern :: <vector>,
       let ch1 = pattern[0];
       let ch2 = pattern[1];
       for (key from 0 below sz - 1,
-	   until test(big[key], ch1) & test(big[key + 1], ch2))
+	   until test(big[key], ch1) & test(big[key + 1], ch2)
+	     & (count := count - 1) <= 0)
       finally
 	if (key < (sz - 1)) key end if;
       end for;
@@ -245,6 +246,87 @@ define method subsequence-position(big :: <vector>, pattern :: <vector>,
 	      end case;
 	    end method search;
       search(0, 0, 0, count);
+  end select;
+end method subsequence-position;
+
+define method subsequence-position(big :: <byte-string>,
+				   pattern :: <byte-string>,
+				   #key test = \==, count = 1)
+  let sz = size(big);
+  let pat-sz = size(pattern);
+
+  select (pat-sz)
+    0 =>
+      0;
+    1 =>
+      let ch = pattern[0];
+      for (key from 0 below sz,
+	   until test(big[key], ch) & (count := count - 1) <= 0)
+      finally
+	if (key < sz) key end if;
+      end for;
+    2 =>
+      let ch1 = pattern[0];
+      let ch2 = pattern[1];
+      for (key from 0 below sz - 1,
+	   until test(big[key], ch1) & test(big[key + 1], ch2)
+	     & (count := count - 1) <= 0)
+      finally
+	if (key < (sz - 1)) key end if;
+      end for;
+    otherwise =>
+      if (test ~= \==)
+	local method search(index, big-key, pat-key, count)
+		case
+		  pat-key >= pat-sz =>  // End of pattern -- We found one.
+		    if (count = 1) index
+		    else search(index + 1, index + 1, 0, count - 1);
+		    end if;
+		  big-key = sz =>      // End of big vector -- it's not here.
+		    #f;
+		  test(big[big-key], pattern[pat-key]) =>
+		    // They match -- try one more.
+		    search(index, big-key + 1, pat-key + 1, count);
+		  otherwise =>         // Don't match -- try one further along.
+		    search(index + 1, index + 1, 0, count);
+		end case;
+	      end method search;
+	search(0, 0, 0, count);
+      else
+	// It's worth doing something Boyer-Moore-ish....
+	let pat-last = pat-sz - 1;
+	let last-char = pattern[pat-last];
+	let skip = make(<vector>, size: 256, fill: pat-sz);
+	for (i from pat-last - 1 to 0 by -1)
+	  skip[as(<integer>, pattern[i])] := pat-last - i;
+	end for;
+	local method do-skip(index, count)
+		if (index >= sz)
+		  #f;
+		else 
+		  let char = big[index];
+		  if (char == last-char)
+		    search(index - pat-last, index, pat-last, count);
+		  else
+		    do-skip(index + skip[as(<integer>, char)], count);
+		  end if;
+		end if;
+	      end method,
+              method search(index, big-key, pat-key, count)
+		case
+		  pat-key < 0 =>  // End of pattern -- We found one.
+		    if (count = 1) index
+		    else do-skip(index + pat-sz, count - 1)
+		    end if;
+		  big[big-key] == pattern[pat-key] =>
+		    // They match -- try one more.
+		    search(index, big-key - 1, pat-key - 1, count);
+		  otherwise =>    // Don't match -- try one further along.
+		    do-skip(index + pat-sz, count);
+		end case;
+	      end method search;
+	do-skip(pat-last, count);
+      end if;
   end select;
 end method subsequence-position;
 
