@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/compile.c,v 1.1 1998/05/03 19:55:06 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/compile.c,v 1.2 1998/12/17 11:11:30 igor Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -743,13 +743,6 @@ static void compile_defgeneric_constituent(struct defgeneric_constituent *c,
 					   int want)
 {
     lose("define generic not at top-level?");
-}
-
-static void compile_defdomain_constituent(struct defdomain_constituent *c,
-					  struct component *component,
-					  int want)
-{
-    lose("define sealed domain not at top-level?");
 }
 
 static void compile_defclass_constituent(struct defclass_constituent *c,
