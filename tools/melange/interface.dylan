@@ -83,7 +83,7 @@ end method is-prefix?;
 define method count-whitespace
     (string :: <string>, position :: <integer>) => (count :: <integer>);
   for (index from position below size(string),
-       while whitespace?(string[index]))
+       while: whitespace?(string[index]))
   finally
     index - position;
   end for;

@@ -539,7 +539,7 @@ define method canonical-name (decl :: <pointer-declaration>)
   else
     for (referent-type = decl.referent then referent-type.referent,
 	 suffix = "*" then concatenate(suffix, "*"),
-	 while instance?(referent-type, <pointer-declaration>))
+	 while: instance?(referent-type, <pointer-declaration>))
     finally
       select (referent-type by instance?)
 	<vector-declaration> =>
