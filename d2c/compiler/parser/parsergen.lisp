@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.5 1996/03/20 19:33:45 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.6 1996/03/21 00:17:27 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;
@@ -981,7 +981,7 @@
 	       (let ((line (read-line ifile)))
 		 (when (string= line "%")
 		   (return))
-		 (body (expand-precents line))))
+		 (body (expand-percents-and-ats line))))
 	     (parse-production grammar lhs rhs (body))))))))
   (let ((undefined (remove nil (grammar-nonterminals grammar)
 			   :key #'nonterminal-productions :test-not #'eq)))
@@ -996,7 +996,7 @@
 	(nreverse (grammar-start-productions grammar)))
   (values))
 
-(defun expand-precents (line)
+(defun expand-percents-and-ats (line)
   (declare (type simple-string line))
   (let ((end (length line))
 	(escaped nil)
@@ -1013,6 +1013,15 @@
 		       (concatenate 'string
 				    (subseq line 0 index)
 				    "rhs-"
+				    (subseq line (1+ index))))
+		 (setf end (length line)))
+	       (setf escaped nil))
+	      ((eql char #\@)
+	       (unless in-string
+		 (setf line
+		       (concatenate 'string
+				    (subseq line 0 index)
+				    "srcloc-"
 				    (subseq line (1+ index))))
 		 (setf end (length line)))
 	       (setf escaped nil))
