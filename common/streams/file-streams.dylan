@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.2 1998/08/10 15:31:21 housel Exp $
 
 //======================================================================
 //
@@ -29,7 +29,7 @@ rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.1 1998/0
 //
 //======================================================================
 
-#if (~mindy & (compiled-for-win32 | compiled-for-solaris))
+#if (~mindy & (compiled-for-win32 | compiled-for-solaris | compiled-for-FreeBSD))
 // We need this because when fd-open is inlined into this file, the
 // identifier O_BINARY will be undeclared in the C code
 method () => ();

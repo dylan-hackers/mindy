@@ -12,6 +12,9 @@
 #ifdef __linux__
   #include <sys/time.h> /* We need this to get struct timeval... */
 #endif /* ifdef linux */
+#ifdef __FreeBSD__
+  #include <sys/time.h>
+#endif
 #include <sys/wait.h>
 
 int fd_open (const char *filename, int flags, int mode)

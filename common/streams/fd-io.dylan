@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.2 1998/08/10 15:31:21 housel Exp $
 
 //======================================================================
 //
@@ -31,7 +31,7 @@ rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.1 1998/05/03 19
 //
 
 method () => ();
-#if (compiled-for-win32 | compiled-for-solaris)
+#if (compiled-for-win32 | compiled-for-solaris | compiled-for-FreeBSD)
   c-include("errno.h");
 #else
   c-include("unistd.h");
