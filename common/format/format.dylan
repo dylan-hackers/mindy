@@ -2,7 +2,7 @@ module: format
 author: chiles@cs.cmu.edu
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.2 1996/03/20 05:04:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.3 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -229,7 +229,7 @@ define method do-dispatch
     (char :: <byte-character>, bd :: <buffer-desc>, arg)
     => consumed-arg? :: <boolean>;
   let stream = bd.stream;
-  select (char by \=)
+  select (char by \==)
     ('s'), ('S') =>
       if (instance?(arg, <byte-string>))
 	// Simulate "write-message" upon the argument.  This code must be
