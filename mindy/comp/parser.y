@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.3 1994/03/30 05:55:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.4 1994/03/31 13:04:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1111,7 +1111,6 @@ static boolean verify_symbol_aux(struct id *id, struct token *token)
 	struct id *other_id = make_id(token);
 	struct symbol *symbol = other_id->symbol;
 
-	free(token);
 	free(other_id);
 
 	if (id->symbol != symbol) {
