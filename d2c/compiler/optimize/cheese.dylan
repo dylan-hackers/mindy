@@ -12,6 +12,7 @@ end;
 
 
 define method optimize-component (component :: <component>) => ();
+  //dump-fer(component);
   let done = #f;
   until (done)
     if (*do-sanity-checks*)
@@ -26,7 +27,9 @@ define method optimize-component (component :: <component>) => ();
       let dependent = component.reoptimize-queue;
       component.reoptimize-queue := dependent.queue-next;
       dependent.queue-next := #"absent";
+      //break("about to optimize %=", dependent);
       optimize(component, dependent);
+      //dump-fer(component);
     else
       add-type-checks(component);
       unless (component.initial-definitions | component.reoptimize-queue)
@@ -128,17 +131,9 @@ define method optimize
     local
       method trim-unused-definitions (defn, new-tail) => ();
 	if (~defn)
-	  local method flush-definers (var)
-		  if (var)
-		    var.definer := #f;
-		    flush-definers(var.definer-next);
-		  end;
-		end;
 	  if (new-tail)
-	    flush-definers(new-tail.definer-next);
 	    new-tail.definer-next := #f;
 	  else
-	    flush-definers(assignment.defines);
 	    assignment.defines := #f;
 	  end;
 	elseif (~defn.dependents & ~defn.needs-type-check?
@@ -152,62 +147,62 @@ define method optimize
 
     let dependency = assignment.depends-on;
     let source = dependency.source-exp;
-    let source-type = source.derived-type;
     let defines = assignment.defines;
 
-    if (~defines)
-      if (side-effect-free?(source))
-	remove-dependency-from-source(component, dependency);
-	delete-assignment(assignment);
-	return();
-      end;
-    elseif (pure-expression?(source))
-      if (instance?(defines.var-info, <values-cluster-info>))
-	if (instance?(source, <ssa-variable>)
-	      & instance?(source.var-info, <values-cluster-info>))
-	  maybe-propagate-copy(component, defines, source);
-	end;
-      else
-	unless (instance?(source, <ssa-variable>)
-		  & instance?(source.var-info, <values-cluster-info>))
-	  maybe-propagate-copy(component, defines, source);
-	  let next = defines.definer-next;
-	  if (next)
-	    let false =
-	      make-literal-constant(make-builder(component),
-				    make(<literal-false>));
-	    for (var = next then var.definer-next,
-		 while: var)
-	      maybe-propagate-copy(component, var, false);
+    if (defines)
+      if (pure-expression?(source))
+	if (instance?(defines.var-info, <values-cluster-info>))
+	  if (instance?(source, <ssa-variable>)
+		& instance?(source.var-info, <values-cluster-info>))
+	    maybe-propagate-copy(component, defines, source);
+	  end;
+	else
+	  unless (instance?(source, <ssa-variable>)
+		    & instance?(source.var-info, <values-cluster-info>))
+	    maybe-propagate-copy(component, defines, source);
+	    let next = defines.definer-next;
+	    if (next)
+	      let false =
+		make-literal-constant(make-builder(component),
+				      make(<literal-false>));
+	      for (var = next then var.definer-next,
+		   while: var)
+		maybe-propagate-copy(component, var, false);
+	      end;
 	    end;
 	  end;
 	end;
       end;
-    end;
 
-    if (defines & instance?(defines.var-info, <values-cluster-info>))
-      maybe-restrict-type(component, defines, source-type);
-    else
-      for (var = defines then var.definer-next,
-	   index from 0 below source-type.min-values,
-	   positionals = source-type.positional-types then positionals.tail,
-	   while: var)
-	maybe-restrict-type(component, var, positionals.head);
-      finally
-	if (var)
-	  let false-type = dylan-value(#"<false>");
-	  for (var = var then var.definer-next,
-	       positionals = positionals then positionals.tail,
-	       while: var)
-	    let type = if (positionals == #())
-			 source-type.rest-value-type;
-		       else
-			 positionals.head;
-		       end;
-	    maybe-restrict-type(component, var, ctype-union(type, false-type));
+      let source-type = source.derived-type;
+      if (instance?(defines.var-info, <values-cluster-info>))
+	maybe-restrict-type(component, defines, source-type);
+      else
+	for (var = defines then var.definer-next,
+	     index from 0 below source-type.min-values,
+	     positionals = source-type.positional-types then positionals.tail,
+	     while: var)
+	  maybe-restrict-type(component, var, positionals.head);
+	finally
+	  if (var)
+	    let false-type = dylan-value(#"<false>");
+	    for (var = var then var.definer-next,
+		 positionals = positionals then positionals.tail,
+		 while: var)
+	      let type = if (positionals == #())
+			   source-type.rest-value-type;
+			 else
+			   positionals.head;
+			 end;
+	      maybe-restrict-type(component, var,
+				  ctype-union(type, false-type));
+	    end;
 	  end;
 	end;
       end;
+    elseif (side-effect-free?(source))
+      remove-dependency-from-source(component, dependency);
+      delete-assignment(assignment);
     end;
   end;
 end;
@@ -313,51 +308,35 @@ define method optimize (component :: <component>, call :: <unknown-call>)
   unless (func-dep)
     error("No function in a call?");
   end;
-  let assign = call.dependents.dependent;
-  assert-type(component, assign, func-dep, function-ctype());
-  let func = func-dep.source-exp;
-  if (instance?(func, <lambda>))
-    // Calling a lambda.  Convert it into either a known or an error call.
-    for (arg-dep = func-dep.dependent-next then arg-dep.dependent-next,
-	 var = func.prologue.dependents.dependent.defines
-	   then var.definer-next,
-	 while: arg-dep & var)
-      assert-type(component, assign, arg-dep, var.var-info.asserted-type);
-    finally
-      if (arg-dep | var)
-	compiler-warning("Wrong number of arguments.");
-	change-call-kind(component, call, <error-call>);
-      else
-	change-call-kind(component, call, <known-call>);
-      end;
-    end;
-  end;
+  // Dispatch of the thing we are calling.
+  optimize-unknown-call(component, call, func-dep.source-exp);
 end;
 
-define method assert-type
-    (component :: <component>, before :: <assignment>,
-     dependent :: <dependency>, type :: <ctype>)
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
     => ();
-  let source = dependent.source-exp;
-  unless (csubtype?(source.derived-type, type))
-    let builder = make-builder(component);
-    let temp = make-ssa-var(builder, #"temp", type);
-    build-assignment(builder, before.policy, before.source-location,
-		     temp, source);
-    for (dep = source.dependents then dep.source-next,
-	 prev = #f then dep,
-	 until: dep == dependent)
-    finally
-      if (prev)
-	prev.source-next := dep.source-next;
-      else
-	source.dependents := dep.source-next;
-      end;
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      function-ctype());
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>, func :: <lambda>)
+    => ();
+  // Convert it into either a known or an error call.
+  let assign = call.dependents.dependent;
+  for (arg-dep = func.depends-on.dependent-next then arg-dep.dependent-next,
+       var = func.prologue.dependents.dependent.defines
+	 then var.definer-next,
+       while: arg-dep & var)
+    assert-type(component, assign, arg-dep, var.var-info.asserted-type);
+  finally
+    if (arg-dep | var)
+      compiler-warning("Wrong number of arguments.");
+      change-call-kind(component, call, <error-call>);
+    else
+      change-call-kind(component, call, <known-call>);
     end;
-    dependent.source-exp := temp;
-    temp.dependents := dependent;
-    dependent.source-next := #f;
-    insert-before(before, builder-result(builder));
   end;
 end;
 
@@ -375,6 +354,37 @@ define method change-call-kind
     dep.source-exp := new;
   end;
   queue-dependent(component, new);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>, func :: <exit-function>)
+    => ();
+  // If the call is in the same lambda as the block, convert it to a
+  // pitcher and exit region.
+  let call-dependency = call.dependents;
+  let assign = call-dependency.dependent;
+  let block-region = func.target-region;
+  for (region = assign.region then region.parent,
+       until: region == #f | region == block-region)
+  finally
+    if (region)
+      let catcher = block-region.catcher;
+      let args = call.depends-on.dependent-next;
+      let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
+			 depends-on: args, dependents: call-dependency);
+      catcher.pitchers := pitcher;
+      remove-dependency-from-source(component, call.depends-on);
+      for (dep = args then dep.dependent-next,
+	   while: dep)
+	dep.dependent := pitcher;
+      end;
+      call-dependency.source-exp := pitcher;
+      queue-dependent(component, pitcher);
+      let exit = make(<exit>, block: block-region, next: block-region.exits);
+      block-region.exits := exit;
+      insert-after(assign, exit);
+    end;
+  end;
 end;
 
 define method optimize (component :: <component>, call :: <known-call>) => ();
@@ -440,6 +450,32 @@ define method optimize (component :: <component>, prologue :: <prologue>)
 		      make-values-ctype(as(<list>, types), #f));
 end;
 
+define method optimize (component :: <component>, catcher :: <catcher>)
+    => ();
+  unless (catcher.exit-function)
+    let result-type = empty-ctype();
+    for (pitcher = catcher.pitchers then pitcher.pitcher-next,
+	 while: pitcher)
+      result-type := values-type-union(result-type, pitcher.pitched-type);
+    end;
+    maybe-restrict-type(component, catcher, result-type);
+  end;
+end;
+
+define method optimize (component :: <component>, pitcher :: <pitcher>)
+  for (dep = pitcher.depends-on then dep.dependent-next,
+       types = #() then pair(dep.source-exp.derived-type, types),
+       while: dep)
+  finally
+    let type = make-values-ctype(reverse!(types), #f);
+    let old-type = pitcher.pitched-type;
+    if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
+      pitcher.pitched-type := type;
+      queue-dependent(component, pitcher.catcher);
+    end;
+  end;
+end;
+
 define method optimize (component :: <component>, lambda :: <lambda>)
     => ();
   let results = lambda.depends-on;
@@ -472,7 +508,7 @@ define method maybe-restrict-result-type
     (component :: <component>, lambda :: <lambda>, type :: <values-ctype>)
     => ();
   let old-type = lambda.result-type;
-  if (old-type ~= type & values-subtype?(type, old-type))
+  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
     lambda.result-type := type;
     queue-dependents(component, lambda);
   end;
@@ -604,11 +640,38 @@ define method queue-dependents
   end;
 end;
 
+define method assert-type
+    (component :: <component>, before :: <assignment>,
+     dependent :: <dependency>, type :: <ctype>)
+    => ();
+  let source = dependent.source-exp;
+  unless (csubtype?(source.derived-type, type))
+    let builder = make-builder(component);
+    let temp = make-ssa-var(builder, #"temp", type);
+    build-assignment(builder, before.policy, before.source-location,
+		     temp, source);
+    for (dep = source.dependents then dep.source-next,
+	 prev = #f then dep,
+	 until: dep == dependent)
+    finally
+      if (prev)
+	prev.source-next := dep.source-next;
+      else
+	source.dependents := dep.source-next;
+      end;
+    end;
+    dependent.source-exp := temp;
+    temp.dependents := dependent;
+    dependent.source-next := #f;
+    insert-before(before, builder-result(builder));
+  end;
+end;
+
 define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
   let old-type = expr.derived-type;
-  if (old-type ~= type & values-subtype?(type, old-type))
+  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
     expr.derived-type := type;
     queue-dependents(component, expr);
   end;
@@ -806,6 +869,10 @@ define method add-type-checks-aux
   add-type-checks-aux(component, region.body);
 end;
 
+define method add-type-checks-aux
+    (component :: <component>, region :: <exit>) => ();
+end;
+
 
 
 // FER editing stuff.
@@ -865,6 +932,23 @@ define method dropped-dependent
   end;
 end;
 
+define method dropped-dependent
+    (component :: <component>, exit :: <exit-function>) => ();
+  // If we dropped the last reference, clear it out.
+  unless (exit.dependents)
+    let catcher = exit.target-region.catcher;
+    catcher.exit-function := #f;
+    queue-dependent(component, catcher);
+  end;
+end;
+
+
+define method combine-regions
+    (first :: <region>, second :: <region>)
+    => res :: <region>;
+  first.parent := second.parent
+    := make(<compound-region>, regions: list(first, second));
+end;
 
 define method combine-regions
     (first :: <simple-region>, second :: <simple-region>)
@@ -931,6 +1015,18 @@ define method combine-regions
   first;
 end;
 
+define method combine-regions
+    (first :: <empty-region>, second :: <compound-region>)
+    => res :: <region>;
+  second;
+end;
+
+define method combine-regions
+    (first :: <compound-region>, second :: <empty-region>)
+    => res :: <region>;
+  first;
+end;
+
 
 define method split-after (assign :: <abstract-assignment>)
     => (before :: <linear-region>, after :: <linear-region>);
@@ -944,6 +1040,10 @@ define method split-after (assign :: <abstract-assignment>)
     new.first-assign := next;
     next.prev-op := #f;
     new.last-assign := last;
+    for (foo = next then next.next-op,
+	 while: foo)
+      foo.region := new;
+    end;
     values(region, new);
   else
     values(region, make(<empty-region>));
@@ -1112,6 +1212,14 @@ define method check-sanity (region :: <compound-region>) => ();
   end;
 end;
 
+define method check-sanity (region :: <body-region>) => ();
+  unless (region.body.parent == region)
+    error("%='s body %= claims %= for its parent.",
+	  region, region.body, region.body.parent);
+  end;
+  check-sanity(region.body);
+end;
+
 define method check-sanity (lambda :: <lambda>) => ();
   //
   // Check the expression aspects of the lambda.
@@ -1126,6 +1234,18 @@ define method check-sanity (lambda :: <lambda>) => ();
 	  lambda, lambda.body, lambda.body.parent);
   end;
   check-sanity(lambda.body);
+end;
+
+define method check-sanity (exit :: <exit>) => ();
+  //
+  // Make sure the exit exits to some block above us.
+  for (region = exit then region.parent,
+       until: region == #f | region == exit.block-of)
+    unless (region)
+      error("exit %= exits to block %= but that isn't an ancestor",
+	    exit, exit.block-of);
+    end;
+  end;
 end;
 
 
