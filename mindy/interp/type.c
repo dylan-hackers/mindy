@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/type.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/type.c,v 1.2 1998/12/17 10:25:53 igor Exp $
 *
 * This file implements the type system.
 *
@@ -94,12 +94,12 @@ struct none_of_type {
 
 /* instancep */
 
-static inline boolean singleton_instancep(obj_t thing, obj_t type)
+static __inline__ boolean singleton_instancep(obj_t thing, obj_t type)
 {
     return idp(thing, SING(type)->object);
 }
 
-static inline boolean class_instancep(obj_t thing, obj_t class)
+static __inline__ boolean class_instancep(obj_t thing, obj_t class)
 {
     obj_t thing_class = object_class(thing);
 
@@ -115,13 +115,13 @@ static inline boolean class_instancep(obj_t thing, obj_t class)
     return result_cache[cacheloc] = subtypep(thing_class, class);
 }
 
-static inline boolean subclass_instancep(obj_t thing, obj_t subclass)
+static __inline__ boolean subclass_instancep(obj_t thing, obj_t subclass)
 {
     return instancep(thing, obj_ClassClass)
 	&& subtypep(thing, SUBCLASS(subclass)->of);
 }
 
-static inline boolean limfix_instancep(obj_t thing, obj_t lim_int)
+static __inline__ boolean limfix_instancep(obj_t thing, obj_t lim_int)
 {
     if (!obj_is_fixnum(thing))
 	return FALSE;
@@ -132,7 +132,7 @@ static inline boolean limfix_instancep(obj_t thing, obj_t lim_int)
     return TRUE;
 }
 
-static inline boolean limbig_instancep(obj_t thing, obj_t lim_int)
+static __inline__ boolean limbig_instancep(obj_t thing, obj_t lim_int)
 {
     if (object_class(thing) != obj_BignumClass)
 	return FALSE;
@@ -143,7 +143,7 @@ static inline boolean limbig_instancep(obj_t thing, obj_t lim_int)
     return TRUE;
 }
 
-static inline boolean union_instancep(obj_t thing, obj_t u)
+static __inline__ boolean union_instancep(obj_t thing, obj_t u)
 {
     obj_t remaining;
 
@@ -155,7 +155,7 @@ static inline boolean union_instancep(obj_t thing, obj_t u)
     return FALSE;
 }
 
-static inline boolean none_of_instancep(obj_t thing, obj_t class)
+static __inline__ boolean none_of_instancep(obj_t thing, obj_t class)
 {
     obj_t remaining;
 
@@ -204,17 +204,17 @@ boolean instancep(obj_t thing, obj_t type)
 
 /* subtypep */
 
-static inline boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
+static __inline__ boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
 {
     return idp(SING(sing1)->object, SING(sing2)->object);
 }
 
-static inline boolean sing_type_subtypep(obj_t sing, obj_t type)
+static __inline__ boolean sing_type_subtypep(obj_t sing, obj_t type)
 {
     return instancep(SING(sing)->object, type);
 }
 
-static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
+static __inline__ boolean class_class_subtypep(obj_t class1, obj_t class2)
 {
     obj_t cpl = CLASS(class1)->cpl;
     obj_t remaining;
@@ -229,22 +229,22 @@ static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
     return FALSE;
 }
 
-static inline boolean never_subtypep(obj_t type1, obj_t type2)
+static __inline__ boolean never_subtypep(obj_t type1, obj_t type2)
 {
     return FALSE;
 }
 
-static inline boolean subclass_class_subtypep(obj_t sub, obj_t class)
+static __inline__ boolean subclass_class_subtypep(obj_t sub, obj_t class)
 {
     return subtypep(object_class(SUBCLASS(sub)->of), class);
 }
 
-static inline boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
+static __inline__ boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
     return subtypep(SUBCLASS(sub1)->of, SUBCLASS(sub2)->of);
 }
 
-static inline boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
+static __inline__ boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -260,7 +260,7 @@ static inline boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
     return TRUE;
 }
 
-static inline boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
+static __inline__ boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -290,17 +290,17 @@ static inline boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
     return TRUE;
 }
 
-static inline boolean limfix_type_subtypep(obj_t lim, obj_t type)
+static __inline__ boolean limfix_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_FixnumClass, type);
 }
 
-static inline boolean limbig_type_subtypep(obj_t lim, obj_t type)
+static __inline__ boolean limbig_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_BignumClass, type);
 }
 
-static inline boolean union_type_subtypep(obj_t u, obj_t type)
+static __inline__ boolean union_type_subtypep(obj_t u, obj_t type)
 {
     obj_t remaining;
 
@@ -312,7 +312,7 @@ static inline boolean union_type_subtypep(obj_t u, obj_t type)
     return TRUE;
 }
 
-static inline boolean type_union_subtypep(obj_t type, obj_t u)
+static __inline__ boolean type_union_subtypep(obj_t type, obj_t u)
 {
     obj_t remaining;
 
@@ -324,12 +324,12 @@ static inline boolean type_union_subtypep(obj_t type, obj_t u)
     return FALSE;
 }
 
-static inline boolean noneof_type_subtypep(obj_t n, obj_t type)
+static __inline__ boolean noneof_type_subtypep(obj_t n, obj_t type)
 {
     return subtypep(NONEOF(n)->base, type);
 }
 
-static inline boolean lim_noneof_subtypep(obj_t type, obj_t n)
+static __inline__ boolean lim_noneof_subtypep(obj_t type, obj_t n)
 {
     obj_t remaining;
 
