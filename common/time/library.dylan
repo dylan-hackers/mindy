@@ -2,8 +2,8 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.2 2000/01/24 04:55:42 andreas Exp $
- 
+rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.3 2000/10/22 21:09:56 dauclair Exp $
+
 //======================================================================
 //
 // Copyright (c) 1996  Carnegie Mellon University
