@@ -2,7 +2,7 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.3 1996/04/06 18:30:25 nkramer Exp $
 
 //======================================================================
 //
@@ -112,16 +112,35 @@ define class <parse-info> (<object>)
   slot set-type :: <class>, required-init-keyword: #"set-type";
 end class <parse-info>;
 
+define class <illegal-regexp> (<error>)
+  slot regular-expression :: <string>, required-init-keyword: #"regexp";
+end class <illegal-regexp>;
+
+define sealed domain make (singleton(<illegal-regexp>));
+define sealed domain initialize (<illegal-regexp>);
+
+define sealed method report-condition (cond :: <illegal-regexp>, stream) => ();
+  condition-format(stream, "Illegal regular expression: \n"
+		     "A sub-regexp that matches the empty string has"
+		     " been quantified in\n   %s",
+		   cond.regular-expression);
+end method report-condition;
+
 define method parse (s :: <string>, character-set-type :: <class>);
   let parse-info = make(<parse-info>, set-type: character-set-type);
   let parse-string = make(<parse-string>, string: s);
   let parse-tree = make(<mark>, group: 0, 
 			child: parse-regexp(parse-string, parse-info));
-  values(optimize(parse-tree),
-	 parse-info.current-group-number,
-	 parse-info.backreference-used,
-	 parse-info.has-alternatives,
-	 parse-info.has-quantifiers);
+  let optimized-regexp = optimize(parse-tree);
+  if (optimized-regexp.pathological?)
+    signal(make(<illegal-regexp>, regexp: s));
+  else
+    values(optimized-regexp,
+	   parse-info.current-group-number,
+	   parse-info.backreference-used,
+	   parse-info.has-alternatives,
+	   parse-info.has-quantifiers);
+  end if;
 end method parse;
 
 define method parse-regexp (s :: <parse-string>, info :: <parse-info>)
@@ -399,6 +418,100 @@ define method optimize (regexp :: <parsed-regexp>)
       regexp;
   end select;
 end method optimize;
+
+// We have to somehow deal with pathological regular expressions like
+// ".**".  Perl simply signals an error in this case.  We *could* in
+// fact match these pathological regexps using the formulation below,
+// but it doesn't seem worth the trouble.  Frankly, I doubt anyone has
+// ever tried to use such a pathological regexp and *not* have done it
+// by mistake.  But in case I'm wrong, here's how to fix a
+// pathological regexp:
+//
+// First, realize that pathological regexps stem from infinitely
+// quantifying subregexps that could match the empty string.  So what
+// we do is find this subregexps, and perform the following
+// transformation:
+//
+//  case (type of regexp)
+//    r1r2 => r1'r2|r2'
+//    r1|r2 => r1'|r2'
+//    r1{0,n} => r1'{1,n}
+//    r1{0,} => r1'{1,}
+//    atom => atom
+//    assertion => can't be done
+//
+// This transformation turns a might-match-emptystring regexp into a
+// regexp that matches the same set of strings minus the empty string.
+// If this transformation can't be done, remember that "$*" is
+// equivalent to "always true and consumes no input".
+
+
+define generic matches-empty-string? (regexp :: <parsed-regexp>)
+ => answer :: <boolean>;
+
+define method matches-empty-string? (regexp :: <parsed-atom>)
+ => answer :: <boolean>;
+  #f;
+end method matches-empty-string?;
+
+define method matches-empty-string? (regexp :: <parsed-assertion>)
+ => answer :: <boolean>;
+  #t;
+end method matches-empty-string?;
+
+define method matches-empty-string? (regexp :: <mark>)
+ => answer :: <boolean>;
+  regexp.child.matches-empty-string?;
+end method matches-empty-string?;
+
+define method matches-empty-string? (regexp :: <union>)
+ => answer :: <boolean>;
+  regexp.left.matches-empty-string? | regexp.right.matches-empty-string?;
+end method matches-empty-string?;
+
+define method matches-empty-string? (regexp :: <alternative>)
+ => answer :: <boolean>;
+  regexp.left.matches-empty-string? & regexp.right.matches-empty-string?;
+end method matches-empty-string?;
+
+define method matches-empty-string? (regexp :: <quantified-atom>)
+ => answer :: <boolean>;
+   regexp.min-matches == 0 | regexp.atom.matches-empty-string?;
+end method matches-empty-string?;
+
+
+define generic pathological? (regexp :: <parsed-regexp>)
+ => answer :: <boolean>;
+
+define method pathological? (regexp :: <parsed-atom>)
+ => answer :: <boolean>;
+  #f;
+end method pathological?;
+
+define method pathological? (regexp :: <parsed-assertion>)
+ => answer :: <boolean>;
+  #f;
+end method pathological?;
+
+define method pathological? (regexp :: <mark>)
+ => answer :: <boolean>;
+  regexp.child.pathological?;
+end method pathological?;
+
+define method pathological? (regexp :: <union>)
+ => answer :: <boolean>;
+  regexp.left.pathological? | regexp.right.pathological?;
+end method pathological?;
+
+define method pathological? (regexp :: <alternative>)
+ => answer :: <boolean>;
+  regexp.left.pathological? | regexp.right.pathological?;
+end method pathological?;
+
+define method pathological? (regexp :: <quantified-atom>)
+ => answer :: <boolean>;
+  regexp.max-matches == #f & regexp.atom.matches-empty-string?;
+end method pathological?;
 
 // Seals for file parse.dylan
 
