@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.12 1996/08/10 20:21:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.13 1996/09/04 16:47:37 nkramer Exp $
 
 //======================================================================
 //
@@ -34,6 +34,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dy
 // identifier O_BINARY will be undeclared in the C code
 method () => ();
   c-include("fcntl.h");
+  c-include("errno.h");
 end();
 #endif
 
