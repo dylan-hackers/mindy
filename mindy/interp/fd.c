@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.2 1998/12/17 10:29:53 igor Exp $
+* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.3 1999/08/05 13:41:52 robmyers Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -348,7 +348,55 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 }
 
 #else
-/* Not WIN32 -- it's assumed this means Unix */
+#	ifdef MACOS
+
+static int mindy_open (const char *filename, int flags, int mode)
+{
+    return MacOpen(filename, flags, mode);	/* From rob's MacTextFileIO.c */
+}
+
+static int mindy_close (int fd)
+{
+    return MacClose(fd);
+}
+
+int input_available(int fd)
+{
+    fd_set fds;
+    struct timeval tv;
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    return select(fd+1, &fds, NULL, NULL, &tv);
+}
+
+int mindy_read (int fd, char *buffer, int max_chars)
+{
+	int length;
+	
+    length = MacRead(fd, buffer, max_chars);						/* Read raw data. fread would translate linefeeds but doesn't return!!! */
+		
+    return length;
+}
+
+static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *oldargs;
+
+    oldargs = args - 1;
+    thread->sp = args + 1;
+
+	// Mac doesn't support forking or piping
+
+	oldargs[0] = obj_False;
+	oldargs[1] = obj_False;
+	
+    do_return(thread, oldargs, oldargs);
+}
+
+#	else
+/* Not WIN32 or MACOS -- it's assumed this means Unix */
 
 static int mindy_open (const char *filename, int flags, int mode)
 {
@@ -446,6 +494,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     }
     do_return(thread, oldargs, oldargs);
 }
+#	endif
 #endif
 /* End Unix-specific */
 /* End OS-specific stuff */
@@ -614,11 +663,14 @@ static void maybe_write(struct thread *thread)
     } else if (nfound == 0)
 	wait_for_output(thread, fd, maybe_write);
     else {
-	res = write(fd,
+#ifdef MACOS
+		res = MacWrite(fd,   
+#else    
+		res = write(fd,
+#endif
 		    buffer_data(fp[-8]) + fixnum_value(fp[-7]),
 		    fixnum_value(fp[-6]));
-
-	results(thread, pop_linkage(thread), res, make_fixnum(res));
+		results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
 }
 
@@ -719,7 +771,9 @@ void init_fd_functions(void)
     define_constant("O_EXCL", make_fixnum(O_EXCL));
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
 #ifndef WIN32
+#ifndef MACOS
     define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK));
+#endif
 #endif
 
     /* This compendium of error numbers comes from Tcl. */

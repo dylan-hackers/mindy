@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/input.c,v 1.1 1998/05/03 19:55:14 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/input.c,v 1.2 1999/08/05 13:41:52 robmyers Exp $
 *
 * This file implements getc.
 *
@@ -43,10 +43,25 @@
 #include "def.h"
 #include "fd.h"
 
+#ifdef MACOS
+#	include<console.h>
+#endif
+
 static int mindy_getchar ()
 {
     char c;
+#ifdef MACOS		/* SIOUX can't read just one char??? */
+	int num_read = 1;
+	/*	Should loop calling SIOUXHandleOneEvent while no keydown. 
+		Then get code direct from event, and repost to SIOUX.	
+	*/
+	c = getch();
+	WriteCharsToConsole( &c, 1 );
+	if( c == '\r' )
+		c = '\n';
+#else
     int num_read = mindy_read(0, &c, 1);
+#endif
     if (num_read < 1)
 	return EOF;
     else

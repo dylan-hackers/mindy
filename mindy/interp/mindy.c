@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.2 1998/12/17 09:01:48 igor Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.3 1999/08/05 13:41:52 robmyers Exp $
 *
 * This file starts everything going.
 *
@@ -44,6 +44,10 @@
 #include "func.h"
 #include "debug.h"
 #include "load.h"
+
+#ifdef MACOS
+#	include<console.h>
+#endif
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
@@ -88,6 +92,12 @@ int main(int argc, char *argv[])
 #if ! NO_ARGV_0
     char *argv0 = "mindy";
 #endif
+#ifdef MACOS
+#ifndef SHLB
+	argc = ccommand( &argv );
+#endif
+#endif
+
     exec_file_name = argv[0];
 
     init();

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.3 1998/12/17 11:03:12 igor Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.4 1999/08/05 13:42:21 robmyers Exp $
 *
 * This file is the main driver.
 *
@@ -46,6 +46,10 @@
 #include "dump.h"
 #include "feature.h"
 #include "lose.h"
+
+#ifdef MACOS
+#	include <console.h>
+#endif
 
 struct body *Program = NULL;
 
@@ -162,7 +166,11 @@ static void end_of_headers(char *value)
 
 static char *find_extension(char *source)
 {
+#ifdef MACOS
+    char *slash = strrchr(source, ':');
+#else
     char *slash = strrchr(source, '/');
+#endif    
     char *dot = strchr(slash ? slash : source, '.');
 
     if (dot)
@@ -201,6 +209,14 @@ int main(int argc, char *argv[])
     init_info();
     init_expand();
     init_compile();
+    
+#ifdef MACOS
+	add_feature(symbol("macos"));
+#	ifndef SHLB
+	argc = ccommand( &argv );
+#	endif
+#endif
+
 
     while ((arg = *++argv) != NULL) {
 	if (arg[0] == '-') {

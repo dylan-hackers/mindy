@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.2 1999/08/05 13:41:52 robmyers Exp $
 *
 * This file implements the debugger.
 *
@@ -2523,12 +2523,14 @@ void invoke_debugger(enum pause_reason reason)
 	reason = do_stuff();
 	explain_reason(reason);
     }
-
+    
+#ifndef MACOS
     if ( ! isatty(fileno(stdin))
       && ! freopen("/dev/tty", "r", stdin)) {
         printf("STDIN is not a tty and cannot open /dev/tty.  Cannot debug.\n");
 	exit(1);
     }
+#endif
 
     while (1) {
 	thread_set_current(NULL);

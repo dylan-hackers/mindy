@@ -85,7 +85,7 @@ end class <threadsafe-random-state>;
 //
 define method initialize
     (state :: <random-state>, #next next-method, 
-     #key seed :: <integer> = as(<integer>, get-time-of-day()))
+     #key seed :: <integer> = modulo( get-time-of-day(), random-upper-bound ) )//as(<integer>, get-time-of-day()))
     => ();
   next-method();
   local method rand1 () => random-number :: <integer>;
