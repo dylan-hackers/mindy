@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.12 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.13 1996/03/18 01:47:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -106,7 +106,8 @@ define module front
     <exit-function>,
 
     <fer-function-region>, prologue, argument-types, argument-types-setter,
-    result-type, result-type-setter, hidden-references?,
+    result-type, result-type-setter, guessed-result-type,
+    guessed-result-type-setter, hidden-references?,
     self-call-block, self-call-block-setter,
     self-tail-calls, self-tail-calls-setter,
     <lambda>, literal, environment,
