@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.25 1995/12/13 04:13:14 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.26 1996/01/08 21:39:32 rgs Exp $
 
 /*
 
@@ -86,11 +86,21 @@ More specifically, there are four header formats, flagged by the Etype field:
 
 */
 define /* exported */ constant $odf-header-flag              = #b10000000;
-define /* exported */ constant $odf-etype-mask		    = #b01100000;
-define /* exported */ constant $odf-object-definition-etype  = #b00000000;
-define /* exported */ constant $odf-end-entry-etype          = #b00100000;
-define /* exported */ constant $odf-local-reference-etype    = #b01000000;
-define /* exported */ constant $odf-external-reference-etype = #b01100000;
+define /* exported */ constant $odf-etype-mask               = #b01100000;
+define /* exported */ constant $odf-object-definition-etype  = #b10000000;
+define /* exported */ constant $odf-end-entry-etype          = #b10100000;
+define /* exported */ constant $odf-local-reference-etype    = #b11000000;
+define /* exported */ constant $odf-external-reference-etype = #b11100000;
+
+// The following constants are used to quickly check for etype
+// headers.  ash(header-byte, $odf-etype-shift) should equal one of
+// the "-shifted" constants
+//
+define constant $odf-etype-shift  = -5;
+define /* exported */ constant $odf-object-definition-shifted  = #b100;
+define /* exported */ constant $odf-end-entry-shifted          = #b101;
+define /* exported */ constant $odf-local-reference-shifted    = #b110;
+define /* exported */ constant $odf-external-reference-shifted = #b111;
 /*
 
 
@@ -1023,7 +1033,7 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
   end;
 
   // End the main buffer now that we know the offset back to the start.
-  dump-header-word(logior($odf-header-flag, $odf-end-entry-etype),
+  dump-header-word($odf-end-entry-etype,
                    oa-len - 1, // for end header word size
 		   state);
 
@@ -1122,7 +1132,7 @@ define /* exported */ method dump-definition-header
   (name :: <symbol>, buf :: <dump-buffer>,
    #key subobjects = #f, raw-data = $odf-no-raw-data-format)
  => ();
-  dump-header-word(logior($odf-header-flag, $odf-object-definition-etype,
+  dump-header-word(logior($odf-object-definition-etype,
   		          if (subobjects) $odf-subobjects-flag else 0 end,
 			  raw-data),
 		   *object-id-registry*[name], buf);
@@ -1137,7 +1147,7 @@ end method;
 define /* exported */ method dump-end-entry
   (start-posn :: <fixed-integer>, buf :: <dump-buffer>)
  => ();
-  dump-header-word(logior($odf-header-flag, $odf-end-entry-etype),
+  dump-header-word($odf-end-entry-etype,
                    buf.current-pos - start-posn,
 		   buf);
   buf.dump-stack := tail(buf.dump-stack);
@@ -1188,8 +1198,7 @@ end method;
 //
 define /* exported */ method dump-local-reference
   (id :: <fixed-integer>, buf :: <dump-buffer>) => ();
-  dump-header-word(logior($odf-header-flag, $odf-local-reference-etype), id,
-  		   buf);
+  dump-header-word($odf-local-reference-etype, id, buf);
 end method;
 
 
@@ -1414,7 +1423,7 @@ define method check-unit-header
   let base = fill-at-least($data-unit-header-size * $word-bytes, state);
 
   let (tag, id) = buffer-header-word(buffer, base);
-  unless (tag = logior($odf-header-flag, $odf-object-definition-etype,
+  unless (tag = logior($odf-object-definition-etype,
   		       $odf-subobjects-flag, $odf-word-raw-data-format))
     error("Invalid ODF header on %=", state.od-stream);
   end;
@@ -1577,7 +1586,7 @@ end method;
 define class <end-object> (<object>) end;
 define /* exported */ constant $end-object = make(<end-object>);
 
-define constant $load-debug = #t;
+define constant $load-debug = #f;
 
 
 // Start loading some objects from a load-state.  Dispatches to an appropriate
@@ -1625,13 +1634,12 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
 
     let (flags, code) = buffer-header-word(buffer, next);
     state.od-next := next + $word-bytes;
-// Okay, the assertion holds.  The assertion itself is a bottleneck.  -rgs
-//    assert(logand(flags, $odf-header-flag) = $odf-header-flag);
-    select (logand(flags, $odf-etype-mask))
-     $odf-object-definition-etype =>
-       assert(code < $dispatcher-table-size);
+
+    select (ash(flags, $odf-etype-shift))
+     $odf-object-definition-shifted =>
 
 if ($load-debug)
+       assert(code < $dispatcher-table-size);
        let orig-stack = state.load-stack;
        block ()
 	 state.load-stack := pair(code, orig-stack);
@@ -1643,13 +1651,13 @@ else
        state.dispatcher.table[code](state);
 end if;
 
-     $odf-end-entry-etype =>
+     $odf-end-entry-shifted =>
        $end-object;
 
-     $odf-local-reference-etype =>
+     $odf-local-reference-shifted =>
        maybe-forward-ref(state.load-unit, code);
 
-     $odf-external-reference-etype =>
+     $odf-external-reference-shifted =>
        let wot = state.extern-index[code];
        if (obj-resolved?(wot))
          let res = wot.actual-obj;
@@ -2001,8 +2009,7 @@ define method maybe-dump-reference-dispatch
     handle.dump-state := buf;
   end if;
 
-  dump-header-word(logior($odf-header-flag, $odf-external-reference-etype),
-  		   d-id, buf);
+  dump-header-word($odf-external-reference-etype, d-id, buf);
   #f;
 end method;
 

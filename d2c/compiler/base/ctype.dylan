@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.35 1995/12/18 17:28:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.36 1996/01/08 21:39:32 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1308,28 +1308,26 @@ end method;
 /// Fixed-Values-Op  --  Internal
 ///
 ///    Return a list of Operation applied to the types in Types1 and Types2,
-/// padding with Rest2 as needed.  Types1 must not be shorter than Types2.  The
-/// second value is #t if Operation always returned a true second value.
+/// padding the shorter with the appropriate rest values as needed.
+/// The second value is #t if Operation always returned a true second
+/// value.
 ///
 define constant fixed-values-op
-  = method (types1 :: <list>, types2 :: <list>, rest2 :: <ctype>,
+  = method (types1 :: <list>, types2 :: <list>,
+	    rest1 :: <ctype>, rest2 :: <ctype>,
 	    operation :: <function>)
       let exact = #t;
-      values(map(method (t1)
-		   let t2 = if (types2 == #())
-			      rest2;
-			    else
-			      types2.head;
-			    end;
-		   types2 := types2.tail;
-		   let (res, win) = operation(t1, t2);
-		   unless (win) exact := #f end;
-		   res;
-		 end method,
-		 types1),
-	     exact);
+      let result = #();
+      for (t1 = types1 then t1.tail,  t2 = types2 then t2.tail,
+	   until t1 == #() & t2 == #())
+	let type1 = if (t1 == #()) rest1 else t1.head end;
+	let type2 = if (t2 == #()) rest2 else t2.head end;
+	let (res, win) = operation(type1, type2);
+	unless (win) exact := #f end;
+	result := pair(res, result);
+      end for;
+      values(reverse!(result), exact);
     end method;
-
 
 /// Args-Type-Op  --  Internal
 ///
@@ -1353,22 +1351,17 @@ define method args-type-op
     (type1 :: <values-ctype>, type2 :: <values-ctype>, operation :: <function>,
      min-fun :: <function>)
     => (res :: <values-ctype>, win? :: <boolean>);
-  let types1 = type1.positional-types;
   let rest1 = type1.rest-value-type;
-  let types2 = type2.positional-types;
   let rest2 = type2.rest-value-type;
   let (rest, rest-exact) = operation(rest1, rest2);
   let (res, res-exact)
-    = if (types1.size < types2.size)
-	fixed-values-op(types2, types1, rest1, operation);
-      else
-	fixed-values-op(types1, types2, rest2, operation);
-      end if;
+    = fixed-values-op(type1.positional-types, type2.positional-types,
+		      rest1, rest2, operation);
   if (member?(empty-ctype(), res))
     values(empty-ctype(), #t);
   else
     let min-values = min-fun(type1.min-values, type2.min-values);
-    if (res.size == 1 & min-values == 1 & rest == empty-ctype())
+    if (min-values == 1 & rest == empty-ctype() & res.size == 1)
       values(res.first, res-exact & rest-exact);
     else
       values(make(<multi-value-ctype>, positional-types: res,
