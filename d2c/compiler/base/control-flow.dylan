@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.2 1995/03/13 19:57:35 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.3 1995/03/24 12:21:48 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -74,8 +74,8 @@ end class;
 //
 define class <if-region> (<join-region>, <dependent-mixin>)
   //
-  // Variable holding test value.
-  slot if-test :: <leaf>, required-init-keyword: if-test:;
+  // Holds the dependency for the leaf whose value is tested.
+  inherited slot depends-on;
   //
   // Regions holding the branches of the IF.
   slot then-region :: <region>, init-keyword: then-region:;
@@ -127,22 +127,6 @@ end;
 // 
 define class <exit> (<region>)
   slot block-of :: <block-region-mixin>, required-init-keyword: block:;
-end;
-
-// A <call-site> represents the control transfer associated with a local
-// function call (and return point.)  The reason for having a distinct
-// call-site object instead of just using the <method-region> itself is that
-// the <call-site> provides a "name" for each call location, allowing analysis
-// to be accumulated for each call site.
-//
-// Depending on the sort of analysis being done, the <call-site> may be
-// considered to contain all the code in the called method, or may just have a
-// summary effect.
-//
-define class <call-site> (<region>)
-  //
-  // The method we're calling.
-  slot method-of :: <method-region>, required-init-keyword: method:;
 end;
 
 
