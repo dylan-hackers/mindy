@@ -151,8 +151,14 @@ main (gint   argc,
 
   g_type_init ();
 
+  g_print("module: gtk-internal\n\n"
+          "define interface\n"
+          "  #include \"gtk/gtk.h\",\n"
+          "    import: all-recursive,\n"
+	  "    name-mapper: minimal-name-mapping;\n");
   for (i = 0; i < G_N_ELEMENTS (get_type_funcs); i++)
     query_type (get_type_funcs[i] (), 0);
+  g_print("end interface;");
 }
 
 
@@ -172,16 +178,37 @@ query_type (GType type,
             gint  level)
 {
   indent (level);
-  g_print ("Type: %s\n", g_type_name (type));
-
   if (G_TYPE_IS_CLASSED (type))
     {
+
       GTypeQuery  type_query;
       GType      *interfaces;
       guint       n_interfaces;
 
+      g_print ("  struct \"struct _%s\",\n    superclasses: {", g_type_name (type));
+
       g_type_query (type, &type_query);
 
+      if (g_type_is_a (type, G_TYPE_OBJECT))
+        {
+          GTypeClass   *klass;
+          GObjectClass *object_class;
+	  GType         parent;
+	  
+          klass = g_type_class_ref (type);
+	  
+          object_class = G_OBJECT_CLASS (klass);
+	  
+	  parent = g_type_parent(type);
+	  
+          /*  query properties & signals here  */
+	  
+	  /* query_type(parent, level + 1); */
+
+	  g_print("<%s>", g_type_name (parent));
+          g_type_class_unref (klass);
+        }
+  
       interfaces = g_type_interfaces (type, &n_interfaces);
 
       if (n_interfaces > 0)
@@ -189,26 +216,13 @@ query_type (GType type,
           gint i;
 
           indent (level);
-          g_print ("Interfaces:\n");
 
           for (i = 0; i < n_interfaces; i++)
-            query_type (interfaces[i], level + 1);
+	    g_print (", <%s>", g_type_name(interfaces[i]));
+	  //query_type (interfaces[i], level + 1);
         }
 
+      g_print("};\n");
       g_free (interfaces);
-
-      if (g_type_is_a (type, G_TYPE_OBJECT))
-        {
-          GTypeClass   *klass;
-          GObjectClass *object_class;
-
-          klass = g_type_class_ref (type);
-
-          object_class = G_OBJECT_CLASS (klass);
-
-          /*  query properties & signals here  */
-
-          g_type_class_unref (klass);
-        }
     }
 }
