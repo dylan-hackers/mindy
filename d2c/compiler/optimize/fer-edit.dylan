@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.5 2003/02/01 16:56:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.6 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -64,8 +64,26 @@ end;
 define method delete-and-unlink-assignment
     (component :: <component>, assignment :: <assignment>) => ();
 
-  // Do everything but the unlinking.
   delete-assignment(component, assignment);
+  unlink-assignment(component, assignment);
+end;
+
+
+define method delete-assignment
+    (component :: <component>, assignment :: <assignment>) => ();
+
+  // Clean up the dependent aspects.
+  delete-dependent(component, assignment);
+
+  // Nuke the definitions.
+  for (var = assignment.defines then var.definer-next,
+       while: var)
+    delete-definition(component, var);
+  end;
+end;
+
+define method unlink-assignment
+    (component :: <component>, assignment :: <assignment>) => ();
 
   // Unlink the assignment from region.
   let next = assignment.next-op;
@@ -90,20 +108,6 @@ define method delete-and-unlink-assignment
 
   // Set the region to #f to indicate that we are a gonner.
   assignment.region := #f;
-end;
-
-
-define method delete-assignment
-    (component :: <component>, assignment :: <assignment>) => ();
-
-  // Clean up the dependent aspects.
-  delete-dependent(component, assignment);
-
-  // Nuke the definitions.
-  for (var = assignment.defines then var.definer-next,
-       while: var)
-    delete-definition(component, var);
-  end;
 end;
 
 define method delete-definition

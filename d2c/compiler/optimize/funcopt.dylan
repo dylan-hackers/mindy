@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/funcopt.dylan,v 1.3 2000/01/24 04:56:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/funcopt.dylan,v 1.4 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -202,33 +202,6 @@ define method let-convert
   replace-expression(component, function.prologue.dependents,
 		     make-operation(builder, <primitive>, arg-temps,
 				    name: #"values"));
-
-  // For each self-tail-call, change it into an assignment of the arg temps.
-  if (function.self-tail-calls)
-    // But first, peel off the temps that correspond to closure vars.
-    for (closure-var = function.environment.closure-vars
-	   then closure-var.closure-next,
-	 temps = arg-temps then temps.tail,
-	 while: closure-var)
-    finally
-      for (self-tail-call = function.self-tail-calls
-	     then self-tail-call.next-self-tail-call,
-	   while: self-tail-call)
-	let assign = self-tail-call.dependents.dependent;
-	for (dep = self-tail-call.depends-on then dep.dependent-next,
-	     args = #() then pair(dep.source-exp, args),
-	     while: dep)
-	finally
-	  let op = make-operation(builder, <primitive>, reverse!(args),
-				  name: #"values");
-	  build-assignment(builder, assign.policy, assign.source-location,
-			   temps, op);
-	  insert-before(component, assign, builder-result(builder));
-	  delete-and-unlink-assignment(component, assign);
-	end;
-      end;
-    end;
-  end;
 
   // If there are any returns, change them into assignments of a cluster
   // and change the call to a reference to that cluster.

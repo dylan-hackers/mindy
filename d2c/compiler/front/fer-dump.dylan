@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.5 2003/04/12 16:52:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.6 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 
@@ -364,10 +364,6 @@ end;
 
 define method kind (op :: <prologue>) => res :: <string>;
   "PROLOGUE";
-end;
-
-define method kind (op :: <self-tail-call>) => res :: <string>;
-  "SELF-TAIL-CALL";
 end;
 
 define method dump (op :: <primitive>, stream :: <stream>) => ();

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.3 2002/03/07 23:42:59 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.4 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -264,45 +264,89 @@ define method definition-for?
   defn.definition-of == var;
 end;
 
+define function defined-variables (assignment :: <assignment>)
+  for (var = assignment.defines then var.definer-next,
+       arg-vars = #() then 
+         pair(var, arg-vars),
+       while: var)
+  finally
+    reverse!(arg-vars)
+  end for;
+end function;
+
+define function operation-arguments(op :: <operation>)
+  for (dep = op.depends-on then dep.dependent-next,
+       args = #() then pair(dep.source-exp, args),
+       while: dep)
+  finally
+    reverse!(args)
+  end for;
+end function operation-arguments;
+
+define function copy-defined-variables(builder, assignment :: <assignment>)
+  => (vars :: <list>);
+  if(assignment.defined-variables)
+    map-as(<list>, 
+           method(x) make-local-var(builder, x.var-info.debug-name, object-ctype()) end,
+           assignment.defined-variables);
+  else
+    #();
+  end if;
+end;
+
 
 define method convert-self-tail-call
     (component :: <component>, func :: <fer-function-region>,
      call :: <abstract-call>)
     => ();
+
   // Set up the wrapper loop and blocks.
   unless (func.self-call-block)
     let builder = make-builder(component);
+    let policy = prologue-assignment.policy;
     let source = func.source-location;
+
+    // make temps for the function arguments
+    let prologue-assignment = func.prologue.dependents.dependent;
+    let new-vars = copy-defined-variables(builder, prologue-assignment);
+    func.self-tail-call-temps := new-vars;
+
+    let old-vars = defined-variables(prologue-assignment);
+    let old-assign-dep = func.prologue.dependents;
+
+    // assign result of PROLOGUE primitive to temps
+    build-assignment(builder, policy, source,
+                     new-vars,
+                     func.prologue);
+
+    // in the old prologue assignment, assign from the arg temps instead
+    let op = make-operation(builder, <primitive>, new-vars, name: #"values");
+    replace-expression(component, old-assign-dep, op);
+
+    
+    reoptimize(component, op);
+    reoptimize(component, old-assign-dep.dependent);
+    reoptimize(component, func.prologue.dependents.dependent);
+
     build-loop-body(builder, $Default-Policy, source);
     func.self-call-block := build-block-body(builder, $Default-Policy, source);
+    func.self-tail-call-temps := new-vars;
     build-region(builder, func.body);
     end-body(builder); // end of the self call block
     end-body(builder); // end of the loop
     replace-subregion(component, func, func.body, builder-result(builder));
   end;
-  // Change the call into a self-tail-call operation.
-  let op = make(<self-tail-call>, dependents: call.dependents,
-		depends-on: call.depends-on.dependent-next,
-		next-self-tail-call: func.self-tail-calls, of: func);
-  func.self-tail-calls := op;
-  remove-dependency-from-source(component, call.depends-on);
-  for (dep = op.depends-on then dep.dependent-next,
-       while: dep)
-    dep.dependent := op;
-  end;
-  let assign-dep = call.dependents;
-  assign-dep.source-exp := op;
-  assert(~assign-dep.source-next);
-  // Insert the exit to self-call-block after the self-tail-call assignment.
-  let assign = assign-dep.dependent;
+
+  // replace call to self by assignment to argument temps
+  let builder = make-builder(component);
+  let assign = call.dependents.dependent;
+  let op = make-operation(builder, <primitive>, 
+                          operation-arguments(call).tail, name: #"values");
+  build-assignment(builder, assign.policy, assign.source-location,
+                   func.self-tail-call-temps, op);
+  insert-before(component, assign, builder-result(builder));
   insert-exit-after(component, assign, func.self-call-block);
-  // Delete the definitions for the assignment.
-  for (defn = assign.defines then defn.definer-next,
-       while: defn)
-    delete-definition(component, defn);
-  end;
-  assign.defines := #f;
-  // Queue the assignment and self-tail-call operation.
+  delete-and-unlink-assignment(component, assign);
   reoptimize(component, op);
-  reoptimize(component, assign);
+  reoptimize(component, op.dependents.dependent);
 end;

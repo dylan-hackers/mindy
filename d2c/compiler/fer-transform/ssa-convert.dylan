@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.9 2003/04/11 23:07:46 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.10 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 
@@ -47,12 +47,18 @@ define function convert-component-to-ssa (component :: <component>) => ();
     init-var.next-initial-variable := #f;
     maybe-convert-to-ssa(component, init-var, ignore);
   end;
+end function convert-component-to-ssa;
 
+// expand-component-clusters -- external.
+//
+define function expand-component-clusters (component :: <component>) => ();
   // Massage code to be in a form that maybe-expand-cluster can work with...
   traverse-component(component, <assignment>, fixup-assignment);
 //  traverse-component(component, <abstract-variable>, rcurry(maybe-expand-cluster, reoptimize));
   traverse-component(component, <abstract-variable>, rcurry(maybe-expand-cluster, ignore));
-end function convert-component-to-ssa;
+end function expand-component-clusters;
+
+
 
 // maybe-convert-to-ssa -- external.
 //

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.48 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.49 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -2913,53 +2913,6 @@ define method emit-assignment
     format(stream, "%s_initialized = TRUE;\n", target);
   end;
   deliver-results(defines, #[], #f, file);
-end;
-
-define method emit-assignment
-    (results :: false-or(<definition-site-variable>),
-     call :: <self-tail-call>, 
-     source-location :: <source-location>,
-     file :: <file-state>)
-    => ();
-  spew-pending-defines(file);
-  let function = call.self-tail-call-of;
-  for (param = function.prologue.dependents.dependent.defines
-	 then param.definer-next,
-       closure-var
-	 = instance?(function, <lambda>) & function.environment.closure-vars
-	 then closure-var.closure-next,
-       index from 0,
-       while: closure-var & param)
-  finally
-    let stream = file.file-guts-stream;
-    for (param = param then param.definer-next,
-	 arg-dep = call.depends-on then arg-dep.dependent-next,
-	 index from index,
-	 while: arg-dep & param)
-      let prefs = function.prologue.preferred-names;
-      let pref = element(prefs, index, default: #f);
-      let (name, rep) = c-name-and-rep(param, file);
-      let (source, source-temp?) = ref-leaf(rep, arg-dep.source-exp, file);
-      unless (source = pref)
-	if (pref)
-	  format(stream, "%s", pref);
-	else
-	  format(stream, "A%d", index); // should never happen!
-	end if;
-	format(stream, " = %s;\n", source);
-      end unless;
-    finally
-      if (param)
-	error("Too many operands in a self-tail-call?");
-      elseif (arg-dep & #f /* index >= prolog.type.<multi-value-ctype>.min-values*/)
-	// we should check if we passed over enough arguments...
-	// currently never reached
-	// TODO, FIXME
-	error("Not enough operands in a self-tail-call?");
-      end;
-    end;
-  end;
-  deliver-results(results, #[], #f, file);
 end;
 
 define method emit-assignment

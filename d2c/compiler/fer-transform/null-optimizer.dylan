@@ -1,5 +1,5 @@
 module: null-optimizer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/null-optimizer.dylan,v 1.3 2001/10/14 18:50:42 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/null-optimizer.dylan,v 1.4 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 
@@ -49,6 +49,10 @@ define method optimize-component
     convert-component-to-ssa(component);
     debug-dump(optimizer, component);
 
+    debug-message(optimizer, "Expanding clusters");
+    expand-component-clusters(component);
+    debug-dump(optimizer, component);
+
     debug-message(optimizer, "Adding type checks");
     just-add-type-checks(component);
     debug-dump(optimizer, component);
@@ -71,7 +75,7 @@ define function debug-dump
     (optimizer :: <abstract-optimizer>,
      component :: <component>)
  => ()
-  if (debug-optimizer?(optimizer))
+  if (debug-optimizer(optimizer) > 1)
     dump-fer(component);
   end;
 end;
@@ -83,7 +87,7 @@ define function debug-message
     (optimizer :: <abstract-optimizer>,
      message :: <string>)
  => ()
-  if (debug-optimizer?(optimizer))
+  if (debug-optimizer(optimizer))
     dformat("\n******** %s\n\n", message);
   end;
 end;

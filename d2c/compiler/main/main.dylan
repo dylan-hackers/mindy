@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.77 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.78 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -104,7 +104,11 @@ define method show-help(stream :: <stream>) => ()
 "       -o, --optimizer-option:\n"
 "                          Turn on an optimizer option. Prefix option with\n"
 "                          'no-' to turn it off.\n"
-"       --debug-optimizer: Display detailed optimizer information.\n"
+"       --debug-optimizer <verbosity>:\n"
+"                          Display detailed optimizer information.\n"
+"                          Integer argument specifies verbosity (0-5)\n"
+"       --optimizer-sanity-check:\n"
+"                          Sanity check optimizer\n"
 "       -F, --cc-overide-command:\n"
 "                          Alternate method of invoking the C compiler.\n"
 "                          Used on files specified with -f.\n"
@@ -311,13 +315,16 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("profile"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
+			    long-options: #("optimizer-sanity-check"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
 			    long-options: #("static"),
 			    short-options: #("s"));
   add-option-parser-by-type(argp,
 			    <parameter-option-parser>,
 			    long-options: #("rpath"));
   add-option-parser-by-type(argp,
-			    <simple-option-parser>,
+			    <parameter-option-parser>,
 			    long-options: #("debug-optimizer",
 					    "dump-transforms"));
   add-option-parser-by-type(argp,
@@ -366,6 +373,12 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   // For folks who have *way* too much time (or a d2c bug) on their hands.
   let debug-optimizer = option-value-by-long-name(argp, "debug-optimizer");
 
+  if(debug-optimizer)
+    debug-optimizer := string-to-integer(debug-optimizer);
+  else
+    debug-optimizer := 0;
+  end if;
+
   // Determine our compilation target.
   let targets-file = option-value-by-long-name(argp, "platforms") |
     $default-targets-dot-descr;
@@ -394,7 +407,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     end;
   *current-optimizer* := make(optimizer-class,
 			      options: optimizer-option-table,
-			      debug-optimizer?: debug-optimizer);
+			      debug-optimizer: debug-optimizer);
 
   // Set up our target.
   if (targets-file == #f)
@@ -433,6 +446,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   if (option-value-by-long-name(argp, "dylan-user-location"))
     show-dylan-user-location(*standard-output*);
     exit(exit-code: 0);
+  end if;
+  if (option-value-by-long-name(argp, "optimizer-sanity-check"))
+    enable-sanity-checks();
   end if;
 
 #if(~mindy)

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.19 2002/04/18 23:14:14 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.20 2003/06/24 21:00:07 andreas Exp $
 
 //======================================================================
 //
@@ -541,7 +541,6 @@ begin
   register-object-id(#"delayed-optimization-call-operation", #x014E);  
   register-object-id(#"module-var-ref-operation", #x00A8);
   register-object-id(#"module-var-set-operation", #x00A9);
-  register-object-id(#"self-tail-call-operation", #x00AA);
   register-object-id(#"heap-slot-ref-operation", #x00AB);
   register-object-id(#"heap-slot-set-operation", #x00AC);
   register-object-id(#"literal-constant", #x00AD);

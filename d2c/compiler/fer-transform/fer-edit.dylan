@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.5 2001/10/19 00:10:56 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.6 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 
@@ -439,13 +439,18 @@ define method delete-queueable
   unless (queueable.queue-next == #"absent")
     for (q = component.reoptimize-queue then q.queue-next,
 	 prev = #f then q,
-	 until: q == queueable)
+	 until: q == queueable | ~q)
     finally
-      if (prev)
-	prev.queue-next := q.queue-next;
+      if(q)
+        if (prev)
+          prev.queue-next := q.queue-next;
+        else
+          component.reoptimize-queue := q.queue-next;
+        end;
       else
-	component.reoptimize-queue := q.queue-next;
-      end;
+        compiler-warning("Queueable %= thinks it's queued, but isn't?",
+                         queueable);
+      end if;
     end;
   end;
   queueable.queue-next := #"deleted";

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.7 2001/10/17 20:56:18 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.8 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 
@@ -81,5 +81,7 @@ define module cheese
 
   export
     <cmu-optimizer>,
-    *optimize-ncalls*;
+    *optimize-ncalls*,
+    enable-sanity-checks,
+    disable-sanity-checks;
 end;

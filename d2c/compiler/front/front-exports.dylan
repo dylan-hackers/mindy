@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.11 2003/02/17 17:36:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.12 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -54,7 +54,7 @@ define module builder-interface
     make-definition-constant, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
     build-unwind-protect-body, build-function-body, make-function-literal,
-    make-initial-var, build-slot-home,
+    make-initial-var, build-slot-home, add-body-assignment,
 
     build-defn-ref, build-defn-set, ref-dylan-defn,
     make-check-type-operation, make-error-operation,
@@ -130,7 +130,6 @@ define module front
     <prologue>, function, function-setter,
     preferred-names, preferred-names-setter,
     <module-var-set>, <module-var-ref>, variable,
-    <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info,
     <slot-ref>, <heap-slot-ref>, <data-word-ref>,
     <heap-slot-set>,
@@ -158,7 +157,7 @@ define module front
     result-type, result-type-setter, guessed-result-type,
     guessed-result-type-setter, hidden-references?,
     self-call-block, self-call-block-setter,
-    self-tail-calls, self-tail-calls-setter,
+    self-tail-call-temps, self-tail-call-temps-setter,
     calling-convention, calling-convention-setter,
     <lambda>, literal, environment,
 
@@ -282,7 +281,7 @@ define module abstract-optimizer
 
   export
     <abstract-optimizer>,
-      debug-optimizer?, debug-optimizer?-setter, optimizer-options,
+      debug-optimizer, debug-optimizer-setter, optimizer-options,
     optimize-component,
     *current-optimizer*;
 end module abstract-optimizer;

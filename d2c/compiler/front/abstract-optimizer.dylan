@@ -1,5 +1,5 @@
 module: abstract-optimizer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/abstract-optimizer.dylan,v 1.2 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/abstract-optimizer.dylan,v 1.3 2003/06/24 21:00:07 andreas Exp $
 copyright: See below.
 
 
@@ -41,8 +41,9 @@ copyright: See below.
 define abstract open primary class <abstract-optimizer> (<object>)
   // Should we print debugging output after each optimization stage?
   // (If this is true, subclasses should call dump-fer frequently.)
-  slot debug-optimizer? :: <boolean> = #f,
-    init-keyword: debug-optimizer?:;
+  // the higher the value, the more to print
+  slot debug-optimizer :: false-or(<integer>) = #f,
+    init-keyword: debug-optimizer:;
   slot optimizer-options :: <table> = make(<table>),
     init-keyword: options:
 end class <abstract-optimizer>;

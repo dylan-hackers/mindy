@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-od.dylan,v 1.4 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-od.dylan,v 1.5 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 
@@ -445,16 +445,6 @@ add-make-dumper(#"module-var-ref-operation", *compiler-dispatcher*,
 
 add-make-dumper(#"module-var-set-operation", *compiler-dispatcher*,
 		<module-var-set>, $module-var-access-slots);
-
-
-add-make-dumper(#"self-tail-call-operation", *compiler-dispatcher*,
-  <self-tail-call>,
-  concatenate(
-    $operation-slots,
-    list(self-tail-call-of, of:, #f,
-         next-self-tail-call, next-self-tail-call:, #f)
-  )
-);
 
 
 define constant $slot-access-slots =

@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.9 2003/04/12 19:51:40 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.10 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -188,18 +188,6 @@ define method clone-expr
 		 clone-arguments(expr.depends-on, state),
 		 derived-type: expr.derived-type,
 		 var: expr.variable);
-end;
-
-define method clone-expr
-    (expr :: <self-tail-call>, state :: <clone-state>)
-    => clone :: <self-tail-call>;
-  let func = state.clone-function-region;
-  let call = make-operation(state.clone-builder, <self-tail-call>,
-			    clone-arguments(expr.depends-on, state),
-			    of: func,
-			    next-self-tail-call: func.self-tail-calls);
-  func.self-tail-calls := call;
-  call;
 end;
 
 define method clone-expr

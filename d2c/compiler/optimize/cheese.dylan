@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.15 2001/10/19 00:13:04 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.16 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 
@@ -76,51 +76,40 @@ define method optimize-component-internal
     (optimizer :: <cmu-optimizer>, component :: <component>) => ()
   reverse-queue(component, #f);
   let done = #f;
-  if (optimizer.debug-optimizer?)
-    dformat("\n******** Preparing to optimize new component\n\n");
-    dump-fer(component)
+  if (optimizer.debug-optimizer > 0)
+    dformat("\n******** Preparing to optimize new component %=\n\n", component.name);
+    if (optimizer.debug-optimizer > 1) dump-fer(component) end;
   end;
   until (done)
     if (*do-sanity-checks*)
       check-sanity(component);
     end;
-    if (component.initial-variables)
-      if (optimizer.debug-optimizer?)
-	dformat("\n******** doing trivial ssa conversion\n\n");
-      end;
-      while (component.initial-variables)
-	let init-var = component.initial-variables;
-	component.initial-variables := init-var.next-initial-variable;
-	init-var.next-initial-variable := #f;
-	maybe-convert-to-ssa(component, init-var, reoptimize);
-      end;
-      if (optimizer.debug-optimizer?) dump-fer(component) end;
-    end;
+    convert-component-to-ssa(component);
     if (component.reoptimize-queue)
       let queueable = component.reoptimize-queue;
       component.reoptimize-queue := queueable.queue-next;
       queueable.queue-next := #"absent";
-      if (optimizer.debug-optimizer?)
+      if (optimizer.debug-optimizer > 2)
 	dformat("\n******** about to optimize %=\n\n", queueable);
       end;
       optimize(component, queueable);
-      if (optimizer.debug-optimizer?) dump-fer(component) end;
+      if (optimizer.debug-optimizer > 4) dump-fer(component) end;
       *optimize-ncalls* := *optimize-ncalls* + 1;
     else
       local method try (function, what)
-	      if (what & optimizer.debug-optimizer?)
+	      if (what & optimizer.debug-optimizer > 1)
 		dformat("\n******** %s\n\n", what);
 	      end;
 	      function(component);
-	      if (optimizer.debug-optimizer?) dump-fer(component) end;
+	      if (optimizer.debug-optimizer > 3) dump-fer(component) end;
 	      let start-over?
 		= component.initial-variables | component.reoptimize-queue;
-	      if (start-over? & optimizer.debug-optimizer?)
+	      if (start-over? & optimizer.debug-optimizer > 1)
 		dformat("\nstarting over...\n");
 	      end;
 	      start-over?;
 	    end;
-      (*do-sanity-checks* & try(assure-all-done, #f))
+        (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(common-subexpression-elimination,
@@ -135,8 +124,11 @@ define method optimize-component-internal
 	| (done := #t);
     end if;
   end until;
+  if (optimizer.debug-optimizer > 1)
+    dformat("\n******** Done optimizing component %=\n\n", component.name);
+    dump-fer(component);
+  end;
 end method optimize-component-internal;
-
 
 define method reverse-queue
     (component :: <component>, before :: false-or(<queueable-mixin>)) => ();
@@ -174,7 +166,7 @@ end;
 
 define method reoptimize
     (component :: <component>, dependent :: <queueable-mixin>) => ();
-  if (*optimizer*.debug-optimizer?)
+  if (*optimizer*.debug-optimizer > 2)
     dformat("queueing %=\n", dependent);
   end if;
   if (dependent.queue-next == #"absent")

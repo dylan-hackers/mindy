@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.10 2003/02/17 17:36:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.11 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -217,23 +217,6 @@ define class <module-var-set> (<module-var-access>)
   //
   // Set operations return nothing.
   inherited slot derived-type, init-function: no-values-ctype;
-end;
-
-// A self-tail-call is used to represent the rebinding of the arguments
-// once we have converted a tail-call of ourselves into a loop.
-//
-define class <self-tail-call> (<operation>)
-  //
-  // Self tail calls return nothing.
-  inherited slot derived-type, init-function: no-values-ctype;
-  //
-  // The function we are self tail calling.
-  constant slot self-tail-call-of :: <fer-function-region>,
-    required-init-keyword: of:;
-  //
-  // The next self tail call in this method.
-  constant slot next-self-tail-call :: false-or(<self-tail-call>),
-    required-init-keyword: next-self-tail-call:;
 end;
 
 define abstract class <slot-access> (<operation>)
@@ -518,9 +501,8 @@ define class <fer-function-region>
   // yet (i.e. haven't found any self tail calls yet).
   slot self-call-block :: false-or(<block-region>), init-value: #f;
 
-  // Chain of all the self tail calls in this function.  Linked via
-  // next-self-tail-call.
-  slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
+  // temporary variables as introduced by self-tail-call conversion
+  slot self-tail-call-temps :: <list>, init-value: #();
 
   // The calling convention used for this function.
   slot calling-convention :: one-of(#"standard", #"callback") = #"standard",
@@ -637,9 +619,6 @@ define sealed domain initialize(<prologue>);
 define sealed domain make(singleton(<module-var-ref>));
 // <module-var-set> -- subclass of <module-var-access>
 define sealed domain make(singleton(<module-var-set>));
-// <self-tail-call> -- subclass of <operation>
-define sealed domain make(singleton(<self-tail-call>));
-define sealed domain initialize(<self-tail-call>);
 // <truly-the> -- subclass of <operation>
 define sealed domain make(singleton(<truly-the>));
 define sealed domain initialize(<truly-the>);
