@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.13 1996/08/08 19:35:50 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.14 1997/01/16 14:58:55 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -117,10 +117,17 @@ define inline method pointer-hash (object :: <object>)
   // Translate the address into an integer, and shift away to bits to account
   // for word alignment.
   //
-  // If we get a non-conservative garbage collector, we will have to return
+  // If we get a non-moving garbage collector, we will have to return
   // some non-permanent state.
-  values(ash(as(<integer>, %%primitive(object-address, object)), -2),
-	 $permanent-hash-state);
+  //
+  // We compute the hash state first and *then* the hash id.  If we do
+  // it in the more natural order, there could be a GC right after we
+  // compute the hash id, and we'd be returning an outdated hash id
+  // without even knowing it.  (Ok, granted, this can't happen with
+  // our current non-moving GC, but if we ever get a new one...)
+  let state = $permanent-hash-state;
+  let id = ash(as(<integer>, %%primitive(object-address, object)), -2);
+  values(id, state);
 end method pointer-hash;
   
 // This function is slow, but should work reasonably.  Eventually, we probably
