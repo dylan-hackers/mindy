@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.48 1996/04/22 15:22:41 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.49 1996/04/24 14:13:31 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -1282,9 +1282,8 @@ static void call_or_print(struct variable *var, obj_t args,
 	*thread->sp++ = var->value;
     *thread->sp++ = exprs;
 
-    if (suspend_others) {
-	thread_restart(thread);
-    }
+    thread_restart(thread);
+
     Continue = TRUE;
 }
 
