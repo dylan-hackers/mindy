@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.11 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.12 1995/10/09 22:29:15 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -117,10 +117,15 @@ end;
 define abstract class <literal-real> (<literal-number>) end;
 define abstract class <literal-rational> (<literal-real>) end;
 define abstract class <literal-integer> (<literal-rational>) end;
+
+// Literal value is always extended.
 define class <literal-fixed-integer> (<literal-integer>) end;
+
 define class <literal-extended-integer> (<literal-integer>) end;
 define class <literal-ratio> (<literal-rational>) end;
 define abstract class <literal-float> (<literal-real>) end;
+
+// literal-value is a ratio, not a float.
 define class <literal-single-float> (<literal-float>) end;
 define class <literal-double-float> (<literal-float>) end;
 define class <literal-extended-float> (<literal-float>) end;
@@ -265,11 +270,15 @@ define class <literal-symbol> (<eql-literal>)
   slot literal-value :: <symbol>, required-init-keyword: value:;
 end;
 
+define class <literal-byte-symbol> (<literal-symbol>)
+end class;
+
 define constant $literal-symbol-memo = make(<table>);
 
 define method make (class == <literal-symbol>, #next next-method, #key value)
   element($literal-symbol-memo, value, default: #f)
-    | (element($literal-symbol-memo, value) := next-method());
+    | (element($literal-symbol-memo, value) 
+         := make(<literal-byte-symbol>, value: value))
 end;
 
 define method print-object (lit :: <literal-symbol>, stream :: <stream>)
@@ -298,15 +307,19 @@ end;
 // Literal characters.
 
 define class <literal-character> (<eql-literal>)
-  slot literal-value :: <character>, required-init-keyword: value:;
 end;
+
+define class <literal-byte-character> (<literal-character>)
+  slot literal-value :: <byte-character>, required-init-keyword: value:;
+end class;
 
 define constant $literal-character-memo = make(<table>);
 
 define method make (class == <literal-character>, #next next-method,
 		    #key value)
   element($literal-character-memo, value, default: #f)
-    | (element($literal-character-memo, value) := next-method());
+    | (element($literal-character-memo, value) 
+         := make(<literal-byte-character>, value: value))
 end;
 
 define method print-object (lit :: <literal-character>, stream :: <stream>)
@@ -462,7 +475,7 @@ define abstract class <literal-vector> (<literal-sequence>)
 end;
 
 define class <literal-simple-object-vector> (<literal-vector>)
-  slot literal-contents :: <simple-object-vector>,
+  slot literal-value :: <simple-object-vector>,
     required-init-keyword: contents:;
 end;
 
@@ -498,7 +511,10 @@ define method as (class == <ct-value>, vec :: <simple-object-vector>)
        contents: map(curry(as, <ct-value>), vec));
 end;
 
-define class <literal-string> (<literal-vector>)
+define abstract class <literal-string> (<literal-vector>)
+end class;
+
+define class <literal-byte-string> (<literal-string>)
   slot literal-value :: <byte-string>, required-init-keyword: value:;
 end;
 
@@ -507,7 +523,8 @@ define constant $literal-string-memo = make(<string-table>);
 define method make (class == <literal-string>, #next next-method,
 		    #key value)
   element($literal-string-memo, value, default: #f)
-    | (element($literal-string-memo, value) := next-method());
+    | (element($literal-string-memo, value)
+        := make(<literal-byte-string>, value: value));
 end;
 
 define method print-object (lit :: <literal-string>, stream :: <stream>)
@@ -531,4 +548,98 @@ define method concatenate (str1 :: <literal-string>, #rest more)
 		    str1.literal-value,
 		    map(literal-value, more)));
 end;
+
+
+// Dump/load methods:
+
+
+define /* exported */ variable *compiler-dispatcher* = make(<dispatcher>);
+
+
+// The method is inherited by all EQL literals.  It must be overridden for some
+// where the type of the literal-value is ambiguous (e.g. for numbers.)
+//
+define method dump-od (obj :: <eql-literal>, buf :: <dump-state>) => ();
+  dump-simple-object($eql-literal-odf-id, buf, obj.literal-value);
+end method;
+
+
+// Just use AS to reconstruct the literal.
+//
+add-od-loader(*compiler-dispatcher*, $eql-literal-odf-id,
+  method (state :: <load-state>) => res :: <eql-literal>;
+    as(<ct-value>, load-sole-subobject(state));
+  end method
+);
+
+
+// We represent literal lists via literal-pair entries to more closely match
+// the internal representation of literals.
+//
+define method dump-od (obj :: <literal-pair>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-pair-odf-id, buf,
+  		     obj.literal-head, obj.literal-tail);
+end method;
+
+add-od-loader(*compiler-dispatcher*, $literal-pair-odf-id,
+  method (state :: <load-state>) => res :: <literal-pair>;
+    let hd = load-object-dispatch(state);
+    let tl = load-object-dispatch(state);
+    assert(load-object-dispatch(state) == $end-object);
+    make(<literal-pair>, literal-head: hd, literal-tail: tl, sharable: #t);
+  end method
+);
+
+
+// The default for literal vectors is just like for eql-literals.
+//
+define method dump-od (obj :: <literal-vector>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-vector-odf-id, buf, obj.literal-value);
+end method;
+
+add-od-loader(*compiler-dispatcher*, $literal-vector-odf-id,
+  method (state :: <load-state>) => res :: <literal-vector>;
+    as(<ct-value>, load-sole-subobject(state));
+  end method
+);
+
+
+// Since all literal numbers are represented as rationals, we need to mark the
+// specialized representation.
+//
+define method dump-od
+    (obj :: <literal-fixed-integer>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-fixed-integer-odf-id, buf, obj.literal-value);
+end method;
+
+define method dump-od
+    (obj :: <literal-single-float>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-single-float-odf-id, buf, obj.literal-value);
+end method;
+
+define method dump-od
+    (obj :: <literal-double-float>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-double-float-odf-id, buf, obj.literal-value);
+end method;
+
+define method dump-od
+    (obj :: <literal-extended-float>, buf :: <dump-state>) => ();
+  dump-simple-object($literal-extended-float-odf-id, buf, obj.literal-value);
+end method;
+
+
+for (x = list($literal-fixed-integer-odf-id, <literal-fixed-integer>,
+	      $literal-single-float-odf-id, <literal-single-float>,
+	      $literal-double-float-odf-id, <literal-double-float>,
+	      $literal-extended-float-odf-id, <literal-extended-float>)
+       then x.tail.tail,
+     until: x == #())
+
+  add-od-loader(*compiler-dispatcher*, x.first,
+    method (state :: <load-state>) => res :: <eql-literal>;
+      make(x.second, value: load-sole-subobject(state));
+    end method
+  );
+
+end for;
 
