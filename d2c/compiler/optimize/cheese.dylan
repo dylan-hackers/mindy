@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.70 1995/05/29 20:59:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.71 1995/06/01 14:29:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -476,29 +476,59 @@ define method optimize-unknown-call
 
   block (return)
     for (spec in sig.specializers,
-	 arg-dep = arguments then arg-dep.dependent-next)
+	 arg-dep = arguments then arg-dep.dependent-next,
+	 count from 0)
       unless (arg-dep)
-	compiler-warning("Not enough arguments.");
+	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
+			   "Wanted %s %d, but only got %d",
+			 call.home-function-region.name,
+			 func.main-entry.name,
+			 if (sig.rest-type | sig.key-infos)
+			   "at least";
+			 else
+			   "exactly";
+			 end,
+			 count);
 	bogus? := #t;
 	return();
       end;
       unless (ctypes-intersect?(arg-dep.source-exp.derived-type, spec))
-	compiler-warning("wrong type arg.");
+	compiler-warning("In %s:\n  wrong type for argument %d in call of "
+			   "%s.\n  Wanted %s, but got %s",
+			 call.home-function-region.name,
+			 count,
+			 func.main-entry.name,
+			 spec,
+			 arg-dep.source-exp.derived-type);
 	bogus? := #t;
       end;
     finally
       if (sig.key-infos)
 	// Make sure all the supplied keywords are okay.
 	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	     count from count by 2,
 	     while: key-dep)
 	  let val-dep = key-dep.dependent-next;
 	  unless (val-dep)
-	    compiler-warning("Odd number of keyword/value arguments.");
+	    compiler-warning("In %s:\n  odd number of keyword/value arguments "
+			       "in call of %s.",
+			     call.home-function-region.name,
+			     func.main-entry.name);
 	    bogus? := #t;
 	    return();
 	  end;
 	  let leaf = key-dep.source-exp;
 	  if (~instance?(leaf, <literal-constant>))
+	    unless (ctypes-intersect?(key-dep.source-exp.derived-type,
+				      specifier-type(#"<symbol>")))
+	      compiler-warning("In %s:\n  bogus keyword type (%s) as argument "
+				 "%d in call of %s",
+			       call.home-function-region.name,
+			       leaf.derived-type,
+			       count,
+			       func.main-entry.name);
+	      bogus? := #t;
+	    end;
 	    known? := #f;
 	  elseif (instance?(leaf.value, <literal-symbol>))
 	    let key = leaf.value.literal-value;
@@ -507,19 +537,36 @@ define method optimize-unknown-call
 		if (keyinfo.key-name == key)
 		  unless (ctypes-intersect?(val-dep.source-exp.derived-type,
 					    keyinfo.key-type))
-		    compiler-warning("wrong type keyword arg.");
+		    compiler-warning("In %s:\n  wrong type for keyword "
+				       "argument %= in call of "
+				       "%s.\n  Wanted %s, but got %s",
+				     call.home-function-region.name,
+				     key,
+				     func.main-entry.name,
+				     keyinfo.key-type,
+				     val-dep.source-exp.derived-type);
+
 		    bogus? := #t;
 		  end;
 		  found-key();
 		end;
 	      end;
 	      unless (sig.all-keys?)
-		compiler-warning("Invalid keyword %=", key);
+		compiler-warning
+		  ("In %s:\n  invalid keyword (%=) in call of %s",
+		   call.home-function-region.name,
+		   key,
+		   func.main-entry.name);
 		bogus? := #t;
 	      end;
 	    end;
 	  else
-	    compiler-warning("%= isn't a keyword.", leaf.value);
+	    compiler-warning
+	      ("In %s:\n  bogus keyword (%s) as argument %d in call of %s",
+	       call.home-function-region.name,
+	       leaf.value,
+	       count,
+	       func.main-entry.name);
 	    bogus? := #t;
 	  end;
 	end;
@@ -535,8 +582,11 @@ define method optimize-unknown-call
 		end;
 	      end;
 	      if (keyinfo.required?)
-		compiler-warning("Required keyword %= unsupplied.",
-				 keyinfo.key-name);
+		compiler-warning("In %s: required keyword %= unsupplied in "
+				   "call of %s",
+				 call.home-function-region.name,
+				 keyinfo.key-name,
+				 func.main-entry.name);
 		bogus? := #t;
 	      end;
 	    end;
@@ -544,16 +594,32 @@ define method optimize-unknown-call
 	end;
       elseif (sig.rest-type)
 	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     count from count,
 	     while: arg-dep)
 	  unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
 				    sig.rest-type))
-	    compiler-warning("wrong type rest arg");
+	    compiler-warning("In %s:\n  wrong type for argument %d in call of "
+			       "%s.\n  Wanted %s, but got %s",
+			     call.home-function-region.name,
+			     count,
+			     func.main-entry.name,
+			     sig.rest-type,
+			     arg-dep.source-exp.derived-type);
 	    bogus? := #t;
 	  end;
 	end;
       elseif (arg-dep)
-	compiler-warning("Too many arguments.");
-	bogus? := #t;
+	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     have from count,
+	     while: arg-dep)
+	finally
+	  compiler-warning("In %s:\n  too many arguments in call of %s.\n"
+			     "  Wanted exactly %d, but got %d.",
+			   call.home-function-region.name,
+			   func.main-entry.name,
+			   count, have);
+	  bogus? := #t;
+	end;
       end;
     end;
   end;
@@ -726,16 +792,32 @@ define method optimize-unknown-call
   let arg-types = #();
   block (return)
     for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+	 count from 0,
 	 gf-spec in sig.specializers)
       unless (arg-dep)
-	compiler-warning("Not enough arguments.");
+	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
+			   "Wanted %s %d, but only got %d",
+			 call.home-function-region.name,
+			 defn.defn-name,
+			 if (sig.rest-type | sig.key-infos)
+			   "at least";
+			 else
+			   "exactly";
+			 end,
+			 count);
 	bogus? := #t;
 	return();
       end;
       let arg-leaf = arg-dep.source-exp;
       let arg-type = arg-leaf.derived-type;
       unless (ctypes-intersect?(arg-type, gf-spec))
-	compiler-warning("Invalid type argument.");
+	compiler-warning("In %s:\n  wrong type for argument %d in call of "
+			   "%s.\n  Wanted %s, but got %s",
+			 call.home-function-region.name,
+			 count,
+			 defn.defn-name,
+			 gf-spec,
+			 arg-dep.source-exp.derived-type);
 	bogus? := #t;
       end;
       arg-leaves := pair(arg-leaf, arg-leaves);
@@ -743,8 +825,17 @@ define method optimize-unknown-call
     finally
       if (arg-dep)
 	unless (sig.key-infos | sig.rest-type)
-	  compiler-warning("Too many arguments.");
-	  bogus? := #t;
+	  for (arg-dep = arg-dep then arg-dep.dependent-next,
+	       have from count,
+	       while: arg-dep)
+	  finally
+	    compiler-warning("In %s:\n  too many arguments in call of %s.\n"
+			       "  Wanted exactly %d, but got %d.",
+			     call.home-function-region.name,
+			     defn.defn-name,
+			     count, have);
+	    bogus? := #t;
+	  end;
 	end;
 	for (arg-dep = arg-dep then arg-dep.dependent-next,
 	     while: arg-dep)
@@ -756,9 +847,24 @@ define method optimize-unknown-call
   if (bogus?)
     change-call-kind(component, call, <error-call>);
   else
-    let meths = ct-sorted-applicable-methods(defn, reverse!(arg-types));
+    let arg-types = reverse!(arg-types);
+    let meths = ct-sorted-applicable-methods(defn, arg-types);
     if (meths == #())
-      compiler-warning("No applicable methods.");
+      let stream = make(<byte-string-output-stream>);
+      write("    (", stream);
+      for (arg-type in arg-types, first? = #t then #f)
+	unless (first?)
+	  write(", ", stream);
+	end;
+	print-message(arg-type, stream);
+      end;
+      write(")", stream);
+      compiler-warning("In %s:\n  no applicable methods for argument types\n"
+			 "%s\n  in call of %s",
+		       call.home-function-region.name,
+		       stream.string-output-stream-string,
+		       defn.defn-name);
+		       
       change-call-kind(component, call, <error-call>);
     elseif (meths)
       // ### Need to check the keywords before the ct method selection
@@ -952,7 +1058,8 @@ define method optimize-known-call
        arg-types = #() then pair(dep.source-exp.derived-type, arg-types),
        dep = call.depends-on.dependent-next then dep.dependent-next)
   finally
-    let meths = ct-sorted-applicable-methods(defn, reverse!(arg-types));
+    let arg-types = reverse!(arg-types);
+    let meths = ct-sorted-applicable-methods(defn, arg-types);
     if (meths)
       // Okay, we now have enough of a better idea of the types that we can
       // actually select the methods.  We need to extract the original
@@ -985,7 +1092,20 @@ define method optimize-known-call
       let builder = make-builder(component);
       let new-call
 	= if (meths == #())
-	    compiler-warning("No applicable methods.");
+	    let stream = make(<byte-string-output-stream>);
+	    write("    (", stream);
+	    for (arg-type in arg-types, first? = #t then #f)
+	      unless (first?)
+		write(", ", stream);
+	      end;
+	      print-message(arg-type, stream);
+	    end;
+	    write(")", stream);
+	    compiler-warning("In %s:\n  no applicable methods for argument "
+			       "types\n%s\n  in call of %s",
+			     call.home-function-region.name,
+			     stream.string-output-stream-string,
+			     defn.defn-name);
 	    make-operation(builder, <error-call>,
 			   pair(call.depends-on.source-exp, arg-leaves));
 	  else
@@ -1654,6 +1774,9 @@ define-primitive-transformer
 define method optimize
     (component :: <component>, region :: <block-region>) => ();
   if (region.exits == #f)
+    if (region.body.doesnt-return?)
+      delete-stuff-after(component, region.parent, region);
+    end;
     replace-subregion(component, region.parent, region, region.body);
     delete-queueable(component, region);
   end;
@@ -2829,7 +2952,7 @@ define method replace-placeholder
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-unknown-call
-	     (builder, dylan-defn-leaf(builder, #"element-setter"), #f,
+	     (builder, dylan-defn-leaf(builder, #"%element-setter"), #f,
 	      list(dep.source-exp, vec,
 		   make-literal-constant(builder, as(<ct-value>, index)))));
       end;
