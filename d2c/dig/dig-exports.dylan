@@ -10,6 +10,7 @@ define library d2c-gnu
 #endif
   use table-extensions;
   use string-extensions;
+  use regular-expressions;
 end library d2c-gnu;
 
 define module d2c-gnu
