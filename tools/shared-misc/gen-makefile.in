@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.11 2000/01/22 02:25:03 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.12 2000/10/07 00:57:07 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -369,8 +369,10 @@ sub do_Makegen_file {
 
     if (@files_to_clean) {
 	push(@clean_commands, "-rm -f @files_to_clean");
+	if ($shared) {
+	    push(@clean_commands, "-rm -rf .libs");
+	}
     }
-
     
     push(@GNUmakefile_dependencies, $gen_makefile,
 	 $defaults, $makegen);
@@ -582,6 +584,8 @@ sub parse_dylan_header {
 sub parse_lid_file {
     local($lid_file) = @_;
     local(%contents);
+    local ($dot_static) = $target_platform{'object_filename_suffix'};
+
     open(LIDFILE, $srcdir.'/'.$lid_file.'.lid')
       || die("Can't open $lid_file.lid: $!\n");
 
@@ -592,7 +596,7 @@ sub parse_lid_file {
     # Just ignore em, since there should be a seperate C rule to clean, etc.
     while (<LIDFILE>) {
 	$lidfile_line = $lidfile_line + 1;
-        if ($_ !~ m/.*$dot_obj$/) {
+        if ($_ !~ m/.*$dot_obj$/ && $_ !~ m/.*$dot_static$/) {
   	    chop; # kill newline
 	    $contents{'files'} .= " $_";
 	}
@@ -745,7 +749,8 @@ sub emit_library_rule {
     local($executable) = $lidfile{'executable'};
     local($executable_filename) = $executable . $dot_exe;
     local($shared_library) = $shared && ($lidfile{'shared_library'} ne 'no');
-
+    local($dot_static) = $target_platform{'object_filename_suffix'};
+    
     local($d2c_target);
 
     if ($enable_d2c) {
@@ -753,12 +758,20 @@ sub emit_library_rule {
 	for $file (split(' ', $lidfile{'files'})) {
 	    $file =~ s/\.dylan$//;  # chop off ".dylan"
 	    push(@files_to_clean, "$file.c", "$file$dot_obj");
+	    if ($shared && $static) {
+		push(@files_to_clean, "$file$dot_static");
+	    }
 	}
 
 	push(@files_to_clean,
 	     "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
 	push(@files_to_clean,
 	     "$unit_prefix-heap.c", "$unit_prefix-heap$dot_obj");
+
+	if($shared && $static) {
+	    push(@files_to_clean, "$unit_prefix-init$dot_static");
+	    push(@files_to_clean, "$unit_prefix-heap$dot_static");
+	}
 
 	if ($executable) {
 	    push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
@@ -778,6 +791,12 @@ sub emit_library_rule {
 	    $libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
 	    
 	    push(@files_to_clean, $foo_lib_du, $libfoo_a);
+
+	    if($shared && $static) {
+		local($lib_static)
+		    = $target_platform{'library_filename_suffix'};
+		push(@files_to_clean, "$lib_prefix$unit_prefix$lib_static");
+	    }
 	    
 	    if (grep(/^compile$/, @keywords)) {
 		push(@compile_dependencies, $foo_lib_du);
@@ -868,6 +887,11 @@ sub emit_c_file_rule {
     };
 
     push(@files_to_clean, $objfile);
+
+    if($static && $shared) {
+	local ($dot_static) = $target_platform{'object_filename_suffix'};
+	push(@files_to_clean, "$basefile$dot_static");
+    }
 }
 
 #
