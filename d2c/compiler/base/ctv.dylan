@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.20 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.21 1996/01/08 21:39:32 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -515,7 +515,41 @@ define class <literal-simple-object-vector> (<literal-vector>)
     required-init-keyword: contents:;
 end;
 
-define constant $literal-vector-memo = make(<equal-table>);
+// <Shallow-equal-table>s hash vectors which are considered equivalent
+// if each element is identical even if the vectors themselves are not.
+//
+define class <shallow-equal-table> (<table>) end class;
+
+define method table-protocol (table :: <shallow-equal-table>)
+ => (test :: <function>, hash :: <function>);
+  values(shallow-equal, shallow-hash);
+end method table-protocol;
+
+define method shallow-equal (vec1 :: <vector>, vec2 :: <vector>)
+  if (vec1.size = vec2.size)
+    block (return)
+      for (i from 0 below vec1.size)
+	if (vec1[i] ~== vec2[i]) return(#f) end if;
+      end for;
+      #t;
+    end block;
+  end if;
+end method shallow-equal;
+      
+define method shallow-hash (vec :: <vector>)
+ => (id :: <fixed-integer>, state :: <object>);
+  let (current-id, current-state) = values(0, $permanent-hash-state);
+  for (i from 0 below vec.size)
+    let (id, state) = object-hash(vec[i]);
+    let (captured-id, captured-state) 
+      = merge-hash-codes(current-id, current-state, id, state, ordered: #t);
+    current-id := captured-id;
+    current-state := captured-state;
+  end for;
+  values(current-id, current-state);
+end method shallow-hash;
+
+define constant $literal-vector-memo = make(<shallow-equal-table>);
 
 define method make (class == <literal-simple-object-vector>, #next next-method,
 		    #key sharable: sharable?, contents)
