@@ -2,6 +2,12 @@ typedef int boolean;
 typedef char bool;
 #define TRUE 1
 #define FALSE 0
+#ifdef __APPLE__
+   #define __STDBOOL_H__   1
+   #define true TRUE
+   #define false FALSE
+#endif
+
 
 typedef struct heapobj *heapptr_t;
 typedef struct descriptor {
