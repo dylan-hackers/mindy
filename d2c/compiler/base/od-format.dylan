@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.19 1995/11/15 15:56:08 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.20 1995/11/16 02:56:12 ram Exp $
 
 /*
 
@@ -1526,17 +1526,23 @@ end;
 define /* exported */ method find-data-unit
   (name :: <data-unit-name>, type :: <fixed-integer>,
    #key location-hint :: false-or(<location-hint>),
-        check-hash :: false-or(<integer>),
+        check-hash: expected-hash :: false-or(<integer>),
 	dispatcher :: <dispatcher> = *default-dispatcher*)
  => res :: <data-unit>;
   let types = element(*data-units*, name, default: #());
   block (punt)
     for (elt in types)
       if (elt.head = type)
-        punt(elt.tail);
+        let found = elt.tail;
+	unless (~expected-hash | expected-hash = found.check-hash)
+          error("Unit hash mismatch; version mismatch between data units.\n"
+	  	"%=",
+		found.unit-name);
+	end unless;
+	punt(found);
       end;
     end for;
-    load-data-unit(name, type, location-hint, check-hash, dispatcher);
+    load-data-unit(name, type, location-hint, expected-hash, dispatcher);
   end block;
 end method;
 
