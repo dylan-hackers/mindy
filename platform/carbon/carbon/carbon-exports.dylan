@@ -204,12 +204,13 @@ define module carbon
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls, EmbedControl,
     IsControlVisible, CreateRootControl, SetControlData, GetControlData, GetControlDataSize, 
-    NewControlUserPaneDrawUPP, NewControlEditTextValidationUPP, NewControlKeyFilterUPP,
+    NewControlUserPaneDrawUPP, NewControlEditTextValidationUPP, NewControlKeyFilterUPP, NewControlActionUPP,
     GetBestControlRect, ActivateControl, DeactivateControl,
     <ControlEditTextSelectionRec*>,
       selStart-value, selEnd-value, selStart-value-setter, selEnd-value-setter,
     SetControl32BitValue, SetControl32BitMinimum, SetControl32BitMaximum, SetControlViewSize,
     GetControl32BitValue, GetControl32BitMinimum, GetControl32BitMaximum, GetControlViewSize,
+    SetControlAction,
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,

@@ -666,6 +666,24 @@ end method NewControlKeyFilterUPP;
 
 
 /*
+		NewControlActionUPP
+*/
+
+define method NewControlActionUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlActionUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlActionUPP;
+
+define method NewControlActionUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlActionUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlActionUPP;
+
+
+
+/*
   EmbedControl
 */
 
@@ -739,8 +757,9 @@ define method GetControlViewSize(inControl :: <ControlHandle>)
   call-out("GetControlViewSize", int:, ptr: inControl.raw-value);
 end method GetControlViewSize;
 
-// Data Browsers
+// Actions
 
-/*
-  We need to be able to create browsers, populate them, track clicks, and get selections
-*/
+define method SetControlAction
+    (inControl :: <ControlHandle>, action :: <UniversalProcPtr>) => ()
+  call-out("SetControlAction", void:, ptr: inControl.raw-value, ptr: action.raw-value);
+end method SetControlAction;
