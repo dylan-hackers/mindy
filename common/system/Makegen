@@ -1,1 +1,13 @@
 &makegen_include("../common-Makegen");
+
+if ($features{'compiled_for_unix'}) {
+    &emit_c_file_rule('posix-system') if ($enable_d2c);
+    $system_lid_file = 'posix-system';
+} else {
+    &unknown_platform_error();
+}
+
+&emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
+                   'compile', 'no-mindy', 'install');
+
+# TODO: mindy support
