@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.34 1995/04/28 07:22:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.35 1995/04/28 15:42:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -379,11 +379,12 @@ define method optimize (component :: <component>, call :: <unknown-call>)
     error("No function in a call?");
   end;
   // Dispatch of the thing we are calling.
-  optimize-unknown-call(component, call, func-dep.source-exp);
+  optimize-unknown-call(component, call, func-dep.source-exp, #t);
 end;
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
+    (component :: <component>, call :: <unknown-call>,
+     func :: <leaf>, local? :: <boolean>)
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -391,91 +392,207 @@ define method optimize-unknown-call
 end;
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <lambda>)
+    (component :: <component>, call :: <unknown-call>,
+     func :: <lambda>, local? :: <boolean>)
     => ();
+
+  // Observe the result type.
+  maybe-restrict-type(component, call, func.result-type);
+
   // Convert it into either a known or an error call.
-  let assign = call.dependents.dependent;
+  let args-okay? = #t;
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        var = func.prologue.dependents.dependent.defines
 	 then var.definer-next,
        while: arg-dep & var)
-    assert-type(component, assign, arg-dep, var.var-info.asserted-type);
+    unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
+			      var.var-info.asserted-type))
+      compiler-warning("wrong type arg.");
+      args-okay? := #f;
+    end;
   finally
     if (arg-dep | var)
       compiler-warning("Wrong number of arguments.");
       change-call-kind(component, call, <error-call>);
+    elseif (~args-okay?)
+      change-call-kind(component, call, <error-call>);
     else
-      change-call-kind(component, call, <local-call>);
+      let assign = call.dependents.dependent;
+      for (arg-dep = call.depends-on.dependent-next
+	     then arg-dep.dependent-next,
+	   var = func.prologue.dependents.dependent.defines
+	     then var.definer-next,
+	   while: arg-dep)
+	assert-type(component, assign, arg-dep, var.var-info.asserted-type);
+	if (local?)
+	  change-call-kind(component, call, <local-call>);
+	else
+	  change-call-kind(component, call, <known-call>);
+	end;
+      end;
     end;
   end;
 end;
 
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <definition-constant-leaf>)
-    => ();
-  optimize-unknown-call(component, call, func.const-defn);
-end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-constant-definition>)
+     func :: <hairy-method-literal>, local? :: <boolean>)
     => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      function-ctype());
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <function-definition>)
-    => ();
-  let sig = defn.function-defn-signature;
+  let sig = func.signature;
   maybe-restrict-type(component, call, sig.returns);
-end;
 
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-method-definition>)
-    => ();
-  let func-dep = call.depends-on;
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  if (sig.next? == #f & sig.rest-type == #f & sig.key-infos == #f)
-    let assign = call.dependents.dependent;
-    for (arg-dep = func-dep.dependent-next then arg-dep.dependent-next,
-	 count from 0,
-	 specializer in sig.specializers,
-	 while: arg-dep)
-      assert-type(component, assign, arg-dep, specializer);
+  let bogus? = #f;
+  let known? = #t;
+  block (return)
+    for (spec in sig.specializers,
+	 arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next)
+      unless (arg-dep)
+	compiler-warning("Not enough arguments.");
+	bogus? := #t;
+	return();
+      end;
     finally
-      if (arg-dep)
-	compiler-warning("Too many arguments.");
-	change-call-kind(component, call, <error-call>);
-      elseif (count == sig.specializers.size)
-	let leaf = defn.method-defn-leaf;
-	if (leaf)
-	  remove-dependency-from-source(component, func-dep);
-	  func-dep.source-exp := leaf;
-	  func-dep.source-next := leaf.dependents;
-	  leaf.dependents := func-dep;
-	  // We just set the derived type instead of using maybe-restrict-type
-	  // because we don't need the propagation aspects of maybe-res-type
-	  // because change-call-kind will queue the call no matter way.
-	  // So we can avoid the extra overhead of maybe-restrict-type.
-	  call.derived-type := leaf.result-type;
-	  change-call-kind(component, call, <known-call>);
+      if (sig.key-infos)
+	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	     while: key-dep)
+	  let val-dep = key-dep.dependent-next;
+	  unless (val-dep)
+	    compiler-warning("Odd number of keyword/value arguments.");
+	    bogus? := #t;
+	    return();
+	  end;
+	  let leaf = key-dep.source-exp;
+	  if (~instance?(leaf, <literal-constant>))
+	    known? := #f;
+	  elseif (instance?(leaf.value, <literal-symbol>))
+	    unless (sig.all-keys?)
+	      let key = leaf.value.literal-value;
+	      block (found-key)
+		for (keyinfo in sig.key-infos)
+		  if (keyinfo.key-name == key)
+		    // ### Should check its type.
+		    found-key();
+		  end;
+		end;
+		compiler-warning("Invalid keyword %=", key);
+		bogus? := #t;
+	      end;
+	    end;
+	  else
+	    compiler-warning("%= isn't a keyword.", leaf.value);
+	    bogus? := #t;
+	  end;
 	end;
+      elseif (sig.rest-type)
+	// ### Should check the remainders types.
+	#f;
+      elseif (arg-dep)
+	compiler-warning("Too many arguments.");
+	bogus? := #t;
+      end;
+    end;
+  end;
+  if (bogus?)
+    change-call-kind(component, call, <error-call>);
+  elseif (known?)
+    let builder = make-builder(component);
+    let new-args = make(<stretchy-vector>);
+    add!(new-args, func.main-entry);
+    let assign = call.dependents.dependent;
+    for (spec in sig.specializers,
+	 arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next)
+      assert-type(component, assign, arg-dep, spec);
+      add!(new-args, arg-dep.source-exp);
+    finally
+      if (sig.next?)
+	add!(new-args, make-literal-constant(builder, make(<literal-false>)));
+      end;
+      // ### Need to assert the keyword types before building the rest
+      // argument.
+      if (sig.rest-type)
+	let rest-args = make(<stretchy-vector>);
+	add!(rest-args, dylan-defn-leaf(builder, #"vector"));
+	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     while: arg-dep)
+	  add!(rest-args, arg-dep.source-exp);
+	end;
+	let rest-temp = make-local-var(builder, #"rest", object-ctype());
+	build-assignment
+	  (builder, assign.policy, assign.source-location, rest-temp,
+	   make-operation(builder, as(<list>, rest-args)));
+	add!(new-args, rest-temp);
+      end;
+      if (sig.key-infos)
+	for (keyinfo in sig.key-infos)
+	  for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	       until: key-dep == #f
+		 | key-dep.source-exp.value.literal-value == keyinfo.key-name)
+	  finally
+	    if (key-dep)
+	      add!(new-args, key-dep.dependent-next.source-exp);
+	    else
+	      add!(new-args,
+		   make-literal-constant(builder, keyinfo.key-default));
+	    end;
+	  end;
+	end;
+      end;
+      insert-before(component, assign, builder-result(builder));
+      let new-call = make-operation(builder, as(<list>, new-args));
+      let call-dep = call.dependents;
+      call.dependents := #f;
+      new-call.dependents := call-dep;
+      call-dep.source-exp := new-call;
+      delete-dependent(component, call);
+      if (local?)
+	change-call-kind(component, new-call, <local-call>);
       else
-	compiler-warning("Too few arguments.");
-	change-call-kind(component, call, <error-call>);
+	change-call-kind(component, new-call, <known-call>);
       end;
     end;
   end;
 end;
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <exit-function>)
+    (component :: <component>, call :: <unknown-call>,
+     func :: <definition-constant-leaf>, local? :: <boolean>)
+    => ();
+  optimize-unknown-call(component, call, func.const-defn, #f);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-constant-definition>, local? :: <boolean>)
+    => ();
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      function-ctype());
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <function-definition>, local? :: <boolean>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-method-definition>, local? :: <boolean>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  let leaf = defn.method-defn-leaf;
+  if (leaf)
+    optimize-unknown-call(component, call, leaf, #f);
+  end;
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <exit-function>, local? :: <boolean>)
     => ();
   // Make a values operation, steeling the args from the call.
   let args = call.depends-on.dependent-next;
@@ -504,6 +621,10 @@ define method change-call-kind
     dep.source-exp := new;
   end;
   queue-dependent(component, new);
+
+  call.depends-on := #f;
+  call.dependents := #f;
+  delete-dependent(component, call);
 end;
 
 define method optimize
