@@ -4,7 +4,7 @@ synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.3 1996/03/30 02:22:37 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.4 1996/04/06 18:30:25 nkramer Exp $
 
 //======================================================================
 //
@@ -73,6 +73,9 @@ define class <substring> (<object>)
   slot start-index :: <integer>, required-init-keyword: #"start";
   slot end-index :: <integer>, required-init-keyword: #"end";
 end class <substring>;
+
+define sealed domain make(singleton(<substring>));
+define sealed domain initialize(<substring>);
 
 // Match-root?: Set things up and call descend-re.
 //
@@ -446,9 +449,3 @@ define method assertion-true? (assertion :: <symbol>, target :: <substring>,
       error("Unknown assertion %=", assertion);
   end select;
 end method assertion-true?;
-
-// Seals for file match.dylan
-
-// <substring> -- subclass of <object>
-define sealed domain make(singleton(<substring>));
-define sealed domain initialize(<substring>);
