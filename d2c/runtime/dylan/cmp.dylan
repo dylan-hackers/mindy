@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.5 1996/02/22 23:58:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.6 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -36,10 +36,8 @@ define generic \== (x :: <object>, y :: <object>) => answer :: <boolean>;
 define method \== (x :: <object>, y :: <object>)
     => answer :: <boolean>;
   let x-class :: <class> = x.object-class;
-  if (~(x-class == y.object-class))
-    #f;
-  elseif (x-class.class-functional?)
-    functional-==(x-class, x, y);
+  if (x-class.class-functional?)
+    x-class == y.object-class & functional-==(x-class, x, y);
   else
     %%primitive \== (x, y);
   end;
