@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.5 2002/01/04 15:56:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.6 2002/01/29 00:52:26 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -75,6 +75,16 @@ define abstract class <cdclass> (<cclass>)
   slot indirect-setter :: false-or(<ct-value>),
     init-value: #f, init-keyword: indirect-setter:;
 end class;
+
+define sealed domain make (singleton(<cdclass>));
+define sealed domain initialize (<cdclass>);
+
+define method initialize
+    (class :: <cdclass>, #next next-method, #key, #all-keys)
+    => ();
+  next-method();
+
+end method;
 
 define class <defined-cdclass> (<cdclass>, <defined-cclass>)
   // no additional slots
