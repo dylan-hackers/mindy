@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.7 1994/05/19 23:11:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.8 1994/05/19 23:23:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -267,32 +267,34 @@ static void dylan_int_int_round(obj_t self, struct thread *thread, obj_t *args)
 	int q = x / y;
 	int r = x % y;
 
-	/* The remainder should be smaller (i.e. closer to zero) than half */
-	/* the divisor. */
-	if (y > 0) {
-	    int limit = y >> 1;
-	    if (r > limit || (r == limit && (q & 1))) {
-		/* r is too large. */
-		r -= y;
-		q++;
+	if (r != 0) {
+	    /* The remainder should be smaller (i.e. closer to zero) than */
+	    /* half the divisor. */
+	    if (y > 0) {
+		int limit = y >> 1;
+		if (r > limit || (r == limit && (q & 1))) {
+		    /* r is too large. */
+		    r -= y;
+		    q++;
+		}
+		else if (r < -limit || (r == -limit && (q & 1))) {
+		    /* r is too small */
+		    r += y;
+		    q--;
+		}
 	    }
-	    else if (r < -limit || (r == -limit && (q & 1))) {
-		/* r is too small */
-		r += y;
-		q--;
-	    }
-	}
-	else {
-	    int limit = -y >> 1;
-	    if (r > limit || (r == limit && (q & 1))) {
-		/* r is too large. */
-		r += y;  /* note: y is negative. */
-		q--;
-	    }
-	    else if (r < -limit || (r == -limit && (q & 1))) {
-		/* r is too small */
-		r -= y;  /* note: y is negative. */
-		q++;
+	    else {
+		int limit = -y >> 1;
+		if (r > limit || (r == limit && (q & 1))) {
+		    /* r is too large. */
+		    r += y;  /* note: y is negative. */
+		    q--;
+		}
+		else if (r < -limit || (r == -limit && (q & 1))) {
+		    /* r is too small */
+		    r -= y;  /* note: y is negative. */
+		    q++;
+		}
 	    }
 	}
 
