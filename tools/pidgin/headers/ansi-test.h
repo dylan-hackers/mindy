@@ -87,6 +87,11 @@ typedef int **typedefs_3;
 typedefs_1 typdefs_1_use;
 typedefs_2 typedefs_2_use, *typedefs_2_use_p, **typedefs_2_use_pp;
 
+// Tricky typedef parsing issues--make sure we declare new types before
+// we tokenize any part of the next declaration.
+typedef int typedef_tokenization;
+typedef_tokenization a;
+
 #endif // TEST_TYPEDEFS
 
 //=========================================================================
