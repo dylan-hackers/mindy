@@ -37,14 +37,13 @@ end method concatenate!;
 
 define open generic position
     (sequence :: <sequence>, value :: <object>,
-     #key predicate :: <function>, skip :: <integer>, default :: <object>)
+     #key predicate :: <function>, skip :: <integer>)
  => (key :: <object>);
 
 define method position
     (sequence :: <sequence>, value :: <object>,
-     #key predicate :: <function> = \==, skip :: <integer> = 0,
-     default :: <object> = #f)
- => (key :: <object>)
+     #key predicate :: <function> = \==, skip :: <integer> = 0)
+ => (key :: false-or(<integer>))
   block (return)
     let (initial-state :: <object>,
 	 limit :: <object>,
@@ -70,8 +69,9 @@ define method position
       end if;
     end for;
 
-    // If all else fails, return the default.
-    default;
+    // Because collections can only be keyed by integers, #f is a unique
+    // return value. (Thanks to Andrew Shalit.)
+    #f;
   end block;
 end method position;
 
