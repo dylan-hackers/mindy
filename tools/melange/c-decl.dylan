@@ -1257,6 +1257,16 @@ define method compute-dylan-name
   mapper(#"constant", prefix, decl.simple-name, actual-containers);
 end method compute-dylan-name;
 
+define method compute-closure 
+    (results :: <deque>, decl :: <enum-slot-declaration>) => (results :: <deque>);
+  if (~decl.declared?)
+    decl.declared? := #t;
+    compute-closure(results, decl.containing-enum-declaration);
+    push-last(results, decl);
+  end if;
+  results;
+end method compute-closure;
+
 define class <macro-declaration> (<constant-declaration>) end class;
 
 // Attempts to add a new declarations corresponding to a CPP macro.  The value
