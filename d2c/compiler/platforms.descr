@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.57 2002/11/09 23:40:45 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.58 2002/12/10 00:44:59 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -578,6 +578,12 @@ platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
 default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
+double-alignment:               8
+long-double-size:               16
+long-double-alignment:          8
+long-long-size:                 8
+long-long-alignment:            8
+
 
 // Doug Auclair's taken over Solaris support ... here's a Solaris-x86 port:
 platform-name:			x86-solaris-gcc
@@ -603,10 +609,17 @@ default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 platform-name:			x86-win32-vc
 inherit-from:			vc x86 win32
 
+// Bruce Hoult made this work on HP/UX 10.20
+// HP/UX 11 not tried yet
 platform-name:				hppa-hpux-gcc
 inherit-from:				gcc hpux hppa
 library-filename-suffix:        	.a .sl
 link-library-command:           	/bin/ar qc %s %s
 link-executable-command:        	gcc -z -o %s %s %s
-link-executable-flags:          	-L/lib/pa1.1 -lm /usr/lib/end.o
+link-executable-flags:          	-L/lib/pa1.1 -lm
 link-shared-library-command:    	$(LIBTOOL) gcc -o %s %s -rpath %s
+double-alignment:                       8
+long-long-size:                         8
+long-long-alignment:                    8
+long-double-size:                       8
+long-double-alignment:                  8
