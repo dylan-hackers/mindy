@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.21 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.22 1995/11/12 21:09:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -76,15 +76,16 @@ define abstract class <cclass>
   //
   // Vector of <slot-info>s for the slots introduced by this class.
   slot new-slot-infos :: <simple-object-vector>,
-    required-init-keyword: slots:;
+    init-keyword: slots:;
   //
   // Vector of all the slots in instances of this class, in no particular
   // order. Filled in when the slot layouts are computed.
-  slot all-slot-infos :: <vector>, init-keyword: all-slot-infos:;
+  slot all-slot-infos :: <vector>,
+    init-keyword: all-slot-infos:;
   //
   // Vector of <override-info>s for the overrides introduced by this class.
   slot override-infos :: <simple-object-vector>,
-    required-init-keyword: overrides:;
+    init-keyword: overrides:;
   //
   // Layout of the instance slots.  Filled in when the slot layouts are
   // computed.
@@ -165,14 +166,14 @@ define method initialize
       end;
       class.closest-primary-superclass := closest;
     end;
-  end;
 
-  // Fill in introduced-by for the slots and overrides.
-  for (slot in slots)
-    slot.slot-introduced-by := class;
-  end;
-  for (override in overrides)
-    override.override-introduced-by := class;
+    // Fill in introduced-by for the slots and overrides.
+    for (slot in slots)
+      slot.slot-introduced-by := class;
+    end;
+    for (override in overrides)
+      override.override-introduced-by := class;
+    end;
   end;
 end;
 
