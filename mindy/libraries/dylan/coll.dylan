@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.19 1994/06/27 17:10:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.20 1994/08/22 15:25:12 nkramer Exp $
 
 //======================================================================
 //
@@ -722,7 +722,11 @@ define method copy-sequence(sequence :: <sequence>,
 			    #key start: first = 0, end: last) => <sequence>;
   let last = if (last) min(last, size(sequence)) else size(sequence) end if;
   let start = min(first, last);
-  let sz = last - start;
+  let sz = if (start <= last) 
+	     last - start;
+	   else
+	     error("End: (%=) is smaller than start: (%=)", last, start);
+	   end if;
   let result = make(class-for-copy(sequence), size: sz);
   let (init_state, limit, next_state, done?,
        current_key, current_element) = forward-iteration-protocol(sequence);

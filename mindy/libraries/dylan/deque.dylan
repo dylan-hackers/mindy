@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.8 1994/08/18 17:42:48 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.9 1994/08/22 15:23:29 nkramer Exp $
 
 //======================================================================
 //
@@ -702,6 +702,10 @@ end method remove-duplicates!;
 define method copy-sequence(source :: <deque>,
 			    #key start: first = 0, end: last) => <deque>;
   let last = last | size(source);
+  if (first > last) 
+    error("End: (%=) is smaller than start: (%=)", last, first);
+  end if;
+
   local method copy(state, first, last)
 	  case
 	    ~state =>

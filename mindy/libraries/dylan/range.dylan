@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.4 1994/06/27 17:10:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.5 1994/08/22 15:24:23 nkramer Exp $
 
 //======================================================================
 //
@@ -707,6 +707,10 @@ define method copy-sequence (source :: <bounded-range>,
 		  else
 		     r-size
 		  end if;
+   if (copy-start > copy-end) 
+     error("End: (%=) is smaller than start: (%=)", copy-start, copy-end);
+   end if;
+
    case
       copy-start > r-size =>
 	 range (size: 0);
