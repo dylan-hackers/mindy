@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.31 1996/07/12 02:00:31 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.32 1996/07/17 16:13:02 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1681,8 +1681,7 @@ define-primitive-emitter
 //
 define constant $sequence-of-moveable-primitives 
   = #[#"extract-args",
-      #"merge-clusters",             // Value primitives.
-      #"values",
+      #"values",                     // Value primitives.
       #"allocate",                   // Allocation primitives.
       #"allocate-with-data-word",
       #"make-immediate",
@@ -1693,8 +1692,6 @@ define constant $sequence-of-moveable-primitives
       #"initialized?",
       #"initial-symbols",
       #"ref-slot",                   // Slot access primitives.
-      #"set-slot",
-      #"unwind-stack",               // NLX primitives.
       #"fixnum-=",                   // Fixnum primitives.
       #"fixnum-<",
       #"fixnum-+",
@@ -1766,7 +1763,6 @@ define constant $sequence-of-moveable-primitives
       #"pointer-<",
       #"pointer-=",
       #"pointer-deref",
-      #"pointer-deref-setter",
       #"vector-elements",
       #"object-address"];
 
