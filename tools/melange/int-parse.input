@@ -62,7 +62,8 @@ define module int-parse
     container-options, macro-defines, macro-undefines, clauses,
     <container-options>, name-mapper, imports, prefix, exclude, rename,
     mappings, equates, read-only, seal-string, <clause>, <function-clause>,
-    <struct-clause>, <union-clause>, <constant-clause>, <variable-clause>,
+    <struct-clause>, <union-clause>, <pointer-clause>,
+    <constant-clause>, <variable-clause>,
     name, options, <undefined>, undefined;
 end module int-parse;
 
@@ -182,6 +183,7 @@ end class;
 define class <function-clause> (<clause>) end class;
 define class <variable-clause> (<clause>) end class;
 define class <constant-clause> (<clause>) end class;
+define class <pointer-clause> (<clause>) end class;
 
 define class <container-clause> (<clause>)
   slot container-options :: <container-options>;
@@ -304,7 +306,7 @@ file-clause (<include-token> <string-literal-token> file-option-list)
 %
 
 file-option-list ()
-  list();
+  #();
 %
 
 file-option-list (file-option-list <comma-token> file-option)
@@ -383,7 +385,7 @@ container-option (<import-token> <lbrace-token> import-list <rbrace-token>)
 %
 
 import-list ()
-  list();
+  #();
 %
 
 import-list (import-list <comma-token> import)
@@ -415,7 +417,7 @@ container-option (<exclude-token> <lbrace-token> exclude-list <rbrace-token>)
 %
 
 exclude-list ()
-  list();
+  #();
 %
 
 exclude-list (exclude-list <comma-token> <string-literal-token>)
@@ -431,7 +433,7 @@ container-option (<rename-token> <lbrace-token> renaming-list <rbrace-token>)
 %
 
 renaming-list ()
-  list();
+  #();
 %
 
 renaming-list (renaming-list <comma-token> renaming)
@@ -487,7 +489,7 @@ interface-clause (<function-token> <string-literal-token> <arrow-token>
 %
 
 function-option-list ()
-  list()
+  #();
 %
 
 function-option-list (function-option-list <comma-token> function-option)
@@ -575,7 +577,7 @@ interface-clause (<union-token> <string-literal-token> <arrow-token>
 %
 
 structure-option-list ()
-  list();
+  #();
 %
 
 structure-option-list (structure-option-list <comma-token> container-option)
@@ -599,6 +601,27 @@ structure-option-list (structure-option-list <comma-token> superclass-option)
   pair($r3, $r1);
 %
 
+interface-clause (<pointer-token> <string-literal-token> pointer-option-list)
+  let new-clause = make(<pointer-clause>, name: $r2.value, options: $r3);
+  $state.clauses := add!($state.clauses, new-clause);
+%
+
+interface-clause (<pointer-token> <string-literal-token> <arrow-token>
+                  <identifier-token> pointer-option-list)
+  $state.container-options.rename :=
+     pair(pair($r2.value, $r4.value), $state.container-options.rename);
+  let new-clause = make(<pointer-clause>, name: $r2.value, options: $r5);
+  $state.clauses := add!($state.clauses, new-clause);
+%
+
+pointer-option-list ()
+  #();
+%
+
+pointer-option-list (structure-option-list <comma-token> superclass-option)
+  pair($r3, $r1);
+%
+
 interface-clause (<constant-token> <string-literal-token>
                   constant-option-list)
   $state.clauses := add!($state.clauses,
@@ -616,7 +639,7 @@ interface-clause (<constant-token> <string-literal-token> <arrow-token>
 %
 
 constant-option-list ()
-  list();
+  #();
 %
 
 constant-option-list (constant-option-list <comma-token> constant-option)
@@ -644,7 +667,7 @@ interface-clause (<variable-token> <string-literal-token> <arrow-token>
 %
 
 variable-option-list ()
-  list()
+  #();
 %
 
 variable-option-list (variable-option-list <comma-token> variable-option)

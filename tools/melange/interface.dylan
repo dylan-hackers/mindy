@@ -124,6 +124,7 @@ define method process-interface-file
 	  end if;
 	end method try-define;
   try-define(0);
+  if (verbose) write-line("", *standard-output*) end if;
 end method process-interface-file;
 
 //----------------------------------------------------------------------
@@ -131,8 +132,9 @@ end method process-interface-file;
 //----------------------------------------------------------------------
 
 // Type dependent handling for "clauses" within the define interface.  These
-// include "function", "struct", "union", "variable" and "constant" clauses.
-// "#include" clauses are handled directly by "process-define-interface".
+// include "function", "struct", "union", "pointer", "variable" and "constant"
+// clauses.  "#include" clauses are handled directly by
+// "process-define-interface".
 //
 // These methods may retrieve and annotate declarations from "c-state", thus
 // modifying the behavior of "write-declaration".
@@ -361,6 +363,38 @@ define method process-clause
 		       concatenate(body, #("<statically-typed-pointer>"));
 		     end if;
 	decl.superclasses := supers;
+    end select;
+  end for;
+end method process-clause;
+
+define method process-clause
+    (clause :: <pointer-clause>, state :: <parse-state>,
+     c-state :: <c-parse-state>)
+ => ();
+  let decl = parse-type(clause.name, c-state);
+  if (instance?(decl, <pointer-declaration>)) decl := true-type(decl) end if; 
+  if (~instance?(decl, union(<pointer-declaration>, <vector-declaration>)))
+    error("Pointer clause names a non-pointer: %s", clause.name);
+  end if;
+
+  for (option in clause.options)
+    let tag = option.head;
+    let body = option.tail;
+    select (tag)
+      #"superclass" =>
+	if (instance?(decl, <vector-declaration>))
+	  let supers = concatenate(body, list(decl.pointer-equiv.dylan-name,
+					      "<c-vector>",
+					      "<statically-typed-pointer>"));
+	  decl.superclasses := remove-duplicates!(supers);
+	else
+	  let supers = if (member?("<statically-typed-pointer>", body))
+			 body;
+		       else
+			 concatenate(body, #("<statically-typed-pointer>"));
+		       end if;
+	  decl.superclasses := supers;
+	end if;
     end select;
   end for;
 end method process-clause;
