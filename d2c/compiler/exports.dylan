@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.110 1995/11/14 14:17:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.111 1995/11/14 15:11:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -600,7 +600,8 @@ define module classes
     sealed?, abstract?, primary?, functional?, not-functional?,
     all-slot-infos, all-slot-infos-setter, new-slot-infos,
     new-slot-infos-setter, override-infos, override-infos-setter,
-    unique-id, subclass-id-range-min, subclass-id-range-max,
+    unique-id, set-and-record-unique-id,
+    subclass-id-range-min, subclass-id-range-max,
     direct-type, space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     instance-slots-layout, vector-slot, vector-slot-setter,
