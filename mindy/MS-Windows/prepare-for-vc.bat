@@ -10,5 +10,7 @@ ren temp.mak Mindy.mak
 
 mkdir Released
 mkdir Debug
-mkdir Released/Objects
-mkdir Debug/Objects
+mkdir Released\Objects
+mkdir Debug\Objects
+mkdir bin
+mkdir lib
