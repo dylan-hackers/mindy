@@ -92,6 +92,11 @@ if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
     }
 }
 
+$have_gtk = '@HAVE_GTK@';
+$gtk_cflags = '@GTK_CFLAGS@';
+$gtk_libs = '@GTK_LIBS@';
+$enable_duim = '@enable_duim@';
+
 # Handle constants from operating-system module.
 $architecture_little_endian = "@little_endian@";
 $machine_name = "@host_cpu@";
