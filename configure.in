@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.90 2002/03/13 16:12:09 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.91 2002/04/28 20:52:49 gabor Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -1070,5 +1070,5 @@ if test "$srcdir" != "$builddir"; then
     echo "Warning: Your source directory does not appear to be the same as"
     echo "your build directory. It should still be possible to build d2c,"
     echo "but several machine-generated source files will be created in the"
-    echo "source hiearchy instead of the build hierarchy."
+    echo "source hierarchy instead of the build hierarchy."
 fi
