@@ -98,7 +98,8 @@ define constant $ppc-linux-platform =
 	   "__BIG_ENDIAN__", "",
 	   "__powerpc__", "",
 	   "__powerpc", "",
-	   "unix", ""], 
+	   "unix", "",
+	   "__builtin_va_list", "void*"], 
        default-include-path:
 	 #["/usr/include",
 	   // Find out the correct value for this path by calling

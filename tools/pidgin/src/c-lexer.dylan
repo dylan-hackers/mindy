@@ -1035,7 +1035,7 @@ define constant reserved-words
 	   "enum", <enum-token>,
 	   "...", <elipsis-token>,
 	   "sizeof", <sizeof-token>,
-	   "constant", <constant-token>,
+//	   "constant", <constant-token>,
 	   "#machine", <machine-token>,
 	   "--", <dec-op-token>,
 	   "++", <inc-op-token>,
