@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.5 2001/03/17 03:43:34 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.6 2001/07/07 17:18:58 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1295,7 +1295,7 @@ define method make-transformer
       give-up();
     end;
     let defn = cclass.class-defn;
-    if (defn.class-defn-defered-evaluations-function)
+    if (defn.class-defn-deferred-evaluations-function)
       give-up();
     end;
     unless (defn.class-defn-maker-function)
