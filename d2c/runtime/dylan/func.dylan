@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.10 1995/12/14 00:12:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.11 1995/12/16 04:24:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -135,6 +135,9 @@ define class <gf-cache> (<object>)
   slot simple :: <boolean>, init-value: #t;
   slot cached-normal :: <list>, init-value: #();
   slot cached-ambiguous :: <list>, init-value: #();
+  slot cached-valid-keywords :: type-union(<simple-object-vector>,
+					   one-of(#f, #"all")),
+    init-value: #f;
   slot cached-classes :: <type-vector>,
     required-init-keyword: #"classes";
   slot next :: type-union(<false>, <gf-cache>), init-value: #f;
@@ -229,6 +232,41 @@ define constant make-rest-arg
       end if;
     end;
 
+// verify-keywords -- internal.
+//
+// The compiler generates calls to this function in static discriminators to
+// verify that the supplied keywords are indeed valid keywords.  And it is
+// only called if there are an even number of keyword/value arguments, so
+// we don't need to check for that case.
+//
+// We implement it via two different methods because we know that practically
+// all calls are going to have the valid-keywords as a constant, and hence
+// the compiler will have precise type information.
+//
+define generic verify-keywords
+    (keyword-value-arguments :: <simple-object-vector>,
+     valid-keywords :: type-union(singleton(#"all"), <simple-object-vector>))
+    => ();
+//
+define method verify-keywords
+    (args :: <simple-object-vector>, valid-keywords == #"all")
+    => ();
+  for (index :: <fixed-integer> from 0 below args.size by 2)
+    check-type(args[index], <symbol>);
+  end for;
+end method verify-keywords;
+//
+define method verify-keywords
+    (args :: <simple-object-vector>, valid-keywords :: <simple-object-vector>)
+    => ();
+  for (index :: <fixed-integer> from 0 below args.size by 2)
+    let key :: <symbol> = args[index];
+    unless (member?(key, valid-keywords))
+      error("Unrecognized keyword: %=", key);
+    end;
+  end for;
+end method verify-keywords;
+
 
 // Function application and invocation.
 
@@ -265,8 +303,16 @@ define constant gf-call
 	end;
       end;
       let arg-ptr :: <raw-pointer> = %%primitive extract-args(nargs);
-      let (ordered, ambiguous)
+      let (ordered, ambiguous, valid-keywords)
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
+      if (valid-keywords)
+	for (index :: <fixed-integer> from nfixed below nargs by 2)
+	  let key :: <symbol> = %%primitive extract-args(nargs);
+	  unless (valid-keywords == #"all" | member?(key, valid-keywords))
+	    error("Unrecognized keyword: %=", key);
+	  end unless;
+	end for;
+      end if;
       if (ambiguous == #())
 	if (ordered == #())
 	  for (index :: <fixed-integer> from 0 below nfixed)
@@ -298,7 +344,9 @@ define constant gf-call
 define method internal-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <fixed-integer>,
      arg-ptr :: <raw-pointer>)
-    => (ordered :: <list>, ambiguous :: <list>);
+    => (ordered :: <list>, ambiguous :: <list>,
+	valid-keywords
+	  :: type-union(<simple-object-vector>, one-of(#f, #"all")));
 
   // We have to use low-level stuff here.  It would be bad to do a full
   // generic function call at this point.
@@ -311,14 +359,30 @@ define method internal-sorted-applicable-methods
 
   // Ordered accumulates the methods we can tell the ordering of.  Each
   // element in this list is a method.
-  let ordered = #();
+  let ordered :: <list> = #();
 
   // Ambiguous accumulates the set of methods of which it is unclear which
   // follows next after ordered.  These methods will all be mutually ambiguous.
-  let ambiguous = #();
+  let ambiguous :: <list> = #();
+
+  // Accumulates the valid keywords.
+  let valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all"))
+    = if (gf.function-keywords)
+	if (gf.function-all-keys?) #"all" else #[] end if;
+      else
+	#f;
+      end if;
 
   for (meth :: <method> in gf.generic-function-methods)
     if (internal-applicable-method?(meth, arg-ptr, cache))
+      unless (valid-keywords == #f | valid-keywords == #"all")
+	if (meth.function-all-keys?)
+	  valid-keywords := #"all";
+	else
+	  valid-keywords := union(valid-keywords, meth.function-keywords);
+	end if;
+      end unless;
+
       block (done-with-method)
 	for (remaining :: <list> = ordered then remaining.tail,
 	     prev :: false-or(<pair>) = #f then remaining,
@@ -401,6 +465,7 @@ define method internal-sorted-applicable-methods
   cache.next := old-cache;
   cache.cached-normal := ordered;
   cache.cached-ambiguous := ambiguous;
+  cache.cached-valid-keywords := valid-keywords;
 
   values(ordered, ambiguous);
 end;
@@ -410,7 +475,8 @@ define variable *debug-generic-threshold* :: <fixed-integer> = -1;
 define method cached-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <fixed-integer>,
      arg-ptr :: <raw-pointer>)
- => (ordered :: <list>, ambiguous :: <list>);
+ => (ordered :: <list>, ambiguous :: <list>,
+     valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
   block (return)
     for (prev :: type-union(<false>, <gf-cache>) = #f then cache,
 	 cache :: type-union(<false>, <gf-cache>) = gf.method-cache
@@ -454,7 +520,8 @@ define method cached-sorted-applicable-methods
 	  cache.call-count := hits;
 	end if;
 
-	return(cache.cached-normal, cache.cached-ambiguous);
+	return(cache.cached-normal, cache.cached-ambiguous,
+	       cache.cached-valid-keywords);
       end block;
     end for;
     internal-sorted-applicable-methods(gf, nargs, arg-ptr);
@@ -484,8 +551,8 @@ define method internal-applicable-method?
 	  // the cache entry to better identify this particular case.
 	  classes[index] 
 	    := case
-		 (%instance?(specializer, <limited-integer>)) =>
-		   if (%instance?(arg-type, <limited-integer>))
+		 (instance?(specializer, <limited-integer>)) =>
+		   if (instance?(arg-type, <limited-integer>))
 		     intersect-limited-ints(arg-type, specializer);
 		   else
 		     specializer;
@@ -501,7 +568,7 @@ define method internal-applicable-method?
 	  // subtypes that might still be valid.
 	  if (overlap?(arg-type, specializer))
 	    classes[index]
-	      := if (%instance?(specializer, <limited-integer>))
+	      := if (instance?(specializer, <limited-integer>))
 		   restrict-limited-ints(arg, arg-type, specializer);
 		 elseif (specializer == <byte-character>)
 		   <non-byte-character>;
