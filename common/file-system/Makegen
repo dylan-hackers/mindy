@@ -1,5 +1,7 @@
 &makegen_include("../common-Makegen");
 
+$CPPFLAGS .= ' -I$(BUILDROOT)';
+
 if ($features{'compiled_for_unix'}) {
     $system_lid_file = 'file-system';
 } elsif ($features{'compiled_for_win32'}) {
@@ -21,6 +23,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../format-out'
     . ' -L../base-file-system';
 
+&emit_c_file_rule("dir-intr-impl");
 &emit_melange_rule('dir-intr');
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');

@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.4 2003/07/21 18:43:08 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.5 2003/07/24 04:03:48 housel Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 define library file-system
@@ -91,13 +91,11 @@ define module dir-commands
   use helpers;
   use file-system, import: { <pathname> };
   
-  export 
-    readdir, opendir, closedir, d-name,
-    lstat, st-mode,
-    <dir>, <stat>, <char*>,
-    $S-IFMT, $S-IFLNK, $S-IFREG, $S-IFDIR,
-
-    is-dir?, is-link?, is-regular-file?, stat-mode;
+  export
+    <char*>,
+    gd-readdir, gd-opendir, gd-closedir, gd-dirent-name,
+    gd-stat-mode,
+    gd-is-dir?, gd-is-link?, gd-is-regular-file?;
 end module dir-commands;
 
 define module information

@@ -1,5 +1,5 @@
 module:      information
-rcs-header:  $Header: /scm/cvs/src/common/file-system/information.dylan,v 1.4 2003/07/21 18:43:08 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/information.dylan,v 1.5 2003/07/24 04:03:48 housel Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 // Gets information files ... whether they exist and their properties
@@ -21,10 +21,12 @@ define method paths(file :: <pathname>) => ans :: <sequence>;
 end method paths;
 
 define method file-type(file :: <pathname>) => (type :: <file-type>);
-  let stat = stat-mode(file);
+  let stat = with-pointer(file = file)
+               gd-stat-mode(file);
+             end;
   let type = case
-	       is-dir?(stat) => #"directory";
-	       is-link?(stat) => #"link";
+	       gd-is-dir?(stat) => #"directory";
+	       gd-is-link?(stat) => #"link";
 	       otherwise => #"file";
 	     end case;
 end method file-type;

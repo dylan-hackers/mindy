@@ -40,7 +40,7 @@ define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
 #else
   // ooOOoOOoh!  This gets weird quickly! -- melange to the rescue!
   let dir* = open-dir(dir-name);
-  if(as(<integer>, dir*) = 0) file-signal(opendir, dir-name); end if;
+  if(dir* = null-pointer) file-signal("opendir", dir-name); end if;
   block()
     while(#t)
       let (name, type) = dir-element(dir*, dir-name);
@@ -49,7 +49,7 @@ define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
   exception(cond :: <file-system-error>)
     // nada
   end;
-  closedir(dir*);
+  gd-closedir(dir*);
 #endif
 end function do-directory;
 
@@ -74,17 +74,19 @@ define function end-of-directory()
   signal(make(<directory-end>, format-string: "End of directory"));
 end function end-of-directory;
 
-define function dir-element(dir :: <DIR>, path :: <pathname>)
+define function dir-element(dir :: <machine-pointer>, path :: <pathname>)
  => (name :: <string>, type :: <file-type>)
-  if(as(<integer>, dir) = 0) end-of-directory(); end if;
-  let file = readdir(dir);
-  if(as(<integer>, file) = 0) end-of-directory(); end if;
+  if(dir = null-pointer) end-of-directory(); end if;
+  let file = gd-readdir(dir);
+  if(file = null-pointer) end-of-directory(); end if;
 
-  let name = convert-to-string(d-name(file));
-  let stat = stat-mode(concatenate(as-dir(path), name));
+  let name = convert-to-string(gd-dirent-name(file));
+  let stat = with-pointer(path = concatenate(as-dir(path), name))
+               gd-stat-mode(path);
+             end;
   let type = case
-	       is-dir?(stat) => #"directory";
-	       is-link?(stat) => #"link";
+	       gd-is-dir?(stat) => #"directory";
+	       gd-is-link?(stat) => #"link";
 	       otherwise => #"file";
 	     end case;
   values(name, type);
@@ -128,16 +130,12 @@ end function build-dir;
 
 define function open-dir(path :: <string>)
   with-pointer(dir = path)
-    opendir(dir);
+    gd-opendir(dir);
   end;
 end function open-dir;
 
 define method create-pointer(c :: <class>, s :: <string>)
   create-c-type(<char*>, string: s);
-end method create-pointer;
-
-define method create-pointer(c :: <class>, obj == <stat>)
-  create-c-type(<stat>, size: content-size(<stat>));
 end method create-pointer;
 
 define function create-c-type(c-type :: <class>, 

@@ -6,6 +6,7 @@ types.dylan
 files.dylan
 helpers.dylan
 information.dylan
-dir-intr.dylan
 directories.dylan
 info-dir.dylan
+dir-intr.dylan
+dir-intr-impl.o
