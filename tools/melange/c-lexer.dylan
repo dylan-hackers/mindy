@@ -883,6 +883,13 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
 		error("Incomplete comment in C header file.");
 	      end if;
 	      skip-comments(end-index + 2);
+	    elseif (*handle-//-comments* & i < sz - 1 
+		      & contents[i] == '/' & contents[i + 1] == '/')
+	      while (i < sz & contents[i] ~== '\n')
+		i := i + 1;
+	      end while;
+	      // i points at the newline now.
+	      i;
 	    elseif ((i < sz - 1)
 		      & contents[i] == '\\' & contents[i + 1] == '\n')
 	      skip-comments(i + 2);
