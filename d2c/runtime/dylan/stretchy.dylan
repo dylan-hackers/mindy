@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.7 2002/08/25 15:46:11 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.8 2002/08/26 05:24:55 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -75,20 +75,8 @@ define sealed class <stretchy-object-vector> (<builtin-stretchy-vector>)
   // at least as long as the stretchy vector.
   sealed slot ssv-data :: <simple-object-vector> = #[];
 end class <stretchy-object-vector>;
+
 define sealed domain make(singleton(<stretchy-object-vector>));
-
-define sealed inline method %element(v :: <stretchy-object-vector>,
-                                     i :: <integer>)
- => (obj :: <object>);
-  %element(v.ssv-data, i);
-end;
-
-define sealed inline method %element-setter(newVal,
-                                            v :: <stretchy-object-vector>,
-                                            i :: <integer>)
- => (obj :: <object>);
-  %element(v.ssv-data, i) := newVal;
-end;
 
 define sealed method initialize
     (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill = #f)
@@ -173,6 +161,21 @@ define sealed inline method element-setter
     %element(ssv.ssv-data, key) := value;
   end if;
 end method element-setter;
+
+define inline method %element
+    (v :: <stretchy-object-vector>,
+     i :: <integer>)
+ => (obj :: <object>);
+  %element(v.ssv-data, i);
+end;
+
+define inline method %element-setter
+    (newVal,
+     v :: <stretchy-object-vector>,
+     i :: <integer>)
+ => (obj :: <object>);
+  %element(v.ssv-data, i) := newVal;
+end;
 
 // This method is identical to the one in "array.dylan", except that it
 // is more tightly specialized to a single sealed class.  If you need to 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/seals.dylan,v 1.3 2001/07/06 05:55:27 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/seals.dylan,v 1.4 2002/08/26 05:24:55 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -73,6 +73,9 @@ define constant <builtin-mutable-collection>
 
 define sealed domain element-setter
   (<object>, <builtin-mutable-collection>, <object>);
+define sealed domain %element-setter
+  (<object>, <builtin-mutable-collection>, <object>);
+
 define sealed domain replace-elements!
   (<builtin-mutable-collection>, <function>, <function>);
 define sealed domain fill! (<builtin-mutable-collection>, <object>);
@@ -121,6 +124,7 @@ define sealed domain initialize (<builtin-collection>);
 define sealed domain shallow-copy (<builtin-collection>);
 define sealed domain type-for-copy (<builtin-collection>);
 define sealed domain element (<builtin-collection>, <object>);
+define sealed domain %element (<builtin-collection>, <object>);
 define sealed domain key-sequence (<builtin-collection>);
 define sealed domain reduce (<function>, <object>, <builtin-collection>);
 define sealed domain reduce1 (<function>, <builtin-collection>);

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.8 2001/07/06 05:49:56 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.9 2002/08/26 05:24:55 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -84,17 +84,33 @@ define open generic backward-iteration-protocol
 	current-element-setter :: <function>,
 	copy-state :: <function>);
 
+// bounds-checking version
 define open generic element
     (collection :: <collection>, key :: <object>, #key default)
  => (element :: <object>);
-
-define open generic key-sequence
-    (collection :: <collection>) => (keys :: <sequence>);
 
 define open generic element-setter
     (new-value :: <object>, collection :: <mutable-collection>,
      key :: <object>)
  => (element :: <object>);
+
+// non-checking version
+// NB %element doesn't accept defaults because for vectors/strings etc
+// it doesn't do bounds checking so the default is useless.
+// A default *might* be wanted for e.g. hash tables, but it's not
+// available, sorry.  Be more choosy where you put without-bounds-checks!!
+
+define open generic %element
+    (collection :: <collection>, key :: <object>)
+ => (element :: <object>);
+
+define open generic %element-setter
+    (new-value :: <object>, collection :: <mutable-collection>,
+     key :: <object>)
+ => (element :: <object>);
+
+define open generic key-sequence
+    (collection :: <collection>) => (keys :: <sequence>);
 
 define open generic size (object :: <object>) => (res :: false-or(<integer>));
 
@@ -163,6 +179,23 @@ define inline method type-for-copy (coll :: <mutable-collection>)
 end method type-for-copy;
 
 // Collection Methods.
+
+// default methods for %element and %element-setter just call through
+// to the standard element and element-setter.  If you don't know the
+// types of your collections then without-bounds-checks will be slower!
+
+define method %element
+    (collection :: <collection>, key :: <object>)
+ => (element :: <object>);
+  element(collection, key);
+end method %element;
+
+define method %element-setter
+    (new-value :: <object>, collection :: <mutable-collection>,
+     key :: <object>)
+ => (element :: <object>);
+    element-setter(new-value, collection, key);
+end method %element-setter;
 
 define method size (collection :: <collection>) => res :: <integer>;
   for (element in collection,
