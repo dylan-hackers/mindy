@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.26 1996/05/11 17:25:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.27 1996/09/12 20:35:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -491,6 +491,13 @@ define method merge-representations
     merge-representations(rep1, rep2.more-general-representation);
   end;
 end;
+
+define method pick-representation
+    (type :: <unknown-ctype>, optimize-for :: one-of(#"speed", #"space"))
+    => rep :: <c-representation>;
+  *general-rep*;
+end method pick-representation;
+
 
 
 // Dump/Load stuff.
