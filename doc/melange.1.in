@@ -1,0 +1,143 @@
+.\" @(#)melange.1		-*- nroff -*-
+.\" ========== DEFINITIONS ==========
+.\" These are stolen from the rxvt.1 man page.
+.\"-------
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Sp	space down the interparagraph distance
+.\"-------
+.de Sp
+.sp \\n(Ddu
+..
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.Sp
+.in +0.5i
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.in
+..
+.\" ========== MAN PAGE    ==========
+.TH MELANGE 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+melange \- Translates C headers into Dylan
+.SH SYNOPSIS
+.B d2c
+.RB "[" -v "] [" --mindy "|" --d2c "] [" -I\c
+.IR includedir "].\|.\|. " infile " [" outfile "]"
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.B melange
+parses C headers and emits equivalent Dylan interfaces. The current version
+can handle some fairly ugly headers, but not everything found on the
+average Unix system. Melange actually contains a full-fledged C
+preprocessor and a C parser. Unlike many similar tools, it's not just doing
+simple pattern matching--it's actually trying to emulate the front end of a
+C compiler.
+.PP
+Eventually, we want Melange to handle any header which GCC can parse. For
+the time being, generating interfaces is more of an art, and any large set
+of headers is virtually gauranteed to find a new bug. Please report every
+bug you encounter to
+.IR gd-bugs@randomhacks.com ,
+preferably with a short example. We're trying to locate and fix all the
+problems, and should respond fairly quickly.
+.SH IMPORTING HEADERS
+To import a header named foo.h, you'll probably want to add a new module to
+your exports.dylan file. Call it foo-interface. Make sure your library
+uses melange-support, and that foo-interface uses the module of the same
+name:
+.Ds
+library: my-application
+
+define library my-application
+  use dylan;
+  use melange-support;
+end library;
+
+define module my-application
+  use dylan;
+  use melange-support;
+  use foo-interface;
+end module;
+
+define module foo-interface
+  use dylan;
+  use melange-support;
+  export
+    /* All the things you want from foo.h. */;
+end module;
+.De
+.PP
+Next, create a file called foo-intr.intr which appears as follows:
+.Ds
+module: foo-interface
+
+define interface
+  #include "foo.h";
+end interface;
+.De
+.PP
+Type
+.B melange -v foo-intr.intr foo-intr.dylan
+to process the header file. Then add foo-intr.dylan to your lid file and
+recompile your program.
+.PP
+There are many other things which can be added to an interface definition
+to control imports, rename symbols, express relationships between types and
+define preprocessor macros. These are described in detail by the Melange
+manual (which is available through the website).
+.SH OPTIONS
+.TP
+.BR "\-\-help"
+Print out a message describing the available options.
+.TP
+.BR "\-\-version"
+Print out the version and copyright.
+.TP
+.BR \-v ", " \-\-verbose
+Print out the name of each C declaration as Melange processes it. This
+should help find where Melange crashed, choked or got confused.
+.TP
+.BR \-\-d2c ", " \-\-mindy
+Only generate code for one environment or the other. The default is to
+generate code for both.
+.TP
+.BR "\-I, \-\-include\-dir" " dir"
+Search
+.I dir
+for C headers.
+.SH BUGS
+Lots of them. Everywhere. We're fixing them as quickly as we can. (See the
+bug tracker on the website for an up-to-date list.)
+.PP
+In particular, it would be desirable for melange to search include
+directories in exactly the fashion as a given platform's C compiler.
+.SH SEE ALSO
+gwydion(7), d2c(1), mindy(1).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The Gwydion Group at CMU and the current Gwydion Dylan maintainers. See the
+CREDITS file in the Gwydion Dylan distribution for more information.
