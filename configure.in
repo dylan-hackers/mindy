@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.143 2003/08/11 21:25:08 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.144 2003/08/12 17:22:12 gabor Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -482,6 +482,9 @@ You may need to specify the --with-existing-runtime option to configure; see
     else	
 	existing_runtime_header="$prefix/include/runtime.h"
     fi
+	if test ! -f "$existing_runtime_header"; then
+	AC_MSG_ERROR([Cannot locate runtime.h for the installed d2c. ($existing_runtime_header)])
+	fi
     ln -s "$existing_runtime_header" "$LOCAL_RUNTIME"
 fi
 
