@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.9 1995/06/07 15:16:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.10 1995/06/12 17:46:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,32 +16,12 @@ method specializers, thus it can't describe:
  B] Methods with specializers whose type is not known at compile time, due to a
     non-constant type expression.
 
-The structure of the method also statically encodes the next-method for each
-method, thus disallowing:
- C] Methods that don't always have the same next method or that might not have
-    a legal next method due to ambiguous methods.
-
-The structure of the tree is a list of lists or methods.  Method precedence
-becomes greater as the tree is descended.  When we reach a leaf method, we know
-that no method can have greater precedence than that method on any call to
-which the method is applicable.  The format of an interior node is:
-    (method, sub1, sub2, ...)
-
-The "method" at the root of the tree is #f, which can be thought of as
-representing the "no-applicable-methods" method.
-
-The method tree maintains two invariants:
- 1] The children of node are mutually disjoint --- no two of the sibling
-    methods can ever be applicable to the same call. 
- 2] The method at a node is always the next method for its immediate children.
-    This means that the precedence of the child methods must be greater, and
-    that no method can somehow interpose itself.  A corrolary is:
- 3] each child specializer is a subtype of the parent specializer (possibly
-    the same type.)
-
-The idea behind the method tree is that compile-time method selection walks
-the tree, descending into the unique child that "must be applicable" to the
-call.
+The structure of the tree is a list of sub-nodes.  Method precedence
+becomes greater as the tree is descended.  When we reach a leaf
+method, we know that no method can have greater precedence than that
+method on any call to which the method is applicable.  Each interior
+node holds a method and a method tree of the stuff more specific than
+that method.
 
 */
 
@@ -55,7 +35,7 @@ specializers:
  disjoint: no intersection
  >: more specific (a subtype)
  <: less specific (a supertype)
- unordered: identical
+ =: identical
  ambiguous: definitely ambiguous (non-hierarchial non-class types)
  unknown: unknown types or non-hierarchical classes.
 
@@ -63,7 +43,7 @@ The 6 corresponding method orderings occur like this:
  disjoint: definitely disjoint (at least one specializer doesn't intersect)
  >: more specific (all = or subtype)
  <: less specific (all = or supertype)
- unordered: the same (all =, an error)
+ =: the same (all =, an error)
  ambiguous: anything combined with either both < and > or any
             single definitely ambiguous position (non-class non-hierarchical.)
  unknown: unknown
@@ -76,7 +56,7 @@ or definitely ambiguous by considering other specializers.
 */
 
 define constant method-precedences
-  = one-of(#"disjoint", #">", #"<", #"unordered", #"ambiguous", #"unknown");
+  = one-of(#"disjoint", #">", #"<", #"=", #"ambiguous", #"unknown");
 
 
 // ### hack version...  Would really be defined in type system.
@@ -95,7 +75,7 @@ define method compare-one-specializer
      gf :: false-or(<definition>), index :: <fixed-integer>)
  => res :: method-precedences;
   case
-    spec1 == spec2 => #"unordered";
+    spec1 == spec2 => #"=";
     csubtype?(spec1, spec2) => #">";
     csubtype?(spec2, spec1) => #"<";
     ~ctypes-intersect?(spec1, spec2) => #"disjoint";
@@ -127,21 +107,21 @@ define method compare-specializers
  => res :: method-precedences;
 
   assert(size(specs1) == size(specs2));
-  let result = #"unordered";
+  let result = #"=";
   block (done)
     for (spec1 in specs1, spec2 in specs2, index from 0)
       let res = compare-one-specializer(spec1, spec2, gf, index);
 
       unless (res == result)
 	select (res)
-	  #"unordered" => begin end;
+	  #"=" => begin end;
 	  #"ambiguous", #"disjoint" => done(res);
 	  #"unknown" => result := res;
 
 	  #"<", #">" =>
 	    select (result)
 	      #"unknown" => begin end;
-	      #"unordered" => result := res;
+	      #"=" => result := res;
 
 	      // we already picked off the res == result case, so they must
 	      // mismatch.
@@ -189,25 +169,11 @@ define class <seal-info> (<object>)
 end class;
 
 
-// Given a method definition or interior method tree node, return the
-// specializers.
+// Merge a new seal into the seal-infos in GF.
 //
-define method get-specializers (node :: <method-definition>)
-  node.function-defn-signature.specializers;
-end method;
-//
-define method get-specializers (node :: <list>)
-  node.head.function-defn-signature.specializers;
-end method;
-
-
-// Merge a new seal into the seal-infos in GF.  The "canonical" property that
-// we want to preserve that is all seals are disjoint.
-//
-// We ignore (don't add) seals containing unknown types or that aren't known to
-// be disjoint from other seals.  We pick off unknown types before entering
-// anything to protect against the possibility that first seal we look at might
-// have unknown types.
+// We ignore (don't add) seals containing unknown types.  Also, if some seal
+// is strictly more specific than some other seal, we only enter the less
+// specific of the two.
 //
 define method canonicalize-1-seal
     (new :: <list>, gf :: <generic-definition>) => ();
@@ -215,14 +181,14 @@ define method canonicalize-1-seal
     if (any?(rcurry(instance?, <unknown-ctype>), new))
       done();
     end;
-
+    
     let res = #();
     for (info in gf.%generic-defn-seal-info)
       let cur-seal = info.seal-types;
       select (compare-specializers(new, cur-seal, gf))
-        #"unordered", #">", #"ambiguous", #"unknown" => done();
+        #"=", #">", #"unknown" => done();
 	#"<" => begin end;
-	#"disjoint" => res := pair(info, res);
+	#"disjoint", #"ambiguous" => res := pair(info, res);
       end;
     end for;
 
@@ -232,224 +198,123 @@ define method canonicalize-1-seal
 end method;
 
 
-// Copy all methods that may intersect with the seal into the seal-info.
-// Methods that definitely intersect are stashed in the method-tree slot (even
-// though not they are not yet a method tree.)  Any unclear methods become
-// hairy-methods.
-//
-define method methods-to-seals
-    (seal-info :: <seal-info>, meths :: <list>)
- => ();
+define class <method-tree-node> (<object>)
+  //
+  // The specializers for this node.  Copied out of the method for faster
+  // access.
+  slot node-specializers :: <list>, init-value: #();
+  //
+  // The method for this node.  This method is strictly more specific than
+  // any methods in the children, and strictly less specific than any
+  // method above us in the tree.
+  slot node-method :: <method-definition>, required-init-keyword: method:;
+  //
+  // The child nodes, possibly empty.
+  slot node-children :: <list>, init-value: #(), init-keyword: children:;
+end;
 
-  let cur-seal = seal-info.seal-types;
-  let gf = seal-info.generic-function;
-  for (meth in meths)
-    select (compare-specializers(get-specializers(meth), cur-seal, gf))
-      #"unordered", #">", #"<" =>
-        seal-info.method-tree := pair(meth, seal-info.method-tree);
-
-      #"disjoint" => begin end;
-
-      #"ambiguous", #"unknown" =>
-        seal-info.hairy-methods := pair(meth, seal-info.hairy-methods);
-    end;
-  end;
+define method initialize (node :: <method-tree-node>, #key) => ();
+  node.node-specializers
+    := node.node-method.function-defn-signature.specializers;
 end method;
 
 
 // This function takes a method tree and a method and tries to return a new
-// method tree.  If the method can't be added, then we call the "punt" function.
+// method tree.
+// 
 // GF is the generic function for context to compare-specializers.
 //
 // What we do is compare the added method to each method at this level in the
 // tree.  If some child is less specific than the method, then we recurse
-// on that (necessarily unique) child.  If all sibs are disjoint, we introduce
-// We introduce a new leaf.  If some children are more specific, then the
-// method becomes the parent of those nodes.
+// on that child.  If some children are more specific, then the
+// method becomes the parent of those nodes.  If we intersect any children
+// but aren't ordered with respect to them, they stay siblings.
 //
-// In all cases, disjoint children remain sibs of the newly introduced (or
-// augmented) subtree.
-//
-define method method-tree-add(mt, meth, gf, punt);
-  let meth-spec = get-specializers(meth);
+define method method-tree-add
+    (mt :: <list>, meth :: <method-definition>,
+     gf :: false-or(<generic-definition>), punt :: <function>)
+    => res :: <list>;
+
+  let meth-spec = meth.function-defn-signature.specializers;
   let greater = #();
-  let disjoint = #();
-  let less = #f;
+  let siblings = #();
+  let less = #();
       
-  for (child in mt.tail)
-    select (compare-specializers(get-specializers(child), meth-spec, gf))
+  for (child in mt)
+    select (compare-specializers(child.node-specializers, meth-spec, gf))
       #">" =>
         greater := pair(child, greater);
 
-      #"disjoint" =>
-        disjoint := pair(child, disjoint);
+      #"disjoint", #"ambiguous" =>
+	siblings := pair(child, siblings);
 
       #"<" =>
-        assert(~less);
-	less := child;
+	less := pair(child, less);
 
-      #"unordered" =>
-        compiler-warning("### Multiply defined method: %s", meth.defn-name);
-	punt();
-
-      #"ambiguous" =>
-        compiler-warning("### Ambiguous methods: %s %s",
-			 meth.defn-name, child.defn-name);
-	punt();
+      #"=" =>
+	error("identical methods made it into the method tree?");
 
       #"unknown" =>
-        punt();
+	compiler-warning
+	  ("Cannot statically determine the relationship between %s and %s.",
+	   child.node-method, meth);
+	punt();
     end;
   end;
 
-  let new-child
-    = case
-        less =>
-	  assert(empty?(greater));
-	  if (instance?(less, <pair>))
-	    method-tree-add(less, meth, gf, punt);
-	  else
-	    list(less, meth);
-	  end;
-
-	empty?(greater) => meth;
-        otherwise => pair(meth, greater);
-      end;
-
-  pair(mt.head, pair(new-child, disjoint));
-end method;
-
-
-// Convert the method list stashed in the method-tree slot into a real method
-// tree.  We try adding each method, putting methods that can't be added into
-// the hairy-methods.
-//
-define method build-method-tree(cur-seal :: <seal-info>) => ();
-  let gf = cur-seal.generic-function;
-  let res = list(#f);
-  for (meth in cur-seal.method-tree)
-    block (next)
-      block (punt)
-        res := method-tree-add(res, meth, gf, punt);
-	next();
-      end;
-      cur-seal.hairy-methods := pair(meth, cur-seal.hairy-methods);
+  if (less == #())
+    pair(make(<method-tree-node>, method: meth, children: greater),
+	 siblings);
+  else
+    assert(greater == #());
+    for (result = siblings
+	   then pair(make(<method-tree-node>,
+			  method: node.node-method,
+			  children: method-tree-add(node.node-children, meth,
+						    gf, punt)),
+		     result),
+	 node in less)
+    finally
+      result;
     end;
   end;
-  cur-seal.method-tree := res;
 end method;
 
 
-// Check congruence at one position, returning #t if definitely congruent.
-// Meth and GF are for error context.
+// Build the method tree for the given seal.  For any congruent method that
+// intersects the seal, we either add it to the seal's method tree or add it to
+// the seal's hairy-methods.
 //
-define method check-1-arg-congruent(mspec, gspec, meth, gf)
-  let (val, val-p) = values-subtype?(mspec, gspec);
-  case
-    ~val-p =>
-      compiler-warning
-	("Can't tell if %s is a subtype of %s, so can't tell if method %s is "
-	   "congruent to GF %s.",
-	 mspec, gspec, meth.defn-name, gf.defn-name);
-      #f;
+define method build-method-tree-for (seal-info :: <seal-info>) => ();
+  let gf = seal-info.generic-function;
+  let seal-spec = seal-info.seal-types;
 
-    ~val =>
-      compiler-warning
-	("Method %s isn't congruent to GF %s because method type %s isn't a "
-	   "subtype of GF type %s.",
-	 meth.defn-name, gf.defn-name, mspec, gspec);
-      #f;
-
-    otherwise => #t;
-  end case;
-end method;
-
-
-// Check that the methods on GF are congruent to it, and return the methods
-// that are congruent.
-//
-define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
-  let gsig = gf.function-defn-signature;
-  let gspecs = gsig.specializers;
-  let res = #();
+  let method-tree = #();
+  let hairy-methods = #();
 
   for (meth in gf.generic-defn-methods)
-    let msig = meth.function-defn-signature;
-    let win = #t;
+    if (meth.method-defn-congruent?)
+      let meth-spec = meth.function-defn-signature.specializers;
+      select (compare-specializers(meth-spec, seal-spec, gf))
+	#"=", #">", #"<", #"ambiguous" =>
+	  block (okay)
+	    block (punt)
+	      method-tree := method-tree-add(method-tree, meth, gf, punt);
+	      okay();
+	    end;
+	    hairy-methods := pair(meth, hairy-methods);
+	  end;
 
-    let mspecs = msig.specializers;
-    unless (size(mspecs) = size(gspecs))
-      compiler-warning
-        ("Method %s has different number of required arguments than GF %s.",
-	 meth.defn-name, gf.defn-name);
-      win := #f;
+	#"disjoint" => begin end;
+
+	#"unknown" =>
+	  hairy-methods := pair(meth, hairy-methods);
+      end;
     end;
-    for (mspec in mspecs, gspec in gspecs)
-      win := check-1-arg-congruent(mspec, gspec, meth, gf) & win;
-    end for;
+  end;
 
-    case
-      gsig.key-infos =>
-        if (~msig.key-infos)
-	  compiler-warning
-	    ("GF %s accepts keywords but method %s doesn't.",
-	     gf.defn-name, meth.defn-name);
-	  win := #f;
-	elseif (msig.all-keys? & ~gsig.all-keys?)
-	  compiler-warning
-	    ("Method %s accepts all keys but GF %s doesn't.",
-	     meth.defn-name, gf.defn-name);
-	  win := #f;
-	else
-	  for (gkey in gsig.key-infos)
-	    let gkey-name = gkey.key-name;
-	    let gspec = gkey.key-type;
-	    block (found-it)
-	      for (mkey in msig.key-infos)
-	        if (mkey.key-name == gkey-name)
-		  win := check-1-arg-congruent (mkey.key-type, gspec, meth, gf)
-			   & win;
-		  found-it();
-		end;
-	      end for;
-		  
-	      compiler-warning
-		("GF %s mandatory keyword arg %= is not accepted by "
-		   "method %s.",
-		 gf.defn-name, gkey-name, meth.defn-name);
-	      win := #f;
-	    end block;
-	  end for;
-	end if;
-
-      msig.key-infos =>
-	compiler-warning
-	  ("Method %s accepts keywords but GF %s doesn't.",
-	   meth.defn-name, gf.defn-name);
-	win := #f;
-
-      gsig.rest-type & ~msig.rest-type =>
-        compiler-warning
-	  ("GF %s accepts variable arguments, but method %s doesn't.",
-	   gf.defn-name, meth.defn-name);
-	win := #f;
-
-      ~gsig.rest-type & msig.rest-type =>
-        compiler-warning
-	  ("Method %s accepts variable arguments, but GF %s doesn't.",
-	   meth.defn-name, gf.defn-name);
-	win := #f;
-      
-      ~check-1-arg-congruent(msig.returns, gsig.returns, meth, gf) =>
-        win := #f;
-
-    end case;
-    if (win)
-      res := pair(meth, res);
-    end;
-
-  end for;
-  res;
+  seal-info.method-tree := method-tree;
+  seal-info.hairy-methods := hairy-methods;
 end method;
 
 
@@ -457,17 +322,20 @@ end method;
 // triggered on demand off of GENERIC-DEFN-SEAL-INFO.
 //
 define method grovel-gf-stuff (gf :: <generic-definition>) => ();
-  let meths = check-gf-congruence(gf);
-  let seals = gf.generic-defn-seals;
-
   gf.%generic-defn-seal-info := #();
-  for (cur-seal in seals)
+  if (gf.generic-defn-sealed?)
+    // ### This isn't quite right because ``define sealed generic'' is a
+    // different kind of sealing than ``seal generic (<object>,...)''.  But
+    // for now it doesn't matter because we don't make any use of the stronger
+    // guarantees implied by seal generic.
+    canonicalize-1-seal(gf.function-defn-signature.specializers, gf);
+  end;
+  for (cur-seal in gf.generic-defn-seals)
     canonicalize-1-seal(cur-seal, gf);
   end;
 
   for (cur-seal in gf.%generic-defn-seal-info)
-    methods-to-seals(cur-seal, meths);
-    build-method-tree(cur-seal);
+    build-method-tree-for(cur-seal);
   end;
 end method;
 
@@ -476,7 +344,7 @@ end method;
 //
 define method generic-defn-seal-info (gf :: <generic-definition>) 
  => res :: <list>;
-  unless (slot-initialized?(gf, %generic-defn-seal-info))
+  unless (gf.%generic-defn-seal-info)
     grovel-gf-stuff(gf);
   end;
   gf.%generic-defn-seal-info;
@@ -495,125 +363,103 @@ end method;
 // 
 define method ct-sorted-applicable-methods
     (gf :: <generic-definition>, call-types :: <list>)
-    => res :: union(<list>, <false>);
+    => (ordered :: union(<list>, <false>),
+	ambiguous :: union(<list>, <false>));
   block (return)
-    if (gf.generic-defn-sealed?)
-      let maybe-applicable = #();
-      let definitely-applicable = #();
-      for (meth in gf.generic-defn-methods)
-	select (compare-specializers(meth.get-specializers, call-types, #f))
-	  #"disjoint" => #f;
-	  #"<", #"unordered" =>
-	    definitely-applicable := pair(meth, definitely-applicable);
-	  #">", #"ambiguous", #"unknown" =>
-	    maybe-applicable := pair(meth, maybe-applicable);
-	end;
-      end;
-      
-      if (definitely-applicable == #())
-	// Nothing is definitely applicable.
-	if (maybe-applicable == #())
-	  // And nothing is potentially applicable.
-	  return(#());
-	elseif (maybe-applicable.tail == #())
-	  // Only one method is potentially applicable.  Select it.
-	  return(maybe-applicable);
-	end;
-      elseif (maybe-applicable == #())
-	// We know precisely which methods are applicable, so not just
-	// check to see if we can sort them.
-	if (definitely-applicable.tail == #())
-	  // There is only one method applicable, so sorting it is easy.
-	  return(definitely-applicable);
-	else
-	  block (punt)
-	    return(sort!(definitely-applicable,
-			 test: method (meth1, meth2)
-				 select (compare-specializers
-					   (meth1.get-specializers,
-					    meth2.get-specializers,
-					    #f))
-				   #">" => #t;
-				   #"<" => #f;
-				   #"ambiguous", #"unknown" => punt();
-				 end;
-			       end));
-	  end;
-	end;
-      end;
-    end;
-
-    for (child in generic-defn-seal-info(gf))
-      select (compare-specializers(child.seal-types, call-types, #f))
-	#"disjoint" =>
-	  // We are disjoint from this seal -- ignore it.
-	  #f;
-
-	#"<", #"unordered" =>
+    for (seal-info in gf.generic-defn-seal-info)
+      select (compare-specializers(seal-info.seal-types, call-types, #f))
+	#"<", #"=" =>
 	  //
 	  // Make sure we don't intersect any of the hairy methods.
-	  for (hairy in child.hairy-methods)
-	    let hairy-specs = hairy.function-defn-signature.specializers;
-	    unless (compare-specializers(hairy-specs, call-types, #f)
-		      == #"disjoint")
-	      return(#f);
+	  block (next-seal)
+	    for (hairy in seal-info.hairy-methods)
+	      let hairy-specs = hairy.function-defn-signature.specializers;
+	      unless (compare-specializers(hairy-specs, call-types, #f)
+			== #"disjoint")
+		next-seal();
+	      end;
 	    end;
 	  end;
 
-	  // Okay, we have a candidate seal.  Now grovel it finding the most
-	  // specific potentially applicable method.
-	  return(find-applicable(child.method-tree, #(), call-types));
+	  // Okay, we have a candidate seal.  Recursivly grovel its method
+	  // tree and return the results if we can come up with any.
+	  let (ordered, ambiguous)
+	    = find-applicable(seal-info.method-tree, #(), #(), call-types);
+	  if (ordered)
+	    return(ordered, ambiguous);
+	  end;
 
 	otherwise =>
 	  //
-	  // We overlap this seal so we have to bail.
-	  return(#f);
+	  // We can't use this seal to figure anything out about the
+	  // call.
+	  begin end;
       end;
     end;
+    values(#f, #f);
   end;
 end;
 
-
-define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
-    => res :: false-or(<list>);
-  block (punt)
-    let intersects-with = #f;
-    block (found)
-      for (sub in mt.tail)
-	select (compare-specializers(get-specializers(sub), types, #f))
-	  #"disjoint" =>
-	    #f;
-	  #"<", #"unordered" =>
-	    intersects-with := sub;
-	    found();
-	  otherwise =>
-	    // If we intersect with two root level methods, then we have
-	    // to punt.  If we intersect with a child method, we have to
-	    // punt because we can't know if the results should include
-	    // the child or not.
-	    if (intersects-with | mt.head)
-	      punt(#f);
-	    else
-	      intersects-with := sub;
-	    end;
-	end;
-      end;
-    end;
-    let nexts = if (mt.head)
-		  pair(mt.head, nexts);
-		else
-		  nexts;
-		end;
-    if (intersects-with)
-      find-applicable(intersects-with, nexts, types);
-    else
-      nexts;
-    end;
-  end;
-end;
 
 define method find-applicable
-    (meth :: <method-definition>, nexts :: <list>, types :: <list>)
-    => res :: <list>;
-  pair(meth, nexts);
+    (mt :: <list>, ordered :: <list>, ambiguous :: <list>, types :: <list>)
+    => (ordered :: false-or(<list>), ambiguous :: false-or(<list>));
+  let definitely-applicable = #();
+  let maybe-applicable = #();
+  for (sub in mt)
+    select (compare-specializers(sub.node-specializers, types, #f))
+      #"disjoint" =>
+	#f;
+
+      #"<", #"=" =>
+	definitely-applicable := pair(sub, definitely-applicable);
+	
+      otherwise =>
+	maybe-applicable := pair(sub, maybe-applicable);
+    end;
+  end;
+
+  if (maybe-applicable == #())
+    // The things we know, we know we know.
+    if (definitely-applicable == #())
+      // Nothing is applicable.  Bottom out.
+      values(ordered, ambiguous);
+    elseif (definitely-applicable.tail == #())
+      let sub = definitely-applicable.head;
+      find-applicable(sub.node-children, pair(sub.node-method, ordered),
+		      ambiguous, types);
+    else
+      block (punt)
+	// A couple things are applicable.  Their relationship with each
+	// other is either unknown or ambiguous.  If they all are mutually
+	// ambiguous, then we can keep going.  If not, we have to punt.
+	for (remaining = definitely-applicable then remaining.tail)
+	  let spec = remaining.head.node-specializers;
+	  for (other in remaining.tail)
+	    select (compare-specializers(spec, other.node-specializers, #f))
+	      #"ambiguous" => begin end;
+	      #"unknown" => punt(#f, #f);
+	    end;
+	  end;
+	end;
+	// Okay, they all were mutually ambiguous.  Great.  Note: each one
+	// of them will have all more specific methods under them so we can
+	// recurse using any of them and get the same results.
+	find-applicable(definitely-applicable.head.node-children, #(),
+			map(node-method, definitely-applicable),
+			types);
+      end;
+    end;
+  elseif (ordered == #() & ambiguous == #() & maybe-applicable.tail == #()
+	    & definitely-applicable == #())
+    // Only one thing is maybe applicable, and we are at the top level.
+    // So assume that it is applicable and recurse on it.
+    let sub = maybe-applicable.head;
+    find-applicable(sub.node-children, list(sub.node-method), #(), types);
+  else
+    // Too much stuff is applicable for us to be able to tell at compile
+    // time.
+    values(#f, #f);
+  end;
 end;
+
