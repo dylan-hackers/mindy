@@ -1,11 +1,11 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.18 2002/01/04 16:26:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.19 2002/01/19 19:18:54 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -528,9 +528,8 @@ define method print-message
 end method print-message;
 
 
-
 define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
-  object.class-metaclass | dylan-value(#"<class>");
+  class-ctype();
 end;
 
 define method ct-value-cclass (object :: <slot-info>) => res :: <cclass>;
