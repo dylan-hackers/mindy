@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.105 1995/10/05 14:12:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.106 1995/10/12 13:35:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -456,8 +456,22 @@ define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <ssa-variable>,
      #next next-method)
     => did-anything? :: <boolean>;
-  unless (instance?(var.definer, <let-assignment>)
-	    & ~instance?(value.definer, <let-assignment>))
+  if (instance?(var.definer, <let-assignment>)
+	& ~instance?(value.definer, <let-assignment>)
+	& block (return)
+	    let binding-home = var.definer.home-function-region;
+	    for (dep = var.dependents then dep.source-next,
+		 while: dep)
+	      if (dep.dependent.home-function-region ~== binding-home)
+		return(#t);
+	      end;
+	    finally
+	      #f;
+	    end;
+	  end)
+    // There are non local references to this variable, so we have to keep it.
+    #f;
+  else
     next-method();
   end;
 end;
