@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.17 1997/02/04 14:41:10 nkramer Exp $
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.18 1997/02/05 10:39:49 nkramer Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -233,7 +233,10 @@ sub read_Defaults_file {
     $makefile = $host_platform{'makefile_name'};
     $dot_obj = $target_platform{'object_filename_suffix'};
     $dot_exe = $target_platform{'executable_filename_suffix'};
-    $dot_lib = $target_platform{'library_filename_suffix'};
+
+    # There can be multiple library suffixes, and we only need the
+    # preferred one.
+    ($dot_lib) = split(/\s+/, $target_platform{'library_filename_suffix'});
     $lib_prefix = $target_platform{'library_filename_prefix'};
 
     # Check to see if buildroot changed to something else.
@@ -306,7 +309,7 @@ sub do_Makegen_file {
     }
 
     push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
-    push(@GNUmakefile_commands, $0);
+    push(@GNUmakefile_commands, "$0 -p$platforms_dot_descr .");
 
     &emit_rule('compile');
     $destdir && do emit_rule ('install');
@@ -842,7 +845,7 @@ sub install {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-	install_one_file($file, $dst, 0);
+	&install_one_file($file, $dst, 0);
     }
 }
 
@@ -861,7 +864,7 @@ sub install_from_src {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-	install_one_file("$srcdir/$file", $dst, 0);
+	&install_one_file("$srcdir/$file", $dst, 0);
     }
 }
 
@@ -879,7 +882,7 @@ sub install_executable_from_src {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-	install_one_file("$srcdir/$file", $dst, 1);
+	&install_one_file("$srcdir/$file", $dst, 1);
     }
 }
 
@@ -941,7 +944,7 @@ sub emit_mindycomp_library_rule {
     foreach $source (@sources) {
 	&emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
     }
-    emit_dbc_link_rule("$libname-lib.dbc", join(' ', @objects));
+    &emit_dbc_link_rule("$libname-lib.dbc", join(' ', @objects));
 }
 
 # makegen_include($include_file) -- exported
