@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.10 2001/02/05 02:04:59 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.11 2001/02/26 20:18:15 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -634,6 +634,10 @@ define macro c-include
     { c-include (?file:expression) } => { %%primitive(\c-include, ?file) }
 end;
 
+define macro c-system-include
+    { c-system-include (?file:expression) } => { %%primitive(\c-system-include, ?file) }
+end;
+
 define macro c-decl
     { c-decl (?decl:expression) } => { %%primitive(\c-decl, ?decl) }
 end;
@@ -647,6 +651,10 @@ define macro c-expr
       => { %%primitive(\c-expr, ?result-type, ?expression) }
     { c-expr (?result-type:token ?:expression) }
       => { %%primitive(\c-expr, ?result-type, ?expression) }
+end;
+
+define macro c-literal
+    { c-literal (?lit:expression) } => { %%primitive(\c-literal, #"int", ?lit) }
 end;
 
 // Callback-related macros
