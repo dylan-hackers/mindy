@@ -1,74 +1,39 @@
 
-if ($win32) {
-    if ($win32_gcc) {
-	print "LINK = ar qv runtime.lib\n";
-    } else {
-	print "LINK = lib /out:runtime.lib\n";
-    }
-    $CPPFLAGS = '-I$(SRCROOT)/runtime';
-    &emit_c_file_rule('allocate');
-    &emit_c_file_rule('main');
-    &emit_c_file_rule('nlx');
-    print <<'EOF';
+&emit_c_file_rule('allocate');
+&emit_c_file_rule('main');
+&emit_c_file_rule('nlx');
 
-
-AS = as
-
-OBJS = allocate.obj main.obj nlx.obj i386.obj
-
-runtime.lib: $(OBJS)
-	del runtime.lib
-	$(LINK) $(OBJS)
-
-i386.obj: $(SRCDIR)\i386.s
-	$(AS) $(SRCDIR)\i386.s -o i386.obj
-
-EOF
-
-
-    push(@compile_dependencies, 'runtime.lib');
-    do install('lib', 'runtime.lib');
-    push(@files_to_clean, '$(OBJS)', 'runtime.lib');
-
+if ($features{'compiled_for_linux'} && $features{'compiled_for_x86'}) {
+    # Linux and win32 have different name mangling conventions, so we
+    # can't use the same cpu-specific file.
+    $cpu_specific = 'linux-ix86';
+} elsif ($features{'compiled_for_win32'} && $features{'compiled_for_x86'}) {
+    $cpu_specific = 'i386';
+} elsif ($features{'compiled_for_hppa'}) {
+    $cpu_specific = 'hppa';
+} elsif ($features{'compiled_for_sparc'}) {
+    $cpu_specific = 'sparc';
 } else {
-if ($x86_linux) {
-
-   print <<'EOF';
-
-AS = as
-CC = gcc
-CPPFLAGS = -I$(SRCROOT)/runtime
-CFLAGS = -g
-
-OBJS = allocate.o nlx.o linux-ix86.o main.o
-
-libruntime.a: $(OBJS)
-	ar crvu libruntime.a $(OBJS)
-
-EOF
-
-    push(@compile_dependencies, 'libruntime.a');
-    do install('lib', 'libruntime.a');
-    push(@files_to_clean, '$(OBJS)', 'libruntime.a');
-
-} else { # not win32 or x86_linux
-
-   print <<"EOF";
-
-AS = /bin/as
-CC = $CC
-CPPFLAGS = -I\$(SRCROOT)/runtime
-CFLAGS = $CFLAGS
-
-OBJS = allocate.o nlx.o hppa.o main.o
-
-libruntime.$lib_type: \$(OBJS)
-	$lib_linker libruntime.$lib_type \$(OBJS)
-
-EOF
-
-    push(@compile_dependencies, "libruntime.$lib_type");
-    do install('lib', "libruntime.$lib_type");
-    push(@files_to_clean, '\$(OBJS)', "libruntime.$lib_type");
+    &unknown_platform_error();
 }
-}
+
+$lib_name = "$lib_prefix" . "runtime$dot_lib";
+
+# These next lines works because Perl uses the same format directives
+# (%s) that Dylan does.
+print "$cpu_specific$dot_obj : \$(SRCDIR)/$cpu_specific.s\n";
+print "\t";
+printf($target_platform{'assembler_command'}, 
+       "\$(SRCDIR)/$cpu_specific.s", "$cpu_specific$dot_obj");
+print "\n";
+
+print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj ",
+    "$cpu_specific$dot_obj\n";
+print "\t";
+printf($target_platform{'link_library_command'}, $lib_name,
+       "allocate$dot_obj main$dot_obj nlx$dot_obj $cpu_specific$dot_obj");
+print "\n";
+
+push(@compile_dependencies, $lib_name);
+do install('lib', $lib_name);
+push(@files_to_clean, $lib_name);
