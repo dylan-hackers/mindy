@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.9 1994/04/09 14:09:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.10 1994/04/10 15:46:26 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,7 @@
 #include "literal.h"
 #include "src.h"
 #include "info.h"
+#include "lose.h"
 
 struct local_methods {
     struct method *head;
@@ -832,7 +833,7 @@ struct literal *parse_character_token(struct token *token)
 struct literal *parse_integer_token(struct token *token)
 {
     long value;
-    int count, radix;
+    int count, radix = 0;
     boolean negative;
     char *ptr;
     struct literal *res;
@@ -865,6 +866,8 @@ struct literal *parse_integer_token(struct token *token)
 	    }
 	}
     }
+    if (radix == 0)
+	lose("No radix in integer literal?");
 
     while (count-- > 0) {
 	int digit = *ptr++;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.5 1994/04/09 14:09:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.6 1994/04/10 15:46:24 wlott Exp $
 *
 * This file does whatever.
 *
@@ -217,7 +217,7 @@ void free_literal(struct literal *literal)
 
 struct literal *dup_literal(struct literal *literal)
 {
-    size_t size;
+    size_t size = 0;
     struct literal *res;
     struct literal *l, **prev;
 
