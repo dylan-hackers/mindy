@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.22 1995/09/27 22:47:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.23 1995/10/24 00:36:06 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -2361,7 +2361,8 @@ void init_num_functions(void)
     define_constant("$maximum-fixed-integer", MAX_FIXNUM);
     define_constant("$minimum-fixed-integer", MIN_FIXNUM);
 
-    define_constant("pi", make_double(M_PI));
+    define_constant("$pi", make_double(M_PI));
+    define_constant("$e", make_double(M_E));
 
     add_transcendental_function(sin);
     add_transcendental_function(cos);
@@ -2376,17 +2377,17 @@ void init_num_functions(void)
     add_transcendental_function(log);
     add_transcendental_function(sqrt);
 
-    define_generic_function("atan2", 1, FALSE, obj_False, FALSE,      
+    define_generic_function("atan2", 2, FALSE, obj_False, FALSE,      
 			    any_float, obj_False);                             
-    define_method("atan2", sf, FALSE, obj_False, FALSE,  
+    define_method("atan2", two_sfs, FALSE, obj_False, FALSE,  
 		  obj_SingleFloatClass, dylan_sf_atan2);     
-    define_method("atan2", df, FALSE, obj_False, FALSE,  
+    define_method("atan2", two_dfs, FALSE, obj_False, FALSE,  
 		  obj_DoubleFloatClass, dylan_df_atan2);     
 
-    define_generic_function("expt", 1, FALSE, obj_False, FALSE,      
+    define_generic_function("expt", 2, FALSE, obj_False, FALSE,
 			    any_float, obj_False);                             
-    define_method("expt", sf, FALSE, obj_False, FALSE,  
+    define_method("expt", two_sfs, FALSE, obj_False, FALSE,  
 		  obj_SingleFloatClass, dylan_sf_expt);     
-    define_method("expt", df, FALSE, obj_False, FALSE,  
+    define_method("expt", two_dfs, FALSE, obj_False, FALSE,  
 		  obj_DoubleFloatClass, dylan_df_expt);     
 }
