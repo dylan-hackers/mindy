@@ -226,22 +226,24 @@ define method float-to-string( float :: <float> )
 end method float-to-string;
 
 define method integer-to-string(    integer :: <integer>,
-                                    #key base :: limited(<integer>, min: 2, max: 36),
-                                    size :: <integer> = 0,
+                                    #key base :: type-union(	limited(<integer>, min: 2, max: 36), 
+                                                                object-class( $unsupplied ) ) = $unsupplied,
+                                    desired-size :: <integer> = 0,
                                     fill :: <character> = '0')
  => ( string :: <byte-string> )
-  // Convert to base-10
-  let( body :: <integer>, digits :: <integer> ) = modulo( integer, base );
-  let base-10-integer :: <integer> = (body * 10) + digits;
+  if( supplied?( base ) )
+    // Convert to base-10
+    let( body :: <integer>, digits :: <integer> ) = floor/( integer, base );
+    integer := (body * 10) + digits;
+  end if;
   
   // Format
-  let formatted-string = format-to-string("%d", base-10-integer);
+  let formatted-string = format-to-string("%d", integer);
   
   // Pad if needed
-  if( formatted-string.size < size )
-    for( i from 0 below size - formatted-string.size )
-        formatted-string := concatenate( fill, formatted-string );
-    end for;
+  if( formatted-string.size < desired-size )
+    let fill-string :: <string> = make( <string>, size: desired-size - formatted-string.size, fill: fill );
+        formatted-string := concatenate!( fill-string, formatted-string );
   end if;
   
   formatted-string;
