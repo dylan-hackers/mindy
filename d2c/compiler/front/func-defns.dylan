@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.5 2001/06/19 21:16:11 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.6 2002/02/27 20:33:10 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -98,6 +98,7 @@ define method method-defn-inline-function
     => res :: false-or(<function-literal>);
   let res = defn.%method-defn-inline-function;
   if (instance?(res, <function>))
+    defn.%method-defn-inline-function := #f; // prevent recursion
     defn.%method-defn-inline-function := res(defn);
   else
     res;
