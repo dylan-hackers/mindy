@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.13 1994/11/29 06:43:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.14 1995/05/14 12:29:43 nkramer Exp $
 *
 * This file implements vectors.
 *
@@ -164,7 +164,6 @@ static obj_t dylan_sovec_copy(obj_t /* <simple-object-vector> */ vector,
     int start = fixnum_value(check_type(first, obj_FixnumClass));
     int end;
     int size = SOVEC(vector)->length;
-    obj_t *ptr;
 
     if (start < 0)
 	error("Bogus start: for copy-sequence %=: %=", vector, first);
