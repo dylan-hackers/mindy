@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.13 1996/03/19 23:53:14 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.14 1996/03/20 04:57:35 wlott Exp $
 
 //======================================================================
 //
@@ -29,6 +29,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dy
 //
 // This file contains the support routines used by the debugger.
 //
+
+define variable *debug-output* = #"cheap-IO";
 
 define method report-problem (problem)
   block ()
@@ -80,6 +82,7 @@ define method debugger-eval (expr)
       condition-format(*debug-output*, "invocation failed:\n  ");
       report-problem(problem);
       condition-format(*debug-output*, "\n");
+      condition-force-output(*debug-output*);
       #f;
     end block;
   exception (<error>)
@@ -105,6 +108,7 @@ define method eval-and-print (expr, num-debug-vars)
     end for;
   end if;
   condition-format(*debug-output*, "\n");
+  condition-force-output(*debug-output*);
 end method eval-and-print;
 
 
@@ -130,6 +134,7 @@ define method debugger-print (exprs)
 	condition-format(*debug-output*, "invocation failed:\n  ");
 	report-problem(problem);
 	condition-format(*debug-output*, "\n");
+	condition-force-output(*debug-output*);
       end block;
     end for;
   exception (<abort>, init-arguments: list(description: "Blow off print"))
@@ -150,6 +155,7 @@ define method debugger-report-condition (cond)
       report-problem(problem);
     end block;
     condition-format(*debug-output*, "\n\n");
+    condition-force-output(*debug-output*);
   exception <error>
     puts("\nCould not recover from earlier errors.\n\n");
   end block;
@@ -165,6 +171,7 @@ define method debugger-abort ()
 			"problem signaling abort restart:\n  ");
       report-problem(problem);
       condition-format(*debug-output*, "\n");
+      condition-force-output(*debug-output*);
     end block;
   exception <error>
     puts("Could not recover from earlier errors.\n");
@@ -214,6 +221,7 @@ define method debugger-describe-restarts (cond)
 	      condition-format(*debug-output*, ":\n  ");
 	      report-condition(description, *debug-output*);
 	  end select;
+	  condition-force-output(*debug-output*);
 	exception (problem :: <error>)
 	  condition-format(*debug-output*,
 			    "\nproblem describing return convention:\n  ");
@@ -221,11 +229,13 @@ define method debugger-describe-restarts (cond)
 	end block;
 	condition-format(*debug-output*, "\n");
       end if;
+      condition-force-output(*debug-output*);
     exception (problem :: <error>)
       condition-format(*debug-output*,
 			"\nproblem checking on return contention:\n  ");
       report-problem(problem);
       condition-format(*debug-output*, "\n");
+      condition-force-output(*debug-output*);
     end block;
   exception <error>
     puts("\nCould not recover from earlier errors.\n");
@@ -248,6 +258,7 @@ define method debugger-restart (cond, index)
 	      condition-format(*debug-output*,
 				"The restart handler refused to "
 				  "handle the restart.\n");
+	      condition-force-output(*debug-output*);
 	      return(#f);
 	    end unless;
 	    local
@@ -255,6 +266,7 @@ define method debugger-restart (cond, index)
 		condition-format(*debug-output*,
 				  "The restart handler declined "
 				    "to handle the restart.\n");
+		condition-force-output(*debug-output*);
 		return(#f);
 	      end method next-handler;
 	    let (#rest values) = h.handler-function(restart, next-handler);
@@ -264,6 +276,7 @@ define method debugger-restart (cond, index)
 	      condition-format(*debug-output*,
 				"The restart handler tried to return, but "
 				  "returning is not allowed\n");
+	      condition-force-output(*debug-output*);
 	      return(#f);
 	    end if;
 	  exception (problem :: <error>)
@@ -271,6 +284,7 @@ define method debugger-restart (cond, index)
 			      "Problem while attempting to restart:\n  ");
 	    report-problem(problem);
 	    condition-format(*debug-output*, "\n");
+	    condition-force-output(*debug-output*);
 	    return(#f);
 	  end block;
 	else
@@ -285,6 +299,7 @@ define method debugger-restart (cond, index)
 			"Invalid restart number, should be less than %d\n",
 			count);
     end if;
+    condition-force-output(*debug-output*);
     #f;
   exception <error>
     puts("Could not recover from earlier errors.\n");
@@ -305,10 +320,12 @@ define method debugger-return (cond)
 			    "problem quering for values to return:\n  ");
 	  report-problem(problem);
 	  condition-format(*debug-output*, "\n");
+	  condition-force-output(*debug-output*);
 	  return(#f);
 	end block;
       else
 	condition-format(*debug-output*, "Returning is not allowed\n");
+	condition-force-output(*debug-output*);
 	return(#f);
       end if;
     exception (problem :: <error>)
@@ -317,6 +334,7 @@ define method debugger-return (cond)
 			  "returning is allowed:\n  ");
       report-problem(problem);
       condition-format(*debug-output*, "\n");
+      condition-force-output(*debug-output*);
       return(#f);
     end block;
   exception <error>
