@@ -71,36 +71,29 @@ rcs-header: $Header:
 //------------------------------------------------------------------------
 
 
+// tokenizer -- exported class.
+//
 // The public view of tokenizers is described above.  The additional fields
 // "cpp-stack" and "include-tokenizer" are used for handling the functionality
 // of CPP.  The "parent" keyword for make is used to create tokenizers for
 // "#included"ed files.
 //
-define primary class <tokenizer> (<object>)
-  required keyword source:, type: type-union(<string>, <stream>);
-  keyword name:, init-value: #f, type: type-union(<false>, <string>);
-  keyword parent:, init-value: #f, type: type-union(<false>, <tokenizer>);
+define /* exported */ primary class <tokenizer> (<object>)
+  keyword name:, init-value: #f, type: false-or(<string>);
+  keyword contents:, init-value: #f, type: false-or(<string>);
+  keyword parent:, init-value: #f, type: false-or(<tokenizer>);
   keyword typedefs-from:, init-value: #f,
-	type: type-union(<false>, <tokenizer>);
-  slot file-name :: <string>;
-  slot contents :: <string>;
-  slot position :: <integer>, init-value: 0;
+	type: false-or(<tokenizer>);
+  slot file-name :: <string> = "<unknown-file>";
+  slot contents :: <long-byte-string> = make(<long-byte-string>);
+  slot position :: <integer> = 0;
   slot unget-stack :: <deque>, init-function: curry(make, <deque>);
-  slot cpp-table :: <table>;
-  slot cpp-stack :: <list>, init-value: #();
-  slot cpp-decls :: type-union(<deque>, <false>);
-  slot include-tokenizer, init-value: #f;
+  /* exported */ slot cpp-table :: <table>;
+  slot cpp-stack :: <list> = #();
+  /* exported */ slot cpp-decls :: type-union(<deque>, <false>) = #f;
+  slot include-tokenizer :: false-or(<tokenizer>) = #f;
   slot typedefs :: <table>;
 end class <tokenizer>;
-
-// Exported operations -- described in module header
-
-define generic get-token
-    (tokenizer :: <tokenizer>, #key) => (result :: <token>);
-define generic unget-token
-    (tokenizer :: <tokenizer>, token :: <token>) => (result :: <false>);
-define generic add-typedef
-    (tokenizer :: <tokenizer>, name :: <object>) => (result :: <false>);
 
 //======================================================================
 // Class definitions for and operations upon <token>s
@@ -130,10 +123,12 @@ define generic add-typedef
 //                       This is only used internally.
 //======================================================================
 
-define abstract primary class <token> (<object>)
-  constant slot token-id :: <integer> = -1;
-  slot string-value :: <string>, required-init-keyword: #"string";
-  slot generator, required-init-keyword: #"generator";
+// <token> -- exported class.
+//
+define /* exported */ abstract primary class <token> (<object>)
+  constant /* exported */ slot token-id :: <integer> = -1;
+  slot string-value :: <byte-string>, required-init-keyword: #"string";
+  /* exported */ slot generator, required-init-keyword: #"generator";
   slot position, init-value: #f, init-keyword: #"position";
 end;
 
@@ -141,19 +136,22 @@ end;
 // General classes of tokens.
 //----------------------------------------------------------------------
 
-define abstract class <simple-token> (<token>) end class;
-define abstract class <reserved-word-token> (<simple-token>) end class;
-define abstract class <punctuation-token> (<simple-token>) end class;
-define abstract class <literal-token> (<token>) end class;
+define /* exported */ abstract class <simple-token> (<token>) end class;
+define /* exported */ abstract class <reserved-word-token> (<simple-token>)
+end class;
+define /* exported */ abstract class <punctuation-token> (<simple-token>)
+end class;
+define /* exported */ abstract class <literal-token> (<token>) end class;
 
 // <end-include-token> will be a subclass of this.
 //
-define class <ei-token> (<token>)
+define /* exported */ class <ei-token> (<token>)
   slot value :: <deque>, required-init-keyword: #"value";
 end class;
-define abstract class <name-token> (<token>) end class;
+define /* exported */ abstract class <name-token> (<token>) end class;
 
-define class <type-specifier-token> (<reserved-word-token>) end class;
+define /* exported */ class <type-specifier-token> (<reserved-word-token>)
+end class;
 
 //----------------------------------------------------------------------
 // Specific token types
@@ -173,39 +171,39 @@ define token <eof-token> :: <simple-token> = 0;
 define token <error-token> :: <simple-token> = 1;
 define token <begin-include-token> :: <simple-token> = 2;
 define token <end-include-token> :: <ei-token> = 3;
-define token <identifier-token> :: <name-token> = 4;
+define /* exported */ token <identifier-token> :: <name-token> = 4;
 define token <type-name-token>  :: <name-token> = 5;
 // literals
-define token <integer-token> :: <literal-token> = 6;
+define /* exported */ token <integer-token> :: <literal-token> = 6;
 define token <character-token> :: <literal-token> = 7;
 define token <string-literal-token> :: <literal-token> = 8;
 define token <cpp-token> :: <literal-token> = 9;
 // A whole bunch of reserved words
-define token <struct-token> :: <reserved-word-token> = 10;
+define /* exported */ token <struct-token> :: <reserved-word-token> = 10;
 define token <typedef-token> :: <reserved-word-token> = 11;
-define token <short-token> :: <type-specifier-token> = 12;
-define token <long-token> :: <type-specifier-token> = 13;
-define token <int-token> :: <type-specifier-token> = 14;
-define token <char-token> :: <type-specifier-token> = 15;
-define token <signed-token> :: <type-specifier-token> = 16;
-define token <unsigned-token> :: <type-specifier-token> = 17;
-define token <float-token> :: <type-specifier-token> = 18;
-define token <double-token> :: <type-specifier-token> = 19;
+define /* exported */ token <short-token> :: <type-specifier-token> = 12;
+define /* exported */ token <long-token> :: <type-specifier-token> = 13;
+define /* exported */ token <int-token> :: <type-specifier-token> = 14;
+define /* exported */ token <char-token> :: <type-specifier-token> = 15;
+define /* exported */ token <signed-token> :: <type-specifier-token> = 16;
+define /* exported */ token <unsigned-token> :: <type-specifier-token> = 17;
+define /* exported */ token <float-token> :: <type-specifier-token> = 18;
+define /* exported */ token <double-token> :: <type-specifier-token> = 19;
 // "const" and "volatile" will be preprocessed away by the cpp code.  They
 // were being used in too many different odd places by various different
 // compilers.  
 //
 // define class <const-token> (<reserved-word-token>) end class;
 // define class <volatile-token> (<reserved-word-token>) end class;
-define token <void-token> :: <type-specifier-token> = 20;
+define /* exported */ token <void-token> :: <type-specifier-token> = 20;
 define token <inline-token> :: <reserved-word-token> = 21;
 define token <extern-token> :: <reserved-word-token> = 22;
 define token <static-token> :: <reserved-word-token> = 23;
 define token <auto-token> :: <reserved-word-token> = 24;
 define token <register-token> :: <reserved-word-token> = 25;
 define token <dummy-token> :: <reserved-word-token> = 26;
-define token <union-token> :: <reserved-word-token> = 27;
-define token <enum-token> :: <reserved-word-token> = 28;
+define /* exported */ token <union-token> :: <reserved-word-token> = 27;
+define /* exported */ token <enum-token> :: <reserved-word-token> = 28;
 define token <constant-token> :: <reserved-word-token> = 29;
 define token <mul-assign-token> :: <reserved-word-token> = 30;
 define token <div-assign-token> :: <reserved-word-token> = 31;
@@ -237,9 +235,9 @@ define token <bar-token> :: <punctuation-token> = 55;
 define token <percent-token> :: <punctuation-token> = 56;
 define token <slash-token> :: <punctuation-token> = 57;
 define token <plus-token> :: <punctuation-token> = 58;
-define token <minus-token> :: <punctuation-token> = 59;
-define token <tilde-token> :: <punctuation-token> = 60;
-define token <bang-token> :: <punctuation-token> = 61;
+define /* exported */ token <minus-token> :: <punctuation-token> = 59;
+define /* exported */ token <tilde-token> :: <punctuation-token> = 60;
+define /* exported */ token <bang-token> :: <punctuation-token> = 61;
 define token <lt-token> :: <punctuation-token> = 62;
 define token <gt-token> :: <punctuation-token> = 63;
 define token <question-token> :: <punctuation-token> = 64;
@@ -257,9 +255,9 @@ define token <assign-token> :: <punctuation-token> = 75;
 define token <lcurly-token> :: <punctuation-token> = 76;
 define token <rcurly-token> :: <punctuation-token> = 77;
 // "Magic" tokens which provide alternate entry points to the parser
-define token <alien-name-token> :: <token> = 78;
-define token <macro-parse-token> :: <token> = 79;
-define token <cpp-parse-token> :: <token> = 80;
+define /* exported */ token <alien-name-token> :: <token> = 78;
+define /* exported */ token <macro-parse-token> :: <token> = 79;
+define /* exported */ token <cpp-parse-token> :: <token> = 80;
 #else
 // The mindy declarations have to be a lot clumsier since we don't have macros.
 
@@ -524,9 +522,19 @@ end class;
 // Support code
 //----------------------------------------------------------------------
 
-define sealed generic string-value (token :: <token>) => (result :: <string>);
-define sealed generic value (token :: <token>) => (result :: <object>);
-define sealed generic parse-error
+// string-value -- exported generic.
+//
+define /* exported */ sealed generic string-value
+  (token :: <token>) => (result :: <string>);
+
+// value -- exported generic.
+//
+define /* exported */ sealed generic value
+  (token :: <token>) => (result :: <object>);
+
+// parse-error -- exported generic.
+//
+define /* exported */ sealed generic parse-error
     (token :: <object>, format :: <string>, #rest args) => (); // never returns
 
 // Literal tokens (and those not otherwise modified) evaluate to themselves.
@@ -655,7 +663,7 @@ define class <string-table> (<value-table>) end class;
 
 // fst-string-hash -- private function.
 //
-define function fst-string-hash (string :: <string>)
+define function fst-string-hash (string :: <byte-string>)
   values(string.size * 256 + as(<integer>, string.first),
 	 $permanent-hash-state);
 end function fst-string-hash;
@@ -667,6 +675,18 @@ define method table-protocol (table :: <string-table>)
   values(\=, fst-string-hash);
 end method;
 
+
+// $long-string-component-size -- private constant.
+//
+// The size of each substring in a <long-byte-string>.  Useful even if we use
+// normal <byte-string>s, cause it gives us an idea of the max chunk we can
+// read in on any architecture.
+//
+define constant $long-string-component-size = 16384;
+
+#if (~mindy)
+define constant <long-byte-string> = <byte-string>;
+#else
 // <long-byte-string> -- private class.
 //
 // This class represents arbitrary length strings of <byte-character>.  We
@@ -678,12 +698,6 @@ define sealed class <long-byte-string> (<string>, <vector>)
   sealed slot size :: <integer> = 0, init-keyword: #"size";
   slot components :: <simple-object-vector> /* of <byte-string> */ = #[];
 end class <long-byte-string>;
-
-// $long-string-component-size -- private constant.
-//
-// The size of each substring in a <long-byte-string>
-//
-define constant $long-string-component-size = 16384;
 
 define sealed inline method initialize
     (value :: <long-byte-string>, #key fill = ' ')
@@ -812,6 +826,7 @@ define inline method forward-iteration-protocol
 	   state;
 	 end);
 end;
+#endif
 
 //========================================================================
 // "Simple" operations on tokenizers
@@ -830,33 +845,34 @@ end;
 // table.
 //
 define method initialize (value :: <tokenizer>,
-			  #key source :: type-union(<string>, <stream>),
-			       parent, typedefs-from, name,
+			  #key name :: false-or(<string>),
+			       contents: stuff :: false-or(<string>),
+			       parent, typedefs-from, 
 			       defines :: false-or(<table>))
   // We just read the entire file into a string for the tokenizer to use.
   // This simplifies things since we can use regexp searches to find things,
   // even across line boundaries.
-  let source-stream :: <stream>
-    = if (instance?(source, <string>))
-	let source = as(<byte-string>, source);	// make(<file-stream>) is picky
-	value.file-name := name | source;
-	make(<file-stream>, locator: source, direction: #"input");
-      else
-	value.file-name := name | "<unknown-file>";
-	source;
-      end if;
-  let components = make(<stretchy-vector>);
-  block ()
-    while (#t)
-      add!(components, read(source-stream, $long-string-component-size));
-    end;
-  exception (err :: <incomplete-read-error>)
-    add!(components, err.incomplete-read-sequence);
-  exception (err :: <end-of-stream-error>)
-    #t;
-  end block;
-  value.contents := apply(concatenate-as, <long-byte-string>, components);
-  close(source-stream);
+  if (name) value.file-name := name end if;
+
+  if (stuff)
+    value.contents := as(<long-byte-string>, stuff);
+  else
+    let source-stream :: <stream>
+      = make(<file-stream>, locator: as(<byte-string>, name),
+	     direction: #"input");
+    let components = make(<stretchy-vector>);
+    block ()
+      while (#t)
+	add!(components, read(source-stream, $long-string-component-size));
+      end;
+    exception (err :: <incomplete-read-error>)
+      add!(components, err.incomplete-read-sequence);
+    exception (err :: <end-of-stream-error>)
+      #t;
+    end block;
+    value.contents := apply(concatenate-as, <long-byte-string>, components);
+    close(source-stream);
+  end if;
 
   if (parent)
     value.typedefs := (typedefs-from | parent).typedefs;
@@ -890,9 +906,7 @@ define method initialize (value :: <tokenizer>,
 	    value.cpp-table[key] := #();
 	  else
 	    let sub-tokenizer
-	      = make(<tokenizer>,
-		     source: make(<byte-string-stream>, direction: #"input",
-				  contents: cpp-value));
+	      = make(<tokenizer>, contents: cpp-value);
 	    for (list = #() then pair(token, list),
 		 token = get-token(sub-tokenizer, expand: #f)
 		   then get-token(sub-tokenizer, expand: #f),
@@ -909,16 +923,24 @@ define method initialize (value :: <tokenizer>,
   end if;
 end method initialize;
 
+// unget-token -- exported function.
+//
 // Stores a previously analyzed token for later return
 //
-define method unget-token (state :: <tokenizer>, token :: <token>)
-  => (result :: <false>);
+define /* exported */ method unget-token
+    (state :: <tokenizer>, token :: <token>)
+ => (result :: <false>);
   push(state.unget-stack, token);
   #f;
 end method unget-token;
 
-// Record the given name as a valid type specifier
+// add-typedef -- exported generic.
 //
+// Record the given name as a valid type specifier.
+//
+define /* exported */ generic add-typedef
+    (tokenizer :: <tokenizer>, name :: <object>) => (result :: <false>);
+
 define method add-typedef (tokenizer :: <tokenizer>, token :: <token>)
  => (result :: <false>);
   tokenizer.typedefs[token.value] := <type-name-token>;
@@ -1053,7 +1075,7 @@ end for;
 // table.
 //
 define method lex-identifier
-    (tokenizer :: <tokenizer>, position :: <integer>, string :: <string>,
+    (tokenizer :: <tokenizer>, position :: <integer>, string :: <byte-string>,
      #key expand = #t)
  => (token :: <token>);
   case
@@ -1076,7 +1098,7 @@ end method lex-identifier;
 define method try-identifier
     (state :: <tokenizer>, position :: <integer>, #key expand = #t)
  => (result :: type-union(<token>, <false>));
-  let contents :: <string> = state.contents;
+  let contents :: <long-byte-string> = state.contents;
 
   let pos = if (contents[position] == '#') position + 1 else position end if;
   if (alpha?(contents[pos]) | contents[pos] == '_')
@@ -1091,39 +1113,56 @@ define method try-identifier
   end if;
 end method try-identifier;
 
+#if (~mindy)
+define multistring-checker match-punctuation
+  ("-=", "*=", "/=", "%=", "+=", "<=", ">=", "&=", "^=", "|=", "==", "!=",
+   "++", "--", "->", "...", ">>", ">>=", "<<", "<<=", "||", "&&", "##", 
+   ";", ",", "(", ")", ".", "&", "*", "+", "~", "!", "/", "%", "<", ">", "^",
+   "|", "?", ":", "=", "{", "}", "-", "[", "]");
+#else
 define constant match-punctuation
-  = make-regexp-positioner("^([-*/%+<>&^|=!]="
-			     "|\\+\\+|--|->|\\.\\.\\.|>>=?|<<=?|\\|\\||&&|##"
-			     "|[;,().&*+~!/%<>^|?:={}]"
-			     "|-|\\[|\\])",
-			   byte-characters-only: #t, case-sensitive: #t);
+  = make-multistring-checker("-=", "*=", "/=", "%=", "+=", "<=", ">=", "&=",
+			     "^=", "|=", "==", "!=",
+			     "++", "--", "->", "...", ">>", ">>=", "<<",
+			     "<<=", "||", "&&", "##",
+			     ";", ",", "(", ")", ".", "&", "*", "+", "~",
+			     "!", "/", "%", "<", ">", "^", "|", "?", ":",
+			     "=", "{", "}", "-", "[", "]");
+#endif
 
 // Attempts to match "punctuation".  Returns a token if the match is succesful
 // and #f otherwise.
 //
 define method try-punctuation (state :: <tokenizer>, position :: <integer>)
  => result :: type-union(<token>, <false>);
-  let contents :: <string> = state.contents;
+  let contents :: <long-byte-string> = state.contents;
 
   if (punctuation?(contents[position]))
-    let (start-index, end-index)
-      = match-punctuation(contents, start: position);
-    if (start-index ~= #f)
-      state.position := end-index;
-      let string-value = copy-sequence(contents,
-				       start: position, end: end-index);
-      lex-identifier(state, position, string-value, expand: #f);
+    let match = match-punctuation(contents, start: position);
+    if (match)
+      state.position := position + match.size;
+      lex-identifier(state, position, match, expand: #f);
     end if;
   end if;
 end method try-punctuation;
 
 define constant match-comment-end = make-substring-positioner("*/");
 
-define variable *handle-//-comments* :: <boolean> = #f;
+// *handle-//-comments* -- xported variable.
+//
+define /* xported */ variable *handle-//-comments* :: <boolean> = #f;
+
+#if (~mindy)
+define multistring-checker comment-matcher("/*", "//", "\\\n", "\\\r\n");
+#else
+define constant comment-matcher
+  = make-multistring-checker("/*", "//", "\\\n", "\\\r\n");
+#endif
 
 // Skip over whitespace characters (including newlines) and comments.
 //
-define method skip-whitespace (contents :: <string>, position :: <integer>)
+define method skip-whitespace
+    (contents :: <long-byte-string>, position :: <integer>)
  => (position :: <integer>);
   let sz = contents.size;
 
@@ -1132,24 +1171,28 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
 	  for (i from index,
 	       until: (i >= sz | ~whitespace?(contents[i])))
 	  finally
-	    if (i < sz - 1 & contents[i] == '/' & contents[i + 1] == '*')
-	      let end-index = match-comment-end(contents, start: i + 2);
-	      if (~end-index)
-		error("Incomplete comment in C header file.");
-	      end if;
-	      skip-comments(end-index + 2);
-	    elseif (*handle-//-comments* & i < sz - 1 
-		      & contents[i] == '/' & contents[i + 1] == '/')
-	      while (i < sz & contents[i] ~== '\n')
-		i := i + 1;
-	      end while;
-	      // i points at the newline if it ain't eof, but we need
-	      // to recurse anyway to handle multiple // comments in a
-	      // row, and that'll handle whitespace.
-	      skip-comments(i);
-	    else
-	      i;
-	    end if;
+	    select (comment-matcher(contents, start: i) by \=)
+	      "/*" =>
+		let end-index = match-comment-end(contents, start: i + 2);
+		if (~end-index)
+		  error("Incomplete comment in C header file.");
+		end if;
+		skip-comments(end-index + 2);
+	      "//" =>
+                if (*handle-//-comments*)
+  	          while (i < sz & contents[i] ~== '\n')
+		    i := i + 1;
+		  end while;
+  	          // i points at the newline if it ain't eof, but we need
+	          // to recurse anyway to handle multiple // comments in a
+	          // row, and that'll handle whitespace.
+	          skip-comments(i);
+		else
+		  i;
+		end if;
+	      otherwise => 
+	        i;
+	    end select;
 	  end for;
 	end method skip-comments;
   skip-comments(position);
@@ -1158,7 +1201,8 @@ end method skip-whitespace;
 // Skip over whitespace characters (excluding newlines) and comments in
 // "#preprocessor" lines.  Handles the "\\\n" special case.
 //
-define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
+define method skip-cpp-whitespace
+    (contents :: <long-byte-string>, position :: <integer>)
  => (position :: <integer>);
   let sz = contents.size;
 
@@ -1168,29 +1212,28 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
 	       until: (i >= sz 
 			 | ~(whitespace?(contents[i]) & contents[i] ~== '\n')))
 	  finally
-	    if (i < sz - 1 & contents[i] == '/' & contents[i + 1] == '*')
-	      let end-index = match-comment-end(contents, start: i + 2);
-	      if (~end-index)
-		error("Incomplete comment in C header file.");
-	      end if;
-	      skip-comments(end-index + 2);
-	    elseif (*handle-//-comments* & i < sz - 1 
-		      & contents[i] == '/' & contents[i + 1] == '/')
-	      while (i < sz & contents[i] ~== '\n')
-		i := i + 1;
-	      end while;
-	      // i points at the newline now.
-	      i;
-	    elseif ((i < sz - 1)
-		      & contents[i] == '\\' & contents[i + 1] == '\n')
-	      skip-comments(i + 2);
-	    elseif ((i < sz - 1)  // handle CRLF newlines
-		      & contents[i] == '\\' & contents[i + 1] == '\r'
-		      & contents[i + 2] == '\n')
-	      skip-comments(i + 3);
-	    else
-	      i;
-	    end if;
+	    select (comment-matcher(contents, start: i) by \=)
+	      "/*" =>
+		let end-index = match-comment-end(contents, start: i + 2);
+		if (~end-index)
+		  error("Incomplete comment in C header file.");
+		end if;
+		skip-comments(end-index + 2);
+	      "//" =>
+                if (*handle-//-comments*)
+  	          while (i < sz & contents[i] ~== '\n')
+		    i := i + 1;
+		  end while;
+	          // i points at the newline now.
+		end if;
+	        i;
+	      "\\\n" =>
+		skip-comments(i + 2);
+	      "\\\r\n" =>
+		skip-comments(i + 3);
+	      otherwise =>
+		i;
+  	    end select;
 	  end for;
 	end method skip-comments;
   skip-comments(position);
@@ -1209,10 +1252,12 @@ define constant match-literal
 			     "((([1-9][0-9]*)|(0[xX][0-9a-fA-F]+)|(0[0-7]*))[lLuU]*))",
 			   byte-characters-only: #t, case-sensitive: #t);
 
+// get-token -- exported function.
+//
 // Returns a <token> object and updates state to reflect the token's
 // consumption. 
 //
-define method get-token
+define /* exported */ method get-token
     (state :: <tokenizer>,
      #key cpp-line, position: init-position, expand = ~cpp-line)
  => (token :: <token>);
@@ -1221,12 +1266,17 @@ define method get-token
 
     // If we are recursively including another file, defer to the tokenizer
     // for that file.
-    if (state.include-tokenizer)
-      let token = get-token(state.include-tokenizer, expand: expand,
+    let sub-tokenizer = state.include-tokenizer;
+    if (sub-tokenizer)
+      let token = get-token(sub-tokenizer, expand: expand,
+//    if (state.include-tokenizer)
+//      let token = get-token(state.include-tokenizer, expand: expand,
 			    cpp-line: cpp-line, position: init-position);
       if (instance?(token, <eof-token>))
-	let macros = state.include-tokenizer.cpp-decls;
-	let old-file = state.include-tokenizer.file-name;
+//	let macros = state.include-tokenizer.cpp-decls;
+	let macros = sub-tokenizer.cpp-decls;
+//	let old-file = state.include-tokenizer.file-name;
+	let old-file = sub-tokenizer.file-name;
 	state.include-tokenizer := #f;
 	return(make(<end-include-token>, position: pos, generator: state,
 		    string: old-file, value: macros));
@@ -1248,9 +1298,7 @@ define method get-token
 	let new-string = concatenate(token.string-value,
 				     get-token(state).string-value);
 	let sub-tokenizer
-	  = make(<tokenizer>,
-		 source: make(<byte-string-stream>, direction: #"input",
-			      contents: new-string));
+	  = make(<tokenizer>, contents: new-string);
 	return(get-token(sub-tokenizer));
       elseif (instance?(token, <identifier-token>)
 		& element(state.typedefs, token.value, default: #f))

@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.14 1997/01/23 17:41:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.15 1997/01/27 01:42:10 rgs Exp $
 
 //======================================================================
 //
@@ -1512,8 +1512,8 @@ define method parse
     format(stream, "#include \"%s\"\n", file);
   end for;
   stream.stream-position := #"start";
-  let tokenizer = make(<tokenizer>, name: "<top-level>", source: stream,
-                       defines: defines);
+  let tokenizer = make(<tokenizer>, name: "<top-level>", defines: defines,
+                       contents: stream.stream-contents);
 
   let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
   parse-state.verbose := verbose;
@@ -1532,9 +1532,8 @@ end;
 define method parse-type
     (type :: <string>, old-state :: <parse-file-state>)
  => (result :: <declaration>);
-  let tokenizer = make(<tokenizer>, name: type,
-		       typedefs-from: old-state.tokenizer,
-                       source: make(<byte-string-stream>, contents: type));
+  let tokenizer = make(<tokenizer>, name: concatenate("Type name: ", type),
+		       typedefs-from: old-state.tokenizer, contents: type);
   unget-token(tokenizer, make(<alien-name-token>,
 			      generator: tokenizer, string: ""));
   let parse-state
@@ -1551,8 +1550,8 @@ define method parse-macro
     (name :: <string>, old-state :: <parse-state>)
  => (result :: <object>);
   let old-tokenizer = old-state.tokenizer;
-  let tokenizer = make(<tokenizer>, name: name, parent: old-tokenizer,
-                       source: make(<byte-string-stream>, contents: " "));
+  let tokenizer = make(<tokenizer>, name: concatenate("CPP Macro: ", name),
+                       parent: old-tokenizer, contents: "");
   if (check-cpp-expansion(name, tokenizer))
     unget-token(tokenizer, make(<macro-parse-token>,
 				generator: tokenizer, string: ""));

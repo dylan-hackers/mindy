@@ -1,4 +1,3 @@
-documented: #t
 module:  c-lexer
 author:  Robert Stockton (rgs@cs.cmu.edu)
 synopsis: Encapsulates the lexical conventions of the C language.  Along with
@@ -38,11 +37,13 @@ rcs-header: $Header:
 //
 define constant default-cpp-table = make(<string-table>);
 
+// include-path -- exported constant.
+//
 // This sequence should contain a complete list of "standard include
 // directories".  We initialize it with "./" here, but expect the appropriate
 // portability module to add more entries.
 //
-define constant include-path :: <deque> = make(<deque>);
+define /* exported */ constant include-path :: <deque> = make(<deque>);
 // add!(include-path, "./");
 push(include-path, "./");
 
@@ -91,6 +92,8 @@ end method copy-token;
 
 define constant empty-table = make(<self-organizing-list>);
 
+// check-cpp-expansion -- exported function.
+//
 // Recursively handle expansion of preprocessor tokens.  Returns #f if the
 // string has no expansion.  Otherwise, adds a series of tokens to the
 // "unget-stack", so that the next get-token call will get the first expanded
@@ -104,7 +107,7 @@ define constant empty-table = make(<self-organizing-list>);
 // cpp-table.  Thus they will have appropriate location information for error
 // reporting. 
 //
-define method check-cpp-expansion
+define /* exported */ method check-cpp-expansion
     (string :: <string>, tokenizer :: <tokenizer>,
      #key parameters: parameter-table = empty-table)
  => (result :: <boolean>);
@@ -182,7 +185,9 @@ define method check-cpp-expansion
   end case;
 end method check-cpp-expansion;
 
-define method open-in-include-path
+// open-in-include-path -- exported function.
+//
+define /* exported */ function open-in-include-path
     (name :: <string>)
  => (full-name :: false-or(<string>), stream :: false-or(<stream>));
   if (first(name) == '/')
@@ -209,7 +214,7 @@ define method open-in-include-path
       end for;
     end block;
   end if;
-end method open-in-include-path;
+end function open-in-include-path;
 
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
@@ -230,9 +235,12 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	let name = copy-sequence(contents, start: angle-start + 1,
 				 end: angle-end - 1);
 	let (full-name, stream) = open-in-include-path(name);
+	// This is inefficient, but simplifies our logic.  We may wish to
+	// adjust later.
+	close(stream);
 	if (full-name)
-	  state.include-tokenizer := make(<tokenizer>, source: stream,
-					  name: full-name, parent: state);
+	  state.include-tokenizer
+	    := make(<tokenizer>, name: full-name, parent: state);
 	else
 	  parse-error(state, "File not found: %s", name);
 	end if;
@@ -250,7 +258,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	if (first(name) == '/')
 #endif
 	  state.include-tokenizer
-	    := make(<tokenizer>, source: name, parent: state);
+	    := make(<tokenizer>, name: name, parent: state);
 	else
 	  // Turn the a relative pathname into an absolute pathname by
 	  // replacing everything after the last path separator with
@@ -264,7 +272,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	  // before now if a user tried that.
 	  state.include-tokenizer
 	    := make(<tokenizer>, parent: state,
-		    source: regexp-replace(state.file-name, 
+		    name: regexp-replace(state.file-name, 
 					   #if (compiled-for-x86-win32)
 					     "[^\\\\/]+$", 
 				           #else
@@ -335,13 +343,27 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
   end if;
 end method cpp-define;
 
+//define constant preprocessor-match
+//  = make-regexp-positioner("^#[ \t]*(define|undef|include|ifdef|ifndef|if"
+//			     "|else|elif|line|endif|error|pragma)\\b",
+//			   byte-characters-only: #t, case-sensitive: #t);
+#if (~mindy)
+define multistring-checker preprocessor-match
+  ("define", "undef", "include", "ifdef", "ifndef", "if", "else", "elif",
+   "line", "endif", "error", "pragma");
+define multistring-positioner do-skip-matcher("#", "/*");
+#else
 define constant preprocessor-match
-  = make-regexp-positioner("^#[ \t]*(define|undef|include|ifdef|ifndef|if"
-			     "|else|elif|line|endif|error|pragma)\\b",
-			   byte-characters-only: #t, case-sensitive: #t);
+  = make-multistring-checker("define", "undef", "include", "ifdef",
+			     "ifndef", "if", "else", "elif", "line",
+			     "endif", "error", "pragma");
 define constant do-skip-matcher
-  = make-regexp-positioner("#|/\\*",
-			   byte-characters-only: #t, case-sensitive: #t);
+  = make-multistring-positioner("#", "/*");
+#endif
+
+//define constant do-skip-matcher
+//  = make-regexp-positioner("#|/\\*",
+//			   byte-characters-only: #t, case-sensitive: #t);
 
 // Checks to see whether we are looking at a preproccessor directive.  If so,
 // we handle the directive and return #t.  The state may change drastically,
@@ -356,10 +378,16 @@ define method try-cpp
   if (contents[start-pos] ~= '#')
     #f;
   else
-    let (found, pos, word-start, word-end)
-      = preprocessor-match(contents, start: start-pos);
+    let start-pos
+      = for (i from start-pos + 1 below contents.size,
+	     until: contents[i] ~== ' ' & contents[i] ~== '\t')
+	finally i;
+	end for;
+      
+    let (word) = preprocessor-match(contents, start: start-pos);
     
-    if (found)
+//    if (found)
+    if (word)
       // If an #if killed off a region of code, this routine will quickly skip
       // over it.  Because we may have to deal with nested #ifs, we don't
       // directly look for #else or #endif.  Instead we re-call "try-cpp" and
@@ -367,7 +395,7 @@ define method try-cpp
       // done.  Note that nested #ifs are eliminated by recursive calls to
       // do-skip, even if their conditions would normally evaluate to true.
       //
-      local method do-skip(pos, current-stack)
+      local method do-skip(pos, current-stack) => ();
 	      let i = do-skip-matcher(contents, start: pos);
 	      unless (i)
 		parse-error(state, "Unmatched #if in include file.")
@@ -381,8 +409,9 @@ define method try-cpp
 	      end if;
 	    end method do-skip;
 
-      let word = copy-sequence(contents, start: word-start, end: word-end);
-      let pos = skip-cpp-whitespace(contents, pos);
+//      let word = copy-sequence(contents, start: word-start, end: word-end);
+//      let pos = skip-cpp-whitespace(contents, pos);
+      let pos = skip-cpp-whitespace(contents, start-pos + word.size);
       state.position := pos;
       select (word by \=)
 	"define" =>
