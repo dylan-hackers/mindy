@@ -9,7 +9,10 @@ if (! $features{'compiled_for_solaris'}) {
        'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
        'compile', 'no-mindy', 'install'
    );
-   do emit_library_rule(
-       'Mindy-transcendental', '', '', 'compile-mindy', 'no-d2c', 'install'
-   );
 }
+
+# However it does work in mindy, and the mindy random needs the mindy
+# transcendental.
+do emit_library_rule(
+   'Mindy-transcendental', '', '', 'compile-mindy', 'no-d2c', 'install'
+);
