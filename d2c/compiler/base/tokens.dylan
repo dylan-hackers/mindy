@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.3 2000/03/15 04:09:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.4 2000/03/15 04:13:33 andreas Exp $
 copyright: see below
 
 
@@ -224,7 +224,7 @@ end method print-object;
 define constant $operator-info :: <self-organizing-list>
   = begin
       let table = make(<self-organizing-list>);
-      table[#"^"] := #(5 . #"left");
+      table[#"^"] := #(5 . #"right");
       table[#"*"] := #(4 . #"left");
       table[#"/"] := #(4 . #"left");
       table[#"+"] := #(3 . #"left");
