@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.6 1996/09/12 20:36:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.7 1996/10/02 19:20:06 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -276,7 +276,7 @@ define module define-classes
 
     override-defn-info,
 
-    slot-defn-info, slot-defn-getter, slot-defn-setter;
+    slot-defn-info, slot-defn-allocation, slot-defn-getter, slot-defn-setter;
     
 end;
 
