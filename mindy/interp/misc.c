@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.1 1994/03/24 21:49:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.2 1994/03/27 02:07:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,7 +17,6 @@
 
 #include "mindy.h"
 #include "thread.h"
-#include "interp.h"
 #include "bool.h"
 #include "list.h"
 #include "vec.h"
