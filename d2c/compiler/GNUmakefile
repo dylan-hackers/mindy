@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.23 1995/11/13 17:17:18 nkramer Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.24 1995/11/13 18:03:46 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -84,20 +84,12 @@ parser.dylan: parser.input
 	cmucl -load do-parsergen
 
 parse-dump.dylan: parse-tree.dylan autodump.dylan
-	rm -f autodumper.dbc
-	cat ${NORMAL_OBJS} > autodumper.dbc
+	gmake autodumper.dbc
 	${MINDY} -f autodumper.dbc -autodump parse-tree
 
 token-dump.dylan: tokens.dylan autodump.dylan
-	rm -f autodumper.dbc
-	cat ${NORMAL_OBJS} > autodumper.dbc
+	gmake autodumper.dbc
 	${MINDY} -f autodumper.dbc -autodump tokens
 
-CFLAGS = -g
-CC = gcc
-
-test: output.o heap.o
-	${CC} ${CFLAGS} -o test output.o heap.o
-
-output.c heap.s: bootstrap.dylan ack.dylan foo.dbc
-	mindy -f foo.dbc bootstrap.dylan ack.dylan
+autodumper.dbc: ${NORMAL_OBJS}
+	cat ${NORMAL_OBJS} > autodumper.dbc
