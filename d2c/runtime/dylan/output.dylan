@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.2 1998/11/25 09:47:02 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.3 1998/12/18 15:41:27 tc Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -337,7 +337,7 @@ define function cheap-io-to-stdio(stream :: <symbol>)
 end function cheap-io-to-stdio;
 
 define function puts(thing :: <object>) => ()
-  fputs(#"Cheap-IO", thing);
+  fputs(thing, #"Cheap-IO");
 end function puts;
 
 define function fputs(thing :: <object>, fake-stream :: <symbol>) => ()
