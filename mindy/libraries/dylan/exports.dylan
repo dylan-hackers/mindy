@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.6 1994/03/30 17:06:49 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.7 1994/03/30 17:32:33 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -63,8 +63,8 @@ define module Builtin-Stuff
     object-class, object-hash,
     pair, prin1, print, putc, puts,
     remove-method, round/,
-    singleton, size, slot-initialized?,
-    sorted-applicable-methods, subtype?,
+    singleton, size, slot-initialized?, sorted-applicable-methods,
+    state-valid?, subtype?,
     tail, tail-setter, truncate/,
     union,
     values, vector;
