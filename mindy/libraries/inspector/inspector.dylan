@@ -2,7 +2,7 @@ module:     Inspector
 author:     Russell M. Schaaf (rsbe@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.2 1996/03/15 04:21:36 rsbe Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.3 1996/03/19 23:46:09 nkramer Exp $
 
 //======================================================================
 //
@@ -94,8 +94,8 @@ define method display-one-object(object :: <limited-integer>,
 				 display-print-level = 1,
 				 display-print-length = 5)
   write("<limited-integer> (", display-stream);
-  let l-i-min = object.limited-integer-min;
-  let l-i-max = object.limited-integer-max;
+  let l-i-min = object.limited-integer-minimum;
+  let l-i-max = object.limited-integer-maximum;
   if (l-i-min)
     if (l-i-max)
       print(l-i-min, display-stream);

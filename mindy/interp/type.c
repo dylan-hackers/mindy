@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.25 1996/02/17 15:14:16 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.26 1996/03/19 23:45:12 nkramer Exp $
 *
 * This file implements the type system.
 *
@@ -1340,13 +1340,14 @@ void init_type_functions(void)
 		    obj_False, FALSE, obj_ObjectClass, dylan_singleton_object);
     define_function("subclass-of", list1(obj_SubclassClass), FALSE, obj_False,
 		    FALSE, obj_ClassClass, dylan_subclass_of);
-    define_function("limited-integer-class", list1(obj_LimIntClass), FALSE,
+    define_function("limited-integer-base-class", list1(obj_LimIntClass), 
+		    FALSE,
 		    obj_False, FALSE, obj_ClassClass, dylan_lim_int_class);
-    define_function("limited-integer-min", list1(obj_LimIntClass), FALSE,
+    define_function("limited-integer-minimum", list1(obj_LimIntClass), FALSE,
 		    obj_False, FALSE,
 		    type_union(object_class(obj_False), obj_IntegerClass),
 		    dylan_lim_int_min);
-    define_function("limited-integer-max", list1(obj_LimIntClass), FALSE,
+    define_function("limited-integer-maximum", list1(obj_LimIntClass), FALSE,
 		    obj_False, FALSE,
 		    type_union(object_class(obj_False), obj_IntegerClass),
 		    dylan_lim_int_max);
