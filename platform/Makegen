@@ -3,5 +3,8 @@
 ##
 
 if ($features{'compiled_for_darwin'}) {
-    do compile_subdirs('carbon');
+    &compile_subdirs('carbon');
+}
+if ($have_gtk) {
+    &compile_subdirs('gtk+');
 }
