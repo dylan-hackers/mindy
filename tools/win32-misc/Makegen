@@ -1,59 +1,72 @@
 
-sub install_one_perl_script {
-    local ($name) = @_;
+# Installs a batch file which calls the Perl script with the argument
+# we give here, plus the same arguments that the batch file was called
+# with
+sub install_one_arg_wrapper {
+    local ($cmd, $name, $ext, $arg1) = @_;
     local ($dst) = "\$(DESTDIR)/bin";
     print "$dst/$name.bat :\n";
     $dst =~ tr|/|\\|;  # translate / to \ for batch files
-    print "\t", 'echo @perl ', "$dst\\$name", 
-        '.perl %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
-    do install_from_src('bin', "$name.perl");
+    print "\t", 'echo @', "$cmd $dst\\$name$ext $arg1", 
+        ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
     push(@install_dependencies, "$dst/$name.bat");
+}
+
+# Installs a batch file which calls the Perl script with exactly the
+# same arguments that the batch file was called with.
+sub install_no_arg_wrapper {
+    local ($cmd, $name, $ext) = @_;
+    &install_one_arg_wrapper($cmd, $name, $ext, '');
 }
 
 sub install_perl_scripts {
     local (@names) = @_;
     local ($name);
     foreach $name (@names) {
-	install_one_perl_script($name);
+	&install_no_arg_wrapper('perl', $name, '.perl');
+	&install_from_src('bin', "$name.perl");
     }
 }
 
 # Assumes the rcs binaries are in $(DESTDIR)/rcs-bin, and 
 # rcs-wrapper in $(DESTDIR)/bin/rcs-wrapper.perl
-sub install_with_rcs_wrapper {
-    local ($name) = @_;
-    print "\$(DESTDIR)/bin/$name.bat :\n";
-    print "\t", 'echo @perl $(DESTDIR)\\bin\\rcs-wrapper.perl ',
-        '$(DESTDIR)\\rcs-bin\\', $name, 
-        '.exe %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> \$(DESTDIR)\\bin\\$name.bat\n";
-    push(@install_dependencies, "\$(DESTDIR)/bin/$name.bat");
+sub install_rcs_wrappers {
+    local (@names) = @_;
+    local ($name);
+    local ($rcsdir) = "\$(DESTDIR)\\rcs-bin";
+    foreach $name (@names) {
+	local ($dst) = "\$(DESTDIR)/bin";
+	print "$dst/$name.bat :\n";
+	$dst =~ tr|/|\\|;  # translate / to \ for batch files
+	print "\t", 'echo @', 
+	    "perl $dst\\rcs-wrapper.perl $rcsdir\\$name.exe", 
+            ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
+	push(@install_dependencies, "$dst/$name.bat");
+    }
 }
 
 # Wrapped RCS stuff
 do install_from_src('bin', 'rcs-wrapper.perl');
-
-do install_with_rcs_wrapper('ci');
-do install_with_rcs_wrapper('co');
-do install_with_rcs_wrapper('rcs');
-do install_with_rcs_wrapper('rcsdiff');
-do install_with_rcs_wrapper('rlog');
-
-# Wrapped normally, except the .perl file isn't named the same as the 
-# .bat file
-do install_from_src('bin', 'autoconf.perl');
-do install_from_src('bin', 'configure.bat');
+do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
 
 # Custom utils with wrappers
-do install_perl_scripts('find-dylan-files', 'mass-ci', 'mass-diff', 
-			'mk-build-tree', 'mk-rcs-links', 'rcsupdate', 
+do install_perl_scripts('configure',
+			'find-dylan-files', 'mass-ci', 'mass-diff', 
+			'mk-build-tree', 'mk-rcs-links', 
 			'tree-diff', 'unix-find', 'which');
 
-do install_from_src('bin', 'gen-makefile.bat');
-# gen-makefile.perl is in shared-misc
+# rcsupdate needs the path to co.exe
+do install_from_src('bin', 'rcsupdate.perl');
+do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
+			   '$(DESTDIR)\\rcs-bin\\co.exe');
+
+# gen-makefile.perl is in shared-misc, which doesn't do wrappers
+do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
 
 # Custom utils that are straight batch files
 do install_from_src('bin', 'build-tags.bat');
 do install_from_src('bin', 'dytc.bat');
+do install_from_src('bin', 'mk-backup.bat');
 
 # Custom perl scripts without wrappers
 do install_from_src('bin', 'find-unrcsed-files.perl');
