@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.17 1995/04/25 23:03:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.18 1995/04/28 15:39:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -666,7 +666,7 @@ define method build-general-method
 	   specializers: as(<list>, specializers),
 	   next: next-var & #t,
 	   rest-type: rest-var & object-ctype(),
-	   key-infos: keyword-infos & as(<list>, keyword-infos),
+	   keys: keyword-infos & as(<list>, keyword-infos),
 	   all-keys?: paramlist.paramlist-all-keys?,
 	   returns: make-values-ctype(as(<list>, result-types),
 	   			      rest-result & object-ctype()));
