@@ -165,6 +165,7 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
     register char current;
     CORD_pos pos;
     char conv_spec[CONV_SPEC_LEN + 1];
+    va_list vsprintf_args;
     
     CORD_ec_init(result);
     for (CORD_set_pos(pos, format, 0); CORD_pos_valid(pos); CORD_next(pos)) {
@@ -254,12 +255,12 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
             	/* Use standard sprintf to perform conversion */
             	{
             	    register char * buf;
-            	    va_list vsprintf_args = args;
-            	    	/* The above does not appear to be sanctioned	*/
-            	    	/* by the ANSI C standard.			*/
+                    va_list vsprintf_args;
             	    int max_size = 0;
             	    int res;
             	    	
+            	    memcpy(vsprintf_args, args, sizeof(va_list));
+
             	    if (width == VARIABLE) width = va_arg(args, int);
             	    if (prec == VARIABLE) prec = va_arg(args, int);
             	    if (width != NONE) max_size = width;
