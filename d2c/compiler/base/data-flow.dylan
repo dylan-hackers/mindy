@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.12 1995/04/26 07:03:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.13 1995/05/01 06:52:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,7 +23,8 @@ expression
 variable-info {abstract}
 
 dependency
-dependent-mixin
+queueable-mixin
+    dependent-mixin
 
 abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
     assignment
@@ -61,23 +62,29 @@ define abstract class <expression> (<object>)
 end class;
 
 
+// <queueable-mixin> is inherited by everything that can be queued for
+// reoptimization.
+//
+define class <queueable-mixin> (<object>)
+  //
+  // Thread running through queueables in the component reoptimize-queue,
+  // #"absent" if this queueable is not currently in the queue (hence is up to
+  // date), or #"deleted" if this queueable has been deleted (hence should
+  // be ignored).
+  slot queue-next
+      :: union(<queueable-mixin>, one-of(#f, #"absent", #"deleted")),
+    init-value: #"absent";
+end;  
+
 // <dependent-mixin> is inherited by all things that can be the direct target
 // of a dependency: assignments, operations, IF-regions, and lambda results.
 //
-define class <dependent-mixin> (<object>)
+define class <dependent-mixin> (<queueable-mixin>)
   //
   // Head of list of dependencies for the expressions that we depend on,
   // threaded by dependent-next.
   slot depends-on :: false-or(<dependency>), init-value: #f,
     init-keyword: depends-on:;
-  //
-  // Thread running through dependents in the component reoptimize-queue,
-  // #"absent" if this dependent is not currently in the queue (hence is up to
-  // date), or #"deleted" if this dependent has been deleted (hence should
-  // be ignored).
-  slot queue-next
-      :: union(<dependent-mixin>, one-of(#f, #"absent", #"deleted")),
-    init-value: #"absent";
 end class;
 
 
