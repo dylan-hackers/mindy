@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.53 1996/09/04 16:47:09 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.54 1996/09/15 15:33:30 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -54,7 +54,7 @@ define module common
 	     $minimum-integer, <byte-character>, $not-supplied,
 	     report-condition, condition-format,
              <format-string-condition>, <never-returns>,
-             <ratio>, numerator, denominator, key-exists?,
+             <ratio>, numerator, denominator, key-exists?, assert,
 #if (mindy)
              *debug-output*, main},
 #else
@@ -92,7 +92,7 @@ define module utils
     current-column, fresh-line,
     integer-to-english, ordinal-suffix,
     find-in, size-in,
-    dformat, assert,
+    dformat, 
     <annotatable>, info, info-setter,
     key-of, list?, pair?,
     symcat, stringify,
@@ -434,12 +434,10 @@ define module target-environment
     move-file-command,
     path-separator,
 
-    // The remainder are really just a way for the compiler to know
-    // when it needs to do black magic, but without knowing the
-    // target's name
     link-doesnt-search-for-libs?,
     import-directive-required?,
-    supports-debugging?;   // perhaps should be supports-stabs...
+    supports-debugging?,
+    uses-win32-stabs?;
 end module target-environment;
 
 
