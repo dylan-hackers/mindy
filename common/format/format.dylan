@@ -2,7 +2,7 @@ module: format
 author: chiles@cs.cmu.edu
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.1 1996/03/20 00:05:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.2 1996/03/20 05:04:08 wlott Exp $
 
 //======================================================================
 //
@@ -450,13 +450,18 @@ define method format-integer
 end;
 
 
-// Condition-Format method.
+// Condition-Format and Condition-Force-Output methods.
 //
-// Condition-Format is a generic function called by the condition system
-// to service its formatting needs.  We supply method on <stream>s that call
-// the <stream> specific format defined above.
+// Condition-Format and Condition-Force-Output are generic functions that are
+// called by the condition system to service its output needs.  We supply
+// method on <stream>s that call the <stream> specific functions.
 //
 define method condition-format
     (stream :: <stream>, string :: <string>, #rest args) => ();
   apply(format, stream, string, args);
 end method condition-format;
+//
+define method condition-force-output
+    (stream :: <stream>) => ();
+  force-output(stream);
+end method condition-force-output;
