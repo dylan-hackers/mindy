@@ -22,7 +22,7 @@ end library;
 define module redirect-io
   use dylan;
 
-#if (d2c)
+#if (~mindy)
   use standard-io;
   use extensions,
      import: {*warning-output*};

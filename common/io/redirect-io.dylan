@@ -1,11 +1,9 @@
 module: redirect-io
 
-#if (d2c)
+#if (~mindy)
 *warning-output* := *standard-output*;
 *gdb-output* := *standard-output*;
+#else
+// XXX - Allow Mindy to compile this file.
+1;
 #endif
-
-define function do-nothing() => ()
-  // XXX - Allow Mindy to compile this file.
-  values();
-end function do-nothing;
