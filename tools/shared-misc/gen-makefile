@@ -353,3 +353,16 @@ sub make_into_library_name {
 	return "lib$basename.a";
     }
 }
+
+# makegen_include is include, except it correctly handles the case
+# where the srcdir is not the same as the destdir (ie, it looks for the
+# include file in the srcdir)
+#
+# There's a certain danger of variable capture with include_file, so
+# don't use that variable in your included files.
+sub makegen_include {
+    local($include_file) =  @_;
+    $include_file = $srcdir . '/' . $include_file;
+    (-e $include_file) || die("No $include_file\n");
+    do $include_file;
+}
