@@ -1,10 +1,9 @@
 module:     Text-Inspector
-library:    Text-Inspector
 author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.5 1996/04/10 20:40:01 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.6 1996/04/22 15:30:52 nkramer Exp $
 
 //======================================================================
 //
@@ -48,7 +47,7 @@ define module text-inspector
   use character-type;
   use string-conversions;
   use substring-search;
-  use inspector-base, export: { *show-elements* };
+  use inspector-base, export: { *show-elements*, $all-libraries };
   export
     display-object-info, inspect;
 end module text-inspector;
@@ -155,7 +154,7 @@ end function command-prompt;
 // responds appropriately. All keywords have defaults, and all of the keywords
 // get passed on to object-info whenever it is called.
 //
-define function inspect (object :: <object>) => ();
+define function inspect-one-obj (object :: <object>) => ();
   // Create a deque to hold the previously created objects.  object
   // contains the current object, which is *not* in the history deque.
   let history = make(<deque>);
@@ -219,4 +218,16 @@ define function inspect (object :: <object>) => ();
       end select;
     end while;
   end block;
+end function inspect-one-obj;
+
+define function inspect (#rest objs) => ();
+  if (objs.empty?)
+    inspect-one-obj($all-libraries);
+  elseif (objs.size > 1)
+    error("Can only inspect one object at a time");
+  else
+    inspect-one-obj(objs.first);
+  end if;
 end function inspect;
+
+*inspect-function* := inspect;
