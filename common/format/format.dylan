@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.4 2002/08/07 20:19:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.5 2002/08/08 04:26:02 bruce Exp $
 
 ///======================================================================
 ///
@@ -113,7 +113,7 @@ define sealed method print-message (object :: <raw-pointer>, stream :: <stream>)
  => ();
   format(stream, "%x", as(<integer>, <raw-pointer>));
 end method print-message;
-#end
+#endif
 
 
 /// Format.
