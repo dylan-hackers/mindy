@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.70 1996/06/26 14:50:47 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.71 1996/06/26 15:05:28 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -909,7 +909,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     incorrect-usage();
   end;
      // bug
-  let possible-targets = get-targets("/usr1/users/nkramer/d2c/compiler/targets.ini");
+  let possible-targets 
+       = get-targets("/afs/cs/project/gwydion/compiler/include/targets.ini");
   if (~key-exists?(possible-targets, target-machine))
     error("Unknown target architecture %=.", target-machine);
   end if;
