@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.2 1994/12/16 11:50:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.3 1994/12/17 02:07:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // is a compile-time constant.  Otherwise, return #f.  We only use lexenv
 // to tell when a constant module variable has been locally shadowed.
 //
-define generic ct-eval (expr :: <expression>,
+define generic ct-eval (expr :: <constituent>,
 			lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
 
@@ -20,17 +20,17 @@ define generic ct-eval (expr :: <expression>,
 //
 // Like ct-eval, but return all the values.
 // 
-define generic ct-mv-eval (expr :: <expression>,
+define generic ct-mv-eval (expr :: <constituent>,
 			   lexenv :: union(<false>, <lexenv>));
 
 
-// ct-eval(<expression>,...) -- exported method.
+// ct-eval(<constituent>,...) -- exported method.
 //
 // Just call ct-mv-eval and return the first result, if there is one.
 // Otherwise return the compile-time literal for #f, because the expression
 // constantly returns no values.
 // 
-define method ct-eval (expr :: <expression>,
+define method ct-eval (expr :: <constituent>,
 		       lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
   let (#rest results) = ct-mv-eval(expr, lexenv);
@@ -42,12 +42,12 @@ define method ct-eval (expr :: <expression>,
 end;
 
 
-// ct-mv-eval(<expression>, <lexenv>) -- exported method.
+// ct-mv-eval(<constituent>, <lexenv>) -- exported method.
 //
 // The default method just retries with the expansion if there is one, and
 // bails if not.
 // 
-define method ct-mv-eval (expr :: <expression>,
+define method ct-mv-eval (expr :: <constituent>,
 			  lexenv :: union(<false>, <lexenv>))
   let (expansion) = expand(expr, lexenv);
   if (expansion)
