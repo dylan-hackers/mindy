@@ -1,0 +1,7 @@
+&makegen_include("../common-Makegen");
+
+$D2CFLAGS .= "-L ../common-dylan -L ../threads -L ../io ";
+
+&emit_melange_rule('termios');
+&emit_library_rule('command-processor', '$(BUILDROOT)/force.timestamp', 
+		   '', 'compile', 'install');

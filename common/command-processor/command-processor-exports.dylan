@@ -6,6 +6,8 @@ define library command-processor
   use melange-support;
   use collection-extensions;
   use string-extensions;
+
+  export command-processor;
 end library;
 
 define module command-processor
@@ -16,4 +18,6 @@ define module command-processor
   use melange-support;
   use subseq;
   use string-hacking;
+
+  export <command>, run-command-processor;
 end module;

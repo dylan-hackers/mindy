@@ -159,7 +159,7 @@ define variable *key-bindings* = make(<simple-vector>,
 *key-bindings*[5] := end-of-line;
 *key-bindings*[11] := kill-to-end-of-line;
 
-begin
+define function run-command-processor()
   let running = #t;
   make(<command>, 
        name: "Exit", 

@@ -1,6 +1,4 @@
 library: command-processor
-executable: cp
-files:
-  command-processor-exports
+files:  command-processor-exports
   command-processor
   termios
