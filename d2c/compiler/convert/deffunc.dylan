@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.2 1994/12/12 21:22:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.3 1994/12/13 13:20:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,6 +17,10 @@ define abstract class <function-definition> (<abstract-constant-definition>)
     init-value: #f, init-keyword: hairy:;
 end;
 
+define method defn-type (defn :: <function-definition>) => res :: <cclass>;
+  dylan-value(#"<function>");
+end;
+
 define class <generic-definition> (<function-definition>)
   //
   // #f iff the open adjective wasn't supplied.
@@ -27,6 +31,10 @@ define class <generic-definition> (<function-definition>)
     init-value: #();
 end;
 
+define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
+  dylan-value(#"<generic-function>");
+end;
+
 define class <implicit-generic-definition>
     (<generic-definition>, <implicit-definition>)
   //
@@ -35,6 +43,11 @@ define class <implicit-generic-definition>
 end;
 
 define abstract class <abstract-method-definition> (<function-definition>)
+end;
+
+define method defn-type (defn :: <abstract-method-definition>)
+    => res :: <cclass>;
+  dylan-value(#"<method>");
 end;
 
 define class <method-definition> (<abstract-method-definition>)
