@@ -1,170 +1,584 @@
 #!/usr/local/bin/perl
 
-# absolute on win32 means drive letter also
-sub dir_is_absolute {
-    local ($dir) = @_;
-    if ($win32) {
-	return ($srcroot =~ /^\w:\//);
-    } else {
-	return ($srcroot =~ /^\//);
-    }
-}
+# Authors: William Lott, Nick Kramer
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.17 1997/02/04 14:41:10 nkramer Exp $
 
-$#ARGV >= 1 && die "Usage: $0 [directory]\n";
-$#ARGV >= 0 && (chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n");
+# Usage: gen-makefile [-pplatforms.descr] directory
+#
+# gen-makefile turns a single Makegen file into a Makefile.
+# gen-makefile does the bulk of the work for mk-build-tree, which
+# calls gen-makefile once on each Makegen in the tree.  The main
+# reason we split gen-makefile from mk-build-tree is that gen-makefile
+# uses eval, so we need a fresh environment for each Makegen file to
+# keep them from accidentally pissing on each other.
+#
+# All Defaults files must define the following variables: $target_name
+# and $srcroot.  Many Defaults files also define $destdir and $D2C.
+# (See below for a full description of all available variables)
+#
+# gen-makefile provides a variety of functions which Makegen files can
+# call.  These functions include:
+#
+#    compile_subdirs(@subdirs)
+#    emit_library_rule($lidfile, $extradeps, $extraflags, @keywords)
+#    emit_c_file_rule($base_file_name, @header_files)
+#    emit_cc_file_rule($base_file_name, @header_files)
+#    emit_melange_rule($base_file_name, @dependencies)
+#    emit_parsergen_rule($base_file_name)
+#    install($dest_subdir, @files)
+#    install_from_src($dest_subdir, @files)
+#    install_executable_from_src($dest_subdir, @files)
+#    emit_mindycomp_rule($dylan_source)
+#    emit_dbc_link_rule($libname, $dbc_files)
+#    emit_mindycomp_library_rule($libname, $source_files)
+#    makegen_include($include_file)
+#    unknown_platform_error()
+#    convert_path_separator($path)
+#
+# Complete documentation on these functions can be found at the end of
+# this file.  Note that many functions can take a bunch of file names.
+# Some do this by accepting a single string with the filenames
+# separated by spaces; others accept a variable number of arguments
+# with one argument per filename.  The former style uses a variable
+# beginning with a dollar sign ($), the latter style uses variables
+# beginning with an at (@) sign.  (Ideally there'd be some
+# consistency, but that's asking an awful lot...)
+#
+# ### How hard could it be to use only varargs?  It looks like only
+# the mindycomp ones violate this convention...
+#
+# gen-makefile also defines a number of global variables.  Most of the
+# variables of interest to Defaults and Makegen writers can be found
+# in set_default_defaults().  Some other ones of interest:
+#
+#     $target_name
+#         The name of the target platform, which is used to calculate
+#         %target_platform.
+#     $host_name
+#         The name of the host platform, which is used to calculate
+#         %host_platform.  This variable defaults to $target_name.
+#     %target_platform
+#         The platforms.descr entry for the target platform.  Keywords
+#         are lowercase and use underbars instead of dashes.  This
+#         variable is automatically derived from $target_name.
+#     %target_features
+#         The features this target platform defines.  Usage:
+#         $target_features{'some_feature'} is 1 if defined, 0
+#         otherwise.  (Note that the feature names are lowercase and
+#         use underbars instead of dashes) This variable is
+#         automatically derived from %target_platform.
+#     %host_platform
+#         The platforms.descr entry for the host platform.  Keywords
+#         are lowercase and use underbars instead of dashes.  This
+#         variable is automatically derived from $host_name.
+#     $srcroot
+#         The root of the source tree.  Must be an absolute path.
+#     $buildroot
+#         The root of the build tree.  Must be an absolute path, and
+#         it must be equivalent to the directory mk-build-tree was run
+#         from.  The purpose of this variable is to allow the user to
+#         choose an alternate wording of the build root -- ie,
+#         "/afs/cs/whatever" instead of "/afs/cs.cmu.edu/whatever".
+#     $subdir
+#         The source dir for this Makegen file is located at
+#         "$srcroot/$subdir", and the current build dir is located at
+#         "$buildroot/$subdir".
+#     $destdir
+#         The root directory that files will be copied to when "make
+#         install" is run.
+#
+# In addition, the d2c Makegens use the following variables:
+#
+#     $stage2
+#         If 0, compile the compiler with Mindy.  If 1, compile it
+#         with d2c.
 
-# Find the current directory.
-chop($cwd = `pwd`);
+
+# Top level code
+#
+# gen-makefile uses the following global variables internally:
+#
+#     %all_platforms
+#         Keys are names of platforms, value is 1 if we know of the
+#         platform, 0 otherwise.
+#     LIDFILE
+#         A file handle that has special meaning in some places.
+#     $orig_buildroot
+#         Used to make sure $buildroot isn't changed by a Makegen.
+#     $defaults
+#         Full path name of the Defaults file.
+#     $makefile
+#         The name of the makefile we're currently generating.
+#     $dot_obj
+#         Shorthand for $target_platform{'object-filename-suffix'}.
+#     $dot_exe
+#         Shorthand for $target_platform{'executable-filename-suffix'}
+#     $dot_lib
+#         Shorthand for $target_platform{'library-filename-suffix'}
+#     $lib_prefix
+#         Shorthand for $target_platform{'library-filename-prefix'}
+#     $lidfile_hit_eof
+#         A global that gets around the lack of multiple return values.
+#     $platforms_dot_descr
+#         Full path name of "platforms.descr"
+#
+# gen-makefile also eval's into existence the following sets of variables:
+#
+#     %platform_platformName
+#         where "platformName" is the name of a platforms.descr entry.
+#     @makefileTarget_dependencies
+#         where "makefileTarget" is the name of a Makefile target
+#     @makefileTarget_commands
+#         where "makefileTarget" is the name of a Makefile target
+#
+# gen-makefile supports the following top-level makefile targets:
+# compile (default), install, clean, and cc_files (compiles C code
+# generated by d2c).
 
-# Set the default defaults.
-
-$D2CDIR = '/afs/cs/project/gwydion/compiler';
-$D2C = '$(D2CDIR)/bin/d2c';
-$D2CFLAGS = '-L$(D2CDIR)/lib';
-$CFLAGS = '-g';
-$CPPFLAGS = '-I$(D2CDIR)/include';
-$MELANGE = 'melange';
-$PARSERGEN = 'parsergen';
-
-$obj = "o";  # filename extension for object files
-$lib_prefix = "lib";  # Prefix for library files.
-$lib_type = "a";  # suffix for library files.
-
-
-# Find the defaults
-$subdir = '';
-$buildroot = $cwd;
-
-# Change //d/path into d:/path on NT.  Only a problem on drives other
-# than C:.  (We can't conditionalize this on $win32, because that
-# variable is set by the Defaults file, which we're trying to locate)
-$buildroot =~ s|^//(\w)/|\1:/|;
-
-until (-e ($defaults = $buildroot . '/Defaults')) {
-    ($buildroot =~ /^(.*)\/([^\/]+)$/)
-      || die("Can't find Defaults and hence can't tell where the root is.\n");
-
-    $subdir = $2 . '/' . $subdir;
-    $buildroot = $1;
-}
-
-# Save the buildroot.
-$orig_buildroot = $buildroot;
-
-# Slurp in the defaults.
-# This is also where the user will define $win32, if applicable, so
-# make sure no win32-specific stuff comes before this line.  
-# Ditto for $nmake. 
-do $defaults;
-die("Problem loading $defaults:\n  $@\n") if $@;
-
-if ($nmake) {
-    $makefile = "Makefile";
+$#ARGV == 0 || $#ARGV == 1 || die "Usage: $0 [-pPlatforms.descr] directory\n";
+if ($ARGV[0] =~ /-p(.*)/) {
+    $platforms_dot_descr = $1;
+    shift(@ARGV);
 } else {
-    $makefile = "GNUmakefile"; 
-    # I'm not sure that Unix can't also use "Makefile", but at the
-    # very least this would cause confusion with people who have
-    # GNUmakefile's lying around.  So sticking with "GNUmakefile" is
-    # the safer option.
+    $platforms_dot_descr = $ENV{'gwydiondir'} . '/etc/platforms.descr';
+}
+$#ARGV == 0 || die "Usage: $0 [-pPlatforms.descr] directory\n";
+chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n";
+
+$lidfile_hit_eof = 0;
+
+do set_default_defaults();
+do find_Defaults_file();
+do read_Defaults_file();
+do do_Makegen_file();
+exit(0);
+
+
+# Core functionality of gen-makefile
+
+# set_default_defaults() -- internal
+#
+# Sets up the default values we use if something isn't specified in
+# the Defaults file.  There is no return value, only a lot of side
+# effects to global variables.
+#
+sub set_default_defaults {
+    # Set the default defaults.
+    $D2CDIR = '/afs/cs/project/gwydion/compiler';
+    $D2C = '$(D2CDIR)/bin/d2c';
+    $D2CFLAGS = '-L$(D2CDIR)/lib';
+    $CFLAGS = '-g';
+    $CPPFLAGS = '-I$(D2CDIR)/include';
+    $MELANGE = 'melange';
+    $PARSERGEN = 'parsergen';
+    $MC = 'mindycomp';
+    # There is no MINDYFLAGS, because that depends on the library name
+    $MINDY = 'mindy';
 }
 
-if ($win32) {
-    $obj = "obj";
-    $lib_prefix = "";
-    $lib_type = "lib";
-}
+# find_Defaults_file() -- internal
+#
+# Finds the Defaults file and sets $defaults, $buildroot, and
+# $orig_buildroot appropriately.
+#
+sub find_Defaults_file {
+    local($cwd) = `pwd`;
+    chop($cwd);
+    $buildroot = $cwd;
+    $subdir = '';
 
-# Check to see if buildroot changed to something else.
-unless ($buildroot eq $orig_buildroot) {
-    $root_inode = (stat($buildroot))[1];
-    $orig_inode = (stat($orig_buildroot))[1];
-    unless ($root_inode == $orig_inode) {
-	die("Defaults changed \$buildroot to:\n  $buildroot\nbut that is a different directory than:\n  $orig_buildroot\n");
+    # Change //d/path into d:/path on NT.  Only a problem on drives
+    # other than C:.  (We can't conditionalize this because we don't
+    # yet know which platform we're running on.)
+    $buildroot =~ s|^//(\w)/|\1:/|;
+
+    until (-e ($defaults = $buildroot . '/Defaults')) {
+	($buildroot =~ /^(.*)\/([^\/]+)$/)
+	    || die("Can't find Defaults and hence can't tell where "
+		   . "the root is.\n");
+
+	$subdir = $2 . '/' . $subdir;
+	$buildroot = $1;
     }
-    &dir_is_absolute($buildroot)
-	|| die("\$buildroot is not absolute:\n  $buildroot\n"
-	       . "(you must include the drive letter on win32 systems)\n");
-    $defaults = $buildroot . '/Defaults';
+
+    # Save the buildroot.
+    $orig_buildroot = $buildroot;
 }
 
-# Make sure they set srcroot.  And set it to an absolute pathname.
-$srcroot || die('$srcroot not set in Defaults.\n');
-&dir_is_absolute($srcroot) 
-    || die("\$srcroot is not absolute:\n  $srcroot\n"
-	   . "(you must include the drive letter on win32 systems\n");
+# read_Defaults_file() -- internal
+#
+# Reads in the Defaults file which find_Defaults_file found, and sets
+# up a variety of global variables that depend on things in the
+# Defaults file.
+#
+sub read_Defaults_file {
+    # Slurp in the defaults.
+    do $defaults;
+    die("Problem loading $defaults:\n  $@\n") if $@;
 
-# Tack the subdir onto srcroot.  Note: subdir is empty or ends with a /, hence
-# the chop.
-chop($srcdir = $srcroot.'/'.$subdir);
+    &read_platforms_dot_descr();
+    $target_name || die("Must set variable \$target_name in Defaults file\n");
+    $host_name = $host_name || $target_name;  # $host defaults to $target
+    %target_platform = &get_platform($target_name);
+    %host_platform = &get_platform($host_name);
 
-# Likewise for builddir
-chop($builddir = $buildroot.'/'.$subdir);
+    # Extract features from target platform
+    local($feature_name);
+    for $feature_name (split(/\s+/, $target_platform{'default_features'})) {
+	$feature_name =~ tr/-A-Z/_a-z/;
+	$features{$feature_name} = 1;
+    }
 
-# Find the Makegen file.
-$makegen = $srcdir . '/Makegen';
-(-e $makegen) || die("No $makegen\n");
+    # Create some useful shorthands (internal use only)
+    $makefile = $host_platform{'makefile_name'};
+    $dot_obj = $target_platform{'object_filename_suffix'};
+    $dot_exe = $target_platform{'executable_filename_suffix'};
+    $dot_lib = $target_platform{'library_filename_suffix'};
+    $lib_prefix = $target_platform{'library_filename_prefix'};
 
-# Start the makefile.
-open(MAKEFILE, ">,$makefile") || die("Can't open ,$makefile: $!\n");
-select(MAKEFILE);
+    # Check to see if buildroot changed to something else.
+    unless ($buildroot eq $orig_buildroot) {
+	### On win32, this code doesn't appear to work correctly in
+	### that it *always* thinks the two are equivalent.  Oh well,
+	### no harm done...
+	local($root_inode) = (stat($buildroot))[1];
+	local($orig_inode) = (stat($orig_buildroot))[1];
+	unless ($root_inode == $orig_inode) {
+	    die("Defaults changed \$buildroot to:\n  $buildroot\n"
+		. "but that is a different directory than:\n"
+		. "  $orig_buildroot\n");
+	}
+	&assert_path_is_absolute($buildroot, "\$buildroot");
+	$defaults = $buildroot . '/Defaults';
+    }
 
-print "### This makefile is machine generated.  Don't expect any edits to survive.\n\n";
-if ($nmake) {
-    $srcroot =~ tr|/|\\|;  # translate / to \ for MS-Windows
-    $srcdir =~ tr|/|\\|;
-    $buildroot =~ tr|/|\\|;
-    $builddir =~ tr|/|\\|;
+    # Make sure they set srcroot.  And set it to an absolute pathname.
+    $srcroot || die('$srcroot not set in Defaults.\n');
+    &assert_path_is_absolute($srcroot, "\$srcroot");
+
+    # Tack the subdir onto srcroot.  Note: subdir is empty or ends
+    # with a /, hence the chop.
+    
+    chop($srcdir = $srcroot.'/'.$subdir);
+
+    # Likewise for builddir
+    chop($builddir = $buildroot.'/'.$subdir);
 }
-print "SRCROOT=$srcroot\n";
-print "SRCDIR=$srcdir\n";
-print 'VPATH=$(SRCDIR)' . "\n";
-print "BUILDROOT=$buildroot\n";
-print "BUILDDIR=$builddir\n";
-$destdir && print "DESTDIR=$destdir\n";
-if (! $nmake) {
-    print "\n.PHONY: default compile install clean\n\n";
-    # Microsoft nmake doesn't do .phony targets
+
+# do_Makegen_file() -- internal
+#
+# Reads in the Makegen file and creates an appropriate Makefile.
+#
+sub do_Makegen_file {
+    # Find the Makegen file.
+    local($makegen) = $srcdir . '/Makegen';
+    (-e $makegen) || die("No $makegen\n");
+
+    # Start the makefile.
+    open(MAKEFILE, ">,$makefile") || die("Can't open ,$makefile: $!\n");
+    select(MAKEFILE);
+
+    print "### This makefile is machine generated.  Don't expect any edits to survive.\n";
+    print "### Generated for target $target_name hosted by $host_name\n\n";
+
+    $srcroot = &convert_path_separator($srcroot);
+    $srcdir = &convert_path_separator($srcdir);
+    $buildroot = &convert_path_separator($buildroot);
+    $builddir = &convert_path_separator($builddir);
+
+    print "SRCROOT=$srcroot\n";
+    print "SRCDIR=$srcdir\n";
+    print 'VPATH=$(SRCDIR)' . "\n";
+    print "BUILDROOT=$buildroot\n";
+    print "BUILDDIR=$builddir\n";
+    $destdir && print "DESTDIR=$destdir\n";
+    if ($host_platform{'make_supports_phony_targets?'}) {
+	print "\n.PHONY: default compile install clean\n\n";
+    }
+    print "default: compile\n\n";
+
+    # Slurp in the generator.
+    do $makegen;
+    die("Problem loading $makegen:\n  $@\n") if $@;
+
+    if (@files_to_clean) {
+	push(@clean_commands, "-rm -f @files_to_clean");
+    }
+
+    push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
+    push(@GNUmakefile_commands, $0);
+
+    &emit_rule('compile');
+    $destdir && do emit_rule ('install');
+    &emit_rule('clean');
+    if ($host_platform{'makefiles_can_rebuild_themselves?'}) {
+	&emit_rule($makefile);
+    }
+
+    &emit_rule('cc_files');
+
+    close(MAKEFILE);
+    rename(",$makefile", $makefile);
 }
-print "default: compile\n\n";
 
-# Slurp in the generator.
-do $makegen;
-die("Problem loading $makegen:\n  $@\n") if $@;
+
+# Internal utility functions
 
-if (@files_to_clean) {
-    push(@clean_commands, "-rm -f @files_to_clean");
+# assert_path_is_absolute($path, $variable) -- internal
+#
+# Decides if the path is an absolute path; signals an error if it
+# isn't.  On a win32 system, an absolute path must have a drive
+# letter.  Make sure you've set %host_platform before you call this
+# function.  $variable is used only in error messages.
+#
+sub assert_path_is_absolute {
+    local($path, $variable) = @_;
+    local($win32_absolute) = ($path =~ /^\w:\//);
+    local($unix_absolute) = ($path =~ /^\//);
+    local($ok, $explanation);
+
+    # We do a lot of extra work here so we can provide better error
+    # messages.
+    if ($win32_absolute && $host_platform{'uses_drive_letters?'}) {
+	$ok = 1;
+    } elsif ($unix_absolute && !$host_platform{'uses_drive_letters?'}) {
+	$ok = 1;
+    } elsif ($unix_absolute && $host_platform{'uses_drive_letters?'}) {
+	$ok = 0;
+	$explanation = "(You must include a drive letter)";
+    } elsif ($win32_absolute && !$host_platform{'uses_drive_letters?'}) {
+	$ok = 0;
+	$explanation = "(You included a drive letter on a Unix machine?!?)";
+    } else {
+	# path is not absolute by anyone's definition, which doesn't
+	# merit further explanation.
+	$ok = 0;
+	$explanation = "";
+    }	
+
+    if (! $ok) {
+	if ($explanation) {
+	    die "$variable is not absolute:\n  $path\n$explanation\n";
+	} else {
+	    die "$variable is not absolute:\n  $path\n";
+	}
+    }
 }
 
-push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
-push(@GNUmakefile_commands, $0);
-
-do emit_rule ('compile');
-$destdir && do emit_rule ('install');
-do emit_rule ('clean');
-if (! $nmake) {
-    do emit_rule($makefile);
-    # Microsoft nmake doesn't like Makefile as a target...
-}
-
-close(MAKEFILE);
-rename(",$makefile", $makefile);
-
+# emit_rule($target) -- internal
+#
+# Emits a rule, looking at the global state to decide what the
+# dependencies are and how to build the target.
+#
 sub emit_rule {
     local($rule) = @_;
 
     print $rule, ': ', join(' ', eval('@'.$rule.'_dependencies')), "\n";
     foreach $rule (eval('@'.$rule.'_commands')) {
-	if ($newlines_are_crlf) {
-	    $rule =~ s|cat\s+(.*)>(.*)|dbclink \2 \1|;
-	    # This kluge replaces the "cat *.dbc > lib.dbc" idiom with
-	    # dbclink.
-	}
 	print "\t", $rule, "\n";
     }
     print "\n";
 }
 
+# compile_subdir($subdir) -- internal
+#
+# Generates the makefile rule to visit a single subdirectory.
+#
+sub compile_subdir {
+    local($subdir) = @_;
+    push(@compile_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, ""));
+    push(@install_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, "install"));
+    push(@clean_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, "clean"));
+    push(@cc_files_commands,
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, "cc_files"));
+}
 
+# maybe_emit_d2c_defines() -- internal
+#
+# If they haven't already been emitted, emit the Makefile header,
+# which defines various Makefile variables like $(D2C).
+#
+sub maybe_emit_d2c_defines {
+    unless ($d2c_defines) {
+	if ($CC) {
+	    print("CC=$CC\n");
+	}
+	print <<EOF;
+D2CDIR = $D2CDIR
+D2C = $D2C
+D2CFLAGS = $D2CFLAGS
+CFLAGS = $CFLAGS
+CPPFLAGS = $CPPFLAGS
+MELANGE = $MELANGE
+PARSERGEN = $PARSERGEN
+MC = $MC
+MINDY = $MINDY
+
+EOF
+        if ($host_platform{'environment_variables_can_be_exported?'}) {
+	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
+	}
+	$d2c_defines = 1;
+    }
+}
+
+# parse_dylan_header() -- internal
+#
+# Reads the Dylan header (keyword: value, ...) from the file LIDFILE,
+# which is already open.  (The file doesn't have to be a lid file, it
+# could be something else like a platforms.descr) Returns an
+# associative array where the keys are header keywords (mashed to
+# lower case), and the values are the header values.
+#
+# In contrast to the Dylan version, keywords can not appear more than
+# once.  If they do, the last value will be used.  Multi-line values
+# are supported, though.
+#
+# We also set the global $lidfile_hit_eof, so you can know why the
+# header ended.  This is useful for reading in platform.descr files,
+# where you call parse_dylan_header repeatedly.
+#
+sub parse_dylan_header {
+    local(%contents);
+    local($last_keyword); # for multi-line values
+
+    while (<LIDFILE>) {
+	# remember, in Perl "." is any character other than newline.
+	# Also, Perl handles all newline hassles by turning win32
+	# style CRLFs into LFs (\n's) before it shows us the string.
+
+	if (/^\s*$/) {  # if blank line, break out of loop
+	    $lidfile_hit_eof = 0;
+	    return %contents;
+	} elsif (m|^//.*$|) {
+	    # comment line, ignore
+	} elsif (/^\s+(.*)$/) {
+	    # Continuation line -- part of a multi-line value
+	    $contents{$last_keyword} .= ' ' . $1;
+	} else {
+	    /^([-A-Za-z0-9_!&*<>|^\$\%\@\?]+):\s+(.*)\s+$/
+		|| die "Bad keyword line in $lid_file\n";
+	    local($keyword) = $1;
+	    local($value) = $2;
+	    if ($value eq '#f' | $value eq '#F') {
+		$value = 0;
+	    } elsif ($value eq '#t' | $value eq '#T') {
+		$value = 1;
+	    }
+	    $keyword =~ tr/-A-Z/_a-z/;
+	    $contents{$keyword} = $value;
+	    $last_keyword = $keyword;
+	}
+    }
+    $lidfile_hit_eof = 1;
+    return %contents;
+}
+
+# parse_lid_file($filename) -- internal
+#
+# Reads in the LID file, and returns an associative array where the
+# keys are header keywords (mashed to lower case), and the values are
+# the header values.  As a magic special case, the keyword 'files'
+# contains all the files in the body of the lid file.
+#
+sub parse_lid_file {
+    local($lid_file) = @_;
+    local(%contents);
+    open(LIDFILE, $srcdir.'/'.$lid_file.'.lid')
+      || die("Can't open $lid_file.lid: $!\n");
+
+    %contents = &parse_dylan_header();
+
+    # Read the filenames
+    while (<LIDFILE>) {
+	chop; # kill newline
+	$contents{'files'} .= " $_";
+    }
+
+    # replace multiple spaces with single spaces
+    $contents{'files'} =~ s/\s+/ /g;
+
+    # strip leading whitespace, which tends to screw up other parts of
+    # gen-makefile
+    $contents{'files'} =~ s/^\s+//;
+
+    close(LIDFILE);
+    return %contents;
+}
+
+# read_platforms_dot_descr() -- internal
+#
+# Read the platforms.descr file (used to be called targets.descr).
+# Each platform description will get it's own associative array named
+# %platform_platformName.  (For example, %platform_x86_win32) See
+# parse_dylan_header for a description of the arrays.
+#
+# In addition to the per-platform arrays, there is a global
+# associative array %all_platforms which is used to list all known
+# platforms.  The key is the name of a platform; the value is 1 if it
+# is a known platform, 0 otherwise.
+#
+sub read_platforms_dot_descr {
+    ### Should have better way of specifying location of .descr
+    open(LIDFILE, $platforms_dot_descr)
+      || die("Can't open $platforms_dot_descr: $!\n");
+    while (! $lidfile_hit_eof) {
+	local(%platform) = &parse_dylan_header();
+	local(@keywords) = keys(%platform);
+	if ($#keywords > 0) {
+	    # if a real header, not a blank line or comment block
+	    local($platform_name) = $platform{'platform_name'};
+	    $platform_name =~ tr/-A-Z/_a-z/; # mash to lowercase; - to _
+
+	    if ($platform{'inherit_from'}) {
+		local(%parent) = &get_platform($platform{'inherit_from'});
+		local($key);
+		foreach $key (keys(%parent)) {
+		    if (! $platform{$key}) {
+			$platform{$key} = $parent{$key};
+		    }
+		}
+	    }
+
+	    # Copy the %platforms array into the appropriate global
+	    local($eval_string) = '%' . 'platform_' . $platform_name 
+		. ' = %' . 'platform';
+	    eval($eval_string);
+	    $all_platforms{$platform_name} = 1;
+	}
+    }
+    close(LIDFILE);
+}
+
+# get_platform($platform_name) -- internal
+#
+# Return the platform (associative array) that corresponds to
+# $platform_name.  This function will lowercase the platform name and
+# translate dashes into underbars for you.
+#
+sub get_platform {
+    local($platform_name) = @_;
+    $platform_name =~ tr/-A-Z/_a-z/;
+    $all_platforms{$platform_name} || die("Unknown platform: $platform_name");
+    local(%platform) = eval('%platform_' . $platform_name);
+    return %platform;
+}
+
+
+# Subroutines people can call from Makegen files.  See top of file for
+# summary.
+
+# compile_subdirs(@subdirs) -- exported
+#
+# Generates the makefile rule to visit a bunch of subdirs subdirectory.
+#
 sub compile_subdirs {
     local($dir);
     foreach $dir (@_) {
@@ -172,115 +586,92 @@ sub compile_subdirs {
     }
 }
 
-sub compile_subdir {
-    local($subdir) = @_;
-
-    # Recursive makes with Microsoft nmake are rather painful.  (If
-    # GNU make for NT is used, this is actually wrong, but gmake/NT
-    # has other problems and shouldn't be used)
-    if ($nmake) {
-	push(@compile_commands, 
-	     'cmd /c "cd ' . $subdir . ' && $(MAKE) /nologo"');
-	push(@install_commands,
-	     'cmd /c "cd ' . $subdir . ' && $(MAKE) /nologo install"');
-	push(@clean_commands,
-	     'cmd /c "cd ' . $subdir . ' && $(MAKE) /nologo clean"');
-    } else {
-	push(@compile_commands, '$(MAKE) -C ' . $subdir);
-	push(@install_commands, '$(MAKE) -C ' . $subdir . ' install');
-	push(@clean_commands, '$(MAKE) -C ' . $subdir . ' clean');
-    }
-}
-
-sub maybe_emit_d2c_defines {
-    unless ($d2c_defines) {
-	if ($CC) {
-	    print("CC=$CC\n");
-	}
-	print <<EOF;
-D2CDIR=$D2CDIR
-D2C=$D2C
-D2CFLAGS=$D2CFLAGS
-CFLAGS=$CFLAGS
-CPPFLAGS=$CPPFLAGS
-MELANGE=$MELANGE
-PARSERGEN=$PARSERGEN
-
-EOF
-        if (! $nmake) {
-	    # This has no real equivalent in nmake (and maybe in win32), 
-	    # so don't expect to be able to change the CCFLAGS.
-	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
-	}
-	$d2c_defines = 1;
-    }
-}
-
+# emit_library_rule($lidfile, $extradeps, $extraflags, @keywords) -- exported
+#
+# Emit the Makefile rule to build a Dylan library.  $lidfile is the
+# name of the lidfile, $extradeps are dependencies in addition to the
+# lid file and the "obvious" dependencies (used libraries and any file
+# mentioned in the lid file).  $extraflags are any extra flags you
+# want to pass to d2c, esp. "-L../somedir".  $extradeps are any
+# additional dependencies you want to specify for the library being
+# built (such as $buildroot/force.timestamp).
+#
+# Keywords recognized:
+#
+#    'compile'
+#         Adds this library to the list of libraries compiled by the
+#         'compile' makefile target.
+#    'install' 
+#         Adds this library/executable to the list of files installed
+#         by the 'install' makefile target.
+#    'no-mindy'
+#         By default, a target is created for libname.dbc; although
+#         this file is not added to any makefile targets, it can be
+#         manually created by running "make libname.dbc".  This makes
+#         for easy debugging.  'no-mindy' suppresses the creation of
+#         this file; this is useful if the Mindy version of the
+#         library does not use the same source files as the d2c
+#         version.
+#    'compile-mindy'
+#         Add libname.dbc to the 'compile' makefile target, instead of
+#         the d2c version of the library.  This flag does not make
+#         much sense with 'no-mindy'.
+#
+# The return value is a two element array.  The first element is the
+# target which would have been used if the 'compile' flag were
+# specified.  The second element of the array is the target which
+# would have been used if the 'compile-mindy' flag were specified.
+# This return value is most useful when bootstrapping a compiler from
+# Mindy, but I'm sure others can think of additional uses.
+#
 sub emit_library_rule {
-    local($lidfile, $extradeps, $extraflags, @keywords) = @_;
-    local($library, $unit_prefix, $executable);
+    local($lidfilename, $extradeps, $extraflags, @keywords) = @_;
 
     do maybe_emit_d2c_defines();
 
-    open(LIDFILE, $srcdir.'/'.$lidfile.'.lid')
-      || die("Can't open $lidfile.lid: $!\n");
+    local(%lidfile) = &parse_lid_file($lidfilename);
+    local($library) = $lidfile{'library'} 
+                          || die("No library: header in $lidfilename.lid.\n");
+    $library =~ tr/A-Z/a-z/;
+    local($unit_prefix) = $lidfile{'unit_prefix'} || "$library";
+    local($executable) = $lidfile{'executable'};
+    local($executable_filename) = $executable . $dot_exe;
 
-    while (<LIDFILE>) {
-	if (/^library:[ \t]*(.*)$/i) {
-	    $library = $1;
-	}
-	elsif (/^unit-prefix:[ \t]*(.*)$/i) {
-	    $unit_prefix = $1;
-	}
-	elsif (/^executable:[ \t]*(.*)$/i) {
-	    if ($win32) {
-		$executable = $1 . ".exe";
-	    } else {
-		$executable = $1;
-	    }
-	}
-	elsif (/^$/) {
-	    last;
-	}
-    }
-    $library || die("No library: header in $lidfile.lid.\n");
-    $unit_prefix || ($unit_prefix = "\L$library\E");
-
-    while (<LIDFILE>) {
-	/\n$/ && chop;
-	s/[ \t]*#.*$//;
-	unless (/^$/) {
-	    s/\.dylan$//;
-	    push(@files_to_clean, $_.'.c', $_ . ".$obj");
-	}
+    local($file);
+    for $file (split(' ', $lidfile{'files'})) {
+	$file =~ s/\.dylan$//;  # chop off ".dylan"
+	push(@files_to_clean, "$file.c", "$file$dot_obj");
     }
 
-    push(@files_to_clean, "$unit_prefix-init.c", "$unit_prefix-init.$obj");
-    push(@files_to_clean, "$unit_prefix-heap.s", "$unit_prefix-heap.$obj");
+    push(@files_to_clean, "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
+    push(@files_to_clean, "$unit_prefix-heap.s", "$unit_prefix-heap$dot_obj");
+
+    local($d2c_target);
 
     if ($executable) {
-	push(@files_to_clean, $executable, 'heap.s', 'inits.c');
+	push(@files_to_clean, $executable_filename, 'heap.s', 'inits.c');
 
 	grep(/^compile$/, @keywords)
-	    && push(@compile_dependencies, $executable);
+	    && push(@compile_dependencies, $executable_filename);
 
 	grep(/^install$/, @keywords)
-	    && do install('bin', $executable);
+	    && do install('bin', $executable_filename);
 
-	print $executable;
+	$d2c_target = $executable_filename;
     }
     else {
 	local($foo_lib_du, $libfoo_a);
 
-	$foo_lib_du = "\L$library\E.lib.du";
-	$libfoo_a = &make_into_library_name($unit_prefix);
+	$foo_lib_du = "$library.lib.du";
+	$libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
 
 	push(@files_to_clean, $foo_lib_du, $libfoo_a);
 
 	grep(/^compile$/, @keywords)
-	    && ($win32
-		? push(@compile_dependencies, $foo_lib_du)
-		: push(@compile_dependencies, $foo_lib_du, $libfoo_a));
+	    && push(@compile_dependencies, $foo_lib_du);
+#	    && ($win32
+#		? push(@compile_dependencies, $foo_lib_du)
+#		: push(@compile_dependencies, $foo_lib_du, $libfoo_a));
 
 	# Under win32, we don't name libname.lib as a dependency
 	# because nmake can't figure out how to build it (after all,
@@ -290,13 +681,23 @@ sub emit_library_rule {
 	grep(/^install$/, @keywords)
 	    && do install('lib', $foo_lib_du, $libfoo_a);
 
-	print $foo_lib_du;
+	$d2c_target = $foo_lib_du;
     }
-    print ": $srcdir/$lidfile.lid $extradeps\n";
-    print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $srcdir/$lidfile.lid\n";
+    print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
+    print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $srcdir/$lidfilename.lid\n";
+    local ($make_name) = $host_platform{'make_command'};
+    local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix . "-files.mak";
+    push(@cc_files_commands, $cc_files_cmd);
+
+    # delayed_binaries doesn't use the makefile target cc_files,
+    # because cc_files will break when there are multiple executables
+    # built in the same directory.  (heap.s and inits.c from one
+    # program will overwrite those of another, and we'll never be able
+    # to build what we want) Instead, we just put the rule to compile
+    # generated C code right after the command to generate the C code
+    # (ie, the d2c call).
     if ($delayed_binaries) {
-	local ($make_name) = $nmake ? '$(MAKE) /nologo' : '$(MAKE)';
-	print "\t$make_name -f cc-", $unit_prefix, "-files.mak\n";
+	print "\t$cc_files_cmd\n";
     }
     print "\ninclude $unit_prefix.dep\n\n";
 
@@ -305,11 +706,27 @@ sub emit_library_rule {
 	    || die("Can't create $unit_prefix.dep: $!\n");
 	close(DEP);
     }
+
+    if (! grep(/^no-mindy$/, @keywords)) {
+	&emit_mindycomp_library_rule($library, $lidfile{'files'});
+    }
+    if (grep(/^compile-mindy$/, @keywords)) {
+	push(@compile_dependencies, "$library-lib.dbc");
+    }
+    local(@return_val);
+    $return_val[0] = $d2c_target;
+    $return_val[1] = "$library-lib.dbc";
+    return @return_val;
 }
 
+# emit_c_file_rule($base_file_name, @header_files) -- exported
+#
+# Emit the rule to compile a C file into an object file.  Dependencies
+# will be the source file and all @header_files.
+#
 sub emit_c_file_rule {
     local ($basefile, @headers) = @_;
-    local ($objfile) = $basefile . ".$obj";
+    local ($objfile) = "$basefile$dot_obj";
 
     do maybe_emit_d2c_defines();
 
@@ -323,11 +740,15 @@ sub emit_c_file_rule {
     push(@files_to_clean, $objfile);
 }
 
-# Just like emit_c_file_rule, except uses .cc as an extension instead of .c
+# emit_cc_file_rule($base_file_name, @header_files) -- exported
+#
+# Just like emit_c_file_rule, except uses .cc as an extension instead
+# of .c (C++ files instead of C files).  I don't think this function
+# is currently used by any of our Makegens.
 #
 sub emit_cc_file_rule {
     local ($basefile, @headers) = @_;
-    local ($objfile) = $basefile . ".$obj";
+    local ($objfile) = "$basefile$dot_obj";
 
     do maybe_emit_d2c_defines();
 
@@ -341,6 +762,11 @@ sub emit_cc_file_rule {
     push(@files_to_clean, $objfile);
 }
 
+# emit_melange_rule($base_file_name, @dependencies) -- exported
+#
+# Emits the rule to turn a Melange input (.intr) file into a .dylan
+# file.
+#
 sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
@@ -355,6 +781,10 @@ sub emit_melange_rule {
     push(@files_to_clean, "$basefile.dylan");
 }
 
+# emit_parsergen_rule($base_file_name) -- exported
+#
+# Emit the rule to Melange a .input file into a .dylan file.
+#
 sub emit_parsergen_rule {
     local ($basefile) = @_;
     do maybe_emit_d2c_defines();
@@ -366,6 +796,43 @@ sub emit_parsergen_rule {
     push(@files_to_clean, "$basefile.dylan");
 }
 
+# install_one_file($from_file, $to_file, $executable_permissions) -- internal
+#
+# Emits the rule to copy $from_file into $to_file when "make install"
+# is run.  If $executable_permissions is true (non-zero), then the
+# installed file will have executable permissions.
+#
+# This may seem like a good candidate for moving to platforms.descr.
+# Unfortunately, there's a lot more going on than merely choosing the
+# name of the "copy file" command.
+#
+sub install_one_file {
+    local ($from_file, $to_file, $executable_permissions) = @_;
+
+    print "$to_file: $from_file\n";
+    if ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
+	# Host is a win32 platform
+	local ($rule) = "\tcopy $from_file $to_file\n\n";
+	$rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
+	print $rule;
+    } elsif ($host_platform{'default_features'} =~ /compiled-for-unix/i) {
+	print "\t", '@-mv $@ $@.old', "\n";
+	print "\t", 'cp -p $< $@', "\n";
+	print "\t", '@rm -f $@.old', "\n";
+	if ($executable_permissions) { print "\t", 'chmod a+x $@', "\n"; }
+	print "\n";
+    } else {
+	die("The host is neither Unix nor win32, so I don't know how\n"
+	    . "to install your files.");
+    }
+    push(@install_dependencies, $to_file);
+}
+
+# install($dest_subdir, @files) -- exported
+#
+# Installs a bunch of files from the build dir into a subdirectory of
+# $destdir.
+#
 sub install {
     local ($subdir, @files) = @_;
     local ($file, $dst);
@@ -375,23 +842,16 @@ sub install {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-
-	print "$dst: $file\n";
-	if ($win32) {
-	    local ($rule) = "\tcopy $file $dst\n\n";
-	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
-	    print $rule;
-	} else {
-	    print "\t", '@-mv $@ $@.old', "\n";
-	    print "\t", 'cp -p $< $@', "\n";
-	    print "\t", '@rm -f $@.old', "\n";
-	    print "\n";
-	}
-
-	push(@install_dependencies, $dst);
+	install_one_file($file, $dst, 0);
     }
 }
 
+# install_from_src($dest_subdir, @files) -- exported
+#
+# Installs a bunch of files from the source dir into a subdirectory of
+# $destdir.  Useful when you just want to copy Perl scripts into the 
+# dest dir.
+#
 sub install_from_src {
     local ($subdir, @files) = @_;
     local ($file, $dst);
@@ -401,25 +861,15 @@ sub install_from_src {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-
-	print "$dst: $srcdir/$file\n";
-	if ($win32) {
-	    local ($rule) = "\tcopy $srcdir/$file $dst\n\n";
-	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
-	    print $rule;
-	} else {
-	    print "\t", '@-mv $@ $@.old', "\n";
-	    print "\t", 'cp -p $< $@', "\n";
-	    print "\t", '@rm -f $@.old', "\n";
-	    print "\n";
-	}
-
-	push(@install_dependencies, $dst);
+	install_one_file("$srcdir/$file", $dst, 0);
     }
 }
 
+# install_executable_from_src($dest_subdir, @files) -- exported
+#
 # Like install_from_src, except makes sure the file has executable 
-# permissions for everyone (this is not relevant on win32)
+# permissions for everyone (this is not relevant on win32, only unix).
+#
 sub install_executable_from_src {
     local ($subdir, @files) = @_;
     local ($file, $dst);
@@ -429,93 +879,81 @@ sub install_executable_from_src {
 
     foreach $file (@files) {
 	$dst = "\$(DESTDIR)/$subdir/$file";
-
-	print "$dst: $srcdir/$file\n";
-	if ($win32) {
-	    local ($rule) = "\tcopy $srcdir/$file $dst\n\n";
-	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
-	    print $rule;
-	} else {
-	    print "\t", '@-mv $@ $@.old', "\n";
-	    print "\t", 'cp -p $< $@', "\n";
-	    print "\t", '@rm -f $@.old', "\n";
-	    print "\t", 'chmod a+x $@', "\n";
-	    print "\n";
-	}
-
-	push(@install_dependencies, $dst);
+	install_one_file("$srcdir/$file", $dst, 1);
     }
 }
 
-
-# Your normal compiler Makegen file should simply set $D2CFLAGS and
-# $CPPFLAGS, then call this subroutine, and finally a emit_library_rule
-sub d2c_library {
-    local ($dylan_lib_name, $unit_prefix, $source_files) = @_;
-    local ($ar_name) = &make_into_library_name($unit_prefix);
-    local ($du_name);
-    if ($dylan_lib_name eq "compiler-main") {  # hack...
-	$du_name = "";
-    } else {
-	$du_name = "compiler-" . $unit_prefix . ".lib.du";
-    }
-    if ($stage2) {
-	push(@compile_dependencies, "$du_name $ar_name");
-    } else {
-	push(@compile_dependencies, $unit_prefix . 'lib.dbc');
-	push(@files_to_clean, '*.dbc');
-	$D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
-	if (! $nmake) {
-	    print "\n.PHONY: d2c-compile\n\n";
-	}
-	print "d2c-compile: $du_name $ar_name\n\n";
-
-	print "MC = mindycomp\n";
-        print 'MINDYFLAGS = -l' . $dylan_lib_name . "\n";
-	print "MINDY = mindy\n\n";
-
-        do spew_dbc_rules($source_files);
-	print "\n";
-
-	print "OBJS = \\\n";   # That's OBJS = \
-        print "\t", join(".dbc \\\n\t", split(/\s/, $source_files)), ".dbc\n";
-	local($dbc_libname) = $unit_prefix . 'lib.dbc';
-        print "\n$dbc_libname: \$(OBJS)\n";
-        print "\t", &dbc_link_rule($dbc_libname, '$(OBJS)'), "\n";
-    }
-}
-
-# Use global $srcdir for where to get sources
-sub spew_dbc_rules {
-    local($sources) = @_;
-    local($source);
-    foreach $source (split(/\s/, $sources)) {
-	print "$source.dbc: $srcdir/$source.dylan\n";
-	print "\t\$(MC) \$(MINDYFLAGS) ";
-	print "-o $source.dbc $srcdir/$source.dylan\n\n";
-    }
-}
-
-sub dbc_link_rule {
-    local($libname, $objects) = @_;
-    if ($newlines_are_crlf) {
-	return "dbclink $libname $objects";
-    } else {
-	return "cat $objects > $libname";
-    }
-}
-
-sub make_into_library_name {
-    local($basename) = @_;
-    return "$lib_prefix$basename.$lib_type";
-}
-
-# makegen_include is include, except it correctly handles the case
-# where the srcdir is not the same as the destdir (ie, it looks for the
-# include file in the srcdir)
+# emit_mindycomp_rule($dylan_source) -- exported
 #
-# There's a certain danger of variable capture with include_file, so
-# don't use that variable in your included files.
+# Emits a rule to run mindycomp on the file.  $dylan_source shouldn't
+# have an extension.
+#
+# emit_mindycomp_library_rule is the primary, perhaps even the only,
+# user of this function.
+#
+sub emit_mindycomp_rule {
+    local($source, $flags) = @_;
+    print "$source.dbc: \$(SRCDIR)/$source.dylan\n";
+    print "\t\$(MC) $flags ";
+    print "-o $source.dbc \$(SRCDIR)/$source.dylan\n";
+}
+
+# emit_dbc_link_rule($libname, $dbc_files) -- exported
+#
+# Links a bunch of .dbc files into a single .dbc file.
+#
+sub emit_dbc_link_rule {
+    local($libname, $objects) = @_;
+    print "\n$libname: $objects\n";
+    if ($host_platform{'use_dbclink?'}) {
+	print "\tdbclink $libname $objects\n\n";
+    } else {
+	print "\tcat $objects > $libname\n\n";
+    }
+}
+
+# emit_mindycomp_library_rule($libname, $source_files) -- exported
+#
+# Generates a rule for compiling the library with Mindy.  Usually this
+# function is invoked via emit_library_rule, but you can call it on
+# your own if you want.  The resulting file will be called
+# foo-lib.dbc, and will *not* be added to the list of compile
+# dependencies.  Also, this command only builds libraries, not
+# executables.  To build an executable, we need to know all the other
+# libraries that go into it, which is beyond the scope of this
+# function.
+#
+sub emit_mindycomp_library_rule {
+    local($libname, $lid_sources) = @_;
+    $libname =~ tr/A-Z/a-z/;
+    local($uppercase_libname) = $libname;
+    $uppercase_libname =~ tr/-a-z/_A-Z/;
+    local($file, @sources, @objects);
+    foreach $file (split(/\s+/, $lid_sources)) {
+	$file =~ s/\.dylan$//;  # chop off ".dylan"
+	push(@sources, $file); # emit_mindycomp_rule doesn't want ".dylan"
+	push(@objects, "$file.dbc");
+	push(@files_to_clean, "$file.dbc");
+    }
+    print "DASH_$uppercase_libname = -l$libname\n\n";
+    print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n";
+    local($source);
+    foreach $source (@sources) {
+	&emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
+    }
+    emit_dbc_link_rule("$libname-lib.dbc", join(' ', @objects));
+}
+
+# makegen_include($include_file) -- exported
+#
+# makegen_include is like C's #include.  The main reason to use
+# makegen_include is that it correctly handles the case where the
+# srcdir is not the same as the destdir (ie, it looks for the include
+# file in the srcdir).
+#
+# There's a certain danger of variable capture with the variable
+# $include_file, so don't use that variable in your included files.
+#
 sub makegen_include {
     local($include_file) =  @_;
     $include_file = $srcdir . '/' . $include_file;
@@ -524,4 +962,27 @@ sub makegen_include {
     # Convert \ back to /, because that's how "do" likes its filenames
     $include_file =~ tr|\\|/|;
     do $include_file;
+}
+
+# unknown_platform_error() -- exported
+#
+# Tries to give a useful error message when a Makegen doesn't
+# understand the platform.
+#
+sub unknown_platform_error {
+    die "Unknown CPU type for platform " . $target_name . "\n"
+	. "All known features: " . $target_platform{'default_features'} . "\n";
+}
+
+# convert_path_separator($path) -- exported
+#
+# Converts a path which uses / into one that uses the path separator
+# appropriate for the host platform.
+#
+sub convert_path_separator {
+    local($path) = @_;
+    local($separator) = $host_platform{'path_separator'};
+    $separator =~ s|\\\\|\\|g; # translate \\ into \ (Dylan escaping rules)
+    $path =~ s|/|$separator|g;
+    return $path;
 }
