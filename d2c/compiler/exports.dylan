@@ -1,17 +1,20 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.120 1995/12/10 15:23:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.121 1995/12/14 00:02:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define library compiler
   use Dylan;
-  use Collection-Extensions, exclude: {heap};
+  use Collection-Extensions,
+    import: {self-organizing-list};
   use Random;
   use Streams;
   use Print;
   use Format;
+#if (mindy)
   use Debugger-Format;
   use String-extensions;
+#end
 end;
 
 define module params
@@ -23,7 +26,16 @@ end;
 
 define module common
   use Dylan, export: all;
-  use Extensions, export: all;
+  use Extensions,
+    import: {main,
+	     <fixed-integer>, <extended-integer>,
+	     $maximum-fixed-integer, ratio,
+	     false-or, one-of, type-or,
+	     <boolean>, <false>, <true>,
+	     ignore,
+	     *debug-output*, <equal-table>, <string-table>, <dictionary>,
+	     key-exists?, equal-hash},
+    export: all;
   use Streams, export: all;
   use Print, export: all;
   use PPrint, export: all;
@@ -34,8 +46,8 @@ end;
 define module utils
   use common;
   use standard-io;
-  use Introspection;
-  use System;
+  use Introspection, import: {object-address, class-name};
+  use System, import: {copy-bytes};
 
   // Stuff defined in utils
   export
@@ -49,7 +61,7 @@ end;
 
 define module od-format
   use common;
-  use system;
+  use system, import: {get-time-of-day};
   use standard-io;
   use introspection, import: {function-name};
   use utils;
@@ -165,9 +177,10 @@ end;
 
 define module source
   use common;
-  use System;
-  use File-Descriptors;
-
+  use System, import: {copy-bytes};
+  use File-Descriptors,
+    import: {fd-close, fd-read, fd-seek, fd-open,
+	     O_RDONLY, SEEK_SET, SEEK_END};
   use utils;
   use od-format;
   use compile-time-values;
@@ -186,7 +199,7 @@ end;
 
 define module header
   use common;
-  use System;
+  use System, import: {copy-bytes};
 
   use utils;
   use source;
@@ -340,7 +353,7 @@ end;
 
 define module lexer
   use common;
-  use System;
+  use System, import: {};
 
   use utils;
   use source;
@@ -520,7 +533,7 @@ end;
 define module ctype
   use common;
   use Introspection, import: {class-name};
-  use Random;
+  use Random, import: {random-bits};
 
   use utils;
   use compile-time-values;
@@ -599,7 +612,7 @@ define module classes
   use forwards, import: {<cclass>}, export: all;
 
   export
-    cclass-name, closest-primary-superclass,
+    cclass-name, loaded?, closest-primary-superclass,
     closest-primary-superclass-setter, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
     all-slot-infos, all-slot-infos-setter, new-slot-infos,
@@ -1256,6 +1269,7 @@ define module fer-od
   
 end;
 
+#if (mindy)
 // Part of the compiler library
 //
 define module autodump
@@ -1273,10 +1287,11 @@ define module autodump
   export 
     autodump;
 end module autodump;
+#end
 
 define module main
   use common;
-  use System;
+  use System, import: {system, copy-bytes, getenv};
 
   use utils;
   use define-classes;
@@ -1303,7 +1318,10 @@ define module main
   use cheese;
   use od-format;
   use string-conversions;
+#if (mindy)
   use autodump;
+#end
   use standard-io;
   use tokens;
 end;
+
