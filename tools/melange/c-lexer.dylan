@@ -1327,7 +1327,7 @@ define /* exported */ method get-token
         let ei-token = make(<end-include-token>, position: pos,
                             generator: state, string: old-file,
                             value: macros);
-        parse-progress-report(ei-token, "<<< exiting header <<<");
+        parse-header-progress-report(ei-token, "<<< exiting header <<<");
         return(ei-token);
       else
         return(token);

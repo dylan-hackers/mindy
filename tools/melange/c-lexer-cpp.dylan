@@ -505,7 +505,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
                     angle-start, angle-end,
                     quote-start, quote-end);
       end if;
-  parse-progress-report(generator, ">>> entered header >>>");
+  parse-header-progress-report(generator, ">>> entered header >>>");
   unget-token(generator, make(<begin-include-token>, position: pos,
 			      generator: generator,
 			      string: generator.file-name));

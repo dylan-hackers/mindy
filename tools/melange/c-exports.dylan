@@ -86,7 +86,10 @@ define module parse-conditions
   use format;
   use standard-io;
   export
-    *show-parse-progress?*,
+    *show-parse-progress-level*,
+    $parse-progress-level-none,
+    $parse-progress-level-headers,
+    $parse-progress-level-all,
     <parse-condition>,
     <simple-parse-error>,
     <simple-parse-warning>,
@@ -96,7 +99,8 @@ define module parse-conditions
     // \with-default-parse-context,
     parse-error,
     parse-warning,
-    parse-progress-report;
+    parse-progress-report,
+    parse-header-progress-report;
 end module;
 
 define module multistring-match

@@ -1,7 +1,7 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.35 2004/05/31 00:03:22 cpage Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.36 2004/06/01 09:52:28 cpage Exp $
 
 //======================================================================
 //
@@ -682,14 +682,19 @@ define method show-copyright(stream :: <stream>) => ()
   format(stream, "Melange (Gwydion Dylan)\n");
   format(stream, "Turns C headers into Dylan libraries.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
-  format(stream, "Copyright 1998-2003 Gwydion Dylan Maintainers\n");
+  format(stream, "Copyright 1998-2004 Gwydion Dylan Maintainers\n");
 end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
   format(stream,
-"Usage: melange [-v] [--mindy|--d2c|--Ttarget] [-Ddef[=val]...] [-Uundef...]\n"
-"               [-Iincdir...] [--framework name...] [--no-struct-accessors]\n"
-"               [-m modulefile]  infile [outfile]\n");
+"Usage: melange [-v] [--headers]\n"
+"               [--mindy|--d2c|--Ttarget] [--no-struct-accessors]\n"
+"               [-Ddef[=val]...] [-Uundef...]\n"
+"               [-Iincdir...] [--framework name...]\n"
+"               [-m modulefile] infile [outfile]\n"
+"       melange --defines\n"
+"       melange --help\n"
+"       melange --version\n");
 end method show-usage;
 
 define method show-usage-and-exit() => ()
@@ -697,36 +702,7 @@ define method show-usage-and-exit() => ()
   exit(exit-code: 1);
 end method show-usage-and-exit;
 
-define method show-help(stream :: <stream>) => ()
-  show-copyright(stream);
-  format(stream, "\n");
-  show-usage(stream);
-  format(stream, "\n"
-"  -v, --verbose:         Print progress messages while parsing.\n"
-"  --mindy:               Generate output for use only with Mindy.\n"
-"  --d2c:                 Generate output for use only with d2c.\n"
-"  -T, --target:          Generate output for use only with the named target.\n"
-"  -D, --define:          Define a C preprocessor symbol for use by C headers.\n"
-"                         If no value is given, defaults to 1.\n"
-"  -U, --undefine:        Prevent definition of a default preprocessor symbol.\n"
-"                         (Default symbols are listed below.)\n"
-"  -I, --includedir:      Extra directories to search for C headers.\n"
-"  --framework:           The name of a framework bundle to search for C headers and\n"
-"                         child frameworks. Required when a child framework is\n"
-"                         directly referred to in an interface definition with no\n"
-"                         previous references to its parent; once a parent is seen,\n"
-"                         either via this option or in a clause of the interface\n"
-"                         definition, its children will be found automatically.\n"
-"                         (Note: Parent --framework options must be given before\n"
-"                         child framework options.)\n"
-"  --no-struct-accessors: Do not generate accessor functions for C struct members.\n"
-"  -m, --module-file:     Create a Dylan interchange file with a module definition\n"
-"                         that exports interface names.\n"
-"  --help                 Show this help text.\n"
-"  --version              Show version number.\n"
-"\n");
-  format(stream,
-"  Default C preprocessor symbols:\n\n");
+define method show-default-defines(stream :: <stream>) => ()
   for (i from 0 below $default-defines.size by 2)
     let name = $default-defines[i];
     let value = $default-defines[i + 1];
@@ -734,11 +710,11 @@ define method show-help(stream :: <stream>) => ()
     if (instance?(value, <string>))
       // Print a simple macro: NAME value
       format(stream,
-"    %s %s\n", name, value);
+"%s %s\n", name, value);
     elseif (instance?(value, <list>))
       // Print a parameterized macro: NAME(arg1, arg2) value
       format(stream,
-"    %s(", name);
+"%s(", name);
       for (arg in value[0],
            fmt = "%s" then ", %s")
         format(stream, fmt, arg);
@@ -746,6 +722,40 @@ define method show-help(stream :: <stream>) => ()
       format(stream, ") %s\n", value[1]);
     end if;
   end for;
+end method show-default-defines;
+
+define method show-help(stream :: <stream>) => ()
+  show-copyright(stream);
+  format(stream, "\n");
+  show-usage(stream);
+  format(stream, "\n"
+"Options:\n"
+"  -v, --verbose          Print progress messages while parsing.\n"
+"                         (Includes --headers.)\n"
+"  --headers              Print each header file included while parsing.\n"
+"  --mindy                Generate output for use only with Mindy.\n"
+"  --d2c                  Generate output for use only with d2c.\n"
+"  -T, --target           Generate output for use only with the named target.\n"
+"  --no-struct-accessors  Do not generate accessor functions for C struct members.\n"
+"  -D, --define           Define a C preprocessor macro for use by C headers.\n"
+"                         If no value is given, defaults to 1.\n"
+"  -U, --undefine         Prevent definition of a default preprocessor macro.\n"
+"                         (Use --defines to see the defaults.)\n"
+"  -I, --includedir       Extra directories to search for C headers.\n"
+"  --framework            The name of a framework bundle to search for C headers\n"
+"                         and child frameworks. Required when a child framework is\n"
+"                         directly referred to in an interface definition with no\n"
+"                         previous references to its parent; once a parent is seen,\n"
+"                         either via this option or in a clause of the interface\n"
+"                         definition, its children will be found automatically.\n"
+"                         (Note: Parent --framework options must be given before\n"
+"                         child framework options.)\n"
+"  -m, --module-file      Create a Dylan interchange file with a module definition\n"
+"                         that exports the interface names.\n"
+"  --defines              Show the default C preprocesor definitions.\n"
+"  --help                 Show this help text.\n"
+"  --version              Show version number.\n"
+);
 end method show-help;
 
 
@@ -773,8 +783,14 @@ define method main (program, #rest args)
 			    long-options: #("version"));
   add-option-parser-by-type(*argp*,
 			    <simple-option-parser>,
+			    long-options: #("defines"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
 			    long-options: #("verbose"),
 			    short-options: #("v"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("headers"));
   add-option-parser-by-type(*argp*,
 			    <simple-option-parser>,
 			    long-options: #("d2c"));
@@ -814,6 +830,10 @@ define method main (program, #rest args)
   end unless;
   
   // Handle our informational options.
+  if (option-value-by-long-name(*argp*, "defines"))
+    show-default-defines(*standard-output*);
+    exit(exit-code: 1);
+  end if;
   if (option-value-by-long-name(*argp*, "help"))
     show-help(*standard-output*);
     exit(exit-code: 1);
@@ -825,6 +845,7 @@ define method main (program, #rest args)
   
   // Retrieve our regular options.
   let verbose? = option-value-by-long-name(*argp*, "verbose");
+  let headers? = option-value-by-long-name(*argp*, "headers");
   let d2c? = option-value-by-long-name(*argp*, "d2c");
   let mindy? = option-value-by-long-name(*argp*, "mindy");
   let target = option-value-by-long-name(*argp*, "target");
@@ -836,11 +857,17 @@ define method main (program, #rest args)
   let framework-dirs = option-value-by-long-name( *argp*, "framework" );
   let no-struct-accessors? = option-value-by-long-name( *argp*, "no-struct-accessors" );
 
-  // Handle --verbose.
-  if (verbose?)
-    *show-parse-progress?* := #t;
+  // Handle --headers.
+  if (headers?)
+    *show-parse-progress-level* := $parse-progress-level-headers;
   end if;
   
+  // Handle --verbose; overrides --headers.
+  if (verbose?)
+    *show-parse-progress-level* := $parse-progress-level-all;
+  end if;
+
+  // Handle --no-struct-accessors
   if (no-struct-accessors?)
     *inhibit-struct-accessors?* := #t;
   end if;

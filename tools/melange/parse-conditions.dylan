@@ -20,8 +20,15 @@ license: CMU Gwydion Dylan License
 //======================================================================
 //  These parameters control the global behavior of this module.
 
-//  Show progress messages while parsing?
-define /* dynamic */ variable *show-parse-progress?* = #f;
+//  What kind of progress messages to show while parsing, if any.
+define constant $parse-progress-level-none = 0;
+define constant $parse-progress-level-headers = 1;
+define constant $parse-progress-level-all = 2; // add new levels above and increase this value.
+define constant <parse-progress-level> = limited(<integer>,
+                                                 min: $parse-progress-level-none,
+                                                 max: $parse-progress-level-all);
+define /* dynamic */ variable *show-parse-progress-level* :: <parse-progress-level>
+  = $parse-progress-level-none;
 
 
 //======================================================================
@@ -60,6 +67,8 @@ define class <simple-parse-warning> (<warning>,
 end;
 
 define class <parse-progress-report> (<format-string-parse-condition>)
+  slot parse-progress-level :: <parse-progress-level> = $parse-progress-level-all,
+    init-keyword: level:;
 end;
 
 
@@ -128,6 +137,15 @@ define function parse-progress-report
 	      format-arguments: format-args));
 end function;
 
+define function parse-header-progress-report
+    (context, format-string, #rest format-args)
+  signal(make(<parse-progress-report>,
+              level: $parse-progress-level-headers,
+	      source-location: find-source-location(context),
+	      format-string: format-string,
+	      format-arguments: format-args));
+end function;
+
 
 //======================================================================
 //  Methods on <parse-condition>
@@ -165,7 +183,7 @@ define method report-condition
 end method report-condition;
 
 define method default-handler(condition :: <parse-progress-report>)
-  if (*show-parse-progress?*)
+  if (*show-parse-progress-level* >= condition.parse-progress-level)
     report-condition(condition, *warning-output*);
     condition-format(*warning-output*, "\n");
   end;
