@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.3 1999/02/25 07:04:30 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.4 1999/03/26 04:14:46 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -470,12 +470,16 @@ define macro class-definer
 end;
 
 define macro constant-definer
-    { define constant ?vars = ?:expression }
-      => make-define-constant({ ?vars }, { ?expression })
-  vars:
-    { ?:variable } => { ?variable }
-    { (?:variable-list) } => { ?variable-list }
-end;
+    { define constant ?:variable = ?:expression }
+      => { define-constant ( ?variable; dummy = ?expression ) }
+    { define constant ( ?:variable-list ) ?eq:token ?:expression }
+      => { define-constant ( ?variable-list; dummy ?eq ?expression ) }
+end macro;
+
+define macro define-constant
+    { define-constant ( ?:variable-list; ?dummy:name = ?:expression ) }
+    => make-define-constant({ ?variable-list }, { ?expression })
+end macro;
 
 define macro domain-definer
     { define sealed domain ?:name (?types ) }
@@ -581,12 +585,16 @@ define macro library-definer
 end;
 
 define macro variable-definer
-    { define variable ?vars = ?:expression }
-      => make-define-variable({ ?vars }, { ?expression })
-  vars:
-    { ?:variable } => { ?variable }
-    { (?:variable-list) } => { ?variable-list }
-end;
+    { define variable ?:variable = ?:expression }
+      => { define-variable ( ?variable; dummy = ?expression ) }
+    { define variable ( ?:variable-list ) ?eq:token ?:expression }
+      => { define-variable ( ?variable-list; dummy ?eq ?expression ) }
+end macro;
+
+define macro define-variable
+    { define-variable ( ?:variable-list; ?dummy:name = ?:expression ) }
+    => make-define-variable({ ?variable-list }, { ?expression })
+end macro;
 
 
 
