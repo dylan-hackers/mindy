@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.11 2001/07/07 17:12:59 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.12 2001/07/08 10:13:13 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1665,7 +1665,7 @@ define method find-slot-offset
   if (csubtype?(instance-class.closest-primary-superclass,
 		slot.slot-introduced-by))
     get-direct-position(slot.slot-positions, instance-class)
-      | error("Can't find position for %= in class %s?", slot, instance-class);
+      | error("Can't find position for slot %= in class %s?", slot.slot-getter.variable-name, instance-class);
   elseif (instance-class.sealed?)
     get-general-position(slot.slot-positions, instance-class);
   else
@@ -1684,7 +1684,7 @@ define method find-slot-offset
     => res :: false-or(<slot-position>);
   let instance-class = instance-type.base-class;
   get-direct-position(slot.slot-positions, instance-class)
-    | error("Can't find position for %= in class %s?", slot, instance-class);
+    | error("Can't find position for %= in class %s?", slot.slot-getter.variable-name, instance-class);
 end method find-slot-offset;
 
 define method find-slot-offset
