@@ -119,24 +119,28 @@ define method c-output
     (type :: <c-struct-type>)
  => (result :: <string>)
   // XXX: This is a bit hacky.
-  if (type.c-type-tag[0] ~= '$')
-    register-exported-name(output-name(type.c-type-tag, class: #t));
-  end if;
-  let def :: <string> = concatenate("define C-struct ", output-name(type.c-type-tag, class: #t), "\n");
-  for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
-    if (object-class(type.c-type-members[counter]) = <c-bit-field>)
-      def := concatenate(def, "  // <bit-field> not yet supported.\n");
-    else
-      let t = type.c-type-members[counter].c-member-variable-type;
-      if (object-class(t) = <c-typedef-type>)
-        t := register-exported-name(output-name(t.c-typedef-name, class: #t));
-      else
-        t := c-output(t);
-      end if;
-      def := concatenate(def, "  slot ", register-exported-name(output-name(type.c-type-members[counter].c-member-variable-name)), " :: ", t, ";\n");
+  if(type.c-type-members) // type not incomplete
+    if (type.c-type-tag[0] ~= '$')
+      register-exported-name(output-name(type.c-type-tag, class: #t));
     end if;
-  end for;
-  concatenate(def, "end C-struct;\n");
+    let def :: <string> = concatenate("define C-struct ", output-name(type.c-type-tag, class: #t), "\n");
+    for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
+      if (object-class(type.c-type-members[counter]) = <c-bit-field>)
+        def := concatenate(def, "  // <bit-field> not yet supported.\n");
+      else
+        let t = type.c-type-members[counter].c-member-variable-type;
+        if (object-class(t) = <c-typedef-type>)
+          t := register-exported-name(output-name(t.c-typedef-name, class: #t));
+        else
+          t := c-output(t);
+        end if;
+        def := concatenate(def, "  slot ", register-exported-name(output-name(type.c-type-members[counter].c-member-variable-name)), " :: ", t, ";\n");
+      end if;
+    end for;
+    concatenate(def, "end C-struct;\n");
+  else
+    ""
+  end if;
 end method;
 
 define method c-output
