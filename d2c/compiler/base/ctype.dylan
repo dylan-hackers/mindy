@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.36 1996/01/08 21:39:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.37 1996/01/09 17:07:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1319,7 +1319,7 @@ define constant fixed-values-op
       let exact = #t;
       let result = #();
       for (t1 = types1 then t1.tail,  t2 = types2 then t2.tail,
-	   until t1 == #() & t2 == #())
+	   until: t1 == #() & t2 == #())
 	let type1 = if (t1 == #()) rest1 else t1.head end;
 	let type2 = if (t2 == #()) rest2 else t2.head end;
 	let (res, win) = operation(type1, type2);
