@@ -497,11 +497,16 @@ define method tautology(arg :: <sequence>) => <integer>;
   let handler <simple-warning> = warning;
   for (arg in arg)
     if (arg)
-      format("Tautologies on %s\n", as(<string>, arg));
+      format("Tautologies on %s ... ", as(<string>, arg));
+      let error-count = fatals;
       tautology(arg);
+      if (error-count = fatals)    // last test had no errors
+	format("ok.\n");
+      end if;
     end if;
   end for;
-  format("Tautology completed with %d warnings and %d fatal errors\n", warnings, fatals);
+  format("Tautology completed with %d warnings and %d fatal errors\n",
+	 warnings, fatals);
   warnings + fatals;
 end method;
 

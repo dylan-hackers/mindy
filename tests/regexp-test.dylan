@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.6 1994/11/09 22:41:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.7 1995/04/08 19:16:48 nkramer Exp $
 
 //======================================================================
 //
@@ -47,26 +47,43 @@ end module regression-test;
 define variable has-errors = #f;
 
 define method main (argv0, #rest ignored)
-  format("Regression test for the string-extensions library.\n\n");
-  positioner-test();
-  replace-test();
-  translate-test();
-  split-test();
-  substring-search-test();
+  format("\nRegression test for the string-extensions library.\n\n");
+  run-several-tests("regexp-positioner", positioner-test);
+  run-several-tests("regexp-replace", replace-test);
+  run-several-tests("make-regexp-replacer", make-replacer-test);
+  run-several-tests("translate", translate-test);
+  run-several-tests("make-translator", make-translator-test);
+  run-several-tests("split", split-test);
+  run-several-tests("make-splitter", make-splitter-test);
+  run-several-tests("substring-search", substring-search-test);
+  run-several-tests("join", join-test);
 //  case-insensitive-equal-test();   // Takes a really long time
-  join-test();
+
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");
   else
-    format("All tests pass.\n");
+    format("All regular expression tests pass.\n");
   end if;
 end method main;
+
+define method run-several-tests (test-name :: <string>, 
+				 test :: <function>) => ();
+  format("%s ... ", test-name);
+  let temp-has-errors = has-errors;
+  has-errors := #f;
+  test();
+  if (has-errors == #f)
+    format("ok.\n");
+  end if;
+  has-errors := temp-has-errors;
+end method run-several-tests;
+
 
 define method run-test (input, expected-result, test-name :: <string>)
  => passed? :: <boolean>;
   if (input ~= expected-result)
     has-errors := #t;
-    format("Failed %s\n", test-name);
+    format("Failed!\n", test-name);
     format("     Got %=\n", input);
     format("     when we expected %=\n", expected-result);
     #f;
@@ -76,7 +93,6 @@ define method run-test (input, expected-result, test-name :: <string>)
 end method run-test;
 
 define method join-test ();
-  format("join\n");
   run-test(join(", ", "dirty word", "clean word",
 		"computer word", "spanish word"),
 	   "dirty word, clean word, computer word, spanish word",
@@ -89,7 +105,7 @@ end method join-test;
 // case-insensitive-equal works.
 //
 define method case-insensitive-equal-test ()
-  format("Case insensitive equal\n");
+  format("Case insensitive equal");
   for (c1 = as(<character>, 0) then successor(c1), 
        until c1 = as(<character>, 255))
     for (c2 = as(<character>, 0) then successor(c2), 
@@ -118,7 +134,6 @@ end method substring-search-test;
 
 
 define method replace-test ()
-  format("regexp-replace\n");
   let big-string = "The rain in spain and some other text";
   run-test(regexp-replace(big-string, "the (.*) in (\\w*\\b)",
 			  "\\2 has it's \\1"),
@@ -133,8 +148,10 @@ define method replace-test ()
   run-test(regexp-replace(big-string, "in", "out", start: 8, end: 15),
 	   "The rain out spain and some other text",
 	   "regexp-replace #4");
+end method replace-test;
 
-  format("Make-regexp-replacer\n");
+define method make-replacer-test ()
+  let big-string = "The rain in spain and some other text";
   let replacer1 = make-regexp-replacer("the (.*) in (\\w*\\b)");
   run-test(replacer1(big-string, "\\2 has it's \\1"),
 	   "spain has it's rain and some other text",
@@ -144,12 +161,11 @@ define method replace-test ()
   run-test(replacer2(big-string),
 	   "spain has it's rain and some other text",
 	   "make-regexp-replacer #2");
-end method replace-test;
+end method make-replacer-test;
 
 
 define method translate-test ()
   let big-string = "The rain in spain and some other text";
-  format("translate\n");
   run-test(translate(big-string, "a-z", "A-Z"),
 	   "THE RAIN IN SPAIN AND SOME OTHER TEXT",
 	   "translate test 1");
@@ -162,8 +178,10 @@ define method translate-test ()
   run-test(translate(big-string, "a-z", "A-Z", start: 5, end: 10),
 	   "The rAIN In spain and some other text",
 	   "translate test 4");
-  
-  format("make-translator\n");
+end method translate-test;
+
+define method make-translator-test ()
+  let big-string = "The rain in spain and some other text";
   let translator1 = make-translator("a-z", "A-Z");
   run-test(translator1(big-string),
 	   "THE RAIN IN SPAIN AND SOME OTHER TEXT",
@@ -180,63 +198,60 @@ define method translate-test ()
   run-test(translator4(big-string, start: 5, end: 10),
 	   "The rAIN In spain and some other text",
 	   "make-translator #4");
-end method translate-test;
+end method make-translator-test;
 
 
 define method split-test ()
   let big-string = "The rain in spain and some other text";
-  block ()
-    format("split\n");
-    let (#rest test1) = split("\\s", big-string);
-    run-test(test1, 
-	     #("The", "rain", "in", "spain", "and", "some", "other", "text"),
-	     "split #1");
-    let (#rest test2) = split("\\s", big-string, count: 3);
-    run-test(test2, #("The", "rain", "in spain and some other text"),
-	     "split #2");
-    let (#rest test3) = split("\\s", big-string, start: 12);
-    run-test(test3, #("The rain in spain", "and", "some", "other", "text"),
-	     "split #3");
-    let (#rest test4) = split("\\s", " Some   text with   lots of spaces  ", 
-			      count: 3);
-    run-test(test4, #("Some", "text", "with   lots of spaces  "),
-	     "split #4");
-    let (#rest test5) = split("\\s", " Some   text with   lots of spaces  ", 
-			      count: 3, remove-empty-items: #f);
-    run-test(test5, #("", "Some", "  text with   lots of spaces  "),
-	     "split #5");
-  end block;
-
-  block ()
-    format("make-splitter\n");
-    let splitter1 = make-splitter("\\s");
-    let (#rest test1) = splitter1(big-string);
-    run-test(test1, 
-	     #("The", "rain", "in", "spain", "and", "some", "other", "text"),
-	     "make-splitter #1");
-    let splitter2 = make-splitter("\\s");
-    let (#rest test2) = splitter2(big-string, count: 3);
-    run-test(test2, #("The", "rain", "in spain and some other text"),
-	     "make-splitter #2");
-    let splitter3 = make-splitter("\\s");
-    let (#rest test3) = splitter3(big-string, start: 12);
-    run-test(test3, #("The rain in spain", "and", "some", "other", "text"),
-	     "make-splitter #3");
-    let splitter4 = make-splitter("\\s");
-    let (#rest test4) = splitter4(" Some   text with   lots of spaces  ", 
-			      count: 3);
-    run-test(test4, #("Some", "text", "with   lots of spaces  "),
-	     "make-splitter #4");
-    let splitter5 = make-splitter("\\s");
-    let (#rest test5) = splitter5(" Some   text with   lots of spaces  ", 
-			      count: 3, remove-empty-items: #f);
-    run-test(test5, #("", "Some", "  text with   lots of spaces  "),
-	     "make-splitter #5");
-  end block;
+  let (#rest test1) = split("\\s", big-string);
+  run-test(test1, 
+	   #("The", "rain", "in", "spain", "and", "some", "other", "text"),
+	   "split #1");
+  let (#rest test2) = split("\\s", big-string, count: 3);
+  run-test(test2, #("The", "rain", "in spain and some other text"),
+	   "split #2");
+  let (#rest test3) = split("\\s", big-string, start: 12);
+  run-test(test3, #("The rain in spain", "and", "some", "other", "text"),
+	   "split #3");
+  let (#rest test4) = split("\\s", " Some   text with   lots of spaces  ", 
+			    count: 3);
+  run-test(test4, #("Some", "text", "with   lots of spaces  "),
+	   "split #4");
+  let (#rest test5) = split("\\s", " Some   text with   lots of spaces  ", 
+			    count: 3, remove-empty-items: #f);
+  run-test(test5, #("", "Some", "  text with   lots of spaces  "),
+	   "split #5");
 end method split-test;
 
+define method make-splitter-test ()
+  let big-string = "The rain in spain and some other text";
+  let splitter1 = make-splitter("\\s");
+  let (#rest test1) = splitter1(big-string);
+  run-test(test1, 
+	   #("The", "rain", "in", "spain", "and", "some", "other", "text"),
+	   "make-splitter #1");
+  let splitter2 = make-splitter("\\s");
+  let (#rest test2) = splitter2(big-string, count: 3);
+  run-test(test2, #("The", "rain", "in spain and some other text"),
+	   "make-splitter #2");
+  let splitter3 = make-splitter("\\s");
+  let (#rest test3) = splitter3(big-string, start: 12);
+  run-test(test3, #("The rain in spain", "and", "some", "other", "text"),
+	   "make-splitter #3");
+  let splitter4 = make-splitter("\\s");
+  let (#rest test4) = splitter4(" Some   text with   lots of spaces  ", 
+				count: 3);
+  run-test(test4, #("Some", "text", "with   lots of spaces  "),
+	   "make-splitter #4");
+  let splitter5 = make-splitter("\\s");
+  let (#rest test5) = splitter5(" Some   text with   lots of spaces  ", 
+				count: 3, remove-empty-items: #f);
+  run-test(test5, #("", "Some", "  text with   lots of spaces  "),
+	   "make-splitter #5");
+end method make-splitter-test;
+
+
 define method positioner-test ();
-  format("regexp-positioner\n");
   test-regexp("a*", "aaaaaaaaaa", #[0, 10]);
   test-regexp("a*", "aaaaabaaaa", #[0, 5]);
   test-regexp("ab*(cd|e)", "acd", #[0, 3, 1, 3]);
