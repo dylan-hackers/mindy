@@ -1,7 +1,7 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.31 2003/04/19 23:52:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.32 2003/10/15 20:01:57 housel Exp $
 
 //======================================================================
 //
@@ -92,7 +92,8 @@ end method count-whitespace;
 //
 define method process-interface-file
     (in-file :: <string>, out-stream :: <stream>, 
-     #key verbose, structs, module-stream :: false-or(<stream>)) => ();
+     #key verbose, structs, module-stream :: false-or(<stream>),
+          defines, undefines) => ();
   let in-stream = make(<file-stream>, locator: in-file);
   let input-string = read-to-end(in-stream);
   let sz = input-string.size;
@@ -122,7 +123,9 @@ define method process-interface-file
 					   new-position, out-stream,
 					   verbose: verbose,
                                            module-stream: module-stream,
-                                           module-line: module-line);
+                                           module-line: module-line,
+                                           defines: defines,
+                                           undefines: undefines);
 	      if (newer-position < sz) try-define(newer-position) end if;
 	    else
 	      write(out-stream, input-string, start: new-position,
@@ -482,7 +485,7 @@ define variable target-switch :: <symbol> = #"all";
 define method process-parse-state
     (state :: <parse-state>, out-stream :: <stream>, 
      #key verbose, structs, module-stream :: false-or(<stream>),
-     module-line)
+     module-line, defines: cmd-defines, undefines: cmd-undefines)
  => ();
   if (~state.include-files)
     error("Missing #include in 'define interface'");
@@ -498,6 +501,16 @@ define method process-parse-state
   let defines = make(<equal-table>);
   for (i from 0 below $default-defines.size by 2)
     defines[$default-defines[i]] := $default-defines[i + 1];
+  end for;
+  for (value keyed-by name in cmd-defines)
+    if (value == #t)
+      defines[name] := "1";
+    else
+      defines[name] := value
+    end;
+  end for;
+  for (def in cmd-undefines)
+    remove-key!(defines, def);
   end for;
   for (def in state.macro-defines)
     defines[def.head] := def.tail;
@@ -598,7 +611,7 @@ define method process-define-interface
     (file-name :: <string>, string :: <string>, start :: <integer>,
      out-stream :: <stream>,
      #key verbose, module-stream :: false-or(<stream>),
-     module-line)
+     module-line, defines, undefines)
  => (end-position :: <integer>);
   let tokenizer = make(<tokenizer>, source-string: string,
 		       source-file: file-name, start: start);
@@ -608,7 +621,9 @@ define method process-define-interface
   process-parse-state(state, out-stream, 
                       verbose: verbose,
                       module-stream: module-stream,
-                      module-line: module-line);
+                      module-line: module-line,
+                      defines: defines,
+                      undefines: undefines);
   // The tokenizer will be set at the next token after the "define
   // interface".  We can't just call tokenizer.position since there may have
   // been an "unget-token" call.
@@ -736,6 +751,14 @@ define method main (program, #rest args)
 			    long-options: #("includedir"),
 			    short-options: #("I"));
   add-option-parser-by-type(*argp*,
+			    <keyed-option-parser>,
+			    long-options: #("define"),
+			    short-options: #("D"));
+  add-option-parser-by-type(*argp*,
+			    <repeated-parameter-option-parser>,
+			    long-options: #("undefine"),
+			    short-options: #("U"));
+  add-option-parser-by-type(*argp*,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("framework"));
   add-option-parser-by-type(*argp*,
@@ -764,6 +787,8 @@ define method main (program, #rest args)
   let target = option-value-by-long-name(*argp*, "target");
   let module-file = option-value-by-long-name(*argp*, "module-file");
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
+  let defines = option-value-by-long-name(*argp*, "define");
+  let undefines = option-value-by-long-name(*argp*, "undefine");
   let regular-args = regular-arguments(*argp*);
   let framework-dirs = option-value-by-long-name( *argp*, "framework" );
   let no-struct-accessors? = option-value-by-long-name( *argp*, "no-struct-accessors" );
@@ -812,7 +837,7 @@ define method main (program, #rest args)
   for (dir in framework-dirs)
     *framework-paths* := add(*framework-paths*, dir);
   end for;
-	find-frameworks( *framework-paths* );
+  find-frameworks(*framework-paths*);
 
   // Handle regular arguments.
   let in-file = #f;
@@ -837,7 +862,9 @@ define method main (program, #rest args)
   // Do our real work.
   process-interface-file(in-file, out-file | *standard-output*,
 			 verbose: verbose?,
-                         module-stream: module-stream);
+                         module-stream: module-stream,
+                         defines: defines,
+                         undefines: undefines);
   exit(exit-code: 0);  // ### seems to be necessary, even though I'd
                        // think all Dylan programs would exit with
                        // exit code 0 if they never called exit() at
