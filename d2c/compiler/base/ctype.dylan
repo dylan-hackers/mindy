@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.10 1995/04/22 02:35:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.11 1995/04/24 10:11:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1116,22 +1116,24 @@ end method;
 /// padding with Rest2 as needed.  Types1 must not be shorter than Types2.  The
 /// second value is #t if Operation always returned a true second value.
 ///
-define constant fixed-values-op = method 
-    (types1 :: <list>, types2 :: <list>, rest2 :: <ctype>,
-     operation :: <function>)
-  let exact = #t;
-  values(map(method(t1, t2)
-  	       let (res, win) = operation(t1, t2);
-	       unless (win) exact := #f end;
-	       res;
-	     end method,
-	     types1,
-	     concatenate(types2,
-	     		 make(<list>, size: types1.size - types2.size,
-			      fill: ctype-union(rest2,
-						dylan-value(#"<false>"))))),
-	 exact);
-end method;
+define constant fixed-values-op
+  = method (types1 :: <list>, types2 :: <list>, rest2 :: <ctype>,
+	    operation :: <function>)
+      let exact = #t;
+      values(map(method (t1)
+		   let t2 = if (types2 == #())
+			      rest2;
+			    else
+			      types2.head;
+			    end;
+		   types2 := types2.tail;
+		   let (res, win) = operation(t1, t2);
+		   unless (win) exact := #f end;
+		   res;
+		 end method,
+		 types1),
+	     exact);
+    end method;
 
 
 /// Args-Type-Op  --  Internal
@@ -1145,34 +1147,38 @@ end method;
 /// approximate the intersection of values types, the second value being true
 /// doesn't mean the result is exact.
 ///
-define constant args-type-op = method
+define method args-type-op
+    (type1 :: <ctype>, type2 :: <ctype>, operation :: <function>,
+     min-fun :: <function>)
+    => (res :: <values-ctype>, win? :: <boolean>);
+  operation(type1, type2);
+end;
+///
+define method args-type-op
     (type1 :: <values-ctype>, type2 :: <values-ctype>, operation :: <function>,
      min-fun :: <function>)
-  if (instance?(type1, <ctype>) & instance?(type2, <ctype>))
-    operation(type1, type2);
-  else
-    let types1 = type1.positional-types;
-    let rest1 = type1.rest-value-type;
-    let types2 = type2.positional-types;
-    let rest2 = type2.rest-value-type;
-    let (rest, rest-exact) = operation(rest1, rest2);
-    let (res, res-exact) =
-        if (types1.size < types2.size)
-	  fixed-values-op(types2, types1, rest1, operation);
-	else
-	  fixed-values-op(types1, types2, rest2, operation);
-	end if;
-    if (member?(empty-ctype(), res))
-      values(empty-ctype(), #t);
-    else
-      let min-values = min-fun(type1.min-values, type2.min-values);
-      if (res.size == 1 & min-values == 1 & rest == empty-ctype())
-	values(res.first, res-exact & rest-exact);
+    => (res :: <values-ctype>, win? :: <boolean>);
+  let types1 = type1.positional-types;
+  let rest1 = type1.rest-value-type;
+  let types2 = type2.positional-types;
+  let rest2 = type2.rest-value-type;
+  let (rest, rest-exact) = operation(rest1, rest2);
+  let (res, res-exact)
+    = if (types1.size < types2.size)
+	fixed-values-op(types2, types1, rest1, operation);
       else
-	values(make(<multi-value-ctype>, positional-types: res,
-		    min-values: min-values, rest-value-type: rest),
-	       res-exact & rest-exact);
-      end;
+	fixed-values-op(types1, types2, rest2, operation);
+      end if;
+  if (member?(empty-ctype(), res))
+    values(empty-ctype(), #t);
+  else
+    let min-values = min-fun(type1.min-values, type2.min-values);
+    if (res.size == 1 & min-values == 1 & rest == empty-ctype())
+      values(res.first, res-exact & rest-exact);
+    else
+      values(make(<multi-value-ctype>, positional-types: res,
+		  min-values: min-values, rest-value-type: rest),
+	     res-exact & rest-exact);
     end;
   end;
 end method;
@@ -1186,13 +1192,23 @@ end method;
 define constant values-type-union = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
-  args-type-op(type1, type2, ctype-union, min);
+  if (type1 == empty-ctype())
+    type2;
+  elseif (type2 == empty-ctype())
+    type1;
+  else
+    args-type-op(type1, type2, ctype-union, min);
+  end;
 end method;
 ///
 define constant values-type-intersection = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
-  args-type-op(type1, type2, ctype-intersection, max);
+  if (type1 == empty-ctype() | type2 == empty-ctype())
+    empty-ctype();
+  else
+    args-type-op(type1, type2, ctype-intersection, max);
+  end;
 end method;
 
 
@@ -1202,20 +1218,17 @@ end method;
 /// Note that due to the semantics of Values-Type-Intersection, this might
 /// return {T, T} when there isn't really any intersection (?).
 ///
-define constant values-types-intersect? = method
+define method values-types-intersect?
+    (type1 :: <ctype>, type2 :: <ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+  ctypes-intersect?(type1, type2);
+end;
+///
+define method values-types-intersect?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-
-  case
-    type1 == empty-ctype() | type2 == empty-ctype() => values(#t, #t);
-
-    instance?(type1, <multi-value-ctype>) |
-    instance?(type2, <multi-value-ctype>) =>
-      let (res, win) = values-type-intersection(type1, type2);
-      values(~(res == empty-ctype()), win);
-
-    otherwise => ctypes-intersect?(type1, type2);
-  end;
+  let (res, win) = values-type-intersection(type1, type2);
+  values(~(res == empty-ctype()), win);
 end method;
 
 
@@ -1224,37 +1237,38 @@ end method;
 ///    A subtypep-like operation that can be used on any types, including
 /// values types.  This is something like the result type congruence rule.
 ///
-define constant values-subtype? = method
+define method values-subtype?
+    (type1 :: <ctype>, type2 :: <ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+  csubtype?(type1, type2);
+end;
+///
+define method values-subtype?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-
-  case
-    instance?(type1, <ctype>) & instance?(type2, <ctype>) =>
-      csubtype?(type1, type2);
-
-    ~values-types-intersect?(type1, type2) => values(#f, #t);
-
-    otherwise =>
-      let types1 = type1.positional-types;
-      let rest1 = type1.rest-value-type;
-      let types2 = type2.positional-types;
-      let rest2 = type2.rest-value-type;
-      if (type1.min-values < type2.min-values)
-	values(#f, #t);
-      else
-	block (done)
-	  for (rem1 = types1 then rem1.tail,
-	       rem2 = types2 then rem2.tail,
-	       until rem1 == #() & rem2 == #())
-	    let t1 = if (rem1 == #()) rest1 else rem1.head end;
-	    let t2 = if (rem2 == #()) rest2 else rem2.head end;
-	    let (res, win-p) = csubtype?(t1, t2);
-	    unless (win-p) done(#f, #f) end;
-	    unless (res) done(#f, #t) end;
-	  end for;
-	  csubtype?(rest1, rest2);
-	end block;
-      end;
+  if (~values-types-intersect?(type1, type2))
+    values(#f, #t);
+  else
+    let types1 = type1.positional-types;
+    let rest1 = type1.rest-value-type;
+    let types2 = type2.positional-types;
+    let rest2 = type2.rest-value-type;
+    if (type1.min-values < type2.min-values)
+      values(#f, #t);
+    else
+      block (done)
+	for (rem1 = types1 then rem1.tail,
+	     rem2 = types2 then rem2.tail,
+	     until rem1 == #() & rem2 == #())
+	  let t1 = if (rem1 == #()) rest1 else rem1.head end;
+	  let t2 = if (rem2 == #()) rest2 else rem2.head end;
+	  let (res, win-p) = csubtype?(t1, t2);
+	  unless (win-p) done(#f, #f) end;
+	  unless (res) done(#f, #t) end;
+	end for;
+	csubtype?(rest1, rest2);
+      end block;
+    end;
   end;
 end method;
 
