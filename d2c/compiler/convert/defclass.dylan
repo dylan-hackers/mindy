@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.41 2002/09/04 21:26:49 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.42 2003/02/05 10:46:32 gabor Exp $
 copyright: see below
 
 
@@ -7,7 +7,7 @@ copyright: see below
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -90,15 +90,19 @@ end class <slot-parse>;
 
 define-procedural-expander
   (#"make-slot",
-   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+   method (generator :: <expansion-generator>, name-frag :: <token-fragment>,
 	   options-frag :: <fragment>)
        => ();
+//compiler-warning("generator.generator-call.source-location here: %s", generator.generator-call.source-location); // ###
+//compiler-warning("name-frag.source-location here: %s", name-frag); // ###
+//compiler-warning("name-frag.fragment-token.source-location here: %s", name-frag.fragment-token); // ###
      generate-fragment
        (generator,
 	make-magic-fragment
 	  (make(<slot-parse>,
 		name: extract-name(name-frag),
-		source-location: generator.generator-call.source-location,
+//		source-location: generator.generator-call.source-location,
+		source-location: name-frag.fragment-token.source-location,
 		options: parse-property-list(make(<fragment-tokenizer>,
 						  fragment: options-frag))),
 	   source-location: generate-token-source-location(generator)))
@@ -343,8 +347,8 @@ end;
 
 
 define class <maker-function-definition> (<abstract-method-definition>)
-  slot maker-func-defn-class-defn :: <class-definition>,
-    init-keyword: class-defn:;
+  constant slot maker-func-defn-class-defn :: <class-definition>,
+    required-init-keyword: class-defn:;
 end class <maker-function-definition>;
 
 
@@ -1343,7 +1347,8 @@ define method finalize-slot
 			      specializers: specializers,
 			      returns: slot-type),
 	      hairy: hairy?,
-	      slot: info);
+	      slot: info,
+	      source-location: slot.source-location);
     let gf = slot.slot-defn-getter.method-defn-of;
     if (gf)
       ct-add-method(gf, slot.slot-defn-getter);
@@ -1359,6 +1364,7 @@ define method finalize-slot
     end;
     slot.slot-defn-setter
       := if (slot.slot-defn-setter-name)
+//compiler-warning("slot defn here: %s", slot); // ###
 	   let defn = make(<setter-method-definition>,
 			   base-name: slot.slot-defn-setter-name,
 			   library: library,
@@ -1367,7 +1373,8 @@ define method finalize-slot
 					     pair(slot-type, specializers),
 					   returns: slot-type),
 			   hairy: hairy?,
-			   slot: info);
+			   slot: info,
+			   source-location: slot.source-location);
 	   let gf = defn.method-defn-of;
 	   if (gf)
 	     ct-add-method(gf, defn);
@@ -1736,11 +1743,23 @@ define method class-defn-maker-function
 		      inline-function: maker-inline-expansion,
 		      inline-type: #"inline",
 		      class-defn: defn);
+	       else
+		 make(<maker-function-definition>,
+		      name: name,
+		      source-location: defn.source-location,
+		      library: defn.defn-library,
+		      signature: sig,
+		      inline-type: #"not-inline",
+		      class-defn: defn);		 
 	       end if;
 	   //
 	   // And make the ctv.
-	   make(<ct-function>, name: name, signature: sig,
+let a =	   make(<ct-function>, name: name, signature: sig,
 		definition: maker-defn);
+//compiler-warning("made ## : %=",a);
+//compiler-warning("a.defn : %=     #################  maker-defn  : %=",a.ct-function-definition, maker-defn);
+
+ a
 	 end block;
   else
     defn.%class-defn-maker-function;
@@ -1754,9 +1773,13 @@ define method maker-inline-expansion
   let class-defn = maker-defn.maker-func-defn-class-defn;
   let component = make(<fer-component>);
   let builder = make-builder(component);
-  let region = build-maker-function-body(builder, class-defn);
+  let (region, signature)
+    = build-maker-function-body(builder,
+				class-defn,
+				signature: maker-defn.function-defn-signature,
+				name: maker-defn.defn-name);
   let leaf = make-function-literal(builder, #f, #"function", #"local",
-				   maker-defn.function-defn-signature, region);
+				   signature, region);
   optimize-component(*current-optimizer*, component, simplify-only?: #t);
   leaf;
 end method maker-inline-expansion;
@@ -2630,7 +2653,8 @@ define method build-key-defaulter-function-body
 end method;
 
 define method build-maker-function-body
-    (tl-builder :: <fer-builder>, defn :: <class-definition>)
+    (tl-builder :: <fer-builder>, defn :: <class-definition>,
+     #key signature :: false-or(<signature>), name :: false-or(<derived-name>))
     => (maker-region :: <fer-function-region>,
 	signature :: <signature>);
   let key-infos = make(<stretchy-vector>);
@@ -2904,8 +2928,9 @@ define method build-maker-function-body
 	    end if;
 	  end if;
 
-	<each-subclass-slot-info>,
-	<class-slot-info> =>
+//	<each-subclass-slot-info>,
+//	<class-slot-info> =>
+	<indirect-slot-info> =>
 	  // If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
 	  
@@ -2998,7 +3023,7 @@ define method build-maker-function-body
     end if;
   end for;
   
-  let name = make(<derived-name>, how: #"maker", base: defn.defn-name);
+  let name = name | make(<derived-name>, how: #"maker", base: defn.defn-name);
   let maker-region
     = build-function-body(tl-builder, policy, source, #f, name,
 			  as(<list>, maker-args), cclass, #t);
@@ -3063,10 +3088,10 @@ define method build-maker-function-body
 	       list(instance-leaf));
   end-body(tl-builder);
   values(maker-region,
-	 make(<signature>, specializers: #(),
-	      keys: as(<list>, key-infos),
-	      all-keys: #t,
-	      returns: direct));
+	 signature | make(<signature>, specializers: #(),
+			  keys: as(<list>, key-infos),
+			  all-keys: #t,
+			  returns: direct));
 end method build-maker-function-body;
 
 
@@ -3182,7 +3207,7 @@ define method build-getter
      	     base: defn.slot-defn-getter.defn-name);
   let lexenv = make(<lexenv>, method-name: getter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
   let index = #f;
@@ -3327,7 +3352,7 @@ define method build-getter
      	     base: defn.slot-defn-getter.defn-name);
   let lexenv = make(<lexenv>, method-name: getter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
   let index = #f;
@@ -3450,12 +3475,16 @@ define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
+
+
+assert(defn.slot-defn-getter.defn-name == defn.slot-defn-getter-name);
+
   let getter-name
       = make(<derived-name>, how: #"getter",
-     	     base: defn.slot-defn-getter.defn-name);
+     	     base: defn.slot-defn-getter.defn-name); // ### simpler!
   let lexenv = make(<lexenv>, method-name: getter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
   let index = if (instance?(slot, <vector-slot-info>))
@@ -3583,7 +3612,7 @@ define method build-setter
      	   base: defn.slot-defn-setter.defn-name);
   let lexenv = make(<lexenv>, method-name: setter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
   let type = slot.slot-type;
   let new = make-lexical-var(builder, #"new-value", source, type);
   let cclass = slot.slot-introduced-by;
@@ -3662,7 +3691,7 @@ define method build-setter
      	   base: defn.slot-defn-setter.defn-name);
   let lexenv = make(<lexenv>, method-name: setter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
   let type = slot.slot-type;
   let new = make-lexical-var(builder, #"new-value", source, type);
   let cclass = slot.slot-introduced-by;
@@ -3737,7 +3766,8 @@ define method build-setter
   let init?-slot = slot.slot-initialized?-slot;
   let lexenv = make(<lexenv>, method-name: setter-name);
   let policy = lexenv.lexenv-policy;
-  let source = make(<source-location>);
+  let source = defn.source-location;
+//compiler-warning("----> build-setter: defn#: %s", defn);
   let type = slot.slot-type;
   let new = make-lexical-var(builder, #"new-value", source, type);
   let cclass = slot.slot-introduced-by;
@@ -4271,8 +4301,8 @@ add-make-dumper
    <maker-function-definition>,
    concatenate
      ($abstract-method-definition-slots,
-      list(maker-func-defn-class-defn, class-defn:,
-	     maker-func-defn-class-defn-setter)),
+      list(maker-func-defn-class-defn, class-defn:, #f)),
+//	     maker-func-defn-class-defn-setter)),
    load-external: #t);
 
 // Seals for file compiler/convert/defclass.dylan
