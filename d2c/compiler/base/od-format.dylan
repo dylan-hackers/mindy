@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.3 1998/11/11 03:49:03 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.4 1999/04/24 00:50:50 andreas Exp $
 
 //======================================================================
 //
@@ -473,6 +473,7 @@ begin
   register-object-id(#"limited-class", #x0070);
   register-object-id(#"class-proxy", #x0071);
   register-object-id(#"subclass-type", #x0072);
+  register-object-id(#"limited-collection", #x0073);
 
 
   // Compile-time functions:
