@@ -9,17 +9,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.2 1994/03/25 02:34:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.3 1994/03/27 02:12:57 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
-#include <setjmp.h>
-
 #include "mindy.h"
 #include "gc.h"
 #include "thread.h"
+#include "driver.h"
 #include "func.h"
 #include "bool.h"
 #include "list.h"
@@ -33,9 +32,6 @@
 #include "../comp/byteops.h"
 
 static obj_t obj_ComponentClass = 0;
-static boolean InInterpreter = FALSE;
-static jmp_buf Catcher;
-static enum pause_reason PauseReason;
 
 static void (*byte_ops[256])(int byte, struct thread *thread);
 
@@ -413,52 +409,6 @@ static void interpret_byte(struct thread *thread)
 
 
 /* Entry points into the interpteter. */
-
-enum pause_reason do_stuff(void)
-{
-    assert (!InInterpreter);
-
-    InInterpreter = TRUE;
-    PauseReason = pause_NoReason;
-    setjmp(Catcher);
-    while (PauseReason == pause_NoReason) {
-	struct thread *thread = thread_pick_next();
-	if (TimeToGC)
-	    collect_garbage();
-	thread->advance(thread);
-    }
-    InInterpreter = FALSE;
-    return PauseReason;
-}
-
-enum pause_reason single_step(struct thread *thread)
-{
-    assert(!InInterpreter);
-    assert(thread->status == status_Running);
-    assert(thread->suspend_count == 0);
-
-    thread_set_current(thread);
-    InInterpreter = TRUE;
-    PauseReason = pause_NoReason;
-    if (setjmp(Catcher) == 0)
-	thread->advance(thread);
-    InInterpreter = FALSE;
-    if (TimeToGC)
-	collect_garbage();
-    return PauseReason;
-}
-
-void go_on(void)
-{
-    assert(InInterpreter);
-    longjmp(Catcher, 1);
-}
-
-void pause(enum pause_reason reason)
-{
-    PauseReason = reason;
-    go_on();
-}
 
 void set_byte_continuation(struct thread *thread, obj_t component)
 {
