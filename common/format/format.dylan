@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.5 2002/08/08 04:26:02 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.6 2003/05/25 15:08:22 housel Exp $
 
 ///======================================================================
 ///
@@ -341,6 +341,20 @@ define method format-integer (arg :: <integer>,
     repeat(arg, #());
   end;
 end method format-integer;
+
+// borrowed from FD version
+//
+define method format-integer
+    (arg :: <float>,
+     radix :: limited(<integer>, min: 2, max: 36),
+     stream :: <stream>)
+ => ();
+  //--- Should we really be this compulsive?
+  unless (radix == 10)
+    error("Can only print floats in base 10");
+  end;
+  print(arg, stream)
+end method;
 
 
 // Condition-Format and Condition-Force-Output methods.
