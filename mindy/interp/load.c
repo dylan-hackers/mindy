@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.1 1998/05/03 19:55:18 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.2 1998/12/17 10:29:54 igor Exp $
 *
 * This file implements the loader.
 *
@@ -1161,7 +1161,7 @@ static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
 
     push_linkage(thread, args);
 
-    load(string_chars(name));
+    load((char *)string_chars(name));
 
     thread->sp = pop_linkage(thread);
     load_do_inits(thread);

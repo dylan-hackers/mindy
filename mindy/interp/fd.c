@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.2 1998/12/17 10:29:53 igor Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -519,7 +519,7 @@ static void maybe_read(struct thread *thread)
 	wait_for_input(thread, fd, maybe_read);
     else {
 	res = mindy_read(fd,
-		         buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		         (char *)(buffer_data(fp[-8]) + fixnum_value(fp[-7])),
 		         fixnum_value(fp[-6]));
 	
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
@@ -636,7 +636,7 @@ static obj_t file_write_date(obj_t path)
 {
     struct stat buf;
 
-    if (stat(string_chars(path), &buf) < 0)
+    if (stat((char *)string_chars(path), &buf) < 0)
 	return obj_False;
     else
 	return make_fixnum(buf.st_mtime);
