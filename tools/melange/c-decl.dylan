@@ -255,7 +255,8 @@ end method find-dylan-name;
 define method dylan-name (decl :: <declaration>) => (result :: <string>);
   // The name should always be computed by compute-dylan-name before we ask
   // for it.  This routine explicitly verifies this.
-  decl.d-name | error("No dylan name defined for %=", decl);
+  decl.d-name | error("No dylan name defined for %= (%s)",
+                      decl, decl.simple-name);
 end method dylan-name;
 
 define method dylan-name-setter
