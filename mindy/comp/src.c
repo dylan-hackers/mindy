@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.16 1994/04/25 21:56:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.17 1994/06/02 23:28:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -528,7 +528,7 @@ static struct expr *make_unary_fn_call(struct expr *fn, struct expr *arg)
 
 struct expr *make_negate(struct expr *expr)
 {
-    return make_unary_fn_call(make_varref(id(symbol("negative"))), expr);
+    return make_unary_fn_call(make_varref(id(sym_Negative)), expr);
 }
 
 static struct body *make_literal_body(struct literal *literal)
@@ -546,7 +546,7 @@ struct expr *make_not(struct expr *expr)
 
 struct expr *make_singleton(struct expr *expr)
 {
-    return make_unary_fn_call(make_varref(id(symbol("singleton"))), expr);
+    return make_unary_fn_call(make_varref(id(sym_Singleton)), expr);
 }
 
 struct expr *make_aref_or_element(struct expr *expr, struct arglist *args)
@@ -559,9 +559,9 @@ struct expr *make_aref_or_element(struct expr *expr, struct arglist *args)
     /* because we just pass it directly to make_function_call */
 
     if (args->head->next != NULL && args->head->next->next == NULL)
-	return make_function_call(make_varref(id(symbol("element"))), args);
+	return make_function_call(make_varref(id(sym_Element)), args);
     else
-	return make_function_call(make_varref(id(symbol("aref"))), args);
+	return make_function_call(make_varref(id(sym_Aref)), args);
 }
 
 struct expr *make_function_call(struct expr *expr, struct arglist *args)

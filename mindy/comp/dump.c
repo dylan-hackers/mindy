@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.11 1994/04/28 19:23:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.12 1994/06/02 23:28:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -582,7 +582,7 @@ void dump_setup_output(char *source, FILE *file)
     if (LibraryName)
 	dump_symbol(LibraryName);
     else
-	dump_symbol(symbol("Dylan-User"));
+	dump_symbol(sym_DylanUser);
     if (ParseOnly) {
 	dump_op(fop_IN_MODULE);
 	dump_symbol(ModuleName);
@@ -1003,19 +1003,19 @@ static void dump_defclass_constituent(struct defclass_constituent *c)
     for (slot = c->slots; slot != NULL; slot = slot->next) {
 	switch (slot->alloc) {
 	  case alloc_INSTANCE:
-	    dump_symbol(symbol("instance"));
+	    dump_symbol(sym_Instance);
 	    break;
 	  case alloc_CLASS:
-	    dump_symbol(symbol("class"));
+	    dump_symbol(sym_Class);
 	    break;
 	  case alloc_SUBCLASS:
-	    dump_symbol(symbol("subclass"));
+	    dump_symbol(sym_Subclass);
 	    break;
 	  case alloc_CONSTANT:
-	    dump_symbol(symbol("constant"));
+	    dump_symbol(sym_Constant);
 	    break;
 	  case alloc_VIRTUAL:
-	    dump_symbol(symbol("virtual"));
+	    dump_symbol(sym_Virtual);
 	    break;
 	  default:
 	    lose("strange slot allocation");

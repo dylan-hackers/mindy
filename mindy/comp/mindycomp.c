@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.6 1994/04/28 04:04:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.7 1994/06/02 23:28:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -230,7 +230,7 @@ void main(int argc, char *argv[])
 
     if (ModuleName == NULL) {
 	warn(line_count-1, "no module: header, assuming Dylan-User\n");
-	ModuleName = symbol("Dylan-User");
+	ModuleName = sym_DylanUser;
     }
 
     yyparse();

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.12 1994/04/20 00:23:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.13 1994/06/02 23:27:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -786,16 +786,16 @@ static void compile_handler_constituent(struct handler_constituent *c,
 {
     if (want == TAIL) {
 	emit_op_and_arg(component, op_PUSH_FUNCTION,
-			find_variable(component, id(symbol("apply")), FALSE));
+			find_variable(component, id(sym_Apply), FALSE));
 	emit_op_and_arg(component, op_PUSH_FUNCTION,
-			find_variable(component, id(symbol("values")), FALSE));
+			find_variable(component, id(sym_Values), FALSE));
 	compile_handler_constituent(c, component, make_want(0, TRUE));
 	emit_op_and_arg(component, op_CALL_TAIL, 2);
     }
     else {
 	compile_body(c->body, component, want);
 	emit_op_and_arg(component, op_PUSH_FUNCTION,
-			find_variable(component, id(symbol("pop-handler")),
+			find_variable(component, id(sym_PopHandler),
 				      FALSE));
 	emit_call_op_and_arg(component, op_CALL_FOR_MANY, 0);
 	emit_wants(component, NOTHING);

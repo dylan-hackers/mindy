@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.8 1994/04/20 00:23:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.9 1994/06/02 23:28:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -132,7 +132,7 @@ static void analize_varref_expr(struct varref_expr *expr,
     expr->home = lexenv->method;
     expr->binding = binding;
 
-    if (binding == NULL && expr->var->symbol == symbol("next-method"))
+    if (binding == NULL && expr->var->symbol == sym_NextMethod)
 	warn(expr->var->line, "next-method not bound -- Mindy requires #next");
 }
 
