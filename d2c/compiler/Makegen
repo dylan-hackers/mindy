@@ -75,7 +75,10 @@ AUTODUMPED_OBJS = parse-dump.dbc token-dump.dbc
 
 OBJS = ${NORMAL_OBJS} ${AUTODUMPED_OBJS}
 
-d2c: ${OBJS}
+d2c.dbc: ${OBJS}
+	cat $^ > $@
+
+d2c: d2c.dbc
 	echo "#!/usr/local/bin/mindy -x" | cat - $^ > $@
 	chmod +x $@
 
@@ -95,7 +98,7 @@ autodumper.dbc: ${NORMAL_OBJS}
 
 EOF
 
-push(@compile_dependencies, 'd2c');
+push(@compile_dependencies, 'd2c.dbc');
 
 do install ('bin', 'd2c');
 
