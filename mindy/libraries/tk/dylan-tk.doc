@@ -35,6 +35,12 @@ could be used to produce the effect as the following Tcl/Tk code:
 
 while being considerably clearer to the average Dylan programmer.
 
+Note: In order for this implementation to work you must have a copy of "wish"
+available on your system.  This implementation was developed upon version 3.6
+of "Tcl/Tk" but should work any version Tk implementation after 3.3 and
+before 4.0.  Since version 4 introduces incompatible changes, you should not
+(at present) expect all features to work under 4.0 or later
+
 General Principles
 ------------------
 
@@ -266,12 +272,6 @@ before they will appear on the screen.  The Dylan/Tk "pack" function closely
 follows the Tcl/Tk function described in "Tcl and the Tk Toolkit", and you
 should look there for more complete information.  However, we will provide a
 brief overview here.
-
-Important note:  Although the Dylan/Tk provides an interface which corresponds
-to the "new" packer described in the book, the implementation rests upon
-Tcl/Tk 3.6, which uses the "old" packer.  If your version of WISH is based
-upon Tk4.0 or higher, it will not work, although conversion should be a simple
-task. 
 
 Each "slave" (i.e. non-top-level) window must be packed into some other
 window.  You specify this window either directly, via "in: parent" or
@@ -721,6 +721,10 @@ The following functions are exported:
    tk process.  This routine expects no results and therefore does not wait
    around for them.
 
+   You should be careful to include spaces between distinct tokens in the
+   input, since "put-tk-line" will cheerfully combine several strings into a
+   single Tk token.
+
  function call-tk-function (#rest pieces) => result :: <string>;
    Concatenates the input into a tk command, executes it, and returns the
    result as a string.  Pauses execution of the current thread until the tk
@@ -759,3 +763,4 @@ The following functions are exported:
   
  function anonymous-name (#key prefix = "w") => result :: <string>;
    Generates a unique new (but unexciting) name for a window.
+
