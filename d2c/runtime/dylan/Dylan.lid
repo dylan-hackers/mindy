@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.3 1995/11/16 03:31:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.4 1995/11/22 14:27:43 ram Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -24,6 +24,7 @@ collection.dylan
 array.dylan
 vector.dylan
 string.dylan
+buffer.dylan
 list.dylan
 handler.dylan
 nlx.dylan
