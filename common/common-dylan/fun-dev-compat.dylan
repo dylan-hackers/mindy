@@ -355,3 +355,13 @@ define method string-to-integer (string :: <sequence>, #key base = 10)
     as(<integer>, number);
   end if;
 end method string-to-integer;
+
+
+// true?
+
+define method true?( value :: <object> )
+=>( result :: <boolean> )
+
+    value == #t;
+    
+end method true?;
