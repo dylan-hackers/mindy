@@ -38,7 +38,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 //======================================================================
 
 //======================================================================
-// c-parser-interface.dylan attempts to encapsulate the interface between
+// c-parser.dylan attempts to encapsulate the interface between
 // low-level parsing and the higher level set of "declarations" derived
 // from that parsing.  This includes declarations for the "parse-state"
 // which is first created and populated by the parser and later updated
@@ -95,7 +95,6 @@ define class <parse-file-state> (<parse-state>)
 end class;
 
 define method initialize (value :: <parse-file-state>, #key)
-/*
   value.objects := make(<string-table>);
   value.structs := make(<string-table>);
   value.pointers := make(<object-table>);
@@ -103,7 +102,6 @@ define method initialize (value :: <parse-file-state>, #key)
 				    dylan-name: "<machine-pointer>",
 				    equated: #t,
 				    name: "statically-typed-pointer");
-*/
 end method initialize;
 
 // Push-include-level informs the <parse-state> that it is now processing a
@@ -314,7 +312,7 @@ end function process-type-list;
 //
 define method process-declarator (#rest foo)
 
-  /*
+  /* XXX - needs updating
     (tp :: <type-declaration>, declarator :: <pair>, state :: <parse-state>)
  => (new-type :: <type-declaration>, name :: <object>);
   case 
@@ -402,7 +400,7 @@ end method process-declarator;
 // This handles the trivial case in which we are down to the bare "name" and
 // are therefore done.
 //
-define method process-declarator (#rest foo) /*
+define method process-declarator (#rest foo) /* XXX - needs updating
     (type :: <type-declaration>, declarator :: <object>,
      state :: <parse-state>)
  => (new-type :: <type-declaration>, name :: <object>);
@@ -413,7 +411,7 @@ end method process-declarator;
 // Walks through the "parse tree" for a c declaration and adds the
 // declared names and their types into the state's typedef or object table. 
 //
-define method declare-objects (#rest foo)/*
+define method declare-objects (#rest foo)/* XXX - needs updating
     (state :: <parse-state>, new-type :: <type-declaration>, names :: <list>,
      is-typedef? :: <boolean>)
  => ();
@@ -462,7 +460,7 @@ end method declare-objects;
 // This adds a new declaration to the "declarations" slot, and label it with
 // the appropriate source file name (taken from the state).
 //
-define method add-declaration (#rest foo)/*
+define method add-declaration (#rest foo)/* XXX - needs updating
     (state :: <parse-file-state>, declaration :: <declaration>)
  => (declaration :: <declaration>);
   push-last(state.declarations, declaration);
@@ -478,7 +476,7 @@ define constant null-table = make(<table>);
 // invokes "compute-closure" (documented in "c-decls.dylan") to determine
 // other declarations are required to have a complete & consistent interface.
 //
-define method declaration-closure (#rest foo) /*
+define method declaration-closure (#rest foo) /* XXX - needs updating
     (state :: <parse-file-state>,
      files :: <sequence>, excluded-files :: <sequence>,
      imports :: <table>, file-imports :: <table>,
