@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.7 1994/10/05 21:04:33 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.8 1994/11/28 15:01:26 wlott Exp $
 *
 * This file implements symbols.
 *
@@ -196,7 +196,7 @@ static obj_t symbol_as_string(obj_t class, obj_t symbol)
 
 static void print_symbol(obj_t symbol)
 {
-    printf("%s", sym_name(symbol));
+    printf("#\"%s\"", sym_name(symbol));
 }
 
 
