@@ -1,12 +1,12 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.9 2001/02/04 22:14:10 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.10 2001/02/08 21:59:20 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -489,9 +489,27 @@ define-primitive-emitter
      end;
    end);
 
+define function c-include-emitter
+    (defines :: false-or(<definition-site-variable>),
+    operation :: <primitive>,
+    file :: <file-state>,
+    left, right)
+  => ();
+  let include = operation.depends-on.source-exp;
+  unless (instance?(include, <literal-constant>)
+	  & instance?(include.value, <literal-string>))
+    error("file name in c-include isn't a constant string?");
+  end;
+  maybe-emit-include(include.value.literal-value, file, left: left, right: right);
+  deliver-results(defines, #[], #f, file);
+end;
+
 define-primitive-emitter
-  (#"c-include",
-   method (defines :: false-or(<definition-site-variable>),
+  (#"c-system-include", rcurry(c-include-emitter, "<", ">"));
+
+define-primitive-emitter
+  (#"c-include", rcurry(c-include-emitter, "\"", "\"")
+/*   method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
@@ -502,7 +520,7 @@ define-primitive-emitter
      end;
      maybe-emit-include(include.value.literal-value, file);
      deliver-results(defines, #[], #f, file);
-   end);
+   end */);
 
 define-primitive-emitter
   (#"c-decl",
@@ -562,6 +580,45 @@ define-primitive-emitter
      end;
    end);
 
+
+define-primitive-emitter
+  (#"c-literal",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let res-dep = operation.depends-on;
+     let result-rep = rep-for-c-type(res-dep.source-exp);
+
+     let expr = res-dep.dependent-next.source-exp;
+     unless (instance?(expr, <literal-constant>)
+	       & instance?(expr.value, <literal-string>))
+       error("expr in c-literal isn't a constant string?");
+     end;
+
+     spew-pending-defines(file);
+     
+/*     define method compute-c-literal-value(lit :: <byte-string>)
+		=> val :: <integer>;
+	      lit.empty?
+		& compiler-fatal-error("expr in c-literal is an empty string?", expr);
+
+	      reduce(0,
+		     method(sofar :: <integer>, this) => comb :: <integer>;
+		       ash(sofar, 8) + as(<integer>, this)
+		     end,
+		     lit)
+	    end method;*/
+     
+//     if (result-rep)	// not yet###
+//       deliver-result(defines, expr.value.compute-c-literal-value, //expr.value.literal-value,
+//		      result-rep, #t, file);
+//     else
+       format(file.file-guts-stream, "'%s';\n",
+	      expr.value.literal-value);
+       deliver-results(defines, #[], #f, file);
+//     end;
+   end);
 
 define method rep-for-c-type (leaf :: <leaf>)
     => rep :: false-or(<representation>);
