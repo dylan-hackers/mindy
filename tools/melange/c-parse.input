@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.13 1997/01/23 16:42:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.14 1997/01/23 17:41:08 rgs Exp $
 
 //======================================================================
 //
@@ -906,16 +906,25 @@ struct-declarator (declarator <colon-token> constant-expr)
 ;   pair(#"bitfield", pair(int-value(%4, @0), %2));
 ; %
 
-Enum-Specifier (<ENUM-Token> <Lcurly-Token> Enumerator-List <Rcurly-Token>)
-  make-struct-type(#f, reverse!(%3), %1, @0);
+Enum-Specifier (<ENUM-Token> enum-elements)
+  make-struct-type(#f, %2, %1, @0);
 %
 
-Enum-Specifier (<ENUM-Token> NAME <Lcurly-Token> Enumerator-List <Rcurly-Token>)
-  make-struct-type(%2.value, reverse!(%4), %1, @0);
+Enum-Specifier (<ENUM-Token> NAME enum-elements)
+  make-struct-type(%2.value, %3, %1, @0);
 %
 
 Enum-Specifier (<ENUM-Token> NAME)
   make-struct-type(%2.value, #f, %1, @0);
+%
+
+enum-elements (<Lcurly-Token> Enumerator-List <Rcurly-Token>)
+  reverse!(%2);
+%
+
+;; VC++ apparently allows commas as terminators
+enum-elements (<Lcurly-Token> Enumerator-List <comma-token> <Rcurly-Token>)
+  reverse!(%2);
 %
 
 enumerator-list (enumerator)
