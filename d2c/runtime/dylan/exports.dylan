@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.37 1996/10/06 14:09:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.38 1996/10/13 20:51:04 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, %Transcendental, Cheap-IO, System,
+    Dylan, Extensions, Cheap-IO, System,
     Introspection, Magic, %Hash-Tables;
 end;
 
@@ -152,19 +152,6 @@ define module Extensions
     },
     export: all;
 end;
-
-// This module is used only by the Transcendental library
-define module %Transcendental
-  use Dylan-Viscera,
-    import: {
-	     // Transcendentals
-	     $double-pi, $single-pi, $double-e, $single-e,
-	     sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
-	     log, exp, \^, sqrt, isqrt
-	     // unimplemented: asinh, acosh, atanh
-	     },
-    export: all;
-end module %Transcendental;
 
 define module Cheap-IO
   use Dylan-Viscera,

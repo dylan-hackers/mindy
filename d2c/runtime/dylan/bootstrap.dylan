@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.35 1996/10/06 14:09:43 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.36 1996/10/13 20:51:04 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -173,12 +173,6 @@ define module dylan-viscera
     $not-supplied, ignore,
     <format-string-condition>,
     functional-==, key-exists?, assert,
-
-    // Transcendentals
-    $double-pi, $single-pi, $double-e, $single-e,
-    sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
-    log, exp, \^, sqrt, isqrt,
-    // Unimplemented:  asinh, acosh, atanh, 
 
     // Cheap IO
     format, print-message, print, write-integer, write,
