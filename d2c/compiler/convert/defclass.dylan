@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.4 1999/04/16 14:37:04 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.5 1999/04/17 17:46:55 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,7 +299,7 @@ define class <keyword-defn> (<object>)
   slot keyword-defn-class :: <real-class-definition>;
   //
   // The keyword
-  slot keyword-symbol :: <symbol>,
+  slot keyword-defn-symbol :: <symbol>,
     required-init-keyword: symbol:;
   //
   // The init-value expression, or #f if none.
@@ -317,6 +317,11 @@ define class <keyword-defn> (<object>)
   // The type restriction for this keyword, if any.
   slot keyword-defn-type :: false-or(<expression-parse>),
     init-value: #f, init-keyword: type:;
+  //
+  // The <override-info> for this override, or #f if we haven't computed it
+  // or don't know enough about the class to compute it at all.
+  slot keyword-defn-info :: false-or(<keyword-info>),
+    init-value: #f;
 end;
 
 
@@ -926,6 +931,7 @@ define method compute-cclass (defn :: <real-class-definition>)
     // Compute the slots and overrides.
     let slot-infos = map(compute-slot, defn.class-defn-slots);
     let override-infos = map(compute-override, defn.class-defn-overrides);
+    let keyword-infos = map(compute-keyword, defn.class-defn-keywords);
     //
     // Make and return the <cclass>.
     make(<defined-cclass>,
@@ -949,7 +955,8 @@ define method compute-cclass (defn :: <real-class-definition>)
 	 primary: defn.class-defn-primary?,
 	 abstract: defn.class-defn-abstract?,
 	 slots: slot-infos,
-	 overrides: override-infos);
+	 overrides: override-infos,
+	 keywords: keyword-infos);
   end unless;
 end method compute-cclass;
 
@@ -997,6 +1004,21 @@ define method compute-override
 		  init-value: override.override-defn-init-value & #t,
 		  init-function: override.override-defn-init-function & #t);
   override.override-defn-info := info;
+  info;
+end;
+
+define method compute-keyword
+    (keyword :: <keyword-defn>) => info :: <keyword-info>;
+  //
+  // Note: we don't pass in anything for the init-value or init-function,
+  // because we need to compile-time-eval those, which we can't do until
+  // tlf-finalization time.
+  let info = make(<keyword-info>,
+		  symbol: keyword.keyword-defn-symbol,
+		  required?: keyword.keyword-defn-required?,
+		  init-value: keyword.keyword-defn-init-value & #t,
+		  init-function: keyword.keyword-defn-init-function & #t);
+  keyword.keyword-defn-info := info;
   info;
 end;
 
