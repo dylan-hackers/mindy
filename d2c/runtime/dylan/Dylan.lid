@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.3 2001/03/17 03:43:35 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.4 2001/12/13 22:43:58 housel Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -18,6 +18,7 @@ num.dylan
 bignum.dylan
 ratio.dylan
 rawptr.dylan
+machineword.dylan
 symbol.dylan
 char.dylan
 value-cell.dylan

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.22 2001/07/07 17:10:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.23 2001/12/13 22:43:58 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -31,7 +31,7 @@ module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Cheap-IO, System,
+    Dylan, Extensions, Cheap-IO, System, Machine-words,
     Introspection, Magic, %Hash-Tables;
 end;
 
@@ -225,6 +225,24 @@ define module System
 	     <buffer>, <buffer-index>, $maximum-buffer-size,
 	     buffer-next, buffer-next-setter, buffer-end, buffer-end-setter,
 	     copy-bytes, buffer-address},
+    export: all;
+end;
+
+define module Machine-Words
+  use Dylan-Viscera,
+    import: {<machine-word>, $machine-word-size,
+             $maximum-signed-machine-word, $minimum-signed-machine-word,
+             $maximum-unsigned-machine-word, $minimum-unsigned-machine-word,
+             // as-unsigned, %logior, %logxor, %logand, %lognot, %logbit?
+             // %count-low-zeros, %count-high-zeros, %+, %-, %*,
+             // %floor/, %ceiling/, %ceiling/, %round/, %truncate/,
+             // %negative, %abs, %shift-left, %shift-right,
+             // so%+, so%-, so%*, so%negative, so%abs, so%shift-left,
+             // d%floor/, d%ceiling/, d%truncate/, d%divide,
+             // u%+, u%-, u%*, u%divide, u%rotate-left, u%rotate-right,
+             // u%shift-left. u%shift-right, u%<,
+             // ud%divide, ud%shift-left, ud%shift-right
+            },
     export: all;
 end;
 
