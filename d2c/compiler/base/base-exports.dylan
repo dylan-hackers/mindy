@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.27 2001/05/26 16:49:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.28 2001/05/31 02:58:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -601,7 +601,8 @@ define module ctype
     find-direct-classes, ctype-extent,
 
     // Shorthand constructor functions.
-    ct-value-cclass, wild-ctype, object-ctype, function-ctype, empty-ctype,
+    ct-value-cclass, wild-ctype, object-ctype, function-ctype, 
+    class-ctype, boolean-ctype, empty-ctype,
 
     // Type specifiers.
     <type-specifier>, specifier-type,
