@@ -196,6 +196,11 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
   end;
 end;
 
+define method dump (op :: <primitive>, stream :: <stream>) => ();
+  format(stream, "primitive %s", op.name);
+  dump-operands(op.operands, stream);
+end;
+
 define method dump (call :: <call>, stream :: <stream>) => ();
   if (~call.operands)
     write("<call w/ no operands>", stream);
