@@ -8,21 +8,19 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
     . '-L../runtime/regexp';
 $CPPFLAGS = '-I$(SRCROOT)/runtime -I$(SRCDIR)';
 
-if ($win32) {
-    $binary_name = 'dig.exe';
+# We're not going to worry about whether dig is actually *useful* on
+# this platform, only whether it can be compiled.
+if ($features{'compiled_for_win32'}) {
     $dig_lid_file = 'win32-dig';
     &emit_c_file_rule('win32-dig-support', 'win32-dig-support.h');
     &emit_melange_rule('win32-dig-c', 'win32-dig-support.h');
-} else {
-    # assumed an HP
-    $binary_name = 'dig';
+} elsif ($features{'compiled_for_hpux'}) {
     $dig_lid_file = 'hp-dig';
     &emit_c_file_rule('hp-dig-support', 'hp-dig-support.h');
     &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
-} 
+} else {
+    &unknown_platform_error();
+}
    
-push(@compile_dependencies, $binary_name);
-push(@files_to_clean, $binary_name);
-do install('bin', $binary_name);
-
-do emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '');
+&emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '', 
+		   'compile', 'install');
