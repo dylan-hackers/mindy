@@ -4,4 +4,3 @@ files:
 	objective-c
 	cocoa-basics
 	cocoa-wrappers
-	cocoa-wrappers-continued

@@ -1,6 +1,6 @@
 default: compile
 
-export CCFLAGS = -ObjC
+export CCFLAGS = -ObjC -Wno-long-double -no-cpp-precomp
 
 flat-cocoa.h:
 	cc -traditional-cpp -dD -E -Wno-four-char-constants -arch ppc -Wp,-lang-objc -P \
@@ -12,7 +12,7 @@ cocoa-wrappers.dylan:
 	../tools/i2d --module cocoa-wrappers -header AppKit/Appkit.h flat-cocoa.h
 	
 cocoa-exports.dylan:
-	make-exports cocoa-exports.input cocoa-basics.dylan cocoa-wrappers.dylan cocoa-wrappers-continued.dylan
+	make-exports cocoa-exports.input cocoa-basics.dylan cocoa-wrappers.dylan
 
 cocoa.lib.du:
 	/usr/local/bin/d2c ./cocoa.lid
