@@ -1,5 +1,36 @@
 
-print <<'EOF';
+# The win32 part unfortunately leaves out any kind of rule for main.c,
+# because Windows doesn't seem to like the idea of the main() function
+# coming from a library.
+
+if ($win32) {
+    print <<'EOF';
+
+AS = as
+CC = cl
+CPPFLAGS = -I$(SRCROOT)/runtime
+CFLAGS = /nologo /O2
+
+OBJS = allocate.obj nlx.obj i386.obj
+
+runtime.lib: $(OBJS)
+	lib /out:runtime.lib $(OBJS)
+
+allocate.obj: allocate.c
+	$(CC) -c allocate.c
+nlx.obj: nlx.c
+	$(CC) -c nlx.c
+i386.obj: i386.s
+	$(AS) i386.s -o i386.obj
+
+EOF
+
+    push(@compile_dependencies, 'runtime.lib');
+    do install('lib', 'runtime.lib');
+    push(@files_to_clean, '$(OBJS)', 'runtime.lib');
+} else { # not win32
+
+   print <<'EOF';
 
 AS = /bin/as
 CC = gcc
@@ -13,8 +44,7 @@ libruntime.a: $(OBJS)
 
 EOF
 
-push(@compile_dependencies, 'libruntime.a');
-
-do install('lib', 'libruntime.a');
-
-push(@files_to_clean, '$(OBJS)', 'libruntime.a');
+    push(@compile_dependencies, 'libruntime.a');
+    do install('lib', 'libruntime.a');
+    push(@files_to_clean, '$(OBJS)', 'libruntime.a');
+}
