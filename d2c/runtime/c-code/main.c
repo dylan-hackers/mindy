@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.25 2003/07/17 19:19:40 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.26 2003/10/03 20:21:19 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -186,6 +186,9 @@ void no_core_dumps(void)
   getrlimit(RLIMIT_CORE, &lim);
   lim.rlim_cur = 0;
   setrlimit(RLIMIT_CORE, &lim);
+  lim.rlim_cur = RLIM_INFINITY;
+  lim.rlim_max = RLIM_INFINITY;
+  setrlimit(RLIMIT_STACK, &lim);
 }
 #else
 void no_core_dumps(void)
