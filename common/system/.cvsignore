@@ -1,2 +1,8 @@
 GNUmakefile
 os-constants.dylan
+posix-os.c
+operatingsystem-init.c
+system-exports.c
+os-constants.c
+operatingsystem-heap.s
+cc-operatingsystem-files.mak
