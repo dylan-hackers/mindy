@@ -10,12 +10,12 @@ define function test-section-header (name :: <string>) => ()
 end;  
 
 define function print-c-type (type :: <c-type>) => ()
-  format(*standard-output*, "%s\n", format-c-type(type));
+  format(*standard-output*, "%s\nTranslation: %s\n", format-c-type(type), c-output(type));
   force-output(*standard-output*);
 end;
 
 define function print-c-declaration (decl :: <c-declaration>) => ()
-  format(*standard-output*, "%s\n", format-c-declaration(decl));
+  format(*standard-output*, "%s\nTranslation: %s\n", format-c-declaration(decl), c-output(decl));
   force-output(*standard-output*);
 end;
 
