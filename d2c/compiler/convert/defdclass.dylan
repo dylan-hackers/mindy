@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.7 2002/01/04 15:51:23 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.8 2002/01/07 21:29:59 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -387,6 +387,14 @@ define method compute-cclass
       compiler-error-location(defn,
                               "the referenced-type for a designator-class "
                                 "must be a designator-class");
+    end if;
+
+    if (designated-representation)
+      init-args
+        := apply(list,
+                 size: designated-representation.representation-size,
+                 alignment: designated-representation.representation-alignment,
+                 init-args);
     end if;
     
     values(<defined-cdclass>,
