@@ -269,28 +269,45 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   let results = lambda.depends-on;
   if (results)
     let result = results.source-exp;
-    if (instance?(result.var-info, <values-cluster-info>))
-      let return-type = result.derived-type;
-      if (return-type.min-values == return-type.positional-types.size
-	    & return-type.rest-value-type == empty-ctype())
-
-	let builder = make-builder(component);
-	let num-results = return-type.min-values;
-	let temps = make(<list>, size: num-results);
-	for (remaining = temps then remaining.tail,
-	     until: remaining == #())
-	  remaining.head := make-local-var(builder, #"temp", object-ctype());
-	end;
-	let assign = result.definer;
-	build-assignment(builder, assign.policy, assign.source-location,
-			 temps, result);
-	remove-dependency(component, results);
-	make-operand-dependencies(builder, lambda, temps);
-	insert-after(assign, builder-result(builder));
-      end;
+    if (instance?(result, <ssa-variable>)
+	  & instance?(result.var-info, <values-cluster-info>))
+      maybe-expand-cluster(component, result);
     end;
   end;
 end;
+
+
+define method maybe-expand-cluster
+    (component :: <component>, cluster :: <ssa-variable>) => ();
+  let return-type = cluster.derived-type;
+  if (return-type.min-values == return-type.positional-types.size
+	& return-type.rest-value-type == empty-ctype())
+    let cluster-dependency = cluster.dependents;
+    unless (cluster-dependency & cluster-dependency.source-next == #f)
+      error("Values cluster used in more than one place?");
+    end;
+    let target = cluster-dependency.dependent;
+    let assign = cluster.definer;
+    let new-defines = #f;
+    let new-depends-on = #f;
+    for (index from return-type.min-values - 1 to 0 by -1)
+      let debug-name = as(<symbol>, format-to-string("result%d", index));
+      let var-info = make(<local-var-info>, debug-name: debug-name,
+			  asserted-type: object-ctype());
+      let var = make(<ssa-variable>, var-info: var-info,
+		     definer: assign, definer-next: new-defines);
+      let dep = make(<dependency>, source-exp: var, source-next: #f,
+		     dependent: target, dependent-next: new-depends-on);
+      var.dependents := dep;
+      new-defines := var;
+      new-depends-on := dep;
+    end;
+    assign.defines := new-defines;
+    target.depends-on := new-depends-on;
+    queue-dependent(component, assign);
+  end;
+end;
+
 
 
 // Type utilities.
