@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/coll-ext/Attic/Makefile.in,v 1.1 1996/02/17 16:55:12 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/coll-ext/Attic/Makefile.in,v 1.2 1996/02/17 17:34:00 nkramer Exp $
 ##
 ##  This is the makefile for the "collection extensions" library
 ##
@@ -65,7 +65,7 @@ MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -lcollection-extensions
 
-OBJS = library.dbc heap.dbc solist.dbc subseq.dbc vecsearch.dbc \
+OBJS = library.dbc solist.dbc subseq.dbc vecsearch.dbc \
 	sde-vector.dbc sequence-diff.dbc
 
 collection-extensions.dbc: ${OBJS}
@@ -73,8 +73,8 @@ collection-extensions.dbc: ${OBJS}
 
 library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
-heap.dbc: ${SRCDIR}/heap.dylan
-	${MC} ${MINDYFLAGS} -o heap.dbc ${SRCDIR}/heap.dylan
+#heap.dbc: ${SRCDIR}/heap.dylan
+#	${MC} ${MINDYFLAGS} -o heap.dbc ${SRCDIR}/heap.dylan
 solist.dbc: ${SRCDIR}/solist.dylan
 	${MC} ${MINDYFLAGS} -o solist.dbc ${SRCDIR}/solist.dylan
 subseq.dbc: ${SRCDIR}/subseq.dylan
