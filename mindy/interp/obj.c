@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.1 1994/03/24 21:49:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.2 1994/04/07 18:30:59 rgs Exp $
 *
 * This file does whatever.
 *
@@ -23,6 +23,7 @@
 
 obj_t obj_ObjectClass = 0;
 
+#undef object_class		/* Get rid of inline def if it exists */
 obj_t object_class(obj_t object)
 {
     if (obj_is_ptr(object))
