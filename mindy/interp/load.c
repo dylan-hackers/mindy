@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.2 1994/03/28 11:06:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.3 1994/03/30 17:07:26 wlott Exp $
 *
 * This file does whatever.
 *
@@ -906,7 +906,7 @@ void load_library(obj_t name)
     int c;
 
     if (load_path == NULL)
-	load_path = "/afs/cs/project/gwydion/mindy/lib";
+	load_path = "/afs/cs.cmu.edu/project/gwydion/mindy/lib";
 
     start = load_path;
     ptr = load_path;
