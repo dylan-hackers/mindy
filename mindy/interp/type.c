@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.21 1994/11/06 23:02:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.22 1994/12/14 19:53:39 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -258,7 +258,7 @@ static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
     if (CLASS(class)->all_subclasses == obj_Nil)
 	return instancep(class, type);
     else
-	return subtypep(obj_ClassClass, type);
+	return subtypep(object_class(class), type);
 }
 
 static inline boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
