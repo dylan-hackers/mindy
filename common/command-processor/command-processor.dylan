@@ -52,12 +52,22 @@ define function n-spaces(n :: <integer>)
   end if;
 end function n-spaces;
 
+// find the command with command-name as the prefix of its name
 define function find-command-by-prefix(command-name :: <string>)
   choose(method(x) 
              case-insensitive-equal(command-name,
                                     subsequence(x.name, end: command-name.size))
          end, *command-table*)
 end function find-command-by-prefix;
+
+// Find the command that forms the prefix of command-name. This
+// is not the same as above!
+define function find-prefixing-command(command-name :: <string>)
+  choose(method(x) 
+             case-insensitive-equal(subsequence(*command-line*, 
+                                                end: x.name.size), x.name)
+         end, *command-table*)
+end function find-prefixing-command;
 
 define function find-command(command-name :: <string>)
   choose(method(x) case-insensitive-equal(command-name, x.name) end, 
@@ -115,17 +125,17 @@ end method self-insert-command;
 define method run-command(c)
   complete-command(c);
   format-out("\r\n");
-  block(done)
-    for(i in *command-table*)
-      if(case-insensitive-equal(subsequence(*command-line*, 
-                                            end: i.name.size), i.name))
-        to-cooked();
-        i.command(copy-sequence(*command-line*, start: i.name.size + 1));
-        to-raw();
-        done();
-      end if;
-    end for;
-  end block;
+  let commands = find-prefixing-command(*command-line*);
+  if(commands.size = 0)
+    format-out("Unknown command. Try Help.\r\n");
+  elseif(commands.size > 1)
+    format-out("Ambiguous command. Try Help.\r\n");
+  else
+    to-cooked();
+    commands[0].command(copy-sequence(*command-line*, 
+                                      start: commands[0].name.size + 1));
+    to-raw();
+  end if;
 
   *command-line* := "";
   *buffer-pointer* := 0;
