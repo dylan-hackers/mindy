@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.21 1996/03/02 19:21:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.22 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -593,10 +593,20 @@ define method cached-sorted-applicable-methods
 	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
 	    let arg = %%primitive extract-arg(arg-ptr, index);
-	    unless (type == arg.object-class
-		      | (~instance?(type, <class>) & instance?(arg, type)))
-	      no-match();
-	    end unless;
+	    case
+	      // The easy check for matches
+	      (type == arg.object-class) => #t;
+	      // The above check will have caught all class matches, so
+	      // this must not be a match.
+	      (instance?(type, <class>)) => no-match();
+	      // Singletons are the next most common case, so optimize them.
+	      (instance?(type, <singleton>)) =>
+		// Trust me.  This special case *does* speed things up.
+		unless (arg == type.singleton-object) no-match() end unless;
+	      // instance? is slow, but its the last resort
+	      otherwise =>
+		unless (instance?(arg, type)) no-match() end unless;
+	    end case;
 	  end for;
 	end if;
 
@@ -604,17 +614,6 @@ define method cached-sorted-applicable-methods
 	  prev.next := cache.next;
 	  cache.next := gf.method-cache;
 	  gf.method-cache := cache;
-	end if;
-
-	// Debugging code.  This will slow down dispatch by a tiny fraction,
-	// but will pay off in the short term for optimization purposes.
-	let hits = cache.call-count + 1;
-	if (hits == *debug-generic-threshold*)
-	  format("\n*** Generic function %= called %= times with types %=\n",
-		 gf, hits, classes);
-	  cache.call-count := 0;
-	else
-	  cache.call-count := hits;
 	end if;
 
 	return(cache.cached-normal, cache.cached-ambiguous,
