@@ -1,10 +1,9 @@
 module:     X-Inspector
-library:    X-Inspector
 author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.4 1996/04/10 20:40:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.5 1996/04/22 15:29:51 nkramer Exp $
 
 //======================================================================
 //
@@ -30,27 +29,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-in
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library X-inspector
-  use dylan;
-  use string-extensions;
-  use tk;
-  use inspector-base;
-  use class-diagram;
-end library X-inspector;
-
-define module X-inspector
-  use dylan;
-  use extensions;
-  use regular-expressions, import: { split };
-  use substring-search, import: { substring-position };
-  use tk;
-  use tk-extension;
-  use inspector-base, export: { *show-elements* };
-  use class-diagram;
-  export
-    xinspect;
-end module X-inspector;
 
 
 // Create the widgets for a single <body-component>, and put these
@@ -81,7 +59,7 @@ end function do-component;
 
 // Graphically display obj.object-info.  The display is interactive.
 //
-define function xinspect (obj :: <object>) => ();
+define function xinspect-one-object (obj :: <object>) => ();
   let window = make(<toplevel>);
   call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
   let window-title = tk-quote(concatenate("Inspect ", short-string(obj)));
@@ -137,11 +115,16 @@ define function xinspect (obj :: <object>) => ();
        relief: "raised", side: "left", anchor: "w", in: button-frame);
   make(<button>, text: "Quit", command: exit,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
+end function xinspect-one-object;
+
+define function xinspect (#rest objs) => ();
+  if (objs.empty?)
+    xinspect-one-object($all-libraries);
+  else
+    for (obj in objs)
+      xinspect-one-object(obj);
+    end for;
+  end if;
 end function xinspect;
 
-
-define method main (prog-name :: <byte-string>, #rest args)
-  xinspect($all-libraries);
-//  map-window(*root-window*);
-end method main;
-
+*xinspect-function* := xinspect;
