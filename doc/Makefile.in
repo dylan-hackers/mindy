@@ -1,0 +1,27 @@
+prefix=@prefix@
+MANDIR=@mandir@
+INSTALL=@INSTALL@
+INSTALL_DATA=@INSTALL_DATA@
+DESTDIR=
+
+default: compile
+
+.PHONY: default compile install clean
+
+compile:
+	-echo 'Nothing to do.'
+
+install: compile
+	${INSTALL_DATA} dylan.7 ${DESTDIR}${MANDIR}/man7/dylan.7
+	${INSTALL_DATA} gwydion.7 ${DESTDIR}${MANDIR}/man7/dylan.7
+	${INSTALL_DATA} d2c.1 ${DESTDIR}${MANDIR}/man1/d2c.1
+	${INSTALL_DATA} mindy.1 ${DESTDIR}${MANDIR}/man1/mindy.1
+	${INSTALL_DATA} mindy.1 ${DESTDIR}${MANDIR}/man1/mindycomp.1
+	${INSTALL_DATA} melange.1 ${DESTDIR}${MANDIR}/man1/melange.1
+	${INSTALL_DATA} make-dylan-app.1 \
+		${DESTDIR}${MANDIR}/man1/make-dylan-app.1
+	${INSTALL_DATA} platforms.descr.4 \
+		${DESTDIR}${MANDIR}/man4/platforms.descr.4
+
+clean:
+	-echo 'Nothing to do.'
