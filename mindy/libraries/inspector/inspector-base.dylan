@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.6 1996/04/22 15:28:05 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.7 1996/04/25 18:26:06 wlott Exp $
 
 //======================================================================
 //
@@ -221,7 +221,7 @@ define method short-string (binding :: <binding>) => string :: <string>;
   if (binding.constant-and-untyped?)
     short-string(binding.binding-value);
   else
-    concatenate(capitalize!(as(<string>, binding.binding-kind)),
+    concatenate(capitalize!(copy-sequence(as(<string>, binding.binding-kind))),
 		" Binding ", as(<string>, binding.binding-name));
   end if;
 end method short-string;
@@ -239,18 +239,33 @@ end function deque;
 // somewhere along the line the tail of a <pair> isn't a <list>.
 //
 define function proper-list? (l :: <list>) => answer :: <boolean>;
-  let cells-seen = make(<object-table>);
-  block (return)
-    for (ptr = l then ptr.tail, until: ptr == #())
-      if (~ instance?(ptr, <list>))
-	return(#f);  // dotted pair
-      elseif (key-exists?(cells-seen, ptr))
-	return(#f);  // circular list
-      end if;
-      cells-seen[ptr] := ptr;
-    end for;
-    #t;
-  end block;
+  local method repeat (slow :: <list>, fast)
+	  if (fast == #())
+	    // End of the list.
+	    #t;
+	  elseif (slow == fast)
+	    // Circular.
+	    #f;
+	  elseif (~instance?(fast, <pair>))
+	    // Improper.
+	    #f;
+	  else
+	    let fast-tail = fast.tail;
+	    if (fast-tail == #())
+	      // End of the list.
+	      #t;
+	    elseif (~instance?(fast-tail, <pair>))
+	      // Improper.
+	      #f;
+	    else
+	      // More to go, advance them both.  Note: we don't have to
+	      // type-check slow.tail because fast has already progressed
+	      // though it.
+	      repeat(slow.tail, fast-tail.tail);
+	    end if;
+	  end if;
+	end method repeat;
+  repeat(l, l.tail);
 end function proper-list?;
 
 
@@ -394,8 +409,13 @@ define function slot-info (cls :: <class>, #key object = $no-object)
       = if (object == $no-object)
 	  values("", list(type));
 	else
-	  values(concatenate(" = #!", short-string(object), "!#"),
-		 list(type, object));
+	  let (value, bound?) = slot-value(slt, object);
+	  if (bound?)
+	    values(concatenate(" = #!", short-string(value), "!#"),
+		   list(type, value));
+	  else
+	    values(" is unbound", list(type));
+	  end if;
 	end if;
 
     let allocation-string = if (slt.slot-allocation == #"instance")
@@ -415,7 +435,7 @@ define function slot-info (cls :: <class>, #key object = $no-object)
 			     as(<string>, getter.function-name),
 			     "!# :: #!", short-string(type), "!#", 
 			     value-string, ", setter: #!", 
-			     short-string(setter.function-name),
+			     as(<string>, setter.function-name),
 			     "!#"),
 		 concatenate(list(getter), type-and-value, list(setter)));
 	end if;
@@ -664,10 +684,3 @@ define method object-info (loaded-libs :: <loaded-libraries>)
 	     header: "All libraries currently loaded:",
 	     body: make-simple-body(get-all-libraries())));
 end method object-info;
-
-
-// Shouldn't < be already defined on symbols?  It isn't in the DRM...
-//
-define method \< (sym1 :: <symbol>, sym2 :: <symbol>) => answer :: <boolean>;
-  as(<string>, sym1) < as(<string>, sym2);
-end method;
