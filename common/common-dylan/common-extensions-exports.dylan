@@ -2,6 +2,7 @@ module: dylan-user
 
 define library common-extensions
   use dylan;
+  use melange-support;
 
   // Only import transcendentals if we have them.
   // XXX - library should be named 'transcendentals'
@@ -22,6 +23,7 @@ end library;
 
 define module common-extensions
   use dylan;
+  use melange-support;
   use extensions,
     rename: {$not-supplied => $unsupplied,
 	     on-exit => register-exit-application-function},
@@ -88,11 +90,9 @@ define module common-extensions
     */
 
     /* Appliation runtime environment */
-    /* UNIMPLEMENTED
     application-name,
     application-filename,
     application-arguments,
-    */
     exit-application;
     //register-exit-application-function,
 

@@ -4,4 +4,5 @@ unit-prefix: commonext
 
 common-extensions-exports.dylan
 extensions.dylan
+extensions-c.dylan
 collections.dylan

@@ -76,6 +76,34 @@ define open generic condition-to-string
 //=========================================================================
 //  Finding yourself and your arguments; exiting.
 
+define function get-argc() => (argc :: <integer>)
+  let argc = application-argc();
+  if (argc < 1)
+    error("Runtime is corrupted: application_argc = %d", argc());
+  end;
+  argc;
+end;
+
+define function application-name () => (string :: <byte-string>)
+  get-argc();
+  pointer-value(application-argv());
+end;
+
+define function application-filename () => (filename :: false-or(<string>))
+  // XXX - I don't know how to find the application's filename under Unix.
+  #f;
+end;
+
+define function application-arguments () => (string :: <simple-object-vector>)
+  // XXX - Should this be our official return type? Harlequin says so.
+  let argc = get-argc();
+  let result = make(<simple-object-vector>, size: argc - 1);
+  for (i from 1 below argc)
+    result[i - 1] := pointer-value(application-argv(), index: i);
+  end for;
+  result;
+end;
+
 define function exit-application (exit-code :: <integer>) => ()
   exit(exit-code: exit-code);
 end;
@@ -128,16 +156,13 @@ end;
 
 #if (d2c)
 
-/*
-XXX - table-definer is broken!
-
 define macro table-definer
-  { define table ?:name = { } }
+  { define table ?:name ?equals:token { } }
     => { define constant ?name :: <table> = make(<table>) }
-  { define table ?:name :: ?type:* = { } }
+  { define table ?:name :: ?type:* ?equals:token { } }
     => { define constant ?name :: ?type = make(?type) }
 end macro;
-*/
+
 
 define macro iterate
   { iterate ?:name (?clauses:*) ?:body end }
