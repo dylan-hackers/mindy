@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.28 1996/01/15 12:51:16 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.29 1996/01/27 20:10:36 rgs Exp $
 
 /*
 
@@ -412,7 +412,7 @@ begin
   register-object-id(#"literal-extended-float", #x0055);
 
   // One subobject, the vector dylan value.
-  register-object-id(#"literal-vector", #x0056);
+  register-object-id(#"labelled-literal", #x0056);
 
   // Similar in concept to literals, but not quite one because there is no
   // literal syntax for it.
@@ -445,7 +445,8 @@ begin
 
   // Compile-time functions:
   register-object-id(#"ct-function", #x0080);
-  register-object-id(#"ct-generic-function", #x0081);
+  register-object-id(#"ct-sealed-generic", #x0081);
+  // Note #"ct-open-generic" below.
   register-object-id(#"ct-method", #x0082);
   register-object-id(#"ct-entry-point", #x0083);
   register-object-id(#"function-signature", #x0084);
@@ -457,6 +458,9 @@ begin
   register-object-id(#"method-name", #x0088);
   register-object-id(#"module-variable", #x0089);
   register-object-id(#"module", #x008A);
+
+  // late additions to category
+  register-object-id(#"ct-open-generic", #x008B);
 
   // FER:
   register-object-id(#"compiler-policy", #x0090);
@@ -538,7 +542,7 @@ begin
   register-object-id(#"define-library-tlf", #x00E0);
   register-object-id(#"define-module-tlf", #x00E1);
   register-object-id(#"define-binding-tlf", #x00E2);
-  register-object-id(#"here-be-roots", #x00E3);
+  register-object-id(#"unit-info", #x00E3);
 
   register-object-id(#"use", #x00E8);
   register-object-id(#"renaming", #x00E9);
@@ -1820,6 +1824,8 @@ define /* exported */ method load-subobjects-vector
        i :: <integer> from 0,
        until: part = $end-object)
     contents[i] := part;
+  finally
+    if (size-hint) assert(i = size-hint) end if;
   end for;
   contents;
 end method;
