@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.24 1995/11/13 18:03:46 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.25 1995/12/09 00:11:11 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -58,7 +58,6 @@ NORMAL_OBJS = exports.dbc \
 	fer-convert.dbc \
 	fer-dump.dbc \
 	deffunc.dbc \
-	method-tree.dbc \
 	defconstvar.dbc \
 	defclass.dbc \
 	tlexpr.dbc \
