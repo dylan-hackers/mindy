@@ -4,7 +4,7 @@
 # pristine--we just added the "srcdir = $(VPATH)" and commented out a
 # few lines above it.
 
-if ($win32) {
+if ($features{'compiled_for_win32'} && $features{'compiled_for_x86'}) {
     print <<'EOF';
 
 CPU= i386
@@ -16,7 +16,7 @@ all: gctest.exe cord\de.exe test_cpp.exe
 
 EOF
 
-    if ($win32_gcc) {
+    if ($features{'c_compiler_is_gcc'}) {
 	print <<'EOF';
 CC = gcc
 
@@ -139,7 +139,7 @@ EOF
 	 'cord/de');
 
 
-} else { # unix
+} elsif ($features{'compiled_for_unix'}) {
 
     print <<"EOF";
 
@@ -275,11 +275,6 @@ $(OBJS) test.o dyn_load.o dyn_load_sunos53.o: $(srcdir)/gc_priv.h $(srcdir)/gc_h
 # invalidating all .o files that rely on gc_priv.h
 
 mark.o typd_mlc.o finalize.o: $(srcdir)/gc_mark.h
-
-libgc.a: $(OBJS) dyn_load.o
-	rm -f on_sparc_sunos5
-	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
-	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(OBJS) dyn_load.o
 
 libgc.sl: $(OBJS) dyn_load.o
 	rm -f on_sparc_sunos5
@@ -444,4 +439,6 @@ EOF
 	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
 	 'if_not_there', 'if_mach', '$(CORD_OBJS)', 'cord/cordtest', 
 	 'cord/de');
+} else {
+    &unknown_platform_error();
 }

@@ -45,15 +45,14 @@ do emit_library_rule(
 sub emit_run_tests_rule {
     local (@tests) = @_;
     local ($test);
-    local ($extension) = $win32 ? ".exe" : "";
     print "run_tests : ";
     foreach $test (@tests) {
-	print "$test$extension ";
+	print "$test$dot_exe ";
     }
     print "\n";
 
     foreach $test (@tests) {
-	local ($test) = "." . ($win32 ? "\\" : "/") . $test;
+	local ($test) = &convert_path_separator("./$test");
 	print "\t$test\n";
     }
     push(@compile_dependencies, "run_tests");

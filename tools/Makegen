@@ -1,8 +1,10 @@
 
-if ($win32) {
+if ($features{'compiled_for_win32'}) {
     $system_dependent_misc = 'win32-misc';
+} elsif ($features{'compiled_for_unix'}) {
+    $system_dependent_misc = 'unix-misc';
 } else {
-    $system_dependent_misc = 'hp-misc';
+    &unknown_platform_error();
 }
 
 do compile_subdirs(
