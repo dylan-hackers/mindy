@@ -64,7 +64,7 @@ D: Lots of low-level compiler fixes.
 N: Bruce Hoult
 E: bruce@hoult.org
 D: PPC trampoline code, some optimizer bug fixes, some build fixes,
-D: some speed tuning, more GC updates.  Installed cvszilla.
+D: some speed tuning, more GC updates.  Installed cvszilla!
 
 N: Peter Housel
 E: housel@acm.org
