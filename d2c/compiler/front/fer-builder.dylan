@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.12 1995/04/21 19:40:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.13 1995/04/21 20:46:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -131,7 +131,7 @@ end method;
 
 define method make-operand-dependencies(builder :: <internal-builder>,
 					result :: <dependent-mixin>,
-					op :: <leaf>)
+					op :: <expression>)
     => res :: <dependent-mixin>;
   // Add this dependent to the reoptimize queue.
   let component = builder.component;
@@ -281,11 +281,7 @@ define method build-assignment-aux
      expr :: <expression>)
 
   let component = builder.component;
-  let dep = make(<dependency>, source-exp: expr,
-  		 source-next: expr.dependents,
-		 dependent: res);
-  expr.dependents := dep;
-  res.depends-on := dep;
+  make-operand-dependencies(builder, res, expr);
 		 
   if (list?(target-vars))
     let prev = #f;
@@ -529,11 +525,14 @@ define method build-method-body
      result-vars :: type-or(<leaf>, <list>))
  => res :: <leaf>;
   ignore(policy);
+  let prologue = make-operand-dependencies(builder, make(<prologue>), #());
   let leaf = make(<lambda>, source-location: source,
-		  derived-type: function-ctype(), vars: arg-vars);
+		  derived-type: function-ctype(),
+		  prologue: prologue);
   make-operand-dependencies(builder, leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
+  build-assignment(builder, policy, source, arg-vars, prologue);
   comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
   leaf;
 end method;
