@@ -1,6 +1,5 @@
 module: c-parser
-copyright: Copyright (C) 1994, Carnegie Mellon University
-	   All rights reserved.
+copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
@@ -8,6 +7,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
+// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -19,20 +19,22 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
+//    University, and the Gwydion Dylan Maintainers.
 // 
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
 // 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
 
 //======================================================================
 //
 // Copyright (c) 1994  Carnegie Mellon University
+// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
 //
 //======================================================================

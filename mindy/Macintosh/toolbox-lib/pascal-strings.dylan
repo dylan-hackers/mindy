@@ -1,8 +1,6 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: (c)1999 Patrick Beard
-
-// Pascal Strings.
+copyright: see below
 
 define class <Pascal-string> (<string>, <Ptr>) 
 end class <Pascal-string>;

@@ -58,7 +58,7 @@ Eventually, we want Melange to handle any header which GCC can parse. For
 the time being, generating interfaces is more of an art, and any large set
 of headers is virtually gauranteed to find a new bug. Please report every
 bug you encounter to
-.IR gd-bugs@randomhacks.com ,
+.IR gd-bugs@gwydiondylan.org ,
 preferably with a short example. We're trying to locate and fix all the
 problems, and should respond fairly quickly.
 .SH IMPORTING HEADERS

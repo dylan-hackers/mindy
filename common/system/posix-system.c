@@ -19,10 +19,10 @@
    Boston, MA  02111-1307, USA.
 
    Bug reports, questions, comments, and suggestions should be sent by
-   E-mail to the Internet address "gwydion-bugs@randomhacks.com".
+   E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.2 1999/04/10 21:08:29 tree Exp $ */
+/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.3 2000/01/24 04:55:36 andreas Exp $ */
 
 #include <sys/types.h>
 #include <unistd.h>

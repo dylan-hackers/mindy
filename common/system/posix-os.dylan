@@ -1,5 +1,5 @@
 module:      operating-system
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.5 1999/04/20 07:32:36 emk Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.6 2000/01/24 04:55:35 andreas Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -25,7 +25,7 @@ synopsis:    Implementation of Harlequin Dylan 1.2 operating-system library
    Boston, MA  02111-1307, USA.
 
    Bug reports, questions, comments, and suggestions should be sent by
-   E-mail to the Internet address "gwydion-bugs@randomhacks.com".
+   E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
 define function login-name()

@@ -1,6 +1,5 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.5 1999/04/16 14:35:28 andreas Exp $
-copyright: Copyright (c) 1995  Carnegie Mellon University
-	   All rights reserved.
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.6 2000/01/24 04:56:47 andreas Exp $
+copyright: see below
 module: dylan-viscera
 
 
@@ -8,6 +7,7 @@ module: dylan-viscera
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
+// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -19,14 +19,15 @@ module: dylan-viscera
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
+//    University, and the Gwydion Dylan Maintainers.
 // 
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
 // 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
 

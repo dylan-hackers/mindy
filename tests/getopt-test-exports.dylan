@@ -1,7 +1,7 @@
 library: getopttest
 module: dylan-user
 author: Jeff Dubrule, Eric Kidd
-copyright: Copyright 1998 Jeff Dubrule, Eric Kidd
+copyright: see below
 
 //======================================================================
 //
@@ -21,7 +21,7 @@ copyright: Copyright 1998 Jeff Dubrule, Eric Kidd
 //  its performance, or its conformity to any specification.
 // 
 //  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
 //======================================================================
 

@@ -2,11 +2,12 @@ module: format-out-test
 author: David Watson, Nick Kramer
 synopsis: Test for the format-out library.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/tests/format-out-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tests/format-out-test.dylan,v 1.2 2000/01/24 04:58:35 andreas Exp $
 
 //======================================================================
 //
 // Copyright (c) 1996  Carnegie Mellon University
+// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -18,14 +19,15 @@ rcs-header: $Header: /scm/cvs/src/tests/format-out-test.dylan,v 1.1 1998/05/03 1
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
+//    University, and the Gwydion Dylan Maintainers.
 // 
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
 // 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
 

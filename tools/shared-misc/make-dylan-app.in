@@ -49,9 +49,7 @@ EOD
 module: $appname
 synopsis: 
 author: 
-copyright: 
-
-define method main(appname, #rest arguments)
+copyright: see below
   format-out("Hello, world from $appname!\\n");
   exit(exit-code: 0);
 end method main;

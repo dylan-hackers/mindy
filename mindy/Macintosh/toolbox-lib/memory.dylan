@@ -1,8 +1,6 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: (c)1999 Patrick Beard
-
-// Memory Manager.
+copyright: see below
 
 define constant $nil = as(<statically-typed-pointer>, 0);
 

@@ -1,8 +1,6 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: (c)1999 Patrick Beard
-
-// Event Manager.
+copyright: see below
 											
 define constant $everyEvent = -1;
 

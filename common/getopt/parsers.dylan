@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
-rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.4 1998/12/29 20:54:51 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.5 2000/01/24 04:54:26 andreas Exp $
 
 //======================================================================
 //
@@ -22,7 +22,7 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.4 1998/12/29 2
 //  its performance, or its conformity to any specification.
 // 
 //  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
 //======================================================================
 

@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.13 1999/07/07 18:40:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.14 2000/01/24 04:54:24 andreas Exp $
 
 //======================================================================
 //
@@ -22,7 +22,7 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.13 1999/07/07 1
 //  its performance, or its conformity to any specification.
 // 
 //  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
 //======================================================================
 

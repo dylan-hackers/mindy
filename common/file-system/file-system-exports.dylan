@@ -1,7 +1,7 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/file-system/Attic/file-system-exports.dylan,v 1.2 1999/04/15 14:28:41 tree Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/Attic/file-system-exports.dylan,v 1.3 2000/01/24 04:54:16 andreas Exp $
 author:      Tom Emerson, tree@tiac.net
-copyright:   Copyright 1999 Thomas R. Emerson
+copyright: Copyright 1999 Thomas R. Emerson
 
 define library file-system
   use dylan;

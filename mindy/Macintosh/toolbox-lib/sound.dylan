@@ -1,8 +1,6 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: (c)1999 Patrick Beard
-
-
+copyright: see below
 // Sound Manager.
 
 define constant SysBeep = get-c-function("SysBeep", args: list(<integer>),

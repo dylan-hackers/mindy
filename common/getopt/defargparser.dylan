@@ -1,7 +1,7 @@
 module: parse-arguments
 synopsis: Interface macros for parser definition and option access.
 authors: David.Lichteblau@SNAFU.DE
-copyright: Copyright 1999 David Lichteblau
+copyright: see below
 
 //======================================================================
 //
@@ -21,7 +21,7 @@ copyright: Copyright 1999 David Lichteblau
 //  its performance, or its conformity to any specification.
 // 
 //  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
 //======================================================================
 

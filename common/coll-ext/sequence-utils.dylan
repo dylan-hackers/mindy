@@ -1,7 +1,6 @@
 module:    Sequence-Utilities
 author:    Matthias Hölzl (tc@gauss.muc.de)
-copyright: Copyright (C) 1998 Matthias Hölzl
-           Copyright (C) 1998 Way Forward Technologies
+copyright: see below
 version:   0.01 19 Dec 1998
 synopsis:  This Module implements some useful methods on collections.
 
@@ -26,7 +25,7 @@ synopsis:  This Module implements some useful methods on collections.
 //  its performance, or its conformity to any specification.
 // 
 //  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 
 // If you need to receive this library under another license contact
 // the author (tc@gauss.muc.de).

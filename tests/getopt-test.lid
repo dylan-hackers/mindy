@@ -6,4 +6,3 @@ copyright: GPL
 
 getopt-test-exports.dylan
 getopt-test.dylan
-

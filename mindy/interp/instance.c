@@ -11,18 +11,19 @@
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
-*     University.
+*     University, and the Gwydion Dylan Maintainers.
 *  
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
 *  
-*  Bug reports, questions, comments, and suggestions should be sent by
-*  E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+*  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+*  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.2 1998/09/21 09:42:57 igor Exp $
+* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.3 2000/01/24 04:58:18 andreas Exp $
 *
 * This file implements instances and user defined classes.
 *

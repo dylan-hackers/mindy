@@ -1,8 +1,6 @@
 module: Toolbox
 author: Patrick Beard, maintenance by Rob Myers (yarrel@netscape.net)
-copyright: (c)1999 Patrick Beard
-
-// Rob replaced stack-alloc with non-threadsafe globals
+copyright: see below
 
 define constant $whichWindow = NewPtr( 4 );
 

@@ -1,7 +1,6 @@
 module: source-locations
-rcs-header: $Header: /scm/cvs/src/tools/pidgin/src/source-locations.dylan,v 1.1 1999/03/28 04:40:33 emk Exp $
-copyright: Copyright (c) 1994  Carnegie Mellon University
-	   All rights reserved.
+rcs-header: $Header: /scm/cvs/src/tools/pidgin/src/source-locations.dylan,v 1.2 2000/01/24 04:59:09 andreas Exp $
+copyright: see below
 
 //======================================================================
 //
@@ -18,14 +17,15 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
+//    University, and the Gwydion Dylan Maintainers.
 // 
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
 // 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
 

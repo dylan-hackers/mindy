@@ -1,8 +1,8 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.5 1999/04/20 07:32:38 emk Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.6 2000/01/24 04:55:36 andreas Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
-copyright:   Copyright 1999 Thomas R. Emerson
+copyright: see below
 
 /*
    Copyright (C) 1999 Thomas R. Emerson
@@ -23,7 +23,7 @@ copyright:   Copyright 1999 Thomas R. Emerson
    Boston, MA  02111-1307, USA.
 
    Bug reports, questions, comments, and suggestions should be sent by
-   E-mail to the Internet address "gwydion-bugs@randomhacks.com".
+   E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
 define library system
