@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.18 2001/06/08 20:51:11 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.19 2001/06/18 23:51:28 housel Exp $
 copyright: see below
 
 
@@ -1226,7 +1226,7 @@ define method finalize-slot
 	   end;
 	   if (slot.slot-defn-sealed?)
 	     if (gf)
-	       add-seal(gf, library, pair(object-ctype(), specializers), tlf);
+	       add-seal(gf, library, pair(slot-type, specializers), tlf);
 	     else
 	       compiler-error
 		 ("%s doesn't name a generic function, so can't be sealed.",
