@@ -11,7 +11,7 @@ module: dylan
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.1 1994/03/24 21:48:03 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.2 1994/03/28 16:54:28 rgs Exp $
 ##
 ##  This file does whatever.
 ##
@@ -98,3 +98,14 @@ define method backward-iteration-protocol (vec :: <vector>)
 	 vector-current-key, vector-current-element,
 	 vector-current-element-setter, vector-copy-state);
 end;
+
+define method `=`(vec1 :: <vector>, vec2 :: <vector>)
+  let (size1, size2) = values(size(vec1), size(vec2));
+  (size1 == size2) & for (index from 0 below size1,
+			 while vec1[index] = vec2[index])
+		    finally
+		      ## #t iff we fell off the end
+		      index == size1;
+		    end for;
+end method `=`;
+
