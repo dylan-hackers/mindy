@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.28 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.29 1996/02/06 15:47:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,7 +16,8 @@ define abstract class <bindings-definition> (<definition>)
   // value, #f if it isn't compile-time computable, and #"not-computed-yet"
   // if we haven't figured it out yet.  Filled in either by ct-value on a
   // constant or by finalize-top-level-form.
-  slot defn-init-value :: type-union(<ct-value>, one-of(#f, #"not-computed-yet")),
+  slot defn-init-value
+    :: type-union(<ct-value>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet", init-keyword: value:;
 end;
 
@@ -181,7 +182,8 @@ define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
 	  let defn = make(defn-class,
 			  name: make(<basic-name>,
 				     symbol: name.token-symbol,
-				     module: *Current-Module*));
+				     module: *Current-Module*),
+			  library: *Current-Library*);
 	  note-variable-definition(defn);
 	  defn;
 	end;
@@ -265,6 +267,7 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	  defn.var-defn-type-defn
 	    := make(<constant-definition>,
 		    name: make(<type-cell-name>, base: defn.defn-name),
+		    library: defn.defn-library,
 		    type: dylan-value(#"<type>"),
 		    value: #f);
 	end;
