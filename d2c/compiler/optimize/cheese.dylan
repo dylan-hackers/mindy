@@ -1,14 +1,14 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.129 1996/04/18 21:52:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.130 1996/05/01 12:33:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
-define variable *do-sanity-checks* = #f;
+define variable *do-sanity-checks* :: <boolean> = #f;
 define method enable-sanity-checks () => (); *do-sanity-checks* := #t; end;
 define method disable-sanity-checks () => (); *do-sanity-checks* := #f; end;
 
-define variable *print-shit* = #f;
+define variable *print-shit* :: <boolean> = #f;
 define method print-shit () => (); *print-shit* := #t; end;
 define method dont-print-shit () => (); *print-shit* := #f; end;
 
@@ -27,7 +27,7 @@ define method optimize-component
     if (*print-shit*) dump-fer(component) end;
     if (component.initial-variables)
       if (*print-shit*)
-	format(*debug-output*, "\n******** doing trivial ssa conversion\n\n");
+	dformat("\n******** doing trivial ssa conversion\n\n");
       end;
       while (component.initial-variables)
 	let init-var = component.initial-variables;
@@ -42,21 +42,20 @@ define method optimize-component
       component.reoptimize-queue := queueable.queue-next;
       queueable.queue-next := #"absent";
       if (*print-shit*)
-	format(*debug-output*, "\n******** about to optimize %=\n\n",
-	       queueable);
+	dformat("\n******** about to optimize %=\n\n", queueable);
       end;
       optimize(component, queueable);
       *optimize-ncalls* := *optimize-ncalls* + 1;
     else
       local method try (function, what)
 	      if (what & *print-shit*)
-		format(*debug-output*, "\n******** %s\n\n", what);
+		dformat("\n******** %s\n\n", what);
 	      end;
 	      function(component);
 	      let start-over?
 		= component.initial-variables | component.reoptimize-queue;
 	      if (start-over? & *print-shit*)
-		format(*debug-output*, "\nstarting over...\n");
+		dformat("\nstarting over...\n");
 	      end;
 	      start-over?;
 	    end;
@@ -164,6 +163,9 @@ end;
 
 define method reoptimize
     (component :: <component>, dependent :: <queueable-mixin>) => ();
+  if (*print-shit*)
+    dformat("queueing %=\n", dependent);
+  end if;
   if (dependent.queue-next == #"absent")
     add-to-queue(component, dependent);
   end;
@@ -238,12 +240,12 @@ end;
 define method expression-movable? (expr :: <primitive>)
     => res :: <boolean>;
   expr.primitive-info.priminfo-pure?;
-end;
+end method expression-movable?;
 
 define method expression-movable? (expr :: <known-call>)
     => res :: <boolean>;
   function-movable?(expr.depends-on.source-exp);
-end;
+end method expression-movable?;
 
 define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
   #f;
@@ -275,7 +277,7 @@ define method expression-movable? (var :: <leaf>)
   #t;
 end;
 
-define method expression-movable? (var :: <abstract-variable>)
+define method expression-movable? (var :: <ssa-variable>)
     => res :: <boolean>;
   ~instance?(var.var-info, <values-cluster-info>);
 end;
@@ -403,7 +405,17 @@ define method optimize
       //
       // For the values that are guarenteed to be returned, we have precise
       // type information.
-      maybe-restrict-type(component, var, positionals.head);
+      let type = positionals.head;
+      maybe-restrict-type(component, var, type);
+      //
+      // If it is a singleton type, replace references to the var with
+      // references directly to that value.
+      let ctv = only-possible-value(type);
+      if (ctv)
+	maybe-propagate-copy
+	  (component, var,
+	   make-literal-constant(make-builder(component), ctv));
+      end if;
 
     finally
       if (var)
@@ -414,9 +426,18 @@ define method optimize
 	for (var = var then var.definer-next,
 	     positionals = positionals then positionals.tail,
 	     until: var == #f | positionals == #())
-	  maybe-restrict-type(component, var,
-			      ctype-union(positionals.head,
-					  false-type));
+	  let type = ctype-union(positionals.head, false-type);
+	  maybe-restrict-type(component, var, type);
+	  //
+	  // If it is a singleton type, replace references to the var with
+	  // references directly to that value.
+	  let ctv = only-possible-value(type);
+	  if (ctv)
+	    maybe-propagate-copy
+	      (component, var,
+	       make-literal-constant(make-builder(component), ctv));
+	  end if;
+	  
 	finally
 	  if (var)
 
@@ -449,6 +470,36 @@ define method optimize
   end;
 end;
 
+
+// maybe-propagate-copy -- internal.
+//
+// Called by the assignment optimizer whenever it notices an assignment that
+// is a potentially useless copy.  The values is guaranteed to be movable,
+// but it is up to us to make sure the copy really is useless.
+// 
+define generic maybe-propagate-copy
+    (component :: <component>, var :: <definition-site-variable>,
+     value :: <expression>)
+    => no-longer-needed? :: <boolean>;
+
+// maybe-propagate-copy{<initial-definition>,<expression>} -- internal.
+//
+// We can't propagate away assignments to initial definitions, because we can't
+// tell which definition the uses of the corresponding initial-variable
+// correspond to.
+//
+define method maybe-propagate-copy
+    (component :: <component>, var :: <initial-definition>,
+     value :: <expression>)
+    => no-longer-needed? :: <boolean>;
+  #f;
+end;
+
+// maybe-propagate-copy{<ssa-variable>,<leaf>}
+//
+// For ssa-variables that are being assigned some leaf, just use that leaf
+// instead of the ssa-variable.  But not if we need to type-check that leaf.
+// 
 define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <leaf>)
     => no-longer-needed? :: <boolean>;
@@ -463,37 +514,84 @@ define method maybe-propagate-copy
   end;
 end;
 
+// maybe-propagate-copy{<ssa-variable>,<ssa-variable>}
+//
+// A copy of another variable needs to be handled specially because only
+// some ssa-variables can be closed over (i.e. defined and referenced in
+// different functions).
+//
 define method maybe-propagate-copy
-    (component :: <component>, var :: <ssa-variable>, value :: <ssa-variable>,
-     #next next-method)
+    (component :: <component>, var :: <ssa-variable>, value :: <ssa-variable>)
     => no-longer-needed? :: <boolean>;
-  if (instance?(var.var-info, <lexical-var-info>)
-	& ~instance?(value.var-info, <lexical-var-info>))
-    // We can't just blindly replace references to var with references to value
-    // because they might be in a different function, and value can't be
-    // closed over.  So we only replace the references that are homed in
-    // value.definer.home.
-    let home = value.definer.home-function-region;
-    let next = #f;
-    for (dep = var.dependents then next,
-	 while: dep)
-      next := dep.source-next;
-      if (dep.dependent.home-function-region == home)
-	replace-expression(component, dep, value);
+  unless (var.needs-type-check?)
+    
+    if (instance?(var.var-info, <lexical-var-info>)
+	  & ~instance?(value.var-info, <lexical-var-info>))
+      // We can't just blindly replace references to var with references to
+      // value because they might be in a different function, and value can't
+      // be closed over.  So we only replace the references that are homed in
+      // value.definer.home.
+      //
+      // let-conversion requeues any lets in the compound result function so
+      // we will retry copy propagation whenever the references to var might
+      // have been moved into the function that defines var.
+      let home = value.definer.home-function-region;
+      let next = #f;
+      for (dep = var.dependents then next,
+	   while: dep)
+	next := dep.source-next;
+	if (dep.dependent.home-function-region == home)
+	  replace-expression(component, dep, value);
+	end;
       end;
-    end;
-    var.dependents == #f;
-  else
-    next-method();
-  end;
-end;
+      var.dependents == #f;
+    else
+      //
+      // We can just replace references to var with references to value because
+      // they are either both lexical variables (and hence value can be closed
+      // over just as easily as var) or var isn't a lexical variable (and hence
+      // can't be closed over so it doesn't matter that value can't either).
+      //
+      // Change all references to this variable to be references to value
+      // instead.
+      while (var.dependents)
+	replace-expression(component, var.dependents, value)
+      end;
+      // Return that we nuked 'em all.
+      #t;
+    end if;
+  end unless;
+end method maybe-propagate-copy;
 
+
+// maybe-propagate-copy{<ssa-variable>,<expression>}
+//
+// We only squeeze out a copy of some operation when there is a single
+// reference to the copy, that reference is an assignment, and that assignment
+// is in the same loop or function as the variable's definition.  And when
+// we don't need to type-check the result.
+// 
 define method maybe-propagate-copy
-    (component :: <component>, var :: <abstract-variable>,
-     value :: <expression>)
+    (component :: <component>, var :: <ssa-variable>, value :: <operation>)
     => no-longer-needed? :: <boolean>;
-  #f;
-end;
+  unless (var.needs-type-check?)
+    let dep = var.dependents;
+    assert(dep);
+    if (dep.source-next == #f)
+      let use = dep.dependent;
+      if (instance?(use, <assignment>)
+	    & (enclosing-loop-or-function(use.region)
+		 == enclosing-loop-or-function(var.definer.region)))
+	if (instance?(use.defines, <ssa-variable>))
+	  queue-dependents(component, use.defines);
+	end if;
+	replace-expression(component, dep, value);
+	#t;
+      end if;
+    end if;
+  end unless;
+end method maybe-propagate-copy;
+
 
 
 define method maybe-expand-cluster
@@ -730,13 +828,45 @@ define method optimize (component :: <component>, if-region :: <if-region>)
   else
     if (instance?(condition, <ssa-variable>))
       let cond-source = condition.definer.depends-on.source-exp;
-      if (instance?(cond-source, <primitive>)
-	    & cond-source.primitive-name == #"not")
-	replace-expression(component, if-region.depends-on,
-			   cond-source.depends-on.source-exp);
-	let then-region = if-region.then-region;
-	if-region.then-region := if-region.else-region;
-	if-region.else-region := then-region;
+      if (instance?(cond-source, <primitive>))
+	// We know that these optimizations will always trigger when possible
+	// because the only ways that the trigger condition can become true
+	// is if someone changes our condition, or if someone changes the
+	// condition's definition to be one of the magic primitives.  But
+	// the only things that can change the condition's definition to either
+	// a not or a make-next-method primitive is copy-propagation (which
+	// explicitly queues the dependents of the variable it changes the
+	// definition of) and optimization of as-boolean when the argument is
+	// a not primitive (which will trigger a copy-propagation, as
+	// described above).
+	
+	select (cond-source.primitive-name)
+	  #"not" =>
+	    // We have an ``if (~x) foo else bar end''.  So change it into an
+	    // ``if (x) bar else foo end''.
+	    replace-expression
+	      (component, if-region.depends-on,
+	       maybe-copy(component, cond-source.depends-on.source-exp,
+			  condition.definer, if-region.home-function-region));
+	    let then-region = if-region.then-region;
+	    if-region.then-region := if-region.else-region;
+	    if-region.else-region := then-region;
+
+	  #"make-next-method" =>
+	    // We have an ``if (make-next-method(info, orig-args)) ... end''
+	    // so change it into an ``if (info ~== #()) ... end''
+	    replace-expression
+	      (component, if-region.depends-on,
+	       expand-next-method-if-ref(component, if-region, cond-source));
+	    let then-region = if-region.then-region;
+	    if-region.then-region := if-region.else-region;
+	    if-region.else-region := then-region;
+
+	  otherwise =>
+	    // Something else.  Ignore it.
+	    begin end;
+
+	end select;
       end if;
     end if;
     if (anything-after?(if-region.parent, if-region))
@@ -746,14 +876,16 @@ define method optimize (component :: <component>, if-region :: <if-region>)
 	unless (then-doesnt-return?)
 	  let after
 	    = extract-stuff-after(component, if-region.parent, if-region);
-	  replace-subregion(component, if-region, if-region.then-region,
-			    combine-regions(if-region.then-region, after));
+	  replace-subregion
+	    (component, if-region, if-region.then-region,
+	     combine-regions(component, if-region.then-region, after));
 	end unless;
       elseif (then-doesnt-return?)
 	let after
 	  = extract-stuff-after(component, if-region.parent, if-region);
-	replace-subregion(component, if-region, if-region.else-region,
-			  combine-regions(if-region.else-region, after));
+	replace-subregion
+	  (component, if-region, if-region.else-region,
+	   combine-regions(component, if-region.else-region, after));
       end if;
     end if;
   end if;
@@ -770,6 +902,31 @@ define method replace-if-with
 		    builder-result(builder));
   delete-dependent(component, if-region);
 end;
+
+
+define method expand-next-method-if-ref
+    (component :: <component>, ref-site :: <dependent-mixin>,
+     next-method-maker :: <primitive>)
+    => no-next-method?-leaf :: <leaf>;
+  let builder = make-builder(component);
+  let source = make(<source-location>);
+  let policy = $Default-Policy;
+
+  let empty?-var = make-local-var(builder, #"empty?", object-ctype());
+  build-assignment
+    (builder, policy, source, empty?-var,
+     make-operation
+       (builder, <primitive>,
+	list(maybe-copy(component, next-method-maker.depends-on.source-exp,
+			next-method-maker, ref-site.home-function-region),
+	     make-literal-constant(builder, as(<ct-value>, #()))),
+	name: #"=="));
+
+  insert-before(component, ref-site, builder-result(builder));
+
+  empty?-var;
+end method expand-next-method-if-ref;
+
 
 
 // Type utilities.
@@ -1232,6 +1389,21 @@ define method replace-placeholder
       end;
       insert-before(component, assign, builder-result(builder));
       replace-expression(component, dep, vec);
+
+    #"make-next-method" =>
+      let builder = make-builder(component);
+      let assign = dep.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+
+      let make-cookie-leaf
+	= ref-dylan-defn(builder, policy, source, #"%make-next-method-cookie");
+      insert-before(component, assign, builder-result(builder));
+      replace-expression
+	(component, dep,
+	 make-unknown-call
+	   (builder, make-cookie-leaf, #f,
+	    listify-dependencies(op.depends-on)));
 
     otherwise => #f;
   end;
