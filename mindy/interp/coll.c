@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.3 1994/04/10 19:00:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.4 1994/04/19 23:41:24 wlott Exp $
 *
 * This file does whatever.
 *
@@ -73,7 +73,7 @@ void init_coll_classes(void)
     init_builtin_class(obj_SeqClass, "<sequence>", obj_CollClass, NULL);
     init_builtin_class(obj_MutExKeyCollClass,
 		       "<mutable-explicit-key-collection>",
-		       obj_MutCollClass, obj_SeqClass, NULL);
+		       obj_MutCollClass, obj_ExKeyCollClass, NULL);
     init_builtin_class(obj_MutSeqClass, "<mutable-sequence>",
 		       obj_MutCollClass, obj_SeqClass, NULL);
     init_builtin_class(obj_ArrayClass, "<array>", obj_MutSeqClass, NULL);
