@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.9 1995/08/20 17:43:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.10 1995/11/13 14:56:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -960,20 +960,20 @@ define class <pattern-variable> (<simple-pattern>)
   //
   // The name of this pattern variable.
   slot patvar-name :: union(<false>, <symbol>),
-    init-value: #f;
+    init-value: #f, init-keyword: name:;
   //
   // The constraint, if any.
   slot patvar-constraint :: one-of(#f, #"expr", #"var", #"name",
 				   #"body", #"case-body"),
-    init-value: #f;
+    init-value: #f, init-keyword: constraint:;
   //
   // True if this pattern variable is a wildcard.
   slot patvar-wildcard? :: <boolean>,
-    init-value: #f;
+    init-value: #f, init-keyword: wildcard:;
   //
   // True if this pattern variable is at the end of the pattern.
   slot patvar-at-end? :: <boolean>,
-    init-value: #f;
+    init-value: #f, init-keyword: at-end:;
 end;
 
 define method print-object (pattern :: <pattern-variable>, stream :: <stream>)
@@ -991,18 +991,20 @@ end;
 define method initialize
     (pv :: <pattern-variable>, #next next-method, #key token) => ();
   next-method();
-  select (token by instance?)
-    <name-token> =>
-      pv.patvar-name := token.token-symbol;
-      if (member?(token.token-symbol,
-		  #[#"expr", #"var", #"name", #"body", #"case-body"]))
-	pv.patvar-constraint := token.token-symbol;
-      end;
-    <constrained-name-token> =>
-      pv.patvar-name := token.token-symbol;
-      pv.patvar-constraint := token.token-constraint;
-    <ellipsis-token> =>
-      #f;
+  if (token)
+    select (token by instance?)
+      <name-token> =>
+	pv.patvar-name := token.token-symbol;
+	if (member?(token.token-symbol,
+		    #[#"expr", #"var", #"name", #"body", #"case-body"]))
+	  pv.patvar-constraint := token.token-symbol;
+	end;
+      <constrained-name-token> =>
+	pv.patvar-name := token.token-symbol;
+	pv.patvar-constraint := token.token-constraint;
+      <ellipsis-token> =>
+	#f;
+    end;
   end;
 end;
 
