@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.6 1995/05/24 19:30:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.7 1995/05/29 00:38:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -353,13 +353,14 @@ define abstract class <literal-list> (<literal-sequence>)
 end;
 
 define method make (class == <literal-list>, #next next-method,
-		    #key contents, tail)
+		    #key sharable: sharable?, contents, tail)
   local
     method repeat (index)
       if (index == contents.size)
 	tail | make(<literal-empty-list>);
       else
 	make(<literal-pair>,
+	     sharable: sharable?,
 	     head: contents[index],
 	     tail: repeat(index + 1));
       end;
@@ -368,8 +369,8 @@ define method make (class == <literal-list>, #next next-method,
 end;
 
 define class <literal-pair> (<literal-list>)
-  slot literal-head :: <literal>, required-init-keyword: head:;
-  slot literal-tail :: <literal>, required-init-keyword: tail:;
+  slot literal-head :: <ct-value>, required-init-keyword: head:;
+  slot literal-tail :: <ct-value>, required-init-keyword: tail:;
 end;
 
 define class <literal-pair-memo-table> (<table>)
@@ -392,14 +393,23 @@ end;
 define constant $literal-pair-memo = make(<literal-pair-memo-table>);
 
 define method make (class == <literal-pair>, #next next-method,
-		    #key head, tail)
-  let key = pair(head, tail);
-  element($literal-pair-memo, key, default: #f)
-    | (element($literal-pair-memo, key) := next-method());
+		    #key sharable: sharable?, head, tail)
+  if (sharable?)
+    let key = pair(head, tail);
+    element($literal-pair-memo, key, default: #f)
+      | (element($literal-pair-memo, key) := next-method());
+  else
+    next-method();
+  end;
+end;
+
+define method print-message (lit :: <literal-pair>, stream :: <stream>) => ();
+  write("{a <pair>}", stream);
 end;
 
 define method as (class == <ct-value>, thing :: <pair>)
   make(<literal-pair>,
+       sharable: #t,
        head: as(<ct-value>, thing.head),
        tail: as(<ct-value>, thing.tail));
 end;
@@ -454,16 +464,26 @@ end;
 define constant $literal-vector-memo = make(<equal-table>);
 
 define method make (class == <literal-simple-object-vector>, #next next-method,
-		    #key contents)
-  do(rcurry(check-type, <literal>), contents);
+		    #key sharable: sharable?, contents)
+  do(rcurry(check-type, <ct-value>), contents);
   let contents = as(<simple-object-vector>, contents);
-  element($literal-vector-memo, contents, default: #f)
-    | (element($literal-vector-memo, contents) :=
-	 next-method(class, contents: contents));
+  if (sharable?)
+    element($literal-vector-memo, contents, default: #f)
+      | (element($literal-vector-memo, contents) :=
+	   next-method(class, contents: contents));
+  else
+    next-method(class, contents: contents);
+  end;
+end;
+
+define method print-message
+    (lit :: <literal-simple-object-vector>, stream :: <stream>) => ();
+  write("{a <simple-object-vector>}", stream);
 end;
 
 define method as (class == <ct-value>, vec :: <simple-object-vector>)
   make(<literal-simple-object-vector>,
+       sharable: #t,
        contents: map(curry(as, <ct-value>), vec));
 end;
 
