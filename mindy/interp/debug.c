@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.14 1994/04/12 20:10:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.15 1994/04/12 23:10:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -67,6 +67,7 @@ struct frame_info {
 
 static jmp_buf BlowOffCmd;
 static struct thread *CurThread = NULL;
+static obj_t CurThreadObj = NULL;
 static struct frame_info *CurFrame = NULL, *TopFrame = NULL;
 static int PrevLine = -1;
 static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
@@ -231,6 +232,10 @@ static void set_frame(struct frame_info *frame)
 static void set_thread(struct thread *thread)
 {
     CurThread = thread;
+    if (thread != NULL)
+	CurThreadObj = thread->thread_obj;
+    else
+	CurThreadObj = NULL;
     ThreadChanged = TRUE;
     free_frames(TopFrame);
     TopFrame = top_frame(thread);
@@ -245,8 +250,8 @@ static void print_thread(struct thread *thread)
 	printf("%d ", thread->suspend_count);
     else
 	printf("  ");
-    if (thread->debug_name != obj_False)
-	print(thread->debug_name);
+    if (THREAD(thread->thread_obj)->debug_name != obj_False)
+	print(THREAD(thread->thread_obj)->debug_name);
     else
 	putchar('\n');
 }
@@ -286,13 +291,8 @@ static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
 
 static void validate_thread_and_frame()
 {
-    struct thread_list *threads;
-
     if (CurThread != NULL) {
-	for (threads = all_threads(); threads != NULL; threads = threads->next)
-	    if (threads->thread == CurThread)
-		break;
-	if (threads == NULL) {
+	if (THREAD(CurThreadObj)->thread == NULL) {
 	    printf("Current thread no longer exists.\n");
 	    set_thread(NULL);
 	    ThreadChanged = FALSE;
@@ -1246,7 +1246,8 @@ static struct thread *find_thread(void)
 
     for (threads = all_threads(); threads != NULL; threads = threads->next) {
 	struct thread *thread = threads->thread;
-	if (thread->debug_name == yylval || thread->id == id)
+	if (THREAD(thread->thread_obj)->debug_name == yylval
+	      || thread->id == id)
 	    return thread;
     }
 
@@ -2039,6 +2040,8 @@ void scavenge_debug_roots(void)
     scavenge(&do_eval_func);
     scavenge(&cur_source_file);
     scav_frames(TopFrame);
+    if (CurThreadObj)
+	scavenge(&CurThreadObj);
 }
 
 
