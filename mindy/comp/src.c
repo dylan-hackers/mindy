@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.6 1994/03/31 10:16:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.7 1994/03/31 13:04:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1249,14 +1249,13 @@ struct for_clause
     if (to) {
 	res->to_kind = to->kind;
 	res->to = to->expr;
+	free(to);
     }
     else {
 	res->to_kind = to_UNBOUNDED;
 	res->to = NULL;
     }
     res->by = by;
-
-    free(to);
 
     return (struct for_clause *)res;
 }
