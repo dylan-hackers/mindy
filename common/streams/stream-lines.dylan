@@ -2,6 +2,7 @@ module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading and writing by lines.
 copyright: See below.
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/stream-lines.dylan,v 1.9 1996/08/07 10:15:46 nkramer Exp $
 
 //======================================================================
 //
@@ -318,8 +319,8 @@ define sealed method new-line (stream :: <simple-sequence-stream>) => ();
 			    stream.contents.size + $default-grow-amount);
     end if;
     let pos :: <integer> = stream.position;
-    stream.contents[pos] := as(stream.stream-element-type, $return));
-    stream.contents[pos + 1] := as(stream.stream-element-type, $newline));
+    stream.contents[pos] := as(stream.stream-element-type, $return);
+    stream.contents[pos + 1] := as(stream.stream-element-type, $newline);
     stream.position := pos + 2;
     if (stream.stream-end < stream.position) 
       stream.stream-end := stream.position;
