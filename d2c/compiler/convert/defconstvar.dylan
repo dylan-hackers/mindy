@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.6 2001/02/25 19:44:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.7 2001/06/19 16:03:25 housel Exp $
 copyright: see below
 
 
@@ -288,6 +288,22 @@ define method ct-value (defn :: <constant-definition>)
     end;
   end;
   defn.defn-init-value;
+end;
+
+define method ct-value (defn :: <constant-method-definition>)
+    => res :: false-or(<ct-value>);
+  if (defn.function-defn-ct-value == #"not-computed-yet")
+    let tlf = defn.const-defn-tlf;
+    if (tlf)
+      if (~tlf.tlf-finalized?)
+        finalize-top-level-form(tlf);
+      end;
+    else
+      error("%= doesn't have a value and we don't know how to compute it?",
+            defn);
+    end;
+  end if;
+  next-method();
 end;
 
 
