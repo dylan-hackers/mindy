@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.24 1996/02/22 17:48:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.25 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -917,67 +917,62 @@ end;
 define method slot-initialized?-transformer
     (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
-  let (okay?, instance, getter) = extract-args(call, 2, #f, #f, #f);
-  if (okay?)
+  block (done)
+    let (okay?, instance, getter) = extract-args(call, 2, #f, #f, #f);
+    unless (okay?) done(#f) end unless;
+
     let class = best-idea-of-class(instance.derived-type);
-    if (class)
-      let slot = slot-from-getter(class, getter);
-      let builder = make-builder(component);
-      let instance-type = instance.derived-type;
-      if (slot-guaranteed-initialized?(slot, instance-type))
-	replace-expression(component, call.dependents,
-			   make-literal-constant(builder, as(<ct-value>, #t)));
-	#t;
-      else
-	let init?-slot = slot.slot-initialized?-slot;
-	if (init?-slot)
-	  let offset = find-slot-offset(init?-slot, instance-type);
-	  if (offset)
-	    replace-expression
-	      (component, call.dependents,
-	       make-operation(builder, <slot-ref>,
-			      list(instance,
-				   make-literal-constant
-				     (builder, as(<ct-value>, offset))),
-			      derived-type: init?-slot.slot-type,
-			      slot-info: init?-slot));
-	    #t;
-	  else
-	    #f;
-	  end if;
-	else
-	  let offset = find-slot-offset(slot, instance-type);
-	  if (offset)
-	    let dep = call.dependents;
-	    let call-assign = dep.dependent;
-	    let policy = call-assign.policy;
-	    let source = call-assign.source-location;
-	    let temp = make-local-var(builder, slot.slot-getter.variable-name,
-				      slot.slot-type);
-	    build-assignment
-	      (builder, policy, source, temp,
-	       make-operation(builder, <slot-ref>,
-			      list(instance,
-				   make-literal-constant
-				     (builder, as(<ct-value>, offset))),
-			      derived-type: slot.slot-type,
-			      slot-info: slot));
-	    replace-expression(component, dep,
-			       make-operation(builder, <primitive>, list(temp),
-					      name: #"initialized?"));
-	    insert-before(component, call-assign, builder-result(builder));
-	    #t;
-	  else
-	    #f;
-	  end if;
-	end if;
-      end if;
-    else
-      #f;
+    unless (class) done(#f) end unless;
+
+    let slot = slot-from-getter(class, getter);
+    unless (slot) done(#f) end unless;
+
+    let builder = make-builder(component);
+    let instance-type = instance.derived-type;
+    if (slot-guaranteed-initialized?(slot, instance-type))
+      replace-expression(component, call.dependents,
+			 make-literal-constant(builder, as(<ct-value>, #t)));
+      done(#t);
     end if;
-  else
-    #f;
-  end if;
+
+    let init?-slot = slot.slot-initialized?-slot;
+    if (init?-slot)
+      let offset = find-slot-offset(init?-slot, instance-type);
+      unless (offset) done(#f) end unless;
+
+      replace-expression
+	(component, call.dependents,
+	 make-operation(builder, <slot-ref>,
+			list(instance,
+			     make-literal-constant(builder,
+						   as(<ct-value>, offset))),
+			derived-type: init?-slot.slot-type,
+			slot-info: init?-slot));
+      done(#t);
+    end if;
+
+    let offset = find-slot-offset(slot, instance-type);
+    unless (offset) done(#f) end unless;
+
+    let dep = call.dependents;
+    let call-assign = dep.dependent;
+    let policy = call-assign.policy;
+    let source = call-assign.source-location;
+    let temp = make-local-var(builder, slot.slot-getter.variable-name,
+			      slot.slot-type);
+    build-assignment
+      (builder, policy, source, temp,
+       make-operation(builder, <slot-ref>,
+		      list(instance,
+			   make-literal-constant(builder,
+						 as(<ct-value>, offset))),
+		      derived-type: slot.slot-type, slot-info: slot));
+    replace-expression(component, dep,
+		       make-operation(builder, <primitive>, list(temp),
+				      name: #"initialized?"));
+    insert-before(component, call-assign, builder-result(builder));
+    done(#t);
+  end block;
 end method slot-initialized?-transformer;
 	    
 define-transformer(#"slot-initialized?", #f, slot-initialized?-transformer);
@@ -1086,7 +1081,7 @@ define-transformer(#"apply", #f, apply-transformer);
 
 
 define method list-transformer
-    (component :: <component>, call :: <unknown-call>)
+    (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
   let (okay?, args) = extract-args(call, 0, #f, #t, #f);
   if (okay?)
