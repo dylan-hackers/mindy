@@ -1,6 +1,6 @@
 module: mine-sweeper
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.1 1996/04/22 23:49:33 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.2 1996/05/12 23:26:34 nkramer Exp $
 
 //======================================================================
 //
@@ -46,6 +46,7 @@ define module mine-sweeper
   use dylan;
   use extensions;
   use tk;
+  use tk-extension, import: { tk-quote, call-tk-function };
   use string-conversions;
   use streams;
   use format;
@@ -154,7 +155,11 @@ end method initialize-grid;
 define method new-game () => ();
   game-paused := #t;
   let options-window = make(<toplevel>);
+  call-tk-function("wm title ", tk-as(<string>, options-window),
+		   " \"", tk-quote("New Game"), "\"");
   let difficulty-frame = make(<frame>, in: options-window);
+  make(<label>, text: "Board Size:", anchor: "w", relief: "flat",
+        side: "top", in: difficulty-frame);
   let difficulty-level = make(<active-variable>, value: 0);
   num-rows := num-cols := num-mines := 8;
   make(<radiobutton>, in: difficulty-frame, variable: difficulty-level,
@@ -173,21 +178,23 @@ define method new-game () => ();
 //       text: "Custom");
   
   let automation-frame = make(<frame>, in: options-window);
+  make(<label>, text: "Tedium level:", anchor: "w", relief: "flat",
+        side: "top", in: automation-frame);
   let automation-variable = make(<active-variable>, value: automation-level);
   make(<radiobutton>, in: automation-frame, variable: automation-variable,
-       value: 0, text: "Level 0", side: "top",
+       value: 0, text: "Maximum tedium", side: "top",
        command: method () automation-level := 0 end,
        anchor: "w", relief: "flat");
   make(<radiobutton>, in: automation-frame, variable: automation-variable,
-       value: 1, text: "Level 1", side: "top",
+       value: 1, text: "Just like Microsoft", side: "top",
        command: method () automation-level := 1 end,
        anchor: "w", relief: "flat");
   make(<radiobutton>, in: automation-frame, variable: automation-variable,
-       value: 2, text: "Level 2", side: "top",
+       value: 2, text: "Somewhat more automated", side: "top",
        command: method () automation-level := 2 end,
        anchor: "w", relief: "flat");
   make(<radiobutton>, in: automation-frame, variable: automation-variable,
-       value: 3, text: "Level 3", side: "top",
+       value: 3, text: "Almost full automation", side: "top",
        command: method () automation-level := 3 end,
        anchor: "w", relief: "flat");
 
@@ -415,8 +422,12 @@ end method auto-play-3;
 
 define method main (prog-name :: <byte-string>, #rest args)
   let button-bar = make(<frame>, in: *root-window*, side: "top");
-  make(<button>, in: button-bar, text: "New game...", command: new-game);
-  make(<button>, in: button-bar, text: "Quit", command: exit);
+  call-tk-function("wm title ", tk-as(<string>, *root-window*),
+		   " \"", tk-quote("Minesweeper"), "\"");
+  make(<button>, in: button-bar, text: "New game...", command: new-game,
+       side: "top", fill: "both");
+  make(<button>, in: button-bar, text: "Quit", command: exit,
+       side: "top", fill: "both");
   initialize-grid();
   map-window(*root-window*);
 end method main;
