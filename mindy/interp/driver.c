@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.18 1995/04/16 23:34:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.19 1995/09/06 23:22:07 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -386,8 +386,13 @@ static void init_waiters(struct waiters *waiters)
 
 void init_driver()
 {
+    /* By using this declaration rather than the constant NULL, we
+     * avoid a compiler bug on the Sparc.
+     */
+    void (*null)(void) = NULL;
+
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
-    set_interrupt_handler(NULL);
+    set_interrupt_handler(null);
 }
