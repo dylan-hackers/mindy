@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.10 2000/11/03 04:25:11 dauclair Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.11 2001/03/04 11:58:52 bruce Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -63,7 +63,7 @@ int gdb_stack_index = 0;
 
 /* extern descriptor_t dylan_apply_safely_value; not used? */ 
 extern descriptor_t dylanZdylan_visceraZgdb_integer_value;
-extern descriptor_t dylanZdylan_visceraZCLS_byte_string;
+extern struct heapobj dylanZdylan_visceraZCLS_byte_string_HEAP;
 extern void dylanZdylan_visceraZgdb_print_object_METH();
 
 void string_arg (char *arg) {
@@ -77,7 +77,7 @@ void string_arg (char *arg) {
 
   dylan_str = (void **)
     GC_malloc(sizeof(struct heapobj *) + sizeof(long) + strlen(arg));
-  dylan_str[0] = (void *)(dylanZdylan_visceraZCLS_byte_string.heapptr);
+  dylan_str[0] = (void *)(&dylanZdylan_visceraZCLS_byte_string_HEAP);
   dylan_str[1] = (void *)strlen(arg);
   strcpy((char *)(&dylan_str[2]), arg);
 
