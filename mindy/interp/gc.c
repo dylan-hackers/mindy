@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.9 1994/06/11 17:18:40 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.10 1994/06/17 18:05:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -254,8 +254,8 @@ void collect_garbage(void)
     int bytes_at_start = bytes_in_use();
     int bytes_at_end;
 
-    printf("[GCing with %d bytes in use...", bytes_at_start);
-    fflush(stdout);
+    fprintf(stderr, "[GCing with %d bytes in use...", bytes_at_start);
+    fflush(stderr);
 
     TimeToGC = FALSE;
     BytesInUse = 0;
@@ -324,9 +324,10 @@ void collect_garbage(void)
     bytes_at_end = bytes_in_use();
     GCTrigger = bytes_at_end + BYTES_CONSED_BETWEEN_GCS;
 
-    printf("reclaimed %d leaving %d]\n",
-	   bytes_at_start - bytes_at_end,
-	   bytes_at_end);
+    fprintf(stderr, "reclaimed %d leaving %d]\n",
+	    bytes_at_start - bytes_at_end,
+	    bytes_at_end);
+    fflush(stderr);
 
     table_gc_hook();
 }
