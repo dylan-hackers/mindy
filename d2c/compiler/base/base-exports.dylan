@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.43 1996/06/26 14:44:54 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.44 1996/07/11 16:20:10 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -767,6 +767,8 @@ define module target-environment
     get-targets, <target-environment>,
 
     target-name,
+
+    default-features,
 
     heap-preamble,
     align-directive,
