@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.43 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.44 1996/04/13 21:22:48 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -909,7 +909,7 @@ define method spew-object
 		  as(<ct-value>, object.slot-init-keyword-required?),
 		slot-positions:
 		  if (instance?(object, <instance-slot-info>))
-		    as(<ct-value>, object.slot-positions);
+		    as(<ct-value>, as(<list>, object.slot-positions));
 		  end if);
 end method spew-object;
 
@@ -1112,17 +1112,13 @@ define method get-class-fields (class :: <cclass>)
     let fields = make(<vector>, size: layout.layout-length + 1, fill: #f);
     for (slot in class.all-slot-infos)
       if (instance?(slot, <instance-slot-info>))
-	block (return)
-	  for (entry in slot.slot-positions)
-	    if (csubtype?(class, entry.head))
-	      fields[entry.tail] := slot;
-	      return();
-	    end;
-	  end;
-	  error("Can't find the position for %= in %=?", slot, class);
-	end;
-      end;
-    end;
+	let posn = get-direct-position(slot.slot-positions, class);
+	unless (posn)
+	  error("Can't find the position for %= in %s?", slot, class)
+	end unless;
+	fields[posn] := slot;
+      end if;
+    end for;
     for (hole in layout.layout-holes)
       fields[hole.head] := hole.tail;
     end;
