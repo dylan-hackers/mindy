@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.1 1996/01/03 21:47:30 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.2 1996/01/31 23:59:47 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,7 @@ define module main
 
   use utils;
   use define-classes;
+  use define-functions;
   use variables;
   use parser;
   use format;
