@@ -296,7 +296,6 @@ end module duim-sheets;
 
 define module duim-sheets-internals
   use dylan;
-  use extensions, import:{subclass}; // common-dylan subclass is no good
   use duim-imports;
   use duim-utilities;
   use duim-geometry-internals;

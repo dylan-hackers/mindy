@@ -105,7 +105,6 @@ end module duim-geometry;
 
 define module duim-geometry-internals
   use dylan;
-  use extensions, import:{subclass}; // common-dylan subclass is no good
   use duim-imports;
   use duim-utilities;
   use duim-geometry, export: all;
