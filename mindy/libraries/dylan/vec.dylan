@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.21 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.22 1996/03/07 17:54:19 nkramer Exp $
 
 //======================================================================
 //
@@ -36,7 +36,7 @@ define constant vector-prev-state =
   begin
     local
       method vector-prev-state (vec :: <vector>, state :: <integer>)
-	  => <integer>;
+	  => prev :: <integer>;
 	state - 1;
       end;
     vector-prev-state;
@@ -46,7 +46,7 @@ define constant vector-next-state =
   begin
     local
       method vector-next-state (vec :: <vector>, state :: <integer>)
-	  => <integer>;
+	  => next :: <integer>;
 	state + 1;
       end;
     vector-next-state;
@@ -66,7 +66,7 @@ define constant vector-current-key =
   begin
     local
       method vector-current-key (vec :: <vector>, state :: <integer>)
-	  => <object>;
+	  => cur-key :: <integer>;
 	state;
       end;
     vector-current-key;
@@ -76,7 +76,7 @@ define constant vector-current-element =
   begin
     local
       method vector-current-element (vec :: <vector>, state :: <integer>)
-	  => <object>;
+	  => cur-elt :: <object>;
 	element(vec, state);
       end;
     vector-current-element;
@@ -87,7 +87,7 @@ define constant vector-current-element-setter =
     local
       method vector-current-element-setter (value :: <object>, vec :: <vector>,
 					    state :: <integer>)
-	  => <object>;
+	  => value :: <object>;
 	element(vec, state) := value;
       end;
     vector-current-element-setter;
@@ -97,19 +97,35 @@ define constant vector-copy-state =
   begin
     local
       method vector-copy-state (vec :: <vector>, state :: <integer>)
-	  => <integer>;
+	  => state :: <integer>;
 	state;
       end;
     vector-copy-state;
   end;
 
 define method forward-iteration-protocol (vec :: <vector>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(0, size(vec), vector-next-state, vector-finished?,
 	 vector-current-key, vector-current-element,
 	 vector-current-element-setter, vector-copy-state);
 end;
 
 define method backward-iteration-protocol (vec :: <vector>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(size(vec) - 1, -1, vector-prev-state, vector-finished?,
 	 vector-current-key, vector-current-element,
 	 vector-current-element-setter, vector-copy-state);
@@ -118,7 +134,7 @@ end;
 
 //// Collection routines.
 
-define method \=(vec1 :: <vector>, vec2 :: <vector>)
+define method \=(vec1 :: <vector>, vec2 :: <vector>) => answer :: <boolean>;
   let (size1, size2) = values(size(vec1), size(vec2));
   (size1 == size2) & for (index from 0 below size1,
 			  while: vec1[index] = vec2[index])
@@ -135,6 +151,7 @@ define method map-as(cls :: limited(<class>, subclass-of: <vector>),
 		     vector :: <vector>,
 		     #next next-method,
 		     #rest more_vectors)
+ => result :: <vector>;
   if (empty?(more_vectors))
     let size = size(vector);
     let result = make(cls, size: size);
@@ -159,6 +176,7 @@ end method map-as;
 define method concatenate-as(cls :: <class>, vector :: <vector>,
 			     #next next-method,
 			     #rest more_vectors)
+ => result :: <vector>;
   if (~subtype?(cls, <vector>) |
 	~every?(rcurry(instance?, <vector>), more_vectors))
     next-method();
@@ -180,6 +198,7 @@ end method concatenate-as;
 
 define method member?(value :: <object>, vector :: <vector>,
 		      #key test = \==)
+ => answer :: <boolean>;
   block (return)
     for (key from 0 below size(vector))
       if (test(value, vector[key])) return(#t) end if;
@@ -188,6 +207,7 @@ define method member?(value :: <object>, vector :: <vector>,
 end method member?;
 
 define method empty?(vector :: <vector>)
+ => answer :: <boolean>;
   size(vector) = 0;
 end method empty?;
 
@@ -195,7 +215,8 @@ end method empty?;
 // all-vector case.
 define method every?(proc :: <function>, vector :: <vector>,
 		     #next next_method,
-		     #rest more_vectors) => <object>;
+		     #rest more_vectors)
+ => answer :: <boolean>;
   if (empty?(more_vectors))
     block (return)
       for (key from 0 below size(vector))
@@ -224,13 +245,15 @@ end method every?;
 // The next two functions are usually called upon rest vectors, so we should
 // handle the vector case as fast as possible.
 define method reduce(proc :: <function>, init-val, collection :: <vector>)
-  for (value = init-val then proc(value, collection[i]),
+ => answer :: <object>;
+for (value = init-val then proc(value, collection[i]),
        i from 0 below collection.size)
   finally value;
   end for;
 end method reduce;
 
 define method reduce1(proc :: <function>, collection :: <vector>)
+ => answer :: <object>;
   let sz = collection.size;
   select (sz)
     // Handle the most common cases first.
@@ -248,6 +271,7 @@ end method reduce1;
 
 define method subsequence-position(big :: <vector>, pattern :: <vector>,
 				   #key test = \==, count = 1)
+ => position :: <integer>;
   let sz = size(big);
   let pat-sz = size(pattern);
 
@@ -293,6 +317,7 @@ end method subsequence-position;
 define method subsequence-position(big :: <byte-string>,
 				   pattern :: <byte-string>,
 				   #key test = \==, count = 1)
+ => position :: <integer>;
   let sz = size(big);
   let pat-sz = size(pattern);
 
@@ -374,7 +399,7 @@ end method subsequence-position;
 define method replace-elements!(vector :: <vector>,
 				predicate :: <function>,
 				new_value_fn :: <function>,
-				#key count: count) => <vector>;
+				#key count: count) => vec :: <vector>;
   for (key from 0 below size(vector),
        until: count == 0)
     let this_element = vector[key];
@@ -391,6 +416,7 @@ end method replace-elements!;
 define method do(proc :: <function>, vector :: <vector>,
 		 #next next_method,
 		 #rest more_vectors)
+ => answer :: singleton(#f);
   if (empty?(more_vectors))
     for (key from 0 below size(vector)) proc(vector[key]) end for;
   elseif (every?(rcurry(instance?, <vector>), more_vectors))
@@ -407,6 +433,7 @@ end method do;
 
 define method fill!(vector :: <vector>, value :: <object>,
 		    #key start: first = 0, end: last)
+ => vector :: <vector>;
   let last = if (last) min(last, size(vector)) else size(vector) end if;
   for (i from first below last)
     vector[i] := value;
@@ -414,6 +441,7 @@ define method fill!(vector :: <vector>, value :: <object>,
 end method fill!;
 
 define method copy-sequence(vector :: <vector>, #key start = 0, end: last)
+ => vector :: <vector>;
   let src-sz = size(vector);
   let last = if (last & last < src-sz) last else src-sz end if;
   let sz = if (start <= last) 
@@ -432,6 +460,7 @@ end method copy-sequence;
 //// Array methods.
 
 define method aref (vector :: <vector>, #rest indices)
+ => elt :: <object>;
   if (indices.size == 1)
     vector[indices[0]];
   else
@@ -441,6 +470,7 @@ define method aref (vector :: <vector>, #rest indices)
 end;
 
 define method aref-setter (new, vector :: <vector>, #rest indices)
+ => new :: <object>;
   if (indices.size == 1)
     vector[indices[0]] := new;
   else
@@ -461,10 +491,12 @@ end method dimensions;
 //// Special purpose element setter methods.
 
 define method element-setter (value, v :: <byte-vector>, index :: <integer>)
+ => new :: <object>;
   error("%= is not an integer between 0 and 255.", value);
 end;
 
 define method element-setter (value, v :: <buffer>, index :: <integer>)
+ => new :: <object>;
   error("%= is not an integer between 0 and 255.", value);
 end;
 
