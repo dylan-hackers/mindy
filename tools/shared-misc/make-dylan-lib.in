@@ -12,8 +12,6 @@ EOD
 
 $libname = $ARGV[0];
 
-$exec_prefix = "@prefix@";
-
 mkdir $libname, 0777 or die "Can't create directory $libname: $!";
 chdir $libname or die "Can't chdir to directory $libname: $!";
 
@@ -62,7 +60,7 @@ clean:
 \t-rm *.o *.s *.a *.c *.mak *~ $libname.lib.du
 
 install: $libname.lib.du 
-\t@INSTALL@ lib$libname.a $libname.lib.du @libdir@/dylan/@version@/dylan-user
+\t@INSTALL@ lib$libname.a $libname.lib.du `d2c --dylan-user-location`
 EOD
 		 
 sub write_file {

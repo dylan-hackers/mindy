@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.37 1999/05/24 17:18:33 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.38 1999/05/29 21:28:28 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -385,6 +385,18 @@ You may need to specify the --with-existing-runtime option to configure; see
     fi
     ln -s "$existing_runtime_header" "$LOCAL_RUNTIME"
 fi
+
+AC_ARG_WITH(site-dylan,[\
+  --with-site-dylan-prefix=SITE_DYLAN_PREFIX
+                          Use this prefix for the site-local Dylan
+                          directory. You might want to set this to
+                          /usr/local if you install Gwydion Dylan in
+                          /usr, in order to be FSSTND compliant.])
+with_site_dylan_prefix=${with_site_dylan_prefix:-no}
+if test "$with_site_dylan_prefix" = yes; then
+    with_site_dylan_prefix=no
+fi
+AC_SUBST(with_site_dylan_prefix)
 
 #====================================================================
 # Start of section lifted from original configure.in.
