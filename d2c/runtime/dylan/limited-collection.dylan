@@ -1,4 +1,4 @@
-RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.4 2002/07/13 00:57:03 bruce Exp $
+RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.5 2002/07/13 05:07:20 bruce Exp $
 Module: dylan-viscera
 Copyright: See below.
 Synopsis: Runtime support for limited collections.
@@ -433,9 +433,21 @@ end method make-limited-collection;
 %limited-simple-vector-setter(<simple-integer-vector>, <integer>, 0);
 %limited-simple-vector-maker(<simple-integer-vector>, <integer>, 0);
 
+%limited-simple-vector-class(<simple-character-vector>, <character>, '\0');
+%limited-simple-vector-setter(<simple-character-vector>, <character>, '\0');
+%limited-simple-vector-maker(<simple-character-vector>, <character>, '\0');
+
+%limited-simple-vector-class(<simple-float-vector>, <single-float>, 0.0s0);
+%limited-simple-vector-setter(<simple-float-vector>, <single-float>, 0.0s0);
+%limited-simple-vector-maker(<simple-float-vector>, <single-float>, 0.0s0);
+
 %limited-simple-vector-class(<simple-double-vector>, <double-float>, 0.0);
 %limited-simple-vector-setter(<simple-double-vector>, <double-float>, 0.0);
 %limited-simple-vector-maker(<simple-double-vector>, <double-float>, 0.0);
+
+%limited-simple-vector-class(<simple-extended-vector>, <extended-float>, 0.0x0);
+%limited-simple-vector-setter(<simple-extended-vector>, <extended-float>, 0.0x0);
+%limited-simple-vector-maker(<simple-extended-vector>, <extended-float>, 0.0x0);
 
 // limited(<simple-vector>, of: ...)
 %limited-simple-vector-class(<limited-simple-vector>, <object>, 0);
