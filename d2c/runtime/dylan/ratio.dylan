@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/ratio.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/ratio.dylan,v 1.3 2001/12/23 04:17:28 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -52,14 +52,13 @@ define sealed inline method make
   let denominator = as(<extended-integer>, denominator);
   //
   // Make sure the denominator is positive.
-  let (numerator, denominator)
-    = if (negative?(denominator))
-	values(- numerator, - denominator);
-      elseif (positive?(denominator))
-	values(numerator, denominator);
-      else
-	error("Can't make a ratio with a zero denominator.");
-      end;
+  if (denominator.negative?)
+    numerator := -numerator;
+    denominator := -denominator;
+  elseif (denominator.zero?)
+    error("Can't make a ratio with a zero denominator.");
+  end;
+
   //
   // Now divide out the gcd and make the ratio object.
   let gcd = gcd(numerator, denominator);
