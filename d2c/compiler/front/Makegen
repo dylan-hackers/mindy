@@ -1,10 +1,4 @@
-$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
-    . '-L../../runtime/dylan -L../../runtime/streams '
-    . '-L../../runtime/standard-io '
-    . '-L../../runtime/print -L../../runtime/format '
-    . '-L../../runtime/random -L../../runtime/coll-ext '
-    . '-L../../runtime/string-ext -L../../runtime/table-ext';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+do "../common-Makegen";
 
 do d2c_library("compiler-front", "front",
                "front-exports primitives front func-defns var-defns tlf"
