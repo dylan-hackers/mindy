@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.90 1996/03/19 23:54:42 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.91 1996/03/20 04:56:47 wlott Exp $
 
 //======================================================================
 //
@@ -52,7 +52,7 @@ define module Builtin-Stuff
     <limited-integer>, <list>, <lock>,
     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
     <mutable-sequence>,
-    <number>,
+    <never-returns>, <number>,
     <object>,
     <pair>,
     <ratio>, <rational>, <real>,
@@ -135,7 +135,9 @@ end Builtin-Stuff;
 
 define module extras
   create
-    *debug-output*, condition-format, report-condition,
+    *debug-output*, *warning-output*,
+    <format-string-condition>, report-condition,
+    condition-format, condition-force-output,
     ratio, $not-supplied, false-or;
 end;
 
@@ -240,6 +242,7 @@ define module Extensions
   use Builtin-Stuff,
     import: {main, exit, on-exit, load, *print-GC-messages*,
 	     $maximum-integer, $minimum-integer,
+	     <never-returns>,
 	     <byte-character>, <byte-vector>,
 	     <true>, <false>,
 	     <general-integer>, <extended-integer>,
