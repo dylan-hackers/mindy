@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.52 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.53 1996/03/21 04:13:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,6 +112,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <let-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   let varlist = form.let-variables;
   let params = varlist.varlist-fixed;
   let rest = varlist.varlist-rest;
@@ -206,6 +207,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <handler-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   // First, build the call to push-handler.
   let policy = lexenv.lexenv-policy;
   let func = ref-dylan-defn(builder, policy, source, #"push-handler");
@@ -246,11 +248,13 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <local-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   let specializer-lexenv = make(<lexenv>, inside: lexenv);
   let vars
     = map(method (meth)
 	    let name = meth.method-name;
-	    let var = make-lexical-var(builder, name.token-symbol, source,
+	    let var = make-lexical-var(builder, name.token-symbol,
+				       name.source-location,
 				       function-ctype());
 	    add-binding(lexenv, name, var);
 	    var;
@@ -271,8 +275,9 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <literal-ref-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
-  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder, form.litref-literal));
+  deliver-result
+    (builder, lexenv.lexenv-policy, form.source-location, want, datum,
+     make-literal-constant(builder, form.litref-literal));
 end;
 
 define method fer-convert
@@ -280,6 +285,7 @@ define method fer-convert
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
   let id = form.varref-id;
+  let source = id.source-location;
   let binding = find-binding(lexenv, id);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 if (binding)
@@ -309,6 +315,7 @@ define method fer-convert
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
   let id = form.varset-id;
+  let source = id.source-location;
   let binding = find-binding(lexenv, id);
   if (binding)
     let temp = fer-convert(builder, form.varset-value,
@@ -403,8 +410,9 @@ define method fer-convert
     op-ptr.head := fer-convert(builder, arg, make(<lexenv>, inside: lexenv),
 			       #"leaf", name);
   end;
-  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-unknown-call(builder, func, #f, ops));
+  deliver-result
+    (builder, lexenv.lexenv-policy, form.source-location, want, datum,
+     make-unknown-call(builder, func, #f, ops));
 end;
 
 define method fer-convert
@@ -417,8 +425,9 @@ define method fer-convert
   let fun-leaf = fer-convert(builder, make(<varref-parse>, id: form.dot-name),
 			     make(<lexenv>, inside: lexenv),
 			     #"leaf", #"function");
-  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-unknown-call(builder, fun-leaf, #f, list(arg-leaf)));
+  deliver-result
+    (builder, lexenv.lexenv-policy, form.source-location, want, datum,
+     make-unknown-call(builder, fun-leaf, #f, list(arg-leaf)));
 end;
 
 define method fer-convert
@@ -426,7 +435,7 @@ define method fer-convert
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
   let lexenv = make(<body-lexenv>, inside: lexenv);
-
+  let source = form.source-location;
   let body = form.body-parts;
   let result
     = if (empty?(body))
@@ -454,6 +463,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <bind-exit-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   let nlx-info = make(<nlx-info>);
   let name = form.exit-name;
   let state-type = specifier-type(#"<raw-pointer>");
@@ -505,6 +515,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <if-parse>, lexenv :: <lexenv>,
      want :: one-of(#"nothing", #"assignment"), datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   build-if-body(builder, lexenv.lexenv-policy, source,
 		fer-convert(builder, form.if-condition,
 			    make(<lexenv>, inside: lexenv),
@@ -522,6 +533,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <method-ref-parse>, lexenv :: <lexenv>,
      want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   let temp = make-local-var(builder, #"method", function-ctype());
   build-assignment(builder, lexenv.lexenv-policy, source, temp,
 		   fer-convert-method(builder, form.method-ref-method, #f, #f,
@@ -573,7 +585,7 @@ define method fer-convert
     end;
   repeat(ops, 0, info.priminfo-arg-types);
   deliver-result
-    (builder, lexenv.lexenv-policy, source, want, datum,
+    (builder, lexenv.lexenv-policy, form.source-location, want, datum,
      make-operation(builder, <primitive>, ops, name: name));
 end;
 
@@ -581,6 +593,7 @@ define method fer-convert
     (builder :: <fer-builder>, form :: <unwind-protect-parse>,
      lexenv :: <lexenv>, want :: <result-designator>, datum :: <result-datum>)
     => res :: <result>;
+  let source = form.source-location;
   let policy = lexenv.lexenv-policy;
   let cleanup-builder = make-builder(builder);
   let cleanup-region
@@ -956,4 +969,3 @@ define method fer-convert-method
 			  function-region);
   end;
 end;
-
