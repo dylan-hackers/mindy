@@ -8,3 +8,4 @@ c-lexer-cpp.dylan
 c-parser-engine.dylan
 c-parser-stubs.dylan
 c-parser.dylan
+platforms.dylan
