@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.38 1995/04/29 08:37:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.39 1995/04/30 05:56:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -414,7 +414,7 @@ define method optimize (component :: <component>, call :: <unknown-call>)
     error("No function in a call?");
   end;
   // Dispatch of the thing we are calling.
-  optimize-unknown-call(component, call, func-dep.source-exp);
+  optimize-unknown-call(component, call, func-dep.source-exp, #f);
 end;
 
 define method optimize
@@ -425,7 +425,8 @@ end;
 
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
+    (component :: <component>, call :: <unknown-call>, func :: <leaf>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -434,7 +435,8 @@ end;
 
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <lambda>)
+    (component :: <component>, call :: <unknown-call>, func :: <lambda>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
 
   // Observe the result type.
@@ -457,6 +459,21 @@ define method optimize-unknown-call
       change-call-kind(component, call, <error-call>);
     elseif (~args-okay?)
       change-call-kind(component, call, <error-call>);
+    elseif (inline-expansion)
+      // Args are okay, and we want to inline it.  So make us a new function
+      // and do so.
+      let builder = make-builder(component);
+      let lexenv = make(<lexenv>);
+      let new-func
+	= build-general-method(builder, inline-expansion, lexenv, lexenv);
+      insert-before(component, call.dependents.dependent,
+		    builder-result(builder));
+      let func-dep = call.depends-on;
+      remove-dependency-from-source(component, func-dep);
+      func-dep.source-exp := new-func;
+      func-dep.source-next := new-func.dependents;
+      new-func.dependents := func-dep;
+      queue-dependent(component, call);
     else
       // The args are all okay, so assert the arg types and convert the call
       // into either a <local-call> or a <known-call>.
@@ -485,7 +502,8 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <hairy-method-literal>)
+     func :: <hairy-method-literal>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   let sig = func.signature;
 
@@ -584,73 +602,90 @@ define method optimize-unknown-call
     change-call-kind(component, call, <error-call>);
   elseif (known?)
     let builder = make-builder(component);
-    let new-args = make(<stretchy-vector>);
-    add!(new-args, func.main-entry);
-    let assign = call.dependents.dependent;
-    for (spec in sig.specializers,
-	 arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next)
-      assert-type(component, assign, arg-dep, spec);
-      add!(new-args, arg-dep.source-exp);
-    finally
-      if (sig.next?)
-	// ### Need to actually deal with #next args.
-	add!(new-args, make-literal-constant(builder, make(<literal-false>)));
-      end;
-      if (sig.key-infos)
-	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
-	     while: key-dep)
-	  block (next-key)
-	    let key = key-dep.source-exp.value.literal-value;
-	    for (keyinfo in sig.key-infos)
-	      if (keyinfo.key-name == key)
-		assert-type(component, assign, key-dep.dependent-next,
-			    keyinfo.key-type);
-		next-key();
+    if (inline-expansion)
+      let lexenv = make(<lexenv>);
+      let new-func
+	= build-general-method(builder, inline-expansion, lexenv, lexenv);
+      insert-before(component, call.dependents.dependent,
+		    builder-result(builder));
+      let func-dep = call.depends-on;
+      remove-dependency-from-source(component, func-dep);
+      func-dep.source-exp := new-func;
+      func-dep.source-next := new-func.dependents;
+      new-func.dependents := func-dep;
+      queue-dependent(component, call);
+    else
+      let new-args = make(<stretchy-vector>);
+      add!(new-args, func.main-entry);
+      let assign = call.dependents.dependent;
+      for (spec in sig.specializers,
+	   arg-dep = call.depends-on.dependent-next
+	     then arg-dep.dependent-next)
+	assert-type(component, assign, arg-dep, spec);
+	add!(new-args, arg-dep.source-exp);
+      finally
+	if (sig.next?)
+	  // ### Need to actually deal with #next args.
+	  add!(new-args,
+	       make-literal-constant(builder, make(<literal-false>)));
+	end;
+	if (sig.key-infos)
+	  for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	       while: key-dep)
+	    block (next-key)
+	      let key = key-dep.source-exp.value.literal-value;
+	      for (keyinfo in sig.key-infos)
+		if (keyinfo.key-name == key)
+		  assert-type(component, assign, key-dep.dependent-next,
+			      keyinfo.key-type);
+		  next-key();
+		end;
 	      end;
 	    end;
 	  end;
 	end;
-      end;
-      if (sig.rest-type)
-	let rest-args = make(<stretchy-vector>);
-	add!(rest-args, dylan-defn-leaf(builder, #"vector"));
-	for (arg-dep = arg-dep then arg-dep.dependent-next,
-	     while: arg-dep)
-	  add!(rest-args, arg-dep.source-exp);
+	if (sig.rest-type)
+	  let rest-args = make(<stretchy-vector>);
+	  add!(rest-args, dylan-defn-leaf(builder, #"vector"));
+	  for (arg-dep = arg-dep then arg-dep.dependent-next,
+	       while: arg-dep)
+	    add!(rest-args, arg-dep.source-exp);
+	  end;
+	  let rest-temp = make-local-var(builder, #"rest", object-ctype());
+	  build-assignment
+	    (builder, assign.policy, assign.source-location, rest-temp,
+	     make-operation(builder, as(<list>, rest-args)));
+	  add!(new-args, rest-temp);
 	end;
-	let rest-temp = make-local-var(builder, #"rest", object-ctype());
-	build-assignment
-	  (builder, assign.policy, assign.source-location, rest-temp,
-	   make-operation(builder, as(<list>, rest-args)));
-	add!(new-args, rest-temp);
-      end;
-      if (sig.key-infos)
-	for (keyinfo in sig.key-infos)
-	  for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
-	       until: key-dep == #f
-		 | key-dep.source-exp.value.literal-value == keyinfo.key-name)
-	  finally
-	    if (key-dep)
-	      add!(new-args, key-dep.dependent-next.source-exp);
-	    else
-	      add!(new-args,
-		   make-literal-constant(builder, keyinfo.key-default));
+	if (sig.key-infos)
+	  for (keyinfo in sig.key-infos)
+	    let key = keyinfo.key-name;
+	    for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+		 until: key-dep == #f
+		   | key-dep.source-exp.value.literal-value == key)
+	    finally
+	      if (key-dep)
+		add!(new-args, key-dep.dependent-next.source-exp);
+	      else
+		add!(new-args,
+		     make-literal-constant(builder, keyinfo.key-default));
+	      end;
 	    end;
 	  end;
 	end;
-      end;
-      insert-before(component, assign, builder-result(builder));
-      let orig-func = call.depends-on.source-exp;
-      let new-call = make-operation(builder, as(<list>, new-args));
-      let call-dep = call.dependents;
-      call.dependents := #f;
-      new-call.dependents := call-dep;
-      call-dep.source-exp := new-call;
-      delete-dependent(component, call);
-      if (orig-func == func)
-	change-call-kind(component, new-call, <local-call>);
-      else
-	change-call-kind(component, new-call, <known-call>);
+	insert-before(component, assign, builder-result(builder));
+	let orig-func = call.depends-on.source-exp;
+	let new-call = make-operation(builder, as(<list>, new-args));
+	let call-dep = call.dependents;
+	call.dependents := #f;
+	new-call.dependents := call-dep;
+	call-dep.source-exp := new-call;
+	delete-dependent(component, call);
+	if (orig-func == func)
+	  change-call-kind(component, new-call, <local-call>);
+	else
+	  change-call-kind(component, new-call, <known-call>);
+	end;
       end;
     end;
   end;
@@ -658,14 +693,16 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <definition-constant-leaf>)
+     func :: <definition-constant-leaf>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
-  optimize-unknown-call(component, call, func.const-defn);
+  optimize-unknown-call(component, call, func.const-defn, #f);
 end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-constant-definition>)
+     defn :: <abstract-constant-definition>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -674,7 +711,8 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <function-definition>)
+     defn :: <function-definition>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
@@ -682,7 +720,8 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <generic-definition>)
+     defn :: <generic-definition>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
@@ -737,19 +776,21 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-method-definition>)
+     defn :: <abstract-method-definition>,
+     inline-expansion :: false-or(<method-parse>))
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
   let leaf = defn.method-defn-leaf;
   if (leaf)
-    optimize-unknown-call(component, call, leaf);
+    optimize-unknown-call(component, call, leaf,
+			  defn.method-defn-inline-expansion);
   end;
 end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <exit-function>)
+     func :: <exit-function>, inline-expansion :: false-or(<method-parse>))
     => ();
   // Make a values operation, steeling the args from the call.
   let args = call.depends-on.dependent-next;
@@ -1824,26 +1865,6 @@ define method add-type-checks-aux
     end;
   end;
 end;
-
-// duplicated from fer-convert because I don't want to figure out how to
-// import them from there.
-// 
-define method dylan-defn-leaf (builder :: <fer-builder>, name :: <symbol>)
-    => res :: <leaf>;
-  make-definition-leaf(builder, dylan-defn(name))
-    | error("%s undefined?", name);
-end;
-
-define method make-check-type-operation (builder :: <fer-builder>,
-					 value-leaf :: <leaf>,
-					 type-leaf :: <leaf>)
-    => res :: <operation>;
-  make-operation(builder,
-		 list(dylan-defn-leaf(builder, #"check-type"),
-		      value-leaf,
-		      type-leaf));
-end method;
-
 
 define method add-type-checks-aux
     (component :: <component>, region :: <compound-region>) => ();
