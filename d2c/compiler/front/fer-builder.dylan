@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.5 2001/02/25 19:42:22 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.6 2001/05/30 21:23:38 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -569,6 +569,18 @@ define method make-local-var
 		   make(<local-var-info>,
 			asserted-type: of-type,
 			debug-name: name));
+end method;
+
+define method make-local-var
+    (builder :: <fer-builder>, name :: <symbol>, of-type == <boolean>)
+ => res :: <initial-variable>;
+  make-local-var(builder, name, boolean-ctype());
+end method;
+
+define method make-local-var
+    (builder :: <fer-builder>, name :: <symbol>, of-type == <object>)
+ => res :: <initial-variable>;
+  make-local-var(builder, name, object-ctype());
 end method;
 
 define method make-ssa-var
