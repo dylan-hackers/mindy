@@ -1032,7 +1032,7 @@ define method write-declaration
   let raw-value = decl.constant-value;
   let value = select (raw-value by instance?)
 		<declaration> => raw-value.dylan-name;
-		<integer>, <float> => format-to-string("%=", raw-value);
+		<general-integer>, <float> => format-to-string("%=", raw-value);
 		<string> => format-to-string("\"%s\"", raw-value);
 		<token> => raw-value.string-value;
 		<character> => "1"; // for #define FOO\n, suggested by dauclair
