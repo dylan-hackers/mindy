@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.10 1995/05/29 00:37:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.11 1995/05/29 20:59:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -85,6 +85,10 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // Layout of the instance slots.  Filled in when the slot layouts are
   // computed.
   slot instance-slots-layout :: <layout-table>;
+  //
+  // The trailing vector slot, if any.  Filled in when the slot layouts are
+  // computed.
+  slot vector-slot :: false-or(<vector-slot-info>);
   //
   // Count of the number of each-subclass slots.
   slot each-subclass-slots-count :: <fixed-integer>;
@@ -230,6 +234,11 @@ define class <instance-slot-info> (<slot-info>)
     init-value: #();
   slot slot-initialized?-slot :: union(<false>, <instance-slot-info>),
     init-value: #f;
+end;
+
+define class <vector-slot-info> (<instance-slot-info>)
+  slot slot-size-slot :: <instance-slot-info>,
+    required-init-keyword: size-slot:;
 end;
 
 define class <class-slot-info> (<slot-info>)
@@ -617,30 +626,33 @@ define method find-position (layout :: <layout-table>,
     for (prev = #f then remaining,
 	 remaining = layout.layout-holes then remaining.tail,
 	 until: remaining == #())
-      let hole = remaining.head;
-      let posn = hole.head;
-      let aligned = ceiling/(posn, alignment) * alignment;
-      let surplus = (aligned + bytes) - (posn + hole.tail);
-      if (zero?(surplus))
-	if (posn == aligned)
-	  if (prev)
-	    prev.tail := remaining.tail;
+      unless (zero?(bytes))
+	let hole = remaining.head;
+	let posn = hole.head;
+	let aligned = ceiling/(posn, alignment) * alignment;
+	let surplus = (aligned + bytes) - (posn + hole.tail);
+	if (zero?(surplus))
+	  if (posn == aligned)
+	    if (prev)
+	      prev.tail := remaining.tail;
+	    else
+	      layout.layout-holes := remaining.tail;
+	    end;
 	  else
-	    layout.layout-holes := remaining.tail;
+	    remaining.head := pair(posn, aligned - posn);
 	  end;
-	else
-	  remaining.head := pair(posn, aligned - posn);
+	  return(aligned);
+	elseif (positive?(surplus))
+	  if (posn == aligned)
+	    remaining.head := pair(aligned + bytes, surplus);
+	  else
+	    remaining.tail
+	      := pair(pair(aligned + bytes, surplus), remaining.tail);
+	  end;
+	  return(aligned);
 	end;
-	return(aligned);
-      elseif (positive?(surplus))
-	if (posn == aligned)
-	  remaining.head := pair(aligned + bytes, surplus);
-	else
-	  remaining.tail
-	    := pair(pair(aligned + bytes, surplus), remaining.tail);
-	end;
-	return(aligned);
       end;
+      
     finally
       let len = layout.layout-length;
       let aligned = ceiling/(len, alignment) * alignment;
@@ -705,6 +717,7 @@ define method layout-slots-for (class :: <cclass>) => ();
   let processed :: <simple-object-vector>
     = if (empty?(supers))
 	class.instance-slots-layout := make(<layout-table>);
+	class.vector-slot := #f;
 	class.each-subclass-slots-count := 0;
 	#[];
       else
@@ -717,6 +730,7 @@ define method layout-slots-for (class :: <cclass>) => ();
 	end;
 	class.instance-slots-layout
 	  := copy-layout-table(critical-super.instance-slots-layout);
+	class.vector-slot := critical-super.vector-slot;
 	class.each-subclass-slots-count
 	  := critical-super.each-subclass-slots-count;
 	for (slot in critical-super.all-slot-infos)
@@ -763,9 +777,26 @@ end;
 
 define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
     => ();
+  if (class.vector-slot)
+    compiler-error("variable length slots must be the last slot in "
+		     "the class.");
+  end;
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout,
 			     rep.representation-size,
+			     rep.representation-alignment);
+  slot.slot-positions := pair(pair(class, offset), slot.slot-positions);
+end;
+
+define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
+    => ();
+  if (class.vector-slot)
+    compiler-error("variable length slots must be the last slot in "
+		     "the class.");
+  end;
+  class.vector-slot := slot;
+  let rep = slot.slot-representation;
+  let offset = find-position(class.instance-slots-layout, 0,
 			     rep.representation-alignment);
   slot.slot-positions := pair(pair(class, offset), slot.slot-positions);
 end;

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.69 1995/05/29 00:42:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.70 1995/05/29 20:59:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -493,7 +493,7 @@ define module classes
     all-slot-infos, new-slot-infos, override-infos, unique-id, direct-type,
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
-    instance-slots-layout,
+    instance-slots-layout, vector-slot,
     <defined-cclass>, class-defn,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
@@ -504,6 +504,8 @@ define module classes
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     slot-positions, find-slot-offset,
+
+    <vector-slot-info>, slot-size-slot,
 
     <virtual-slot-info>, <constant-slot-info>, <class-slot-info>,
     <each-subclass-slot-info>,

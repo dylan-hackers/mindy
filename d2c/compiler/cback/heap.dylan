@@ -231,12 +231,18 @@ end;
 
 define method spew-object
     (object :: <literal-simple-object-vector>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<simple-object-vector>"), state);
+  let contents = object.literal-contents;
+  spew-instance(specifier-type(#"<simple-object-vector>"), state,
+		size: as(<ct-value>, contents.size),
+		%element: contents);
 end;
 
 define method spew-object
     (object :: <literal-string>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<byte-string>"), state);
+  let str = object.literal-value;
+  spew-instance(specifier-type(#"<byte-string>"), state,
+		size: as(<ct-value>, str.size),
+		%element: map-as(<vector>, curry(as, <ct-value>), str));
 end;
 
 define method spew-object
@@ -310,33 +316,63 @@ define method spew-instance
       <fixed-integer> =>
 	format(state.stream, "\t.blockz\t%d\n", field);
       <instance-slot-info> =>
-	let init-value
-	  = block (return)
-	      let getter = field.slot-getter;
-	      let slot-name = getter & getter.variable-name;
-	      if (getter)
-		for (index from 0 below slots.size by 2)
-		  if (slots[index] == slot-name)
-		    return(slots[index + 1]);
-		  end;
-		end;
-	      end;
-	      for (override in field.slot-overrides)
-		if (csubtype?(class, override.override-introduced-by))
-		  if (override.override-init-value == #t
-			| override.override-init-function)
-		    error("Init value for %s in %= not set up.",
-			  slot-name, class);
-		  end;
-		  return(override.override-init-value);
-		end;
-	      end;
-	      if (field.slot-init-value == #t | field.slot-init-function)
-		error("Init value for %s in %= not set up.", slot-name, class);
-	      end;
-	      field.slot-init-value;
+	let init-value = find-init-value(class, field, slots);
+	if (instance?(field, <vector-slot-info>))
+	  let len-ctv = find-init-value(class, field.slot-size-slot, slots);
+	  unless (len-ctv)
+	    error("Length of a variable length instance unspecified?");
+	  end;
+	  unless (instance?(len-ctv, <literal-fixed-integer>))
+	    error("Bogus length: %=", len-ctv);
+	  end;
+	  let len = len-ctv.literal-value;
+	  if (instance?(init-value, <sequence>))
+	    unless (init-value.size == len)
+	      error("Size mismatch.");
 	    end;
-	spew-reference(init-value, field.slot-representation, state);
+	    for (element in init-value)
+	      spew-reference(element, field.slot-representation, state);
+	    end;
+	  else
+	    for (i from 0 below len)
+	      spew-reference(init-value, field.slot-representation, state);
+	    end;
+	  end;
+	else
+	  spew-reference(init-value, field.slot-representation, state);
+	end;
     end;
   end;
 end;
+
+define method find-init-value
+    (class :: <cclass>, slot :: <instance-slot-info>,
+     slots :: <simple-object-vector>)
+    => res :: type-or(<ct-value>, <sequence>, <false>);
+  block (return)
+    let getter = slot.slot-getter;
+    let slot-name = getter & getter.variable-name;
+    if (getter)
+      for (index from 0 below slots.size by 2)
+	if (slots[index] == slot-name)
+	  return(slots[index + 1]);
+	end;
+      end;
+    end;
+    for (override in slot.slot-overrides)
+      if (csubtype?(class, override.override-introduced-by))
+	if (override.override-init-value == #t
+	      | override.override-init-function)
+	  error("Init value for %s in %= not set up.",
+		slot-name, class);
+	end;
+	return(override.override-init-value);
+      end;
+    end;
+    if (slot.slot-init-value == #t | slot.slot-init-function)
+      error("Init value for %s in %= not set up.", slot-name, class);
+    end;
+    slot.slot-init-value;
+  end;
+end;
+

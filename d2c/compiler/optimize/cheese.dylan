@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.69 1995/05/29 03:15:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.70 1995/05/29 20:59:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -819,7 +819,13 @@ define method optimize-unknown-call
   if (leaf)
     optimize-unknown-call(component, call, leaf, #f);
   else
-    optimize-slot-ref(component, call, func.accessor-method-defn-slot-info);
+    let args = call.depends-on.dependent-next;
+    optimize-slot-ref(component, call, func.accessor-method-defn-slot-info,
+		      listify-dependencies(if (call.use-generic-entry?)
+					     args.dependent-next;
+					   else
+					     args;
+					   end));
   end;
 end;
 
@@ -834,7 +840,13 @@ define method optimize-unknown-call
   if (leaf)
     optimize-unknown-call(component, call, leaf, #f);
   else
-    optimize-slot-set(component, call, func.accessor-method-defn-slot-info);
+    let args = call.depends-on.dependent-next;
+    optimize-slot-set(component, call, func.accessor-method-defn-slot-info,
+		      listify-dependencies(if (call.use-generic-entry?)
+					     args.dependent-next;
+					   else
+					     args;
+					   end));
   end;
 end;
 
@@ -1019,7 +1031,8 @@ define method optimize-known-call
     => ();
   let sig = func.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
-  optimize-slot-ref(component, call, func.accessor-method-defn-slot-info);
+  optimize-slot-ref(component, call, func.accessor-method-defn-slot-info,
+		    listify-dependencies(call.depends-on.dependent-next));
 end;
 
 define method optimize-known-call
@@ -1028,17 +1041,27 @@ define method optimize-known-call
     => ();
   let sig = func.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
-  optimize-slot-set(component, call, func.accessor-method-defn-slot-info);
+  optimize-slot-set(component, call, func.accessor-method-defn-slot-info,
+		    listify-dependencies(call.depends-on.dependent-next));
 end;
 
 
+define method listify-dependencies (dependencies :: false-or(<dependency>))
+    => res :: <list>;
+  for (res = #() then pair(dep.source-exp, res),
+       dep = dependencies then dep.dependent-next,
+       while: dep)
+  finally
+    reverse!(res);
+  end;
+end;
 
 
 define method optimize-slot-ref
     (component :: <component>, call :: <abstract-call>,
-     slot :: <instance-slot-info>)
+     slot :: <instance-slot-info>, args :: <list>)
     => ();
-  let instance = call.depends-on.dependent-next.source-exp;
+  let instance = args.first;
   let offset = find-slot-offset(slot, instance.derived-type);
   if (offset)
     let builder = make-builder(component);
@@ -1070,7 +1093,7 @@ define method optimize-slot-ref
     let value = make-local-var(builder, slot.slot-getter.variable-name,
 			       slot.slot-type);
     build-assignment(builder, policy, source, value,
-		     make-operation(builder, <slot-ref>, list(instance),
+		     make-operation(builder, <slot-ref>, args,
 				    derived-type: slot.slot-type,
 				    slot-info: slot, slot-offset: offset));
     unless (init?-slot | guaranteed-initialized?)
@@ -1094,15 +1117,15 @@ end;
 
 define method optimize-slot-set
     (component :: <component>, call :: <abstract-call>,
-     slot :: <instance-slot-info>)
+     slot :: <instance-slot-info>, args :: <list>)
     => ();
-  let instance = call.depends-on.dependent-next.dependent-next.source-exp;
+  let instance = args.second;
   let offset = find-slot-offset(slot, instance.derived-type);
   if (offset)
-    let new = call.depends-on.dependent-next.source-exp;
+    let new = args.first;
     let builder = make-builder(component);
     let call-assign = call.dependents.dependent;
-    let op = make-operation(builder, <slot-set>, list(new, instance),
+    let op = make-operation(builder, <slot-set>, args,
 			    slot-info: slot, slot-offset: offset);
 
     build-assignment(builder, call-assign.policy, call-assign.source-location,

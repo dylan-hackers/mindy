@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.52 1995/05/29 02:08:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.53 1995/05/29 20:57:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1311,11 +1311,21 @@ define method emit-assignment
 	values(ref-leaf(instance-rep, instance-leaf, output-info), #f);
       else
 	let instance-expr = ref-leaf($heap-rep, instance-leaf, output-info);
+	let offset-expr
+	  = if (op.depends-on.dependent-next)
+	      let index = ref-leaf(*long-rep*,
+				   op.depends-on.dependent-next.source-exp,
+				   output-info);
+	      format-to-string("%d + %s * sizeof(%s)",
+			       offset, index, slot-rep.representation-c-type);
+	    else
+	      format-to-string("%d", offset);
+	    end;
 	spew-pending-defines(output-info);
-	values(format-to-string("SLOT(%s, %s, %d)",
+	values(format-to-string("SLOT(%s, %s, %s)",
 				instance-expr,
 				slot-rep.representation-c-type,
-				offset),
+				offset-expr),
 	       ~slot.slot-read-only?);
       end;
   deliver-result(results, expr, slot-rep, now-dammit?, output-info);
@@ -1328,11 +1338,20 @@ define method emit-assignment
   let slot = op.slot-info;
   let offset = op.slot-offset;
   let slot-rep = slot.slot-representation;
-  let (new, instance)
-    = extract-operands(op, output-info, slot-rep, $heap-rep);
-  format(output-info.output-info-guts-stream,
-	 "SLOT(%s, %s, %d) = %s;\n",
-	 instance, slot-rep.representation-c-type, offset, new);
+  if (instance?(slot, <vector-slot-info>))
+    let (new, instance, index)
+      = extract-operands(op, output-info, slot-rep, $heap-rep, *long-rep*);
+    let c-type = slot-rep.representation-c-type;
+    format(output-info.output-info-guts-stream,
+	   "SLOT(%s, %s, %d + %s * sizeof(%s)) = %s;\n",
+	   instance, c-type, offset, index, c-type, new);
+  else
+    let (new, instance)
+      = extract-operands(op, output-info, slot-rep, $heap-rep);
+    format(output-info.output-info-guts-stream,
+	   "SLOT(%s, %s, %d) = %s;\n",
+	   instance, slot-rep.representation-c-type, offset, new);
+  end;
   deliver-results(results, #[], #f, output-info);
 end;
 
@@ -2296,7 +2315,7 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 elseif (code < 32)
 	   format-to-string("'\\%o'", code);
 	 elseif (code <= 126)
-	   format-to-string("'%c'", code);
+	   format-to-string("'%c'", lit.literal-value);
 	 else
 	   format-to-string("%d", code);
 	 end,

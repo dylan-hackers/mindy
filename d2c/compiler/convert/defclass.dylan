@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.23 1995/05/26 13:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.24 1995/05/29 20:59:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -96,6 +96,10 @@ define class <slot-defn> (<object>)
   slot slot-defn-init-keyword-required? :: <boolean>,
     init-value: #f, init-keyword: init-keyword-required:;
   //
+  // The sizer slot defn.
+  slot slot-defn-sizer-defn :: false-or(<slot-defn>),
+    init-value: #f, init-keyword: sizer-defn:;
+
   // The slot-info for this slot, or #f if we haven't computed it or don't know
   // enough about the class to compute it at all.
   slot slot-defn-info :: union(<false>, <slot-info>),
@@ -174,11 +178,16 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
     select (option.classopt-kind)
       #"slot" =>
 	let (sealed?, allocation, type, setter, init-keyword,
-	     req-init-keyword, init-value, init-function)
+	     req-init-keyword, init-value, init-function, sizer,
+	     size-init-keyword, req-size-init-keyword,
+	     size-init-value, size-init-function)
 	  = extract-properties("slot spec", option.classopt-plist,
 			       sealed:, allocation:, type:, setter:,
 			       init-keyword:, required-init-keyword:,
-			       init-value:, init-function:);
+			       init-value:, init-function:,
+			       sizer:, size-init-keyword:,
+			       required-size-init-keyword:,
+			       size-init-value:, size-init-function:);
 	let allocation = if (allocation)
 			   allocation.varref-id.token-symbol;
 			 else
@@ -236,11 +245,11 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	  if (req-init-keyword)
 	    compiler-error("Can't supply both an init-keyword: and a "
 			     "required-init-keyword:.");
-	    unless (instance?(init-keyword, <literal-ref>)
-		      & instance?(init-keyword.litref-literal,
-				  <literal-symbol>))
-	      compiler-error("Bogus init-keyword: %=", init-keyword);
-	    end;
+	  end;
+	  unless (instance?(init-keyword, <literal-ref>)
+		    & instance?(init-keyword.litref-literal,
+				<literal-symbol>))
+	    compiler-error("Bogus init-keyword: %=", init-keyword);
 	  end;
 	elseif (req-init-keyword)
 	  unless (instance?(req-init-keyword, <literal-ref>)
@@ -250,12 +259,111 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 			   req-init-keyword);
 	  end;
 	end;
+
 	let getter-name = make(<basic-name>, symbol: getter,
 			       module: *Current-Module*);
 	let setter-name = setter & make(<basic-name>, symbol: setter,
 					module: *Current-Module*);
+
+	let size-defn
+	  = if (instance?(sizer, <varref>))
+	      let sizer-name
+		= make(<basic-name>, symbol: sizer.varref-id.token-symbol,
+		       module: *Current-Module*);
+	      
+	      unless (allocation == #"instance")
+		compiler-error("Only instance allocation slots can be "
+				 "variable length.");
+	      end;
+	      
+	      if (size-init-value)
+		unless (instance?(size-init-value, <expression>))
+		  compiler-error("Bogus size-init-value: %=", size-init-value);
+		end;
+		if (size-init-function)
+		  compiler-error("Can't have both a size-init-value: and "
+				   "size-init-function:");
+		end;
+	      elseif (size-init-function)
+		unless (instance?(size-init-function, <expression>))
+		  compiler-error("Bogus size-init-function: %=",
+				 size-init-value);
+		end;
+	      elseif (~req-size-init-keyword)
+		compiler-error("The Initial size must be supplied somehow.");
+	      end;
+	      
+	      if (size-init-keyword)
+		if (req-size-init-keyword)
+		  compiler-error("Can't have both a size-init-keyword: and a "
+				   "required-size-init-keyword:");
+		end;
+		unless (instance?(size-init-keyword, <literal-ref>)
+			  & instance?(size-init-keyword.litref-literal,
+				      <literal-symbol>))
+		  compiler-error("Bogus size-init-keyword: %=",
+				 size-init-keyword);
+		end;
+	      elseif (req-size-init-keyword)
+		unless (instance?(req-size-init-keyword, <literal-ref>)
+			  & instance?(req-size-init-keyword.litref-literal,
+				      <literal-symbol>))
+		  compiler-error("Bogus required-size-init-keyword: %=",
+				 req-size-init-keyword);
+		end;
+	      end;
+	      
+	      let slot = make(<slot-defn>,
+			      sealed: sealed? & #t,
+			      allocation: allocation,
+			      type:
+				make(<varref>,
+				     id: make(<name-token>,
+					      symbol: #"<fixed-integer>",
+					      module: $Dylan-Module,
+					      uniquifier: make(<uniquifier>))),
+			      getter-name: sizer-name,
+			      setter-name: #f,
+			      init-value: size-init-value,
+			      init-function: size-init-function,
+			      init-keyword:
+				if (size-init-keyword)
+				  size-init-keyword.litref-literal;
+				elseif (req-size-init-keyword)
+				  req-size-init-keyword.litref-literal;
+				end,
+			      init-keyword-required:
+				req-size-init-keyword & #t);
+	      add!(slots, slot);
+	      slot;
+	    else
+	      unless (sizer == #f
+			| (instance?(sizer, <literal-ref>)
+			     & sizer.litref-literal = #f))
+		compiler-error("Bogus sizer name: %=", sizer);
+	      end;
+	      if (size-init-value)
+		compiler-error("Can't supply a size-init-value: without a "
+				 "sizer: generic function");
+	      end;
+	      if (size-init-function)
+		compiler-error("Can't supply a size-init-function: without a "
+				 "sizer: generic function");
+	      end;
+	      if (size-init-keyword)
+		compiler-error("Can't supply a size-init-keyword: without a "
+				 "sizer: generic function");
+	      end;
+	      if (req-size-init-keyword)
+		compiler-error("Can't supply a required-size-init-keyword: "
+				 "without a sizer: generic function");
+	      end;
+
+	      #f;
+	    end;
+	
 	let slot = make(<slot-defn>,
-			sealed: sealed?,
+			sealed: sealed? & #t,
 			allocation: allocation,
 			type: type,
 			getter-name: getter-name,
@@ -268,6 +376,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 			  elseif (req-init-keyword)
 			    req-init-keyword.litref-literal;
 			  end,
+			sizer-defn: size-defn,
 			init-keyword-required: req-init-keyword & #t);
 	add!(slots, slot);
 
@@ -509,19 +618,36 @@ define method compute-slot (slot :: <slot-defn>) => info :: <slot-info>;
   // Note: we don't pass in anything for the type, init-value, or
   // init-function, because we need to compile-time-eval those, which we
   // can't do until tlf-finalization time.
-  let info = make(<slot-info>,
-		  allocation: slot.slot-defn-allocation,
-		  getter: find-variable(getter-name, create: #t),
-		  read-only: slot.slot-defn-setter-name == #f,
-		  init-value: slot.slot-defn-init-value & #t,
-		  init-function: slot.slot-defn-init-function & #t,
-		  init-keyword: if (slot.slot-defn-init-keyword)
-				  slot.slot-defn-init-keyword.literal-value;
-				else
-				  #f;
-				end,
-		  init-keyword-required:
-		    slot.slot-defn-init-keyword-required?);
+  let info
+    = if (slot.slot-defn-sizer-defn)
+	make(<vector-slot-info>,
+	     getter: find-variable(getter-name, create: #t),
+	     read-only: slot.slot-defn-setter-name == #f,
+	     init-value: slot.slot-defn-init-value & #t,
+	     init-function: slot.slot-defn-init-function & #t,
+	     init-keyword: if (slot.slot-defn-init-keyword)
+			     slot.slot-defn-init-keyword.literal-value;
+			   else
+			     #f;
+			   end,
+	     init-keyword-required:
+	       slot.slot-defn-init-keyword-required?,
+	     size-slot: slot.slot-defn-sizer-defn.slot-defn-info);
+      else
+	make(<slot-info>,
+	     allocation: slot.slot-defn-allocation,
+	     getter: find-variable(getter-name, create: #t),
+	     read-only: slot.slot-defn-setter-name == #f,
+	     init-value: slot.slot-defn-init-value & #t,
+	     init-function: slot.slot-defn-init-function & #t,
+	     init-keyword: if (slot.slot-defn-init-keyword)
+			     slot.slot-defn-init-keyword.literal-value;
+			   else
+			     #f;
+			   end,
+	     init-keyword-required:
+	       slot.slot-defn-init-keyword-required?);
+      end;
   slot.slot-defn-info := info;
   info;
 end;
@@ -559,89 +685,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
   //
   // Finalize the slots.
   for (slot in defn.class-defn-slots)
-    //
-    // Implicity define the accessor generics.
-    implicitly-define-generic(slot.slot-defn-getter-name, 1, #f, #f);
-    if (slot.slot-defn-setter-name)
-      implicitly-define-generic(slot.slot-defn-setter-name, 2, #f, #f);
-    end;
-    //
-    // Compute the type of the slot.
-    let slot-type
-      = if (slot.slot-defn-type)
-	  let type = ct-eval(slot.slot-defn-type, #f);
-	  if (instance?(type, <ctype>))
-	    type;
-	  else
-	    make(<unknown-ctype>);
-	  end;
-	else
-	  object-ctype();
-	end;
-
-    // Fill in the <slot-info> with the type, init value, and init-function
-    let info = slot.slot-defn-info;
-    if (info)
-      info.slot-type := slot-type;
-
-      if (slot.slot-defn-init-value)
-	let init-val = ct-eval(slot.slot-defn-init-value, #f);
-	if (init-val)
-	  info.slot-init-value := init-val;
-	end;
-      end;
-
-      if (slot.slot-defn-init-function)
-	let init-val = ct-eval(slot.slot-defn-init-function, #f);
-	if (init-val)
-	  info.slot-init-function := init-val;
-	end;
-      end;
-    end;
-
-    // Define the accessor methods.
-    unless (slot.slot-defn-allocation == #"virtual")
-      //
-      // Are the accessor methods hairy?
-      let hairy? = ~cclass | instance?(slot-type, <unknown-ctype>);
-      //
-      // Note: the act of making these method definitions associates them with
-      // the appropriate generic function.
-      slot.slot-defn-getter
-	:= make(<getter-method-definition>,
-		base-name: slot.slot-defn-getter-name,
-		signature: make(<signature>,
-				specializers: list(class-type),
-				returns: slot-type),
-		hairy: hairy?,
-		slot: info);
-      if (slot.slot-defn-sealed?)
-	let gf = slot.slot-defn-getter.method-defn-of;
-	if (gf)
-	  add-seal(gf, list(class-type));
-	end;
-      end;
-      slot.slot-defn-setter
-	:= if (slot.slot-defn-setter-name)
-	     let defn = make(<setter-method-definition>,
-			     base-name: slot.slot-defn-setter-name,
-			     signature: make(<signature>,
-					     specializers:
-					       list(slot-type, class-type),
-					     returns: slot-type),
-			     hairy: hairy?,
-			     slot: info);
-	     if (slot.slot-defn-sealed?)
-	       let gf = defn.method-defn-of;
-	       if (gf)
-		 add-seal(gf, list(object-ctype(), class-type));
-	       end;
-	     end;
-	     defn;
-	   else
-	     #f;
-	   end;
-    end;
+    finalize-slot(slot, cclass, class-type);
   end;
 
   // Finalize the overrides.
@@ -665,6 +709,104 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
   end;
 end;
 
+define method finalize-slot
+    (slot :: <slot-defn>, cclass :: <cclass>, class-type :: <ctype>) => ();
+  //
+  // Implicity define the accessor generics.
+  if (slot.slot-defn-sizer-defn)
+    implicitly-define-generic(slot.slot-defn-getter-name, 2, #f, #f);
+    if (slot.slot-defn-setter-name)
+      implicitly-define-generic(slot.slot-defn-setter-name, 3, #f, #f);
+    end;
+  else
+    implicitly-define-generic(slot.slot-defn-getter-name, 1, #f, #f);
+    if (slot.slot-defn-setter-name)
+      implicitly-define-generic(slot.slot-defn-setter-name, 2, #f, #f);
+    end;
+  end;
+  //
+  // Compute the type of the slot.
+  let slot-type
+    = if (slot.slot-defn-type)
+	let type = ct-eval(slot.slot-defn-type, #f);
+	if (instance?(type, <ctype>))
+	  type;
+	else
+	  make(<unknown-ctype>);
+	end;
+      else
+	object-ctype();
+      end;
+
+  let specializers
+    = if (slot.slot-defn-sizer-defn)
+	list(class-type, specifier-type(#"<fixed-integer>"));
+      else
+	list(class-type);
+      end;
+
+  // Fill in the <slot-info> with the type, init value, and init-function
+  let info = slot.slot-defn-info;
+  if (info)
+    info.slot-type := slot-type;
+
+    if (slot.slot-defn-init-value)
+      let init-val = ct-eval(slot.slot-defn-init-value, #f);
+      if (init-val)
+	info.slot-init-value := init-val;
+      end;
+    elseif (slot.slot-defn-init-function)
+      let init-val = ct-eval(slot.slot-defn-init-function, #f);
+      if (init-val)
+	info.slot-init-function := init-val;
+      end;
+    end;
+  end;
+
+  // Define the accessor methods.
+  unless (slot.slot-defn-allocation == #"virtual")
+    //
+    // Are the accessor methods hairy?
+    let hairy? = ~cclass | instance?(slot-type, <unknown-ctype>);
+    //
+    // Note: the act of making these method definitions associates them with
+    // the appropriate generic function.
+    slot.slot-defn-getter
+      := make(<getter-method-definition>,
+	      base-name: slot.slot-defn-getter-name,
+	      signature: make(<signature>,
+			      specializers: specializers,
+			      returns: slot-type),
+	      hairy: hairy?,
+	      slot: info);
+    if (slot.slot-defn-sealed?)
+      let gf = slot.slot-defn-getter.method-defn-of;
+      if (gf)
+	add-seal(gf, specializers);
+      end;
+    end;
+    slot.slot-defn-setter
+      := if (slot.slot-defn-setter-name)
+	   let defn = make(<setter-method-definition>,
+			   base-name: slot.slot-defn-setter-name,
+			   signature: make(<signature>,
+					   specializers:
+					     pair(slot-type, specializers),
+					   returns: slot-type),
+			   hairy: hairy?,
+			   slot: info);
+	   if (slot.slot-defn-sealed?)
+	     let gf = defn.method-defn-of;
+	     if (gf)
+	       add-seal(gf, pair(object-ctype(), specializers));
+	     end;
+	   end;
+	   defn;
+	 else
+	   #f;
+	 end;
+  end;
+end;
 
 
 // Top level form conversion.
@@ -926,6 +1068,9 @@ define method convert-top-level-form
 		       & ~data-word?))
 	  make-local-var(init-builder, #"instance", cclass);
 	end;
+    let size-leaf = #f;
+    let vector-slot = cclass.vector-slot;
+    let size-slot = vector-slot & vector-slot.slot-size-slot;
 
     let %maker-slot-descriptors-leaf = #f;
     let %maker-override-descriptors-leaves = #();
@@ -1038,17 +1183,63 @@ define method convert-top-level-form
 			  name: #"make-data-word-instance",
 			  derived-type: cclass));
 		  else
-		    block (return)
-		      for (entry in slot.slot-positions)
-			if (csubtype?(cclass, entry.head))
-			  build-assignment
-			    (init-builder, policy, source, #(),
-			     make-operation(init-builder, <slot-set>,
-					    list(leaf, instance-leaf),
-					    slot-info: slot,
-					    slot-offset: entry.tail));
-			  return();
+		    let posn
+		      = block (return)
+			  for (entry in slot.slot-positions)
+			    if (csubtype?(cclass, entry.head))
+			      return(entry.tail);
+			    end;
+			  end;
+			  error("Couldn't find the position for %s",
+				slot.slot-getter.variable-name);
 			end;
+		    if (instance?(slot, <vector-slot-info>))
+		      // We need to build a loop to initialize every element.
+		      let block-region = build-block-body(init-builder, policy,
+							  source);
+		      let index
+			= make-local-var(init-builder, #"index",
+					 specifier-type(#"<fixed-integer>"));
+		      build-assignment
+			(init-builder, policy, source, index,
+			 make-literal-constant
+			   (init-builder, as(<ct-value>, 0)));
+		      build-loop-body(init-builder, policy, source);
+		      let more? = make-local-var(init-builder, #"more?",
+						specifier-type(#"<boolean>"));
+		      build-assignment
+			(init-builder, policy, source, more?,
+			 make-unknown-call
+			   (init-builder, dylan-defn-leaf(init-builder, #"<"),
+			    #f, list(index, size-leaf)));
+		      build-if-body(init-builder, policy, source, more?);
+		      build-assignment
+			(init-builder, policy, source, #(),
+			 make-operation(init-builder, <slot-set>,
+					list(leaf, instance-leaf, index),
+					slot-info: slot,
+					slot-offset: posn));
+		      build-assignment
+			(init-builder, policy, source, index,
+			 make-unknown-call
+			   (init-builder, dylan-defn-leaf(init-builder, #"+"),
+			    #f, list(index,
+				     make-literal-constant
+				       (init-builder, as(<ct-value>, 1)))));
+		      build-else(init-builder, policy, source);
+		      build-exit(init-builder, policy, source, block-region);
+		      end-body(init-builder);
+		      end-body(init-builder);
+		      end-body(init-builder);
+		    else
+		      build-assignment
+			(init-builder, policy, source, #(),
+			 make-operation(init-builder, <slot-set>,
+					list(leaf, instance-leaf),
+					slot-info: slot,
+					slot-offset: posn));
+		      if (slot == size-slot)
+			size-leaf := leaf;
 		      end;
 		    end;
 		  end;
@@ -1221,14 +1412,43 @@ define method convert-top-level-form
 				  as(<list>, maker-args), #"best");
 	  build-region(builder, builder-result(maker-builder));
 	  let bytes = cclass.instance-slots-layout.layout-length;
+	  let base-len = make-literal-constant(builder, as(<ct-value>, bytes));
+	  let len-leaf
+	    = if (vector-slot)
+		let fi = specifier-type(#"<fixed-integer>");
+		let elsize
+		  = vector-slot.slot-representation.representation-size;
+		let extra
+		  = if (elsize == 1)
+		      size-leaf;
+		    else
+		      let var = make-local-var(builder, #"extra", fi);
+		      let elsize-leaf
+			= make-literal-constant(builder,
+						as(<ct-value>, elsize));
+		      build-assignment
+			(builder, policy, source, var,
+			 make-unknown-call
+			   (builder, dylan-defn-leaf(builder, #"*"), #f,
+			    list(size-leaf, elsize-leaf)));
+		      var;
+		    end;
+		let var = make-local-var(builder, #"bytes", fi);
+		build-assignment
+		  (builder, policy, source, var,
+		   make-unknown-call
+		     (builder, dylan-defn-leaf(builder, #"+"), #f,
+		      list(base-len, extra)));
+		var;
+	      else
+		base-len;
+	      end;
 	  unless (data-word?)
 	    build-assignment
 	      (builder, policy, source, instance-leaf,
-	       make-operation(builder, <primitive>,
-			      list(make-literal-constant
-				     (builder, as(<ct-value>, bytes))),
-			      name: #"allocate",
-			      derived-type: cclass));
+	       make-operation
+		 (builder, <primitive>, list(len-leaf),
+		  name: #"allocate", derived-type: cclass));
 	  end;
 	  build-region(builder, builder-result(init-builder));
 	  build-return(builder, policy, source, maker-region,
@@ -1424,14 +1644,26 @@ define method build-getter
   let source = make(<source-location>);
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
+  let (index, args, specializers)
+    = if (instance?(slot, <vector-slot-info>))
+	let fi = specifier-type(#"<fixed-integer>");
+	let index = make-lexical-var(builder, #"index", source, fi);
+	values(index,
+	       list(instance, index),
+	       list(cclass, fi));
+      else
+	values(#f,
+	       list(instance),
+	       list(cclass));
+      end;
   let region = build-function-body
     (builder, policy, source,
      format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
-     list(instance), #"best");
+     args, #"best");
   let type = slot.slot-type;
   let meth = make-method-literal
     (builder, #"global",
-     make(<signature>, specializers: list(cclass), returns: type),
+     make(<signature>, specializers: specializers, returns: type),
      region);
   let result = make-local-var(builder, #"result", type);
   local
@@ -1453,7 +1685,7 @@ define method build-getter
 	end-body(builder);
       end;
       build-assignment(builder, policy, source, result,
-		       make-operation(builder, <slot-ref>, list(instance),
+		       make-operation(builder, <slot-ref>, args,
 				      derived-type: slot.slot-type,
 				      slot-info: slot, slot-offset: offset));
       unless (init?-offset | slot-guaranteed-initialized?(slot, cclass))
@@ -1487,20 +1719,32 @@ define method build-setter
   let new = make-lexical-var(builder, #"new-value", source, type);
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
+  let (index, args, specializers)
+    = if (instance?(slot, <vector-slot-info>))
+	let fi = specifier-type(#"<fixed-integer>");
+	let index = make-lexical-var(builder, #"index", source, fi);
+	values(index,
+	       list(new, instance, index),
+	       list(type, cclass, fi));
+      else
+	values(#f,
+	       list(new, instance),
+	       list(type, cclass));
+      end;
   let region = build-function-body
     (builder, policy, source,
      format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
-     list(new, instance), #"best");
+     args, #"best");
   let meth = make-method-literal
     (builder, #"global",
-     make(<signature>, specializers: list(type, cclass), returns: type),
+     make(<signature>, specializers: specializers, returns: type),
      region);
   let result = make-local-var(builder, #"result", type);
   local
     method set (offset :: <fixed-integer>,
 		init?-offset :: false-or(<fixed-integer>))
       build-assignment(builder, policy, source, #(),
-		       make-operation(builder, <slot-set>, list(new, instance),
+		       make-operation(builder, <slot-set>, args,
 				      slot-info: slot, slot-offset: offset));
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
