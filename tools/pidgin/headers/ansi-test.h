@@ -15,6 +15,7 @@
 #define TEST_FUNCTIONS
 #define TEST_ENUMS
 #define TEST_STRUCTS_AND_UNIONS
+#define TEST_MACROS
 
 #endif // !defined SPECIFIC_TESTS
 
@@ -246,3 +247,28 @@ union union_mixed {
 };
 
 #endif // TEST_STRUCTS_AND_UNIONS
+
+
+//=========================================================================
+//  Macros
+//=========================================================================
+
+#if defined TEST_MACROS
+
+// Supported macro types.
+#define MACRO_EMPTY
+#define MACRO_UNKNOWN    { int a; }
+#define MACRO_INTEGER_1  1
+#define MACRO_INTEGER_2  (1 + 1)
+#define MACRO_INTEGER_3  (1 + 1) * 2 - 1
+#define MACRO_INTEGER_4  MACRO_INTEGER_1 * 4
+#define MACRO_INTEGER_5  MACRO_INTEGER_3 * -1
+#define MACRO_STRING_1   "Hi!"
+#define MACRO_STRING_2   (("Hello" ", " "world!"))
+
+// Currently unsupported macro types.
+typedef int macro_typedef_type;
+#define MACRO_TYPE_ALIAS_1 int
+#define MACRO_TYPE_ALIAS_2 macro_typedef_type
+
+#endif // TEST_MACROS
