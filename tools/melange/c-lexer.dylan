@@ -695,7 +695,8 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
   local method skip-comments (index :: <integer>)
 	 => end-index :: type-union(<integer>, <false>);
 	  for (i from index,
-	       until: (i >= sz | (contents[i] ~= ' ' & contents[i] ~= '\t')))
+	       until: (i >= sz 
+			 | ~(whitespace?(contents[i]) & contents[i] ~== '\n')))
 	  finally
 	    if (i < sz - 1 & contents[i] == '/' & contents[i + 1] == '*')
 	      let end-index = match-comment-end(contents, start: i + 2);
@@ -706,6 +707,10 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
 	    elseif ((i < sz - 1)
 		      & contents[i] == '\\' & contents[i + 1] == '\n')
 	      skip-comments(i + 2);
+	    elseif ((i < sz - 1)  // handle CRLF newlines
+		      & contents[i] == '\\' & contents[i + 1] == '\r'
+		      & contents[i + 2] == '\n')
+	      skip-comments(i + 3);
 	    else
 	      i;
 	    end if;
