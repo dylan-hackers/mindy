@@ -145,6 +145,10 @@ define method autodump-main
 		  <ellipsis-token>, <sharp-word-token>, <true-token>,
 		  <false-token>, <next-token>, <rest-token>, <key-token>,
 		  <all-keys-token>);
+
+    #"variables" =>
+      autodump("variables", "vars-dump.dylan", <use>, <renaming>);
+
     otherwise
       => error("Unknown module %=", component);
   end select;
