@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-if test `uname` -eq "Darwin"; then
+if test `uname` = "Darwin"; then
     LIBTOOL=glibtool;
     LIBTOOLIZE=glibtoolize
 else
@@ -26,7 +26,7 @@ DIE=0
 ($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
         echo
         echo "You must have $LIBTOOL installed to compile Gwydion Dylan."
-	if test $LIBTOOL -eq glibtool; then
+	if test $LIBTOOL = glibtool; then
 	    echo "This should have come with Darwin/MacOS X"
 	else
 	    echo "Get ftp://ftp.gnu.org/pub/gnu/libtool/libtool-1.3.2.tar.gz"
