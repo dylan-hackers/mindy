@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.15 1994/04/12 23:10:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.16 1994/04/14 19:20:43 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1564,9 +1564,6 @@ static struct byteop_info {
     {op_MAKE_VALUE_CELL, 0xff, "make-value-cell"},
     {op_VALUE_CELL_REF, 0xff, "value-cell-ref"},
     {op_VALUE_CELL_SET, 0xff, "value-cell-set"},
-    {op_VARIABLE_VALUE, 0xff, "variable-value   %v"},
-    {op_VARIABLE_FUNCTION, 0xff, "variable-function%v"},
-    {op_SET_VARIABLE_VALUE, 0xff, "set-variable-value"},
     {op_MAKE_METHOD, 0xff, "make-method"},
     {op_CHECK_TYPE, 0xff, "check-type"},
     {op_CHECK_TYPE_FUNCTION, 0xff, "check-type-function"},
@@ -1580,6 +1577,9 @@ static struct byteop_info {
     {op_PUSH_TRUE, 0xff, "push\t#t"},
     {op_PUSH_FALSE, 0xff, "push\t#f"},
     {op_DUP, 0xff, "dup"},
+    {op_DOT_TAIL, 0xff, "dot\ttail"},
+    {op_DOT_FOR_MANY, 0xff, "dot\tfor %c"},
+    {op_DOT_FOR_SINGLE, 0xff, "dot\tfor single"},
 
     {op_PUSH_CONSTANT, 0xf0, "push\tconst(%a)"},
     {op_PUSH_ARG, 0xf0, "push\targ(%a)"},
@@ -1587,9 +1587,11 @@ static struct byteop_info {
     {op_PUSH_LOCAL, 0xf0, "push\tlocal(%a)"},
     {op_POP_LOCAL, 0xf0, "pop\tlocal(%a)"},
     {op_CALL_TAIL, 0xf0, "call\tnargs = %a, tail"},
-    {op_CALL_FOR_MANY, 0xf0, "call\tnargs = %a, for %c"},
-    {op_CALL_FOR_SINGLE, 0xf0, "call\tnargs= %a, for single"},
-
+    {op_CALL_FOR_MANY, 0xf0, "call\tnargs = %n, for %c"},
+    {op_CALL_FOR_SINGLE, 0xf0, "call\tnargs = %n, for single"},
+    {op_PUSH_VALUE, 0xf0, "push\tvalue %v"},
+    {op_PUSH_FUNCTION, 0xf0, "push\tfunction %v"},
+    {op_POP_VALUE, 0xf0, "pop\tvalue %v"},
 
     {op_PLUS, 0xff, "+"},
     {op_MINUS, 0xff, "-"},
@@ -1608,8 +1610,6 @@ static int disassem_int4(unsigned char *ptr)
     return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
 }
 
-static obj_t last_const = NULL;
-
 static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 {
     unsigned char *ptr = start;
@@ -1617,8 +1617,8 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
     struct byteop_info *info;
     char buf[256], *fill = buf, *msg = "";
     int i, c;
-    obj_t this_const = NULL;
     obj_t trailer = NULL;
+    boolean extra = FALSE;
 
     for (info = ByteOpInfos; info->op != NULL; info++)
 	if ((info->mask & byte) == info->match) {
@@ -1640,8 +1640,6 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 		    }
 		}
 		sprintf(fill, "%d", i);
-		if ((byte & 0xf0) == op_PUSH_CONSTANT)
-		    this_const = COMPONENT(component)->constant[i];
 		break;
 
 	      case 'b':
@@ -1649,23 +1647,31 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 		break;
 
 	      case 'c':
-		byte = *ptr++;
-		if (byte == 0xff) {
-		    sprintf(fill, "%d", disassem_int4(ptr));
+		i = *ptr++;
+		if (i == 0xff) {
+		    i = disassem_int4(ptr);
 		    ptr += 4;
 		}
-		else
-		    sprintf(fill, "%d", byte);
-		break;
-
-	      case 'e':
-		if (ptr - start > 1)
-		    ptr++;
+		sprintf(fill, "%d", i>>1);
+		if (i & 1)
+		    strcat(fill, ", #rest");
 		break;
 
 	      case 'i':
 		sprintf(fill, "%d", disassem_int4(ptr));
 		ptr += 4;
+		break;
+
+	      case 'n':
+		i = byte & 0xf;
+		if (i == 0xf) {
+		    extra = TRUE;
+		    i = *ptr++;
+		    if (i == 0xff) {
+			i = disassem_int4(ptr);
+			ptr += 4;
+		    }
+		}
 		break;
 
 	      case 't':
@@ -1676,8 +1682,17 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 		break;
 
 	      case 'v':
-		if (last_const != NULL && obj_is_fixnum(last_const))
-		    trailer = ((struct variable *)last_const)->name;
+		i = byte & 0xf;
+		if (i == 0xf) {
+		    i = *ptr++;
+		    if (i == 0xff) {
+			i = disassem_int4(ptr);
+			ptr += 4;
+		    }
+		}
+		trailer = ((struct variable *)COMPONENT(component)
+			   ->constant[i])
+		    ->name;
 		fill[0] = '\0';
 		break;
 
@@ -1693,19 +1708,18 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 	    *fill++ = c;
     } while (c != '\0');
 
+    if (extra)
+	ptr++;
+
     for (i = 0; i < (ptr - start); i++)
 	printf(" %02x", start[i]);
     while (i++ < 4)
 	printf("   ");
     printf("\t%s", buf);
-    if (trailer != NULL) {
-	putchar('\t');
+    if (trailer != NULL)
 	print(trailer);
-    }
     else
 	putchar('\n');
-
-    last_const = this_const;
 
     return ptr;
 }
@@ -1746,8 +1760,6 @@ static void disassemble_component(obj_t component)
 	printf("%6d:", ptr - (unsigned char *)component);
 	ptr = disassemble_op(component, ptr);
     }
-
-    last_const = NULL;
 }
 
 static void disassemble_thing(obj_t thing)
