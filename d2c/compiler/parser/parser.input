@@ -1,0 +1,2038 @@
+module: parser
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.1 1994/12/12 13:01:35 wlott Exp $
+copyright: Copyright (c) 1994  Carnegie Mellon University
+	   All rights reserved.
+
+
+define constant stretchy-vector =
+  method (#rest things)
+    as(<stretchy-vector>, things);
+  end;
+
+
+define class <action> (<object>)
+  slot on :: <class>, required-init-keyword: on:, setter: #f;
+end;
+
+define class <shift> (<action>)
+  slot state :: <integer>, required-init-keyword: state:, setter: #f;
+end;
+
+define method \= (action1 :: <shift>, action2 :: <shift>)
+  action1.state == action2.state;
+end;
+
+define class <reduce> (<action>)
+  slot production :: <integer>, required-init-keyword: production:, setter: #f;
+end;
+
+define method \= (action1 :: <reduce>, action2 :: <reduce>)
+  action1.production == action2.production;
+end;
+
+define class <accept> (<action>)
+end;
+
+define method \= (action1 :: <accept>, action2 :: <accept>)
+  #t;
+end;
+
+define method make-action-table(#rest actions)
+  let result = make(<table>);
+  for (action in actions)
+    local
+      method process (clas, result)
+	let old = element(result, clas, default: action);
+	if (action == old | subtype?(action.on, old.on))
+	  result[clas] := action;
+	  for (sub in clas.direct-subclasses)
+	    process(sub, result);
+	  end;
+	elseif (~subtype?(old.on, action.on))
+	  cerror("Pick one at random.",
+		 "Not sure what to do on %=: %= or %=",
+		 clas, action, old);
+	end;
+      end;
+    process(action.on, result);
+  end;
+  result;
+end;
+
+
+%%
+
+
+;;;; Program structure
+
+:entry-point program
+:entry-point expression
+:entry-point variable
+:entry-point body-opt
+:entry-point case-body
+:entry-point property-list-sans-comma
+:entry-point pattern-opt
+:entry-point type
+
+
+program ()
+  #f;
+%
+
+program (top-level-forms semi-opt)
+  #f;
+%
+
+top-level-forms (constituent)
+  process-top-level-form(%1);
+  #f;
+%
+
+top-level-forms (top-level-forms <semicolon-token> constituent)
+  process-top-level-form(%3);
+  #f;
+%
+
+:type body-opt <simple-object-vector>
+
+body-opt ()
+  #[];
+%
+
+body-opt (body)
+  %1;
+%
+
+:type body <simple-object-vector>
+
+body (constituents semi-opt)
+  as(<simple-object-vector>, %1);
+%
+
+:type constituents <stretchy-vector>
+
+constituents (constituent)
+  stretchy-vector(%1);
+%
+
+constituents (constituents <semicolon-token> constituent)
+  add!(%1, %3);
+%
+
+:type constituent <constituent>
+
+constituent (defining-form)
+  %1;
+%
+
+constituent (local-declaration)
+  %1;
+%
+
+constituent (expression)
+  %1;
+%
+
+
+;;;; Property lists
+
+:type property-list-sans-comma <simple-object-vector>
+
+property-list-sans-comma ()
+  #[];
+%
+
+property-list-sans-comma (<keyword-token> value property-list-opt)
+  apply(vector, make(<property>, keyword: %1, value: %2), %3);
+%
+
+:type property-list-opt <simple-object-vector>
+
+property-list-opt ()
+  #[];
+%
+
+property-list-opt (property-list)
+  as(<simple-object-vector>, %1);
+%
+
+:type property-list <stretchy-vector>
+
+property-list (property)
+  stretchy-vector(%1);
+%
+
+property-list (property-list property)
+  add!(%1, %2);
+%
+
+:type property <property>
+
+property (<comma-token> <keyword-token> value)
+  make(<property>, keyword: %2, value: %3);
+%
+
+:type value |union(<expression>, <property-set>)|
+
+value (expression)
+  %1;
+%
+
+value (property-set)
+  %1;
+%
+
+:type property-set <property-set>
+
+property-set (<left-brace-token> <right-brace-token>)
+  make(<property-set>, members: #[]);
+%
+
+property-set (<left-brace-token> property-set-members <right-brace-token>)
+  make(<property-set>, members: as(<simple-object-vector>, %2));
+%
+
+property-set (<property-set>)
+  %1;
+%
+
+:type property-set-members <stretchy-vector>
+
+property-set-members (property-set-member)
+  stretchy-vector(%1);
+%
+
+property-set-members (property-set-members <comma-token> property-set-member)
+  add!(%1, %3);
+%
+
+property-set-member (property-set-item)
+  %1;
+%
+
+property-set-member (property-set-item <arrow-token> property-set-item)
+  pair(%1, %3);
+%
+
+:type property-set-item <word-token>
+
+property-set-item (<word-token>)
+  %1;
+%
+
+
+;;;; Defining Forms
+
+:type defining-form <defining-form>
+
+defining-form (<define-token> modifiers-opt <class-token> <name-token>
+	       <left-paren-token> arguments-opt <right-paren-token>
+	       classopts-opt <end-token>)
+  make(<define-class-parse>, modifiers: %2, name: %4, supers: %6, options: %8);
+%
+
+defining-form (<define-token> <constant-token> bindings)
+  make(<define-constant-parse>, bindings: %3);
+%
+
+defining-form (<define-token> modifiers-opt <generic-token>
+	       generic-function-definition)
+  %4.define-modifiers := %2;
+  %4;
+%
+
+defining-form (<define-token> <library-token> <name-token> clauses-opt
+	       <end-token>)
+  make(<define-library-parse>, name: %3, clauses: %4);
+%
+
+defining-form (<define-token> modifiers-opt <method-token> <name-token>
+	       method-body <end-token>)
+  %5.method-name := %4;
+  make(<define-method-parse>, modifiers: %2, method: %5);
+%
+
+defining-form (<define-token> <module-token> <name-token> clauses-opt
+	       <end-token>)
+  make(<define-module-parse>, name: %3, clauses: %4);
+%
+
+defining-form (<define-token> modifiers-opt <define-bindings-word-token>
+	       bindings)
+  make(<define-bindings-parse>, modifiers: %2, word: %3, bindings: %4);
+%
+
+defining-form (<define-token> <variable-token> bindings)
+  make(<define-variable-parse>, bindings: %3);
+%
+
+defining-form (<define-token> modifiers-opt <define-word-token> <name-token>
+	       fragment-opt <end-token> <identifier-token> <name-token>)
+  unless (same-id?(%3, %7))
+    error("Define-word mismatch: ~= isn't ~=",
+	  %7.token-symbol, %3.token-symbol);
+  end;
+  unless (same-id?(%4, %8))
+    error("Name mismatch: ~= isn't ~=",
+	  %8.token-symbol, %4.token-symbol);
+  end;
+  make(<define-parse>, modifiers: %2, word: %3, name: %4,
+       fragment: prepend-piece(make(<piece>, token: %4), %5));
+%
+
+defining-form (<define-token> modifiers-opt <define-word-token> 
+	       <name-token> fragment-opt <end-token> <identifier-token>)
+  unless (same-id?(%3, %7) | same-id?(%4, %7))
+    error("Name mismatch: ~= isn't ~=",
+	  %7.token-symbol, %4.token-symbol);
+  end;
+  make(<define-parse>, modifiers: %2, word: %3, name: %4,
+       fragment: prepend-piece(make(<piece>, token: %4), %5));
+%
+
+defining-form (<define-token> modifiers-opt <define-word-token>
+	       <name-token> fragment-opt <end-token>)
+  make(<define-parse>, modifiers: %2, word: %3, name: %4,
+       fragment: prepend-piece(make(<piece>, token: %4), %5));
+%
+
+defining-form (macro-definition)
+  %1;
+%
+
+defining-form (<defining-form>)
+  %1;
+%
+
+:type modifiers-opt <simple-object-vector>
+
+modifiers-opt ()
+  #[];
+%
+
+modifiers-opt (modifiers)
+  as(<simple-object-vector>, %1);
+%
+
+:type modifiers <stretchy-vector>
+
+modifiers (<simple-name-token>)
+  stretchy-vector(%1);
+%
+
+modifiers (modifiers <simple-name-token>)
+  add!(%1, %2);
+%
+
+:type classopts-opt <simple-object-vector>
+
+classopts-opt ()
+  #[];
+%
+
+classopts-opt (classopts)
+  as(<simple-object-vector>, %1);
+%
+
+:type classopts <stretchy-vector>
+
+classopts (classopt)
+  stretchy-vector(%1);
+%
+
+classopts (classopts <semicolon-token> classopt)
+  add!(%1, %3);
+%
+
+:type classopt <classopt>
+
+classopt (<name-token> <name-token> property-list-opt)
+  make(<classopt>, kind: %1.token-symbol, name: %2, plist: %3);
+%
+
+classopt (<name-token> <keyword-token> property-list-opt)
+  make(<classopt>, thing: %1.token-symbol, name: %2, plist: %3);
+%
+
+:type generic-function-definition <define-generic-parse>
+
+generic-function-definition (<name-token> generic-function-body
+			     property-list-opt)
+  %2.defgen-name := %1;
+  %2.defgen-plist := %3;
+  %2;
+%
+
+:type clauses-opt <simple-object-vector>
+
+clauses-opt ()
+  #[];
+%
+
+clauses-opt (clauses semi-opt)
+  as(<simple-object-vector>, %1);
+%
+
+:type clauses <stretchy-vector>
+
+clauses (clause)
+  stretchy-vector(%1);
+%
+
+clauses (clauses <semicolon-token> clause)
+  add!(%1, %3);
+%
+
+:type clause |type-or(<use-clause>, <export-clause>, <create-clause>)|
+
+clause (<use-token> <name-token> <comma-token> value <comma-token>
+	value <comma-token> value <comma-token> value <comma-token> value)
+  make(<use-clause>, name: %2, import: %4, exclude: %6, prefix: %8,
+       rename: %10, export: %12);
+%
+  
+clause (<export-token> names-opt)
+  make(<export-clause>, names: %2);
+%
+
+clause (<create-token> names-opt)
+  make(<create-clause>, names: %2);
+%
+
+:type names-opt <simple-object-vector>
+
+names-opt ()
+  #[];
+%
+
+names-opt (names)
+  as(<simple-object-vector>, %1);
+%
+
+:type names <stretchy-vector>
+
+names (<name-token>)
+  stretchy-vector(%1);
+%
+
+names (names <comma-token> <name-token>)
+  add!(%1, %3);
+%
+
+
+;;;; Local declarations
+
+:type local-declaration <local-declaration>
+
+local-declaration (<let-token> bindings)
+  make(<let>, bindings: %2);
+%
+
+local-declaration (<let-token> <handler-token> condition <equal-token> handler)
+  make(<let-handler>, type: %3.head, plist: %3.tail, handler: %5);
+%
+
+local-declaration (<local-token> local-methods)
+  make(<local>, methods: as(<simple-object-vector>, %2));
+%
+
+local-declaration (<local-declaration>)
+  %1;
+%
+
+:type bindings <bindings>
+
+bindings (variable <equal-token> expression)
+  make(<bindings>,
+       parameter-list: make(<parameter-list>, required: vector(%1)),
+       expression: %3);
+%
+
+bindings (<left-paren-token> variable-list <right-paren-token> <equal-token>
+	  expression)
+  make(<bindings>, parameter-list: %2, expression: %5);
+%
+
+bindings (<bindings>)
+  %1;
+%
+
+:type variable-list-opt <parameter-list>
+
+variable-list-opt ()
+  make(<parameter-list>);
+%
+
+variable-list-opt (variable-list)
+  %1;
+%
+
+:type variable-list <parameter-list>
+
+variable-list (variables)
+  make(<parameter-list>, required: as(<simple-object-vector>, %1));
+%
+
+variable-list (variables <comma-token> <rest-token> <name-token>)
+  make(<parameter-list>, required: as(<simple-object-vector>, %1), rest: %4);
+%
+
+variable-list (<rest-token> <name-token>)
+  make(<parameter-list>, rest: %2);
+%
+
+:type variables <stretchy-vector>
+
+variables (variable)
+  stretchy-vector(%1);
+%
+
+variables (variables <comma-token> variable)
+  add!(%1, %3);
+%
+
+:type variable <parameter>
+
+variable (<name-token>)
+  make(<parameter>, name: %1);
+%
+
+variable (<name-token> <double-colon-token> type)
+  make(<parameter>, name: %1, type: %3);
+%
+
+:type type <expression>
+
+type (operand)
+  %1;
+%
+
+:type condition <expression>
+
+condition (type)
+  pair(%1, #[]);
+%
+
+condition (<left-paren-token> type property-list <right-paren-token>)
+  pair(%2, %4);
+%
+
+:type handler <expression>
+
+handler (expression)
+  %1;
+%
+
+:type local-methods <stretchy-vector>
+
+local-methods (method-definition)
+  stretchy-vector(%1);
+%
+
+local-methods (local-methods <comma-token> method-definition)
+  add!(%1, %3);
+%
+
+:type method-definition <method-parse>
+
+method-definition (method-and-name method-body <end-token> method-and-name-opt)
+  unless (~%4 | same-id?(%1, %4))
+    error("Name mismatch: %= isn't %=", %4.token-symbol, %1.token-symbol);
+  end;
+  %2.method-name := %1;
+  %2;
+%
+
+:type method-and-name-opt |union(<name-token>, <false>)|
+
+method-and-name-opt ()
+  #f
+%
+
+method-and-name-opt (<name-token>)
+  unless (%1.token-symbol == #"method")
+    %1;
+  end;
+%
+
+method-and-name-opt (<name-token> <name-token>)
+  unless (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  %2;
+%
+
+method-and-name-opt (<begin-word-token>)
+  unless (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  #f;
+%
+
+method-and-name-opt (<begin-word-token> <name-token>)
+  unless (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  %2;
+%
+
+:type method-and-name <name-token>
+
+method-and-name (<name-token>)
+  if (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  %1;
+%
+
+method-and-name (<name-token> <name-token>)
+  unless (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  %2;
+%
+
+method-and-name (<begin-word-token> <name-token>)
+  unless (%1.token-symbol == #"method")
+    error("Parse error at or before %=", %1);
+  end;
+  %2;
+%
+
+
+;;;; Expressions
+
+:type expressions <stretchy-vector>
+
+expressions (expression)
+  stretchy-vector(%1);
+%
+
+expressions (expressions <comma-token> expression)
+  add!(%1, %3);
+%
+
+:type expression <expression>
+
+expression (expression-aux)
+  if (empty?(%1[1]))
+    %1[0][0];
+  else
+    make(<binop-series>,
+	 operands: as(<simple-object-vector>, %1[0]),
+	 operators: as(<simple-object-vector>, %1[1]));
+  end;
+%
+
+expression (<keyword-token>)
+  make(<literal>, value: %1.token-literal);
+%
+
+:type expression-aux <vector>
+
+expression-aux (binary-operand-sans-keyword)
+  vector(stretchy-vector(%1), stretchy-vector());
+%
+
+expression-aux (expression-aux <binary-operator-token> binary-operand)
+  add!(%1[1], %2);
+  add!(%1[0], %3);
+  %1;
+%
+
+:type binary-operand <expression>
+
+binary-operand (<keyword-token>)
+  make(<literal>, value: %1.token-literal);
+%
+
+binary-operand (binary-operand-sans-keyword)
+  %1;
+%
+
+:type binary-operand-sans-keyword <expression>
+
+binary-operand-sans-keyword (operand)
+  %1;
+%
+
+binary-operand-sans-keyword (<minus-token> operand)
+  make(<funcall>,
+       function: make(<varref>,
+		      name: make(<name-token>,
+				 symbol: #"negative",
+				 module: %1.token-module,
+				 uniquifier: %1.token-uniquifier)),
+       arguments: vector(%2));
+%
+
+binary-operand-sans-keyword (<tilde-token> operand)
+  make(<funcall>,
+       function: make(<varref>, name: %1),
+       arguments: vector(%2));
+%
+
+:type operand <expression>
+
+operand (operand <left-paren-token> arguments-opt <right-paren-token>)
+  make(<funcall>, function: %1, arguments: %3);
+%
+
+operand (operand <left-bracket-token> arguments <right-bracket-token>)
+  make(<funcall>,
+       function: make(<varref>,
+		      name: make(<name-token>,
+				 symbol: if (%3.size == 1)
+					   #"element";
+					 else
+					   #"aref";
+					 end,
+				 module: $Dylan-Module,
+				 uniquifier: make(<uniquifier>))),
+       arguments: apply(vector, %1, %3));
+%
+
+operand (operand <dot-token> <name-token>)
+  make(<dot>, operand: %1, name: %3);
+%
+
+operand (leaf)
+  %1;
+%
+
+:type arguments-opt <simple-object-vector>
+
+arguments-opt ()
+  #[];
+%
+
+arguments-opt (arguments)
+  as(<simple-object-vector>, %1);
+%
+
+:type arguments <stretchy-vector>
+
+arguments (expression)
+  stretchy-vector(%1);
+%
+
+arguments (<keyword-token> expression)
+  stretchy-vector(make(<literal>, value: %1.token-literal), %2);
+%
+
+arguments (arguments <comma-token> expression)
+  add!(%1, %3);
+%
+
+arguments (arguments <comma-token> <keyword-token> expression)
+  add!(add!(%1, make(<literal>, value: %3.token-literal)), %4);
+%
+
+:type leaf <expression>
+
+leaf (<expression>)
+  %1;
+%
+
+leaf (literal)
+  %1;
+%
+
+leaf (<name-token>)
+  make(<varref>, name: %1);
+%
+
+leaf (<left-paren-token> expression <right-paren-token>)
+  %2;
+%
+
+leaf (statement)
+  %1;
+%
+
+:type literal <expression>
+
+literal (<literal-token>)
+  make(<literal>, value: %1.token-literal);
+%
+
+literal (strings)
+  make(<literal>, value: %1);
+%
+
+literal (<true-token>)
+  make(<literal>, value: #t);
+%
+
+literal (<false-token>)
+  make(<literal>, value: #f);
+%
+
+literal (<sharp-paren-token> constants <dot-token> constant
+	 <right-paren-token>)
+  for (results = %4 then pair(%2[index], results),
+       index from %2.size - 1 above -1)
+  finally
+    make(<literal>, value: results);
+  end;
+%
+
+literal (<sharp-paren-token> constants-opt <right-paren-token>)
+  make(<literal>, value: as(<list>, %2));
+%
+
+literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
+  make(<literal>, value: as(<simple-object-vector>, %2));
+%
+
+literal (<literal>)
+  %1;
+%
+
+:type strings <string>
+
+strings (<string-token>)
+  %1.token-literal;
+%
+
+strings (strings <string-token>)
+  concatenate(%1, %2.token-literal);
+%
+
+:type constants-opt <simple-object-vector>
+
+constants-opt ()
+  #[];
+%
+
+constants-opt (constants)
+  as(<simple-object-vector>, %1);
+%
+
+:type constants <stretchy-vector>
+
+constants (constant)
+  stretchy-vector(%1);
+%
+
+constants (constants <comma-token> constant)
+  add!(%1, %3);
+%
+
+:type constant <object>
+
+constant (literal)
+  %1.token-literal;
+%
+
+constant (<keyword-token>)
+  %1.token-literal;
+%
+
+
+;;;; Statements
+
+:type statement <expression>
+
+statement (<begin-word-token> fragment-opt end-clause)
+  if (%3 & ~same-id?(%1, %3))
+    error("Begin-word mismatch: %= isn't %=", %3, %1);
+  end;
+  make(<macro-statement>, begin-word: %1, fragment: %2);
+%
+
+statement (<begin-token> body-opt <end-token>)
+  make(<begin>, body: %2);
+%
+
+statement (<bind-exit-token> <left-paren-token> <name-token>
+	   <right-paren-token> body-opt <end-token>)
+  make(<bind-exit>, name: %3, body: %5);
+%
+
+statement (<for-token> <left-paren-token> for-header <right-paren-token>
+	   body-opt <finally-token> body-opt <end-token>)
+  make(<for>, header: %3, body: %5, finally: %7);
+%
+
+:type for-header <simple-object-vector>
+
+for-header ()
+  #[];
+%
+
+for-header (for-clause more-for-clauses)
+  %2[0] := %1;
+  as(<simple-object-vector>, %2);
+%
+
+:type more-for-clauses <stretchy-vector>
+
+more-for-clauses ()
+  stretchy-vector(#f);
+%
+
+more-for-clauses (more-for-clauses <semicolon-token> for-clause)
+  add!(%1, %3);
+%
+
+:type for-clause <for-clause>
+
+for-clause (<in-token> variable <comma-token> expression)
+  make(<for-in-clause>, variable: %2, collection: %4);
+%
+
+for-clause (<equal-token> variable <comma-token> expression
+	    <comma-token> expression)
+  make(<for-step-clause>, variable: %2, init: %4, step: %6);
+%
+
+for-clause (<from-token> variable <comma-token> expression <comma-token>
+	    expression)
+  make(<for-from-clause>, variable: %2, from: %4, by: %6);
+%
+
+for-clause (<from-token> variable <comma-token> expression <comma-token>
+	    expression <comma-token> <name-token> expression)
+  make(<for-from-clause>, variable: %2, from: %4, by: %6,
+       kind: %8.token-symbol, bound: %9);
+%
+
+for-clause (<while-token> expression)
+  make(<for-while-clause>, condition: %2);
+%
+
+statement (<if-token> <left-paren-token> expression <right-paren-token>
+	   body-opt <else-token> body-opt <end-token>)
+  make(<if>, condition: %3, consequent: %5, alternate: %7);
+%
+
+statement (<method-token> method-body <end-token>)
+  make(<method-ref>, method: %2);
+%
+
+statement (<mv-call> <left-paren-token> arguments <right-paren-token>)
+  make(<mv-call>, operands: as(<simple-object-vector>, %3));
+%
+
+statement (<set-token> <left-paren-token> expression <comma-token> expression
+	   <right-paren-token>)
+  make(<assignment>, place: %3, value: %5);
+%
+
+statement (<uwp-token> body-opt <cleanup-token> body-opt <end-token>)
+  make(<uwp>, body: %2, cleanup: %4);
+%
+
+:type fragment-opt <fragment>
+
+fragment-opt ()
+  make(<fragment>);
+%
+
+fragment-opt (fragment)
+  %1;
+%
+
+:type fragment <fragment>
+
+fragment (statement non-statement-etc)
+  prepend-piece(make(<piece>, token: %1), %2);
+%
+
+fragment (statement)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+fragment (non-statement-etc)
+  %1;
+%
+
+:type non-statement-etc <fragment>
+
+non-statement-etc (defining-form semicolon-etc-opt)
+  prepend-piece(make(<piece>, token: %1), %2);
+%
+
+non-statement-etc (local-declaration semicolon-etc-opt)
+  prepend-piece(make(<piece>, token: %1), %2);
+%
+
+non-statement-etc (simple-fragment fragment-opt)
+  append-fragments(%1, %2);
+%
+
+:type semicolon-etc-opt <fragment>
+
+semicolon-etc-opt ()
+  make(<fragment>);
+%
+
+semicolon-etc-opt (<semicolon-token> fragment-opt)
+  prepend-piece(make(<piece>, token: %1), %2);
+%
+
+:type simple-fragment <fragment>
+
+simple-fragment (<name-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (modified-constant)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<operator-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<expression>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<left-paren-token> fragment-opt <right-paren-token>)
+  let left = make(<balanced-piece>, token: %1);
+  let right = make(<balanced-piece>, token: %3, other: left);
+  left.piece-other := right;
+  postpend-piece(prepend-piece(left, %2), right);
+%
+
+simple-fragment (<left-bracket-token> fragment-opt <right-bracket-token>)
+  let left = make(<balanced-piece>, token: %1);
+  let right = make(<balanced-piece>, token: %3, other: left);
+  left.piece-other := right;
+  postpend-piece(prepend-piece(left, %2), right);
+%
+
+simple-fragment (<dot-token> <name-token>)
+  let dot = make(<piece>, token: %1);
+  let name = make(<piece>, token: %2);
+  dot.piece-next := name;
+  name.piece-prev := dot;
+  make(<fragment>, head: dot, tail: name);
+%
+
+simple-fragment (property-set)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<next-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<rest-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<key-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<all-keys-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<otherwise-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<arrow-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<double-colon-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<comma-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+simple-fragment (<semicolon-token>)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+:type modified-constant <token>
+
+modified-constant (<literal-token>)
+  %1;
+%
+
+modified-constant (<string-token>)
+  %1;
+%
+
+modified-constant (<keyword-token>)
+  %1;
+%
+
+modified-constant (<true-token>)
+  %1;
+%
+
+modified-constant (<false-token>)
+  %1;
+%
+
+modified-constant (<sharp-paren-token> constants <dot-token> constant
+	 <right-paren-token>)
+  for (results = %4 then pair(%2[index], results),
+       index from %2.size - 1 above -1)
+  finally
+    make(<literal>, value: results);
+  end;
+%
+
+modified-constant (<sharp-paren-token> constants-opt <right-paren-token>)
+  make(<literal>, value: as(<list>, %2));
+%
+
+modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
+  make(<literal>, value: as(<simple-object-vector>, %2));
+%
+
+:type end-clause |union(<false>, <begin-word-token>)|
+
+end-clause (<end-token>)
+  #f;
+%
+
+end-clause (<end-token> <begin-word-token>)
+  %2;
+%
+
+
+;;;; Case bodies.
+
+;// Case-body-1's end in a case-label.  Case-body-2's end in constituents.  
+;// Either kind is a valid case-body, but can be extended differently.
+;// This seperation is necessary in order to resolve the various conflicts
+;// inherit in the original production:
+;//
+;//    case-body:
+;//        case-label constituents-OPT ; ...
+;//
+;// If left as is, then we can't tell what to do when we hit a
+;// semicolon.  Specifically, it can either seperate two constituents,
+;// seperate two case clauses, or terminate the case-body.  Splitting
+;// case-body into case-body-1 and case-body-2 allows us to talk about
+;// the semicolon token ourselves, which means it no longer might have
+;// to be reduced over (i.e. we no longer have to tell the difference
+;// between a semicolon that seperates two constituents from one that
+;// seperates two case clauses.
+;//
+;// To fix the remaining problem, we intoduce the -semi productions that are
+;// the same thing as the sans -semi production, except followed by a
+;// semicolon.  This allows us to shift the semicolon that follows a case-body
+;// without having to reduce the entire case-body.
+
+:type case-body <simple-object-vector>
+
+case-body ()
+  #[];
+%
+
+case-body (<semicolon-token>)
+  #[];
+%
+
+case-body (case-body-1)
+  as(<simple-object-vector>, %1);
+%
+
+case-body (case-body-1-semi)
+  as(<simple-object-vector>, %1);
+%
+
+case-body (case-body-2)
+  as(<simple-object-vector>, %1);
+%
+
+case-body (case-body-2-semi)
+  as(<simple-object-vector>, %1);
+%
+
+:type case-body-1 <stretchy-vector>
+
+case-body-1 (case-label)
+  stretchy-vector(make(<case-clause>, label: %1));
+%
+
+case-body-1 (case-body-1-semi case-label)
+  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
+  add!(%1, make(<case-clause>, label: %2));
+%
+
+case-body-1 (case-body-2-semi case-label)
+  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
+  add!(%1, make(<case-clause>, label: %2));
+%
+
+:type case-body-1-semi <stretchy-vector>
+
+case-body-1-semi (case-body-1 <semicolon-token>)
+  %1;
+%
+
+:type case-body-2 <stretchy-vector>
+
+case-body-2 (case-label constituent)
+  stretchy-vector(make(<case-clause>, label: %1, body: stretchy-vector(%2)));
+%
+
+case-body-2 (case-body-1-semi case-label constituent)
+  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
+  add!(%1, make(<case-clause>, label: %2, body: stretchy-vector(%3)));
+%
+
+case-body-2 (case-body-2-semi case-label constituent)
+  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
+  add!(%1, make(<case-clause>, label: %2, body: stretchy-vector(%3)));
+%
+
+case-body-2 (case-body-2-semi constituent)
+  add!(%1.last.case-body, %2);
+  %1;
+%
+
+:type case-body-2-semi <stretchy-vector>
+
+case-body-2-semi (case-body-2 <semicolon-token>)
+  %1;
+%
+
+:type case-label |union(<simple-object-vector>, <true>)|
+
+case-label (expressions <arrow-token>)
+  as(<simple-object-vector>, %1);
+%
+
+case-label (<left-paren-token> expression <comma-token> expressions
+	    <right-paren-token> <arrow-token>)
+  apply(vector, %2, %4);
+%
+
+case-label (<otherwise-token> arrow-opt)
+  #t;
+%
+
+
+;;;; Methods and generic functions.
+
+:type method-body <method-parse>
+
+method-body (<left-paren-token> parameter-list-opt <right-paren-token>
+	     semi-opt body-opt)
+  make(<method-parse>, parameter-list: %2, body: %5);
+%
+
+method-body (<left-paren-token> parameter-list-opt <right-paren-token>
+	     <arrow-token> variable <semicolon-token> body-opt)
+  make(<method-parse>,
+       parameter-list: %2,
+       returns: make(<parameter-list>, required: vector(%5)),
+       body: %7);
+%
+
+method-body (<left-paren-token> parameter-list-opt <right-paren-token>
+	     <arrow-token> <left-paren-token> variable-list-opt
+	     <right-paren-token> semi-opt body-opt)
+  make(<method-parse>, parameter-list: %2, returns: %6, body: %9);
+%
+
+:type generic-function-body <define-generic-parse>
+
+generic-function-body (<left-paren-token> parameter-list-opt
+		       <right-paren-token>)
+  make(<define-generic-parse>, parameter-list: %2);
+%
+
+generic-function-body (<left-paren-token> parameter-list-opt
+		       <right-paren-token> <arrow-token> variable)
+  make(<define-generic-parse>,
+       parameter-list: %2,
+       returns: make(<parameter-list>, required: vector(%5)));
+%
+
+generic-function-body (<left-paren-token> parameter-list-opt
+		       <right-paren-token> <arrow-token> <left-paren-token>
+		       variable-list-opt <right-paren-token>)
+  make(<define-generic-parse>, parameter-list: %2, returns: %6);
+%
+
+:type parameter-list-opt <parameter-list>
+
+parameter-list-opt ()
+  make(<parameter-list>);
+%
+
+parameter-list-opt (parameter-list)
+  %1;
+%
+
+:type parameter-list <parameter-list>
+
+parameter-list (parameters)
+  make(<parameter-list>, required: as(<simple-object-vector>, %1));
+%
+
+parameter-list (parameters <comma-token> next-rest-key-parameter-list)
+  %3.paramlist-required-vars := as(<simple-object-vector>, %1);
+  %3;
+%
+
+parameter-list (next-rest-key-parameter-list)
+  %1;
+%
+
+:type next-rest-key-parameter-list <parameter-list>
+
+next-rest-key-parameter-list (<next-token> <name-token>)
+  make(<parameter-list>, next: %2);
+%
+
+next-rest-key-parameter-list (<next-token> <name-token> <comma-token>
+			      rest-key-parameter-list)
+  %4.paramlist-next := %2;
+  %4;
+%
+
+next-rest-key-parameter-list (rest-key-parameter-list)
+  %1;
+%
+
+:type rest-key-parameter-list <parameter-list>
+
+rest-key-parameter-list (<rest-token> <name-token>)
+  make(<parameter-list>, rest: %2);
+%
+
+rest-key-parameter-list (<rest-token> <name-token> <comma-token>
+			 key-parameter-list)
+  %4.paramlist-rest := %2;
+  %4;
+%
+
+rest-key-parameter-list (key-parameter-list)
+  %1;
+%
+
+:type key-parameter-list <parameter-list>
+
+key-parameter-list (<key-token> keyword-parameters-opt)
+  make(<parameter-list>, keys: %2);
+%
+
+key-parameter-list (<key-token> <comma-token> <all-keys-token>)
+  make(<parameter-list>, keys: #[], all-keys: #t);
+%
+
+key-parameter-list (<key-token> keyword-parameters-comma <all-keys-token>)
+  make(<parameter-list>, keys: %2, all-keys: #t);
+%
+
+key-parameter-list (<all-keys-token>)
+  make(<parameter-list>, keys: #[], all-keys: #t);
+%
+
+:type parameters <stretchy-vector>
+
+parameters (parameter)
+  stretchy-vector(%1);
+%
+
+parameters (parameters <comma-token> parameter)
+  add!(%1, %3);
+%
+
+parameter (variable)
+  %1;
+%
+
+:type parameter <parameter>
+
+parameter (<name-token> <double-equal-token> expression)
+  let singleton-name = make(<name-token>,
+			    symbol: #"singleton",
+			    module: $Dylan-Module,
+			    uniquifier: make(<uniquifier>));
+  let singleton-varref = make(<varref>, name: singleton-name);
+  let funcall = make(<funcall>,
+		     function: singleton-varref,
+		     arguments: vector(%3));
+  make(<parameter>, name: %1, type: funcall);
+%
+
+:type keyword-parameters-opt <simple-object-vector>
+
+keyword-parameters-opt ()
+  #[];
+%
+
+keyword-parameters-opt (keyword-parameters)
+  as(<simple-object-vector>, %1);
+%
+
+:type keyword-parameters <stretchy-vector>
+
+keyword-parameters (keyword-parameter)
+  stretchy-vector(%1);
+%
+
+keyword-parameters (keyword-parameters-comma keyword-parameter)
+  add!(%1, %2);
+%
+
+:type keyword-parameters-comma <stretchy-vector>
+
+keyword-parameters-comma (keyword-parameters <comma-token>)
+  %1;
+%
+
+:type keyword-parameter <keyword-parameter>
+
+keyword-parameter (keyword-opt <name-token> default-opt)
+  make(<keyword-parameter>,
+       keyword: if (%1) %1.token-literal else %2.token-symbol end,
+       name: %2,
+       default: %3);
+%
+
+:type default-opt |union(<false>, <expression>)|
+
+default-opt ()
+  #f;
+%
+
+default-opt (default)
+  %1;
+%
+
+:type default <expression>
+
+default (<left-paren-token> expression <right-paren-token>)
+  %2;
+%
+
+default (<equal-token> expression)
+  %2;
+%
+
+
+;;;; Macros, patterns, and templates
+
+:type macro-definition <define-macro-parse>
+
+macro-definition (<define-token> <macro-token> <identifier-token>
+		  define-rule-set auxiliary-rule-sets-opt <end-token>
+		  macro-opt)
+  make(<define-define-macro-parse>, name: %3,
+       main-rule-set: as(<simple-object-vector>, %4),
+       auxiliary-rule-sets: as(<simple-object-vector>, %5));
+%
+
+macro-definition (<define-token> <macro-token> <identifier-token>
+		  define-bindings-rule-set auxiliary-rule-sets-opt <end-token>
+		  macro-opt)
+  make(<define-define-bindings-macro-parse>, name: %3,
+       main-rule-set: as(<simple-object-vector>, %4),
+       auxiliary-rule-sets: as(<simple-object-vector>, %5));
+%
+
+macro-definition (<define-token> <macro-token> <identifier-token>
+		  statement-rule-set auxiliary-rule-sets-opt <end-token>
+		  macro-opt)
+  make(<define-statement-macro-parse>, name: %3,
+       main-rule-set: as(<simple-object-vector>, %4),
+       auxiliary-rule-sets: as(<simple-object-vector>, %5));
+%
+
+macro-definition (<define-token> <macro-token> <identifier-token>
+		  function-rule-set auxiliary-rule-sets-opt <end-token>
+		  macro-opt)
+  make(<define-function-macro-parse>, name: %3,
+       main-rule-set: as(<simple-object-vector>, %4),
+       auxiliary-rule-sets: as(<simple-object-vector>, %5));
+%
+
+:type define-rule-set <stretchy-vector>
+
+define-rule-set (define-rule)
+  stretchy-vector(%1);
+%
+
+define-rule-set (define-rule-set define-rule)
+  add!(%1, %2);
+%
+
+:type define-rule <define-rule>
+
+define-rule (<left-brace-token> <define-token> pattern <end-token>
+	     <right-brace-token> <arrow-token> <left-brace-token> template-opt
+	     <right-brace-token> semi-opt)
+  make(<define-rule>, pattern: %3, template: %8);
+%
+
+:type define-bindings-rule-set <stretchy-vector>
+
+define-bindings-rule-set (define-bindings-rule)
+  stretchy-vector(%1);
+%
+
+define-bindings-rule-set (define-bindings-rule-set define-bindings-rule)
+  add!(%1, %2);
+%
+
+:type define-bindings-rule <define-bindings-rule>
+
+define-bindings-rule (<left-brace-token> <define-token> pattern
+		      <right-brace-token> <arrow-token> <left-brace-token>
+		      template-opt <right-brace-token> semi-opt)
+  make(<define-bindings-rule>, pattern: %3, template: %7);
+%
+
+statement-rule-set (statement-rule)
+  stretchy-vector(%1);
+%
+
+statement-rule-set (statement-rule-set statement-rule)
+  add!(%1, %2);
+%
+
+:type statement-rule <statement-rule>
+
+statement-rule (<left-brace-token> <word-token> pattern-opt <end-token>
+		<right-brace-token> <arrow-token> <left-brace-token>
+		template-opt <right-brace-token> semi-opt)
+  make(<statement-rule>, pattern: %3, template: %8);
+%
+
+:type function-rule-set <stretchy-vector>
+
+function-rule-set (function-rule)
+  stretchy-vector(%1);
+%
+
+function-rule-set (function-rule-set function-rule)
+  add!(%1, %2);
+%
+
+:type function-rule <function-rule>
+
+function-rule (<left-brace-token> <word-token> <left-paren-token> pattern-opt
+	       <right-paren-token> <right-brace-token> <arrow-token>
+	       <left-brace-token> template-opt <right-brace-token> semi-opt)
+  make(<function-rule>, pattern: %4, template: %9);
+%
+
+:type auxiliary-rule-sets-opt <stretchy-vector>
+
+auxiliary-rule-sets-opt ()
+  stretchy-vector();
+%
+
+auxiliary-rule-sets-opt (auxiliary-rule-sets-opt auxiliary-rule-set)
+  add!(%1, %2);
+%
+
+:type auxiliary-rule-set <auxiliary-rule-set>
+
+auxiliary-rule-set (<keyword-token> auxiliary-rules)
+  make(<auxiliary-rule-set>,
+       name: %1.token-literal,
+       rules: as(<simple-object-vector>, %2));
+%
+
+:type auxiliary-rules <stretchy-vector>
+
+auxiliary-rules (auxiliary-rule)
+  stretchy-vector(%1);
+%
+
+auxiliary-rules (auxiliary-rules auxiliary-rule)
+  add!(%1, %2);
+%
+
+:type auxiliary-rule <auxiliary-rule>
+
+auxiliary-rule (<left-brace-token> pattern-opt <right-brace-token>
+		  <arrow-token> <left-brace-token> template-opt
+		  <right-brace-token> semi-opt)
+  make(<auxiliary-rule>, pattern: %2, template: %6);
+%
+
+:type pattern-opt <pattern>
+
+pattern-opt ()
+  make(<pattern>, pieces: #[]);
+%
+
+pattern-opt (pattern)
+  %1;
+%
+
+:type pattern <pattern>
+
+pattern (pattern-aux semi-opt)
+  make(<pattern>, pieces: as(<simple-object-vector>, %1));
+%
+
+:type pattern-aux <stretchy-vector>
+
+pattern-aux (pattern-list)
+  stretchy-vector(%1);
+%
+
+pattern-aux (pattern-aux <semicolon-token> pattern-list)
+  add!(%1, %3);
+%
+
+:type pattern-list <pattern-list>
+
+pattern-list (pattern-list-aux)
+  make(<pattern-list>, pieces: as(<simple-object-vector>, %1));
+%
+
+pattern-list (pattern-list-aux <comma-token> property-list-pattern)
+  make(<pattern-list>, pieces: as(<simple-object-vector>, add!(%1, %3)));
+%
+
+pattern-list (property-list-pattern)
+  make(<pattern-list>, pieces: vector(%1));
+%
+
+:type pattern-list-aux <stretchy-vector>
+
+pattern-list-aux (pattern-sequence)
+  stretchy-vector(%1);
+%
+
+pattern-list-aux (pattern-list-aux <comma-token> pattern-sequence)
+  add!(%1, %3);
+%
+
+:type pattern-sequence <pattern-sequence>
+
+pattern-sequence (pattern-sequence-aux)
+  make(<pattern-sequence>, pieces: as(<simple-object-vector>, %1));
+%
+
+:type pattern-sequence-aux <stretchy-vector>
+
+pattern-sequence-aux (simple-pattern)
+  stretchy-vector(%1);
+%
+
+pattern-sequence-aux (<arrow-token>)
+  stretchy-vector(make(<arrow-pattern>, literal: %1));
+%
+
+pattern-sequence-aux (pattern-sequence-aux simple-pattern)
+  add!(%1, %2);
+%
+
+pattern-sequence-aux (pattern-sequence-aux <arrow-token>)
+  if (instance?(%1.last, <otherwise-pattern>))
+    %1;
+  else
+    add!(%1, make(<arrow-pattern>, literal: %2));
+  end;
+%
+
+:type property-list-pattern <property-list-pattern>
+
+property-list-pattern (<rest-token> <question-token> <name-token>)
+  make(<property-list-pattern>, rest: %3.token-symbol);
+%
+
+property-list-pattern (<rest-token> <question-token> <name-token> <comma-token>
+			 <key-token> pattern-keywords-opt)
+  %6.plistpat-rest := %3.token-symbol;
+  %6;
+%
+
+property-list-pattern (<key-token> pattern-keywords-opt)
+  %2;
+%
+
+:type simple-pattern <simple-pattern>
+
+simple-pattern (pattern-variable)
+  %1;
+%
+
+simple-pattern (variable-pattern)
+  %1;
+%
+
+simple-pattern (<left-paren-token> pattern-opt <right-paren-token>)
+  make(<details-pattern>, sub-pattern: %2);
+%
+
+simple-pattern (<identifier-token>)
+  make(<identifier-pattern>, identifier: %1);
+%
+
+simple-pattern (<otherwise-token>)
+  make(<otherwise-pattern>, literal: %1);
+%
+
+:type pattern-variable <pattern-variable>
+
+pattern-variable (<question-token> <name-token>)
+  make(<pattern-variable>, token: %2);
+%
+
+pattern-variable (<question-token> <constrained-name-token>)
+  make(<pattern-variable>, token: %2);
+%
+
+pattern-variable (<ellipsis-token>)
+  make(<pattern-variable>, token: %1);
+%
+
+:type variable-pattern <simple-pattern>
+
+variable-pattern (pattern-variable <double-colon-token> pattern-variable)
+  make(<variable-pattern>, name: %1, type: %3);
+%
+
+variable-pattern (pattern-variable <equal-token> pattern-variable)
+  make(<bound-variable-pattern>, variable: %1, value: %3);
+%
+
+variable-pattern (pattern-variable <double-colon-token> pattern-variable
+		  <equal-token> pattern-variable)
+  make(<bound-variable-pattern>,
+       variable: make(<variable-pattern>, name: %1, type: %3),
+       value: %5);
+%
+
+:type pattern-keywords-opt <property-list-pattern>
+
+pattern-keywords-opt ()
+  make(<pattern-list>);
+%
+
+pattern-keywords-opt (pattern-keywords)
+  %1;
+%
+
+:type pattern-keywords <property-list-pattern>
+
+pattern-keywords (<all-keys-token>)
+  make(<property-list-pattern>, keys: #[], all-keys: #t);
+%
+
+pattern-keywords (pattern-keywords-aux)
+  make(<property-list-pattern>, keys: as(<simple-object-vector>, %1));
+%
+
+pattern-keywords (pattern-keywords-aux <comma-token> <all-keys-token>)
+  make(<property-list-pattern>, keys: as(<simple-object-vector>, %1),
+       all-keys: #t);
+%
+
+:type pattern-keywords-aux <stretchy-vector>
+
+pattern-keywords-aux (pattern-keyword)
+  stretchy-vector(%1);
+%
+
+pattern-keywords-aux (pattern-keywords-aux <comma-token> pattern-keyword)
+  add!(%1, %3);
+%
+
+:type pattern-keyword <pattern-keyword>
+
+pattern-keyword (<question-token> <word-token> pattern-default-opt)
+  make(<pattern-keyword>, name: %2.token-symbol, default: %3);
+%
+
+pattern-keyword (<double-question-token> <word-token> pattern-default-opt)
+  make(<pattern-keyword>, name: %2.token-symbol, default: %3, all: #t);
+%
+
+:type pattern-default-opt |type-or(<expression>, <property-set>, <false>)|
+
+pattern-default-opt ()
+  #f;
+%
+
+pattern-default-opt (<left-paren-token> expression <right-paren-token>)
+  %2;
+%
+
+pattern-default-opt (<left-paren-token> property-set <right-paren-token>)
+  %2;
+%
+
+:type template-opt <template>
+
+template-opt (replacement-opt)
+  make(<template>, parts: as(<simple-object-vector>, %1));
+%
+
+:type replacement-opt <stretchy-vector>
+
+replacement-opt ()
+  stretchy-vector();
+%
+
+replacement-opt (replacement-opt replacement-element)
+  add!(%1, %2);
+%
+
+replacement-element (<left-paren-token> replacement-opt <right-paren-token>)
+  make(<paren-template>,
+       left-token: %1,
+       parts: as(<simple-object-vector>, %2),
+       right-token: %3);
+%
+
+replacement-element (<left-bracket-token> replacement-opt
+		       <right-bracket-token>)
+  make(<paren-template>,
+       left-token: %1,
+       parts: as(<simple-object-vector>, %2),
+       right-token: %3);
+%
+
+replacement-element (<left-brace-token> replacement-opt <right-brace-token>)
+  make(<paren-template>,
+       left-token: %1,
+       parts: as(<simple-object-vector>, %2),
+       right-token: %3);
+%
+
+replacement-element (<sharp-paren-token> replacement-opt <right-paren-token>)
+  make(<paren-template>,
+       left-token: %1,
+       parts: as(<simple-object-vector>, %2),
+       right-token: %3);
+%
+
+replacement-element (<sharp-bracket-token> replacement-opt
+		       <right-bracket-token>)
+  make(<paren-template>,
+       left-token: %1,
+       parts: as(<simple-object-vector>, %2),
+       right-token: %3);
+%
+
+replacement-element (<question-token> <word-token>)
+  make(<pattern-variable-reference>, name: %2.token-symbol);
+%
+
+replacement-element (<double-question-token> <word-token>
+		       <binary-operator-token> <ellipsis-token>)
+  make(<pattern-variable-reference>, name: %2.token-symbol, separator: %3);
+%
+
+replacement-element (<double-question-token> <word-token> <semicolon-token>
+		       <ellipsis-token>)
+  make(<pattern-variable-reference>, name: %2.token-symbol, separator: %3);
+%
+
+replacement-element (<double-question-token> <word-token> <comma-token>
+		       <ellipsis-token>)
+  make(<pattern-variable-reference>, name: %2.token-symbol, separator: %3);
+%
+
+replacement-element (<dot-token>)
+  %1;
+%
+
+replacement-element (<double-colon-token>)
+  %1;
+%
+
+replacement-element (<ellipsis-token>)
+  make(<pattern-variable-reference>);
+%
+
+replacement-element (<arrow-token>)
+  %1;
+%
+
+replacement-element (<keyword-token>)
+  %1;
+%
+
+replacement-element (<literal-token>)
+  %1;
+%
+
+replacement-element (<string-token>)
+  %1;
+%
+
+replacement-element (<operator-token>)
+  %1;
+%
+
+replacement-element (<true-token>)
+  %1;
+%
+
+replacement-element (<false-token>)
+  %1;
+%
+
+replacement-element (<next-token>)
+  %1;
+%
+
+replacement-element (<rest-token>)
+  %1;
+%
+
+replacement-element (<key-token>)
+  %1;
+%
+
+replacement-element (<all-keys-token>)
+  %1;
+%
+
+replacement-element (<word-token>)
+  %1;
+%
+
+replacement-element (<semicolon-token>)
+  %1;
+%
+
+replacement-element (<comma-token>)
+  %1;
+%
+
+
+;;;; Random optionals.
+
+semi-opt ()
+  #f;
+%
+
+semi-opt (<semicolon-token>)
+  %1;
+%
+
+keyword-opt ()
+  #f;
+%
+
+keyword-opt (<keyword-token>)
+  %1;
+%
+
+arrow-opt ()
+  #f;
+%
+
+arrow-opt (<arrow-token>)
+  %1;
+%
+
+macro-opt ()
+  #f;
+%
+
+macro-opt (<macro-token>)
+  %1;
+%
+
+%%
+
+
+// Driver loop.
+
+define method do-action (action :: <accept>, state-stack :: <list>,
+			 symbol-stack :: <list>, token :: <token>,
+			 tokenizer :: <tokenizer>)
+  unget-token(tokenizer, token);
+  if (symbol-stack.size ~= 1)
+    error("Symbol-stack didn't get reduced all the way?");
+  end;
+  symbol-stack.head;
+end;
+
+define method do-action (action :: <shift>, state-stack :: <list>,
+			 symbol-stack :: <list>, token :: <token>,
+			 tokenizer :: <tokenizer>)
+  parse-loop(pair(action.state, state-stack),
+	     pair(token, symbol-stack),
+	     get-token(tokenizer),
+	     tokenizer);
+end;
+
+define method do-action (action :: <reduce>, state-stack :: <list>,
+			 symbol-stack :: <list>, token :: <token>,
+			 tokenizer :: <tokenizer>)
+  let (new-state-stack, new-symbol-stack)
+    = *production-table*[action.production](state-stack, symbol-stack);
+  parse-loop(new-state-stack, new-symbol-stack, token, tokenizer);
+end;
+
+define method parse-loop (state-stack :: <list>, symbol-stack :: <list>,
+			  token :: <token>, tokenizer :: <tokenizer>)
+  let state = state-stack.head;
+  let action = element(*action-table*[state], token.object-class, default: #f);
+  unless (action)
+    error("Parse error at or before %=", token);
+  end;
+  do-action(action, state-stack, symbol-stack, token, tokenizer);
+end;
+
+define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
+  parse-loop(list(start-state), #(), get-token(tokenizer), tokenizer);
+end;
+
+define method parse-program (tokenizer :: <tokenizer>) => ();
+  parse(tokenizer, $program-start-state);
+end;
+
+define method parse-expression (tokenizer :: <tokenizer>)
+    => res :: <expression>;
+  parse(tokenizer, $expression-start-state);
+end;
+
+define method parse-variable (tokenizer :: <tokenizer>)
+    => res :: <parameter>;
+  parse(tokenizer, $variable-start-state);
+end;
+
+define method parse-body (tokenizer :: <tokenizer>)
+    => res :: <simple-object-vector>;
+  parse(tokenizer, $body-opt-start-state);
+end;
+
+define method parse-case-body (tokenizer :: <tokenizer>)
+    => res :: <simple-object-vector>;
+  parse(tokenizer, $case-body-start-state);
+end;
+
+define method parse-property-list (tokenizer :: <tokenizer>)
+    => res :: <simple-object-vector>;
+  parse(tokenizer, $property-list-sans-comma-start-state);
+end;
+
+define method parse-type (tokenizer :: <tokenizer>)
+    => res :: <expression>;
+  parse(tokenizer, $type-start-state);
+end;
