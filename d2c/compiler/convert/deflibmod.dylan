@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.5 1995/11/08 16:44:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.6 1995/11/09 13:23:06 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -51,6 +51,7 @@ add-od-loader(*compiler-dispatcher*, #"define-library-tlf",
 		let name = load-object-dispatch(state);
 		let uses = load-object-dispatch(state);
 		let exports = load-object-dispatch(state);
+		assert-end-object(state);
 		note-library-definition(name, uses, exports);
 		name;
 	      end);
@@ -103,6 +104,7 @@ add-od-loader(*compiler-dispatcher*, #"define-module-tlf",
 		let uses = load-object-dispatch(state);
 		let exports = load-object-dispatch(state);
 		let creates = load-object-dispatch(state);
+		assert-end-object(state);
 		note-module-definition(*Current-Library*, name, uses, exports,
 				       creates);
 		name;
