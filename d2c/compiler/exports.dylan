@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.97 1995/11/09 14:08:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.98 1995/11/09 16:50:42 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,7 @@ end;
 
 define module od-format
   use common;
+  use system;
   use standard-io;
   use utils;
   use self-organizing-list;
