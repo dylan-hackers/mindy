@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.7 1995/06/14 10:55:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.8 1995/08/07 12:17:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -206,6 +206,7 @@ define-primitive-emitter
      results[nfixed]
        := pair(format-to-string("%s(%s, %s + %d, %s - %s - %d)",
 				main-entry-name(mra-info, output-info),
+				top-name,
 				bottom-name, nfixed,
 				top-name, bottom-name, nfixed),
 	       $heap-rep);
