@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.17 1994/06/27 16:32:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.18 1994/06/29 00:14:19 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -72,6 +72,7 @@ extern int access(const void *path, int flags);
 #include "vec.h"
 #include "error.h"
 #include "../comp/fileops.h"
+#include "config.h"
 #include "load.h"
 
 #if defined(MACH) || defined(hpux)
@@ -1007,7 +1008,7 @@ void load_library(obj_t name)
     int c;
 
     if (load_path == NULL)
-	load_path = "/afs/cs.cmu.edu/project/gwydion/mindy/lib";
+	load_path = DEFAULT_LOAD_PATH;
 
     start = load_path;
     ptr = load_path;
