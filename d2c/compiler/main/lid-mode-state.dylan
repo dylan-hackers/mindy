@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.18 2003/03/27 16:13:50 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.19 2003/04/08 06:44:28 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -262,10 +262,11 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
     else  // assumed a Dylan file, with or without a ".dylan" extension
       block ()
 	format(*debug-output*, "Parsing %s\n", file);
-	// ### prefixed-filename is still not (necessarily) an absolute
-	// filename, but it's getting closer
+	// ### prefixed-filename is now an absolute filename.  Previously we
+        // used $this-dir, but that meant .du files contained library-relative
+        // filenames, which didn't work when loaded elsewhere (i.e. always)
 	let prefixed-filename
-	  = find-file(file, vector($this-dir, state.unit-lid-file.filename-prefix));
+	  = find-file(file, vector(get-current-directory(), state.unit-lid-file.filename-prefix));
 	if (prefixed-filename == #f)
 	  compiler-fatal-error("Can't find source file %=.", file);
 	end if;
