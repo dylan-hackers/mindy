@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.13 1995/06/16 02:32:02 rgs Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.14 1995/09/13 23:34:27 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -18,6 +18,12 @@ dnl
 dnl	This must come first -- do not move.
 
 AC_INIT(interp/mindy.h)
+
+# Require the use of Autoconf 2.4 or later to generate ./configure
+# Previous versions have bugs that prevent ./configure from working
+# under AIX
+#
+AC_PREREQ(2.4)
 
 #--------------------------------------------------------------------
 #	See if the #!interpreter syntax is supported
@@ -259,6 +265,11 @@ AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
+
+# If boolean is not already a typdef, #define it to be "int"
+#
+AC_CHECK_TYPE(boolean, int)
+
 
 #--------------------------------------------------------------------
 #	If a system doesn't have an opendir function (man, that's old!)
