@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.2 1998/07/09 22:41:49 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1102,6 +1102,23 @@ define method layout-instance-slots () => ();
   do(layout-slots-for, *All-Classes*);
 end method layout-instance-slots;
 
+
+// tc:
+// If layout-slots-for is called on a functional class we may
+// introduce the following call-chain:
+// use-data-word-representation
+// => pick-representation
+// => direct-representation
+// => assign-representation
+// => layout-slots-for
+// but now we have class.layout-computed? set to #"computing".
+// Oops.
+//
+define method layout-slots-for-if-possible (class :: <cclass>) => ();
+  if (class.layout-computed? ~== #"computing")
+    layout-slots-for(class);
+  end if;
+end method layout-slots-for-if-possible;
 
 define method layout-slots-for (class :: <cclass>) => ();
   if (class.layout-computed? == #f)

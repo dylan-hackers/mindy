@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.2 1998/07/09 22:41:48 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,8 +299,13 @@ define method assign-representations (class :: <cclass>) => ();
   // what is in the class.
   if (class.functional?)
     //
-    // Make sure we've computed the layout for the class.  
-    layout-slots-for(class);
+    // Make sure we've computed the layout for the class.
+    // This is wrong if we arrive here because of a `layout-slots-for'
+    // call.  Thus I changed the following.  tc
+    //
+    // layout-slots-for(class); // tc
+    //
+    layout-slots-for-if-possible(class);
     //
     // Layout-slots-for will call either use-data-word-representation or
     // use-general-representation if appropriate.  Therefore, if it finishes

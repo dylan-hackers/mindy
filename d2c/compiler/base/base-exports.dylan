@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.2 1998/05/11 17:38:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.3 1998/07/09 22:41:45 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -733,7 +733,7 @@ define module classes
     <proxy>, proxy-for,
 
     inherit-slots, inherit-overrides, assign-unique-ids,
-    layout-instance-slots, layout-slots-for,
+    layout-instance-slots, layout-slots-for, layout-slots-for-if-possible,
 
     // For dumper...
     <limited-cclass>, each-subclass-slots-count;
