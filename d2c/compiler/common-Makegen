@@ -23,13 +23,3 @@ EOF
     }
     return @makefile_targets;
 }
-
-$D2CFLAGS = $d2c_runtime
-    . '-L../../../common/streams '
-    . '-L../../../common/standard-io -L../../../common/stream-ext '
-    . '-L../../../common/print -L../../../common/format '
-    . '-L../../runtime/random -L../../../common/collection-extensions '
-    . '-L../../../common/string-ext -L../../../common/table-ext '
-    . '-L../../../common/regular-expressions -L../../../common/transcendental '
-	. '-L../../runtime/melange -L../../runtime/garbage-collection '
-    . '-L../../../common/getopt -L../../../common/base-file-system';
