@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.26 1995/05/29 20:55:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.27 1995/06/04 01:04:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -453,6 +453,10 @@ end;
 
 define sealed movable method list (#rest things) => res :: <list>;
   as(<list>, things);
+end;
+
+define inline method pair (head, tail) => res :: <pair>;
+  make(<pair>, head: head, tail: tail);
 end;
 
 define sealed inline method \~ (thing :: <object>) => res :: <boolean>;
