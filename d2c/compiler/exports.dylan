@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.83 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.84 1995/08/07 12:24:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -490,7 +490,8 @@ define module classes
   export
     cclass-name, closest-primary-superclass, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, new-slot-infos, override-infos, unique-id, direct-type,
+    all-slot-infos, new-slot-infos, override-infos, unique-id,
+    subclass-id-range-min, subclass-id-range-max, direct-type,
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     instance-slots-layout, vector-slot,
@@ -764,6 +765,7 @@ define module front
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
     <truly-the>, guaranteed-type,
+    <instance?>, type,
     nlx-info, <catch>, <throw>, throw-next, throw-next-setter, <make-catcher>,
     <disable-catcher>, disable-catcher-next, disable-catcher-next-setter,
 
