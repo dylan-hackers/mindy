@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.2 1996/04/06 18:30:25 nkramer Exp $
 
 //======================================================================
 //
@@ -131,6 +131,7 @@ define module regular-expressions
     regexp-replace, make-regexp-replacer,
     translate, make-translator,
     split, make-splitter,
-    join;
+    join,
+    <illegal-regexp>;
 end module regular-expressions;
 
