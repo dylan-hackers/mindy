@@ -34,9 +34,9 @@ do emit_library_rule(
 #do emit_library_rule(
 #    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 #);
-#do emit_library_rule(
-#    'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
-#);
+do emit_library_rule(
+    'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+);
 
 if (! $features{'compiled_for_solaris'}
     && ! $features{'compiled_for_win32'}
@@ -48,7 +48,7 @@ if (! $features{'compiled_for_solaris'}
 
 print <<"EOF"
 
-DYLANPATH=../common/transcendental:../mindy/libraries/dylan:../common/coll-ext:../common/table-ext:../common/string-ext:../common/standard-io:../common/streams:../mindy/libraries/random:../common/print:../common/format:../common/matrix::../common/format-out:../common/time:../common/regexp
+DYLANPATH=../common/transcendental:../mindy/libraries/dylan:../common/coll-ext:../common/table-ext:../common/string-ext:../common/standard-io:../common/streams:../mindy/libraries/random:../common/print:../common/format:../common/matrix::../common/format-out:../common/time:../common/regexp:../common/getopt
 
 EOF
 ;
