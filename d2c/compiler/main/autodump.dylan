@@ -56,14 +56,16 @@ define method autodump (module-name :: <string>, file-name :: <string>,
   format(stream, "author: Autodump\n\n");
   format(stream, "// Don't modify this file by hand, use autodump.\n\n");
 
-  for (cls in classes)
-    let name = as(<byte-string>, cls.class-name);
-    format(*standard-output*, "register-object-id(#\"%s\", #x%x);\n", 
-	   copy-sequence(name, start: 1, end: name.size - 1), next-free-id);
-    next-free-id := next-free-id + 1;
-  end for;
-  format(stream, "\n");
+  if (next-free-id ~= #f)
+    for (cls in classes)
+      let name = as(<byte-string>, cls.class-name);
+      format(*standard-output*, "register-object-id(#\"%s\", #x%x);\n", 
+	     copy-sequence(name, start: 1, end: name.size - 1), next-free-id);
+      next-free-id := next-free-id + 1;
+    end for;
+  end if;
 
+  format(stream, "\n");
   for (cls in classes)
     generate-dumper-and-loader(stream, cls);
   end for;
@@ -72,7 +74,8 @@ end method autodump;
 
 define variable next-free-id = #f;
 
-define method autodump-main (component :: <symbol>, id :: <integer>)
+define method autodump-main
+    (component :: <symbol>, id :: union(<integer>, <false>)) => ();
   next-free-id := id;
   select (component)
     #"parse-tree" 
@@ -142,37 +145,6 @@ define method autodump-main (component :: <symbol>, id :: <integer>)
 		  <ellipsis-token>, <sharp-word-token>, <true-token>,
 		  <false-token>, <next-token>, <rest-token>, <key-token>,
 		  <all-keys-token>);
-    #"fragments"
-      => autodump("fragments", "frag-dump.dylan",
-		  <fragment>, <piece>, <balanced-piece>,
-		  <fragment-tokenizer>);
-    #"macros"
-      => autodump("macros", "macro-dump.dylan",
-		  <define-macro-definition>, 
-		  <define-bindings-macro-definition>,
-		  <statement-macro-definition>, <function-macro-definition>);
-    #"definitions"
-      => autodump("definitions", "def-dump.dylan", 
-		  <definition>, <abstract-constant-definition>,
-		  <implicit-definition>);
-    #"define-classes"
-      => autodump("define-classes", "defcls-dump.dylan", 
-		  <class-definition>);
-    #"define-functions"
-      => autodump("define-functions", "deffun-dump.dylan",
-		  <generic-definition>, <method-definition>,
-		  <accessor-method-definition>,
-		  <getter-method-definition>,
-		  <setter-method-definition>, <define-generic-tlf>,
-		  <define-method-tlf>, <function-definition>,       
-		  <abstract-method-definition>);
-    #"define-constants-and-variables"
-      => autodump("define-constants-and-variables", "defvar-dump.dylan",
-		  <define-bindings-tlf>, <bindings-definition>,
-		  <constant-definition>, <variable-definition>);
-    #"top-level-expressions"
-      => autodump("top-level-expressions", "tlexpr-dump.dylan",
-		  <magic-interal-primitives-placeholder>);
     otherwise
       => error("Unknown module %=", component);
   end select;
