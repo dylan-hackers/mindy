@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.3 2001/03/14 05:09:38 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.4 2001/09/01 23:20:46 andreas Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -199,8 +199,6 @@ define method random
   end if;
 end method random;
 
-/*
-
 
 // Random floats.
 
@@ -243,7 +241,7 @@ define method random-gaussian (#key mean = 0, standard-deviation = 1,
  => random :: <float>;
   let unit-gaussian
     = sqrt(-2 * log(random-float(1.0, state: state))) 
-              * cos(2 * $pi * random-float(1.0, state: state));
+              * cos(2 * $double-pi * random-float(1.0, state: state));
    standard-deviation * unit-gaussian + mean;
 end method random-gaussian;
 
@@ -315,5 +313,3 @@ define method chi-square
   end for;
   ((as(<float>, total) * r) / N) - N;
 end method chi-square;
-
-*/
