@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.29 1996/03/09 12:01:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.30 1996/03/09 15:24:44 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -1564,22 +1564,34 @@ struct slot_spec
     res->next = NULL;
 
     if (init_expr != NULL) {
-	/* For the init-expr, we create an init-function and stick it into 
-	   the property list.  To do that, we need to create all sorts 
-	   of parse-tree stuff out of thin air, which ain't pretty.
+	/* If the init-expr is a literal, add it to the property list 
+	   as a init-value:
 	   */
-	struct body *init_expr_body
-	    = add_constituent(make_body(), make_expr_constituent(init_expr));
-	struct method *init_method
-	    = make_method_description(make_param_list(), NULL, init_expr_body);
-	struct token *init_method_token;
-
-	init_method->line = line;
-	init_method_token = make_token("init-function:", 14);
-	init_method_token->line = line;
-	plist = add_property(plist ? plist : make_property_list(),
-				  init_method_token,
-				  make_method_ref(init_method));
+	if (init_expr->kind == expr_LITERAL) {
+	    plist = add_property(plist ? plist : make_property_list(),
+				 make_token("init-value:", 11),
+				 init_expr);
+	} else {
+	    /* Otherwise, turn the expression into an anonymous method
+	       and add it to the property list as an init-function.
+	       To do that, we need to create all sorts of parse-tree
+	       stuff out of thin air, which ain't pretty.  
+	       */
+	    struct body *init_expr_body
+		= add_constituent(make_body(), 
+				  make_expr_constituent(init_expr));
+	    struct method *init_method
+		= make_method_description(make_param_list(), NULL, 
+					  init_expr_body);
+	    struct token *init_method_token;
+	    
+	    init_method->line = line;
+	    init_method_token = make_token("init-function:", 14);
+	    init_method_token->line = line;
+	    plist = add_property(plist ? plist : make_property_list(),
+				 init_method_token,
+				 make_method_ref(init_method));
+	}
     }
 
     res->plist = plist;
