@@ -4,8 +4,9 @@ CC = gcc
 LIBS = c-code/libruntime.a /lib/pa1.1/libm.a
 
 DYLAN_FILES = \
-	dylan/exports.dylan \
+	dylan/bootstrap.dylan \
 	dylan/macros.dylan \
+	dylan/exports.dylan \
 	dylan/misc.dylan \
 	dylan/object.dylan \
 	dylan/boolean.dylan \
@@ -33,18 +34,12 @@ DYLAN_FILES = \
 	dylan/thread.dylan \
 	gobbledygook.dylan
 
-C_FILES = $(patsubst %.dylan,%.c,$(DYLAN_FILES)) unit-init.c
+C_FILES = $(patsubst %.dylan,%.c,$(DYLAN_FILES)) foo-init.c inits.c
+S_FILES = heap.s
+O_FILES = $(patsubst %.c,%.o,$(C_FILES)) $(patsubst %.s,%.o,$(S_FILES))
 
-O_FILES = $(patsubst %.c,%.o,$(C_FILES)) inits.o heap.o
-
-foo: ${O_FILES} ${LIBS}
-	${CC} ${CFLAGS} -o foo ${O_FILES} ${LIBS}
-
-inits.c: gen-inits
-	gen-inits unit
-
-${C_FILES} heap.s: ../compiler/foo.dbc ${DYLAN_FILES}
-	time mindy -f ../compiler/foo.dbc ${DYLAN_FILES}
+foo: foo.lid ${DYLAN_FILES} ../compiler/foo.dbc ${LIBS}
+	time mindy -f ../compiler/foo.dbc foo.lid
 
 clean:
-	rm -f ${C_FILES} inits.c heap.s ${O_FILES} foo core
+	rm -f ${C_FILES} ${S_FILES} ${O_FILES} libfoo.a foo core
