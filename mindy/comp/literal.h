@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.1 1994/03/24 21:49:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.2 1994/03/28 11:32:01 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,41 +26,48 @@ enum literal_kind {
 struct literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
 };
 
 struct keyword_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     struct keyword *keyword;
 };
 
 struct symbol_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     struct symbol *symbol;
 };
 
 struct integer_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     long value;
 };
 
 struct float_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     double value;
 };
 
 struct character_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     char value;
 };
 
 struct string_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     int length;
     unsigned char chars[0];
 };
@@ -68,12 +75,14 @@ struct string_literal {
 struct vector_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     struct literal *first;
 };
 
 struct list_literal {
     enum literal_kind kind;
     struct literal *next;
+    int line;
     struct literal *first;
     struct literal *tail;
 };
