@@ -250,6 +250,32 @@ define class <c-enum-constant> (<object>)
     required-init-keyword: value:;
 end;
 
+define method format-c-tagged-type
+    (type :: <c-enum-type>, #key multi-line?)
+ => (string :: <string>)
+  let (prefix, suffix) =
+    if (multi-line?)
+      values("    ", "\n");
+    else
+      values("", " ");
+    end;
+  
+  let result = concatenate(type.c-type-name, " {", suffix);
+  let first? = #t;
+  for (member in type.c-enum-members)
+    let member = format-to-string("%s = %d", member.c-enum-constant-name,
+				  member.c-enum-constant-value);
+    result :=
+      if (first?)
+	first? := #f;
+	concatenate(result, prefix, member);
+      else
+	concatenate(result, ",", suffix, prefix, member);
+      end;
+  end for;
+  concatenate(result, suffix, "}");
+end;
+
 
 //=========================================================================
 //  Pointer-valued types
