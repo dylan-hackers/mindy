@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.6 1995/03/23 22:02:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.7 1995/11/08 19:54:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,6 +21,17 @@ define class <statement-macro-definition> (<macro-definition>)
 end;
 
 define class <function-macro-definition> (<macro-definition>)
+end;
+
+define class <define-macro-tlf> (<simple-define-tlf>)
+  //
+  // Make the definition required.
+  required keyword defn:;
+end;
+
+define method print-message
+    (tlf :: <define-macro-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Macro %s", tlf.tlf-defn.defn-name);
 end;
 
 
@@ -170,6 +181,15 @@ define method process-top-level-form
 end;
 
 
+define method finalize-top-level-form (tlf :: <define-macro-tlf>) => ();
+  // Nothing to do.
+end;
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <define-macro-tlf>) => ();
+  // Nothing to do.
+end;
+
 
 // define-macro & fix-define-rules
 
@@ -187,6 +207,7 @@ define method define-macro (defmacro :: <define-macro-parse>,
   find-end-variables(defn, #t);
   find-intermediate-words(defn);
   note-variable-definition(defn);
+  add!(*Top-Level-Forms*, make(<define-macro-tlf>, defn: defn));
 end;
 
 define method fix-define-rules (defmacro :: <define-macro-parse>) => ();
