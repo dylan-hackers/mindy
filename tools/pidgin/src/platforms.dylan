@@ -8,6 +8,15 @@ define class <c-platform> (<object>)
     required-init-keyword: default-include-path:;
 end class;
 
+define constant $generic-platform =
+  make(<c-platform>,
+       default-defines:
+	 #["const", "",
+	   "volatile", "",
+	   "__STDC__", "1"],
+       default-include-path:
+	 #["/usr/include"]);
+       
 define constant $i386-linux-platform =
   make(<c-platform>,
        default-defines:
