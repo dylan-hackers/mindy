@@ -10,7 +10,6 @@ end library;
 
 define module c-ffi-output
   use common-dylan;
-  use string-conversions;
   use substring-search;
   use c-types;
   use c-declarations;
