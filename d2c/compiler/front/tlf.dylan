@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.2 1994/12/13 18:35:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.3 1995/03/23 21:57:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -72,14 +72,14 @@ define method extract-properties (where :: <string>,
 				  plist :: <simple-object-vector>,
 				  #rest keywords)
   for (prop in plist)
-    unless (member?(prop.prop-keyword.token-literal, keywords))
-      error("Bogus keyword in %s: %=", where, prop.prop-keyword);
+    unless (member?(prop.prop-keyword.token-literal.literal-value, keywords))
+      compiler-error("Bogus keyword in %s: %=", where, prop.prop-keyword);
     end;
   end;
   local method find-key (key)
 	  block (return)
 	    for (prop in plist)
-	      if (prop.prop-keyword.token-literal == key)
+	      if (prop.prop-keyword.token-literal.literal-value == key)
 		return(prop.prop-value);
 	      end;
 	    end;
