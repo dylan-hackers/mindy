@@ -2,3 +2,4 @@ ansi-c-test
 *.s
 *.c
 *.mak
+c-parser.dylan

@@ -1,0 +1,1660 @@
+module: c-parser
+author:  Robert Stockton (rgs@cs.cmu.edu)
+copyright: Copyright (C) 1994, Carnegie Mellon University
+	   All rights reserved.
+	   This code was produced by the Gwydion Project at Carnegie Mellon
+	   University.  If you are interested in using this code, contact
+	   "Scott.Fahlman@cs.cmu.edu" (Internet).
+
+
+//======================================================================
+//
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+//
+//======================================================================
+
+//======================================================================
+// Module c-parse handles parsing of native C header files.  Theoretically, we
+// could have arbitrary C code in these files.  However, in practice we only
+// need to be able to parse about half of the C language.
+//
+// The actual "source" for the c parser is contained in "c-parse.input", which
+// is an input file for a lisp-based Dylan parser generator.  (This is a
+// logical route to follow for bootstrapping purposes.  It would clearly be
+// useful to re-implement the generator in Dylan at some future date.)
+// "C-parse.dylan" is the pure Dylan output of this generator, and should
+// *not* be considered human readable code.
+//
+// The "parse-tree" is a very ad-hoc structure, because it is intended to be
+// quite ephemeral.  The final goal is to add an ordered sequence of
+// <declaration>s to the <parse-state> which both controls the parsing process
+// and returns the results of the parse.  This approach allows us to do a
+// single pass parse of the data, and also support the feedback required to
+// handle C's "type names", which are context sensitive.
+//
+// The token stream provided by the tokenizer may actually correspond to
+// several different "included" files.  We can detect transitions into and out
+// of recursively included files by watching for <begin-include-token> and
+// <end-include-token>.  We make the simplifying assumption that declarations
+// will not be split across include files.  This assumption should be
+// justifiable on the basis that any exception would be unbearably ugly.
+//
+// The raw parse engine has been fitted with a number of different front ends
+// to allow several different types of data to be parsed.  The following
+// functions are exported:
+//   parse(filename, #key defines, undefines) => result :: <parse-file-state>
+//     This function processes an entire include file, leaving a series of
+//     declarations in the returned parse state.
+//   parse-type(alien-name :: <string>, old-state :: <parse-file-state>)
+//   => result :: <declaration>
+//     This function parses the contents of the given string and tries to
+//     interpret it as the name of an object or type declared in "old-state".
+//     Parse-type will signal an error if no such declaration is found.
+//   parse-macro(cpp-name :: <string>, old-state :: <parse-file-state>)
+//   => result :: constant-value or <declaration>
+//     This function tries to evaluate a preprocessor constant in hopes that
+//     it will either evaluate to a type or object name or to a constant
+//     compile time value.  It returns the matched declaration or value, or it
+//     signals an error. 
+//   cpp-parse(tokenizer :: <tokenizer>) => result :: <integer>
+//     This function evaluates a line of CPP input according to a limited set
+//     of C operators and an odd set of evaluation rules which make undefined
+//     identifiers into integers.  (Note that this function is used by the
+//     tokenizer, but also recursively uses the tokenizer by specifying a few
+//     magic keywords to avoid infinite recursion.)  This function consumes
+//     one line's worth of tokens from the tokenizer and then leaves it in a
+//     consistent state for further processing by a different parser.
+//
+// The input file is messier than it might be, because we have retained
+// productions corresponding to the entire C language -- simply commenting out
+// the ones which are not needed for header files.  This should simplify
+// future expansion.
+//======================================================================
+
+//----------------------------------------------------------------------
+// Simple parser support 
+//----------------------------------------------------------------------
+
+// *HACK*: We temporarily use a global variable to figure out whether a given
+// declaration is an object declaration or a typedef declaration.  This
+// appears to be simpler than trying to propogate detailed information
+// upwards.
+//
+define variable *typedef-flag* = #f;
+
+// This function checks to see whether the given object can be interpreted as
+// an integer.  If so, it returns the integer value.  Otherwise, it raises an
+// error.  This function is used to evaluate compile time constants.
+//
+define generic int-value (value :: <object>, state :: <parse-state>);
+
+define method int-value (value :: <integer>, state :: <parse-state>)
+  value;
+end method;
+
+define method int-value (token :: <integer-token>, state :: <parse-state>)
+  token.value;
+end method;
+
+define method int-value (value :: <character>, state :: <parse-state>)
+  as(<integer>, value);
+end method;
+
+define method int-value (token :: <character-token>, state :: <parse-state>)
+  as(<integer>, token.value);
+end method;
+
+define method int-value (value :: <object>, state :: <parse-state>)
+  error(value, "Value in constant expression must be an integer.");
+end method;
+
+// This method will only be called if we are evaluating an expression in a CPP
+// line.  It is not called for arbitrary identifiers.
+//
+define method int-value
+    (value :: <identifier-token>, state :: <parse-cpp-state>)
+  let expansion = element(value.generator.cpp-table,
+                          value.string-value, default: #f);
+  case
+    expansion == #f => 
+      // The C preprocessor blithely accepts undefined identifiers as "0"
+      0;
+    empty?(expansion) =>
+      1;
+    expansion.size > 1 =>
+      int-value(parse-macro(value.string-value, state), state);
+    otherwise =>
+      int-value(head(expansion), state);
+  end case;
+end method;
+
+// Evaluate identifiers in the case where we are *not* evaluating an
+// expression in a CPP line.
+//
+define method int-value
+    (value :: <identifier-token>, state :: <parse-state>)
+  let object-decl = element(state.objects, value.string-value, default: #f);
+  if (instance?(object-decl, <enum-slot-declaration>))
+    object-decl.constant-value;
+  else
+    parse-error(value, "Value in constant expression must be an integer.");
+  end if;
+end method int-value;
+
+define constant <source-location> = false-or(<parse-state>);
+
+
+//----------------------------------------------------------------------
+// The actual productions.  The format is
+//  production (sub-production-or-<token> .....)
+//    Arbitrary dylan code -- variables %1 - %n correspond to the
+//    sub-productions, and @0 is a <parse-state> which is passed into each
+//    action routine for record-keeping purposes.
+//  %
+//----------------------------------------------------------------------
+
+%%
+
+:entry-point file
+
+;; Magic tokens
+;; It seems that the end-of-file token must be named "EOF"
+:token EOF <simple-token> 
+:token <error-token> <simple-token> 
+:token <begin-include-token> <simple-token> 
+:token <end-include-token> <ei-token> 
+:token <identifier-token> <name-token> 
+:token <type-name-token>  <name-token> 
+;; literals
+:token <integer-token> <literal-token> 
+:token <character-token> <literal-token> 
+:token <string-literal-token> <literal-token> 
+:token <cpp-token> <literal-token> 
+;; A whole bunch of reserved words
+:token <struct-token> <reserved-word-token> 
+:token <typedef-token> <reserved-word-token> 
+:token <short-token> <type-specifier-token> 
+:token <long-token> <type-specifier-token> 
+:token <int-token> <type-specifier-token> 
+:token <char-token> <type-specifier-token> 
+:token <signed-token> <type-specifier-token> 
+:token <unsigned-token> <type-specifier-token> 
+:token <float-token> <type-specifier-token> 
+:token <double-token> <type-specifier-token> 
+;; "const" and "volatile" will be preprocessed away by the cpp code.  They
+;; were being used in too many different odd places by various different
+;; compilers.  
+;;
+;; define class <const-token> (<reserved-word-token>) end class;
+;; define class <volatile-token> (<reserved-word-token>) end class;
+:token <void-token> <type-specifier-token> 
+:token <inline-token> <reserved-word-token> 
+:token <extern-token> <reserved-word-token> 
+:token <static-token> <reserved-word-token> 
+:token <auto-token> <reserved-word-token> 
+:token <register-token> <reserved-word-token> 
+:token <dummy-token> <reserved-word-token> 
+:token <union-token> <reserved-word-token> 
+:token <enum-token> <reserved-word-token> 
+:token <constant-token> <reserved-word-token> 
+:token <mul-assign-token> <reserved-word-token> 
+:token <div-assign-token> <reserved-word-token> 
+:token <mod-assign-token> <reserved-word-token> 
+:token <add-assign-token> <reserved-word-token> 
+:token <sub-assign-token> <reserved-word-token> 
+:token <left-assign-token> <reserved-word-token> 
+:token <right-assign-token> <reserved-word-token> 
+:token <and-assign-token> <reserved-word-token> 
+:token <xor-assign-token> <reserved-word-token> 
+:token <or-assign-token> <reserved-word-token> 
+;; A whole bunch of puctuation
+:token <elipsis-token> <punctuation-token> 
+:token <sizeof-token> <punctuation-token> 
+:token <dec-op-token> <punctuation-token> 
+:token <inc-op-token> <punctuation-token> 
+:token <ptr-op-token> <punctuation-token> 
+:token <semicolon-token> <punctuation-token> 
+:token <comma-token> <punctuation-token> 
+:token <dot-token> <punctuation-token> 
+:token <lparen-token> <punctuation-token> 
+:token <rparen-token> <punctuation-token> 
+:token <lbracket-token> <punctuation-token> 
+:token <rbracket-token> <punctuation-token> 
+:token <ampersand-token> <punctuation-token> 
+:token <star-token> <punctuation-token> 
+:token <carat-token> <punctuation-token> 
+:token <bar-token> <punctuation-token> 
+:token <percent-token> <punctuation-token> 
+:token <slash-token> <punctuation-token> 
+:token <plus-token> <punctuation-token> 
+:token <minus-token> <punctuation-token> 
+:token <tilde-token> <punctuation-token> 
+:token <bang-token> <punctuation-token> 
+:token <lt-token> <punctuation-token> 
+:token <gt-token> <punctuation-token> 
+:token <question-token> <punctuation-token> 
+:token <colon-token> <punctuation-token> 
+:token <eq-op-token> <punctuation-token> 
+:token <le-op-token> <punctuation-token> 
+:token <ge-op-token> <punctuation-token> 
+:token <ne-op-token> <punctuation-token> 
+:token <and-op-token> <punctuation-token> 
+:token <or-op-token> <punctuation-token> 
+:token <pound-pound-token> <punctuation-token> 
+:token <left-op-token> <punctuation-token> 
+:token <right-op-token> <punctuation-token> 
+:token <assign-token> <punctuation-token> 
+:token <lcurly-token> <punctuation-token> 
+:token <rcurly-token> <punctuation-token> 
+;; "Magic" tokens which provide alternate entry points to the parser
+:token <alien-name-token> <token>
+:token <macro-parse-token> <token>
+:token <cpp-parse-token> <token>
+;; #machine -- hack to suport solaris
+:token <machine-token> <token>
+
+:union NON-CURLY <token>
+    (<identifier-token> <type-name-token>  <integer-token>
+     <character-token> <string-literal-token> <cpp-token> <struct-token>
+     <typedef-token> <short-token> <long-token> <int-token> <char-token>
+     <signed-token> <unsigned-token> <float-token> <double-token>
+     <void-token> <inline-token> <extern-token> <static-token> <auto-token>
+     <register-token> <dummy-token> <union-token> <enum-token>
+     <constant-token> <mul-assign-token> <div-assign-token>
+     <mod-assign-token> <add-assign-token> <sub-assign-token>
+     <left-assign-token> <right-assign-token> <and-assign-token>
+     <xor-assign-token> <or-assign-token> <elipsis-token> <sizeof-token>
+     <dec-op-token> <inc-op-token> <ptr-op-token> <semicolon-token>
+     <comma-token> <dot-token> <lparen-token> <rparen-token>
+     <lbracket-token> <rbracket-token> <ampersand-token> <star-token>
+     <carat-token> <bar-token> <percent-token> <slash-token> <plus-token>
+     <minus-token> <tilde-token> <bang-token> <lt-token> <gt-token>
+     <question-token> <colon-token> <eq-op-token> <le-op-token>
+     <ge-op-token> <ne-op-token> <and-op-token> <or-op-token>
+     <pound-pound-token> <left-op-token> <right-op-token> <assign-token>)
+
+:union NAME <name-token> 
+    (<identifier-token> <type-name-token>)
+
+:union TYPE-SPEC <type-specifier-token>
+    (<short-token> <long-token> <int-token> <char-token> <signed-token>
+     <unsigned-token> <float-token> <double-token> <void-token>)
+
+
+
+file (EOF)
+  %1;
+%
+
+file (file1 EOF)
+  %1;
+%
+
+file (<alien-name-token> type-name EOF)
+  %2;
+%
+
+file (<alien-name-token> identifier EOF)
+  element(@0.objects, %2.string-value, default: #f)
+    | parse-error(%2, "Unknown identifier: %s", %2.string-value);
+%
+
+file (<macro-parse-token> type-name EOF)
+  %2;
+%
+
+;file (<macro-parse-token> identifier EOF)
+;  element(@0.objects, %2.string-value, default: #f)
+;    | parse-error(%2, "Unknown identifier: %s", %2.string-value);
+;%
+
+file (<macro-parse-token> constant-expr EOF)
+  if (instance?(%2, <identifier-token>))
+    element(@0.objects, %2.string-value, default: #f)
+      | parse-error(%2, "Unknown identifier: %s", %2.string-value);
+  else
+    %2;
+  end if;
+%
+
+file (<cpp-parse-token> constant-expr EOF)
+  int-value(%2, @0);
+%
+
+file1 (external-definition)
+  %1;
+%
+
+file1 (file1 external-definition)
+  %1;
+%
+
+primary-expr (identifier)
+  // We allow arbitrary identifiers only because they are occasionally
+  // permitted by CPP (and treated as integers).  This will also allow a
+  // single identifier to pass as a constant expr.  Users of "constant-expr"
+  // should be aware of this and call "int-value" to insure that it is in fact
+  // a constant value.  "parse-macro" takes advantage of this property of
+  // "constant-expr" to allow defined identifiers to be parsed.
+  %1;
+%
+
+;Primary-Expr (<CONSTANT-Token>)
+;  Error("Primary-Expr Not Yet Handled.");
+;%
+
+primary-expr (<integer-token>)
+  %1.value;
+%
+
+primary-expr (<character-token>)
+  // C evaluates characters as integers in expressions, so we try to parse
+  // them as well. This helps particularly with #definies and enums.
+  %1.value;
+%
+
+;Primary-Expr (<STRING-LITERAL-Token>)
+;  Error("Primary-Expr Not Yet Handled.");
+;%
+
+primary-expr (<lparen-token> expr <rparen-token>)
+  %2;
+%
+
+primary-expr (identifier identifier)
+  // XXX - We use this to catch preprocessor expressions of the form
+  // "defined FOO", which are endemic in the Linux headers and break
+  // the original CMU Melange. Let's hope this works.
+  // What would be the consequences of making "defined" a keyword?
+  if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
+    parse-error(@0, "Didn't expect to see two identifiers back-to-back.");
+  elseif (element(%2.generator.cpp-table, %2.string-value, default: #f))
+    1;
+  else
+    0;
+  end;  
+%
+
+postfix-expr (primary-expr)
+  %1;
+%
+
+;postfix-expr (postfix-expr <lbracket-token> expr <rbracket-token>)
+;  error("postfix-expr not yet handled.");
+;%
+
+;postfix-expr (postfix-expr <lparen-token> <rparen-token>)
+;  error("postfix-expr not yet handled.");
+;%
+
+postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
+  // There aren't any compile-time functions which we are prepared to
+  // evaluate in general.  However, if we are evaluating an expression on a
+  // CPP line, we should be prepared to evaluate the pseudo-function
+  // "defined".
+  //
+  if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
+    parse-error(@0,"Function calls not allowed in constant expressions.");
+  elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
+    1;
+  else
+    0;
+  end if;
+%
+
+postfix-expr (<machine-token> <lparen-token> <identifier-token> <rparen-token>)
+  // Handle the solaris "#machine(foo)" construct.  Simply return 0 -- machine
+  // types should also be checked via the standard mechanism.
+  0;
+%
+
+;postfix-expr (postfix-expr <dot-token> identifier)
+;  error("postfix-expr not yet handled.");
+;%
+
+;Postfix-Expr (Postfix-Expr <PTR-OP-Token> Identifier)
+;  Error("Postfix-Expr Not Yet Handled.");
+;%
+
+;Postfix-Expr (Postfix-Expr <INC-OP-Token>)
+;  Error("Postfix-Expr Not Yet Handled.");
+;%
+
+;Postfix-Expr (Postfix-Expr <DEC-OP-Token>)
+;  Error("Postfix-Expr Not Yet Handled.");
+;%
+
+argument-expr-list (assignment-expr)
+  %1;
+%
+
+;argument-expr-list (argument-expr-list <comma-token> assignment-expr)
+;  error("argument-expr-list not yet handled.");
+;%
+
+unary-expr (postfix-expr)
+  %1;
+%
+
+;Unary-Expr (<INC-OP-Token> Unary-Expr)
+;  Error("Unary-Expr Not Yet Handled.");
+;%
+
+;Unary-Expr (<DEC-OP-Token> Unary-Expr)
+;  Error("Unary-Expr Not Yet Handled.");
+;%
+
+unary-expr (unary-operator cast-expr)
+  select (%1 by instance?)
+    <minus-token> => -int-value(%2, @0);
+    <tilde-token> => lognot(int-value(%2, @0));
+    <bang-token> => if (int-value(%2, @0) == 0) 1 else 0 end if;
+  end select;
+%
+
+;Unary-Expr (<SIZEOF-Token> Unary-Expr)
+;  Error("Unary-Expr Not Yet Handled.");
+;%
+
+Unary-Expr (<SIZEOF-Token> <Lparen-Token> Type-Name <Rparen-Token>)
+  c-type-size(%3);
+%
+
+;unary-operator (<ampersand-token>)
+;  error("unary-operator not yet handled.");
+;%
+
+;unary-operator (<star-token>)
+;  error("unary-operator not yet handled.");
+;%
+
+;unary-operator (<plus-token>)
+;  error("unary-operator not yet handled.");
+;%
+
+unary-operator (<minus-token>)
+  %1;
+%
+
+unary-operator (<tilde-token>)
+  %1;
+%
+
+unary-operator (<bang-token>)
+  %1;
+%
+
+cast-expr (unary-expr)
+  %1;
+%
+
+cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
+  let result = int-value(%4, @0);
+  if (instance?(result, <integer>)
+       & instance?(%2.true-type, <integer-type-declaration>))
+    result;
+  else
+    parse-error
+      (@0,
+       "Melange only handles compile time casts from integer to integer");
+  end if;
+%
+
+multiplicative-expr (cast-expr)
+  %1;
+%
+
+multiplicative-expr (multiplicative-expr <star-token> cast-expr)
+  int-value(%1, @0) * int-value(%3, @0);
+%
+
+multiplicative-expr (multiplicative-expr <slash-token> cast-expr)
+  truncate/(int-value(%1, @0), int-value(%3, @0));
+%
+
+multiplicative-expr (multiplicative-expr <percent-token> cast-expr)
+  remainder(int-value(%1, @0), int-value(%3, @0));
+%
+
+additive-expr (multiplicative-expr)
+  %1;
+%
+
+additive-expr (additive-expr <plus-token> multiplicative-expr)
+  int-value(%1, @0) + int-value(%3, @0);
+%
+
+additive-expr (additive-expr <minus-token> multiplicative-expr)
+  int-value(%1, @0) - int-value(%3, @0);
+%
+
+shift-expr (additive-expr)
+  %1;
+%
+
+Shift-Expr (Shift-Expr <LEFT-OP-Token> Additive-Expr)
+  ash(int-value(%1, @0), int-value(%3, @0))
+%
+
+Shift-Expr (Shift-Expr <RIGHT-OP-Token> Additive-Expr)
+  ash(int-value(%1, @0), -int-value(%3, @0))
+%
+
+relational-expr (shift-expr)
+  %1;
+%
+
+relational-expr (relational-expr <lt-token> shift-expr)
+  if (int-value(%1, @0) < int-value(%3, @0)) 1 else 0 end if;
+%
+
+relational-expr (relational-expr <gt-token> shift-expr)
+  if (int-value(%1, @0) > int-value(%3, @0)) 1 else 0 end if;
+%
+
+Relational-Expr (Relational-Expr <LE-OP-Token> Shift-Expr)
+  if (int-value(%1, @0) <= int-value(%3, @0)) 1 else 0 end if;
+%
+
+Relational-Expr (Relational-Expr <GE-OP-Token> Shift-Expr)
+  if (int-value(%1, @0) >= int-value(%3, @0)) 1 else 0 end if;
+%
+
+equality-expr (relational-expr)
+  %1;
+%
+
+Equality-Expr (Equality-Expr <EQ-OP-Token> Relational-Expr)
+  if (int-value(%1, @0) == int-value(%3, @0)) 1 else 0 end if;
+%
+
+Equality-Expr (Equality-Expr <NE-OP-Token> Relational-Expr)
+  if (int-value(%1, @0) ~= int-value(%3, @0)) 1 else 0 end if;
+%
+
+and-expr (equality-expr)
+  %1;
+%
+
+and-expr (and-expr <ampersand-token> equality-expr)
+  logand(int-value(%1, @0), int-value(%3, @0))
+%
+
+exclusive-or-expr (and-expr)
+  %1;
+%
+
+exclusive-or-expr (exclusive-or-expr <carat-token> and-expr)
+  logxor(int-value(%1, @0), int-value(%3, @0));
+%
+
+inclusive-or-expr (exclusive-or-expr)
+  %1;
+%
+
+inclusive-or-expr (inclusive-or-expr <bar-token> exclusive-or-expr)
+  logior(int-value(%1, @0), int-value(%3, @0));
+%
+
+logical-and-expr (inclusive-or-expr)
+  %1;
+%
+
+Logical-And-Expr (Logical-And-Expr <AND-OP-Token> Inclusive-Or-Expr)
+  if (int-value(%1, @0) == 0) %1 else %3 end if;
+%
+
+logical-or-expr (logical-and-expr)
+  %1;
+%
+
+Logical-Or-Expr (Logical-Or-Expr <OR-OP-Token> Logical-And-Expr)
+  if (int-value(%1, @0) == 0) %3 else %1 end if;
+%
+
+conditional-expr (logical-or-expr)
+  %1;
+%
+
+conditional-expr (logical-or-expr <question-token> logical-or-expr <colon-token> conditional-expr)
+  if (int-value(%1, @0) == 0) %5 else %3 end if;
+%
+
+assignment-expr (conditional-expr)
+  %1;
+%
+
+;assignment-expr (unary-expr assignment-operator assignment-expr)
+;  error("assignment-expr not yet handled.");
+;%
+
+;assignment-operator (<assign-token>)
+;  error("assignment-operator not yet handled.");
+;%
+
+;Assignment-Operator (<MUL-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<DIV-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<MOD-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<ADD-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<SUB-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<LEFT-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<RIGHT-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<AND-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<XOR-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+;Assignment-Operator (<OR-ASSIGN-Token>)
+;  Error("Assignment-Operator Not Yet Handled.");
+;%
+
+expr (assignment-expr)
+  %1;
+%
+
+;expr (expr <comma-token> assignment-expr)
+;  error("expr not yet handled.");
+;%
+
+constant-expr (conditional-expr)
+  // In general, constant expr will return an integer value.  However, for
+  // obscure reasons, we also allow it to return a single identifier.
+  %1;
+%
+
+lcurly-element (<lcurly-token> curly-list <rcurly-token>)
+  #f;
+%
+
+lcurly-element (NON-CURLY)
+  #f;
+%
+
+curly-list ()
+  #f;
+%
+
+curly-list (curly-list lcurly-element)
+  #f;
+%
+
+declaration (declaration-specifiers <semicolon-token>)
+  *typedef-flag* := #f;
+  process-type-list(%1, @0);
+%
+
+declaration (inline-declaration)
+  // Ignore inline declarations.  These occur in VC++ header files, so we'd
+  // better be able to handle them. They also occur in Gtk+.
+  parse-warning(%1, "ignoring inline function declaration");
+  #f;
+%
+
+inline-declaration (inline-specifiers declaration-specifiers
+                    extended-declarator-list <semicolon-token>)
+  %1;
+%
+
+inline-declaration (inline-specifiers declaration-specifiers
+                    extended-declarator-list
+                    <lcurly-token> curly-list <rcurly-token>)
+  %1;
+%
+
+inline-declaration (declaration-specifiers extended-declarator-list
+                    <lcurly-token> curly-list <rcurly-token>)
+  %3;
+%
+
+inline-specifiers (<inline-token>)
+  %1;
+%
+
+inline-specifiers (<static-token>)
+  // XXX - This rule might allow 'static extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  // This should go away when we handle static storage specifiers.
+  %1;
+%
+
+inline-specifiers (<static-token> <inline-token>)
+  // Bogus declarations of this form appear in Gtk+.
+  // XXX - This rule might allow 'static inline extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  %2;
+%
+
+inline-specifiers (<inline-token> <static-token>)
+  // XXX - This rule might allow 'inline static extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  // This should go away when we handle static storage specifiers.
+  %1;
+%
+
+declaration (<extern-token> init-declarator-list <semicolon-token>)
+  // Storage class must be extern; unspecified type must be "int"
+  let spec = list(make(<int-token>, generator: %1.generator, string: "int"));
+  let type = process-type-list(spec, @0);
+  let names = reverse!(%2);
+  declare-objects(@0, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
+%
+
+declaration (declaration-specifiers extended-declarator-list <semicolon-token>)
+  let type = process-type-list(%1, @0);
+  let names = reverse!(%2);
+  declare-objects(@0, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
+%
+
+declaration-specifiers (storage-class-specifier declaration-specifiers)
+  // Storage class must be extern -- no need to note it
+  %2;
+%
+
+; declaration-specifiers (type-modifier declaration-specifiers)
+;  // Storage class must be extern -- no need to note it
+;  %2;
+; %
+
+declaration-specifiers (type-specifier)
+  list(%1);
+%
+
+declaration-specifiers (numeric-specifier)
+  %1;
+%
+
+init-declarator-list (declarator)
+  list(%1);
+%
+
+init-declarator-list (init-declarator-list <comma-token> declarator)
+  pair(%3, %1);
+%
+
+extended-declarator-list (declarator)
+  // This hack is necessary because VC++ lets you redeclare typedefs.  Bad
+  // idea!  Don't look for clean logic or robustness -- that would require
+  // more work than MS deserves.
+  list(%1);
+%
+
+; extended-declarator-list (type-modifier declarator)
+;   list(%2);
+; %
+
+extended-declarator-list (extended-declarator-list <comma-token> 
+                          declarator)
+  // see above.
+  pair(%3, %1);
+%
+
+extended-declarator-list (extended-declarator)
+  list(%1);
+%
+
+extended-declarator-list (extended-declarator-list <comma-token> 
+                          extended-declarator)
+  // see above.
+  pair(%3, %1);
+%
+
+extended-declarator (<type-name-token>)
+  // see above.
+  %1;
+%
+
+extended-declarator (pointer <type-name-token>)
+  // see above.
+  pair(%1, %2);
+%
+
+;init-declarator (declarator <assign-token> initializer)
+;  if (*typedef-flag*) error("Attempt to initialize a typedef") end if;
+;  error("init-declarator not yet handled.");
+;%
+
+storage-class-specifier (<TYPEDEF-token>)
+  *typedef-flag* := #t;
+  %1;
+%
+
+storage-class-specifier (<EXTERN-token>)
+  %1;
+%
+
+;Storage-Class-Specifier (<STATIC-Token>)
+;  Error("Storage-Class-Specifier Not Yet Handled.");
+;%
+
+;Storage-Class-Specifier (<AUTO-Token>)
+;  Error("Storage-Class-Specifier Not Yet Handled.");
+;%
+
+;Storage-Class-Specifier (<REGISTER-Token>)
+;  Error("Storage-Class-Specifier Not Yet Handled.");
+;%
+
+;; Correctly parsing all of the cases in which "const" and "volatile" can
+;; appear (in any given compiler) is too challenging.  Since we are ignoring
+;; them anyway, we will just use the preprocessor to whisk them away.  (This
+;; will result in our accepting a few invalid files, but we have to be pretty
+;; permissive anyway to handle all of the various compilers around.
+; Type-modifier (<CONST-Token>)
+;   %1;
+; %
+
+; Type-modifier (<VOLATILE-Token>)
+;   %1;
+; %
+
+numeric-specifier (TYPE-SPEC)
+  list(%1);
+%
+
+numeric-specifier (TYPE-SPEC numeric-specifier)
+  pair(%1, %2);
+%
+
+type-specifier (struct-or-union-specifier)
+  %1;
+%
+
+type-specifier (enum-specifier)
+  %1;
+%
+
+type-specifier (<TYPE-NAME-token>)
+  @0.objects[%1.value];
+%
+
+;; We use NAME here because people sometimes use struct tags as
+;; typedef names.  This still appears incorrect to me, but we need it to be
+;; able to parse existing header files.  -- rgs
+struct-or-union-specifier (struct-or-union NAME <lcurly-token>
+                           struct-declaration-list <rcurly-token>)
+  make-struct-type(%2.value, %4, %1, @0);
+%
+
+struct-or-union-specifier (struct-or-union <lcurly-token> struct-declaration-list <rcurly-token>)
+  make-struct-type(#f, %3, %1, @0);
+%
+
+struct-or-union-specifier (struct-or-union NAME)
+  make-struct-type(%2.value, #f, %1, @0);
+%
+
+Struct-Or-Union (<STRUCT-Token>)
+  %1;
+%
+
+Struct-Or-Union (<UNION-Token>)
+  %1;
+%
+
+struct-declaration-list (struct-declaration)
+  %1;
+%
+
+struct-declaration-list (struct-declaration-list struct-declaration)
+  // Creates list in normal order.
+  concatenate(%1, %2);
+%
+
+struct-declaration (type-specifier-list struct-declarator-list <semicolon-token>)
+  let type = process-type-list(reverse!(%1), @0);
+  let return = #();
+  for (declarator in %2)
+    let (type, name) = process-declarator(type, declarator, @0);
+    return := pair(pair(name.value, type), return);
+  end for;
+  return;
+%
+
+struct-declaration (type-specifier-list <semicolon-token>)
+  let type = process-type-list(reverse!(%1), @0);
+  list(pair("_anon_field", type));
+%
+
+struct-declarator-list (struct-declarator)
+  list(%1);
+%
+
+struct-declarator-list (struct-declarator-list <comma-token> struct-declarator)
+  // Creates list in reverse order.
+  pair(%3, %1);
+%
+
+struct-declarator (declarator)
+  %1;
+%
+
+;struct-declarator (<colon-token> constant-expr)
+;  error("struct-declarator not yet handled.");
+;%
+
+struct-declarator (declarator <colon-token> constant-expr)
+  pair(#"bitfield", pair(int-value(%3, @0), %1));
+%
+
+; struct-declarator (type-modifier declarator)
+;   %2;
+; %
+
+; struct-declarator (type-modifier declarator <colon-token> constant-expr)
+;   pair(#"bitfield", pair(int-value(%4, @0), %2));
+; %
+
+Enum-Specifier (<ENUM-Token> enum-elements)
+  make-struct-type(#f, %2, %1, @0);
+%
+
+Enum-Specifier (<ENUM-Token> NAME enum-elements)
+  make-struct-type(%2.value, %3, %1, @0);
+%
+
+Enum-Specifier (<ENUM-Token> NAME)
+  make-struct-type(%2.value, #f, %1, @0);
+%
+
+enum-elements (<Lcurly-Token> internal-include-boundary Enumerator-List
+               internal-include-boundary <Rcurly-Token>)
+  reverse!(%3);
+%
+
+;; VC++ apparently allows commas as terminators
+enum-elements (<Lcurly-Token> internal-include-boundary Enumerator-List
+               internal-include-boundary <comma-token>
+               internal-include-boundary <Rcurly-Token>)
+  reverse!(%3);
+%
+
+enumerator-list (enumerator)
+  list(make-enum-slot(%1.head, %1.tail, #f, @0));
+%
+
+enumerator-list (enumerator-list internal-include-boundary <comma-token>
+                 internal-include-boundary enumerator)
+  // HACK: We depend here on the fact that this parser generator evaluates
+  // the subtrees left-to-right.
+  //
+  // We do all of this on the fly because some (i.e. Apple's) C compilers
+  // let later enum values be computed based upon those earlier in the 
+  // same enum declaration.
+  pair(make-enum-slot(%5.head, %5.tail, %1.head, @0), %1);
+%
+
+enumerator (identifier)
+  pair(%1.value, #f);
+%
+
+enumerator (identifier <assign-token> constant-expr)
+  pair(%1.value, int-value(%3, @0));
+%
+
+declarator (declarator2)
+  %1;
+%
+
+declarator (pointer declarator2)
+  pair(%1, %2);
+%
+
+declarator2 (identifier)
+  %1;
+%
+
+declarator2 (<lparen-token> declarator <rparen-token>)
+  %2
+%
+
+declarator2 (declarator2 <lbracket-token> <rbracket-token>)
+  pair(#"vector", pair(#f, %1));
+%
+
+declarator2 (declarator2 <lbracket-token> constant-expr <rbracket-token>)
+  pair(#"vector", pair(int-value(%3, @0), %1));
+%
+
+declarator2 (declarator2 <lparen-token> <rparen-token>)
+  pair(#"function", pair(list(make(<varargs-declaration>,
+                                   name: "", type: unknown-type)), %1));
+%
+
+declarator2 (declarator2 <lparen-token> parameter-type-list <rparen-token>)
+  pair(#"function", pair(reverse!(%3), %1));
+%
+
+declarator2 (declarator2 <lparen-token> parameter-identifier-list <rparen-token>)
+  pair(#"function", pair(reverse!(%3), %1));
+%
+
+pointer (<star-token>)
+  list(#"pointer");
+%
+
+; pointer (<star-token> type-modifier)
+;   // They can put "const" in some screwy places.  Ignore it.
+;   list(#"pointer");
+; %
+
+pointer (<star-token> pointer)
+  pair(#"pointer", %2);
+%
+
+; pointer (<star-token> type-modifier pointer)
+;   // They can put "const" in some screwy places.  Ignore it.
+;   pair(#"pointer", %2);
+; %
+
+type-specifier-list (type-specifier)
+  list(%1);
+%
+
+type-specifier-list (numeric-specifier)
+  reverse!(%1);
+%
+
+; type-specifier-list (type-modifier type-specifier)
+;   list(%2);
+; %
+
+; type-specifier-list (type-modifier numeric-specifier)
+;   reverse!(%2);
+; %
+
+parameter-identifier-list (identifier-list)
+  %1;
+%
+
+Parameter-Identifier-List (Identifier-List <Comma-Token> <ELIPSIS-Token>)
+  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
+%
+
+identifier-list (identifier)
+  list(make(<arg-declaration>, name: %1.string-value, type: unknown-type));
+%
+
+identifier-list (identifier-list <comma-token> identifier)
+  // Produces list in reverse order.
+  pair(make(<arg-declaration>, name: %3.string-value, type: unknown-type),
+       %1);
+%
+
+parameter-type-list (parameter-list)
+  %1;
+%
+
+parameter-type-list (Parameter-List <Comma-Token> <ELIPSIS-Token>)
+  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
+%
+
+parameter-list (parameter-declaration)
+  list(%1);
+%
+
+parameter-list (parameter-list <comma-token> parameter-declaration)
+  // Produces lists in reverse order.
+  pair(%3, %1);
+%
+
+parameter-declaration (type-specifier-list declarator)
+  let type = process-type-list(reverse!(%1), @0);
+  let (type, name) = process-declarator(type, %2, @0);
+  make(<arg-declaration>, name: name.string-value, type: type);
+%
+
+parameter-declaration (type-name)
+  make(<arg-declaration>, name: "", type: %1);
+%
+
+type-name (type-specifier-list)
+  process-type-list(reverse!(%1), @0);
+%
+
+type-name (type-specifier-list abstract-declarator)
+  let type = process-type-list(reverse!(%1), @0);
+  let (type, name) = process-declarator(type, %2, @0);
+  type;
+%
+
+abstract-declarator (pointer)
+  list(%1);
+%
+
+; abstract-declarator (type-modifier pointer)
+;   list(%1);
+; %
+
+abstract-declarator (abstract-declarator2)
+  %1;
+%
+
+abstract-declarator (pointer abstract-declarator2)
+  pair(%1, %2);
+%
+
+abstract-declarator2 (<lparen-token> abstract-declarator <rparen-token>)
+  %2;
+%
+
+abstract-declarator2 (<lbracket-token> <rbracket-token>)
+  list(#"vector", #f);
+%
+
+abstract-declarator2 (<lbracket-token> constant-expr <rbracket-token>)
+  list(#"vector", int-value(%2, @0));
+%
+
+abstract-declarator2 (abstract-declarator2 <lbracket-token> <rbracket-token>)
+  pair(#"vector", pair(#f, %1));
+%
+
+abstract-declarator2 (abstract-declarator2 <lbracket-token> constant-expr <rbracket-token>)
+  pair(#"vector", pair(int-value(%3, @0), %1));
+%
+
+abstract-declarator2 (<lparen-token> <rparen-token>)
+  list(#"function",
+       list(make(<varargs-declaration>, name: "", type: unknown-type)));
+%
+
+abstract-declarator2 (<lparen-token> parameter-type-list <rparen-token>)
+  list(#"function", reverse!(%2));
+%
+
+abstract-declarator2 (abstract-declarator2 <lparen-token> <rparen-token>)
+  pair(#"function", pair(list(make(<varargs-declaration>,
+                                   name: "", type: unknown-type)), %1));
+%
+
+abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <rparen-token>)
+  pair(#"function", pair(reverse!(%3), %1));
+%
+
+;initializer (assignment-expr)
+;  error("initializer not yet handled.");
+;%
+
+;initializer (<lcurly-token> initializer-list <rcurly-token>)
+;  error("initializer not yet handled.");
+;%
+
+;initializer (<lcurly-token> initializer-list <comma-token> <rcurly-token>)
+;  error("initializer not yet handled.");
+;%
+
+;initializer-list (initializer)
+;  error("initializer-list not yet handled.");
+;%
+
+;initializer-list (initializer-list <comma-token> initializer)
+;  error("initializer-list not yet handled.");
+;%
+
+;;statement (labeled-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;statement (compound-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;statement (expression-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;statement (selection-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;statement (iteration-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;statement (jump-statement)
+;;  error("statement not yet handled.");
+;;%
+
+;;labeled-statement (identifier <colon-token> statement)
+;;  error("labeled-statement not yet handled.");
+;;%
+
+;;labeled-statement (<CASE-token> constant-expr <colon-token> statement)
+;;  error("labeled-statement not yet handled.");
+;;%
+
+;;labeled-statement (<DEFAULT-token> <colon-token> statement)
+;;  error("labeled-statement not yet handled.");
+;;%
+
+;;compound-statement (<lcurly-token> <rcurly-token>)
+;;  error("compound-statement not yet handled.");
+;;%
+
+;;compound-statement (<lcurly-token> statement-list <rcurly-token>)
+;;  error("compound-statement not yet handled.");
+;;%
+
+;;compound-statement (<lcurly-token> declaration-list <rcurly-token>)
+;;  error("compound-statement not yet handled.");
+;;%
+
+;;compound-statement (<lcurly-token> declaration-list statement-list <rcurly-token>)
+;;  error("compound-statement not yet handled.");
+;;%
+
+;;declaration-list (declaration)
+;;  error("declaration-list not yet handled.");
+;;%
+
+;;declaration-list (declaration-list declaration)
+;;  error("declaration-list not yet handled.");
+;;%
+
+;;statement-list (statement)
+;;  error("statement-list not yet handled.");
+;;%
+
+;;statement-list (statement-list statement)
+;;  error("statement-list not yet handled.");
+;;%
+
+;;expression-statement (<semicolon-token>)
+;;  error("expression-statement not yet handled.");
+;;%
+
+;;expression-statement (expr <semicolon-token>)
+;;  error("expression-statement not yet handled.");
+;;%
+
+;;selection-statement (<IF-token> <lparen-token> expr <rparen-token> statement)
+;;  error("selection-statement not yet handled.");
+;;%
+
+;;selection-statement (<IF-token> <lparen-token> expr <rparen-token> statement <ELSE-token> statement)
+;;  error("selection-statement not yet handled.");
+;;%
+
+;;selection-statement (<SWITCH-token> <lparen-token> expr <rparen-token> statement)
+;;  error("selection-statement not yet handled.");
+;;%
+
+;;iteration-statement (<WHILE-token> <lparen-token> expr <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<DO-token> statement <WHILE-token> <lparen-token> expr <rparen-token> <semicolon-token>)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> <semicolon-token> <semicolon-token> <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> <semicolon-token> <semicolon-token> expr <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> <semicolon-token> expr <semicolon-token> <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> <semicolon-token> expr <semicolon-token> expr <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> expr <semicolon-token> <semicolon-token> <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> expr <semicolon-token> <semicolon-token> expr <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> expr <semicolon-token> expr <semicolon-token> <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;iteration-statement (<FOR-token> <lparen-token> expr <semicolon-token> expr <semicolon-token> expr <rparen-token> statement)
+;;  error("iteration-statement not yet handled.");
+;;%
+
+;;jump-statement (<GOTO-token> identifier <semicolon-token>)
+;;  error("jump-statement not yet handled.");
+;;%
+
+;;jump-statement (<CONTINUE-token> <semicolon-token>)
+;;  error("jump-statement not yet handled.");
+;;%
+
+;;jump-statement (<BREAK-token> <semicolon-token>)
+;;  error("jump-statement not yet handled.");
+;;%
+
+;;jump-statement (<RETURN-token> <semicolon-token>)
+;;  error("jump-statement not yet handled.");
+;;%
+
+;;jump-statement (<RETURN-token> expr <semicolon-token>)
+;;  error("jump-statement not yet handled.");
+;;%
+
+;;external-definition (function-definition)
+;;  error("external-definition not yet handled.");
+;;%
+
+external-definition (<begin-include-token>)
+  push-include-level(@0, %1.string-value);
+%
+
+external-definition (<end-include-token>)
+  do(curry(add-cpp-declaration, @0), %1.value);
+  pop-include-level(@0);
+%
+
+internal-include-boundary ()
+  #f;
+%
+
+internal-include-boundary (<begin-include-token>)
+  #f;
+%
+
+internal-include-boundary (<end-include-token>)
+  do(curry(add-cpp-declaration, @0), %1.value);
+%
+
+external-definition (declaration)
+  if (%1)
+    parse-progress-report(@0, "Declaration %s.", %1.canonical-name);
+  end if;
+  %1;
+%
+
+;;function-definition (declarator function-body)
+;;  error("function-definition not yet handled.");
+;;%
+
+;;function-definition (declaration-specifiers declarator function-body)
+;;  error("function-definition not yet handled.");
+;;%
+
+;;function-body (compound-statement)
+;;  error("function-body not yet handled.");
+;;%
+
+;;function-body (declaration-list compound-statement)
+;;  error("function-body not yet handled.");
+;;%
+
+identifier (<IDENTIFIER-token>)
+  %1;
+%
+
+%%
+
+//----------------------------------------------------------------------
+// More parser boilerplate
+//----------------------------------------------------------------------
+
+define method aux-get-token
+    (parse-state :: <parse-state>) => (result :: <token>);
+  get-token(parse-state.tokenizer);
+end method aux-get-token;
+
+define method aux-get-token
+    (parse-state :: <parse-cpp-state>) => (result :: <token>);
+  get-token(parse-state.tokenizer, cpp-line: #t, expand: #f);
+end method aux-get-token;
+
+// The initial size of the parser stacks.
+// 
+define constant $initial-stack-size = 200;
+
+// grow -- internal.
+//
+// Grow a stack.  Make a new vector twice as long, copy the old elements
+// across, and return it.
+// 
+define method grow (vec :: <simple-object-vector>)
+    => new :: <simple-object-vector>;
+  let old-size = vec.size;
+  let new-size = old-size * 2;
+  let new = make(<simple-object-vector>, size: new-size);
+  for (index from 0 below old-size)
+    new[index] := vec[index];
+  end for;
+  new;
+end method grow;
+
+define constant $eof-token = 0;
+
+define method dformat (template :: <string>, #rest rest)
+  apply(format, *standard-error*, template, rest);
+end method;
+
+// parse -- internal.
+//
+// The actual parser loop.  Drive the state machine and maintain the stacks
+// until we hit an accept action or until be hit a bogus token.
+// 
+define method parse-loop
+    (parse-state :: <parse-state>, #key debug :: <boolean> = #f)
+    => result :: <object>;
+  let start-state = $file-start-state;
+  let tokenizer = parse-state.tokenizer;
+
+  block (return)
+    let state-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let symbol-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let srcloc-stack = make(<simple-object-vector>, size: $initial-stack-size);
+
+    state-stack[0] := start-state;
+    let top :: <integer> = 1;
+    let (lookahead, lookahead-srcloc) = aux-get-token(parse-state);
+
+    unless (lookahead.token-id == $eof-token)
+      let actions :: <simple-object-vector> = $action-table[start-state];
+      let action :: <integer> = actions[$eof-token];
+    end unless;
+
+    while (#t)
+      let state :: <integer> = state-stack[top - 1];
+
+      if (debug)
+	dformat("top = %d, state = %d, lookahead = %s\n",
+		top, state, lookahead.string-value);
+      end if;
+
+      let actions :: <simple-object-vector> = $action-table[state];
+      let action :: <integer> = actions[lookahead.token-id];
+      let (action-datum, action-kind)
+	= truncate/(action, ash(1, $action-bits));
+      select (action-kind)
+	$error-action =>
+	  parse-error(parse-state, "Parse error at or before %s",
+                      lookahead.string-value);
+
+	$accept-action =>
+	  if (debug)
+	    dformat("  accepting.\n");
+	  end if;
+	  unget-token(tokenizer, lookahead);
+	  if (top ~== 2)
+	    error("stack didn't get reduced all the way?");
+	  end if;
+	  return(symbol-stack[1]);
+
+	$shift-action =>
+	  if (top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  if (debug)
+	    dformat("  shifting to state %d.\n", action-datum);
+	  end if;
+	  state-stack[top] := action-datum;
+	  symbol-stack[top] := lookahead;
+	  srcloc-stack[top] := lookahead-srcloc;
+	  top := top + 1;
+	  let (new-lookahead, new-srcloc) = aux-get-token(parse-state);
+	  lookahead := new-lookahead;
+	  lookahead-srcloc := new-srcloc;
+
+	  unless (lookahead.token-id == $eof-token)
+	    let actions :: <simple-object-vector>
+	      = $action-table[action-datum];
+	    let action :: <integer> = actions[$eof-token];
+	  end unless;
+
+	$reduce-action =>
+	  let semantic-action :: <function>
+	    = $production-table[action-datum];
+	  let number-pops :: <integer>
+	    = $number-of-pops[action-datum];
+	  if (debug)
+	    dformat("  reducing by production %d, num pops = %d\n",
+		    action-datum, number-pops);
+	  end if;
+	  let old-top = top - number-pops;
+	  let extra-args = make(<simple-object-vector>, size: number-pops * 2);
+	  for (index from 0 below number-pops)
+	    extra-args[index * 2] := symbol-stack[old-top + index];
+	    extra-args[index * 2 + 1] := srcloc-stack[old-top + index];
+	  end for;
+	  let new-srcloc = parse-state;
+	  let (new-state :: <integer>, new-symbol)
+	    = apply(semantic-action, state-stack[old-top - 1], new-srcloc,
+		    extra-args);
+	  if (old-top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  state-stack[old-top] := new-state;
+	  symbol-stack[old-top] := new-symbol;
+	  srcloc-stack[old-top] := new-srcloc;
+	  top := old-top + 1;
+
+      end select;
+    end while;
+  end block;
+end method parse-loop;
+
+//----------------------------------------------------------------------
+// External interfaces to the parsing engine.
+//----------------------------------------------------------------------
+
+// This function processes an entire include file, leaving a series of
+// declarations in the returned parse state.
+//
+define method parse
+    (files :: <sequence> /* of <string> */, #key defines, verbose)
+ => (result :: <parse-state>);
+  let stream = make(<byte-string-stream>, contents: "",
+                    direction: #"input-output");
+  for (file in files)
+    format(stream, "#include \"%s\"\n", file);
+  end for;
+  stream.stream-position := #"start";
+  let tokenizer = make(<tokenizer>, name: "<top-level>", defines: defines,
+                       contents: stream.stream-contents);
+
+  let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
+  parse-state.verbose := verbose;
+
+  parse-loop(parse-state);
+  if (tokenizer.cpp-decls)
+    do(curry(add-cpp-declaration, parse-state), tokenizer.cpp-decls)
+  end if;
+  parse-state;
+end;
+
+// This function parses the contents of the given string and tries to
+// interpret it as the name of an object or type declared in "old-state".
+// Parse-type will signal an error if no such declaration is found.
+//
+define method parse-type
+    (type :: <string>, old-state :: <parse-file-state>)
+ => (result :: <declaration>);
+  let tokenizer = make(<tokenizer>, name: concatenate("Type name: ", type),
+		       typedefs-from: old-state.tokenizer, contents: type);
+  unget-token(tokenizer, make(<alien-name-token>,
+			      generator: tokenizer, string: ""));
+  let parse-state
+    = make(<parse-type-state>, tokenizer: tokenizer, parent: old-state);
+  parse-loop(parse-state);
+end;
+
+// This function tries to evaluate a preprocessor constant in hopes that
+// it will either evaluate to a type or object name or to a constant
+// compile time value.  It returns the matched declaration or value, or it
+// signals an error. 
+//
+define method parse-macro
+    (name :: <string>, old-state :: <parse-state>)
+ => (result :: <object>);
+  let old-tokenizer = old-state.tokenizer;
+  let tokenizer = make(<tokenizer>, name: concatenate("CPP Macro: ", name),
+                       parent: old-tokenizer, contents: "");
+  if (check-cpp-expansion(name, tokenizer))
+    unget-token(tokenizer, make(<macro-parse-token>,
+				generator: tokenizer, string: ""));
+    let parse-state
+      = make(<parse-macro-state>, tokenizer: tokenizer, parent: old-state);
+    parse-loop(parse-state);
+  else
+    error("Macro not defined in 'parse-macro'.");
+  end if;
+end;
+
+// This function evaluates a line of CPP input according to a limited set of C
+// operators and an odd set of evaluation rules which make undefined
+// identifiers into integers.  (Note that this function is used by the
+// tokenizer, but also recursively uses the tokenizer by specifying a few
+// magic keywords to avoid infinite recursion.)  This function consumes one
+// line's worth of tokens from the tokenizer and then leaves it in a
+// consistent state for further processing by a different parser.
+//
+define method cpp-parse (tokenizer :: <tokenizer>) => result :: <integer>;
+  block ()
+    let parse-state
+      = make(<parse-cpp-state>, tokenizer: tokenizer);
+    unget-token(tokenizer, make(<cpp-parse-token>,
+				generator: tokenizer, string: ""));
+    parse-loop(parse-state);
+  cleanup 
+    get-token(tokenizer); // un-unget the EOF, since we may want to
+                          // continue with this tokenizer using a different
+                          // lexer
+  end block;
+end;
+
