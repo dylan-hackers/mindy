@@ -101,7 +101,8 @@ define method process-interface-file
 	end method try-define;
   try-define(0);
   force-output(out-stream);
-  if (verbose) write-line(*standard-output*, "") end if;
+  if (verbose) write-line(*standard-error*, "") end if;
+  force-output(*standard-error*);
 end method process-interface-file;
 
 //----------------------------------------------------------------------
@@ -394,8 +395,11 @@ define method process-parse-state
   if (~state.include-file)
     error("Missing #include in 'define interface'");
   end if;
+  let (full-name, stream) = open-in-include-path(state.include-file);
+  unless (full-name) error("File not found: %s", state.include-file) end;
+  close(stream); // rgs: This is inefficient -- we should use the open stream.
   let c-state
-    = c-parse(state.include-file,
+    = c-parse(full-name,
 	      defines: state.macro-defines, undefines: state.macro-undefines,
 	      verbose: verbose);
 
@@ -416,7 +420,7 @@ define method process-parse-state
   let (#rest opts) = merge-container-options(state.container-options);
   for (decl in decls) apply(apply-options, decl, opts) end for;
 
-  let load-string = write-file-load(vector(state.include-file),
+  let load-string = write-file-load(vector(full-name),
 				    state.object-files, decls, out-stream);
   write-mindy-includes(state.mindy-include-file, decls);
   do(rcurry(write-declaration, load-string, out-stream), decls);
@@ -466,7 +470,7 @@ define method main (program, #rest args)
     if (arg = "-v")
       verbose := #t;
     elseif (is-prefix?("-I", arg))
-      push-last(include-path, copy-sequence(arg, start: 2));
+      push(include-path, copy-sequence(arg, start: 2));
     elseif (is-prefix?("-T", arg))
       // This should allow specification of arbitrary targets, just in case
       //    I get lazy, and forget to add explicit switches for them.  It's
@@ -495,7 +499,15 @@ define method main (program, #rest args)
     process-interface-file(in-file, out-file | *standard-output*,
 			   verbose: verbose);
   else
-    break("No arguments -- invoking debugger.");
+    write(*standard-error*,
+	  "usage: melange [options....] input-file [output-file]\n"
+	    "options include:\n"
+	    "  -v\t\tShow progress using '.'s for each declaration and\n"
+	    "\t\t'[]' for recursive includes.\n"
+	    "  -I[directory]\tLook for #included files in this directory\n"
+	    "  -mindy\tGenerate code for Mindy [DEFAULT]\n"
+	    "  -d2c\t\tGenerate code for D2C\n");
+    force-output(*standard-error*);
   end if;
 end method main;
 
