@@ -88,7 +88,7 @@ if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
     $d2c_runtime = '-L@LOCAL_RUNTIME@ ';
 } else {
     $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
-    @runtime_directories = ('c-code', 'dylan', 'melange', 'random');
+    @runtime_directories = ('c-code', 'dylan', 'melange');
     foreach (@runtime_directories) {
 	$d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
     }
