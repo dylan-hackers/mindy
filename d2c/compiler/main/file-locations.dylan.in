@@ -1,20 +1,34 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.2 1996/09/04 16:47:21 nkramer Exp $
+author: Nick Kramer
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.3 1996/12/05 14:01:51 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-// Where to find various important files.  (So far the only important
-// file is targets.descr)
+// Where to find various important files.
+
+// We find the location of the "Gwydion directory", and then compute
+// locations from that.  Truth be told, this scheme leaves much to be
+// desired.  For one, the group AFS tree actually doesn't match up
+// with this mythical Gwydion dir that we're referencing.  As a first
+// approximation, gwydion/compiler can be our "Gwydion dir".
+
+// A second problem is that, gwydion dir or not, the compiler doesn't
+// automatically search it for library files.  It probably should, but
+// then we'd need a way of specifying "no implicit -L$GwydionDir".
+
+define constant $gwydion-dir
+  = getenv("GwydionDir") | 
+      #if (compiled-for-x86-win32)
+	 "/gwydion";
+      #elseif (compiled-for-hppa-hpux)
+	 "/afs/cs/project/gwydion/compiler";
+      #else
+         #f;  // no default
+      #endif
 
 define constant $default-targets-dot-descr
-#if (compiled-for-x86-win32)
-  #if (C-compiler-is-gcc)
-    = "/gwydion/etc/targets.descr"; // the gcc runtime doesn't do drive letters
-  #else
-    = "c:/gwydion/etc/targets.descr";
-  #endif
-#elseif (compiled-for-hppa-hpux)
-  = "/afs/cs/project/gwydion/compiler/etc/targets.descr";
-#else
-  = #f;  // no default
-#endif
+  = if ($gwydion-dir)
+      concatenate($gwydion-dir, "/etc/targets.descr");
+    else
+      #f;
+    end if;
