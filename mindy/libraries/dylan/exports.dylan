@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.41 1994/08/30 21:44:45 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.42 1994/08/30 23:08:12 wlott Exp $
 
 //======================================================================
 //
@@ -51,7 +51,7 @@ define module Builtin-Stuff
     <number>,
     <object>,
     <pair>,
-    <ratio>, <rational>, <real>,
+    <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
     <spinlock>, <string>, <symbol>,
     <thread>, <true>, <type>,
@@ -121,7 +121,7 @@ define module Dylan
 	     <number>,
 	     <object>,
 	     <pair>,
-	     <ratio>, <rational>, <real>,
+	     <rational>, <real>,
 	     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
 	     <string>, <symbol>,
 	     <type>,
@@ -157,11 +157,10 @@ define module Dylan
     <condition>,
     <deque>,
     <error>,
-    <object-table>,
     <range>, <restart>,
     <serious-condition>, <simple-error>, <simple-restart>,
     <simple-warning>, <stretchy-collection>, <stretchy-vector>,
-    <table>, <type-error>,
+    <type-error>,
     <warning>,
     abort, abs, add, add!, add-new, add-new!, always, any?, as-lowercase,
     as-lowercase!, as-uppercase, as-uppercase!,
@@ -170,7 +169,7 @@ define module Dylan
     class-for-copy, complement, compose, concatenate, concatenate-as,
     condition-format-string, condition-format-arguments, conjoin,
     copy-sequence, curry,
-    default-handler, denominator, dimension, dimensions, disjoin, do-handlers,
+    default-handler, dimension, dimensions, disjoin, do-handlers,
     empty?, even?, every?, expt,
     fill!, find-key, first, first-setter,
     gcd,
@@ -178,10 +177,9 @@ define module Dylan
     key-sequence, key-test,
     last, last-setter, lcm,
     map, map-as, map-into, max, member?, min, modulo,
-    numerator,
     odd?,
     pop, pop-last, positive?, push, push-last,
-    range, rank, rationalize, rcurry, reduce, reduce1, remainder, remove,
+    range, rank, rcurry, reduce, reduce1, remainder, remove,
     remove!, remove-duplicates, remove-duplicates!, remove-key!,
     replace-elements!, replace-subsequence!, restart-query,
     return-allowed?, return-description, return-query, reverse, reverse!,
@@ -191,6 +189,9 @@ define module Dylan
     third, third-setter, type-error-value,
     type-error-expected-type,
     zero?;
+  create
+    /* <ratio>, rationalize, numerator, denominator, */
+    <object-table>, <table>;
 end Dylan;
 
 define module Extensions
@@ -202,10 +203,11 @@ define module Extensions
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
-  export
-    one-of, type-or, ignore,
+  create
     <equal-table>, equal-hash, collection-hash, 
     <value-table>, value-hash, sequence-hash, string-hash;
+  export
+    one-of, type-or, ignore;
 end Extensions;
 
 define module System
@@ -271,4 +273,11 @@ define module Threads
     export: all;
   export
     <multilock>, <semaphore>;
+end;
+
+
+define module Hash-Tables
+  use Dylan;
+  use Builtin-Stuff, import: {state-valid?, float-hash};
+  use Extensions;
 end;
