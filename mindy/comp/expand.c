@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.26 1996/03/08 21:31:45 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.27 1996/07/16 18:00:39 wlott Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -1967,7 +1967,8 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 
     /* Advance the count by by */
     args = make_argument_list();
-    add_argument(args, make_argument(make_varref(id(temp))));
+    add_argument
+	(args, make_argument(make_varref(clause->vars->required_params->id)));
     add_argument(args, make_argument(by));
     expr = make_function_call(make_varref(id(sym_Plus)), args);
     add_set(info->step_body, id(temp), expr);
