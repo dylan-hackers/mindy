@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.10 1994/10/26 20:19:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.11 1994/11/29 06:39:11 wlott Exp $
 
 //======================================================================
 //
@@ -114,13 +114,13 @@ end method eval-and-print;
 
 define method debugger-call (exprs)
   let num-debug-vars = debug-variables.size;
-  for (expr in exprs)
-    block ()
+  block ()
+    for (expr in exprs)
       eval-and-print(expr, num-debug-vars);
-    exception (<abort>, init-arguments: list(description: "Blow off call"))
-      #f;
-    end block;
-  end for;
+    end for;
+  exception (<abort>, init-arguments: list(description: "Blow off call"))
+    #f;
+  end block;
 end method debugger-call;
 
 
@@ -137,6 +137,8 @@ define method debugger-print (exprs)
 	*force-output-function*(*debug-output*);
       end block;
     end for;
+  exception (<abort>, init-arguments: list(description: "Blow off print"))
+    #f;
   exception (<error>)
     puts("Could not recover from earlier error.\n");
   end block;
