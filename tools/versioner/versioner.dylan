@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.7 1996/10/06 12:41:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.8 1997/02/04 14:41:14 nkramer Exp $
 
 // Program that slurps up a whole bunch of rlog outputs, and decides
 // which revisions go together to form a conceptual "version".  The
@@ -21,21 +21,21 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dyla
 // Constants that seem likely to change
 
 define constant $gwydion-prefix 
-    #if (compiled-for-x86-win32)
+    #if (compiled-for-win32)
        = "n:/gwydion/"; 
     #else
        = "/afs/cs/project/gwydion/";
     #endif
 
 define constant $rlog-command
-  #if (compiled-for-x86-win32)
+  #if (compiled-for-win32)
      = "/gwydion/rcs-bin/rlog.exe";
   #else
        = "rlog";
   #endif
 
 define constant $find-command
-  #if (compiled-for-x86-win32)
+  #if (compiled-for-win32)
      = "perl /gwydion/bin/unix-find.perl %s -name \"*,v\" -print";
   #else
      = "find %s -follow -name *,v -print";
@@ -238,7 +238,7 @@ end method sequence-less-than;
 // stolen from the compiler.
 //
 define function path-separator? (c :: <character>) => answer :: <boolean>;
-  #if (compiled-for-x86-win32)
+  #if (compiled-for-win32)
      (c == '/') | (c == '\\') | (c == ':');
   #else
      c == '/';

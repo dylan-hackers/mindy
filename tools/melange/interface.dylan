@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.15 1996/10/30 19:24:54 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.16 1997/02/04 14:41:07 nkramer Exp $
 
 //======================================================================
 //
@@ -518,7 +518,7 @@ define method main (program, #rest args)
       verbose := #t;
     elseif (is-prefix?("-I", arg))
       let include-string = copy-sequence(arg, start: 2);
-      #if (compiled-for-x86-win32)
+      #if (compiled-for-win32)
 	 // translate \ to /, because \ does bad things when inside a
 	 // string literal, like c-include("d:\foo\bar.h")
 	 let include-string = translate(include-string, "\\\\", "/");

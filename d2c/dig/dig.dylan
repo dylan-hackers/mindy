@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.8 1996/11/21 02:31:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.9 1997/02/04 14:39:47 nkramer Exp $
 
 //========================================================================
 //
@@ -163,7 +163,7 @@ define variable $from-gdb :: <stream> = *standard-input*;
 //
 define method open-gdb-process (#rest args) => ();
   let cmd-line = apply(join, " ", "gdb", args);
-#if (compiled-for-hppa-hpux)
+#if (compiled-for-hpux)
   let (to-fd, from-fd) = mutant-fd-exec(cmd-line);
   $to-gdb := make(<fd-stream>, direction: #"output", fd: to-fd);
   $from-gdb := make(<fd-stream>, direction: #"input", fd: from-fd);
@@ -171,7 +171,7 @@ define method open-gdb-process (#rest args) => ();
   let (to-stream, from-stream) = piped-exec(cmd-line);
   $to-gdb := to-stream;
   $from-gdb := from-stream;
-  #if (compiled-for-x86-win32)
+  #if (compiled-for-win32)
      ignore-interrupts();
   #endif
 #endif
@@ -271,7 +271,7 @@ define method receive-gdb-response
 	  write-element($to-gdb, read-element(*standard-input*));
 	end while;
 	force-output($to-gdb);
-#if (~mindy & compiled-for-hppa-hpux)
+#if (~mindy & compiled-for-hpux)
         // ### sleep(0) delays us just long enough to give other
         // processes a chance to run
 	call-out("sleep", void:, int: 0);
@@ -1064,12 +1064,12 @@ end;
 
 define dig-command "run" (line)
   clear-gdb-variable-types();	// See expr-token for more info
-#if (compiled-for-hppa-hpux)
+#if (compiled-for-hpux)
   do-gdb-command("handle SIGSEGV nostop noprint pass");
 #endif
   send-gdb-command("run %s", line);
   receive-gdb-response();
-#if (compiled-for-hppa-hpux)
+#if (compiled-for-hpux)
   do-gdb-command("handle SIGSEGV stop print nopass");
 #endif
   #"prompt-sent";

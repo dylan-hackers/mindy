@@ -1,5 +1,5 @@
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.4 1996/08/14 15:52:45 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.5 1997/02/04 14:39:50 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -58,7 +58,7 @@ end method exit;
 // don't dump core.
 //
 define method no-core-dumps () => ();
-  #if (~ compiled-for-x86-win32)
+  #if (~ compiled-for-win32)
     let buf = make(<buffer>, size: 8);
     call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
     pointer-deref(#"int", buf.buffer-address, 0) := 0;

@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/transcendental.dylan,v 1.1 1996/10/13 20:52:23 bfw Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/transcendental.dylan,v 1.2 1997/02/04 14:39:56 nkramer Exp $
 copyright: See below.
 
 //======================================================================
@@ -363,7 +363,7 @@ end method tanh;
 // Inverse hyperbolic trig functions are not implemented for x86 because C
 // doesn't have them, and we haven't yet felt up to writing our own.
 
-#if (compiled-for-hppa-hpux)
+#if (compiled-for-hpux)
 
 define sealed method asinh (x :: <integer>) => y :: <single-float>;
   as(<single-float>,

@@ -252,7 +252,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 				 end: quote-end - 1);
 
         // if (name is an absolute path) [drive/UNC optional on win32 systems]
-#if (compiled-for-x86-win32)
+#if (compiled-for-win32)
         if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
 #else
 	if (first(name) == '/')
