@@ -195,6 +195,10 @@ define class <alien-name-token> (<token>) end class;
 define class <macro-parse-token> (<token>) end class;
 define class <cpp-parse-token> (<token>) end class;
 
+define constant <non-curly-token>
+  = type-union(<reserved-word-token>, <name-token>, <literal-token>,
+	       <nc-punctuation-token>);
+
 //----------------------------------------------------------------------
 // The actual productions.  The format is
 //  production (sub-production-or-<token> .....)
@@ -583,21 +587,68 @@ constant-expr (conditional-expr)
   $r1;
 %
 
+lcurly-element (<lcurly-token> curly-list <rcurly-token>)
+  #f;
+%
+
+lcurly-element (<literal-token>)
+  #f;
+%
+
+lcurly-element (<nc-punctuation-token>)
+  #f;
+%
+
+lcurly-element (<reserved-word-token>)
+  #f;
+%
+
+lcurly-element (<name-token>)
+  #f;
+%
+
+curly-list (lcurly-element)
+  #f;
+%
+
+curly-list (lcurly-element curly-list)
+  #f;
+%
+
 declaration (declaration-specifiers <semicolon-token>)
   *typedef-flag* := #f;
   process-type-list($r1, $state);
 %
 
-declaration (declaration-specifiers init-declarator-list <semicolon-token>)
-  let type = process-type-list($r1, $state);
+declaration (declaration-specifiers extended-declarator-list
+             <lcurly-token> curly-list <rcurly-token>)
+  // Ignore inline declarations.  These occur in VC++ header files, so we'd
+  // better be able to handle them.
+  write-line(*standard-error*, "Warning: ignoring inline code declaration.");
+  #f;
+%
+
+declaration (<inline-token> declaration-specifiers extended-declarator-list
+             <lcurly-token> curly-list <rcurly-token>)
+  // Ignore inline declarations.  These occur in VC++ header files, so we'd
+  // better be able to handle them.
+  #f;
+%
+
+declaration (<extern-token> init-declarator-list <semicolon-token>)
+  // Storage class must be extern; unspecified type must be "int"
+  let spec = list(make(<int-token>, generator: $r1.generator, string: "int"));
+  let type = process-type-list(spec, $state);
   let names = reverse!($r2);
   declare-objects($state, type, names, *typedef-flag*);
   *typedef-flag* := #f;
 %
 
-declaration-specifiers (storage-class-specifier)
-  // Storage class must be extern; unspecified type must be "int"
-  list(make(<int-token>, generator: $r1.generator, string: "int"));
+declaration (declaration-specifiers extended-declarator-list <semicolon-token>)
+  let type = process-type-list($r1, $state);
+  let names = reverse!($r2);
+  declare-objects($state, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
 %
 
 declaration-specifiers (storage-class-specifier declaration-specifiers)
@@ -605,24 +656,62 @@ declaration-specifiers (storage-class-specifier declaration-specifiers)
   $r2;
 %
 
+; declaration-specifiers (type-modifier declaration-specifiers)
+;  // Storage class must be extern -- no need to note it
+;  $r2;
+; %
+
 declaration-specifiers (type-specifier)
   list($r1);
 %
 
-declaration-specifiers (type-specifier declaration-specifiers)
-  pair($r1, $r2);
+declaration-specifiers (numeric-specifier)
+  $r1;
 %
 
-init-declarator-list (init-declarator)
+init-declarator-list (declarator)
   list($r1);
 %
 
-init-declarator-list (init-declarator-list <comma-token> init-declarator)
+init-declarator-list (init-declarator-list <comma-token> declarator)
   pair($r3, $r1);
 %
 
-init-declarator (declarator)
+extended-declarator-list (declarator)
+  // This hack is necessary because VC++ lets you redeclare typedefs.  Bad
+  // idea!  Don't look for clean logic or robustness -- that would require
+  // more work than MS deserves.
+  list($r1);
+%
+
+; extended-declarator-list (type-modifier declarator)
+;   list($r2);
+; %
+
+extended-declarator-list (extended-declarator-list <comma-token> 
+                          declarator)
+  // see above.
+  pair($r3, $r1);
+%
+
+extended-declarator-list (extended-declarator)
+  list($r1);
+%
+
+extended-declarator-list (extended-declarator-list <comma-token> 
+                          extended-declarator)
+  // see above.
+  pair($r3, $r1);
+%
+
+extended-declarator (<type-name-token>)
+  // see above.
   $r1;
+%
+
+extended-declarator (pointer <type-name-token>)
+  // see above.
+  pair($r1, $r2);
 %
 
 ;init-declarator (declarator <assign-token> initializer)
@@ -651,15 +740,25 @@ storage-class-specifier (<EXTERN-token>)
 ;  Error("Storage-Class-Specifier Not Yet Handled.");
 ;%
 
-type-specifier (<type-specifier-token>)
-  $r1;
-%
-Type-Specifier (<CONST-Token>)
-  $r1;
+;; Correctly parsing all of the cases in which "const" and "volatile" can
+;; appear (in any given compiler) is too challenging.  Since we are ignoring
+;; them anyway, we will just use the preprocessor to whisk them away.  (This
+;; will result in our accepting a few invalid files, but we have to be pretty
+;; permissive anyway to handle all of the various compilers around.
+; Type-modifier (<CONST-Token>)
+;   $r1;
+; %
+
+; Type-modifier (<VOLATILE-Token>)
+;   $r1;
+; %
+
+numeric-specifier (<type-specifier-token>)
+  list($r1);
 %
 
-Type-Specifier (<VOLATILE-Token>)
-  $r1;
+numeric-specifier (<type-specifier-token> numeric-specifier)
+  pair($r1, $r2);
 %
 
 type-specifier (struct-or-union-specifier)
@@ -743,6 +842,14 @@ struct-declarator (declarator <colon-token> constant-expr)
   pair(#"bitfield", pair(int-value($r3, $state), $r1));
 %
 
+; struct-declarator (type-modifier declarator)
+;   $r2;
+; %
+
+; struct-declarator (type-modifier declarator <colon-token> constant-expr)
+;   pair(#"bitfield", pair(int-value($r4, $state), $r2));
+; %
+
 Enum-Specifier (<ENUM-Token> <Lcurly-Token> Enumerator-List <Rcurly-Token>)
   make-struct-type(#f, reverse!($r3), $r1, $state);
 %
@@ -818,28 +925,35 @@ pointer (<star-token>)
   list(#"pointer");
 %
 
-pointer (<star-token> type-specifier-list)
-  // They can put "const" in some screwy places.  Ignore it.
-  list(#"pointer");
-%
+; pointer (<star-token> type-modifier)
+;   // They can put "const" in some screwy places.  Ignore it.
+;   list(#"pointer");
+; %
 
 pointer (<star-token> pointer)
   pair(#"pointer", $r2);
 %
 
-pointer (<star-token> type-specifier-list pointer)
-  // They can put "const" in some screwy places.  Ignore it.
-  pair(#"pointer", $r2);
-%
+; pointer (<star-token> type-modifier pointer)
+;   // They can put "const" in some screwy places.  Ignore it.
+;   pair(#"pointer", $r2);
+; %
 
 type-specifier-list (type-specifier)
   list($r1);
 %
 
-type-specifier-list (type-specifier-list type-specifier)
-  // Produces a list in reverse order
-  pair($r2, $r1);
+type-specifier-list (numeric-specifier)
+  reverse!($r1);
 %
+
+; type-specifier-list (type-modifier type-specifier)
+;   list($r2);
+; %
+
+; type-specifier-list (type-modifier numeric-specifier)
+;   reverse!($r2);
+; %
 
 parameter-identifier-list (identifier-list)
   $r1;
@@ -899,6 +1013,10 @@ type-name (type-specifier-list abstract-declarator)
 abstract-declarator (pointer)
   list($r1);
 %
+
+; abstract-declarator (type-modifier pointer)
+;   list($r1);
+; %
 
 abstract-declarator (abstract-declarator2)
   $r1;
