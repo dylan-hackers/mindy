@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.8 2001/11/08 01:09:59 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.9 2002/01/04 15:56:56 housel Exp $
 copyright: see below
 
 
@@ -318,8 +318,11 @@ add-make-dumper(#"defined-designator-class", *compiler-dispatcher*,
                    designated-representation, representation:, #f,
                    referenced-type, referenced-type:, #f,
                    pointer-type, pointer-type:, #f,
+                   pointer-type-superclass, pointer-type-superclass:, #f,
                    import-type, import-type:, #f,
-                   export-type, export-type:, #f)),
+                   export-type, export-type:, #f,
+                   indirect-getter, indirect-getter:, #f,
+                   indirect-setter, indirect-setter:, #f)),
   load-external: #t
 );
 

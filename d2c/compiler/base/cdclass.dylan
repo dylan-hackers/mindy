@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.4 2001/07/24 06:26:08 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.5 2002/01/04 15:56:56 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -56,8 +56,8 @@ define abstract class <cdclass> (<cclass>)
   //
   // Superclass for generating the pointer-type, if it doesn't exist
   // and is needed
-  slot pointer-type-superclass :: <cclass>,
-    required-init-keyword: pointer-type-superclass:;
+  slot pointer-type-superclass :: false-or(<cclass>),
+    init-value: #f, init-keyword: pointer-type-superclass:;
   //
   // Corresponding Dylan import and export types
   slot import-type :: false-or(<ctype>),

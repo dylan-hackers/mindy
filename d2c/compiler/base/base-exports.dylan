@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.33 2001/09/17 11:47:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.34 2002/01/04 15:56:56 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -685,8 +685,11 @@ define module classes
     all-subclasses-known?,
 
     <cdclass>, size-of, alignment-of, designated-representation,
-    referenced-type, pointer-type, pointer-type-setter, import-type,
-    export-type, struct-slot-infos, struct-slot-infos-setter, 
+    referenced-type, pointer-type, pointer-type-setter,
+    pointer-type-superclass,
+    import-type, export-type,
+    struct-slot-infos, struct-slot-infos-setter,
+    indirect-getter, indirect-setter,
     <defined-cdclass>,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
