@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.21 1995/07/11 12:39:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.22 1995/09/27 22:47:53 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -1853,6 +1853,58 @@ static obj_t dylan_xf_as_df(obj_t class, obj_t x)
 
 
 
+/* Transcendental support */
+
+#define define_transcendental_function(function)                        \
+    static obj_t dylan_sf_##function (obj_t sf)                         \
+    {                                                                   \
+	return make_single((float) function(single_value(sf)));         \
+    }                                                                   \
+    static obj_t dylan_df_##function (obj_t df)                         \
+    {                                                                   \
+	return make_double((long double) function(double_value(df)));   \
+    }
+
+define_transcendental_function(sin)
+define_transcendental_function(cos)
+define_transcendental_function(tan)
+define_transcendental_function(asin)
+define_transcendental_function(acos)
+define_transcendental_function(atan)
+define_transcendental_function(sinh)
+define_transcendental_function(cosh)
+define_transcendental_function(tanh)
+define_transcendental_function(exp)
+define_transcendental_function(log)
+define_transcendental_function(sqrt)
+
+static obj_t dylan_sf_atan2 (obj_t sf1, obj_t sf2)                 
+{                                                                   
+    return make_single((float) atan2(single_value(sf1),          
+				    single_value(sf2)));        
+}                                                                   
+
+static obj_t dylan_df_atan2 (obj_t df1, obj_t df2)             
+{                                                                   
+    return make_double((long double) atan2(double_value(df1),    
+					   double_value(df2)));  
+}
+
+/* The Common Lisp expt() function is called pow() in C
+ */
+static obj_t dylan_sf_expt (obj_t sf1, obj_t sf2)                 
+{                                                                   
+    return make_single((float) pow(single_value(sf1),          
+				   single_value(sf2)));        
+}                                                                   
+
+static obj_t dylan_df_expt (obj_t df1, obj_t df2)             
+{                                                                   
+    return make_double((long double) pow(double_value(df1),    
+					 double_value(df2)));  
+}
+
+
 /* GC stuff. */
 
 static int scav_bignum(struct object *ptr)
@@ -1978,6 +2030,14 @@ void init_num_classes(void)
     def_printer(obj_ExtendedFloatClass, print_xf);
 }
 
+#define add_transcendental_function(function)                           \
+    define_generic_function(#function, 1, FALSE, obj_False, FALSE,      \
+			    any_float, obj_False);                      \
+    define_method(#function, sf, FALSE, obj_False, FALSE,               \
+		  obj_SingleFloatClass, dylan_sf_##function);           \
+    define_method(#function, df, FALSE, obj_False, FALSE,               \
+		  obj_DoubleFloatClass, dylan_df_##function);
+
 void init_num_functions(void)
 {
     obj_t fi = list1(obj_FixnumClass);
@@ -1986,6 +2046,7 @@ void init_num_functions(void)
     obj_t sf = list1(obj_SingleFloatClass);
     obj_t df = list1(obj_DoubleFloatClass);
     obj_t xf = list1(obj_ExtendedFloatClass);
+    obj_t any_float = list1(obj_FloatClass);
     obj_t two_objs = list2(obj_ObjectClass, obj_ObjectClass);
     obj_t two_ints = list2(obj_IntegerClass, obj_IntegerClass);
     obj_t two_fis = list2(obj_FixnumClass, obj_FixnumClass);
@@ -2299,4 +2360,33 @@ void init_num_functions(void)
 
     define_constant("$maximum-fixed-integer", MAX_FIXNUM);
     define_constant("$minimum-fixed-integer", MIN_FIXNUM);
+
+    define_constant("pi", make_double(M_PI));
+
+    add_transcendental_function(sin);
+    add_transcendental_function(cos);
+    add_transcendental_function(tan);
+    add_transcendental_function(asin);
+    add_transcendental_function(acos);
+    add_transcendental_function(atan);
+    add_transcendental_function(sinh);
+    add_transcendental_function(cosh);
+    add_transcendental_function(tanh);
+    add_transcendental_function(exp);
+    add_transcendental_function(log);
+    add_transcendental_function(sqrt);
+
+    define_generic_function("atan2", 1, FALSE, obj_False, FALSE,      
+			    any_float, obj_False);                             
+    define_method("atan2", sf, FALSE, obj_False, FALSE,  
+		  obj_SingleFloatClass, dylan_sf_atan2);     
+    define_method("atan2", df, FALSE, obj_False, FALSE,  
+		  obj_DoubleFloatClass, dylan_df_atan2);     
+
+    define_generic_function("expt", 1, FALSE, obj_False, FALSE,      
+			    any_float, obj_False);                             
+    define_method("expt", sf, FALSE, obj_False, FALSE,  
+		  obj_SingleFloatClass, dylan_sf_expt);     
+    define_method("expt", df, FALSE, obj_False, FALSE,  
+		  obj_DoubleFloatClass, dylan_df_expt);     
 }
