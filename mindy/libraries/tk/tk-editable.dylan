@@ -31,13 +31,18 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 //
 //======================================================================
 
-// Mixin for windows which contain one ore more strings which can be
+// Mixin for windows which contain one or more strings which can be
 // inserted and modified.
 //
 define abstract class <editable> (<object>) end class;
 
+// Hack -- to avoid an inconsistent CPL, <editable> is a subclass of
+// <object> rather than <window>, and so this generic has a
+// not-so-clean signature
+//
 define generic delete
-    (widget :: <window>, index, #key end:) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), index, #key end:) 
+ => (widget :: <window>);
 
 define method delete
     (widget :: <editable>, index, #key end: last) => (widget :: <window>);
@@ -65,7 +70,8 @@ define method insert
 end method insert;
 
 define generic scan-mark
-    (widget :: <window>, #rest coords) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), #rest coords) 
+ => (widget :: <window>);
 
 define method scan-mark
     (widget :: <editable>, #rest coords) => (widget :: <window>);
@@ -74,7 +80,8 @@ define method scan-mark
 end method scan-mark;
 
 define generic scan-dragto
-    (widget :: <window>, #rest coords) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), #rest coords) 
+ => (widget :: <window>);
 
 define method scan-dragto
     (widget :: <editable>, #rest coords) => (widget :: <window>);
@@ -83,7 +90,8 @@ define method scan-dragto
 end method scan-dragto;
 
 define generic select-adjust
-    (widget :: <window>, index) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), index) 
+ => (widget :: <window>);
 
 define method select-adjust
     (widget :: <editable>, index) => (widget :: <window>);
@@ -99,7 +107,8 @@ define method select-clear (widget :: <window>) => (widget :: <window>);
 end method select-clear;
 
 define generic select-from
-    (widget :: <window>, index) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), index) 
+ => (widget :: <window>);
 
 define method select-from
     (widget :: <editable>, index) => (widget :: <window>);
@@ -108,7 +117,8 @@ define method select-from
 end method select-from;
 
 define generic select-to
-    (widget :: <window>, index) => (widget :: <window>);
+    (widget :: type-union(<window>, <editable>), index) 
+ => (widget :: <window>);
 
 define method select-to
     (widget :: <editable>, index) => (widget :: <window>);
