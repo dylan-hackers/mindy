@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.23 1994/05/25 12:32:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.24 1994/05/31 17:17:51 rgs Exp $
 *
 * This file does whatever.
 *
@@ -395,7 +395,8 @@ static boolean
 			    restrict_limited_integers(arg, arg_class,
 						      specializer);
 		    else
-			*(cached_classes - 1) = singleton(arg);
+			*(cached_classes - 1) = restrict_type(specializer,
+							      arg_class);
 		    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 		}
 		return FALSE;

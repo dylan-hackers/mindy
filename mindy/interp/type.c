@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.12 1994/04/26 18:06:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.13 1994/05/31 17:13:16 rgs Exp $
 *
 * This file does whatever.
 *
@@ -33,7 +33,7 @@
 
 obj_t obj_TypeClass = 0;
 static obj_t obj_SingletonClass, obj_LimIntClass;
-static obj_t obj_SubclassClass, obj_UnionClass;
+static obj_t obj_SubclassClass, obj_UnionClass, obj_NoneOfClass;
 
 struct singleton {
     obj_t class;
@@ -60,6 +60,12 @@ struct union_type {
     obj_t members;
 };
 
+struct none_of_type {
+    obj_t class;
+    enum type_Id type_id;
+    obj_t base;
+    obj_t exclude;
+};
 
 
 /* instancep */
@@ -121,6 +127,21 @@ static inline boolean union_instancep(obj_t thing, obj_t u)
     return FALSE;
 }
 
+static inline boolean none_of_instancep(obj_t thing, obj_t class)
+{
+    obj_t remaining;
+
+    if (!instancep(thing, obj_ptr(struct none_of_type *, class)->base))
+	return FALSE;
+
+    for (remaining = obj_ptr(struct none_of_type *, class)->exclude;
+	 remaining != obj_Nil;
+	 remaining = TAIL(remaining))
+	if (instancep(thing, HEAD(remaining)))
+	    return FALSE;
+    return TRUE;
+}
+
 boolean instancep(obj_t thing, obj_t type)
 {
     enum type_Id type_id = obj_ptr(struct type *, type)->type_id;
@@ -140,6 +161,9 @@ boolean instancep(obj_t thing, obj_t type)
 	break;
     case id_Union:
 	return union_instancep(thing, type);
+	break;
+    case id_NoneOf:
+	return none_of_instancep(thing, type);
 	break;
     }
     lose("instancep dispatch didn't do anything.");
@@ -271,6 +295,26 @@ static inline boolean type_union_subtypep(obj_t type, obj_t u)
     return FALSE;
 }
 
+static inline boolean noneof_type_subtypep(obj_t n, obj_t type)
+{
+    return subtypep(obj_ptr(struct none_of_type *, n)->base, type);
+}
+
+static inline boolean lim_noneof_subtypep(obj_t type, obj_t n)
+{
+    obj_t remaining;
+
+    if (!subtypep(type, obj_ptr(struct none_of_type *, n)->base)) return FALSE;
+
+    for (remaining = obj_ptr(struct none_of_type *, n)->exclude;
+	 remaining != obj_Nil;
+	 remaining = TAIL(remaining))
+	if (instancep(obj_ptr(struct singleton *, HEAD(remaining))->object,
+		      type))
+	    return FALSE;
+    return TRUE;
+}
+
 boolean subtypep(obj_t type1, obj_t type2)
 {
     int type1_id, type2_id;
@@ -291,6 +335,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	case id_Class:
 	case id_SubClass:
 	case id_LimInt:
+	case id_NoneOf:
 	    return sing_type_subtypep(type1, type2);
 	    break;
 	case id_Union:
@@ -311,6 +356,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	    return class_subclass_subtypep(type1, type2);
 	    break;
 	case id_LimInt:
+	case id_NoneOf:
 	    return never_subtypep(type1, type2);
 	    break;
 	case id_Union:
@@ -329,6 +375,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	    return subclass_subclass_subtypep(type1, type2);
 	    break;
 	case id_LimInt:
+	case id_NoneOf:
 	    return never_subtypep(type1, type2);
 	    break;
 	case id_Union:
@@ -352,10 +399,16 @@ boolean subtypep(obj_t type1, obj_t type2)
 	case id_Union:
 	    return type_union_subtypep(type1, type2);
 	    break;
+	case id_NoneOf:
+	    return lim_noneof_subtypep(type1, type2);
+	    break;
 	}
 	break;
     case id_Union:
 	return union_type_subtypep(type1, type2);
+	break;
+    case id_NoneOf:
+	return noneof_type_subtypep(type1, type2);
 	break;
     }
     lose("subtypep dispatch didn't do anything.");
@@ -441,31 +494,41 @@ static boolean union_type_overlapp(obj_t u, obj_t type)
     return FALSE;
 }
 
-static boolean (*overlapp_table[5][5])(obj_t t1, obj_t t2) = {
+static boolean noneof_type_overlapp(obj_t n, obj_t type)
+{
+    return overlapp(obj_ptr(struct none_of_type *, n)->base, type);
+}
+
+static boolean (*overlapp_table[6][6])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
 	sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,
-	sing_type_subtypep, sing_type_subtypep
+	sing_type_subtypep, sing_type_subtypep, sing_type_subtypep
     },
     /* class x mumble methods */
     {
 	class_type_overlapp, class_class_overlapp, class_type_overlapp,
-	class_type_overlapp, class_type_overlapp
+	class_type_overlapp, class_type_overlapp, class_type_overlapp
     },
     /* subclass x mumble methods */
     {
 	subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp,
-	subclass_type_overlapp, subclass_type_overlapp
+	subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp
     },
     /* limint x mumble methods */
     {
 	lim_type_overlapp, lim_class_overlapp, never_subtypep,
-	lim_lim_overlapp, lim_type_overlapp,
+	lim_lim_overlapp, lim_type_overlapp, lim_type_overlapp
     },
     /* union x mumble methods */
     {
 	union_type_overlapp, union_type_overlapp, union_type_overlapp,
-	union_type_overlapp, union_type_overlapp
+	union_type_overlapp, union_type_overlapp, union_type_overlapp
+    },
+    /* noneof x mumble methods */
+    {
+	noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp,
+	noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp
     }
 };
 
@@ -638,6 +701,30 @@ obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2)
 
     return limited_integer(min, max);
 }
+
+/* none_of construction */
+
+/* return a version of "type" which excludes the given value.  If type
+   is already a none_of type, simply extend it, else return a new none_of
+   type. */
+obj_t restrict_type(obj_t exclude, obj_t type)
+{
+    if (obj_ptr(struct type *, type)->type_id == id_NoneOf) {
+	obj_ptr(struct none_of_type *, type)->exclude =
+	    pair(exclude, obj_ptr(struct none_of_type *,type)->exclude);
+	return type;
+    } else {
+	obj_t res = alloc(obj_NoneOfClass, sizeof(struct none_of_type));
+
+	obj_ptr(struct none_of_type *, res)->type_id = id_NoneOf;
+	obj_ptr(struct none_of_type *, res)->base = type;
+	obj_ptr(struct none_of_type *, res)->exclude =
+	    pair(exclude, obj_Nil);
+
+	return res;
+    }
+}
+
 
 /* union construction. */
 
@@ -829,6 +916,15 @@ static void print_union(obj_t union_type)
     putchar('}');
 }
 
+static void print_none_of(obj_t union_type)
+{
+    printf("{none of ");
+    prin1(obj_ptr(struct none_of_type *, union_type)->base);
+    printf(": ");
+    prin1(obj_ptr(struct none_of_type *, union_type)->exclude);
+    putchar('}');
+}
+
 
 
 /* GC stuff. */
@@ -857,6 +953,21 @@ static obj_t trans_limint(obj_t limint)
     return transport(limint, sizeof(struct lim_int));
 }
 
+static int scav_noneof(struct object *obj)
+{
+    struct none_of_type *ptr = ((struct none_of_type *) obj);
+
+    scavenge(&ptr->base);
+    scavenge(&ptr->exclude);
+
+    return sizeof(struct none_of_type);
+}
+
+static obj_t trans_noneof(obj_t noneof)
+{
+    return transport(noneof, sizeof(struct none_of_type));
+}
+
 void scavenge_type_roots(void)
 {
     scavenge(&obj_TypeClass);
@@ -864,6 +975,7 @@ void scavenge_type_roots(void)
     scavenge(&obj_SubclassClass);
     scavenge(&obj_LimIntClass);
     scavenge(&obj_UnionClass);
+    scavenge(&obj_NoneOfClass);
 }
 
 
@@ -876,6 +988,7 @@ void make_type_classes(void)
     obj_SubclassClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_LimIntClass = make_builtin_class(scav_limint, trans_limint);
     obj_UnionClass = make_builtin_class(scav_simp_type, trans_simp_type);
+    obj_NoneOfClass = make_builtin_class(scav_noneof, trans_noneof);
 }
 
 void init_type_classes(void)
@@ -890,6 +1003,8 @@ void init_type_classes(void)
     def_printer(obj_LimIntClass, print_limint);
     init_builtin_class(obj_UnionClass, "<union>", obj_TypeClass, NULL);
     def_printer(obj_UnionClass, print_union);
+    init_builtin_class(obj_NoneOfClass, "<none-of>", obj_TypeClass, NULL);
+    def_printer(obj_NoneOfClass, print_none_of);
 }
 
 void init_type_functions(void)
