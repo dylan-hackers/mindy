@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.42 1995/11/09 16:54:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.43 1995/11/11 11:16:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -484,7 +484,7 @@ define class <lambda> (<fer-function-region>)
 end;
 
 
-define class <fer-component> (<component>)
+define class <fer-component> (<component>, <identity-preserving-mixin>)
 
   // All the function literals mentioned in this component.
   slot all-function-literals :: <stretchy-vector>,
