@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.12 1995/01/26 18:02:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.13 1995/03/04 21:54:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,7 +52,7 @@ define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
     => res :: <result>;
   build-assignment
     (builder, policy, source, datum,
-     result | make-literal-constant(builder, make(<ct-literal>, value: #f)));
+     result | make-literal-constant(builder, make(<literal-false>)));
 
   #f;
 end;
@@ -65,7 +65,7 @@ define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
     => res :: <result>;
   build-let
     (builder, policy, source, datum,
-     result | make-literal-constant(builder, make(<ct-literal>, value: #f)));
+     result | make-literal-constant(builder, make(<literal-false>)));
 
   #f;
 end;
@@ -76,7 +76,7 @@ define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
 			      datum :: <result-datum>,
 			      result :: <result>)
     => res :: <result>;
-  result | make-literal-constant(builder, make(<ct-literal>, value: #f));
+  result | make-literal-constant(builder, make(<literal-false>));
 end;
 
 define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
@@ -85,7 +85,7 @@ define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
 			      datum :: <result-datum>,
 			      result :: <result>)
     => res :: <result>;
-  result | make-literal-constant(builder, make(<ct-literal>, value: #f));
+  result | make-literal-constant(builder, make(<literal-false>));
 end;
 
 define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
@@ -218,8 +218,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 
   // Supply #f as the result.
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder,
-				       make(<ct-literal>, value: #f)));
+		 make-literal-constant(builder, make(<literal-false>)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <local>,
@@ -243,18 +242,15 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 
   // Supply #f as the result.
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder,
-				       make(<ct-literal>, value: #f)));
+		 make-literal-constant(builder, make(<literal-false>)));
 end;
 
-define method fer-convert (builder :: <fer-builder>, form :: <literal>,
+define method fer-convert (builder :: <fer-builder>, form :: <literal-ref>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder,
-				       make(<ct-literal>,
-					    value: form.lit-value)));
+		 make-literal-constant(builder, form.litref-literal));
 end;
 
 define constant $arg-names
@@ -585,7 +581,7 @@ define method build-general-method
 	  let default = if (param.param-default)
 			  ct-eval(param.param-default, lexenv);
 			else
-			  make(<ct-literal>, value: #f);
+			  make(<literal-false>);
 			end;
 	  if (default)
 	    add!(infos, make(<key-info>, key-name: param.param-keyword,
@@ -597,17 +593,15 @@ define method build-general-method
 				 object-ctype());
 	    add!(infos, make(<key-info>, key-name: param.param-keyword,
 			     type: object-ctype(),
-			     default: $Unbound-Marker-CT-Value));
+			     default: #f));
 	    add!(vars, pre-default);
 	    let temp = make-local-var(builder, #"temp", object-ctype());
 	    build-assignment
 	      (builder, lexenv.lexenv-policy, source, temp,
 	       make-operation
 		 (builder,
-		  list(dylan-defn-leaf(builder, #"=="),
-		       pre-default,
-		       make-literal-constant(builder,
-					     $Unbound-Marker-CT-Value))));
+		  list(dylan-defn-leaf(builder, #"unbound?"),
+		       pre-default)));
 	    build-if-body(builder, lexenv.lexenv-policy, source, temp);
 	    fer-convert(builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
@@ -731,7 +725,7 @@ define method build-general-method
 		       if (rest-result)
 			 object-ctype();
 		       else
-			 make(<ct-literal>, value: #f);
+			 make(<literal-false>);
 		       end),
 		    method-literal));
   else
@@ -898,8 +892,9 @@ define method build-keyword-dispatch(builder, policy, source, args, keywords,
     let var = make-local-var(builder, info.keyinfo-symbol, object-ctype());
     add!(vars, var);
     add!(args, var);
-    add!(ops, make-literal-constant(builder,
-				    make(<ct-literal>, info.keyinfo-symbol)));
+    add!(ops,
+	 make-literal-constant
+	   (builder, make(<literal-symbol>, value: info.keyinfo-symbol)));
     add!(ops, make-literal-constant(builder, info.keyinfo-default));
   end;
   build-assignment(builder, policy, source, as(<list>, vars),
@@ -920,9 +915,14 @@ define method build-hairy-method-general-entry (leaf)
     let ops = list(dylan-defn-leaf(body-builder, #"%check-arg-count"),
 		   count-var,
 		   make-literal-constant
-		     (body-builder, make(<ct-literal>, value: nfixed)),
+		     (body-builder, make(<literal-fixed-integer>, value: nfixed)),
 		   make-literal-constant
-		     (body-builder, make(<ct-literal>, value: more?)));
+		     (body-builder,
+		      if (more?)
+			make(<literal-true>);
+		      else
+			make(<literal-false>);
+		      end));
     build-assignment(body-builder, policy, source, #(),
 		     make-operation(body-builder, ops));
   end;
@@ -932,18 +932,18 @@ define method build-hairy-method-general-entry (leaf)
     let ops = list(dylan-defn-leaf(body-builder, #"%arg"),
 		   context-var,
 		   make-literal-constant
-		     (body-builder, make(<ct-literal>, value: index)));
+		     (body-builder, make(<literal-fixed-integer>, value: index)));
     build-let(body-builder, policy, source, temp,
 	      make-operation(body-builder, ops));
   end;
-  add!(args,make-literal-constant(body-builder,make(<ct-literal>, value: #f)));
+  add!(args, make-literal-constant(body-builder, make(<literal-false>)));
   if (more?)
     let context = make-local-var(body-builder, #"context", object-ctype());
     let count = make-local-var(body-builder, #"count", object-ctype());
     let ops = list(dylan-defn-leaf(body-builder, #"%more-arg-context"),
 		   context-var, count-var,
 		   make-literal-constant
-		     (body-builder, make(<ct-literal>, value: nfixed)));
+		     (body-builder, make(<literal-fixed-integer>, value: nfixed)));
     build-assignment(body-builder, policy, source, list(context, count),
 		     make-operation(body-builder, ops));
     add!(args, context);
@@ -1038,7 +1038,8 @@ define method canonicalize-results (builder :: <fer-builder>,
 	 (builder, #"default-unsupplied-values",
 	  list(results,
 	       make-literal-constant
-		 (builder, make(<ct-literal>, value: fixed-results.size)))));
+		 (builder,
+		  make(<literal-fixed-integer>, value: fixed-results.size)))));
     build-assignment(builder, policy, source,
 		     concatenate(fixed-results, list(rest-result)),
 		     make-mv-operation(builder, list(method-leaf, cluster)));
@@ -1070,6 +1071,6 @@ define method make-error-operation (builder :: <fer-builder>,
   make-operation(builder,
 		 list(dylan-defn-leaf(builder, #"error"),
 		      make-literal-constant(builder,
-					    make(<ct-literal>, value: msg))));
+					    make(<literal-string>, contents: msg))));
 end method;
 
