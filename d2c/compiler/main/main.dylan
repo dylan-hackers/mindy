@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.51 1996/02/12 02:01:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.52 1996/02/16 03:52:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,11 +53,14 @@ define constant $cc-flags = getenv("CCFLAGS") | "";
 //
 define class <unit-info> (<object>)
 
-  slot unit-name :: <byte-string>, required-init-keyword: #"unit-name";
+  slot unit-name :: <byte-string>,
+    required-init-keyword: #"unit-name";
 
-  slot undumped-objects :: <vector>,
-    init-function: method () make(<stretchy-vector>) end method,
-    init-keyword: #"undumped-objects";
+  slot undumped-objects :: <simple-object-vector>,
+    required-init-keyword: #"undumped-objects";
+
+  slot extra-labels :: <simple-object-vector>,
+    required-init-keyword: #"extra-labels";
 
   slot unit-linker-options :: false-or(<byte-string>),
     init-value: #f, init-keyword: #"linker-options";
@@ -73,6 +76,7 @@ end;
 add-make-dumper(#"unit-info", *compiler-dispatcher*, <unit-info>,
 		list(unit-name, unit-name:, #f,
 		     undumped-objects, undumped-objects:, #f,
+		     extra-labels, extra-labels:, #f,
 		     unit-linker-options, linker-options: #f));
 
 
@@ -374,9 +378,9 @@ define method compile-library
   format(*debug-output*, "Emitting Library Heap.\n");
   let s-name = concatenate(unit-prefix, "-heap.s");
   let heap-stream = make(<file-stream>, name: s-name, direction: #"output");
-  let undumped = build-local-heap(unit-prefix, unit.unit-init-roots,
-				  unit.unit-root-names, heap-stream);
+  let (undumped, extra-labels) = build-local-heap(unit, heap-stream);
   close(heap-stream);
+
   let o-name = concatenate(unit-prefix, "-heap.o");
   let cc-command
     = format-to-string("gcc %s -c %s -o %s", $cc-flags, s-name, o-name);
@@ -401,7 +405,8 @@ define method compile-library
   let linker-options = element(header, #"linker-options", default: #f);
   let unit-info = make(<unit-info>,
 		       unit-name: unit-prefix,
-		       undumped-objects: as(<simple-object-vector>, undumped),
+		       undumped-objects: undumped,
+		       extra-labels: extra-labels,
 		       linker-options: linker-options);
 
   if (executable)
@@ -409,8 +414,8 @@ define method compile-library
       format(*debug-output*, "Emitting Global Heap.\n");
       let heap-stream 
 	= make(<file-stream>, name: "heap.s", direction: #"output");
-      build-initial-heap(apply(concatenate, map(undumped-objects, *units*)),
-			 heap-stream);
+      build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
+			heap-stream);
       close(heap-stream);
     end;
 
