@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.9 1998/12/30 00:35:09 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.10 1998/12/30 03:56:03 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1290,10 +1290,10 @@ define method show-help(stream :: <stream>) => ()
 "       -s, --static:      Force static linking.\n"
 "       -d, --break:       Debug d2c by breaking on errors.\n"
 "       --dump-transforms: Display detailed optimizer information.\n"
-"       -f, --cc-overide-command:\n"
+"       -F, --cc-overide-command:\n"
 "                          Alternate method of invoking the C compiler.\n"
 "                          Used on files speficied with -f.\n"
-"       -F, --cc-overide-file:\n"
+"       -f, --cc-overide-file:\n"
 "                          Files which need special C compiler invocation.\n"
 	   );
 end method show-help;
