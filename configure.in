@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.13 1998/09/05 22:57:27 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.14 1998/09/16 19:12:46 olet Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -139,6 +139,13 @@ AC_PROG_LEX
 AC_PROG_YACC
 
 AC_CHECK_TOOL(RANLIB, ranlib, :)
+
+AC_PATH_PROG(EMACS, emacs, no)
+
+if test "$EMACS" = no
+then
+	AC_PATH_PROG(EMACS, xemacs, no)
+fi
 
 #--------------------------------------------------------------------
 # Figure out what to do with Mindy. If we're cross-compiling, we'll
