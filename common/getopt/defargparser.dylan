@@ -1,11 +1,11 @@
 module: parse-arguments
 synopsis: Interface macros for parser definition and option access.
-authors: David.Lichteblau@SNAFU.DE
+authors: David Lichteblau <lichteblau@fhtw-berlin.de>
 copyright: see below
 
 //======================================================================
 //
-//  Copyright (c) 1999-2000 David Lichteblau
+//  Copyright (c) 1999-2001 David Lichteblau
 //  All rights reserved.
 // 
 //  Use and copying of this software and preparation of derivative
@@ -39,7 +39,7 @@ copyright: see below
 //
 // Below you can find a short overview of defargparser's features.
 // If you are looking for working examples, have a look at
-//   <URL:http://www.snafu.de/~david.lichteblau/dylan/>
+//   <URL:http://www.inf.fu-berlin.de/~lichtebl/dylan/>
 //
 //
 // Emacs
@@ -165,6 +165,21 @@ copyright: see below
  
 #if (~mindy) // whole file
 
+// Macro ARGUMENT-PARSER-DEFINER--exported
+// =======================================
+// Syntax: define argument-parser ?:name (?supers:*) ?options end
+//
+//  - Let `?supers' default to <argument-list-parser>.
+//
+//  - Transform human-readable `?options' into patterns of the form
+//      [option-name, type, [default-if-any], #rest initargs]
+//      [regular-arguments-name]
+//      (synopsis-fn-name, usage, description)
+// 
+//  - Hand it over to `defargparser-rec'.
+//
+// Explanation: I have no idea what that is for.
+//
 define macro argument-parser-definer
     { define argument-parser ?:name () ?options end }
       => { defargparser-rec ?name (<argument-list-parser>) () ?options end }
@@ -198,38 +213,61 @@ define macro argument-parser-definer
       => { ["", ""], ?realargs }
 end macro;
 
+// Macro DEFARGPARSER-REC--internal
+// ================================
+// Syntax: defargparser-rec ?:name (?supers:*) (?processed:*) ?options end
+//
+//   - Start out without `?processed' forms.
+//   - (Recursively) take each `?options' form and add a pair
+//       [?name, ?option]
+//     to `?processed'.
+//   - Finally, pass the `?processed' forms to `defargparser-aux'.
+//
+// Explanation: The options will be processed by auxiliary rules.
+// However, these need the `?name', which would be available to main
+// rules only.  That's why we need the name/option pairs.
+//
 define macro defargparser-rec
-    { defargparser-rec ?:name (?supers) (?processed:*) end }
+    { defargparser-rec ?:name (?supers:*) (?processed:*) end }
       => { defargparser-aux ?name (?supers) ?processed end }
 
-    { defargparser-rec ?:name (?supers) (?processed:*) [?option:*] ?rem:* end }
+    { defargparser-rec ?:name (?supers:*) (?processed:*) [?option:*] ?rem:* end }
       => { defargparser-rec ?name (?supers)
 	     (?processed [?name, ?option]) ?rem
 	   end }
-    { defargparser-rec ?:name (?supers) (?processed:*) (?usage:*) ?rem:* end }
+    { defargparser-rec ?:name (?supers:*) (?processed:*) (?usage:*) ?rem:* end }
       => { defargparser-rec ?name (?supers)
 	     ((?usage) ?processed) ?rem
 	   end }
-
-  supers:
-    { ?super:expression, ... } => { ?super, ... }
-    { } => { }
 end macro;
 
+// Macro DEFARGPARSER-AUX--internal
+// ================================
+// Syntax: defargparser-aux ?:name (?supers:*) ?options end
+//
+// Explanation: This is rather staightforward; code generation is
+// performed by auxillary macros that output
+//
+//   - (defargparser-class) a class definition for `?name'
+//
+//   - (defargparser-init) initialize methods that add our option
+//     parsers (held in slots named `.*-parser') using add-option-parser
+//
+//   - (defargparser-accessors) accessors that ask the parsers for the
+//     values that were found
+//
+//  - (defargparser-synopsis) a method printing usage information
+//
 define macro defargparser-aux
-    { defargparser-aux ?:name (?supers) ?options:* end }
+    { defargparser-aux ?:name (?supers:*) ?options:* end }
       => { defargparser-class ?name (?supers) ?options end;
            defargparser-init ?name ?options end;
            defargparser-accessors ?name ?options end;
            defargparser-synopsis ?name ?options end }
-
-  supers:
-    { ?super:expression, ... } => { ?super, ... }
-    { } => { }
 end macro;
 
 define macro defargparser-class
-    { defargparser-class ?:name (?supers) ?slots end }
+    { defargparser-class ?:name (?supers:*) ?slots end }
       => { define class ?name (?supers)
 	     ?slots
 	   end class }
@@ -260,10 +298,6 @@ define macro defargparser-class
       => {  ... }
     { (?usage:*) ... }
       => { ... }
-    { } => { }
-
-  supers:
-    { ?super:expression, ... } => { ?super, ... }
     { } => { }
 end macro;
 
