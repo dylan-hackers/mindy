@@ -9,9 +9,9 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.2 1994/03/27 03:15:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.3 1994/03/30 10:36:25 rgs Exp $
 *
-* This file does whatever.
+* Main driver routines for mindy.
 *
 \**********************************************************************/
 
@@ -175,7 +175,7 @@ static void set_pause_interrupted(void)
 enum pause_reason do_stuff(void)
 {
     struct thread *thread;
-    int timer;
+    volatile int timer;
     boolean do_select = TRUE;
 
     assert (!InInterpreter);
@@ -191,7 +191,7 @@ enum pause_reason do_stuff(void)
 	    timer = OPS_PER_TIME_SLICE;
 	    InInterpreter = TRUE;
 	    set_interrupt_handler(set_pause_interrupted);
-	    setjmp(Catcher);
+	    _setjmp(Catcher);
 	    if (PauseReason == pause_NoReason)
 		while (timer-- > 0)
 		    thread->advance(thread);
@@ -225,7 +225,7 @@ enum pause_reason single_step(struct thread *thread)
     thread_set_current(thread);
     InInterpreter = TRUE;
     PauseReason = pause_NoReason;
-    if (setjmp(Catcher) == 0)
+    if (_setjmp(Catcher) == 0)
 	thread->advance(thread);
     InInterpreter = FALSE;
     if (TimeToGC)
@@ -236,7 +236,7 @@ enum pause_reason single_step(struct thread *thread)
 void go_on(void)
 {
     assert(InInterpreter);
-    longjmp(Catcher, 1);
+    _longjmp(Catcher, 1);
 }
 
 void pause(enum pause_reason reason)
