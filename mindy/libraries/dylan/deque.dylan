@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.15 1996/02/13 21:10:51 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.16 1996/02/13 23:20:04 nkramer Exp $
 
 //======================================================================
 //
@@ -242,7 +242,7 @@ end method drop!;
 // DEQUE-HEAD of the deque.  If the deque is empty, both DEQUE-HEAD and
 // DEQUE-TAIL must be set to the new element.
 //
-define method push (deque :: <deque>, new)
+define method push (deque :: <deque>, new) => new :: <object>;
   let new-element = make(<deque-element>, data: new);
   case
     empty?(deque) =>
@@ -262,7 +262,7 @@ end method push;
 // Removes the first deque-element and returns its DEQUE-ELEMENT-DATA.  If
 // the deque is empty, an error is signalled.
 //
-define method pop (deque :: <deque>)
+define method pop (deque :: <deque>) => top :: <object>;
   case
     empty?(deque) =>
       error("POP:  deque empty.");
@@ -286,7 +286,7 @@ end method pop;
 // Creates a new deque-element and places it at the DEQUE-TAIL of the
 // deque.
 //
-define method push-last (deque :: <deque>, new)
+define method push-last (deque :: <deque>, new) => new :: <object>;
   let new-element = make(<deque-element>, data: new);
   case
     empty?(deque) =>
@@ -305,7 +305,7 @@ end method push-last;
 //
 // Removes the last deque-element and returns its DEQUE-ELEMENT-DATA.
 //
-define method pop-last (deque :: <deque>)
+define method pop-last (deque :: <deque>) => bottom :: <object>;
   case
     empty?(deque) =>
       error("POP-LAST:  deque empty.");
