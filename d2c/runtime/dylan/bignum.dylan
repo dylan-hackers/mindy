@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.5 1995/12/09 20:39:56 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -6,10 +6,8 @@ module: dylan-viscera
 
 // Extended integer digits.
 
-/* ### not absolutly needed
-
 define constant $digit-bits = 8;
-define constant $digit-mask = #xff /* lognot(ash(-1, $digit-bits)) */;
+define constant $digit-mask = lognot(ash(-1, $digit-bits));
 
 // <digit> -- internal.
 // 
@@ -30,6 +28,11 @@ define sealed inline method functional-== (a :: <digit>, b :: <digit>)
     => res :: <boolean>;
   a.value == b.value;
 end;
+
+// Seal = and ~= on digits
+// 
+seal generic \= (<digit>, <digit>);
+seal generic \~= (<digit>, <digit>);
 
 // make-digit -- internal.
 //
@@ -93,6 +96,11 @@ define inline method \< (digit1 :: <digit>, digit2 :: <digit>)
     => res :: <boolean>;
   digit1.value < digit2.value;
 end;
+
+// Seal < and <= on digits.
+// 
+seal generic \< (<digit>, <digit>);
+seal generic \<= (<digit>, <digit>);
 
 // $no-carry -- internal.
 //
@@ -185,8 +193,6 @@ define inline method digit-lognot (x :: <digit>) => res :: <digit>;
   make-digit(lognot(x.value));
 end;
 
-*/
-
 
 // Extended integer class and utilities
 
@@ -195,7 +201,6 @@ end;
 // A bignum.
 // 
 define class <extended-integer> (<integer>)
-/* ### not absolutly needed
   //
   // A bignum is just a vector of digits.  We require a fill instead of
   // supplying an init-value because we can't supply an obviously constant
@@ -203,10 +208,7 @@ define class <extended-integer> (<integer>)
   slot bignum-digit :: <digit>,
     sizer: bignum-size, required-size-init-keyword: size:,
     required-init-keyword: fill:;
-*/
 end;
-
-/* ### not absolutly needed
 
 seal generic make (singleton(<extended-integer>));
 seal generic initialize (<extended-integer>);
@@ -252,7 +254,7 @@ define method normalized-length (num :: <extended-integer>,
     => res-len :: <fixed-integer>;
   if (len > 1)
     for (index :: <fixed-integer> from len - 2 to 0 by -1,
-	 prev-digit = bignum-digit(num, len - 1)
+	 prev-digit :: <digit> = bignum-digit(num, len - 1)
 	   then bignum-digit(num, index),
 	 while: sign-extend-digit(bignum-digit(num, index)) == prev-digit)
     finally
@@ -278,7 +280,7 @@ end;
 
 // as methods.
 
-seal generic as (singleton(<extended-integer>), <integer>);
+seal generic as (singleton(<extended-integer>), <complex>);
 
 define inline method as
     (class == <extended-integer>, num :: <extended-integer>)
@@ -298,7 +300,7 @@ define method as (class == <extended-integer>, num :: <fixed-integer>)
   let len = ceiling/($fixed-integer-bits, $digit-bits);
   let res = make-bignum(len);
   for (index :: <fixed-integer> from 0 below len,
-       num = num then ash(num, -$digit-bits))
+       num :: <fixed-integer> = num then ash(num, -$digit-bits))
     bignum-digit(res, index) := make-digit(num);
   end;
   normalize-bignum(res, len);
@@ -317,7 +319,7 @@ define method as (class == <fixed-integer>, num :: <extended-integer>)
   end;
   let len = bignum-size(num);
   local
-    method repeat (index, result)
+    method repeat (index :: <fixed-integer>, result :: <fixed-integer>)
       if (negative?(index))
 	result;
       else
@@ -376,7 +378,7 @@ define inline method bignum-as-float
     => res :: <float>;
   let len = bignum-size(num);
   local
-    method repeat (index, result)
+    method repeat (index :: <fixed-integer>, result :: <float>)
       if (negative?(index))
 	result;
       else
@@ -674,9 +676,10 @@ end;
 
 define method divisor-shift (num :: <extended-integer>)
     => res :: <fixed-integer>;
-  for (top-digit = as-signed(bignum-digit(num, num.bignum-size - 1))
+  for (top-digit :: <fixed-integer>
+	 = as-signed(bignum-digit(num, num.bignum-size - 1))
 	 then ash(top-digit, -1),
-       count from 1,
+       count :: <fixed-integer> from 1,
        until: top-digit == 0)
   finally
     $digit-bits - count;
@@ -687,11 +690,12 @@ define method division-guess (x1 :: <digit>, x2 :: <digit>, x3 :: <digit>,
 			      y1 :: <digit>, y2 :: <digit>)
     => res :: <digit>;
   block (return)
-    for (guess = if (x1 == y1)
-		   make-digit(-1);
-		 else
-		   digit-divide(x1, x2, y1);
-		 end
+    for (guess :: <digit>
+	   = if (x1 == y1)
+	       make-digit(-1);
+	     else
+	       digit-divide(x1, x2, y1);
+	     end
 	   then digit-subtract(guess, make-digit(1), $no-borrow))
       let (guess*y1-low, guess*y1-high) = digit-multiply(guess, y1);
       let (guess*y2-low, guess*y2-high) = digit-multiply(guess, y2);
@@ -809,12 +813,12 @@ define method floor/ (x :: <extended-integer>, y :: <extended-integer>)
   let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
   let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
   let (quo, rem) = bignum-divide(x-abs, y-abs);
-  if (y-neg) rem := -rem end;
   if (x-neg == y-neg)
-    values(quo, rem);
+    values(quo, if (y-neg) -rem else rem end);
+  elseif (zero?(rem))
+    values(-quo, rem);
   else
-    values(-1 - quo,
-	   if (zero?(rem)) rem else y - rem end);
+    values(-1 - quo, if (y-neg) y + rem else y - rem end);
   end;
 end;
 
@@ -823,12 +827,12 @@ define method ceiling/ (x :: <extended-integer>, y :: <extended-integer>)
   let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
   let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
   let (quo, rem) = bignum-divide(x-abs, y-abs);
-  if (x-neg) rem := -rem end;
-  if (x-neg == y-neg)
-    values(1 + quo,
-	   if (zero?(rem)) rem else rem - y end);
+  if (x-neg ~== y-neg)
+    values(-quo, if (x-neg) -rem else rem end);
+  elseif (zero?(rem))
+    values(quo, rem);
   else
-    values(-quo, rem);
+    values(1 + quo, (if (x-neg) -rem else rem end) - y);
   end;
 end;
 
@@ -836,7 +840,8 @@ define method round/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
   let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-  let (quo, rem) = bignum-divide(x-abs, y-abs);
+  let (quo :: <extended-integer>, rem :: <extended-integer>)
+    = bignum-divide(x-abs, y-abs);
   let twice-rem = rem + rem;
   if (twice-rem > y-abs | (twice-rem == y-abs & odd?(quo)))
     quo := quo + 1;
@@ -858,28 +863,23 @@ end;
 
 // ^
 
-define method \^ (base :: <number>, power :: <extended-integer>)
+define method \^ (base :: <complex>, power :: <extended-integer>)
     => res :: <number>;
-  case
-    negative?(power) =>
-      1 / base ^ -power;
-    base == 2 =>
-      ash(1, power);
-    base == #e2 =>
-      ash(#e1, power);
-    otherwise =>
-      let len = power.bignum-size;
-      let total = as(object-class(base), 1);
-      for (digit-index :: <fixed-integer> from 0 below len)
-	let digit = as-signed(bignum-digit(power, digit-index));
-	for (bit-index :: <fixed-integer> from 0 below $digit-bits)
-	  if (logbit?(bit-index, digit))
-	    total := base * total;
-	  end;
-	  base := base * base;
+  if (negative?(power))
+    1 / base ^ -power;
+  else
+    let len = power.bignum-size;
+    let total = as(object-class(base), 1);
+    for (digit-index :: <fixed-integer> from 0 below len)
+      let digit = as-signed(bignum-digit(power, digit-index));
+      for (bit-index :: <fixed-integer> from 0 below $digit-bits)
+	if (logbit?(bit-index, digit))
+	  total := base * total;
 	end;
+	base := base * base;
       end;
-      total;
+    end;
+    total;
   end;
 end;
 
@@ -1595,31 +1595,3 @@ define inline method binary-logand
     => res :: <extended-integer>;
   binary-logand(as(<extended-integer>, a), b);
 end;
-
-define method logbit? (index :: <extended-integer>, num :: <integer>)
-    => res :: <boolean>;
-  if (negative?(index))
-    #f;
-  elseif (index > $maximum-fixed-integer)
-    negative?(num);
-  else
-    logbit?(as(<fixed-integer>, index), num);
-  end;
-end;
-
-define method ash (num :: <integer>, shift :: <extended-integer>)
-    => res :: <integer>;
-  if (shift < $minimum-fixed-integer)
-    ash(num, $minimum-fixed-integer);
-  elseif (shift <= $maximum-fixed-integer)
-    ash(num, as(<fixed-integer>, shift));
-  elseif (zero?(num))
-    num;
-  else
-    error("Can't shift %d by %d bits -- the result would be too large to "
-	    "represent.",
-	  num, shift);
-  end;
-end;
-
-*/
