@@ -321,7 +321,7 @@ define method write-c-accessor-method
   // Write getter method
   unless(real-type.abstract-type?)
     format(stream,
-           "define %s method %s\n"
+           "define %s inline method %s\n"
              "    (ptr :: %s) => (result :: %s);\n"
              "  %s;\n"
              "end method %s;\n\n",
@@ -336,7 +336,7 @@ define method write-c-accessor-method
           & ~instance?(real-type, <non-atomic-types>))
       // Write setter method
       format(stream,
-             "define %s method %s-setter\n"
+             "define %s inline method %s-setter\n"
                "    (value :: %s, ptr :: %s) => (result :: %s);\n"
                "  %s := %s;\n"
                "  value;\n"
@@ -1017,8 +1017,7 @@ define method write-declaration
   // We must special case this one since there are so many declarations of the
   // form "typedef struct foo foo".
   if (~decl.equated? 
-        & decl.simple-name ~= decl.type.simple-name 
-        & ~decl.true-type.abstract-type?)
+        & decl.simple-name ~= decl.type.simple-name)
     format(stream, "define constant %s = %s;\n\n",
 	   decl.dylan-name, decl.type.dylan-name);
     register-written-name(written-names, decl.dylan-name, decl);
@@ -1102,7 +1101,7 @@ define method write-declaration
     end if;
     unless(target-type.true-type.abstract-type?)
       format(stream,
-             "define method pointer-value\n"
+             "define inline method pointer-value\n"
                "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",
              decl.dylan-name, target-map);
       write(stream,
@@ -1117,7 +1116,7 @@ define method write-declaration
       // Write setter method, if applicable.
       unless (instance?(true-type(target-type), <non-atomic-types>))
         format(stream,
-               "define method pointer-value-setter\n"
+               "define inline method pointer-value-setter\n"
                  "    (value :: %s, ptr :: %s, #key index = 0)\n"
                  " => (result :: %s);\n  ",
                target-map, decl.dylan-name, target-map);

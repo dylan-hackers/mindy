@@ -692,8 +692,7 @@ define method pointer-to
 	  <enum-declaration>,
 	  <predefined-type-declaration> =>
 	    make(<pointer-declaration>, 
-//                 name: concatenate(target-type.simple-name, "*"),
-                 name: anonymous-name(),
+                 name: concatenate(target-type.simple-name, "*"),
 		 referent: target-type);
 	  otherwise =>
 	    // Pointers to struct types are the same as the types themselves.
@@ -718,15 +717,12 @@ define method vector-of
   else
     let new-type
       = make(<vector-declaration>, length: length, 
-/*
              name: if(length)
                      format-to-string("%s<@%=>", 
                                       target-type.simple-name, length)
                    else
                      format-to-string("%s<@>", target-type.simple-name)
                    end if,
-*/
-             name: anonymous-name(),
              equiv: pointer-to(target-type, state));
     state.vectors[vector(target-type, length)] := new-type;
     new-type;
@@ -874,7 +870,7 @@ define constant int-type = make(<integer-type-declaration>,
 				dylan-name: "<integer>", size: $integer-size);
 define constant unsigned-int-type = make(<integer-type-declaration>,
 					 accessor: "unsigned-long-at",
-					 name: "unsigned int",
+					 name: "unsigned-int",
 					 dylan-name: "<integer>",
 					 size: $integer-size);
 define constant short-type = make(<integer-type-declaration>,
@@ -884,7 +880,7 @@ define constant short-type = make(<integer-type-declaration>,
 				  size: $short-int-size);
 define constant unsigned-short-type = make(<integer-type-declaration>,
 					   accessor: "unsigned-short-at",
-					   name: "unsigned short",
+					   name: "unsigned-short",
 					   dylan-name: "<integer>",
 					   size: $short-int-size);
 define constant long-type = make(<integer-type-declaration>,
@@ -894,19 +890,19 @@ define constant long-type = make(<integer-type-declaration>,
 				 size: $long-int-size);
 define constant unsigned-long-type = make(<integer-type-declaration>,
 					  accessor: "unsigned-long-at",
-					  name: "unsigned long",
+					  name: "unsigned-long",
 					  dylan-name: "<integer>",
 					  size: $long-int-size);
 // "long long" is an idiom supported by gcc, so we'll recognize it, without
 // actually supporting access.
 define constant longlong-type = make(<integer-type-declaration>,
 				     accessor: "longlong-at",
-				     name: "long long",
+				     name: "long-long",
 				     dylan-name: "<double-integer>",
 				     size: $long-int-size * 2);
 define constant unsigned-longlong-type = make(<integer-type-declaration>,
 					      accessor: "unsigned-longlong-at",
-					      name: "unsigned long long",
+					      name: "unsigned-long-long",
 					      dylan-name: "<double-integer>",
 					      size: $longlong-int-size);
 define constant char-type = make(<integer-type-declaration>,
@@ -916,7 +912,7 @@ define constant char-type = make(<integer-type-declaration>,
 				 size: $char-size);
 define constant unsigned-char-type = make(<integer-type-declaration>,
 					  accessor: "unsigned-byte-at",
-					  name: "unsigned char",
+					  name: "unsigned-char",
 					  dylan-name: "<integer>",
 					  size: $char-size);
 define constant float-type = make(<float-type-declaration>,
@@ -931,7 +927,7 @@ define constant double-type = make(<float-type-declaration>,
 				   size: $double-float-size);
 define constant long-double-type = make(<float-type-declaration>,
 					accessor: "long-double-at",
-					name: "long double",
+					name: "long-double",
 					dylan-name: "<extended-float>",
 					size: $long-double-size);
 
