@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.12 1996/02/18 18:36:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.13 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -828,12 +828,15 @@ define method %subtype? (class1 :: <class>, class2 :: <class>)
   case
     class1 == class2 =>
       #t;
-    class1 == class2.subtype-cache =>
+    class1 == class2.subtype-success-cache =>
       #t;
+    class1 == class2.subtype-failure-cache =>
+      #f;
     member?(class2, class1.all-superclasses) =>
-      class2.subtype-cache := class1;
+      class2.subtype-success-cache := class1;
       #t;
     otherwise =>
+      class2.subtype-failure-cache := class1;
       #f;
   end case;
 end;
