@@ -1,0 +1,73 @@
+#!/usr/local/bin/perl
+
+if ($#ARGV == -1) {
+    (-e "RCS") || die("./RCS doesn't exist, so can't guess the RCS dir.\n");
+    (-l "RCS") || die("./RCS isn't a link, so can't guess where the other RCS dirs should be linked.\n");
+    $rcsroot = (readlink("RCS") || die("readlink(./RCS) failed: $!\n"));
+    ($rcsroot =~ s,/RCS$,,) || die("read(./RCS) doesn't end in /RCS, so can't guess where the other RCS dirs should\nbe linked.\n");
+    do mk_rcs_links('', $rcsroot, '.');
+}
+elsif ($#ARGV == 0) {
+    do mk_rcs_links('', $ARGV[0], '.');
+}
+else {
+    die("usage: $0 [rcs-dir]\n");
+}
+
+
+
+sub mk_rcs_links {
+    local($prefix, $rcsdir, $srcdir) = @_;
+    local(@subdirs);
+
+    opendir(RCSDIR, $rcsdir) || die("can't look in $rcsdir: $!\n");
+
+    $srcdir =~ s/^\.\///;
+
+    unless (-d $srcdir) {
+	(-e $srcdir) &&	die("$srcdir already exists and isn't a directory.\n");
+	print STDOUT "Making $srcdir\n";
+	mkdir($srcdir, 0777) || die("mkdir($srcdir) failed: $!\n");
+    }
+
+    @subdirs = ();
+
+    while ($entry = readdir(RCSDIR)) {
+	if ($entry eq '.' || $entry eq '..') {
+	}
+	elsif ($entry eq "RCS") {
+	    do make_rcs_link($prefix.$rcsdir.'/'.$entry, $srcdir.'/'.$entry);
+	}
+	elsif (-d ($rcsdir . '/' . $entry)) {
+	    push(@subdirs, $entry);
+	}
+    }
+
+    closedir(RCSDIR);
+
+    unless ($rcsdir =~ /^\//) {
+	$prefix .= '../';
+    }
+
+    foreach $subdir (@subdirs) {
+	do mk_rcs_links($prefix, $rcsdir.'/'.$subdir, $srcdir.'/'.$subdir);
+    }
+}
+
+sub make_rcs_link {
+    local($real, $link) = @_;
+
+    if (-l $link) {
+	$old = readlink($link) || die("Can't check %link: $!\n");
+	if ($old ne $real) {
+	    print STDOUT "relinking $link to $real\n";
+	    unlink($link) || die("unlink($link) failed: $!\n");
+	    symlink($real, $link) || die("symlink($real, $link) failed: $!\n");
+	}
+    }
+    else {
+	(-e $link) && die("$link already exists and isn't a link.\n");
+	print STDOUT "linking $link to $real\n";
+	symlink($real, $link) || die("symlink($real, $link) failed: $!\n");
+    }
+}
