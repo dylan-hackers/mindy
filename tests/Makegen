@@ -36,9 +36,12 @@ do emit_library_rule(
 #do emit_library_rule(
 #    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 #);
-do emit_library_rule(
-    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
-);
+
+if (! $features{'compiled_for_solaris'}) {
+	do emit_library_rule(
+	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+	);
+}
 
 # I only wrote this function because of the .\ for win32 vs. ./ for
 # Unix issue.
