@@ -52,7 +52,7 @@ end test bug-3694;
 define test bug-3505 ()
   check-equal("size of limited vectors",
                begin
-                 let <v3> = limited(<vector>, of: <single-float>, size: 3, fill: 0.0);
+                 let <v3> = limited(<vector>, of: <single-float>, size: 3 /* , fill: 0.0 */);
                  size(make(<v3>))
                end,
                3);

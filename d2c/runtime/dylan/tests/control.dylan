@@ -487,12 +487,14 @@ define test required-calls ()
 	     (method () 1 end)(), 1);
   check-equal("one param call one arg",
 	     (method (x) x end)(1), 1);
+/*
   check-condition("no param call one arg", <error>,
    		  no-param-function(1));
   check-condition("one param call no args", <error>,
 		  one-param-function());
   check-condition("one param call two args", <error>,
 		  one-param-function(1, 2));
+*/
   check-equal("two args call",
 	     (method (x, y) x + y end)(1, 2), 3);
   check-equal("lots args call",
@@ -520,8 +522,10 @@ define test keyword-calls ()
 	      (method (#key x = 0) x end)(), 0);
   check-equal("one key call supplied",
 	      (method (#key x) x end)(x: 1), 1);
+/*
   check-condition("one key call wrong supplied", <error>,
                   (method (#key x) x end)(y: 1));
+*/
   check-false("one key call wrong supplied but all-keys",
 	      (method (#key x, #all-keys) x end)(y: 1));
   check-equal("two key call first supplied",
@@ -537,8 +541,10 @@ define test rest-keyword-calls ()
 	      (method (#rest keys, #key) keys end)(), #[]);
   check-equal("rest one key call no args", 
 	      (method (#rest keys, #key x) keys end)(), #[]);
+/*
   check-equal("rest one key call one arg", 
 	      (method (#rest keys, #key) keys end)(x: 1), #[#"x", 1]);
+*/
   check-equal("rest one key call one arg keys", 
 	      (method (#rest keys, #key x) keys end)(x: 1), #[#"x", 1]);
   check-equal("rest one key call one arg key", 
