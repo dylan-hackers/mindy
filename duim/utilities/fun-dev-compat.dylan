@@ -9,32 +9,17 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
     NOTES
 */
 
-// Change define /*thread*/ variable to define variable : d2c has no threads yet
+// Change define /*thread*/ variable to define variable;
+// d2c has no threads yet
 
-// Change define /*sideways*/ method to define method: this may require that create
-// be changed to export in some places. Watch for compile errors.
+// Change define /*sideways*/ method to define method;
+// this may require that create be changed to export in some places.
+// Watch for compile errors.
 
 
-/*
-	Utilities
-*/
-
-// redefine destructuring-let as follows:
-// NOTE: This needs more work
-/*
-define macro destructuring-let
-  { destructuring-let (?pattern = ?value:expression) ?:body end } //- (?pattern:*)
-    => { begin
-	   let _destructuring-let-body = method (?pattern) ?body end;
-	   apply(_destructuring-let-body, ?value)
-	 end }
-    pattern:
-    { (?var:name, #key ?rest:name) }
-     => { ?var, #rest ?rest }
-    { (?var:name) }
-     => { ?var }
-end macro destructuring-let;
-*/
+//
+//	Utilities
+//
 
 // without-bounds-checks
 // Do-nothing version
@@ -51,28 +36,19 @@ end;
 // Just throws an error on the sequence. 
 // Should declare an <element-range-error> class and instantiate it
 
-define method element-range-error( sequence :: <sequence>, index :: <integer> )
-=> ()
-
-	error( sequence );	//- Make meaningful error and throw
-
+define method element-range-error
+    (sequence :: <sequence>, index :: <integer>)
+ => ()
+  error( "range error (element %d of %=)", index, sequence );
 end method;
-
-
-/*
-	Geometry
-*/
-
-
-// Comment out sealed domain make(subclass(<bounding-box>)); to avoid corrupted .du file
 
 
 // assert
 // Gwydion defines a traditional assert on <boolean> in misc in extentions, 
 // exported from common-dylan.
 // We exclude that version and declare our own here.
-// FIXME:   3rd clause should have a #rest as its 3rd argument for format arguments
-//          and apply this to format-string
+// FIXME:   3rd clause should have a #rest as its 3rd argument for 
+//          format arguments and apply this to format-string
 
 define macro assert
     { assert( ?clauses ) }
@@ -98,36 +74,29 @@ end macro assert;
 
 define constant find-value = find-element;
 
-
-/*
-    duim-dcs
-*/
-
-
-// module.dylan: change create to export for dynamic-color-palettes,... Need to be created elsewhere...
-// styles.dylan: unseal sealed slots of <style-descriptor> . "Sealed methods not part of a GF"...
-
-// Change named-color-definer to:
-/*
-define macro named-color-definer
-  { define named-color ?:name ?equal-sign:token ( ?red:expression, ?green:expression, ?blue:expression ) }
-    => { $default-named-color-table[?#"name"]
-           := make-rgb-color ( ?red / 255.0, ?green / 255.0, ?blue / 255.0 )   }
-end macro named-color-definer;
-
-*/
-
-
 // with-keywords-removed
-// do-nothing version
-// FIXME:   Implementation required.
 
 define macro with-keywords-removed
-    { with-keywords-removed( ?new-rest:name = ?fun-rest:variable, ?remove:expression ) ?:body end }
-      => { begin
-            let ?new-rest = ?fun-rest;
+   { with-keywords-removed( ?new-rest:name = ?fun-rest:expression,
+                            ?remove:expression )
+       ?:body
+     end }
+     => { begin
+            let remove = ?remove;
+            let ?new-rest
+              = for(plist = ?fun-rest then tail(tail(plist)),
+                    new = #()
+                      then if(member?(head(plist), remove))
+                             new
+                           else
+                             pair(head(plist), pair(head(tail(plist)), new));
+                           end,
+                    until: empty?(plist))
+                finally
+                  new;
+                end for;
             ?body 
-           end}
+          end }
 end;
 
 
@@ -237,78 +206,68 @@ define class <notification> ( <object> ) end class;
 // wait-for
 // do-nothing implementation
 
-define method wait-for( notification :: <notification>, #key timeout :: <integer> = 1000 )
-=> ()
-
+define method wait-for
+    (notification :: <notification>, #key timeout :: <integer> = 1000)
+ => ()
     values();
-    
 end method wait-for;
 
 
 // release-all
 // do-nothing implementation
-
-define method release-all( notification :: <notification> )
-=> ()
-
+define method release-all
+    (notification :: <notification>)
+ => ()
     values();
-    
 end method release-all;
 
 
 // put-property!
 
-define method put-property!( properties :: <collection>, property :: <object>, property :: <object> )
-=> ()
-
-    values();
-
+define method put-property!
+    (properties :: <collection>, property :: <object>, value :: <object>)
+ => ()
+  add!(properties, property);
+  add!(properties, property);
+  values();
 end method put-property!;
-
 
 // get-property
 
-define method get-property( properties :: <collection>, property :: <object>,
-                            #key items = #f, default = #f, test = #f   )
-=> ( result :: <object> )
-
-    local method is?( item ) item = property end;
-
-    let key-index = find-key( properties, is?, failure: #f );
-    if( key-index )
-        element( properties, key-index + 1, default: #f );
-    else
-        #f;
-    end if;
-
+define method get-property
+    (properties :: <list>, key :: <object>, #key default)
+ => (result :: <object>);
+  block(return)
+    for(item in properties,
+        key? :: <boolean> = #t then ~key?,
+        found? :: <boolean> = #f then key? & item == key)
+      if(found?)
+        return(item);
+      end if;
+    end for;
+    default;
+  end block;
 end method get-property;
 
-
 // remove-property!
-
-define method remove-property!( properties :: <collection>, property :: <object> )
-=>( result :: <collection> )
-
-    local method is?( item ) item = property end;
-    let key-index = find-key( properties, is?, failure: #f );
-    if( key-index )
-    let new-collection = make( <stretchy-vector> );
-	    for( i :: <integer> from 0 below properties.size() )
-	        unless( ( i = key-index ) | i =  ( i = key-index + 1 ))
-	            new-collection := add!( new-collection, properties[ i ] );
-	        end unless;
-	    end for;
-    else
-        properties;
-    end if;
-    
-end method remove-property!;
-
-// true?
-
-define method true?( value :: <object> )
-=>( result :: <boolean> )
-
-    value == #t;
-    
-end method true?;
+define macro remove-property!
+  { remove-property!(?place:expression, ?key:expression) }
+    => { begin
+           let result = #f;
+           let key = ?key;
+           ?place := for(plist = ?place then tail(tail(plist)),
+                         new = #()
+                           then if(head(plist) == key)
+                                  result := head(tail(plist));
+                                  new;
+                                else
+                                  pair(head(plist),
+                                       pair(head(tail(plist)), new));
+                                end,
+                         until: empty?(plist))
+                     finally
+                       new;
+                     end for;
+           result;
+         end }
+end macro;
