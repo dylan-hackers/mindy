@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.20 1994/05/05 11:52:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.21 1994/05/19 22:34:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -880,6 +880,28 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
     }
     else if (kind == symbol("debug-var"))
 	*simple = FALSE;
+    else if (kind == symbol("arg")) {
+	if (CurFrame == NULL)  {
+	    printf("No current frame.\n");
+	    *okay = FALSE;
+	}
+	else {
+	    obj_t *fp = CurFrame->fp;
+	    obj_t *args = ((obj_t *)obj_rawptr(fp[-3])) + 1;
+	    int nargs = fp - args - 4;
+	    int arg = fixnum_value(TAIL(expr));
+
+	    if (arg >= nargs) {
+		printf("%d too large -- Only %d argument%s\n", arg, nargs,
+		       nargs == 1 ? "" : "s");
+		*okay = FALSE;
+	    }
+	    else {
+		HEAD(expr) = symbol("literal");
+		TAIL(expr) = args[arg];
+	    }
+	}
+    }
     else if (kind == symbol("funcall")) {
 	obj_t args;
 
@@ -1540,7 +1562,7 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 	printf(" isn't a function or component\n");
     }
     else if (line == -1) {
-	printf("Can't install function start breakpoints.");
+	printf("Can't install function start breakpoints."); /* ### */
     }
     else if (!instancep(thing, obj_ByteMethodClass)) {
 	prin1(thing);
@@ -1576,7 +1598,7 @@ static void breakpoint_cmd(void)
     if (exprs == obj_False)
 	printf("Invalid function expression.\n");
     else if (exprs == obj_Nil)
-	printf("Can't list breakpoints yet.\n");
+	list_breakpoints();
     else {
 	boolean okay = TRUE;
 	boolean func_simple = TRUE;
