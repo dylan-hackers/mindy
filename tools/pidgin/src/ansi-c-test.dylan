@@ -25,7 +25,7 @@ define method main(appname, #rest args)
   let array-10-char*-* =
     make(<c-pointer-type>, referent: array-10-char*);
   let func =
-    make(<c-function-type>, return-type: array-10-char*-*, varargs?: #f);
+    make(<c-function-type>, return-type: array-10-char*-*);
   print-c-type(func);
   let func-ptr =
     make(<c-pointer-type>, referent: func);
@@ -44,4 +44,27 @@ define method main(appname, #rest args)
   print-c-type(make(<c-typedef-type>,
 		    name: "typedefed_type",
 		    type: $c-int-type));
+
+
+  print-c-type(make(<c-function-type>,
+		    return-type: $c-void-type,
+		    explicit-void?: #t));
+  print-c-type(make(<c-function-type>,
+		    return-type: $c-void-type,
+		    explicit-varargs?: #t));
+
+  local method build-argument-list (f :: <c-function-type>)
+	  add!(f.c-function-parameters, $c-int-type);
+	  add!(f.c-function-parameters, $c-char-type);
+	  add!(f.c-function-parameters, $c-long-long-type);
+	end;
+  let func2 = make(<c-function-type>,
+		   return-type: $c-void-type);
+  build-argument-list(func2);
+  print-c-type(func2);
+  let func3 = make(<c-function-type>,
+		   return-type: $c-void-type,
+		   explicit-varargs?: #t);
+  build-argument-list(func3);
+  print-c-type(func3);
 end;
