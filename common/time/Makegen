@@ -3,8 +3,13 @@ $stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
 $D2CFLAGS = '-L../dylan -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext -L../melange';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
-&emit_melange_rule('time-intr');
+# Solaris doesn't support the Time library because it doesn't have the
+# "timezone" variable.
+#
+if (! $features{'compiled_for_solaris'}) {
+	&emit_melange_rule('time-intr');
 
-do emit_library_rule(
-    'Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
-);
+	do emit_library_rule(
+	    'Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+	);
+}
