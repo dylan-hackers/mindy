@@ -269,9 +269,11 @@ define common-extensions function-test position ()
               position(list1, 'w'));
   check-false("test posision with skip greater than existance", 
 	      position(list1, 'a', skip: 2));
-  check-equal("test position using test: \\<", 
-              position(#(1, 2, 3, 4), 3, test: \<),
-              3);
+// The following check has been modified to match the documentation at
+// http://www.fun-o.com/products/doc/core/core_66.htm#MARKER-2-478
+  check-equal("test position using predicate: \\>", 
+              position(#(1, 2, 3, 4), 3, predicate: \>),
+              3); 
 end function-test position;
 
 /*
