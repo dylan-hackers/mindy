@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.14 1995/05/05 08:49:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.15 1995/05/05 14:45:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -444,6 +444,17 @@ define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
   pprint-fields(union, stream, members: union.members);
 end;
 
+define method print-message (union :: <union-ctype>, stream :: <stream>) => ();
+  write("union(", stream);
+  for (member in union.members, first? = #t then #f)
+    unless(first?)
+      write(", ", stream);
+    end;
+    print-message(member, stream);
+  end;
+  write(')', stream);
+end;
+
 // The "members" of any non-union type is a list of the type itself.
 define method members(type :: <ctype>) => result :: <list>;
   list(type);
@@ -587,6 +598,11 @@ define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
   #f;
 end;
 
+define method print-message (ctype :: <unknown-ctype>, stream :: <stream>)
+    => ();
+  write("<unknown>", stream);
+end;
+
 
 //// Limited types:
 ///
@@ -658,6 +674,20 @@ define method print-object (limint :: <limited-integer-ctype>,
 		base-class: limint.base-class,
 		if (limint.low-bound) low-bound: end, limint.low-bound,
 		if (limint.high-bound) high-bound: end, limint.high-bound);
+end;
+
+define method print-message (limint :: <limited-integer-ctype>,
+			     stream :: <stream>)
+    => ();
+  write("limited(", stream);
+  print-message(limint.base-class, stream);
+  if (limint.low-bound)
+    format(stream, ", min: %d", limint.low-bound);
+  end;
+  if (limint.high-bound)
+    format(stream, ", max: %d", limint.high-bound);
+  end;
+  write(')', stream);
 end;
 
 define method make-canonical-limited-integer
@@ -838,27 +868,9 @@ define method print-object (sing :: <singleton-ctype>, stream :: <stream>)
   pprint-fields(sing, stream, value: sing.singleton-value);
 end;
 
-
-// <byte-character-ctype>
-
-define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
-  keyword base-class:,
-    init-function: curry(dylan-value, #"<character>");
-end;
-
-define variable *byte-character-ctype-memo* = #f;
-
-define method make (class == <byte-character-ctype>, #next next-method, #key)
-  *byte-character-ctype-memo*
-    | (*byte-character-ctype-memo* := next-method());
-end;
-
-define method csubtype-dispatch (type1 :: <singleton-ctype>,
-				 type2 :: <byte-character-ctype>)
-    => res :: <boolean>;
-  let val = type1.singleton-value;
-  instance?(val, <literal-character>)
-    & instance?(val.literal-value, <byte-character>);
+define method print-message (sing :: <singleton-ctype>, stream :: <stream>)
+    => ();
+  format(stream, "singleton(%s)", sing.singleton-value);
 end;
 
 
@@ -992,7 +1004,34 @@ define method ct-value-cclass (object :: <byte-character-ctype>)
 end;
 
 
+
+// <byte-character-ctype>
 
+define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
+  keyword base-class:,
+    init-function: curry(dylan-value, #"<character>");
+end;
+
+define variable *byte-character-ctype-memo* = #f;
+
+define method make (class == <byte-character-ctype>, #next next-method, #key)
+  *byte-character-ctype-memo*
+    | (*byte-character-ctype-memo* := next-method());
+end;
+
+define method print-message
+    (type :: <byte-character-ctype>, stream :: <stream>)
+    => ();
+  write("<byte-character>", stream);
+end;
+
+define method csubtype-dispatch (type1 :: <singleton-ctype>,
+				 type2 :: <byte-character-ctype>)
+    => res :: <boolean>;
+  let val = type1.singleton-value;
+  instance?(val, <literal-character>)
+    & instance?(val.literal-value, <byte-character>);
+end;
 
 
 //// Multi-values types:
