@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.17 2001/02/04 23:18:32 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.18 2001/02/08 22:27:39 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -253,10 +253,10 @@ end;
 // Include a given ".h" file, which is expected to be in your include
 // search path (as specified in CPATH or via -I switches.
 //
-define method maybe-emit-include
-    (name :: <byte-string>, file :: <file-state>)
+define function maybe-emit-include
+    (name :: <byte-string>, file :: <file-state>, #key left = '"', right = '"')
   unless (element(file.file-includes-exist-for, name, default: #f))
-    format(file.file-body-stream, "#include \"%s\"\n\n", name);
+    format(file.file-body-stream, "#include %s%s%s\n\n", left, name, right);
     element(file.file-includes-exist-for, name) := #t;
   end;
 end;
@@ -452,6 +452,12 @@ define method c-name-global (name :: <name>) => (result :: <byte-string>);
     = string-to-c-name(as(<string>,
 			  name.name-module.module-home.library-name));
   concatenate(library-name, "Z", c-name(name));
+end method;
+
+// Needed for <meta-cclass>.
+define method c-name-global (name :: <anonymous-name>) => (result :: <byte-string>);
+  concatenate(/*library-name,*/ "Y_", name.c-name);
+  // put in filename too!
 end method;
 
 // Emit a description of the <source-location> in C.  For 
