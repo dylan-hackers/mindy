@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.74 1996/06/26 18:18:39 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.75 1996/07/11 16:18:02 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -337,6 +337,7 @@ define method compile-library
 
     let (header, files) = parse-lid(lid-file);
 
+    do(process-feature, split-at-whitespace(target.default-features));
     do(process-feature,
        split-at-whitespace(element(header, #"features", default: "")));
     do(process-feature, command-line-features);
@@ -398,7 +399,6 @@ define method compile-library
     layout-instance-slots();
     let init-functions = make(<stretchy-vector>);
     let unit = make(<unit-state>, prefix: unit-prefix);
-    let objects-stream = make(<byte-string-output-stream>);
     let other-units = map-as(<simple-object-vector>, unit-name, *units*);
     let all-generated-files = #();
 
@@ -418,6 +418,18 @@ define method compile-library
     format(makefile, "# of this makefile.  So we use this fake "
 	     "target...\n#\n");
     format(makefile, "all : all-at-end-of-file\n\n");
+
+    // These next three streams gather filenames.  Objects-stream is
+    // simply *.o.  clean-stream is the list of files we will delete
+    // with the "clean" target--all objects plus the library archive
+    // (.a), the library summary (.du), and the executable.
+    // real-clean-stream is everything in clean plus *.c, *.s, and
+    // cc-lib-files.mak.
+    //
+    let objects-stream = make(<byte-string-output-stream>);
+    let clean-stream = make(<byte-string-output-stream>);
+    let real-clean-stream = make(<byte-string-output-stream>);
+    format(real-clean-stream, " %s", makefile-name);
 
     for (file in files, tlfs in tlf-vectors)
       block ()
@@ -477,6 +489,8 @@ define method compile-library
 	output-c-file-rule(makefile, c-name, o-name, target);
 	all-generated-files := add!(all-generated-files, c-name);
 	format(objects-stream, " %s", o-name);
+	format(clean-stream, " %s", o-name);
+	format(real-clean-stream, " %s %s", o-name, c-name);
 
       exception (<simple-restart>,
 		   init-arguments:
@@ -518,6 +532,8 @@ define method compile-library
       output-c-file-rule(makefile, c-name, o-name, target);
       all-generated-files := add!(all-generated-files, c-name);
       format(objects-stream, " %s", o-name);
+      format(clean-stream, " %s", o-name);
+      format(real-clean-stream, " %s %s", o-name, c-name);
     end;
 
     format(*debug-output*, "Emitting Library Heap.\n");
@@ -538,6 +554,8 @@ define method compile-library
     format(makefile, "\t%s\n", assemble-string);
     all-generated-files := add!(all-generated-files, s-name);
     format(objects-stream, " %s", o-name);
+    format(clean-stream, " %s", o-name);
+    format(real-clean-stream, " %s %s", o-name, s-name);
 
     let objects = string-output-stream-string(objects-stream);
     
@@ -633,9 +651,15 @@ define method compile-library
 	  format(makefile, "\n%s : %s%s inits.obj heap.obj\n",
 		 executable, ar-name, unit-libs);
 	  format(makefile,
-		 "\tlink %s /out:%s %s inits.obj heap.obj %s\n", 
+		 "\tlink %s /out:%s %s %s"
+		   " inits.obj heap.obj runtime.lib gc.lib\n", 
 		 target.link-executable-flags,
 		 executable, ar-name, unit-libs);
+	  format(clean-stream, " %s inits.obj heap.obj %s", 
+		 ar-name, executable);
+	  format(real-clean-stream,
+		 " %s inits.c inits.obj heap.s heap.obj %s", 
+		 ar-name, executable);
 	else
 	  format(makefile, "\n%s : %s %s%s\n",
 		 executable, objects, ar-name, unit-libs);
@@ -644,6 +668,9 @@ define method compile-library
 		 target.link-executable-command,
 		 flags, target.link-executable-flags, executable, 
 		 ar-name, linker-args);
+	  format(clean-stream, " %s inits.o heap.o %s", ar-name, executable);
+	  format(real-clean-stream, " %s inits.c inits.o heap.s heap.o %s", 
+		 ar-name, executable);
 	end if;
 	format(makefile, "\nall-at-end-of-file : %s\n", executable);
       end;
@@ -663,12 +690,21 @@ define method compile-library
 
       end-dumping(dump-buf);
       format(makefile, "\nall-at-end-of-file : %s\n", ar-name);
+      format(clean-stream, " %s", ar-name);
+      format(real-clean-stream, " %s %s.lib.du", ar-name, 
+	     as-lowercase(lib-name));
     end;
 
     if (log-dependencies)
       spew-dependency-log(concatenate(unit-prefix, ".dep"));
     end if;
 
+    format(makefile, "\nclean :\n");
+    format(makefile, "\t%s %s\n", target.delete-file-command, 
+	   clean-stream.string-output-stream-string);
+    format(makefile, "\nrealclean :\n");
+    format(makefile, "\t%s %s\n", target.delete-file-command, 
+	   real-clean-stream.string-output-stream-string);
     close(makefile);
     if (pick-which-file(makefile-name, temp-makefile-name, target) = #t)
       // If the new makefile is different from the old one, then we need
@@ -844,7 +880,7 @@ define method incorrect-usage () => ();
 	 "\t-tfilename\tGet target environment information from \n"
 	   "\t\t\tfilename instead of the default targets.ini\n");
   force-output(*standard-error*);
-  error("Incorrect usage");
+  exit(exit-code: 1);
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
@@ -857,10 +893,20 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let lid-file = #f;
   let features = #();
   let log-dependencies = #f;
-  let target-machine = #"hppa-hpux";   // Need some better way than 
-                                       // assuming we always want an 
-                                       // HP compiler...
-  let targets-dot-ini = "/afs/cs/project/gwydion/compiler/include/targets.ini";
+  let target-machine = 
+       #if (hppa-hpux)
+	  #"hppa-hpux";
+       #elseif (i386-win32)
+	  #"i386-win32";
+       #else
+	  #"unknown";
+       #endif
+  let targets-dot-ini = 
+       #if (i386-win32)
+	  "d:/nick/targets.ini";
+       #else
+	  "/afs/cs/project/gwydion/compiler/include/targets.ini";
+       #endif
   let no-binaries = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
