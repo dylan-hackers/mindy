@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.15 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.16 1996/04/13 21:39:00 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -99,6 +99,10 @@ define constant <slot-allocation>
   = one-of(#"instance", #"class", #"each-subclass", #"virtual");
 
 define class <slot-descriptor> (<object>)
+  //
+  // Some human-readable name for this slot, if one is available.
+  constant slot slot-name :: false-or(<byte-string>) = #f,
+    init-keyword: name:;
   //
   // How this slot is to be allocated.
   constant slot slot-allocation :: <slot-allocation>,
