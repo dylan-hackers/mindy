@@ -1,1 +1,10 @@
 configure
+config.log
+config.status
+config.cache
+gen-makefile
+mk-build-tree
+Defaults
+GNUmakefile
+force.timestamp
+
