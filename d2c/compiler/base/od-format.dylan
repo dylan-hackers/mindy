@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.24 1995/12/09 00:12:11 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.25 1995/12/13 04:13:14 rgs Exp $
 
 /*
 
@@ -1625,7 +1625,8 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
 
     let (flags, code) = buffer-header-word(buffer, next);
     state.od-next := next + $word-bytes;
-    assert(logand(flags, $odf-header-flag) = $odf-header-flag);
+// Okay, the assertion holds.  The assertion itself is a bottleneck.  -rgs
+//    assert(logand(flags, $odf-header-flag) = $odf-header-flag);
     select (logand(flags, $odf-etype-mask))
      $odf-object-definition-etype =>
        assert(code < $dispatcher-table-size);
@@ -1745,15 +1746,19 @@ end method;
 
 // Utility that loads an object's subobjects into a stretchy-vector.
 //
-define /* exported */ method load-subobjects-vector (state :: <load-state>)
- => res :: <stretchy-vector>;
-
-  let contents = make(<stretchy-vector>);
-  let part = load-object-dispatch(state);
-  until (part = $end-object)
-    add!(contents, part);
-    part := load-object-dispatch(state);
-  end;
+define /* exported */ method load-subobjects-vector
+    (state :: <load-state>, #key size-hint)
+ => (res :: <vector>);
+  let contents = if (size-hint)
+		   make(<simple-object-vector>, size: size-hint);
+		 else
+		   make(<stretchy-vector>);
+		 end if;
+  for (part = load-object-dispatch(state) then load-object-dispatch(state),
+       i :: <fixed-integer> from 0,
+       until: part = $end-object)
+    contents[i] := part;
+  end for;
   contents;
 end method;
 
@@ -2179,11 +2184,14 @@ end method;
 define method make-loader-guts 
     (state :: <load-state>, info :: <make-info>)
  => res :: <object>;
-  let vec = load-subobjects-vector(state);
-  assert(vec.size == info.init-keys.size);
+  let key-count = info.init-keys.size;
+  let vec = load-subobjects-vector(state, size-hint: key-count);
+  assert(vec.size == key-count);
   let keys = #();
   let losers = #();
-  for (val in vec, key in info.init-keys, i from 0)
+  for (i from 0 below key-count)
+    let key = info.init-keys[i];
+    let val = vec[i];
     if (key & obj-resolved?(val))
       keys := pair(key, pair(val.actual-obj, keys));
     elseif (info.setter-funs[i])
