@@ -1,0 +1,24 @@
+&makegen_include("../cocoa-Makegen");
+
+#$D2CFLAGS = $D2CFLAGS . ' -L../../../d2c/runtime/melange -L.';
+
+
+#&emit_c_file_rule('call-by-value-wrappers') if ($enable_d2c);
+#
+#&emit_library_rule(
+#    'carbon', '$(BUILDROOT)/force.timestamp', '', 'compile',
+#    'no-mindy', 'install'
+#);
+
+print <<EOF;
+export CCFLAGS = -ObjC
+
+cocoa-test: cocoa-test.lid cocoa-test.dylan cocoa-test-exports.dylan
+	d2c -L../cocoa cocoa-test.lid
+	../tools/compose-cocoa-app cocoa-test
+
+clean:
+	-rm -f *.o *.s *.a *.c *.mak  *~ cocoa-test
+	-rm -rf *.app *.app.old .libs
+
+EOF
