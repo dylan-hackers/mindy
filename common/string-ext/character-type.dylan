@@ -1,11 +1,8 @@
 module:   character-type
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-synopsis: Implements character tests that are in C's ctype library, 
-          as well as predecessor and successor (which help preserve
-          sanity while stepping through all possible characters)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.4 1996/11/04 11:57:11 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.5 1997/01/16 15:15:56 nkramer Exp $
 
 //======================================================================
 //
@@ -31,6 +28,11 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-ty
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
+
+
+// Implements character tests that are in C's ctype library, as well
+// as predecessor and successor (which help preserve sanity while
+// stepping through all possible characters)
 
 // isalpha
 //
