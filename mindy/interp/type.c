@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.20 1994/11/04 13:14:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.21 1994/11/06 23:02:14 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -1294,8 +1294,13 @@ static obj_t trans_simp_type(obj_t type)
     return transport(type, sizeof(struct singleton));
 }
 
-static int scav_limint(struct object *ptr)
+static int scav_limint(struct object *o)
 {
+    struct lim_int *ptr = (struct lim_int *)o;
+
+    scavenge(&ptr->min);
+    scavenge(&ptr->max);
+
     return sizeof(struct lim_int);
 }
 
