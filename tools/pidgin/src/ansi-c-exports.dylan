@@ -146,7 +146,8 @@ define module c-file
     <c-file>,
       c-file-name,
       c-file-system-header?,
-      c-file-contents,
+      c-file-included-files,
+      c-file-declarations,
       add-c-declaration!,
       add-c-file!;
 end module;
