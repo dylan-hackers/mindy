@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.28 1995/12/06 23:27:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.29 1995/12/07 14:19:23 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -683,10 +683,10 @@ end;
 define constant $limited-integer-table = make(<limited-integer-table>);
 
 define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
-  slot low-bound :: union(<integer>, <false>), 
+  slot low-bound :: union(<extended-integer>, <false>), 
        required-init-keyword: low-bound:;
 
-  slot high-bound :: union(<integer>, <false>), 
+  slot high-bound :: union(<extended-integer>, <false>), 
        required-init-keyword:  high-bound:;
 end class;
 
@@ -748,6 +748,13 @@ define method make-canonical-limited-integer
      low-bound :: union(<integer>, <false>),
      high-bound :: union(<integer>, <false>))
     => res :: <ctype>;
+  if (low-bound)
+    low-bound := as(<extended-integer>, low-bound);
+  end;
+  if (high-bound)
+    high-bound := as(<extended-integer>, high-bound);
+  end;
+  
   if (base-class == dylan-value(#"<fixed-integer>"))
     if (~low-bound | low-bound < runtime-$minimum-fixed-integer)
       low-bound := runtime-$minimum-fixed-integer;
@@ -982,7 +989,6 @@ end;
 define method really-make-canonical-singleton
     (thing :: <literal-integer>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
-  let value = thing.literal-value;
   make(<limited-integer-ctype>,
        base-class: base-class-hint | ct-value-cclass(thing),
        low-bound: value, high-bound: value);
