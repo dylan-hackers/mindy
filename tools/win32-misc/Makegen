@@ -1,13 +1,12 @@
 
-# Must be properly quoted for nmake
-$GwydionDir = '^%GwydionDir^%';
+$GwydionDir = $destdir;
 
 # Installs a batch file which calls the Perl script with the argument
 # we give here, plus the same arguments that the batch file was called
 # with
 sub install_one_arg_wrapper {
     local ($cmd, $name, $ext, $arg1) = @_;
-    local ($dst) = "\$(DESTDIR)/bin";
+    local ($dst) = "$destdir/bin";
     print "$dst/$name.bat :\n";
     $dst =~ tr|/|\\|;  # translate / to \ for batch files
     print "\t", 'echo @', "$cmd $GwydionDir\\bin\\$name$ext $arg1", 
@@ -27,7 +26,7 @@ sub install_perl_scripts {
     local ($name);
     foreach $name (@names) {
 	&install_no_arg_wrapper('perl', $name, '.perl');
-	&install_from_src('bin', "$name.perl");
+	&install_from_src("$destdir/bin", "$name.perl");
     }
 }
 
@@ -36,7 +35,7 @@ sub install_rcs_wrappers {
     local (@names) = @_;
     local ($name);
     foreach $name (@names) {
-	local ($dst) = "\$(DESTDIR)/bin";
+	local ($dst) = "$destdir/bin";
 	print "$dst/$name.exe : rcs-wrapper.exe\n";
 	$dst =~ tr|/|\\|;  # translate / to \ for batch files
 	print "\tcopy rcs-wrapper.exe $dst\\$name.exe\n";
@@ -46,13 +45,13 @@ sub install_rcs_wrappers {
 
 sub install_backslash_wrapper {
     local ($newname, $wrapped) = @_;
-    local ($dst) = "\$(DESTDIR)/bin";
+    local ($dst) = "$destdir/bin";
     print "$dst/$newname.bat :\n";
     $dst =~ tr|/|\\|;  # translate / to \ for batch files
     print "\t", 'echo @', 
 	    "perl $GwydionDir\\bin\\backslash-wrapper.perl $wrapped", 
             ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$newname.bat\n";
-    push(@install_dependencies, "\$(DESTDIR)/bin/$newname.bat");
+    push(@install_dependencies, "$destdir/bin/$newname.bat");
 }
 
 # rcs-wrapper.  We can't use emit_c_file_rule because they don't build
@@ -65,6 +64,7 @@ rcs-wrapper.exe : \$(SRCDIR)/rcs-wrapper.c
 EOF
 push(@compile_dependencies, 'rcs-wrapper.exe');
 
+if ($install_rcs_wrappers_n_stuff) {
 # Wrapped RCS stuff
 do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
 
@@ -74,29 +74,33 @@ do install_perl_scripts('configure',
 			'mk-rcs-links', 'tree-diff', 'unix-find', 'which');
 
 # rcsupdate needs the path to co.exe
-do install_from_src('bin', 'rcsupdate.perl');
+do install_from_src("$destdir/bin", 'rcsupdate.perl');
 do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
 			   "$GwydionDir\\rcs-bin\\co.exe");
+}
 
 # These files are in shared-misc, which doesn't do wrappers
 do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
 do install_no_arg_wrapper('perl', 'mk-build-tree', '.perl');
+
+if ($install_rcs_wrappers_n_stuff) {
 do install_no_arg_wrapper('perl', 'line-count', '.perl');
 
 # Custom utils that are straight batch files
-do install_from_src('bin', 'build-tags.bat');
-do install_from_src('bin', 'dytc.bat');
-do install_from_src('bin', 'mk-backup.bat');
+do install_from_src("$destdir/bin", 'build-tags.bat');
+do install_from_src("$destdir/bin", 'dytc.bat');
+do install_from_src("$destdir/bin", 'mk-backup.bat');
 
 # Custom perl scripts without wrappers
-do install_from_src('bin', 'find-unrcsed-files.perl');
-do install_from_src('bin', 'module-tool.perl');
-do install_from_src('bin', 'shadows.perl');
+do install_from_src("$destdir/bin", 'find-unrcsed-files.perl');
+do install_from_src("$destdir/bin", 'module-tool.perl');
+do install_from_src("$destdir/bin", 'shadows.perl');
 
 # Wrappers for DOS commands that don't like forward slashes
-do install_from_src('bin', 'backslash-wrapper.perl');
+do install_from_src("$destdir/bin", 'backslash-wrapper.perl');
 do install_backslash_wrapper('dbccopy', 'copy');
 do install_backslash_wrapper('sattrib', 'attrib');
+}
 
 # Can't use emit_c_file_rule because they don't build executables
 print <<EOF;
@@ -105,5 +109,5 @@ dbclink.exe : \$(SRCDIR)/dbclink.c
 	cl -nologo -Ox \$(SRCDIR)/dbclink.c -o dbclink.exe
 
 EOF
-do install ('bin', 'dbclink.exe');
+do install ("$destdir/bin", 'dbclink.exe');
 push(@compile_dependencies, 'dbclink.exe');

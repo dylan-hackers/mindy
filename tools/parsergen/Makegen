@@ -1,4 +1,8 @@
+&makegen_include("../common-Makegen");
 
-$CPPFLAGS = '-I$(SRCDIR)';
-&emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
-		   'compile', 'install');
+if ($stage2) {
+  &emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
+		     'compile', 'install');
+};
+
+&emit_dbc_link_rule('parsergen-lib.dbc', 'library.dbc lisp-read.dbc parsergen.dbc');

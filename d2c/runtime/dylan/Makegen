@@ -1,7 +1,10 @@
 
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
 $D2CFLAGS = '';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+if ($target_name eq "x86-linux") {
+  $D2C = $D2C . ' -F"gcc -g -I' . "$srcroot/d2c/runtime" .
+	 ' -c %s -o %s" -fnum.c';
+};
+
 
 do emit_library_rule(
     'Dylan', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'

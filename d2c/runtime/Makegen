@@ -1,22 +1,15 @@
+if ($host_name eq $target_name) {
+  do compile_subdirs(
+      'c-code',
+      'gc'
+  );
+};
+
 do compile_subdirs(
-    'c-code',
-    'gc',
     'dylan',
     'melange',
-    'streams',
-    'standard-io',
-    'print',
-    'format',
-    'random',
-    'coll-ext',
-    'table-ext',
-    'string-ext',
-    'regexp',
-    'format-out',
-    'matrix',
-    'time',
-    'stream-ext',
-    'transcendental'
+    '../../common',
+    'random'
 );
 
-do install_from_src('include', "runtime.h");
+do install_from_src($includedir, "runtime.h");

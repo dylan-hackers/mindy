@@ -131,7 +131,7 @@ test_cpp.exe: test_cpp.obj gc_cpp.h gc.h gc.lib
 EOF
 
     push(@compile_dependencies, 'gc.lib');
-    do install('lib', 'gc.lib');
+    do install($libdir, 'gc.lib');
 
     push(@files_to_clean, '$(OBJS)', 'gc.lib', 'gctest', 'gctest_dyn_link',
 	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
@@ -431,7 +431,7 @@ gctest_dyn_link: test.o libgc.so
 EOF
     push(@compile_dependencies, "libgc$dot_lib");
 
-    do install('lib', "libgc$dot_lib");
+    do install($libdir, "libgc$dot_lib");
 
     push(@files_to_clean, '$(OBJS)', "libgc$dot_lib", 'gctest',
 	 'gctest_dyn_link', 

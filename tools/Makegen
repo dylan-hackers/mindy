@@ -9,26 +9,17 @@ if ($features{'compiled_for_win32'}) {
 
 do compile_subdirs(
     'elisp',
-    'melange',
     'parsergen',
-    'lisp2dylan',
-    'versioner',
+    'melange',
     'shared-misc',
-    'make-exports',
-    'synopsis',
     $system_dependent_misc
 );
 
-print <<'EOF';
-.PHONY: force
-
-force:
-	touch force.timestamp
-
-EOF
-
-unless (-e "force.timestamp") {
-    open(FILE, ">force.timestamp")
-	|| die("Can't create force.timestamp: $!\n");
-    close(FILE);
+if ($stage2) {
+  do compile_subdirs(
+      'lisp2dylan',
+      'versioner',
+      'make-exports',
+      'synopsis'
+  );
 }

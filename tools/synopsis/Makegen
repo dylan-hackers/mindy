@@ -1,4 +1,4 @@
+&makegen_include("../common-Makegen");
 
-$CPPFLAGS = '-I$(SRCDIR)';
 &emit_library_rule('Synopsis', '$(BUILDROOT)/force.timestamp', '', 
 		   'compile', 'install');

@@ -1,9 +1,9 @@
 
 if ($stage2) {
-    do compile_subdirs('runtime', 'tests', 'demos', 'compiler', 'dig');
+    do compile_subdirs('runtime', 'compiler', 'demos', 'dig');
 }
 else {
-    do compile_subdirs('compiler', 'runtime', 'tests', 'demos', 'dig');
+    do compile_subdirs('compiler', 'runtime', 'demos', 'dig');
     print <<'EOF';
 .PHONY: d2c-compile d2c-install
 
@@ -14,18 +14,4 @@ d2c-install: install
 	$(MAKE) -C compiler d2c-install
 
 EOF
-}
-
-print <<'EOF';
-.PHONY: force
-
-force:
-	touch force.timestamp
-
-EOF
-
-unless (-e "force.timestamp") {
-    open(FILE, ">force.timestamp")
-	|| die("Can't create force.timestamp: $!\n");
-    close(FILE);
 }

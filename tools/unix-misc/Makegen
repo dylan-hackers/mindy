@@ -1,5 +1,5 @@
 
-do install_executable_from_src('bin', 'mk-rcs-links');
+do install_executable_from_src($bindir, 'mk-rcs-links');
 
 # rcsupdate seems to be quite HP-specific.
 #
@@ -11,6 +11,6 @@ rcsupdate : \$(SRCDIR)/rcsupdate.c
 	gcc \$(SRCDIR)/rcsupdate.c -o rcsupdate
 
 EOF
-	do install ('bin', 'rcsupdate');
+	do install ($bindir, 'rcsupdate');
 	push(@compile_dependencies, 'rcsupdate');
 }

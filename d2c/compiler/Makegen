@@ -9,7 +9,7 @@
     'main'
 );
 
-&install_from_src('etc', "platforms.descr");
+&install_from_src($sysconfdir, "platforms.descr");
 
 $stage2 || print <<'EOF';
 .PHONY: d2c-compile

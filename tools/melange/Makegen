@@ -1,5 +1,4 @@
-
-$D2CFLAGS = "-L. -L/afs/cs/project/gwydion/compiler/lib";
+&makegen_include("../common-Makegen");
 
 if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "win32-vc-decl";
@@ -11,23 +10,28 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "linux-c-decl";
 } else {
     &uknown_platform_error();
-}
+};
 
 &emit_parsergen_rule('c-parse');
 
-&emit_library_rule
-    ($c_decl_lid,
-     '$(BUILDROOT)/force.timestamp',
-     '',
-     'compile'
-     );
+if ($stage2) {
+  &emit_library_rule
+      ($c_decl_lid,
+       '$(BUILDROOT)/force.timestamp',
+       '',
+       'compile'
+       );
+};
 
 &emit_parsergen_rule('int-parse');
 
-&emit_library_rule
-    ('melange',
-     '$(BUILDROOT)/force.timestamp melange-c.lib.du',
-     '-L.',
-     'compile', 'install'
-     );
+if ($stage2) {
+  &emit_library_rule
+      ('melange',
+       '$(BUILDROOT)/force.timestamp melange-c.lib.du',
+       '-L.',
+       'compile', 'install'
+       );
+};
+
 &emit_dbc_link_rule('melange.dbc', 'melange-c-lib.dbc melange-lib.dbc');

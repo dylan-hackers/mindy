@@ -1,12 +1,12 @@
 
 $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
-    . '-L../runtime/dylan -L../runtime/streams '
-    . '-L../runtime/print -L../runtime/format '
-    . '-L../runtime/random -L../runtime/coll-ext '
-    . '-L../runtime/string-ext -L../runtime/melange '
-    . '-L../runtime/table-ext -L../runtime/standard-io '
-    . '-L../runtime/regexp';
-$CPPFLAGS = '-I$(SRCROOT)/runtime -I$(SRCDIR)';
+    . '-L../runtime/dylan -L../../common/streams '
+    . '-L../../common/print -L../../common/format '
+    . '-L../runtime/random -L../../common/coll-ext '
+    . '-L../../common/string-ext -L../runtime/melange '
+    . '-L../../common/table-ext -L../../common/standard-io '
+    . '-L../../common/regexp';
+$CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR)';
 
 # We're not going to worry about whether dig is actually *useful* on
 # this platform, only whether it can be compiled.
