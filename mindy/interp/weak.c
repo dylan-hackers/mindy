@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.6 1994/10/05 21:05:00 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.7 1995/04/19 02:56:51 wlott Exp $
 *
 * This file implements weak pointers.
 *
@@ -100,6 +100,8 @@ static int scav_weak_pointer(struct object *obj)
 	weakptr->next = WeakPointers;
 	WeakPointers = weakptr;
     }
+    else
+	scavenge(&weakptr->object);
 
     return sizeof(struct weak_pointer);
 }
@@ -112,7 +114,6 @@ static obj_t trans_weak_pointer(obj_t weakptr)
 void scavenge_weak_roots(void)
 {
     scavenge(&obj_WeakPointerClass);
-    WeakPointers = NULL;
 }
 
 void break_weak_pointers(void)
@@ -129,6 +130,8 @@ void break_weak_pointers(void)
 	n = w->next;
 	w->next = NULL;
     }
+
+    WeakPointers = NULL;
 }
 
 
