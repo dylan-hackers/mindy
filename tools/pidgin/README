@@ -20,3 +20,8 @@ Gwydion Dylan website at:
 
 Eric Kidd
 27 March 1999
+
+----- PROBLEM AREAS -----
+c-parser.input needs to know about enum members for constant folding
+c-lexer.dylan needs to know about typedefs (in a complicated fashion, too)
+c-parser.input knows too much about function arguments
