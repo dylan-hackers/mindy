@@ -241,15 +241,10 @@ for (name in #[#"fixnum-negative", #"fixnum-lognot"])
      pure: #t);
 end;
   
-for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
-		 #"fixnum-truncate/"])
-  // Note: these arn't pure because they have to signal an error for
-  // divide by zero.
-  define-primitive
-    (name,
-     #(#"<fixed-integer>", #"<fixed-integer>"),
-     #(values:, #"<fixed-integer>", #"<fixed-integer>"));
-end;
+define-primitive
+  (#"fixnum-divide", #(#"<fixed-integer>", #"<fixed-integer>"),
+   #(values:, #"<fixed-integer>", #"<fixed-integer>"),
+   pure: #t);
 
 
 // Single float operations.

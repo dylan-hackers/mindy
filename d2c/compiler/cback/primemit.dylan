@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.9 1995/08/23 20:33:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.10 1995/08/27 01:18:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -614,58 +614,7 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
-  (#"fixnum-floor/",
-   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     spew-pending-defines(output-info);
-     let (x, y) = extract-operands(operation, output-info,
-				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s / %s)", x, y),
-				 *long-rep*),
-			    pair(format-to-string("(%s %% %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
-   end);
-
-define-primitive-emitter
-  (#"fixnum-ceiling/",
-   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     spew-pending-defines(output-info);
-     let (x, y) = extract-operands(operation, output-info,
-				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s / %s)", x, y),
-				 *long-rep*),
-			    pair(format-to-string("(%s %% %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
-   end);
-
-define-primitive-emitter
-  (#"fixnum-round/",
-   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     spew-pending-defines(output-info);
-     let (x, y) = extract-operands(operation, output-info,
-				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s / %s)", x, y),
-				 *long-rep*),
-			    pair(format-to-string("(%s %% %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
-   end);
-
-define-primitive-emitter
-  (#"fixnum-truncate/",
+  (#"fixnum-divide",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
