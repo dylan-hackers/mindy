@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.24 1996/02/19 20:36:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.25 1996/02/20 00:12:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -951,7 +951,7 @@ for-clause (<in-token> variable <comma-token> expression <comma-token>
 
 :type variable-or-false |false-or(<parameter>)|
 
-variable-or-false (<false>)
+variable-or-false (<false-token>)
   #f;
 %
 
