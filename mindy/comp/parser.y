@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.29 1996/03/09 12:01:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.30 1996/03/21 17:39:46 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -658,7 +658,10 @@ exception_clauses:
 
 exception_clause:
 	EXCEPTION variable_name body
-	{ free($1);
+	{ 
+	  warn($1->line, "Token following EXCEPTION must be surrounded "
+	       "by parentheses");
+	  free($1);
 	  $$ = make_exception_clause(make_varref(make_id($2)),
 				     NULL, NULL, $3);
 	}
