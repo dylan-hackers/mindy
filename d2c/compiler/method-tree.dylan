@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.5 1995/05/26 13:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.6 1995/05/29 22:47:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -507,11 +507,48 @@ define method ct-sorted-applicable-methods
     => res :: union(<list>, <false>);
   block (return)
     if (gf.generic-defn-sealed?)
-      let meths = gf.generic-defn-methods;
-      if (meths == #())
-	return(#());
-      elseif (meths.tail == #())
-	return(meths);
+      let maybe-applicable = #();
+      let definitely-applicable = #();
+      for (meth in gf.generic-defn-methods)
+	select (compare-specializers(meth.get-specializers, call-types, #f))
+	  #"disjoint" => #f;
+	  #"<", #"unordered" =>
+	    definitely-applicable := pair(meth, definitely-applicable);
+	  #">", #"ambiguous", #"unknown" =>
+	    maybe-applicable := pair(meth, maybe-applicable);
+	end;
+      end;
+      
+      if (definitely-applicable == #())
+	// Nothing is definitely applicable.
+	if (maybe-applicable == #())
+	  // And nothing is potentially applicable.
+	  return(#());
+	elseif (maybe-applicable.tail == #())
+	  // Only one method is potentially applicable.  Select it.
+	  return(maybe-applicable);
+	end;
+      elseif (maybe-applicable == #())
+	// We know precisely which methods are applicable, so not just
+	// check to see if we can sort them.
+	if (definitely-applicable.tail == #())
+	  // There is only one method applicable, so sorting it is easy.
+	  return(definitely-applicable);
+	else
+	  block (punt)
+	    return(sort!(definitely-applicable,
+			 test: method (meth1, meth2)
+				 select (compare-specializers
+					   (meth1.get-specializers,
+					    meth2.get-specializers,
+					    #f))
+				   #">" => #t;
+				   #"<" => #f;
+				   #"ambiguous", #"unknown" => punt();
+				 end;
+			       end));
+	  end;
+	end;
       end;
     end;
 
@@ -521,7 +558,7 @@ define method ct-sorted-applicable-methods
       for (child in seals)
 	select (compare-specializers(child.seal-types, call-types, #f))
 	  #"disjoint" => #f;
-	  #">", "unordered" =>
+	  #"<", "unordered" =>
 	    candidate-seal := child;
 	    found();
 	  otherwise =>
@@ -560,7 +597,7 @@ define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
 	select (compare-specializers(get-specializers(sub), types, #f))
 	  #"disjoint" =>
 	    #f;
-	  #">" =>
+	  #"<", #"unordered" =>
 	    intersects-with := sub;
 	    found();
 	  otherwise =>
