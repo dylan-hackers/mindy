@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.22 2001/07/21 07:28:43 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.23 2001/07/24 06:32:08 housel Exp $
 copyright: see below
 
 
@@ -3648,6 +3648,20 @@ define method class-defn-override-infos-setter
   end;
 end;
 
+define method class-defn-keyword-infos
+    (defn :: <real-class-definition>) => res :: <simple-object-vector>;
+  let class = defn.class-defn-cclass;
+  class & class.keyword-infos;
+end;
+
+define method class-defn-keyword-infos-setter
+    (vec :: false-or(<simple-object-vector>), defn :: <real-class-definition>)
+    => ();
+  if (vec)
+    defn.class-defn-cclass.keyword-infos := vec;
+  end;
+end;
+
 define method class-defn-vector-slot
     (defn :: <real-class-definition>) => res :: false-or(<vector-slot-info>);
   let class = defn.class-defn-cclass;
@@ -3678,7 +3692,9 @@ define constant $class-definition-slots
 		     class-defn-all-slot-infos, #f,
 		       class-defn-all-slot-infos-setter, */
 		     class-defn-override-infos, #f,
-		       class-defn-override-infos-setter
+		       class-defn-override-infos-setter,
+		     class-defn-keyword-infos, #f,
+		       class-defn-keyword-infos-setter
     /* ### -- currently recomputed, so we don't really need to dump them.
 		     , class-defn-vector-slot, #f,
 		       class-defn-vector-slot-setter */));
