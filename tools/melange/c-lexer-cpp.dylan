@@ -75,6 +75,65 @@ define constant default-cpp-table = make(<string-table>);
 //
 define /* exported */ constant include-path :: <deque> = make(<deque>);
 
+// *framework-path* -- exported variable
+
+define variable *framework-paths* :: <vector> = make( <vector> );
+
+// *frameworks* -- private variable
+// This is the table of (MacOSX/Darwin-style) framework include paths
+// keyed by framework name
+// This is of litle interest outside MacOSX but is here to make the code simpler
+
+define variable *frameworks* :: <table> = make( <table> );
+
+// These routines support finding frameworks at run time
+
+define method framework-exists?( path :: <string>, name :: <string> )
+=> ( exists :: <boolean> )
+    let framework-header :: <string> =
+        concatenate( path, name, ".h" );
+    block()
+        let file = make(<file-stream>, locator: path, 
+                        direction: #"input");	
+        close( file );
+        #t;
+    exception (<file-does-not-exist-error>)
+        #f;
+    end block;
+end method framework-exists?;
+
+define method find-frameworks( frameworks :: <vector> )
+=> ()
+    for( framework :: <string> in frameworks )
+        find-framework( framework );
+    end for;
+end method find-frameworks;
+
+define method find-framework( name :: <string> )
+=> ()
+    for( path :: <string> in *framework-paths* )
+        let full-path :: <string> = concatenate( path, name ) ;
+        // If it has a headers directory
+        let framework-headers-path :: <string> = 
+                concatenate( full-path, "/Headers/" );
+        if( framework-exists?( framework-headers-path, name ) )
+            // Add it to the include table
+            let framework-name :: <string> = 
+                    copy-sequence( name, end: name.size - 10 ); 
+            *frameworks*[ as( <symbol>, framework-name ) ] := 
+                    framework-headers-path;
+            // Guess that it has a frameworks directory and add this
+            // It's a little wasteful, but it isolates us from file-system
+            // And the path won't be added if we don't find a header
+            // Note that this means that parent frameworks must be listed before children
+            let recursive-path :: <string> = 
+                    concatenate( full-path, "/Frameworks/" );
+            *framework-paths* := 
+                add!( *framework-paths*, recursive-path );
+        end if;
+    end for;
+end method find-framework;
+
 // This routine grabs tokens from within the "parameter list" of a
 // parameterized macro use.  The calling routine should have already consumed
 // the opening paren.  The result is a reversed list of reversed token lists.
@@ -255,6 +314,46 @@ define /* exported */ method check-cpp-expansion
   end case;
 end method check-cpp-expansion;
 
+// framework-include
+// Ceck for #include<Framework/Framework.h>
+
+define method framework-include( filename :: <string> )
+=>( full-name :: false-or( <string> ), stream :: false-or( <stream> ) )
+	// Break the include down into a framework name and a file name
+	let slash-position :: false-or( <integer> ) = 
+		subsequence-position( filename, "/" );
+	if( slash-position )
+		let framework-name :: <string> = 
+			copy-sequence( filename, end: slash-position );
+		// Try to find the framework
+		let framework-path :: false-or( <string> ) = 
+			element( *frameworks*, as( <symbol>, framework-name), 
+				default: #f );
+		// If we found it, try to open the file
+		if( framework-path )
+			let file-name :: <string> = 
+				copy-sequence( filename, start: slash-position + 1 );
+			let full-path :: <string> =
+				concatenate!( framework-path, file-name );
+			block()
+      			values(full-path, 
+      				make(<file-stream>, locator: full-path, 
+      					direction: #"input"));			
+			exception (<file-does-not-exist-error>)
+			  values( #f, #f );
+			end block;
+		else
+                        // It may be a nested framework
+                        // Try to find it
+			// Otherwise it's probably not a framework include.
+			// Let open-in-include-path try
+			values( #f, #f );
+		end if;
+	else
+		values( #f, #f );
+	end if;
+end method framework-include;
+
 // open-in-include-path -- exported function.
 //
 define /* exported */ function open-in-include-path
@@ -275,29 +374,36 @@ define /* exported */ function open-in-include-path
       values(#f, #f);
     end block;
   else
+
     // We don't have any "file-exists" functions, so we just keep trying
     // to open files until one of them fails to signal an error.
     block (return)
-      for (dir in include-path)
-	block ()
-	  #if (MacOS)
-	  	let full-name = if( (dir ~= "") & (dir ~= ":") )
-	  						concatenate(dir, ":", name);
-	  					else
-	  						name;
-	  					end if;
-	  #else
-	  	let full-name = concatenate(dir, "/", name);
-	  #endif
-	  let stream = make(<file-stream>, locator: full-name,
-			    direction: #"input");
-	  return(full-name, stream);
-	exception (<file-does-not-exist-error>)
-	  #f;
-	end block;
-      finally
-	values(#f, #f);
-      end for;
+        for (dir in include-path)
+            block ()
+            #if (MacOS)
+                    let full-name = if( (dir ~= "") & (dir ~= ":") )
+                                                            concatenate(dir, ":", name);
+                                                    else
+                                                            name;
+                                                    end if;
+            #else
+                    let full-name = concatenate(dir, "/", name);
+            #endif
+            let stream = make(<file-stream>, locator: full-name,
+                                direction: #"input");
+            return(full-name, stream);
+            exception (<file-does-not-exist-error>)
+            #f;
+            end block;
+        finally
+            // Try looking in the frameworks
+            let( file-path, file-stream ) = framework-include( name );
+            if( file-stream )
+                values( file-path, file-stream );
+            else
+                values(#f, #f);
+            end if;
+        end for;
     end block;
   end if;
 end function open-in-include-path;

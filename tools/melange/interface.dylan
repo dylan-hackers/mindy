@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.20 2003/01/30 12:16:57 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.21 2003/02/13 15:29:13 robmyers Exp $
 
 //======================================================================
 //
@@ -740,6 +740,9 @@ define method main (program, #rest args)
   add-option-parser-by-type(*argp*,
 			    <simple-option-parser>,
 			    long-options: #("shadow-structs"));
+  add-option-parser-by-type(*argp*,
+			    <repeated-parameter-option-parser>,
+			    long-options: #("framework"));
   
   // Parse our command-line arguments.
   unless (parse-arguments(*argp*, args))
@@ -765,6 +768,7 @@ define method main (program, #rest args)
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
   let regular-args = regular-arguments(*argp*);
   let structs? = option-value-by-long-name(*argp*, "shadow-structs");
+  let framework-dirs = option-value-by-long-name( *argp*, "framework" );
 
   // Handle --verbose.
   if (verbose?)
@@ -799,6 +803,13 @@ define method main (program, #rest args)
   #else
   	push(include-path, "./");
   #endif
+  
+  // Handle -framework
+  //NOTE: Parent frameworks of child frameworks must be given, 
+  //	and must be given before their child frameworks
+  for (dir in framework-dirs)
+    *framework-paths* := add(*framework-paths*, dir);
+  end for;
 
   // Handle regular arguments.
   let in-file = #f;

@@ -97,6 +97,8 @@ end for;
 
 *handle-c++-comments* := #t;
 
+*framework-paths* := #[ "/System/Library/Frameworks/", "/Library/Frameworks/", "~/Library/Frameworks/" ];
+
 
 // These constants should be moved here in the future.  Until the module
 // declarations can be sufficiently rearranged to allow their definition
