@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.6 1996/07/15 21:31:22 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.7 1996/12/05 11:23:24 nkramer Exp $
 
 
 ///======================================================================
@@ -899,12 +899,15 @@ define sealed method print-object
     write(stream, print-to-string(object.size));
     write(stream, ")}");
   else
-    pprint-logical-block(stream,
-			 prefix: concatenate(name-prefix),
-			 body: method (stream)
-				 print-items(object, print, stream);
-			       end method,
-			 suffix: "}");
+    pprint-logical-block
+      (stream,
+       body: method (stream)
+	       pprint-indent(#"current", 3, stream);
+	       write(stream, name-prefix);
+	       pprint-newline(#"fill", stream);
+	       print-items(object, print, stream);
+	       write(stream, "}");
+	     end method);
   end if;
 end method print-object;
 
