@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.9 1995/11/16 03:45:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.10 1995/12/04 16:43:53 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -238,8 +238,7 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 		      & (max == #f | instance?(max, <literal-integer>)))
 		  let min = min & min.literal-value;
 		  let max = max & max.literal-value;
-		  make(<limited-integer-ctype>, base-class: args[0],
-		       low-bound: min, high-bound: max);
+		  make-canonical-limited-integer(args[0], min, max);
 		end;
 	      end;
 	    otherwise =>
