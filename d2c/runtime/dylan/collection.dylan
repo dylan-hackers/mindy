@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.6 1995/12/05 03:34:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.7 1995/12/06 21:34:54 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -137,7 +137,6 @@ end method class-for-copy;
 
 // Collection Methods.
 
-/* ### not absolutly needed
 define method size (collection :: <collection>) => res :: <fixed-integer>;
   for (element in collection,
        result :: <fixed-integer> from 0)
@@ -178,13 +177,11 @@ define method do
     let keys = key-intersection(collection, more-collections);
     for (key in keys)
       apply(proc, collection[key],
-	    map(rcurry(element, key), more-collections));
+	    map(method (coll) coll[key] end method, more-collections));
     end for;
   end;
   #f;
 end method do;
-
-*/
 
 define inline method map
     (proc :: <function>, collection :: <collection>, #rest more-collections)
@@ -192,8 +189,6 @@ define inline method map
   apply(map-as, class-for-copy(collection), proc, collection,
 	more-collections);
 end;
-
-/* ### not absolutly needed
 
 define method map-as
     (class :: <class>, proc :: <function>, collection :: <collection>,
@@ -215,7 +210,7 @@ define method map-as
     for (key in keys)
       result[key]
 	:= apply(proc, collection[key],
-		 map(rcurry(element, key), more-collections));
+		 map(method (coll) coll[key] end method, more-collections));
     end for;
     result;
   end;
@@ -238,12 +233,10 @@ define method map-into
   for (key in keys)
     target[key]
       := apply(proc, collection[key],
-	       map(rcurry(element, key), more-collections));
+	       map(method (coll) coll[key] end method, more-collections));
   end for;
   target;
 end method map-into;
-
-*/
 
 define inline method any?
     (proc :: <function>, collection :: <collection>, #rest more-collections)
@@ -316,7 +309,6 @@ define inline method member?
   end;
 end method member?;
 
-/* ### not absolutly needed
 define method find-key
     (collection :: <collection>, proc :: <function>, #key skip, failure = #f)
     => key-or-failure :: <object>;
@@ -385,7 +377,12 @@ end method key-sequence;
 
 // No method on key-test for <collection>.
 
-*/
+
+// Explicit-key-collection generics
+
+define open generic remove-key!
+    (table :: <mutable-explicit-key-collection>, key :: <object>)
+ => (table :: <mutable-explicit-key-collection>);
 
 
 // Sequence generics
@@ -686,8 +683,6 @@ define method sequence-map-into
   target;
 end method sequence-map-into;
 
-/* ### not absolutly needed
-
 define method find-key
     (sequence :: <sequence>, proc :: <function>, #key skip, failure = #f)
     => key-or-failure :: <object>;
@@ -755,17 +750,41 @@ define sealed inline method key-test
   \==;
 end method key-test;
 
-define method concatenate (sequence :: <sequence>, #rest more-sequences)
+define inline method concatenate (sequence :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
   apply(concatenate-as, sequence.class-for-copy, sequence, more-sequences);
 end;
 
-/*
-define method concatenate-as
-    (class :: <class>, sequence :: <sequence>, #rest more-sequences)
-    => new-seq :: <sequence>;
-*/
+define method concatenate-as(cls :: <class>, sequence :: <sequence>,
+			     #rest more-sequences) => result :: <sequence>;
+  if (size (sequence) == #f
+	| any? (method (s) size (s) == #f end, more-sequences))
+    error ("CONCATENATE-AS not applicable to unbounded sequences");
+  end if;
+  let length = for (total = 0 then total + seq.size,
+		    seq in more-sequences)
+	       finally total + sequence.size;
+	       end for;
+		 
+  let result = make(cls, size: length);
+  let (init-state, limit, next-state, done?, current-key, current-element,
+       current-element-setter) = forward-iteration-protocol(result);
 
+  let new-state = for (elem in sequence,
+		       state = init-state then next-state(result, state))
+		    current-element(result, state) := elem;
+		  finally state;
+		  end for;
+  for (result-state = new-state
+	 then for (elem in sequence,
+		   state = result-state then next-state(result, state))
+		current-element(result, state) := elem;
+	      finally state;
+	      end for,
+       sequence in more-sequences)
+  end for;
+  result;
+end method concatenate-as;
 
 define inline method first
     (sequence :: <sequence>, #rest keys, #key default) => value :: <object>;
@@ -796,8 +815,6 @@ define inline method third-setter
     (new-value :: <object>, sequence :: <sequence>) => new-value :: <object>;
   sequence[2] := new-value;
 end;
-
-*/
 
 define method copy-sequence
     (sequence :: <sequence>, #key start :: <fixed-integer> = 0, end: last)
@@ -838,37 +855,4 @@ define inline method last-setter
     (new-value :: <object>, seq :: <sequence>) => value :: <object>;
   element(seq, seq.size - 1) := new-value;
 end method last-setter;
-
-// Experiment -- this is the same source as the general method, but more
-// specific type info.  How will the result differ?
-define method copy-sequence
-    (sequence :: <simple-object-vector>, #key start :: <fixed-integer> = 0, end: last)
- => (result :: <simple-object-vector>);
-  let seq-size :: <fixed-integer> = sequence.size;
-  let last :: <fixed-integer> = last | seq-size;
-  case
-    (last > seq-size) => error("End: (%=) out of range.", last);
-    (start < 0) => error("Start: (%=) out of range.", start);
-    (start > last) => error("Start: (%=) > End: (%=).", start, last);
-  end case;
-
-  let sz :: <fixed-integer> = last - start;
-  let result-cls :: <class> = class-for-copy(sequence);
-  let result :: result-cls = make(result-cls, size: sz);
-  let (init-state, limit, next-state, done?,
-       current-key, current-element) = forward-iteration-protocol(sequence);
-
-  for (index :: <fixed-integer> from 0 below start,
-       state = init-state then next-state(sequence, state))
-  finally
-    let (res-init, res-limit, res-next, res-done?, res-key,
-	 res-elem, res-elem-setter) = forward-iteration-protocol(result);
-    for (index :: <fixed-integer> from index below last,
-	 state = state then next-state(sequence, state),
-	 res-state = res-init then res-next(result, res-state))
-      res-elem(result, res-state) := current-element(sequence, state);
-    end for;
-  end for;
-  result;
-end method copy-sequence;
 
