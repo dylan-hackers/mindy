@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.12 2001/07/08 10:13:13 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.13 2001/07/21 07:17:19 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -156,6 +156,9 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot keyword-infos :: <simple-object-vector> = #[],
     init-keyword: keywords:;
   //
+  // Vector of all <keyword-info>s that apply to this class.
+  slot %all-keyword-infos :: false-or(<simple-object-vector>) = #f;
+  //
   // #t if we've computed the layout, #"computing" if we are working on it,
   // and #f until then.
   slot layout-computed? :: one-of(#t, #"computing", #f) = #f;
@@ -202,7 +205,8 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
     init-value: #f;
   //
   // The metaclass that determines the class object's slot layout
-  constant slot class-metaclass :: false-or(<meta-cclass>), required-init-keyword: metaclass:;
+  constant slot class-metaclass :: false-or(<meta-cclass>),
+    required-init-keyword: metaclass:;
 end class;
 
 define sealed domain make (singleton(<cclass>));
@@ -210,7 +214,7 @@ define sealed domain initialize (<cclass>);
 
 define method initialize
     (class :: <cclass>, #next next-method,
-     #key loading: loading? = #t, precedence-list, slots, overrides)
+     #key loading: loading? = #t, precedence-list, slots, overrides, keywords)
     => ();
   next-method();
   
@@ -221,6 +225,10 @@ define method initialize
   
   unless (overrides)
     overrides := class.override-infos;
+  end;
+  
+  unless (keywords)
+    keywords := class.keyword-infos;
   end;
   
   // Add this class to *All-Classes*.
@@ -283,6 +291,9 @@ define method initialize
     end;
     for (override in overrides)
       override.override-introduced-by := class;
+    end;
+    for (keyword in keywords)
+      keyword.keyword-introduced-by := class;
     end;
   end;
 end;
@@ -498,6 +509,16 @@ end;
 define sealed domain make (singleton(<override-info>));
 define sealed domain initialize (<override-info>);
 
+define method keyword-needs-supplied?-var
+    (info :: <keyword-info>)
+ => (res :: <boolean>);
+  if (info.keyword-init-value)
+    #f;
+  else
+    let rep = pick-representation(info.keyword-type, #"speed");
+    ~rep.representation-has-bottom-value?;
+  end;
+end;
 
 define method print-message
     (override :: <override-info>, stream :: <stream>) => ();
@@ -1042,6 +1063,93 @@ define method inherit-overrides ()
   end;
 end;
 
+
+// Initialization argument inheritance
+ 
+define method all-keyword-infos (class :: <cclass>) => (result :: <sequence>);
+  local
+    method inherit-keyword
+        (info :: <keyword-info>, from :: <keyword-info>)
+     => (info :: <keyword-info>);
+      unless(csubtype?(info.keyword-type, from.keyword-type))
+        compiler-fatal-error
+          ("The type in the initialization argument specification for "
+             "keyword %s: in class %s must be a subtype of the corresponding "
+             "type specification in class %s",
+           info.keyword-symbol, class, from.keyword-introduced-by);
+      end;
+      unless(info.keyword-required?
+               | info.keyword-init-value
+               | info.keyword-init-function)
+        if(from.keyword-init-value)
+          info.keyword-init-value := from.keyword-init-value;
+        elseif(from.keyword-init-function)
+          info.keyword-init-function := from.keyword-init-function;
+        elseif(from.keyword-required?)
+          info.keyword-required? := #t;
+        end if;
+      end unless;
+      info;
+    end method;
+  
+  if(class.%all-keyword-infos == #f)
+    let new-keywords :: <object-table> = make (<object-table>);
+    //
+    // Required init keywords
+    for(info in class.new-slot-infos)
+      if(info.slot-init-keyword-required?)
+        new-keywords[info.slot-init-keyword]
+          := make(<keyword-info>,
+                  introduced-by: class,
+                  symbol: info.slot-init-keyword,
+                  required: #t,
+                  type: info.slot-type);
+      end if;
+    end for;
+    //
+    // Explicit init-arg specifications
+    for(info in class.keyword-infos)
+      if(element(new-keywords, info.keyword-symbol, default: #f))
+        compiler-fatal-error
+          ("Class %s can't have two definitions of initialization keyword %s:",
+           class, info.keyword-symbol);
+      end if;
+      
+      new-keywords[info.keyword-symbol] := info;
+    end for;
+
+    //
+    // Inherited init-arg specifications
+    let result-keywords :: <object-table> = make (<object-table>);
+    for(superclass in class.direct-superclasses)
+      for(info in superclass.all-keyword-infos)
+        if(element(new-keywords, info.keyword-symbol, default: #f))
+          result-keywords[info.keyword-symbol]
+            := inherit-keyword(new-keywords[info.keyword-symbol], info);
+        else
+          if(element(result-keywords, info.keyword-symbol, default: #f)
+               & element(result-keywords, info.keyword-symbol) ~== info)
+            compiler-fatal-error
+              ("Keyword %s is inherited with different definitions from two "
+                 "different classes without an override in class %s",
+               info.keyword-symbol, class);
+          end if;
+          result-keywords[info.keyword-symbol] := info;
+        end if;
+      end for;
+    end for;
+
+    for(info keyed-by symbol in new-keywords)
+      unless(element(result-keywords, symbol, default: #f))
+        result-keywords[symbol] := info;
+      end unless;
+    end for;
+
+    class.%all-keyword-infos := as(<simple-object-vector>, result-keywords);
+  else
+    class.%all-keyword-infos;
+  end if;
+end method;
 
 
 // Unique ID assignment.
@@ -1947,7 +2055,6 @@ define method csubtype-dispatch
   let ctv = type1.singleton-value;
   instance?(ctv, <cclass>) & csubtype?(ctv, type2.subclass-of);
 end method csubtype-dispatch;
-
 
 define method ctype-intersection-dispatch
     (type1 :: <subclass-ctype>, type2 :: <subclass-ctype>)

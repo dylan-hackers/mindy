@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.29 2001/07/07 17:14:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.30 2001/07/21 07:17:19 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -667,7 +667,7 @@ define module classes
     abstract?, primary?, functional?, not-functional?, all-slot-infos,
     all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
     override-infos, override-infos-setter, unique-id,
-    keyword-infos, keyword-infos-setter,
+    keyword-infos, keyword-infos-setter, all-keyword-infos,
     set-and-record-unique-id, subclass-id-range-min,
     subclass-id-range-max,
     direct-space-representation, direct-space-representation-setter,
@@ -707,7 +707,13 @@ define module classes
     override-init-value, override-init-value-setter,
     override-init-function, override-init-function-setter,
 
-    <keyword-info>,
+    <keyword-info>, keyword-introduced-by, keyword-introduced-by-setter,
+    keyword-symbol, 
+    keyword-init-value, keyword-init-value-setter,
+    keyword-init-function, keyword-init-function-setter,
+    keyword-required?, keyword-required?-setter,
+    keyword-type, keyword-type-setter,
+    keyword-needs-supplied?-var,
 
     <struct-slot-info>, struct-slot-c-type, struct-slot-c-name,
     struct-slot-offset, struct-slot-getter, struct-slot-setter,
