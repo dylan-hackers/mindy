@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.26 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.27 1996/02/05 23:53:50 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -485,40 +485,43 @@ static obj_t bignum_shift_right(obj_t bignum, int shift)
     int nbits = shift % DIGIT_BITS;
     int len = BIGNUM(bignum)->length;
     int length = len - ndigits;
-    obj_t res = alloc_bignum(length);
-    digit_t *result = BIGNUM(res)->digits;
-    digit_t *digits = BIGNUM(bignum)->digits;
     int pad = PAD(bignum);
-    int high_mask = (~0 << (DIGIT_BITS - nbits)) & DIGIT_MASK;
-    int low_mask = ~high_mask & DIGIT_MASK;
-    int i;
 
     if (length < 1) {
-        result[0] = pad;
-	normalize_bignum(res, 1);
+	obj_t res = alloc_bignum(1);
+	BIGNUM(res)->digits[0] = pad;
 	return res;
     }
-
-    if (nbits == 0) {
-	for (i = 0; i < length; i++)
-	    result[i] = digits[i + ndigits];
-    }
     else {
-	for (i = 0; i < length - 1; i++)
-	    result[i] =
-	      ((digits[i+ndigits] >> nbits) & low_mask)
-		| ((digits[i+ndigits+1] << (DIGIT_BITS - nbits)) & high_mask);
-	result[length - 1] =
-	  ((digits[len - 1] >> nbits) & low_mask)
-	    | (pad & high_mask);
+	obj_t res = alloc_bignum(length < 1 ? 1 : length);
+	digit_t *result = BIGNUM(res)->digits;
+	digit_t *digits = BIGNUM(bignum)->digits;
+	int high_mask = (~0 << (DIGIT_BITS - nbits)) & DIGIT_MASK;
+	int low_mask = ~high_mask & DIGIT_MASK;
+	int i;
+
+	if (nbits == 0) {
+	    for (i = 0; i < length; i++)
+		result[i] = digits[i + ndigits];
+	}
+	else {
+	    for (i = 0; i < length - 1; i++)
+		result[i] =
+		    ((digits[i+ndigits] >> nbits) & low_mask)
+			| ((digits[i+ndigits+1] << (DIGIT_BITS - nbits))
+			   & high_mask);
+	    result[length - 1] =
+		((digits[len - 1] >> nbits) & low_mask)
+		    | (pad & high_mask);
+	}
+	normalize_bignum(res, length);
+	/*
+	   printf("shifting "); dump_bignum(bignum, BIGNUM(bignum)->length);
+	   printf(" by (%d, %d) is ", ndigits, nbits);
+	   dump_bignum(res, BIGNUM(res)->length); printf("\n");
+	   */
+	return res;
     }
-    normalize_bignum(res, length);
-/*
-    printf("shifting "); dump_bignum(bignum, BIGNUM(bignum)->length);
-    printf(" by (%d, %d) is ", ndigits, nbits);
-    dump_bignum(res, BIGNUM(res)->length); printf("\n");
-*/
-    return res;
 }
 
 static void divide_by_digit(obj_t *quotient, int *remainder,
