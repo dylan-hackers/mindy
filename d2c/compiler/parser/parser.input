@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.25 1996/02/20 00:12:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.26 1996/02/21 02:37:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1231,94 +1231,137 @@ end-clause (<end-token> <begin-word-token>)
 ;// semicolon.  This allows us to shift the semicolon that follows a case-body
 ;// without having to reduce the entire case-body.
 
-:type case-body <simple-object-vector>
+:type case-body <fragment>
 
 case-body ()
-  #[];
+  make(<fragment>);
 %
 
 case-body (<semicolon-token>)
-  #[];
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
 %
 
 case-body (case-body-1)
-  as(<simple-object-vector>, %1);
+  %1;
 %
 
 case-body (case-body-1-semi)
-  as(<simple-object-vector>, %1);
+  %1;
 %
 
 case-body (case-body-2)
-  as(<simple-object-vector>, %1);
+  let body = as(<simple-object-vector>, %1.tail);
+  let body-piece = make(<piece>, token: make(<begin>, body: body));
+  postpend-piece(%1.head, body-piece);
 %
 
 case-body (case-body-2-semi)
-  as(<simple-object-vector>, %1);
+  let body = as(<simple-object-vector>, %1.second);
+  let body-piece = make(<piece>, token: make(<begin>, body: body));
+  let semi-piece = make(<piece>, token: %1.third);
+  postpend-piece(postpend-piece(%1.first, body-piece), semi-piece);
 %
 
-:type case-body-1 <stretchy-vector>
+:type case-body-1 <fragment>
 
 case-body-1 (case-label)
-  stretchy-vector(make(<case-clause>, label: %1));
+  %1;
 %
 
 case-body-1 (case-body-1-semi case-label)
-  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
-  add!(%1, make(<case-clause>, label: %2));
+  append-fragments(%1, %2);
 %
 
 case-body-1 (case-body-2-semi case-label)
-  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
-  add!(%1, make(<case-clause>, label: %2));
+  let body = as(<simple-object-vector>, %1.second);
+  let body-piece = make(<piece>, token: make(<begin>, body: body));
+  let semi-piece = make(<piece>, token: %1.third);
+  let case-body-2-frag
+    = postpend-piece(postpend-piece(%1.first, body-piece), semi-piece);
+  append-fragments(case-body-2-frag, %2);
 %
 
-:type case-body-1-semi <stretchy-vector>
+:type case-body-1-semi <fragment>
 
 case-body-1-semi (case-body-1 <semicolon-token>)
-  %1;
+  postpend-piece(%1, make(<piece>, token: %2));
 %
 
-:type case-body-2 <stretchy-vector>
+:type case-body-2 <pair>
 
 case-body-2 (case-label constituent)
-  stretchy-vector(make(<case-clause>, label: %1, body: stretchy-vector(%2)));
+  pair(%1, stretchy-vector(%2));
 %
 
 case-body-2 (case-body-1-semi case-label constituent)
-  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
-  add!(%1, make(<case-clause>, label: %2, body: stretchy-vector(%3)));
+  pair(append-fragments(%1, %2), stretchy-vector(%3));
 %
 
 case-body-2 (case-body-2-semi case-label constituent)
-  %1.last.case-body := as(<simple-object-vector>, %1.last.case-body);
-  add!(%1, make(<case-clause>, label: %2, body: stretchy-vector(%3)));
+  let body = as(<simple-object-vector>, %1.second);
+  let body-piece = make(<piece>, token: make(<begin>, body: body));
+  let semi-piece = make(<piece>, token: %1.third);
+  let case-body-2-frag
+    = postpend-piece(postpend-piece(%1.first, body-piece), semi-piece);
+  pair(append-fragments(case-body-2-frag, %2),
+       stretchy-vector(%3));
 %
 
 case-body-2 (case-body-2-semi constituent)
-  add!(%1.last.case-body, %2);
-  %1;
+  pair(%1.first, add!(%1.second, %2));
 %
 
-:type case-body-2-semi <stretchy-vector>
+:type case-body-2-semi <vector>
 
 case-body-2-semi (case-body-2 <semicolon-token>)
-  %1;
+  vector(%1.head, %1.tail, %2);
 %
 
-:type case-label |type-union(<simple-object-vector>, <true>)|
+:type case-label <fragment>
 
-case-label (expressions <arrow-token>)
-  as(<simple-object-vector>, %1);
+case-label (case-label-expressions <arrow-token>)
+  postpend-piece(%1, make(<piece>, token: %2));
 %
 
-case-label (<left-paren-token> expression <comma-token> expressions
+case-label (<left-paren-token> expression <comma-token> case-label-expressions
 	    <right-paren-token> <arrow-token>)
-  apply(vector, %2, %4);
+  let lp-piece = make(<balanced-piece>, token: %1);
+  let expr-piece = make(<piece>, token: %2);
+  let comma-piece = make(<piece>, token: %3);
+  let fragment = %4;
+  let rp-piece = make(<balanced-piece>, token: %5, other: lp-piece);
+  lp-piece.piece-other := rp-piece;
+  let arrow-piece = make(<piece>, token: %6);
+  prepend-piece
+    (lp-piece,
+     prepend-piece
+       (expr-piece,
+	prepend-piece
+	  (comma-piece,
+	   postpend-piece
+	     (postpend-piece
+		(fragment,
+		 rp-piece),
+	      arrow-piece))));
 %
 
 case-label (<otherwise-token> arrow-opt)
-  #t;
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+:type case-label-expressions <fragment>
+
+case-label-expressions (expression)
+  let piece = make(<piece>, token: %1);
+  make(<fragment>, head: piece, tail: piece);
+%
+
+case-label-expressions (case-label-expressions <comma-token> expression)
+  let comma-piece = make(<piece>, token: %2);
+  let expr-piece = make(<piece>, token: %3);
+  postpend-piece(postpend-piece(%1, comma-piece), expr-piece);
 %
 
 
@@ -2337,7 +2380,7 @@ define method parse-body (tokenizer :: <tokenizer>)
 end;
 
 define method parse-case-body (tokenizer :: <tokenizer>)
-    => res :: <simple-object-vector>;
+    => res :: <fragment>;
   parse(tokenizer, $case-body-start-state);
 end;
 
