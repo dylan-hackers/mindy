@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.12 1994/06/11 02:23:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.13 1994/06/11 17:48:23 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -41,6 +41,17 @@ extern int execvp(const char *, char *const []);
 extern int sys_nerr;
 extern char *sys_errlist[];
 #endif hpux
+#ifdef __osf__
+#include <stdlib.h>
+#define pause buttplug
+#include <unistd.h>
+#undef pause
+#include <fcntl.h>
+extern void bzero(char *string, int length);
+extern int select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
+extern int fsync(int filedes);
+#endif __osf__
 
 #include "mindy.h"
 #include "list.h"
