@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.13 1994/11/03 22:19:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.14 1994/11/28 15:00:57 wlott Exp $
 *
 * This file implements the printer framework.
 *
@@ -243,17 +243,15 @@ void vformat(char *fmt, obj_t *args, int nargs)
 		if (--nargs < 0)
 		    error("Not enough arguments to format");
 		if (instancep(*args, obj_ByteStringClass)) {
-		  fputs((char *)string_chars(*args++), stdout);
+		    fputs((char *)string_chars(*args++), stdout);
 		}
-/* This will have to be commented out until we figure out how 
-   to print conditions. */
-#if 0
-		else if (instancep(*args, obj_ConditionClass)) {
-		  fputs(conditionthing, *args++);
+		else if (instancep(*args, obj_SymbolClass)) {
+		    fputs((char *)sym_name(*args++), stdout);
 		}
-#endif
+		/* Can't print conditions, because they are defined in */
+		/* dylan. */
 		else {
-		  error("%= is neither a string nor a condition,"
+		  error("%= is neither a string nor a symbol,"
 			" and so can't be printed with %%s", *args++);
 		}
 		break;
