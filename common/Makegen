@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.22 2003/04/16 21:54:57 andreas Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.23 2003/04/23 22:05:34 housel Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -9,43 +9,28 @@
 
 # These libraries are needed to compile d2c. They must compile against the
 # runtime that shipped with 2.2.0.
-@pre_melange_libraries_needed_to_bootstrap =
+@bootstrap_libraries =
     ('streams', 'standard-io', 'print', 'format', 'collection-extensions',
-     'table-ext', 'string-ext', 'regular-expressions', 'format-out', 'matrix',
+     'table-ext', 'string-ext', 'regular-expressions',
      'stream-ext', 'transcendental', 'getopt', 'base-file-system');
-    #'internal-time'
-@post_melange_libraries_needed_to_bootstrap =
-    ('time');
-    #'internal-time'
 
 # These libraries have been introduced since 2.2.0. They may not be used by
 # d2c, parsergen or any of the above libraries. Once common-dylan stabilizes,
 # and most users can compile common-dylan programs, we'll drop backwards
 # compatibility with 2.2.0 and port everything to build against these
 # libraries.
-@newer_libraries =
-    ('threads', 'common-dylan', 'collections', 'io', 'file-system',
-     'date', 'system', 'locators', 'network');
+@non_bootstrap_libraries =
+    ('threads', 'format-out', 'common-dylan', 'collections', 'io',
+     'file-system', 'time', 'date', 'system', 'locators', 'matrix', 'network');
+    #'internal-time'
 
-&compile_subdirs(@pre_melange_libraries_needed_to_bootstrap);
-# Parsergen is needed to compile Melange
-push(@compile_commands, 
-   	sprintf($host_platform{'recursive_make_command'},
-       	"../tools/parsergen", ""));
-push(@dbc_only_commands, 
-   	sprintf($host_platform{'recursive_make_command'},
-       	"../tools/parsergen", ""));
-# Melange is needed to compile the common libraries
-push(@compile_commands,
-    sprintf($host_platform{'recursive_make_command'},
-        "../tools/melange", ""));
-push(@dbc_only_commands,
-    sprintf($host_platform{'recursive_make_command'},
-        "../tools/melange", ""));
-&compile_subdirs(@post_melange_libraries_needed_to_bootstrap);
-
+&compile_subdirs(@bootstrap_libraries);
 unless ($enable_bootstrap) {
-  &compile_subdirs(@newer_libraries);
+    # Melange is needed to compile the common libraries
+    push(@compile_commands,
+	 sprintf($host_platform{'recursive_make_command'},
+		 "../tools/melange", ""));
+  &compile_subdirs(@non_bootstrap_libraries);
   if($features{'compiled_for_unix'}) {
     &compile_subdirs('command-processor');
   }
