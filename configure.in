@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.66 2001/04/20 00:29:31 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.67 2001/04/20 18:21:57 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -128,11 +128,14 @@ AC_SUBST(d2c_host)
 #----------------------------------------------------------
 AC_MSG_CHECKING(executable endings)
 exe_ext=""
+cygnus_line_hack=""
 if test "$d2c_build" = "x86-cygnus-gcc"; then
   exe_ext=".exe"
+  cygnus_line_hack="\$_ =~ s/\r//;"
 fi
 AC_MSG_RESULT($exe_ext)
 AC_SUBST(exe_ext)
+AC_SUBST(cygnus_line_hack)
 
 AC_MSG_CHECKING(d2c target system type)
 GD_D2C_SYSTEM($target,d2c_target)

@@ -2,6 +2,7 @@
 
 while (<>) {
     chop($_);
+    @cygnus_line_hack@
     $names{$_}++;
 }
 
