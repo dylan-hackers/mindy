@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.30 1995/06/09 19:07:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.31 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -328,7 +328,14 @@ define method dump (op :: <primitive>, stream :: <stream>) => ();
   dump-operands(op.depends-on, stream);
 end;
 
-define method dump (op :: <set>, stream :: <stream>) => ();
+define method dump (op :: <module-var-ref>, stream :: <stream>) => ();
+  write("ref ", stream);
+  dump(op.variable.defn-name, stream);
+  format(stream, "[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method dump (op :: <module-var-set>, stream :: <stream>) => ();
   write("set ", stream);
   dump(op.variable.defn-name, stream);
   format(stream, "[%d]", op.id);
@@ -390,10 +397,6 @@ end;
 
 define method dump (info :: <debug-named-info>, stream :: <stream>) => ();
   write(as(<string>, info.debug-name), stream);
-end;
-
-define method dump (info :: <module-var-info>, stream :: <stream>) => ();
-  dump(info.var-defn.defn-name, stream);
 end;
 
 define method dump (name :: <basic-name>, stream :: <stream>) => ();

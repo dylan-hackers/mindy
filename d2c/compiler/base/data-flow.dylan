@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.16 1995/06/07 19:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.17 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,7 +16,6 @@ expression
 		initial-definition
 	    multi-definition-variable {abstract}
 	        initial-variable
-	    global-variable
     operation [dependent-mixin] {abstract}
         join-operation
 
@@ -217,11 +216,6 @@ end;
 define class <initial-variable> (<multi-definition-variable>)
   slot next-initial-variable :: false-or(<initial-variable>),
     required-init-keyword: next-initial-variable:;
-end class;
-
-// Represents a global variable, which doesn't get SSA converted.
-//
-define class <global-variable> (<abstract-variable>)
 end class;
 
 

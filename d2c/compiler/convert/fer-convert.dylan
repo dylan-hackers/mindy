@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.38 1995/06/07 22:53:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.39 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -210,7 +210,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
     add-binding(lexenv, name, var, type-var: type-temp);
     build-let(builder, lexenv.lexenv-policy, source, var,
 	      if (type-temp)
-		make-check-type-operation(builder, temp, type-temp);
+		make-check-type-operation
+		  (builder, lexenv.lexenv-policy, source,
+		   temp, type-temp);
 	      else
 		temp;
 	      end);
@@ -325,11 +327,13 @@ define method fer-convert (builder :: <fer-builder>, form :: <varref>,
 		   let var = find-variable(name);
 		   let defn = var & var.variable-definition;
 		   if (defn)
-		     make-definition-leaf(builder, defn);
+		     fer-convert-defn-ref(builder, lexenv.lexenv-policy,
+					  source, defn);
 		   else
 		     compiler-warning("Undefined variable: %s", name);
 		     make-error-operation
-		       (builder, "Undefined variable: %s",
+		       (builder, lexenv.lexenv-policy, source,
+			"Undefined variable: %s",
 			make-literal-constant
 			  (builder,
 			   as(<ct-value>, format-to-string("%s", name))));
@@ -351,58 +355,74 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
     end;
     let id = place.varref-id;
     let binding = find-binding(lexenv, id);
-    block (return)
-      let (leaf, type-leaf, defn)
-	= if (binding)
-	    values(binding.binding-var, binding.binding-type-var, #f);
-	  else
-	    let name = id-name(id);
-	    let var = find-variable(name);
-	    let defn = var & var.variable-definition;
-	    if (~defn)
-	      compiler-warning("Undefined variable: %s", name);
-	      return(deliver-result
-		       (builder, lexenv.lexenv-policy, source, want, datum,
-			make-error-operation
-			  (builder, "Undefined variable: %s",
-			   make-literal-constant
-			     (builder,
-			      as(<ct-value>, format-to-string("%s", name))))));
-	    elseif (instance?(defn, <variable-definition>))
-	      let type-defn = defn.var-defn-type-defn;
-	      values(make-definition-leaf(builder, defn),
-		     type-defn & make-definition-leaf(builder, type-defn),
-		     defn);
-	    else
-	      compiler-warning("Attept to assign constant module variable: %s",
-			       name);
-	      return(deliver-result
-		       (builder, lexenv.lexenv-policy, source, want, datum,
-			make-error-operation
-			  (builder,
-			   "Can't assign constant module varaible: %s",
-			   make-literal-constant
-			     (builder,
-			      as(<ct-value>, format-to-string("%s", name))))));
-	    end;
-	  end;
+    if (binding)
       let temp = fer-convert(builder, form.assignment-value,
 			     make(<lexenv>, inside: lexenv),
-			     #"leaf", #"temp");
-      if (type-leaf)
-	let checked = make-local-var(builder, #"checked", object-ctype());
-	build-assignment(builder, lexenv.lexenv-policy, source, checked,
-			 make-check-type-operation(builder, temp, type-leaf));
-	temp := checked;
-      end;
-      if (binding)
-	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
+			     #"leaf", #"new-value");
+      let checked
+	= if (binding.binding-type-var)
+	    let checked
+	      = make-local-var(builder, #"checked-new-value", object-ctype());
+	    build-assignment(builder, lexenv.lexenv-policy, source, checked,
+			     make-check-type-operation
+			       (builder, lexenv.lexenv-policy, source,
+				temp, binding.binding-type-var));
+	    checked;
+	  else
+	    temp;
+	  end;
+      build-assignment(builder, lexenv.lexenv-policy, source,
+		       binding.binding-var, checked);
+      deliver-result(builder, lexenv.lexenv-policy, source,
+		     want, datum, checked);
+    else
+      let name = id-name(id);
+      let var = find-variable(name);
+      let defn = var & var.variable-definition;
+      if (~defn)
+	compiler-warning("Undefined variable: %s", name);
+	deliver-result
+	  (builder, lexenv.lexenv-policy, source, want, datum,
+	   make-error-operation
+	     (builder, lexenv.lexenv-policy, source,
+	      "Undefined variable: %s",
+	      make-literal-constant
+		(builder,
+		 as(<ct-value>, format-to-string("%s", name)))));
+      elseif (~instance?(defn, <variable-definition>))
+	compiler-warning("Attept to assign constant module variable: %s",
+			 name);
+	deliver-result
+	  (builder, lexenv.lexenv-policy, source, want, datum,
+	   make-error-operation
+	     (builder, lexenv.lexenv-policy, source,
+	      "Can't assign constant module variable: %s",
+	      make-literal-constant
+		(builder,
+		 as(<ct-value>, format-to-string("%s", name)))));
       else
-	build-assignment
-	  (builder, lexenv.lexenv-policy, source, #(),
-	   make-operation(builder, <set>, list(temp), var: defn));
+	let temp = fer-convert(builder, form.assignment-value,
+			       make(<lexenv>, inside: lexenv),
+			       #"leaf", #"new-value");
+	let checked
+	  = if (defn.var-defn-type-defn)
+	      let checked = make-local-var(builder, #"checked-new-value",
+					   object-ctype());
+	      build-assignment
+		(builder, lexenv.lexenv-policy, source, checked,
+		 make-check-type-operation
+		   (builder, lexenv.lexenv-policy, source, temp,
+		    fer-convert-defn-ref(builder, lexenv.lexenv-policy, source,
+					 defn.var-defn-type-defn)));
+	      checked;
+	    else
+	      temp;
+	    end;
+	fer-convert-defn-set(builder, lexenv.lexenv-policy, source,
+			     defn, checked);
+	deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		       checked);
       end;
-      deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
     end;
   end;
 end;
@@ -594,7 +614,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
   build-assignment
     (builder, policy, source, #(),
      make-unknown-call
-       (builder, dylan-defn-leaf(builder, #"push-unwind-protect"), #f,
+       (builder,
+	ref-dylan-defn(builder, policy, source, #"push-unwind-protect"),
+	#f,
 	list(cleanup-literal)));
   let res = fer-convert-body(builder, form.uwp-body,
 			     make(<lexenv>, inside: lexenv),
@@ -604,7 +626,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
   build-assignment
     (cleanup-builder, policy, source, #(),
      make-unknown-call
-       (cleanup-builder, dylan-defn-leaf(builder, #"pop-unwind-protect"),
+       (cleanup-builder,
+	ref-dylan-defn(builder, policy, source, #"pop-unwind-protect"),
 	#f, #()));
   fer-convert-body(cleanup-builder, form.uwp-cleanup,
 		   make(<lexenv>, inside: lexenv),
@@ -697,7 +720,9 @@ define method fer-convert-method
     build-let
       (body-builder, lexenv.lexenv-policy, source, var,
        make-unknown-call
-	 (builder, dylan-defn-leaf(builder, #"%make-next-method-cookie"),
+	 (builder,
+	  ref-dylan-defn(builder, lexenv.lexenv-policy, source,
+			  #"%make-next-method-cookie"),
 	  #f, cookie-args));
     add!(vars, next-info-var);
     add-binding(lexenv, next, var);
@@ -764,8 +789,9 @@ define method fer-convert-method
 	    let checked = make-lexical-var(builder, name.token-symbol, source,
 					   object-ctype());
 	    build-assignment
-	      (body-builder, lexenv.lexenv-policy, source,
-	       checked, make-check-type-operation(builder, var, type-var));
+	      (body-builder, lexenv.lexenv-policy, source, checked,
+	       make-check-type-operation
+		 (builder, lexenv.lexenv-policy, source, var, type-var));
 	    add-binding(lexenv, name, checked, type-var: type-var);
 	  else
 	    add-binding(lexenv, name, var);
@@ -792,9 +818,11 @@ define method fer-convert-method
 				param.param-name.token-symbol,
 				type);
       add!(fixed-results, temp);
-      let op = make-check-type-operation(result-check-builder, temp, type-var);
-      build-assignment(result-check-builder, specializer-lexenv.lexenv-policy,
-		       source, var, op);
+      build-assignment
+	(result-check-builder, specializer-lexenv.lexenv-policy, source, var,
+	 make-check-type-operation
+	   (result-check-builder, specializer-lexenv.lexenv-policy, source,
+	    temp, type-var));
     else
       add!(result-type-leaves, make-literal-constant(builder, type));
       add!(fixed-results, var);
@@ -872,15 +900,19 @@ define method fer-convert-method
 	= make-values-cluster(builder, #"results", wild-ctype());
 
       let args = make(<stretchy-vector>);
-      add!(args, dylan-defn-leaf(builder, #"values"));
+      add!(args,
+	   ref-dylan-defn(builder, lexenv.lexenv-policy, source, #"values"));
       for (fixed in checked-fixed-results)
 	add!(args, fixed);
       end;
       add!(args, rest-result);
       build-assignment
 	(builder, lexenv.lexenv-policy, source, checked-cluster,
-	 make-unknown-call(builder, dylan-defn-leaf(builder, #"apply"), #f,
-			   as(<list>, args)));
+	 make-unknown-call
+	   (builder,
+	    ref-dylan-defn(builder, lexenv.lexenv-policy, source, #"apply"),
+	    #f,
+	    as(<list>, args)));
       build-return(builder, lexenv.lexenv-policy, source,
 		   function-region, checked-cluster);
     end;
@@ -911,8 +943,10 @@ define method fer-convert-method
 	let temp = make-local-var(builder, name, object-ctype());
 	build-assignment
 	  (builder, lexenv.lexenv-policy, source, temp,
-	   make-unknown-call(builder, dylan-defn-leaf(builder, name), #f,
-			     as(<list>, args)));
+	   make-unknown-call
+	     (builder,
+	      ref-dylan-defn(builder, lexenv.lexenv-policy, source, name), #f,
+	      as(<list>, args)));
 	temp;
       end;
     build-call(#"%make-method",
@@ -929,34 +963,110 @@ define method fer-convert-method
 end;
 
 
-// Random utilities.
+// Definition reference conversion.
 
-define method dylan-defn-leaf (builder :: <fer-builder>, name :: <symbol>)
+define generic fer-convert-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>)
     => res :: <leaf>;
-  make-definition-leaf(builder, dylan-defn(name))
-    | error("%s undefined?", name);
+
+
+define method fer-convert-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <abstract-constant-definition>)
+    => res :: <leaf>;
+  let value = ct-value(defn);
+  if (instance?(value, <eql-ct-value>))
+    make-literal-constant(builder, value);
+  elseif (value)
+    make-definition-constant(builder, defn);
+  else
+    let type = defn.defn-type | object-ctype();
+    let temp = make-local-var(builder, #"temp", type);
+    build-assignment(builder, policy, source, temp,
+		     make-operation(builder, <module-var-ref>, #(),
+				    derived-type: type,
+				    var: defn));
+    temp;
+  end;
+end method;
+
+define method fer-convert-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <variable-definition>)
+ => res :: <leaf>;
+  let type = defn.defn-type | object-ctype();
+  let temp = make-local-var(builder, #"temp", type);
+  build-assignment(builder, policy, source, temp,
+		   make-operation(builder, <module-var-ref>, #(),
+				  derived-type: type,
+				  var: defn));
+  temp;
+end method;
+
+
+define generic fer-convert-defn-set
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>, new-value :: <leaf>)
+    => ();
+
+define method fer-convert-defn-set
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>, new-value :: <leaf>)
+    => ();
+  build-assignment(builder, policy, source, #(),
+		   make-operation(builder, <module-var-set>, list(new-value),
+				  var: defn));
 end;
 
-define method make-check-type-operation (builder :: <fer-builder>,
-					 value-leaf :: <leaf>,
-					 type-leaf :: <leaf>)
+
+
+// Random utilities.
+
+define method ref-dylan-defn
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <symbol>)
+    => res :: <leaf>;
+  let defn = dylan-defn(name);
+  unless (defn)
+    error("%s undefined?", name);
+  end;
+  fer-convert-defn-ref(builder, policy, source, defn)
+end;
+
+define method make-check-type-operation
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value-leaf :: <leaf>, type-leaf :: <leaf>)
     => res :: <operation>;
-  make-unknown-call(builder, dylan-defn-leaf(builder, #"check-type"), #f,
-		    list(value-leaf, type-leaf));
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, policy, source, #"check-type"),
+     #f,
+     list(value-leaf, type-leaf));
 end method;
 
 define method make-error-operation
-    (builder :: <fer-builder>, msg :: <byte-string>, #rest args)
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     msg :: <byte-string>, #rest args)
     => res :: <operation>;
-  make-unknown-call(builder, dylan-defn-leaf(builder, #"error"), #f,
-		    pair(make-literal-constant(builder, as(<ct-value>, msg)),
-			 as(<list>, args)));
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+		     #"error"),
+     #f,
+     pair(make-literal-constant(builder, as(<ct-value>, msg)),
+	  as(<list>, args)));
 end method;
 
 define method make-error-operation
-    (builder :: <fer-builder>, symbol :: <symbol>, #rest args)
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     symbol :: <symbol>, #rest args)
     => res :: <operation>;
-  make-unknown-call(builder, dylan-defn-leaf(builder, symbol), #f,
-		    as(<list>, args));
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+		     symbol),
+     #f,
+     as(<list>, args));
 end method;
 

@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.21 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.22 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -334,17 +334,13 @@ define method convert-top-level-form
 		fer-convert(builder, param.param-type, lexenv,
 			    #"assignment", type);
 		if (instance?(defn, <variable-definition>))
-		  let type-defn = defn.var-defn-type-defn;
-		  build-assignment
-		    (builder, policy, source, #(),
-		     make-operation(builder, <set>, list(type),
-				    var: type-defn));
+		  fer-convert-defn-set(builder, policy, source,
+				       defn.var-defn-type-defn, type);
 		end;
-		make-check-type-operation(init-builder, temp, type);
+		make-check-type-operation(init-builder, policy, source,
+					  temp, type);
 	      end;
-	  build-assignment(init-builder, policy, source, #(),
-			   make-operation(init-builder, <set>, list(checked),
-					  var: defn));
+	  fer-convert-defn-set(init-builder, policy, source, defn, checked);
 	end;
 	temp;
       end;
@@ -365,9 +361,7 @@ define method convert-top-level-form
 	    list(cluster,
 		 make-literal-constant(builder, as(<ct-value>, vars.size))),
 	    name: #"canonicalize-results"));
-      build-assignment(init-builder, policy, source, #(),
-		       make-operation(init-builder, <set>, list(rest-temp),
-				      var: rest-defn));
+      fer-convert-defn-set(init-builder, policy, source, rest-defn, rest-temp);
     else
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", vars);
@@ -388,7 +382,6 @@ define method convert-top-level-form
 				lexenv, lexenv);
   if (defn.function-defn-hairy?)
     let source = make(<source-location>);
-    build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		     make-operation(builder, <set>, list(leaf), var: defn));
+    fer-convert-defn-set(builder, lexenv.lexenv-policy, source, defn, leaf);
   end;
 end;

@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.37 1995/06/04 22:55:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.38 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,7 +20,9 @@ operation
 	error-call
     prologue
     self-tail-call
-    set
+    module-var-access
+	module-var-ref
+	module-var-set
     slot-access {abstract}
 	slot-ref
 	slot-set
@@ -155,16 +157,22 @@ define class <prologue> (<operation>)
   slot function :: <fer-function-region>, required-init-keyword: function:;
 end;
 
+define class <module-var-access> (<operation>)
+  //
+  // The definition for the variable being set.
+  slot variable :: <definition>, required-init-keyword: var:;
+end;  
+
+define class <module-var-ref> (<module-var-access>)
+end;
+
 // A set operation is used to change a global variable.
 // 
-define class <set> (<operation>)
+define class <module-var-set> (<module-var-access>)
   //
   // Set operations return nothing.
   inherited slot derived-type,
     init-function: curry(make-values-ctype, #(), #f);
-  //
-  // The definition for the variable being set.
-  slot variable :: <definition>, required-init-keyword: var:;
 end;
 
 // A self-tail-call is used to represent the rebinding of the arguments
@@ -318,14 +326,6 @@ end class;
 define class <lexical-var-info> (<debug-named-info>, <source-location-mixin>)
 // ??? stuff to handle set & closure vars?
 end class;
-
-define class <module-var-info> (<variable-info>)
-  slot var-defn :: <definition>, required-init-keyword: var-defn:;
-end class;
-  
-define class <module-almost-constant-var-info> (<module-var-info>)
-end class;
-  
 
 
 

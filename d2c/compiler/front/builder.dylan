@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.17 1995/06/04 22:50:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.18 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -179,14 +179,6 @@ define generic make-unknown-call
 //
 define generic make-literal-constant
     (builder :: <fer-builder>, value :: <ct-value>)
- => res :: <leaf>;
-
-
-// Return a leaf to reference a named definition (the value of a module
-// variable, a named method, or other time-time resolvable thing.)
-//
-define generic make-definition-leaf
-    (builder :: <fer-builder>, def :: <definition>)
  => res :: <leaf>;
 
 

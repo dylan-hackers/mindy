@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.36 1995/06/07 19:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.37 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -458,33 +458,17 @@ define method make-literal-constant
 		 value: value));
 end method;
 
-define method make-definition-leaf
+define method make-definition-constant
     (builder :: <fer-builder>, defn :: <abstract-constant-definition>)
  => res :: <leaf>;
   let value = ct-value(defn);
-  if (instance?(value, <eql-ct-value>))
-    make-literal-constant(builder, value);
-  elseif (value)
-    make(<definition-constant-leaf>,
-	 derived-type: ct-value-cclass(value), const-defn: defn);
-  else
-    let type = defn.defn-type | object-ctype();
-    make(<global-variable>,
-	 derived-type: type,
-	 var-info: make(<module-almost-constant-var-info>,
-			var-defn: defn, asserted-type: type));
+  unless (value)
+    error("%s doesn't have a ct-value, so it can be represented as a "
+	    "<definition-constant-leaf>",
+	  defn.defn-name);
   end;
-end method;
-
-define method make-definition-leaf
-    (builder :: <fer-builder>, defn :: <variable-definition>)
- => res :: <global-variable>;
-  ignore(builder);
-  let type = defn.defn-type | object-ctype();
-  make(<global-variable>,
-       derived-type: type,
-       var-info: make(<module-var-info>,
-		      var-defn: defn, asserted-type: type));
+  make(<definition-constant-leaf>,
+       derived-type: ct-value-cclass(value), const-defn: defn);
 end method;
 
 // make-initial-var -- internal utility used by the various make-mumble-var

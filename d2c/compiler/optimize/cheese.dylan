@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.92 1995/06/12 17:40:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.93 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -216,15 +216,6 @@ define method side-effect-free? (var :: <leaf>) => res :: <boolean>;
   #t;
 end;
 
-define method side-effect-free?
-    (var :: <global-variable>) => res :: <boolean>;
-  if (var.var-info.var-defn.ct-value)
-    #t;
-  else
-    #f;
-  end;
-end;
-
 
 
 define method pure-single-value-expression? (expr :: <expression>)
@@ -263,10 +254,6 @@ define method pure-single-value-expression? (var :: <abstract-variable>)
   ~instance?(var.var-info, <values-cluster-info>);
 end;
 
-define method pure-single-value-expression? (var :: <global-variable>)
-    => res :: <boolean>;
-  #f;
-end;
 
 define method trim-unneeded-defines
     (component :: <component>, assignment :: <assignment>) => ();
@@ -634,7 +621,8 @@ define method optimize-unknown-call
       let assign = call.dependents.dependent;
       let policy = assign.policy;
       let source = assign.source-location;
-      let new-func = make-definition-leaf(builder, ordered.head);
+      let new-func
+	= fer-convert-defn-ref(builder, policy, source, ordered.head);
       let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
       insert-before(component, assign, builder-result(builder));
       let new-call = make-unknown-call(builder, new-func, next-leaf,
@@ -1224,7 +1212,8 @@ define method optimize-known-call
 	    let assign = call.dependents.dependent;
 	    let policy = assign.policy;
 	    let source = assign.source-location;
-	    let new-func = make-definition-leaf(builder, ordered.head);
+	    let new-func
+	      = fer-convert-defn-ref(builder, policy, source, ordered.head);
 	    let next-leaf
 	      = make-next-method-info-leaf(builder, ordered, ambiguous);
 	    insert-before(component, assign, builder-result(builder));
@@ -1297,7 +1286,8 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, #"uninitialized-slot-error"));
+	 make-error-operation(builder, policy, source,
+			      #"uninitialized-slot-error"));
       end-body(builder);
     end;
     let value = make-local-var(builder, slot.slot-getter.variable-name,
@@ -1315,7 +1305,8 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, #"uninitialized-slot-error"));
+	 make-error-operation(builder, policy, source,
+			      #"uninitialized-slot-error"));
       end-body(builder);
     end;
     insert-before(component, call-assign, builder-result(builder));
@@ -2466,7 +2457,8 @@ define method add-type-checks-aux
 	end;
 	// Make the check type operation.
 	let asserted-type = defn.var-info.asserted-type;
-	let check = make-check-type-operation(builder, temp,
+	let check = make-check-type-operation(builder, assign.policy,
+					      assign.source-location, temp,
 					      make-literal-constant
 						(builder, asserted-type));
 	// Assign the type checked value to the real var.
@@ -2608,8 +2600,9 @@ define method replace-placeholder
       build-assignment
 	(builder, policy, source, vec,
 	 make-unknown-call
-	   (builder, dylan-defn-leaf(builder, #"make"), #f,
-	    list(dylan-defn-leaf(builder, #"<simple-object-vector>"),
+	   (builder, ref-dylan-defn(builder, policy, source, #"make"), #f,
+	    list(ref-dylan-defn(builder, policy, source,
+				#"<simple-object-vector>"),
 		 make-literal-constant(builder, as(<ct-value>, size:)),
 		 make-literal-constant(builder, as(<ct-value>, len)))));
       for (dep = op.depends-on then dep.dependent-next,
@@ -2618,7 +2611,9 @@ define method replace-placeholder
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-unknown-call
-	     (builder, dylan-defn-leaf(builder, #"%element-setter"), #f,
+	     (builder,
+	      ref-dylan-defn(builder, policy, source, #"%element-setter"),
+	      #f,
 	      list(dep.source-exp, vec,
 		   make-literal-constant(builder, as(<ct-value>, index)))));
       end;
@@ -2635,10 +2630,13 @@ define method replace-placeholder
   leaf.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
   let catcher = leaf.depends-on.source-exp;
-  let make-exit-fun-leaf = dylan-defn-leaf(builder, #"make-exit-function");
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+  let make-exit-fun-leaf = ref-dylan-defn(builder, policy, source,
+					  #"make-exit-function");
   let temp = make-local-var(builder, #"exit-function", function-ctype());
   build-assignment
-    (builder, $Default-Policy, make(<source-location>), temp,
+    (builder, policy, source, temp,
      make-unknown-call(builder, make-exit-fun-leaf, #f, list(catcher)));
   insert-before(component, dep.dependent, builder-result(builder));
   replace-expression(component, dep, temp);
@@ -2651,10 +2649,12 @@ define method replace-placeholder
   op.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
   let catcher = op.depends-on.source-exp;
+  let assign = op.dependents.dependent;
+  let func = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			    #"make-catcher");
+  insert-before(component, assign, builder-result(builder));
   replace-expression(component, dep,
-		     make-unknown-call
-		       (builder, dylan-defn-leaf(builder, #"make-catcher"), #f,
-			list(catcher)));
+		     make-unknown-call(builder, func, #f, list(catcher)));
 end;
   
 define method replace-placeholder
@@ -2663,10 +2663,12 @@ define method replace-placeholder
   op.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
   let catcher = op.depends-on.source-exp;
+  let assign = op.dependents.dependent;
+  let func = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			    #"disable-catcher");
+  insert-before(component, assign, builder-result(builder));
   replace-expression(component, dep,
-		     make-unknown-call
-		       (builder, dylan-defn-leaf(builder, #"disable-catcher"),
-			#f, list(catcher)));
+		     make-unknown-call(builder, func, #f, list(catcher)));
 end;
   
 define method replace-placeholder
@@ -2682,11 +2684,12 @@ define method replace-placeholder
 		   make-operation(builder, <primitive>,
 				  list(cluster, zero-leaf),
 				  name: #"canonicalize-results"));
+  let func = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			    #"throw");
   insert-before(component, assign, builder-result(builder));
   replace-expression(component, dep,
-		     make-unknown-call
-		       (builder, dylan-defn-leaf(builder, #"throw"), #f,
-			list(op.depends-on.source-exp, temp)));
+		     make-unknown-call(builder, func, #f,
+				       list(op.depends-on.source-exp, temp)));
 end;
 
 
@@ -2850,7 +2853,6 @@ define method maybe-close-over
 					 source-location:
 					   var.var-info.source-location),
 			  derived-type: value-cell-type);
-    let value-setter = dylan-defn-leaf(builder, #"value-setter");
     for (defn in var.definitions)
       let temp = make-ssa-var(builder, var.var-info.debug-name,
 			      defn.derived-type);
@@ -2869,7 +2871,9 @@ define method maybe-close-over
       temp.definer := assign;
       select (defn.definer by instance?)
 	<let-assignment> =>
-	  let make-leaf = dylan-defn-leaf(builder, #"make");
+	  let make-leaf
+	    = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			     #"make");
 	  let value-cell-type-leaf
 	    = make-literal-constant(builder, value-cell-type);
 	  let value-keyword-leaf
@@ -2883,6 +2887,9 @@ define method maybe-close-over
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, value-cell, op);
 	<set-assignment> =>
+	  let value-setter
+	    = ref-dylan-defn(builder, assign.policy, assign.source-location,
+			     #"value-setter");
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, #(),
 	     make-unknown-call(builder, value-setter, #f,
@@ -2891,7 +2898,6 @@ define method maybe-close-over
       insert-after(component, assign, builder-result(builder));
       reoptimize(component, assign);
     end;
-    let value = dylan-defn-leaf(builder, #"value");
     let next = #f;
     for (dep = var.dependents then next,
 	 while: dep)
@@ -2901,6 +2907,9 @@ define method maybe-close-over
       dep.source-exp := temp;
       temp.dependents := dep;
       dep.source-next := #f;
+      let value
+	= ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+			 #"value");
       let op = make-unknown-call(builder, value, #f, list(value-cell));
       op.derived-type := var.derived-type;
       build-assignment(builder, $Default-Policy, make(<source-location>),
@@ -2954,12 +2963,13 @@ define-primitive-transformer
      build-assignment
        (builder, policy, source, var,
 	make-unknown-call
-	  (builder, dylan-defn-leaf(builder, #"make-closure"), #f,
+	  (builder, ref-dylan-defn(builder, policy, source, #"make-closure"),
+	   #f,
 	   list(make-literal-constant(builder, ctv),
 		make-literal-constant(builder,
 				      as(<ct-value>, closure-size)))));
      let closure-var-setter-leaf
-       = dylan-defn-leaf(builder, #"closure-var-setter");
+       = ref-dylan-defn(builder, policy, source, #"closure-var-setter");
      for (dep = primitive.depends-on.dependent-next then dep.dependent-next,
 	  index from 0,
 	  while: dep)
@@ -3068,7 +3078,8 @@ define method build-xep
 				wild-ctype(), #t);
   let new-args = make(<stretchy-vector>);
   if (instance?(main-entry, <lambda>) & main-entry.environment.closure-vars)
-    let closure-ref-leaf = dylan-defn-leaf(builder, #"closure-var");
+    let closure-ref-leaf = ref-dylan-defn(builder, policy, source,
+					  #"closure-var");
     for (closure-var = main-entry.environment.closure-vars
 	   then closure-var.closure-next,
 	 index from 0,
@@ -3109,7 +3120,7 @@ define method build-xep
   else
     if (signature.rest-type == #f & signature.key-infos == #f)
       let op = make-unknown-call
-	(builder, dylan-defn-leaf(builder, #"=="), #f,
+	(builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
 	 list(nargs-leaf, wanted-leaf));
       let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
       build-assignment(builder, policy, source, temp, op);
@@ -3118,7 +3129,7 @@ define method build-xep
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder, #"wrong-number-of-arguments-error",
+	   (builder, policy, source, #"wrong-number-of-arguments-error",
 	    make-literal-constant(builder, as(<ct-value>, #t)),
 	    wanted-leaf, nargs-leaf));
       end-body(builder);
@@ -3128,7 +3139,7 @@ define method build-xep
     else
       unless (empty?(arg-types))
 	let op = make-unknown-call
-	  (builder, dylan-defn-leaf(builder, #"<"), #f,
+	  (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
 	   list(nargs-leaf, wanted-leaf));
 	let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
 	build-assignment(builder, policy, source, temp, op);
@@ -3136,19 +3147,19 @@ define method build-xep
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	   (builder, #"wrong-number-of-arguments-error",
+	   (builder, policy, source, #"wrong-number-of-arguments-error",
 	    make-literal-constant(builder, as(<ct-value>, #f)),
 	    wanted-leaf, nargs-leaf));
 	build-else(builder, policy, source);
 	end-body(builder);
       end;
       if (signature.key-infos)
-	let func = dylan-defn-leaf(builder,
-				   if (odd?(arg-types.size))
-				     #"even?";
-				   else
-				     #"odd?";
-				   end);
+	let func = ref-dylan-defn(builder, policy, source,
+				  if (odd?(arg-types.size))
+				    #"even?";
+				  else
+				    #"odd?";
+				  end);
 	let op = make-unknown-call(builder, func, #f, list(nargs-leaf));
 	let temp = make-local-var(builder, #"nkeys-okay?", object-ctype());
 	build-assignment(builder, policy, source, temp, op);
@@ -3156,7 +3167,8 @@ define method build-xep
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	     (builder, #"odd-number-of-keyword/value-arguments-error"));
+	     (builder, policy, source,
+	      #"odd-number-of-keyword/value-arguments-error"));
 	build-else(builder, policy, source);
 	end-body(builder);
       end;
@@ -3218,9 +3230,9 @@ define method build-xep
 	  unless (generic-entry? | signature.all-keys?)
 	    build-assignment
 	      (key-dispatch-builder, policy, source, #(),
-	       make-error-operation(key-dispatch-builder,
-				    #"unrecognized-keyword-error",
-				    key-var));
+	       make-error-operation
+		 (key-dispatch-builder, policy, source,
+		  #"unrecognized-keyword-error", key-var));
 	  end;
 	else
 	  let key-info = remaining.head;
@@ -3256,7 +3268,7 @@ define method build-xep
 	    (key-dispatch-builder, policy, source, temp,
 	     make-unknown-call
 	       (key-dispatch-builder,
-		dylan-defn-leaf(key-dispatch-builder, #"=="),
+		ref-dylan-defn(key-dispatch-builder, policy, source, #"=="),
 		#f,
 		list(key-var,
 		     make-literal-constant(key-dispatch-builder,
@@ -3281,7 +3293,7 @@ define method build-xep
       (key-dispatch-builder, policy, source, index-var,
        make-unknown-call
 	 (key-dispatch-builder,
-	  dylan-defn-leaf(key-dispatch-builder, #"-"),
+	  ref-dylan-defn(key-dispatch-builder, policy, source, #"-"),
 	  #f,
 	  list(nargs-leaf,
 	       make-literal-constant
@@ -3295,7 +3307,8 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, more-var,
        make-unknown-call(key-dispatch-builder,
-			 dylan-defn-leaf(key-dispatch-builder, #"<"),
+			 ref-dylan-defn(key-dispatch-builder, policy, source,
+					#"<"),
 			 #f, list(index-var, wanted-leaf)));
     build-if-body(key-dispatch-builder, policy, source, more-var);
     build-exit(key-dispatch-builder, policy, source, done-block);
@@ -3318,7 +3331,8 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, temp,
        make-unknown-call(key-dispatch-builder,
-			 dylan-defn-leaf(key-dispatch-builder, #"+"),
+			 ref-dylan-defn(key-dispatch-builder, policy, source,
+					#"+"),
 			 #f,
 			 list(index-var,
 			      make-literal-constant(key-dispatch-builder,
@@ -3331,7 +3345,8 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, index-var,
        make-unknown-call(key-dispatch-builder,
-			 dylan-defn-leaf(key-dispatch-builder, #"-"),
+			 ref-dylan-defn(key-dispatch-builder, policy, source,
+					#"-"),
 			 #f,
 			 list(index-var,
 			      make-literal-constant(key-dispatch-builder,

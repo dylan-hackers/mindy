@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.31 1995/06/12 17:36:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.32 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -955,7 +955,8 @@ define method convert-top-level-form
 	  (builder, policy, source, var,
 	   make-unknown-call
 	     (builder,
-	      dylan-defn-leaf(builder, symcat("class-", what, "-descriptors")),
+	      ref-dylan-defn(builder, policy, source,
+			      symcat("class-", what, "-descriptors")),
 	      #f,
 	      list(make-literal-constant(builder, for-class))));
 	var;
@@ -989,7 +990,7 @@ define method convert-top-level-form
 	      (builder, policy, source, var,
 	       make-unknown-call
 		 (builder,
-		  dylan-defn-leaf(builder, #"element"),
+		  ref-dylan-defn(builder, policy, source, #"element"),
 		  #f,
 		  list(evals-slot-descriptors-leaf(),
 		       make-literal-constant
@@ -1009,7 +1010,10 @@ define method convert-top-level-form
 	    build-assignment
 	      (builder, policy, source, #(),
 	       make-unknown-call
-		 (builder, dylan-defn-leaf(builder, #"slot-type-setter"), #f,
+		 (builder,
+		  ref-dylan-defn(builder, policy, source,
+				  #"slot-type-setter"),
+		  #f,
 		  list(var, evals-slot-descriptor-leaf())));
 	    values(object-ctype(), var);
 	  else
@@ -1030,7 +1034,8 @@ define method convert-top-level-form
 	  (builder, policy, source, #(),
 	   make-unknown-call
 	     (builder,
-	      dylan-defn-leaf(builder, #"init-value-or-function-setter"),
+	      ref-dylan-defn(builder, policy, source,
+			      #"init-value-or-function-setter"),
 	      list(var, evals-slot-descriptor-leaf())));
       elseif (init-function == #t)
 	have-defered-evaluations? := #t;
@@ -1042,7 +1047,8 @@ define method convert-top-level-form
 	  (builder, policy, source, #(),
 	   make-unknown-call
 	     (builder,
-	      dylan-defn-leaf(builder, #"init-value-or-function-setter"),
+	      ref-dylan-defn(builder, policy, source,
+			      #"init-value-or-function-setter"),
 	      list(var, evals-slot-descriptor-leaf())));
       end;
 
@@ -1054,8 +1060,11 @@ define method convert-top-level-form
 		let temp = make-local-var(builder, name, object-ctype());
 		build-assignment
 		  (builder, lexenv.lexenv-policy, source, temp,
-		   make-unknown-call(builder, dylan-defn-leaf(builder, name),
-				     #f, as(<list>, args)));
+		   make-unknown-call
+		     (builder,
+		      ref-dylan-defn(builder, lexenv.lexenv-policy, source,
+				      name),
+		      #f, as(<list>, args)));
 		temp;
 	      end,
 	      method build-add-method (gf-name, method-leaf)
@@ -1066,12 +1075,16 @@ define method convert-top-level-form
 		if (gf-defn)
 		  let policy = $Default-Policy;
 		  let source = make(<source-location>);
+		  let gf-leaf = fer-convert-defn-ref(builder, policy, source,
+						     gf-defn);
 		  build-assignment
 		    (builder, policy, source, #(),
 		     make-unknown-call
-		       (builder, dylan-defn-leaf(builder, #"add-method"), #f,
-			list(make-definition-leaf(builder, gf-defn),
-			     method-leaf)));
+		       (builder,
+			ref-dylan-defn(builder, policy, source,
+					#"add-method"),
+			#f,
+			list(gf-leaf, method-leaf)));
 		else
 		  error("No definition for %=, and can't "
 			  "implicitly define it.",
@@ -1130,7 +1143,7 @@ define method convert-top-level-form
 	  (builder, policy, source, descriptor-var,
 	   make-unknown-call
 	     (builder,
-	      dylan-defn-leaf(builder, #"element"),
+	      ref-dylan-defn(builder, policy, source, #"element"),
 	      #f,
 	      list(evals-override-descriptors-leaf(),
 		   make-literal-constant
@@ -1146,7 +1159,8 @@ define method convert-top-level-form
 	    (builder, policy, source, #(),
 	     make-unknown-call
 	       (builder,
-		dylan-defn-leaf(builder, #"init-value-or-function-setter"),
+		ref-dylan-defn(builder, policy, source,
+				#"init-value-or-function-setter"),
 		list(var, descriptor-var)));
 	else
 	  let var = make-local-var(builder,
@@ -1159,7 +1173,8 @@ define method convert-top-level-form
 	    (builder, policy, source, #(),
 	     make-unknown-call
 	       (builder,
-		dylan-defn-leaf(builder, #"init-value-or-function-setter"),
+		ref-dylan-defn(builder, policy, source,
+				#"init-value-or-function-setter"),
 		list(var, descriptor-var)));
 	end;
       end;
@@ -1227,7 +1242,7 @@ define method convert-top-level-form
 	      (maker-builder, policy, source, var,
 	       make-unknown-call
 		 (maker-builder,
-		  dylan-defn-leaf(maker-builder, #"element"),
+		  ref-dylan-defn(maker-builder, policy, source, #"element"),
 		  #f,
 		  list(maker-slot-descriptors-leaf(),
 		       make-literal-constant
@@ -1260,7 +1275,8 @@ define method convert-top-level-form
 		    (maker-builder, policy, source, var,
 		     make-unknown-call
 		       (maker-builder,
-			dylan-defn-leaf(maker-builder, #"slot-type"),
+			ref-dylan-defn(maker-builder, policy, source,
+					#"slot-type"),
 			#f,
 			list(maker-slot-descriptor-leaf())));
 		  values(object-ctype(), var);
@@ -1327,7 +1343,9 @@ define method convert-top-level-form
 		      build-assignment
 			(init-builder, policy, source, more?,
 			 make-unknown-call
-			   (init-builder, dylan-defn-leaf(init-builder, #"<"),
+			   (init-builder,
+			    ref-dylan-defn(init-builder, policy, source,
+					    #"<"),
 			    #f, list(index, size-leaf)));
 		      build-if-body(init-builder, policy, source, more?);
 		      build-assignment
@@ -1339,7 +1357,9 @@ define method convert-top-level-form
 		      build-assignment
 			(init-builder, policy, source, index,
 			 make-unknown-call
-			   (init-builder, dylan-defn-leaf(init-builder, #"+"),
+			   (init-builder,
+			    ref-dylan-defn(init-builder, policy, source,
+					    #"+"),
 			    #f, list(index,
 				     make-literal-constant
 				       (init-builder, as(<ct-value>, 1)))));
@@ -1375,7 +1395,8 @@ define method convert-top-level-form
 			  (maker-builder, policy, source, var,
 			   make-unknown-call
 			     (maker-builder,
-			      dylan-defn-leaf(maker-builder, #"element"),
+			      ref-dylan-defn(maker-builder, policy, source,
+					      #"element"),
 			      #f,
 			      list(maker-override-descriptors-leaf(introducer),
 				   make-literal-constant
@@ -1397,7 +1418,7 @@ define method convert-top-level-form
 		     init-function-var | init-value-var,
 		     make-unknown-call
 		       (maker-builder,
-			dylan-defn-leaf(maker-builder,
+			ref-dylan-defn(maker-builder, policy, source,
 					#"init-value-or-function"),
 			#f,
 			list(descriptor-leaf)));
@@ -1427,7 +1448,8 @@ define method convert-top-level-form
 		  build-assignment
 		    (maker-builder, policy, source, init-value-var,
 		     make-check-type-operation
-		       (maker-builder, init-value-var, type-var));
+		       (maker-builder, policy, source,
+			init-value-var, type-var));
 		end;
 	      end;
 	    
@@ -1466,7 +1488,8 @@ define method convert-top-level-form
 		  build-assignment
 		    (maker-builder, policy, source, #(),
 		     make-error-operation
-		       (maker-builder, #"missing-required-init-keyword-error",
+		       (maker-builder, policy, source,
+			#"missing-required-init-keyword-error",
 			make-literal-constant
 			  (maker-builder, as(<ct-value>, key)),
 			make-literal-constant(maker-builder, cclass)));
@@ -1547,7 +1570,9 @@ define method convert-top-level-form
 		      build-assignment
 			(builder, policy, source, var,
 			 make-unknown-call
-			   (builder, dylan-defn-leaf(builder, #"*"), #f,
+			   (builder,
+			    ref-dylan-defn(builder, policy, source, #"*"),
+			    #f,
 			    list(size-leaf, elsize-leaf)));
 		      var;
 		    end;
@@ -1555,8 +1580,8 @@ define method convert-top-level-form
 		build-assignment
 		  (builder, policy, source, var,
 		   make-unknown-call
-		     (builder, dylan-defn-leaf(builder, #"+"), #f,
-		      list(base-len, extra)));
+		     (builder, ref-dylan-defn(builder, policy, source, #"+"),
+		      #f, list(base-len, extra)));
 		var;
 	      else
 		base-len;
@@ -1608,13 +1633,14 @@ define method convert-top-level-form
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder,
+	   (builder, policy, source,
 	    "Circularity detected while processing the defered evaluations "
 	      "for %=",
 	    make-literal-constant(builder, cclass)));
       end-body(builder);
       let defered-evaluations-setter-leaf
-	= dylan-defn-leaf(builder, #"class-defered-evaluations-setter");
+	= ref-dylan-defn(builder, policy, source,
+			  #"class-defered-evaluations-setter");
       build-assignment
 	(builder, policy, source, #(),
 	 make-unknown-call
@@ -1631,7 +1657,9 @@ define method convert-top-level-form
       build-assignment
 	(builder, policy, source, #(),
 	 make-unknown-call
-	   (builder, dylan-defn-leaf(builder, #"class-maker-setter"), #f,
+	   (builder,
+	    ref-dylan-defn(builder, policy, source, #"class-maker-setter"),
+	    #f,
 	    list(make-literal-constant(builder, cclass),
 		 maker-leaf | false-leaf)));
       // Clear the defered-evaluations function.
@@ -1651,119 +1679,6 @@ define method convert-top-level-form
   end;
 end;
 
-/*
-define method build-hairy-class (???)
-  local method make-symbol-literal (sym)
-	  make-literal-constant(builder, make(<ct-literal>, value: sym));
-	end;
-  let vector-leaf = dylan-defn-leaf(builder, #"vector");
-  if (~ct-value(defn))
-    let cclass-ctype = dylan-defn(#"<class>");
-    let args = make(<stretchy-vector>);
-    add!(args, make-symbol-literal(defn.defn-name.name-symbol));
-    begin
-      let supers-args = make(<stretchy-vector>);
-      for (super in defn.class-defn-supers)
-	let temp = make-local-var(builder, #"temp", cclass-ctype);
-	fer-convert(builder, super, lexenv, #"assignment", temp);
-	add!(supers-args, temp);
-      end;
-      let temp = make-local-var(builder, #"supers", object-ctype());
-      build-assignment(builder, policy, source, temp,
-		       make-unknown-call(builder, vector-leaf, #f,
-					 as(<list>, supers-args)));
-      add!(args, temp);
-    end;
-    build-assignment
-      (builder, policy, source, make-definition-leaf(builder, defn),
-       make-unknown-call(builder, dylan-defn-leaf(builder, #"%make-class"), #f,
-			 as(<list>, args)));
-  end;
-
-    begin
-      add!(args, make-keyword-literal(slots:));
-      let slots-args = make(<stretchy-vector>);
-      add!(slots-args, dylan-defn-leaf(builder, #"vector"));
-      for (slot in defn.class-defn-slots)
-	let slot-args = make(<stretchy-vector>);
-	add!(slot-args, dylan-defn-leaf(builder, #"vector"));
-	add!(slot-args, make-keyword-literal(allocation:));
-	add!(slot-args, make-keyword-literal(slot.slot-defn-allocation));
-	add!(slot-args, make-keyword-literal(getter:));
-	begin
-	  let name = slot.slot-defn-getter-name;
-	  let var = find-variable(name);
-	  let defn = var & var.variable-definition;
-	  if (defn)
-	    add!(slot-args, make-definition-leaf(builder, defn));
-	  else
-	    error("No definition for %=, and can't implicitly define it.",
-		  name);
-	  end;
-	end;
-	if (slot.slot-defn-setter-name)
-	  let name = slot.slot-defn-setter-name;
-	  let var = find-variable(name);
-	  let defn = var & var.variable-definition;
-	  if (defn)
-	    add!(slot-args, make-keyword-literal(setter:));
-	    add!(slot-args, make-definition-leaf(builder, defn));
-	  else
-	    error("No definition for %=, and can't implicitly define it.",
-		  name);
-	  end;
-	end;
-	if (slot.slot-defn-type)
-	  add!(slot-args, make-keyword-literal(type:));
-	  if (slot.slot-type)
-	    add!(slot-args,
-		 make-literal-constant(builder, slot.slot-type));
-	  else
-	    let temp = make-local-var(builder, #"type",
-				      dylan-value(#"<type>"));
-	    fer-convert(builder, slot.slot-defn-type, lexenv,
-			#"assignment", temp);
-	    add!(slot-args, temp);
-	  end;
-	end;
-	if (slot.slot-init-value)
-	  add!(slot-args, make-keyword-literal(init-value:));
-	  add!(slot-args,
-	       fer-convert(builder, slot.slot-init-value, lexenv,
-			   #"leaf", #"init-value"));
-	end;
-	if (slot.slot-defn-init-function)
-	  add!(slot-args, make-keyword-literal(init-function:));
-	  let temp = make-local-var(builder, #"init-function",
-				    function-ctype());
-	  fer-convert(builder, slot.slot-defn-init-function, lexenv,
-		      #"assignment", temp);
-	  add!(slot-args, temp);
-	end;
-	if (slot.slot-defn-init-keyword)
-	  add!(slot-args,
-	       if (slot.slot-defn-init-keyword-required?)
-		 make-keyword-literal(required-init-keyword:);
-	       else
-		 make-keyword-literal(init-keyword:);
-	       end);
-	  add!(slot-args, make-keyword-literal(slot.slot-defn-init-keyword));
-	end;
-	let temp = make-local-var(builder,
-				  slot.slot-getter.defn-name.name-symbol,
-				  object-ctype());
-	build-assignment(builder, policy, source, temp,
-			 make-unknown-call(builder, as(<list>, slot-args)));
-	add!(slots-args, temp);
-      end;
-      let temp = make-local-var(builder, #"slots", object-ctype());
-      build-assignment(builder, policy, source, temp,
-		       make-unknown-call(builder, as(<list>, slots-args)));
-      add!(args, temp);
-    end;
-  end;
-end;
-*/
 
 define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
@@ -1807,7 +1722,8 @@ define method build-getter
 	build-else(builder, policy, source);
 	build-assignment
 	  (builder, policy, source, #(),
-	   make-error-operation(builder, #"uninitialized-slot-error"));
+	   make-error-operation
+	     (builder, policy, source, #"uninitialized-slot-error"));
 	end-body(builder);
       end;
       build-assignment(builder, policy, source, result,
@@ -1823,7 +1739,8 @@ define method build-getter
 	build-else(builder, policy, source);
 	build-assignment
 	  (builder, policy, source, #(),
-	   make-error-operation(builder, #"uninitialized-slot-error"));
+	   make-error-operation
+	     (builder, policy, source, #"uninitialized-slot-error"));
 	end-body(builder);
       end;
     end;
@@ -1946,16 +1863,18 @@ define method build-slot-posn-dispatch
       end;
     finally
       let ranges = as(<simple-object-vector>, ranges);
-      let less-then = dylan-defn-leaf(builder, #"<");
+      let less-then = ref-dylan-defn(builder, policy, source, #"<");
       //
       // Extract the unique id for this argument.
       let class-temp = make-local-var(builder, #"class", object-ctype());
-      let obj-class-leaf = dylan-defn-leaf(builder, #"%object-class");
+      let obj-class-leaf
+	= ref-dylan-defn(builder, policy, source, #"%object-class");
       build-assignment(builder, policy, source, class-temp,
 		       make-unknown-call(builder, obj-class-leaf, #f,
 					 list(instance-leaf)));
       let id-temp = make-local-var(builder, #"id", object-ctype());
-      let unique-id-leaf = dylan-defn-leaf(builder, #"unique-id");
+      let unique-id-leaf
+	= ref-dylan-defn(builder, policy, source, #"unique-id");
       build-assignment(builder, policy, source, id-temp,
 		       make-unknown-call(builder, unique-id-leaf, #f,
 					 list(class-temp)));
@@ -1984,7 +1903,6 @@ define method build-slot-posn-dispatch
       split-range(0, ranges.size - 1);
     end;
   else
-    let instance?-leaf = dylan-defn-leaf(builder, #"instance?");
     local
       method split (positions :: <list>, init?-positions :: false-or(<list>))
 	if (empty?(positions) | (init?-positions & empty?(init?-positions)))
@@ -2023,6 +1941,8 @@ define method build-slot-posn-dispatch
 	  end;
 	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
 	  let type-leaf = make-literal-constant(builder, best-test);
+	  let instance?-leaf
+	    = ref-dylan-defn(builder, policy, source, #"instance?");
 	  build-assignment
 	    (builder, policy, source, cond-temp,
 	     make-unknown-call

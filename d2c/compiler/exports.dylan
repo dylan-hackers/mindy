@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.82 1995/06/14 10:56:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.83 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -656,7 +656,7 @@ define module builder-interface
     build-if-body, build-else, build-block-body, build-exit, build-return,
     build-loop-body, build-assignment, build-join, make-operation,
     <fer-builder>, build-let, make-unknown-call, make-literal-constant,
-    make-definition-leaf, make-lexical-var, make-ssa-var, make-local-var,
+    make-definition-constant, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
     build-unwind-protect-body, build-function-body, make-function-literal, 
 
@@ -689,7 +689,7 @@ define module flow
     <expression>, <dependency>, <queueable-mixin>, <dependent-mixin>,
     <leaf>, <variable-info>, <definition-site-variable>,
     <ssa-variable>, <initial-definition>, <multi-definition-variable>,
-    <initial-variable>, <global-variable>, <operation>,
+    <initial-variable>, <operation>,
     <join-operation>, <abstract-assignment>, <assignment>,
     <join-assignment>,
 
@@ -760,7 +760,7 @@ define module front
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, name,
     <prologue>, function,
-    <set>, variable,
+    <module-var-set>, <module-var-ref>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
     <truly-the>, guaranteed-type,
@@ -773,7 +773,6 @@ define module front
 
     <debug-named-info>, debug-name,
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
-    <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
     <abstract-function-literal>,
     <function-literal>, visibility, visibility-setter, <function-visibility>,
@@ -823,7 +822,8 @@ define module fer-convert
     export: all;
   use front,
     rename: {<primitive> => <fer-primitive>, <mv-call> => <fer-mv-call>},
-    import: {<function-literal>, <method-literal>, <set>,
+    import: {<function-literal>, <method-literal>,
+	       <module-var-ref>, <module-var-set>,
 	       <function-visibility>, <catch>, <disable-catcher>,
 	       <make-catcher>};
   use builder-interface, export: all;
@@ -837,7 +837,8 @@ define module fer-convert
 
   export
     fer-convert-method, fer-convert, fer-convert-body,
-    dylan-defn-leaf, make-check-type-operation, make-error-operation;
+    fer-convert-defn-ref, fer-convert-defn-set,
+    ref-dylan-defn, make-check-type-operation, make-error-operation;
 end;
 
 define module define-functions
@@ -861,8 +862,7 @@ define module define-functions
   use lexenv;
   use source;
   use front,
-    import: {<function-literal>, <method-literal>, <truly-the>,
-	       <set>, <mv-call>};
+    import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>};
   use compile-time-functions;
 
   export
@@ -896,7 +896,7 @@ define module define-constants-and-variables
   use builder-interface;
   use fer-convert;
   use source;
-  use front, import: {<method-literal>, <set>};
+  use front, import: {<method-literal>};
   use define-functions;
   use expand;
   use compile-time-functions;

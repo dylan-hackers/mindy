@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.67 1995/06/14 10:57:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.68 1995/06/15 00:47:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -298,12 +298,6 @@ define method get-info-for (leaf :: <initial-definition>,
 			    output-info :: <output-info>)
     => res :: <backend-var-info>;
   get-info-for(leaf.definition-of, output-info);
-end;
-
-define method get-info-for (leaf :: <global-variable>,
-			    output-info :: <output-info>)
-    => res :: <backend-var-info>;
-  get-info-for(leaf.var-info.var-defn, output-info);
 end;
 
 define method c-name-and-rep (leaf :: <abstract-variable>,
@@ -1048,26 +1042,6 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       expr :: <global-variable>,
-			       output-info :: <output-info>)
-    => ();
-  let (name, rep) = c-name-and-rep(expr, output-info);
-  if (~expr.var-info.var-defn.ct-value)
-    let stream = output-info.output-info-guts-stream;
-    if (rep.representation-has-bottom-value?)
-      let temp = new-local(output-info);
-      format(output-info.output-info-vars-stream, "%s %s;\n",
-	     rep.representation-c-type, temp);
-      format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
-      name := temp;
-    else
-      format(stream, "if (!%s_initialized) abort();\n", name);
-    end;
-  end;
-  deliver-result(defines, name, rep, #f, output-info);
-end;
-
-define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <literal-constant>,
 			       output-info :: <output-info>)
     => ();
@@ -1452,7 +1426,28 @@ end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>),
-     set :: <set>, output-info :: <output-info>)
+     ref :: <module-var-ref>, output-info :: <output-info>)
+    => ();
+  let defn = ref.variable;
+  let info = get-info-for(defn, output-info);
+  let name = info.backend-var-info-name;
+  let rep = info.backend-var-info-rep;
+  let stream = output-info.output-info-guts-stream;
+  if (rep.representation-has-bottom-value?)
+    let temp = new-local(output-info);
+    format(output-info.output-info-vars-stream, "%s %s;\n",
+	   rep.representation-c-type, temp);
+    format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
+    name := temp;
+  else
+    format(stream, "if (!%s_initialized) abort();\n", name);
+  end;
+  deliver-result(defines, name, rep, #f, output-info);
+end;
+
+define method emit-assignment
+    (defines :: false-or(<definition-site-variable>),
+     set :: <module-var-set>, output-info :: <output-info>)
     => ();
   let defn = set.variable;
   let info = get-info-for(defn, output-info);
@@ -1731,27 +1726,6 @@ define method ref-leaf (target-rep :: <representation>,
 	end;
       end;
   conversion-expr(target-rep, expr, rep, output-info);
-end;
-
-define method ref-leaf (target-rep :: <representation>,
-			leaf :: <global-variable>,
-			output-info :: <output-info>)
-    => res :: <string>;
-  let (name, rep) = c-name-and-rep(leaf, output-info);
-  if (~leaf.var-info.var-defn.ct-value)
-    let stream = output-info.output-info-guts-stream;
-    if (rep.representation-has-bottom-value?)
-      let temp = new-local(output-info);
-      format(output-info.output-info-vars-stream, "%s %s;\n",
-	     rep.representation-c-type, temp);
-      format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
-      name := temp;
-    else
-      format(stream, "if (!%s_initialized) abort();\n", name);
-    end;
-  end;
-
-  conversion-expr(target-rep, name, rep, output-info);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
