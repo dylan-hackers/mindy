@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.8 1994/10/05 21:04:23 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.9 1995/04/19 13:12:16 wlott Exp $
 *
 * This file is the parser for the debugger.
 *
@@ -62,6 +62,7 @@ static obj_t result;
 %token tok_SYMBOL
 %token tok_KEYWORD
 %token tok_COMMA
+%token tok_EXTERN_NAME
 
 %%
 
@@ -98,6 +99,8 @@ leaf:		tok_DEBUGVAR
 	|	tok_ARG
 		    { $$ = pair(symbol("arg"), $1); }
 	|	tok_SYMBOL
+		    { $$ = list2(symbol("variable"), $1); }
+	|	tok_EXTERN_NAME
 		    { $$ = pair(symbol("variable"), $1); }
 	|	literal
 		    { $$ = pair(symbol("literal"), $1); }
