@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.57 1995/06/05 21:21:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.58 1995/06/05 21:59:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1396,7 +1396,7 @@ end;
 
 define method find-main-entry-info
     (defn :: <generic-definition>, output-info :: <output-info>)
-    => res :: <fer-function-region>;
+    => res :: <function-info>;
   let discriminator = defn.generic-defn-discriminator;
   if (discriminator)
     get-info-for(discriminator, output-info);
@@ -1407,7 +1407,7 @@ end;
 
 define method find-main-entry-info
     (defn :: <abstract-method-definition>, output-info :: <output-info>)
-    => res :: <fer-function-region>;
+    => res :: <function-info>;
   get-info-for(defn.ct-value, output-info);
 end;
 
