@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.3 1994/10/05 20:55:18 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.4 1995/09/13 23:35:09 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -49,8 +49,5 @@ extern int line_count;
  * been previously included.
  */
 
-#ifndef TRUE
-typedef int boolean;
 #define TRUE 1
 #define FALSE 0
-#endif

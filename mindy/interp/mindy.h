@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.8 1995/07/24 20:50:07 panda Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.9 1995/09/13 23:35:38 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -49,11 +49,6 @@ extern void lose _ANSI_ARGS_((char *fmt, ...));
 	    lose("assertion failed, line %d file %s", __LINE__, __FILE__); \
     } while (0)
 
-#ifdef WIN32
-    typedef unsigned char boolean;
-#else
-    typedef int boolean;
-#endif
 #define TRUE 1
 #define FALSE 0
 
