@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/exports.dylan,v 1.3 2000/01/24 04:58:24 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/exports.dylan,v 1.4 2002/04/17 19:08:52 gabor Exp $
 
 //======================================================================
 //
@@ -257,7 +257,8 @@ define module Extensions
 	     <true>, <false>,
 	     <general-integer>, <extended-integer>,
 	     <ratio>, numerator, denominator,
-	     <weak-pointer>, weak-pointer-object},
+	     <weak-pointer>, weak-pointer-object,
+	     invoke-debugger},
     export: all;
   use extras, exclude: { add-debug-variable, instantiable? },
     export: all;
