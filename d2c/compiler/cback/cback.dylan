@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.126 1996/07/12 01:49:57 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.127 1996/07/12 14:36:48 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1765,9 +1765,9 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   let clause-is-an-elseif = if-region.else-region.elseif-able?;
   
   if (clause-is-an-elseif)
-    write("else ", stream);
+    write(stream, "else ");
   else
-    write("else {\n", stream);
+    write(stream, "else {\n");
     indent(stream, $indentation-step);
   end if;
   
@@ -1777,7 +1777,7 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   spew-pending-defines(file);
   if (~clause-is-an-elseif)
     indent(stream, -$indentation-step);
-    write("}\n", stream);
+    write(stream, "}\n");
   end if;
 end method emit-region;
 
