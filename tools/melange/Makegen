@@ -15,7 +15,7 @@ if ($features{'compiled_for_win32'}) {
 } elsif ($features{'compiled_for_openbsd'}) {
     $c_decl_lid = "openbsd-c-decl";
 } else {
-    &uknown_platform_error();
+    &unknown_platform_error();
 };
 
 &emit_parsergen_rule('c-parse');
