@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.48 1996/07/30 20:14:28 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.49 1996/08/10 20:06:10 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,7 +15,7 @@ define library compiler-base
 #if (mindy)
   use Debugger-Format;
 #endif
-  use String-extensions, export: all;   // used by target
+  use String-extensions;
   use Table-extensions, export: all;
   
   export c-representation;
@@ -40,6 +40,7 @@ define library compiler-base
   export utils;
   export variables;
   export target-environment;
+  export file-system;
 end;
 
 define module params
@@ -106,6 +107,43 @@ define module utils
     log-target, log-dependency, spew-dependency-log;
 end;
 
+define module file-system
+  use dylan;
+  use extensions;
+  use System, import: {system};
+  use String-conversions;  // as(<string>, char)
+  // We use the Streams library to see if a file exists
+  use Streams, 
+    import: {<stream>, <file-stream>, <file-does-not-exist-error>, close}; 
+
+#if (mindy)
+  use System, import: {getcwd};
+#else
+  use System, 
+     import: {call-out, buffer-address, <buffer>};
+#endif
+
+  export
+     <filename>,
+     $search-path-separator,
+     search-path-separator?,
+     $a-path-separator,
+     path-separator?,
+     filename-prefix,
+     filename-extension,
+     base-filename,
+     pathless-filename,
+     
+     get-current-directory,
+
+     find-file,
+     find-and-open-file,
+     
+     delete-file,
+     rename-file,
+     files-identical?;
+end module file-system;
+
 define module od-format
   use common;
 #if (mindy)
@@ -117,6 +155,7 @@ define module od-format
   use introspection, import: {function-name};
   use utils;
   use self-organizing-list;
+  use file-system, import: {find-and-open-file};
   export
     $odf-header-flag,
     $odf-etype-mask,
@@ -241,6 +280,7 @@ define module source
   use utils;
   use od-format;
   use compile-time-values;
+  use File-System, import: {pathless-filename};
 
   export
     <source-location-mixin>, source-location,
@@ -353,6 +393,7 @@ end;
 define module header
   use common;
   use System, import: {copy-bytes};
+  use character-type;
 
   use utils;
   use source;
@@ -751,22 +792,12 @@ define module signature
   use od-format;
 end;
 
-define module ini-files
-  use dylan;
-  use extensions;
-  use regular-expressions;
-  use substring-search;
-  use streams;
-  use format;         // format and standard-io are for printing error msgs
-  use standard-io;
-  export 
-    parse-ini-file, <parse-error>;
-end module ini-files;
-
 define module target-environment
   use dylan;
-  use ini-files;
+  use header;
+  use source;
   use streams, import: { <file-stream> };
+  use substring-search, import: { substring-replace };
   export
     get-targets, <target-environment>,
     target-name,
