@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.1 1994/12/12 13:01:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.2 1994/12/13 13:26:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -757,7 +757,12 @@ literal (<literal-token>)
 %
 
 literal (strings)
-  make(<literal>, value: %1);
+  make(<literal>,
+       value: if (%1.size == 1)
+		%1[0];
+	      else
+		apply(concatenate, %1);
+	      end);
 %
 
 literal (<true-token>)
@@ -789,14 +794,14 @@ literal (<literal>)
   %1;
 %
 
-:type strings <string>
+:type strings <stretchy-vector>
 
 strings (<string-token>)
-  %1.token-literal;
+  stretchy-vector(%1.token-literal);
 %
 
 strings (strings <string-token>)
-  concatenate(%1, %2.token-literal);
+  add!(%1, %2.token-literal);
 %
 
 :type constants-opt <simple-object-vector>
@@ -911,7 +916,7 @@ statement (<method-token> method-body <end-token>)
   make(<method-ref>, method: %2);
 %
 
-statement (<mv-call> <left-paren-token> arguments <right-paren-token>)
+statement (<mv-call-token> <left-paren-token> arguments <right-paren-token>)
   make(<mv-call>, operands: as(<simple-object-vector>, %3));
 %
 
