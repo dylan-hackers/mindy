@@ -1,8 +1,8 @@
-To install a precompiled binary distribution of d2c, go to one of the FTP
-sites listed in the README and download an appropriate package for your
-operating system. Tarballs are available for several common Unix-like
-systems and a variety of processors. RPMs and other "packaged" binaries are
-slowly becoming available as well.
+To install a precompiled binary distribution of Gwydion, go to one of
+the FTP sites listed in the README and download an appropriate package
+for your operating system. Tarballs are available for several common
+Unix-like systems and a variety of processors. RPMs and other
+"packaged" binaries are slowly becoming available as well.
 
 Binary tarballs are currently designed to untar into /usr/local on most
 platforms. If you want to put them somewhere else, please see the section
@@ -26,19 +26,16 @@ provide a download link for it.  If you install it under, say,
 /usr/lib/libgc.a, provide --with-gc-prefix=/usr to make it accessible
 to the d2c build process.
 
-Once you have binaries installed, grab a source snapshot from the FTP site
-or download one from CVS (see the website mentioned in the README for
-instructions). If you choose to use CVS, you'll need to run 'autogen.sh' in
-the gd/src directory to create the configure script. To build all of
-Gwydion:
+Once you have installed a pre-built binary, or decided to wait through
+the lengthy process of an interpreter bootstrap, do:
 
-  $ ./configure --prefix=/usr/local --with-gc-prefix=/usr
+  $ ./configure
   $ make
   $ make install
 
 or from CVS:
 
-  $ ./autogen.sh --prefix=/usr/local --with-gc-prefix=/usr
+  $ ./autogen.sh
   $ make
   $ make install
 
@@ -46,16 +43,13 @@ You can also use a separate build directory:
 
   $ mkdir build
   $ cd build
-  $ /<path-to-gd>/src/configure --prefix=/usr/local --with-gc-prefix=/usr
+  $ ../configure
   $ make
   $ make install
 
-If binaries are not yet avilable for your platform, it will be necessary to
-cross-compile and port d2c to the new architecture. This takes anywhere
-from a few days to a week or two, and a working knowledge of Dylan. We're
-working on a porting guide, but for now, follow the instructions in the
-README to subscribe to gd-hackers and announce your intent. New ports and
-new binary packages are always welcome.
+If the configure process complains that your platform is unsupported,
+things get a little more involved. Read the BOOTSTRAPPING file for
+more details.
 
 RELOCATING BINARIES
 
@@ -68,8 +62,15 @@ Dylan-specific variable.
   DYLANDIR: The prefix under which Gwydion Dylan was installed. This defaults
     to /usr/local for tarballs and /usr for RPMS. Both Mindy and d2c use this
     variable to locate various files.
+
   DYLANPATH: The location of d2c libraries and Mindy *.dbc files. This
-    defaults to "$DYLANDIR/lib/dylan". You won't normally need to set this
-    unless you create more than one directory of libraries.
+    defaults to "$DYLANDIR/lib/dylan/$VERSION/$PLATFORM". You won't
+    normally need to set this unless you create more than one
+    directory of libraries.
+
+If you are on a platform with support for shared libraries, you'll
+need to make sure the libraries are found by the runtime
+linker. Details vary form system to system, but usually you need to
+set the environment variable LD_LIBRARY_PATH to $DYLANPATH.
   
 The RPMS are allegedly relocatable. Tell us if it doesn't work.

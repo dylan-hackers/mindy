@@ -40,9 +40,7 @@ Here's what happens in each case:
 
  3) You don't want d2c at all, but Mindy looks tempting.
 
-    This is the default action of './configure' if it can't find an
-    existing d2c.
-
+    Run './configure --disable-d2c'
 
  4) You want d2c, can't find a binary for d2c, but d2c already
     supports your platform: BOOTSTRAPPING_WITH_MINDY
@@ -50,10 +48,10 @@ Here's what happens in each case:
     If you can't find a working d2c binary, you'll need to bootstrap
     d2c using Mindy. This involves compiling Mindy, building a
     bytecode-compiled copy of d2c that runs (very slowly) under Mindy,
-    and using that copy of d2c to compile a new version, as per step (2)
-    above.  You need to explicitly specify the --enable-mindy-bootstrap
-    switch to ./configure, then when you run "make" the rest will happen
-    automagically.
+    and using that copy of d2c to compile a new version, as per step
+    (2) above.  This automatically happens when configure doesn't find
+    a pre-installed binary.  After configure, run "make", and the rest
+    will happen automagically.
 
     This takes anything from several hours to several days.
 
