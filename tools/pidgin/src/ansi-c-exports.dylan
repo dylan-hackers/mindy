@@ -3,6 +3,7 @@ Module: dylan-user
 define library ansi-c
   use dylan;
   use format;
+  use parser-utilities;
 
   export
     c-types,
@@ -103,6 +104,7 @@ end module;
 
 define module c-declarations
   use outside-dependencies;
+  use source-locations, import: {<source-location>};
   use c-types;
 
   export

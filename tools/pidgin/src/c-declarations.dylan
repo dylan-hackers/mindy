@@ -19,7 +19,9 @@ Module: c-declarations
 //    unknown define
 
 define abstract class <c-declaration> (<object>)
-  // XXX - Eventually we want to add a source location
+  slot c-declaration-location :: false-or(<source-location>),
+    init-keyword: location:,
+    init-value: #f;
 end class;
 
 define generic c-declaration-name
