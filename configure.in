@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.31 1999/04/10 18:42:46 emk Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.32 1999/04/12 19:32:36 tree Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -322,7 +322,7 @@ RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du libdylan.a melange-support.
 # Delete our local runtime directory, if it exists.
 LOCAL_RUNTIME="$builddir"/previous_runtime
 AC_SUBST(LOCAL_RUNTIME)
-if test -e "$LOCAL_RUNTIME"; then
+if test -d "$LOCAL_RUNTIME"; then
     rm -rf "$LOCAL_RUNTIME"
 fi
 
@@ -357,7 +357,7 @@ if test $SCENARIO = BOOTSTRAPPING_WITH_D2C; then
     # Make links to our runtime libraries.
     for f in $RUNTIME_LIBRARIES; do
 	lib="$with_existing_runtime/$f"
-	if test -e $lib; then
+	if test -r $lib; then
 	    ln -s "$lib" "$LOCAL_RUNTIME"
 	else
 	    AC_MSG_ERROR([
