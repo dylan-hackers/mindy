@@ -1,12 +1,155 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
 
+
+// A target description is a description of the target-environment we
+// are compiling for.  This includes information such as what files
+// are called, how to run the assembler, and how to run the C
+// compiler.  It is possible to have multiple target descriptions for
+// what is conceptually the same target environment.  This would
+// happen if, say, there are two different C compilers (one target for
+// each C compiler).
+//
+// Each description looks like a Dylan header, with keywords and
+// values.  In a value, the character sequences \, \\, \n, and \t are
+// interpretted as if they were inside Dylan string literals.
+// Multi-line values might or might not do what you expect (this of
+// course depends on what you expect); they work fine for feature
+// lists..
+//
+// There can be no blank lines in the middle of a description, because
+// like Dylan headers, blank lines mark the end of a description.
+// Comments may start in column 0 only.  Comments don't count as blank
+// lines, so you can use comments to visually break up a header
+// without confusing the compiler.
+//
+// Target descriptions also support a simplified version of
+// inheritence (single inheritence with no abstract targets).  See
+// description of the inherit-from: keyword for more details.
+
+// Mandatory keywords (must be declared either in this target or in
+// one of the targets it inherits from):
+//
+// target-name: The name of the target.  This is what the compiler
+// looks at when it tries to figure out what "foo" refers to in
+// "-Tfoo".  The compiler internals do *not* get to look at this name;
+// if it did, users could not define new targets.
+//
+// inherit-from: Inherit all keywords from this target.  The target to
+// inherit from must be in this file and must come before the present
+// target.
+//
+// default-features: Conditional compilation features that are defined
+// on this platform.  When overriding an inheritted default-features,
+// remember that you are giving an entirely new value to default
+// features, *not* merely adding to the list of default-features you
+// inheritted.
+//
+// integer-length: [integer] The number of bits in a machine integer.
+//
+// heap-preamble: A string that is outputted at the beginning of all
+// .s files (ie, all lib-heap.s and heap.s files)
+//
+// align-directive: Assembler directive that tells it to align the
+// next structure on an N byte boundary
+//
+// word-directive: Assembler directive for outputting a 32-bit word.
+//
+// half-word-directive: Assembler directive for outputting a 16-bit integer.
+//
+// byte-directive: Assembler directive for outputting an 8-bit quantity.
+//
+// comment-token: A string that the assembler will recognize as the
+// beginning of a line comment.
+//
+// mangled-name-prefix: Mangled-name-prefix is a string that goes
+// before all symbol names inside an assembly file. (Some C compilers
+// "mangle" symbol names before passing them on to the linker.  For
+// assembly files to interact with C files, the assembly files must
+// have their names similarly mangled.  Prefixing names with something
+// (such as an underbar) is the most common form of name mangling.)
+//
+// object-filename-suffix: The suffix (aka extension) used to
+// designate a file as an object-code file.  Includes the period.
+//
+// library-filename-prefix: A string that goes in front of the name of
+// the library when constructing the filename for that library.
+// Usually blank on Windows, "lib" on Unix.
+//
+// library-filename-suffix: The suffix (aka extension) for library
+// files.  Includes the period.
+//
+// executable-filename-suffix: The suffix for executable filenames.
+//
+// compile-c-command: A format string that describes how to invoke the
+// C compiler.  Arg1 for the format statement is the source code
+// filename, arg2 is the object code filename.  Both filenames have
+// the appropriate extensions already added.  The command will be
+// outputted to a makefile.  In this makefile, the make variable
+// $(CCFLAGS) will be defined; the compile-c-command is strongly
+// encouraged to use this.
+//
+// default-c-compiler-flags: Provides the default value for $(CCFLAGS)
+// inside the makefile.  (see above)
+//
+// assembler-command: A format string that describes how to invoke the
+// assembler.  Arg1 for the format statement is the source code
+// filename, arg2 is the object code filename.  Both filenames have
+// the appropriate extensions already added.  The command will be
+// outputted to a makefile.  There is no default-assembler-flags.
+//
+// link-library-command: A format string that gives the beginning of
+// the command for linking a library.  Arg1 is the name of the archive
+// (with extension), arg2 is the object files.
+//
+// link-executable-command: A format string that gives the beginning
+// of the command for linking an executable file.  Arg1 is the name of
+// the executable (with extension).  Arg2 is the object files.  Arg3
+// are linker arguments.
+//
+// link-executable-flags: Flags that are passed to the
+// link-executable-command as part of arg3.  (Libraries can specify
+// additional linker args; these come before the link-executable-flags
+// in arg3)  Remember that because of the silly way Unix links files,
+// the order you specify these in *does* matter.
+//
+// make-command: A string that gives the command for running the make
+// utility.  This is not a format string.
+//
+// delete-file-command: A string that gives the command for deleting a
+// file.
+//
+// compare-file-command: A format string for the command to compare
+// two files.  Arg1 will be the first filename, arg2 will be the
+// second filename.
+//
+// move-file-command: A format string for the command to move a file.
+// The first arg will be the old filename, the second arg will be the
+// new filename.
+
+// Optional flags: (All defaults are #f)
+//
+// link-doesnt-search-for-libs?: If #t, the compiler assume the linker
+// has no library search path, so the compiler will provide pathnames
+// for all library files.  Otherwise, the compiler will simply use the
+// -l flag for some libraries (notably runtime and gc).  Currently unused.
+//
+// supports-debugging?: Controls whether the compiler outputs
+// debugging information in the assembly file.  Debugging information
+// is in stabs format, and this does little good if the C compiler
+// doesn't also output debugging information in stabs format.
+//
+// import-directive-required?: If #t, outputs a ".import" directive in
+// assembly files for every symbol that is declared outside that
+// assembly file.
+
+
 // Microsoft Windows '95 or NT on Intel 80386 or higher
 //
 target-name:                    x86-win32
-integer-length:			32
 default-features:               compiled-for-x86-win32 newlines-are-CRLF
 				C-compiler-is-VC 
+integer-length:			32
 heap-preamble:                  \t.data\n\t.balign 8\t
 align-directive:                .balign
 export-directive:               \t.globl\t%s\n
@@ -20,20 +163,18 @@ library-filename-prefix:
 library-filename-suffix:        .lib
 executable-filename-suffix:     .exe
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       /nologo /Ox
+default-c-compiler-flags:       /nologo /Ox -DWIN32
 assembler-command:              as %s -o %s
-// If link-like-a-windows-machine is #t, it triggers some compiler black 
-// magic for linking both libs and executables
-link-like-a-windows-machine?:   #t
 link-doesnt-search-for-libs?:   #t
-link-library-command:           lib /nologo
-link-executable-command:        link /nologo
+link-library-command:           lib /nologo /out:%s %s
+link-executable-command:        link /nologo /out:%s %s %s
 link-executable-flags:          /subsystem:console
 make-command:                   nmake /nologo
 delete-file-command:            del
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #f
+path-separator:        		\\
 
 // Another name for x86-win32
 //
@@ -52,21 +193,24 @@ inherit-from:                   x86-win32
 default-features:               compiled-for-x86-win32 newlines-are-CRLF
 				C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include
-// Override special VC linking black magic
-link-like-a-windows-machine?:   #f
-link-library-command:           ar qc
-link-executable-command:        gcc -z
-link-executable-flags:          
+default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include -DWIN32 -DWIN32_GCC
+// gcc/NT is perfectly capable of searching, but it'll look for .a
+// files instead of .lib files, which presents a whole different set
+// of problems
+link-doesnt-search-for-libs?:   #t
+link-library-command:           ar qc %s %s
+link-executable-command:        gcc -o %s %s %s
+link-executable-flags:          -lm -lkernel32
 supports-debugging?:            #t
+path-separator:        		/
 
 
 // HP/UX on HP PA-RISC processors
 //
 target-name:                    hppa-hpux
-integer-length:			32
 default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
-heap-preamble:                  \t.data\n\t.align 8\t
+integer-length:			32
+heap-preamble:                  \t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
 align-directive:                .align
 export-directive:               \t.export\t%s, DATA\n
 import-directive-required?:      #t
@@ -82,11 +226,12 @@ executable-filename-suffix:
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -g -O4 -finline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
-link-library-command:           /bin/ar qc
-link-executable-command:        gcc -z
-link-executable-flags:          -L/lib/pa1.1 /usr/lib/end.o
+link-library-command:           /bin/ar qc %s %s
+link-executable-command:        gcc -z -o %s %s %s
+link-executable-flags:          -L/lib/pa1.1 -lm /usr/lib/end.o
 make-command:                   gmake
 delete-file-command:            rm -f
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #t
+path-separator:        		/
