@@ -1,11 +1,11 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/nlx.dylan,v 1.2 2000/01/24 04:56:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/nlx.dylan,v 1.3 2001/05/14 23:31:15 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -30,23 +30,23 @@ module: dylan-viscera
 //======================================================================
 
 define abstract class <unwind-block> (<object>)
-  slot saved-stack :: <raw-pointer>,
+  constant slot saved-stack :: <raw-pointer>,
     required-init-keyword: saved-stack:;
-  slot saved-uwp :: false-or(<unwind-protect>),
+  constant slot saved-uwp :: false-or(<unwind-protect>),
     required-init-keyword: saved-uwp:;
-  slot saved-handler :: false-or(<handler>),
+  constant slot saved-handler :: false-or(<handler>),
     required-init-keyword: saved-handler:;
 end;
 
 define class <unwind-protect> (<unwind-block>)
-  slot cleanup :: <function>,
+  constant slot cleanup :: <function>,
     required-init-keyword: cleanup:;
 end;
 
 define sealed domain make (singleton(<unwind-protect>));
 define sealed domain initialize (<unwind-protect>);
 
-define method push-unwind-protect (cleanup :: <function>) => ();
+define function push-unwind-protect (cleanup :: <function>) => ();
   let thread = this-thread();
   thread.cur-uwp := make(<unwind-protect>,
 			 saved-stack: %%primitive(current-sp),
@@ -55,21 +55,21 @@ define method push-unwind-protect (cleanup :: <function>) => ();
 			 cleanup: cleanup);
 end;
 
-define method pop-unwind-protect () => ();
+define function pop-unwind-protect () => ();
   let thread = this-thread();
   thread.cur-uwp := thread.cur-uwp.saved-uwp;
 end;
 
 define class <catcher> (<unwind-block>)
-  slot saved-state :: <raw-pointer>, required-init-keyword: saved-state:;
+  constant slot saved-state :: <raw-pointer>, required-init-keyword: saved-state:;
   slot disabled :: <boolean>, init-value: #f;
-  slot thread :: <thread>, required-init-keyword: thread:;
+  constant slot thread :: <thread>, required-init-keyword: thread:;
 end;
 
 define sealed domain make (singleton(<catcher>));
 define sealed domain initialize (<catcher>);
 
-define method make-catcher (saved-state :: <raw-pointer>) => res :: <catcher>;
+define function make-catcher (saved-state :: <raw-pointer>) => res :: <catcher>;
   let thread = this-thread();
   make(<catcher>,
        saved-stack: %%primitive(current-sp),
@@ -79,23 +79,22 @@ define method make-catcher (saved-state :: <raw-pointer>) => res :: <catcher>;
        thread: thread);
 end;
 
-define method make-exit-function (catcher :: <catcher>) => res :: <function>;
+define function make-exit-function (catcher :: <catcher>) => res :: <function>;
   method (#rest args)
     throw(catcher, args);
   end;
 end;
 
-define method disable-catcher (catcher :: <catcher>) => ();
+define function disable-catcher (catcher :: <catcher>) => ();
   catcher.disabled := #t;
 end;
 
 
-define constant catch
-  = method (saved-state :: <raw-pointer>, thunk :: <function>)
-      thunk(saved-state);
-    end;
+define function catch (saved-state :: <raw-pointer>, thunk :: <function>)
+  thunk(saved-state);
+end;
 
-define method throw (catcher :: <catcher>, values :: <simple-object-vector>)
+define function throw (catcher :: <catcher>, values :: <simple-object-vector>)
     => res :: <never-returns>;
   if (catcher.disabled)
     error("Can't exit to a block that has already been exited from.");
