@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.1 1994/03/24 21:49:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.2 1994/04/08 17:56:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -52,6 +52,7 @@ void error(char *msg, ...)
 	va_end(ap);
 
 	invoke(thread, nargs+1);
+	go_on();
     }
     else if (thread) {
 	obj_t cond = make_vector(nargs+1, NULL);
@@ -87,6 +88,7 @@ void type_error(obj_t value, obj_t type)
 	*thread->sp++ = value;
 	*thread->sp++ = type;
 	invoke(thread, 2);
+	go_on();
     }
     else
 	error("~S is not an instance of type ~S", value, type);
