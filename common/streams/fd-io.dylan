@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.1 1996/03/20 00:00:54 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.2 1996/05/01 14:40:47 wlott Exp $
 
 //======================================================================
 //
@@ -30,9 +30,12 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1
 //======================================================================
 //
 
-c-include("unistd.h");
-c-include("fcntl.h");
-
+method () => ();
+  c-include("unistd.h");
+  c-include("fcntl.h");
+  c-include("string.h");
+end();
+  
 define /* exported */ constant fd-seek-set :: <integer>
   = c-expr(int:, "SEEK_SET");
 
@@ -190,5 +193,11 @@ end method;
 
 define method fd-error-string (num :: <integer>) 
  => res :: <byte-string>;
-  "beats me"; // ### hack
+  let ptr = call-out("strerror", #"ptr", #"int", num);
+  let len = call-out("strlen", #"int", #"ptr", ptr);
+  let res = make(<byte-string>, size: len);
+  for (i from 0 below res.size)
+    res[i] := as(<character>, pointer-deref(#"unsigned-char", ptr, i));
+  end for;
+  res;
 end method;
