@@ -14,7 +14,8 @@ $destdir = "@exec_prefix@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
-
+$enable_mindy = "@enable_mindy@";
+$enable_d2c = "@enable_d2c@";
 $INSTALL = "@INSTALL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
