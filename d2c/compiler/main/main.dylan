@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.96 1997/02/02 17:08:00 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.97 1997/02/04 14:39:31 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,7 @@ define class <main-unit-state> (<object>)
     slot unit-lid-file :: <byte-string>, required-init-keyword: lid-file:;
     slot unit-command-line-features :: <list>, 
          required-init-keyword: command-line-features:;
-    slot unit-target :: <target-environment>,
+    slot unit-target :: <platform>,
          required-init-keyword: target:;
     slot unit-log-dependencies :: <boolean>, 
          required-init-keyword: log-dependencies:;
@@ -285,7 +285,7 @@ end method process-feature;
 // all, but if we find it under more than one suffix, we error.
 //
 define method find-library-archive
-    (unit-name :: <byte-string>, target :: <target-environment>,
+    (unit-name :: <byte-string>, target :: <platform>,
      no-binaries :: <boolean>)
  => path :: <byte-string>;
   let libname = concatenate(target.library-filename-prefix, unit-name);
@@ -360,7 +360,7 @@ end method output-s-file-rule;
 //
 define method pick-which-file
     (old-filename :: <string>, new-filename :: <string>, 
-     target :: <target-environment>)
+     target :: <platform>)
  => (used-new-file :: <boolean>);
   if (files-identical?(old-filename, new-filename))
     delete-file(new-filename);
@@ -422,6 +422,11 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 	add!(state.unit-tlf-vectors, make(<stretchy-vector>));
 	let prefixed-filename 
 	  = find-file(file, vector(".", state.unit-lid-file.filename-prefix));
+	if (prefixed-filename == #f)
+	  compiler-fatal-error("Can't find object file %=, and thus can't"
+				 " record dependency info.", 
+			       file);
+	end if;
 	log-dependency(prefixed-filename);
       else  // assumed a Dylan file, with or without a ".dylan" extension
 	block ()
@@ -767,7 +772,7 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
 end method;
 
 define function use-correct-path-separator
-    (string :: <byte-string>, target :: <target-environment>) 
+    (string :: <byte-string>, target :: <platform>) 
  => new-string :: <byte-string>;
   map(method (c :: <character>) => new-char :: <character>;
 	if (c == '/') target.path-separator else c end if;
@@ -1089,8 +1094,8 @@ define method incorrect-usage () => ();
   format(*standard-error*, 
 	 "                        Often used with -no-binaries\n");
   format(*standard-error*, 
-	 "    -tfilename          Get target environment information from \n"
-	   "                        filename instead of the default targets.ini\n");
+	 "    -pfilename          Get platform information from \n"
+	   "                        filename instead of the default platforms.descr\n");
   format(*standard-error*, 
 	 "    -d                  Compiler debug mode (for debugging this compiler)\n");
   format(*standard-error*, 
@@ -1110,12 +1115,14 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let features = #();
   let log-dependencies = #f;
   let target-machine = 
-       #if (compiled-for-hppa-hpux)
+       #if (compiled-for-hppa & compiled-for-hpux)
 	  #"hppa-hpux";
-       #elseif (compiled-for-x86-win32)
+       #elseif (compiled-for-x86 & compiled-for-win32)
 	  #"x86-win32";
-       #elseif (compiled-for-x86-linux)
+       #elseif (compiled-for-x86 & compiled-for-linux)
           #"x86-linux";
+       #elseif (compiled-for-sparc & compiled-for-solaris)
+	  #"sparc-solaris";
        #else
 	  #"unknown";
        #endif
@@ -1157,11 +1164,11 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	    else
 	      error("Target environment not supplied with -T.");
 	    end if;
-	  't' =>
+	  'p' =>
 	    if (arg.size > 2)
 	      targets-file := copy-sequence(arg, start: 2);
 	    else
-	      error("Name of targets description file not supplied with -t.");
+	      error("Name of targets description file not supplied with -p.");
 	    end if;
 	  'n' =>
 	    if (arg = "-no-binaries")  // We need this switch to keep gmake
@@ -1200,11 +1207,11 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     incorrect-usage();
   end;
   if (targets-file == #f)
-    error("Can't find targets.descr");
+    error("Can't find platforms.descr");
   end if;
-  let possible-targets = get-targets(targets-file);
+  let possible-targets = get-platforms(targets-file);
   if (~key-exists?(possible-targets, target-machine))
-    error("Unknown target architecture %=.", target-machine);
+    error("Unknown platform %=.", target-machine);
   end if;
   let target = possible-targets[target-machine];
   *current-target* := target;
