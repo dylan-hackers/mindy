@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.9 1994/04/20 00:22:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.10 1994/04/28 04:01:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -174,6 +174,14 @@ int read_byte(struct load_info *info)
     return *ptr;
 }
 
+void unread_byte(struct load_info *info)
+{
+    if (info->ptr == info->buffer)
+	lose("unread_byte used while buffer empty.");
+
+    info->ptr--;
+}
+
 unsigned short read_uint2(struct load_info *info)
 {
     unsigned short res;
@@ -212,16 +220,11 @@ static obj_t fop_flame(struct load_info *info)
     return NULL;
 }
 
-static obj_t fop_comment(struct load_info *info)
-{
-    while (read_byte(info) != '\n')
-	;
-    return obj_False;
-}
-
-static obj_t fop_byte_order(struct load_info *info)
+static obj_t fop_header(struct load_info *info)
 {
     short x;
+    long magic;
+    int major_version, minor_version;
 
     assert(sizeof(x)==2);
 
@@ -232,7 +235,22 @@ static obj_t fop_byte_order(struct load_info *info)
     else if (x == 256)
 	info->swap_bytes = TRUE;
     else
-	lose("Strange byte order.\n");
+	error("Invalid .dbc file: ~A", make_string(info->name));
+
+    magic = read_int4(info);
+
+    if (magic != dbc_MagicNumber)
+	error("Invalid .dbc file: ~A", make_string(info->name));
+	
+    major_version = read_byte(info);
+    minor_version = read_byte(info);
+
+    if (major_version < file_MajorVersion)
+	error("Obsolete .dbc file: ~A", make_string(info->name));
+    if (major_version > file_MajorVersion)
+	error("Obsolete version of Mindy for ~A", make_string(info->name));
+    if (minor_version < file_MinorVersion)
+	error("Obsolete .dbc file: ~A", make_string(info->name));
 
     return obj_False;
 }
@@ -847,10 +865,27 @@ static obj_t fop_done(struct load_info *info)
 
 /* Interface routines. */
 
+static void skip_header(struct load_info *info)
+{
+    int c;
+
+    while ((c = read_byte(info)) == '#')
+	while ((c = read_byte(info)) != '\n')
+	    ;
+
+    if (c != fop_HEADER)
+	error("Invalid .dbc file: ~A", make_string(info->name));
+
+    unread_byte(info);
+}
+
 static void load_group(struct load_info *info)
 {
     info->done = FALSE;
     info->next_handle = 0;
+
+    skip_header(info);
+
     while (!info->done)
 	read_thing(info);
 }
@@ -1030,8 +1065,7 @@ void init_loader(void)
     for (i = 0; i < 256; i++)
 	opcodes[i] = fop_flame;
 
-    opcodes[fop_COMMENT] = fop_comment;
-    opcodes[fop_BYTE_ORDER] = fop_byte_order;
+    opcodes[fop_HEADER] = fop_header;
     opcodes[fop_STORE] = fop_store;
     opcodes[fop_SHORT_REF] = fop_short_ref;
     opcodes[fop_REF] = fop_ref;
