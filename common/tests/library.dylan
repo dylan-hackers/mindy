@@ -11,12 +11,7 @@ define library common-dylan-test-suite
   use common-dylan;
   use testworks;
   use testworks-specs;
-  use transcendental;
-  use common-extensions;
-  use regular-expressions;
   use dylan-test-suite;
-  use random;
-  use dylan;
 
   export common-dylan-test-suite;
 end library common-dylan-test-suite;
@@ -31,17 +26,9 @@ define module common-dylan-test-suite
   use simple-random;
   use simple-profiling;
   use transcendentals;
-  use regular-expressions;
-  use random;
-  use system, import: { copy-bytes };
-  use extensions,
-		export: {<byte>, <byte-vector>},
-		exclude: { assert };
-  //use byte-vector;
-  use functional-extensions,
-		import: { profiling };
+  use byte-vector;
   use machine-words;
-  //use threads;		We Wish! :-)
+//  use threads;		We Wish! :-)
 
   use testworks;
   use testworks-specs;
@@ -64,7 +51,6 @@ define module common-dylan-test-suite
          stream-class-info,
          test-stream-class;
 */
-
   // Stream class info
 /*
   export <stream-class-info>,
@@ -78,5 +64,6 @@ define module common-dylan-test-suite
 
   // Test streams
   export <test-input-stream>,
-         <test-output-stream>;*/
+         <test-output-stream>;
+*/
 end module common-dylan-test-suite;
