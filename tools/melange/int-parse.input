@@ -43,13 +43,6 @@ rcs-header: $Header:
 // "include file" or "object file" and "clauses" which describe the processing
 // of a single object.
 //
-// Note that this parser is atypical in that it does not try to consume all of
-// the input.  It simply goes until it reaches the end of the "define
-// interface" form, and the stops.  Since this is foreign to the parser
-// generator's internal model, <eof-token> has been redefined to encompass all
-// possible tokens.  Although this works, it is probably inherently unstable.
-// Some extra code has been added to the generic "make-action-table" to insure
-// that the omnipresence of <eof-token> doesn't screw up the tables.
 //======================================================================
 
 //----------------------------------------------------------------------
@@ -224,79 +217,97 @@ end class <container-clause>;
 define class <struct-clause> (<container-clause>) end class;
 define class <union-clause> (<container-clause>) end class;
 
-//----------------------------------------------------------------------
-// Generic parser boilerplate.
-//----------------------------------------------------------------------
 
-define class <action> (<object>)
-  slot on :: <class>, required-init-keyword: on:, setter: #f;
-end;
-
-define class <shift> (<action>)
-  slot state :: <integer>, required-init-keyword: state:, setter: #f;
-end;
-
-define method \= (action1 :: <shift>, action2 :: <shift>) => eq? :: <boolean>;
-  action1.state == action2.state;
-end;
-
-define class <reduce> (<action>)
-  slot production :: <integer>, required-init-keyword: production:, setter: #f;
-end;
-
-define method \= (action1 :: <reduce>, action2 :: <reduce>) => eq? :: <boolean>;
-  action1.production == action2.production;
-end;
-
-define class <accept> (<action>)
-end;
-
-define method \= (action1 :: <accept>, action2 :: <accept>)
- => eq? :: <boolean>;
-  #t;
-end;
-
-// Because <eof-token> encompasses all other token classes, we must keep
-// actions for <eof-token> from overwriting other valid actions.  This is an
-// ugly special case, but allows us to use the parser generator for an
-// application beyond its normal capabilities -- i.e. parsing only a portion
-// of a file.  (In practice, the extra code is probably superfluous, as the
-// states which acceof <eof-token> don't accept anything else -- but better
-// safe than sorry.
-//
-define method make-action-table(#rest actions)
-  let result = make(<self-organizing-list>);
-  for (action in actions)
-    local
-      method process (clas :: <class>, is-eof)
-	unless (is-eof & key-exists?(result, clas))
-	  result[clas] := action;
-	  for (sub in clas.direct-subclasses)
-	    process(sub, is-eof);
-	  end;
-	end unless;
-      end;
-    process(action.on, action.on == <eof-token>);
-  end;
-  result;
-end;
+define constant <source-location> = false-or(<parse-state>);
 
 //----------------------------------------------------------------------
 // The actual productions.  The format is
 //  production (sub-production-or-<token> .....)
-//    Arbitrary dylan code -- variables $r1 - $rn correspond to the
-//    sub-productions, and $state is a <parse-state> which is passed into each
+//    Arbitrary dylan code -- variables %1 - %n correspond to the
+//    sub-productions, and @0 is a <parse-state> which is passed into each
 //    action routine for record-keeping purposes.
 //  %
 //----------------------------------------------------------------------
 
 %%
+:token EOF <simple-token> 
+:token <error-token> <simple-token> 
+
+:token <integer-token> <literal-token> 
+:token <character-token> <literal-token> 
+:token <string-literal-token> <literal-token> 
+:token <symbol-literal-token> <literal-token> 
+:token <true-token> <boolean-token> 
+:token <false-token> <boolean-token> 
+
+:token <identifier-token> <name-token> 
+
+:token <define-token> <reserved-word-token> 
+:token <interface-token> <reserved-word-token> 
+:token <end-token> <reserved-word-token> 
+:token <include-token> <reserved-word-token> 
+:token <object-file-token> <reserved-word-token> 
+:token <mindy-inc-token> <reserved-word-token> 
+:token <define-macro-token> <reserved-word-token> 
+:token <undefine-token> <reserved-word-token> 
+:token <name-mapper-token> <reserved-word-token> 
+:token <import-token> <reserved-word-token> 
+:token <prefix-token> <reserved-word-token> 
+:token <exclude-token> <reserved-word-token> 
+:token <exclude-file-token> <reserved-word-token> 
+:token <rename-token> <reserved-word-token> 
+:token <mapping-token> <reserved-word-token> 
+:token <equate-token> <reserved-word-token> 
+:token <superclass-token> <reserved-word-token> 
+:token <all-token> <reserved-word-token> 
+:token <none-token> <reserved-word-token> 
+:token <all-recursive-token> <reserved-word-token> 
+:token <function-token> <reserved-word-token> 
+:token <map-result-token> <reserved-word-token> 
+:token <equate-result-token> <reserved-word-token> 
+:token <ignore-result-token> <reserved-word-token> 
+:token <map-argument-token> <reserved-word-token> 
+:token <equate-argument-token> <reserved-word-token> 
+:token <input-argument-token> <reserved-word-token> 
+:token <output-argument-token> <reserved-word-token> 
+:token <input-output-argument-token> <reserved-word-token> 
+:token <struct-token> <reserved-word-token> 
+:token <union-token> <reserved-word-token> 
+:token <pointer-token> <reserved-word-token> 
+:token <constant-token> <reserved-word-token> 
+:token <variable-token> <reserved-word-token> 
+:token <getter-token> <reserved-word-token> 
+:token <setter-token> <reserved-word-token> 
+:token <read-only-token> <reserved-word-token> 
+:token <seal-token> <reserved-word-token> 
+:token <seal-functions-token> <reserved-word-token> 
+:token <sealed-token> <reserved-word-token> 
+:token <open-token> <reserved-word-token> 
+:token <inline-token> <reserved-word-token> 
+:token <value-token> <reserved-word-token> 
+
+;; A whole bunch of punctuation
+
+:token <semicolon-token> <punctuation-token> 
+:token <comma-token> <punctuation-token> 
+:token <lbrace-token> <punctuation-token> 
+:token <rbrace-token> <punctuation-token> 
+:token <arrow-token> <punctuation-token> 
+
+:union LITERAL <literal-token>
+    (<integer-token> <character-token> <string-literal-token>
+     <symbol-literal-token> <true-token> <false-token>)
+:union BOOLEAN <boolean-token>
+    (<true-token> <false-token>)
+
+:entry-point parse-root
+
 parse-root (interface-def <semicolon-token>)
   // dispose of semi if it exists, but accept EOF instead
   #t;
 %
 
-parse-root (interface-def <true-eof-token>)
+parse-root (interface-def EOF)
   #t;
 %
 
@@ -309,49 +320,49 @@ interface-def (<define-token> <interface-token> interface-clause-list
 %
 
 interface-clause-list (interface-clause-list1 <semicolon-token>)
-  $r1;
+  %1;
 %
 
 interface-clause-list (interface-clause-list1)
-  $r1;
+  %1;
 %
 
 interface-clause-list1 (interface-clause-list1 <semicolon-token>
                        interface-clause)
-  pair($r3, $r1)
+  pair(%3, %1)
 %
 
 interface-clause-list1 (interface-clause)
-  list($r1);
+  list(%1);
 %
 
 interface-clause (file-clause)
-  $r1;
+  %1;
 %
 
 file-clause (<include-token> <string-literal-token> file-option-list)
-  if ($state.include-files) 
-    parse-error($r1, "More than one #include in interface definition.")
+  if (@0.include-files) 
+    parse-error(%1, "More than one #include in interface definition.")
   end if;
-  $state.include-files := vector($r2.value);
-  $state.container-options := process-container-options($r3);
+  @0.include-files := vector(%2.value);
+  @0.container-options := process-container-options(%3);
 %
 
 file-clause (<include-token> <lbrace-token> include-file-list <rbrace-token>
 file-option-list)
-  if ($state.include-files) 
-    parse-error($r1, "More than one #include in interface definition.")
+  if (@0.include-files) 
+    parse-error(%1, "More than one #include in interface definition.")
   end if;
-  $state.include-files := as(<simple-object-vector>, $r3);
-  $state.container-options := process-container-options($r5);
+  @0.include-files := as(<simple-object-vector>, %3);
+  @0.container-options := process-container-options(%5);
 %
 
 include-file-list (<string-literal-token>)
-  make(<stretchy-vector>, size: 1, fill: $r1.value);
+  make(<stretchy-vector>, size: 1, fill: %1.value);
 %
 
 include-file-list (include-file-list <comma-token> <string-literal-token>)
-  add!($r1, $r3.value);
+  add!(%1, %3.value);
 %
 
 file-option-list ()
@@ -359,70 +370,70 @@ file-option-list ()
 %
 
 file-option-list (file-option-list <comma-token> file-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 file-option (<object-file-token> <string-literal-token>)
-  push-last($state.object-files, $r2.value);
-  pair(#"object-file", $r2.value);
+  push-last(@0.object-files, %2.value);
+  pair(#"object-file", %2.value);
 %
 
 file-option (<mindy-inc-token> <string-literal-token>)
-  if ($state.mindy-include-file) 
-    parse-error($r1,
+  if (@0.mindy-include-file) 
+    parse-error(%1,
                 "More than one mindy-include-file: in interface definition.")
   end if;
-  pair(#"mindy-file", $state.mindy-include-file := $r2.value);
+  pair(#"mindy-file", @0.mindy-include-file := %2.value);
 %
 
 file-option (<define-macro-token> <lbrace-token> macro-definitions
              <rbrace-token>)
-  pair(#"macro-definitions", $r3);
+  pair(#"macro-definitions", %3);
 %
 
 file-option (<undefine-token> <lbrace-token> macro-undefinitions
              <rbrace-token>)
-  pair(#"macro-undefines", $r3);
+  pair(#"macro-undefines", %3);
 %
 
 file-option (container-option)
-  $r1;
+  %1;
 %
 
 macro-definitions (macro-definition)
-  list($r1);
+  list(%1);
 %
 
 macro-definitions (macro-definitions <comma-token> macro-definition)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 macro-definition (<string-literal-token>)
-  push-last($state.macro-defines, pair($r1.value, 1));
+  push-last(@0.macro-defines, pair(%1.value, 1));
 %
 
 macro-definition (<string-literal-token> <arrow-token> <string-literal-token>)
-  push-last($state.macro-defines, pair($r1.value, $r3.value));
+  push-last(@0.macro-defines, pair(%1.value, %3.value));
 %
 
 macro-definition (<string-literal-token> <arrow-token> <integer-token>)
-  push-last($state.macro-defines, pair($r1.value, $r3.value));
+  push-last(@0.macro-defines, pair(%1.value, %3.value));
 %
 
 macro-undefinitions (macro-undefinition)
-  list($r1);
+  list(%1);
 %
 
 macro-undefinitions (macro-undefinitions <comma-token> macro-undefinition)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 macro-undefinition (<string-literal-token>)
-  push-last($state.macro-undefines, $r1.value);
+  push-last(@0.macro-undefines, %1.value);
 %
 
 container-option (<name-mapper-token> <identifier-token>)
-  list(#"name-mapper", $r2.value);
+  list(#"name-mapper", %2.value);
 %
 
 container-option (<import-token> <all-token>)
@@ -434,20 +445,20 @@ container-option (<import-token> <all-recursive-token>)
 %
 
 container-option (<import-token> <lbrace-token> import-list <rbrace-token>)
-  list(#"import", $r3);
+  list(#"import", %3);
 %
 
 container-option (<import-token> <string-literal-token> <arrow-token>
                   <all-token>)
-  list(#"import-file", $r2, #"all");
+  list(#"import-file", %2, #"all");
 %
 
 container-option (<import-token> <string-literal-token> <arrow-token> <none-token>)
-  list(#"import-file", $r2, #"none");
+  list(#"import-file", %2, #"none");
 %
 
 container-option (<import-token> <string-literal-token> <arrow-token> <lbrace-token> import-list <rbrace-token>)
-  list(#"import-file", $r2, $r5);
+  list(#"import-file", %2, %5);
 %
 
 import-list ()
@@ -455,31 +466,31 @@ import-list ()
 %
 
 import-list (import-list <comma-token> import)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 import-list (import)
-  list($r1);
+  list(%1);
 %
 
 import (<string-literal-token>)
-  $r1.value;
+  %1.value;
 %
 
 import (renaming)
-  $r1;
+  %1;
 %
 
 renaming (<string-literal-token> <arrow-token> <identifier-token>)
-  pair($r1.value, $r3.value);
+  pair(%1.value, %3.value);
 %
 
 container-option (<prefix-token> <string-literal-token>)
-  list(#"prefix", $r2.value);
+  list(#"prefix", %2.value);
 %
 
 container-option (<exclude-token> <lbrace-token> exclude-list <rbrace-token>)
-  list(#"exclude", $r3);
+  list(#"exclude", %3);
 %
 
 exclude-list ()
@@ -487,25 +498,25 @@ exclude-list ()
 %
 
 exclude-list (exclude-list <comma-token> <string-literal-token>)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 exclude-list (<string-literal-token>)
-  list($r1);
+  list(%1);
 %
 
 container-option (<exclude-file-token> <string-literal-token>)
-  list(#"exclude-file", list($r2));
+  list(#"exclude-file", list(%2));
 %
 
 container-option (<exclude-file-token> <lbrace-token> exclude-list
 		  <rbrace-token>)
-  list(#"exclude-file", $r3);
+  list(#"exclude-file", %3);
 %
 
 
 container-option (<rename-token> <lbrace-token> renaming-list <rbrace-token>)
-  list(#"rename", $r3);
+  list(#"rename", %3);
 %
 
 renaming-list ()
@@ -513,55 +524,55 @@ renaming-list ()
 %
 
 renaming-list (renaming-list <comma-token> renaming)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 renaming-list (renaming)
-  list($r1);
+  list(%1);
 %
 
 container-option (<mapping-token> <lbrace-token> renaming-list <rbrace-token>)
-  list(#"mapping", $r3);
+  list(#"mapping", %3);
 %
 
 container-option (<equate-token> <lbrace-token> renaming-list <rbrace-token>)
-  list(#"equate", $r3);
+  list(#"equate", %3);
 %
 
 sealing (<sealed-token>)
-  $r1.string-value
+  %1.string-value
 %
 
 sealing (<open-token>)
-  $r1.string-value
+  %1.string-value
 %
 
 sealing (<inline-token>)
-  parse-error($r1, "'inline' not handled at present.")
+  parse-error(%1, "'inline' not handled at present.")
 %
 
 container-option (<seal-functions-token> sealing)
-  list(#"seal", $r2);
+  list(#"seal", %2);
 %
 
-container-option (<read-only-token> <boolean-token>)
-  list(#"read-only", $r2.value);
+container-option (<read-only-token> BOOLEAN)
+  list(#"read-only", %2.value);
 %
 
 interface-clause (<function-token> <string-literal-token>
                   function-option-list)
-  $state.clauses := add!($state.clauses,
+  @0.clauses := add!(@0.clauses,
                          make(<function-clause>, 
-                              name: $r2.value, options: $r3));
+                              name: %2.value, options: %3));
 %
 
 interface-clause (<function-token> <string-literal-token> <arrow-token>
                   <identifier-token> function-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  $state.clauses := add!($state.clauses,
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  @0.clauses := add!(@0.clauses,
                          make(<function-clause>,
-                              name: $r2.value, options: $r5));
+                              name: %2.value, options: %5));
 %
 
 function-option-list ()
@@ -569,87 +580,87 @@ function-option-list ()
 %
 
 function-option-list (function-option-list <comma-token> function-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 function-option (<map-result-token> <identifier-token>)
-  pair(#"map-result", $r2.string-value);
+  pair(#"map-result", %2.string-value);
 %
 
 function-option (<equate-result-token> <identifier-token>)
-  pair(#"equate-result", $r2.string-value);
+  pair(#"equate-result", %2.string-value);
 %
 
-function-option (<ignore-result-token> <boolean-token>)
-  pair(#"ignore-result", $r2.value);
+function-option (<ignore-result-token> BOOLEAN)
+  pair(#"ignore-result", %2.value);
 %
 
 function-option (<map-argument-token> <lbrace-token> argument
                  <arrow-token> <identifier-token> <rbrace-token>)
-  pair(#"map-arg", pair($r3.value, $r5.string-value));
+  pair(#"map-arg", pair(%3.value, %5.string-value));
 %
 
 function-option (<equate-argument-token> <lbrace-token> argument
                  <arrow-token> <identifier-token> <rbrace-token>)
-  pair(#"equate-arg", pair($r3.value, $r5.string-value));
+  pair(#"equate-arg", pair(%3.value, %5.string-value));
 %
 
 function-option (<input-argument-token> argument)
-  pair(#"in", $r2.value);
+  pair(#"in", %2.value);
 %
 
 function-option (<input-output-argument-token> argument)
-  pair(#"in-out", $r2.value);
+  pair(#"in-out", %2.value);
 %
 
 function-option (<output-argument-token> argument)
-  pair(#"out", $r2.value);
+  pair(#"out", %2.value);
 %
 
 argument (<integer-token>)
-  $r1;
+  %1;
 %
 
 argument (<identifier-token>)
-  $r1;
+  %1;
 %
 
 argument (<string-literal-token>)
-  $r1;
+  %1;
 %
 
 interface-clause (<struct-token> <string-literal-token> structure-option-list)
-  let (container-opts, rest) = process-container-options($r3);
-  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  let (container-opts, rest) = process-container-options(%3);
+  let new-clause = make(<struct-clause>, name: %2.value, options: rest);
   new-clause.container-options := container-opts;
-  $state.clauses := add!($state.clauses, new-clause);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 interface-clause (<struct-token> <string-literal-token> <arrow-token>
                   <identifier-token> structure-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  let (container-opts, rest) = process-container-options($r5);
-  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  let (container-opts, rest) = process-container-options(%5);
+  let new-clause = make(<struct-clause>, name: %2.value, options: rest);
   new-clause.container-options := container-opts;
-  $state.clauses := add!($state.clauses, new-clause);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 interface-clause (<union-token> <string-literal-token> structure-option-list)
-  let (container-opts, rest) = process-container-options($r3);
-  let new-clause = make(<union-clause>, name: $r2.value, options: rest);
+  let (container-opts, rest) = process-container-options(%3);
+  let new-clause = make(<union-clause>, name: %2.value, options: rest);
   new-clause.container-options := container-opts;
-  $state.clauses := add!($state.clauses, new-clause);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 interface-clause (<union-token> <string-literal-token> <arrow-token>
                   <identifier-token> structure-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  let (container-opts, rest) = process-container-options($r5);
-  let new-clause = make(<union-clause>, name: $r2.value, options: rest);
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  let (container-opts, rest) = process-container-options(%5);
+  let new-clause = make(<union-clause>, name: %2.value, options: rest);
   new-clause.container-options := container-opts;
-  $state.clauses := add!($state.clauses, new-clause);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 structure-option-list ()
@@ -657,61 +668,61 @@ structure-option-list ()
 %
 
 structure-option-list (structure-option-list <comma-token> container-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 superclass-list (<identifier-token>)
-  list($r1.string-value);
+  list(%1.string-value);
 %
 
 superclass-list (superclass-list <comma-token> <identifier-token>)
-  pair($r3.string-value, $r1);
+  pair(%3.string-value, %1);
 %
 
 superclass-option
     (<superclass-token> <lbrace-token> superclass-list <rbrace-token>)
-  pair(#"superclass", reverse!($r3));
+  pair(#"superclass", reverse!(%3));
 %
 
 structure-option-list (structure-option-list <comma-token> superclass-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 interface-clause (<pointer-token> <string-literal-token> pointer-option-list)
-  let new-clause = make(<pointer-clause>, name: $r2.value, options: $r3);
-  $state.clauses := add!($state.clauses, new-clause);
+  let new-clause = make(<pointer-clause>, name: %2.value, options: %3);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 interface-clause (<pointer-token> <string-literal-token> <arrow-token>
                   <identifier-token> pointer-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  let new-clause = make(<pointer-clause>, name: $r2.value, options: $r5);
-  $state.clauses := add!($state.clauses, new-clause);
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  let new-clause = make(<pointer-clause>, name: %2.value, options: %5);
+  @0.clauses := add!(@0.clauses, new-clause);
 %
 
 pointer-option-list ()
   #();
 %
 
-pointer-option-list (structure-option-list <comma-token> superclass-option)
-  pair($r3, $r1);
+pointer-option-list (pointer-option-list <comma-token> superclass-option)
+  pair(%3, %1);
 %
 
 interface-clause (<constant-token> <string-literal-token>
                   constant-option-list)
-  $state.clauses := add!($state.clauses,
+  @0.clauses := add!(@0.clauses,
                          make(<constant-clause>, 
-                              name: $r2.value, options: $r3));
+                              name: %2.value, options: %3));
 %
 
 interface-clause (<constant-token> <string-literal-token> <arrow-token>
                   <identifier-token> constant-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  $state.clauses := add!($state.clauses,
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  @0.clauses := add!(@0.clauses,
                          make(<constant-clause>,
-                              name: $r2.value, options: $r5));
+                              name: %2.value, options: %5));
 %
 
 constant-option-list ()
@@ -719,27 +730,27 @@ constant-option-list ()
 %
 
 constant-option-list (constant-option-list <comma-token> constant-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
-constant-option (<value-token> <literal-token>)
-  pair(#"value", $r2.string-value);
+constant-option (<value-token> LITERAL)
+  pair(#"value", %2.string-value);
 %
 
 interface-clause (<variable-token> <string-literal-token>
                   variable-option-list)
-  $state.clauses := add!($state.clauses,
+  @0.clauses := add!(@0.clauses,
                          make(<variable-clause>, 
-                              name: $r2.value, options: $r3));
+                              name: %2.value, options: %3));
 %
 
 interface-clause (<variable-token> <string-literal-token> <arrow-token>
                   <identifier-token> variable-option-list)
-  $state.container-options.rename :=
-     pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  $state.clauses := add!($state.clauses,
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
+  @0.clauses := add!(@0.clauses,
                          make(<variable-clause>,
-                              name: $r2.value, options: $r5));
+                              name: %2.value, options: %5));
 %
 
 variable-option-list ()
@@ -747,31 +758,31 @@ variable-option-list ()
 %
 
 variable-option-list (variable-option-list <comma-token> variable-option)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 variable-option (<getter-token> <identifier-token>)
-  pair(#"getter", $r2.string-value);
+  pair(#"getter", %2.string-value);
 %
 
 variable-option (<setter-token> <identifier-token>)
-  pair(#"setter", $r2.string-value);
+  pair(#"setter", %2.string-value);
 %
 
-variable-option (<read-only-token> <boolean-token>)
-  pair(#"read-only", $r2.value);
+variable-option (<read-only-token> BOOLEAN)
+  pair(#"read-only", %2.value);
 %
 
 variable-option (<mapping-token> <identifier-token>)
-  pair(#"map", $r2.string-value);
+  pair(#"map", %2.string-value);
 %
 
 variable-option (<equate-token> <identifier-token>)
-  pair(#"equate", $r2.string-value);
+  pair(#"equate", %2.string-value);
 %
 
 variable-option (<getter-token> sealing)
-  pair(#"seal", $r2);
+  pair(#"seal", %2);
 %
 
 %%
@@ -780,48 +791,145 @@ variable-option (<getter-token> sealing)
 // More parser boilerplate
 //----------------------------------------------------------------------
 
-define method do-action (action :: <accept>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  unget-token(parse-state.tokenizer, token);
-  if (symbol-stack.size ~= 1)
-    parse-error(token, "Symbol-stack didn't get reduced all the way?");
-  end;
-  symbol-stack.head;
-end;
+// The initial size of the parser stacks.
+// 
+define constant $initial-stack-size = 200;
 
-define method do-action (action :: <shift>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  parse-loop(pair(action.state, state-stack),
-	     pair(token, symbol-stack),
-	     get-token(parse-state.tokenizer),
-	     parse-state);
-end;
+// grow -- internal.
+//
+// Grow a stack.  Make a new vector twice as long, copy the old elements
+// across, and return it.
+// 
+define method grow (vec :: <simple-object-vector>)
+    => new :: <simple-object-vector>;
+  let old-size = vec.size;
+  let new-size = old-size * 2;
+  let new = make(<simple-object-vector>, size: new-size);
+  for (index from 0 below old-size)
+    new[index] := vec[index];
+  end for;
+  new;
+end method grow;
 
-define method do-action (action :: <reduce>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  let (new-state-stack, new-symbol-stack)
-    = *production-table*[action.production](state-stack, symbol-stack,
-                                            $state: parse-state);
-  parse-loop(new-state-stack, new-symbol-stack, token, parse-state);
-end;
+define constant $eof-token = 0;
 
-define method find-action (table, token)
-  let action = element(table, token.object-class, default: #f);
-  if (action)
-    action;
-  else
-    parse-error(token, "Parse error at or before %=.", token.string-value);
-  end;
-end;
+define method dformat (template :: <string>, #rest rest)
+  apply(format, *standard-error*, template, rest);
+  force-output(*standard-error*);
+end method;
 
-define method parse-loop (state-stack :: <list>, symbol-stack :: <list>,
-			  token :: <token>, parse-state :: <parse-state>)
-  do-action(find-action(*action-table*[state-stack.head], token),
-	    state-stack, symbol-stack, token, parse-state);
-end;
+// parse -- internal.
+//
+// The actual parser loop.  Drive the state machine and maintain the stacks
+// until we hit an accept action or until be hit a bogus token.
+// 
+define method parse-loop
+    (parse-state :: <parse-state>, #key debug :: <boolean> = #f)
+    => result :: <object>;
+  let start-state = $parse-root-start-state;
+  let tokenizer = parse-state.tokenizer;
+
+  block (return)
+    let state-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let symbol-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let srcloc-stack = make(<simple-object-vector>, size: $initial-stack-size);
+
+    state-stack[0] := start-state;
+    let top :: <integer> = 1;
+    let (lookahead, lookahead-srcloc) = get-token(tokenizer);
+
+    unless (lookahead.token-id == $eof-token)
+      let actions :: <simple-object-vector> = $action-table[start-state];
+      let action :: <integer> = actions[$eof-token];
+    end unless;
+
+    while (#t)
+      let state :: <integer> = state-stack[top - 1];
+
+      if (debug)
+	dformat("top = %d, state = %d, lookahead = %s\n",
+		top, state, lookahead.string-value);
+      end if;
+
+      let actions :: <simple-object-vector> = $action-table[state];
+      let action :: <integer> = actions[lookahead.token-id];
+      let (action-datum, action-kind)
+	= truncate/(action, ash(1, $action-bits));
+      select (action-kind)
+	$error-action =>
+	  parse-error(lookahead, "Parse error at or before %=",
+		      lookahead.string-value);
+
+	$accept-action =>
+	  if (debug)
+	    dformat("  accepting.\n");
+	  end if;
+	  unget-token(tokenizer, lookahead);
+	  if (top ~== 2)
+	    error("stack didn't get reduced all the way?");
+	  end if;
+	  return(symbol-stack[1]);
+
+	$shift-action =>
+	  if (top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  if (debug)
+	    dformat("  shifting to state %d.\n", action-datum);
+	  end if;
+	  state-stack[top] := action-datum;
+	  symbol-stack[top] := lookahead;
+	  srcloc-stack[top] := lookahead-srcloc;
+	  top := top + 1;
+	  let (new-lookahead, new-srcloc) = get-token(tokenizer);
+	  lookahead := new-lookahead;
+	  lookahead-srcloc := new-srcloc;
+
+	  unless (lookahead.token-id == $eof-token)
+	    let actions :: <simple-object-vector>
+	      = $action-table[action-datum];
+	    let action :: <integer> = actions[$eof-token];
+	  end unless;
+
+	$reduce-action =>
+	  let semantic-action :: <function>
+	    = $production-table[action-datum];
+	  let number-pops :: <integer>
+	    = $number-of-pops[action-datum];
+	  if (debug)
+	    dformat("  reducing by production %d, num pops = %d\n",
+		    action-datum, number-pops);
+	  end if;
+	  let old-top = top - number-pops;
+	  let extra-args = make(<simple-object-vector>, size: number-pops * 2);
+	  for (index from 0 below number-pops)
+	    extra-args[index * 2] := symbol-stack[old-top + index];
+	    extra-args[index * 2 + 1] := srcloc-stack[old-top + index];
+	  end for;
+	  let new-srcloc = parse-state;
+	  let (new-state :: <integer>, new-symbol)
+	    = apply(semantic-action, state-stack[old-top - 1], new-srcloc,
+		    extra-args);
+	  if (old-top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  state-stack[old-top] := new-state;
+	  symbol-stack[old-top] := new-symbol;
+	  srcloc-stack[old-top] := new-srcloc;
+	  top := old-top + 1;
+	  // Unlike most parsers, we don't care if we've hit EOF.  This
+	  // doesn't sit well with the parser generator, so we cheat by faking
+	  // an accepting state.
+	  if (top == 2) return(symbol-stack[1]) end if;
+      end select;
+    end while;
+  end block;
+end method parse-loop;
+
 
 //----------------------------------------------------------------------
 // External interfaces to the parsing engine.
@@ -832,5 +940,5 @@ end;
 // information acquired.
 //
 define method parse (parse-state :: <parse-state>)
-  parse-loop(#(0), #(), get-token(parse-state.tokenizer), parse-state);
+  parse-loop(parse-state);
 end;

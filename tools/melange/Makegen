@@ -1,4 +1,4 @@
-$D2CFLAGS = "-L/afs/cs/project/gwydion/compiler/lib";
+$D2CFLAGS = "-L. -L/afs/cs/project/gwydion/compiler/lib";
 
 push(@files_to_clean, "*.dbc");
 
@@ -8,12 +8,16 @@ if ($win32) {
     $c_decl_lid = "hp-c-decl";
 }
 
+&emit_parsergen_rule('c-parse');
+
 &emit_library_rule
     ($c_decl_lid,
      '$(BUILDROOT)/force.timestamp',
      '',
      'compile'
      );
+
+&emit_parsergen_rule('int-parse');
 
 &emit_library_rule
     ('melange',
@@ -35,8 +39,8 @@ c-lexer.dbc: $(SRCDIR)/c-lexer.dylan
 	$(MC) -lmelange-c $(SRCDIR)/c-lexer.dylan -o c-lexer.dbc
 c-lexer-cpp.dbc: $(SRCDIR)/c-lexer-cpp.dylan
 	$(MC) -lmelange-c $(SRCDIR)/c-lexer-cpp.dylan -o c-lexer-cpp.dbc
-c-parse.dbc: $(SRCDIR)/c-parse.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-parse.dylan -o c-parse.dbc
+c-parse.dbc: c-parse.dylan
+	$(MC) -lmelange-c c-parse.dylan -o c-parse.dbc
 alignment.dbc: $(SRCDIR)/alignment.dylan
 	$(MC) -lmelange-c $(SRCDIR)/alignment.dylan -o alignment.dbc
 c-decl.dbc: $(SRCDIR)/c-decl.dylan
@@ -51,26 +55,32 @@ name-map.dbc: $(SRCDIR)/name-map.dylan
 	$(MC) -lmelange $(SRCDIR)/name-map.dylan -o name-map.dbc
 int-lexer.dbc: $(SRCDIR)/int-lexer.dylan
 	$(MC) -lmelange $(SRCDIR)/int-lexer.dylan -o int-lexer.dbc
-int-parse.dbc: $(SRCDIR)/int-parse.dylan
-	$(MC) -lmelange $(SRCDIR)/int-parse.dylan -o int-parse.dbc
+int-parse.dbc: int-parse.dylan
+	$(MC) -lmelange int-parse.dylan -o int-parse.dbc
 interface.dbc: $(SRCDIR)/interface.dylan
 	$(MC) -lmelange $(SRCDIR)/interface.dylan -o interface.dbc
 
+EOF
+if ($win32) {
+    print <<'EOF';
 OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc win32-vc-portability.dbc \
 	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
 	c-decl-write.dbc exports.dbc name-map.dbc int-lexer.dbc \
 	int-parse.dbc interface.dbc
 
 melange.dbc: $(OBJS)
-EOF
-if ($win32) {
-    print <<'EOF';
 	dbclink $@ $(OBJS)
 win32-vc-portability.dbc: $(SRCDIR)/win32-vc-portability.dylan
 	$(MC) -lmelange-c $(SRCDIR)/win32-vc-portability.dylan -o win32-vc-portability.dbc
 EOF
 } else {
     print <<'EOF';
+OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc hp-portability.dbc \
+	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
+	c-decl-write.dbc exports.dbc name-map.dbc int-lexer.dbc \
+	int-parse.dbc interface.dbc
+
+melange.dbc: $(OBJS)
 	cat $(OBJS) > $@
 hp-portability.dbc: $(SRCDIR)/hp-portability.dylan
 	$(MC) -lmelange-c $(SRCDIR)/hp-portability.dylan -o hp-portability.dbc

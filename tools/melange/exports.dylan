@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.13 1996/10/30 19:24:54 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.14 1997/01/23 16:42:10 rgs Exp $
 
 //======================================================================
 //
@@ -76,8 +76,10 @@ define module int-lexer
   use streams;
   export
     <tokenizer>, get-token, unget-token, <token>, value, string-value,
-    generator, parse-error, position, <error-token>, <identifier-token>,
-    <integer-token>, <eof-token>, <true-eof-token>, <keyword-token>,
+    generator, parse-error, position, token-id,
+    <reserved-word-token>, <name-token>, <punctuation-token>,
+    <error-token>, <identifier-token>, <simple-token>,
+    <integer-token>, <eof-token>, <keyword-token>,
     <symbol-literal-token>, <string-literal-token>, <comma-token>,
     <semicolon-token>, <lbrace-token>, <rbrace-token>, <arrow-token>,
     <define-token>, <interface-token>, <end-token>, <include-token>,
@@ -101,7 +103,9 @@ define module int-parse
   use table-extensions;
   use self-organizing-list;
   use c-lexer, import: {include-path, open-in-include-path};
-  use streams, import: {close};
+  use streams;
+  use standard-io;
+  use format;
   use int-lexer;
   export
     parse, <parse-state>, include-files, object-files, mindy-include-file,

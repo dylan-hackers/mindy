@@ -39,13 +39,15 @@ define module c-lexer
   export
     include-path, open-in-include-path, check-cpp-expansion, <tokenizer>,
     get-token, unget-token, add-typedef, cpp-table, cpp-decls, <token>, value,
-    string-value, generator, parse-error, <error-token>, <identifier-token>,
+    string-value, generator, parse-error, token-id,
+    <error-token>, <identifier-token>,
     <integer-token>, <eof-token>, <begin-include-token>, <end-include-token>,
     <reserved-word-token>, <struct-token>, <typedef-token>, <name-token>,
     <int-token>, <short-token>, <long-token>, <signed-token>,
     <unsigned-token>, <char-token>, <float-token>, <double-token>,
     // <const-token>, <volatile-token>,
-    <void-token>, <inline-token>,
+    <void-token>, <inline-token>, <punctuation-token>, <simple-token>,
+    <ei-token>, <alien-name-token>, <macro-parse-token>, <cpp-parse-token>,
     <extern-token>, <static-token>, <auto-token>, <register-token>,
     <type-name-token>, <union-token>, <enum-token>, <elipsis-token>,
     <sizeof-token>, <dec-op-token>, <inc-op-token>, <ptr-op-token>,
@@ -61,7 +63,7 @@ define module c-lexer
     <eq-op-token>, <assign-token>, <ge-op-token>, <le-op-token>,
     <ne-op-token>, <and-op-token>, <or-op-token>, <left-op-token>,
     <right-op-token>, <lcurly-token>, <rcurly-token>, <type-specifier-token>,
-    <nc-punctuation-token>, *handle-//-comments*;
+    *handle-//-comments*;
 end module c-lexer;
 
 define module portability

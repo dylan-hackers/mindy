@@ -1,4 +1,3 @@
-documented: #t
 module: c-parse
 author:  Robert Stockton (rgs@cs.cmu.edu)
 copyright: Copyright (C) 1994, Carnegie Mellon University
@@ -6,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.13 1997/01/23 16:42:10 rgs Exp $
 
 //======================================================================
 //
@@ -139,121 +138,190 @@ define method int-value
   end if;
 end method int-value;
 
-//----------------------------------------------------------------------
-// Generic parser boilerplate.
-//----------------------------------------------------------------------
+define constant <source-location> = false-or(<parse-state>);
 
-define class <action> (<object>)
-  slot on :: <class>, required-init-keyword: on:, setter: #f;
-end;
-
-define class <shift> (<action>)
-  slot state :: <integer>, required-init-keyword: state:, setter: #f;
-end;
-
-define method \= (action1 :: <shift>, action2 :: <shift>) => eq? :: <boolean>;
-  action1.state == action2.state;
-end;
-
-define class <reduce> (<action>)
-  slot production :: <integer>, required-init-keyword: production:, setter: #f;
-end;
-
-define method \= (action1 :: <reduce>, action2 :: <reduce>)
- => eq? :: <boolean>;
-  action1.production == action2.production;
-end;
-
-define class <accept> (<action>)
-end;
-
-define method \= (action1 :: <accept>, action2 :: <accept>)
- => eq? :: <boolean>;
-  #t;
-end;
-
-define method make-action-table(#rest actions)
-  let result = make(<self-organizing-list>);
-  for (action in actions)
-    local
-      method process (clas :: <class>)
-	result[clas] := action;
-	for (sub in clas.direct-subclasses)
-	  process(sub);
-	end for;
-      end method process;
-    process(action.on);
-  end for;
-  result;
-end method make-action-table;
-
-//----------------------------------------------------------------------
-// "Magic" tokens which provide alternate entry points to the parser
-//----------------------------------------------------------------------
-
-define class <alien-name-token> (<token>) end class;
-define class <macro-parse-token> (<token>) end class;
-define class <cpp-parse-token> (<token>) end class;
-
-define constant <non-curly-token>
-  = type-union(<reserved-word-token>, <name-token>, <literal-token>,
-	       <nc-punctuation-token>);
 
 //----------------------------------------------------------------------
 // The actual productions.  The format is
 //  production (sub-production-or-<token> .....)
-//    Arbitrary dylan code -- variables $r1 - $rn correspond to the
-//    sub-productions, and $state is a <parse-state> which is passed into each
+//    Arbitrary dylan code -- variables %1 - %n correspond to the
+//    sub-productions, and @0 is a <parse-state> which is passed into each
 //    action routine for record-keeping purposes.
 //  %
 //----------------------------------------------------------------------
 
 %%
-file (<eof-token>)
-  $r1;
+
+:entry-point file
+
+;; Magic tokens
+;; It seems that the end-of-file token must be named "EOF"
+:token EOF <simple-token> 
+:token <error-token> <simple-token> 
+:token <begin-include-token> <simple-token> 
+:token <end-include-token> <ei-token> 
+:token <identifier-token> <name-token> 
+:token <type-name-token>  <name-token> 
+;; literals
+:token <integer-token> <literal-token> 
+:token <character-token> <literal-token> 
+:token <string-literal-token> <literal-token> 
+:token <cpp-token> <literal-token> 
+;; A whole bunch of reserved words
+:token <struct-token> <reserved-word-token> 
+:token <typedef-token> <reserved-word-token> 
+:token <short-token> <type-specifier-token> 
+:token <long-token> <type-specifier-token> 
+:token <int-token> <type-specifier-token> 
+:token <char-token> <type-specifier-token> 
+:token <signed-token> <type-specifier-token> 
+:token <unsigned-token> <type-specifier-token> 
+:token <float-token> <type-specifier-token> 
+:token <double-token> <type-specifier-token> 
+;; "const" and "volatile" will be preprocessed away by the cpp code.  They
+;; were being used in too many different odd places by various different
+;; compilers.  
+;;
+;; define class <const-token> (<reserved-word-token>) end class;
+;; define class <volatile-token> (<reserved-word-token>) end class;
+:token <void-token> <type-specifier-token> 
+:token <inline-token> <reserved-word-token> 
+:token <extern-token> <reserved-word-token> 
+:token <static-token> <reserved-word-token> 
+:token <auto-token> <reserved-word-token> 
+:token <register-token> <reserved-word-token> 
+:token <dummy-token> <reserved-word-token> 
+:token <union-token> <reserved-word-token> 
+:token <enum-token> <reserved-word-token> 
+:token <constant-token> <reserved-word-token> 
+:token <mul-assign-token> <reserved-word-token> 
+:token <div-assign-token> <reserved-word-token> 
+:token <mod-assign-token> <reserved-word-token> 
+:token <add-assign-token> <reserved-word-token> 
+:token <sub-assign-token> <reserved-word-token> 
+:token <left-assign-token> <reserved-word-token> 
+:token <right-assign-token> <reserved-word-token> 
+:token <and-assign-token> <reserved-word-token> 
+:token <xor-assign-token> <reserved-word-token> 
+:token <or-assign-token> <reserved-word-token> 
+;; A whole bunch of puctuation
+:token <elipsis-token> <punctuation-token> 
+:token <sizeof-token> <punctuation-token> 
+:token <dec-op-token> <punctuation-token> 
+:token <inc-op-token> <punctuation-token> 
+:token <ptr-op-token> <punctuation-token> 
+:token <semicolon-token> <punctuation-token> 
+:token <comma-token> <punctuation-token> 
+:token <dot-token> <punctuation-token> 
+:token <lparen-token> <punctuation-token> 
+:token <rparen-token> <punctuation-token> 
+:token <lbracket-token> <punctuation-token> 
+:token <rbracket-token> <punctuation-token> 
+:token <ampersand-token> <punctuation-token> 
+:token <star-token> <punctuation-token> 
+:token <carat-token> <punctuation-token> 
+:token <bar-token> <punctuation-token> 
+:token <percent-token> <punctuation-token> 
+:token <slash-token> <punctuation-token> 
+:token <plus-token> <punctuation-token> 
+:token <minus-token> <punctuation-token> 
+:token <tilde-token> <punctuation-token> 
+:token <bang-token> <punctuation-token> 
+:token <lt-token> <punctuation-token> 
+:token <gt-token> <punctuation-token> 
+:token <question-token> <punctuation-token> 
+:token <colon-token> <punctuation-token> 
+:token <eq-op-token> <punctuation-token> 
+:token <le-op-token> <punctuation-token> 
+:token <ge-op-token> <punctuation-token> 
+:token <ne-op-token> <punctuation-token> 
+:token <and-op-token> <punctuation-token> 
+:token <or-op-token> <punctuation-token> 
+:token <pound-pound-token> <punctuation-token> 
+:token <left-op-token> <punctuation-token> 
+:token <right-op-token> <punctuation-token> 
+:token <assign-token> <punctuation-token> 
+:token <lcurly-token> <punctuation-token> 
+:token <rcurly-token> <punctuation-token> 
+;; "Magic" tokens which provide alternate entry points to the parser
+:token <alien-name-token> <token>
+:token <macro-parse-token> <token>
+:token <cpp-parse-token> <token>
+
+:union NON-CURLY <token>
+    (<identifier-token> <type-name-token>  <integer-token>
+     <character-token> <string-literal-token> <cpp-token> <struct-token>
+     <typedef-token> <short-token> <long-token> <int-token> <char-token>
+     <signed-token> <unsigned-token> <float-token> <double-token>
+     <void-token> <inline-token> <extern-token> <static-token> <auto-token>
+     <register-token> <dummy-token> <union-token> <enum-token>
+     <constant-token> <mul-assign-token> <div-assign-token>
+     <mod-assign-token> <add-assign-token> <sub-assign-token>
+     <left-assign-token> <right-assign-token> <and-assign-token>
+     <xor-assign-token> <or-assign-token> <elipsis-token> <sizeof-token>
+     <dec-op-token> <inc-op-token> <ptr-op-token> <semicolon-token>
+     <comma-token> <dot-token> <lparen-token> <rparen-token>
+     <lbracket-token> <rbracket-token> <ampersand-token> <star-token>
+     <carat-token> <bar-token> <percent-token> <slash-token> <plus-token>
+     <minus-token> <tilde-token> <bang-token> <lt-token> <gt-token>
+     <question-token> <colon-token> <eq-op-token> <le-op-token>
+     <ge-op-token> <ne-op-token> <and-op-token> <or-op-token>
+     <pound-pound-token> <left-op-token> <right-op-token> <assign-token>)
+
+:union NAME <name-token> 
+    (<identifier-token> <type-name-token>)
+
+:union TYPE-SPEC <type-specifier-token>
+    (<short-token> <long-token> <int-token> <char-token> <signed-token>
+     <unsigned-token> <float-token> <double-token> <void-token>)
+
+
+
+file (EOF)
+  %1;
 %
 
-file (file1 <eof-token>)
-  $r1;
+file (file1 EOF)
+  %1;
 %
 
-file (<alien-name-token> type-name <eof-token>)
-  $r2;
+file (<alien-name-token> type-name EOF)
+  %2;
 %
 
-file (<alien-name-token> identifier <eof-token>)
-  element($state.objects, $r2.string-value, default: #f)
-    | parse-error($r2, "Unknown identifier: %s", $r2.string-value);
+file (<alien-name-token> identifier EOF)
+  element(@0.objects, %2.string-value, default: #f)
+    | parse-error(%2, "Unknown identifier: %s", %2.string-value);
 %
 
-file (<macro-parse-token> type-name <eof-token>)
-  $r2;
+file (<macro-parse-token> type-name EOF)
+  %2;
 %
 
-;file (<macro-parse-token> identifier <eof-token>)
-;  element($state.objects, $r2.string-value, default: #f)
-;    | parse-error($r2, "Unknown identifier: %s", $r2.string-value);
+;file (<macro-parse-token> identifier EOF)
+;  element(@0.objects, %2.string-value, default: #f)
+;    | parse-error(%2, "Unknown identifier: %s", %2.string-value);
 ;%
 
-file (<macro-parse-token> constant-expr <eof-token>)
-  if (instance?($r2, <identifier-token>))
-    element($state.objects, $r2.string-value, default: #f)
-      | parse-error($r2, "Unknown identifier: %s", $r2.string-value);
+file (<macro-parse-token> constant-expr EOF)
+  if (instance?(%2, <identifier-token>))
+    element(@0.objects, %2.string-value, default: #f)
+      | parse-error(%2, "Unknown identifier: %s", %2.string-value);
   else
-    $r2;
+    %2;
   end if;
 %
 
-file (<cpp-parse-token> constant-expr <eof-token>)
-  int-value($r2, $state);
+file (<cpp-parse-token> constant-expr EOF)
+  int-value(%2, @0);
 %
 
 file1 (external-definition)
-  $r1;
+  %1;
 %
 
 file1 (file1 external-definition)
-  $r1;
+  %1;
 %
 
 primary-expr (identifier)
@@ -263,7 +331,7 @@ primary-expr (identifier)
   // should be aware of this and call "int-value" to insure that it is in fact
   // a constant value.  "parse-macro" takes advantage of this property of
   // "constant-expr" to allow defined identifiers to be parsed.
-  $r1;
+  %1;
 %
 
 ;Primary-Expr (<CONSTANT-Token>)
@@ -271,7 +339,7 @@ primary-expr (identifier)
 ;%
 
 Primary-Expr (<integer-token>)
-  $r1.value;
+  %1.value;
 %
 
 ;Primary-Expr (<STRING-LITERAL-Token>)
@@ -279,11 +347,11 @@ Primary-Expr (<integer-token>)
 ;%
 
 primary-expr (<lparen-token> expr <rparen-token>)
-  $r2;
+  %2;
 %
 
 postfix-expr (primary-expr)
-  $r1;
+  %1;
 %
 
 ;postfix-expr (postfix-expr <lbracket-token> expr <rbracket-token>)
@@ -300,9 +368,9 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   // CPP line, we should be prepared to evaluate the pseudo-function
   // "defined".
   //
-  if (~instance?($state, <parse-cpp-state>) | $r1.string-value ~= "defined")
-    parse-error($state,"Function calls not allowed in constant expressions.");
-  elseif (element($r3.generator.cpp-table, $r3.string-value, default: #f))
+  if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
+    parse-error(@0,"Function calls not allowed in constant expressions.");
+  elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
     1;
   else
     0;
@@ -326,7 +394,7 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
 ;%
 
 argument-expr-list (assignment-expr)
-  $r1;
+  %1;
 %
 
 ;argument-expr-list (argument-expr-list <comma-token> assignment-expr)
@@ -334,7 +402,7 @@ argument-expr-list (assignment-expr)
 ;%
 
 unary-expr (postfix-expr)
-  $r1;
+  %1;
 %
 
 ;Unary-Expr (<INC-OP-Token> Unary-Expr)
@@ -346,10 +414,10 @@ unary-expr (postfix-expr)
 ;%
 
 unary-expr (unary-operator cast-expr)
-  select ($r1 by instance?)
-    <minus-token> => -int-value($r2, $state);
-    <tilde-token> => lognot(int-value($r2, $state));
-    <bang-token> => if (int-value($r2, $state) == 0) 1 else 0 end if;
+  select (%1 by instance?)
+    <minus-token> => -int-value(%2, @0);
+    <tilde-token> => lognot(int-value(%2, @0));
+    <bang-token> => if (int-value(%2, @0) == 0) 1 else 0 end if;
   end select;
 %
 
@@ -358,7 +426,7 @@ unary-expr (unary-operator cast-expr)
 ;%
 
 Unary-Expr (<SIZEOF-Token> <Lparen-Token> Type-Name <Rparen-Token>)
-  c-type-size($r3);
+  c-type-size(%3);
 %
 
 ;unary-operator (<ampersand-token>)
@@ -374,155 +442,155 @@ Unary-Expr (<SIZEOF-Token> <Lparen-Token> Type-Name <Rparen-Token>)
 ;%
 
 unary-operator (<minus-token>)
-  $r1;
+  %1;
 %
 
 unary-operator (<tilde-token>)
-  $r1;
+  %1;
 %
 
 unary-operator (<bang-token>)
-  $r1;
+  %1;
 %
 
 cast-expr (unary-expr)
-  $r1;
+  %1;
 %
 
 cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
-  let result = int-value($r4, $state);
+  let result = int-value(%4, @0);
   if (instance?(result, <integer>)
-       & instance?($r2.true-type, <integer-type-declaration>))
+       & instance?(%2.true-type, <integer-type-declaration>))
     result;
   else
     parse-error
-      ($state,
+      (@0,
        "Melange only handles compile time casts from integer to integer");
   end if;
 %
 
 multiplicative-expr (cast-expr)
-  $r1;
+  %1;
 %
 
 multiplicative-expr (multiplicative-expr <star-token> cast-expr)
-  int-value($r1, $state) * int-value($r3, $state);
+  int-value(%1, @0) * int-value(%3, @0);
 %
 
 multiplicative-expr (multiplicative-expr <slash-token> cast-expr)
-  truncate/(int-value($r1, $state), int-value($r3, $state));
+  truncate/(int-value(%1, @0), int-value(%3, @0));
 %
 
 multiplicative-expr (multiplicative-expr <percent-token> cast-expr)
-  remainder(int-value($r1, $state), int-value($r3, $state));
+  remainder(int-value(%1, @0), int-value(%3, @0));
 %
 
 additive-expr (multiplicative-expr)
-  $r1;
+  %1;
 %
 
 additive-expr (additive-expr <plus-token> multiplicative-expr)
-  int-value($r1, $state) + int-value($r3, $state);
+  int-value(%1, @0) + int-value(%3, @0);
 %
 
 additive-expr (additive-expr <minus-token> multiplicative-expr)
-  int-value($r1, $state) - int-value($r3, $state);
+  int-value(%1, @0) - int-value(%3, @0);
 %
 
 shift-expr (additive-expr)
-  $r1;
+  %1;
 %
 
 Shift-Expr (Shift-Expr <LEFT-OP-Token> Additive-Expr)
-  ash(int-value($r1, $state), int-value($r3, $state))
+  ash(int-value(%1, @0), int-value(%3, @0))
 %
 
 Shift-Expr (Shift-Expr <RIGHT-OP-Token> Additive-Expr)
-  ash(int-value($r1, $state), -int-value($r3, $state))
+  ash(int-value(%1, @0), -int-value(%3, @0))
 %
 
 relational-expr (shift-expr)
-  $r1;
+  %1;
 %
 
 relational-expr (relational-expr <lt-token> shift-expr)
-  if (int-value($r1, $state) < int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) < int-value(%3, @0)) 1 else 0 end if;
 %
 
 relational-expr (relational-expr <gt-token> shift-expr)
-  if (int-value($r1, $state) > int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) > int-value(%3, @0)) 1 else 0 end if;
 %
 
 Relational-Expr (Relational-Expr <LE-OP-Token> Shift-Expr)
-  if (int-value($r1, $state) <= int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) <= int-value(%3, @0)) 1 else 0 end if;
 %
 
 Relational-Expr (Relational-Expr <GE-OP-Token> Shift-Expr)
-  if (int-value($r1, $state) >= int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) >= int-value(%3, @0)) 1 else 0 end if;
 %
 
 equality-expr (relational-expr)
-  $r1;
+  %1;
 %
 
 Equality-Expr (Equality-Expr <EQ-OP-Token> Relational-Expr)
-  if (int-value($r1, $state) == int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) == int-value(%3, @0)) 1 else 0 end if;
 %
 
 Equality-Expr (Equality-Expr <NE-OP-Token> Relational-Expr)
-  if (int-value($r1, $state) ~= int-value($r3, $state)) 1 else 0 end if;
+  if (int-value(%1, @0) ~= int-value(%3, @0)) 1 else 0 end if;
 %
 
 and-expr (equality-expr)
-  $r1;
+  %1;
 %
 
 and-expr (and-expr <ampersand-token> equality-expr)
-  logand(int-value($r1, $state), int-value($r3, $state))
+  logand(int-value(%1, @0), int-value(%3, @0))
 %
 
 exclusive-or-expr (and-expr)
-  $r1;
+  %1;
 %
 
 exclusive-or-expr (exclusive-or-expr <carat-token> and-expr)
-  logxor(int-value($r1, $state), int-value($r3, $state));
+  logxor(int-value(%1, @0), int-value(%3, @0));
 %
 
 inclusive-or-expr (exclusive-or-expr)
-  $r1;
+  %1;
 %
 
 inclusive-or-expr (inclusive-or-expr <bar-token> exclusive-or-expr)
-  logior(int-value($r1, $state), int-value($r3, $state));
+  logior(int-value(%1, @0), int-value(%3, @0));
 %
 
 logical-and-expr (inclusive-or-expr)
-  $r1;
+  %1;
 %
 
 Logical-And-Expr (Logical-And-Expr <AND-OP-Token> Inclusive-Or-Expr)
-  if (int-value($r1, $state) == 0) $r1 else $r3 end if;
+  if (int-value(%1, @0) == 0) %1 else %3 end if;
 %
 
 logical-or-expr (logical-and-expr)
-  $r1;
+  %1;
 %
 
 Logical-Or-Expr (Logical-Or-Expr <OR-OP-Token> Logical-And-Expr)
-  if (int-value($r1, $state) == 0) $r3 else $r1 end if;
+  if (int-value(%1, @0) == 0) %3 else %1 end if;
 %
 
 conditional-expr (logical-or-expr)
-  $r1;
+  %1;
 %
 
 conditional-expr (logical-or-expr <question-token> logical-or-expr <colon-token> conditional-expr)
-  if (int-value($r1, $state) == 0) $r5 else $r3 end if;
+  if (int-value(%1, @0) == 0) %5 else %3 end if;
 %
 
 assignment-expr (conditional-expr)
-  $r1;
+  %1;
 %
 
 ;assignment-expr (unary-expr assignment-operator assignment-expr)
@@ -574,7 +642,7 @@ assignment-expr (conditional-expr)
 ;%
 
 expr (assignment-expr)
-  $r1;
+  %1;
 %
 
 ;expr (expr <comma-token> assignment-expr)
@@ -584,26 +652,14 @@ expr (assignment-expr)
 constant-expr (conditional-expr)
   // In general, constant expr will return an integer value.  However, for
   // obscure reasons, we also allow it to return a single identifier.
-  $r1;
+  %1;
 %
 
 lcurly-element (<lcurly-token> curly-list <rcurly-token>)
   #f;
 %
 
-lcurly-element (<literal-token>)
-  #f;
-%
-
-lcurly-element (<nc-punctuation-token>)
-  #f;
-%
-
-lcurly-element (<reserved-word-token>)
-  #f;
-%
-
-lcurly-element (<name-token>)
+lcurly-element (NON-CURLY)
   #f;
 %
 
@@ -617,7 +673,7 @@ curly-list (lcurly-element curly-list)
 
 declaration (declaration-specifiers <semicolon-token>)
   *typedef-flag* := #f;
-  process-type-list($r1, $state);
+  process-type-list(%1, @0);
 %
 
 declaration (declaration-specifiers extended-declarator-list
@@ -637,81 +693,81 @@ declaration (<inline-token> declaration-specifiers extended-declarator-list
 
 declaration (<extern-token> init-declarator-list <semicolon-token>)
   // Storage class must be extern; unspecified type must be "int"
-  let spec = list(make(<int-token>, generator: $r1.generator, string: "int"));
-  let type = process-type-list(spec, $state);
-  let names = reverse!($r2);
-  declare-objects($state, type, names, *typedef-flag*);
+  let spec = list(make(<int-token>, generator: %1.generator, string: "int"));
+  let type = process-type-list(spec, @0);
+  let names = reverse!(%2);
+  declare-objects(@0, type, names, *typedef-flag*);
   *typedef-flag* := #f;
 %
 
 declaration (declaration-specifiers extended-declarator-list <semicolon-token>)
-  let type = process-type-list($r1, $state);
-  let names = reverse!($r2);
-  declare-objects($state, type, names, *typedef-flag*);
+  let type = process-type-list(%1, @0);
+  let names = reverse!(%2);
+  declare-objects(@0, type, names, *typedef-flag*);
   *typedef-flag* := #f;
 %
 
 declaration-specifiers (storage-class-specifier declaration-specifiers)
   // Storage class must be extern -- no need to note it
-  $r2;
+  %2;
 %
 
 ; declaration-specifiers (type-modifier declaration-specifiers)
 ;  // Storage class must be extern -- no need to note it
-;  $r2;
+;  %2;
 ; %
 
 declaration-specifiers (type-specifier)
-  list($r1);
+  list(%1);
 %
 
 declaration-specifiers (numeric-specifier)
-  $r1;
+  %1;
 %
 
 init-declarator-list (declarator)
-  list($r1);
+  list(%1);
 %
 
 init-declarator-list (init-declarator-list <comma-token> declarator)
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 extended-declarator-list (declarator)
   // This hack is necessary because VC++ lets you redeclare typedefs.  Bad
   // idea!  Don't look for clean logic or robustness -- that would require
   // more work than MS deserves.
-  list($r1);
+  list(%1);
 %
 
 ; extended-declarator-list (type-modifier declarator)
-;   list($r2);
+;   list(%2);
 ; %
 
 extended-declarator-list (extended-declarator-list <comma-token> 
                           declarator)
   // see above.
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 extended-declarator-list (extended-declarator)
-  list($r1);
+  list(%1);
 %
 
 extended-declarator-list (extended-declarator-list <comma-token> 
                           extended-declarator)
   // see above.
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 extended-declarator (<type-name-token>)
   // see above.
-  $r1;
+  %1;
 %
 
 extended-declarator (pointer <type-name-token>)
   // see above.
-  pair($r1, $r2);
+  pair(%1, %2);
 %
 
 ;init-declarator (declarator <assign-token> initializer)
@@ -721,11 +777,11 @@ extended-declarator (pointer <type-name-token>)
 
 storage-class-specifier (<TYPEDEF-token>)
   *typedef-flag* := #t;
-  $r1;
+  %1;
 %
 
 storage-class-specifier (<EXTERN-token>)
-  $r1;
+  %1;
 %
 
 ;Storage-Class-Specifier (<STATIC-Token>)
@@ -746,92 +802,92 @@ storage-class-specifier (<EXTERN-token>)
 ;; will result in our accepting a few invalid files, but we have to be pretty
 ;; permissive anyway to handle all of the various compilers around.
 ; Type-modifier (<CONST-Token>)
-;   $r1;
+;   %1;
 ; %
 
 ; Type-modifier (<VOLATILE-Token>)
-;   $r1;
+;   %1;
 ; %
 
-numeric-specifier (<type-specifier-token>)
-  list($r1);
+numeric-specifier (TYPE-SPEC)
+  list(%1);
 %
 
-numeric-specifier (<type-specifier-token> numeric-specifier)
-  pair($r1, $r2);
+numeric-specifier (TYPE-SPEC numeric-specifier)
+  pair(%1, %2);
 %
 
 type-specifier (struct-or-union-specifier)
-  $r1;
+  %1;
 %
 
 type-specifier (enum-specifier)
-  $r1;
+  %1;
 %
 
 type-specifier (<TYPE-NAME-token>)
-  $state.objects[$r1.value];
+  @0.objects[%1.value];
 %
 
-;; We use <name-token> here because people sometimes use struct tags as
+;; We use NAME here because people sometimes use struct tags as
 ;; typedef names.  This still appears incorrect to me, but we need it to be
 ;; able to parse existing header files.  -- rgs
-struct-or-union-specifier (struct-or-union <name-token> <lcurly-token>
+struct-or-union-specifier (struct-or-union NAME <lcurly-token>
                            struct-declaration-list <rcurly-token>)
-  make-struct-type($r2.value, $r4, $r1, $state);
+  make-struct-type(%2.value, %4, %1, @0);
 %
 
 struct-or-union-specifier (struct-or-union <lcurly-token> struct-declaration-list <rcurly-token>)
-  make-struct-type(#f, $r3, $r1, $state);
+  make-struct-type(#f, %3, %1, @0);
 %
 
-struct-or-union-specifier (struct-or-union <name-token>)
-  make-struct-type($r2.value, #f, $r1, $state);
+struct-or-union-specifier (struct-or-union NAME)
+  make-struct-type(%2.value, #f, %1, @0);
 %
 
 Struct-Or-Union (<STRUCT-Token>)
-  $r1;
+  %1;
 %
 
 Struct-Or-Union (<UNION-Token>)
-  $r1;
+  %1;
 %
 
 struct-declaration-list (struct-declaration)
-  $r1;
+  %1;
 %
 
 struct-declaration-list (struct-declaration-list struct-declaration)
   // Creates list in normal order.
-  concatenate($r1, $r2);
+  concatenate(%1, %2);
 %
 
 struct-declaration (type-specifier-list struct-declarator-list <semicolon-token>)
-  let type = process-type-list(reverse!($r1), $state);
+  let type = process-type-list(reverse!(%1), @0);
   let return = #();
-  for (declarator in $r2)
-    let (type, name) = process-declarator(type, declarator, $state);
+  for (declarator in %2)
+    let (type, name) = process-declarator(type, declarator, @0);
     return := pair(pair(name.value, type), return);
   end for;
   return;
 %
 
 struct-declaration (type-specifier-list <semicolon-token>)
-  let type = process-type-list(reverse!($r1), $state);
+  let type = process-type-list(reverse!(%1), @0);
   list(pair("_anon_field", type));
 %
 
 struct-declarator-list (struct-declarator)
-  list($r1);
+  list(%1);
 %
 
 struct-declarator-list (struct-declarator-list <comma-token> struct-declarator)
   // Creates list in reverse order.
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 struct-declarator (declarator)
-  $r1;
+  %1;
 %
 
 ;struct-declarator (<colon-token> constant-expr)
@@ -839,31 +895,31 @@ struct-declarator (declarator)
 ;%
 
 struct-declarator (declarator <colon-token> constant-expr)
-  pair(#"bitfield", pair(int-value($r3, $state), $r1));
+  pair(#"bitfield", pair(int-value(%3, @0), %1));
 %
 
 ; struct-declarator (type-modifier declarator)
-;   $r2;
+;   %2;
 ; %
 
 ; struct-declarator (type-modifier declarator <colon-token> constant-expr)
-;   pair(#"bitfield", pair(int-value($r4, $state), $r2));
+;   pair(#"bitfield", pair(int-value(%4, @0), %2));
 ; %
 
 Enum-Specifier (<ENUM-Token> <Lcurly-Token> Enumerator-List <Rcurly-Token>)
-  make-struct-type(#f, reverse!($r3), $r1, $state);
+  make-struct-type(#f, reverse!(%3), %1, @0);
 %
 
-Enum-Specifier (<ENUM-Token> <name-token> <Lcurly-Token> Enumerator-List <Rcurly-Token>)
-  make-struct-type($r2.value, reverse!($r4), $r1, $state);
+Enum-Specifier (<ENUM-Token> NAME <Lcurly-Token> Enumerator-List <Rcurly-Token>)
+  make-struct-type(%2.value, reverse!(%4), %1, @0);
 %
 
-Enum-Specifier (<ENUM-Token> <name-token>)
-  make-struct-type($r2.value, #f, $r1, $state);
+Enum-Specifier (<ENUM-Token> NAME)
+  make-struct-type(%2.value, #f, %1, @0);
 %
 
 enumerator-list (enumerator)
-  list(make-enum-slot($r1.head, $r1.tail, #f, $state));
+  list(make-enum-slot(%1.head, %1.tail, #f, @0));
 %
 
 enumerator-list (enumerator-list <comma-token> enumerator)
@@ -873,52 +929,52 @@ enumerator-list (enumerator-list <comma-token> enumerator)
   // We do all of this on the fly because some (i.e. Apple's) C compilers
   // let later enum values be computed based upon those earlier in the 
   // same enum declaration.
-  pair(make-enum-slot($r3.head, $r3.tail, $r1.head, $state), $r1);
+  pair(make-enum-slot(%3.head, %3.tail, %1.head, @0), %1);
 %
 
 enumerator (identifier)
-  pair($r1.value, #f);
+  pair(%1.value, #f);
 %
 
 enumerator (identifier <assign-token> constant-expr)
-  pair($r1.value, int-value($r3, $state));
+  pair(%1.value, int-value(%3, @0));
 %
 
 declarator (declarator2)
-  $r1;
+  %1;
 %
 
 declarator (pointer declarator2)
-  pair($r1, $r2);
+  pair(%1, %2);
 %
 
 declarator2 (identifier)
-  $r1;
+  %1;
 %
 
 declarator2 (<lparen-token> declarator <rparen-token>)
-  $r2
+  %2
 %
 
 declarator2 (declarator2 <lbracket-token> <rbracket-token>)
-  pair(#"vector", pair(#f, $r1));
+  pair(#"vector", pair(#f, %1));
 %
 
 declarator2 (declarator2 <lbracket-token> constant-expr <rbracket-token>)
-  pair(#"vector", pair(int-value($r3, $state), $r1));
+  pair(#"vector", pair(int-value(%3, @0), %1));
 %
 
 declarator2 (declarator2 <lparen-token> <rparen-token>)
   pair(#"function", pair(list(make(<varargs-declaration>,
-                                   name: "", type: unknown-type)), $r1));
+                                   name: "", type: unknown-type)), %1));
 %
 
 declarator2 (declarator2 <lparen-token> parameter-type-list <rparen-token>)
-  pair(#"function", pair(reverse!($r3), $r1));
+  pair(#"function", pair(reverse!(%3), %1));
 %
 
 declarator2 (declarator2 <lparen-token> parameter-identifier-list <rparen-token>)
-  pair(#"function", pair(reverse!($r3), $r1));
+  pair(#"function", pair(reverse!(%3), %1));
 %
 
 pointer (<star-token>)
@@ -931,103 +987,103 @@ pointer (<star-token>)
 ; %
 
 pointer (<star-token> pointer)
-  pair(#"pointer", $r2);
+  pair(#"pointer", %2);
 %
 
 ; pointer (<star-token> type-modifier pointer)
 ;   // They can put "const" in some screwy places.  Ignore it.
-;   pair(#"pointer", $r2);
+;   pair(#"pointer", %2);
 ; %
 
 type-specifier-list (type-specifier)
-  list($r1);
+  list(%1);
 %
 
 type-specifier-list (numeric-specifier)
-  reverse!($r1);
+  reverse!(%1);
 %
 
 ; type-specifier-list (type-modifier type-specifier)
-;   list($r2);
+;   list(%2);
 ; %
 
 ; type-specifier-list (type-modifier numeric-specifier)
-;   reverse!($r2);
+;   reverse!(%2);
 ; %
 
 parameter-identifier-list (identifier-list)
-  $r1;
+  %1;
 %
 
 Parameter-Identifier-List (Identifier-List <Comma-Token> <ELIPSIS-Token>)
-  pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
+  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
 %
 
 identifier-list (identifier)
-  list(make(<arg-declaration>, name: $r1.string-value, type: unknown-type));
+  list(make(<arg-declaration>, name: %1.string-value, type: unknown-type));
 %
 
 identifier-list (identifier-list <comma-token> identifier)
   // Produces list in reverse order.
-  pair(make(<arg-declaration>, name: $r3.string-value, type: unknown-type),
-       $r1);
+  pair(make(<arg-declaration>, name: %3.string-value, type: unknown-type),
+       %1);
 %
 
 parameter-type-list (parameter-list)
-  $r1;
+  %1;
 %
 
 parameter-type-list (Parameter-List <Comma-Token> <ELIPSIS-Token>)
-  pair(make(<varargs-declaration>, name: "", type: unknown-type), $r1);
+  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
 %
 
 parameter-list (parameter-declaration)
-  list($r1);
+  list(%1);
 %
 
 parameter-list (parameter-list <comma-token> parameter-declaration)
   // Produces lists in reverse order.
-  pair($r3, $r1);
+  pair(%3, %1);
 %
 
 parameter-declaration (type-specifier-list declarator)
-  let type = process-type-list(reverse!($r1), $state);
-  let (type, name) = process-declarator(type, $r2, $state);
+  let type = process-type-list(reverse!(%1), @0);
+  let (type, name) = process-declarator(type, %2, @0);
   make(<arg-declaration>, name: name.string-value, type: type);
 %
 
 parameter-declaration (type-name)
-  make(<arg-declaration>, name: "", type: $r1);
+  make(<arg-declaration>, name: "", type: %1);
 %
 
 type-name (type-specifier-list)
-  process-type-list(reverse!($r1), $state);
+  process-type-list(reverse!(%1), @0);
 %
 
 type-name (type-specifier-list abstract-declarator)
-  let type = process-type-list(reverse!($r1), $state);
-  let (type, name) = process-declarator(type, $r2, $state);
+  let type = process-type-list(reverse!(%1), @0);
+  let (type, name) = process-declarator(type, %2, @0);
   type;
 %
 
 abstract-declarator (pointer)
-  list($r1);
+  list(%1);
 %
 
 ; abstract-declarator (type-modifier pointer)
-;   list($r1);
+;   list(%1);
 ; %
 
 abstract-declarator (abstract-declarator2)
-  $r1;
+  %1;
 %
 
 abstract-declarator (pointer abstract-declarator2)
-  pair($r1, $r2);
+  pair(%1, %2);
 %
 
 abstract-declarator2 (<lparen-token> abstract-declarator <rparen-token>)
-  $r2;
+  %2;
 %
 
 abstract-declarator2 (<lbracket-token> <rbracket-token>)
@@ -1035,15 +1091,15 @@ abstract-declarator2 (<lbracket-token> <rbracket-token>)
 %
 
 abstract-declarator2 (<lbracket-token> constant-expr <rbracket-token>)
-  list(#"vector", int-value($r2, $state));
+  list(#"vector", int-value(%2, @0));
 %
 
 abstract-declarator2 (abstract-declarator2 <lbracket-token> <rbracket-token>)
-  pair(#"vector", pair(#f, $r1));
+  pair(#"vector", pair(#f, %1));
 %
 
 abstract-declarator2 (abstract-declarator2 <lbracket-token> constant-expr <rbracket-token>)
-  pair(#"vector", pair(int-value($r3, $state), $r1));
+  pair(#"vector", pair(int-value(%3, @0), %1));
 %
 
 abstract-declarator2 (<lparen-token> <rparen-token>)
@@ -1052,16 +1108,16 @@ abstract-declarator2 (<lparen-token> <rparen-token>)
 %
 
 abstract-declarator2 (<lparen-token> parameter-type-list <rparen-token>)
-  list(#"function", reverse!($r2));
+  list(#"function", reverse!(%2));
 %
 
 abstract-declarator2 (abstract-declarator2 <lparen-token> <rparen-token>)
   pair(#"function", pair(list(make(<varargs-declaration>,
-                                   name: "", type: unknown-type)), $r1));
+                                   name: "", type: unknown-type)), %1));
 %
 
 abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <rparen-token>)
-  pair(#"function", pair(reverse!($r3), $r1));
+  pair(#"function", pair(reverse!(%3), %1));
 %
 
 ;initializer (assignment-expr)
@@ -1237,28 +1293,28 @@ abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <r
 ;;%
 
 external-definition (<begin-include-token>)
-  if ($state.verbose)
+  if (@0.verbose)
     write-element(*standard-error*, '[');
     force-output(*standard-error*);
   end if;
-  push-include-level($state, $r1.string-value);
+  push-include-level(@0, %1.string-value);
 %
 
 external-definition (<end-include-token>)
-  if ($state.verbose)
+  if (@0.verbose)
     write-element(*standard-error*, ']');
     force-output(*standard-error*);
   end if;
-  do(curry(add-cpp-declaration, $state), $r1.value);
-  pop-include-level($state);
+  do(curry(add-cpp-declaration, @0), %1.value);
+  pop-include-level(@0);
 %
 
 external-definition (declaration)
-  if ($state.verbose)
+  if (@0.verbose)
     write-element(*standard-error*, '.');
     force-output(*standard-error*);
   end if;
-  $r1;
+  %1;
 %
 
 ;;function-definition (declarator function-body)
@@ -1278,7 +1334,7 @@ external-definition (declaration)
 ;;%
 
 identifier (<IDENTIFIER-token>)
-  $r1;
+  %1;
 %
 
 %%
@@ -1286,15 +1342,6 @@ identifier (<IDENTIFIER-token>)
 //----------------------------------------------------------------------
 // More parser boilerplate
 //----------------------------------------------------------------------
-
-define method find-action (table, token)
-  let action = element(table, token.object-class, default: #f);
-  if (action)
-    action;
-  else
-    parse-error(token, "Parse error at or before %=.", token.string-value);
-  end;
-end;
 
 define method aux-get-token
     (parse-state :: <parse-state>) => (result :: <token>);
@@ -1306,35 +1353,139 @@ define method aux-get-token
   get-token(parse-state.tokenizer, cpp-line: #t, expand: #f);
 end method aux-get-token;
 
+// The initial size of the parser stacks.
+// 
+define constant $initial-stack-size = 200;
+
+// grow -- internal.
+//
+// Grow a stack.  Make a new vector twice as long, copy the old elements
+// across, and return it.
+// 
+define method grow (vec :: <simple-object-vector>)
+    => new :: <simple-object-vector>;
+  let old-size = vec.size;
+  let new-size = old-size * 2;
+  let new = make(<simple-object-vector>, size: new-size);
+  for (index from 0 below old-size)
+    new[index] := vec[index];
+  end for;
+  new;
+end method grow;
+
+define constant $eof-token = 0;
+
+define method dformat (template :: <string>, #rest rest)
+  apply(format, *standard-error*, template, rest);
+end method;
+
+// parse -- internal.
+//
+// The actual parser loop.  Drive the state machine and maintain the stacks
+// until we hit an accept action or until be hit a bogus token.
+// 
 define method parse-loop
-    (parse-state :: <parse-state>) => (result :: <object>);
-  local method step
-	    (state-stack :: <list>, symbol-stack :: <list>,
-	     token :: <token>, parse-state :: <parse-state>)
-#if (~mindy)
-	 => (result :: <object>);
-#endif
-	  let action = find-action(*action-table*[state-stack.head], token);
-	  select (action by instance?)
-	    <shift> =>
-	      step(pair(action.state, state-stack), pair(token, symbol-stack),
-		   aux-get-token(parse-state), parse-state);
-	    <reduce> =>
-	      let (new-state-stack, new-symbol-stack)
-		= (*production-table*[action.production]
-		     (state-stack, symbol-stack, $state: parse-state));
-	      step(new-state-stack, new-symbol-stack, token, parse-state);
-	    <accept> =>
-	      unget-token(parse-state.tokenizer, token);
-	      if (symbol-stack.size ~= 1)
-		parse-error(token,
-			    "Symbol-stack didn't get reduced all the way?");
-	      end;
-	      symbol-stack.head;
-	  end select;
-	end method step;
-  step(#(0), #(), aux-get-token(parse-state), parse-state);
-end;
+    (parse-state :: <parse-state>, #key debug :: <boolean> = #f)
+    => result :: <object>;
+  let start-state = $file-start-state;
+  let tokenizer = parse-state.tokenizer;
+
+  block (return)
+    let state-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let symbol-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let srcloc-stack = make(<simple-object-vector>, size: $initial-stack-size);
+
+    state-stack[0] := start-state;
+    let top :: <integer> = 1;
+    let (lookahead, lookahead-srcloc) = aux-get-token(parse-state);
+
+    unless (lookahead.token-id == $eof-token)
+      let actions :: <simple-object-vector> = $action-table[start-state];
+      let action :: <integer> = actions[$eof-token];
+    end unless;
+
+    while (#t)
+      let state :: <integer> = state-stack[top - 1];
+
+      if (debug)
+	dformat("top = %d, state = %d, lookahead = %s\n",
+		top, state, lookahead);
+      end if;
+
+      let actions :: <simple-object-vector> = $action-table[state];
+      let action :: <integer> = actions[lookahead.token-id];
+      let (action-datum, action-kind)
+	= truncate/(action, ash(1, $action-bits));
+      select (action-kind)
+	$error-action =>
+	  parse-error(parse-state, "Parse error at or before %s", lookahead);
+
+	$accept-action =>
+	  if (debug)
+	    dformat("  accepting.\n");
+	  end if;
+	  unget-token(tokenizer, lookahead);
+	  if (top ~== 2)
+	    error("stack didn't get reduced all the way?");
+	  end if;
+	  return(symbol-stack[1]);
+
+	$shift-action =>
+	  if (top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  if (debug)
+	    dformat("  shifting to state %d.\n", action-datum);
+	  end if;
+	  state-stack[top] := action-datum;
+	  symbol-stack[top] := lookahead;
+	  srcloc-stack[top] := lookahead-srcloc;
+	  top := top + 1;
+	  let (new-lookahead, new-srcloc) = aux-get-token(parse-state);
+	  lookahead := new-lookahead;
+	  lookahead-srcloc := new-srcloc;
+
+	  unless (lookahead.token-id == $eof-token)
+	    let actions :: <simple-object-vector>
+	      = $action-table[action-datum];
+	    let action :: <integer> = actions[$eof-token];
+	  end unless;
+
+	$reduce-action =>
+	  let semantic-action :: <function>
+	    = $production-table[action-datum];
+	  let number-pops :: <integer>
+	    = $number-of-pops[action-datum];
+	  if (debug)
+	    dformat("  reducing by production %d, num pops = %d\n",
+		    action-datum, number-pops);
+	  end if;
+	  let old-top = top - number-pops;
+	  let extra-args = make(<simple-object-vector>, size: number-pops * 2);
+	  for (index from 0 below number-pops)
+	    extra-args[index * 2] := symbol-stack[old-top + index];
+	    extra-args[index * 2 + 1] := srcloc-stack[old-top + index];
+	  end for;
+	  let new-srcloc = parse-state;
+	  let (new-state :: <integer>, new-symbol)
+	    = apply(semantic-action, state-stack[old-top - 1], new-srcloc,
+		    extra-args);
+	  if (old-top == state-stack.size)
+	    state-stack := grow(state-stack);
+	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
+	  end if;
+	  state-stack[old-top] := new-state;
+	  symbol-stack[old-top] := new-symbol;
+	  srcloc-stack[old-top] := new-srcloc;
+	  top := old-top + 1;
+
+      end select;
+    end while;
+  end block;
+end method parse-loop;
 
 //----------------------------------------------------------------------
 // External interfaces to the parsing engine.
@@ -1420,29 +1571,9 @@ define method cpp-parse (tokenizer :: <tokenizer>) => result :: <integer>;
 				generator: tokenizer, string: ""));
     parse-loop(parse-state);
   cleanup 
-    get-token(tokenizer); // un-unget the <eof-token>, since we may want to
+    get-token(tokenizer); // un-unget the EOF, since we may want to
                           // continue with this tokenizer using a different
                           // lexer
   end block;
 end;
 
-// Seals for file c-parse.dylan
-
-// <action> -- subclass of <object>
-define sealed domain make(singleton(<action>));
-define sealed domain initialize(<action>);
-// <shift> -- subclass of <action>
-define sealed domain make(singleton(<shift>));
-// <reduce> -- subclass of <action>
-define sealed domain make(singleton(<reduce>));
-// <accept> -- subclass of <action>
-define sealed domain make(singleton(<accept>));
-// <alien-name-token> -- subclass of <token>
-define sealed domain make(singleton(<alien-name-token>));
-define sealed domain initialize(<alien-name-token>);
-// <macro-parse-token> -- subclass of <token>
-define sealed domain make(singleton(<macro-parse-token>));
-define sealed domain initialize(<macro-parse-token>);
-// <cpp-parse-token> -- subclass of <token>
-define sealed domain make(singleton(<cpp-parse-token>));
-define sealed domain initialize(<cpp-parse-token>);

@@ -131,16 +131,407 @@ define generic add-typedef
 //======================================================================
 
 define abstract primary class <token> (<object>)
+  constant slot token-id :: <integer> = -1;
   slot string-value :: <string>, required-init-keyword: #"string";
   slot generator, required-init-keyword: #"generator";
   slot position, init-value: #f, init-keyword: #"position";
 end;
 
+#if (foo)
+define macro token-definer
+  { define token ?:name :: ?super:expression = ?value:expression }
+    => { begin
+	   define class ?name (?super)
+	     inherited slot token-id = ?value;
+	   end class ?name;
+       }
+  supers:
+    { } => { }
+    { ?:expression, ... } => { ?expression, ... }
+end macro;
+#endif
+
+//----------------------------------------------------------------------
+// General classes of tokens.
+//----------------------------------------------------------------------
+
+define abstract class <simple-token> (<token>) end class;
+define abstract class <reserved-word-token> (<simple-token>) end class;
+define abstract class <punctuation-token> (<simple-token>) end class;
+define abstract class <literal-token> (<token>) end class;
+
+// <end-include-token> will be a subclass of this.
+//
+define class <ei-token> (<token>)
+  slot value :: <deque>, required-init-keyword: #"value";
+end class;
+define abstract class <name-token> (<token>) end class;
+
+define class <type-specifier-token> (<reserved-word-token>) end class;
+
+//----------------------------------------------------------------------
+// Specific token types
+//----------------------------------------------------------------------
+
+#if (foo)
+// Magic tokens
+define token <eof-token> :: <simple-token> = 0;
+define token <error-token> :: <simple-token> = 1;
+define token <begin-include-token> :: <simple-token> = 2;
+define token <end-include-token> :: <ei-token> = 3;
+define token <identifier-token> :: <name-token> = 4;
+define token <type-name-token>  :: <name-token> = 5;
+// literals
+define token <integer-token> :: <literal-token> = 6;
+define token <character-token> :: <literal-token> = 7;
+define token <string-literal-token> :: <literal-token> = 8;
+define token <cpp-token> :: <literal-token> = 9;
+// A whole bunch of reserved words
+define token <struct-token> :: <reserved-word-token> = 10;
+define token <typedef-token> :: <reserved-word-token> = 11;
+define token <short-token> :: <type-specifier-token> = 12;
+define token <long-token> :: <type-specifier-token> = 13;
+define token <int-token> :: <type-specifier-token> = 14;
+define token <char-token> :: <type-specifier-token> = 15;
+define token <signed-token> :: <type-specifier-token> = 16;
+define token <unsigned-token> :: <type-specifier-token> = 17;
+define token <float-token> :: <type-specifier-token> = 18;
+define token <double-token> :: <type-specifier-token> = 19;
+// "const" and "volatile" will be preprocessed away by the cpp code.  They
+// were being used in too many different odd places by various different
+// compilers.  
+//
+// define class <const-token> (<reserved-word-token>) end class;
+// define class <volatile-token> (<reserved-word-token>) end class;
+define token <void-token> :: <type-specifier-token> = 20;
+define token <inline-token> :: <reserved-word-token> = 21;
+define token <extern-token> :: <reserved-word-token> = 22;
+define token <static-token> :: <reserved-word-token> = 23;
+define token <auto-token> :: <reserved-word-token> = 24;
+define token <register-token> :: <reserved-word-token> = 25;
+define token <dummy-token> :: <reserved-word-token> = 26;
+define token <union-token> :: <reserved-word-token> = 27;
+define token <enum-token> :: <reserved-word-token> = 28;
+define token <constant-token> :: <reserved-word-token> = 29;
+define token <mul-assign-token> :: <reserved-word-token> = 30;
+define token <div-assign-token> :: <reserved-word-token> = 31;
+define token <mod-assign-token> :: <reserved-word-token> = 32;
+define token <add-assign-token> :: <reserved-word-token> = 33;
+define token <sub-assign-token> :: <reserved-word-token> = 34;
+define token <left-assign-token> :: <reserved-word-token> = 35;
+define token <right-assign-token> :: <reserved-word-token> = 36;
+define token <and-assign-token> :: <reserved-word-token> = 37;
+define token <xor-assign-token> :: <reserved-word-token> = 38;
+define token <or-assign-token> :: <reserved-word-token> = 39;
+// A whole bunch of puctuation
+define token <elipsis-token> :: <punctuation-token> = 40;
+define token <sizeof-token> :: <punctuation-token> = 41;
+define token <dec-op-token> :: <punctuation-token> = 42;
+define token <inc-op-token> :: <punctuation-token> = 43;
+define token <ptr-op-token> :: <punctuation-token> = 44;
+define token <semicolon-token> :: <punctuation-token> = 45;
+define token <comma-token> :: <punctuation-token> = 46;
+define token <dot-token> :: <punctuation-token> = 47;
+define token <lparen-token> :: <punctuation-token> = 48;
+define token <rparen-token> :: <punctuation-token> = 49;
+define token <lbracket-token> :: <punctuation-token> = 50;
+define token <rbracket-token> :: <punctuation-token> = 51;
+define token <ampersand-token> :: <punctuation-token> = 52;
+define token <star-token> :: <punctuation-token> = 53;
+define token <carat-token> :: <punctuation-token> = 54;
+define token <bar-token> :: <punctuation-token> = 55;
+define token <percent-token> :: <punctuation-token> = 56;
+define token <slash-token> :: <punctuation-token> = 57;
+define token <plus-token> :: <punctuation-token> = 58;
+define token <minus-token> :: <punctuation-token> = 59;
+define token <tilde-token> :: <punctuation-token> = 60;
+define token <bang-token> :: <punctuation-token> = 61;
+define token <lt-token> :: <punctuation-token> = 62;
+define token <gt-token> :: <punctuation-token> = 63;
+define token <question-token> :: <punctuation-token> = 64;
+define token <colon-token> :: <punctuation-token> = 65;
+define token <eq-op-token> :: <punctuation-token> = 66;
+define token <le-op-token> :: <punctuation-token> = 67;
+define token <ge-op-token> :: <punctuation-token> = 68;
+define token <ne-op-token> :: <punctuation-token> = 69;
+define token <and-op-token> :: <punctuation-token> = 70;
+define token <or-op-token> :: <punctuation-token> = 71;
+define token <pound-pound-token> :: <punctuation-token> = 72;
+define token <left-op-token> :: <punctuation-token> = 73;
+define token <right-op-token> :: <punctuation-token> = 74;
+define token <assign-token> :: <punctuation-token> = 75;
+define token <lcurly-token> :: <punctuation-token> = 76;
+define token <rcurly-token> :: <punctuation-token> = 77;
+// "Magic" tokens which provide alternate entry points to the parser
+define token <alien-name-token> :: <token> = 78;
+define token <macro-parse-token> :: <token> = 79;
+define token <cpp-parse-token> :: <token> = 80;
+#else
+// The mindy declarations have to be a lot clumsier since we don't have macros.
+
+// Magic tokens
+define class <eof-token> (<simple-token>) 
+  inherited slot token-id = 0;
+end class;
+define class <error-token> (<simple-token>) 
+  inherited slot token-id = 1;
+end class;
+define class <begin-include-token> (<simple-token>) 
+  inherited slot token-id = 2;
+end class;
+define class <end-include-token> (<ei-token>) 
+  inherited slot token-id = 3;
+end class;
+define class <identifier-token> (<name-token>) 
+  inherited slot token-id = 4;
+end class;
+define class <type-name-token>  (<name-token>) 
+  inherited slot token-id = 5;
+end class;
+// literals
+define class <integer-token> (<literal-token>) 
+  inherited slot token-id = 6;
+end class;
+define class <character-token> (<literal-token>) 
+  inherited slot token-id = 7;
+end class;
+define class <string-literal-token> (<literal-token>) 
+  inherited slot token-id = 8;
+end class;
+define class <cpp-token> (<literal-token>) 
+  inherited slot token-id = 9;
+end class;
+// A whole bunch of reserved words
+define class <struct-token> (<reserved-word-token>) 
+  inherited slot token-id = 10;
+end class;
+define class <typedef-token> (<reserved-word-token>) 
+  inherited slot token-id = 11;
+end class;
+define class <short-token> (<type-specifier-token>) 
+  inherited slot token-id = 12;
+end class;
+define class <long-token> (<type-specifier-token>) 
+  inherited slot token-id = 13;
+end class;
+define class <int-token> (<type-specifier-token>) 
+  inherited slot token-id = 14;
+end class;
+define class <char-token> (<type-specifier-token>) 
+  inherited slot token-id = 15;
+end class;
+define class <signed-token> (<type-specifier-token>) 
+  inherited slot token-id = 16;
+end class;
+define class <unsigned-token> (<type-specifier-token>) 
+  inherited slot token-id = 17;
+end class;
+define class <float-token> (<type-specifier-token>) 
+  inherited slot token-id = 18;
+end class;
+define class <double-token> (<type-specifier-token>) 
+  inherited slot token-id = 19;
+end class;
+// "const" and "volatile" will be preprocessed away by the cpp code.  They
+// were being used in too many different odd places by various different
+// compilers.  
+//
+// define class <const-token> (<reserved-word-token>) end class;
+// define class <volatile-token> (<reserved-word-token>) end class;
+define class <void-token> (<type-specifier-token>) 
+  inherited slot token-id = 20;
+end class;
+define class <inline-token> (<reserved-word-token>) 
+  inherited slot token-id = 21;
+end class;
+define class <extern-token> (<reserved-word-token>) 
+  inherited slot token-id = 22;
+end class;
+define class <static-token> (<reserved-word-token>) 
+  inherited slot token-id = 23;
+end class;
+define class <auto-token> (<reserved-word-token>) 
+  inherited slot token-id = 24;
+end class;
+define class <register-token> (<reserved-word-token>) 
+  inherited slot token-id = 25;
+end class;
+define class <dummy-token> (<reserved-word-token>) 
+  inherited slot token-id = 26;
+end class;
+define class <union-token> (<reserved-word-token>) 
+  inherited slot token-id = 27;
+end class;
+define class <enum-token> (<reserved-word-token>) 
+  inherited slot token-id = 28;
+end class;
+define class <constant-token> (<reserved-word-token>) 
+  inherited slot token-id = 29;
+end class;
+define class <mul-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 30;
+end class;
+define class <div-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 31;
+end class;
+define class <mod-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 32;
+end class;
+define class <add-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 33;
+end class;
+define class <sub-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 34;
+end class;
+define class <left-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 35;
+end class;
+define class <right-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 36;
+end class;
+define class <and-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 37;
+end class;
+define class <xor-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 38;
+end class;
+define class <or-assign-token> (<reserved-word-token>) 
+  inherited slot token-id = 39;
+end class;
+// A whole bunch of puctuation
+define class <elipsis-token> (<punctuation-token>) 
+  inherited slot token-id = 40;
+end class;
+define class <sizeof-token> (<punctuation-token>) 
+  inherited slot token-id = 41;
+end class;
+define class <dec-op-token> (<punctuation-token>) 
+  inherited slot token-id = 42;
+end class;
+define class <inc-op-token> (<punctuation-token>) 
+  inherited slot token-id = 43;
+end class;
+define class <ptr-op-token> (<punctuation-token>) 
+  inherited slot token-id = 44;
+end class;
+define class <semicolon-token> (<punctuation-token>) 
+  inherited slot token-id = 45;
+end class;
+define class <comma-token> (<punctuation-token>) 
+  inherited slot token-id = 46;
+end class;
+define class <dot-token> (<punctuation-token>) 
+  inherited slot token-id = 47;
+end class;
+define class <lparen-token> (<punctuation-token>) 
+  inherited slot token-id = 48;
+end class;
+define class <rparen-token> (<punctuation-token>) 
+  inherited slot token-id = 49;
+end class;
+define class <lbracket-token> (<punctuation-token>) 
+  inherited slot token-id = 50;
+end class;
+define class <rbracket-token> (<punctuation-token>) 
+  inherited slot token-id = 51;
+end class;
+define class <ampersand-token> (<punctuation-token>) 
+  inherited slot token-id = 52;
+end class;
+define class <star-token> (<punctuation-token>) 
+  inherited slot token-id = 53;
+end class;
+define class <carat-token> (<punctuation-token>) 
+  inherited slot token-id = 54;
+end class;
+define class <bar-token> (<punctuation-token>) 
+  inherited slot token-id = 55;
+end class;
+define class <percent-token> (<punctuation-token>) 
+  inherited slot token-id = 56;
+end class;
+define class <slash-token> (<punctuation-token>) 
+  inherited slot token-id = 57;
+end class;
+define class <plus-token> (<punctuation-token>) 
+  inherited slot token-id = 58;
+end class;
+define class <minus-token> (<punctuation-token>) 
+  inherited slot token-id = 59;
+end class;
+define class <tilde-token> (<punctuation-token>) 
+  inherited slot token-id = 60;
+end class;
+define class <bang-token> (<punctuation-token>) 
+  inherited slot token-id = 61;
+end class;
+define class <lt-token> (<punctuation-token>) 
+  inherited slot token-id = 62;
+end class;
+define class <gt-token> (<punctuation-token>) 
+  inherited slot token-id = 63;
+end class;
+define class <question-token> (<punctuation-token>) 
+  inherited slot token-id = 64;
+end class;
+define class <colon-token> (<punctuation-token>) 
+  inherited slot token-id = 65;
+end class;
+define class <eq-op-token> (<punctuation-token>) 
+  inherited slot token-id = 66;
+end class;
+define class <le-op-token> (<punctuation-token>) 
+  inherited slot token-id = 67;
+end class;
+define class <ge-op-token> (<punctuation-token>) 
+  inherited slot token-id = 68;
+end class;
+define class <ne-op-token> (<punctuation-token>) 
+  inherited slot token-id = 69;
+end class;
+define class <and-op-token> (<punctuation-token>) 
+  inherited slot token-id = 70;
+end class;
+define class <or-op-token> (<punctuation-token>) 
+  inherited slot token-id = 71;
+end class;
+define class <pound-pound-token> (<punctuation-token>) 
+  inherited slot token-id = 72;
+end class;
+define class <left-op-token> (<punctuation-token>) 
+  inherited slot token-id = 73;
+end class;
+define class <right-op-token> (<punctuation-token>) 
+  inherited slot token-id = 74;
+end class;
+define class <assign-token> (<punctuation-token>) 
+  inherited slot token-id = 75;
+end class;
+define class <lcurly-token> (<punctuation-token>) 
+  inherited slot token-id = 76;
+end class;
+define class <rcurly-token> (<punctuation-token>) 
+  inherited slot token-id = 77;
+end class;
+// "Magic" tokens which provide alternate entry points to the parser
+define class <alien-name-token> (<token>) 
+  inherited slot token-id = 78;
+end class;
+define class <macro-parse-token> (<token>) 
+  inherited slot token-id = 79;
+end class;
+define class <cpp-parse-token> (<token>) 
+  inherited slot token-id = 80;
+end class;
+
+#endif
+
+//----------------------------------------------------------------------
+// Support code
+//----------------------------------------------------------------------
+
 define sealed generic string-value (token :: <token>) => (result :: <string>);
 define sealed generic value (token :: <token>) => (result :: <object>);
-//define sealed generic parse-error
-//    (token :: type-union(<token>,<tokenizer>), format :: <string>, #rest args)
-// => ();				// never returns
 define sealed generic parse-error
     (token :: <object>, format :: <string>, #rest args) => (); // never returns
 
@@ -150,32 +541,11 @@ define method value (token :: <token>) => (result :: <token>);
   token;
 end method value;
 
-define abstract class <simple-token> (<token>) end class;
-define abstract class <reserved-word-token> (<simple-token>) end class;
-define abstract class <punctuation-token> (<simple-token>) end class;
-define class <eof-token> (<simple-token>) end class;
-define class <error-token> (<simple-token>) end class;
-define class <begin-include-token> (<simple-token>) end class;
-
-define class <end-include-token> (<token>)
-  slot value :: <deque>, required-init-keyword: #"value";
-end class;
-
-define abstract class <name-token> (<token>) end class;
-define class <identifier-token> (<name-token>) end class;
-define class <type-name-token>  (<name-token>) end class;
-
 // Name tokens evaluate to the string-value.
 //
 define method value (token :: <name-token>) => (result :: <string>);
   token.string-value;
 end method value;
-
-define abstract class <literal-token> (<token>) end class;
-define class <integer-token> (<literal-token>) end class;
-define class <character-token> (<literal-token>) end class;
-define class <string-literal-token> (<literal-token>) end class;
-define class <cpp-token> (<literal-token>) end class;
 
 // Integer tokens can be in one of three different radices.  Figure out which
 // and then compute an integer value.
@@ -254,93 +624,6 @@ end method value;
 define method value (token :: <cpp-token>) => (result :: <string>);
   copy-sequence(token.string-value, start: 1);
 end method value;
-
-// A whole bunch of reserved words
-
-define class <struct-token> (<reserved-word-token>) end class;
-define class <typedef-token> (<reserved-word-token>) end class;
-define class <type-specifier-token> (<reserved-word-token>) end class;
-define class <short-token> (<type-specifier-token>) end class;
-define class <long-token> (<type-specifier-token>) end class;
-define class <int-token> (<type-specifier-token>) end class;
-define class <char-token> (<type-specifier-token>) end class;
-define class <signed-token> (<type-specifier-token>) end class;
-define class <unsigned-token> (<type-specifier-token>) end class;
-define class <float-token> (<type-specifier-token>) end class;
-define class <double-token> (<type-specifier-token>) end class;
-
-// "const" and "volatile" will be preprocessed away by the cpp code.  They
-// were being used in too many different odd places by various different
-// compilers.  
-//
-// define class <const-token> (<reserved-word-token>) end class;
-// define class <volatile-token> (<reserved-word-token>) end class;
-
-define class <void-token> (<type-specifier-token>) end class;
-define class <inline-token> (<reserved-word-token>) end class;
-define class <extern-token> (<reserved-word-token>) end class;
-define class <static-token> (<reserved-word-token>) end class;
-define class <auto-token> (<reserved-word-token>) end class;
-define class <register-token> (<reserved-word-token>) end class;
-define class <type_name-token> (<reserved-word-token>) end class;
-define class <union-token> (<reserved-word-token>) end class;
-define class <enum-token> (<reserved-word-token>) end class;
-define class <constant-token> (<reserved-word-token>) end class;
-define class <mul-assign-token> (<reserved-word-token>) end class;
-define class <div-assign-token> (<reserved-word-token>) end class;
-define class <mod-assign-token> (<reserved-word-token>) end class;
-define class <add-assign-token> (<reserved-word-token>) end class;
-define class <sub-assign-token> (<reserved-word-token>) end class;
-define class <left-assign-token> (<reserved-word-token>) end class;
-define class <right-assign-token> (<reserved-word-token>) end class;
-define class <and-assign-token> (<reserved-word-token>) end class;
-define class <xor-assign-token> (<reserved-word-token>) end class;
-define class <or-assign-token> (<reserved-word-token>) end class;
-
-// A whole bunch of puctuation
-
-// <nc-token> is a punctuation token which isn't a curly brace.  We need this
-// to quickly skip over code declarations that we can't handle.
-define class <nc-punctuation-token> (<punctuation-token>) end class;
-
-define class <elipsis-token> (<nc-punctuation-token>) end class;
-define class <sizeof-token> (<nc-punctuation-token>) end class;
-define class <dec-op-token> (<nc-punctuation-token>) end class;
-define class <inc-op-token> (<nc-punctuation-token>) end class;
-define class <ptr-op-token> (<nc-punctuation-token>) end class;
-define class <semicolon-token> (<nc-punctuation-token>) end class;
-define class <comma-token> (<nc-punctuation-token>) end class;
-define class <dot-token> (<nc-punctuation-token>) end class;
-define class <lparen-token> (<nc-punctuation-token>) end class;
-define class <rparen-token> (<nc-punctuation-token>) end class;
-define class <lbracket-token> (<nc-punctuation-token>) end class;
-define class <rbracket-token> (<nc-punctuation-token>) end class;
-define class <ampersand-token> (<nc-punctuation-token>) end class;
-define class <star-token> (<nc-punctuation-token>) end class;
-define class <carat-token> (<nc-punctuation-token>) end class;
-define class <bar-token> (<nc-punctuation-token>) end class;
-define class <percent-token> (<nc-punctuation-token>) end class;
-define class <slash-token> (<nc-punctuation-token>) end class;
-define class <plus-token> (<nc-punctuation-token>) end class;
-define class <minus-token> (<nc-punctuation-token>) end class;
-define class <tilde-token> (<nc-punctuation-token>) end class;
-define class <bang-token> (<nc-punctuation-token>) end class;
-define class <lt-token> (<nc-punctuation-token>) end class;
-define class <gt-token> (<nc-punctuation-token>) end class;
-define class <question-token> (<nc-punctuation-token>) end class;
-define class <colon-token> (<nc-punctuation-token>) end class;
-define class <eq-op-token> (<nc-punctuation-token>) end class;
-define class <le-op-token> (<nc-punctuation-token>) end class;
-define class <ge-op-token> (<nc-punctuation-token>) end class;
-define class <ne-op-token> (<nc-punctuation-token>) end class;
-define class <and-op-token> (<nc-punctuation-token>) end class;
-define class <or-op-token> (<nc-punctuation-token>) end class;
-define class <pound-pound-token> (<nc-punctuation-token>) end class;
-define class <left-op-token> (<nc-punctuation-token>) end class;
-define class <right-op-token> (<nc-punctuation-token>) end class;
-define class <assign-token> (<nc-punctuation-token>) end class;
-define class <lcurly-token> (<punctuation-token>) end class;
-define class <rcurly-token> (<punctuation-token>) end class;
 
 // When we have a specific token that triggered an error, this routine can
 // used saved character positions to precisely identify the location.
@@ -1104,8 +1387,8 @@ define sealed domain make(singleton(<static-token>));
 define sealed domain make(singleton(<auto-token>));
 // <register-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<register-token>));
-// <type_name-token> -- subclass of <reserved-word-token>
-define sealed domain make(singleton(<type_name-token>));
+// <dummy-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<dummy-token>));
 // <union-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<union-token>));
 // <enum-token> -- subclass of <reserved-word-token>
@@ -1211,3 +1494,12 @@ define sealed domain make(singleton(<rcurly-token>));
 // <string-table> -- subclass of <value-table>
 define sealed domain make(singleton(<string-table>));
 define sealed domain initialize(<string-table>);
+// <alien-name-token> -- subclass of <token>
+define sealed domain make(singleton(<alien-name-token>));
+define sealed domain initialize(<alien-name-token>);
+// <macro-parse-token> -- subclass of <token>
+define sealed domain make(singleton(<macro-parse-token>));
+define sealed domain initialize(<macro-parse-token>);
+// <cpp-parse-token> -- subclass of <token>
+define sealed domain make(singleton(<cpp-parse-token>));
+define sealed domain initialize(<cpp-parse-token>);

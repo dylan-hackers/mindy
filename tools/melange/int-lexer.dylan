@@ -106,16 +106,205 @@ define generic unget-token
 //======================================================================
 
 define abstract primary class <token> (<object>)
+  constant slot token-id :: <integer> = -1;
   slot string-value :: <string>, required-init-keyword: #"string";
   slot generator, required-init-keyword: #"generator";
   slot position, init-value: #f, init-keyword: #"position";
 end;
 
+// This should no longer be necessary -- rgs.
 // The parser generator wires in "<eof-token>" as the only permissible
 // stopping point.  Since we want to be able to stop in the middle of a file,
 // we define it to be identical to "<token>".  If you really want the "end of
 // file", use "<true-eof-token>".
-define constant <eof-token> = <token>;
+//define constant <eof-token> = <token>;
+
+define abstract class <simple-token> (<token>) end class;
+define abstract class <reserved-word-token> (<simple-token>) end class;
+define abstract class <punctuation-token> (<simple-token>) end class;
+
+define abstract class <name-token> (<token>) end class;
+
+define abstract class <literal-token> (<token>) end class;
+define abstract class <boolean-token> (<literal-token>) end class;
+
+define class <eof-token> (<simple-token>) 
+  inherited slot token-id = 0;
+end class;
+define class <error-token> (<simple-token>) 
+  inherited slot token-id = 1;
+end class;
+
+define class <integer-token> (<literal-token>) 
+  inherited slot token-id = 2;
+end class;
+define class <character-token> (<literal-token>) 
+  inherited slot token-id = 3;
+end class;
+define class <string-literal-token> (<literal-token>) 
+  inherited slot token-id = 4;
+end class;
+define class <symbol-literal-token> (<literal-token>) 
+  inherited slot token-id = 5;
+end class;
+define class <true-token> (<boolean-token>) 
+  inherited slot token-id = 6;
+end class;
+define class <false-token> (<boolean-token>) 
+  inherited slot token-id = 7;
+end class;
+
+define class <identifier-token> (<name-token>) 
+  inherited slot token-id = 8;
+end class;
+
+define class <define-token> (<reserved-word-token>) 
+  inherited slot token-id = 9;
+end class;
+define class <interface-token> (<reserved-word-token>) 
+  inherited slot token-id = 10;
+end class;
+define class <end-token> (<reserved-word-token>) 
+  inherited slot token-id = 11;
+end class;
+define class <include-token> (<reserved-word-token>) 
+  inherited slot token-id = 12;
+end class;
+define class <object-file-token> (<reserved-word-token>) 
+  inherited slot token-id = 13;
+end class;
+define class <mindy-inc-token> (<reserved-word-token>) 
+  inherited slot token-id = 14;
+end class;
+define class <define-macro-token> (<reserved-word-token>) 
+  inherited slot token-id = 15;
+end class;
+define class <undefine-token> (<reserved-word-token>) 
+  inherited slot token-id = 16;
+end class;
+define class <name-mapper-token> (<reserved-word-token>) 
+  inherited slot token-id = 17;
+end class;
+define class <import-token> (<reserved-word-token>) 
+  inherited slot token-id = 18;
+end class;
+define class <prefix-token> (<reserved-word-token>) 
+  inherited slot token-id = 19;
+end class;
+define class <exclude-token> (<reserved-word-token>) 
+  inherited slot token-id = 20;
+end class;
+define class <exclude-file-token> (<reserved-word-token>) 
+  inherited slot token-id = 21;
+end class;
+define class <rename-token> (<reserved-word-token>) 
+  inherited slot token-id = 22;
+end class;
+define class <mapping-token> (<reserved-word-token>) 
+  inherited slot token-id = 23;
+end class;
+define class <equate-token> (<reserved-word-token>) 
+  inherited slot token-id = 24;
+end class;
+define class <superclass-token> (<reserved-word-token>) 
+  inherited slot token-id = 25;
+end class;
+define class <all-token> (<reserved-word-token>) 
+  inherited slot token-id = 26;
+end class;
+define class <none-token> (<reserved-word-token>) 
+  inherited slot token-id = 27;
+end class;
+define class <all-recursive-token> (<reserved-word-token>) 
+  inherited slot token-id = 28;
+end class;
+define class <function-token> (<reserved-word-token>) 
+  inherited slot token-id = 29;
+end class;
+define class <map-result-token> (<reserved-word-token>) 
+  inherited slot token-id = 30;
+end class;
+define class <equate-result-token> (<reserved-word-token>) 
+  inherited slot token-id = 31;
+end class;
+define class <ignore-result-token> (<reserved-word-token>) 
+  inherited slot token-id = 32;
+end class;
+define class <map-argument-token> (<reserved-word-token>) 
+  inherited slot token-id = 33;
+end class;
+define class <equate-argument-token> (<reserved-word-token>) 
+  inherited slot token-id = 34;
+end class;
+define class <input-argument-token> (<reserved-word-token>) 
+  inherited slot token-id = 35;
+end class;
+define class <output-argument-token> (<reserved-word-token>) 
+  inherited slot token-id = 36;
+end class;
+define class <input-output-argument-token> (<reserved-word-token>) 
+  inherited slot token-id = 37;
+end class;
+define class <struct-token> (<reserved-word-token>) 
+  inherited slot token-id = 38;
+end class;
+define class <union-token> (<reserved-word-token>) 
+  inherited slot token-id = 39;
+end class;
+define class <pointer-token> (<reserved-word-token>) 
+  inherited slot token-id = 40;
+end class;
+define class <constant-token> (<reserved-word-token>) 
+  inherited slot token-id = 41;
+end class;
+define class <variable-token> (<reserved-word-token>) 
+  inherited slot token-id = 42;
+end class;
+define class <getter-token> (<reserved-word-token>) 
+  inherited slot token-id = 43;
+end class;
+define class <setter-token> (<reserved-word-token>) 
+  inherited slot token-id = 44;
+end class;
+define class <read-only-token> (<reserved-word-token>) 
+  inherited slot token-id = 45;
+end class;
+define class <seal-token> (<reserved-word-token>) 
+  inherited slot token-id = 46;
+end class;
+define class <seal-functions-token> (<reserved-word-token>) 
+  inherited slot token-id = 47;
+end class;
+define class <sealed-token> (<reserved-word-token>) 
+  inherited slot token-id = 48;
+end class;
+define class <open-token> (<reserved-word-token>) 
+  inherited slot token-id = 49;
+end class;
+define class <inline-token> (<reserved-word-token>) 
+  inherited slot token-id = 50;
+end class;
+define class <value-token> (<reserved-word-token>) 
+  inherited slot token-id = 51;
+end class;
+
+// A whole bunch of punctuation
+
+define class <semicolon-token> (<punctuation-token>) 
+  inherited slot token-id = 52;
+end class;
+define class <comma-token> (<punctuation-token>) 
+  inherited slot token-id = 53;
+end class;
+define class <lbrace-token> (<punctuation-token>) 
+  inherited slot token-id = 54;
+end class;
+define class <rbrace-token> (<punctuation-token>) 
+  inherited slot token-id = 55;
+end class;
+define class <arrow-token> (<punctuation-token>) 
+  inherited slot token-id = 56;
+end class;
 
 define sealed generic string-value (token :: <token>) => (result :: <string>);
 define sealed generic value (token :: <token>) => (result :: <object>);
@@ -128,15 +317,6 @@ define sealed generic parse-error
 define method value (token :: <token>) => (result :: <token>);
   token;
 end method value;
-
-define abstract class <simple-token> (<token>) end class;
-define abstract class <reserved-word-token> (<simple-token>) end class;
-define abstract class <punctuation-token> (<simple-token>) end class;
-define class <true-eof-token> (<simple-token>) end class;
-define class <error-token> (<simple-token>) end class;
-
-define abstract class <name-token> (<token>) end class;
-define class <identifier-token> (<name-token>) end class;
 
 // Name values are interned as symbols so that they will be case insensitive.
 //
@@ -153,15 +333,6 @@ define method value (token :: <keyword-token>) => (result :: <symbol>);
   as(<symbol>, copy-sequence(token.string-value,
 			     end: token.string-value.size - 1))
 end method value;
-
-define abstract class <literal-token> (<token>) end class;
-define class <integer-token> (<literal-token>) end class;
-define class <character-token> (<literal-token>) end class;
-define class <string-literal-token> (<literal-token>) end class;
-define class <symbol-literal-token> (<literal-token>) end class;
-define abstract class <boolean-token> (<punctuation-token>) end class;
-define class <true-token> (<boolean-token>) end class;
-define class <false-token> (<boolean-token>) end class;
 
 // Boolean tokens may be #t or #f.  Figure out which.
 //
@@ -244,59 +415,6 @@ define method value (token :: <string-literal-token>) => (result :: <string>);
   as(<string>, new);
 end method value;
 
-// A whole bunch of reserved words
-
-define class <define-token> (<reserved-word-token>) end class;
-define class <interface-token> (<reserved-word-token>) end class;
-define class <end-token> (<reserved-word-token>) end class;
-define class <include-token> (<reserved-word-token>) end class;
-define class <object-file-token> (<reserved-word-token>) end class;
-define class <mindy-inc-token> (<reserved-word-token>) end class;
-define class <define-macro-token> (<reserved-word-token>) end class;
-define class <undefine-token> (<reserved-word-token>) end class;
-define class <name-mapper-token> (<reserved-word-token>) end class;
-define class <import-token> (<reserved-word-token>) end class;
-define class <prefix-token> (<reserved-word-token>) end class;
-define class <exclude-token> (<reserved-word-token>) end class;
-define class <exclude-file-token> (<reserved-word-token>) end class;
-define class <rename-token> (<reserved-word-token>) end class;
-define class <mapping-token> (<reserved-word-token>) end class;
-define class <equate-token> (<reserved-word-token>) end class;
-define class <superclass-token> (<reserved-word-token>) end class;
-define class <all-token> (<reserved-word-token>) end class;
-define class <none-token> (<reserved-word-token>) end class;
-define class <all-recursive-token> (<reserved-word-token>) end class;
-define class <function-token> (<reserved-word-token>) end class;
-define class <map-result-token> (<reserved-word-token>) end class;
-define class <equate-result-token> (<reserved-word-token>) end class;
-define class <ignore-result-token> (<reserved-word-token>) end class;
-define class <map-argument-token> (<reserved-word-token>) end class;
-define class <equate-argument-token> (<reserved-word-token>) end class;
-define class <input-argument-token> (<reserved-word-token>) end class;
-define class <output-argument-token> (<reserved-word-token>) end class;
-define class <input-output-argument-token> (<reserved-word-token>) end class;
-define class <struct-token> (<reserved-word-token>) end class;
-define class <union-token> (<reserved-word-token>) end class;
-define class <pointer-token> (<reserved-word-token>) end class;
-define class <constant-token> (<reserved-word-token>) end class;
-define class <variable-token> (<reserved-word-token>) end class;
-define class <getter-token> (<reserved-word-token>) end class;
-define class <setter-token> (<reserved-word-token>) end class;
-define class <read-only-token> (<reserved-word-token>) end class;
-define class <seal-token> (<reserved-word-token>) end class;
-define class <seal-functions-token> (<reserved-word-token>) end class;
-define class <sealed-token> (<reserved-word-token>) end class;
-define class <open-token> (<reserved-word-token>) end class;
-define class <inline-token> (<reserved-word-token>) end class;
-define class <value-token> (<reserved-word-token>) end class;
-
-// A whole bunch of punctuation
-
-define class <semicolon-token> (<punctuation-token>) end class;
-define class <comma-token> (<punctuation-token>) end class;
-define class <lbrace-token> (<punctuation-token>) end class;
-define class <rbrace-token> (<punctuation-token>) end class;
-define class <arrow-token> (<punctuation-token>) end class;
 
 // When we have a specific token that triggered an error, this routine can
 // used saved character positions to precisely identify the location.
@@ -589,7 +707,7 @@ define method get-token
     let pos = skip-whitespace(contents, pos);
     if (pos = contents.size)
       state.position := pos;
-      return(make(<true-eof-token>, position: pos, generator: state,
+      return(make(<eof-token>, position: pos, generator: state,
 		  string: ""));
     end if;
 
@@ -633,8 +751,8 @@ end method get-token;
 // <tokenizer> -- subclass of <object>
 define sealed domain make(singleton(<tokenizer>));
 define sealed domain initialize(<tokenizer>);
-// <true-eof-token> -- subclass of <simple-token>
-define sealed domain make(singleton(<true-eof-token>));
+// <eof-token> -- subclass of <simple-token>
+define sealed domain make(singleton(<eof-token>));
 // <error-token> -- subclass of <simple-token>
 define sealed domain make(singleton(<error-token>));
 // <identifier-token> -- subclass of <name-token>
