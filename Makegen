@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.25 2003/07/18 14:03:40 andreas Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.26 2003/10/01 19:03:58 brent Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -82,11 +82,7 @@ if ($enable_bootstrap) {
 	&compile_subdirs("d2c");
 	# XXX - this directory name is confusing
 	push(@compile_commands, 'mkdir bootstrap_compiler');
-	if ($target_name eq 'x86-cygnus-gcc') {
-	     push(@compile_commands, 'cp d2c/compiler/main/d2c.exe bootstrap_compiler');
-	} else {
-	     push(@compile_commands, 'cp d2c/compiler/main/d2c bootstrap_compiler');
-	}
+	push(@compile_commands, 'cp d2c/compiler/main/d2c' . $dot_exe . ' bootstrap_compiler');
 	push(@compile_commands, 'rm -f config.cache');
 	push(@compile_commands, $recheck);
 	push(@compile_commands, '$(MAKE) clean');
