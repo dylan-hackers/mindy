@@ -4,7 +4,7 @@ synopsis:   Test out the thread features of Mindy by getting I/O on
             multiple streams.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.2 1995/05/13 12:51:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.3 1996/02/18 02:17:17 nkramer Exp $
 
 //======================================================================
 //
@@ -99,11 +99,10 @@ end method echo-file;
 define constant asterixes = curry(echo-file, "asterixes.txt");
 define constant dashes = curry(echo-file, "dashes.txt");
 
-define method main (argv0, #rest ignored)
+define method main (argv0 :: <byte-string>, #rest ignored)
   let asterix-thread = spawn-thread("Asterixes", asterixes);
   let dash-thread = spawn-thread("Dashes", dashes);
   echo-input(*standard-input*);
   kill-thread(asterix-thread);
   kill-thread(dash-thread);
 end method main;
-
