@@ -1,0 +1,18 @@
+&makegen_include("../common-Makegen");
+
+$D2CFLAGS = $D2CFLAGS
+    . ' -L ../threads'
+    . ' -L../transcendental'
+    . ' -L../format'
+    . ' -L../streams'
+    . ' -L../standard-io'
+    . ' -L../table-ext'
+    . ' -L../format-out'
+    . ' -L../print'
+    . ' -L../../d2c/runtime/random'
+    . ' -L../common-dylan';
+
+
+do emit_library_rule(
+    'collections', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);

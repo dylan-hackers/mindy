@@ -1,0 +1,16 @@
+&makegen_include("../../common-Makegen");
+
+$D2CFLAGS = $D2CFLAGS
+    . ' -L..'
+    . ' -L../../threads'
+    . ' -L../../common-dylan'
+    . ' -L../../../qa/testworks'
+    . ' -L../../../qa/testworks-specs'
+    . ' -L../../../d2c/runtime/dylan/tests'
+    . ' -L../transcendental'
+    . ' -L../stream-ext'
+    . ' -L../regular-expressions'
+    . ' -L../../d2c/runtime/random';
+
+&emit_library_rule('collections-test-suite', '$(BUILDROOT)/force.timestamp',
+		   '', 'compile', 'install');
