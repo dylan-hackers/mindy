@@ -121,7 +121,7 @@ end method;
 define sealed method stream-at-end? (stream :: <fd-stream>)
  => at-end? :: <boolean>;
   if (stream.fd-direction == #"input")
-    let res :: <boolean> = ~get-input-buffer(stream);
+    let res :: <boolean> = (~ get-input-buffer(stream));
     release-input-buffer(stream);
     res;
   else
