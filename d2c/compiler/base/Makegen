@@ -24,7 +24,7 @@ MINDYFLAGS = -lcompiler-base
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
 
 OBJS = \
 	base-exports.dbc \
@@ -34,16 +34,13 @@ OBJS = \
 	dylan-dump.dbc \
 	ctv.dbc \
 	source.dbc \
+	tokens.dbc \
 	errors.dbc \
 	header.dbc \
-	tokens.dbc \
 	names.dbc \
 	defns.dbc \
 	variables.dbc \
-	fragments.dbc \
-	parse-tree.dbc \
 	policy.dbc \
-	lexenv.dbc \
 	ctype.dbc \
 	rep.dbc \
 	cclass.dbc \
@@ -51,8 +48,6 @@ OBJS = \
 	c-rep.dbc \
 	transdef.dbc \
 	ctfunc.dbc \
-	cteval.dbc \
-	expand.dbc \
 	data-flow.dbc \
 	control-flow.dbc \
 	signature.dbc

@@ -24,35 +24,20 @@ MINDYFLAGS = -lcompiler-front
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
 
 OBJS = \
 	front-exports.dbc \
-	tlf.dbc \
-	deflibmod.dbc \
-	deffunc.dbc \
-	defconstvar.dbc \
-	defclass.dbc \
 	primitives.dbc \
 	front.dbc \
+	func-defns.dbc \
+	var-defns.dbc \
+	tlf.dbc \
 	clone.dbc \
-	cheese.dbc \
-	fer-edit.dbc \
-	callopt.dbc \
-	xep.dbc \
-	tailcall.dbc \
-	funcopt.dbc \
-	primopt.dbc \
-	trans.dbc \
-	constraint.dbc \
 	builder.dbc \
 	fer-builder.dbc \
-	fer-convert.dbc \
 	fer-dump.dbc \
-	tlexpr.dbc \
-	fer-od.dbc \
-	misc-dump.dbc \
-	dump.dbc
+	fer-od.dbc
 
 frontlib.dbc: ${OBJS}
 	cat $^ > $@

@@ -1,5 +1,5 @@
 module: errors
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.3 1996/02/09 20:02:37 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.4 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -88,14 +88,6 @@ define method print-message
   else
     print(wot, stream);
   end;
-end;
-
-
-// Covers most cases, and will always work.
-//
-define method print-message
-    (wot :: <symbol-token>, stream :: <stream>) => ();
-  print(as(<string>, wot.token-symbol), stream);
 end;
 
 

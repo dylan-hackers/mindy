@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.52 1996/03/02 19:09:17 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.53 1996/03/17 00:31:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -552,3 +552,14 @@ define class <nlx-info> (<identity-preserving-mixin>)
   slot nlx-throws :: false-or(<throw>), init-value: #f,
     init-keyword: throws:;
 end;
+
+
+
+// Functions defined in support libraries.
+
+define open generic optimize-component
+    (component :: <component>, #key simplify-only) => ();
+
+define open generic build-xep-component
+    (function :: <ct-function>, generic-entry? :: <boolean>)
+ => (entry :: <fer-function-region>, component :: <component>);

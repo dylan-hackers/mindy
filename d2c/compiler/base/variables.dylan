@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.26 1996/02/12 01:57:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.27 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,6 +39,9 @@ define class <library> (<object>)
     init-function: curry(make, <object-table>);
 end;
 
+define sealed domain make (singleton(<library>));
+define sealed domain initialize (<library>);
+
 define method print-object (lib :: <library>, stream :: <stream>) => ();
   pprint-fields(lib, stream, name: lib.library-name);
 end;
@@ -66,8 +69,8 @@ define class <module> (<identity-preserving-mixin>)
   slot used-modules :: <simple-object-vector>;
   //
   // Hash table mapping names to syntactic categories.
-  slot module-syntax-table :: <table>,
-    init-function: curry(make, <table>);
+  slot module-syntax-table :: <syntax-table>,
+    init-function: curry(make, <syntax-table>);
   //
   // Hash table mapping names to variables for variables accessable
   // in this module.
@@ -85,6 +88,9 @@ define class <module> (<identity-preserving-mixin>)
     init-function: curry(make, <object-table>);
 end;
 
+define sealed domain make (singleton(<module>));
+define sealed domain initialize (<module>);
+
 define method print-object (mod :: <module>, stream :: <stream>) => ();
   pprint-fields(mod, stream, name: mod.module-name);
 end;
@@ -93,51 +99,6 @@ define method print-message (mod :: <module>, stream :: <stream>) => ();
   format(stream, "module %s:%s",
 	 mod.module-home.library-name,
 	 mod.module-name);
-end;
-
-define method initialize
-    (mod :: <module>, #next next-method, #key magic-tokens: magic-tokens?)
-    => ();
-  next-method();
-  //
-  // Fill in the built in core words.
-  //
-  let table = mod.module-syntax-table;
-  table[#"define"] := <define-token>;
-  table[#"end"] := <end-token>;
-  table[#"generic"] := <generic-token>;
-  table[#"handler"] := <handler-token>;
-  table[#"let"] := <let-token>;
-  table[#"local"] := <local-token>;
-  table[#"macro"] := <macro-token>;
-  table[#"otherwise"] := <otherwise-token>;
-  table[#"seal"] := <seal-token>;
-
-  if (magic-tokens?)
-    table[#"%%begin"] := <begin-token>;
-    table[#"%%bind-exit"] := <bind-exit-token>;
-    table[#"%%class"] := <class-token>;
-    table[#"%%cleanup"] := <cleanup-token>;
-    table[#"%%constant"] := <constant-token>;
-    table[#"%%create"] := <create-token>;
-    table[#"%%finally"] := <finally-token>;
-    table[#"%%for"] := <for-token>;
-    table[#"%%from"] := <from-token>;
-    table[#"%%else"] := <else-token>;
-    table[#"%%export"] := <export-token>;
-    table[#"%%if"] := <if-token>;
-    table[#"%%in"] := <in-token>;
-    table[#"%%library"] := <library-token>;
-    table[#"%%method"] := <method-token>;
-    table[#"%%module"] := <module-token>;
-    table[#"%%mv-call"] := <mv-call-token>;
-    table[#"%%primitive"] := <primitive-token>;
-    table[#"%%set"] := <set-token>;
-    table[#"%%unwind-protect"] := <uwp-token>;
-    table[#"%%use"] := <use-token>;
-    table[#"%%variable"] := <variable-token>;
-    table[#"%%while"] := <while-token>;
-  end;
 end;
 
 // module-name -- exported.
@@ -175,7 +136,14 @@ define class <variable> (<object>)
   //
   // Function to compile-time evaluate calls to this function.
   slot variable-ct-evaluator :: false-or(<function>), init-value: #f;
+  //
+  // Function to build some parse tree out of fragments.  Called because of
+  // references in procedural macros.
+  slot variable-fragment-expander :: false-or(<function>) = #f;
 end;
+
+define sealed domain make (singleton(<variable>));
+define sealed domain initialize (<variable>);
 
 define method print-object (var :: <variable>, stream :: <stream>) => ();
   pprint-fields(var, stream, name: var.variable-name);
@@ -219,6 +187,9 @@ define class <use> (<object>)
     required-init-keyword: exports:;
 end;
 
+define sealed domain make (singleton(<use>));
+define sealed domain initialize (<use>);
+
 define method print-object (u :: <use>, stream :: <stream>) => ();
   pprint-fields(u, stream,
 		name-used: u.name-used,
@@ -239,6 +210,9 @@ define class <renaming> (<object>)
   // The name the module/library is being imported as.
   slot new-name :: <symbol>, required-init-keyword: new-name:;
 end;
+
+define sealed domain make (singleton(<renaming>));
+define sealed domain initialize (<renaming>);
 
 define method print-object (ren :: <renaming>, stream :: <stream>) => ();
   pprint-fields(ren, stream, orig-name: ren.orig-name, new-name: ren.new-name);
@@ -269,28 +243,28 @@ define method find-library (name :: <symbol>) => result :: <library>;
     let new = make(<library>, name: name);
     element($Libraries, name) := new;
 
-    // Create the Dylan-User module.  Even though the dylan-user
-    // module is defined in this library, we record the home of the
-    // dylan-user module as the dylan library, so that the dylan-user
-    // module's uses (dylan, extensions, etc.) get looked up in the
-    // correct (i.e. dylan) library.
-    let dylan-user = make(<module>,
-			  name: #"Dylan-User",
-			  home: find-library(#"Dylan"),
-			  magic-tokens: name == #"Dylan");
-    new.local-modules[#"Dylan-User"] := dylan-user;
-    note-module-definition(new, #"Dylan-User",
-			   if (name == #"Dylan")
-			     #[];
-			   else
+    //
+    // The Dylan library does not have a Dylan-User module.
+    unless (name == #"Dylan")
+      //
+      // Create the Dylan-User module.  Even though the dylan-user
+      // module is defined in this library, we record the home of the
+      // dylan-user module as the dylan library, so that the dylan-user
+      // module's uses (dylan, extensions, etc.) get looked up in the
+      // correct (i.e. dylan) library.
+      let dylan-user = make(<module>,
+			    name: #"Dylan-User",
+			    home: find-library(#"Dylan"));
+      new.local-modules[#"Dylan-User"] := dylan-user;
+      note-module-definition(new, #"Dylan-User",
 			     map(method (name)
 				   make(<use>, name: name, imports: #t,
 					prefix: #f, excludes: #[],
 					renamings: #[], exports: #[]);
 				 end,
-				 $Dylan-User-Uses);
-			   end,
-			   #[], #[]);
+				 $Dylan-User-Uses),
+			     #[], #[]);
+    end unless;
 
     // And return the new library.
     new;
@@ -343,8 +317,7 @@ define method find-module (lib :: <library>, name :: <symbol>,
   if (mod)
     mod;
   elseif (create?)
-    let new = make(<module>, name: name, home: lib,
-		   magic-tokens: lib == $Dylan-Library);
+    let new = make(<module>, name: name, home: lib);
     lib.local-modules[name] := new;
     if (lib.defined?)
       // ### Check to see if this name classes with any of the
@@ -531,10 +504,6 @@ define method note-module-definition
 	compiler-error
 	  ("%s in both a create clause and an export clause in module %s",
 	   name, mod.module-name);
-      elseif (old.defined?)
-	compiler-error("%s in create clause for module %s, so must be "
-			 "defined elsewhere.",
-		       name, mod.module-name);
       else
 	mod.exported-variables[name] := old;
 	old.created? := #t;
@@ -908,6 +877,44 @@ define constant $Dylan-Module
   = find-module($Dylan-Library, #"Dylan-Viscera", create: #t);
 
 
+// Bootstrap module stuff.
+
+// $Bootstrap-Module -- exported.
+//
+// Handle on the bootstrap module.
+//
+define constant $Bootstrap-Module
+  = find-module($Dylan-Library, #"Bootstrap", create: #t);
+
+// $bootstrap-exports -- internal.
+//
+// Names to export from the bootstrap module.
+// 
+define constant $bootstrap-exports :: <stretchy-vector>
+  = make(<stretchy-vector>);
+
+// add-bootstrap-export -- exported.
+//
+// Record that name is supposed to be exported from the bootstrap module.
+// 
+define method add-bootstrap-export (name :: <symbol>) => ();
+  if ($bootstrap-module.defined?)
+    error("Trying to add an export to the bootstrap module after it has"
+	    " been defined.");
+  end if;
+  add!($bootstrap-exports, name);
+end method add-bootstrap-export;
+
+// define-bootstrap-module -- exported.
+//
+// Actually define the bootstrap module.
+// 
+define method define-bootstrap-module () => ();
+  note-module-definition($Dylan-Library, #"Bootstrap",
+			 #[], $bootstrap-exports, #[]);
+end method define-bootstrap-module;
+
+
 // Shorthands
 
 // dylan-name -- ???
@@ -946,3 +953,56 @@ define method dylan-value (name :: <symbol>)
   defn & defn.ct-value;
 end;
 
+
+// Dumping stuff.
+
+add-make-dumper(#"library", *compiler-dispatcher*, <library>,
+		list(library-name, #f, #f),
+		dumper-only: #t);
+
+add-od-loader(*compiler-dispatcher*, #"library",
+  method (state :: <load-state>) => res :: <library>;
+    find-library(load-sole-subobject(state));
+  end method
+);
+
+
+add-make-dumper(#"module", *compiler-dispatcher*, <module>,
+		list(module-home, #f, #f,
+		     module-name, #f, #f),
+		dumper-only: #t);
+
+add-od-loader(*compiler-dispatcher*, #"module",
+  method (state :: <load-state>) => res :: <module>;
+    let lib = load-object-dispatch(state);
+    let mod-name = load-object-dispatch(state);
+    assert-end-object(state);
+    find-module(lib, mod-name, create: #t);
+  end method
+);
+
+
+add-make-dumper(#"module-variable", *compiler-dispatcher*, <variable>,
+		list(variable-home, #f, #f,
+		     variable-name, #f, #f),
+		dumper-only: #t);
+
+add-od-loader(*compiler-dispatcher*, #"module-variable", 
+  method (state :: <load-state>) => res :: <variable>;
+    find-variable(load-basic-name(state), create: #t);
+  end method
+);
+
+
+
+add-make-dumper(#"use", *compiler-dispatcher*, <use>, 
+		list(name-used, #"name", #f,
+		     imports, #"imports", #f,
+		     prefix, #"prefix", #f,
+		     excludes, #"excludes", #f,
+		     renamings, #"renamings", #f,
+		     exports, #"exports", #f));
+
+add-make-dumper(#"renaming", *compiler-dispatcher*, <renaming>, 
+		list(orig-name, #"orig-name", #f,
+		     new-name, #"new-name", #f));

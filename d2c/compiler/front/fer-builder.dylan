@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.43 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.44 1996/03/17 00:31:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -355,6 +355,7 @@ define method build-assignment
      builder, target-vars, expr);
 end method;
 
+/*
 // Make a join operation and a join assignment.  Add the assignment to the
 // builder.
 //
@@ -379,7 +380,7 @@ define method build-join
   target-var.definer := res;
   add-body-assignment(builder, res);
 end method;
-
+*/
 
 // We've kind of deprecated this operation, since we want to support creating
 // operations with make to make load/dump easier.  make-operation is kept
@@ -611,4 +612,112 @@ define method make-function-literal
   main-entry.literal := leaf;
   leaf;
 end;
+
+
+// Definition reference conversion.
+
+define generic build-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>)
+    => res :: <leaf>;
+
+
+define method build-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <abstract-constant-definition>)
+    => res :: <leaf>;
+  let value = ct-value(defn);
+  if (instance?(value, <eql-ct-value>))
+    make-literal-constant(builder, value);
+  elseif (value)
+    make-definition-constant(builder, defn);
+  else
+    let type = defn.defn-type | object-ctype();
+    let temp = make-local-var(builder, #"temp", type);
+    build-assignment(builder, policy, source, temp,
+		     make-operation(builder, <module-var-ref>, #(),
+				    derived-type: type,
+				    var: defn));
+    temp;
+  end;
+end method;
+
+define method build-defn-ref
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <abstract-variable-definition>)
+ => res :: <leaf>;
+  let type = defn.defn-type | object-ctype();
+  let temp = make-local-var(builder, #"temp", type);
+  build-assignment(builder, policy, source, temp,
+		   make-operation(builder, <module-var-ref>, #(),
+				  derived-type: type,
+				  var: defn));
+  temp;
+end method;
+
+
+define generic build-defn-set
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>, new-value :: <leaf>)
+    => ();
+
+define method build-defn-set
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <definition>, new-value :: <leaf>)
+    => ();
+  build-assignment(builder, policy, source, #(),
+		   make-operation(builder, <module-var-set>, list(new-value),
+				  var: defn));
+end;
+
+
+
+// Random utilities.
+
+define method ref-dylan-defn
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <symbol>)
+    => res :: <leaf>;
+  let defn = dylan-defn(name);
+  unless (defn)
+    error("%s undefined?", name);
+  end;
+  build-defn-ref(builder, policy, source, defn)
+end;
+
+define method make-check-type-operation
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value-leaf :: <leaf>, type-leaf :: <leaf>)
+    => res :: <operation>;
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, policy, source, #"check-type"),
+     #f,
+     list(value-leaf, type-leaf));
+end method;
+
+define method make-error-operation
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     msg :: <byte-string>, #rest args)
+    => res :: <operation>;
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+		     #"error"),
+     #f,
+     pair(make-literal-constant(builder, as(<ct-value>, msg)),
+	  as(<list>, args)));
+end method;
+
+define method make-error-operation
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     symbol :: <symbol>, #rest args)
+    => res :: <operation>;
+  make-unknown-call
+    (builder,
+     ref-dylan-defn(builder, $Default-Policy, make(<source-location>),
+		     symbol),
+     #f,
+     as(<list>, args));
+end method;
 

@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.10 1996/02/21 15:52:45 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.11 1996/03/17 00:31:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,18 +20,6 @@ define method print-object (tlf :: <simple-define-tlf>, stream :: <stream>)
   pprint-fields(tlf, stream, name: tlf.tlf-defn.defn-name);
 end;
 
-// process-top-level-form -- exported.
-//
-// Called by the parser whenever it finishes another top-level form.
-//
-define open generic process-top-level-form (form :: <constituent>) => ();
-
-define method process-top-level-form (form :: <local-declaration>) => ();
-  compiler-error-location(
-    form,
-    "Local declarations cannot appear directly at top level.");
-end;
-
 // finalize-top-level-form -- exported.
 //
 // Called by the main driver on each top level form in *Top-Level-Forms*
@@ -46,50 +34,57 @@ define open generic convert-top-level-form
     => ();
 
 
-// Utilities.
+// Specific top level forms.
 
-define method extract-modifiers (where :: <string>, name :: <symbol>,
-				 modifiers :: <simple-object-vector>,
-				 #rest names)
-  for (modifier in modifiers)
-    unless (member?(modifier.token-symbol, names))
-      compiler-error("Bogus modifier for %s %s: %s",
-	    where, name, modifier.token-symbol);
-    end;
-  end;
-  local method find-modifier (name)
-	  block (return)
-	    for (modifier in modifiers)
-	      if (modifier.token-symbol == name)
-		return(#t);
-	      end;
-	    end;
-	    #f;
-	  end;
-	end;
-  apply(values, map(find-modifier, names));
+define open abstract class <define-generic-tlf> (<simple-define-tlf>)
+  //
+  // Make the definition required.
+  required keyword defn:;
+end class <define-generic-tlf>;
+
+
+define open abstract class <define-method-tlf> (<simple-define-tlf>)
+end class <define-method-tlf>;
+
+define method print-message
+    (tlf :: <define-method-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Method %s", tlf.tlf-defn.defn-name);
 end;
 
-define method extract-properties (where :: <string>,
-				  plist :: <simple-object-vector>,
-				  #rest keywords)
-  for (prop in plist)
-    unless (member?(prop.prop-keyword.token-literal.literal-value, keywords))
-      compiler-error("Bogus keyword in %s: %=", where, prop.prop-keyword);
-    end;
-  end;
-  local method find-key (key)
-	  block (return)
-	    for (prop in plist)
-	      if (prop.prop-keyword.token-literal.literal-value == key)
-		return(prop.prop-value);
-	      end;
-	    end;
-	    #f;
-	  end;
-	end;
-  apply(values, map(find-key, keywords));
+
+define open abstract class <define-bindings-tlf> (<define-tlf>)
+  constant slot tlf-required-defns :: <simple-object-vector>,
+    required-init-keyword: required-defns:;
+  constant slot tlf-rest-defn :: false-or(<bindings-definition>),
+    required-init-keyword: rest-defn:;
+end class <define-bindings-tlf>;
+
+
+define class <define-class-tlf> (<simple-define-tlf>)
+  //
+  // Make the definition required.
+  required keyword defn:;
+  //
+  // Stretchy vector of <init-function-definition>s.
+  constant slot tlf-init-function-defns :: <stretchy-vector>
+    = make(<stretchy-vector>);
 end;
+
+define method print-message
+    (tlf :: <define-class-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Class %s", tlf.tlf-defn.defn-name);
+end;
+
+
+
+define class <magic-interal-primitives-placeholder> (<top-level-form>)
+end;
+
+define method print-message
+    (tlf :: <magic-interal-primitives-placeholder>, stream :: <stream>) => ();
+  write("Magic internal primitives.", stream);
+end;
+
 
 
 // Dump stuff.

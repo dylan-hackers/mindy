@@ -1,4 +1,7 @@
 module: primitives
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.30 1996/03/17 00:31:59 wlott Exp $
+copyright: Copyright (c) 1996  Carnegie Mellon University
+	   All rights reserved.
 
 
 define class <primitive-info> (<identity-preserving-mixin>)
@@ -138,6 +141,10 @@ define-primitive
 
 
 // Define-primitives for the standard primitives.
+
+define-primitive
+  (#"mv-call", #(#"<function>", #"cluster"),
+   #(values:, rest:, #"<object>"));
 
 define-primitive
   (#"invoke-generic-entry", #(#"<method>", #"<list>", #"cluster"),

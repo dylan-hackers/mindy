@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.11 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.12 1996/03/17 00:31:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,32 +7,14 @@ define library compiler-front
   use Dylan;
   use compiler-base;
 
-  export cheese;
-  export dump;
-  export fer-convert;
   export fer-od;
   export front;
-  export misc-dump;
   export primitives;
-  export top-level-expressions;
-  export top-level-forms;
   export builder-interface;
-  export define-functions;
-  export define-constants-and-variables;
-  export define-libraries-and-modules;
-  export define-classes;
-  export forward-defn-classes;
+  export function-definitions;
+  export variable-definitions;
+  export top-level-forms;
 end library;
-
-define module forward-defn-classes
-  create
-    <abstract-method-definition>,
-    <bindings-definition>,
-    defn-init-value,
-    <constant-definition>,
-    <constant-method-definition>,
-    <variable-definition>, var-defn-type-defn;
-end module;
 
 
 define module builder-interface
@@ -46,47 +28,12 @@ define module builder-interface
     build-unwind-protect-body, build-function-body, make-function-literal,
     make-initial-var,
 
+    build-defn-ref, build-defn-set, ref-dylan-defn,
+    make-check-type-operation, make-error-operation,
+
     <fer-component>, <nlx-info>;
 end;
 
-
-define module top-level-forms
-  use common;
-  use utils;
-  use errors;
-  use tokens;
-  use compile-time-values;
-  use parse-tree;
-  use variables;
-  use definitions;
-  use builder-interface, import: {<fer-builder>};
-  use od-format;
-  use source;
-
-  export
-    <top-level-form>,
-    <define-tlf>, <simple-define-tlf>, tlf-defn, tlf-defn-setter,
-    *Top-Level-Forms*,
-
-    process-top-level-form, finalize-top-level-form, convert-top-level-form,
-
-    extract-modifiers, extract-properties;
-end;
-
-
-define module define-libraries-and-modules
-  use common;
-  use utils;
-  use errors;
-  use names;
-  use compile-time-values;
-  use tokens;
-  use parse-tree;
-  use variables;
-  use top-level-forms;
-  use od-format;
-  use builder-interface, import: {<fer-builder>};
-end;
 
 define module primitives
   use common;
@@ -104,6 +51,7 @@ define module primitives
 
     define-primitive-transformer, define-primitive-emitter;
 end;
+
 
 define module front
   use common;
@@ -126,7 +74,7 @@ define module front
   export
     dump-fer, id, reset-ids,
 
-    clone-function,
+    optimize-component, clone-function, build-xep-component,
 
     <fer-assignment>, policy,
     <let-assignment>, let-next, <set-assignment>,
@@ -178,206 +126,6 @@ define module front
     nlx-disable-catchers-setter, nlx-throws, nlx-throws-setter;
 end;
 
-define module fer-convert
-  use common;
-
-  use utils;
-  use errors;
-  use source;
-  use tokens;
-  use names;
-  use compile-time-values;
-  use compile-time-eval;
-  use signature-interface;
-  use definitions;
-  use forward-defn-classes;
-  use variables;
-  use parse-tree;
-  use expand;
-  use flow,
-    exclude: {<assignment>},
-    rename: {<expression> => <fer-expression>},
-    export: all;
-  use front,
-    rename: {<primitive> => <fer-primitive>, <mv-call> => <fer-mv-call>},
-    import: {<function-literal>, <method-literal>,
-	       <module-var-ref>, <module-var-set>,
-	       <function-visibility>, <catch>, <disable-catcher>,
-	       <make-catcher>};
-  use builder-interface, export: all;
-  use ctype;
-  use lexenv, export: all;
-  use policy, export: all;
-  use representation;
-  use compile-time-functions;
-  use primitives,
-    import: {primitive-info-or-lose, priminfo-arg-types};
-
-  export
-    fer-convert-method, fer-convert, fer-convert-body,
-    fer-convert-defn-ref, fer-convert-defn-set,
-    ref-dylan-defn, make-check-type-operation, make-error-operation;
-end;
-
-
-define module define-functions
-  use common;
-  use utils;
-  use errors;
-  use tokens;
-  use names;
-  use definitions;
-  use forward-defn-classes,
-    export: {<abstract-method-definition>};
-  use variables;
-  use parse-tree,
-    exclude: {<mv-call>};
-  use top-level-forms;
-  use compile-time-values;
-  use builder-interface;
-  use fer-convert;
-  use signature-interface;
-  use ctype;
-  use classes;
-  use transformers;
-  use compile-time-eval;
-  use lexenv;
-  use source;
-  use front,
-    import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>};
-  use compile-time-functions;
-  use od-format;
-
-  export
-    compute-signature,
-    <generic-definition>, generic-defn-discriminator, generic-defn-methods,
-    add-seal, ct-add-method, ct-applicable-methods, sort-methods,
-    method-defn-inline-expansion, method-defn-inline-function,
-    %method-defn-inline-function, %method-defn-inline-function-setter,
-    generic-defn-sealed?,
-    <method-definition>, method-defn-of,
-    <accessor-method-definition>, accessor-method-defn-slot-info,
-    <getter-method-definition>, <setter-method-definition>,
-    <define-generic-tlf>, <define-implicit-generic-tlf>,
-    <define-method-tlf>,
-    implicitly-define-generic,
-    dump-queued-methods,
-
-    $abstract-method-definition-slots;
-end;
-
-define module define-constants-and-variables
-  use common;
-  use utils;
-  use errors;
-  use compile-time-values;
-  use compile-time-eval;
-  use lexenv;
-  use parse-tree;
-  use top-level-forms;
-  use names;
-  use definitions;
-  use forward-defn-classes;
-  use ctype;
-  use variables;
-  use tokens;
-  use builder-interface;
-  use fer-convert;
-  use source;
-  use front, import: {<method-literal>};
-  use define-functions;
-  use expand;
-  use compile-time-functions;
-  use od-format;
-
-  export
-    <define-bindings-tlf>, <define-constant-method-tlf>,
-    tlf-required-defns, tlf-rest-defn,
-    expand-until-method-ref;
-end;
-
-define module define-classes
-  use common;
-  use utils;
-  use errors;
-  use compile-time-values;
-  use tokens;
-  use names;
-  use definitions;
-  use variables;
-  use lexenv;
-  use parse-tree,
-    exclude: {<primitive>};
-  use top-level-forms;
-  use ctype;
-  use classes;
-  use compile-time-eval;
-  use define-functions;
-  use define-constants-and-variables;
-  use builder-interface;
-  use fer-convert;
-  use signature-interface;
-  use source;
-  use expand;
-  use front,
-    import: {<slot-ref>, <slot-set>, <uninitialized-value>, <primitive>,
-	       <function-literal>, <method-literal>};
-  use representation;
-  use c-representation;
-  use compile-time-functions;
-  use od-format;
-
-  export
-    <define-class-tlf>,
-    class-defn-defered-evaluations-function, class-defn-maker-function,
-    class-defn-slots, class-defn-overrides,
-    slot-defn-setter, slot-defn-getter, slot-defn-info,
-    override-defn-info;
-end;
-
-define module top-level-expressions
-  use common;
-  use utils;
-  use tokens;
-  use parse-tree;
-  use top-level-forms;
-  use lexenv;
-  use builder-interface;
-  use fer-convert;
-  use expand;
-  use od-format;
-
-  export <magic-interal-primitives-placeholder>;
-end;
-
-
-
-define module dump
-  use common;
-
-  use utils;
-  use tokens;
-  use variables;
-  use parse-tree;
-  use fragments;
-  use source;
-
-  export
-    dump-parse;
-end;
-
-define module misc-dump
-  use common;
-  use standard-io;
-  use utils;
-  use od-format;
-  use compile-time-values;
-  use ctype;
-  use classes;
-  use variables;
-  use variables-dumper-vars;
-  use names;
-end;
 
 define module fer-od
   use common;
@@ -397,33 +145,93 @@ define module fer-od
   
 end;
 
-define module cheese
+define module function-definitions
   use common;
+
   use utils;
+  use od-format;
+  use source;
   use errors;
   use compile-time-values;
-  use names;
-  use definitions;
-  use forward-defn-classes;
-  use variables, exclude: {<renaming>};
-  use flow;
-  use front;
+  use compile-time-functions;
   use ctype;
   use classes;
+  use names;
+  use definitions;
+  use variables;
   use signature-interface;
-  use source;
-  use builder-interface;
-  use policy;
-  use define-functions;
-  use define-classes;
-  use parse-tree, import: {<method-parse>};
-  use lexenv;
-  use fer-convert;
-  use primitives;
   use transformers;
-  use compile-time-functions;
+
+  use front;
 
   export
-    optimize-component, *optimize-ncalls*, build-xep, build-xep-component;
-end;
+    <generic-definition>, generic-defn-sealed?, generic-defn-sealed?-setter,
+    generic-defn-methods, generic-defn-discriminator,
+    %generic-defn-discriminator, %generic-defn-discriminator-setter,
 
+    <implicit-generic-definition>,
+
+    <abstract-method-definition>, method-defn-inline-function,
+
+    <method-definition>, method-defn-congruent?, method-defn-of,
+
+    <accessor-method-definition>, accessor-method-defn-slot-info,
+    accessor-method-defn-slot-info-setter,
+
+    <getter-method-definition>,
+    <setter-method-definition>,
+
+    add-seal, <seal-info>, seal-types, 
+
+    ct-add-method, ct-applicable-methods, sort-methods,
+
+    $abstract-method-definition-slots, dump-queued-methods;
+    
+end module function-definitions;
+
+
+define module variable-definitions
+  use common;
+
+  use compile-time-values;
+  use ctype;
+  use definitions;
+  use function-definitions;
+
+  export
+    <bindings-definition>, defn-type-setter, %defn-init-value,
+    defn-init-value, defn-init-value-setter,
+    <variable-definition>, var-defn-type-defn, var-defn-type-defn-setter;
+end module variable-definitions;
+
+define module top-level-forms
+  use common;
+
+  use utils;
+  use od-format;
+  use source;
+  use errors;
+  use tokens;
+  use compile-time-values;
+  use variables;
+  use definitions;
+
+  use builder-interface, import: {<fer-builder>};
+  use variable-definitions;
+
+  export
+    *Top-Level-Forms*,
+    <top-level-form>, finalize-top-level-form, convert-top-level-form,
+
+    <define-tlf>, <simple-define-tlf>, tlf-defn, tlf-defn-setter,
+
+    <define-generic-tlf>,
+
+    <define-method-tlf>,
+
+    <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn,
+
+    <define-class-tlf>, tlf-init-function-defns,
+
+    <magic-interal-primitives-placeholder>;
+end;

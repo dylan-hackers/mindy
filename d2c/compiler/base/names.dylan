@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.9 1996/02/21 02:43:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.10 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,6 +9,9 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define abstract class <name> (<object>)
 end;
 
+define sealed domain make (singleton(<name>));
+define sealed domain initialize (<name>);
+
 
 define class <basic-name> (<name>)
   slot name-symbol :: <symbol>,
@@ -16,6 +19,8 @@ define class <basic-name> (<name>)
   slot name-module :: <module>,
     required-init-keyword: module:;
 end;
+
+define sealed domain make (singleton(<basic-name>));
 
 define method print-object (name :: <basic-name>, stream :: <stream>) => ();
   pprint-fields(name, stream,
@@ -31,13 +36,29 @@ define method id-name (token :: <identifier-token>) => res :: <basic-name>;
   make(<basic-name>, symbol: token.token-symbol, module: token.token-module);
 end;
 
-// see misc-dump for basic-name dumping (module ordering problem.)
+
+add-make-dumper(#"basic-name", *compiler-dispatcher*, <basic-name>,
+		list(name-module, #f, #f,
+		     name-symbol, #f, #f),
+		dumper-only: #t);
+
+define constant load-basic-name
+    = method (state :: <load-state>) => res :: <basic-name>;
+	let modu = load-object-dispatch(state);
+	let obj-name = load-object-dispatch(state);
+	assert-end-object(state);
+	make(<basic-name>, symbol: obj-name, module: modu);
+      end method;
+
+add-od-loader(*compiler-dispatcher*, #"basic-name", load-basic-name);
 
 
 define class <type-cell-name> (<name>)
   slot type-cell-name-base :: <basic-name>,
     required-init-keyword: base:;
 end;
+
+define sealed domain make (singleton(<type-cell-name>));
 
 define method print-object (name :: <type-cell-name>, stream :: <stream>)
     => ();
@@ -60,6 +81,8 @@ define class <method-name> (<name>)
   slot method-name-specializers :: <sequence>,
     required-init-keyword: specializers:;
 end;
+
+define sealed domain make (singleton(<method-name>));
 
 define method print-object (name :: <method-name>, stream :: <stream>) => ();
   pprint-fields(name, stream,
@@ -90,6 +113,8 @@ define class <generated-name> (<name>)
   slot generated-name-description :: <string>,
     required-init-keyword: description:;
 end class <generated-name>;
+
+define sealed domain make (singleton(<generated-name>));
 
 define method print-object
     (name :: <generated-name>, stream :: <stream>) => ();

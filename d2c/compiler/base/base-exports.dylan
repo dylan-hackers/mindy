@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.27 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.28 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -19,21 +19,16 @@ define library compiler-base
   export c-representation;
   export classes;
   export common;
-  export compile-time-eval;
   export compile-time-functions;
   export compile-time-values;
   export ctype;
   export definitions;
   export errors;
-  export expand;
   export flow;
   export forwards;
-  export fragments;
   export header;
-  export lexenv;
   export names;
   export od-format;
-  export parse-tree;
   export policy;
   export representation;
   export signature-interface;
@@ -41,7 +36,6 @@ define library compiler-base
   export tokens;
   export transformers;
   export utils;
-  export variables-dumper-vars;
   export variables;
 
 end;
@@ -195,8 +189,7 @@ define module forwards
     <ctype>,
     <cclass>,
     <abstract-variable>,
-    <ct-function>,
-    expand;
+    <ct-function>;
 end;
 
 define module compile-time-values
@@ -248,18 +241,6 @@ define module source
     extract-string;
 end;
 
-define module header
-  use common;
-  use System, import: {copy-bytes};
-
-  use utils;
-  use source;
-
-  export
-    <header>, parse-header;
-end;
-
-
 define module tokens
   use common;
   use self-organizing-list;
@@ -272,45 +253,98 @@ define module tokens
 
   export
 
-    <token>, <eof-token>, <error-token>, <symbol-token>,
-    <identifier-token>, <word-token>, <name-token>,
-    <simple-name-token>, <quoted-name-token>, <begin-word-token>,
-    <define-word-token>, <define-bindings-word-token>,
-    <constrained-name-token>, <core-word-token>, <begin-token>,
-    <bind-exit-token>, <class-token>, <cleanup-token>,
-    <constant-token>, <create-token>, <define-token>, <else-token>,
-    <end-token>, <export-token>, <finally-token>, <for-token>,
-    <from-token>, <generic-token>, <handler-token>, <if-token>,
-    <in-token>, <let-token>, <library-token>, <local-token>,
-    <macro-token>, <module-token>, <method-token>, <mv-call-token>,
-    <otherwise-token>, <primitive-token>, <seal-token>, <set-token>,
-    <use-token>, <uwp-token>, <variable-token>, <while-token>,
-    <keyword-token>, <abstract-literal-token>, <literal-token>,
-    <string-token>, <operator-token>, <binary-operator-token>,
-    <simple-binary-operator-token>, <unary-operator-token>,
-    <punctuation-token>, <left-paren-token>, <right-paren-token>,
-    <comma-token>, <dot-token>, <semicolon-token>,
-    <left-bracket-token>, <right-bracket-token>, <left-brace-token>,
-    <right-brace-token>, <double-colon-token>, <minus-token>,
-    <tilde-token>, <equal-token>, <double-equal-token>, <arrow-token>,
-    <sharp-paren-token>, <sharp-bracket-token>, <question-token>,
-    <double-question-token>, <ellipsis-token>, <sharp-word-token>,
-    <true-token>, <false-token>, <next-token>, <rest-token>,
-    <key-token>, <all-keys-token>,
+    $eof-token,
+    $error-token,
+    $left-paren-token,
+    $right-paren-token,
+    $comma-token,
+    $dot-token,
+    $semicolon-token,
+    $left-bracket-token,
+    $right-bracket-token,
+    $left-brace-token,
+    $right-brace-token,
+    $double-colon-token,
+    $minus-token,
+    $equal-token,
+    $double-equal-token,
+    $arrow-token,
+    $sharp-paren-token,
+    $sharp-bracket-token,
+    $double-sharp-token,
+    $question-token,
+    $double-question-token,
+    $question-equal-token,
+    $ellipsis-token,
+    $true-token,
+    $false-token,
+    $next-token,
+    $rest-token,
+    $key-token,
+    $all-keys-token,
+    $include-token,
+    $define-token,
+    $end-token,
+    $handler-token,
+    $let-token,
+    $local-token,
+    $macro-token,
+    $otherwise-token,
+    $raw-ordinary-word-token,
+    $raw-begin-word-token,
+    $raw-function-word-token,
+    $ordinary-define-body-word-token,
+    $begin-and-define-body-word-token,
+    $function-and-define-body-word-token,
+    $ordinary-define-list-word-token,
+    $begin-and-define-list-word-token,
+    $function-and-define-list-word-token,
+    $quoted-name-token,
+    $constrained-name-token,
+    $tilde-token,
+    $other-binary-operator-token,
+    $literal-token,
+    $string-token,
+    $symbol-token,
+    $parsed-definition-macro-call-token,
+    $parsed-special-definition-token,
+    $parsed-local-declaration-token,
+    $parsed-expression-token,
+    $parsed-constant-token,
+    $parsed-macro-call-token,
+    $parsed-parameter-list-token,
+    $parsed-variable-list-token,
+    $feature-if-token,
+    $feature-elseif-token,
+    $feature-else-token,
+    $feature-end-token,
 
-    token-symbol, token-constraint, token-module,
-    token-uniquifier, token-literal,
-
-    operator-precedence, operator-left-associative?,
-    operator-precedence-setter, operator-left-associative?-setter,
-
+    <token>, token-kind, 
+    <symbol-token>, token-symbol, 
+    <identifier-token>, token-module, token-uniquifier,
     <uniquifier>, same-id?,
+    <operator-token>, operator-precedence, operator-associativity,
+    <constrained-name-token>, token-constraint,
+    <literal-token>, token-literal,
+    <pre-parsed-token>, token-parse-tree,
 
-    merge-category,
+    <syntax-table>, syntax-for-name, category-merge-okay?, merge-category,
 
-    <tokenizer>, get-token, unget-token;
+    <tokenizer>, get-token, unget-token, note-potential-end-point;
 
 end;
+
+define module header
+  use common;
+  use System, import: {copy-bytes};
+
+  use utils;
+  use source;
+
+  export
+    <header>, parse-header;
+end;
+
 
 define module errors
   use common;
@@ -348,7 +382,9 @@ define module names
     <basic-name>, id-name, name-symbol, name-module,
     <type-cell-name>, type-cell-name-base,
     <method-name>, method-name-generic-function, method-name-specializers,
-    <generated-name>, generated-name-description;
+    <generated-name>, generated-name-description,
+
+    load-basic-name;
 end;
 
 define module definitions
@@ -362,14 +398,17 @@ define module definitions
   use od-format;
   use forwards, import: {<library>, <ctype>, <ct-function>};
   use signature-interface;
+  use errors;
 
   export
     <definition>, defn-name, defn-library, defn-type, ct-value,
     install-transformers, $definition-slots,
     check-syntax-table-additions, make-syntax-table-additions,
-    <abstract-constant-definition>,
+    <abstract-constant-definition>, <abstract-variable-definition>,
     <implicit-definition>,
-    <class-definition>,
+    <class-definition>, class-defn-maker-function,
+    class-defn-defered-evaluations-function,
+    
 
     <function-definition>,
     function-defn-signature, function-defn-signature-setter,
@@ -378,12 +417,6 @@ define module definitions
     function-defn-transformers,
     function-defn-movable?, function-defn-flushable?;
 
-end;
-
-define module variables-dumper-vars
-  create
-    name-used, imports, prefix, excludes, renamings, exports,
-    orig-name, new-name;
 end;
 
 define module variables
@@ -395,12 +428,13 @@ define module variables
   use tokens;
   use names;
   use definitions;
-  use variables-dumper-vars;
   use od-format;
 
   use forwards, import: {<library>, <module>}, export: all;
   export
     $Dylan-Library, $Dylan-Module, *Current-Library*, *Current-Module*,
+
+    $Bootstrap-Module, add-bootstrap-export, define-bootstrap-module,
 
     find-library, library-name, note-library-definition,
     find-module, use-module, module-name, module-syntax-table,
@@ -408,133 +442,14 @@ define module variables
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
     variable-ct-evaluator, variable-ct-evaluator-setter,
+    variable-fragment-expander, variable-fragment-expander-setter,
     note-variable-definition,
-    <use>, <renaming>,
+    <use>, <renaming>, orig-name, new-name,
 
     module-home, variable-home,
     name-inherited-or-exported?,
 
     dylan-var, dylan-defn, dylan-value;
-end;
-
-define module fragments
-  use common;
-
-  use utils;
-  use tokens;
-
-  export
-    <fragment>, fragment-head, fragment-head-setter, fragment-tail,
-    fragment-tail-setter,
-    <piece>, piece-prev, piece-prev-setter, piece-next, piece-next-setter,
-    piece-token,
-    <balanced-piece>, piece-other, piece-other-setter,
-    prepend-piece, postpend-piece, append-fragments,
-    <fragment-tokenizer>;
-end;
-
-define module parse-tree
-  use common;
-  use utils;
-  use tokens;
-  use fragments;
-  use od-format;
-  use source, import: { source-location, <source-location-mixin> };
-  use compile-time-values, import: { *compiler-dispatcher* };
-
-  export
-    <property>, prop-keyword, prop-value,
-    <bindings>, bindings-parameter-list, bindings-expression,
-    bindings-expression-setter,
-    <parameter-list>, paramlist-required-vars, paramlist-required-vars-setter,
-    paramlist-rest, paramlist-rest-setter, paramlist-next,
-    paramlist-next-setter, paramlist-keys, paramlist-all-keys?,
-    <parameter>, param-name, param-type,
-    <keyword-parameter>, param-keyword, param-default,
-    <method-parse>, method-name, method-name-setter, method-param-list,
-    method-returns, method-body,
-    <property-set>, property-set-members,
-    <use-clause>, use-name, use-import, use-exclude, use-prefix, use-rename,
-    use-export,
-    <export-clause>, export-names,
-    <create-clause>, create-names,
-    <for-clause>, <for-while-clause>, for-clause-condition,
-    <for-var-clause>, for-clause-variable,
-    <for-in-clause>, for-clause-collection, for-clause-keyed-by,
-    for-clause-using,
-    <for-step-clause>, for-clause-init, for-clause-step,
-    <for-from-clause>, for-clause-from, for-clause-by, for-clause-kind,
-    for-clause-bound,
-    <classopt>, classopt-kind, classopt-name, classopt-plist,
-
-    <constituent>,
-    <defining-form>, define-modifiers, define-modifiers-setter,
-    <define-class-parse>, defclass-name, defclass-supers, defclass-options,
-    <define-constant-parse>, defconst-bindings,
-    <define-generic-parse>, defgen-name, defgen-name-setter, defgen-param-list,
-    defgen-returns, defgen-plist, defgen-plist-setter,
-    <seal-generic-parse>, sealgen-name, sealgen-type-exprs,
-    <define-library-parse>, deflibrary-name, deflibrary-clauses,
-    <define-method-parse>, defmethod-method,
-    <define-module-parse>, defmodule-name, defmodule-clauses,
-    <define-variable-parse>, defvar-bindings,
-    <define-parse>, define-word, define-word-setter, define-name,
-    define-fragment,
-    <define-bindings-parse>, define-bindings,
-    <define-macro-parse>, defmacro-name, defmacro-main-rule-set,
-    defmacro-auxiliary-rule-sets,
-    <define-define-macro-parse>, <define-define-bindings-macro-parse>,
-    <define-statement-macro-parse>, <define-function-macro-parse>,
-    <local-declaration>,
-    <let>, let-bindings,
-    <let-handler>, handler-type, handler-plist, handler-expression,
-    <local>, local-methods,
-    <expression>,
-    <literal-ref>, litref-literal,
-    <binop-series>, binop-series-operands, binop-series-operators,
-    <funcall>, funcall-function, funcall-arguments,
-    <dot>, dot-operand, dot-name,
-    <varref>, varref-id,
-    <macro-statement>, statement-begin-word, statement-fragment,
-    <assignment>, assignment-place, assignment-value,
-    <begin>, begin-body,
-    <bind-exit>, exit-name, exit-body,
-    <for>, for-header, for-body, for-finally,
-    <if>, if-condition, if-consequent, if-alternate,
-    <method-ref>, method-ref-method,
-    <mv-call>, mv-call-operands,
-    <primitive>, primitive-name, primitive-operands,
-    <uwp>, uwp-body, uwp-cleanup,
-    <rule>, rule-pattern, rule-template,
-    <abstract-define-rule>, define-rule-modifiers-pattern,
-    define-rule-modifiers-pattern-setter,
-    <define-rule>, <define-bindings-rule>,
-    <statement-rule>, <function-rule>,
-    <pattern>, pattern-pieces,
-    <pattern-list>, pattern-list-pieces,
-    <pattern-sequence>, pattern-sequence-pieces,pattern-sequence-pieces-setter,
-    <simple-pattern>,
-    <variable-pattern>, variable-name-pattern, variable-type-pattern,
-    <bound-variable-pattern>, bound-variable-variable, bound-variable-value,
-    <identifier-pattern>, pattern-identifier,
-    <literal-pattern>, pattern-literal, <otherwise-pattern>, <arrow-pattern>,
-    <details-pattern>, pattern-sub-pattern,
-    <pattern-variable>, patvar-name, patvar-name-setter,
-    patvar-constraint, patvar-constraint-setter,
-    patvar-wildcard?, patvar-wildcard?-setter,
-    patvar-at-end?, patvar-at-end?-setter,
-    <property-list-pattern>, plistpat-rest, plistpat-rest-setter,
-    plistpat-keys, plistpat-all-keys?,
-    <pattern-keyword>, patkey-name, patkey-default, patkey-all?,
-    <auxiliary-rule-set>, rule-set-name, rule-set-rules,
-    rule-set-body-variable?, rule-set-body-variable?-setter,
-    rule-set-processed-intermediate-words?,
-    rule-set-processed-intermediate-words?-setter,
-    <auxiliary-rule>,
-    <template>, template-parts,
-    <paren-template>, template-left-token, template-right-token,
-    <pattern-variable-reference>, patvarref-name, patvarref-separator;
-
 end;
 
 define module policy
@@ -544,20 +459,6 @@ define module policy
   use compile-time-values;
 
   export <policy>, $Default-Policy;
-end;
-
-define module lexenv
-  use common;
-  use utils;
-  use tokens;
-  use policy;
-  use forwards, import: {<abstract-variable>};
-
-  export
-    <lexenv>, lexenv-policy, lexenv-policy-setter,
-    <body-lexenv>, lexenv-handlers, lexenv-handlers-setter,
-    <binding>, binding-name, binding-var, binding-type-var,
-    add-binding, find-binding;
 end;
 
 define module ctype
@@ -752,40 +653,6 @@ define module compile-time-functions
 
     <ct-entry-point>, ct-entry-point-for, ct-entry-point-kind;
 end;
-
-define module compile-time-eval
-  use common;
-
-  use utils;
-  use names;
-  use variables;
-  use definitions;
-  use compile-time-values;
-  use ctype;
-  use classes;
-  use tokens;
-  use parse-tree;
-  use forwards, import: {expand};
-  use lexenv;
-
-  export
-    ct-eval, ct-mv-eval;
-end;
-
-define module expand
-  use common;
-  use utils;
-  use compile-time-values;
-  use tokens;
-  use lexenv;
-  use parse-tree;
-  use variables;
-  use compile-time-eval;
-  use ctype;
-
-  use forwards, import: {expand}, export: all;
-end;
-
 
 define module flow
   use common;

@@ -1,19 +1,7 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.12 1996/02/08 02:24:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.13 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
-
-
-// Tokenizer interface.
-
-define primary abstract open class <tokenizer> (<object>)
-end;
-
-define open generic get-token (tokenizer :: <tokenizer>)
-    => token :: <token>;
-
-define open generic unget-token (tokenizer :: <tokenizer>, token :: <token>)
-    => ();
 
 
 // token classes.
@@ -21,151 +9,242 @@ define open generic unget-token (tokenizer :: <tokenizer>, token :: <token>)
 // <token> -- exported.
 // 
 // All the different tokens returned by the tokenizer are all
-// (indirect) instances the class <token>.  The different syntactic
-// categories for tokens are represent by the direct class of the
-// token.  Tokens that fall into more than one syntactic category (for
-// example, -, which is punctuation, a unary operator, and a binary
-// operator) are implemented by using multiple inheritance.
+// instances the class <token>.  The different kinds of tokens are
+// represented via an enumeration of integer constants.
 //
-define primary abstract open class <token> (<source-location-mixin>)
+define class <token> (<source-location-mixin>)
+  //
+  // Integer indicating the syntactic category for this token.
+  constant slot token-kind :: <integer>,
+    required-init-keyword: #"kind";
 end;
 
+define sealed domain make (singleton(<token>));
+define sealed domain initialize (<token>);
 
-// <eof-token> -- exported.
-//
-// And, of course, we have to somehow represent the end of the file.
-//
-define class <eof-token> (<token>)
-end;
+define sealed method print-object
+    (token :: <token>, stream :: <stream>) => ();
+  pprint-fields(token, stream, kind: token.token-kind);
+end method print-object;
 
-// <error-token> -- exported.
-//
-// Used when the lexer fails to figure anything better out.  Will
-// only happen if strange characters (non-whitespace control chars or
-// chars with the high bit set for example) show up in the input.
+// ### will flame out if the file can't be found, which is likely if the
+// location is in another library.
 // 
-define class <error-token> (<token>)
-end;
+define sealed method print-message
+    (wot :: <token>, stream :: <stream>) => ();
+  if (wot.token-kind == $eof-token)
+    write("EOF", stream);
+  else
+    let loc = wot.source-location;
+    if (instance?(loc, <file-source-location>))
+      print(extract-string(loc), stream);
+    else
+      print(wot, stream);
+    end;
+  end if;
+end method print-message;
+
+// The token-kind values.  Note: if you change these values in any way,
+// you *must* update the set of tokens in parser/parser.input correspondingly.
+//
+define constant $eof-token = 0;
+define constant $error-token = 1;
+//
+define constant $left-paren-token = 2;
+define constant $right-paren-token = 3;
+define constant $comma-token = 4;
+define constant $dot-token = 5;
+define constant $semicolon-token = 6;
+define constant $left-bracket-token = 7;
+define constant $right-bracket-token = 8;
+define constant $left-brace-token = 9;
+define constant $right-brace-token = 10;
+define constant $double-colon-token = 11;
+define constant $minus-token = 12;
+define constant $equal-token = 13;
+define constant $double-equal-token = 14;
+define constant $arrow-token = 15;
+define constant $sharp-paren-token = 16;
+define constant $sharp-bracket-token = 17;
+define constant $double-sharp-token = 18;
+define constant $question-token = 19;
+define constant $double-question-token = 20;
+define constant $question-equal-token = 21;
+define constant $ellipsis-token = 22;
+//
+define constant $true-token = 23;
+define constant $false-token = 24;
+define constant $next-token = 25;
+define constant $rest-token = 26;
+define constant $key-token = 27;
+define constant $all-keys-token = 28;
+define constant $include-token = 29;
+//
+define constant $define-token = 30;
+define constant $end-token = 31;
+define constant $handler-token = 32;
+define constant $let-token = 33;
+define constant $local-token = 34;
+define constant $macro-token = 35;
+define constant $otherwise-token = 36; 
+//
+define constant $raw-ordinary-word-token = 37;
+define constant $raw-begin-word-token = 38;
+define constant $raw-function-word-token = 39;
+define constant $ordinary-define-body-word-token = 40;
+define constant $begin-and-define-body-word-token = 41;
+define constant $function-and-define-body-word-token = 42;
+define constant $ordinary-define-list-word-token = 43;
+define constant $begin-and-define-list-word-token = 44;
+define constant $function-and-define-list-word-token = 45;
+define constant $quoted-name-token = 46;
+//
+define constant $constrained-name-token = 47;
+//
+define constant $tilde-token = 48;
+define constant $other-binary-operator-token = 49;
+//
+define constant $literal-token = 50;
+define constant $string-token = 51;
+define constant $symbol-token = 52;
+//
+define constant $parsed-definition-macro-call-token = 53;
+define constant $parsed-special-definition-token = 54;
+define constant $parsed-local-declaration-token = 55;
+define constant $parsed-expression-token = 56;
+define constant $parsed-constant-token = 57;
+define constant $parsed-macro-call-token = 58;
+define constant $parsed-parameter-list-token = 59;
+define constant $parsed-variable-list-token = 60;
+//
+define constant $feature-if-token = 61;
+define constant $feature-elseif-token = 62;
+define constant $feature-else-token = 63;
+define constant $feature-end-token = 64;
 
 // <symbol-token> -- exported.
 //
-// Any symbol based token.
+// The various tokens that have a symbol name.
 //
-define abstract class <symbol-token> (<token>)
+define class <symbol-token> (<token>)
   //
-  // The word as a symbol.
-  slot token-symbol :: <symbol>, required-init-keyword: symbol:;
-end;
+  // The symbol name for the token.
+  constant slot token-symbol :: <symbol>,
+    required-init-keyword: symbol:;
+end class <symbol-token>;
 
-// token-symbol -- exported.
-//
-// Return the word this token is for as a symbol.
-//
-define generic token-symbol (token :: <symbol-token>) => res :: <symbol>;
+define sealed domain make (singleton(<symbol-token>));
+
+define sealed method print-object
+    (token :: <symbol-token>, stream :: <stream>) => ();
+  pprint-fields(token, stream, kind: token.token-kind,
+		symbol: token.token-symbol);
+end method print-object;
+
+define sealed method print-message
+    (wot :: <symbol-token>, stream :: <stream>) => ();
+  print(as(<string>, wot.token-symbol), stream);
+end;
 
 // <identifier-token> -- exported.
-// 
-// Tokens that may need to be used to identify variables.
 //
-define abstract class <identifier-token> (<symbol-token>)
+// Tokens that can be used as identifiers.
+//
+define class <identifier-token> (<symbol-token>)
   //
-  // The module this name should be looked up in if interpreted as a free
-  // reference, or #f if a generated name (and hence, not really from any
-  // module).
-  slot token-module :: false-or(<module>), setter: #f,
-    init-value: #f, init-keyword: module:;
+  constant slot token-module :: false-or(<module>) = #f,
+    init-keyword: module:;
   //
-  // A uniquifier.
-  slot token-uniquifier :: false-or(<uniquifier>), setter: #f,
-    init-value: #f, init-keyword: uniquifier:;
-end;
-  
-define method print-object (id :: <identifier-token>, stream :: <stream>)
-    => ();
-  let mod = id.token-module;
-  let uniq = id.token-uniquifier;
-  pprint-fields(id, stream,
-		symbol: id.token-symbol,
+  constant slot token-uniquifier :: false-or(<uniquifier>) = #f,
+    init-keyword: uniquifier:;
+end class <identifier-token>;
+
+define sealed domain make (singleton(<identifier-token>));
+
+define sealed method print-object
+    (token :: <identifier-token>, stream :: <stream>) => ();
+  let mod = token.token-module;
+  let uniq = token.token-uniquifier;
+  pprint-fields(token, stream,
+		kind: token.token-kind,
+		symbol: token.token-symbol,
 		if (mod) module: end, mod,
 		if (uniq) uniquifier: end, uniq);
 end;
 
-// token-module -- exported.
-//
-// Return the module (or #f if none) the name token should be looked
-// up in when used as a free reference.
-//
-define generic token-module (token :: <identifier-token>)
- => res :: false-or(<module>);
-
-// token-uniquifier -- exported.
-//
-define generic token-uniquifier (token :: <identifier-token>)
-    => res :: false-or(<uniquifier>);
 
 // <uniquifier> -- exported.
 //
-define class <uniquifier> (<object>)
+define class <uniquifier> (<identity-preserving-mixin>)
 end;
+
+define sealed domain make (singleton(<uniquifier>));
+define sealed domain initialize (<uniquifier>);
+
 
 // same-id? -- exported.
 // 
 define method same-id? (id1 :: <identifier-token>, id2 :: <identifier-token>)
+    => res :: <boolean>;
   id1.token-symbol == id2.token-symbol
     & id1.token-module == id2.token-module
     & id1.token-uniquifier == id2.token-uniquifier;
 end;
 
-define abstract class <word-token> (<identifier-token>)
-end;
 
-define abstract class <name-token> (<word-token>)
-end;
+define class <operator-token> (<identifier-token>)
+  //
+  // The precedence of this operator.  The higher the number, the tighter
+  // the binding.
+  slot operator-precedence :: <integer> = 0;
+  //
+  // The associativity of the operator, #"left" or #"right".
+  slot operator-associativity :: one-of(#"left", #"right") = #"left";
+end class <operator-token>;
 
-define method make (c == <name-token>, #rest keys, #all-keys)
-    => res :: <name-token>;
-  apply(make, <simple-name-token>, keys);
-end;
+define sealed domain make (singleton(<operator-token>));
 
-define class <simple-name-token> (<name-token>)
-end;
+define sealed method print-object
+    (token :: <operator-token>, stream :: <stream>) => ();
+  let mod = token.token-module;
+  let uniq = token.token-uniquifier;
+  pprint-fields(token, stream,
+		kind: token.token-kind,
+		symbol: token.token-symbol,
+		if (mod) module: end, mod,
+		if (uniq) uniquifier: end, uniq,
+		precedence: token.operator-precedence,
+		associativity: token.operator-associativity);
+end method print-object;
 
-define class <quoted-name-token> (<simple-name-token>)
-end;
+define constant $operator-info :: <self-organizing-list>
+  = begin
+      let table = make(<self-organizing-list>);
+      table[#"^"] := #(5 . #"left");
+      table[#"*"] := #(4 . #"left");
+      table[#"/"] := #(4 . #"left");
+      table[#"+"] := #(3 . #"left");
+      table[#"-"] := #(3 . #"left");
+      table[#"="] := #(2 . #"left");
+      table[#"=="] := #(2 . #"left");
+      table[#"~="] := #(2 . #"left");
+      table[#"~=="] := #(2 . #"left");
+      table[#"<"] := #(2 . #"left");
+      table[#">"] := #(2 . #"left");
+      table[#"<="] := #(2 . #"left");
+      table[#">="] := #(2 . #"left");
+      table[#"&"] := #(1 . #"right");
+      table[#"|"] := #(1 . #"right");
+      table[#":="] := #(0 . #"right");
+      table;
+    end;
 
-define class <begin-word-token> (<word-token>)
-end;
+define method initialize (op :: <operator-token>, #key symbol) => ();
+  let info = $operator-info[symbol];
+  op.operator-precedence := info.head;
+  op.operator-associativity := info.tail;
+end method initialize;
 
-define abstract class <define-word-token> (<word-token>)
-end;
-
-define method make (c == <define-word-token>, #rest keys, #all-keys)
-    => res :: <define-word-token>;
-  apply(make, <define-word-and-name-token>, keys);
-end;
-
-define abstract class <define-bindings-word-token> (<word-token>)
-end;
-
-define method make (c == <define-bindings-word-token>, #rest keys, #all-keys)
-    => res :: <define-bindings-word-token>;
-  apply(make, <define-bindings-word-and-name-token>, keys);
-end;
-
-define class <define-word-and-name-token> (<define-word-token>, <name-token>)
-end;
-
-define class <define-bindings-word-and-name-token>
-    (<define-bindings-word-token>, <name-token>)
-end;
-
-define class <define-and-begin-word-token>
-    (<define-word-token>, <begin-word-token>)
-end;
-
-define class <define-bindings-and-begin-word-token>
-    (<define-bindings-word-token>, <begin-word-token>)
-end;
 
 // <constrained-name-token> -- exported.
 //
@@ -174,294 +253,248 @@ end;
 define class <constrained-name-token> (<symbol-token>)
   //
   // The constraint, as a symbol.
-  slot token-constraint :: <symbol>, required-init-keyword: constraint:;
+  constant slot token-constraint :: <symbol>,
+    required-init-keyword: constraint:;
 end;
 
-define method print-object (token :: <constrained-name-token>,
-			    stream :: <stream>)
-    => ();
+define sealed domain make (singleton(<constrained-name-token>));
+
+define sealed method print-object
+    (token :: <constrained-name-token>, stream :: <stream>) => ();
   pprint-fields(token, stream,
+		kind: token.token-kind,
 		symbol: token.token-symbol,
 		constraint: token.token-constraint);
-end;
+end method print-object;
 
-// <core-word-token>, etc. -- all exported.
-//
-// The various core words.
-//
-define abstract class <core-word-token> (<symbol-token>)
-end;
-
-define method print-object (token :: <core-word-token>, stream :: <stream>)
-    => ();
-  pprint-fields(token, stream, symbol: token.token-symbol);
-end;
-
-define class <begin-token> (<core-word-token>) end;
-define class <bind-exit-token> (<core-word-token>) end;
-define class <class-token> (<core-word-token>) end;
-define class <cleanup-token> (<core-word-token>) end;
-define class <constant-token> (<core-word-token>) end;
-define class <create-token> (<core-word-token>) end;
-define class <define-token> (<core-word-token>) end;
-define class <else-token> (<core-word-token>) end;
-define class <end-token> (<core-word-token>) end;
-define class <export-token> (<core-word-token>) end;
-define class <finally-token> (<core-word-token>) end;
-define class <for-token> (<core-word-token>) end;
-define class <from-token> (<core-word-token>) end;
-define class <generic-token> (<core-word-token>) end;
-define class <handler-token> (<core-word-token>) end;
-define class <if-token> (<core-word-token>) end;
-define class <in-token> (<core-word-token>) end;
-define class <let-token> (<core-word-token>) end;
-define class <library-token> (<core-word-token>) end;
-define class <local-token> (<core-word-token>) end;
-define class <macro-token> (<core-word-token>) end;
-define class <method-token> (<core-word-token>) end;
-define class <module-token> (<core-word-token>) end;
-define class <mv-call-token> (<core-word-token>) end;
-define class <otherwise-token> (<core-word-token>) end;
-define class <primitive-token> (<core-word-token>) end;
-define class <seal-token> (<core-word-token>) end;
-define class <set-token> (<core-word-token>) end;
-define class <use-token> (<core-word-token>) end;
-define class <uwp-token> (<core-word-token>) end;
-define class <variable-token> (<core-word-token>) end;
-define class <while-token> (<core-word-token>) end;
-
-// <abstract-literal-token> -- exported.
-//
-// Some kind of literal.
-//
-define class <abstract-literal-token> (<token>)
-  //
-  // The literal this is a literal token of.
-  slot token-literal :: <literal>, required-init-keyword: literal:;
-end;
-
-define method print-object (token :: <abstract-literal-token>,
-			    stream :: <stream>)
-    => ();
-  pprint-fields(token, stream, literal: token.token-literal);
-end;
-
-// token-literal -- exported.
-//
-define generic token-literal (token :: <abstract-literal-token>) => result;
-
-// <keyword-token> -- exported.
-//
-// A keyword, either foo: or #"foo" syntax.
-// 
-define class <keyword-token> (<abstract-literal-token>)
-end;
 
 // <literal-token> -- exported.
 //
-// Random literal things that don't need to be distinguished by the parser.
-// In other words, numbers and characters.
-// 
-define class <literal-token> (<abstract-literal-token>)
-end;
-
-// <string-token> -- exported.
+// A literal value, e.g. a string, character, number, or symbol.
 //
-// A string.  Seperate from <literal-token> because the grammar allows
-// two strings to be juxtaposed.
-// 
-define class <string-token> (<abstract-literal-token>)
-end;
+define class <literal-token> (<token>)
+  //
+  // The literal this token is.
+  constant slot token-literal :: <literal>,
+    required-init-keyword: literal:;
+end class <literal-token>;
 
-// <operator-token>, <unary-operator-token>, <binary-operator-token>
-//   -- all exported.
+define sealed domain make (singleton(<literal-token>));
+
+define sealed method print-object
+    (token :: <literal-token>, stream :: <stream>) => ();
+  pprint-fields(token, stream,
+		kind: token.token-kind,
+		literal: token.token-literal);
+end method print-object;
+
+
+// <pre-parsed-token> -- exported.
 //
-// An operator, either binary or unary.
-// 
-define abstract class <operator-token> (<identifier-token>)
-end;
+define class <pre-parsed-token> (<token>)
+  //
+  // The piece of parse tree this token represents.
+  slot token-parse-tree :: <object>,
+    required-init-keyword: parse-tree:;
+end class <pre-parsed-token>;
 
-define abstract class <binary-operator-token> (<operator-token>)
-  slot operator-precedence :: <integer>;
-  slot operator-left-associative? :: <boolean>;
-end;
+define sealed domain make (singleton(<pre-parsed-token>));
 
-define method make (wot == <binary-operator-token>, #rest keys, #key)
-    => res :: <binary-operator-token>;
-  apply(make, <simple-binary-operator-token>, keys);
-end;
-
-define constant $operator-info
-  = begin
-      let table = make(<self-organizing-list>);
-      table[#"^"] := #(5 . #t);
-      table[#"*"] := #(4 . #t);
-      table[#"/"] := #(4 . #t);
-      table[#"+"] := #(3 . #t);
-      table[#"-"] := #(3 . #t);
-      table[#"="] := #(2 . #t);
-      table[#"=="] := #(2 . #t);
-      table[#"~="] := #(2 . #t);
-      table[#"~=="] := #(2 . #t);
-      table[#"<"] := #(2 . #t);
-      table[#">"] := #(2 . #t);
-      table[#"<="] := #(2 . #t);
-      table[#">="] := #(2 . #t);
-      table[#"&"] := #(1 . #f);
-      table[#"|"] := #(1 . #f);
-      table[#":="] := #(0 . #f);
-      table;
-    end;
-
-define method initialize
-    (binop :: <binary-operator-token>, #next next-method, #key) => ();
-  next-method();
-  let info = $operator-info[binop.token-symbol];
-  binop.operator-precedence := head(info);
-  binop.operator-left-associative? := tail(info);
-end;
-
-define class <simple-binary-operator-token> (<binary-operator-token>)
-end;
-
-define abstract class <unary-operator-token> (<operator-token>)
-end;
-
-define class <tilde-token> (<unary-operator-token>)
-end;
-
-// <punctuation-token>, etc. -- all exported.
-//
-// The various different kinds of punctuation.  Again, these are all
-// different classes because the parser needs to know about them.
-// 
-define abstract class <punctuation-token> (<token>)
-end;
-
-define class <left-paren-token> (<punctuation-token>)
-end;
-
-define class <right-paren-token> (<punctuation-token>)
-end;
-
-define class <comma-token> (<punctuation-token>)
-end;
-
-define class <dot-token> (<punctuation-token>)
-end;
-
-define class <semicolon-token> (<punctuation-token>)
-end;
-
-define class <left-bracket-token> (<punctuation-token>)
-end;
-
-define class <right-bracket-token> (<punctuation-token>)
-end;
-
-define class <left-brace-token> (<punctuation-token>)
-end;
-
-define class <right-brace-token> (<punctuation-token>)
-end;
-
-define class <double-colon-token> (<punctuation-token>)
-end;
-
-define class <arrow-token> (<punctuation-token>)
-end;
-
-define class <sharp-paren-token> (<punctuation-token>)
-end;
-
-define class <sharp-bracket-token> (<punctuation-token>)
-end;
-
-define class <question-token> (<punctuation-token>)
-end;
-
-define class <double-question-token> (<punctuation-token>)
-end;
-
-define class <ellipsis-token> (<punctuation-token>)
-end;
-
-// <minus-token>, <equal-token>, <double-equal-token> -- all exported.
-//
-// These all fall into multiple syntactic categories.  Luckily, we
-// were able to tweek the grammar enough that the lack of disjointness
-// doesn't cause any ambiguities.
-// 
-define class <minus-token>
-    (<punctuation-token>, <binary-operator-token>, <unary-operator-token>)
-end;
-
-define class <equal-token> (<punctuation-token>, <binary-operator-token>)
-end;
-
-define class <double-equal-token>
-    (<punctuation-token>, <binary-operator-token>)
-end;
-
-// <sharp-word-token>, etc. -- all exported.
-//
-// The various different #sharp words.  If it were just up to me, I
-// would have called all these punctuation, but Apple called them
-// something different, so I maintained that seperation here.  It
-// doesn't matter at all, because the parser never looks at either
-// <punctunation-token> or <sharp-word-token>, just the different
-// specific kinds of punctuation or sharp words.
-// 
-define abstract class <sharp-word-token> (<token>)
-end;
-
-define class <true-token> (<sharp-word-token>)
-end;
-
-define class <false-token> (<sharp-word-token>)
-end;
-
-define class <next-token> (<sharp-word-token>)
-end;
-
-define class <rest-token> (<sharp-word-token>)
-end;
-
-define class <key-token> (<sharp-word-token>)
-end;
-
-define class <all-keys-token> (<sharp-word-token>)
-end;
+define sealed method print-object
+    (token :: <pre-parsed-token>, stream :: <stream>) => ();
+  pprint-fields(token, stream,
+		kind: token.token-kind,
+		parse-tree: token.token-parse-tree);
+end method print-object;
 
 
 // Syntax Tables.
 
-define constant $word-categories$
-  = vector(<name-token>,
-	   <begin-word-token>,
-	   <define-word-token>,
-	   <define-bindings-word-token>,
-	   <define-word-and-name-token>,
-	   <define-bindings-word-and-name-token>,
-	   <define-and-begin-word-token>,
-	   <define-bindings-and-begin-word-token>);
+define constant <word-category>
+  = one-of(#"core", #"ordinary", #"begin", #"function",
+	   #"define-body", #"define-list");
 
-define method merge-category(table :: <table>,
-			     name :: <symbol>,
-			     category :: <class>)
-  let current = element(table, name, default: category);
-  if (subtype?(current, category))
-    current;
-  else
-    block (return)
-      for (test in $word-categories$)
-	if (subtype?(test, category) & subtype?(test, current))
-	  return(test);
-	end;
-      finally
-	#f;
-      end;
+define class <word-info> (<object>)
+  //
+  // Vector of symbols describing the categories this word drops into.
+  constant slot word-info-categories :: <simple-object-vector>,
+    required-init-keyword: categories:;
+  //
+  // token-kind for this kind of word.
+  constant slot word-info-token-kind :: <integer>,
+    required-init-keyword: kind:;
+  //
+  // Self-organizing-list mapping additional categories to the <word-info>
+  // for words in that category plus all of this words categories.
+  constant slot word-info-sub-infos :: <self-organizing-list>
+    = make(<self-organizing-list>);
+end class <word-info>;
+  
+define sealed domain make (singleton(<word-info>));
+define sealed domain initialize (<word-info>);
+
+define constant $default-word-info
+  = begin
+      local method add-sub-category
+		(to :: <word-info>, category :: <word-category>,
+		 kind :: <integer>)
+		=> (sub-category :: <word-info>);
+	      to.word-info-sub-infos[category]
+		:= make(<word-info>,
+			categories: add(to.word-info-categories, category),
+			kind: kind);
+	    end method add-sub-category;
+      let default-info
+	= make(<word-info>, categories: #[], kind: $raw-ordinary-word-token);
+      for (category in #[#"ordinary", #"begin", #"function"],
+	   kind from $raw-ordinary-word-token)
+	let sub-info = add-sub-category(default-info, category, kind);
+	for (sub-category in #[#"define-body", #"define-list"],
+	     delta from 3 by 3)
+	  add-sub-category(sub-info, sub-category, kind + delta);
+	end for;
+      end for;
+      for (category in #[#"define-body", #"define-list"],
+	   kind from $ordinary-define-body-word-token by 3)
+	let sub-info = add-sub-category(default-info, category, kind);
+	for (sub-category in #[#"ordinary", #"begin", #"function"],
+	     delta from 0)
+	  add-sub-category(sub-info, sub-category, kind + delta);
+	end for;
+      end for;
+	  
+      default-info;
     end;
-  end;
-end;
 
+define class <core-word-info> (<word-info>)
+  //
+  // The core-word this is the info for.
+  slot core-word-info-word :: <symbol>, required-init-keyword: word:;
+end class <core-word-info>;
+
+define sealed domain make (singleton(<core-word-info>));
+
+define constant $core-word-infos :: <simple-object-vector>
+  = map-as(<simple-object-vector>,
+	   method (core-word :: <symbol>, kind :: <integer>)
+	       => res :: <core-word-info>;
+	     make(<core-word-info>,
+		  categories: #[#"core"],
+		  kind: kind,
+		  word: core-word);
+	   end method,
+	   #[#"define", #"end", #"handler", #"let",
+	     #"local", #"macro", #"otherwise"],
+	   make(<range>, from: $define-token));
+
+
+define class <syntax-table> (<object>)
+  //
+  // object-table mapping symbols to word-infos.
+  constant slot syntax-table-entries :: <object-table>
+    = make(<object-table>);
+end class <syntax-table>;
+
+define sealed domain make (singleton(<syntax-table>));
+define sealed domain initialize (<syntax-table>);
+
+define method initialize (table :: <syntax-table>, #key) => ();
+  for (info in $core-word-infos)
+    table.syntax-table-entries[info.core-word-info-word] := info;
+  end for;
+end method initialize;
+
+define method syntax-for-name (table :: <syntax-table>, name :: <symbol>)
+    => (kind :: <integer>, categories :: <simple-object-vector>);
+  let entry = element(table.syntax-table-entries, name,
+		      default: $default-word-info);
+  values(entry.word-info-token-kind, entry.word-info-categories);
+end method syntax-for-name;
+
+
+define method category-merge-okay?
+    (table :: <syntax-table>, name :: <symbol>, category :: <word-category>)
+    => res :: <boolean>;
+  let current = element(table.syntax-table-entries, name,
+			default: $default-word-info);
+  if (member?(category, current.word-info-categories))
+    #t;
+  else
+    element(current.word-info-sub-infos, category, default: #f) ~== #f;
+  end if;
+end method category-merge-okay?;
+
+define method merge-category
+    (table :: <syntax-table>, name :: <symbol>, category :: <word-category>)
+    => ();
+  let current = element(table.syntax-table-entries, name,
+			default: $default-word-info);
+  unless (member?(category, current.word-info-categories))
+    table.syntax-table-entries[name]
+      := element(current.word-info-sub-infos, category)
+  end unless;
+end method merge-category;
+
+
+
+// Tokenizer interface.
+
+define primary abstract open class <tokenizer> (<object>)
+end class <tokenizer>;
+
+define open generic get-token (tokenizer :: <tokenizer>)
+    => token :: <token>;
+
+define open generic unget-token (tokenizer :: <tokenizer>, token :: <token>)
+    => ();
+
+define open generic note-potential-end-point (tokenizer :: <tokenizer>) => ();
+
+define method note-potential-end-point (tokenizer :: <tokenizer>) => ();
+end method note-potential-end-point;
+
+
+
+// Library dump support.
+
+define constant $token-slots
+  = list(source-location, source-location:, #f,
+	 token-kind, kind:, #f);
+
+add-make-dumper(#"token", *compiler-dispatcher*, <token>,
+		$token-slots);
+
+define constant $symbol-token-slots
+  = concatenate($token-slots,
+		list(token-symbol, symbol:, #f));
+
+define constant $identifier-token-slots
+  = concatenate($symbol-token-slots,
+		list(token-module, module:, #f,
+		     token-uniquifier, uniquifier:, #f));
+
+add-make-dumper(#"identifier-token", *compiler-dispatcher*, <identifier-token>,
+		$identifier-token-slots);
+
+add-make-dumper(#"uniquifier", *compiler-dispatcher*, <uniquifier>, #(),
+		load-external: #t);
+
+// We don't need to dump the precedence and associativity of operators because
+// they are a static property of the symbol.  We only have them as slots at
+// all so that they can be more effeciently accessed.
+//
+add-make-dumper(#"operator-token", *compiler-dispatcher*, <operator-token>,
+		$identifier-token-slots);
+
+add-make-dumper(#"constrained-name-token", *compiler-dispatcher*,
+		<constrained-name-token>,
+		concatenate($symbol-token-slots,
+			    list(token-constraint, constraint:, #f)));
+
+add-make-dumper(#"literal-token", *compiler-dispatcher*, <literal-token>,
+		concatenate($token-slots,
+			    list(token-literal, literal:, #f)));
+
+add-make-dumper(#"pre-parsed-token", *compiler-dispatcher*, <pre-parsed-token>,
+		concatenate($token-slots,
+			    list(token-parse-tree, parse-tree:, #f)));

@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.15 1996/02/21 16:09:38 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.16 1996/03/17 00:30:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -73,6 +73,9 @@ end;
 define open abstract class <abstract-constant-definition> (<definition>)
 end;
 
+define open abstract class <abstract-variable-definition> (<definition>)
+end;
+
 
 define open primary abstract class <function-definition>
     (<abstract-constant-definition>)
@@ -131,6 +134,15 @@ define open primary abstract class <class-definition>
     (<abstract-constant-definition>)
 end class;
 
+define open generic class-defn-defered-evaluations-function
+    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+
+define open generic class-defn-maker-function
+    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+
+
+
+
 
 // {check,make}-syntax-table-additions -- exported.
 //
@@ -138,33 +150,40 @@ end class;
 // table when some definition becomes accessable.
 //
 define open generic check-syntax-table-additions
-    (table :: <table>, defn :: false-or(<definition>), name :: <symbol>)
+    (table :: <syntax-table>, defn :: false-or(<definition>), name :: <symbol>)
     => ();
 define open generic make-syntax-table-additions
-    (table :: <table>, defn :: false-or(<definition>), name :: <symbol>)
+    (table :: <syntax-table>, defn :: false-or(<definition>), name :: <symbol>)
     => ();
 
 
 define method check-syntax-table-additions
-    (table :: <table>, defn :: <false>, name :: <symbol>) => ();
+    (table :: <syntax-table>, defn :: <false>, name :: <symbol>) => ();
+  //
+  // If there is no definition, then there is nothing to check.
 end;
 
 define method check-syntax-table-additions
-    (table :: <table>, defn :: <definition>, name :: <symbol>)
+    (table :: <syntax-table>, defn :: <definition>, name :: <symbol>)
     => ();
-  // For almost all definitions name shouldn't have any special syntax.
-  unless (merge-category(table, name, <name-token>))
-    error("Inconsistent syntax for %=", name);
+  //
+  // For almost all definitions name must be ordinary.
+  unless (category-merge-okay?(table, name, #"ordinary"))
+    compiler-error("Inconsistent syntax for %=", name);
   end;
 end;
 
 
 define method make-syntax-table-additions
-    (table :: <table>, defn :: <false>, name :: <symbol>) => ();
+    (table :: <syntax-table>, defn :: <false>, name :: <symbol>) => ();
+  //
+  // If there is no definition, then there is nothing to change.
 end;
 
 define method make-syntax-table-additions
-    (table :: <table>, defn :: <definition>, name :: <symbol>)
+    (table :: <syntax-table>, defn :: <definition>, name :: <symbol>)
     => ();
-  table[name] := merge-category(table, name, <name-token>);
+  //
+  // Change the word to be guaranteed ordinary.
+  merge-category(table, name, #"ordinary");
 end;
