@@ -196,17 +196,28 @@ define method source-location (state :: <parse-state>)
   source-location(state.tokenizer);
 end method;
 
+
+// Some C type specifiers that do not themselves represent complete types.
+// These are used in process-type-list below.
+//
+define constant <c-type-specifier> =
+  type-union(<c-type>, <incomplete-type-specifier>);
+define class <incomplete-type-specifier> (<object>) end;
+define constant $c-unknown-type = make(<incomplete-type-specifier>);
+define constant $c-signed-type = make(<incomplete-type-specifier>);
+define constant $c-unsigned-type = make(<incomplete-type-specifier>);
+
 // We may have a jumble of type specifiers.  Rationalize them into a
 // predefined type or user defined type.
 //
-define method process-type-list
+define function process-type-list
     (types :: <list>, state :: <parse-state>)
-/* => (result :: <type-declaration>);
+ => (result :: <c-type>)
 
   // This is just an ad-hoc state machine.  It could have been incorporated
   // into the grammar, but since it wasn't, we have to sort out the mess by
-  // hand. 
-  let type = unknown-type;
+  // hand.
+  let type :: <c-type-specifier> = $c-unknown-type;
   for (specifier in types)
     type := select (specifier by instance?)
 // We are now using the preprocessor to eliminate these tokens before they
@@ -217,83 +228,82 @@ define method process-type-list
 //		type;
 	      <char-token> =>
 		select (type)
-		  unknown-type, signed-type => char-type;
-		  unsigned-type => unsigned-char-type;
+		  $c-unknown-type, $c-signed-type => $c-char-type;
+		  $c-unsigned-type => $c-unsigned-char-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <char-token>, got %=", type);
 		end select;
 	      <short-token> =>
 		select (type)
-		  unknown-type, signed-type => short-type;
-		  unsigned-type => unsigned-short-type;
+		  $c-unknown-type, $c-signed-type => $c-short-type;
+		  $c-unsigned-type => $c-unsigned-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <short-token>, got %=", type);
 		end select;
 	      <long-token> =>
 		// "long long" is an idiom supported by gcc, so we'll
 		// recognize it, without actually supporting access.
 		select (type)
-		  long-type => longlong-type;
-		  unsigned-long-type => unsigned-longlong-type;
-		  unknown-type, signed-type => long-type;
-		  unsigned-type => unsigned-long-type;
+		  $c-long-type => $c-long-long-type;
+		  $c-unsigned-long-type => $c-unsigned-long-long-type;
+		  $c-unknown-type, $c-signed-type => $c-long-type;
+		  $c-unsigned-type => $c-unsigned-long-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <long-token>, got %=", type);
 		end select;
 	      <int-token> =>
 		select (type)
-		  unknown-type, signed-type => int-type;
-		  unsigned-type => unsigned-int-type;
-		  longlong-type, unsigned-longlong-type,
-		  long-type, unsigned-long-type,
-		  short-type, unsigned-short-type => type;
+		  $c-unknown-type, $c-signed-type => $c-int-type;
+		  $c-unsigned-type => $c-unsigned-int-type;
+		  $c-long-long-type, $c-unsigned-long-long-type,
+		  $c-long-type, $c-unsigned-long-type,
+		  $c-short-type, $c-unsigned-short-type => type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <int-token>, got %=", type);
 		end select;
 	      <signed-token> =>
 		select (type)
-		  unknown-type => signed-type;
-		  long-type => long-type;
-		  char-type => char-type;
-		  short-type => short-type;
+		  $c-unknown-type => $c-signed-type;
+		  $c-long-type => $c-long-type;
+		  $c-char-type => $c-char-type;
+		  $c-short-type => $c-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <signed-token>, got %=", type);
 		end select;
 	      <unsigned-token> =>
 		select (type)
-		  unknown-type => unsigned-type;
-		  long-type => unsigned-long-type;
-		  char-type => unsigned-char-type;
-		  short-type => unsigned-short-type;
+		  $c-unknown-type => $c-unsigned-type;
+		  $c-long-type => $c-unsigned-long-type;
+		  $c-char-type => $c-unsigned-char-type;
+		  $c-short-type => $c-unsigned-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <unsigned-token>, got %=", type);
 		end select;
 	      <float-token> =>
 		select (type)
-		  unknown-type => float-type;
+		  $c-unknown-type => $c-float-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <float-token>, got %=", type);
 		end select;
 	      <double-token> =>
 		select (type)
-		  unknown-type => double-type;
-		  long-type => long-double-type;
+		  $c-unknown-type => $c-double-type;
+		  $c-long-type => $c-long-double-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <double-token>, got %=", type);
 		end select;
 	      <void-token> =>
 		select (type)
-		  unknown-type => void-type;
+		  $c-unknown-type => $c-void-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <void-token>, got %=", type);
 		end select;
 	      otherwise =>
 		// user defined types are passed on unmodified
 		select (type)
-		  unknown-type => specifier;
+		  $c-unknown-type => specifier;
 		  otherwise => parse-error(state, "Bad type specifier for user type, got %=", type);
 		end select;
 	    end select;
   end for;
   select (type)
-    unknown-type => parse-error(state, "Bad type specifier (unknown type)");
-    unsigned-type => unsigned-int-type;
-    signed-type => int-type;
+    $c-unknown-type => parse-error(state, "Bad type specifier (unknown type)");
+    $c-unsigned-type => $c-unsigned-int-type;
+    $c-signed-type => $c-int-type;
     otherwise => type;
   end select;
-*/
-end method process-type-list;
+end function process-type-list;
 
 // Deals with the odd idiomatic data structures which result from the LALR
 // parser generator.  These might take the form of 
