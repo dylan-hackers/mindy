@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.1 1998/05/03 19:55:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.2 1999/02/25 06:46:15 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,8 +101,8 @@ define module expanders
 
   export
     split-fragment-at-commas, expression-from-fragment,
-    extract-name, extract-boolean, extract-properties,
-    make-magic-fragment;
+    extract-name, extract-boolean, extract-identifier-or-false,
+    extract-identifier, extract-properties, make-magic-fragment;
 
 end module expanders;
 
