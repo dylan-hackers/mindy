@@ -1,13 +1,18 @@
 
-if ($win32) {
-    # Need to do funky stuff because we rename the file as well as copy it
-    push(@install_dependencies, "\$(DESTDIR)/bin/gen-makefile.perl");
-    print <<EOF;
+# rename_and_install(destdir, old_name, new_name) -- Only works on
+# win32, because it's only used on win32.
+sub rename_and_install {
+    local ($destdir, $old_name, $new_name) = @_;
+    push(@install_dependencies, "\$(DESTDIR)/$destdir/$new_name");
+    print "\n";
+    print "\$(DESTDIR)/$destdir/$new_name : \$(SRCDIR)/$old_name\n";
+    print "\tattrib -R \$(DESTDIR)\\$destdir\\$new_name\n";
+    print "\tcopy \$(SRCDIR)\\$old_name \$(DESTDIR)\\$destdir\\$new_name\n";
+}    
 
-\$(DESTDIR)/bin/gen-makefile.perl : \$(SRCDIR)/gen-makefile
-	attrib -R \$(DESTDIR)\\bin\\gen-makefile.perl
-	copy \$(SRCDIR)\\gen-makefile \$(DESTDIR)\\bin\\gen-makefile.perl
-EOF
+if ($win32) {
+    do rename_and_install('bin', 'gen-makefile', 'gen-makefile.perl');
+    do rename_and_install('bin', 'mk-build-tree', 'mk-build-tree.perl');
 } else {
     do install_executable_from_src('bin', 'gen-makefile');
 }
