@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.6 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.7 2001/05/31 03:00:03 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -273,13 +273,13 @@ define method initialize
 end;
 
 
-define constant boolean-ctype
-    = method () => boolean-ctype :: <ctype>;
+define constant boolean-ctype-extent
+    = method () => boolean-ctype-extent :: <ctype>;
 	specifier-type(#"<boolean>").ctype-extent;
       end method;
 
 define class <instance?> (<operation>)
-  inherited slot derived-type, init-function: boolean-ctype;
+  inherited slot derived-type, init-function: boolean-ctype-extent;
   slot type :: <ctype>, required-init-keyword: type:;
 end;
 
