@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.37 2003/06/11 18:17:20 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.38 2003/07/02 16:56:30 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -221,9 +221,8 @@ end;
 
 define module System
   use Dylan-Viscera,
-    import: {\%%primitive,
-	     
-	     // Foreign interface stuff.
+    import: {
+             // Foreign interface stuff.
 	     \call-out, \c-include, \c-system-include,
 	     \c-decl, \c-local-decl, \c-expr, \c-literal,
 	     \c-struct-field, \c-struct-field-setter,
@@ -315,14 +314,8 @@ define module magic
 	     class-row,
 	     closure-var,
 	     closure-var-setter,
-	     \define-constant,
-	     \define-generic,
-	     \define-variable,
 	     disable-catcher,
 	     find-slot-offset,
-	     \for-aux,
-	     \for-aux2,
-	     \for-clause,
 	     fast-class-instance?,
 	     general-call,
 	     general-rep-getter,
@@ -339,7 +332,6 @@ define module magic
 	     make-rest-arg,
 	     maybe-do-deferred-evaluations,
 	     missing-required-init-keyword-error,
-	     \mv-call,
 	     no-applicable-methods-error,
 	     odd-number-of-keyword/value-arguments-error,
 	     override-init-function,

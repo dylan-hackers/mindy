@@ -140,6 +140,5 @@ define module testworks
          do-check-condition,
          do-benchmark,
          record-test-unit-crash,
-         \maybe-trap-errors,
          print-failure-reason;
 end module testworks;
