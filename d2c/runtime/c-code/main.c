@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.24 2003/07/02 16:54:36 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.25 2003/07/17 19:19:40 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +7,12 @@
 
 #include "config.h"
 #include "runtime.h"
+
+#if defined(HAVE_GC_H)
+#include <gc.h>
+#elif defined(HAVE_GC_GC_H)
+#include <gc/gc.h>
+#endif
 
 int application_argc;
 char **application_argv;
@@ -23,7 +29,11 @@ void GD_NORETURN not_reached(void)
    */
 void real_main(int argc, char *argv[])
 {
-    descriptor_t *sp = allocate_stack();
+    descriptor_t *sp;
+
+    GC_INIT();
+
+    sp = allocate_stack();
 
     /* Remember our arguments so we can support Harlequin-style
        application-name and application-arguments functions. Once we
