@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.8 2001/05/26 17:01:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.9 2002/07/27 12:14:39 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1629,9 +1629,16 @@ end;
 define method macro-expand (form :: <macro-call-parse>)
     => expansion :: <expression-parse>;
 
-  fix-source-location(parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form))),
+  fix-source-location(parse-body(macro-expansion-tokenizer(form)),
                       form.source-location);
 end method macro-expand;
+
+// macro-expansion-tokenizer -- exported.
+//
+define method macro-expansion-tokenizer (form :: <macro-call-parse>)
+ => (tokenizer :: <tokenizer>);
+  make(<fragment-tokenizer>, fragment: macro-expand-aux(form));
+end method;
 
 // macro-expand-aux -- internal.
 //
