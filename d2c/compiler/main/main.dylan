@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.43 1996/01/25 00:29:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.44 1996/01/27 20:25:57 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,19 +9,18 @@ define constant $cc-flags = getenv("CCFLAGS") | "";
 
 // Roots registry.
 
-define variable *roots* :: <stretchy-vector> = make(<stretchy-vector>);
+define variable *units* :: <stretchy-vector> = make(<stretchy-vector>);
 
-define method here-be-roots
-    (unit-prefix :: <byte-string>, roots :: <simple-object-vector>) => ();
-  add!(*roots*, vector(unit-prefix, roots));
+define method add-unit (info :: <unit-info>) => ();
+  add!(*units*, info);
 end;
-
-add-od-loader(*compiler-dispatcher*, #"here-be-roots",
+  
+add-od-loader(*compiler-dispatcher*, #"unit-info",
   method (state :: <load-state>) => res :: <byte-string>;
     let prefix = load-object-dispatch(state);
-    let roots = load-object-dispatch(state);
+    let undumped = load-object-dispatch(state);
     assert-end-object(state);
-    here-be-roots(prefix, roots);
+    add-unit(make(<unit-info>, unit-name: prefix, undumped-objects: undumped));
     prefix;
   end method
 );
@@ -231,7 +230,7 @@ define method compile-library
   let init-functions = make(<stretchy-vector>);
   let unit = make(<unit-state>, prefix: unit-prefix);
   let objects-stream = make(<byte-string-output-stream>);
-  let other-units = map-as(<simple-object-vector>, first, *roots*);
+  let other-units = map-as(<simple-object-vector>, unit-name, *units*);
   for (file in files, tlfs in tlf-vectors)
     block ()
       format(*debug-output*, "Processing %s\n", file);
@@ -307,6 +306,22 @@ define method compile-library
     end;
     format(objects-stream, " %s", o-name);
   end;
+
+  format(*debug-output*, "Emitting Library Heap.\n");
+  let s-name = concatenate(unit-prefix, "-heap.s");
+  let heap-stream = make(<file-stream>, name: s-name, direction: #"output");
+  let undumped = build-local-heap(unit-prefix, unit.unit-init-roots,
+				  heap-stream);
+  close(heap-stream);
+  let o-name = concatenate(unit-prefix, "-heap.o");
+  let cc-command
+    = format-to-string("gcc %s -c %s -o %s", $cc-flags, s-name, o-name);
+  format(*debug-output*, "%s\n", cc-command);
+  unless (zero?(system(cc-command)))
+    cerror("so what", "cc failed?");
+  end;
+  format(objects-stream, " %s", o-name);
+
   let objects = string-output-stream-string(objects-stream);
   
   begin
@@ -325,10 +340,9 @@ define method compile-library
       format(*debug-output*, "Emitting Initial Heap.\n");
       let heap-stream 
 	= make(<file-stream>, name: "heap.s", direction: #"output");
-      here-be-roots(unit-prefix,
-		    as(<simple-object-vector>,
-		       unit.unit-init-roots));
-      build-initial-heap(*roots*, heap-stream);
+      add-unit(make(<unit-info>, unit-name: unit-prefix,
+		    undumped-objects: as(<simple-object-vector>, undumped)));
+      build-initial-heap(*units*, heap-stream);
       close(heap-stream);
     end;
 
@@ -338,8 +352,8 @@ define method compile-library
       write("#include <runtime.h>\n\n", stream);
       write("/* This file is machine generated.  Do not edit. */\n\n", stream);
       write("void inits(descriptor_t *sp)\n{\n", stream);
-      for (unit in *roots*)
-	format(stream, "    %s_init(sp);\n", unit[0]);
+      for (unit in *units*)
+	format(stream, "    %s_init(sp);\n", unit.unit-name);
       end;
       write("}\n", stream);
       close(stream);
@@ -351,8 +365,8 @@ define method compile-library
 	flags := concatenate(flags, " -L", dir);
       end;
       let unit-libs = "";
-      for (unit in *roots*)
-	unit-libs := concatenate(" -l", unit[0], unit-libs);
+      for (unit in *units*)
+	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
       let command
 	= concatenate("gcc ", flags, " -L/lib/pa1.1 -o ", executable,
@@ -375,9 +389,8 @@ define method compile-library
       end;
     end;
 
-    dump-simple-object(#"here-be-roots", dump-buf, unit-prefix,
-		       as(<simple-object-vector>,
-			  unit.unit-init-roots));
+    dump-simple-object(#"unit-info", dump-buf, unit-prefix,
+		       as(<simple-object-vector>, undumped));
 
     end-dumping(dump-buf);
   end;
