@@ -421,10 +421,13 @@ register-object-id(#"ct-method", #x0082);
 register-object-id(#"ct-entry-point", #x0083);
 register-object-id(#"function-signature", #x0084);
 register-object-id(#"function-key-info", #x0085);
+
+// Names, modules, & the like
 register-object-id(#"basic-name", #x0086);
 register-object-id(#"type-cell-name", #x0087);
 register-object-id(#"method-name", #x0088);
 register-object-id(#"module-variable", #x0089);
+register-object-id(#"module", #x008A);
 
 // FER:
 register-object-id(#"compiler-policy", #x0090);
