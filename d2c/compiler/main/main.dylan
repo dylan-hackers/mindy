@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.82 1996/08/07 00:37:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.83 1996/08/07 14:08:58 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -709,7 +709,7 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
   write(stream,
 	"void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
   for (unit in *units*)
-    format(stream, "    %s_init(sp);\n", unit.unit-name);
+    format(stream, "    %s_Library_init(sp);\n", unit.unit-name);
   end;
   if (entry-function-name)
     format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
@@ -933,7 +933,11 @@ define method build-unit-init-function
     => ();
   let init-func-guts = emit-init-functions(prefix, init-functions,
 					   0, init-functions.size, stream);
-  format(stream, "void %s_init(descriptor_t *sp)\n{\n%s}\n",
+  // The function this generated used to be called simply "%s_init",
+  // but that conflicted with the heap object of the same name.  (Of
+  // course, on the HP, the linker has separate namespaces for code
+  // and data, but most other platforms do not)
+  format(stream, "void %s_Library_init(descriptor_t *sp)\n{\n%s}\n",
 	 prefix, init-func-guts);
 end;
 
