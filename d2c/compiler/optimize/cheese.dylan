@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.102 1995/09/01 15:39:14 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.103 1995/10/02 01:44:27 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -4027,11 +4027,29 @@ define method insert-after
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-after(assign);
-  let new = combine-regions(combine-regions(before, insert), after);
+  let new = combine-regions(before, insert, after);
   new.parent := parent;
   replace-subregion(component, parent, region, new);
 end;
     
+define method insert-after
+    (component :: <component>, after :: <abstract-assignment>,
+     insert :: <simple-region>) => ();
+  let region = after.region;
+  for (assign = insert.first-assign then assign.next-op,
+       while: assign)
+    assign.region := region;
+  end for;
+  if (after.next-op)
+    after.next-op.prev-op := insert.last-assign;
+  else
+    region.last-assign := insert.last-assign;
+  end if;
+  insert.last-assign.next-op := after.next-op;
+  insert.first-assign.prev-op := after;
+  after.next-op := insert.first-assign;
+end method insert-after;
+
 define method insert-after
     (component :: <component>, assign :: <abstract-assignment>,
      insert :: <empty-region>)
@@ -4055,9 +4073,28 @@ define method insert-before
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-before(assign);
-  let new = combine-regions(combine-regions(before, insert), after);
+  let new = combine-regions(before, insert, after);
   new.parent := parent;
   replace-subregion(component, parent, region, new);
+end;
+    
+define method insert-before
+    (component :: <component>, before :: <abstract-assignment>,
+     insert :: <simple-region>)
+    => ();
+  let region = before.region;
+  for (assign = insert.first-assign then assign.next-op,
+       while: assign)
+    assign.region := region;
+  end for;
+  if (before.prev-op)
+    before.prev-op.next-op := insert.first-assign;
+  else
+    region.first-assign := insert.first-assign;
+  end if;
+  insert.first-assign.prev-op := before.prev-op;
+  insert.last-assign.next-op := before;
+  before.prev-op := insert.last-assign;
 end;
     
 define method insert-before
