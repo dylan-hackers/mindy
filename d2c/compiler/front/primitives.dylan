@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.31 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.32 1996/04/06 07:07:57 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,6 +53,9 @@ define class <primitive-info> (<identity-preserving-mixin>)
   slot priminfo-emitter :: false-or(<function>),
     init-value: #f;
 end;
+
+define sealed domain make (singleton(<primitive-info>));
+define sealed domain initialize (<primitive-info>);
 
 define method print-object
     (info :: <primitive-info>, stream :: <stream>) => ();
@@ -149,6 +152,10 @@ define-primitive
 define-primitive
   (#"invoke-generic-entry", #(#"<method>", #"<list>", #"cluster"),
    #(values:, rest:, #"<object>"));
+
+define-primitive
+  (#"main-entry", #(#"<method>"), #"<raw-pointer>",
+   pure: #t);
 
 define-primitive
   (#"values", #(rest:, #"<object>"), #(values:, rest:, #"<object>"),
@@ -465,8 +472,3 @@ define-primitive
   (#"object-address", #(#"<object>"), #"<raw-pointer>",
    pure: #t);
 
-// Seals for file primitives.dylan
-
-// <primitive-info> -- subclass of <identity-preserving-mixin>
-define sealed domain make(singleton(<primitive-info>));
-define sealed domain initialize(<primitive-info>);
