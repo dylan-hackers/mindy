@@ -1,7 +1,16 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.8 1995/06/10 12:35:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.9 1995/12/10 15:24:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+
+// Feature tokens.
+
+define abstract class <feature-token> (<token>) end;
+define class <feature-if-token> (<feature-token>) end;
+define class <feature-else-if-token> (<feature-token>) end;
+define class <feature-else-token> (<feature-token>) end;
+define class <feature-end-token> (<feature-token>) end;
 
 
 // Constructors.
@@ -614,7 +623,8 @@ define constant $Initial-State$ =
 			      pair("bB", #"sharp-b"),
 			      pair("oO", #"sharp-o"),
 			      pair("xX", #"sharp-x"),
-			      pair("eE", #"sharp-e")),
+			      pair("eE", #"sharp-e"),
+			      pair("iI", #"sharp-i")),
 			state(#"sharp-paren", <sharp-paren-token>),
 			state(#"sharp-bracket", <sharp-bracket-token>),
 			state(#"true", <true-token>),
@@ -640,6 +650,8 @@ define constant $Initial-State$ =
 			state(#"sharp-all-key", #f,
 			      pair("sS", #"sharp-all-keys")),
 			state(#"sharp-all-keys", <all-keys-token>),
+			state(#"sharp-i", #f, pair("fF", #"sharp-if")),
+			state(#"sharp-if", <feature-if-token>),
 			state(#"sharp-quote", #f,
 			      pair('"', #"quoted-keyword"), 
 			      pair('\\', #"sharp-quote-escape"),
@@ -662,9 +674,19 @@ define constant $Initial-State$ =
 			      pair("0-9", #"extended-integer"),
 			      pair("bB", #"sharp-b"),
 			      pair("oO", #"sharp-o"),
-			      pair("xX", #"sharp-x")),
+			      pair("xX", #"sharp-x"),
+			      pair("lL", #"sharp-el"),
+			      pair("nN", #"sharp-en")),
 			state(#"sharp-e-minus", #f,
 			      pair("0-9", #"extended-integer")),
+			state(#"sharp-el", #f, pair("sS", #"sharp-els")),
+			state(#"sharp-els", #f, pair("eE", #"sharp-els")),
+			state(#"sharp-else", <feature-else-token>,
+			      pair("iI", #"sharp-els")),
+			state(#"sharp-elsei", #f, pair("fF", #"sharp-els")),
+			state(#"sharp-elseif", <feature-else-if-token>),
+			state(#"sharp-en", #f, pair("dD", #"sharp-end")),
+			state(#"sharp-end", <feature-end-token>),
 			state(#"extended-integer", parse-integer-literal,
 			      pair("0-9", #"extended-integer")),
 			state(#"lparen", <left-paren-token>),
@@ -897,6 +919,98 @@ define constant $Initial-State$ =
   end;
 
 
+// Features.
+
+define variable *features* :: <list> = #();
+
+define method add-feature (feature :: <symbol>) => ();
+  *features* := add-new!(*features*, feature);
+end method add-feature;
+
+define method remove-feature (feature :: <symbol>) => ();
+  *features* := remove!(*features*, feature);
+end method remove-feature;
+
+define method feature-present? (feature :: <symbol>) => present? :: <boolean>;
+  member?(feature, *features*);
+end method feature-present?;
+						    
+
+// Conditional compilation stuff.
+
+define class <conditional-state> (<object>)
+  slot active? :: <boolean>,
+    required-init-keyword: active:;
+  slot do-else? :: <boolean>,
+    required-init-keyword: do-else:;
+  slot seen-else? :: <boolean>,
+    init-value: #f;
+  slot old-state :: false-or(<conditional-state>),
+    init-value: #f, init-keyword: old-state:;
+end class <conditional-state>;
+
+define method active? (state == #f) => res :: <boolean>;
+  #t;
+end method active?;
+
+
+define method parse-error (token :: <token>) => ();
+  compiler-error("syntax error in feature condition at or before %=", token);
+end method parse-error;
+
+
+define method parse-feature-term (lexer :: <lexer>) => res :: <boolean>;
+  let token = internal-get-token(lexer);
+  select (token by instance?)
+    <left-paren-token> =>
+      parse-feature-expr(lexer);
+    <tilde-token> =>
+      ~parse-feature-term(lexer);
+    type-or(<word-token>, <core-word-token>) =>
+      feature-present?(token.token-symbol);
+    otherwise =>
+      parse-error(token);
+  end select;
+end method parse-feature-term;
+
+
+define method parse-feature-expr (lexer :: <lexer>) => res :: <boolean>;
+  block (return)
+    let res = parse-feature-term(lexer);
+    while (#t)
+      let token = internal-get-token(lexer);
+      select (token by instance?)
+	<right-paren-token> =>
+	  return(res);
+	<binary-operator-token> =>
+	  select (token.token-symbol)
+	    #"&" =>
+	      if (~parse-feature-term(lexer))
+		res := #f;
+	      end if;
+	    #"|" =>
+	      if (parse-feature-term(lexer))
+		res := #t;
+	      end if;
+	    otherwise =>
+	      parse-error(token);
+	  end select;
+	otherwise =>
+	  parse-error(token);
+      end select;
+    end while;
+  end block;
+end method parse-feature-expr;
+    
+define method parse-conditional (lexer :: <lexer>) => res :: <boolean>;
+  let token = internal-get-token(lexer);
+  unless (instance?(token, <left-paren-token>))
+    parse-error(token);
+  end unless;
+  parse-feature-expr(lexer);
+end method parse-conditional;
+
+
 // lexer
 
 // <lexer> -- exported.
@@ -919,6 +1033,8 @@ define class <lexer> (<tokenizer>)
   //
   // A list of tokens that have been unread.
   slot pushed-tokens :: <list>, init-value: #();
+  //
+  slot conditional-state :: false-or(<conditional-state>), init-value: #f;
 end;
 
 define method print-object (lexer :: <lexer>, stream :: <stream>) => ();
@@ -1030,11 +1146,11 @@ define method skip-multi-line-comment (lexer :: <lexer>,
   next(seen-nothing, start, 1);
 end method;
 
-// get-token -- exported.
+// internal-get-token -- internal.
 //
 // Tokenize the next token and return it.
 //
-define method get-token (lexer :: <lexer>) => res :: <token>;
+define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   if (lexer.pushed-tokens ~= #())
     //
     // There are some unread tokens, so extract one of them instead of
@@ -1169,12 +1285,66 @@ define method get-token (lexer :: <lexer>) => res :: <token>;
   end;
 end;
 
+define method get-token (lexer :: <lexer>) => token :: <token>;
+  block (return)
+    while (#t)
+      let token = internal-get-token(lexer);
+      select (token by instance?)
+	<feature-if-token> =>
+	  let cond = parse-conditional(lexer);
+	  lexer.conditional-state
+	    := if (lexer.conditional-state.active?)
+		 make(<conditional-state>, active: cond, do-else: ~cond);
+	       else
+		 make(<conditional-state>, active: #f, do-else: #f);
+	       end if;
+	  
+	<feature-else-if-token> =>
+	  if (lexer.conditional-state == #f)
+	    compiler-error("#elseif with no matching #if");
+	  elseif (lexer.conditional-state.seen-else?)
+	    compiler-error("#elseif after #else in one #if");
+	  elseif (parse-conditional(lexer))
+	    lexer.conditional-state.active?
+	      := lexer.conditional-state.do-else?;
+	    lexer.conditional-state.do-else? := #f;
+	  else
+	    lexer.conditional-state.active? := #f;
+	  end if;
+
+	<feature-else-token> =>
+	  if (lexer.conditional-state == #f)
+	    compiler-error("#else with no matching #if");
+	  elseif (lexer.conditional-state.seen-else?)
+	    compiler-error("#else after #else in one #if");
+	  else
+	    lexer.conditional-state.seen-else? := #t;
+	    lexer.conditional-state.active?
+	      := lexer.conditional-state.do-else?;
+	  end if;
+
+	<feature-end-token> =>
+	  if (lexer.conditional-state == #f)
+	    compiler-error("#end with no matching #if");
+	  else
+	    lexer.conditional-state := lexer.conditional-state.old-state;
+	  end;
+	  
+	otherwise =>
+	  if (lexer.conditional-state.active?)
+	    return(token);
+	  end if;
+      end select;
+    end while;
+  end block;
+end method get-token;
+
 // unget-token -- exported.
 //
 // Pushes token back so that the next call to get-token will return
 // it.  Used by the parser when it wants to put back its lookahead
 // token.
 //
-define method unget-token (lexer :: <lexer>, token) => ();
+define method unget-token (lexer :: <lexer>, token :: <token>) => ();
   lexer.pushed-tokens := pair(token, lexer.pushed-tokens);
 end;
