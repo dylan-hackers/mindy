@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.22 1995/04/30 10:36:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.23 1995/05/01 06:53:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -274,6 +274,22 @@ define method build-exit
   ignore(policy);
   let res = make(<exit>, source-location: source,
 		 block: target, next: target.exits);
+  target.exits := res;
+  add-body-region(builder, res);
+  res;
+end method;
+
+
+define method build-return
+    (builder :: <internal-builder>, policy :: <policy>,
+     source :: <source-location>, target :: <block-region>,
+     operands :: union(<list>, <leaf>))
+ => ();
+  ignore(policy);
+  let res = make-operand-dependencies(builder,
+				      make(<return>, source-location: source,
+					   block: target, next: target.exits),
+				      operands);
   target.exits := res;
   add-body-region(builder, res);
   res;
@@ -572,14 +588,11 @@ end;
 //
 define method build-method-body
     (builder :: <fer-builder>, policy :: <policy>,
-     source :: <source-location>,
-     arg-vars :: <list>,
-     result-vars :: type-or(<leaf>, <list>))
+     source :: <source-location>, arg-vars :: <list>)
  => res :: <leaf>;
   ignore(policy);
   let prologue = make-operand-dependencies(builder, make(<prologue>), #());
   let leaf = make(<lambda>, source-location: source, prologue: prologue);
-  make-operand-dependencies(builder, leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
   build-let(builder, policy, source, arg-vars, prologue);

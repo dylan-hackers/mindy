@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.7 1995/04/27 00:53:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.8 1995/05/01 06:48:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -79,6 +79,16 @@ define generic build-block-body
 define generic build-exit
     (builder :: <flow-builder>, policy :: <policy>,
      source :: <source-location>, target :: <block-region>)
+ => ();
+
+
+// Returns are just like exits, but return a set of values from the target
+// method region.
+//
+define generic build-return
+    (builder :: <flow-builder>, policy :: <policy>,
+     source :: <source-location>, target :: <method-region>,
+     operands :: union(<list>, <leaf>))
  => ();
 
 
@@ -222,15 +232,12 @@ define generic make-exit-function
 
 
 // Makes a fixed-arg method literal.  The formal argument variables are
-// represented by a list of already-allocated lexical-vars.  Similarly, the
-// body is expected to deliver the result(s) to the specified variable(s).  A
-// values-cluster can be specified as the result location.
+// represented by a list of already-allocated lexical-vars.
 //
 define generic build-method-body
     (builder :: <fer-builder>, policy :: <policy>,
      source :: <source-location>,
-     arg-vars :: <list>,
-     result-vars :: type-or(<leaf>, <list>))
+     arg-vars :: <list>)
  => res :: <leaf>;
 
 
