@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.60 1996/02/21 17:03:15 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.61 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -792,7 +792,7 @@ define method generic-defn-discriminator (gf :: <generic-definition>)
     => res :: false-or(<ct-function>);
   if (gf.%generic-defn-discriminator == #"not-computed-yet")
     gf.%generic-defn-discriminator
-      := if (discriminator-possible?(gf))
+      := if (discriminator-possible?(gf) & gf.generic-defn-methods.size > 1)
 	   let sig = gf.function-defn-signature;
 	   make(<ct-function>,
 		name: format-to-string("Discriminator for %s", gf.defn-name),
@@ -819,8 +819,7 @@ end;
 
 define method discriminator-possible? (gf :: <generic-definition>)
     => res :: <boolean>;
-  if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
-	& gf.generic-defn-methods.size > 1)
+  if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?)
     block (return)
       for (meth in gf.generic-defn-methods)
 	if (meth.function-defn-hairy?)
