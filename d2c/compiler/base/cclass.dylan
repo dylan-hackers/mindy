@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.11 1995/05/29 20:59:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.12 1995/05/29 23:09:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -300,9 +300,13 @@ end;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
     => (result :: <ctype>, precise :: <boolean>);
-  if (type1.sealed? & type2.sealed?)
+  if (type1.sealed?)
     values(reduce(ctype-union, empty-ctype(),
-		  intersection(type1.subclasses, type2.subclasses)),
+		  choose(rcurry(csubtype?, type2), type1.subclasses)),
+	   #t);
+  elseif (type2.sealed?)
+    values(reduce(ctype-union, empty-ctype(),
+		  choose(rcurry(csubtype?, type1), type2.subclasses)),
 	   #t);
   else
     let primary1 = type1.closest-primary-superclass;
