@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.3 1995/10/30 13:09:14 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.4 1995/11/11 22:44:05 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -153,7 +153,7 @@ add-od-loader(*default-dispatcher*, #"ratio",
 //
 define method integer-decode-float
     (float :: <float>, precision :: <fixed-integer>)
- => ();
+ => (frac :: <extended-integer>, exp :: <fixed-integer>);
   let fclass = object-class(float);
   let lim = as(fclass, ash(1, precision));
   let two = as(fclass, 2);
@@ -172,14 +172,14 @@ define method integer-decode-float
     current := current / two;
     exponent := exponent + 1;
   end if;
-  values(as(<extended-integer>, current), exponent);
+  values(as(<extended-integer>, truncate(current)), exponent);
 end method;
 
     
 // Float methods:
 
 define method dump-od(obj :: <single-float>, buf :: <dump-buffer>) => ();
-  let (frac, exp) = integer-decode-float(obj);
+  let (frac, exp) = integer-decode-float(obj, 23);
   dump-simple-object(#"single-float", buf, frac, exp);
 end method;
 
