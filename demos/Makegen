@@ -7,7 +7,7 @@ do emit_library_rule(
     'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
 do emit_library_rule(
-    'strext-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
 do emit_library_rule(
     'craps', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
