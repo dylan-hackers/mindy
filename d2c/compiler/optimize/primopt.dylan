@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.5 2001/07/24 06:20:37 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.6 2001/10/13 22:09:31 gabor Exp $
 copyright: see below
 
 
@@ -575,6 +575,9 @@ define method sign-and-bits-from-type (ctype :: <limited-integer-ctype>)
   sign-and-bits-from-range(ctype.high-bound, ctype.low-bound);
 end method sign-and-bits-from-type;
 
+define generic sign-and-bits-from-range
+    (high :: false-or(<extended-integer>), low :: false-or(<extended-integer>))
+    => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
 
 define method sign-and-bits-from-range
     (high :: <extended-integer>, low :: <extended-integer>)
@@ -747,7 +750,7 @@ define-primitive-transformer
      let arg = primitive.depends-on.source-exp;
      let arg-type = arg.derived-type;
      let false-type = specifier-type(#"<false>");
-     if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
+     if (csubtype?(arg.derived-type, boolean-ctype()))
        replace-expression(component, primitive.dependents, arg);
      elseif (~ctypes-intersect?(arg-type, false-type))
        replace-expression(component, primitive.dependents,
@@ -891,11 +894,13 @@ define-primitive-transformer
      let y = primitive.depends-on.dependent-next.source-exp;
      let y-type = y.derived-type;
      if (instance?(x-type, <limited-integer-ctype>)
-	   & instance?(y-type, <limited-integer-ctype>))
-       if (x-type.high-bound < y-type.low-bound)
+	 & instance?(y-type, <limited-integer-ctype>))
+       if (x-type.high-bound & y-type.low-bound
+	   & x-type.high-bound < y-type.low-bound)
 	 replace-expression(component, primitive.dependents,
 			    make-literal-constant(make-builder(component), #t));
-       elseif (x-type.low-bound >= y-type.high-bound)
+       elseif (x-type.low-bound & y-type.high-bound
+	       & x-type.low-bound >= y-type.high-bound)
 	 replace-expression(component, primitive.dependents,
 			    make-literal-constant(make-builder(component), #f));
        end;
