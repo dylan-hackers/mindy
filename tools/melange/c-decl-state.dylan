@@ -286,10 +286,9 @@ define method process-declarator
 		      name: anonymous-name(), equiv: pointer-to(tp, state));
       process-declarator(decl, declarator.tail.tail, state);
     (declarator.head == #"function") =>
-      // rgs: We must add code later to canonicalize these and declare the
-      // ones which we have pointers to.  On the other hand, we can't easily
-      // create c function pointers anyway, so it probably doesn' matter in
-      // the short run. 
+      // rgs: For now, we simple equate all function types to
+      // <function-pointer>.  At some later date, we will actually
+      // provide distinct types canonicalized by their signatures.
       let params = second(declarator);
       let real-params = if (params.size == 1 & first(params).type == void-type)
 			  #();
@@ -304,6 +303,8 @@ define method process-declarator
 			  result: make(<result-declaration>,
 				       name: "result", type: tp),
 			  params: real-params);
+      // See above
+      equate(new-type, "<function-pointer>");
       process-declarator(new-type, declarator.tail.tail, state);
     otherwise =>
       parse-error(state, "unknown type modifier");
