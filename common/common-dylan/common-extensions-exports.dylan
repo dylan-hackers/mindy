@@ -4,6 +4,7 @@ define library common-extensions
   use dylan;
 
   // Only import transcendentals if we have them.
+  // XXX - library should be named 'transcendentals'
 #if (~compiled-for-solaris)
   use transcendental,
     export: { transcendental };
@@ -12,83 +13,92 @@ define library common-extensions
   export
     common-extensions,
     finalization,
-    simple-debugging,
     simple-io,
     simple-random,
-    machine-word,
-    byte-vector;
+    simple-profiling,
+    byte-vector,
+    machine-word;
 end library;
 
 define module common-extensions
   use dylan;
   use extensions,
-    import: {integer-length,
+    rename: {$not-supplied => $unsupplied,
+	     on-exit => register-exit-application-function},
+    export: {integer-length,
 	     false-or,
 	     one-of,
 	     subclass,
 	     <format-string-condition>,
-	     $not-supplied => $unsupplied,
+	     $unsupplied,
 	     ignore,
-             key-exists?,
+	     key-exists?,
 	     assert,
-	     exit => exit-application,
-	     on-exit => register-exit-application-function,
+	     register-exit-application-function,
 	     <stretchy-sequence>,
 	     <object-deque>,
-	     <stretchy-object-vector>},
-    export: all;
+	     <stretchy-object-vector>};
+  use %Hash-Tables,
+    export: {remove-all-keys!};
 
-  // Unsupplied, unfound.
   export
-    // $unsupplied,
-    $unfound;
+    /* Numerics */
+    //integer-length,
 
-  // Locators.
-  export
-    <locator>,
-    supports-open-locator?,
-    open-locator,
-    supports-list-locator?,
-    list-locator;
+    /* Unsupplied, unfound */
+    //$unsupplied,
+    $unfound,
 
-/* UNIMPLEMENTED:
-  export
+    /* Collections */
     //<object-deque>,
     //<stretchy-sequence>,
     //<stretchy-object-vector>,
     concatenate!,
     position,
-    // key-exists?,
-    remove-all-keys!,
+    //remove-all-keys!,
     difference,
-    fill-table,
+    fill-table!,
     find-element,
-*/
+    //key-exists?,
 
-  export
-    // <format-string-condition>,
-    condition-to-string;
+    /* Conditions */
+    //<format-string-condition>,
+    condition-to-string,
 
-  export
-    // assert,
-    // UNIMPLEMENTED: debug-message,
-    debug-assert;
+    /* Debugging */
+    //assert,
+    debug-message,
+    debug-assert,
 
-  export
-    // ignore,
-    ignorable;
+    /* Types */
+    //false-or,
+    //one-of,
+    //subclass,
 
-/* UNIMPLEMENTED:
-  export
+    /* Ignoring */
+    //ignore,
+    ignorable,
+
+    /* Converting to and from numbers */
+    /* UNIMPLEMENTED
     float-to-string,
     integer-to-string,
     number-to-string,
-    string-to-integer;
-*/
+    string-to-integer,
+    */
+
+    /* Appliation runtime environment */
+    /* UNIMPLEMENTED
+    application-name,
+    application-filename,
+    application-arguments,
+    */
+    exit-application;
+    //register-exit-application-function,
 
 #if (d2c)
   export
-    // UNIMPLEMENTED: \table-definer,
+    \table-definer,
     \iterate,
     \when;
 #endif
@@ -98,11 +108,15 @@ define module finalization
   // XXX - Needs definition. No-op stubs OK.
 end module;
 
+define module simple-io
+  // XXX - Needs definition.
+end module;
+
 define module simple-random
   // XXX - Needs definition.
 end module;
 
-define module machine-word
+define module simple-profiling
   // XXX - Needs definition.
 end module;
 
@@ -111,3 +125,21 @@ define module byte-vector
     export: {<byte>,
 	     <byte-vector>};
 end module;
+
+define module machine-word
+  // XXX - Needs definition.
+end module;
+
+/*
+  Stream protocol.
+*/
+
+/*
+  // Locators.
+  export
+    <locator>,
+    supports-open-locator?,
+    open-locator,
+    supports-list-locator?,
+    list-locator;
+*/

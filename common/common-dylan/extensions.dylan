@@ -72,6 +72,16 @@ define open generic condition-to-string
 
 
 //=========================================================================
+//  Application environment functions.
+//=========================================================================
+//  Finding yourself and your arguments; exiting.
+
+define function exit-application (exit-code :: <integer>) => ()
+  exit(exit-code: exit-code);
+end;
+
+
+//=========================================================================
 //  Debugging & assertions
 //=========================================================================
 //  Some of this may move to simple-debugging.
@@ -113,6 +123,8 @@ end;
 //=========================================================================
 //  Miscellaneous macros exported from common-extensions. These are not
 //  available under Mindy.
+//
+//  XXX - can the name bound by 'iterate' return?
 
 #if (d2c)
 
