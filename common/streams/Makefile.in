@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.2 1996/06/12 21:53:12 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.3 1996/07/04 17:55:03 bfw Exp $
 ##
 ##  This is the makefile for the Mindy streams library, streams.dbc.
 ##
@@ -71,7 +71,7 @@ all: new-streams-lib.dbc streams-lib.dbc
 
 NEWMINDYFLAGS = -lNew-Streams
 
-NEWOBJS = new-library.dbc new-internals.dbc new-streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc
+NEWOBJS = new-library.dbc new-internals.dbc new-streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc bbso-stream.dbc
 
 new-streams-lib.dbc: ${NEWOBJS}
 	cat ${NEWOBJS} > $@
@@ -94,8 +94,8 @@ file-streams.dbc: ${SRCDIR}/file-streams.dylan
 	${MC} ${NEWMINDYFLAGS} -o file-streams.dbc ${SRCDIR}/file-streams.dylan
 wrapper-streams.dbc: ${SRCDIR}/wrapper-streams.dylan
 	${MC} ${NEWMINDYFLAGS} -o wrapper-streams.dbc ${SRCDIR}/wrapper-streams.dylan
-#standard-io.dbc: ${SRCDIR}/standard-io.dylan
-#	${MC} ${NEWMINDYFLAGS} -o standard-io.dbc ${SRCDIR}/standard-io.dylan
+bbso-stream.dbc: ${SRCDIR}/bbso-stream.dylan
+	${MC} ${NEWMINDYFLAGS} -o bbso-stream.dbc ${SRCDIR}/bbso-stream.dylan
 
 ##
 ## Old streams
