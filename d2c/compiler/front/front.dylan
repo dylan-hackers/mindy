@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.13 1995/04/23 02:59:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.14 1995/04/24 03:24:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -19,6 +19,9 @@ operation
 	error-call
 	mv-call
     prologue
+    catcher
+    pitcher
+
 
 variable-info
     module-var-info
@@ -131,6 +134,29 @@ end class;
 define class <prologue> (<operation>)
 end;
 
+// Used by blocks/exits to pass up the values.
+define class <pitcher> (<operation>)
+  inherited slot derived-type,
+    init-function: curry(make-values-ctype, #(), #f);
+  slot pitched-type :: <values-ctype>,
+    init-function: wild-ctype;
+  slot catcher :: <catcher>, required-init-keyword: catcher:;
+  slot pitcher-next :: union(<false>, <pitcher>), required-init-keyword: next:;
+end;
+
+define class <catcher> (<operation>)
+  inherited slot depends-on, init-value: #f;
+  //
+  // The pitchers that are throwing to this catcher, threaded though
+  // pitcher-next.
+  slot pitchers :: union(<false>, <pitcher>), init-value: #f;
+  //
+  // If there is an exit function that jumps to this block, then this is it.
+  // If false, then all potential exits are explicitly represented by
+  // <pitcher> and <exit-region> objects.
+  slot exit-function :: false-or(<exit-function>), init-value: #f;
+end;
+
 
 
 // Constants and variables:
@@ -196,7 +222,8 @@ define constant <function-visibility>
   = one-of(#"global", #"local", #"deleted");
 
 define abstract class <function-literal> (<leaf>)
-  inherited slot derived-type, init-value: <function>;
+
+  inherited slot derived-type, init-function: function-ctype;
 
   // An indication of what kind of references to this function can exist:
   //
@@ -283,7 +310,7 @@ end class;
 //
 define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
 
-  // The signature describing what arguments are actually used.
+  // The signature for this function.
   slot signature :: <signature>, required-init-keyword: signature:;
 
   // The main entry-point into the function, which takes all arguments
@@ -301,7 +328,8 @@ end class;
 define class <exit-function> (<function-literal>)
   //
   // The region that this exit function exits to.
-  slot target-region :: <fer-block-region>;
+  slot target-region :: <fer-block-region>,
+    required-init-keyword: target-region:
 end class;
 
 
@@ -334,10 +362,9 @@ end class;
 //
 define class <fer-exit-block-region> (<fer-block-region>)
   //
-  // If there is an exit function that jumps to this block, then this is it.
-  // If false, then all potential exits are explicitly represented by
-  // <exit-region> objects.
-  slot exit-function :: false-or(<exit-function>), init-value: #f;
+  // The catcher operation for this block.
+  slot catcher :: <catcher>,
+    init-function: curry(make, <catcher>);
 end class;
 
 // FER-Cleanup-Block-Region represents a block/cleanup clause.  Somehow...
