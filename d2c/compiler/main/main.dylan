@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.17 1999/04/11 05:21:55 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.18 1999/04/13 05:17:52 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -211,14 +211,30 @@ define method test-parse
   end block;
 end method test-parse;
 
+define function translate-abstract-filename (abstract-name :: <byte-string>)
+ => (physical-name :: <byte-string>)
+  // XXX - We should eventually replace this with a routine that checks
+  // for foo.dylan and then foo.dyl, preferably using some sort of abstract
+  // locator translation. But for now, we keep it simple.
+  concatenate(abstract-name, ".dylan");
+end;
 
 define method parse-lid (state :: <main-unit-state>) => ();
   let source = make(<source-file>, name: state.unit-lid-file);
   let (header, start-line, start-posn) = parse-header(source);
-  
+
+  // We support to types of lid files: old "Gwydion LID" and new
+  // "official LID". The Gwydion format had a series of file names after
+  // the header; the new format has a 'Files:' keyword in the header. We
+  // grab the keyword value, transform the filenames in a vaguely appropriate
+  // fashion, and then grab anything in the body "as is". This handles both
+  // formats. See translate-abstract-filename for details of the new format.
   let contents = source.contents;
   let end-posn = contents.size;
-  let files = make(<stretchy-vector>);
+  let files = map-as(<stretchy-vector>,
+		     translate-abstract-filename,
+		     split-at-whitespace(element(header, #"files",
+						 default: "")));
 
   local
     method repeat (posn :: <integer>)
