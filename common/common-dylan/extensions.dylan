@@ -150,30 +150,47 @@ define function debug-message
   format( *standard-error*, format-string, format-arguments );
 end function;
 
-define macro assert 
+#if(mindy)
+
+  define method assert(value :: <boolean>, #rest noise)
+  =>(result :: <boolean>)
+      if(value)
+          error("An assertion failed.");
+      end if;
+    
+      #f;
+  end method assert;
+
+  define constant debug-assert = assert;
+
+#else
+
+  define macro assert 
   { assert(?value:expression, ?format-string:expression, ?format-args:expression) }
   =>{	block()
-            unless (value)
-                let error-string :: <string> = format-to-string(format-string, format-args);
-                error(error-string);
-            end unless;
-        #f;
-        end block; }
+              unless (value)
+                  let error-string :: <string> = format-to-string(format-string, format-args);
+                  error(error-string);
+              end unless;
+          #f;
+          end block; }
   { assert(?value:expression) }
   =>{	block()
-            unless (value)
-                error("An assertion failed.");
-            end unless;
-            #f;
-        end block; }
-end macro assert;
+              unless (value)
+                  error("An assertion failed.");
+              end unless;
+              #f;
+          end block; }
+  end macro assert;
 
-define macro debug-assert
-    { debug-assert(?value:expression, ?format-string:expression, ?format-args:expression) }
+  define macro debug-assert
+      { debug-assert(?value:expression, ?format-string:expression, ?format-args:expression) }
   =>{ assert(?value, ?format-string, format-args) }
-    { debug-assert(?value:expression) }
+      { debug-assert(?value:expression) }
   =>{ assert(?value) }
-end macro debug-assert;
+  end macro debug-assert;
+
+#endif
 
 //=========================================================================
 //  Ignore & ignorable
