@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.2 1995/01/10 13:57:22 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.3 1995/04/29 08:28:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -498,3 +498,105 @@ define method generic-defn-seal-info (gf :: <generic-definition>)
   end;
   gf.%generic-defn-seal-info;
 end method;
+
+
+
+// ct-sorted-applicable-methods
+//
+// Return a guess at the applicable methods for call with arguments of the
+// given types as list of <method-definition>s, or #f if we can't tell.  If we
+// can tell that no methods are applicable, we return the empty list.
+// 
+// The methods returned might not be applicable, but if they arn't then
+// nothing is.
+// 
+define method ct-sorted-applicable-methods
+    (gf :: <generic-definition>, call-types :: <list>)
+    => res :: union(<list>, <false>);
+  block (return)
+    if (gf.generic-defn-sealed?)
+      let meths = gf.generic-defn-methods;
+      if (meths == #())
+	return(#());
+      elseif (meths.tail == #())
+	return(meths);
+      end;
+    end;
+
+    let seals = generic-defn-seal-info(gf);
+    let candidate-seal = #f;
+    block (found)
+      for (child in seals)
+	select (compare-specializers(child.seal-types, call-types, #f))
+	  #"disjoint" => #f;
+	  #">", "unordered" =>
+	    candidate-seal := child;
+	    found();
+	  otherwise =>
+	    if (candidate-seal)
+	      return(#f);
+	    else
+	      candidate-seal := child;
+	    end;
+	end;
+      end;
+    end;
+    unless (candidate-seal)
+      return(#f);
+    end;
+    
+    for (hairy in candidate-seal.hairy-methods)
+      let hairy-specs = hairy.function-defn-signature.specializers;
+      unless (compare-specializers(hairy-specs, call-types, #f) == #"disjoint")
+	return(#f);
+      end;
+    end;
+
+    // Okay, we have a candidate seal.  Now grovel it finding the most
+    // specific potentially applicable method.
+    find-applicable(candidate-seal.method-tree, #(), call-types);
+  end;
+end;
+
+
+define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
+    => res :: false-or(<list>);
+  block (punt)
+    block (found)
+      let intersects-with = #f;
+      for (sub in mt.tail)
+	select (compare-specializers(get-specializers(sub), types, #f))
+	  #"disjoint" =>
+	    #f;
+	  #">" =>
+	    intersects-with := sub;
+	    found();
+	  otherwise =>
+	    if (intersects-with)
+	      // It intersects with two things at this level.  Give up.
+	      punt(#f);
+	    else
+	      intersects-with := sub;
+	    end;
+	end;
+      end;
+      if (intersects-with)
+	find-applicable(intersects-with,
+			if (mt.head)
+			  pair(mt.head, nexts);
+			else
+			  nexts;
+			end,
+			types);
+      else
+	nexts;
+      end;
+    end;
+  end;
+end;
+
+define method find-applicable
+    (meth :: <method-definition>, nexts :: <list>, types :: <list>)
+    => res :: <list>;
+  pair(meth, nexts);
+end;
