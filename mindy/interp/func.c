@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.17 1994/04/18 05:43:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.18 1994/04/21 01:28:30 rgs Exp $
 *
 * This file does whatever.
 *
@@ -85,6 +85,7 @@ static void trace_return(obj_t *old_sp, obj_t *vals, int nvals)
 
 struct gf_cache {
     obj_t class;
+    boolean simple;
     obj_t cached_result;
     int size;
     obj_t cached_classes[0];
@@ -97,6 +98,7 @@ obj_t make_gf_cache(int req_args, obj_t cached_result)
     struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
     int i;
 
+    gfc->simple = TRUE;
     gfc->cached_result = cached_result;
     gfc->size = req_args;
     for (i = 0; i < req_args; i++)
@@ -362,80 +364,76 @@ void invoke_methods(obj_t method, obj_t next_methods,
    several calls to gfd_applicable_method_p and will be set to false if the 
    method depends upon anything other than the types of the args. */
 static boolean
-    gfd_applicable_method_p(obj_t method, obj_t *args, boolean *can_cache)
+    gfd_applicable_method_p(obj_t method, obj_t *args, obj_t cache)
 {
     obj_t specializers = METHOD(method)->specializers;
-    boolean l_can_cache = *can_cache;
-    boolean all_class_only = l_can_cache;
-    boolean any_class_only = FALSE;
-    boolean applicable = TRUE;
+    obj_t *cached_classes = obj_ptr(struct gf_cache *, cache)->cached_classes;
 
     while (specializers != obj_Nil) {
 	obj_t arg = *args++;
-	obj_t arg_class = object_class(arg);
+	obj_t arg_class = *cached_classes++;
 	obj_t specializer = HEAD(specializers);
 
 	if (!subtypep(arg_class, specializer))
-	    if (instancep(arg, specializer))
-		all_class_only = FALSE;
-	    else {
-		if (!any_class_only && l_can_cache)
-		    any_class_only = !overlapp(arg_class, specializer);
-		if (!l_can_cache || any_class_only) {
-		    /* no further info can be gained, so return */
-		    *can_cache = l_can_cache && any_class_only;
-		    return FALSE;
+	    if (instancep(arg, specializer)) {
+		*(cached_classes - 1) = singleton(arg);
+		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
+	    } else {
+		if (overlapp(arg_class, specializer)) {
+		    *(cached_classes - 1) = singleton(arg);
+		    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 		}
-		applicable = FALSE;
+		return FALSE;
 	    }
 	specializers = TAIL(specializers);
     }
-    if (applicable)
-	*can_cache = all_class_only;
-    else
-	*can_cache = l_can_cache && any_class_only;
-    return applicable;
+    return TRUE;
 }
 
 static boolean applicable_method_p(obj_t method, obj_t *args)
 {
     obj_t cache = METHOD(method)->class_cache;
     int max = METHOD(method)->required_args;
-    boolean can_cache = TRUE;
+    int i;
+    obj_t cache_elem, *cache_class, *arg;
+    boolean result;
 
     if (cache != obj_False) {
-	obj_t *cache_class = obj_ptr(struct gf_cache *, cache)->cached_classes;
-	obj_t *arg = args;
-	int i;
 	boolean found = TRUE;
 
-	for (i = 0; i < max; i++, arg++, cache_class++) {
-	    if (*cache_class != object_class(*arg)) {
-		found = FALSE;
-		break;
+	struct gf_cache *c = obj_ptr(struct gf_cache *, cache);
+	cache_class = c->cached_classes;
+	arg = args;
+
+	if (c->simple)
+	    for (i = 0; i < max; i++, arg++, cache_class++) {
+		if (*cache_class != object_class(*arg)) {
+		    found = FALSE;
+		    break;
+		}
 	    }
-	}
+	else
+	    for (i = 0; i < max; i++, arg++, cache_class++) {
+		if (!instancep(*arg, *cache_class)) {
+		    found = FALSE;
+		    break;
+		}
+	    }
 	if (found)
 	    return TRUE;
     }
 
     /* It wasn't in the cache.... */
-    if (gfd_applicable_method_p(method, args, &can_cache)) {
-	if (can_cache) {
-	    int i;
-	    obj_t cache_elem =
-		(cache == obj_False) ? make_gf_cache(max, obj_False) : cache;
-	    obj_t *cache_class = obj_ptr(struct gf_cache *,
-					 cache_elem)->cached_classes;
-	    obj_t *arg = args;
-	    
-	    for (i = 0; i < max; i++, arg++, cache_class++)
-		*cache_class = object_class(*arg);
-	    METHOD(method)->class_cache = cache_elem;
-	}
-	return TRUE;
-    } else
-	return FALSE;
+    cache_elem = (cache == obj_False) ? make_gf_cache(max, obj_False) : cache;
+    cache_class = obj_ptr(struct gf_cache *, cache_elem)->cached_classes;
+    arg = args;
+
+    for (i = 0; i < max; i++, arg++, cache_class++)
+	*cache_class = object_class(*arg);
+
+    result = gfd_applicable_method_p(method, args, cache_elem);
+    METHOD(method)->class_cache = cache_elem;
+    return result;
 }
 
 static boolean method_accepts_keyword(obj_t method, obj_t keyword)
@@ -1019,12 +1017,18 @@ static obj_t
     obj_t ordered = obj_Nil;
     obj_t ambiguous = obj_Nil;
     obj_t scan, *prev;
-    boolean can_cache = TRUE;
+    int i, max = gf->required_args;
+    obj_t cache_elem = make_gf_cache(max, obj_False);
+    obj_t *cache = obj_ptr(struct gf_cache *, cache_elem)->cached_classes;
+    obj_t *arg = args;
+    
+    for (i = 0; i < max; i++, arg++, cache++)
+	*cache = object_class(*arg);
 
     while (methods != obj_Nil) {
 	obj_t method = HEAD(methods);
 
-	if (gfd_applicable_method_p(method, args, &can_cache)) {
+	if (gfd_applicable_method_p(method, args, cache_elem)) {
 	    for (prev=&ordered; (scan=*prev) != obj_Nil; prev=&TAIL(scan)) {
 		switch (compare_methods(method, HEAD(scan), args)) {
 		  case method_MoreSpecific:
@@ -1076,16 +1080,8 @@ static obj_t
 	*prev = pair(obj_False, ambiguous);
     }
 
-    if (can_cache) {
-	int i, max = gf->required_args;
-	obj_t cache_elem = make_gf_cache(max, ordered);
-	obj_t *cache = obj_ptr(struct gf_cache *, cache_elem)->cached_classes;
-	obj_t *arg = args;
-
-	for (i = 0; i < max; i++, arg++, cache++)
-	    *cache = object_class(*arg);
-	gf->cache = pair(cache_elem, gf->cache);
-    }
+    obj_ptr(struct gf_cache *, cache_elem)->cached_result = ordered;
+    gf->cache = pair(cache_elem, gf->cache);
     return ordered;
 }
 
@@ -1108,12 +1104,20 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 	int i;
 	boolean found = TRUE;
 
-	for (i = 0; i < max; i++, arg++, cache_class++) {
-	    if (*cache_class != object_class(*arg)) {
-		found = FALSE;
-		break;
+	if (cache_elem->simple)
+	    for (i = 0; i < max; i++, arg++, cache_class++) {
+		if (*cache_class != object_class(*arg)) {
+		    found = FALSE;
+		    break;
+		}
 	    }
-	}
+	else
+	    for (i = 0; i < max; i++, arg++, cache_class++) {
+		if (!instancep(*arg, *cache_class)) {
+		    found = FALSE;
+		    break;
+		}
+	    }
 	if (found) {
 	    *prev = TAIL(cache);
 	    TAIL(cache) = true_gf->cache;
