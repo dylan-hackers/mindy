@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.35 2002/04/10 23:42:47 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.36 2002/04/12 20:19:34 gabor Exp $
 copyright: see below
 
 
@@ -1507,11 +1507,19 @@ define method class-defn-deferred-evaluations-function
 		   return(#t);
 		 end;
 	       end;
-	       // ### inherited each-subclass slots w/ non obvious init
+	       // Inherited each-subclass slots w/ non obvious init
 	       // values impose the existence of the deferred-evaluations
-	       // function. TODO
-	       
-	       // also indirect slots with non-ctv init-values/functions
+	       // function.
+	       for (override-defn in defn.class-defn-overrides)
+		 let info = override-defn.override-defn-info;
+		 if (instance?(info.override-slot, <each-subclass-slot-info>))
+		   if (info.override-init-value /* == #t е TODO (same as above?) */
+			| info.override-init-function)
+		     return(#t);
+		   end;
+		 end;
+	       end;
+	       // Also indirect slots with non-ctv init-values/functions
 	       // imply a deferred-evaluations function.
 	       for (slot-defn in defn.class-defn-slots)
 		 let info = slot-defn.slot-defn-info;
@@ -1800,6 +1808,7 @@ define method build-home-store
   (builder :: <fer-builder>,
    new :: <leaf>,
    slot-info :: <class-slot-info>,
+   override-info :: false-or(<override-info>), 
    policy :: <policy>,
    source :: <source-location>)
  => ()
@@ -1824,6 +1833,7 @@ define method build-home-store
   (builder :: <fer-builder>,
    new :: <leaf>,
    slot-info :: <each-subclass-slot-info>,
+   override-info :: false-or(<override-info>), 
    policy :: <policy>,
    source :: <source-location>)
  => ()
@@ -1833,9 +1843,14 @@ define method build-home-store
 	 make-literal-constant(builder, slot-info.slot-introduced-by),
 	 builder, policy, source);
   let meta-slot = slot-info.associated-meta-slot;
-  assert(~meta-slot.slot-initialized?-slot);
-  let meta-instance = meta-slot.slot-introduced-by;
-  let offset = find-slot-offset(meta-slot, meta-instance); // there may be more!!еее
+  assert(override-info | ~meta-slot.slot-initialized?-slot);
+  let meta-instance
+    = if (override-info)
+	override-info.override-introduced-by.class-metaclass;
+      else
+	meta-slot.slot-introduced-by;
+      end;
+  let offset = find-slot-offset(meta-slot, meta-instance); // there may be more than one!!еее
   build-assignment
     (builder, policy, source, #(),
      make-operation
@@ -1889,6 +1904,46 @@ define method convert-top-level-form
 	end;
       end;
 
+      local method update-indirect-slot(slot-info, override-info, slot-name, init-value, init-function, type,
+					init-value-var, make-init-value-var, init-function-leaf, type-var) => ();
+	  if (init-value) // later: init-value == #t TODO
+	    //
+	    // Copy over the value into the class instance.
+	    let var = init-value-var | make-init-value-var();
+	    unless (init-value-var)
+	      build-assignment
+		(evals-builder, policy, source, var,
+		 make-unknown-call
+		   (evals-builder,
+		    ref-dylan-defn(evals-builder, policy, source,
+				   if (override-info)
+				     #"override-init-value"
+				   else
+				     #"slot-init-value"
+				   end),
+		    #f,
+		    list(make-literal-constant(evals-builder, override-info | slot-info))));
+	    end unless;
+	    //
+	    // assign to the indirect slot.
+	    // cannot simply use the slot-setter because slot might be constant.
+	    build-home-store(evals-builder, var, slot-info, override-info, policy, source);
+	  elseif (init-function)
+	    //
+	    // Invoke the init function and store the result
+	    // into the class instance.
+	    
+	    let var = make-init-value-var();
+	    call-init-function(init-function, slot-info, override-info,
+			       slot-name, evals-builder, policy, source,
+			       var, init-function-leaf, type-var);
+
+	    // assign to the indirect slot.
+	    // cannot simply use the slot-setter because slot might be constant.
+	    build-home-store(evals-builder, var, slot-info, override-info, policy, source);
+	  end if;
+      end method update-indirect-slot;
+
       for (slot-defn in defn.class-defn-slots,
 	   index from 0)
 	let slot-info = slot-defn.slot-defn-info;
@@ -1919,8 +1974,6 @@ define method convert-top-level-form
 	      values(slot-type, #f);
 	    end;
 
-	let allocation = slot-defn.slot-defn-allocation;
-	
 	local method make-init-value-var() => var :: <initial-variable>;
 		make-local-var(evals-builder, symcat(slot-name, "-init-value"),
 			       type);
@@ -1962,10 +2015,9 @@ define method convert-top-level-form
 	// Now that the <slot-info> contains the proper values,
 	// we can begin to initialize the storage allocated for
 	// indirect slots (if they are not already).
-	// еее SAME HAS TO HAPPEN FOR OVERRIDES TOO (SEE BELOW)
 
 	if (instance?(slot-info, <indirect-slot-info>))
-	  if (init-value) // later: init-value == #t TODO
+/*	  if (init-value) // later: init-value == #t TODO
 	    //
 	    // Copy over the value into the class instance.
 	    let var = init-value-var | make-init-value-var();
@@ -1989,17 +2041,19 @@ define method convert-top-level-form
 	    // into the class instance.
 	    
 	    let var = make-init-value-var();
-	    call-init-function(init-function, slot-info, #f /* override ее */,
+	    call-init-function(init-function, slot-info, #f / * override ее * /,
 			       slot-name, evals-builder, policy, source,
 			       var, init-function-leaf, type-var);
 
 	    // assign to the indirect slot.
 	    // cannot simply use the slot-setter because slot might be constant.
 	    build-home-store(evals-builder, var, slot-info, policy, source);
-	  end if;
+	  end if;*/
+	  update-indirect-slot(slot-info, #f, slot-name, init-value, init-function, type,
+			       init-value-var, make-init-value-var, init-function-leaf, type-var);
 	end if;
 
-	unless (allocation == #"virtual")
+	unless (#"virtual" == slot-defn.slot-defn-allocation)
 	  if (type-var)
 	    local
 	      method build-call (name, #rest args)
@@ -2091,6 +2145,47 @@ define method convert-top-level-form
 	let slot-name = getter.variable-name;
 	let init-value = override-info.override-init-value;
 	let init-function = override-info.override-init-function;
+	let type = object-ctype(); /// еее as above!!!
+
+
+	local method make-init-value-var() => var :: <initial-variable>;
+		make-local-var(evals-builder, symcat(slot-name, "-init-value"),
+			       type);
+	      end; /// reuse ееее TODO
+
+
+	let (init-value-var, init-function-leaf) =
+	  if (init-value == #t)
+	    let var = make-init-value-var();
+	    fer-convert(evals-builder, override-defn.override-defn-init-value,
+			lexenv, #"assignment", var);
+	    build-assignment
+	      (evals-builder, policy, source, #(),
+	       make-unknown-call
+		 (evals-builder,
+		  ref-dylan-defn(evals-builder, policy, source,
+				 #"override-init-value-setter"),
+		  #f,
+		  list(var, make-literal-constant(evals-builder, override-info))));
+	    var;
+	  elseif (init-function == #t)
+	    let leaf = convert-init-function(evals-builder, getter,
+					     override-defn.override-defn-init-function,
+					     type);
+	    build-assignment
+	      (evals-builder, policy, source, #(),
+	       make-unknown-call
+		 (evals-builder,
+		  ref-dylan-defn(evals-builder, policy, source,
+				 #"override-init-function-setter"),
+		  #f,
+		  list(leaf, make-literal-constant(evals-builder, override-info))));
+	    values(#f, leaf);
+	  end if;
+
+
+
+#if (very-old)
 
 	if (init-value == #t | init-function == #t)
 	  let descriptor-leaf
@@ -2125,6 +2220,14 @@ define method convert-top-level-form
 		  #f,
 		  list(leaf, descriptor-leaf)));
 	  end if;
+	end if;
+#endif
+
+	// now update the each-subclass-slot
+	let slot-info = override-info.override-slot;
+	if (instance?(slot-info, <each-subclass-slot-info>))
+	  update-indirect-slot(slot-info, override-info, slot-name, init-value, init-function, type,
+			       init-value-var, make-init-value-var, init-function-leaf, /* еее type-var */ #f);
 	end if;
       end for;
     end;
