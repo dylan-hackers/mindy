@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.3 1994/12/17 02:21:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.4 1994/12/17 14:51:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -184,6 +184,7 @@ define method define-macro (defmacro :: <define-macro-parse>,
 		  main-rule-set: defmacro.defmacro-main-rule-set,
 		  auxiliary-rule-sets: defmacro.defmacro-auxiliary-rule-sets);
   find-wildcards(defn);
+  find-end-variables(defn, #t);
   find-intermediate-words(defn);
   note-variable-definition(defn);
 end;
@@ -346,7 +347,6 @@ define method expand-macro-aux (form :: <constituent>,
 end;
 
 
-
 define method find-intermediate-words (defn :: <macro-definition>)
     => res :: <simple-object-vector>;
   let aux-rule-sets = defn.macro-auxiliary-rule-sets;
@@ -554,6 +554,97 @@ define method find-intermediate-words-at-start (pattern :: <pattern-sequence>,
   end;
 end;
 
+
+
+define generic find-end-variables (within, at-end?) => ();
+
+define method find-end-variables (defn :: <macro-definition>,
+				  at-end? :: <boolean>)
+    => ();
+  for (rule in defn.macro-main-rule-set)
+    find-end-variables(rule, at-end?);
+  end;
+  for (rule-set in defn.macro-auxiliary-rule-sets)
+    for (rule in rule-set.rule-set-rules)
+      find-end-variables(rule, at-end?);
+    end;
+  end;
+end;
+
+define method find-end-variables (rule :: <rule>, at-end? :: <boolean>) => ();
+  find-end-variables(rule.rule-pattern, at-end?);
+end;
+
+define method find-end-variables (rule :: <abstract-define-rule>,
+				  at-end? :: <boolean>,
+				  #next next-method)
+    => ();
+  find-end-variables(rule.define-rule-modifiers-pattern, at-end?);
+  next-method();
+end;
+
+define method find-end-variables (pattern :: <pattern>, at-end? :: <boolean>)
+    => ();
+  let pieces = pattern.pattern-pieces;
+  let length = pieces.size;
+  unless (length == 0)
+    for (index from 0 below length - 1)
+      find-end-variables(pieces[index], #f);
+    finally
+      find-end-variables(pieces[index], at-end?);
+    end;
+  end;
+end;
+				 
+define method find-end-variables (pattern :: <pattern-list>,
+				  at-end? :: <boolean>)
+    => ();
+  let pieces = pattern.pattern-list-pieces;
+  let length = pieces.size;
+  unless (length == 0)
+    for (index from 0 below length - 1)
+      find-end-variables(pieces[index], #f);
+    finally
+      find-end-variables(pieces[index], at-end?);
+    end;
+  end;
+end;
+
+define method find-end-variables (pattern :: <pattern-sequence>,
+				  at-end? :: <boolean>)
+    => ();
+  let pieces = pattern.pattern-sequence-pieces;
+  let length = pieces.size;
+  unless (length == 0)
+    for (index from 0 below length - 1)
+      find-end-variables(pieces[index], #f);
+    finally
+      find-end-variables(pieces[index], at-end?);
+    end;
+  end;
+end;
+
+define method find-end-variables (pattern :: <property-list-pattern>,
+				  at-end? :: <boolean>)
+    => ();
+end;
+
+define method find-end-variables (pattern :: <simple-pattern>,
+				  at-end? :: <boolean>)
+    => ();
+end;
+
+define method find-end-variables (pattern :: <details-pattern>,
+				  at-end? :: <boolean>)
+    => ();
+  find-end-variables(pattern.pattern-sub-pattern, #t);
+end;
+
+define method find-end-variables (pattern :: <pattern-variable>,
+				  at-end? :: <boolean>)
+    => ();
+  pattern.patvar-at-end? := at-end?;
+end;
 
 
 define generic find-wildcards (within) => ();
@@ -1060,7 +1151,12 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
 		     fail, continue, results);
     #f =>
       if (pattern.patvar-wildcard?)
-	match-wildcard(pattern, fragment, fail, continue, results);
+	if (pattern.patvar-at-end?)
+	  continue(make(<fragment>), fail,
+		   add-binding(pattern, fragment, results));
+	else
+	  match-wildcard(pattern, fragment, fail, continue, results);
+	end;
       elseif (fragment.more?)
 	let head = fragment.fragment-head;
 	if (instance?(head, <balanced-piece>))
