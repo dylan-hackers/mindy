@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.46 1995/05/18 23:20:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.47 1995/05/21 03:06:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -776,9 +776,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		  variable-representation(defines, output-info)
 		end;
 
-      deliver-results(defines,
-		      vector(pair(ref-leaf(rep, var, output-info), rep)),
-		      #f, output-info);
+      deliver-result(defines, ref-leaf(rep, var, output-info), rep, #f,
+		     output-info);
     end;
   end;
 end;
@@ -800,7 +799,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
       format(stream, "if (!%s_initialized) abort();\n", name);
     end;
   end;
-  deliver-results(defines, vector(pair(name, rep)), #f, output-info);
+  deliver-result(defines, name, rep, #f, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -814,7 +813,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		     variable-representation(defines, output-info)
 		   end;
     let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
-    deliver-results(defines, vector(pair(expr, rep)), #f, output-info);
+    deliver-result(defines, expr, rep, #f, output-info);
   end;
 end;
 
@@ -823,10 +822,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
     => ();
   let info = get-info-for(leaf.const-defn, output-info);
-  deliver-results(defines,
-		  vector(pair(info.backend-var-info-name,
-			      info.backend-var-info-rep)),
-		  #f, output-info);
+  deliver-result(defines, info.backend-var-info-name,
+		  info.backend-var-info-rep, #f, output-info);
 end;
 
 define method emit-assignment (results :: false-or(<definition-site-variable>),
@@ -836,9 +833,9 @@ define method emit-assignment (results :: false-or(<definition-site-variable>),
   if (results)
     let rep = variable-representation(results, output-info);
     if (rep == $general-rep)
-      deliver-results(results, vector(pair("0", $heap-rep)), #f, output-info);
+      deliver-result(results, "0", $heap-rep, #f, output-info);
     else
-      deliver-results(results, vector(pair("0", rep)), #f, output-info);
+      deliver-result(results, "0", rep, #f, output-info);
     end;
   end;
 end;
@@ -1005,7 +1002,7 @@ define method emit-assignment
     end;
     deliver-results(results, result-exprs, #f, output-info);
   else
-    deliver-results(results, vector(pair(call, result-rep)), #t, output-info);
+    deliver-result(results, call, result-rep, #t, output-info);
   end;
 end;
 
@@ -1165,8 +1162,7 @@ define method emit-assignment
 				offset),
 	       ~slot.slot-read-only?);
       end;
-  deliver-results(results, vector(pair(expr, slot-rep)),
-		  now-dammit?, output-info);
+  deliver-result(results, expr, slot-rep, now-dammit?, output-info);
 end;
 
 define method emit-assignment
@@ -1181,7 +1177,7 @@ define method emit-assignment
   format(output-info.output-info-guts-stream,
 	 "SLOT(%s, %s, %d) = %s;\n",
 	 instance, slot-rep.representation-c-type, offset, new);
-  deliver-results(results, #[], #t, output-info);
+  deliver-results(results, #[], #f, output-info);
 end;
 
 
@@ -1192,7 +1188,7 @@ define method emit-assignment
   if (results)
     let rep = variable-representation(results, output-info);
     let source = extract-operands(op, output-info, rep);
-    deliver-results(results, vector(pair(source, rep)), #f, output-info);
+    deliver-result(results, source, rep, #f, output-info);
   end;
 end;
 
@@ -1238,8 +1234,8 @@ define method deliver-results
     (defines :: false-or(<definition-site-variable>), values :: <sequence>,
      now-dammit? :: <boolean>, output-info :: <output-info>)
     => ();
-  let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
+    let stream = output-info.output-info-guts-stream;
     let (bottom-name, top-name) = produce-cluster(defines, output-info);
     format(stream, "%s = %s + %d;\n", top-name, bottom-name, values.size);
     for (val in values, index from 0)
@@ -1255,6 +1251,35 @@ define method deliver-results
       if (var)
 	let false = make(<literal-false>);
 	for (var = var then var.definer-next,
+	     while: var)
+	  let target-rep = variable-representation(var, output-info);
+	  let (source-name, source-rep)
+	    = c-expr-and-rep(false, target-rep, output-info);
+	  deliver-single-result(var, source-name, source-rep, #f, output-info);
+	end;
+      end;
+    end;
+  end;
+end;
+
+define method deliver-result
+    (defines :: false-or(<definition-site-variable>), value :: <string>,
+     rep :: <representation>, now-dammit? :: <boolean>,
+     output-info :: <output-info>)
+    => ();
+  if (defines)
+    if (instance?(defines.var-info, <values-cluster-info>))
+      let stream = output-info.output-info-guts-stream;
+      let (bottom-name, top-name) = produce-cluster(defines, output-info);
+      format(stream, "%s = %s + 1;\n", top-name, bottom-name);
+      emit-copy(format-to-string("%s[0]", bottom-name), $general-rep,
+		value, rep, output-info);
+    else
+      deliver-single-result(defines, value, rep, now-dammit?, output-info);
+      let next = defines.definer-next;
+      if (next)
+	let false = make(<literal-false>);
+	for (var = next then var.definer-next,
 	     while: var)
 	  let target-rep = variable-representation(var, output-info);
 	  let (source-name, source-rep)
@@ -1301,7 +1326,7 @@ define-primitive-emitter
        => ();
      let nargs = extract-operands(operation, output-info, *long-rep*);
      let expr = format-to-string("((void *)(orig_sp - %s))", nargs);
-     deliver-results(results, vector(pair(expr, *ptr-rep*)), #f, output-info);
+     deliver-result(results, expr, *ptr-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1313,8 +1338,7 @@ define-primitive-emitter
      let (args, index) = extract-operands(operation, output-info,
 					  *ptr-rep*, *long-rep*);
      let expr = format-to-string("(((descriptor_t *)%s)[%s])", args, index);
-     deliver-results(results, vector(pair(expr, $general-rep)), #t,
-		     output-info);
+     deliver-result(results, expr, $general-rep, #t, output-info);
    end);
 
 define-primitive-emitter
@@ -1328,8 +1352,7 @@ define-primitive-emitter
 			  *ptr-rep*, *long-rep*, *long-rep*);
      let expr = format-to-string("make_rest_arg(%s + %s, %s - %s)",
 				 args, nfixed, nargs, nfixed);
-     deliver-results(defines, vector(pair(expr, $heap-rep)), #t,
-		     output-info);
+     deliver-result(defines, expr, $heap-rep, #t, output-info);
    end);
 
 define-primitive-emitter
@@ -1441,13 +1464,9 @@ define-primitive-emitter
        format(stream, "%s[%d] = %s;\n", stack-top, count,
 	      ref-leaf($general-rep, arg-dep.source-exp, output-info));
      finally
-       deliver-results
-	 (defines,
-	  vector(pair(format-to-string("make_rest_arg(%s, %s + %d)",
-				       stack-top, stack-top, count),
-		      $heap-rep)),
-	  #t,
-	  output-info);
+       let expr = format-to-string("make_rest_arg(%s, %s + %d)",
+				   stack-top, stack-top, count);
+       deliver-result(defines, expr, $heap-rep, #t, output-info);
      end;
    end);
 
@@ -1457,11 +1476,10 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
-     let expr = extract-operands(operation, output-info, $heap-rep);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s != NULL)", expr),
-				 $boolean-rep)),
-		     #f, output-info);
+     let expr = format-to-string("(%s != NULL)",
+				 extract-operands(operation, output-info,
+						  $heap-rep));
+     deliver-result(defines, expr, $boolean-rep, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1471,10 +1489,8 @@ define-primitive-emitter
 	   output-info :: <output-info>)
        => ();
      let bytes = extract-operands(operation, output-info, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("allocate(%s)", bytes),
-				 $heap-rep)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("allocate(%s)", bytes),
+		    $heap-rep, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1494,8 +1510,7 @@ define-primitive-emitter
 	       "data-word reference?");
      end;
      let source = extract-operands(operation, output-info, source-rep);
-     deliver-results(defines, vector(pair(source, target-rep)),
-		     #f, output-info);
+     deliver-result(defines, source, target-rep, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1521,6 +1536,128 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
+  (#"call-out",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let stream = make(<byte-string-output-stream>);
+
+     let func-dep = operation.depends-on;
+     let func = func-dep.source-exp;
+     unless (instance?(func, <literal-constant>)
+	       & instance?(func.value, <literal-string>))
+       error("function in call-out isn't a constant string?");
+     end;
+     format(stream, "%s(", func.value.literal-value);
+
+     let res-dep = func-dep.dependent-next;
+     let result-rep = rep-for-c-type(res-dep.source-exp);
+
+     local
+       method repeat (dep :: false-or(<dependency>), first? :: <boolean>)
+	 if (dep)
+	   unless (first?)
+	     write(", ", stream);
+	   end;
+	   let rep = rep-for-c-type(dep.source-exp);
+	   let next = dep.dependent-next;
+	   format(stream, "(%s)%s",
+		  rep.representation-c-type,
+		  ref-leaf(rep, next.source-exp, output-info));
+	   repeat(next.dependent-next, #f);
+	 end;
+       end;
+     repeat(res-dep.dependent-next, #t);
+
+     write(')', stream);
+
+     spew-pending-defines(output-info);
+     if (result-rep)
+       deliver-result(defines, string-output-stream-string(stream),
+		      result-rep, #t, output-info);
+     else
+       format(output-info.output-info-guts-stream, "%s;\n",
+	      string-output-stream-string(stream));
+       deliver-results(defines, #[], #f, output-info);
+     end;
+   end);
+
+     
+define method rep-for-c-type (leaf :: <leaf>)
+    => rep :: false-or(<representation>);
+  unless (instance?(leaf, <literal-constant>))
+    error("Type spec in call-out isn't a constant?");
+  end;
+  let ct-value = leaf.value;
+  unless (instance?(ct-value, <literal-symbol>))
+    error("Type spec in call-out isn't a symbol?");
+  end;
+  let c-type = ct-value.literal-value;
+  select (c-type)
+    #"long" => *long-rep*;
+    #"int" => *int-rep*;
+    #"unsigned-int" => *uint-rep*;
+    #"short" => *short-rep*;
+    #"unsigned-short" => *ushort-rep*;
+    #"char" => *byte-rep*;
+    #"unsigned-char" => *ubyte-rep*;
+    #"ptr" => *ptr-rep*;
+    #"float" => *float-rep*;
+    #"double" => *double-rep*;
+    #"long-double" => *long-double-rep*;
+    #"void" => #f;
+  end;
+end;
+
+define-primitive-emitter
+  (#"c-string",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let leaf = operation.depends-on.source-exp;
+     unless (instance?(leaf, <literal-constant>))
+       error("argument to c-string isn't a constant?");
+     end;
+     let lit = leaf.value;
+     unless (instance?(lit, <literal-string>))
+       error("argument to c-string isn't a string?");
+     end;
+     let stream = make(<byte-string-output-stream>);
+     write('"', stream);
+     for (char in lit.literal-value)
+       let code = as(<integer>, char);
+       if (char < ' ')
+	 select (char)
+	   '\b' => write("\\b", stream);
+	   '\t' => write("\\t", stream);
+	   '\n' => write("\\n", stream);
+	   '\r' => write("\\r", stream);
+	   otherwise =>
+	     format(stream, "\\0%d%d",
+		    ash(code, -3),
+		    logand(code, 7));
+	 end;
+       elseif (char == '"' | char == '\\')
+	 format(stream, "\\%c", char);
+       elseif (code < 127)
+	 write(char, stream);
+       elseif (code < 256)
+	 format(stream, "\\%d%d%d",
+		ash(code, -6),
+		logand(ash(code, -3), 7),
+		logand(code, 7));
+       else
+	 error("%= can't be represented in a C string.");
+       end;
+     end;
+     write('"', stream);
+     deliver-result(defines, string-output-stream-string(stream), *ptr-rep*,
+		    #f, output-info);
+   end);
+
+define-primitive-emitter
   (#"fixnum-=",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1528,10 +1665,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s == %s)", x, y),
-				 $boolean-rep)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s == %s)", x, y),
+		    $boolean-rep, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1542,10 +1677,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s < %s)", x, y),
-				 $boolean-rep)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s < %s)", x, y), $boolean-rep,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1556,10 +1689,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s + %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s + %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1570,10 +1701,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s * %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s * %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1584,10 +1713,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s - %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s - %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1597,9 +1724,8 @@ define-primitive-emitter
 	   output-info :: <output-info>)
        => ();
      let x = extract-operands(operation, output-info, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(- %s)", x), *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(- %s)", x), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1678,10 +1804,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s | %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s | %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1692,10 +1816,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s ^ %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s ^ %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1706,10 +1828,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(%s & %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(%s & %s)", x, y), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1719,9 +1839,8 @@ define-primitive-emitter
 	   output-info :: <output-info>)
        => ();
      let x = extract-operands(operation, output-info, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("(~ %s)", x), *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("(~ %s)", x), *long-rep*,
+		    #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1732,10 +1851,8 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-results(defines,
-		     vector(pair(format-to-string("fixnum_ash(%s, %s)", x, y),
-				 *long-rep*)),
-		     #f, output-info);
+     deliver-result(defines, format-to-string("fixnum_ash(%s, %s)", x, y),
+		    *long-rep*, #f, output-info);
    end);
 
 
