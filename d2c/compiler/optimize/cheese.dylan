@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.89 1995/06/09 19:01:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.90 1995/06/10 12:36:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -578,6 +578,7 @@ define method optimize-unknown-call
 			 else
 			   "exactly";
 			 end,
+			 sig.specializers.size,
 			 count);
 	bogus? := #t;
 	return();
@@ -791,6 +792,7 @@ define method compare-unknown-call-against-signature
 			 else
 			   "exactly";
 			 end,
+			 sig.specializers.size,
 			 count);
 	bogus? := #t;
 	return();
