@@ -1,4 +1,6 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
+#if !defined(__MACH__) || !defined(__APPLE__)
+#	include <sys/poll.h>
+#endif
