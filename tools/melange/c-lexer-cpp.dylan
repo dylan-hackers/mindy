@@ -176,6 +176,35 @@ define method check-cpp-expansion
   end case;
 end method check-cpp-expansion;
 
+define method open-in-include-path
+    (name :: <string>)
+ => (full-name :: false-or(<string>), stream :: false-or(<stream>));
+  if (first(name) == '/')
+    block ()
+      values(name, make(<file-stream>, locator: name, direction: #"input"));
+    exception (<file-does-not-exist-error>)
+      values(#f, #f);
+    end block;
+  else
+    // We don't have any "file-exists" functions, so we just keep trying
+    // to open files until one of them fails to signal an error.
+    block (return)
+      for (dir in include-path)
+	block ()
+	  let full-name = concatenate(dir, "/", name);
+	  let stream = make(<file-stream>, locator: full-name,
+			    direction: #"input");
+	  return(full-name, stream);
+	exception (<file-does-not-exist-error>)
+	  #f;
+	end block;
+      finally
+	values(#f, #f);
+      end for;
+    end block;
+  end if;
+end method open-in-include-path;
+
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
 // string combined with the enclosing file's directory or the "include-path".
@@ -194,25 +223,12 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	// full pathname is specified, we just use that.)
 	let name = copy-sequence(contents, start: angle-start + 1,
 				 end: angle-end - 1);
-	if (first(name) == '/')
-	  state.include-tokenizer := make(<tokenizer>,
-					  source: name, parent: state);
+	let (full-name, stream) = open-in-include-path(name);
+	if (full-name)
+	  state.include-tokenizer := make(<tokenizer>, source: stream,
+					  name: full-name, parent: state);
 	else
-	  // We don't have any "file-exists" functions, so we just keep trying
-	  // to open files until one of them fails to signal an error.
-	  for (stream = #f
-		 then block ()
-			state.include-tokenizer
-			  := make(<tokenizer>, parent: state,
-				  source: concatenate(dir, "/", name));
-		      exception (<file-does-not-exist-error>)
-			  #f;
-		      end block,
-	       dir in include-path,
-	       until: stream)
-	  finally
-	    stream | parse-error(state, "File not found: %s", name);
-	  end for;
+	  parse-error(state, "File not found: %s", name);
 	end if;
       else
 	// We've got a '""' name, so we should look in the same directory as
