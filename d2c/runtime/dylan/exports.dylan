@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.34 2003/05/25 15:39:17 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.35 2003/05/28 20:42:17 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -164,6 +164,7 @@ define module Extensions
              // Floats.
              decode-float, scale-float, float-radix,
              float-digits, float-precision,
+             integer-decode-float,
              $single-float-epsilon, $double-float-epsilon,
              $extended-float-epsilon,
              $minimum-single-float-exponent, $maximum-single-float-exponent,

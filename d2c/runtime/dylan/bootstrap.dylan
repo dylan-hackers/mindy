@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.33 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.34 2003/05/28 20:42:17 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -194,6 +194,7 @@ define module dylan-viscera
     <ratio>, ratio, numerator, denominator,
     decode-float, scale-float, float-radix,
     float-digits, float-precision,
+    integer-decode-float,
     $single-float-epsilon, $double-float-epsilon,
     $extended-float-epsilon,
     $minimum-single-float-exponent, $maximum-single-float-exponent,

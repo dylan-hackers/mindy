@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.9 2003/05/27 17:38:09 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.10 2003/05/28 20:42:17 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -527,6 +527,34 @@ define method as (class == <extended-integer>, num :: <float>)
     else
       bignum;
     end if;
+  end if;
+end method;
+
+define method integer-decode-float
+    (num :: <float>)
+ => (significand :: <extended-integer>,
+     exponent :: <integer>, sign :: <integer>);
+  let digits = float-digits(num);
+  let (significand, exponent, sign) = decode-float(num);
+  let sign = if(negative?(sign)) -1 else 1 end;
+
+  if (zero?(significand))
+    values(#e0, 0, sign);
+  else
+    let (top :: <integer>, rem :: <integer>)
+      = truncate/(digits, $digit-bits);
+    let bignum = make-bignum(top + 1);
+    local
+      method repeat (index :: <integer>, shift :: <integer>, float :: <float>)
+        unless (negative?(index))
+          let scaled = scale-float(float, shift);
+          let slice = truncate(scaled);
+          bignum-digit(bignum, index) := make-digit(slice);
+          repeat(index - 1, $digit-bits, scaled - slice);
+        end;
+      end method;
+    repeat(top, rem, significand);
+    values(bignum, exponent - digits, sign);
   end if;
 end method;
 
