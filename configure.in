@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.91 2002/04/28 20:52:49 gabor Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.92 2002/04/30 22:17:47 gabor Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -42,7 +42,7 @@ AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
 #--------------------------------------------------------------------
-# This is used in conjuction with the output of 'd2c --compiler-info'
+# This is used in conjunction with the output of 'd2c --compiler-info'
 # to decide when d2c needs a full bootstrap.  Increment the value here
 # whenever the dump format or the
 # interaction between the runtime and the compiler changes.
@@ -225,7 +225,7 @@ AC_SUBST(static)
 # Figure out what to do with Mindy.
 #--------------------------------------------------------------------
 
-# If self compiling, always run mindy out of the build area, since the
+# If self-compiling, always run mindy out of the build area, since the
 # installed version might be wrong.
 MINDY=$builddir/mindy/interp/mindy
 MC=$builddir/mindy/comp/mindycomp
