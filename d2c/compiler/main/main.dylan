@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.8 1995/05/01 06:55:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.9 1995/05/03 07:20:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -25,8 +25,9 @@ define method compile (#rest files) => res :: <component>;
   end;
   format(*debug-output*, "Finalizing definitions\n");
   do(finalize-top-level-form, $Top-Level-Forms);
-  format(*debug-output*, "inhereting slots\n");
+  format(*debug-output*, "inhereting slots, assigning unique ids\n");
   inherit-slots();
+  assign-unique-ids();
   format(*debug-output*, "seeding representations\n");
   seed-representations();
   format(*debug-output*, "laying out instances\n");
@@ -36,7 +37,7 @@ define method compile (#rest files) => res :: <component>;
   let builder = make-builder(component);
   let init-function
     = build-method-body(builder, $Default-Policy, make(<source-location>),
-			#());
+			"Top Level Initializations", #());
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
   build-return(builder, $Default-Policy, make(<source-location>),
 	       init-function, #());
