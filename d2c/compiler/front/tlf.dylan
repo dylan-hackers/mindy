@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.7 1996/01/15 12:51:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.8 1996/01/31 23:55:41 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -92,9 +92,15 @@ end;
 
 // Dump stuff.
 
+// If name's var isn't visible outside this library, don't bother dumping the
+// definition.
+//
 define method dump-od
     (tlf :: <simple-define-tlf>, state :: <dump-state>) => ();
-  dump-simple-object(#"define-binding-tlf", state, tlf.tlf-defn);
+  let defn = tlf.tlf-defn;
+  if (name-inherited-or-exported?(defn.defn-name))
+    dump-simple-object(#"define-binding-tlf", state, defn);
+  end if;
 end;
 
 add-od-loader(*compiler-dispatcher*, #"define-binding-tlf",
