@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.9 1996/06/24 20:20:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.10 1996/08/12 14:03:37 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -184,7 +184,16 @@ define macro for
 
   header:
     { ?v:variable in ?c:expression, ... }
-      => { for-clause(?v in ?c) ... }
+      => { for-clause(?v in ?c using forward-iteration-protocol) ... }
+    { ?v:variable in ?c:expression using ?p:expression, ... }
+      => { for-clause(?v in ?c using ?p) ... }
+    { ?v:variable keyed-by ?k:variable in ?c:expression, ... }
+      => { for-clause(?v keyed-by ?k in ?c using forward-iteration-protocol) 
+           ... }
+    { ?v:variable keyed-by ?k:variable in ?c:expression using ?p:expression, 
+      ... }
+      => { for-clause(?v keyed-by ?k in ?c using ?p) ... }
+
     { ?v:variable = ?e1:expression then ?e2:expression, ... }
       => { for-clause(?v = ?e1 then ?e2) ... }
     { ?v:variable from ?e1:expression ?to, ... }
@@ -217,16 +226,34 @@ define macro for-clause
     { for-clause(?v:variable = ?e1:expression then ?e2:expression) }
       => {, var1: ?v, init1: ?e1, next1: ?e2 }
 
-    // Collection clauses
-    { for-clause(?v:variable in ?c:expression) }
+    // Collection clauses without keyed-by
+    { for-clause(?v:variable in ?c:expression using ?protocol:expression) }
       => {, init0: [ let collection = ?c;
 		     let (initial-state, limit, next-state, finished-state?,
 			  current-key, current-element)
-		       = forward-iteration-protocol(collection); ]
+		       = ?protocol(collection); ]
 	  , var1: state, init1: initial-state
 	  , next1: next-state(collection, state)
 	  , stop1: finished-state?(collection, state, limit)
 	  , var2: ?v, next2: current-element(collection, state) }
+
+    // Collection clauses with keyed-by
+    //
+    // Because the compiler can't always optimize away extraneous
+    // calls to current-key (how does it know the function has no side
+    // effects?), we have a separate macro clause for for loops that
+    // use keyed-by.
+    { for-clause(?v:variable keyed-by ?k:variable in ?c:expression 
+		   using ?protocol:expression) }
+      => {, init0: [ let collection = ?c;
+		     let (initial-state, limit, next-state, finished-state?,
+			  current-key, current-element)
+		       = ?protocol(collection); ]
+	  , var1: state, init1: initial-state
+	  , next1: next-state(collection, state)
+	  , stop1: finished-state?(collection, state, limit)
+	  , var2: ?v, next2: current-element(collection, state)
+	  , var3: ?k, next3: current-key(collection, state) }
 
     // Numeric clauses (three different variants depending on to/by combos)
     { for-clause(?v:name :: ?t:expression from ?e1:expression
@@ -262,13 +289,16 @@ define macro for-aux2
 	       #key ??init0:*, ??var1:variable, ??init1:expression,
 		    ??next1:expression, ??stop1:expression = #f,
 		    ??var2:variable = ignore, ??next2:expression = #f,
-		    ??stop2:expression = #f;
+		    ??stop2:expression = #f,
+		    ??var3:variable = ignore, ??next3:expression = #f;
+                    // no stop3, though
       end }
       => { ??init0 ...
 	   local method repeat (??var1, ...)
 		   block (return)
 		     unless (??stop1 | ...)
 		       let (??var2, ...) = values(??next2, ...);
+		       let (??var3, ...) = values(??next3, ...);
 		       unless (??stop2 | ...)
 			 ?main;
 			 mv-call(return, repeat(??next1, ...));
