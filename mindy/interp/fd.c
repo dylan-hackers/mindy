@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.4 1994/04/04 17:40:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.5 1994/04/08 17:56:50 wlott Exp $
 *
 * This file does whatever.
 *
@@ -120,12 +120,13 @@ static void maybe_read(struct thread *thread)
     }
     else if (nfound == 0)
 	wait_for_input(thread, fd, maybe_read);
-
-    res = read(fd,
-	       buffer_data(fp[-7]) + fixnum_value(fp[-6]),
-	       fixnum_value(fp[-5]));
-
-    results(thread, pop_linkage(thread), res, make_fixnum(res));
+    else {
+	res = read(fd,
+		   buffer_data(fp[-7]) + fixnum_value(fp[-6]),
+		   fixnum_value(fp[-5]));
+	
+	results(thread, pop_linkage(thread), res, make_fixnum(res));
+    }
 }
 
 static void fd_read(obj_t self, struct thread *thread, obj_t *args)
@@ -186,12 +187,13 @@ static void maybe_write(struct thread *thread)
 	    wait_for_output(thread, fd, maybe_write);
     else if (nfound == 0)
 	wait_for_output(thread, fd, maybe_write);
+    else {
+	res = write(fd,
+		    buffer_data(fp[-7]) + fixnum_value(fp[-6]),
+		    fixnum_value(fp[-5]));
 
-    res = write(fd,
-		buffer_data(fp[-7]) + fixnum_value(fp[-6]),
-		fixnum_value(fp[-5]));
-
-    results(thread, pop_linkage(thread), res, make_fixnum(res));
+	results(thread, pop_linkage(thread), res, make_fixnum(res));
+    }
 }
 
 static void fd_write(obj_t self, struct thread *thread, obj_t *args)
