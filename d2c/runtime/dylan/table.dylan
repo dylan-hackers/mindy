@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.11 1996/05/09 04:00:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.12 1996/07/12 14:31:31 dwatson Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -35,22 +35,6 @@ Synopsis:   Implements <table>, <object-table>, <equal-table>,
 //
 // Author's note: "ht" is my abbreviation for "hashtable", and is used
 // as a parameter quite frequently.
-//
-// <object-table>s are as defined in the book, operating on pointers and
-// using == as a comparator.
-//
-// <equal-table>s use = as a key test, but since = uses == as a
-// default method, <equal-table>s also have to worry about garbage
-// collection.
-//
-// <value-table>s are an abstract class who's hash function never
-// involves addresses (ie, always returns $permanent-hash-state).  The
-// user defines a subclass of <value-table> and writes a method for
-// table-protocol.  This will probably involve writing a new hash
-// function to be used on the hash keys.  *Make sure this function does
-// not call object-hash*.
-//
-// For a more in depth explanation, see mindy.doc
 
 
 // Exported interface.
@@ -279,13 +263,20 @@ define sealed method make
   apply(make, <simple-object-table>, key-value-pairs);
 end method make;
 
-define method initialize
-    (ht :: <table>, #next next-method, #key size: sz = $starting-table-size);
-  next-method();
+// Table-init does most of the work of initialize, except we move it out
+// of initialize to allow remove-all-keys! to call it.
+
+define method table-init (ht :: <table>, #key size: sz = $starting-table-size)
   let sz = if (sz == 0) 1 else sz end if;
   ht.buckets := make(<entry-vector>, size: sz, fill: #f);
   ht.bucket-states := make(<simple-object-vector>, 
 			   size: sz, fill: $permanent-hash-state);
+end method table-init;
+
+define method initialize
+    (ht :: <table>, #next next-method, #key size: sz = $starting-table-size);
+  next-method();
+  table-init(ht, size: sz)
 end method initialize;
 
 define inline method key-test (ht :: <table>) => test :: <function>;
@@ -401,7 +392,7 @@ end method equal-hash;
 
 define method equal-hash (col :: <collection>)
  => (id :: <integer>, state :: <hash-state>);
-  collection-hash(col, equal-hash, equal-hash);
+  collection-hash(equal-hash, equal-hash, col);
 end method equal-hash;
 
 // Object-hash returns $permanent-hash-state for <fix-num>s. (Yes,
@@ -439,6 +430,8 @@ define sealed method value-hash (key == #t)
   values(1, $permanent-hash-state);
 end method value-hash;
 
+// Another function placed here to prevent a circular library definition.
+//
 // You can't write a more specific method on collections because 
 // any two collections with identical key/element pairs are equal. 
 // Because of this, you can't merge-hash-codes with ordered: #t, or
@@ -448,7 +441,8 @@ end method value-hash;
 // you *can* use ordered: #t for merging them)
 //
 define method collection-hash
-    (col :: <collection>, key-hash :: <function>, element-hash :: <function>)
+    (key-hash :: <function>, element-hash :: <function>, col :: <collection>,
+     #key ordered :: <boolean> = #f)
  => (id :: <integer>, state :: <hash-state>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   let (state, limit, next, done?, cur-key, cur-elem)
@@ -463,7 +457,7 @@ define method collection-hash
       = merge-hash-codes(elt-id, elt-state, key-id, key-state, ordered: #t);
     let (captured-id2, captured-state2) 
       = merge-hash-codes(current-id, current-state, 
-			 captured-id1, captured-state1, ordered: #f);
+			 captured-id1, captured-state1, ordered: ordered);
     current-id := captured-id2;
     current-state := captured-state2;
   end for;
@@ -476,8 +470,8 @@ end method collection-hash;
 // but identical key/element pairs won't generate the same hash id,
 // even though the two collections are =.
 //
-define method sequence-hash
-    (seq :: <sequence>, element-hash :: <function>)
+define function sequence-hash
+    (element-hash :: <function>, seq :: <sequence>)
  => (id :: <integer>, state :: <hash-state>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   for (elt in seq)
@@ -488,29 +482,7 @@ define method sequence-hash
     current-state := captured-state;
   end for;
   values(current-id, current-state);
-end method sequence-hash;
-
-// A convenient method for hashing strings. Calls sequence-hash 
-// and "does the right thing."
-//
-define method string-hash (s :: <string>)
-    => (id :: <integer>, state :: <hash-state>);
-  sequence-hash(s, value-hash);
-end method string-hash;
-
-// This string-hash method should have the same semantics as the standard
-// one, but should be much faster.
-//
-define method string-hash (s :: <byte-string>)
- => (id :: <integer>, state :: <object>);
-  for (id :: <integer> = 0
-	 then merge-hash-codes(id, $permanent-hash-state, as(<integer>, s[i]),
-			       $permanent-hash-state, ordered: #t),
-       i :: <integer> from 0 below s.size)
-  finally
-    values(id, $permanent-hash-state);
-  end for;
-end method string-hash;
+end function sequence-hash;
 
 define sealed inline method table-protocol (ht :: <object-table>) 
  => (key-test :: <function>, key-hash :: <function>);
@@ -801,6 +773,21 @@ define method remove-key! (ht :: <value-table>, key) => (found? :: <boolean>);
   end if; // had to remove something
 end method remove-key!;
 
+// Modifies collection so that the collection no longer contains any keys
+// or elements (i.e. is empty)
+//
+define open generic remove-all-keys!
+    (coll :: <mutable-explicit-key-collection>)
+ => (coll :: <mutable-explicit-key-collection>);
+
+// Method on <table> which doesn't use remove-key!
+//
+define method remove-all-keys! (table :: <table>)
+ => (table :: <table>);
+  table-init(table);
+  table;
+end method remove-all-keys!;
+
 // Takes a hashtable and mutates it so that it has a different number of
 // buckets.
 //
@@ -1013,15 +1000,31 @@ define method forward-iteration-protocol (ht :: <table>)
 	  end method);
 end method forward-iteration-protocol;
 
-// A value table whose keys are strings.
+// A convenient method for hashing strings. Calls sequence-hash 
+// and "does the right thing."
 //
-define class <string-table> (<value-table>)
-end class <string-table>;
+define method string-hash (s :: <string>)
+    => (id :: <integer>, state :: <hash-state>);
+  sequence-hash(value-hash, s);
+end method string-hash;
 
-define sealed domain make(singleton(<string-table>));
-define sealed domain initialize(<string-table>);
+// This string-hash method should have the same semantics as the standard
+// one, but should be much faster.
+//
+define method string-hash (s :: <byte-string>)
+ => (id :: <integer>, state :: <hash-state>);
+  for (id = 0 then merge-hash-codes(id, $permanent-hash-state,
+				    as(<integer>, s[i]),
+				    $permanent-hash-state,
+				    ordered: #t),
+       i from 0 below s.size)
+  finally
+    values(id, $permanent-hash-state);
+  end for;
+end method string-hash;
 
-define sealed inline method table-protocol (ht :: <string-table>)
- => (key-test :: <function>, key-hash :: <function>);
-  values(\=, string-hash);
-end method table-protocol;
+// Moved from string-extensions to prevent a circular library definition.
+//
+define method uppercase? (c :: <character>) => answer :: <boolean>;
+  c >= 'A' & c <= 'Z';
+end method uppercase?;
