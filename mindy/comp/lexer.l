@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.2 1994/03/30 05:59:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.3 1994/04/06 17:49:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -37,7 +37,7 @@ E	E[-+]?{D}+
 IOC	[!&*+/<=>?|^$%@_]
 OC	[-~]|{IOC}
 ON	{IOC}{OC}*
-O	-|~|:=|{ON}
+O	-|~|~=|:=|{ON}
 A0	[a-z0-9]
 S	{ON}?{A0}({A0}|{OC})*
 
