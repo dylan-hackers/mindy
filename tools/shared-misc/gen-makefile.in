@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.40 2003/02/05 20:35:08 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.41 2003/02/18 14:26:27 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1214,11 +1214,12 @@ sub install_library {
 #
 sub emit_mindycomp_rule {
     local($source, $flags) = @_;
-    if (-e "$srcdir/$source.dylan") {
+# one day, we want to move all generated file to builddir. Not yet, though.
+#    if (-e "$srcdir/$source.dylan") {
       $da_source = "\$(SRCDIR)/$source.dylan";
-    } else {
-      $da_source = "$source.dylan";
-    }
+#    } else {
+#      $da_source = "$source.dylan";
+#    }
     print "$source.dbc: $da_source\n";
     print "\t\$(MC) $flags ";
     print "-o $source.dbc $da_source\n";
