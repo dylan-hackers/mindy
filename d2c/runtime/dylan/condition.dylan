@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.4 2000/01/24 04:56:45 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.5 2000/10/20 15:20:53 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -582,7 +582,7 @@ define method lose
     (str :: <byte-string>, #rest args) => res :: <never-returns>;
   fputs("internal error: ", #"Cheap-Err");
   apply(cheap-format, #"Cheap-Err", str, args);
-  fputs('\n', #"Cheap-Err");
+  cheap-format(#"Cheap-Err", "\n");
   call-out("abort", void:);
 end;
 
