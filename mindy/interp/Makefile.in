@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.15 1996/07/23 16:06:57 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.16 1996/07/23 16:19:32 dwatson Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -76,7 +76,7 @@ SRCS = parser-tab.c lexer.c \
 	char.c handler.c instance.c input.c driver.c \
 	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
 
-EXTERN-INCLUDES = malloc.inc ../libraries/time/time.inc
+EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${SRCDIR}/../libraries/time/time.inc
 
 mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy
@@ -87,8 +87,8 @@ ${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	mv y.tab.c ${SRCDIR}/parser-tab.c
 	mv y.tab.h ${SRCDIR}/parser-tab.h
 
-${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: ${SRCDIR}/$(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
-	$(PERL) ${SRCDIR}/make-init.pl ${SRCDIR}/$(EXTERN-INCLUDES)
+${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: $(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
+	$(PERL) ${SRCDIR}/make-init.pl $(EXTERN-INCLUDES)
 	mv ,extern1.def ${SRCDIR}/extern1.def
 	mv ,extern2.def ${SRCDIR}/extern2.def
 
