@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.66 1996/04/18 12:57:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.67 1996/05/02 00:15:34 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -665,10 +665,6 @@ define method compile-library
 	    unit-libs := stringify(' ', archive, unit-libs);
 	  end unless;
 	end;
-	if (unit-info.unit-linker-options)
-	  linker-args
-	    := stringify(' ', unit-info.unit-linker-options, linker-args);
-	end if;
 
 	format(makefile, "\n%s : %s %s%s\n",
 	       executable, objects, ar-name, unit-libs);
