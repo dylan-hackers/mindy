@@ -1,12 +1,12 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.5 2001/03/17 03:43:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.6 2001/05/30 21:28:20 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -680,7 +680,7 @@ define class <union-ctype> (<ctype>, <ct-value>)
   // types or singletons.  Any nested unions are flattened into this
   // one, and the union of anything and an unknown type is itself an
   // unknown type.
-  slot members :: <list>, setter: #f, required-init-keyword: members:;
+  constant slot members :: <list>, required-init-keyword: members:;
 end class;
 
 define sealed domain make (singleton(<union-ctype>));
@@ -899,7 +899,7 @@ end method ctype-extent-dispatch;
 //
 define abstract class <limited-ctype> (<ctype>)
   // The most specific class that is a supertype of this type.
-  slot base-class :: <cclass>, required-init-keyword: base-class:;
+  constant slot base-class :: <cclass>, required-init-keyword: base-class:;
 end class;
 
 define sealed domain make (singleton(<limited-ctype>));
@@ -919,7 +919,7 @@ end;
 /*
 
 define class <range-ctype> (<limited-ctype>)
-  slot ranges :: <simple-object-vector>, required-init-keyword: ranges:;
+  constant slot ranges :: <simple-object-vector>, required-init-keyword: ranges:;
 end class <range-ctype>;
 
 define sealed domain make (singleton(<range-ctype>));
@@ -977,10 +977,9 @@ end;
 define constant $limited-integer-table = make(<limited-integer-table>);
 
 define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
-  slot low-bound :: false-or(<extended-integer>), 
+  constant slot low-bound :: false-or(<extended-integer>), 
        required-init-keyword: low-bound:;
-
-  slot high-bound :: false-or(<extended-integer>), 
+  constant slot high-bound :: false-or(<extended-integer>), 
        required-init-keyword:  high-bound:;
 end class;
 
@@ -1258,7 +1257,7 @@ define variable *find-limited-collection-implementation* :: <function>
     end method;
 
 define class <limited-collection-ctype> (<limited-ctype>, <ct-value>)
-  slot element-type :: <ctype>, required-init-keyword: element-type:;
+  constant slot element-type :: <ctype>, required-init-keyword: element-type:;
   slot size-or-dimension :: type-union(<false>, <integer>, <sequence>) = #f,
        init-keyword: size:;
   // The implementation class, if one exists and we know it. All instances
@@ -1418,7 +1417,8 @@ define method ctype-intersection-dispatch
     => (result :: <ctype>, precise :: <boolean>);
   let (base, precise) = ctype-intersection(type1.base-class, type2);
   if (base == empty-ctype())
-    values(empty-ctype(), precise);
+//    values(empty-ctype(), precise);
+    values(base, precise);
   elseif (instance?(base, <cclass>))
     values(make(<limited-collection-ctype>, base-class: base,
 		element-type: type1.element-type,
@@ -1433,7 +1433,7 @@ end method;
 
 // <singleton-ctype> -- exported.
 //
-// We only represents singletons with eql compile-time constant values.
+// We only represent singletons with eql compile-time constant values.
 //
 define class <singleton-ctype> (<limited-ctype>, <ct-value>)
 
@@ -1442,7 +1442,7 @@ define class <singleton-ctype> (<limited-ctype>, <ct-value>)
   // class membership.
 
   // The value we represent.
-  slot singleton-value :: <eql-ct-value>,
+  constant slot singleton-value :: <eql-ct-value>,
     required-init-keyword: value:;
 end class;
 
@@ -1730,17 +1730,16 @@ end method ctype-extent-dispatch;
 // the min-values is 1.  Y2 is thus sort of an "optional" result type.
 //
 define class <multi-value-ctype> (<values-ctype>)
-
   // Types of each specifically typed value.  Values > than min-values
   // might not actually be returned.
-  slot positional-types :: <list>, required-init-keyword: positional-types:;
+  constant slot positional-types :: <list>, required-init-keyword: positional-types:;
 
   // The minimum number of values that will ever be returned (<= to
   // positional-types.)
-  slot min-values :: <integer>, required-init-keyword: min-values:;
+  constant slot min-values :: <integer>, required-init-keyword: min-values:;
 
   // Type of the rest values; empty-ctype if none.
-  slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
+  constant slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
 end class;
 
 define sealed domain make (singleton(<multi-value-ctype>));
@@ -1873,8 +1872,7 @@ end method ctype-extent-dispatch;
 // needed.  The second value is #t if Operation always returned a true
 // second value.
 //
-define constant fixed-values-op
-  = method (types1 :: <list>, types2 :: <list>,
+define function fixed-values-op (types1 :: <list>, types2 :: <list>,
 	    rest1 :: <ctype>, rest2 :: <ctype>,
 	    operation :: <function>)
 	=> (res :: <list>, exact :: <boolean>);
@@ -1889,7 +1887,7 @@ define constant fixed-values-op
 	result := pair(res, result);
       end for;
       values(reverse!(result), exact);
-    end method;
+end function;
 
 // Args-Type-Op  --  Internal
 //
@@ -2063,53 +2061,56 @@ end method;
 
 define variable *wild-ctype-memo* :: false-or(<multi-value-ctype>) = #f;
 
-define constant wild-ctype
-  = method () => res :: <multi-value-ctype>;
+define function wild-ctype () => res :: <multi-value-ctype>;
       *wild-ctype-memo*
 	| (*wild-ctype-memo*
 	     := make(<multi-value-ctype>,
 		     positional-types: #(),
 		     rest-value-type: object-ctype(),
 		     min-values: 0));
-    end;
+end;
 
 define variable *object-ctype-memo* :: false-or(<ctype>) = #f;
 
-define constant object-ctype
-  = method () => res :: <ctype>;
+define function object-ctype () => res :: <ctype>;
       *object-ctype-memo*
 	| (*object-ctype-memo*
 	     := dylan-value(#"<object>") | error("<object> undefined?"));
-    end;
+end;
 
 define variable *function-ctype-memo* :: false-or(<ctype>) = #f;
 
-define constant function-ctype
-  = method () => res :: <ctype>;
+define function function-ctype () => res :: <ctype>;
       *function-ctype-memo*
 	| (*function-ctype-memo*
 	     := dylan-value(#"<function>") | error("<function> undefined?"));
-    end;
+end;
 
 define variable *class-ctype-memo* :: false-or(<ctype>) = #f;
 
-define constant class-ctype
-  = method () => res :: <ctype>;
+define function class-ctype () => res :: <ctype>;
       *class-ctype-memo*
 	| (*class-ctype-memo*
 	     := dylan-value(#"<class>") | error("<class> undefined?"));
-    end;
+end;
+
+define variable *boolean-ctype-memo* :: false-or(<ctype>) = #f;
+
+define function boolean-ctype () => res :: <ctype>;
+      *boolean-ctype-memo*
+	| (*boolean-ctype-memo*
+	     := dylan-value(#"<boolean>") | error("<boolean> undefined?"));
+end;
 
 define variable *empty-ctype-memo* :: false-or(<ctype>) = #f;
 
 // The empty-type (bottom) is the union of no members.
-define constant empty-ctype
-    = method () => res :: <ctype>;
+define function empty-ctype () => res :: <ctype>;
       *empty-ctype-memo*
 	| (*empty-ctype-memo* := make(<union-ctype>,
 				      members: #(),
 				      type-hash: 0));
-    end;
+end;
 
 
 /// Type specifiers.
