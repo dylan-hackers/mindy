@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.4 2001/08/03 18:34:25 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.5 2001/10/13 22:11:43 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -190,7 +190,7 @@ define method propagate-constraints-region
   for (assign = region.first-assign then assign.next-op,
        while: assign)
     //
-    // Apply any incomming renamings to whatever this assign references.
+    // Apply any incoming renamings to whatever this assign references.
     apply-renamings-to-dependencies(component, assign, renamings);
     //
     // If this assignment is just a type assertion, then add a renaming so
@@ -268,7 +268,7 @@ define method extract-if-constraints
      then-renamings :: <renaming-set>, else-renamings :: <renaming-set>)
     => ();
   let cond-type = cond.derived-type;
-  if (csubtype?(cond-type, specifier-type(#"<boolean>")))
+  if (csubtype?(cond-type, boolean-ctype()))
     add-renaming(then-renamings,
 		 cond,
 		 method () => new :: <leaf>;
