@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.9 1994/04/14 19:17:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.10 1994/04/18 05:30:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -140,6 +140,7 @@ static void bind_rettypes(struct body *body,
 	rettypes->rest_temp = gensym();
 	bind_temp(body, id(rettypes->rest_temp),
 		  make_function_call(make_varref(id(ctype)), args));
+	rettypes->rest_temp_varref = make_varref(id(rettypes->rest_temp));
     }
 }
 
@@ -885,7 +886,7 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 	bind_rettypes(body, c->rettypes);
 	add_argument(init_args, make_argument(c->rettypes->req_types_list));
 	if (c->rettypes->rest_temp)
-	    expr = make_varref(id(c->rettypes->rest_temp));
+	    expr = c->rettypes->rest_temp_varref;
 	else
 	    expr = make_literal_ref(make_false_literal());
 	add_argument(init_args, make_argument(expr));

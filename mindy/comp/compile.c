@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.10 1994/04/14 19:16:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.11 1994/04/18 05:29:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -362,8 +362,8 @@ static void compile_method_ref(struct method *method,
 
     if (method->rettypes) {
 	compile_expr(method->rettypes->req_types_list, component, SINGLE);
-	if (method->rettypes->rest_type)
-	    compile_expr(method->rettypes->rest_type, component, SINGLE);
+	if (method->rettypes->rest_temp_varref)
+	    compile_expr(method->rettypes->rest_temp_varref, component,SINGLE);
 	else
 	    emit_op(component, op_PUSH_FALSE);
     }

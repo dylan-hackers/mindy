@@ -64,6 +64,8 @@ static void free_rettypes(struct return_type_list *rettypes)
 	free_expr(rettypes->req_types_list);
     if (rettypes->rest_type)
 	free_expr(rettypes->rest_type);
+    if (rettypes->rest_temp_varref)
+	free_expr(rettypes->rest_temp_varref);
     free(rettypes);
 }
 

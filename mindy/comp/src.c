@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.13 1994/04/18 03:27:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.14 1994/04/18 05:30:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -687,6 +687,7 @@ struct return_type_list *make_return_type_list(struct expr *rest)
     res->req_types_list = NULL;
     res->rest_type = rest;
     res->rest_temp = NULL;
+    res->rest_temp_varref = NULL;
 
     return res;
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.8 1994/04/14 19:15:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.9 1994/04/18 05:30:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -364,6 +364,7 @@ struct return_type_list {
     struct expr *req_types_list;
     struct expr *rest_type;
     struct symbol *rest_temp;
+    struct expr *rest_temp_varref;
 };
 
 struct return_type {
