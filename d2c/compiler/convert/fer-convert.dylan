@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.28 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.29 1995/05/12 12:39:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -165,13 +165,13 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 	    ct-type;
 	  else
 	    let type-local
-	      = make-local-var(builder, #"type", dylan-value(#"<type>"));
+	      = make-local-var(builder, #"type", specifier-type(#"<type>"));
 	    fer-convert(builder, param.param-type,
 			make(<lexenv>, inside: lexenv),
 			#"assignment", type-local);
 	    let type-temp
 	      = make-lexical-var(builder, #"type", source,
-				 dylan-value(#"<type>"));
+				 specifier-type(#"<type>"));
 	    build-let(builder, lexenv.lexenv-policy, source,
 		      type-temp, type-local);
 	    type-temps[index] := type-temp;
@@ -530,12 +530,13 @@ define method fer-convert-method
 	if (type)
 	  values(type, #f);
 	else
-	  let temp = make-local-var(builder, #"type", dylan-value(#"<type>"));
+	  let temp = make-local-var(builder, #"type",
+				    specifier-type(#"<type>"));
 	  fer-convert(builder, param.param-type,
 		      make(<lexenv>, inside: specializer-lexenv),
 		      #"assignment", temp);
 	  let var = make-lexical-var(builder, #"type", source,
-				     dylan-value(#"<type>"));
+				     specifier-type(#"<type>"));
 	  build-let(builder, specializer-lexenv.lexenv-policy, source,
 		    var, temp);
 	  values(object-ctype(), var);
@@ -569,12 +570,12 @@ define method fer-convert-method
   let next = paramlist.paramlist-next;
   let next-info-var
     = next & make-lexical-var(builder, #"next-method-info", source,
-			      dylan-value(#"<list>"));
+			      specifier-type(#"<list>"));
   let rest = paramlist.paramlist-rest;
   let rest-var
     = if (rest)
 	let var = make-lexical-var(builder, rest.token-symbol, source,
-				   object-ctype());
+				   specifier-type(#"<simple-object-vector>"));
 	add-binding(lexenv, rest, var);
 	var;
       elseif (next & paramlist.paramlist-keys)
@@ -631,7 +632,7 @@ define method fer-convert-method
 				    format-to-string("%s-supplied?",
 						     name.token-symbol)),
 				 source,
-				 dylan-value(#"<boolean>"));
+				 specifier-type(#"<boolean>"));
 	    let rep = pick-representation(type, #"speed");
 	    if (rep.representation-has-bottom-value?)
 	      build-let(body-builder, lexenv.lexenv-policy,
