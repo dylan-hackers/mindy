@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.11 1994/10/20 03:04:01 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.12 1994/10/26 15:06:25 wlott Exp $
 *
 * This file implements the printer framework.
 *
@@ -304,6 +304,12 @@ static void dylan_format(struct thread *thread, int nargs)
     do_return(thread, old_sp, old_sp);
 }
 
+static obj_t dylan_fflush()
+{
+    fflush(stdout);
+    return obj_False;
+}
+
 
 /* Init stuff. */
 
@@ -320,4 +326,6 @@ void init_print_functions(void)
     define_constant("format",
 		    make_raw_function("format", 1, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_False, dylan_format));
+    define_function("fflush", obj_Nil, FALSE, obj_False, FALSE,
+		    obj_ObjectClass, dylan_fflush);
 }
