@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.5 1999/01/06 06:51:37 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.6 1999/04/11 05:21:53 emk Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -119,6 +119,8 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"compile-c-command";
   constant /* exported */ slot default-c-compiler-flags :: <byte-string>,
     required-init-keyword: #"default-c-compiler-flags";
+  constant /* exported */ slot default-c-compiler-debug-flags :: <byte-string>,
+    required-init-keyword: #"default-c-compiler-debug-flags";
   constant /* exported */ slot assembler-command :: <byte-string>,
     required-init-keyword: #"assembler-command";
   constant /* exported */ slot link-library-command :: <byte-string>,
@@ -231,6 +233,7 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"executable-filename-suffix"] := #t;
 *valid-properties*[#"compile-c-command"] := #t;
 *valid-properties*[#"default-c-compiler-flags"] := #t;
+*valid-properties*[#"default-c-compiler-debug-flags"] := #t;
 *valid-properties*[#"assembler-command"] := #t;
 *valid-properties*[#"link-library-command"] := #t;
 *valid-properties*[#"link-executable-command"] := #t;

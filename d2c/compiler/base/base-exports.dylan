@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.9 1999/01/25 12:09:38 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.10 1999/04/11 05:21:53 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -454,6 +454,7 @@ define module platform
 
     compile-c-command,
     default-c-compiler-flags,
+    default-c-compiler-debug-flags,
     assembler-command,
     link-library-command,
     randomize-library-command,

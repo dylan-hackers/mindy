@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.16 1999/04/10 18:30:52 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.17 1999/04/11 05:21:55 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -66,6 +66,7 @@ define class <main-unit-state> (<object>)
     slot unit-other-cback-units :: <simple-object-vector>;
 
     slot unit-cc-flags;
+    slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
     // Makefile generation streams, etc.
     slot unit-all-generated-files :: <list>, init-value: #();
     slot unit-makefile-name :: <byte-string>;
@@ -557,7 +558,11 @@ end method parse-and-finalize-library;
 define method emit-make-prologue (state :: <main-unit-state>) => ();
   let cc-flags
     = getenv("CCFLAGS") 
-        | format-to-string(state.unit-target.default-c-compiler-flags,
+        | format-to-string(if (state.unit-debug?)
+			     state.unit-target.default-c-compiler-debug-flags;
+			   else
+			     state.unit-target.default-c-compiler-flags;
+			   end if,
 			   $runtime-include-dir);
 
   state.unit-cc-flags := cc-flags;
@@ -1437,7 +1442,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let override-files = option-value-by-long-name(argp, "cc-override-file");
   let link-static = option-value-by-long-name(argp, "static");
   *break-on-compiler-errors* = option-value-by-long-name(argp, "break");
-  *emit-all-function-objects?* = option-value-by-long-name(argp, "debug");
+  let debug? = option-value-by-long-name(argp, "debug");
+  *emit-all-function-objects?* = debug?;
 
   // Determine our compilation target.
   let target-machine-name = option-value-by-long-name(argp, "target");
@@ -1489,6 +1495,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	     target: *current-target*,
 	     no-binaries: no-binaries,
 	     link-static: link-static,
+	     debug?: debug?,
 	     cc-override: cc-override,
 	     override-files: as(<list>, override-files));
   let worked? = compile-library(state);

@@ -277,6 +277,9 @@ make-command:                   	gmake
 // inside the makefile.  (see above)  A format string with one arg which is the
 // location of the include directory for runtime.h.
 //
+// default-c-compiler-debug-flags: The same as the above, but used when
+// "-g" is passed to d2c.
+//
 // assembler-command: A format string that describes how to invoke the
 // assembler.  Arg1 for the format statement is the source code
 // filename, arg2 is the object code filename.  Both filenames have
@@ -359,6 +362,7 @@ platform-name:			vc
 default-features:		C-compiler-is-VC
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -nologo -Ox -DWIN32 -I. -I%s
+default-c-compiler-debug-flags: -nologo -Ox -DWIN32 -I. -I%s
 assembler-command:              as %s -o %s
 link-library-command:           lib /nologo /out:%s %s
 link-executable-command:        link /nologo /out:%s %s %s
@@ -394,6 +398,7 @@ comment-token:                  #
 mangled-name-prefix:            
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
+default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-shared-library-command:    gcc -shared -o %s %s
@@ -452,6 +457,7 @@ inherit-from:			vc win32 x86
 platform-name:			x86-win32-gcc
 inherit-from:			gcc win32 x86
 default-c-compiler-flags:       -g -O4 -finline-functions -I%s -I. -DWIN32 -DWIN32_GCC
+default-c-compiler-debug-flags: -g -O4 -fno-inline-functions -I%s -I. -DWIN32 -DWIN32_GCC
 
 platform-name:				hppa-hpux-gcc
 inherit-from:				gcc hpux hppa
