@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.3 1994/12/13 13:16:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.4 1994/12/13 18:41:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -37,6 +37,9 @@ define class <slot> (<object>)
 end;
 
 define class <define-class-tlf> (<simple-define-tlf>)
+  //
+  // Make the definition required.
+  required keyword defn:;
 end;
 
 
