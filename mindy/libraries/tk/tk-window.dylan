@@ -47,13 +47,6 @@ define class <window> (<object>)
     init-value: #f;
 end class <window>;
 
-// The main "wish" window.  All other windows are typically built underneath
-// this one.  (Note that this is defined before the initialization function.
-// In this special case, this works anyway.
-//
-define constant *root-window* :: <window>
-  = make(<window>, parent: #f, name: "");
-
 // This function is used to define the behavior of a particular subclass of
 // <window> The first parameter is the class, the second is the tk name of
 // the class, and all remaining parameters describe keywords which should be
@@ -244,6 +237,12 @@ define method initialize
     if (do-pack) apply(pack, window, keys) end if;
   end if;
 end method initialize;
+
+// The main "wish" window.  All other windows are typically built underneath
+// this one.  
+//
+define constant *root-window* :: <window>
+  = make(<window>, parent: #f, name: "");
 
 define method tk-as
     (cls == <string>, value :: <window>) => (result :: <string>);
