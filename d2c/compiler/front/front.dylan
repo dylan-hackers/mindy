@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.21 1995/05/01 06:56:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.22 1995/05/01 11:49:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -140,6 +140,7 @@ end class;
 // A prologue is used to represent the incomming arguments to a function.
 // 
 define class <prologue> (<operation>)
+  slot lambda :: <lambda>, required-init-keyword: lambda:;
 end;
 
 // A catcher is used to receive the values from an exit-function.
@@ -304,7 +305,10 @@ end class;
 define class <lambda> (<method-literal>, <method-region>, <annotatable>)
 
   // List of lexical varibles for args.
-  slot prologue :: <prologue>, required-init-keyword: prologue:;
+  slot prologue :: <prologue>;
+
+  // List of the argument types.
+  slot argument-types :: <list>, required-init-keyword: argument-types:;
 
   // The result type of this function.
   slot result-type :: <values-ctype>, init-function: wild-ctype;
@@ -332,6 +336,12 @@ define class <lambda> (<method-literal>, <method-region>, <annotatable>)
   slot entry-for :: false-or(<function-literal>), init-value: #f;
 end class;
 
+define method initialize (lambda :: <lambda>, #key) => ();
+  lambda.prologue
+    := make(<prologue>, lambda: lambda, depends-on: #f,
+	    // ### The depends-on: shouldn't be needed, but Mindy is broken.
+	    derived-type: make-values-ctype(lambda.argument-types, #f));
+end;
 
 // The <Hairy-Method-Literal> leaf is used to represent hairy methods.  The
 // value returned by the function is the value which results from calling the

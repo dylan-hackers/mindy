@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.23 1995/05/01 06:53:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.24 1995/05/01 11:49:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -591,11 +591,11 @@ define method build-method-body
      source :: <source-location>, arg-vars :: <list>)
  => res :: <leaf>;
   ignore(policy);
-  let prologue = make-operand-dependencies(builder, make(<prologue>), #());
-  let leaf = make(<lambda>, source-location: source, prologue: prologue);
+  let leaf = make(<lambda>, source-location: source,
+		  argument-types: map(derived-type, arg-vars));
   let comp = builder.component;
   push-body(builder, leaf);
-  build-let(builder, policy, source, arg-vars, prologue);
+  build-let(builder, policy, source, arg-vars, leaf.prologue);
   comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
   leaf;
 end method;

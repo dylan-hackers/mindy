@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.42 1995/05/01 08:47:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.43 1995/05/01 11:49:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -195,26 +195,38 @@ define method pure-single-value-expression? (var :: <function-literal>)
 end;
 
 
-define method defines-unneeded? (defn :: <false>) => res :: <boolean>;
-  #t;
-end;
-
-define method defines-unneeded? (defn :: <ssa-variable>)
-    => res :: <boolean>;
-  if (defn.dependents | defn.needs-type-check?)
-    #f;
-  else
-    defines-unneeded?(defn.definer-next);
+define method trim-unneeded-defines
+    (component :: <component>, assignment :: <assignment>) => ();
+  local
+    method unneeded? (defines)
+      if (defines)
+	if (unneeded?(defines.definer-next))
+	  defines.definer-next := #f;
+	  if (define-unneeded?(defines))
+	    delete-definition(component, defines);
+	    #t;
+	  else
+	    #f;
+	  end;
+	else
+	  #f;
+	end;
+      else
+	#t;
+      end;
+    end;
+  if (unneeded?(assignment.defines))
+    assignment.defines := #f;
   end;
 end;
 
-define method defines-unneeded? (defn :: <initial-definition>)
+define method define-unneeded? (defn :: <ssa-variable>)
+  ~(defn.dependents | defn.needs-type-check?);
+end;
+
+define method define-unneeded? (defn :: <initial-definition>)
     => res :: <boolean>;
-  if (defn.definition-of.dependents | defn.needs-type-check?)
-    #f;
-  else
-    defines-unneeded?(defn.definer-next);
-  end;
+  ~(defn.definition-of.dependents | defn.needs-type-check?);
 end;
 
 
@@ -223,6 +235,7 @@ define method optimize
   let dependency = assignment.depends-on;
   let source = dependency.source-exp;
   let source-type = source.derived-type;
+  trim-unneeded-defines(component, assignment);
   let defines = assignment.defines;
   
   if (source-type == empty-ctype())
@@ -236,7 +249,7 @@ define method optimize
     end;
     assignment.defines := #f;
 
-  elseif (defines-unneeded?(defines) & side-effect-free?(source))
+  elseif (defines == #f & side-effect-free?(source))
     //
     // there is no point to this assignment, so nuke it.
     delete-and-unlink-assignment(component, assignment);
@@ -476,63 +489,65 @@ define method optimize-unknown-call
   // Observe the result type.
   maybe-restrict-type(component, call, func.result-type);
 
-  // Check the args to see if they are all okay.
-  let args-okay? = #t;
-  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-       var = func.prologue.dependents.dependent.defines
-	 then var.definer-next,
-       while: arg-dep & var)
-    unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
-			      var.var-info.asserted-type))
-      compiler-warning("wrong type arg.");
-      args-okay? := #f;
-    end;
-  finally
-    if (arg-dep | var)
-      compiler-warning("Wrong number of arguments.");
-      change-call-kind(component, call, <error-call>);
-    elseif (~args-okay?)
-      change-call-kind(component, call, <error-call>);
-    elseif (inline-expansion)
-      // Args are okay, and we want to inline it.  So make us a new function
-      // and do so.
-      let builder = make-builder(component);
-      let lexenv = make(<lexenv>);
-      let new-func
-	= build-general-method(builder, inline-expansion, lexenv, lexenv);
-      insert-before(component, call.dependents.dependent,
-		    builder-result(builder));
-      let func-dep = call.depends-on;
-      remove-dependency-from-source(component, func-dep);
-      func-dep.source-exp := new-func;
-      func-dep.source-next := new-func.dependents;
-      new-func.dependents := func-dep;
-      reoptimize(component, call);
-    else
-      // The args are all okay, so assert the arg types and convert the call
-      // into either a <local-call> or a <known-call>.
-      let assign = call.dependents.dependent;
-      for (arg-dep = call.depends-on.dependent-next
-	     then arg-dep.dependent-next,
-	   var = func.prologue.dependents.dependent.defines
-	     then var.definer-next,
-	   while: arg-dep)
-	assert-type(component, assign, arg-dep, var.var-info.asserted-type);
+  block (return)
+
+    // Check the args to see if they are all okay.
+    let args-okay? = #t;
+    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+	 arg-type in func.argument-types)
+      unless (arg-dep)
+	compiler-warning("Not enough arguments.");
+	change-call-kind(component, call, <error-call>);
+	return();
       end;
-      let func-dep = call.depends-on;
-      if (func-dep.source-exp == func)
-	change-call-kind(component, call, <local-call>);
-      else
+      unless (ctypes-intersect?(arg-dep.source-exp.derived-type, arg-type))
+	compiler-warning("wrong type arg.");
+	args-okay? := #f;
+      end;
+    finally
+      if (arg-dep)
+	compiler-warning("Too many arguments.");
+	change-call-kind(component, call, <error-call>);
+      elseif (~args-okay?)
+	change-call-kind(component, call, <error-call>);
+      elseif (inline-expansion)
+	// Args are okay, and we want to inline it.  So make us a new function
+	// and do so.
+	let builder = make-builder(component);
+	let lexenv = make(<lexenv>);
+	let new-func
+	  = build-general-method(builder, inline-expansion, lexenv, lexenv);
+	insert-before(component, call.dependents.dependent,
+		      builder-result(builder));
+	let func-dep = call.depends-on;
 	remove-dependency-from-source(component, func-dep);
-	func-dep.source-exp := func;
-	func-dep.source-next := func.dependents;
-	func.dependents := func-dep;
-	change-call-kind(component, call, <known-call>);
+	func-dep.source-exp := new-func;
+	func-dep.source-next := new-func.dependents;
+	new-func.dependents := func-dep;
+	reoptimize(component, call);
+      else
+	// The args are all okay, so assert the arg types and convert the call
+	// into either a <local-call> or a <known-call>.
+	let assign = call.dependents.dependent;
+	for (arg-dep = call.depends-on.dependent-next
+	       then arg-dep.dependent-next,
+	     arg-type in func.argument-types)
+	  assert-type(component, assign, arg-dep, arg-type);
+	end;
+	let func-dep = call.depends-on;
+	if (func-dep.source-exp == func)
+	  change-call-kind(component, call, <local-call>);
+	else
+	  remove-dependency-from-source(component, func-dep);
+	  func-dep.source-exp := func;
+	  func-dep.source-next := func.dependents;
+	  func.dependents := func-dep;
+	  change-call-kind(component, call, <known-call>);
+	end;
       end;
     end;
   end;
 end;
-
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
@@ -920,13 +935,8 @@ end;
 
 define method optimize (component :: <component>, prologue :: <prologue>)
     => ();
-  let types = make(<stretchy-vector>);
-  for (var = prologue.dependents.dependent.defines then var.definer-next,
-       while: var)
-    add!(types, var.var-info.asserted-type);
-  end;
   maybe-restrict-type(component, prologue,
-		      make-values-ctype(as(<list>, types), #f));
+		      make-values-ctype(prologue.lambda.argument-types, #f));
 end;
 
 
@@ -1243,19 +1253,17 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
     = begin
 	let temps = make(<stretchy-vector>);
 	for (dep = call.depends-on.dependent-next then dep.dependent-next,
-	     param = lambda.prologue.dependents.dependent.defines
-	       then param.definer-next,
-	     while: dep & param)
-	  let var-info = param.var-info;
-	  let temp = make-local-var(builder, var-info.debug-name,
-				    var-info.asserted-type);
+	     arg-type in lambda.argument-types)
+	  unless (dep)
+	    error("Wrong number of argument in let-convert?");
+	  end;
+	  let temp = make-local-var(builder, #"arg", arg-type);
 	  add!(temps, temp);
 	  build-assignment(builder, call-policy, call-source,
 			   temp, dep.source-exp);
 	finally
-	  if (dep | param)
-	    error("Different number of parameters and arguments in a "
-		    "known call?");
+	  if (dep)
+	    error("Wrong number of arguments in let-convert?");
 	  end;
 	end;
 	insert-before(component, call-assign, builder-result(builder));
@@ -2128,6 +2136,8 @@ define method find-in-environment
       lambda.environment.closure-vars
 	:= make(<closure-var>, original: var, copy: copy,
 		next: lambda.environment.closure-vars);
+      lambda.argument-types
+	:= pair(var.derived-type, lambda.argument-types);
       prologue.derived-type := wild-ctype();
       for (call-dep = lambda.dependents then call-dep.source-next,
 	   while: call-dep)

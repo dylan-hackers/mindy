@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.26 1995/05/01 06:56:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.27 1995/05/01 11:49:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -367,6 +367,8 @@ define class <lambda-info> (<object>)
     required-init-keyword: main-entry-name:;
   slot lambda-info-prototype :: <byte-string>,
     required-init-keyword: prototype:;
+  slot lambda-info-argument-representations :: <list>,
+    required-init-keyword: argument-reps:;
   slot lambda-info-result-representation
     :: type-or(<representation>, <list>,
 	       one-of(#"doesn't-return", #"cluster", #"void")),
@@ -376,18 +378,6 @@ end;
 define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     => res :: <lambda-info>;
   // Compute the prototype.
-
-  let defines = lambda.prologue.dependents.dependent.defines;
-  for (var = defines then var.definer-next,
-       index from 0,
-       while: var)
-    if (var.info)
-      error("lambda arg already has a backend-info?");
-    end;
-    let rep = pick-representation(var.derived-type, #"speed");
-    let name = format-to-string("A%d", index);
-    var.info := make(<backend-var-info>, representation: rep, name: name);
-  end;
 
   let stream = make(<byte-string-output-stream>);
   let name = new-global(output-info);
@@ -433,17 +423,20 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
       end;
 
   format(stream, " %s(descriptor_t *orig_sp", name);
-  if (defines)
-    for (var = defines then var.definer-next,
-	 index from 0,
-	 while: var)
-      let (name, rep) = c-name-and-rep(var, output-info);
-      format(stream, ", %s %s", rep.representation-c-type, name);
+  let argument-reps = #();
+  for (arg-type in lambda.argument-types,
+       index from 0,
+       var = lambda.prologue.dependents.dependent.defines
+	 then var & var.definer-next)
+    let rep = pick-representation(arg-type, #"speed");
+    format(stream, ", %s A%d", rep.representation-c-type, index);
+    if (var)
       let varinfo = var.var-info;
       if (instance?(varinfo, <debug-named-info>))
 	format(stream, " /* %s */", varinfo.debug-name);
       end;
     end;
+    argument-reps := pair(rep, argument-reps);
   end;
   write(')', stream);
 
@@ -451,6 +444,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
        lambda: lambda,
        main-entry-name: name,
        prototype: stream.string-output-stream-string,
+       argument-reps: reverse!(argument-reps),
        result-rep: result-rep);
 end;
 
@@ -908,15 +902,15 @@ define method emit-call
   let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
   format(stream, "%s(%s", name, sp);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-       param = function.prologue.dependents.dependent.defines
-	 then param.definer-next,
-       while: arg-dep & param)
-    let param-rep = variable-representation(param, output-info);
-    write(", ", stream);
-    write(ref-leaf(param-rep, arg-dep.source-exp, output-info), stream);
+       rep in func-info.lambda-info-argument-representations)
+    unless (arg-dep)
+      error("Not enough arguments in a direct call of a lambda?");
+    end;
+      write(", ", stream);
+      write(ref-leaf(rep, arg-dep.source-exp, output-info), stream);
   finally
-    if (arg-dep | param)
-      error("Different number of arguments and parameters in a known call?");
+    if (arg-dep)
+      error("Too many arguments in a direct call of a lambda?");
     end;
   end;
   write(')', stream);
@@ -985,6 +979,15 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <prologue>,
 			       output-info :: <output-info>)
     => ();
+  let lambda-info = get-info-for(expr.lambda, output-info);
+  deliver-results(defines,
+		  map(method (rep, index)
+			pair(format-to-string("A%d", index),
+			     rep);
+		      end,
+		      lambda-info.lambda-info-argument-representations,
+		      make(<range>, from: 0)),
+		  #f, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -1087,7 +1090,7 @@ define method deliver-cluster
 end;
 
 define method deliver-results
-    (defines :: false-or(<definition-site-variable>), values :: <vector>,
+    (defines :: false-or(<definition-site-variable>), values :: <sequence>,
      now-dammit? :: <boolean>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
