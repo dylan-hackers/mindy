@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.12 1995/11/09 17:33:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.13 1995/11/16 04:11:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -365,7 +365,51 @@ define-primitive-emitter
      end;
    end);
 
-     
+define-primitive-emitter
+  (#"c-decl",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let decl = operation.depends-on.source-exp;
+     unless (instance?(decl, <literal-constant>)
+	       & instance?(decl.value, <literal-string>))
+       error("decl in c-decl isn't a constant string?");
+     end;
+     format(output-info.output-info-body-stream, "%s\n",
+	    decl.value.literal-value);
+     deliver-results(defines, #[], #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"c-expr",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let stream = make(<byte-string-output-stream>);
+
+     let res-dep = operation.depends-on;
+     let result-rep = rep-for-c-type(res-dep.source-exp);
+
+     let expr = res-dep.dependent-next.source-exp;
+     unless (instance?(expr, <literal-constant>)
+	       & instance?(expr.value, <literal-string>))
+       error("expr in c-expr isn't a constant string?");
+     end;
+
+     spew-pending-defines(output-info);
+     if (result-rep)
+       deliver-result(defines, expr.value.literal-value,
+		      result-rep, #t, output-info);
+     else
+       format(output-info.output-info-guts-stream, "%s;\n",
+	      expr.value.literal-value);
+       deliver-results(defines, #[], #f, output-info);
+     end;
+   end);
+
+
 define method rep-for-c-type (leaf :: <leaf>)
     => rep :: false-or(<representation>);
   unless (instance?(leaf, <literal-constant>))

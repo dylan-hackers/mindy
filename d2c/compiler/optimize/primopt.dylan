@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.9 1995/10/05 14:15:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.10 1995/11/16 04:11:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -302,13 +302,6 @@ define-primitive-transformer
   (#"call-out",
    method (component :: <component>, primitive :: <primitive>) => ();
      let func-dep = primitive.depends-on;
-     begin
-       let func = func-dep.source-exp;
-       unless (instance?(func, <literal-constant>)
-		 & instance?(func.value, <literal-string>))
-	 compiler-error("The function in call-out isn't a constant string.");
-       end;
-     end;
      let result-dep = func-dep.dependent-next;
      begin
        let result-type = result-dep.source-exp.dylan-type-for-c-type;
@@ -329,6 +322,14 @@ define-primitive-transformer
 	 end;
        end;
      repeat(result-dep.dependent-next);
+   end);
+
+define-primitive-transformer
+  (#"c-expr",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let result-dep = primitive.depends-on;
+     let result-type = result-dep.source-exp.dylan-type-for-c-type;
+     maybe-restrict-type(component, primitive, result-type);
    end);
 
 define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;

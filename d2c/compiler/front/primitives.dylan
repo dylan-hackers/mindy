@@ -212,6 +212,14 @@ define-primitive
      #"<single-float>", #"<double-float>", #"<extended-float>"));
 
 define-primitive
+  (#"c-decl", #(#"<string>"), #(values:));
+
+define-primitive
+  (#"c-expr", #(#"<symbol>", #"<string>"),
+   #(union:, #"<fixed-integer>", #"<raw-pointer>",
+     #"<single-float>", #"<double-float>", #"<extended-float>"));
+
+define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",
    pure: #t);
 
