@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.2 1994/12/17 02:06:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.3 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,7 +101,10 @@ define method print-object (tokenizer :: <fragment-tokenizer>,
   pprint-fields(tokenizer, stream, current: tokenizer.current-piece);
 end;
 
-define method initialize (tokenizer :: <fragment-tokenizer>, #key fragment)
+define method initialize
+    (tokenizer :: <fragment-tokenizer>, #next next-method, #key fragment)
+    => ();
+  next-method();
   tokenizer.current-piece := fragment.fragment-head;
   tokenizer.tail-piece := fragment.fragment-tail;
 end;

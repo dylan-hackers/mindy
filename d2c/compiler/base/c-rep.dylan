@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.14 1995/05/29 20:56:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.15 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -44,8 +44,8 @@ define method representation-has-bottom-value? (res :: <representation>)
   #t;
 end;
 
-define method initialize (rep :: <c-representation>, #next next-method,
-			  #key more-general)
+define method initialize
+    (rep :: <c-representation>, #next next-method, #key more-general) => ();
   next-method();
   rep.representation-depth
     := if (more-general)

@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.13 1995/06/01 14:26:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.14 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -94,7 +94,10 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot each-subclass-slots-count :: <fixed-integer>;
 end class;
 
-define method initialize (obj :: <cclass>, #key slots, overrides)
+define method initialize
+    (obj :: <cclass>, #next next-method, #key slots, overrides) => ();
+  next-method();
+  
   // Record the class.
   add!($All-Classes, obj);
 
@@ -222,8 +225,8 @@ end;
 // the set of keys passed in when we make the particular kind of slot-info
 // above.
 // 
-define method initialize (info :: <slot-info>, #next next-method,
-			  #key allocation)
+define method initialize
+    (info :: <slot-info>, #next next-method, #key allocation) => ();
   next-method();
 end;
 

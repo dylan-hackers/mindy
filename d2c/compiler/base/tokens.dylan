@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.5 1995/05/26 13:11:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.6 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -296,7 +296,9 @@ define constant $operator-info
       table;
     end;
 
-define method initialize (binop :: <binary-operator-token>, #key)
+define method initialize
+    (binop :: <binary-operator-token>, #next next-method, #key) => ();
+  next-method();
   let info = $operator-info[binop.token-symbol];
   binop.operator-precedence := head(info);
   binop.operator-left-associative? := tail(info);

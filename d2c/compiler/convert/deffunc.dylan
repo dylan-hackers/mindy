@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.24 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.25 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -384,7 +384,9 @@ end;
 // This method exists just so make will recognize base-name as a valid
 // init keyword.
 // 
-define method initialize (defn :: <method-definition>, #key base-name) => ();
+define method initialize
+    (defn :: <method-definition>, #next next-method, #key base-name) => ();
+  next-method();
 end;
 
 define method compute-signature

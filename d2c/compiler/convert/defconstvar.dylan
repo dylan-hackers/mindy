@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.20 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.21 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -107,7 +107,9 @@ end;
 define class <define-constant-tlf> (<define-bindings-tlf>)
 end;
 
-define method initialize (tlf :: <define-constant-tlf>, #key)
+define method initialize
+    (tlf :: <define-constant-tlf>, #next next-method, #key) => ();
+  next-method();
   for (defn in tlf.tlf-required-defns)
     defn.defconst-tlf := tlf;
   end;

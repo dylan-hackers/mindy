@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.7 1995/05/26 13:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.8 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -984,7 +984,9 @@ define method print-object (pattern :: <pattern-variable>, stream :: <stream>)
 		pattern.patvar-at-end?);
 end;
 
-define method initialize (pv :: <pattern-variable>, #key token)
+define method initialize
+    (pv :: <pattern-variable>, #next next-method, #key token) => ();
+  next-method();
   select (token by instance?)
     <name-token> =>
       pv.patvar-name := token.token-symbol;

@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.8 1995/05/26 13:11:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.9 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -109,7 +109,8 @@ define method print-message (mod :: <module>, stream :: <stream>) => ();
 	 mod.home.library-name);
 end;
 
-define method initialize (mod :: <module>, #key) => ();
+define method initialize (mod :: <module>, #next next-method, #key) => ();
+  next-method();
   //
   // Fill in the built in core words.
   //

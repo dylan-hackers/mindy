@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.14 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.15 1995/06/04 22:42:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -197,7 +197,8 @@ end;
 // var.
 //
 define method initialize
-    (obj :: <initial-definition>, #next next-method, #all-keys);
+    (obj :: <initial-definition>, #next next-method, #all-keys) => ();
+  next-method();
   let of = obj.definition-of;
   of.definitions := pair(obj, of.definitions);
 end;
