@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.49 1995/05/26 11:21:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.50 1995/05/26 15:35:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1014,6 +1014,16 @@ end;
 define method find-main-entry
     (func :: <definition-constant-leaf>) => res :: <fer-function-region>;
   find-main-entry(func.const-defn);
+end;
+
+define method find-main-entry
+    (defn :: <generic-definition>) => res :: <fer-function-region>;
+  let discriminator = defn.generic-defn-discriminator-leaf;
+  if (discriminator)
+    find-main-entry(discriminator);
+  else
+    error("Known call of a generic function without a static discriminator?");
+  end;
 end;
 
 define method find-main-entry

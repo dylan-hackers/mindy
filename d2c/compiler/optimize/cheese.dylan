@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.66 1995/05/26 11:22:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.67 1995/05/26 15:35:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -566,8 +566,8 @@ define method optimize-unknown-call
     end;
     change-call-kind(component, call, <error-call>);
   elseif (known?)
-    let builder = make-builder(component);
     if (inline-expansion)
+      let builder = make-builder(component);
       let lexenv = make(<lexenv>);
       let new-func
 	= fer-convert-method(builder, inline-expansion, #f,
@@ -577,88 +577,104 @@ define method optimize-unknown-call
       let func-dep = call.depends-on;
       replace-expression(component, func-dep, new-func);
     else
-      let new-ops = make(<stretchy-vector>);
-      // Add the original function to the known-call operands.
-      add!(new-ops, call.depends-on.source-exp);
-      // Add the fixed parameters.
-      let assign = call.dependents.dependent;
-      for (spec in sig.specializers,
-	   arg-dep = arguments then arg-dep.dependent-next)
-	// Assert the argument types before adding them to the known-call
-	// operands so that the known-call sees the asserted leaves.
-	assert-type(component, assign, arg-dep, spec);
-	add!(new-ops, arg-dep.source-exp);
-      finally
-	// If there is a #next parameter, add something for it.
-	if (sig.next?)
-	  if (next-method-info)
-	    add!(new-ops, next-method-info);
-	  else
-	    add!(new-ops, make-literal-constant(builder, as(<ct-value>, #())));
-	  end;
-	end;
-	// Need to assert the key types before we build the #rest vector.
-	if (sig.key-infos)
-	  for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
-	       while: key-dep)
-	    block (next-key)
-	      let key = key-dep.source-exp.value.literal-value;
-	      for (keyinfo in sig.key-infos)
-		if (keyinfo.key-name == key)
-		  assert-type(component, assign, key-dep.dependent-next,
-			      keyinfo.key-type);
-		  next-key();
-		end;
-	      end;
-	    end;
-	  end;
-	end;
-	if (sig.rest-type | (sig.next? & sig.key-infos))
-	  let rest-args = make(<stretchy-vector>);
-	  for (arg-dep = arg-dep then arg-dep.dependent-next,
-	       while: arg-dep)
-	    add!(rest-args, arg-dep.source-exp);
-	  end;
-	  let rest-temp = make-local-var(builder, #"rest", object-ctype());
-	  build-assignment
-	    (builder, assign.policy, assign.source-location, rest-temp,
-	     make-operation(builder, <primitive>, as(<list>, rest-args),
-			    name: #"vector"));
-	  add!(new-ops, rest-temp);
-	end;
-	if (sig.key-infos)
-	  for (keyinfo in sig.key-infos)
-	    let key = keyinfo.key-name;
-	    for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
-		 until: key-dep == #f
-		   | key-dep.source-exp.value.literal-value == key)
-	    finally
-	      let leaf
-		= if (key-dep)
-		    key-dep.dependent-next.source-exp;
-		  else
-		    let default = keyinfo.key-default;
-		    if (default)
-		      make-literal-constant(builder, default);
-		    else
-		      make(<uninitialized-value>,
-			   derived-type: keyinfo.key-type);
-		    end;
-		  end;
-	      add!(new-ops, leaf);
-	      if (keyinfo.key-supplied?-var)
-		let supplied? = as(<ct-value>, key-dep & #t);
-		add!(new-ops, make-literal-constant(builder, supplied?));
-	      end;
-	    end;
-	  end;
-	end;
-	insert-before(component, assign, builder-result(builder));
-	let new-call = make-operation(builder, <known-call>,
-				      as(<list>, new-ops));
-	replace-expression(component, call.dependents, new-call);
+      convert-to-known-call(component, sig, call);
+    end;
+  end;
+end;
+
+
+define method convert-to-known-call
+    (component :: <component>, sig :: <signature>, call :: <unknown-call>)
+    => ();
+  let (next-method-info, arguments)
+    = if (call.use-generic-entry?)
+	let dep = call.depends-on.dependent-next;
+	values(dep.source-exp, dep.dependent-next);
+      else
+	values(#f, call.depends-on.dependent-next);
+      end;
+
+  let builder = make-builder(component);
+  let new-ops = make(<stretchy-vector>);
+  // Add the original function to the known-call operands.
+  add!(new-ops, call.depends-on.source-exp);
+  // Add the fixed parameters.
+  let assign = call.dependents.dependent;
+  for (spec in sig.specializers,
+       arg-dep = arguments then arg-dep.dependent-next)
+    // Assert the argument types before adding them to the known-call
+    // operands so that the known-call sees the asserted leaves.
+    assert-type(component, assign, arg-dep, spec);
+    add!(new-ops, arg-dep.source-exp);
+  finally
+    // If there is a #next parameter, add something for it.
+    if (sig.next?)
+      if (next-method-info)
+	add!(new-ops, next-method-info);
+      else
+	add!(new-ops, make-literal-constant(builder, as(<ct-value>, #())));
       end;
     end;
+    // Need to assert the key types before we build the #rest vector.
+    if (sig.key-infos)
+      for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	   while: key-dep)
+	block (next-key)
+	  let key = key-dep.source-exp.value.literal-value;
+	  for (keyinfo in sig.key-infos)
+	    if (keyinfo.key-name == key)
+	      assert-type(component, assign, key-dep.dependent-next,
+			  keyinfo.key-type);
+	      next-key();
+	    end;
+	  end;
+	end;
+      end;
+    end;
+    if (sig.rest-type | (sig.next? & sig.key-infos))
+      let rest-args = make(<stretchy-vector>);
+      for (arg-dep = arg-dep then arg-dep.dependent-next,
+	   while: arg-dep)
+	add!(rest-args, arg-dep.source-exp);
+      end;
+      let rest-temp = make-local-var(builder, #"rest", object-ctype());
+      build-assignment
+	(builder, assign.policy, assign.source-location, rest-temp,
+	 make-operation(builder, <primitive>, as(<list>, rest-args),
+			name: #"vector"));
+      add!(new-ops, rest-temp);
+    end;
+    if (sig.key-infos)
+      for (keyinfo in sig.key-infos)
+	let key = keyinfo.key-name;
+	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	     until: key-dep == #f
+	       | key-dep.source-exp.value.literal-value == key)
+	finally
+	  let leaf
+	    = if (key-dep)
+		key-dep.dependent-next.source-exp;
+	      else
+		let default = keyinfo.key-default;
+		if (default)
+		  make-literal-constant(builder, default);
+		else
+		  make(<uninitialized-value>,
+		       derived-type: keyinfo.key-type);
+		end;
+	      end;
+	  add!(new-ops, leaf);
+	  if (keyinfo.key-supplied?-var)
+	    let supplied? = as(<ct-value>, key-dep & #t);
+	    add!(new-ops, make-literal-constant(builder, supplied?));
+	  end;
+	end;
+      end;
+    end;
+    insert-before(component, assign, builder-result(builder));
+    let new-call = make-operation(builder, <known-call>,
+				  as(<list>, new-ops));
+    replace-expression(component, call.dependents, new-call);
   end;
 end;
 
@@ -763,10 +779,17 @@ define method optimize-unknown-call
 				  meths.tail));
 	  end;
       build-assignment(builder, policy, source, next-leaf, op);
+      insert-before(component, assign, builder-result(builder));
       let new-call = make-unknown-call(builder, new-func, next-leaf,
 				       reverse!(arg-leaves));
-      insert-before(component, call, builder-result(builder));
       replace-expression(component, call.dependents, new-call);
+    elseif (defn.generic-defn-discriminator-leaf)
+      // There is a static descriminator function.  We can change into a
+      // known call.  We don't reference the discriminator directly because
+      // we still want to be able to do method selection if we can derive
+      // a better idea of the argument types.
+      convert-to-known-call
+	(component, defn.generic-defn-discriminator-leaf.signature, call);
     end;
   end;
 end;    
@@ -906,7 +929,80 @@ define method optimize-known-call
 end;
 
 define method optimize-known-call
-    (component :: <component>, call :: <unknown-call>,
+    (component :: <component>, call :: <known-call>,
+     defn :: <generic-definition>)
+    => ();
+  // We might be able to do a bit more method selection.
+  let sig = defn.function-defn-signature;
+  let nfixed = sig.specializers.size;
+  for (i from 0 below nfixed,
+       arg-leaves = #() then pair(dep.source-exp, arg-leaves),
+       arg-types = #() then pair(dep.source-exp.derived-type, arg-types),
+       dep = call.depends-on.dependent-next then dep.dependent-next)
+  finally
+    let meths = ct-sorted-applicable-methods(defn, reverse!(arg-types));
+    if (meths)
+      // Okay, we now have enough of a better idea of the types that we can
+      // actually select the methods.  We need to extract the original
+      // arguments and change into a call of the first applicable method.
+      // But we have already extracted the fixed arguments, so just extract
+      // the rest args if there are any.
+      if (sig.rest-type)
+	unless (dep & dep.dependent-next == #f)
+	  error("Strange number of arguments in a known call to a generic "
+		  "function?");
+	end;
+	let rest-var = dep.source-exp;
+	unless (instance?(rest-var, <ssa-variable>))
+	  error("Strange leaf for rest-var in known call to a generic "
+		  "function");
+	end;
+	let rest-op = rest-var.definer.depends-on.source-exp;
+	unless (instance?(rest-op, <primitive>) & rest-op.name == #"vector")
+	  error("Strange value for rest-var in known call to a generic "
+		  "function");
+	end;
+	for (dep = rest-op.depends-on then dep.dependent-next,
+	     while: dep)
+	  arg-leaves := pair(dep.source-exp, arg-leaves);
+	end;
+      end;
+      arg-leaves := reverse!(arg-leaves);
+      // Okay, we now have all the arguments.  Change into a call of the
+      // first method.
+      let builder = make-builder(component);
+      let new-call
+	= if (meths == #())
+	    compiler-warning("No applicable methods.");
+	    make-operation(builder, <error-call>,
+			   pair(call.depends-on.source-exp, arg-leaves));
+	  else
+	    let assign = call.dependents.dependent;
+	    let policy = assign.policy;
+	    let source = assign.source-location;
+	    let new-func = make-definition-leaf(builder, meths.head);
+	    let next-leaf = make-local-var(builder, #"next-method-info",
+					   object-ctype());
+	    let op
+	      = if (empty?(meths.tail))
+		  make-literal-constant(builder, as(<ct-value>, #()));
+		else
+		  make-unknown-call
+		    (builder, dylan-defn-leaf(builder, #"list"), #f,
+		     map(curry(make-definition-leaf, builder),
+			 meths.tail));
+		end;
+	    build-assignment(builder, policy, source, next-leaf, op);
+	    insert-before(component, assign, builder-result(builder));
+	    make-unknown-call(builder, new-func, next-leaf, arg-leaves);
+	  end;
+      replace-expression(component, call.dependents, new-call);
+    end;
+  end;
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
      defn :: <abstract-method-definition>)
     => ();
   let sig = defn.function-defn-signature;
