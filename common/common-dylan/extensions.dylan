@@ -15,10 +15,40 @@ end class;
 //  passed to 'default:'. These cannot be confused with any other Dylan
 //  values.
 
+define method unsupplied?( object :: <object> )
+=> ( unsupplied? :: <boolean> )
+    object = $unsupplied;
+end method unsupplied?;
+
+define method supplied?( object :: <object> )
+=> ( unsupplied? :: <boolean> )
+    ~ unsupplied?( object );
+end method supplied?;
+
+define method unsupplied()
+=> ( unsupplied-marker :: <object> )
+    $unsupplied;
+end method unsupplied;
+
 define class <not-found-marker> (<object>)
 end;
 
 define constant $unfound = make(<not-found-marker>);
+
+define function found?( object :: <object> )
+=> ( found? :: <boolean> )
+    ~ unfound?( object );
+end function found?;
+
+define function unfound?( object :: <object> )
+=> ( unfound? :: <boolean> )
+    object = $unfound;
+end function unfound?;
+
+define function unfound()
+=> ( unfound-marker :: <object> )
+    $unfound;
+end function unfound;
 
 
 //=========================================================================
@@ -59,9 +89,9 @@ define open generic list-locator
 
 
 //=========================================================================
-//  Locators
+//  Condition string conversion
 //=========================================================================
-//  A very abstract interface to locators.
+//  condition-to-string
 
 define open generic condition-to-string
     (condition :: <condition>)
@@ -117,21 +147,42 @@ end;
 define function debug-message
     (format-string, #rest format-arguments)
  => ()
-  // XXX - need implementation
+  format( *standard-error*, format-string, format-arguments );
 end function;
 
-// XXX - assert and debug-assert work right, but need to be enhanced.
-define constant debug-assert = assert;
+define macro assert 
+  { assert(?value:expression, ?format-string:expression, ?format-args:expression) }
+  =>{	block()
+            unless (value)
+                let error-string :: <string> = format-to-string(format-string, format-args);
+                error(error-string);
+            end unless;
+        #f;
+        end block; }
+  { assert(?value:expression) }
+  =>{	block()
+            unless (value)
+                error("An assertion failed.");
+            end unless;
+            #f;
+        end block; }
+end macro assert;
 
+define macro debug-assert
+    { debug-assert(?value:expression, ?format-string:expression, ?format-args:expression) }
+  =>{ assert(?value, ?format-string, format-args) }
+    { debug-assert(?value:expression) }
+  =>{ assert(?value) }
+end macro debug-assert;
 
 //=========================================================================
 //  Ignore & ignorable
 //=========================================================================
 //  Control compiler warnings about unused variables.
 
-define function ignorable (object) => ()
-  // XXX - This has the right API, but doesn't do anything. Also fix
-  // ignorable.
+define function ignorable (#rest noise) => ()
+  // XXX - This has the right API, but does nothing. Also fix ignore.
+  // XXX - Does it? Should it be #rest?
 end;
 
 
@@ -139,11 +190,169 @@ end;
 //  Conversions
 //=========================================================================
 //  Convert numbers to and from strings.
+//  XXX - Much hackiness lurks here:
+//		No scientific notation
+//		No optimization
+//		No error handling to speak of
+//		String-to-number functions are very tolerant of input
 
-// XXX - float-to-string
-// XXX - integer-to-string
-// XXX - number-to-string
-// XXX - string-to-integer
+define method float-to-string( float :: <float> ) 
+=> ( string :: <string> )
+    
+    let string = format-to-string( "%=", float );
+    
+    // Take off the marker
+    string := copy-sequence( string, start: 0, end: string.size - 2 );
+    
+    string;
+end method float-to-string;
+
+define method integer-to-string(    integer :: <integer>,
+                                    #key base :: limited(<integer>, min: 2, max: 36),
+                                    size :: <integer> = 0,
+                                    fill :: <character> = '0')
+ => ( string :: <byte-string> )
+  // Convert to base-10
+  let( body :: <integer>, digits :: <integer> ) = modulo( integer, base );
+  let base-10-integer :: <integer> = (body * 10) + digits;
+  
+  // Format
+  let formatted-string = format-to-string("%d", base-10-integer);
+  
+  // Pad if needed
+  if( formatted-string.size < size )
+    for( i from 0 below size - formatted-string.size )
+        formatted-string := concatenate( fill, formatted-string );
+    end for;
+  end if;
+  
+  formatted-string;
+end method integer-to-string;
+
+// XXX - number-to-string isn't in common-dylan? ASK FUN-O: about this.
+
+define method string-to-integer( string :: <byte-string>, #key base :: <integer> = 10, 
+                                    start-position :: <integer> = 0, end-position :: <integer> = $unsupplied,
+                                    default :: <integer> = $unsupplied )
+=> ( result :: <integer> )
+    // Get the string we're actually parsing
+    if( ~ supplied?( end-position ) )
+        end-position := string.size();
+    end if;
+    let substring :: <string> = copy-sequence( string, start: start-position, end: end-position );
+    
+    // Set the state and parse
+    let negative :: <boolean> = #f;
+    let this-base :: <integer> = 1;
+    let integer :: <integer> = 0;
+    block( exit-loop )
+        for( i :: <integer> from substring.size - 1 to 0 by - 1   )
+            let char :: <character> = substring[ i ];
+            select( char )
+                '-' => negative := #t;		// Check we haven't set already?
+                '0' => #f;
+                '1' => integer := integer + (1 * this-base);
+                '2' => integer := integer + (2 * this-base);
+                '3' => integer := integer + (3 * this-base);
+                '4' => integer := integer + (4 * this-base);
+                '5' => integer := integer + (5 * this-base);
+                '6' => integer := integer + (6 * this-base);
+                '7' => integer := integer + (7 * this-base);
+                '8' => integer := integer + (8 * this-base);
+                '9' => integer := integer + (9 * this-base);
+                ',' => #f;
+                // XXX - If it's not a valid character, throw an error. ASK FUN-O: What about spaces, etc?
+                otherwise => if( supplied?( default ) ) 
+                                integer := default; 
+                                exit-loop();
+                            else 
+                                break("Invalid string in string-to-integer.");
+                                exit-loop(); 
+                            end if;
+            end select; 
+            this-base := this-base * base;
+        end for;
+        // If the string is negative, make the integer negative as well
+        if( negative )
+            integer := - integer;
+        end if;
+    end block;
+    
+    integer;
+end method string-to-integer;
+
+// XXX - ASK FUN-O: Not part of common-dylan, but used in DUIM?
+// Rewrite along the same lines as string-to-integer: find the decimal then work left & right
+
+define method string-to-float( string :: <string>, #key base :: <integer> = 10, 
+                                    start-position :: <integer> = 0, end-position :: <integer> = $unsupplied,
+                                    default :: <integer> = $unsupplied   )
+=>( result :: <float> )
+    // Get the string we're actually parsing
+    if( ~ supplied?( end-position ) )
+        end-position := string.size();
+    end if;
+    let substring :: <string> = copy-sequence( string, start: start-position, end: end-position );
+    
+    // Set up the parsing state
+    let base-float = as( <float>, base );	// as <float> doesn't work when divided!
+    let float :: <float> = 0.0;
+    let left = make( <stretchy-vector> );
+    let right = make( <stretchy-vector> );
+    let current = left;
+    let negative = #f;
+    
+    block( exit-loop )
+        for( char in substring  )
+            select( char )
+                '-' => negative := #t;		//TODO Check we haven't set already
+                '0' => add!( current, 0.0 );
+                '1' => add!( current, 1.0 );
+                '2' => add!( current, 2.0 );
+                '3' => add!( current, 3.0 );
+                '4' => add!( current, 4.0 );
+                '5' => add!( current, 5.0 );
+                '6' => add!( current, 6.0 );
+                '7' => add!( current, 7.0 );
+                '8' => add!( current, 8.0 );
+                '9' => add!( current, 9.0 );
+                '.' => current := right;		//TODO Use decimal-separator
+                ',' => #f;				// TODO Use thousands-separator
+                // XXX - If it's not a valid character, throw an error. ASK FUN-O: What about spaces, etc?
+                otherwise => if( supplied?( default ) ) 
+                                float := default; 
+                                exit-loop();
+                            else 
+                                break("Invalid string in string-to-integer.");
+                                exit-loop(); 
+                            end if;
+            end select; 
+        end for;
+    
+        if( left.size > 0 )
+            //OPTIMIZE to go from right to left, multiplying
+            let multiple = as( <float>, (base ^ (left.size - 1)) );
+            for( digit in left )
+                float := float + (digit * multiple);
+                multiple := multiple / base-float;
+            end for;
+        end if;
+        
+        if( right.size > 0 )
+            let fraction = 1.0 / base-float;
+            for( digit in right )
+                float := float + (digit * fraction);
+                fraction := fraction / base-float;
+            end for
+        end if;
+        
+        if( negative )
+            float := float * -1.0;
+        end if;
+    end block;
+    
+    float;
+end method string-to-float;
 
 
 //=========================================================================
@@ -232,3 +441,4 @@ end macro;
 //  The related bug needs to be fixed.
 
 define constant subclass = hackish-subclass;
+    

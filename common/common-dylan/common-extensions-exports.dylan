@@ -3,6 +3,8 @@ module: dylan-user
 define library common-extensions
   use dylan;
   use melange-support;
+  use format;
+  use standard-io;
 
   // Only import transcendentals if we have them.
 #if (~compiled-for-solaris)
@@ -35,6 +37,7 @@ end module c-support;
 define module common-extensions
   use dylan;
   use extensions,
+    exclude: { assert },
     rename: {$not-supplied => $unsupplied,
 	     on-exit => register-exit-application-function,
 	     subclass => hackish-subclass},
@@ -43,11 +46,9 @@ define module common-extensions
 	     one-of,
 	     //subclass,
 	     <format-string-condition>, <simple-condition>,
-	     $unsupplied,
 	     ignore,
 	     key-exists?,
 	     difference,
-	     assert,
 	     register-exit-application-function,
 	     <stretchy-sequence>,
 	     <object-deque>,
@@ -55,6 +56,8 @@ define module common-extensions
   use %Hash-Tables,
     export: {remove-all-keys!};
   use c-support;
+  use format;
+  use standard-io;
 
   export
     /* Numerics */
@@ -62,7 +65,13 @@ define module common-extensions
 
     /* Unsupplied, unfound */
     //$unsupplied,
+    supplied?,
+    unsupplied?,
+    unsupplied,
     $unfound,
+    found?,
+    unfound?,
+    unfound,
 
     /* Collections */
     //<object-deque>,
@@ -81,9 +90,9 @@ define module common-extensions
     condition-to-string,
 
     /* Debugging */
-    //assert,
+    \assert,
     debug-message,
-    debug-assert,
+    \debug-assert,
 
     /* Types */
     //false-or,
@@ -95,12 +104,10 @@ define module common-extensions
     ignorable,
 
     /* Converting to and from numbers */
-    /* UNIMPLEMENTED
     float-to-string,
     integer-to-string,
-    number-to-string,
+    // Not part of common? number-to-string,
     string-to-integer,
-    */
 
     /* Appliation runtime environment */
     application-name,
