@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.1 1994/03/24 21:49:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.2 1994/04/08 14:26:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -22,7 +22,9 @@ extern void free(void *ptr);
 typedef int boolean;
 #define TRUE 1
 #define FALSE 0
+
 extern char *current_file;
+extern boolean ParseOnly;
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
