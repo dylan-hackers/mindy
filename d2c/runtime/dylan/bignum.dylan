@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.4 2001/12/21 22:36:12 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.5 2001/12/22 16:08:27 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -32,7 +32,7 @@ module: dylan-viscera
 
 // Extended integer digits.
 
-define constant $digit-bits = 15;
+define constant $digit-bits = 16;
 define constant $digit-mask = lognot(ash(-1, $digit-bits));
 
 // <digit> -- internal.
@@ -303,7 +303,11 @@ end;
 define inline method normalize-bignum (num :: <extended-integer>,
 				       len :: <integer>)
     => res :: <extended-integer>;
-  shrink-bignum(num, normalized-length(num, len));
+  if (num.bignum-size > 1)
+    shrink-bignum(num, normalized-length(num, len));
+  else
+    num;
+  end;
 end;
 
 
@@ -345,22 +349,30 @@ define method as (class == <integer>, num :: <extended-integer>)
   // by shifting and logior-ing.  We use as-signed on the most significant
   // digit because that is the digit that has the sign bit in it.
   //
-  if (num < $minimum-integer
-	| num > $maximum-integer)
-    error("%= can't be represented as a <integer>", num);
-  end;
   let len = bignum-size(num);
-  local
-    method repeat (index :: <integer>, result :: <integer>)
-      if (negative?(index))
-	result;
-      else
-	repeat(index - 1,
-	       logior(ash(result, $digit-bits),
-		      as-unsigned(bignum-digit(num, index))));
+  if (len = 1)
+    bignum-digit(num, 0).as-signed;
+  elseif (len = 2)
+    // the digit size can't be bigger than half the native word size, so this
+    // is safe.
+    logior(bignum-digit(num, 0).as-unsigned, 
+           ash(bignum-digit(num, 1).as-signed, $digit-bits));
+  elseif (num < $minimum-integer | num > $maximum-integer)
+    // TODO: make extended constants for min/max
+    error("%= can't be represented as a <integer>", num);
+  else
+    local
+      method repeat (index :: <integer>, result :: <integer>)
+        if (negative?(index))
+          result;
+        else
+          repeat(index - 1,
+                 logior(ash(result, $digit-bits),
+                        as-unsigned(bignum-digit(num, index))));
+        end;
       end;
-    end;
-  repeat(len - 2, as-signed(bignum-digit(num, len - 1)));
+    repeat(len - 2, as-signed(bignum-digit(num, len - 1)));
+  end;
 end;
 
 define method as (class == <single-float>, num :: <extended-integer>)
@@ -409,17 +421,26 @@ define inline method bignum-as-float
     (class :: <class>, num :: <extended-integer>)
     => res :: <float>;
   let len = bignum-size(num);
-  local
-    method repeat (index :: <integer>, result :: <float>)
-      if (negative?(index))
-	result;
-      else
-	repeat(index - 1,
-	       result * ash(1, $digit-bits)
-		 + as(class, as-unsigned(bignum-digit(num, index))));
+  if (len = 1)
+    as(class, bignum-digit(num, 0).as-signed);
+  elseif (len = 2)
+    // the digit size can't be bigger than half the native word size, so this
+    // is safe.
+    as(class, logior(bignum-digit(num, 0).as-unsigned, 
+                     ash(bignum-digit(num, 1).as-signed, $digit-bits)));
+  else
+    local
+      method repeat (index :: <integer>, result :: <float>)
+        if (negative?(index))
+          result;
+        else
+          repeat(index - 1,
+                 result * ash(1, $digit-bits)
+                   + as(class, as-unsigned(bignum-digit(num, index))));
+        end;
       end;
-    end;
-  repeat(len - 2, as(class, as-signed(bignum-digit(num, len - 1))));
+    repeat(len - 2, as(class, as-signed(bignum-digit(num, len - 1))));
+  end;
 end;
 
 
@@ -452,29 +473,31 @@ define method \< (num1 :: <extended-integer>, num2 :: <extended-integer>)
     => res :: <boolean>;
   let len1 = bignum-size(num1);
   let len2 = bignum-size(num2);
-  let num1-neg = digit-sign-bit-set?(bignum-digit(num1, len1 - 1));
-  let num2-neg = digit-sign-bit-set?(bignum-digit(num2, len2 - 1));
-  if (num1-neg == num2-neg)
-    if (len1 == len2)
-      block (return)
-	for (posn :: <integer> from len1 - 1 to 0 by -1)
-	  let digit1 = bignum-digit(num1, posn);
-	  let digit2 = bignum-digit(num2, posn);
-	  if (digit1 < digit2)
-	    return(#t);
-	  elseif (digit2 < digit1)
-	    return(#f);
-	  end;
-	end;
-	#f;
+  if (len1 + len2 = 2)
+    bignum-digit(num1, 0).as-signed < bignum-digit(num2, 0).as-signed;
+  else
+    let num1-neg = digit-sign-bit-set?(bignum-digit(num1, len1 - 1));
+    let num2-neg = digit-sign-bit-set?(bignum-digit(num2, len2 - 1));
+    if (num1-neg == num2-neg)
+      if (len1 == len2)
+        block (return)
+          for (posn :: <integer> from len1 - 1 to 0 by -1)
+            let digit1 = bignum-digit(num1, posn);
+            let digit2 = bignum-digit(num2, posn);
+            if (digit1 ~= digit2)
+              return(digit1 < digit2);
+            end;
+          end;
+          #f;
+        end;
+      elseif (len1 < len2)
+        ~num1-neg;
+      else
+        num1-neg;
       end;
-    elseif (len1 < len2)
-      ~num1-neg;
     else
       num1-neg;
     end;
-  else
-    num1-neg;
   end;
 end;
 
@@ -482,18 +505,18 @@ end;
 //
 // For a bignum to be even, the first digit must be even.
 //
-define method even? (a :: <extended-integer>)
+define inline method even? (a :: <extended-integer>)
     => res :: <boolean>;
-  zero?(as-unsigned(digit-logand(bignum-digit(a, 0), make-digit(1))));
+  bignum-digit(a, 0).value.even?;
 end;
 
 // zero? -- exported generic function method.
 //
 // For a bignum to be zero, the size has to be 1 and the only digit 0.
 //
-define method zero? (a :: <extended-integer>)
+define inline method zero? (a :: <extended-integer>)
     => res :: <boolean>;
-  a.bignum-size == 1 & bignum-digit(a, 0) == make-digit(0);
+  a.bignum-size == 1 & bignum-digit(a, 0).value.zero?;
 end;
 
 // positive? -- exported generic function method.
@@ -502,7 +525,7 @@ end;
 // this means that if there is one digit, it is greater than zero and if there
 // are multiple digits, the sign bit is clear.
 //
-define method positive? (a :: <extended-integer>)
+define inline method positive? (a :: <extended-integer>)
     => res :: <boolean>;
   let len = a.bignum-size;
   if (len == 1)
@@ -516,7 +539,7 @@ end;
 //
 // For a bignum to be negative, this sign bit has to be set.
 //
-define method negative? (a :: <extended-integer>)
+define inline method negative? (a :: <extended-integer>)
     => res :: <boolean>;
   digit-sign-bit-set?(bignum-digit(a, a.bignum-size - 1));
 end;
@@ -528,33 +551,37 @@ define method \+ (a :: <extended-integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   let a-len = bignum-size(a);
   let b-len = bignum-size(b);
-  let (shorter, shorter-len, longer, longer-len)
-    = if (a-len < b-len)
-	values(a, a-len, b, b-len);
-      else
-	values(b, b-len, a, a-len);
-      end;
-  let res = make-bignum(longer-len + 1);
-  let carry-in = $no-carry;
-  let shorter-digit = make-digit(0);
-  let longer-digit = make-digit(0);
-  for (index :: <integer> from 0 below shorter-len)
-    shorter-digit := bignum-digit(shorter, index);
-    longer-digit := bignum-digit(longer, index);
-    let (digit, carry-out) = digit-add(shorter-digit, longer-digit, carry-in);
-    bignum-digit(res, index) := digit;
-    carry-in := carry-out;
+  if (a-len + b-len = 2)
+    as(<extended-integer>, bignum-digit(a, 0).as-signed + bignum-digit(b, 0).as-signed);
+  else
+    let (shorter, shorter-len, longer, longer-len)
+      = if (a-len < b-len)
+          values(a, a-len, b, b-len);
+        else
+          values(b, b-len, a, a-len);
+        end;
+    let res = make-bignum(longer-len + 1);
+    let carry-in = $no-carry;
+    let shorter-digit = make-digit(0);
+    let longer-digit = make-digit(0);
+    for (index :: <integer> from 0 below shorter-len)
+      shorter-digit := bignum-digit(shorter, index);
+      longer-digit := bignum-digit(longer, index);
+      let (digit, carry-out) = digit-add(shorter-digit, longer-digit, carry-in);
+      bignum-digit(res, index) := digit;
+      carry-in := carry-out;
+    end;
+    let shorter-sign = sign-extend-digit(shorter-digit);
+    for (index :: <integer> from shorter-len below longer-len)
+      longer-digit := bignum-digit(longer, index);
+      let (digit, carry-out) = digit-add(shorter-sign, longer-digit, carry-in);
+      bignum-digit(res, index) := digit;
+      carry-in := carry-out;
+    end;
+    bignum-digit(res, longer-len)
+      := digit-add(shorter-sign, sign-extend-digit(longer-digit), carry-in);
+    normalize-bignum(res, longer-len + 1);
   end;
-  let shorter-sign = sign-extend-digit(shorter-digit);
-  for (index :: <integer> from shorter-len below longer-len)
-    longer-digit := bignum-digit(longer, index);
-    let (digit, carry-out) = digit-add(shorter-sign, longer-digit, carry-in);
-    bignum-digit(res, index) := digit;
-    carry-in := carry-out;
-  end;
-  bignum-digit(res, longer-len)
-    := digit-add(shorter-sign, sign-extend-digit(longer-digit), carry-in);
-  normalize-bignum(res, longer-len + 1);
 end;
 
 
@@ -564,48 +591,52 @@ define method \* (a :: <extended-integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   let a-len = bignum-size(a);
   let b-len = bignum-size(b);
-  let res-len = a-len + b-len;
-  let res = make-bignum(res-len);
-  for (index :: <integer> from 0 below res-len)
-    bignum-digit(res, index) := make-digit(0);
+  if (a-len + b-len = 2)
+    as(<extended-integer>, bignum-digit(a, 0).as-signed * bignum-digit(b, 0).as-signed);
+  else
+    let res-len = a-len + b-len;
+    let res = make-bignum(res-len);
+    for (index :: <integer> from 0 below res-len)
+      bignum-digit(res, index) := make-digit(0);
+    end;
+    local
+      method mult-and-add
+          (a-digit :: <digit>, b-digit :: <digit>, res-index :: <integer>,
+           carry :: <digit>)
+       => new-carry :: <digit>;
+        let (low, high) = digit-multiply(a-digit, b-digit);
+        let (low, carry) = digit-add(low, carry, $no-carry);
+        let high = digit-add(high, make-digit(0), carry);
+        let res-digit = bignum-digit(res, res-index);
+        let (low, carry) = digit-add(low, res-digit, $no-carry);
+        let high = digit-add(high, make-digit(0), carry);
+        bignum-digit(res, res-index) := low;
+        high;
+      end;
+    let a-digit = make-digit(0);
+    for (a-index :: <integer> from 0 below a-len)
+      a-digit := bignum-digit(a, a-index);
+      let b-digit = make-digit(0);
+      let carry = make-digit(0);
+      for (b-index :: <integer> from 0 below b-len)
+        b-digit := bignum-digit(b, b-index);
+        carry := mult-and-add(a-digit, b-digit, a-index + b-index, carry);
+      end;
+      let b-sign = sign-extend-digit(b-digit);
+      for (b-index :: <integer> from b-len below res-len - a-index)
+        carry := mult-and-add(a-digit, b-sign, a-index + b-index, carry);
+      end;
+    end;
+    let a-sign = sign-extend-digit(a-digit);
+    for (a-index :: <integer> from a-len below res-len)
+      let carry = make-digit(0);
+      for (b-index :: <integer> from 0 below res-len - a-index)
+        let b-digit = bignum-digit(b, b-index);
+        carry := mult-and-add(a-sign, b-digit, a-index + b-index, carry);
+      end;
+    end;
+    normalize-bignum(res, res-len);
   end;
-  local
-    method mult-and-add
-	(a-digit :: <digit>, b-digit :: <digit>, res-index :: <integer>,
-	 carry :: <digit>)
-	=> new-carry :: <digit>;
-      let (low, high) = digit-multiply(a-digit, b-digit);
-      let (low, carry) = digit-add(low, carry, $no-carry);
-      let high = digit-add(high, make-digit(0), carry);
-      let res-digit = bignum-digit(res, res-index);
-      let (low, carry) = digit-add(low, res-digit, $no-carry);
-      let high = digit-add(high, make-digit(0), carry);
-      bignum-digit(res, res-index) := low;
-      high;
-    end;
-  let a-digit = make-digit(0);
-  for (a-index :: <integer> from 0 below a-len)
-    a-digit := bignum-digit(a, a-index);
-    let b-digit = make-digit(0);
-    let carry = make-digit(0);
-    for (b-index :: <integer> from 0 below b-len)
-      b-digit := bignum-digit(b, b-index);
-      carry := mult-and-add(a-digit, b-digit, a-index + b-index, carry);
-    end;
-    let b-sign = sign-extend-digit(b-digit);
-    for (b-index :: <integer> from b-len below res-len - a-index)
-      carry := mult-and-add(a-digit, b-sign, a-index + b-index, carry);
-    end;
-  end;
-  let a-sign = sign-extend-digit(a-digit);
-  for (a-index :: <integer> from a-len below res-len)
-    let carry = make-digit(0);
-    for (b-index :: <integer> from 0 below res-len - a-index)
-      let b-digit = bignum-digit(b, b-index);
-      carry := mult-and-add(a-sign, b-digit, a-index + b-index, carry);
-    end;
-  end;
-  normalize-bignum(res, res-len);
 end;
 
 
@@ -615,50 +646,54 @@ define method \- (a :: <extended-integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   let a-len = bignum-size(a);
   let b-len = bignum-size(b);
-  if (a-len < b-len)
-    let res = make-bignum(b-len + 1);
-    let borrow-in = $no-borrow;
-    let a-digit = make-digit(0);
-    let b-digit = make-digit(0);
-    for (index :: <integer> from 0 below a-len)
-      a-digit := bignum-digit(a, index);
-      b-digit := bignum-digit(b, index);
-      let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
-      bignum-digit(res, index) := digit;
-      borrow-in := borrow-out;
-    end;
-    let a-sign = sign-extend-digit(a-digit);
-    for (index :: <integer> from a-len below b-len)
-      b-digit := bignum-digit(b, index);
-      let (digit, borrow-out) = digit-subtract(a-sign, b-digit, borrow-in);
-      bignum-digit(res, index) := digit;
-      borrow-in := borrow-out;
-    end;
-    bignum-digit(res, b-len)
-      := digit-subtract(a-sign, sign-extend-digit(b-digit), borrow-in);
-    normalize-bignum(res, b-len + 1);
+  if (a-len + b-len = 2)
+    as(<extended-integer>, bignum-digit(a, 0).as-signed - bignum-digit(b, 0).as-signed);
   else
-    let res = make-bignum(a-len + 1);
-    let borrow-in = $no-borrow;
-    let a-digit = make-digit(0);
-    let b-digit = make-digit(0);
-    for (index :: <integer> from 0 below b-len)
-      a-digit := bignum-digit(a, index);
-      b-digit := bignum-digit(b, index);
-      let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
-      bignum-digit(res, index) := digit;
-      borrow-in := borrow-out;
+    if (a-len < b-len)
+      let res = make-bignum(b-len + 1);
+      let borrow-in = $no-borrow;
+      let a-digit = make-digit(0);
+      let b-digit = make-digit(0);
+      for (index :: <integer> from 0 below a-len)
+        a-digit := bignum-digit(a, index);
+        b-digit := bignum-digit(b, index);
+        let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
+        bignum-digit(res, index) := digit;
+        borrow-in := borrow-out;
+      end;
+      let a-sign = sign-extend-digit(a-digit);
+      for (index :: <integer> from a-len below b-len)
+        b-digit := bignum-digit(b, index);
+        let (digit, borrow-out) = digit-subtract(a-sign, b-digit, borrow-in);
+        bignum-digit(res, index) := digit;
+        borrow-in := borrow-out;
+      end;
+      bignum-digit(res, b-len)
+        := digit-subtract(a-sign, sign-extend-digit(b-digit), borrow-in);
+      normalize-bignum(res, b-len + 1);
+    else
+      let res = make-bignum(a-len + 1);
+      let borrow-in = $no-borrow;
+      let a-digit = make-digit(0);
+      let b-digit = make-digit(0);
+      for (index :: <integer> from 0 below b-len)
+        a-digit := bignum-digit(a, index);
+        b-digit := bignum-digit(b, index);
+        let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
+        bignum-digit(res, index) := digit;
+        borrow-in := borrow-out;
+      end;
+      let b-sign = sign-extend-digit(b-digit);
+      for (index :: <integer> from b-len below a-len)
+        a-digit := bignum-digit(a, index);
+        let (digit, borrow-out) = digit-subtract(a-digit, b-sign, borrow-in);
+        bignum-digit(res, index) := digit;
+        borrow-in := borrow-out;
+      end;
+      bignum-digit(res, a-len)
+        := digit-subtract(sign-extend-digit(a-digit), b-sign, borrow-in);
+      normalize-bignum(res, a-len + 1);
     end;
-    let b-sign = sign-extend-digit(b-digit);
-    for (index :: <integer> from b-len below a-len)
-      a-digit := bignum-digit(a, index);
-      let (digit, borrow-out) = digit-subtract(a-digit, b-sign, borrow-in);
-      bignum-digit(res, index) := digit;
-      borrow-in := borrow-out;
-    end;
-    bignum-digit(res, a-len)
-      := digit-subtract(sign-extend-digit(a-digit), b-sign, borrow-in);
-    normalize-bignum(res, a-len + 1);
   end;
 end;
 
@@ -771,6 +806,7 @@ define method shift-for-division
   end;
 end;
 
+// This is only called with +ve arguments
 define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   let x-len = x.bignum-size;
@@ -838,54 +874,114 @@ end;
 
 define method floor/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-  let (quo, rem) = bignum-divide(x-abs, y-abs);
-  if (x-neg == y-neg)
-    values(quo, if (y-neg) -rem else rem end);
-  elseif (zero?(rem))
-    values(-quo, rem);
+  let x-len = x.bignum-size;
+  let y-len = y.bignum-size;
+  if (x-len <= 2 & y-len <= 2)
+    let xv = bignum-digit(x, x-len - 1).as-signed;
+    let yv = bignum-digit(y, y-len - 1).as-signed;
+    if (x-len = 2)
+      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
+    end;
+    if (y-len = 2)
+      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
+    end;
+    let (quo, rem) = floor/(xv, yv);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
-    values(-1 - quo, if (y-neg) y + rem else y - rem end);
+    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+    let (quo, rem) = bignum-divide(x-abs, y-abs);
+    if (x-neg == y-neg)
+      values(quo, if (y-neg) -rem else rem end);
+    elseif (zero?(rem))
+      values(-quo, rem);
+    else
+      values(-1 - quo, if (y-neg) y + rem else y - rem end);
+    end;
   end;
 end;
 
 define method ceiling/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-  let (quo, rem) = bignum-divide(x-abs, y-abs);
-  if (x-neg ~== y-neg)
-    values(-quo, if (x-neg) -rem else rem end);
-  elseif (zero?(rem))
-    values(quo, rem);
+  let x-len = x.bignum-size;
+  let y-len = y.bignum-size;
+  if (x-len <= 2 & y-len <= 2)
+    let xv = bignum-digit(x, x-len - 1).as-signed;
+    let yv = bignum-digit(y, y-len - 1).as-signed;
+    if (x-len = 2)
+      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
+    end;
+    if (y-len = 2)
+      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
+    end;
+    let (quo, rem) = ceiling/(xv, yv);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   else
-    values(1 + quo, (if (x-neg) -rem else rem end) - y);
+    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+    let (quo, rem) = bignum-divide(x-abs, y-abs);
+    if (x-neg ~== y-neg)
+      values(-quo, if (x-neg) -rem else rem end);
+    elseif (zero?(rem))
+      values(quo, rem);
+    else
+      values(1 + quo, (if (x-neg) -rem else rem end) - y);
+    end;
   end;
 end;
 
 define method round/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-  let (quo :: <extended-integer>, rem :: <extended-integer>)
-    = bignum-divide(x-abs, y-abs);
-  let twice-rem = rem + rem;
-  if (twice-rem > y-abs | (twice-rem == y-abs & odd?(quo)))
-    quo := quo + 1;
-    rem := rem - y-abs;
+  let x-len = x.bignum-size;
+  let y-len = y.bignum-size;
+  if (x-len <= 2 & y-len <= 2)
+    let xv = bignum-digit(x, x-len - 1).as-signed;
+    let yv = bignum-digit(y, y-len - 1).as-signed;
+    if (x-len = 2)
+      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
+    end;
+    if (y-len = 2)
+      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
+    end;
+    let (quo, rem) = round/(xv, yv);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  else
+    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+    let (quo :: <extended-integer>, rem :: <extended-integer>)
+      = bignum-divide(x-abs, y-abs);
+    let twice-rem = rem + rem;
+    if (twice-rem > y-abs | (twice-rem == y-abs & odd?(quo)))
+      quo := quo + 1;
+      rem := rem - y-abs;
+    end;
+    values(if (x-neg == y-neg) quo else -quo end,
+           if (x-neg) -rem else rem end);
   end;
-  values(if (x-neg == y-neg) quo else -quo end,
-	 if (x-neg) -rem else rem end);
 end;
 
 define method truncate/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-  let (quo, rem) = bignum-divide(x-abs, y-abs);
-  values(if (x-neg == y-neg) quo else -quo end,
-	 if (x-neg) -rem else rem end);
+  let x-len = x.bignum-size;
+  let y-len = y.bignum-size;
+  if (x-len <= 2 & y-len <= 2)
+    let xv = bignum-digit(x, x-len - 1).as-signed;
+    let yv = bignum-digit(y, y-len - 1).as-signed;
+    if (x-len = 2)
+      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
+    end;
+    if (y-len = 2)
+      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
+    end;
+    let (quo, rem) = truncate/(xv, yv);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  else
+    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+    let (quo, rem) = bignum-divide(x-abs, y-abs);
+    values(if (x-neg == y-neg) quo else -quo end,
+           if (x-neg) -rem else rem end);
+  end;
 end;
 
 
@@ -922,10 +1018,22 @@ end;
 // 
 define method gcd (x :: <extended-integer>, y :: <extended-integer>)
     => res :: <extended-integer>;
-  if (zero?(x))
+  let x-len = x.bignum-size;
+  let y-len = y.bignum-size;
+  if (x-len = 1 & bignum-digit(x, 0).value.zero?)
     y;
-  elseif (zero?(y))
+  elseif (y-len = 1 & bignum-digit(y, 0).value.zero?)
     x;
+  elseif (x-len <= 2 & y-len <= 2)
+    let xv = bignum-digit(x, x-len - 1).as-signed;
+    let yv = bignum-digit(y, y-len - 1).as-signed;
+    if (x-len = 2)
+      xv := logior(ash(xv, $digit-bits), bignum-digit(x, 0).as-unsigned);
+    end;
+    if (y-len = 2)
+      yv := logior(ash(yv, $digit-bits), bignum-digit(y, 0).as-unsigned);
+    end;
+    as(<extended-integer>, gcd(xv, yv));
   else
     let x = if (negative?(x)) -x else copy-bignum(x) end;
     let y = if (negative?(y)) -y else copy-bignum(y) end;
@@ -934,16 +1042,16 @@ define method gcd (x :: <extended-integer>, y :: <extended-integer>)
     let factors-of-two = min(x-shift, y-shift);
     block (return)
       for (while: #t)
-	select (three-way-compare(x, x-len, y, y-len))
-	  #"equal" =>
-	    return(ash(normalize-bignum(x, x-len), factors-of-two));
-	  #"less" =>
-	    y-len := subtract-in-place(y, y-len, x, x-len);
-	    y-len := shift-until-odd(y, y-len);
-	  #"greater" =>
-	    x-len := subtract-in-place(x, x-len, y, y-len);
-	    x-len := shift-until-odd(x, x-len);
-	end;
+        select (three-way-compare(x, x-len, y, y-len))
+          #"equal" =>
+            return(ash(normalize-bignum(x, x-len), factors-of-two));
+          #"less" =>
+            y-len := subtract-in-place(y, y-len, x, x-len);
+            y-len := shift-until-odd(y, y-len);
+          #"greater" =>
+            x-len := subtract-in-place(x, x-len, y, y-len);
+            x-len := shift-until-odd(x, x-len);
+        end;
       end;
     end;
   end;
