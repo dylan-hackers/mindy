@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.37 2002/04/13 01:35:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.38 2002/08/25 12:05:40 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -232,7 +232,14 @@ define class <file-state> (<object>)
   //
   // keeps track of names used already.  This is cleared whenever we start
   // emitting a new function.
-  slot file-local-table :: <table> = make(<string-table>);
+  slot file-local-table :: <string-table> = make(<string-table>);
+  //
+  // table of all local vars allocated, whether in use or not
+  slot file-local-vars :: <string-table> = make(<string-table>);
+  //
+  // a list of local variables that are know to not be in use at a
+  // particular time, and therefor available for reuse
+  slot file-freed-locals :: false-or(<local-var>) = #f;
   //
   // we keep track of the components for all the xeps that we lazily generated
   // and dump them after the referencing component has compiled, since we are
@@ -553,20 +560,88 @@ end method;
 // but their usage is idiosyncratic.
 //========================================================================
 
+define class <local-var> (<object>)
+  constant slot local-name :: <byte-string>,
+    required-init-keyword: name:;
+  constant slot base-name :: <byte-string>,
+    required-init-keyword: base-name:;
+  constant slot seq :: <integer>,
+    required-init-keyword: seq:;
+  constant slot rep :: false-or(<byte-string>),
+    required-init-keyword: rep:;
+  slot next :: false-or(<local-var>) = #f;
+end <local-var>;
+
+
 define method new-local
     (file :: <file-state>,
-     #key name :: <string> = "L_", modifier :: <string> = "anon")
- => res :: <string>;
-  let result = stringify(name, modifier);
-  let last-num :: <integer> = element(file.file-local-table, result, default: 0);
-  let num = last-num + 1;
-  file.file-local-table[result] := num;
-  if (num == 1)
-    result;
-  else
-    new-local(file, name: result, modifier: stringify('_', num));
-  end if;
+     #key name :: <byte-string> = "L_",
+     modifier :: <byte-string> = "anon",
+     wanted-rep :: false-or(<byte-string>) = #f,
+     dont-add? :: <boolean> = #f,
+     comment :: false-or(<byte-string>) = #f)
+ => res :: <byte-string>;
+  block (return)
+    let result = stringify(name, modifier);
+    if (wanted-rep)
+      // no point even trying unless they told us what type of
+      // C variable we need...
+      for(prev = #f then curr,
+          curr = file.file-freed-locals then curr.next,
+          while: curr)
+        let curr-rep = curr.rep;
+        // we only really need to make sure the c-rep is the
+        // same, but it makes it easier to read the generated
+        // code if the base-name is the same too :-)
+//        dformat("reusing %= ", curr.local-name);
+        if (curr-rep
+              & curr.base-name = result
+              & curr-rep = wanted-rep)
+          if (prev)
+            prev.next := curr.next
+          else
+            file.file-freed-locals := curr.next
+          end;
+          return(curr.local-name);
+        end if;
+      end for;
+    end if;
+
+    let last-num :: <integer>
+      = element(file.file-local-table, result, default: 0);
+    let num = last-num + 1;
+    let local-name =
+      if (num == 1)
+        result
+      else
+        stringify(result, '_', num)
+      end;
+    file.file-local-table[result] := num;
+    file.file-local-vars[local-name] :=
+      make(<local-var>,
+           name: local-name,
+           base-name: result,
+           seq: num,
+           rep: wanted-rep);
+    unless (dont-add?)
+      let stream = file.file-vars-stream;
+      format(stream, "%s %s;", wanted-rep, local-name);
+      if (comment)
+        format(stream, " /* %s */", comment);
+      end;
+      new-line(stream);
+    end;
+    local-name;
+  end block;
 end;
+
+define method free-local(file :: <file-state>, name :: <byte-string>)
+ => ();
+  let var :: <local-var> = file.file-local-vars[name];
+  var.next := file.file-freed-locals;
+  file.file-freed-locals := var;
+end;
+
 
 // If the name is unique? then no _number is used, and the 
 // name must be unique without any such suffix.  Name can be #f if there is no
@@ -828,26 +903,28 @@ define function c-name-and-rep
      // ### Should really be ssa-variable
      file :: <file-state>,
      #key dont-add :: <boolean>,
-	  prefix :: <string> = "L_")
-    => (name :: <string>, rep :: <c-representation>);
+	  prefix :: <byte-string> = "L_")
+    => (name :: <byte-string>, rep :: <c-representation>);
   let info = get-info-for(leaf, file);
   let name = info.backend-var-info-name;
   unless (name)
+    let c-type = info.backend-var-info-rep.representation-c-type;
     if (instance?(leaf.var-info, <debug-named-info>))
+      let comment =
+        ~dont-add & leaf.var-info.debug-name.clean-for-comment;
       let dname = string-to-c-name(as(<string>, leaf.var-info.debug-name));
-      name := new-local(file, name: prefix, modifier: dname);
+      name := new-local(file,
+                        name: prefix,
+                        modifier: dname,
+                        wanted-rep: c-type,
+                        comment: comment,
+                        dont-add?: dont-add);
     else
-      name := new-local(file, name: prefix);
+      name := new-local(file,
+                        name: prefix,
+                        wanted-rep: c-type,
+                        dont-add?: dont-add);
     end if;
-    unless (dont-add)
-      let stream = file.file-vars-stream;
-      format(stream, "%s %s;",
-	     info.backend-var-info-rep.representation-c-type, name);
-      if (instance?(leaf.var-info, <debug-named-info>))
-	format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
-      end;
-      new-line(stream);
-    end unless;
     info.backend-var-info-name := name;
   end;
   values(name, info.backend-var-info-rep);
@@ -1374,9 +1451,11 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
+    let (c-code, temp?) = conversion-expr(*heap-rep*, expr, rep, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr(*heap-rep*, expr, rep, file));
+	   c-code);
+    if (temp?) free-local(file, c-code) end;
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -1395,9 +1474,11 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
+    let (c-code, temp?) = conversion-expr(*heap-rep*, expr, rep, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr(*heap-rep*, expr, rep, file));
+	   c-code);
+    if (temp?) free-local(file, c-code) end;
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -1572,10 +1653,12 @@ define method emit-definition-gunk
     if (init-value)
       let (init-value-expr, init-value-rep)
 	= c-expr-and-rep(init-value, rep, file);
+      let (c-code, temp?)
+        = conversion-expr(rep, init-value-expr, init-value-rep, file);
       format(stream, "%s;\t/* %s */\n",
-	     conversion-expr(rep, init-value-expr, init-value-rep,
-			     file),
+	     c-code,
 	     defn.defn-name.clean-for-comment);
+      if (temp?) free-local(file, c-code) end;
     else
       format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
 	     defn.defn-name.clean-for-comment, name);
@@ -1684,6 +1767,8 @@ define method emit-function
     => ();
   file.file-next-block := 0;
   file.file-local-table := make(<string-table>);
+  file.file-local-vars := make(<string-table>);
+  file.file-freed-locals := #f;
   assert(file.file-pending-defines == #f);
 
   let function-info = get-info-for(function, file);
@@ -2060,12 +2145,10 @@ define method emit-return
     format(file.file-guts-stream, "return;\n");
   else
     let stream = file.file-guts-stream;  
-    let temp = new-local(file, modifier: "temp");
     let function = return.block-of;
     let function-info = get-info-for(function, file);
-    let name = pick-result-structure(result-reps, file);
-    format(file.file-vars-stream, "struct %s %s;\n",
-	   name, temp);
+    let c-type = concatenate("struct ", pick-result-structure(result-reps, file));
+    let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
     for (rep in result-reps,
 	 index from 0,
 	 dep = return.depends-on then dep.dependent-next)
@@ -2074,6 +2157,7 @@ define method emit-return
     end;
     spew-pending-defines(file);
     format(stream, "return %s;\n", temp);
+    free-local(file, temp);
   end if;
 end;
 
@@ -2498,10 +2582,8 @@ define method emit-assignment
 	format(file.file-guts-stream, "%s;\n", call);
 	deliver-results(results, #[], #f, file);
       else
-	let temp = new-local(file, modifier: "temp");
-	format(file.file-vars-stream, "struct %s %s;\n",
-	       pick-result-structure(result-rep, file),
-	       temp);
+        let c-type = concatenate("struct ", pick-result-structure(result-rep, file));
+	let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
 	format(file.file-guts-stream, "%s = %s;\n", temp, call);
 	let result-exprs = make(<vector>, size: result-rep.size);
 	for (rep in result-rep,
@@ -2509,7 +2591,8 @@ define method emit-assignment
 	  result-exprs[index]
 	    := pair(stringify(temp, ".R", index), rep);
 	end;
-	deliver-results(results, result-exprs, #f, file);
+	deliver-results(results, result-exprs, #t, file);
+        free-local(file, temp); // BGH bug!?
       end if;
     otherwise =>
       deliver-result(results, call, result-rep, #t, file);
@@ -2640,18 +2723,21 @@ define method emit-assignment
   maybe-emit-prototype(name, defn, file);
   let rep = info.backend-var-info-rep;
   let stream = file.file-guts-stream;
-  unless (defn.defn-guaranteed-initialized?)
-    if (rep.representation-has-bottom-value?)
-      let temp = new-local(file, modifier: "temp");
-      format(file.file-vars-stream, "%s %s;\n",
-	     rep.representation-c-type, temp);
+  case
+    defn.defn-guaranteed-initialized? =>
+      deliver-result(defines, name, rep, #t, file);
+
+    rep.representation-has-bottom-value? =>
+      let c-type = rep.representation-c-type;
+      let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
       format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
-      name := temp;
-    else
+      deliver-result(defines, temp, rep, #t, file);
+      free-local(file, temp);
+
+    otherwise =>
       format(stream, "if (!%s_initialized) abort();\n", name);
-    end;
+      deliver-result(defines, name, rep, #t, file);
   end;
-  deliver-result(defines, name, rep, #t, file);
 end;
 
 define method emit-assignment
@@ -2861,19 +2947,20 @@ define method deliver-cluster
       end;
     elseif (defines.definer-next == #f)
       let (name, rep) = c-name-and-rep(defines, file);
-      let guts = conversion-expr
-		   (rep, stringify(src-start, "[0]"), *general-rep*, file);
-      let source
-	= if (min-values > 0)
-	    guts
-	  else
-	    let (false, false-rep) = c-expr-and-rep(as(<ct-value>, #f), rep, file);
-	    stringify('(', src-start, " == ", src-end, " ? ",
-		      conversion-expr(rep, false, false-rep, file), " : ",
-		      guts,
-		      ')')
-	  end;
+      let (guts, guts-temp?) = conversion-expr
+        (rep, stringify(src-start, "[0]"), *general-rep*, file);
+      let source =
+        if (min-values > 0)
+          guts
+        else
+          let (false, false-rep) = c-expr-and-rep(as(<ct-value>, #f), rep, file);
+          stringify('(', src-start, " == ", src-end, " ? ",
+                    conversion-expr(rep, false, false-rep, file), " : ",
+                    guts,
+                    ')');
+        end;
       deliver-single-result(defines, source, rep, #t, file);
+      if (guts-temp?) free-local(file, guts) end;
     else
       let count = for (var = defines then var.definer-next,
 		       index from 0,
@@ -3457,10 +3544,12 @@ define method emit-copy
   let (proxy, proxy-rep)
     = c-expr-and-rep(make(<proxy>, for: source-rep.representation-class),
 		     *heap-rep*, file);
+  let (c-code, temp?) = conversion-expr(*heap-rep*, proxy, proxy-rep, file);
   format(stream, "%s.heapptr = %s;\n",
-	 target, conversion-expr(*heap-rep*, proxy, proxy-rep, file));
+	 target, c-code);
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
+  if (temp?) free-local(file, c-code) end;
 end;
 
 define method emit-copy
@@ -3469,9 +3558,10 @@ define method emit-copy
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
-  let heapptr = conversion-expr(*heap-rep*, source, source-rep, file);
+  let (heapptr, temp?) = conversion-expr(*heap-rep*, source, source-rep, file);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
   format(stream, "%s.dataword.l = 0;\n", target);
+  if (temp?) free-local(file, heapptr) end;
 end;
 
 define method emit-copy
@@ -3480,8 +3570,9 @@ define method emit-copy
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
-  let expr = conversion-expr(target-rep, source, source-rep, file);
+  let (expr, temp?) = conversion-expr(target-rep, source, source-rep, file);
   target ~= expr & format(stream, "%s = %s;\n", target, expr);
+  if (temp?) free-local(file, expr) end;
 end;
 
 
@@ -3492,15 +3583,14 @@ define method conversion-expr
     (target-rep :: <general-representation>,
      source :: <string>, source-rep :: <c-representation>,
      file :: <file-state>)
-    => res :: <string>;
+    => (res :: <string>, temp? :: <boolean>);
   if (target-rep == source-rep)
-    source;
+    values(source, #f);
   else
-    let temp = new-local(file, modifier: "temp");
-    format(file.file-vars-stream, "%s %s;\n",
-	   target-rep.representation-c-type, temp);
+    let c-type = target-rep.representation-c-type;
+    let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
     emit-copy(temp, target-rep, source, source-rep, file);
-    temp;
+    values(temp, #t);
   end;
 end;
 
@@ -3561,3 +3651,6 @@ define sealed domain make(singleton(<constant-method-info>));
 // <pending-define> -- subclass of <object>
 define sealed domain make(singleton(<pending-define>));
 define sealed domain initialize(<pending-define>);
+// <local-var> -- subclass of <object>
+define sealed domain make(singleton(<local-var>));
+define sealed domain initialize(<local-var>);
