@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.6 1996/07/30 19:37:50 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.7 1996/09/05 10:34:09 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy streams library, streams.dbc.
 ##
@@ -67,7 +67,7 @@ all: streams-lib.dbc
 
 MINDYFLAGS = -lStreams
 
-OBJS = library.dbc internals.dbc streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc bbso-stream.dbc stream-reading-buf.dbc
+OBJS = library.dbc internals.dbc streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc bbso-stream.dbc stream-reading-buf.dbc piped-exec.dbc
 
 streams-lib.dbc: ${OBJS}
 	cat ${OBJS} > $@
@@ -94,6 +94,8 @@ wrapper-streams.dbc: ${SRCDIR}/wrapper-streams.dylan
 	${MC} ${MINDYFLAGS} -o wrapper-streams.dbc ${SRCDIR}/wrapper-streams.dylan
 bbso-stream.dbc: ${SRCDIR}/bbso-stream.dylan
 	${MC} ${MINDYFLAGS} -o bbso-stream.dbc ${SRCDIR}/bbso-stream.dylan
+piped-exec.dbc: ${SRCDIR}/piped-exec.dylan
+	${MC} ${MINDYFLAGS} -o piped-exec.dbc ${SRCDIR}/piped-exec.dylan
 
 
 clean:
