@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.39 1996/04/18 17:03:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.40 1996/05/01 12:16:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -437,14 +437,7 @@ define method dump (leaf :: <literal-constant>, stream :: <stream>) => ();
 end;
 
 define method dump (ct-value :: <ct-value>, stream :: <stream>) => ();
-  print(ct-value, stream, level: 1, length: 3);
-end;
-
-define method dump (lit :: type-union(<literal-number>, <literal-symbol>,
-				   <literal-character>, <literal-string>,
-				   <literal-empty-list>, <literal-boolean>),
-		    stream :: <stream>) => ();
-  print-message(lit, stream);
+  print-message(ct-value, stream);
 end;
 
 define method dump (type :: <ctype>, stream :: <stream>) => ();
