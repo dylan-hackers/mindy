@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.1 1998/05/03 19:55:06 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.2 1998/12/17 11:12:19 igor Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -54,14 +54,14 @@ static void dump_constant(struct constant *c);
 
 /* Base output routines */
 
-inline static void dump_byte(unsigned byte)
+__inline__ static void dump_byte(unsigned byte)
 {
     putc(byte, File);
 }
 
 #define dump_op dump_byte
 
-inline static void dump_bytes(void *ptr, int bytes)
+__inline__ static void dump_bytes(void *ptr, int bytes)
 {
     int count;
 
@@ -72,17 +72,17 @@ inline static void dump_bytes(void *ptr, int bytes)
     }
 }
 
-inline static void dump_short(short value)
+__inline__ static void dump_short(short value)
 {
     dump_bytes(&value, sizeof(value));
 }
 
-inline static void dump_int(int value)
+__inline__ static void dump_int(int value)
 {
     dump_bytes(&value, sizeof(value));
 }
 
-inline static void dump_long(long value)
+__inline__ static void dump_long(long value)
 {
     dump_bytes(&value, sizeof(value));
 }
