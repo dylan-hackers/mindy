@@ -7,8 +7,9 @@ MINDYFLAGS = -lmelange
 	$(MC) ${MINDYFLAGS} -o $@ $<
 
 OBJS = exports.dbc c-lexer.dbc c-lexer-cpp.dbc hp-portability.dbc \
-	c-parse.dbc c-decl.dbc c-decl-state.dbc c-decl-write.dbc \
-	name-map.dbc int-lexer.dbc int-parse.dbc interface.dbc
+	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
+	c-decl-write.dbc name-map.dbc int-lexer.dbc int-parse.dbc \
+	interface.dbc
 
 melange.dbc: ${OBJS}
 	cat ${OBJS} > $@ 
