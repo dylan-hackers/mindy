@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.119 1996/02/02 18:49:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.120 1996/02/09 04:42:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -673,8 +673,16 @@ define method optimize (component :: <component>, op :: <throw>) => ();
 	   then region.parent,
 	 until: region == body-region)
       if (instance?(region, <unwind-protect-region>))
+	let policy = $Default-Policy;
+	let source = region.source-location;
 	build-assignment
-	  (builder, $Default-Policy, region.source-location, #(),
+	  (builder, policy, source, #(),
+	   make-unknown-call
+	     (builder,
+	      ref-dylan-defn(builder, policy, source, #"pop-unwind-protect"),
+	      #f, #()));
+	build-assignment
+	  (builder, policy, source, #(),
 	   make-unknown-call
 	     (builder, region.uwp-region-cleanup-function, #f, #()));
       end;
