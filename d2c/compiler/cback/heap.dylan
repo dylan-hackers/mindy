@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.57 1996/11/04 19:18:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.58 1996/11/08 04:30:10 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -55,27 +55,37 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 define abstract class <state> (<object>)
   //
   // The stream we are spewing to.
-  slot stream :: <stream>, required-init-keyword: stream:;
+  constant slot stream :: <stream>, required-init-keyword: stream:;
   // 
   // The architecture we are compiling for.
-  slot target :: <target-environment>, required-init-keyword: target:;
+  constant slot target :: <target-environment>, required-init-keyword: target:;
+  //
+  // linker symbol that points to the base of the heap.
+  constant slot heap-base :: <byte-string> = "heap_base",
+    init-keyword: heap-base:;
   //
   // The prefix we are pre-pending to each symbol to guarantee uniqueness.
-  slot id-prefix :: <byte-string>, init-keyword: #"id-prefix", init-value: "L";
+  constant slot id-prefix :: <byte-string> = "L", init-keyword: #"id-prefix";
   //
-  // The id counter used to generate unique names.
-  slot next-id :: <integer>, init-value: 0;
+  // The id counter used to generate unique names when we arn't dumping the
+  // object ourselves (and therefore cannot reference it relative to the
+  // heap base).
+  slot next-id :: <integer> = 0;
+  //
+  // The number of bytes in the heap so far.
+  slot heap-size :: <integer> = 0;
   //
   // A queue of objects that we have decided to dump but haven't gotten
-  // around to dumping yet.
-  slot object-queue :: <deque>, init-function: curry(make, <deque>);
+  // around to dumping yet.  Used as a fifo so that we can use the the
+  // heap-size at the time of queueing as the object offset.
+  constant slot object-queue :: <deque> = make(<deque>);
   //
   // Objects that are dumped (or are to be dumped) in other heaps but
   // referenced in this one must be imported.  This table keeps track of those
   // objects we have already imported so that we don't import them multiple
   // times.
-  slot object-referenced-table :: <object-table>,
-    init-function: curry(make, <object-table>);
+  constant slot object-referenced-table :: <object-table>
+    = make(<object-table>);
 end;
 
 // heap-object-referenced? and -setter -- internal.
@@ -105,6 +115,8 @@ define class <global-state> (<state>)
     init-function: curry(make, <literal-false>);
 end class <global-state>;
 
+define sealed domain make(singleton(<global-state>));
+
 // <local-state> -- internal.
 //
 // The additional information needed while dumping a library local heap.
@@ -121,6 +133,8 @@ define class <local-state> (<state>)
   slot extra-labels :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end class <local-state>;
+
+define sealed domain make(singleton(<local-state>));
 
 // <extra-label> -- internal.
 //
@@ -139,6 +153,9 @@ define class <extra-label> (<object>)
   // The extra label itself.
   slot extra-label-label :: <byte-string>, required-init-keyword: label:;
 end class <extra-label>;
+
+define sealed domain make(singleton(<extra-label>));
+define sealed domain initialize(<extra-label>);
 
 add-make-dumper
   (#"extra-label", *compiler-dispatcher*, <extra-label>,
@@ -198,7 +215,8 @@ define method build-local-heap
      extra-labels :: <simple-object-vector>);
   let prefix = unit.unit-prefix;
   let state = make(<local-state>, stream: stream, target: target,
-		   id-prefix: concatenate(prefix, "_L"));
+		   heap-base: stringify(prefix, "_heap_base"),
+		   id-prefix: stringify(prefix, "_L"));
   // Debugging is currently only supported on systems that support
   // stabs (what gdb uses)
   if (target.supports-debugging?)
@@ -286,6 +304,12 @@ end method build-local-heap;
 define method spew-objects-in-queue (state :: <state>) => ();
   let stream = state.stream;
   let target = state.target;
+  begin
+    let name = stringify(target.mangled-name-prefix, state.heap-base);
+    new-line(stream);
+    format(stream, target.export-directive, name);
+    format(stream, "%s:\n", name);
+  end;
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
     let info = get-info-for(object, #f);
@@ -297,9 +321,11 @@ define method spew-objects-in-queue (state :: <state>) => ();
       error("Trying to spew %=, but it doesn't have any labels.", object);
     end if;
     for (label in labels)
-      format(stream, target.export-directive, 
-	     concatenate(target.mangled-name-prefix, label));
-      format(stream, "%s%s:\n", target.mangled-name-prefix, label);
+      unless (member?('+', label))
+	let name = stringify(target.mangled-name-prefix, label);
+	format(stream, target.export-directive, name);
+	format(stream, "%s:\n", name);
+      end unless;
     end for;
 
     spew-object(object, state);
@@ -488,7 +514,13 @@ define method object-name (object :: <ct-value>, state :: <state>)
       // Dump-o-rama.  Mark it as dumped, queue it, and flag it as referenced
       // so we don't try to import the name.
       info.const-info-dumped? := #t;
-      push(state.object-queue, object);
+      push-last(state.object-queue, object);
+      let current-size = state.heap-size;
+      if (info.const-info-heap-labels.empty?)
+	info.const-info-heap-labels
+	  := vector(stringify(state.heap-base, "+", current-size));
+      end if;
+      state.heap-size := current-size + logand(object-size(object) + 7, -8);
       heap-object-referenced?(object, state) := #t;
     end if;
     //
@@ -512,7 +544,8 @@ define method object-name (object :: <ct-value>, state :: <state>)
 			 info.const-info-heap-labels.first);
   unless (heap-object-referenced?(object, state))
     if (state.target.import-directive-required?)
-      format(state.stream, "\t.import\t%s, data\n", name);
+      format(state.stream, "\t.import\t%s, data\n",
+	     extract-base-name(name));
     end if;
     heap-object-referenced?(object, state) := #t;
   end unless;
@@ -532,13 +565,32 @@ define method entry-name (object :: <ct-entry-point>, state :: <state>)
 			 object.entry-point-c-name);
   unless (heap-object-referenced?(object, state))
     if (state.target.import-directive-required?)
-      format(state.stream, "\t.import\t%s, code\n", name);
+      format(state.stream, "\t.import\t%s, code\n",
+	     extract-base-name(name));
     end if;
     heap-object-referenced?(object, state) := #t;
   end unless;
   name;
 end;
 	
+
+// extract-base-name -- internal.
+//
+// Return the base-name of name.  If name is of the form ``foo+37'' then the
+// base-name is foo.  Otherwise the base-name and name are the same.
+// 
+define function extract-base-name (name :: <byte-string>)
+    => res :: <byte-string>;
+  block (return)
+    for (char in name, posn from 0)
+      if (char == '+')
+	return(copy-sequence(name, end: posn));
+      end if;
+    end for;
+    name;
+  end block;
+end function extract-base-name;
+
 
 
 //------------------------------------------------------------------------
@@ -1321,12 +1373,63 @@ define method find-init-value
   end;
 end;
 
-// Seals for file heap.dylan
+
+// Object-size.
 
-// <global-state> -- subclass of <state>
-define sealed domain make(singleton(<global-state>));
-// <local-state> -- subclass of <state>
-define sealed domain make(singleton(<local-state>));
-// <extra-label> -- subclass of <object>
-define sealed domain make(singleton(<extra-label>));
-define sealed domain initialize(<extra-label>);
+// object-size -- internal.
+//
+// Return the size (in bytes) of the compile-time value.
+// 
+define generic object-size (ctv :: <ct-value>) => size :: <integer>;
+
+// object-size{<ct-value>} -- method on internal GF.
+//
+// For most kinds of ctvs the size is static and hung off the class'es
+// instance slot layout table.
+// 
+define method object-size (ctv :: <ct-value>) => size :: <integer>;
+  let class = ctv.ct-value-cclass;
+  assert(~class.vector-slot);
+  class.instance-slots-layout.layout-length;
+end method object-size;
+
+// object-size{<literal-extended-integer>} -- method on internal GF.
+//
+define method object-size (ctv :: <literal-extended-integer>)
+    => size :: <integer>;
+  object-size-from-length
+    (ctv, ceiling/(ctv.literal-value.integer-length + 1, 8));
+end method object-size;
+
+// object-size{<literal-vector>} -- method on internal GF.
+//
+define method object-size (ctv :: <literal-vector>)
+    => size :: <integer>;
+  object-size-from-length(ctv, ctv.literal-value.size);
+end method object-size;
+
+// object-size-from-length -- internal.
+//
+// Compute the size of the ctv assuming that there are the number of elements
+// given in elements in the instance's vector slot.
+// 
+define function object-size-from-length
+    (ctv :: <ct-value>, elements :: <integer>)
+    => size :: <integer>;
+  let class = ctv.ct-value-cclass;
+  let vector-slot = class.vector-slot;
+  assert(vector-slot);
+  get-direct-position(vector-slot.slot-positions, class)
+    + vector-slot.slot-representation.representation-size * elements;
+end function object-size-from-length;
+
+// object-size{<proxy>} -- method on internal GF.
+//
+// Proxies are magical and in fact, only have one slot: the class.  So we just
+// return the amount of storage needed to store the class.
+// 
+define function object-size (ctv :: <proxy>)
+    => size :: <integer>;
+  *heap-rep*.representation-size;
+end function object-size;
+
