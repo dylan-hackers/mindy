@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.14 1996/03/07 17:58:29 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.15 1996/05/11 15:59:30 wlott Exp $
 
 //======================================================================
 //
@@ -413,3 +413,34 @@ define method max (x :: <real>, #rest more)
   end select;
 end;
 
+
+// integer-length -- exported from Extensions.
+//
+// Return the number of ``interesting'' bits in x.  The interesting bits
+// are all but the sign bits.
+//
+define generic integer-length (x :: <general-integer>) => res :: <integer>;
+//
+define method integer-length (x :: <integer>) => res :: <integer>;
+  for (x = if (x < 0) lognot(x) else x end
+	 then ash(x, -1),
+       length from 0,
+       until: x == 0)
+  finally
+    length;
+  end for;
+end method integer-length;
+//
+define method integer-length (x :: <extended-integer>) => res :: <integer>;
+  for (x = if (x < 0) lognot(x) else x end then ash(x, -16),
+       length from 0 by 16,
+       until: x < 65536)
+  finally
+    for (x = as(<integer>, x) then ash(x, -1),
+	 length from length,
+	 until: x == 0)
+    finally
+      length;
+    end for;
+  end for;
+end method integer-length;

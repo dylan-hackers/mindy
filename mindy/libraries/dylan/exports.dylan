@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.93 1996/04/22 15:24:11 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.94 1996/05/11 15:59:30 wlott Exp $
 
 //======================================================================
 //
@@ -143,7 +143,7 @@ define module extras
     *debug-output*, *warning-output*, *inspect-function*, *xinspect-function*,
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
-    ratio, $not-supplied, false-or, instantiable?;
+    ratio, integer-length, $not-supplied, false-or, instantiable?;
 end;
 
 
