@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.26 1996/02/21 16:07:26 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.27 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -741,12 +741,14 @@ define module compile-time-functions
   export
     ct-function-name, ct-function-signature,
     ct-function-definition, ct-function-closure-var-types,
+    has-general-entry?, has-general-entry?-setter,
 
     <ct-generic-function>, <ct-open-generic>, <ct-sealed-generic>,
 
     <ct-method>, ct-method-hidden?,
     <ct-accessor-method>, ct-accessor-method-slot-info,
     ct-accessor-standin, ct-accessor-standin-setter,
+    has-generic-entry?, has-generic-entry?-setter,
 
     <ct-entry-point>, ct-entry-point-for, ct-entry-point-kind;
 end;
