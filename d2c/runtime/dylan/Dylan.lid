@@ -1,7 +1,6 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.13 1996/07/26 19:45:05 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.14 1996/09/04 16:47:25 nkramer Exp $
 library: Dylan
 unique-id-base: 0
-linker-options: -lruntime -lgc -lm
 
 bootstrap.dylan
 macros.dylan
