@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/designator-class.dylan,v 1.2 2001/01/25 03:50:28 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/designator-class.dylan,v 1.3 2002/01/03 16:31:22 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -67,14 +67,20 @@ end class;
 //
 define macro designator-class-definer
     { define ?class-adjectives designator-class ?:name (?supers)
+        options ?type-options;
 	?slots
-        ?type-options
       end }
       => make-define-designator-class({?name}, {?supers}, {?slots},
 				      {?class-adjectives, ?type-options})
 
+    { define ?class-adjectives designator-class ?:name (?supers)
+	?slots
+      end }
+      => make-define-designator-class({?name}, {?supers}, {?slots},
+				      {?class-adjectives})
+
   class-adjectives:
-    { } => { }
+    { } => { dummy: #f }
     { abstract ... } => { abstract: #t, ... }
     { concrete ... } => { abstract: #f, ... }
     { primary ... } => { primary: #t, ... }
@@ -82,6 +88,7 @@ define macro designator-class-definer
     { sealed ... } => { sealed: #t, ... }
     { open ... } => { sealed: #f, ... }
     { functional ... } => { functional: #t, ... }
+    { instantiable ... } => { instantiable: #t, ... }
 
   type-options:
     { #rest ?all:*, 
