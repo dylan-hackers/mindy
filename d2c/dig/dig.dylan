@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.7 1996/10/07 21:42:11 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.8 1996/11/21 02:31:35 rgs Exp $
 
 //========================================================================
 //
@@ -337,8 +337,8 @@ end method do-gdb-command;
 //
 define method check-seg-fault (str :: <string>) => (result :: <boolean>);
   if (regexp-positions(str, "Program received signal SIGSEGV"))
-    do-gdb-command("tbreak dylan_error_main_2");
-    do-gdb-command("set dylan_seg_fault_error_main(orig_sp)");
+    do-gdb-command("tbreak dylanZdylan_visceraZerror_METH");
+    do-gdb-command("set dylanZdylan_visceraZseg_fault_error_METH(orig_sp)");
     do-gdb-command("continue");
     send-user-response("Program received signal SIGSEGV -- giving up.\n");
     #t;
@@ -415,7 +415,8 @@ define method invoke-dylan-function
       let (#rest args) = split(",[ \t]*", arglist);
       for (arg in args)
 	let (keyarg, real-arg)
-	  = regexp-matches(arg, "([a-zA-Z0-9]+_sym_[a-zA-Z0-9_]+)?(.*)",
+	  = regexp-matches(arg,
+			   "([a-zA-Y0-9]+ZSYM_[a-zA-Y0-9_]+)?(.*)",
 			   matches: #[1, 2]);
 	if (keyarg)
 	  add-pusher(keyarg);
@@ -427,7 +428,7 @@ define method invoke-dylan-function
       end for;
       let value
 	= do-gdb-command("p gdb_invoke_function"
-			   "((descriptor_t)dylan_apply_safely_fun, %d)",
+			   "((descriptor_t)dylanZdylan_visceraZapply_safely_fun, %d)",
 			 size(arg-pushers));
       if (check-seg-fault(value))
 	0;
@@ -458,7 +459,7 @@ define method dylan-function-result
     (function :: <string>, arglist :: <string>) => (result-tag :: <string>);
   let count = invoke-dylan-function(function, arglist);
   if (count == 0)
-    "dylan_false";
+    "dylanZfalse";
   else
     expr-token("gdb_result_stack[0]");
   end if;
@@ -478,68 +479,6 @@ end method dylan-function-result;
 // D2C compiler.  Look to the compiler for an explanation of what is going
 // on.
 //
-define constant c-prefix-transform :: <vector>
-  = begin
-      let map = make(<byte-string>, size: 256, fill: 'X');
-      local
-	method fill-range
-	    (start :: <character>, stop :: <character>, xform :: <function>)
-	    => ();
-	  for (i from as(<integer>, start) to as(<integer>, stop))
-	    map[i] := xform(as(<character>, i));
-	  end for;
-	end method fill-range;
-      map[as(<integer>, ' ')] := '_';
-      map[as(<integer>, '!')] := 'D';
-      map[as(<integer>, '$')] := '_';
-      map[as(<integer>, '%')] := '_';
-      map[as(<integer>, '&')] := 'O';
-      map[as(<integer>, '*')] := 'O';
-      map[as(<integer>, '+')] := 'O';
-      map[as(<integer>, '-')] := '_';
-      map[as(<integer>, '/')] := 'O';
-      fill-range('0', '9', identity);
-      map[as(<integer>, '<')] := 'O';
-      map[as(<integer>, '=')] := 'O';
-      map[as(<integer>, '>')] := 'O';
-      map[as(<integer>, '?')] := 'P';
-      fill-range('A', 'Z', as-lowercase);
-      map[as(<integer>, '^')] := 'O';
-      map[as(<integer>, '_')] := '_';
-      fill-range('a', 'z', identity);
-      map[as(<integer>, '|')] := 'O';
-      map[as(<integer>, '~')] := 'O';
-      map;
-    end;
-
-define method c-prefix (description :: <string>) => (result :: <string>);
-  if (description.empty?)
-    description;
-  else
-    let start = 0;
-    for (i :: <integer> from start below description.size,
-	 until: description[i] == ' ')
-    finally
-      let (first, last, offset, result)
-	= if (i > start & description[start] == '<'
-		& description[i - 1] == '>')
-	    values(start + 1, i - 1, 4, 
-		   map-into(make(<byte-string>, size: i - start + 2),
-			    identity, "cls_"));
-	  elseif (description[i - 1] == ':')
-	    values(start, i - 1, 4, 
-		   map-into(make(<byte-string>, size: i - start + 3),
-			    identity, "sym_"));
-	  else
-	    values(start, i, 0, make(<byte-string>, size: i - start));
-	  end if;
-      for (j :: <integer> from offset, i :: <integer> from first below last)
-	result[j] := c-prefix-transform[as(<integer>, description[i])];
-      end for;
-      result;
-    end for;
-  end if;
-end method c-prefix;
 
 define constant <variable-types> = one-of(#"string", #"heap-object",
 					  #"descriptor", #"other");
@@ -553,6 +492,75 @@ define constant *var-types* :: <string-table> = make(<string-table>);
 // specialized domain.  If the succeed, they will potentially mangle the
 // name into a form more meaningful to GDB and note information about the
 // variable's type.  If not, they will simply return #f.
+// $c-name-transform is a vector which maps from the Dylan to C character
+// set.  If the value is #f, there is no mapping (the character is illegal in
+// all Dylan names, including operator names.)  This is an information-
+// preserving, invertible transformation.
+//
+define constant $c-name-transform :: <vector>
+  = begin
+      let map = make(<simple-object-vector>, size: 256, fill: #f);
+      for (i from 0 below 256)
+        map[i] := format-to-string("X%x", i);
+      end for;
+      local
+	method fill-range
+	    (start :: <character>, stop :: <character>, xform :: <function>)
+	    => ();
+	  for (i from as(<integer>, start) to as(<integer>, stop))
+	    map[i] := make(<byte-string>, size: 1,
+	    		   fill: xform(as(<character>, i)));
+	  end for;
+	end method fill-range;
+      map[as(<integer>, ' ')] := "BLANK";
+      map[as(<integer>, '!')] := "D";
+      map[as(<integer>, '$')] := "C";
+      map[as(<integer>, '%')] := "PCT";
+      map[as(<integer>, '&')] := "AND";
+      map[as(<integer>, '*')] := "V";
+      map[as(<integer>, '+')] := "PLUS";
+      map[as(<integer>, '-')] := "_";
+      map[as(<integer>, '/')] := "SLASH";
+      fill-range('0', '9', identity);
+      map[as(<integer>, '<')] := "LESS";
+      map[as(<integer>, '=')] := "EQUAL";
+      map[as(<integer>, '>')] := "GREATER";
+      map[as(<integer>, '?')] := "QUERY";
+      fill-range('A', 'Z', as-lowercase);
+      map[as(<integer>, '^')] := "RAISE";
+      map[as(<integer>, '_')] := "X_";
+      fill-range('a', 'z', identity);
+      map[as(<integer>, '|')] := "OR";
+      map[as(<integer>, '~')] := "NOT";
+      map;
+    end;
+
+
+// Map a string of legal dylan identifier characters into legal C name
+// characters using the $c-name-transform.
+//
+define function string-to-c-name (str :: <byte-string>) 
+ => res :: <byte-string>;
+  if (str.first == '<' & str.last == '>')
+    concatenate("CLS_", string-to-c-name(copy-sequence(str, start: 1, 
+						       end: str.size - 1)));
+  else
+    let res = make(<byte-string>, size: str.size);
+    let res-idx = 0;
+    for (ch in str)
+      let mapping = $c-name-transform[as(<integer>, ch)];
+      if (mapping.size == 1)
+	res[res-idx] := mapping[0];
+	res-idx := res-idx + 1;
+      else
+	res := concatenate(copy-sequence(res, end: res-idx), mapping,
+			   copy-sequence(res, start: res-idx + 1));
+	res-idx := res-idx + mapping.size;
+      end if;
+    end for;
+    res;
+  end if;
+end function;
 
 // Check whether the variable is defined as a local.  We must do this first,
 // since local variables will shadow globals.  Local variables are subject
@@ -628,8 +636,8 @@ end method find-global-variable;
 //
 define method find-dylan-variable-list
     (dylan-name :: <string>) => (#rest c-names :: <string>);
-  let search-string = c-prefix(dylan-name);
-  let response = do-gdb-command("info var ^[a-zA-Z0-9]*_%s$", search-string);
+  let search-string = string-to-c-name(dylan-name);
+  let response = do-gdb-command("info var ^[a-zA-Y0-9_]*Z[a-zA-Y0-9_]*Z%s$", search-string);
   local method do-search (pos :: <integer>, res :: <list>) => (res :: <list>);
 	  let (found, next, type-start, type-end, first, last)
 	    = regexp-positions(response, "(.*) ([^ ]+)[[;]\n", start: pos);
@@ -651,6 +659,23 @@ define method find-dylan-variable-list
 	end method do-search;
   apply(values, do-search(0, #()));
 end method find-dylan-variable-list;
+
+define method find-dylan-method-list
+    (dylan-name :: <string>) => (#rest c-names :: <string>);
+  let search-string = string-to-c-name(dylan-name);
+  let response = do-gdb-command("info fun ^[a-zA-Y0-9_]*Z[a-zA-Y0-9_]*Z%s_METH[_0-9]*$", search-string);
+  local method do-search (pos :: <integer>, res :: <list>) => (res :: <list>);
+	  let (found, next, first, last)
+	    = regexp-positions(response, "([a-zA-Z_0-9]+)\\(", start: pos);
+	  if (found)
+	    let name = copy-sequence(response, start: first, end: last);
+	    do-search(next, pair(name, res));
+	  else
+	    res;
+	  end if;
+	end method do-search;
+  apply(values, do-search(0, #()));
+end method find-dylan-method-list;
 
 // If find-dylan-variable-list above returns several values, we must go to
 // the user to find out which is the correct one.  This routines does this
@@ -712,8 +737,8 @@ define method translate-arg-vars (arg :: <string>)
   local method try-one-var (string :: <string>, start :: <integer>)
 	  let (first, last)
 	    = regexp-positions(string,
-			       "[-a-zA-Z*/+_?=~&<>|^@]"
-				 "[-0-9a-zA-Z*/+_?=~$&<>|^@]*:?",
+			       "[-a-zA-Y*/+_?=~&<>|^@]"
+				 "[-0-9a-zA-Y*/+_?=~$&<>|^@]*:?",
 			       start: start);
 	  if (~first)
 	    string;
@@ -794,6 +819,10 @@ define method dylan-object? (name :: <string>) => (result :: <boolean>);
   tag-type == #"descriptor" | tag-type == #"heap-object";
 end method dylan-object?;
     
+define class <evaluation-error> (<error>)
+  slot failed-expr :: <string>, required-init-keyword: #"expr";
+end class <evaluation-error>;
+
 // Converts nested strings and function calls into GDB variables (calling
 // routines as necessary).  This has the effect of decomposing sets of
 // nested function calls into a sequence of calls which can be handled by
@@ -812,7 +841,7 @@ define method transform-expression (expr :: <string>) => (result :: <string>);
 	end method replace-quotes;
   local method replace-functions (str)
 	  let (match, fun, args)
-	    = regexp-matches(str, "([a-zA-Z0-9_]+)[ \t]*\\(([^()]+)\\)");
+	    = regexp-matches(str, "([a-zA-Y0-9_]+)[ \t]*\\(([^()]+)\\)");
 	  if (~match)
 	    str;
 	  elseif (fun.dylan-object?)
@@ -820,16 +849,22 @@ define method transform-expression (expr :: <string>) => (result :: <string>);
 	      (substring-replace(str, match,
 				   dylan-function-result(fun, args)));
 	  else
-	    replace-functions
-	      (substring-replace(str, match, match.expr-token));
+	    let (replacement, found?) = match.expr-token;
+	    unless (found?) signal(make(<evaluation-error>, expr: match)) end;
+	    replace-functions(substring-replace(str, match, replacement));
 	  end if;
 	end method replace-functions;
-  replace-functions(translate-arg-vars(replace-quotes(expr)));
+  block ()
+    replace-functions(translate-arg-vars(replace-quotes(expr)));
+  exception (err :: <evaluation-error>)
+    send-user-response("Could not evaluate expression: %=\n", err.failed-expr);
+    "dylanZfalse";
+  end block;
 end method transform-expression;
 
 
 //========================================================================
-// Generic function breakpoints
+// Breakpoints
 //========================================================================
 
 // Performs really hairy magic in order to find the names of each of the
@@ -850,32 +885,33 @@ define method generic-function-generic-entries
     // faster results.  (Note -- after the first call, this will just be
     // a set of 6 hash table lookups, which should be faster than the rest
     // of the operation anyway.)
-    unless (select-any-variable("dylan_generic_function_methods")
-	      & select-any-variable("dylan_false")
-	      & select-any-variable("dylan_map")
-	      & select-any-variable("dylan_generic_entry")
-	      & select-any-variable("dylan_size")
-	      & select-any-variable("dylan_element"))
+    unless (select-any-variable("dylanZdylan_visceraZgeneric_function_methods")
+	      & select-any-variable("dylanZfalse")
+	      & select-any-variable("dylanZdylan_visceraZmap")
+	      & select-any-variable("dylanZdylan_visceraZgeneric_entry")
+	      & select-any-variable("dylanZdylan_visceraZsize")
+	      & select-any-variable("dylanZdylan_visceraZelement"))
       send-user-response("Can't find necessary runtime routines to"
 			   "lookup a function's methods\n");
       values();
     end unless;
     
-    let funs = dylan-function-result("dylan_generic_function_methods", fun);
-    if (funs = "dylan_false") return() end if;
+    let funs = dylan-function-result("dylanZdylan_visceraZgeneric_function_methods", fun);
+    if (funs = "dylanZfalse") return() end if;
 
-    let entries = dylan-function-result("dylan_map",
-					concatenate("dylan_generic_entry",
+    let entries = dylan-function-result("dylanZdylan_visceraZmap",
+					// depends on local symbol !!!
+					concatenate("dylanZdylan_visceraZgeneric_entry",
 						    ", ", funs));
-    if (entries = "dylan_false") return() end if;
-
+    if (entries = "dylanZfalse") return() end if;
+ 
     let size-str = do-gdb-command("set gdb_print_genobj(%s)",
-				  dylan-function-result("dylan_size",
+				  dylan-function-result("dylanZdylan_visceraZsize",
 							entries));
     let size = string-to-integer(regexp-matches(size-str, "[0-9]+"));
     let results = make(<stretchy-vector>);
     for (i from 0 below size)
-      let entry = dylan-function-result("dylan_element",
+      let entry = dylan-function-result("dylanZdylan_visceraZelement",
 					format-to-string("%s, %d",
 							 entries, i));
       let instr = do-gdb-command("x/i %s.dataword.ptr", entry);
@@ -891,38 +927,46 @@ end method generic-function-generic-entries;
 // out the perverted logic -- just be happy when it works and scream to
 // "rgs@cs.cmu.edu" when it doesn't.
 //
-define method set-generic-breakpoints (fun :: <string>) => ();
-  let (#rest entries) = generic-function-generic-entries(fun);
-  let entry-table = make(<string-table>);
-  for (entry in entries)
-    let str = regexp-matches(entry, "^(.*)_generic(_[0-9]+)?", matches: #[1]);
-    unless (key-exists?(entry-table, str))
-      entry-table[str] := #t;
-      let result = do-gdb-command("info fun ^%s_main", str);
-      local method find-funs (pos :: <integer>)
-	      let (found, next, first, last)
-		= regexp-positions(result, "([a-zA-Z_][a-zA-Z0-9_]*)\\(",
-				   start: pos);
-	      if (found)
-		let proc = copy-sequence(result, start: first, end: last);
-		send-user-response(do-gdb-command("break %s", proc));
-		find-funs(next);
-	      end if;
-	    end method find-funs;
-      find-funs(0);
-    end unless;
-  end for;
+define method set-generic-breakpoints (dylan-name :: <string>) => ();
+  let fun = find-dylan-variable(dylan-name);
+  if (fun)
+    let (#rest entries) = generic-function-generic-entries(fun);
+    let entry-table = make(<string-table>);
+    for (entry in entries)
+      let str = regexp-matches(entry, "^(.*)_METH_GENERIC(_[0-9]+)?",
+			       matches: #[1]);
+      unless (key-exists?(entry-table, str))
+	entry-table[str] := #t;
+	let result = do-gdb-command("info fun ^%s_METH", str);
+	local method find-funs (pos :: <integer>)
+		let (found, next, first, last)
+		  = regexp-positions(result, "([a-zA-Y_][a-zA-Y0-9_]*)\\(",
+				     start: pos);
+		if (found)
+		  let proc = copy-sequence(result, start: first, end: last);
+		  send-user-response(do-gdb-command("break %s", proc));
+		  find-funs(next);
+		end if;
+	      end method find-funs;
+	find-funs(0);
+      end unless;
+    end for;
+  else
+    send-user-response("No such generic function -- %s\n", dylan-name);
+  end if;
 end method set-generic-breakpoints;
  
 // Sets simple breakpoints in C functions or on each possible main entry for
 // Dylan generic functions.
 //
 define method set-any-breakpoints (fun :: <string>) => ();
-  let real-name = select-any-variable(fun);
-  if (real-name & real-name.dylan-object?)
-    set-generic-breakpoints(real-name);
+  let (#rest methods) = find-dylan-method-list(fun);
+  if (methods.empty?)
+    send-user-response("%s", do-gdb-command("break %s", fun));
   else
-    send-user-response(do-gdb-command("break %s", real-name | fun));
+    for (meth in methods)
+      send-user-response("%s -- %s", meth, do-gdb-command("break %s", meth));
+    end for;
   end if;
 end method set-any-breakpoints;
 
@@ -1047,6 +1091,10 @@ define dig-command "break" (line)
   set-any-breakpoints(line);
 end;
 
+define dig-command "gbreak" (line)
+  set-generic-breakpoints(line);
+end;
+
 #else
 
 *command-table*["print"] := compose(print-any-value, transform-expression);
@@ -1095,7 +1143,7 @@ define method main (prog-name :: <string>, #rest args);
   receive-gdb-response();
   do-gdb-command("set confirm off");
   do-gdb-command("set height 10000");
-  do-gdb-command("break dylan_invoke_debugger_generic");
+  do-gdb-command("break dylanZdylan_visceraZinvoke_debugger_METH_GENERIC");
   do-gdb-command("break abort");
   command-loop();
 end method main;
