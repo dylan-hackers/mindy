@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/def.c,v 1.2 2000/01/24 04:58:11 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/def.c,v 1.3 2000/12/19 02:07:57 andreas Exp $
 *
 * This file implements the stuff to install definitions.
 *
@@ -67,6 +67,9 @@ static void maybe_copy_methods(obj_t new_gf, obj_t old_gf)
 
 /* Stuff to define builtin stuff. */
 
+/* This is the same as define_constant, but nobody calls it.
+   So we take it out.
+
 void define(char *name, obj_t value)
 {
     obj_t namesym = symbol(name);
@@ -78,6 +81,7 @@ void define(char *name, obj_t value)
     var->value = value;
     var->function = func_Maybe;
 }
+*/
 
 void define_constant(char *name, obj_t value)
 {
