@@ -36,7 +36,7 @@ D: BeOS port of Mindy.
 N: Matthias Hoelzl
 E: tc@gauss.muc.de
 D: Made Mindy work with standard flex, identified incredibly hairy bug
-D: in CSE optimizations.
+D: in CSE optimizations, functional classes workaround.
 
 N: Peter Housel
 E: housel@acm.org
@@ -61,6 +61,3 @@ D: Debian advisor
 N: Ole J. Tetlie
 E: olet@ifi.uio.no
 D: Solaris maintainer, Debian maintainer
-
-N: ???
-D: Functional classes bugfix.
