@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.31 1996/07/11 16:05:14 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.32 1996/07/21 15:44:27 wlott Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -487,6 +487,19 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 }
 
 
+/* file-write-date */
+
+static obj_t file_write_date(obj_t path)
+{
+    struct stat buf;
+
+    if (stat(string_chars(path), &buf) < 0)
+	return obj_False;
+    else
+	return make_fixnum(buf.st_mtime);
+}
+
+
 /* Init stuff. */
 
 void init_fd_functions(void)
@@ -549,6 +562,8 @@ void init_fd_functions(void)
 				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_exec));
+    define_function("file-write-date", list1(obj_ByteStringClass), FALSE,
+		    obj_False, FALSE, obj_ObjectClass, file_write_date);
 
     define_constant("SEEK_SET", make_fixnum(SEEK_SET));
     define_constant("SEEK_CUR", make_fixnum(SEEK_CUR));
