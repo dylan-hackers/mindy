@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.18 1994/12/07 18:48:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.19 1995/02/14 02:31:57 rgs Exp $
 *
 * This file is the garbage collector.
 *
@@ -36,6 +36,9 @@
 #include "gc.h"
 #include "weak.h"
 #include "table.h"
+#include "module.h"
+#include "bool.h"
+#include "sym.h"
 
 extern void scavenge_thread_roots(void);
 extern void scavenge_bool_roots(void);
@@ -281,9 +284,15 @@ void collect_garbage(void)
     struct block *old_blocks = UsedBlocks;
     int bytes_at_start = bytes_in_use();
     int bytes_at_end;
+    boolean print_message
+	= find_variable(module_BuiltinStuff,
+			symbol("*print-GC-messages*"),
+			FALSE, TRUE)->value != obj_False;
 
-    fprintf(stderr, "[GCing with %d bytes in use...", bytes_at_start);
-    fflush(stderr);
+    if (print_message) {
+	fprintf(stderr, "[GCing with %d bytes in use...", bytes_at_start);
+	fflush(stderr);
+    }
 
     BytesInUse = 0;
     UsedBlocks = 0;
@@ -354,10 +363,24 @@ void collect_garbage(void)
     GCTrigger = bytes_at_end + BYTES_CONSED_BETWEEN_GCS;
     TimeToGC = FALSE;
 
-    fprintf(stderr, "reclaimed %d leaving %d]\n",
-	    bytes_at_start - bytes_at_end,
-	    bytes_at_end);
-    fflush(stderr);
+    if (print_message) {
+	fprintf(stderr, "reclaimed %d leaving %d]\n",
+		bytes_at_start - bytes_at_end,
+		bytes_at_end);
+	fflush(stderr);
+    }
 
     table_gc_hook();
+}
+
+void init_gc_functions(void)
+{
+    struct variable *var;
+    obj_t namesym = symbol("*print-GC-messages*");
+
+    define_variable(module_BuiltinStuff, namesym, var_Variable);
+    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var->function = func_No;
+    var->type = obj_BooleanClass;
+    var->value = obj_False;
 }
