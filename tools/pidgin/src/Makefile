@@ -4,9 +4,9 @@ all: ansi-c-test
 
 clean:
 	rm -f *.c *.s *.mak *.a *.du *.o
-	rm -f ansi-c-test
+	rm -f ansi-c-test pidgin
 	rm -f core
-
+	rm -f *.cffi *.log gmon.out
 
 # parser-utilities library
 
@@ -36,14 +36,23 @@ c-parser-engine.dylan: c-parser-engine.input
 c-parser.lib.du: c-parser.lid c-parser-exports.dylan \
 	         c-parser-engine.dylan c-parser.dylan c-lexer.dylan \
 	         c-lexer-cpp.dylan c-parser-stubs.dylan \
+                 platforms.dylan \
 	         ansi-c.lib.du parser-utilities.lib.du
 	d2c $<
 
 
-# ansi-c-test library
+# ansi-c-test application
 
 ansi-c-test.lid: ansi-c-test-exports.dylan ansi-c-test.dylan
 	touch $@
 
 ansi-c-test: ansi-c-test.lid ansi-c.lib.du c-parser.lib.du
+	d2c $<
+
+# ansi-c-test application
+
+pidgin.lid: pidgin-exports.dylan pidgin.dylan
+	touch $@
+
+pidgin: pidgin.lid ansi-c.lib.du c-parser.lib.du
 	d2c $<
