@@ -36,7 +36,6 @@ use Getopt::Long;
 # Globals
 ######################################################################
 			
-my $numMethods = 0;
 my $moduleName;
 my $headerFile;
 
@@ -1284,16 +1283,6 @@ sub parse_methods
 		if( $returnType )
 		{
 			write_method_wrapper( $classMethod, $class, $returnType, $names, $types );
-			$numMethods = $numMethods + 1;
-			#TODO: This will wrap round for ridiculously large files: make it scale OK
-			unless( $numMethods % 3000 )
-			{
-				close( OUTFILE );
-   				my $outputFile = "$moduleName-continued.dylan";
-    			open( OUTFILE, '>', $outputFile ) or die "Can't open $outputFile: $!\n";
-    			select( OUTFILE );
-   				print_header( $moduleName, $headerFile );
-			}
 		}
 	}
 }
