@@ -9,10 +9,10 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/Attic/GNUmakefile,v 1.1 1994/06/29 00:03:10 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/Attic/GNUmakefile,v 1.2 1994/06/29 00:09:48 wlott Exp $
 ##
 
-SUBDIRS = hello-world cat
+SUBDIRS = hello-world cat html2txt
 
 all: ${SUBDIRS}
 
