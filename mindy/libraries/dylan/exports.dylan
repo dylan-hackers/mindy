@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.57 1994/11/28 15:38:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.58 1994/12/10 15:44:08 nkramer Exp $
 
 //======================================================================
 //
@@ -100,7 +100,7 @@ define module Builtin-Stuff
     O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC, O_EXCL,
     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
     EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
-    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EWOULDBLOCK, EPIPE, EFBIG,
+    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EPIPE, EFBIG, // EWOULDBLOCK, 
     <foreign-file>, <c-function>, <statically-typed-pointer>, signed-byte-at,
     signed-short-at, signed-long-at, unsigned-byte-at, unsigned-short-at,
     unsigned-long-at, signed-byte-at-setter, signed-short-at-setter,
@@ -281,7 +281,7 @@ define module File-Descriptors
 	     // Read errors (that are also not Open or Close errors).
 	     //
 	     EINTR,
-	     EWOULDBLOCK,
+	     // EWOULDBLOCK,
 
 	     // Write errors (that are not also open, close, or read errors).
 	     //
