@@ -1,0 +1,141 @@
+.\" @(#)d2c.1		-*- nroff -*-
+.TH D2C 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+d2c \- A Dylan-to-C compiler
+.SH SYNOPSIS
+.B d2c
+.RI "[ " option " ].\|.\|. " lidfile 
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.B d2c
+is an aggressively optimizing Dylan compiler which generates C code. Under
+normal cicumstances, it will then automatically invoke your C compiler to
+generate native executables.
+.PP
+.B d2c
+supports nearly all of the Dylan language, including the macro system. It
+can interface with C using
+.IR melange (1)\c
+, and can compile code developed under the
+.IR mindy (1)
+Dylan interpreter.
+.SH PROGRAM STRUCTURE
+A Dylan program is made up out of one or more libraries. Each library
+contains one or more modules, each of which can be defined in one or more
+source files.
+.B d2c
+compiles an entire library at once and performs aggressive
+inter-file optimizations.
+.PP
+You describe a library by creating a
+.B lid
+(library interchange definition) file which lists the files to be compiled and any relevant options. You
+then feed this file through
+.B d2c
+to produce a static library or an executable (shared library support is
+being debugged at the moment).
+.PP
+You can use the
+.IR make-dylan-app (1)
+script to create a sample Dylan program composed of a
+.B lid
+file and an empty main function.
+.SH OPTIONS
+.TP
+.BR "\-\-help"
+Print out a message describing the available options.
+.TP
+.BR "\-\-version"
+Print out the version and copyright.
+.TP
+.BI "\-L, \-\-libdir" " libdir"
+Specify an extra directory to search for compiled Dylan libraries.
+.TP
+.BI "\-D, \-\-define" " feature"
+Define a conditional-compilation feature which can be tested with #if.
+.TP
+.BI "\-U, \-\-undefine" " feature"
+Undefine a conditional-compilation feature which can be tested with #if.
+.TP
+.BR "\-M, \-\-log\-deps"
+Write
+.IR make (1)\c
+\-style dependency information to a file when compiling. You can then
+include this file into your Makefiles.
+.TP
+.BR "\-T, \-\-target" " target"
+Generate code for the platform named
+.BI target
+instead of the native platform.
+.TP
+.BI "\-p, \-\-platforms" " descriptions"
+Get platform descriptions from the file
+.BI descriptions
+instead of the standard
+.IR platforms.descr (4)
+file.
+.TP
+.BR "\-\-no\-binaries"
+Do not compile generated C files. Often used in conjunction with
+.BR -T .
+.TP
+.BR "\-d, \-\-break"
+Halt the compiler upon encountering an error. This is generally used when
+debugging
+.B d2c
+itself.
+.TP
+.BI "\-F, \-\-cc\-override\-command" " command"
+Use
+.IR command
+to invoke the C compiler on certain source files (see below). This can be
+used to work around bugs in the native C compiler by passing non-standard
+options.
+.TP
+.BI "\-f, \-\-cc\-override\-file" " file"
+Mark
+.IR file
+as using a non\-standard command to invoke the C compiler (see above).
+.TP
+.BR "\-g, \-\-debug"
+Try to generate binaries suitable for debugging. At the moment, that means
+including all declared functions in the generated code.
+.TP
+.BR "\-s, \-\-static"
+Force programs to link against static libraries. This will become more
+useful once shared libraries are supported, of course.
+.TP
+.BR "\-\-dump\-transforms"
+Display way, way too much information about what
+.B d2c
+is doing. If you suspect you've found an optimizer bug, this is the place
+to start looking.
+.SH BUGS
+.B d2c
+runs very slowly. We need to profile it and speed things up by about an
+order of magnitude. Harlequin Dylan shows this is possible.
+.PP
+It would be nice to support compilation of single-file Dylan programs,
+source\-level debugging and incremental compilation. Shared library support
+needs to be fixed, and an efficient solution for the fragile base class
+problem should be found.
+.PP
+Certain obscure Dylan features are missing, most notably support for
+creating classes at runtime.
+.PP
+Other bugs can be found on the website.
+.SH SEE ALSO
+dylan(7), gwydion(7), melange(1), make-dylan-app(1), platforms.descr(4), mindy(1).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The Gwydion Group at CMU and the current Gwydion Dylan maintainers. See the
+CREDITS file in the Gwydion Dylan distribution for more information.

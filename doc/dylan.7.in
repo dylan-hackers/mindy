@@ -1,0 +1,94 @@
+.\" @(#)d2c.1		-*- nroff -*-
+.TH DYLAN 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+Dylan \- An object-oriented, dynamic language.
+.SH DESCRIPTION
+Dylan is an object-oriented, dynamic, infix, garbage\-collected programming
+language with support for multiple inheritence, multiple dispatch (an
+advanced form of polymorphism), typed and untyped variables, closures and
+exceptions. Dylan also supports pattern-based hygenic macros. These allow
+you to define new control constructs and fully integrate them with the
+language.
+.PP
+Dylan (theoretically) combines the performance of C or C++ with the rapid
+development of Perl and the expressiveness of LISP. It looks similar to C
+or Pascal, so experienced programmers can learn to write simple programs
+quickly.
+.SH HISTORY
+Dylan was originally designed by Apple Computer's Advanced Development
+Labs. They were using several languages at the time: SmallTalk and LISP for
+research prototypes, and C and C++ for end-user applications. They wanted
+one language which could be used for everything.
+.PP
+With help from Harlequin and the Gwydion Group at CMU, Apple revised and
+improved Dylan. Each agreed to implement Dylan for a specific platform:
+Apple would handle the MacOS, Harlequin would handle Windows, and the
+Gwydion Group would develop for Unix.
+.PP
+Things didn't go so well for Apple. The company was loosing money and
+decided to cancel most of their non-MacOS development work.  Harlequin
+fared better--they just released Harlequin Dylan 1.1, which generates
+efficient code and includes a powerful GUI toolkit. The Gwydion Group made
+excellent progress before moving on to other research areas.
+.PP
+For more information about the Gwydion Dylan (and its ongoing development),
+see
+.IR gwydion (7).
+.SH DESIGN
+Dylan, like Java, is heavily redesigned form of LISP with many features
+stripped out and a special focus on performance. Java chose a somewhat
+easier route: it replaced almost all of the object system, eliminated
+dynamic typing and removed any powerful but hard\-to\-optimize features.
+.PP
+The Dylan designers chose to take a somewhat more radical approach. They
+left in the powerful object model, dynamic typing, and many advanced
+features such as closures and integrated macros. In most cases, the Dylan
+version of a feature was simplified, but not removed. For example, the
+Dylan object model includes generic functions (with multimethods), but
+omits the meta-object protocol and method combination rules.
+.PP
+Dylan did include, however, many new features to help the compiler generate
+efficient code. Programmers can specify type declarations to help the
+compiler infer types, or they can omit the type declarations if they don't
+care about peformance. Special classes allow the efficient representation
+of vectors and arrays of primitive types. Libraries can forbid their
+clients to subclass certain types, allowing method dispatch to be performed
+at compile time.
+.PP
+Because of these decisions, Dylan needs a powerful optimizer to produce
+efficient code. Fortunately, the techniques for implementing such
+optimizers are well-understood, even if a lot of work is involved.
+.SH PERFORMANCE
+A good Dylan compiler can match a C or C++ compiler in most ways, providing
+the programmer is willing to use type declarations and avoid the more
+expensive features.
+.PP
+Harlequin's Dylan compiler can generate code which matches the performace
+of C on many benchmarks, even those involving complex numeric calculations.
+Gwydion Dylan generates code about half as good as the underlying C
+compiler. Limited collection types must be used when processing large
+amounts of data, of course.
+.PP
+Memory usage for a Dylan program is about twice that of an equivalent C
+program, thanks to the garbage collector. However, the amortitized
+allocation and collection speed of a good modern garbage collector is
+effectively the same as that of malloc and free.
+.PP
+Using recent research, generic function dispatch can be performed at the
+price of three or four instructions per polymorphic argument. Membership in
+a class can be determined in constant time. Graph-coloring algorithms can
+be used to optimize slot access in the presence of multiple inheritence.
+.PP
+In light of these facts, Dylan appears to be a good choice for application
+development and an entirely reasonable choice for certain kinds of systems
+programming. Due to its LISP heritage, however, it is still useful for
+complex symbolic processing, fancy data structure manipulation and rapid
+prototyping.
+.SH SEE ALSO
+gwydion(7), d2c(1).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ ,
+including a brief Dylan tutorial.
