@@ -2,7 +2,7 @@ module: time-test
 author: David Watson, Nick Kramer
 synopsis: Test for the time library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.2 1996/08/07 15:14:40 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.3 1996/08/14 15:56:29 dwatson Exp $
 
 //======================================================================
 //
@@ -92,7 +92,7 @@ define method time-io-test () => ();
   run-test(string, "Wednesday 19 June 1996, 12:34 PM", "time-io");
 end method time-io-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the time library.\n\n");
   run-several-tests("time", time-test);
   run-several-tests("time-io", time-io-test);
@@ -101,4 +101,5 @@ define method main (argv0 :: <byte-string>, #rest ignored)
   else
     format("All time tests pass.\n");
   end if;
+  force-output(*standard-output*);
 end method main;
