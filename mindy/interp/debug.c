@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.26 1994/06/17 18:04:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.27 1994/06/26 22:40:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -531,7 +531,18 @@ static void quit_cmd(void)
 
 static void continue_cmd(void)
 {
-    Continue = TRUE;
+    struct thread_list *threads;
+
+    for (threads = all_threads(); threads != NULL; threads = threads->next) {
+	enum thread_status status = threads->thread->status;
+
+	if (status == status_Running || status == status_Waiting) {
+	    Continue = TRUE;
+	    return;
+	}
+    }
+
+    printf("No threads are potentially runnable.\n");
 }
 
 static void tron_cmd(void)
@@ -627,8 +638,10 @@ static void frame_cmd(void)
 
 		if (frame == NULL)
 		    printf("Frame number too large, should be < %d.\n", i);
-		else
+		else {
+		    set_frame(NULL);
 		    set_frame(frame);
+		}
 	    }
 	}
     }
@@ -1899,15 +1912,17 @@ static void disassemble_component(obj_t component)
 	while (ptr >= next_line) {
 	    obj_t entry = SOVEC(debug_info)->contents[debug_index++];
 	    int line = fixnum_value(SOVEC(entry)->contents[0]);
-	    FILE *source = find_source_line(source_file, mtime, line);
-	    if (source) {
-		int c;
-		printf("\n%d\t", line);
-		while ((c = getc(source)) != EOF && c != '\n')
-		    putchar(c);
+	    if (line != 0) {
+		FILE *source = find_source_line(source_file, mtime, line);
+		if (source) {
+		    int c;
+		    printf("\n%d\t", line);
+		    while ((c = getc(source)) != EOF && c != '\n')
+			putchar(c);
+		}
+		else
+		    printf("\nline %d:", line);
 	    }
-	    else
-		printf("\nline %d:", line);
 	    next_line += fixnum_value(SOVEC(entry)->contents[1]);
 	}
 	printf("\n%6d:", (int)(ptr - (unsigned char *)component));
@@ -2042,7 +2057,7 @@ static struct cmd_entry Cmds[] = {
 "error\t\tRedisplay the error that caused this thread to enter the debugger.",
 	 error_cmd},
     {"flush", "flush\t\tFlush all debugger variables.", flush_cmd},
-    {"frame", "frame num\tMove to the given frame.", frame_cmd},
+    {"frame", "frame [num]\tMove to the given frame.", frame_cmd},
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
     {"help", "help [topic]\tDisplay help about some topic.", help_cmd},
     {"kill", "kill thread\tKill the given thread.", kill_cmd},
