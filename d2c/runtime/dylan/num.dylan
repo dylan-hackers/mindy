@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.10 2003/10/07 06:01:47 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.10.4.1 2004/10/13 20:08:22 hannes Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -871,6 +871,20 @@ define inline method binary-logand
     (a :: <double-integer>, b :: <double-integer>)
  => (res :: <double-integer>);
   %%primitive(dblfix-logand, a, b);
+end;
+
+define inline method binary-logand
+    (a :: <integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-logand, dbl-a, b);
+end;
+  	 
+define inline method binary-logand
+    (a :: <double-integer>, b :: <integer>)
+ => (res :: <double-integer>);
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-logand, a, dbl-b);
 end;
 
 define inline method lognot (a :: <double-integer>)
