@@ -41,6 +41,7 @@ define module c-declarations
 
   use c-lexer;			// Tokens are used in process-type-list and
 				// make-struct-type
+  use portability;              // constants for size of C data types
 
   export
     // Basic type declarations
@@ -318,7 +319,8 @@ define generic true-type (type :: <type-declaration>);
 // Returns the number of bytes required to store instances of some C type.
 // Portability note: these sizes should hold true for "typical" C compilers on
 // 16 and 32 bit machines.  However, they may well need to be customized for
-// other architectures or C compilers.
+// other architectures or C compilers.  See the XXXX-portability.dylan file
+// in the source directory.
 //
 define generic c-type-size (type :: <type-declaration>);
 
@@ -348,9 +350,6 @@ define method true-type (type :: <type-declaration>)
 end method true-type;
 
 // Returns the number of bytes required to store instances of some C type.
-// Portability note: these sizes should hold true for "typical" C compilers on
-// 16 and 32 bit machines.  However, they may well need to be customized for
-// other architectures or C compilers.
 //
 define method c-type-size (type :: <type-declaration>)
  => size :: <integer>;
@@ -602,9 +601,7 @@ define method c-type-size (decl :: <struct-declaration>) => size :: <integer>;
 end method c-type-size;
 
 define method c-type-size (type :: <enum-declaration>) => size :: <integer>;
-  // Portability note: This should be standard for 16 and 32 bit machines, but
-  // is not guaranteed in the ref manual.
-  4;
+  $enum-size;
 end method c-type-size;
 
 //------------------------------------------------------------------------
@@ -742,9 +739,7 @@ end method pointer-to;
 
 define method c-type-size (pointer :: <pointer-declaration>)
  => size :: <integer>;
-  // Portability note: This assumption should hold true on most 16 and 32 bit
-  // machines. 
-  4;
+  $pointer-size;
 end method c-type-size;
 
 define method c-type-size (vector :: <vector-declaration>)
@@ -819,9 +814,7 @@ end method compute-closure;
 
 define method c-type-size (type :: <function-type-declaration>)
  => size :: <integer>;
-  // Portability note: This assumption should hold true on most 16 and 32 bit
-  // machines. 
-  4;
+  $function-pointer-size;
 end method c-type-size;
 
 //------------------------------------------------------------------------
@@ -888,49 +881,57 @@ define constant void-type = make(<predefined-type-declaration>,
 				 dylan-name: "<void>",
 				 name: "void-type", size: 0);
 
-// Portability note: The type sizes given here are typical for 32 bit
-// machines, but may not be accurate for 16 and 64 bit machines.
 define constant int-type = make(<integer-type-declaration>,
 				accessor: "signed-long-at",
 				name: "int",
-				dylan-name: "<integer>", size: 4);
+				dylan-name: "<integer>", size: $integer-size);
 define constant unsigned-int-type = make(<integer-type-declaration>,
 					 accessor: "unsigned-long-at",
 					 name: "unsigned int",
-					 dylan-name: "<integer>", size: 4);
+					 dylan-name: "<integer>",
+					 size: $integer-size);
 define constant short-type = make(<integer-type-declaration>,
 				  accessor: "signed-short-at",
 				  name: "short",
-				  dylan-name: "<integer>", size: 2);
+				  dylan-name: "<integer>",
+				  size: $short-int-size);
 define constant unsigned-short-type = make(<integer-type-declaration>,
 					   accessor: "unsigned-short-at",
 					   name: "unsigned short",
-					   dylan-name: "<integer>", size: 2);
+					   dylan-name: "<integer>",
+					   size: $short-int-size);
 define constant long-type = make(<integer-type-declaration>,
 				 accessor: "signed-long-at",
 				 name: "long",
-				 dylan-name: "<integer>", size: 4);
+				 dylan-name: "<integer>",
+				 size: $long-int-size);
 define constant unsigned-long-type = make(<integer-type-declaration>,
 					  accessor: "unsigned-long-at",
 					  name: "unsigned long",
-					  dylan-name: "<integer>", size: 4);
+					  dylan-name: "<integer>",
+					  size: $long-int-size);
 define constant char-type = make(<integer-type-declaration>,
 				 accessor: "signed-byte-at",
 				 name: "char",
-				 dylan-name: "<integer>", size: 1);
+				 dylan-name: "<integer>",
+				 size: $char-size);
 define constant unsigned-char-type = make(<integer-type-declaration>,
 					  accessor: "unsigned-byte-at",
 					  name: "unsigned char",
-					  dylan-name: "<integer>", size: 1);
+					  dylan-name: "<integer>",
+					  size: $char-size);
 define constant float-type = make(<float-type-declaration>,
 				  name: "float",
-				  dylan-name: "<float>", size: 4);
+				  dylan-name: "<float>",
+				  size: $float-size);
 define constant double-type = make(<float-type-declaration>,
 				   name: "double",
-				   dylan-name: "<float>", size: 8);
+				   dylan-name: "<float>",
+				   size: $double-float-size);
 define constant long-double-type = make(<float-type-declaration>,
 					name: "double",
-					dylan-name: "<float>", size: 16);
+					dylan-name: "<float>",
+					size: $long-double-size);
 
 define method compute-closure 
     (results :: <deque>, decl :: <predefined-type-declaration>)
