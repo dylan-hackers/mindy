@@ -2,7 +2,7 @@ module: itime-test
 author: David Watson, Nick Kramer
 synopsis: Test for the internal-time library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/itime-test.dylan,v 1.1 1996/07/18 10:59:36 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/itime-test.dylan,v 1.2 1996/08/07 14:50:59 dwatson Exp $
 
 //======================================================================
 //
@@ -28,19 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/itime-test.dylan,v 1.1 1
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library itime-test
-  use Dylan;
-  use Internal-Time;
-  use Print;
-end library itime-test;
-
-define module itime-test
-  use Dylan;
-  use Extensions;
-  use Internal-Time;
-  use Cheap-io;
-end module itime-test;
 
 define variable has-errors = #f;
 
