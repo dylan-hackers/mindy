@@ -40,13 +40,14 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.1 1998/05/03 19:55:19 andreas Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.2 1999/08/05 16:38:31 robmyers Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_
 #define _STD_OS_H_	1
 
 #include <errno.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #ifndef NO_PWD_H
 #   include <pwd.h>
@@ -55,7 +56,6 @@
 #ifndef NO_SYS_PARAM_H
 #   include <sys/param.h>
 #endif
-#include <sys/types.h>
 #ifdef USE_DIRENT2_H
 #   include "std-dirent2.h"
 #else
