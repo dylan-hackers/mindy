@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.83 1996/02/15 19:21:43 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.84 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -65,7 +65,7 @@ define module Builtin-Stuff
     $permanent-hash-state, *print-GC-messages*,
     abstract?,
     add-method, all-superclasses, applicable-method?, apply,
-    apply-curry, as, ash,
+    apply-curry, as, ash, binary-type-union,
     binary-logand, binary-logior, binary-logxor, broadcast-event,
     direct-subclasses, direct-superclasses,
     ceiling, ceiling/, class-name, collect-garbage, copy-bytes,
@@ -222,7 +222,7 @@ define module Dylan
     second, second-setter, shallow-copy, signal, size-setter, sort, sort!,
     subsequence-position,
     third, third-setter, type-error-value,
-    type-error-expected-type,
+    type-error-expected-type, type-union,
     zero?;
   create
     <object-table>, <table>, remove-key!, object-hash;
@@ -245,7 +245,7 @@ define module Extensions
     <value-table>, value-hash, sequence-hash, string-hash,
     <string-table>;
   export
-    one-of, type-or, false-or, ignore, key-exists?, <dictionary>;
+    one-of, false-or, ignore, key-exists?, <dictionary>;
 end Extensions;
 
 define module System
