@@ -45,6 +45,17 @@ sub install_rcs_wrappers {
     }
 }
 
+sub install_backslash_wrapper {
+    local ($newname, $wrapped) = @_;
+    local ($dst) = "\$(DESTDIR)/bin";
+    print "$dst/$newname.bat :\n";
+    $dst =~ tr|/|\\|;  # translate / to \ for batch files
+    print "\t", 'echo @', 
+	    "perl $dst\\backslash-wrapper.perl $wrapped", 
+            ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$newname.bat\n";
+    push(@install_dependencies, "\$(DESTDIR)/bin/$newname.bat");
+}
+
 # Wrapped RCS stuff
 do install_from_src('bin', 'rcs-wrapper.perl');
 do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
@@ -72,6 +83,11 @@ do install_from_src('bin', 'mk-backup.bat');
 do install_from_src('bin', 'find-unrcsed-files.perl');
 do install_from_src('bin', 'module-tool.perl');
 do install_from_src('bin', 'shadows.perl');
+
+# Wrappers for DOS commands that don't like forward slashes
+do install_from_src('bin', 'backslash-wrapper.perl');
+do install_backslash_wrapper('dbccopy', 'copy');
+do install_backslash_wrapper('sattrib', 'attrib');
 
 # Can't use emit_c_file_rule because they don't build executables
 print <<EOF;
