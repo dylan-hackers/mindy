@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.73 1995/06/04 17:05:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.74 1995/06/04 22:55:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -97,31 +97,10 @@ define method maybe-convert-to-ssa
 		"to replace?");
       end;
       dep.source-exp := ssa;
-      reoptimize-consumers(component, dep.dependent);
+      reoptimize(component, dep.dependent);
     end;
     reoptimize(component, assign);
   end;
-end;
-
-define method reoptimize-consumers
-    (component :: <component>, dependent :: <dependent-mixin>)
-    => ();
-  reoptimize(component, dependent);
-end;
-
-define method reoptimize-consumers
-    (component :: <component>, assign :: <assignment>)
-    => ();
-  for (var = assign.defines then var.definer-next,
-       while: var)
-    if (instance?(var, <ssa-variable>))
-      for (dep = var.dependents then dep.source-next,
-	   while: dep)
-	reoptimize-consumers(component, dep.dependent);
-      end;
-    end;
-  end;
-  reoptimize(component, assign);
 end;
 
 
@@ -1394,97 +1373,77 @@ end;
 
 // block/exit related optimizations.
 
+define method optimize (component :: <component>, catch :: <catch>) => ();
+  let nlx-info = catch.nlx-info;
+  if (~nlx-info.nlx-hidden-references? & nlx-info.nlx-exit-function == #f
+	& nlx-info.nlx-throws == #f)
+    // We no longer need the exit function and all the throws are gone,
+    // which means we only have local exits.  So change the catch into a call
+    // and nuke the make-catcher and disable-catchers.
+    let builder = make-builder(component);
+    replace-expression
+      (component, catch.dependents,
+       make-unknown-call
+	 (builder, catch.depends-on.source-exp, #f,
+	  list(make(<uninitialized-value>, 
+		    derived-type: specifier-type(#"<raw-pointer>")))));
+    let make-catcher-op = nlx-info.nlx-make-catcher;
+    if (make-catcher-op)
+      replace-expression
+	(component, make-catcher-op.dependents,
+	 make(<uninitialized-value>, 
+	      derived-type: make-catcher-op.derived-type));
+    end;
+    while (nlx-info.nlx-disable-catchers)
+      let disable-catcher-op = nlx-info.nlx-disable-catchers;
+      replace-expression
+	(component, disable-catcher-op.dependents,
+	 make(<uninitialized-value>, 
+	      derived-type: disable-catcher-op.derived-type));
+    end;
+  end;
+end;
+
 define method expand-exit-function
     (component :: <component>, call :: <general-call>,
      func :: <exit-function>, cluster :: <abstract-variable>)
     => ();
-  let builder = make-builder(component);
-  let call-dependency = call.dependents;
-  let assign = call-dependency.dependent;
-  let policy = assign.policy;
-  let source = assign.source-location;
-
   if (call.use-generic-entry?)
     error("Trying to call the generic entry for an exit function?");
   end;
 
-  let catcher = func.depends-on.source-exp;
-  let from = func.depends-on.dependent-next.source-exp;
-
-  let throw
-    = make-operation(builder, <primitive>, list(catcher, from, cluster),
-		     name: #"throw", derived-type: empty-ctype());
-
-  replace-expression(component, assign.depends-on, throw);
+  replace-expression(component, call.dependents,
+		     make-operation(make-builder(component), <throw>,
+				    list(func.depends-on.source-exp, cluster),
+				    nlx-info: func.nlx-info));
 end;
 
-define-primitive-transformer
-  (#"make-catcher",
-   method (component :: <component>, primitive :: <primitive>) => ();
-     let state-leaf = primitive.depends-on.source-exp;
-     if (instance?(state-leaf, <uninitialized-value>))
-       replace-expression
-	 (component, primitive.dependents,
-	  make-literal-constant(make-builder(component),
-				as(<ct-value>, #f)));
-     end;
-   end);
-
-define-primitive-transformer
-  (#"disable-catcher",
-   method (component :: <component>, primitive :: <primitive>) => ();
-     let catcher-leaf = primitive.depends-on.source-exp;
-     if (csubtype?(catcher-leaf.derived-type, specifier-type(#"<false>")))
-       replace-expression(component, primitive.dependents, catcher-leaf);
-     end;
-   end);
-
-define-primitive-transformer
-  (#"throw",
-   method (component :: <component>, primitive :: <primitive>) => ();
-     let body-function = primitive.depends-on.dependent-next.source-exp;
-     let body-region = body-function.main-entry;
-     if (primitive.home-function-region == body-region)
-       let assign = primitive.dependents.dependent;
-       let builder = make-builder(component);
-       let catcher = primitive.depends-on.source-exp;
-       assert(instance?(catcher, <ssa-variable>));
-       build-assignment
-	 (builder, assign.policy, assign.source-location, #(),
-	  make-operation(builder, <primitive>, list(catcher),
-		    name: #"disable-catcher"));
-       for (region = primitive.dependents.dependent.region
-	      then region.parent,
-	    until: region == body-region)
-	 if (instance?(region, <unwind-protect-region>))
-	   build-assignment
-	     (builder, $Default-Policy, region.source-location, #(),
-	      make-unknown-call
-		(builder, region.uwp-region-cleanup-function, #f, #()));
-	 end;
-       end;
-       insert-before(component, assign, builder-result(builder));
-       insert-return-before(component, assign, body-region,
-			    primitive.depends-on.dependent-next
-			      .dependent-next.source-exp);
-       //
-       // Check to see if the only remaining dependent of the body-function
-       // is the catch primitive.
-       let dep = body-function.dependents;
-       if (dep & dep.dependent-next == #f
-	     & instance?(dep.dependent, <primitive>)
-	     & dep.dependent.name == #"catch")
-	 //
-	 // Change the catch into a regular call.
-	 replace-expression
-	   (component, dep.dependent.dependents,
-	    make-unknown-call
-	      (builder, body-function, #f,
-	       list(make(<uninitialized-value>,
-			 derived-type: specifier-type(#"<raw-pointer>")))));
-       end;
-     end;
-   end);
+define method optimize (component :: <component>, op :: <throw>) => ();
+  let nlx-info = op.nlx-info;
+  let body-region = nlx-info.nlx-make-catcher.home-function-region;
+  if (op.home-function-region == body-region)
+    let assign = op.dependents.dependent;
+    let builder = make-builder(component);
+    build-assignment
+      (builder, assign.policy, assign.source-location, #(),
+       make-operation(builder, <disable-catcher>,
+		      list(op.depends-on.source-exp),
+		      nlx-info: nlx-info));
+    for (region = op.dependents.dependent.region
+	   then region.parent,
+	 until: region == body-region)
+      if (instance?(region, <unwind-protect-region>))
+	build-assignment
+	  (builder, $Default-Policy, region.source-location, #(),
+	   make-unknown-call
+	     (builder, region.uwp-region-cleanup-function, #f, #()));
+      end;
+    end;
+    insert-before(component, assign, builder-result(builder));
+    insert-return-before(component, assign, body-region,
+			 op.depends-on.dependent-next.source-exp);
+  end;
+end;
 
 define method optimize
     (component :: <component>, region :: <block-region>) => ();
@@ -1496,6 +1455,7 @@ define method optimize
     delete-queueable(component, region);
   end;
 end;
+
 
 
 // Function optimization
@@ -1828,7 +1788,7 @@ define method queue-throws
   for (assign = region.first-assign then assign.next-op,
        while: assign)
     let expr = assign.depends-on.source-exp;
-    if (instance?(expr, <primitive>) & expr.name == #"throw")
+    if (instance?(expr, <throw>))
       reoptimize(component, expr);
     end;
   end;
@@ -2579,18 +2539,6 @@ define method replace-placeholder
       insert-before(component, assign, builder-result(builder));
       replace-expression(component, dep, vec);
 
-    #"make-catcher", #"disable-catcher", #"throw" =>
-      let builder = make-builder(component);
-      replace-expression
-	(component, dep,
-	 make-unknown-call
-	   (builder, dylan-defn-leaf(builder, op.name), #f,
-	    for (dep = op.depends-on then dep.dependent-next,
-		 args = #() then pair(dep.source-exp, args),
-		 while: dep)
-	    finally
-	      reverse!(args);
-	    end));
     otherwise => #f;
   end;
 end;
@@ -2598,6 +2546,7 @@ end;
 define method replace-placeholder
     (component :: <component>, dep :: <dependency>, leaf :: <exit-function>)
     => ();
+  leaf.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
   let catcher = leaf.depends-on.source-exp;
   let make-exit-fun-leaf = dylan-defn-leaf(builder, #"make-exit-function");
@@ -2609,6 +2558,51 @@ define method replace-placeholder
   replace-expression(component, dep, temp);
 end;
 
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <make-catcher>)
+    => ();
+  op.nlx-info.nlx-hidden-references? := #t;
+  let builder = make-builder(component);
+  let catcher = op.depends-on.source-exp;
+  replace-expression(component, dep,
+		     make-unknown-call
+		       (builder, dylan-defn-leaf(builder, #"make-catcher"), #f,
+			list(catcher)));
+end;
+  
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <disable-catcher>)
+    => ();
+  op.nlx-info.nlx-hidden-references? := #t;
+  let builder = make-builder(component);
+  let catcher = op.depends-on.source-exp;
+  replace-expression(component, dep,
+		     make-unknown-call
+		       (builder, dylan-defn-leaf(builder, #"disable-catcher"),
+			#f, list(catcher)));
+end;
+  
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <throw>)
+    => ();
+  op.nlx-info.nlx-hidden-references? := #t;
+  let builder = make-builder(component);
+  let assign = dep.dependent;
+  let catcher = op.depends-on.source-exp;
+  let cluster = op.depends-on.dependent-next.source-exp;
+  let temp = make-local-var(builder, #"values", object-ctype());
+  let zero-leaf = make-literal-constant(builder, as(<ct-value>, 0));
+  build-assignment(builder, assign.policy, assign.source-location, temp,
+		   make-operation(builder, <primitive>,
+				  list(cluster, zero-leaf),
+				  name: #"canonicalize-results"));
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, dep,
+		     make-unknown-call
+		       (builder, dylan-defn-leaf(builder, #"throw"), #f,
+			list(op.depends-on.source-exp, temp)));
+end;
 
 
 // Environment analysis
@@ -2725,8 +2719,6 @@ define method find-in-environment
 	  var-at-ref.dependents := new-dep;
 	  ref-dep.dependent-next := new-dep;
 	  reoptimize(component, ref);
-	elseif (instance?(ref, <primitive>) & ref.name == #"throw")
-	  error("A throw primitive made it through to environment analysis?");
 	else
 	  let builder = make-builder(component);
 	  let op = make-operation(builder, <primitive>,
@@ -3205,6 +3197,56 @@ define method delete-dependent
   delete-queueable(component, dependent);
 end;
 
+define method delete-dependent
+    (component :: <component>, op :: <catch>, #next next-method) => ();
+  op.nlx-info.nlx-catch := #f;
+  next-method();
+end;
+
+define method delete-dependent
+    (component :: <component>, op :: <make-catcher>, #next next-method) => ();
+  op.nlx-info.nlx-make-catcher := #f;
+  next-method();
+end;
+
+define method delete-dependent
+    (component :: <component>, op :: <disable-catcher>, #next next-method)
+    => ();
+  let nlx-info = op.nlx-info;
+  for (prev = #f then disable,
+       disable = nlx-info.nlx-disable-catchers
+	 then disable.disable-catcher-next,
+       until: disable == op)
+  finally
+    if (prev)
+      prev.disable-catcher-next := op.disable-catcher-next;
+    else
+      nlx-info.nlx-disable-catchers := op.disable-catcher-next;
+    end;
+  end;
+  if (nlx-info.nlx-catch & ~nlx-info.nlx-hidden-references?
+	& nlx-info.nlx-exit-function == #f & nlx-info.nlx-throws == #f)
+    reoptimize(component, nlx-info.nlx-catch);
+  end;
+  next-method();
+end;
+
+define method delete-dependent
+    (component :: <component>, op :: <throw>, #next next-method) => ();
+  let nlx-info = op.nlx-info;
+  for (prev = #f then throw,
+       throw = nlx-info.nlx-throws then throw.throw-next,
+       until: throw == op)
+  finally
+    if (prev)
+      prev.throw-next := op.throw-next;
+    else
+      nlx-info.nlx-throws := op.throw-next;
+    end;
+  end;
+  next-method();
+end;
+
 define method delete-and-unlink-assignment
     (component :: <component>, assignment :: <assignment>) => ();
 
@@ -3353,7 +3395,15 @@ define method dropped-dependent
     (component :: <component>, exit :: <exit-function>) => ();
   // If we dropped the last reference, clear it out.
   unless (exit.dependents)
+    let nlx-info = exit.nlx-info;
+    nlx-info.nlx-exit-function := #f;
+
     delete-dependent(component, exit);
+
+    if (nlx-info.nlx-catch & ~nlx-info.nlx-hidden-references?
+	  & nlx-info.nlx-exit-function == #f & nlx-info.nlx-throws == #f)
+      reoptimize(component, nlx-info.nlx-catch);
+    end;
   end;
 end;
 

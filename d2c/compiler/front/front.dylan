@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.36 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.37 1995/06/04 22:55:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -19,14 +19,16 @@ operation
 	    mv-call
 	error-call
     prologue
-    catcher
-    set
     self-tail-call
+    set
     slot-access {abstract}
 	slot-ref
 	slot-set
     truly-the
-
+    catch
+    throw
+    make-catcher
+    disable-catcher
 
 variable-info
     module-var-info
@@ -101,7 +103,8 @@ define class <primitive> (<operation>)
   slot info :: <primitive-info>;
 end;
 
-define method initialize (prim :: <primitive>, #key) => ();
+define method initialize (prim :: <primitive>, #next next-method, #key) => ();
+  next-method();
   prim.info := primitive-info-or-lose(prim.name);
   let type = prim.info.primitive-result-type;
   prim.derived-type := values-type-intersection(type, prim.derived-type);
@@ -199,8 +202,61 @@ define class <truly-the> (<operation>)
   slot guaranteed-type :: <ctype>, required-init-keyword: guaranteed-type:;
 end;
 
-define method initialize (op :: <truly-the>, #key guaranteed-type)
+define method initialize
+    (op :: <truly-the>, #next next-method, #key guaranteed-type) => ();
+  next-method();
   op.derived-type := guaranteed-type;
+end;
+
+
+define class <nlx-operation> (<operation>)
+  slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
+end;
+
+define class <catch> (<nlx-operation>)
+end;
+
+define method initialize
+    (catch :: <catch>, #next next-method, #key nlx-info) => ();
+  next-method();
+  nlx-info.nlx-catch := catch;
+end;
+
+define class <throw> (<nlx-operation>)
+  slot throw-next :: false-or(<throw>);
+  inherited slot derived-type, init-function: empty-ctype;
+end;
+
+define method initialize
+    (op :: <throw>, #next next-method, #key nlx-info) => ();
+  next-method();
+  op.throw-next := nlx-info.nlx-throws;
+  nlx-info.nlx-throws := op;
+end;
+
+define class <make-catcher> (<nlx-operation>)
+  inherited slot derived-type,
+    init-function: curry(specifier-type, #"<catcher>");
+end;
+
+define method initialize
+    (op :: <make-catcher>, #next next-method, #key nlx-info) => ();
+  next-method();
+  nlx-info.nlx-make-catcher := op;
+end;
+
+define class <disable-catcher> (<nlx-operation>)
+  slot disable-catcher-next :: false-or(<disable-catcher>);
+  inherited slot derived-type,
+    init-function: curry(make-values-ctype, #(), #f);
+end;
+
+define method initialize
+    (op :: <disable-catcher>, #next next-method, #key nlx-info)
+    => ();
+  next-method();
+  op.disable-catcher-next := nlx-info.nlx-disable-catchers;
+  nlx-info.nlx-disable-catchers := op;
 end;
 
 
@@ -342,11 +398,19 @@ end class;
 
 // An <exit-function> is a magical function literal that represents
 // the exit-function for a block in situations where a non-local exit is
-// possible.  It also depends-on the catcher and the function being exited
-// from.
+// possible.  It depends-on the catcher for that block so that we don't think
+// we can flush the catcher until after we've flushed all copies of the
+// exit function.
 //
 define class <exit-function> (<abstract-function-literal>, <dependent-mixin>)
+  slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
 end class;
+
+define method initialize
+    (exit-fun :: <exit-function>, #next next-method, #key nlx-info) => ();
+  next-method();
+  nlx-info.nlx-exit-function := exit-fun;
+end;
 
 
 // FE region classes:
@@ -385,7 +449,9 @@ define class <fer-function-region>
   slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
 end;
 
-define method initialize (func :: <fer-function-region>, #key) => ();
+define method initialize
+    (func :: <fer-function-region>, #next next-method, #key) => ();
+  next-method();
   func.prologue
     := make(<prologue>, function: func, depends-on: #f,
 	    // ### The depends-on: shouldn't be needed, but Mindy is broken.
@@ -457,3 +523,11 @@ define class <closure-var> (<object>)
   slot closure-next :: false-or(<closure-var>), required-init-keyword: next:;
 end;
 
+define class <nlx-info> (<object>)
+  slot nlx-hidden-references? :: <boolean>, init-value: #f;
+  slot nlx-catch :: false-or(<catch>);
+  slot nlx-make-catcher :: false-or(<make-catcher>);
+  slot nlx-exit-function :: false-or(<exit-function>);
+  slot nlx-disable-catchers :: false-or(<disable-catcher>), init-value: #f;
+  slot nlx-throws :: false-or(<throw>), init-value: #f;
+end;

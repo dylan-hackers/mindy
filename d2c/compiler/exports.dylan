@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.71 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.72 1995/06/04 22:55:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -656,7 +656,7 @@ define module builder-interface
     make-values-cluster, copy-variable, make-exit-function,
     build-unwind-protect-body, build-function-body, make-function-literal, 
 
-    <fer-component>;
+    <fer-component>, <nlx-info>;
 end;
 
 define module flow
@@ -741,7 +741,7 @@ define module front
   use classes;
   use signature-interface;
   use source;
-  use builder-interface, export: {<fer-component>};
+  use builder-interface, export: {<fer-component>, <nlx-info>};
   use policy;
   use primitives;
   use compile-time-functions;
@@ -760,6 +760,8 @@ define module front
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
     <truly-the>, guaranteed-type,
+    nlx-info, <catch>, <throw>, throw-next, throw-next-setter, <make-catcher>,
+    <disable-catcher>, disable-catcher-next, disable-catcher-next-setter,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
@@ -788,8 +790,13 @@ define module front
     <unwind-protect-region>, uwp-region-cleanup-function,
 
     <environment>, closure-vars, closure-vars-setter,
-    <closure-var>, original-var, copy-var, closure-next, closure-next-setter;
-    
+    <closure-var>, original-var, copy-var, closure-next, closure-next-setter,
+
+    // <nlx-info> is picked up via a create.
+    nlx-hidden-references?, nlx-hidden-references?-setter,
+    nlx-catch, nlx-catch-setter, nlx-make-catcher, nlx-make-catcher-setter,
+    nlx-exit-function, nlx-exit-function-setter, nlx-disable-catchers,
+    nlx-disable-catchers-setter, nlx-throws, nlx-throws-setter;
 end;
 
 define module fer-convert
@@ -813,7 +820,8 @@ define module fer-convert
   use front,
     rename: {<primitive> => <fer-primitive>, <mv-call> => <fer-mv-call>},
     import: {<function-literal>, <method-literal>, <set>,
-	       <function-visibility>};
+	       <function-visibility>, <catch>, <disable-catcher>,
+	       <make-catcher>};
   use builder-interface, export: all;
   use ctype;
   use lexenv, export: all;

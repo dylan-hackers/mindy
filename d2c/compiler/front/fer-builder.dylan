@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.33 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.34 1995/06/04 22:55:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -547,16 +547,16 @@ define method copy-variable
 end method;
 
 
-// If we've already made an exit function, return it, otherwise make one.
-//
 define method make-exit-function
-    (builder :: <fer-builder>, catcher :: <abstract-variable>,
-     from :: <function-literal>)
+    (builder :: <fer-builder>, nlx-info :: <nlx-info>,
+     catcher :: <abstract-variable>)
  => res :: <leaf>;
-  let exit-fun = make(<exit-function>);
-  make-operand-dependencies(builder, exit-fun, list(catcher, from));
-  exit-fun;
+  make-operand-dependencies(builder,
+			    make(<exit-function>, nlx-info: nlx-info),
+			    list(catcher));
 end;
+
+
 
 // Starts building an unwind-protect body.
 // 
