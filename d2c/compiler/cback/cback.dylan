@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.99 1996/02/09 17:01:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.100 1996/02/10 00:45:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -352,6 +352,37 @@ define method get-info-for (thing :: <annotatable>,
   thing.info | (thing.info := make-info-for(thing, file));
 end;
 
+// Lots of places we emit ``useful'' information inside comments.  But if the
+// useful information contains a ``*/'' it will confuse the C compiler.  So
+// we use this routine to clobber all occurances of */ before actually writing
+// the comment.
+// 
+define method clean-for-comment (thing :: <byte-string>)
+    => res :: <byte-string>;
+  let len = thing.size;
+  unless (len < 2)
+    let previous-is-star? = thing[0] == '*';
+    for (index :: <integer> from 1 below len)
+      let char = thing[index];
+      if (char == '*')
+	previous-is-star? := #t;
+      elseif (previous-is-star?)
+	previous-is-star? := #f;
+	if (char == '/')
+	  thing[index - 1] := 'X';
+	  thing[index] := 'X';
+	end if;
+      end if;
+    end for;
+  end unless;
+  thing;
+end method clean-for-comment;
+//
+define method clean-for-comment (thing :: <object>) => res :: <byte-string>;
+  format-to-string("%s", thing).clean-for-comment;
+end method clean-for-comment;
+
+
 // This form defines a vector which maps from characters in dylan
 // names to characters in C names.  This is necessary because C's name
 // syntax is much more restrictive than Dylan's.
@@ -576,12 +607,12 @@ define method emit-prototype-for
     format(stream, "extern %s %s;\t/* %s */\n\n",
 	   rep.representation-c-type,
 	   info.backend-var-info-name,
-	   defn.defn-name);
+	   defn.defn-name.clean-for-comment);
   else
     // We must have a user meaningful-name, so make sure it's
     // declared.
     format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
-	   info.backend-var-info-name, defn.defn-name);
+	   info.backend-var-info-name, defn.defn-name.clean-for-comment);
   end if;
   unless (rep.representation-has-bottom-value?
 	    | defn.defn-guaranteed-initialized?)
@@ -599,7 +630,7 @@ define method emit-prototype-for
     => ();
   let stream = file.file-body-stream;
   format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
-	 name, defn);
+	 name, defn.clean-for-comment);
 end;  
 
 define method emit-prototype-for
@@ -607,7 +638,7 @@ define method emit-prototype-for
     => ();
   let stream = file.file-body-stream;
   format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
-	 name, defn.defn-name);
+	 name, defn.defn-name.clean-for-comment);
 end;  
 
 define method defn-guaranteed-initialized? (defn :: <definition>)
@@ -693,7 +724,7 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
     format(stream, "%s %s;",
 	   info.backend-var-info-rep.representation-c-type, name);
     if (instance?(leaf.var-info, <debug-named-info>))
-      format(stream, " /* %s */", leaf.var-info.debug-name);
+      format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
     end;
     write('\n', stream);
     info.backend-var-info-name := name;
@@ -975,7 +1006,7 @@ define generic emit-tlf-gunk (tlf :: <top-level-form>,
 define method emit-tlf-gunk (tlf :: <top-level-form>,
 			     file :: <file-state>)
     => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf);
+  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
 end;
 
 // This method does useful stuff to insure that heap dumping does the
@@ -985,7 +1016,7 @@ define method emit-tlf-gunk (tlf :: type-union(<define-generic-tlf>,
 					       <define-implicit-generic-tlf>),
 			     file :: <file-state>)
  => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf);
+  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
   let ctv = defn.ct-value;
   if (instance?(ctv, <ct-sealed-generic>))
@@ -1015,7 +1046,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 			     file :: <file-state>)
     => ();
   let bstream = file.file-body-stream;
-  format(bstream, "/* %s */\n\n", tlf);
+  format(bstream, "/* %s */\n\n", tlf.clean-for-comment);
 
   let gstream = file.file-guts-stream;
 
@@ -1089,7 +1120,7 @@ end;
 define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
 			     file :: <file-state>)
     => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf);
+  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
   for (defn in tlf.tlf-required-defns)
     emit-bindings-definition-gunk(defn, file);
   end;
@@ -1118,16 +1149,16 @@ define method emit-bindings-definition-gunk
       format(stream, "%s;\t/* %s */\n",
 	     conversion-expr(rep, init-value-expr, init-value-rep,
 			     file),
-	     defn.defn-name);
+	     defn.defn-name.clean-for-comment);
     else
       format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
-	     defn.defn-name, name);
+	     defn.defn-name.clean-for-comment, name);
     end;
     file.file-prototypes-exist-for[name] := #t;
   else
     format(stream, "/* %s allocated as %s */\n",
-	   defn.defn-name,
-	   info.backend-var-info-name);
+	   defn.defn-name.clean-for-comment,
+	   info.backend-var-info-name.clean-for-comment);
   end;
 end;
 
@@ -1213,7 +1244,7 @@ define method emit-function
   emit-region(function.body, file);
 
   let stream = file.file-body-stream;
-  format(stream, "/* %s */\n", function.name);
+  format(stream, "/* %s */\n", function.name.clean-for-comment);
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
   write(get-string(file.file-vars-stream), stream);
@@ -1256,7 +1287,7 @@ define method compute-function-prototype
     if (var)
       let varinfo = var.var-info;
       if (instance?(varinfo, <debug-named-info>))
-	format(stream, " /* %s */", varinfo.debug-name);
+	format(stream, " /* %s */", varinfo.debug-name.clean-for-comment);
       end;
     end;
   end;
@@ -1293,7 +1324,7 @@ define method emit-prototype-for
   format(file.file-body-stream,
 	 "extern %s;\t/* %s */\n\n",
 	 compute-function-prototype(#f, function-info, file),
-	 function-info.function-info-name);
+	 function-info.function-info-name.clean-for-comment);
 end;
 
 define method emit-prototype-for
@@ -1629,7 +1660,7 @@ define method emit-assignment
     let stream = file.file-guts-stream;
     write(setup-stream.string-output-stream-string, stream);
     if (name)
-      format(stream, "/* %s */\n", name);
+      format(stream, "/* %s */\n", name.clean-for-comment);
     end;
     if (results)
       format(stream, "%s = ", sp);
@@ -1786,7 +1817,7 @@ define method emit-assignment
   write(')', stream);
   let call = string-output-stream-string(stream);
   format(file.file-guts-stream, "/* %s */\n",
-	 func-info.function-info-name);
+	 func-info.function-info-name.clean-for-comment);
   let result-rep = func-info.function-info-result-representation;
   if (results == #f | result-rep == #())
     format(file.file-guts-stream, "%s;\n", call);
@@ -1891,7 +1922,7 @@ define method emit-assignment
   spew-pending-defines(file);
   let (bottom-name, top-name) = consume-cluster(cluster, file);
   if (name)
-    format(stream, "/* %s */\n", name);
+    format(stream, "/* %s */\n", name.clean-for-comment);
   end;
   if (results)
     format(stream, "%s = ", top-name);
