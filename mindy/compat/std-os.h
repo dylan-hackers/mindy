@@ -40,7 +40,7 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.4 2002/03/03 07:58:09 brent Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.5 2003/01/26 15:35:53 andreas Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_
@@ -375,7 +375,7 @@ EXTERN int	protect_write _ANSI_ARGS_((int fd, VOID *buf, size_t numBytes));
 #   endif
 #endif
 
-// Include select and other net stuff for BeOS
+/* Include select and other net stuff for BeOS */
 #if defined(__BEOS__)
 #include <be/net/socket.h>
 #endif
