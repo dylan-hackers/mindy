@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.18 1994/07/11 20:06:00 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.19 1994/08/18 21:35:40 wlott Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -367,8 +367,12 @@ static struct body
 
     r = rettypes->req_types;
 
-    if (rettypes->rest_temp)
+    if (rettypes->restp) {
+	if (r == NULL && rettypes->rest_temp == NULL)
+	    /* #rest <object> -- real easy to test. */
+	    return form;
 	add_argument(values, make_argument(make_varref(id(sym_Values))));
+    }
     else {
 	if (r == NULL) {
 	    /* No results are returned -- hence it is easy to test their */
@@ -410,36 +414,44 @@ static struct body
 	add_argument(values, make_argument(expr));
     }
 
-    if (rettypes->rest_temp) {
+    if (rettypes->restp) {
 	struct symbol *rest_temp = gensym();
-	struct symbol *val_temp = gensym();
-	struct body *body;
-	struct param_list *meth_params;
-	struct method *method;
-	struct arglist *args;
-	struct expr *expr;
 
 	set_rest_param(params, id(rest_temp));
 	
-	args = make_argument_list();
-	add_argument(args, make_argument(make_varref(id(val_temp))));
-	add_argument(args,make_argument(make_varref(id(rettypes->rest_temp))));
-	expr = make_function_call(make_varref(id(ctype)), args);
-	add_expr(body = make_body(), expr);
+	if (rettypes->rest_temp) {
+	    struct symbol *val_temp = gensym();
+	    struct param_list *meth_params;
+	    struct arglist *args;
+	    struct body *body;
+	    struct method *method;
+	    struct expr *expr;
+
+	    args = make_argument_list();
+	    add_argument(args, make_argument(make_varref(id(val_temp))));
+	    add_argument(args,
+			 make_argument(make_varref(id(rettypes->rest_temp))));
+	    expr = make_function_call(make_varref(id(ctype)), args);
+	    add_expr(body = make_body(), expr);
 	
-	meth_params = make_param_list();
-	meth_params = push_param(make_param(id(val_temp), NULL), meth_params);
-	method = make_method_description(meth_params, NULL, body);
+	    meth_params = make_param_list();
+	    meth_params = push_param(make_param(id(val_temp), NULL),
+				     meth_params);
+	    method = make_method_description(meth_params, NULL, body);
 
-	args = make_argument_list();
-	add_argument(args, make_argument(make_method_ref(method)));
-	add_argument(args, make_argument(make_varref(id(rest_temp))));
-	expr = make_function_call(make_varref(id(sym_Do)), args);
+	    args = make_argument_list();
+	    add_argument(args, make_argument(make_method_ref(method)));
+	    add_argument(args, make_argument(make_varref(id(rest_temp))));
+	    expr = make_function_call(make_varref(id(sym_Do)), args);
 
-	add_expr(body = make_body(), expr);
-	add_expr(body, make_varref(id(rest_temp)));
+	    add_expr(body = make_body(), expr);
+	    add_expr(body, make_varref(id(rest_temp)));
 
-	add_argument(values, make_argument(make_body_expr(body)));
+	    add_argument(values, make_argument(make_body_expr(body)));
+	}
+	else
+	    add_argument(values, make_argument(make_varref(id(rest_temp))));
+
 	fn = make_varref(id(sym_Apply));
     }
     else
@@ -906,6 +918,8 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 	add_argument(init_args, make_argument(c->rettypes->req_types_list));
 	if (c->rettypes->rest_temp)
 	    expr = c->rettypes->rest_temp_varref;
+	else if (c->rettypes->restp)
+	    expr = make_literal_ref(make_true_literal());
 	else
 	    expr = make_literal_ref(make_false_literal());
 	add_argument(init_args, make_argument(expr));

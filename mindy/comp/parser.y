@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.13 1994/07/11 20:02:45 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.14 1994/08/18 21:35:47 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -746,9 +746,9 @@ gf_suffix:
 	{ $$ = make_gf_suffix(NULL, $1); }
     |	ARROW return_type_element property_list_opt
 	{ free($1);
-	  $$ = make_gf_suffix(add_return_type(make_return_type_list(NULL),
-					      $2),
-			      $3);
+	  $$ = make_gf_suffix
+	          (add_return_type(make_return_type_list(FALSE, NULL), $2),
+		   $3);
 	}
     |	ARROW LPAREN return_type_list RPAREN property_list_opt
 	{ free($1); free($2); free($4); $$ = make_gf_suffix($3, $5); }
@@ -843,9 +843,9 @@ return_type:
 
 return_type_list:
 	/* epsilon */
-	{ $$ = make_return_type_list(NULL); }
+	{ $$ = make_return_type_list(FALSE, NULL); }
     |	REST return_type_element
-	{ free($1); $$ = make_return_type_list($2); }
+	{ free($1); $$ = make_return_type_list(TRUE, $2); }
     |	return_type_list_head
 	{ $$ = $1; }
     |	return_type_list_head COMMA REST return_type_element
@@ -854,7 +854,7 @@ return_type_list:
 
 return_type_list_head:
 	return_type_element
-	{ $$ = add_return_type(make_return_type_list(NULL), $1); }
+	{ $$ = add_return_type(make_return_type_list(FALSE, NULL), $1); }
     |	return_type_list_head COMMA return_type_element
 	{ free($2); $$ = add_return_type($1, $3); }
 ;

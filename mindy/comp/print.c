@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.12 1994/07/11 20:05:03 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.13 1994/08/18 21:35:49 wlott Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
@@ -277,6 +277,8 @@ static void print_return_type_list(struct return_type_list *l, int depth)
 	printf("%s#rest\n", indent(depth+1));
 	print_expr(l->rest_type, depth+2);
     }
+    else if (l->restp)
+	printf("%s#rest foo :: <object>\n", indent(depth+1));
     printf("%send returns\n", indent(depth));
 }
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.21 1994/07/12 20:45:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.22 1994/08/18 21:35:51 wlott Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -700,13 +700,15 @@ struct plist
     return plist;
 }
 
-struct return_type_list *make_return_type_list(struct expr *rest)
+struct return_type_list *make_return_type_list(boolean restp,
+					       struct expr *rest)
 {
     struct return_type_list *res = malloc(sizeof(struct return_type_list));
 
     res->req_types = NULL;
     res->req_types_tail = &res->req_types;
     res->req_types_list = NULL;
+    res->restp = restp;
     res->rest_type = rest;
     res->rest_temp = NULL;
     res->rest_temp_varref = NULL;
@@ -732,6 +734,7 @@ struct return_type_list
     *set_return_type_rest_type(struct return_type_list *list,
 			       struct expr *type)
 {
+    list->restp = TRUE;
     list->rest_type = type;
     return list;
 }

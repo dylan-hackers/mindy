@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.16 1994/07/19 17:18:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.17 1994/08/18 21:35:04 wlott Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -379,6 +379,8 @@ static void compile_method_ref(struct method *method,
 	compile_expr(method->rettypes->req_types_list, component, SINGLE);
 	if (method->rettypes->rest_temp_varref)
 	    compile_expr(method->rettypes->rest_temp_varref, component,SINGLE);
+	else if (method->rettypes->restp)
+	    emit_op(component, op_PUSH_TRUE);
 	else
 	    emit_op(component, op_PUSH_FALSE);
     }

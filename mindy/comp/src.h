@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.14 1994/07/11 20:04:01 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.15 1994/08/18 21:35:53 wlott Exp $
 *
 \**********************************************************************/
 
@@ -376,6 +376,7 @@ struct return_type_list {
     struct return_type *req_types;
     struct return_type **req_types_tail;
     struct expr *req_types_list;
+    boolean restp;
     struct expr *rest_type;
     struct symbol *rest_temp;
     struct expr *rest_temp_varref;
@@ -637,7 +638,8 @@ extern struct plist *make_property_list(void);
 extern struct plist
     *add_property(struct plist *plist, struct token *keyword,
 		  struct expr *expr);
-extern struct return_type_list *make_return_type_list(struct expr *rest);
+extern struct return_type_list *make_return_type_list(boolean restp,
+						      struct expr *rest);
 extern struct return_type_list *add_return_type(struct return_type_list *l,
 						struct expr *type);
 extern struct return_type_list
