@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.6 1997/02/10 03:55:19 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.7 1997/02/25 17:02:43 rgs Exp $
 
 //======================================================================
 //
@@ -213,6 +213,19 @@ define sealed inline method unsigned-long-at-setter
  => (result :: <integer>);
   pointer-deref(long:, ptr.raw-value, offset) := new;
 end method unsigned-long-at-setter;
+
+define sealed inline method longlong-at
+    (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <integer>);
+  error("accesses to 'long long' data not currently supported");
+end method longlong-at;
+
+define sealed inline method longlong-at-setter
+    (new :: <integer>,
+     ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <integer>);
+  error("accesses to 'long long' data not currently supported");
+end method longlong-at-setter;
 
 define sealed inline method pointer-at
     (ptr :: <statically-typed-pointer>,
