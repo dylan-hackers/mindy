@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.1 1994/03/24 21:49:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.2 1994/06/11 17:51:01 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -18,7 +18,7 @@
 #define obj_is_fixnum(o) (!obj_is_ptr(o))
 
 #define fixnum_value(o) (((long)(o))>>1)
-#define make_fixnum(i) ((obj_t)((i)<<1))
+#define make_fixnum(i) ((obj_t)(((long)(i))<<1))
 #define MAX_FIXNUM ((obj_t)((((unsigned long)~0)<<2)>>1))
 #define MIN_FIXNUM ((obj_t)~(((unsigned long)~0)>>1))
 
