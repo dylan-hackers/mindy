@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.2 1996/03/20 19:34:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.3 1996/03/21 00:43:23 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,17 +33,19 @@ define constant stretchy-vector =
 // If there is only one part at it is already an expression-parse, just
 // return it.  Otherwise, make a body-parse.
 // 
-define method make-body (parts :: <stretchy-vector>)
+define method make-body
+    (parts :: <stretchy-vector>, srcloc :: <source-location>)
     => res :: <expression-parse>;
   if (parts.size == 1)
     let form = parts[0];
     if (instance?(form, <expression-parse>))
       form;
     else
-      make(<body-parse>, parts: vector(form));
+      make(<body-parse>, source-location: srcloc, parts: vector(form));
     end;
   else
-    make(<body-parse>, parts: as(<simple-object-vector>, parts));
+    make(<body-parse>, source-location: srcloc,
+	 parts: as(<simple-object-vector>, parts));
   end;
 end method make-body;
 
@@ -94,25 +96,82 @@ define method first-word-in (fragment :: <token-fragment>)
 end method first-word-in;
 
 
+// binary operand series
+//
+// Binop-series are used to represent the pending binary operations that we
+// haven't be able to convert into function calls yet because of precedence
+// rules.
+// 
+
 // <binop-series> -- internal to the parser.
 //
-// Used to represent the pending binary operations that we haven't be able
-// to convert into function calls yet because of precedence rules.
+// Both the abstract class for binop-series of arbitrary length and the
+// concrete (direct) class for binop-series that are just one long.  Kinda
+// sleezy, but I don't feel like defining a <binop-series-leaf> just to
+// reduce the sleeze.
 // 
 define class <binop-series> (<object>)
-  slot binop-series-operand-stack :: <list> = #();
-  slot binop-series-operator-stack :: <list> = #();
+  //
+  // The operand, as an expression parse.
+  slot binop-series-operand :: <expression-parse>,
+    required-init-keyword: operand:;
+  //
+  // That operand's source location.  Not the same as operand.source-location,
+  // because the source-location slot holds a minimized source location,
+  // while this is the full compound location in all its glory.  We need this
+  // so we can use source-location-spanning to compute the source location
+  // for function calls.
+  slot binop-series-operand-srcloc :: <source-location>,
+    required-init-keyword: operand-srcloc:;
 end class <binop-series>;
 
 define sealed domain make (singleton(<binop-series>));
 define sealed domain initialize (<binop-series>);
 
-define method initialize
-    (series :: <binop-series>, #next next-method,
-     #key initial-operand :: <expression-parse>)
-    => ();
-  series.binop-series-operand-stack := list(initial-operand);
-end method initialize;
+// <binop-series-stack> -- internal to the parser.
+//
+// An additional operator and operand tacked onto the stuff to our left.
+// 
+define class <binop-series-stack> (<binop-series>)
+  //
+  // The stuff to our left.
+  slot binop-series-to-left :: <binop-series>,
+    required-init-keyword: to-left:;
+  //
+  // The operator combining the stuff to our left with this operand (inherited
+  // from <binop-series>).
+  slot binop-series-operator :: <operator-token>,
+    required-init-keyword: operator:;
+end class <binop-series-stack>;
+
+define sealed domain make (singleton(<binop-series-stack>));
+
+// reduce-binop-series -- internal to the parser.
+//
+// Reduce the remaining operations into function calls and return the
+// final expression.
+// 
+define generic reduce-binop-series
+    (series :: <binop-series>) => res :: <expression-parse>;
+
+// reduce-binop-series{<binop-series>}
+//
+// Just return the operand, because it is reduced as far as it can go.
+// 
+define method reduce-binop-series
+    (series :: <binop-series>) => res :: <expression-parse>;
+  series.binop-series-operand;
+end method reduce-binop-series;
+
+// reduce-binop-series{<binop-series-stack>}
+//
+// Use reduce-once to peal off one layer and try again.  Eventually we will
+// end up in the other method, and hence ground out.
+// 
+define method reduce-binop-series
+    (series :: <binop-series-stack>) => res :: <expression-parse>;
+  reduce-binop-series(reduce-once(series));
+end method reduce-binop-series;
 
 // add-binop -- internal to the parser.
 //
@@ -121,71 +180,83 @@ end method initialize;
 // 
 define method add-binop
     (series :: <binop-series>, operator :: <operator-token>,
-     operand :: <expression-parse>)
+     operand :: <expression-parse>, operand-srcloc :: <source-location>)
     => series :: <binop-series>;
-  let precedence = operator.operator-precedence;
-  local
-    method repeat (operator-stack :: <list>, operand-stack :: <list>)
-	=> (operator-stack :: <list>, operand-stack :: <list>);
-      if (operator-stack.empty?)
-	values(operator-stack, operand-stack);
-      else
-	let prev-operator = operator-stack.head;
-	if (select (operator.operator-associativity)
-	      #"left" =>
-		prev-operator.operator-precedence >= precedence;
-	      #"right" =>
-		prev-operator.operator-precedence > precedence;
-	    end select)
-	  repeat(operator-stack.tail,
-		 pair(make-binary-function-call(operand-stack.tail.head,
-						prev-operator,
-						operand-stack.head),
-		      operand-stack.tail.tail));
-	else
-	  values(operator-stack, operand-stack);
-	end if;
-      end if;
-    end method repeat;
-  let (operator-stack, operand-stack)
-    = repeat(series.binop-series-operator-stack,
-	     series.binop-series-operand-stack);
-  series.binop-series-operator-stack := pair(operator, operator-stack);
-  series.binop-series-operand-stack := pair(operand, operand-stack);
-  series;
+  make(<binop-series-stack>,
+       to-left: reduce-some(series, operator.operator-precedence,
+			    operator.operator-associativity),
+       operator: operator, operand: operand,
+       operand-srcloc: operand-srcloc);
 end method add-binop;
-
-// reduce-binop-series -- internal to the parser.
+       
+// reduce-some -- internal this page
 //
-// Reduce the remaining operations into function calls and return the
-// final expression.
+// Reduce as much of the series as possible given that it is followed by an
+// operator with the given precedence and associativity.
 // 
-define method reduce-binop-series
-    (series :: <binop-series>) => res :: <expression-parse>;
-  local
-    method repeat (operator-stack :: <list>, operand-stack :: <list>)
-	=> res :: <expression-parse>;
-      if (operator-stack.empty?)
-	operand-stack.head;
-      else
-	repeat(operator-stack.tail,
-	       pair(make-binary-function-call(operand-stack.tail.head,
-					      operator-stack.head,
-					      operand-stack.head),
-		    operand-stack.tail.tail));
-      end if;
-    end method repeat;
-  repeat(series.binop-series-operator-stack,
-	 series.binop-series-operand-stack);
-end method reduce-binop-series;
+define generic reduce-some
+    (series :: <binop-series>, precedence :: <integer>,
+     associativity :: one-of(#"left", #"right"))
+    => res :: <binop-series>;
+
+// reduce-some{<binop-series>}
+//
+// We are at the end, so we can't reduce it any further.
+// 
+define method reduce-some
+    (series :: <binop-series>, precedence :: <integer>,
+     associativity :: one-of(#"left", #"right"))
+    => res :: <binop-series>;
+  series;
+end method reduce-some;
+
+// reduce-some{<binop-series-stack>}
+//
+// Compare the operator on the top of the stack with precedence.  If the
+// previous operator has a higher precedence (i.e. binds tighter), then
+// reduce it and try again.  Otherwise, return the series as is.
+// 
+define method reduce-some
+    (series :: <binop-series-stack>, precedence :: <integer>,
+     associativity :: one-of(#"left", #"right"))
+    => res :: <binop-series>;
+  let prev-precedence = series.binop-series-operator.operator-precedence;
+  if (select (associativity)
+	#"left" => prev-precedence >= precedence;
+	#"right" => prev-precedence > precedence;
+      end select)
+    reduce-some(reduce-once(series), precedence, associativity);
+  else
+    series;
+  end if;
+end method reduce-some;
+
+// reduce-once -- internal to this page.
+//
+// Pop a layer off the stack replacing the exposed second layer operand
+// with the top operator applied to the second and top operands.
+// 
+define method reduce-once (series :: <binop-series-stack>)
+    => res :: <binop-series>;
+  let to-left = series.binop-series-to-left;
+  let srcloc = source-location-spanning(to-left.binop-series-operand-srcloc,
+					series.binop-series-operand-srcloc);
+  to-left.binop-series-operand
+    := make-binary-function-call(srcloc,
+				 to-left.binop-series-operand,
+				 series.binop-series-operator,
+				 series.binop-series-operand);
+  to-left.binop-series-operand-srcloc := srcloc;
+  to-left;
+end method reduce-once;
 
 // make-binary-function-call -- internal.
 //
 // Make a function call out of the operator and the two arguments.
 // 
 define method make-binary-function-call
-    (left :: <expression-parse>, operator :: <operator-token>,
-     right :: <expression-parse>)
+    (call-srcloc :: <source-location>, left :: <expression-parse>, 
+     operator :: <operator-token>, right :: <expression-parse>)
     => res :: <expression-parse>;
   //
   // First, check to see if we are expanding into a function-macro call or
@@ -207,8 +278,7 @@ define method make-binary-function-call
     let comma-frag = make(<token-fragment>, token: comma-token);
     let right-frag = make-parsed-fragment(right);
     make(<function-macro-call-parse>,
-	 source-location: operator.source-location,
-	 word: id,
+	 source-location: call-srcloc, word: id,
 	 fragment: append-fragments!(append-fragments!(left-frag, comma-frag),
 				     right-frag));
   else
@@ -225,7 +295,7 @@ define method make-binary-function-call
 		  module: module,
 		  uniquifier: operator.token-uniquifier);
     make(<funcall-parse>,
-	 source-location: operator.source-location,
+	 source-location: call-srcloc,
 	 function: make(<varref-parse>, id: id),
 	 arguments: vector(left, right));
   end if;
