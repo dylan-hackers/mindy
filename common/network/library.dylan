@@ -39,6 +39,22 @@ define module network-internal
     $POLLOUT,
     poll,
 
+    getaddrinfo,
+    freeaddrinfo,
+    gai-strerror,
+    <addrinfo>,
+    get-ai-flags,
+    get-ai-family,
+    get-ai-socktype,
+    get-ai-protocol,
+    get-ai-addrlen,
+    get-ai-addr,
+    get-ai-canonname,
+    get-ai-next,
+
+    $AF-INET,
+    $AF-INET6,
+
     get-p-proto,
     get-sa-data,
     get-sin-family,

@@ -10,6 +10,15 @@ define interface
     superclasses: {<sockaddr>};
   struct "struct pollfd" => <pollfd>,
     superclasses: {<c-vector>};
+  function "getaddrinfo",
+    equate-argument: {1 => <c-string>},
+    map-argument: {1 => <byte-string>},
+    equate-argument: {2 => <c-string>},
+    map-argument: {2 => <byte-string>},
+    output-argument: 4;
+  function "gai_strerror",
+    equate-result: <c-string>,
+    map-result: <byte-string>;
   function "gethostbyname",
     equate-argument: {1 => <c-string>},
     map-argument: {1 => <byte-string>};

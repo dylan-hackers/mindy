@@ -10,6 +10,8 @@ end library network-test;
 define module network-test
   use common-dylan;
   use format-out;
+  use format;
+  use print;
   use streams;
   use standard-io;
   use network-internal;
