@@ -137,20 +137,6 @@ define abstract primary class <token> (<object>)
   slot position, init-value: #f, init-keyword: #"position";
 end;
 
-#if (foo)
-define macro token-definer
-  { define token ?:name :: ?super:expression = ?value:expression }
-    => { begin
-	   define class ?name (?super)
-	     inherited slot token-id = ?value;
-	   end class ?name;
-       }
-  supers:
-    { } => { }
-    { ?:expression, ... } => { ?expression, ... }
-end macro;
-#endif
-
 //----------------------------------------------------------------------
 // General classes of tokens.
 //----------------------------------------------------------------------
@@ -173,7 +159,15 @@ define class <type-specifier-token> (<reserved-word-token>) end class;
 // Specific token types
 //----------------------------------------------------------------------
 
-#if (foo)
+#if (~mindy)
+define macro token-definer
+  { define token ?:name :: ?super:expression = ?value:expression }
+    => { define class ?name (?super)
+	   inherited slot token-id = ?value;
+	 end class ?name;
+       }
+end macro;
+
 // Magic tokens
 define token <eof-token> :: <simple-token> = 0;
 define token <error-token> :: <simple-token> = 1;

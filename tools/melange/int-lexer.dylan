@@ -128,6 +128,79 @@ define abstract class <name-token> (<token>) end class;
 define abstract class <literal-token> (<token>) end class;
 define abstract class <boolean-token> (<literal-token>) end class;
 
+#if (~mindy)
+define macro token-definer
+  { define token ?:name :: ?super:expression = ?value:expression }
+    => { define class ?name (?super)
+	   inherited slot token-id = ?value;
+	 end class ?name;
+       }
+end macro;
+
+define token <eof-token> :: <simple-token> = 0;
+define token <error-token> :: <simple-token> = 1;
+
+define token <integer-token> :: <literal-token> = 2;
+define token <character-token> :: <literal-token> = 3;
+define token <string-literal-token> :: <literal-token> = 4;
+define token <symbol-literal-token> :: <literal-token> = 5;
+define token <true-token> :: <boolean-token> = 6;
+define token <false-token> :: <boolean-token> = 7;
+
+define token <identifier-token> :: <name-token> = 8;
+
+define token <define-token> :: <reserved-word-token> = 9;
+define token <interface-token> :: <reserved-word-token> = 10;
+define token <end-token> :: <reserved-word-token> = 11;
+define token <include-token> :: <reserved-word-token> = 12;
+define token <object-file-token> :: <reserved-word-token> = 13;
+define token <mindy-inc-token> :: <reserved-word-token> = 14;
+define token <define-macro-token> :: <reserved-word-token> = 15;
+define token <undefine-token> :: <reserved-word-token> = 16;
+define token <name-mapper-token> :: <reserved-word-token> = 17;
+define token <import-token> :: <reserved-word-token> = 18;
+define token <prefix-token> :: <reserved-word-token> = 19;
+define token <exclude-token> :: <reserved-word-token> = 20;
+define token <exclude-file-token> :: <reserved-word-token> = 21;
+define token <rename-token> :: <reserved-word-token> = 22;
+define token <mapping-token> :: <reserved-word-token> = 23;
+define token <equate-token> :: <reserved-word-token> = 24;
+define token <superclass-token> :: <reserved-word-token> = 25;
+define token <all-token> :: <reserved-word-token> = 26;
+define token <none-token> :: <reserved-word-token> = 27;
+define token <all-recursive-token> :: <reserved-word-token> = 28;
+define token <function-token> :: <reserved-word-token> = 29;
+define token <map-result-token> :: <reserved-word-token> = 30;
+define token <equate-result-token> :: <reserved-word-token> = 31;
+define token <ignore-result-token> :: <reserved-word-token> = 32;
+define token <map-argument-token> :: <reserved-word-token> = 33;
+define token <equate-argument-token> :: <reserved-word-token> = 34;
+define token <input-argument-token> :: <reserved-word-token> = 35;
+define token <output-argument-token> :: <reserved-word-token> = 36;
+define token <input-output-argument-token> :: <reserved-word-token> = 37;
+define token <struct-token> :: <reserved-word-token> = 38;
+define token <union-token> :: <reserved-word-token> = 39;
+define token <pointer-token> :: <reserved-word-token> = 40;
+define token <constant-token> :: <reserved-word-token> = 41;
+define token <variable-token> :: <reserved-word-token> = 42;
+define token <getter-token> :: <reserved-word-token> = 43;
+define token <setter-token> :: <reserved-word-token> = 44;
+define token <read-only-token> :: <reserved-word-token> = 45;
+define token <seal-token> :: <reserved-word-token> = 46;
+define token <seal-functions-token> :: <reserved-word-token> = 47;
+define token <sealed-token> :: <reserved-word-token> = 48;
+define token <open-token> :: <reserved-word-token> = 49;
+define token <inline-token> :: <reserved-word-token> = 50;
+define token <value-token> :: <reserved-word-token> = 51;
+
+// A whole bunch of punctuation
+
+define token <semicolon-token> :: <punctuation-token> = 52;
+define token <comma-token> :: <punctuation-token> = 53;
+define token <lbrace-token> :: <punctuation-token> = 54;
+define token <rbrace-token> :: <punctuation-token> = 55;
+define token <arrow-token> :: <punctuation-token> = 56;
+#else
 define class <eof-token> (<simple-token>) 
   inherited slot token-id = 0;
 end class;
@@ -305,6 +378,7 @@ end class;
 define class <arrow-token> (<punctuation-token>) 
   inherited slot token-id = 56;
 end class;
+#endif
 
 define sealed generic string-value (token :: <token>) => (result :: <string>);
 define sealed generic value (token :: <token>) => (result :: <object>);
