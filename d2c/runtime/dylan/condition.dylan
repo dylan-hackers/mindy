@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.6 1995/12/07 00:26:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.7 1995/12/15 05:32:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -21,12 +21,12 @@ end class <serious-condition>;
 define open abstract class <error> (<serious-condition>)
 end class <error>;
 
-// <simple-condition> -- internal
+// <format-string-condition> -- exported from Extensions
 //
 // This class mixes in the format string and arguments used by the various
 // simple-mumble conditions.
 // 
-define abstract class <simple-condition> (<condition>)
+define abstract class <format-string-condition> (<condition>)
 
   // The format string.  Exported from Dylan.
   constant slot condition-format-string :: <string>,
@@ -36,11 +36,11 @@ define abstract class <simple-condition> (<condition>)
   constant slot condition-format-arguments :: <sequence>,
     init-keyword: format-arguments:,
     init-value: #();
-end class <simple-condition>;
+end class <format-string-condition>;
 
 // <simple-error> -- exported from Dylan
 // 
-define class <simple-error> (<error>, <simple-condition>)
+define class <simple-error> (<error>, <format-string-condition>)
 end class <simple-error>;
 
 seal generic make(singleton(<simple-error>));
@@ -75,7 +75,7 @@ end class <warning>;
 
 // <simple-warning> -- exported from Dylan
 // 
-define class <simple-warning> (<warning>, <simple-condition>)
+define class <simple-warning> (<warning>, <format-string-condition>)
 end class <simple-warning>;
 
 seal generic make(singleton(<simple-warning>));
@@ -88,7 +88,7 @@ end class <restart>;
 
 // <simple-restart> -- exported from Dylan
 //
-define class <simple-restart> (<restart>, <simple-condition>)
+define class <simple-restart> (<restart>, <format-string-condition>)
 end class <simple-restart>;
 
 seal generic make(singleton(<simple-restart>));
@@ -155,12 +155,13 @@ define method report-condition (condition :: <condition>, stream) => ();
   condition-format(stream, "%=", condition);
 end method report-condition;
 
-// report-condition(<simple-condition>) -- exported gf method.
+// report-condition(<format-string-condition>) -- exported gf method.
 //
 // All simple conditions report the same: we just pass the format string
 // and arguments to format.
 // 
-define sealed method report-condition (condition :: <simple-condition>, stream)
+define sealed method report-condition
+    (condition :: <format-string-condition>, stream)
     => ();
   apply(condition-format, stream,
 	condition.condition-format-string,
