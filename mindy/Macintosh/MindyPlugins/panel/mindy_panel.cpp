@@ -370,11 +370,10 @@ static void ItemHit(PanelParameterBlock *pb)
 
 static void Validate(Handle original, Handle current, Boolean *recompile, Boolean *relink, Boolean *reset)
 {
-#pragma unused(original, current)
 	MindySettings& origSettings = **(MindySettingsHandle) original;
 	MindySettings& currentSettings = **(MindySettingsHandle) current;
 	
-	*recompile	= currentSettings.mode != origSettings.mode;
+	*recompile	= !EqualString(origSettings.library, currentSettings.library, true, true);
 	*relink		= *recompile && hasLinkerOutput(currentSettings.mode);
 	*reset		= false;
 }
