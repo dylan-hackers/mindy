@@ -196,6 +196,7 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
       let result-stop :: <integer> = result-start + available;
       while (#t)
 	if (result-stop > n)
+	  // Were almost done. Copy over the last chunk, then break out.
 	  let copy-size = n - result-start;
 	  copy-sequence!(result, result-start,
 			 buf, buf-start,
@@ -203,16 +204,23 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
 	  buf.buffer-next := buf.buffer-next + copy-size;
 	  exit-loop(result);
 	else
+	  // We'll need to continue. Copy a buffer load.
 	  copy-sequence!(result, result-start, buf, buf-start, available);
 	  buf.buffer-next := buf.buffer-end;
 	end if;
 	if (buf := next-input-buffer(stream))
+	  // There's still more input to be had. Update out indices 
+	  // and iterate.
 	  available := buf.buffer-end - buf.buffer-next;
 	  result-start := result-stop;
 	  result-stop := result-start + available;
 	  buf-start := buf.buffer-next;
 	else
-	  if (on-end-of-stream == $not-supplied)
+	  // We hit the end of the stream. 
+	  // Check to see if we got everything we needed, else bail.
+	  if (n == result.size)
+	    exit-loop(result);
+	  elseif (on-end-of-stream == $not-supplied)
 	    error(make(<incomplete-read-error>,
 		       stream: stream,
 		       sequence: result,
