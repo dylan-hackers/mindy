@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.1 1996/03/17 01:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.2 1996/03/20 19:34:19 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -534,10 +534,11 @@ define method parse
   block (return)
     let state-stack = make(<simple-object-vector>, size: $initial-stack-size);
     let symbol-stack = make(<simple-object-vector>, size: $initial-stack-size);
+    let srcloc-stack = make(<simple-object-vector>, size: $initial-stack-size);
 
     state-stack[0] := start-state;
     let top :: <integer> = 1;
-    let lookahead = get-token(tokenizer);
+    let (lookahead, lookahead-srcloc) = get-token(tokenizer);
 
     unless (lookahead.token-kind == $eof-token)
       let actions :: <simple-object-vector> = $action-table[start-state];
@@ -570,7 +571,7 @@ define method parse
 	  if (debug?)
 	    dformat("  accepting.\n");
 	  end if;
-	  unget-token(tokenizer, lookahead);
+	  unget-token(tokenizer, lookahead, lookahead-srcloc);
 	  if (top ~== 2)
 	    error("stack didn't get reduced all the way?");
 	  end if;
@@ -580,14 +581,18 @@ define method parse
 	  if (top == state-stack.size)
 	    state-stack := grow(state-stack);
 	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
 	  end if;
 	  if (debug?)
 	    dformat("  shifting to state %d.\n", action-datum);
 	  end if;
 	  state-stack[top] := action-datum;
 	  symbol-stack[top] := lookahead;
+	  srcloc-stack[top] := lookahead-srcloc;
 	  top := top + 1;
-	  lookahead := get-token(tokenizer);
+	  let (new-lookahead, new-srcloc) = get-token(tokenizer);
+	  lookahead := new-lookahead;
+	  lookahead-srcloc := new-srcloc;
 
 	  unless (lookahead.token-kind == $eof-token)
 	    let actions :: <simple-object-vector>
@@ -611,15 +616,36 @@ define method parse
 		    action-datum, number-pops);
 	  end if;
 	  let old-top = top - number-pops;
+	  let extra-args = make(<simple-object-vector>, size: number-pops * 2);
+	  for (index from 0 below number-pops)
+	    extra-args[index * 2] := symbol-stack[old-top + index];
+	    extra-args[index * 2 + 1] := srcloc-stack[old-top + index];
+	  end for;
+	  let new-srcloc
+	    = if (zero?(number-pops))
+		let left = srcloc-stack[top - 1];
+		if (left)
+		  source-location-between(left, lookahead-srcloc);
+		else
+		  source-location-before(lookahead-srcloc);
+		end if;
+	      elseif (number-pops == 1)
+		srcloc-stack[old-top];
+	      else
+		source-location-spanning
+		  (srcloc-stack[old-top], srcloc-stack[top - 1]);
+	      end if;
 	  let (new-state :: <integer>, new-symbol)
-	    = apply(semantic-action, state-stack[old-top - 1],
-		    copy-sequence(symbol-stack, start: old-top, end: top));
+	    = apply(semantic-action, state-stack[old-top - 1], new-srcloc,
+		    extra-args);
 	  if (old-top == state-stack.size)
 	    state-stack := grow(state-stack);
 	    symbol-stack := grow(symbol-stack);
+	    srcloc-stack := grow(srcloc-stack);
 	  end if;
 	  state-stack[old-top] := new-state;
 	  symbol-stack[old-top] := new-symbol;
+	  srcloc-stack[old-top] := new-srcloc;
 	  top := old-top + 1;
 
       end select;
