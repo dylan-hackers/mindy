@@ -268,9 +268,16 @@ define class <signed-token> (<type-specifier-token>) end class;
 define class <unsigned-token> (<type-specifier-token>) end class;
 define class <float-token> (<type-specifier-token>) end class;
 define class <double-token> (<type-specifier-token>) end class;
-define class <const-token> (<reserved-word-token>) end class;
-define class <volatile-token> (<reserved-word-token>) end class;
+
+// "const" and "volatile" will be preprocessed away by the cpp code.  They
+// were being used in too many different odd places by various different
+// compilers.  
+//
+// define class <const-token> (<reserved-word-token>) end class;
+// define class <volatile-token> (<reserved-word-token>) end class;
+
 define class <void-token> (<type-specifier-token>) end class;
+define class <inline-token> (<reserved-word-token>) end class;
 define class <extern-token> (<reserved-word-token>) end class;
 define class <static-token> (<reserved-word-token>) end class;
 define class <auto-token> (<reserved-word-token>) end class;
@@ -292,42 +299,46 @@ define class <or-assign-token> (<reserved-word-token>) end class;
 
 // A whole bunch of puctuation
 
-define class <elipsis-token> (<punctuation-token>) end class;
-define class <sizeof-token> (<punctuation-token>) end class;
-define class <dec-op-token> (<punctuation-token>) end class;
-define class <inc-op-token> (<punctuation-token>) end class;
-define class <ptr-op-token> (<punctuation-token>) end class;
-define class <semicolon-token> (<punctuation-token>) end class;
-define class <comma-token> (<punctuation-token>) end class;
-define class <dot-token> (<punctuation-token>) end class;
-define class <lparen-token> (<punctuation-token>) end class;
-define class <rparen-token> (<punctuation-token>) end class;
-define class <lbracket-token> (<punctuation-token>) end class;
-define class <rbracket-token> (<punctuation-token>) end class;
-define class <ampersand-token> (<punctuation-token>) end class;
-define class <star-token> (<punctuation-token>) end class;
-define class <carat-token> (<punctuation-token>) end class;
-define class <bar-token> (<punctuation-token>) end class;
-define class <percent-token> (<punctuation-token>) end class;
-define class <slash-token> (<punctuation-token>) end class;
-define class <plus-token> (<punctuation-token>) end class;
-define class <minus-token> (<punctuation-token>) end class;
-define class <tilde-token> (<punctuation-token>) end class;
-define class <bang-token> (<punctuation-token>) end class;
-define class <lt-token> (<punctuation-token>) end class;
-define class <gt-token> (<punctuation-token>) end class;
-define class <question-token> (<punctuation-token>) end class;
-define class <colon-token> (<punctuation-token>) end class;
-define class <eq-op-token> (<punctuation-token>) end class;
-define class <le-op-token> (<punctuation-token>) end class;
-define class <ge-op-token> (<punctuation-token>) end class;
-define class <ne-op-token> (<punctuation-token>) end class;
-define class <and-op-token> (<punctuation-token>) end class;
-define class <or-op-token> (<punctuation-token>) end class;
-define class <pound-pound-token> (<punctuation-token>) end class;
-define class <left-op-token> (<punctuation-token>) end class;
-define class <right-op-token> (<punctuation-token>) end class;
-define class <assign-token> (<punctuation-token>) end class;
+// <nc-token> is a punctuation token which isn't a curly brace.  We need this
+// to quickly skip over code declarations that we can't handle.
+define class <nc-punctuation-token> (<punctuation-token>) end class;
+
+define class <elipsis-token> (<nc-punctuation-token>) end class;
+define class <sizeof-token> (<nc-punctuation-token>) end class;
+define class <dec-op-token> (<nc-punctuation-token>) end class;
+define class <inc-op-token> (<nc-punctuation-token>) end class;
+define class <ptr-op-token> (<nc-punctuation-token>) end class;
+define class <semicolon-token> (<nc-punctuation-token>) end class;
+define class <comma-token> (<nc-punctuation-token>) end class;
+define class <dot-token> (<nc-punctuation-token>) end class;
+define class <lparen-token> (<nc-punctuation-token>) end class;
+define class <rparen-token> (<nc-punctuation-token>) end class;
+define class <lbracket-token> (<nc-punctuation-token>) end class;
+define class <rbracket-token> (<nc-punctuation-token>) end class;
+define class <ampersand-token> (<nc-punctuation-token>) end class;
+define class <star-token> (<nc-punctuation-token>) end class;
+define class <carat-token> (<nc-punctuation-token>) end class;
+define class <bar-token> (<nc-punctuation-token>) end class;
+define class <percent-token> (<nc-punctuation-token>) end class;
+define class <slash-token> (<nc-punctuation-token>) end class;
+define class <plus-token> (<nc-punctuation-token>) end class;
+define class <minus-token> (<nc-punctuation-token>) end class;
+define class <tilde-token> (<nc-punctuation-token>) end class;
+define class <bang-token> (<nc-punctuation-token>) end class;
+define class <lt-token> (<nc-punctuation-token>) end class;
+define class <gt-token> (<nc-punctuation-token>) end class;
+define class <question-token> (<nc-punctuation-token>) end class;
+define class <colon-token> (<nc-punctuation-token>) end class;
+define class <eq-op-token> (<nc-punctuation-token>) end class;
+define class <le-op-token> (<nc-punctuation-token>) end class;
+define class <ge-op-token> (<nc-punctuation-token>) end class;
+define class <ne-op-token> (<nc-punctuation-token>) end class;
+define class <and-op-token> (<nc-punctuation-token>) end class;
+define class <or-op-token> (<nc-punctuation-token>) end class;
+define class <pound-pound-token> (<nc-punctuation-token>) end class;
+define class <left-op-token> (<nc-punctuation-token>) end class;
+define class <right-op-token> (<nc-punctuation-token>) end class;
+define class <assign-token> (<nc-punctuation-token>) end class;
 define class <lcurly-token> (<punctuation-token>) end class;
 define class <rcurly-token> (<punctuation-token>) end class;
 
@@ -542,12 +553,13 @@ end;
 // table.
 //
 define method initialize (value :: <tokenizer>,
-			  #key source, parent, typedefs-from, name,
+			  #key source :: type-union(<string>, <stream>),
+			       parent, typedefs-from, name,
 			       defines :: false-or(<table>))
   // We just read the entire file into a string for the tokenizer to use.
   // This simplifies things since we can use regexp searches to find things,
   // even across line boundaries.
-  let source-stream
+  let source-stream :: <stream>
     = if (instance?(source, <string>))
 	let source = as(<byte-string>, source);	// make(<file-stream>) is picky
 	value.file-name := name | source;
@@ -567,6 +579,7 @@ define method initialize (value :: <tokenizer>,
     #t;
   end block;
   value.contents := apply(concatenate-as, <long-byte-string>, components);
+  close(source-stream);
 
   if (parent)
     value.typedefs := (typedefs-from | parent).typedefs;
@@ -684,9 +697,10 @@ define constant reserved-words
 	   "unsigned", <unsigned-token>,
 	   "float", <float-token>,
 	   "double", <double-token>,
-	   "const", <const-token>,
-	   "volatile", <volatile-token>,
+//	   "const", <const-token>,
+//	   "volatile", <volatile-token>,
 	   "void", <void-token>,
+	   "__inline", <inline-token>,
 	   "extern", <extern-token>,
 	   "static", <static-token>,
 	   "auto", <auto-token>,
@@ -1075,11 +1089,13 @@ define sealed domain make(singleton(<float-token>));
 // <double-token> -- subclass of <type-specifier-token>
 define sealed domain make(singleton(<double-token>));
 // <const-token> -- subclass of <reserved-word-token>
-define sealed domain make(singleton(<const-token>));
+// define sealed domain make(singleton(<const-token>));
 // <volatile-token> -- subclass of <reserved-word-token>
-define sealed domain make(singleton(<volatile-token>));
+// define sealed domain make(singleton(<volatile-token>));
 // <void-token> -- subclass of <type-specifier-token>
 define sealed domain make(singleton(<void-token>));
+// <inline-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<inline-token>));
 // <extern-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<extern-token>));
 // <static-token> -- subclass of <reserved-word-token>
