@@ -2,7 +2,7 @@ module:     Dylan-User
 author:     Russell Schaaf (rsbe@andrew.cmu.edu)
 synopsis:   This file defines the Gwydion matrix operations library.
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/library.dylan,v 1.1 1995/11/06 23:50:30 rsbe Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/library.dylan,v 1.2 1996/05/05 21:04:10 rsbe Exp $
 
 //======================================================================
 //
@@ -36,21 +36,24 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/library.dylan,v 
 // Matrix (Library) -- public
 // 
 define library Matrix
-   use Dylan;
-   export Matrix;
+  use Dylan;
+  export Matrix;
 end library Matrix;
 
 
 // Matrix (Module) -- public
 //
 define module Matrix
-   use Dylan;
-   export
-      <matrix>,
-      identity-matrix,
-      augment-matrix,
-      gauss-jordan,
-      inverse,
-      det,
-      transpose;
+  use Dylan;
+  // needed for <ratio>s and operations on them
+  use Extensions;
+  export
+    <matrix>,
+    matrix,
+    identity-matrix,
+    augment-matrix,
+    gauss-jordan,
+    inverse,
+    det,
+    transpose;
 end module Matrix;
