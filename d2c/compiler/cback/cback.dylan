@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.40 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.41 1995/05/12 12:32:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -885,7 +885,7 @@ define method emit-assignment
 	values(#f, call.depends-on.dependent-next);
       end;
   let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
-  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+  for (arg-dep = arguments then arg-dep.dependent-next,
        count from 0,
        while: arg-dep)
     format(setup-stream, "%s[%d] = %s;\n", args, count,
@@ -1238,10 +1238,12 @@ define method deliver-cluster
     let stream = output-info.output-info-guts-stream;
     if (instance?(defines.var-info, <values-cluster-info>))
       let (dst-start, dst-end) = produce-cluster(defines, output-info);
-      unless (src-start = dst-start)
+      if (src-start ~= dst-start)
 	format(stream, "%s = %s;\n", dst-end, dst-start);
 	format(stream, "while (%s < %s) {\n", src-start, src-end);
 	format(stream, "    *%s++ = *%s++;\n", dst-end, src-start);
+      elseif (src-end ~= dst-end)
+	format(stream, "%s = %s;\n", dst-end, src-end);
       end;
     else
       let count = for (var = defines then var.definer-next,
@@ -1348,6 +1350,21 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
+  (#"make-rest-arg",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let (args, nfixed, nargs)
+       = extract-operands(operation, output-info,
+			  *ptr-rep*, *long-rep*, *long-rep*);
+     let expr = format-to-string("make_rest_arg(%s + %s, %s - %s)",
+				 args, nfixed, nargs, nfixed);
+     deliver-results(defines, vector(pair(expr, $heap-rep)), #t,
+		     output-info);
+   end);
+
+define-primitive-emitter
   (#"pop-args",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1390,6 +1407,44 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
+  (#"merge-clusters",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let cluster1 = operation.depends-on.source-exp;
+     let cluster2 = operation.depends-on.dependent-next.source-exp;
+     let (cluster2-bottom, cluster2-top)
+       = consume-cluster(cluster2, output-info);
+     let (cluster1-bottom, cluster1-top)
+       = consume-cluster(cluster1, output-info);
+     unless (cluster1-top = cluster2-bottom)
+       error("Merging two clusters that arn't adjacent?");
+     end;
+     let min-values
+       = cluster1.derived-type.min-values + cluster2.derived-type.min-values;
+     deliver-cluster(defines, cluster1-bottom, cluster2-top,
+		     make-values-ctype(make(<list>, size: min-values,
+					    fill: object-ctype()),
+				       object-ctype()),
+		     output-info);
+   end);
+
+define-primitive-emitter
+  (#"values-sequence",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let vec = extract-operands(operation, output-info, $heap-rep);
+     let (cur-sp, new-sp)
+       = cluster-names(output-info.output-info-cur-stack-depth);
+     format(output-info.output-info-guts-stream,
+	    "%s = values_sequence(%s);\n", new-sp, vec);
+     deliver-cluster(defines, cur-sp, new-sp, wild-ctype(), output-info);
+   end);
+
+define-primitive-emitter
   (#"values",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1402,6 +1457,30 @@ define-primitive-emitter
        add!(results, pair(expr, $general-rep));
      end;
      deliver-results(defines, results, #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"vector",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let stream = output-info.output-info-guts-stream;
+     let stack-top = cluster-names(output-info.output-info-cur-stack-depth);
+     for (arg-dep = operation.depends-on then arg-dep.dependent-next,
+	  count from 0,
+	  while: arg-dep)
+       format(stream, "%s[%d] = %s;\n", stack-top, count,
+	      ref-leaf($general-rep, arg-dep.source-exp, output-info));
+     finally
+       deliver-results
+	 (defines,
+	  vector(pair(format-to-string("make_rest_arg(%s, %s + %d)",
+				       stack-top, stack-top, count),
+		      $heap-rep)),
+	  #t,
+	  output-info);
+     end;
    end);
 
 define-primitive-emitter
