@@ -62,7 +62,6 @@ define module c-ffi
     null-pointer?, <C-void*>, <C-statically-typed-pointer>,
     \C-pointer-type-definer, pointer-value,
     pointer-value-setter, pointer-value-address; 
-    // element, element-setter, \=, \<,
 
 /*
   export
@@ -95,7 +94,6 @@ define module c-ffi
     \C-variable-definer, \C-address-definer,
 
     // Allocating and deallocating storage.
-    // make(subclass(<C-pointer>),...),
     destroy, \with-stack-structure;
 
 /*

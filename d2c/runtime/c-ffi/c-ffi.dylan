@@ -25,6 +25,7 @@ end designator-class <C-number>;
 //  are directly instantiable and map to themselves for import and export.
 
 define primary open abstract designator-class <C-pointer> (<C-value>)
+  options c-rep: #"ptr";
   // XXX - Why is this class open? It has two complete, mutually
   // exclusive subclasses which could be open.
   constant slot %pointer-address :: <raw-pointer>,
