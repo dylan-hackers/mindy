@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.27 1996/02/21 15:50:07 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.28 1996/03/04 10:51:57 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,7 +257,7 @@ defining-form (<define-token> modifiers-opt <class-token> <name-token>
 	       <left-paren-token> arguments-opt <right-paren-token>
 	       classopts-opt <end-token>)
   make(<define-class-parse>, modifiers: %2, name: %4, supers: %6, options: %8,
-       source-location: extract-source(%1));
+       source-location: extract-source(%4));
 %
 
 defining-form (<define-token> <constant-token> bindings)
@@ -278,7 +278,7 @@ defining-form (seal-generic)
 defining-form (<define-token> <library-token> <name-token> clauses-opt
 	       <end-token>)
   make(<define-library-parse>, name: %3, clauses: %4,
-       source-location: extract-source(%1));
+       source-location: extract-source(%3));
 %
 
 defining-form (<define-token> modifiers-opt <method-token> <name-token>
@@ -291,7 +291,7 @@ defining-form (<define-token> modifiers-opt <method-token> <name-token>
 defining-form (<define-token> <module-token> <name-token> clauses-opt
 	       <end-token>)
   make(<define-module-parse>, name: %3, clauses: %4,
-       source-location: extract-source(%1));
+       source-location: extract-source(%3));
 %
 
 defining-form (<define-token> modifiers-opt <define-bindings-word-token>
@@ -317,7 +317,7 @@ defining-form (<define-token> modifiers-opt <define-word-token> <name-token>
   end;
   make(<define-parse>, modifiers: %2, word: %3, name: %4,
        fragment: prepend-piece(make(<piece>, token: %4), %5),
-       source-location: extract-source(%1));
+       source-location: extract-source(%4));
 %
 
 defining-form (<define-token> modifiers-opt <define-word-token> 
@@ -328,14 +328,14 @@ defining-form (<define-token> modifiers-opt <define-word-token>
   end;
   make(<define-parse>, modifiers: %2, word: %3, name: %4,
        fragment: prepend-piece(make(<piece>, token: %4), %5),
-       source-location: extract-source(%1));
+       source-location: extract-source(%4));
 %
 
 defining-form (<define-token> modifiers-opt <define-word-token>
 	       <name-token> fragment-opt <end-token>)
   make(<define-parse>, modifiers: %2, word: %3, name: %4,
        fragment: prepend-piece(make(<piece>, token: %4), %5),
-       source-location: extract-source(%1));
+       source-location: extract-source(%4));
 %
 
 defining-form (macro-definition)
@@ -410,7 +410,7 @@ generic-function-definition (<name-token> generic-function-body
 seal-generic (<seal-token> <generic-token> <name-token>
 	      <left-paren-token> expressions-opt <right-paren-token>)
   make(<seal-generic-parse>, name: %3, type-exprs: %5,
-       source-location: extract-source(%1));
+       source-location: extract-source(%3));
 %
 
 :type clauses-opt <simple-object-vector>
