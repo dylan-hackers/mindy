@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.10 1994/04/10 15:46:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.11 1994/04/10 21:08:22 wlott Exp $
 *
 * This file does whatever.
 *
@@ -142,13 +142,14 @@ struct body *make_expr_body(struct expr *expr)
     return add_constituent(make_body(), make_expr_constituent(expr));
 }
 
-struct constituent *make_define_constant(struct bindings *bindings)
+struct constituent *make_define_constant(int line, struct bindings *bindings)
 {
     struct defconst_constituent *res
 	= malloc(sizeof(struct defconst_constituent));
 
     res->kind = constituent_DEFCONST;
     res->next = NULL;
+    res->line = line;
     res->bindings = bindings;
     res->tlf = NULL;
 
@@ -169,12 +170,13 @@ struct constituent *make_define_method(flags_t flags, struct method *method)
     return (struct constituent *)res;
 }
 
-struct constituent *make_define_variable(struct bindings *bindings)
+struct constituent *make_define_variable(int line, struct bindings *bindings)
 {
     struct defvar_constituent *res = malloc(sizeof(struct defvar_constituent));
 
     res->kind = constituent_DEFVAR;
     res->next = NULL;
+    res->line = line;
     res->bindings = bindings;
     res->tlf = NULL;
 
@@ -656,6 +658,7 @@ struct plist
     /* The keyword token has a trailing : */
     key->chars[key->length-1] = '\0';
 
+    prop->line = key->line;
     prop->keyword = symbol(key->chars);
     prop->expr = expr;
     prop->next = NULL;
@@ -1398,11 +1401,12 @@ struct class_guts *make_class_guts(void)
 }
 
 struct slot_spec
-    *make_slot_spec(flags_t flags, enum slot_allocation alloc, struct id *name,
-		    struct expr *type, struct plist *plist)
+    *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
+		    struct id *name, struct expr *type, struct plist *plist)
 {
     struct slot_spec *res = malloc(sizeof(struct slot_spec));
 
+    res->line = line;
     res->flags = flags;
     res->alloc = alloc;
     res->name = name;
