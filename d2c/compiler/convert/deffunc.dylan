@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.69 1996/05/29 23:08:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.70 1996/07/12 02:29:46 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -176,11 +176,11 @@ define method print-message
   for (type in tlf.sealed-domain-type-exprs,
        first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-type-expr(type, stream);
   end;
-  write(')', stream);
+  write-element(stream, ')');
 end;
 
 
@@ -225,25 +225,25 @@ define generic print-type-expr
 
 define method print-type-expr
     (expr :: <expression-parse>, stream :: <stream>) => ();
-  write("???", stream);
+  write(stream, "???");
 end method print-type-expr;
 
 define method print-type-expr
     (expr :: <varref-parse>, stream :: <stream>) => ();
-  write(as(<string>, expr.varref-id.token-symbol), stream);
+  write(stream, as(<string>, expr.varref-id.token-symbol));
 end method print-type-expr;
 
 define method print-type-expr
     (expr :: <funcall-parse>, stream :: <stream>) => ();
   print-type-expr(expr.funcall-function, stream);
-  write('(', stream);
+  write-element(stream, '(');
   for (arg in expr.funcall-arguments, first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end unless;
     print-type-expr(arg, stream);
   end for;
-  write(')', stream);
+  write-element(stream, ')');
 end method print-type-expr;
 
 define method print-type-expr
