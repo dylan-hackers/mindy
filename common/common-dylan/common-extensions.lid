@@ -3,6 +3,6 @@ unique-id-base: 5100
 unit-prefix: commonext
 
 common-extensions-exports.dylan
+c-support.dylan
 extensions.dylan
-extensions-c.dylan
 collections.dylan

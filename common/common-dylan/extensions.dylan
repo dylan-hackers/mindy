@@ -86,7 +86,7 @@ end;
 
 define function application-name () => (string :: <byte-string>)
   get-argc();
-  pointer-value(application-argv());
+  application-argv(0);
 end;
 
 define function application-filename () => (filename :: false-or(<string>))
@@ -99,7 +99,7 @@ define function application-arguments () => (string :: <simple-object-vector>)
   let argc = get-argc();
   let result = make(<simple-object-vector>, size: argc - 1);
   for (i from 1 below argc)
-    result[i - 1] := pointer-value(application-argv(), index: i);
+    result[i - 1] := application-argv(i);
   end for;
   result;
 end;
@@ -219,3 +219,15 @@ define macro when
 end macro;
 
 #endif
+
+
+//=========================================================================
+//  Subclass
+//=========================================================================
+//  XXX - GROSS HACK! d2c seems to have trouble with subclass for some
+//  reason--it won't find it when we re-export it. Apparently, you can't
+//  re-export inline functions or something stupid like that.
+
+define inline function subclass (type :: <type>) => (type :: <type>)
+  hackish-subclass(type);
+end function subclass;

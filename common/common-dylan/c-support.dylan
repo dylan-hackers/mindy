@@ -1,4 +1,4 @@
-module: common-extensions
+module: c-support
 
 #if (mindy)
 define constant anonymous-2 = find-c-pointer("application_argc");
@@ -31,14 +31,14 @@ define method content-size (value :: limited(<class>, subclass-of: <anonymous-1>
 end method content-size;
 
 define constant anonymous-3 = find-c-pointer("application_argv");
-define sealed method application-argv () => (result :: <anonymous-1>);
+define sealed method application-argv-internal () => (result :: <anonymous-1>);
   pointer-at(anonymous-3, offset: 0, class: <anonymous-1>);
-end method application-argv;
+end method application-argv-internal;
 
-define sealed method application-argv-setter (value :: <anonymous-1>) => (result :: <anonymous-1>);
+define sealed method application-argv-internal-setter (value :: <anonymous-1>) => (result :: <anonymous-1>);
   pointer-at(anonymous-3, offset: 0, class: <anonymous-1>) := value;
   value;
-end method application-argv-setter;
+end method application-argv-internal-setter;
 
 #else
 c-include(".//prototypes.h");
@@ -73,13 +73,19 @@ define method content-size (value :: subclass(<anonymous-1>)) => (result :: <int
   4;
 end method content-size;
 
-define sealed method application-argv () => (result :: <anonymous-1>);
+define sealed method application-argv-internal () => (result :: <anonymous-1>);
   as(<anonymous-1>, c-variable-ref(ptr: "&application_argv"));
-end method application-argv;
+end method application-argv-internal;
 
-define sealed method application-argv-setter (value :: <anonymous-1>) => (result :: <anonymous-1>);
+define sealed method application-argv-internal-setter (value :: <anonymous-1>) => (result :: <anonymous-1>);
   c-variable-ref(ptr: "&application_argv") := value;
   value;
-end method application-argv-setter;
+end method application-argv-internal-setter;
 
 #endif
+define function application-argv
+    (index :: <integer>)
+ => (string :: <byte-string>)
+  pointer-value(application-argv-internal(), index: index);
+end function application-argv;
+  

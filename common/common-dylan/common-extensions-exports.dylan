@@ -22,16 +22,26 @@ define library common-extensions
     machine-words;
 end library;
 
+define module c-support
+  use dylan;
+  use extensions;
+  use melange-support;
+
+  export
+    application-argc,
+    application-argv;
+end module c-support;
+
 define module common-extensions
   use dylan;
-  use melange-support;
   use extensions,
     rename: {$not-supplied => $unsupplied,
-	     on-exit => register-exit-application-function},
+	     on-exit => register-exit-application-function,
+	     subclass => hackish-subclass},
     export: {integer-length,
 	     false-or,
 	     one-of,
-	     subclass,
+	     //subclass,
 	     <format-string-condition>,
 	     $unsupplied,
 	     ignore,
@@ -43,6 +53,7 @@ define module common-extensions
 	     <stretchy-object-vector>};
   use %Hash-Tables,
     export: {remove-all-keys!};
+  use c-support;
 
   export
     /* Numerics */
@@ -76,7 +87,7 @@ define module common-extensions
     /* Types */
     //false-or,
     //one-of,
-    //subclass,
+    subclass,
 
     /* Ignoring */
     //ignore,
