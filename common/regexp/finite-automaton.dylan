@@ -4,7 +4,7 @@ synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/finite-automaton.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/finite-automaton.dylan,v 1.2 1998/11/11 02:36:45 housel Exp $
 
 //======================================================================
 //
@@ -245,13 +245,12 @@ define method my-test-function (set1 :: <list>, set2 :: <list>)
   size(union(set1, set2, test: \==)) = set1.size;
 end method my-test-function;
 
-define method my-hash-function (set :: <list>)
+define method my-hash-function (set :: <list>, initial-state :: <hash-state>)
   let id = 0;
-  let state = $permanent-hash-state;
+  let state = initial-state;
   for (elt in set)
-    let (elt-id, elt-state) = object-hash(elt);
-    let (new-id, new-state) = merge-hash-codes(id, state, elt-id, elt-state,
-					       ordered: #f);
+    let (elt-id, new-state) = object-hash(elt, state);
+    let new-id = merge-hash-ids(id, elt-id, ordered: #f);
     id := new-id;
     state := new-state;
   end for;

@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/interface.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/regular-expressions/interface.dylan,v 1.2 1998/11/11 02:36:46 housel Exp $
 
 //======================================================================
 //
@@ -105,12 +105,14 @@ define method table-protocol (table :: <regexp-cache>)
 	   key1.regexp-string == key2.regexp-string
 	     & key1.character-set-type == key2.character-set-type;
 	 end method,
-	 method (key :: <cache-key>) => (id :: <integer>, state); // hash()
-	   let (string-id, string-state) = object-hash(key.regexp-string);
+	 method (key :: <cache-key>, initial-state)
+	  => (id :: <integer>, state); // hash()
+	   let (string-id, string-state)
+	     = object-hash(key.regexp-string, initial-state);
 	   let (set-type-id, set-type-state) 
-	     = object-hash(key.character-set-type);
-	   merge-hash-codes(string-id, string-state, 
-			    set-type-id, set-type-state, ordered: #t);
+	     = object-hash(key.character-set-type, string-state);
+	   let id = merge-hash-ids(string-id, set-type-id, ordered: #t);
+	   values(id, set-type-state);
 	 end method);
 end method table-protocol;
 
