@@ -40,7 +40,7 @@ define method run-several-tests (test-name :: <string>,
   if (has-errors == #f)
     format("ok.\n");
   end if;
-  has-errors := temp-has-errors;
+  has-errors := temp-has-errors | has-errors;
 end method run-several-tests;
 
 define method run-test (input, expected-result, test-name :: <string>)
