@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.4 2000/01/24 04:56:46 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.5 2001/02/26 20:19:21 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -32,7 +32,7 @@ module: dylan-viscera
 define abstract class <function> (<object>)
   //
   // Some human readable ``name'' for this function.
-  slot function-name :: <byte-string>,
+  constant slot function-name :: <byte-string>,
     required-init-keyword: function-name:;
   //
   // The general entry point for this function.  The actual address of the
@@ -40,22 +40,22 @@ define abstract class <function> (<object>)
   slot general-entry :: <raw-pointer>,
     required-init-keyword: general-entry:;
   //
-  slot function-specializers :: <simple-object-vector>,
+  constant slot function-specializers :: <simple-object-vector>,
     required-init-keyword: specializers:;
   //
-  slot function-rest? :: <boolean>,
+  constant slot function-rest? :: <boolean>,
     required-init-keyword: rest?:;
   //
-  slot function-keywords :: type-union(<simple-object-vector>, <false>),
+  constant slot function-keywords :: type-union(<simple-object-vector>, <false>),
     required-init-keyword: keywords:;
   //
-  slot function-all-keys? :: <boolean>,
+  constant slot function-all-keys? :: <boolean>,
     required-init-keyword: all-keys?:;
   //
-  slot function-values :: <simple-object-vector>,
+  constant slot function-values :: <simple-object-vector>,
     required-init-keyword: values:;
   //
-  slot function-rest-value :: <type>,
+  constant slot function-rest-value :: <type>,
     required-init-keyword: rest-value:;
 end;
   
@@ -87,7 +87,7 @@ define class <callback-function> (<function>)
   // The C callback entry point for this method.
   slot callback-entry :: <raw-pointer>,
     required-init-keyword: callback-entry:;
-  slot callback-signature :: <byte-string>,
+  constant slot callback-signature :: <byte-string>,
     required-init-keyword: callback-signature:;
 end;
 
@@ -151,7 +151,7 @@ end;
 define class <method> (<function>)
   //
   // The generic-function entry point for this method.
-  slot generic-entry :: <raw-pointer>,
+  constant slot generic-entry :: <raw-pointer>,
     required-init-keyword: generic-entry:;
 end;
 
@@ -162,7 +162,7 @@ define sealed domain make(singleton(<method>));
 define class <dynamic-method> (<method>)
   //
   // The static method to call to do the actual work.
-  slot real-method :: <function>, required-init-keyword: real-method:;
+  constant slot real-method :: <function>, required-init-keyword: real-method:;
 end class <dynamic-method>;
 
 define sealed domain make (singleton(<dynamic-method>));
@@ -172,7 +172,7 @@ define sealed domain make (singleton(<dynamic-method>));
 define class <accessor-method> (<method>)
   //
   // The <slot-descriptor> this is the acccessor of.
-  slot accessor-slot :: <slot-descriptor>,
+  constant slot accessor-slot :: <slot-descriptor>,
     required-init-keyword: slot:;
 end class <accessor-method>;
 
@@ -241,7 +241,7 @@ define class <gf-cache> (<object>)
   slot cached-valid-keywords :: type-union(<simple-object-vector>,
 					   one-of(#f, #"all")),
     init-value: #f;
-  slot cached-classes :: <type-vector>,
+  constant slot cached-classes :: <type-vector>,
     required-init-keyword: #"classes";
   slot next :: type-union(<false>, <gf-cache>), init-value: #f;
   slot call-count :: <integer>, init-value: 1;
