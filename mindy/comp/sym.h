@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.7 1994/10/05 20:56:12 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.8 1995/07/11 12:18:39 wlott Exp $
 *
 \**********************************************************************/
 
@@ -75,6 +75,7 @@ extern struct symbol *sym_MakeSlot;
 extern struct symbol *sym_Negative;
 extern struct symbol *sym_NegativeP;
 extern struct symbol *sym_NextMethod;
+extern struct symbol *sym_Not;
 extern struct symbol *sym_PopHandler;
 extern struct symbol *sym_PushHandler;
 extern struct symbol *sym_Setter;

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.9 1994/10/05 20:56:10 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.10 1995/07/11 12:18:39 wlott Exp $
 *
 * This file implements symbols.
 *
@@ -71,6 +71,7 @@ struct symbol *sym_MakeSlot = NULL;
 struct symbol *sym_Negative = NULL;
 struct symbol *sym_NegativeP = NULL;
 struct symbol *sym_NextMethod = NULL;
+struct symbol *sym_Not = NULL;
 struct symbol *sym_PopHandler = NULL;
 struct symbol *sym_PushHandler = NULL;
 struct symbol *sym_Setter = NULL;
@@ -260,6 +261,7 @@ void init_sym_table(void)
     sym_Negative = symbol("negative");
     sym_NegativeP = symbol("negative?");
     sym_NextMethod = symbol("next-method");
+    sym_Not = symbol("~");
     sym_PopHandler = symbol("pop-handler");
     sym_PushHandler = symbol("push-handler");
     sym_Setter = symbol("setter");
