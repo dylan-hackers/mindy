@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.28 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.29 1996/03/07 17:45:19 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -2076,6 +2076,8 @@ void init_num_functions(void)
 		    dylan_idp);
     define_function("~==", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		    dylan_not_idp);
+    define_generic_function("=", two_objs, FALSE, obj_False, FALSE,
+			    list1(obj_BooleanClass), obj_False);
     define_method("=", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_idp);
 
@@ -2095,6 +2097,26 @@ void init_num_functions(void)
 			    int_and_real, obj_False);
     define_generic_function("round", any_real, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
+
+    define_generic_function("negative", list1(obj_ObjectClass), 
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+    define_generic_function("+", two_objs,
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+    define_generic_function("-", two_objs,
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+    define_generic_function("*", two_objs,
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+    define_generic_function("/", two_objs,
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+
+    define_generic_function("<", two_objs,
+			    FALSE, obj_False, FALSE,
+			    list1(obj_BooleanClass), obj_False);
 
     define_method("negative", fi, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_negative);
