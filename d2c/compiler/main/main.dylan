@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.6 1995/04/21 19:37:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.7 1995/04/21 21:56:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -40,10 +40,6 @@ define method compile (#rest files) => res :: <component>;
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
   end-body(builder);
   format(*debug-output*, "Optimizing\n");
-  optimize-component(component);
-  format(*debug-output*, "Adding type checks.\n");
-  add-type-checks(component);
-  format(*debug-output*, "Reoptimizing.\n");
   optimize-component(component);
   format(*debug-output*, "Emitting C code.\n");
   let output-info = make(<output-info>);
