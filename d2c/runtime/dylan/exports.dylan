@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.19 1996/02/18 18:36:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.20 1996/02/23 00:00:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -151,7 +151,7 @@ define module Extensions
 	     <byte>, <byte-vector>,
 
 	     // Misc other stuff.
-	     $not-supplied, ignore
+	     $not-supplied, ignore, functional-==
     },
     export: all;
 end;
@@ -216,7 +216,6 @@ define module magic
     closure-var-setter,
     disable-catcher,
     find-slot-offset,
-    functional-==,
     general-call,
     general-rep-getter,
     general-rep-setter,
@@ -245,6 +244,7 @@ define module magic
     slot-init-value-setter,
     slot-type,
     slot-type-setter,
+    slow-functional-==,
     throw,
     type-error,
     uninitialized-slot-error,
