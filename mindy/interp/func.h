@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.7 1994/06/11 02:23:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.8 1994/06/16 22:12:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,6 +20,7 @@ extern obj_t obj_FunctionClass;
 extern obj_t obj_MethodInfoClass;
 extern obj_t obj_MethodClass;
 extern obj_t obj_ByteMethodClass;
+extern obj_t obj_GFClass;
 
 struct method_info {
     obj_t class;
