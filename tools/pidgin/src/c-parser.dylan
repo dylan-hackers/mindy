@@ -69,9 +69,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 // All <parse-state> objects share these slots.
 //
 define abstract class <parse-state> (<object>)
-  slot repository :: <c-type-repository>,
-    required-init-keyword: repository:;
-  // XXX - can initialize get this from our parent if we have one?
+  slot repository :: <c-type-repository>;
   slot objects :: <table>;
   slot structs :: <table>;  // XXX - may go away
   slot tokenizer :: <tokenizer>,
@@ -101,10 +99,15 @@ define class <parse-file-state> (<parse-state>)
   slot hackish-output-list :: <c-file> = make(<c-file>);
 end class;
 
-define method initialize (value :: <parse-file-state>, #key)
+define method initialize (value :: <parse-file-state>, #key repository: r)
   value.objects := make(<string-table>);
   value.structs := make(<string-table>);
   value.pointers := make(<object-table>);
+  if (r)
+    value.repository := r;
+  else
+    error("required initialization argument 'repository:' not found");
+  end if;
 /*
   value.pointers[void-type] := make(<pointer-declaration>, referent: void-type,
 				    dylan-name: "<machine-pointer>",
@@ -162,15 +165,21 @@ define class <parse-cpp-state> (<parse-value-state>) end class;
 
 define method initialize
     (value :: <parse-value-state>,
-     #key parent :: type-union(<parse-state>, <false>))
+     #key repository: r, parent :: type-union(<parse-state>, <false>))
   if (parent)
     value.objects := parent.objects;
     value.structs := parent.structs;
     value.pointers := parent.pointers;
+    value.repository := parent.repository;
   else
     value.objects := make(<string-table>);
     value.structs := make(<string-table>);
     value.pointers := make(<object-table>);
+    if (r)
+      value.repository := r;
+    else
+      error("required initialization argument 'repository:' not found");
+    end if;
   end if;
 end method initialize;
 
@@ -180,10 +189,18 @@ end method initialize;
 // this application.  The hash function is very fast, but will fail for empty
 // strings.  Luckily, no such strings should show up in C declarations.
 //
+// We now hash on the middle character as well as the first. Many huge
+// headers prefix thousands of definitions with the same character, with
+// very predictable results.
+//
 define class <string-table> (<table>) end class;
 
-define method fast-string-hash (string :: <string>, initial-state :: <object>)
-  values(string.size * 256 + as(<integer>, string.first), initial-state);
+define method fast-string-hash (string :: <byte-string>,
+				initial-state :: <object>)
+  values(string.size * 256 +
+	   as(<integer>, string[0]) +
+	   as(<integer>, string[ash(string.size, -1)]),
+	 initial-state);
 end method fast-string-hash;
 
 define method table-protocol (table :: <string-table>)
@@ -280,19 +297,19 @@ define function process-type-list
 	      <signed-token> =>
 		select (type)
 		  $c-unknown-type => $c-signed-type;
-		  // XXX - I don't think these are ANSI. Check.
-		  //$c-long-type => $c-signed-long-type;
-		  //$c-char-type => $c-signed-char-type;
-		  //$c-short-type => $c-signed-short-type;
+		  $c-long-type => $c-signed-long-type;
+		  $c-char-type => $c-signed-char-type;
+		  $c-short-type => $c-signed-short-type;
+		  $c-long-long-type =>  $c-signed-long-long-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <signed-token>, got %=", type);
 		end select;
 	      <unsigned-token> =>
 		select (type)
 		  $c-unknown-type => $c-unsigned-type;
-		  // XXX - I don't think these are ANSI. Check.
-		  //$c-long-type => $c-unsigned-long-type;
-		  //$c-char-type => $c-unsigned-char-type;
-		  //$c-short-type => $c-unsigned-short-type;
+		  $c-long-type => $c-unsigned-long-type;
+		  $c-char-type => $c-unsigned-char-type;
+		  $c-short-type => $c-unsigned-short-type;
+		  $c-long-long-type =>  $c-unsigned-long-long-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <unsigned-token>, got %=", type);
 		end select;
 	      <float-token> =>
@@ -336,10 +353,13 @@ end function process-type-list;
 // fails to typecheck against <icky-type-name>, investigate it thoroughly
 // and take appropriate steps.
 //
+// TIME - This typecheck has a negligible impact on performance.
+//
 define constant <icky-type-name> =
   type-union(<identifier-token>,      // A regular type name
 	     <c-typedef-declaration>, // Potential typedef redeclaration
-	     <empty-list>);           // Abstract declarator
+	     <empty-list>,            // Abstract declarator
+	     <c-typedef-type>);       // XXX - When computing sizeof... !!!
 
 // Deals with the odd idiomatic data structures which result from the LALR
 // parser generator.  These might take the form of 
@@ -380,18 +400,6 @@ define method process-declarator
 	process-declarator(tp, tail(declarator), state);
       end for;
       
-    /* XXX - skip bitfields, which don't work yet
-    (declarator.head == #"bitfield") =>
-      if (instance?(tp.true-type, <integer-type-declaration>))
-	let decl = make(<bitfield-declaration>, bits: second(declarator),
-			base: tp, name: anonymous-name(),
-			dylan-name: "<integer>");
-	process-declarator(decl, declarator.tail.tail, state);
-      else
-	parse-error(state, "Bit-fields must be of an integral type.  "
-		      "This is of type %=.", tp);
-      end if; */
-
     // Process vector types.
     (declarator.head == #"vector") =>
       let length = second(declarator);
@@ -535,55 +543,35 @@ end method add-declaration;
 
 // Main parser routine:
 define function parse-c-file
-    (repository :: <c-type-repository>, filename :: <byte-string>)
+    (repository :: <c-type-repository>, filename :: <string>,
+     #key platform :: <c-platform>, include-path: includes :: <sequence>)
  => (c-file :: <c-file>)
   // XXX - We ignore typedefs and structs already in the repository.
   // We should probably either (1) honor them or (2) create and return
   // a repository.
+  // XXX - Why isn't this re-entrant?
   // XXX - We need to accept a parameter which knows about sizeof and
   // the header search path.
-  *show-parse-progress?* := #t;
-  let defines = make(<string-table>);
-  for (i from 0 below $default-defines.size by 2)
-    defines[$default-defines[i]] := $default-defines[i + 1];
+
+  // Set up out include path.
+  include-path.size := 0;
+  for (dir in includes)
+    push-last(include-path, dir);
+  end for;    
+  for (dir in platform.c-platform-default-include-path)
+    push-last(include-path, dir);
   end for;
-  let state = parse(repository, list(filename), defines: defines, verbose: #t);
+
+  // Preload our default defines.
+  let defines = make(<string-table>);
+  let default-defines = platform.c-platform-default-defines;
+  for (i from 0 below default-defines.size by 2)
+    defines[default-defines[i]] := default-defines[i + 1];
+  end for;
+
+  let state = parse(repository, list(filename), defines: defines);
   state.hackish-output-list;
 end function;
-
-define constant $default-defines
-  = #["const", "",
-      "volatile", "",
-      "__STDC__", "",
-
-      // The following six declarations should be removed someday, as soon as 
-      // we fix a bug in MINDY.
-      //"__GNUC__", "2",
-      //"__GNUC_MINPR__", "7",
-      //"__signed__", "",
-      //"__const", "",
-      //"__CONSTVALUE", "",
-      //"__CONSTVALUE2", "",
-
-      // Parameterized macros which remove various GCC extensions from our
-      // source code. The last item in the list is the right-hand side of
-      // the define; all the items preceding it are named parameters.
-      "__attribute__", #(#("x"), ""), 
-      "__signed__", "", 
-      "__inline__", "",
-      "inline", "",
-      "__inline", "",
-
-      "__ELF__", "",
-      "unix", "",
-      "i386", "",
-      "linux", "",
-      "__unix__", "",
-      "__i386__", "",
-      "__linux__", "",
-      "__unix", "",
-      "__i386", "",
-      "__linux", ""];
 
 
 // Seals for file c-parser-interface.dylan

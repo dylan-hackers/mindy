@@ -23,7 +23,7 @@ end;
 //  This routine will be moving elsewhere in the future.
 
 define function make-tagged-type
-    (name :: type-union(<string>, <false>),
+    (name :: false-or(<byte-string>),
      member-list :: type-union(<list>, <false>),
      decl-token :: <token>, state :: <parse-state>)
  => (result :: <c-tagged-type>)
@@ -88,7 +88,7 @@ define function make-tagged-type
       parse-error(state, "type not found: %s", name);
       
     // Make a new struct-or-union type.
-    (instance?(declaration-class, <c-struct-or-union-type>)) =>
+    (subtype?(declaration-class, <c-struct-or-union-type>)) =>
       register-new-tagged-type(make(declaration-class,
 				    repository: state.repository,
 				    tag: name,
@@ -117,16 +117,19 @@ end function make-tagged-type;
 
 // Used when processing <SIZEOF-token>.
 define function c-type-size (name :: <icky-type-name>)
+ => (size :: <integer>)
   // XXX - need information about local C compiler
-  error("cannot evaluate sizeof expressions");
+  signal(make(<simple-warning>,
+	      format-string: "STUB: returning 4 for sizeof"));
+  4;
 end;
 
 // Used when processing <end-include-token>.
 // Used in the function parse.
 define function add-cpp-declaration
-    (state :: <parse-state>, macro-name :: <string>)
+    (state :: <parse-state>, macro-name :: <byte-string>)
  => ()
-  parse-warning(state, "Ignoring '#define %s' for now", macro-name);
+  parse-warning(state, "ignoring '#define %s' for now", macro-name);
 
 /*
   block ()
@@ -155,7 +158,7 @@ end;
 
 // Used in rules on enumerator-list.
 define function make-enum-slot
-    (name :: <string>, value :: false-or(<integer>),
+    (name :: <byte-string>, value :: false-or(<integer>),
      prev :: false-or(<c-enum-constant>), state :: <parse-state>)
  => (result :: <c-enum-constant>);
   if (element(state.objects, name, default: #f))
@@ -173,3 +176,49 @@ define function make-enum-slot
 				value: value);
   end if;
 end;
+
+// Used in several places...
+define function make-struct-or-union-slot
+    (state :: <parse-state>,
+     member-name :: <icky-type-name>,
+     type :: <c-type>,
+     bit-field-width :: false-or(<integer>))
+ => (member :: <c-struct-member>)
+
+  // XXX - This needs to be reconsidered or moved somewhere else. It's a tiny
+  // chunk of a larger conceptual entity, the rest of which is missing.
+  local method ultimate-type (type :: <c-type>) => (ultimate :: <c-type>)
+	  if (instance?(type, <c-typedef-type>))
+	    ultimate-type(type.c-typedef-type);
+	  else
+	    type;
+	  end if;
+	end method;
+  
+  // Figure out our name.
+  let name = select (member-name by instance?)
+	       <name-token> => member-name.value;
+	       <empty-list> => #f;
+	       otherwise =>
+		 parse-error(state, "illegal member name %=", member-name);
+	     end select;
+  
+  // Create an appropriate member object.
+  case
+    (bit-field-width & instance?(type.ultimate-type, <c-int-type>)) =>
+      make(<c-bit-field>,
+	   name: name,
+	   sign: type.ultimate-type.c-integer-type-sign-specifier,
+	   width: bit-field-width);
+    bit-field-width =>
+      parse-error(state, "bit fields must be of type 'int', 'signed int' or "
+		    "'unsigned int', not '%s'",
+		  format-c-type(type));
+    name =>
+      make(<c-member-variable>,
+	   name: name,
+	   type: type);
+    otherwise =>
+      error("Cannot create unamed member variable in struct or union.");
+  end case;
+end function;

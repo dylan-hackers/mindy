@@ -932,18 +932,21 @@ struct-declaration-list (struct-declaration-list struct-declaration)
 
 struct-declaration (type-specifier-list struct-declarator-list <semicolon-token>)
   let type = process-type-list(reverse!(%1), @0);
-  let return = #();
-  for (declarator in %2)
+  let result = #();
+  for (member in %2)
+    let declarator = member.head;
+    let width = member.tail;
     let (type, name) = process-declarator(type, declarator, @0);
-    return := pair(pair(name.value, type), return);
+    result := pair(make-struct-or-union-slot(@0, name, type, width), result);
   end for;
-  return;
+  result;
 %
 
-struct-declaration (type-specifier-list <semicolon-token>)
-  let type = process-type-list(reverse!(%1), @0);
-  list(pair("_anon_field", type));
-%
+;struct-declaration (type-specifier-list <semicolon-token>)
+;  let type = process-type-list(reverse!(%1), @0);
+;  list(pair("_anon_field", type));
+;  // XXX - I think this is wrong and useless.
+;%
 
 struct-declarator-list (struct-declarator)
   list(%1);
@@ -955,24 +958,16 @@ struct-declarator-list (struct-declarator-list <comma-token> struct-declarator)
 %
 
 struct-declarator (declarator)
-  %1;
+  pair(%1, #f);
 %
 
-;struct-declarator (<colon-token> constant-expr)
-;  error("struct-declarator not yet handled.");
-;%
+struct-declarator (<colon-token> constant-expr)
+  pair(#(), int-value(%2, @0));
+%
 
 struct-declarator (declarator <colon-token> constant-expr)
-  pair(#"bitfield", pair(int-value(%3, @0), %1));
+  pair(%1, int-value(%3, @0));
 %
-
-; struct-declarator (type-modifier declarator)
-;   %2;
-; %
-
-; struct-declarator (type-modifier declarator <colon-token> constant-expr)
-;   pair(#"bitfield", pair(int-value(%4, @0), %2));
-; %
 
 Enum-Specifier (<ENUM-Token> enum-elements)
   make-tagged-type(#f, %2, %1, @0);
@@ -1643,7 +1638,6 @@ define method parse-type
 			      generator: tokenizer, string: ""));
   let parse-state
     = make(<parse-type-state>,
-	   repository: old-state.repository,
 	   tokenizer: tokenizer,
 	   parent: old-state);
   parse-loop(parse-state);
@@ -1665,7 +1659,6 @@ define method parse-macro
 				generator: tokenizer, string: ""));
     let parse-state
       = make(<parse-macro-state>,
-	     repository: old-state.repository,	     
 	     tokenizer: tokenizer,
 	     parent: old-state);
     parse-loop(parse-state);
