@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.12 1996/05/09 02:15:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.13 1996/05/11 14:45:19 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -255,6 +255,7 @@ end method optimize-general-call-ctv;
 //
 // If there is a definition that corresponds to this generic function, dispatch
 // off of it.  Otherwise, try changing into a known or error call.
+//
 define method optimize-general-call-ctv
     (component :: <component>, call :: <general-call>, ctv :: <ct-function>)
     => ();
@@ -726,7 +727,7 @@ define method compare-call-against-signature
 	    bogus? := #t;
 	  end;
 	end;
-	if (valid?)
+	if (valid? & check-keywords?)
 	  // Now make sure all the required keywords are supplied.
 	  for (keyinfo in sig.key-infos)
 	    block (found-key)
