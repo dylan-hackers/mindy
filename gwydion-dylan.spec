@@ -1,15 +1,11 @@
 #
 # Spec file for Gwydion Dylan RPM.
 #
-# Flaws in this spec file:
-#  * This package does not support a build root until we clean up
-#    Makegen to allow an install prefix.
-#
 # To use this spec file, copy it to /usr/src/redhat/SPECS. Get the
 # latest source and documentation tarball from the FTP site and
 # put them into /usr/src/redhat/SOURCES. Edit your local copy of
 # this file, replacing:
-#   * VERSION with a number of the form '2.1.2'. (2 occurances)
+#   * VERSION with a number of the form '2.3.1'. (2 occurances)
 #   * libcX with either libc5 or libc6, depending on your Linux
 #     distribution.
 # Then type 'cd /usr/src/redhat/SPECS/; rpm -ba gwydion-dylan.spec`.
@@ -17,23 +13,24 @@
 Name: gwydion-dylan
 Summary: CMU's Gwydion Dylan development tools
 Version: VERSION
-Release: 1-libcX
+Release: 1.libcX
 Copyright: X-style
 Group: Development/Languages/Dylan
 Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-VERSION.tar.gz
 Source1: ftp://berlin.ccc.de/pub/gd/doc/gd20-html.tar.gz
 URL: http://www.gwydiondylan.org/
 Packager: eric.kidd@pobox.com
+BuildRoot: /tmp/gd-root
 Prefix: /usr
 
 %description
 CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
 fairly efficient output but requires strange incantations to compile even
-simple programs. Tools for interfacing with C and possibly C++ are
-included. (The Mindy bytecode interpreter is available as a separate
-package.)  If you're really excited about writing Dylan programs for
-Linux--and don't mind the inconveniences of d2c--these are the tools to
-use. If you prefer a mature development environment, try another language.
+simple programs. Tools for interfacing with C are included. (The Mindy
+bytecode interpreter is available as a separate package.) If you're really
+excited about writing Dylan programs for Linux--and don't mind the
+inconveniences of d2c--these are the tools to use. If you prefer a mature
+development environment, try another language.
 
 For more infomration, see the Gwydion Dylan maintainers' web page at
 <http://www.gwydiondylan.org/>.
@@ -67,6 +64,11 @@ on the web at <http://www.gwydiondylan.org/>.
 
 
 %changelog
+* Sat Jan 09 1999 Eric Kidd <eric.kidd@pobox.com>
+  - Added a build root.
+  - Simplified file list.
+  - Edited description.
+  - Deleted some commented out code.
 
 * Thu Dec 29 1998 Eric Kidd <eric.kidd@pobox.com>
   - Added prefix for gwydion-dylan-extras and mindy.
@@ -113,13 +115,6 @@ if [ ! -x /usr/bin/d2c -a ! -x /usr/local/bin/d2c ]; then
   echo "d2c prep: Trying installing the Gwydion Dylan RPMs."
   exit 1
 fi
-# We should be able to build parsergen from source now.
-#if [ ! -x /usr/bin/parsergen -a ! -x /usr/local/bin/parsergen ]; then
-#  # Look for the other utilities need to bootstrap d2c.
-#  echo "d2c prep: Must have gwydion-dylan-extras installed to"
-#  echo "d2c prep: recompile d2c."
-#  exit 1
-#fi
 %setup -n gd -a 1
 
 
@@ -136,7 +131,7 @@ make
 
 %install
 cd src/
-make install
+make DESTDIR=$RPM_BUILD_ROOT install
 
 
 %post
@@ -172,7 +167,7 @@ fi
 %doc docs/
 %doc src/README src/INSTALL src/NEWS src/ONEWS.html src/CREDITS
 
-# Our well-behaved files, including some programs with dumb names.
+# Our files, including some programs with dumb names.
 /usr/bin/d2c
 /usr/bin/melange
 /usr/bin/gen-makefile
@@ -189,43 +184,10 @@ fi
 /usr/man/man1/make-dylan-app.1
 /usr/man/man4/platforms.descr.4
 
-# Random libraries and other cruft. Be careful to keep this up-to-date.
-/usr/lib/dylan/libruntime.a
-/usr/lib/dylan/libgc.a
-/usr/lib/dylan/dylan.lib.du
-/usr/lib/dylan/libdylan.a
-/usr/lib/dylan/melange-support.lib.du
-/usr/lib/dylan/libmelange.a
-/usr/lib/dylan/streams.lib.du
-/usr/lib/dylan/libstreams.a
-/usr/lib/dylan/standard-io.lib.du
-/usr/lib/dylan/libstdio.a
-/usr/lib/dylan/print.lib.du
-/usr/lib/dylan/libprint.a
-/usr/lib/dylan/format.lib.du
-/usr/lib/dylan/libformat.a
-/usr/lib/dylan/collection-extensions.lib.du
-/usr/lib/dylan/libcollext.a
-/usr/lib/dylan/table-extensions.lib.du
-/usr/lib/dylan/libtableext.a
-/usr/lib/dylan/string-extensions.lib.du
-/usr/lib/dylan/libstringext.a
-/usr/lib/dylan/regular-expressions.lib.du
-/usr/lib/dylan/libregexp.a
-/usr/lib/dylan/format-out.lib.du
-/usr/lib/dylan/libformatout.a
-/usr/lib/dylan/matrix.lib.du
-/usr/lib/dylan/libmatrix.a
-/usr/lib/dylan/time.lib.du
-/usr/lib/dylan/libtime.a
-/usr/lib/dylan/stream-extensions.lib.du
-/usr/lib/dylan/libstreamext.a
-/usr/lib/dylan/transcendental.lib.du
-/usr/lib/dylan/libtranscendental.a
-/usr/lib/dylan/random.lib.du
-/usr/lib/dylan/librandom.a
-/usr/lib/dylan/parse-arguments.lib.du
-/usr/lib/dylan/libgetopt.a
+# Our libraries.
+/usr/lib/dylan/*.a
+/usr/lib/dylan/*.du
+
 
 %files extras
 /usr/bin/line-count
@@ -245,23 +207,4 @@ fi
 /usr/man/man1/mindy.1
 /usr/man/man1/mindycomp.1
 
-/usr/lib/dylan/dylan-lib.dbc
-/usr/lib/dylan/random-lib.dbc
-/usr/lib/dylan/tk-lib.dbc
-/usr/lib/dylan/inspector-base-lib.dbc
-/usr/lib/dylan/text-inspector-lib.dbc
-/usr/lib/dylan/x-inspector-lib.dbc
-/usr/lib/dylan/streams-lib.dbc
-/usr/lib/dylan/standard-io-lib.dbc
-/usr/lib/dylan/print-lib.dbc
-/usr/lib/dylan/format-lib.dbc
-/usr/lib/dylan/collection-extensions-lib.dbc
-/usr/lib/dylan/table-extensions-lib.dbc
-/usr/lib/dylan/string-extensions-lib.dbc
-/usr/lib/dylan/regular-expressions-lib.dbc
-/usr/lib/dylan/format-out-lib.dbc
-/usr/lib/dylan/matrix-lib.dbc
-/usr/lib/dylan/time-lib.dbc
-/usr/lib/dylan/stream-extensions-lib.dbc
-/usr/lib/dylan/transcendental-lib.dbc
-/usr/lib/dylan/parse-arguments-lib.dbc
+/usr/lib/dylan/*.dbc
