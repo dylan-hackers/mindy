@@ -35,6 +35,8 @@ MC = mindycomp
 
 c-exports.dbc: $(SRCDIR)/c-exports.dylan
 	$(MC) -lmelange-c $(SRCDIR)/c-exports.dylan -o c-exports.dbc
+multistring.dbc: $(SRCDIR)/multistring.dylan
+	$(MC) -lmelange-c $(SRCDIR)/multistring.dylan -o multistring.dbc
 c-lexer.dbc: $(SRCDIR)/c-lexer.dylan
 	$(MC) -lmelange-c $(SRCDIR)/c-lexer.dylan -o c-lexer.dbc
 c-lexer-cpp.dbc: $(SRCDIR)/c-lexer-cpp.dylan
@@ -63,10 +65,10 @@ interface.dbc: $(SRCDIR)/interface.dylan
 EOF
 if ($win32) {
     print <<'EOF';
-OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc win32-vc-portability.dbc \
-	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
-	c-decl-write.dbc exports.dbc name-map.dbc int-lexer.dbc \
-	int-parse.dbc interface.dbc
+OBJS = c-exports.dbc multistring.dbc c-lexer.dbc c-lexer-cpp.dbc \
+        win32-vc-portability.dbc c-parse.dbc alignment.dbc c-decl.dbc \
+        c-decl-state.dbc c-decl-write.dbc exports.dbc name-map.dbc \
+        int-lexer.dbc int-parse.dbc interface.dbc
 
 melange.dbc: $(OBJS)
 	dbclink $@ $(OBJS)
