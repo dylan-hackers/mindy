@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.4 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.5 1995/06/07 15:13:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -117,6 +117,29 @@ define method extract-rest-arg (expr :: <literal-constant>)
     #f;
   end;
 end;    
+
+
+define method check-type-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, object-leaf, type-leaf) = extract-args(call, 2, #f, #f, #f);
+  if (okay? & instance?(type-leaf, <literal-constant>))
+    let type = type-leaf.value;
+    if (csubtype?(object-leaf.derived-type, type))
+      replace-expression(component, call.dependents, object-leaf);
+      #t;
+    else
+      maybe-restrict-type(component, call, type);
+      // Restricting the result type doesn't count as doing anything
+      #f;
+    end;
+  else
+    #f;
+  end;
+end;
+
+define-transformer(#"check-type", #f, check-type-transformer);
+
 
 
 define method apply-transformer
