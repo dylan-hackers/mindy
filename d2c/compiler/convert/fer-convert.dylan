@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.4 1994/12/13 14:19:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.5 1994/12/15 21:49:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -102,7 +102,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   for (param in params, type in types, type-temp in type-temps, temp in temps)
     let name = param.param-name;
     let var = make-lexical-var(builder, name.token-symbol, source, type);
-    add-binding(lexenv, name, var, btype-var: type-temp);
+    add-binding(lexenv, name, var, type-var: type-temp);
     build-let(builder, lexenv.lexenv-policy, source, var,
 	      if (type-temp)
 		make-check-type-operation(builder, temp, type-temp);
@@ -140,8 +140,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      build-general-method(builder, meth.method-ref-method,
-				   specializer-lexenv, lexenv));
+	      build-general-method(builder, meth, specializer-lexenv, lexenv));
   end;
   unless (target-vars == #())
     build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
@@ -392,15 +391,18 @@ define method build-general-method
     let name = param.param-name;
     let var = make-lexical-var(builder, name.token-symbol, source, type);
     add-binding(lexenv, name, var, type-var: type-var);
-    add!(fixed-vars, var);
     if (type-var)
       non-const-arg-types? := #t;
       add!(specializers, type-var);
-      let op = make-check-type-operation(arg-check-builder, var, type-var);
+      //let temp = make-lexical-var(builder, name.token-symbol, source, type);
+      let temp = var;
+      add!(fixed-vars, temp);
+      let op = make-check-type-operation(arg-check-builder, temp, type-var);
       build-assignment(arg-check-builder, specializer-lexenv.lexenv-policy,
 		       source, var, op);
     else
       add!(specializers, make-literal-constant(builder, type));
+      add!(fixed-vars, var);
     end;
   end;
   let next-var
@@ -448,12 +450,13 @@ define method build-general-method
 		 (builder,
 		  list(dylan-defn-leaf(builder, #"=="),
 		       pre-default,
-		       make-literal-constant($Unbound-Marker-CT-Value))));
+		       make-literal-constant(builder,
+					     $Unbound-Marker-CT-Value))));
 	    build-if-body(builder, lexenv.lexenv-policy, source, temp);
 	    fer-convert(builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
 			var);
-	    build-else(builder, source);
+	    build-else(builder, lexenv.lexenv-policy, source);
 	    build-assignment(builder, lexenv.lexenv-policy, source, var,
 			     pre-default);
 	    end-body(builder);
@@ -479,13 +482,15 @@ define method build-general-method
     if (type-var)
       non-const-result-types? := #t;
       add!(result-types, type-var);
+      let temp = make-local-var(builder, param.param-name.token-symbol, type);
       let op = make-check-type-operation(result-check-builder, var, type-var);
       build-assignment(result-check-builder, specializer-lexenv.lexenv-policy,
-		       source, var, op);
+		       source, temp, op);
+      add!(fixed-results, temp);
     else
       add!(result-types, make-literal-constant(builder, type));
+      add!(fixed-results, var);
     end;
-    add!(fixed-results, var);
   end;
 
   let rest-result
