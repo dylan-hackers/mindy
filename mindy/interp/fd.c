@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.24 1995/04/02 15:11:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.25 1995/04/08 19:17:21 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -381,63 +381,17 @@ void init_fd_functions(void)
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_exec));
 
-#ifdef L_SET
-    define_constant("L_SET", make_fixnum(L_SET));
-#else
-#	ifdef SEEK_SET
-	define_constant("L_SET", make_fixnum(SEEK_SET));
-#	endif
-#endif
-#ifdef L_INCR
-    define_constant("L_INCR", make_fixnum(L_INCR));
-#else
-#	ifdef SEEK_CUR
-	define_constant("L_INCR", make_fixnum(SEEK_CUR));
-#	endif
-#endif
-#ifdef L_XTND
-    define_constant("L_XTND", make_fixnum(L_XTND));
-#else
-#	ifdef SEEK_END
-	define_constant("L_XTND", make_fixnum(SEEK_END));
-#	endif
-#endif
-
-#ifdef FNDELAY
-    define_constant("FNDELAY", make_fixnum(FNDELAY));
-#endif
-#ifdef FAPPEND
-    define_constant("FAPPEND", make_fixnum(FAPPEND));
-#else
-    define_constant("FAPPEND", make_fixnum(O_APPEND));
-#endif
-
-#ifdef FCREAT
-    define_constant("FCREAT", make_fixnum(FCREAT));
-#else
-    define_constant("FCREAT", make_fixnum(O_CREAT));
-#endif
-#ifdef FTRUNC
-    define_constant("FTRUNC", make_fixnum(FTRUNC));
-#else
-    define_constant("FTRUNC", make_fixnum(O_TRUNC));
-#endif
-#ifdef FEXCL
-    define_constant("FEXCL", make_fixnum(FEXCL));
-#else
-    define_constant("FEXCL", make_fixnum(O_EXCL));
-#endif
-
+    define_constant("SEEK_SET", make_fixnum(SEEK_SET));
+    define_constant("SEEK_CUR", make_fixnum(SEEK_CUR));
+    define_constant("SEEK_END", make_fixnum(SEEK_END));
     define_constant("O_RDONLY", make_fixnum(O_RDONLY));
     define_constant("O_WRONLY", make_fixnum(O_WRONLY));
     define_constant("O_RDWR", make_fixnum(O_RDWR));
-#ifdef O_NDELAY
-    define_constant("O_NDELAY", make_fixnum(O_NDELAY));
-#endif
     define_constant("O_APPEND", make_fixnum(O_APPEND));
     define_constant("O_CREAT", make_fixnum(O_CREAT));
-    define_constant("O_TRUNC", make_fixnum(O_TRUNC));
     define_constant("O_EXCL", make_fixnum(O_EXCL));
+    define_constant("O_TRUNC", make_fixnum(O_TRUNC));
+    define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK));
 
     /* This compendium of error numbers comes from Tcl. */
 #ifdef E2BIG
