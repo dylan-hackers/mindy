@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.8 2003/02/03 12:38:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.9 2003/04/12 19:51:40 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -81,7 +81,8 @@ define method clone-expr
 	      method ()
 		make(<ssa-variable>,
 		     derived-type: var.derived-type,
-		     var-info: var.var-info);
+		     var-info: var.var-info,
+                     needs-type-check: var.needs-type-check?);
 	      end);
 end;
 
