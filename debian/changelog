@@ -1,8 +1,14 @@
-gwydion-dylan (2.2.3a-1) unstable; urgency=low
+gwydion-dylan (2.3.3-1) unstable; urgency=low
 
-  * New upstream version
+  * New upstream version.
 
- -- Neil Schemenauer <nascheme@enme.ucalgary.ca> Mon, 30 Aug 1999 07:44:29 -0600
+ -- Neil Schemenauer <nascheme@enme.ucalgary.ca>  Tue,  4 Apr 2000 13:34:00 -0600
+
+gwydion-dylan (2.3.2a-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Neil Schemenauer <nascheme@enme.ucalgary.ca>  Mon, 30 Aug 1999 07:44:29 -0600
 
 gwydion-dylan (2.3.1-1) unstable; urgency=low
 
