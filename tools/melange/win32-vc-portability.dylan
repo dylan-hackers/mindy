@@ -63,8 +63,17 @@ define constant $default-defines
       "WIN32", "",
       "_WIN32", "1", 
       "__cdecl", "",
+      "_cdecl", "",
       "__STDC__", "",
-      "_POSIX_", ""];
+      "_POSIX_", "",
+      "__int64", "long long",
+      "__attribute__", #(#("x"), ""),
+      "__declspec", #(#("x"), ""),
+      "__fastcall", "",
+      "__stdcall", "",
+      "inline", "",
+      "_inline", "",
+      "__inline", ""];
 
 // Set up the search path for .h files
 begin
