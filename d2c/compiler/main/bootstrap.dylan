@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.54 1996/04/08 08:29:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.55 1996/04/14 13:22:42 wlott Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -743,8 +743,10 @@ define open generic verify-keywords
 
 // Internal errors.
 
-define method uninitialized-slot-error () => res :: type-union();
-  error("Slot is not initialized.");
+define method uninitialized-slot-error
+    (slot :: <slot-description>, instance :: <object>)
+    => res :: type-union();
+  error("Accessing uninitialized slot %= in instance %=", slot, instance);
 end;
 
 define method missing-required-init-keyword-error
