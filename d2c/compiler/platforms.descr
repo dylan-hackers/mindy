@@ -259,9 +259,9 @@ inherit-from:                   hppa-hpux
 default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
 library-filename-suffix:        .sl .a
 compile-c-command:              cc -Ae +Z $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -O4
+default-c-compiler-flags:       -O
 assembler-command:              cc $(CCFLAGS) -c %s -o %s
 link-library-command:           ld -b -o %s %s
-link-executable-command:        cc -g -o %s %s %s
+link-executable-command:        cc -Wl,+s,+b,/afs/cs/project/gwydion/compiler/lib  -g -o %S %S %S
 link-executable-flags:          -L/lib/pa1.1 -lm
 supports-debugging?:            #f
