@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.17 2001/05/28 20:17:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.18 2001/06/08 20:51:11 andreas Exp $
 copyright: see below
 
 
@@ -1314,9 +1314,17 @@ end method maybe-define-init-function;
 
 // class-defn-mumble-function accessors.
 
-
 define method class-defn-defered-evaluations-function
     (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
+    error("Internal error: Too late to compile defered evaluation function.");
+  else
+    defn.%class-defn-defered-evaluations-function;
+  end;
+end;
+
+define method class-defn-defered-evaluations-function
+    (defn :: <local-class-definition>) => res :: false-or(<ct-function>);
   if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
     defn.%class-defn-defered-evaluations-function
       := if (block (return)
@@ -1399,6 +1407,15 @@ end;
 
 define method class-defn-maker-function
     (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-maker-function == #"not-computed-yet")
+    error("Internal error: too late to compute maker function.");
+  else
+    defn.%class-defn-maker-function;
+  end if;
+end method class-defn-maker-function;
+
+define method class-defn-maker-function
+    (defn :: <local-class-definition>) => res :: false-or(<ct-function>);
   if (defn.%class-defn-maker-function == #"not-computed-yet")
     defn.%class-defn-maker-function
       := block (return)
@@ -3281,9 +3298,9 @@ end;
 define constant $class-definition-slots
   = concatenate($definition-slots,
 		list(class-defn-cclass, class:, #f,
-		     %class-defn-defered-evaluations-function, #f,
+		     class-defn-defered-evaluations-function, #f,
 		       %class-defn-defered-evaluations-function-setter,
-		     %class-defn-maker-function, #f,
+		     class-defn-maker-function, #f,
 		       %class-defn-maker-function-setter,
 		     class-defn-new-slot-infos, #f,
 		       class-defn-new-slot-infos-setter,
