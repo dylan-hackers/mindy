@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.74 1995/06/06 02:12:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.75 1995/06/06 11:33:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -976,6 +976,10 @@ define module stack-analysis
   use utils;
   use flow;
   use front;
+  use ctype;
+  use signature-interface;
+  use definitions;
+  use compile-time-functions;
 
   export
     analize-stack-usage;
