@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.6 1995/04/21 02:37:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.7 1995/04/21 19:39:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -161,10 +161,13 @@ end class;
 // 
 define abstract class <definition-site-variable> (<abstract-variable>)
   // The assignment that defines this variable.
-  slot definer :: <abstract-assignment>, required-init-keyword: definer:;
+  slot definer :: <abstract-assignment>, init-keyword: definer:;
 
   // Thread through all the variables defined at our defining operation.
   slot definer-next :: false-or(<definition-site-variable>), init-value: #f;
+
+  // #f if the assignment to this variable does not need to be type checked.
+  slot needs-type-check? :: <boolean>, init-value: #t;
 end;
 
 
@@ -184,6 +187,8 @@ end class;
 define class <initial-definition> (<definition-site-variable>)
   slot definition-of :: <multi-definition-variable>,
     required-init-keyword: definition:;
+  slot next-initial-definition :: false-or(<initial-definition>),
+    required-init-keyword: next-initial-definition:;
 end;
 
 // When we make an initial-definition, add to definitions list in multi-def
