@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.40 2002/08/28 13:06:57 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.41 2002/08/29 22:34:10 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -575,6 +575,8 @@ define inline function contact-bgh-if(test :: <boolean>)
   if (test) contact-bgh() end;
 end;
 
+define constant <temp-locals-list> = <list>;
+
 define inline function contact-bgh-unless-empty(temps :: <temp-locals-list>)
  => ();
   unless (temps.empty?) contact-bgh() end;
@@ -682,8 +684,6 @@ end;
 //  1.5% of the time there are more than two
 //
 // Conclusion: a list does six times less consing than a stretchy!!
-
-define constant <temp-locals-list> = <list>;
 
 define function free-temps(names :: <temp-locals-list>, file :: <file-state>)
  => ();
