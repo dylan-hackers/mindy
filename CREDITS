@@ -1,95 +1,57 @@
-This file contains credits (currently incomplete) for people who have
-worked on Gwydion Dylan. It follows the same format as the Linux kernel
-credits file:
+The following people have at one time or another contributed to the
+Gwydion Dylan project:
 
-	This is at least a partial credits-file of people that have
-	contributed to the linux project.  It is sorted by name, and
-	formatted in a format that allows for easy grepping and
-	beautification by scripts.  The fields are: name (N), email (E),
-	web-address (W), PGP key ID and fingerprint (P), description (D)
-	and snail-mail address (S). 
-	Thanks,
+Gwydion Dylan Hackers (1998-today)
+==================================
 
-			Linus
-----------
+Alex Potanin      (alexpotanin)*
+Andreas Bogk      (andreas)*
+Patrick Beard     (beard)
+Brent Fulgham     (brent)*
+Bruce Hoult       (bruce)*
+Chris Double      (chris)*
+Chris Page        (cpage)*
+David Auclair     (dauclair)
+Eric M. Kidd      (emk)
+Gabor Greif       (gabor)*
+Hannes Mehnert    (hannes)*
+Peter Housel      (housel)*
+Jeff Dubrule      (igor)
+Neel Krishnaswami (neel)
+Nolan Darilek     (nolan)
+Ole J. Tetlie     (olet)
+Peter Hinely      (phinely)*
+Igo Albrecht      (prom)*
+Rob Myers         (robmyers)
+Paul Dempster     (scotek)
+Matthias Hölzl    (tc)
+Tim Pritlove      (tim)*
+Tom Emerson       (tree)
+WASHIDA Motoi     (wm3)*
 
-N: Douglas M. Auclair
-E: dauclair@hotmail.com
-D: Cygnus port, Solaris maintainer (updated to include Time library)
-D: Made file-system library Common-Dylan compliant
-D: Added introspection of instance slots
-D: Added Dylan-style virtual structs that shadow C-style structs from Melange
-D: Fixed --no-binaries flag for d2c
+The string given in parentheses is the account name used to commit to
+the source code repository.  People marked with an asterisk are
+currently active developers, and responsible for this release.
 
-N: Andreas Bogk
-E: ich@andreas.org
-D: LinuxPPC port, libc5 RPMS and tarballs, CVS and FTP site mirrors,
-D: shared libraries work, Boehm update, transcendental math. Ongoing bug
-D: fixes and dirty work, too.
+Gwydion Project at the Carnegie Mellon University  (1994-1998)
+==============================================================
 
-N: Chaos Computer Club
-D: FTP and CVS hosting.
-
-N: Jeff Dubrule
-E: igor@pobox.com
-D: Grand Exalted Poobah of .cvsignore files, miscellaneous cleanups.
-D: Interstate server repair team.
-D: 64-bit ports of Mindy and d2c (in progress).
-
-N: Brent Fulgham
-E: bfulgham@debian.org
-D: Debian maintainer, various Linux and cygnus porting work.  Ongoing
-D: bug fixes, unfortunately offset by bug creation tendencies.
-
-N: Gabor Greif
-E: gabor@mac.com
-D: Merciless Czar of microoptimizations.
-D: Class slots, various cleanups, bug fixes.
-D: CodeWarrior Plugin port of d2c.
-
-N: Harlequin, Ltd.
-D: Enormous improvements to Emacs dylan-mode, moral encouragement.
-
-N: Peter Hinely
-E: phinely@hawaii.edu
-D: BeOS port of Mindy.
+Ben Folk-Williams  (bfw)
+Bill Chiles        (chiles)
+David Pierce       (dpierce)
+David Watson       (dwatson)
+Nick Kramer        (nkramer)
+Noah Gibbs         (panda)
+Robert Stockton    (rgs)
+Robert MacLachlan  (ram)
+Russell M. Schaaf  (rsbe)
+Sean Hallgren      (hallgren)
+William Lott       (wlott)
 
 
-N: Matthias Hoelzl
-E: tc@gauss.muc.de
-D: Made Mindy work with standard flex, identified incredibly hairy bug
-D: in CSE optimizations, functional classes workaround.
-D: Lots of low-level compiler fixes.
+People credited with code imported to the project at some point
+===============================================================
 
-N: Bruce Hoult
-E: bruce@hoult.org
-D: PPC trampoline code, some optimizer bug fixes, some build fixes,
-D: some speed tuning, more GC updates.  Installed cvszilla
-
-N: Peter Housel
-E: housel@acm.org
-D: FreeBSD port, major portability work, callbacks, callbacks to
-D: closures, fancy new SGML manuals. Lots of Melange work, and many,
-D: many bug fixes. C heap file generation, making shared libraries
-D: work.
-
-N: Eric Kidd
-E: eric.kidd@pobox.com
-W: http://www.pobox.com/~emk/
-W: http://www.randomhacks.com/
-D: RPM packaging, new configure.in, Dylan tutorial, Melange fixes,
-D: website, bug tracker and mailing lists. Documentation and the new
-D: getopt, too.
-
-N: Megabyte Computers
-D: Hosting of randomhacks.com, server repairs, cheap parts. Our many
-D: thanks!
-
-N: Rob Myers
-E: robmyers@mac.com
-D: Classic MacOS port, MacOS X port. MacOS X maintainer.
-
-N: Shaleh
-E: shaleh@livenet.net
-D: Debian advisor
-
+Andrew Armstrong
+Roger Critchlow
+Scott McKay
