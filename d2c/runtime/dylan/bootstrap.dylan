@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.10 1995/12/11 19:49:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.11 1995/12/14 00:09:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -111,24 +111,35 @@ define %%module dylan-viscera
     // Special Operators
     \&, \|, \:=,
 
-    // Buffers:
-    <byte>,
-    <byte-vector>,
-    <buffer>,
-    <buffer-index>,
-    $maximum-buffer-size,
-    copy-bytes,
-    buffer-address,
-
     // Extensions
-    <fixed-integer>, <extended-integer>, <byte-character>,
+    <fixed-integer>, <extended-integer>,
+    $maximum-fixed-integer, $minimum-fixed-integer,
     <ratio>, ratio, numerator, denominator,
-    $not-supplied,
+    <byte-character>, <true>, <false>,
+    <equal-table>, equal-hash, 
+    <value-table>, value-hash,
+    <string-table>, string-hash,
+    collection-hash, sequence-hash,
     false-or, one-of, <never-returns>,
-    format, print-message, print, write-integer, write,
     report-condition, condition-format, *warning-output*,
     <debugger>, invoke-debugger, *debugger*,
+    <byte>, <byte-vector>,
+    $not-supplied, ignore,
+
+    // Cheap IO
+    format, print-message, print, write-integer, write,
 
     // System stuff
-    call-out, c-include, c-decl, c-expr;
+    call-out, c-include, c-decl, c-expr,
+    <raw-pointer>, pointer-deref, pointer-deref-setter,
+    object-address,
+    <buffer>, <buffer-index>, $maximum-buffer-size,
+    copy-bytes, buffer-address,
+
+    // Introspection Stuff
+    class-name, function-name,
+    singleton-object,
+    <limited-integer>, limited-integer-base-class,
+    limited-integer-minimum, limited-integer-maximum,
+    <union>, union-members, union-singletons;
 end;

@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.13 1995/12/11 19:49:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.14 1995/12/14 00:09:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Cheap-IO, System;
+    Dylan, Extensions, Cheap-IO, System, Introspection;
 end;
 
 define module Dylan
@@ -121,15 +121,21 @@ end;
 define module Extensions
   use Dylan-Viscera,
     import: {
-	     // More types.
-	     <fixed-integer>, <extended-integer>, <byte-character>,
+	     // More integers.
+	     <fixed-integer>, <extended-integer>,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
 
 	     // Ratios.
 	     <ratio>, ratio, numerator, denominator,
 
-	     // Handy value that everyone wants.
-	     $not-supplied,
+	     // More types.
+	     <byte-character>, <true>, <false>,
+
+	     // Hash table extensions.
+	     <equal-table>, equal-hash, 
+	     <value-table>, value-hash,
+	     <string-table>, string-hash,
+	     collection-hash, sequence-hash,
 
 	     // Type extensions.
 	     false-or, one-of, <never-returns>,
@@ -140,15 +146,11 @@ define module Extensions
 	     // Debugger Hooks
 	     <debugger>, invoke-debugger, *debugger*,
 
-	     // Buffer stuff.
-	     <byte>,
-	     <byte-vector>,
-	     <buffer>,
-	     <buffer-index>,
-	     $maximum-buffer-size,
-	     copy-bytes,
-	     buffer-address
+	     // Byte vector stuff.
+	     <byte>, <byte-vector>,
 
+	     // Misc other stuff.
+	     $not-supplied, ignore
     },
     export: all;
 end;
@@ -165,8 +167,28 @@ end;
 
 define module System
   use Dylan-Viscera,
-    import: { call-out, c-include, c-decl, c-expr },
+    import: {// Foreign interface stuff.
+	     call-out, c-include, c-decl, c-expr,
+
+	     // Raw pointer stuff.
+	     <raw-pointer>, pointer-deref, pointer-deref-setter,
+
+	     // Object address
+	     object-address,
+
+	     // Buffers
+	     <buffer>, <buffer-index>, $maximum-buffer-size,
+	     copy-bytes, buffer-address},
     export: all;
 end;
 
-	     
+define module Introspection
+  use Dylan-Viscera,
+    import: {class-name, function-name,
+	     singleton-object,
+	     <limited-integer>, limited-integer-base-class,
+	     limited-integer-minimum, limited-integer-maximum,
+	     <union>, union-members, union-singletons},
+    export: all;
+end;
+
