@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.2 1994/03/25 03:45:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.3 1994/03/26 07:45:21 wlott Exp $
 *
 * This file does whatever.
 *
@@ -648,6 +648,7 @@ static scav_thread(struct thread *thread)
 
     for (ptr = thread->stack_base; ptr < thread->sp; ptr++)
 	scavenge(ptr);
+    bzero(thread->sp, (thread->stack_end - thread->sp) * sizeof(obj_t));
 }
 
 void scavenge_thread_roots(void)
