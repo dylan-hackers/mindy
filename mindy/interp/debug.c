@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.4 2000/03/18 15:42:56 robmyers Exp $
+* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.5 2000/10/31 14:37:40 dauclair Exp $
 *
 * This file implements the debugger.
 *
@@ -58,6 +58,7 @@
 #include "instance.h"
 #include "parser.h"
 #include "../comp/byteops.h"
+#include "../compat/cygwin.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
@@ -382,7 +383,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 	}
 	
 	if (source_directories == NULL || name[0] == '/')
-	    cur_source_stream = fopen(name, "r");
+	    cur_source_stream = fopen(name, open_for());
 	else
 	    cur_source_stream = NULL;
 
@@ -2528,7 +2529,7 @@ void invoke_debugger(enum pause_reason reason)
     
 #ifndef MACOS
     if ( ! isatty(fileno(stdin))
-      && ! freopen("/dev/tty", "r", stdin)) {
+      && ! freopen("/dev/tty", open_for(), stdin)) {
         printf("STDIN is not a tty and cannot open /dev/tty.  Cannot debug.\n");
 	exit(1);
     }

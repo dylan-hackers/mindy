@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/print.h,v 1.2 2000/01/24 04:58:20 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/print.h,v 1.3 2000/10/31 14:37:40 dauclair Exp $
 *
 \**********************************************************************/
 
@@ -38,3 +38,9 @@ extern int count_format_args(char *fmt);
 extern void vformat(char *fmt, obj_t *args, int nargs);
 
 extern void def_printer(obj_t class, void (*print_fn)(obj_t object));
+
+/** A little routine added by Douglas M. Auclair (dauclair@hotmail.com)
+ *  that ensures that, no matter the operating system, the character gets
+ *  printed correctly.  (Particularly, '\n' on cygnus) */
+char os_safe_character_printer(char);
+

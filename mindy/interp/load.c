@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.6 2000/01/24 04:58:19 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.7 2000/10/31 14:37:40 dauclair Exp $
 *
 * This file implements the loader.
 *
@@ -58,6 +58,7 @@
 #include "def.h"
 #include "../comp/fileops.h"
 #include "load.h"
+#include "../compat/cygwin.h"
 
 #if BUFSIZ > 4096
 #define BUFFER_SIZE BUFSIZ
@@ -982,11 +983,11 @@ void load(char *name)
 #if WIN32
       fd = open(name, O_RDONLY | O_BINARY, 0);
 #else 
-#	ifdef MACOS
+#ifdef MACOS
       fd = MacOpen(name, O_RDONLY | O_BINARY, 0 );	/* So we can load the data fork for self-runners */
-#	else
-      fd = open(name, O_RDONLY, 0);
-#	endif
+#else
+      fd = open(name, flags_for(O_RDONLY), 0);
+#endif
 #endif
     }
     if (fd < 0)

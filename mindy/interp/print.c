@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/print.c,v 1.2 2000/01/24 04:58:20 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/print.c,v 1.3 2000/10/31 14:37:40 dauclair Exp $
 *
 * This file implements the printer framework.
 *
@@ -49,6 +49,7 @@
 #include "error.h"
 #include "num.h"
 #include "type.h"
+#include "../compat/cygwin.h"
 
 void def_printer(obj_t class, void (*print_fn)(obj_t object))
 {
@@ -94,10 +95,11 @@ void prin1(obj_t object)
     depth--;
 }
 
+/* Doug asks, "Why do we need \n after printing an object?" */
 void print(obj_t object)
 {
     prin1(object);
-    putchar('\n');
+    os_safe_character_printer('\n');
 }
 
 static void vvformat(char *fmt, va_list ap)
@@ -111,6 +113,7 @@ static void vvformat(char *fmt, va_list ap)
 
     vformat(fmt, SOVEC(vec)->contents, args);
 }
+
 #if _USING_PROTOTYPES_
 void format(char *fmt, ...)
 {
@@ -181,6 +184,82 @@ void print_number_in_binary(int number)
 	print_nonzero_in_binary(number);
 }
 
+/* Dylan routines */
+
+static obj_t dylan_print(obj_t obj)
+{
+  print(obj);
+  return obj;
+}
+
+static obj_t dylan_prin1(obj_t obj)
+{
+  prin1(obj);
+  return obj;
+}
+
+static obj_t dylan_putc(obj_t obj)
+{
+  os_safe_character_printer(char_int(obj));
+  return obj;
+}
+
+static obj_t dylan_puts(obj_t obj)
+{
+  char* output_string = (char*)string_chars(obj);
+  if(cygwin()) {
+    /* check that each character is safe for printing on this os */
+    while(*output_string) {
+      os_safe_character_printer(*output_string++);
+    }
+  } else {
+    fputs(output_string, stdout);
+  }
+  return obj;
+}
+
+static void dylan_format(struct thread* thread, int nargs)
+{
+  obj_t* args = thread->sp - nargs;
+  obj_t* old_sp;
+  obj_t fmt = args[0];
+
+  push_linkage(thread, args);
+  check_type(fmt, obj_ByteStringClass);
+  vformat((char*)string_chars(fmt), args+1, nargs-1);
+  old_sp = pop_linkage(thread);
+  thread->sp = old_sp;
+  do_return(thread, old_sp, old_sp);
+}
+
+static obj_t dylan_fflush()
+{
+  fflush(stdout);
+  return obj_False;
+}
+
+/* Refactored code appearing several places
+ * in the switch in vformat to these functions (more_arguments and check_and)
+ * Douglas M. Auclair, dauclair@hotmail.com */
+int more_arguments(int nargs)
+{
+  if(--nargs < 0) {
+    error("Not enough arguments to format");
+  }
+  return nargs;
+}
+
+int check_and_print_number(obj_t obj, int nargs, int base, const char* fmt)
+{
+  nargs = more_arguments(nargs);
+  check_type(obj, obj_IntegerClass);
+  if(obj_is_fixnum(obj))
+    fprintf(stdout, fmt, fixnum_value(obj));
+  else print_bignum(obj, base);
+  return nargs;
+}
+
+
 void vformat(char *fmt, obj_t *args, int nargs)
 {
     while (*fmt != '\0') {
@@ -188,18 +267,12 @@ void vformat(char *fmt, obj_t *args, int nargs)
 	    switch (*++fmt) {
               case 'd':
 	      case 'D':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
-		check_type(*args, obj_IntegerClass);
-		if (obj_is_fixnum(*args))
-		    fprintf(stdout, "%ld", fixnum_value(*args++));
-		else
-		    print_bignum(*args++, 10);
+		nargs = check_and_print_number(*args, nargs, 10, "%ld");
+		args++;
 		break;
               case 'b':
 	      case 'B':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
+		nargs = more_arguments(nargs);
 		check_type(*args, obj_IntegerClass);
 		if (obj_is_fixnum(*args))
 		    print_number_in_binary(fixnum_value(*args++));
@@ -208,44 +281,32 @@ void vformat(char *fmt, obj_t *args, int nargs)
 		break;
               case 'o':
 	      case 'O':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
-		check_type(*args, obj_IntegerClass);
-		if (obj_is_fixnum(*args))
-		    fprintf(stdout, "%lo", fixnum_value(*args++));
-		else
-		    print_bignum(*args++, 8);
+		nargs = check_and_print_number(*args, nargs, 8, "%lo");
+		args++;
 		break;
               case 'x':
 	      case 'X':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
-		check_type(*args, obj_IntegerClass);
-		if (obj_is_fixnum(*args))
-		    fprintf(stdout, "%lx", fixnum_value(*args++));
-		else
-		    print_bignum(*args++, 16);
+		nargs = check_and_print_number(*args, nargs, 16, "%lx");
+		args++;
 		break;
 	      case 'c':
 	      case 'C':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
+		nargs = more_arguments(nargs);
 		check_type(*args, obj_CharacterClass);
+		os_safe_character_printer(char_int(*args++));
 		fputc(char_int(*args++), stdout);
 		break;
 	      case '=':
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
+		nargs = more_arguments(nargs);
 		prin1(*args++);
 		break;
 	      case 's':
 	      case 'S':
 		/* Gotta somehow have two cases,          */
 		/* one for strings and another for errors */
-		if (--nargs < 0)
-		    error("Not enough arguments to format");
 		if (instancep(*args, obj_ByteStringClass)) {
-		    fputs((char *)string_chars(*args++), stdout);
+		nargs = more_arguments(nargs);
+		    dylan_puts(*args++);
 		}
 		else if (instancep(*args, obj_SymbolClass)) {
 		    fputs((char *)sym_name(*args++), stdout);
@@ -266,63 +327,11 @@ void vformat(char *fmt, obj_t *args, int nargs)
 	      }
 	}
 	else
-	    putchar(*fmt);
+	    os_safe_character_printer(*fmt);
 	fmt++;
     }
 }
 
-
-/* Dylan routines */
-
-static obj_t dylan_print(obj_t obj)
-{
-    print(obj);
-    return obj;
-}
-
-static obj_t dylan_prin1(obj_t obj)
-{
-    prin1(obj);
-    return obj;
-}
-
-static obj_t dylan_putc(obj_t obj)
-{
-    putchar(char_int(obj));
-    return obj;
-}
-
-static obj_t dylan_puts(obj_t obj)
-{
-    fputs((char *)string_chars(obj), stdout);
-    return obj;
-}
-
-static void dylan_format(struct thread *thread, int nargs)
-{
-    obj_t *args = thread->sp - nargs;
-    obj_t *old_sp;
-    obj_t fmt = args[0];
-
-    push_linkage(thread, args);
-
-    check_type(fmt, obj_ByteStringClass);
-
-    vformat((char *)string_chars(fmt), args+1, nargs-1);
-
-    old_sp = pop_linkage(thread);
-    thread->sp = old_sp;
-
-    do_return(thread, old_sp, old_sp);
-}
-
-static obj_t dylan_fflush()
-{
-    fflush(stdout);
-    return obj_False;
-}
-
-
 /* Init stuff. */
 
 void init_print_functions(void)
@@ -342,3 +351,18 @@ void init_print_functions(void)
     define_function("fflush", obj_Nil, FALSE, obj_False, FALSE,
 		    obj_ObjectClass, dylan_fflush);
 }
+
+/*******
+ * a little routine to check for '\n' and print '\r' before it (for cygwin)
+ *******/
+char os_safe_character_printer(char curr)
+{
+  static char prev = '\0';
+  if(cygwin() && '\n' == curr && prev != '\r') {
+    putchar('\r');
+  }
+  putchar(curr);
+  prev = curr;
+  return curr;
+}
+

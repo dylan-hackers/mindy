@@ -25,10 +25,12 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/str.h,v 1.3 2000/01/24 04:58:21 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/str.h,v 1.4 2000/10/31 14:37:40 dauclair Exp $
 *
 \**********************************************************************/
 
+#ifndef MINDY_STR_H
+#define MINDY_STR_H
 
 extern obj_t obj_ByteStringClass;
 extern obj_t obj_UnicodeStringClass;
@@ -60,3 +62,6 @@ struct string {
 
 extern obj_t make_byte_string(char *chars);
 extern obj_t alloc_byte_string(int len);
+
+#endif
+

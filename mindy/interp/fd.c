@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.4 2000/01/24 04:58:15 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.5 2000/10/31 14:37:40 dauclair Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -46,6 +46,7 @@
 #include "obj.h"
 #include "def.h"
 #include "fd.h"
+#include "../compat/cygwin.h"
 
 /* And now, some large pieces of OS-dependent stuff. */
 
@@ -402,7 +403,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 
 static int mindy_open (const char *filename, int flags, int mode)
 {
-    return open(filename, flags, mode);
+    return open(filename, flags_for(flags), mode);
 }
 
 static int mindy_close (int fd)
