@@ -2,7 +2,34 @@ module: plugin-api
 file: plugin-api.dylan
 author: gabor@mac.com
 synopsis: CW plugin interface.
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.1 2004/04/13 21:01:46 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.2 2004/04/13 23:46:28 gabor Exp $
+copyright: see below
+
+//======================================================================
+//
+// Copyright (c) 2000 - 2004  Gwydion Dylan Maintainers
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University, and the Gwydion Dylan Maintainers.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+//
+//======================================================================
 
 c-system-include("Files.h");
 c-system-include("TextUtils.h");
@@ -343,15 +370,13 @@ end;
 
 //CW_CALLBACK CWCreateNewTextDocument(CWPluginContext, const CWNewTextDocumentInfo* docinfo);
 define function create-new-text-document(plug :: <plugin-callback>, info :: <new-text-document-info>) => ();
-	c-local-decl("CWNewTextDocumentInfo docinfo;");
+	c-zeroed-local("CWNewTextDocumentInfo", "docinfo");
 	let doc-name :: <c-string> = as(<c-string>, info.document-name);
 
-	c-void-expr("memset(&docinfo, 0, sizeof(docinfo))");
 	call-out("docinfo.documentname = ", void:, ptr: doc-name.raw-value);
 	call-out("docinfo.text = ", void:, ptr: info.initial-text.opaque-handle.raw-value);
 //	c-assign("docinfo.text", ptr: info.initial-text.opaque-handle.raw-value);
 	let mark-dirty = mark-dirty? & 1 | 0;
-//	let mark-dirty :: <integer> = if (mark-dirty?) 1 else 0 end if;
 	call-out("docinfo.markDirty = ", void:, int: mark-dirty);
 	check(call-out("CWCreateNewTextDocument", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&docinfo")));
 end function create-new-text-document;
@@ -367,8 +392,7 @@ standard-seals-for(<file-spec>);
 //CW_CALLBACK	CWGetProjectFile(CWPluginContext context, CWFileSpec* projectSpec);
 define function get-project-file(plug :: <plugin-callback>) => project-spec :: <file-spec>;
 	c-local-decl("CWFileSpec spec;");
-	let i = call-out("CWGetProjectFile", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&spec"));
-	check(i);
+	check(call-out("CWGetProjectFile", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&spec")));
 	make(<file-spec>,
 		vol: c-int-expr("spec.vRefNum"),
 		dir: c-int-expr("spec.parID"),
@@ -505,30 +529,30 @@ end function precompiling?;
 
 // CW_CALLBACK CWIsAutoPrecompiling(CWPluginContext context, Boolean* isAutoPrecompiling);
 define function auto-precompiling?(plug :: <plugin-callback>) => auto-precompiling? :: <boolean>;
-	c-void-expr("{ Boolean isAutoPrecompiling;");
-	check(call-out("CWIsAutoPrecompiling", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&isAutoPrecompiling")));
-	c-int-expr("isAutoPrecompiling; }") ~== 0
+	with-c-variable-and-ptr("Boolean", isAutoPrecompiling, isAutoPrecompiling-ptr)
+	    check(call-out("CWIsAutoPrecompiling", int:, ptr: plug.opaque-pointer.raw-value, ptr: isAutoPrecompiling-ptr));
+	end ~== 0
 end function auto-precompiling?;
 
 // CW_CALLBACK CWIsPreprocessing(CWPluginContext context, Boolean* isPreprocessing);
 define function preprocessing?(plug :: <plugin-callback>) => preprocessing? :: <boolean>;
-	c-void-expr("{ Boolean isPreprocessing;");
-	check(call-out("CWIsPreprocessing", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&isPreprocessing")));
-	c-int-expr("isPreprocessing; }") ~== 0
+	with-c-variable-and-ptr("Boolean", isPreprocessing, isPreprocessing-ptr)
+	    check(call-out("CWIsPreprocessing", int:, ptr: plug.opaque-pointer.raw-value, ptr: isPreprocessing-ptr));
+	end ~== 0
 end function preprocessing?;
 
 // CW_CALLBACK CWIsGeneratingDebugInfo(CWPluginContext context, Boolean* isGenerating);
 define function generating-debug-info?(plug :: <plugin-callback>) => generating-debug-info? :: <boolean>;
-	c-void-expr("{ Boolean isGenerating;");
-	check(call-out("CWIsGeneratingDebugInfo", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&isGenerating")));
-	c-int-expr("isGenerating; }") ~== 0
+	with-c-variable-and-ptr("Boolean", isGenerating, isGenerating-ptr)
+	    check(call-out("CWIsGeneratingDebugInfo", int:, ptr: plug.opaque-pointer.raw-value, ptr: isGenerating-ptr));
+	end ~== 0
 end function generating-debug-info?;
 
 // CW_CALLBACK CWIsCachingPrecompiledHeaders(CWPluginContext context, Boolean* isCaching);
 define function caching-precompiled-headers?(plug :: <plugin-callback>) => caching-precompiled-headers? :: <boolean>;
-	c-void-expr("{ Boolean isCaching;");
-	check(call-out("CWIsCachingPrecompiledHeaders", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&isCaching")));
-	c-int-expr("isCaching; }") ~== 0
+	with-c-variable-and-ptr("Boolean", isCaching, isCaching-ptr)
+	    check(call-out("CWIsCachingPrecompiledHeaders", int:, ptr: plug.opaque-pointer.raw-value, ptr: isCaching-ptr));
+	end ~== 0
 end function caching-precompiled-headers?;
 
 //CW_CALLBACK CWGetMainFileNumber(CWPluginContext context, long* fileNumber);
@@ -1320,7 +1344,7 @@ end;
 
 // CW_CALLBACK CWResolveRelativePath(CWPluginContext context, const CWRelativePath* relativePath, CWFileSpec* fileSpec, Boolean create);
 define function resolve-relative-path(plug :: <plugin-callback>, relative-path :: <machine-pointer>, #key create :: <boolean> = #t) => file-spec :: <file-spec>;
-	c-void-expr("{ CWFileSpec spec; memset(&spec, 0, sizeof(spec))");
+	c-zeroed-local("CWFileSpec", "spec");
 	check(call-out("CWResolveRelativePath", int:,
 								ptr: plug.opaque-pointer.raw-value,
 								ptr: relative-path.raw-value,
@@ -1332,22 +1356,24 @@ define function resolve-relative-path(plug :: <plugin-callback>, relative-path :
 	make(<file-spec>,
 				vol: c-int-expr("spec.vRefNum"),
 				dir: c-int-expr("spec.parID"),
-				name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name; }"))))
+				name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))))
 
 end function resolve-relative-path;
 
 
 define function fill-fs-spec(spec :: <file-spec>, into :: <raw-pointer>, #key extra :: <byte-string> = "") => ();
+	c-local-decl("CWFileSpec* spec");
 	let spec-file-name :: <c-string> = as(<c-string>, concatenate(":", spec.spec-file-name, extra));
-	call-out("{ CWFileSpec* spec = ", void:, ptr: into);
+	call-out("spec = ", void:, ptr: into);
 	call-out("spec->vRefNum = ", void:, int: spec.volume-ref);
 	call-out("spec->parID = ", void:, int: spec.directory-ref);
 	call-out("c2pstrcpy", void:, ptr: c-ptr-expr("spec->name"), ptr: spec-file-name.raw-value);
-	c-void-expr("}");
 end function fill-fs-spec;
 
 define function relative-path-from(plug :: <plugin-callback>, root-spec :: <file-spec>, relative-path :: <byte-string>, #key check: check? :: <boolean>) => file-spec :: <file-spec>;
-	c-void-expr("{ CWFileSpec spec, dest; memset(&spec, 0, sizeof(spec)); memset(&dest, 0, sizeof(dest))");
+	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("CWFileSpec", "dest");
+
 	fill-fs-spec(root-spec, c-ptr-expr("&spec"), extra: relative-path);
 	
 	local method check-if-needed(result :: <integer>) => result :: <integer>;
@@ -1359,7 +1385,7 @@ define function relative-path-from(plug :: <plugin-callback>, root-spec :: <file
 	make(<file-spec>,
 				vol: c-int-expr("dest.vRefNum"),
 				dir: c-int-expr("dest.parID"),
-				name: as(<byte-string>, as(<c-string>, c-ptr-expr("dest.name; }"))))
+				name: as(<byte-string>, as(<c-string>, c-ptr-expr("dest.name"))))
 
 end function relative-path-from;
 
