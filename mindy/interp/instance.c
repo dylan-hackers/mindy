@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.41 1996/02/13 19:39:24 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.42 1996/02/14 00:23:43 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1252,7 +1252,7 @@ static obj_t process_inherited(obj_t class, obj_t inherited, obj_t overrides)
 /* Initialize Defined Class */
 
 void init_defined_class(obj_t class, obj_t slots,
-			obj_t initargs, obj_t inheriteds)
+			obj_t initargs, obj_t inheriteds, obj_t abstractp)
 {
     obj_t scan;
     obj_t overrides;
@@ -1291,6 +1291,7 @@ void init_defined_class(obj_t class, obj_t slots,
 	do_initialization(class, obj_Nil, obj_Nil);
     }
 
+    DC(class)->abstract_p = !idp(abstractp, obj_False);
     DC(class)->new_slots = slots;
     DC(class)->all_slots = obj_Nil;
     DC(class)->new_initargs = initargs;
@@ -1481,6 +1482,11 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
     if (DC(class)->all_slots == obj_False)
 	error("Attempt to make an instance of %= before\n"
 	      "the define class for it has been processed.",
+	      class);
+
+    if (DC(class)->abstract_p == TRUE)
+	error("Attempt to instantiate the abstract class %= with\n"
+	      "the default make method.",
 	      class);
 
     initializers = obj_Nil;

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.11 1996/02/13 19:39:24 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.12 1996/02/14 00:23:43 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -77,4 +77,5 @@ extern void describe(obj_t thing);
 
 extern obj_t make_defined_class(obj_t debug_name, struct library *library);
 extern void init_defined_class(obj_t class, obj_t slots,
-			       obj_t initargs, obj_t inheriteds);
+			       obj_t initargs, obj_t inheriteds, 
+			       obj_t abstractp);
