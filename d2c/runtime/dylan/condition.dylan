@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.6 2000/10/21 03:39:42 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.7 2000/10/22 21:03:45 dauclair Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -66,7 +66,7 @@ end class <format-string-condition>;
 
 // interposed this class to conform to the common-extensions
 // in the "core" document from Functional Objects, Inc.
-define abstract class <simple-condition> (<format-string-condition>)
+define open abstract class <simple-condition> (<format-string-condition>)
 end class <simple-condition>;
 
 // <simple-error> -- exported from Dylan
