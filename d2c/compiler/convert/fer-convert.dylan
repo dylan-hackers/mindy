@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.1 1994/12/12 13:01:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.2 1994/12/12 21:20:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -844,6 +844,7 @@ end;
 define method make-check-type-operation (builder :: <fer-builder>,
 					 value-leaf :: <leaf>,
 					 type-leaf :: <list>)
+    => res :: <operation>;
   make-operation(builder,
 		 list(dylan-defn-leaf(builder, #"check-type"),
 		      value-leaf,
@@ -852,7 +853,7 @@ end method;
 
 define method make-error-operation (builder :: <fer-builder>,
 				    msg :: <byte-string>)
-    => res :: <leaf>;
+    => res :: <operation>;
   make-operation(builder,
 		 list(dylan-defn-leaf(builder, #"error"),
 		      make-literal-constant(builder,
