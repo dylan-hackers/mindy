@@ -27,7 +27,8 @@ rcs-header: $Header:
 
 define module c-declarations
   use dylan;
-  use extensions, exclude: {format};
+  use extensions, exclude: {format, <string-table>};
+  use regular-expressions;
   use streams;
   use format;
 
@@ -50,7 +51,7 @@ define module c-declarations
     ignored?-setter, find-result, find-parameter, find-slot,
     argument-direction-setter, constant-value-setter, getter-setter,
     setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
-    exclude-slots, equate, remap, rename, true-type,
+    exclude-slots, equate, remap, rename, true-type, superclasses-setter,
 
     // "Import declarations phase" 
     declaration-closure, // also calls compute-closure
@@ -120,6 +121,9 @@ end module c-declarations;
 //           operations include add-cpp-declaration
 //   <typed> (Mix-in class)
 //     operations include type
+//   <new-static-pointer> (Mix-in class)
+//     Corresponds to new types which will be subtypes of
+//     <statically-typed-pointer>.  Operations include superclasses.
 //------------------------------------------------------------------------
 
 // A <declaration> can correspond to any sort of declaration that might appear
@@ -301,6 +305,10 @@ define abstract class <type-declaration> (<declaration>)
   slot equated? :: <boolean>, init-value:  #f, init-keyword: #"equated";
 end class;
 
+define abstract class <new-static-pointer> (<object>)
+  slot superclasses :: false-or(<sequence>), init-value: #f;
+end class <new-static-pointer>;
+
 // Pushes past any typedefs to find an actual "structured" type declaration.
 // Should only be used in calls of the form: instance?(foo.true-type, <bar>)
 //
@@ -353,8 +361,12 @@ end method c-type-size;
 define abstract class <structured-type-declaration> (<type-declaration>) 
   slot members :: union(<sequence>, <false>), init-value: #f;
 end class <structured-type-declaration>;
-define class <struct-declaration> (<structured-type-declaration>) end class;
-define class <union-declaration> (<structured-type-declaration>) end class;
+define class <struct-declaration>
+    (<new-static-pointer>, <structured-type-declaration>)
+end class;
+define class <union-declaration>
+    (<new-static-pointer>, <structured-type-declaration>)
+end class;
 define class <enum-declaration> (<structured-type-declaration>) end class;
 
 // Given a function (or function type) declaration, return the declaration
@@ -581,12 +593,12 @@ end method c-type-size;
 
 //------------------------------------------------------------------------
 
-define class <pointer-declaration> (<type-declaration>)
+define class <pointer-declaration> (<new-static-pointer>, <type-declaration>)
   slot referent :: <type-declaration>, required-init-keyword: #"referent";
   slot accessors-written?, init-value: #f;
 end class;
 
-define class <vector-declaration> (<type-declaration>)
+define class <vector-declaration> (<new-static-pointer>, <type-declaration>)
   slot pointer-equiv :: <type-declaration>, required-init-keyword: #"equiv";
   slot length :: union(<integer>, <false>), required-init-keyword: #"length";
 end class <vector-declaration>;

@@ -241,8 +241,10 @@ define method write-declaration
     (decl :: <struct-declaration>, load-string :: <string>, stream :: <stream>)
  => ();
   if (~decl.equated?)
-    format(stream, "define class %s (<statically-typed-pointer>) end;\n\n",
-	   decl.dylan-name);
+    let supers = decl.superclasses | #("<statically-typed-pointer>");
+    format(stream, "define class %s (%s) end;\n\n",
+	   decl.dylan-name,
+	   as(<byte-string>, apply(join, ", ", supers)));
     local method slot-accessors
 	      (end-offset :: <integer>, c-slot :: <declaration>)
 	   => (end-offset :: <integer>);
@@ -284,8 +286,10 @@ define method write-declaration
     (decl :: <union-declaration>, load-string :: <string>, stream :: <stream>)
  => ();
   if (~decl.equated?)
-    format(stream, "define class %s (<statically-typed-pointer>) end;\n\n",
-	   decl.dylan-name);
+    let supers = decl.superclasses | #("<statically-typed-pointer>");
+    format(stream, "define class %s (%s) end;\n\n",
+	   decl.dylan-name,
+	   as(<byte-string>, apply(join, ", ", supers)));
 
     // This may still be an "incomplete type".  If so, we define the class, but
     // don't write any slot accessors.
@@ -609,8 +613,10 @@ define method write-declaration
     let target-map = target-type.mapped-name;
 
     // First get the raw c function ...
-    format(stream, "define class %s (<statically-typed-pointer>) end class;\n",
-	   decl.dylan-name);
+    let supers = decl.superclasses | #("<statically-typed-pointer>");
+    format(stream, "define class %s (%s) end;\n\n",
+	   decl.dylan-name,
+	   as(<byte-string>, apply(join, ", ", supers)));
     format(stream,
 	   "define method pointer-value\n"
 	     "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",

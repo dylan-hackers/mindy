@@ -306,15 +306,29 @@ define method process-clause
     error("Struct clause names a non-struct: %s", clause.name);
   end if;
 
-  let (#rest options) = merge-container-options(clause.container-options,
-						state.container-options);
-  apply(apply-container-options, decl, options);
+  let (#rest opts) = merge-container-options(clause.container-options,
+					     state.container-options);
+  apply(apply-container-options, decl, opts);
 
   let find-decl = curry(find-slot, decl);
   process-mappings(clause.container-options, find-decl);
   let (imports, import-all?) = process-imports(clause.container-options,
 					       find-decl);
   exclude-slots(decl, imports, import-all?);
+  for (option in clause.options)
+    let tag = option.head;
+    let body = option.tail;
+    select (tag)
+      #"superclass" =>
+	let supers
+	  = if (member?("<statically-typed-pointer>", body, test: \=))
+	      body
+	    else
+	      concatenate(body, #("<statically-typed-pointer>"));
+	    end if;
+	decl.superclasses := supers;
+    end select;
+  end for;
 end method process-clause;
 
 define method process-clause
@@ -326,15 +340,28 @@ define method process-clause
   if (~instance?(decl, <union-declaration>))
     error("Union clause names a non-union: %s", clause.name);
   end if;
-  let (#rest options) = merge-container-options(clause.container-options,
-						state.container-options);
-  apply(apply-container-options, decl, options);
+  let (#rest opts) = merge-container-options(clause.container-options,
+					     state.container-options);
+  apply(apply-container-options, decl, opts);
 
   let find-decl = curry(find-slot, decl);
   process-mappings(clause.container-options, find-decl);
   let (imports, import-all?) = process-imports(clause.container-options,
 					       find-decl);
   exclude-slots(decl, imports, import-all?);
+  for (option in clause.options)
+    let tag = option.head;
+    let body = option.tail;
+    select (tag)
+      #"superclass" =>
+	let supers = if (member?("<statically-typed-pointer>", body))
+		       body
+		     else
+		       concatenate(body, #("<statically-typed-pointer>"));
+		     end if;
+	decl.superclasses := supers;
+    end select;
+  end for;
 end method process-clause;
 
 //----------------------------------------------------------------------

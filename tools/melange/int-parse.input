@@ -124,8 +124,10 @@ end class <parse-state>;
 // will last for milliseconds or less.
 //
 define method process-container-options 
-    (parsed-clauses :: <list>) => (result :: <container-options>);
+    (parsed-clauses :: <list>)
+ => (result :: <container-options>, rest :: <list>);
   let result = make(<container-options>);
+  let left = #();
   for (item in parsed-clauses)
     select (item.head)
       #"name-mapper" =>
@@ -159,10 +161,10 @@ define method process-container-options
       #"seal" =>
         result.seal-string := item.tail;
       otherwise =>
-        #f;
+        left := pair(item, left);
     end select;
   end for;
-  result;
+  values(result, reverse!(left));
 end method process-container-options;
 
 // This corresponds to any "clause" in the interface definition which is not a
@@ -174,15 +176,12 @@ end method process-container-options;
 //
 define class <clause> (<object>) 
   slot name :: <string>, required-init-keyword: #"name";
+  slot options :: <sequence>, required-init-keyword: #"options";
 end class;
 
-define class <simple-clause> (<clause>)
-  slot options :: <sequence>, required-init-keyword: #"options";
-end class <simple-clause>;
-
-define class <function-clause> (<simple-clause>) end class;
-define class <variable-clause> (<simple-clause>) end class;
-define class <constant-clause> (<simple-clause>) end class;
+define class <function-clause> (<clause>) end class;
+define class <variable-clause> (<clause>) end class;
+define class <constant-clause> (<clause>) end class;
 
 define class <container-clause> (<clause>)
   slot container-options :: <container-options>;
@@ -541,41 +540,62 @@ argument (<string-literal-token>)
   $r1;
 %
 
-interface-clause (<struct-token> <string-literal-token> container-option-list)
-  let new-clause = make(<struct-clause>, name: $r2.value);
+interface-clause (<struct-token> <string-literal-token> structure-option-list)
+  let (container-opts, rest) = process-container-options($r3);
+  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
-  new-clause.container-options := process-container-options($r3)
 %
 
 interface-clause (<struct-token> <string-literal-token> <arrow-token>
-                  <identifier-token> container-option-list)
+                  <identifier-token> structure-option-list)
   $state.container-options.rename :=
      pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  let new-clause = make(<struct-clause>, name: $r2.value);
+  let (container-opts, rest) = process-container-options($r5);
+  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
-  new-clause.container-options := process-container-options($r5)
 %
 
-interface-clause (<union-token> <string-literal-token> container-option-list)
-  let new-clause = make(<union-clause>, name: $r2.value);
+interface-clause (<union-token> <string-literal-token> structure-option-list)
+  let (container-opts, rest) = process-container-options($r3);
+  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
-  new-clause.container-options := process-container-options($r3)
 %
 
 interface-clause (<union-token> <string-literal-token> <arrow-token>
-                  <identifier-token> container-option-list)
+                  <identifier-token> structure-option-list)
   $state.container-options.rename :=
      pair(pair($r2.value, $r4.value), $state.container-options.rename);
-  let new-clause = make(<union-clause>, name: $r2.value);
+  let (container-opts, rest) = process-container-options($r5);
+  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
-  new-clause.container-options := process-container-options($r5)
 %
 
-container-option-list ()
+structure-option-list ()
   list();
 %
 
-container-option-list (container-option-list <comma-token> container-option)
+structure-option-list (structure-option-list <comma-token> container-option)
+  pair($r3, $r1);
+%
+
+superclass-list (<identifier-token>)
+  list($r1.string-value);
+%
+
+superclass-list (superclass-list <comma-token> <identifier-token>)
+  pair($r3.string-value, $r1);
+%
+
+superclass-option
+    (<superclass-token> <lbrace-token> superclass-list <rbrace-token>)
+  pair(#"superclass", reverse!($r3));
+%
+
+structure-option-list (structure-option-list <comma-token> superclass-option)
   pair($r3, $r1);
 %
 
