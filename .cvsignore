@@ -19,5 +19,6 @@ libtool
 gwydion-dylan.spec
 config.guess
 config.sub
+missing
 previous_runtime
 bootstrap_compiler

@@ -9,7 +9,6 @@ else
     LIBTOOLIZE=libtoolize
 fi
 
-
 srcdir=`dirname $0`
 if test -z "$srcdir"; then srcdir=.; fi
 
@@ -18,6 +17,14 @@ DIE=0
 (autoconf --version && autoheader --version) < /dev/null > /dev/null 2>&1 || {
         echo
         echo "You must have autoconf installed to compile Gwydion Dylan."
+        echo "Download the appropriate package for your distribution,"
+        echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
+        DIE=1
+}
+
+(aclocal --version) < /dev/null > /dev/null 2>&1 || {
+        echo
+        echo "You must have automake installed to compile Gwydion Dylan."
         echo "Download the appropriate package for your distribution,"
         echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
         DIE=1
@@ -52,6 +59,13 @@ echo processing...
   $LIBTOOLIZE --force --copy
   autoheader
   autoconf )
+
+test -x "$srcdir/missing" || {
+    	echo
+    	echo "You need to have a copy of the 'missing' script in $srcdir."
+	echo "You probably already have a copy in \${prefix}/share/automake"
+	echo "or in \${prefix}/share/autoconf."
+}
 
 if test -z "$*"; then
         echo "I am going to run ./configure with no arguments - if you wish "
