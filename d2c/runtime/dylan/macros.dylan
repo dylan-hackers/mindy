@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.17 2002/01/25 04:18:36 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.18 2002/04/06 08:22:35 brent Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -173,6 +173,11 @@ end;
 define macro unless
     { unless (?:expression) ?:body end }
       => { if (?expression) else ?body end }
+end;
+
+define macro when
+	{ when (?:expression) ?:body end }
+		=> { if (?expression) ?body end }
 end;
 
 define macro until

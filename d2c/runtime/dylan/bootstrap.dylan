@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.22 2001/12/13 22:43:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.23 2002/04/06 08:22:35 brent Exp $
 copyright: see below
 module: bootstrap
 
@@ -221,7 +221,7 @@ define module dylan-viscera
     exit, on-exit, no-core-dumps, get-time-of-day,
 
     // Machine-word stuff
-    <machine-word>, $machine-word-size,
+    <machine-word>, $machine-word-size, $machine-word-zero,
     $maximum-signed-machine-word, $minimum-signed-machine-word,
     $maximum-unsigned-machine-word, $minimum-unsigned-machine-word,
     // as-unsigned, %logior, %logxor, %logand, %lognot, %logbit?,
