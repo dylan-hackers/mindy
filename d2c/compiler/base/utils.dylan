@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.20 1996/01/15 23:09:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.21 1996/02/02 23:09:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -185,7 +185,12 @@ define method pprint-logical-block
 end;
 
 
+#if (mindy)
 *debug-output* := make(<flush-happy-stream>, target: *debug-output*);
+#else
+define variable *debug-output* :: <stream>
+  = make(<flush-happy-stream>, target: *standard-output*);
+#end
 
 
 // pretty format
