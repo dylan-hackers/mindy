@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.51 1996/06/03 18:53:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.52 1996/06/24 19:49:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -782,15 +782,20 @@ end class;
 
 define sealed domain make (singleton(<unknown-ctype>));
 
+define method print-message (ctype :: <unknown-ctype>, stream :: <stream>)
+    => ();
+  write("<unknown>", stream);
+end;
+
 define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
   ignore(type);
   #f;
 end;
 
-define method print-message (ctype :: <unknown-ctype>, stream :: <stream>)
-    => ();
-  write("<unknown>", stream);
-end;
+define method ctype-extent-dispatch (type :: <unknown-ctype>)
+    => res :: <ctype>;
+  object-ctype();
+end method ctype-extent-dispatch;
 
 
 //// Limited types:
