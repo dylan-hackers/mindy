@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.4 1995/05/02 16:32:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.5 1995/05/12 12:43:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -152,6 +152,10 @@ define class <variable> (<object>)
   // The definition for this variable, or #f if not yet defined.
   slot variable-definition :: union(<definition>, <false>),
     init-value: #f;
+  //
+  // List of FER transformers for this variable.  Gets propagated to the defn
+  // when the defn is installed.
+  slot variable-transformers :: <list>, init-value: #();
 end;
 
 define method print-object (var :: <variable>, stream :: <stream>) => ();
@@ -754,7 +758,8 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.variable-definition)
     unless (instance?(var.variable-definition, <implicit-definition>))
-      error("%s in module %s multiply defined.", name.name-symbol, mod.module-name);
+      error("%s in module %s multiply defined.",
+	    name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -781,6 +786,13 @@ define method note-variable-definition (defn :: <definition>)
       end;
     end;
   end;
+  //
+  // And if it is a function definition and we have some function info,
+  // propagate it over.
+  if (~empty?(var.variable-transformers)
+	& instance?(defn, <function-definition>))
+    defn.function-defn-transformers := var.variable-transformers;
+  end;
 end;
 //
 // We ignore implicit definitions for variables already defined or from outside
@@ -797,11 +809,17 @@ define method note-variable-definition (defn :: <implicit-definition>,
 end;
 
 
-// Syntax table stuff.
+// Transformer instillation
+
+define method define-transformer
+    (name :: <symbol>, transformer :: <function>) => ();
+  let var = dylan-var(name, create: #t);
+  var.variable-transformers := pair(transformer, var.variable-transformers);
+end;
+
 
 
 // Initilization stuff.
-
 
 define constant $Dylan-Library
   = find-library(#"Dylan", create: #t);
