@@ -164,7 +164,7 @@ define variable *Icap*
   = make(<active-variable>, class: <boolean>, value: #t);
 
 define constant menu-frame
-  = make(<frame>, relief: "groove", fill: "x", side: "top");
+  = make(<frame>, relief: "raised", fill: "x", side: "top", borderwidth: 2);
 
 define constant status-variable = make(<active-variable>, class: <symbol>,
 				       value: #"idle");
@@ -197,12 +197,12 @@ add-checkbutton(var-menu, label: "Capitalize <I> strings", variable: *Icap*);
 configure(var-button, menu: var-menu);
 
 define constant status-label =
-  make(<label>, relief: "raised", textvariable: status-variable,
+  make(<label>, relief: "sunken", textvariable: status-variable,
        width: 20, in: menu-frame, side: "right");
        
 
 define constant entry-frame
-  = make(<frame>, relief: "groove", fill: "x", side: "top");
+  = make(<frame>, relief: "groove", fill: "x", side: "top", borderwidth: 2);
 
 define constant length-variable = make(<active-variable>, class: <integer>,
 				       value: 78);
