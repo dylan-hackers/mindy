@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.7 1994/04/14 19:15:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.8 1994/04/18 03:28:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -152,9 +152,22 @@ static void dump_integer_literal(struct integer_literal *literal)
     dump_integer(literal->value);
 }
 
-static void dump_float_literal(struct float_literal *literal)
+static void dump_single_float_literal(struct single_float_literal *literal)
 {
-    lose("### Can't deal with float literals yet.");
+    dump_op(fop_SINGLE_FLOAT);
+    dump_bytes(&literal->value, sizeof(literal->value));
+}
+
+static void dump_double_float_literal(struct double_float_literal *literal)
+{
+    dump_op(fop_DOUBLE_FLOAT);
+    dump_bytes(&literal->value, sizeof(literal->value));
+}
+
+static void dump_extended_float_literal(struct extended_float_literal *literal)
+{
+    dump_op(fop_EXTENDED_FLOAT);
+    dump_bytes(&literal->value, sizeof(literal->value));
 }
 
 static void dump_character_literal(struct character_literal *literal)
@@ -290,7 +303,8 @@ static void dump_unbound_literal(struct literal *literal)
 
 static void (*LiteralDumpers[(int)literal_Kinds])() = {
     dump_symbol_literal, dump_integer_literal,
-    dump_float_literal, dump_character_literal, dump_string_literal,
+    dump_single_float_literal, dump_double_float_literal,
+    dump_extended_float_literal, dump_character_literal, dump_string_literal,
     dump_list_literal, dump_vector_literal, dump_true_literal,
     dump_false_literal, dump_unbound_literal
 };
