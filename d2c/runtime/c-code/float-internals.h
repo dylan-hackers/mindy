@@ -14,7 +14,8 @@ union ldbl {
 				            | (e + 0x3FFE))
 
 #if defined(__CYGWIN__)
-#define INFINITY (1.0F/0.0F)
+# define INFINITY (1.0F/0.0F)
+# undef HAVE_LOGL
 #endif
 
 #elif defined(__sparc__)
