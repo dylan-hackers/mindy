@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.44 1996/04/08 08:26:02 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.45 1996/04/10 16:51:27 wlott Exp $
 
 /*
 
@@ -554,7 +554,8 @@ begin
   register-object-id(#"extra-label", #x00E4);
 
   register-object-id(#"use", #x00E8);
-  register-object-id(#"renaming", #x00E9);
+  register-object-id(#"all-marker", #x00E9);
+  register-object-id(#"renaming", #x00EA);
 
 
   // Tokens
