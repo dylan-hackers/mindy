@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.16 1995/06/04 01:04:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.17 1995/06/04 22:50:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -62,8 +62,7 @@ define generic build-else
  => ();
 
 
-// Marks the start of a block.  The block can be passed to MAKE-EXIT-FUNCTION
-// to get an exit function for the block, or it can be used directly by
+// Marks the start of a block.  The block can be used by
 // BUILD-EXIT.  END-BODY marks the end of the block.
 //
 define generic build-block-body
@@ -225,11 +224,11 @@ define generic copy-variable
  => res :: <abstract-variable>;
 
 
-// Return an exit function that exits to Block.
+// Return the exit function for the given nlx info, or make one if necessary.
 //
 define generic make-exit-function
-    (builder :: <fer-builder>, catcher :: <abstract-variable>,
-     from :: <function-literal>)
+    (builder :: <fer-builder>, nlx-info :: <nlx-info>,
+     catcher :: <abstract-variable>)
  => res :: <leaf>;
 
 
