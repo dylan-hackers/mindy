@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.9 1995/06/15 15:03:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.10 1995/07/19 19:41:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -279,9 +279,32 @@ define method check-type-transformer
       replace-expression(component, call.dependents, object-leaf);
       #t;
     else
-      maybe-restrict-type(component, call, type);
-      // Restricting the result type doesn't count as doing anything
-      #f;
+      let builder = make-builder(component);
+      let dep = call.dependents;
+      let assign = dep.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+
+      let temp = make-ssa-var(builder, #"cond", specifier-type(#"<boolean>"));
+      let res = make-ssa-var(builder, #"result", type);
+      build-assignment
+	(builder, policy, source, temp,
+	 make-unknown-call
+	   (builder, ref-dylan-defn(builder, policy, source, #"instance?"),
+	    #f, list(object-leaf, type-leaf)));
+      build-if-body(builder, policy, source, temp);
+      build-assignment
+	(builder, policy, source, res,
+	 make-operation(builder, <truly-the>, list(object-leaf),
+			guaranteed-type: type));
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation
+	   (builder, policy, source, #"type-error", object-leaf, type-leaf));
+      end-body(builder);
+      insert-before(component, assign, builder-result(builder));
+      replace-expression(component, dep, res);
     end;
   else
     #f;
