@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.8 2003/02/03 12:34:10 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.9 2003/02/18 23:07:44 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1170,6 +1170,7 @@ define method change-call-kind
   let new = apply(make, new-kind, dependents: call.dependents,
 		  depends-on: call.depends-on,
 		  derived-type: call.derived-type,
+                  ct-source-location: call.ct-source-location,
 		  make-keyword-args);
   for (dep = call.depends-on then dep.dependent-next,
        while: dep)
