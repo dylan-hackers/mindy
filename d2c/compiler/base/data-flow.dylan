@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.9 1995/04/22 02:34:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.10 1995/04/24 10:12:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -81,10 +81,12 @@ define class <dependent-mixin> (<object>)
   slot depends-on :: false-or(<dependency>), init-value: #f,
     init-keyword: depends-on:;
   //
-  // Thread running through dependents in the component reoptimize-queue, or
+  // Thread running through dependents in the component reoptimize-queue,
   // #"absent" if this dependent is not currently in the queue (hence is up to
-  // date.)
-  slot queue-next :: union(<dependent-mixin>, one-of(#f, #"absent")),
+  // date), or #"deleted" if this dependent has been deleted (hence should
+  // be ignored).
+  slot queue-next
+      :: union(<dependent-mixin>, one-of(#f, #"absent", #"deleted")),
     init-value: #"absent";
 end class;
 
