@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.1 1998/05/03 19:55:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.2 1999/04/10 06:43:43 emk Exp $
 
 //======================================================================
 //
@@ -198,6 +198,8 @@ define method open-gdb-process (#rest args) => ();
   $from-gdb := from-stream;
   #if (compiled-for-win32)
      ignore-interrupts();
+  #else
+     delegate-gdb-signals(); 
   #endif
 #endif
 end method open-gdb-process;
@@ -296,7 +298,7 @@ define method receive-gdb-response
 	  write-element($to-gdb, read-element(*standard-input*));
 	end while;
 	force-output($to-gdb);
-#if (~mindy & compiled-for-hpux)
+#if (~mindy & compiled-for-unix)
         // ### sleep(0) delays us just long enough to give other
         // processes a chance to run
 	call-out("sleep", void:, int: 0);
@@ -1089,12 +1091,12 @@ end;
 
 define dig-command "run" (line)
   clear-gdb-variable-types();	// See expr-token for more info
-#if (compiled-for-hpux)
+#if (compiled-for-unix)
   do-gdb-command("handle SIGSEGV nostop noprint pass");
 #endif
   send-gdb-command("run %s", line);
   receive-gdb-response();
-#if (compiled-for-hpux)
+#if (compiled-for-unix)
   do-gdb-command("handle SIGSEGV stop print nopass");
 #endif
   #"prompt-sent";
