@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.12 2002/09/13 19:52:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.13 2003/02/17 17:36:54 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -629,7 +629,19 @@ end;
 define function uninitialized-slot-error
     (slot :: <slot-descriptor>, instance :: <object>)
     => res :: <never-returns>;
-  error(make(<uninitialized-slot-error>, slot: slot, instance: instance));
+  error(make(<uninitialized-slot-error>, 
+             slot: slot, 
+             instance: instance));
+end;
+
+define function uninitialized-slot-error-with-location
+    (slot :: <slot-descriptor>, instance :: <object>, 
+     source-location :: <source-location>)
+    => res :: <never-returns>;
+  error(make(<uninitialized-slot-error>, 
+             slot: slot, 
+             instance: instance,
+             source-location: source-location));
 end;
 
 // <uninitialized-slot-error> -- internal.
@@ -646,6 +658,9 @@ define class <uninitialized-slot-error> (<error>)
   // The instance whos slot was uninitialized.
   constant slot uninitialized-slot-error-instance :: <object>,
     required-init-keyword: instance:;
+
+  constant slot uninitialized-slot-error-source-location :: <source-location>
+    = $unknown-source-location, init-keyword: source-location:;
 end class <uninitialized-slot-error>;
 
 define sealed domain make (singleton(<uninitialized-slot-error>));
@@ -661,53 +676,71 @@ define sealed method report-condition
     => ();
   let name = condition.uninitialized-slot-error-slot.slot-name;
   let instance = condition.uninitialized-slot-error-instance;
+  let source-location = condition.uninitialized-slot-error-source-location;
   if (name)
-    condition-format(stream, "Accessing uninitialized slot %s in %=",
-		     name, instance);
+    condition-format(stream, "Accessing uninitialized slot %s in %=, at\n%=",
+		     name, instance, source-location);
   else
-    condition-format(stream, "Accessing uninitialized slot in %=", instance);
+    condition-format(stream, "Accessing uninitialized slot in %=, at\n%=", 
+                     instance, source-location);
   end if;
 end method report-condition;
 
 
 
 define function missing-required-init-keyword-error
-    (keyword :: <symbol>, class :: <class>) => res :: <never-returns>;
-  error("Missing required-init-keyword %= in make of %=", keyword, class);
+    (keyword :: <symbol>, class :: <class>, 
+     #key source-location :: <source-location> = $unknown-source-location) 
+ => res :: <never-returns>;
+  error("Missing required-init-keyword %= in make of %= at\n%s", 
+        keyword, class, source-location);
 end;
 
 define function wrong-number-of-arguments-error
-    (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>)
+    (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>,
+     #key source-location :: <source-location> = $unknown-source-location) 
     => res :: <never-returns>;
-  error("Wrong number of arguments.  Wanted %s %d but got %d.",
+  error("Wrong number of arguments.  Wanted %s %d but got %d, at\n%s",
 	if (fixed?) "exactly" else "at least" end,
-	wanted, got);
+	wanted, got, source-location);
 end;
 
-define function odd-number-of-keyword/value-arguments-error ()
+define function odd-number-of-keyword/value-arguments-error 
+    (#key source-location :: <source-location> = $unknown-source-location) 
  => res :: <never-returns>;
-  error("Odd number of keyword/value arguments.");
+  error("Odd number of keyword/value arguments, at\n%s", source-location);
 end;
 
 define function unrecognized-keyword-error
-    (key :: <symbol>) => res :: <never-returns>;
-  error("Unrecognized keyword: %=.", key);
-end;
-
-define function no-applicable-methods-error (function :: <generic-function>, arguments :: <simple-object-vector>)
+    (key :: <symbol>, 
+     #key source-location :: <source-location> = $unknown-source-location) 
  => res :: <never-returns>;
-  error("No applicable methods in call of %= when given arguments:\n  %=",
-	function, arguments);
+  error("Unrecognized keyword: %= at\n=s", key, source-location);
 end;
 
-define function ambiguous-method-error (methods :: <list>)
+define function no-applicable-methods-error 
+    (function :: <generic-function>, 
+     arguments :: <simple-object-vector>,
+     #key source-location :: <source-location> = $unknown-source-location) 
  => res :: <never-returns>;
-  error("It is ambiguous which of these methods is most specific:\n  %=",
-	methods);
+  error("No applicable methods in call of %= when given arguments:\n  %=, at\n%s",
+	function, arguments, source-location);
 end;
 
-define function select-error (target) => res :: <never-returns>;
-  error("select error: %= does not match any of the keys", target);
+define function ambiguous-method-error 
+    (methods :: <list>,
+     #key source-location :: <source-location> = $unknown-source-location) 
+ => res :: <never-returns>;
+  error("It is ambiguous which of these methods is most specific:\n  %=, at\n%s",
+	methods, source-location);
+end;
+
+define function select-error 
+    (target,
+     #key source-location :: <source-location> = $unknown-source-location) 
+ => res :: <never-returns>;
+  error("select error: %= does not match any of the keys, at\n%s", 
+        target, source-location);
 end;
 
 

@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.9 2001/10/06 15:30:42 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.10 2003/02/17 17:36:54 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -144,6 +144,8 @@ end;
 // In Operands, the called function is first, followed by the args.
 //
 define abstract class <abstract-call> (<operation>)
+  constant slot ct-source-location :: false-or(<literal-constant>) = #f,
+    init-keyword: ct-source-location:;
 end class;
 
 // A call where the function is known and all hairy argument stuff has been

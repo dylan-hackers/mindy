@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.12 2002/10/31 10:17:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.13 2003/02/17 17:36:54 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -791,20 +791,26 @@ define constant general-call
 // These two functions must be kept in sync with the calls to them from
 // compiler/cback/cback.dylan.
 // 
-define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
+define function gf-call-lookup 
+    (self :: <generic-function>, 
+     nargs :: <integer>, 
+     source-location :: <source-location>)
  => (meth :: <method>, next :: <list>);
   let specializers = self.function-specializers;
   let nfixed = specializers.size;
   if (nfixed ~== nargs)
     if (self.function-rest? | self.function-keywords)
       if (nargs < nfixed)
-        wrong-number-of-arguments-error(#f, nfixed, nargs);
+        wrong-number-of-arguments-error(#f, nfixed, nargs, 
+                                        source-location: source-location);
       end;
       if (self.function-keywords & odd?(nargs - nfixed))
-        odd-number-of-keyword/value-arguments-error();
+        odd-number-of-keyword/value-arguments-error
+          (source-location: source-location);
       end;
     else
-      wrong-number-of-arguments-error(#t, nfixed, nargs);
+      wrong-number-of-arguments-error(#t, nfixed, nargs,
+                                      source-location: source-location);
     end;
   end;
   let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
@@ -836,13 +842,15 @@ define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
     for (index :: <integer> from 0 below nfixed)
       let specializer :: <type> = %element(specializers, index);
       let arg = %%primitive(extract-arg, arg-ptr, index);
-      %check-type(arg, specializer, $unknown-source-location);
+      %check-type(arg, specializer, source-location);
     end;
     no-applicable-methods-error
-      (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
+      (self, mv-call(vector, %%primitive(pop-args, arg-ptr)),
+       source-location: source-location);
   else
     // There is no unambiguous "first method"
-    ambiguous-method-error(next-info.first);
+    ambiguous-method-error(next-info.first,
+                           source-location: source-location);
   end if;
 end function;
 
@@ -852,7 +860,7 @@ end function;
 define function gf-call (self :: <generic-function>, nargs :: <integer>)
   // clever bit: gf-call-lookup and the called function reuse the same
   // arguments on the orig_sp stack
-  let (meth, next-info) = gf-call-lookup(self, nargs);
+  let (meth, next-info) = gf-call-lookup(self, nargs, $unknown-source-location);
   %%primitive(invoke-generic-entry, meth, next-info, 
               %%primitive(pop-args, %%primitive(extract-args, nargs)));
 end function;

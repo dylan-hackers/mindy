@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.8 2002/03/10 16:15:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.9 2003/02/17 17:36:54 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -453,7 +453,8 @@ end method;
 
 define method make-unknown-call
     (builder :: <fer-builder>, function :: <leaf>,
-     next-method-info :: false-or(<leaf>), arguments :: <list>)
+     next-method-info :: false-or(<leaf>), arguments :: <list>,
+     #key ct-source-location :: false-or(<literal-constant>))
     => res :: <operation>;
   let operands = pair(function,
 		      if (next-method-info)
@@ -462,7 +463,8 @@ define method make-unknown-call
 			arguments;
 		      end);
   make-operation(builder, <unknown-call>, operands,
-		 use-generic-entry: next-method-info & #t);
+                 use-generic-entry: next-method-info & #t,
+                 ct-source-location: ct-source-location);
 end;
 
 

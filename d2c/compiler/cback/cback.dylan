@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.43 2002/10/31 20:59:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.44 2003/02/17 17:36:52 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -2482,11 +2482,24 @@ define method emit-assignment
     maybe-emit-prototype(c-name, info, file)
       & eagerly-reference(gf-call-lookup, file);
 
-    format(stream, "{\n  struct %s L_temp = %s(%s, %s, %s);\n",
+    let (srcloc, srcloc-temp?) 
+      = if(call.ct-source-location)
+          ref-leaf(*general-rep*, call.ct-source-location, file);
+        else
+          let (expr, rep) 
+            = c-expr-and-rep(dylan-value(#"$unknown-source-location"),
+                             *general-rep*,
+                             file);
+          conversion-expr(*general-rep*, expr, rep, file);
+        end if;
+
+    // contact-bgh-if(srcloc-temp?);
+
+    format(stream, "{\n  struct %s L_temp_gf_lookup = %s(%s, %s, %s, %s);\n",
            pick-result-structure(result-rep, file), 
-           c-name, call-top-name, func, count);
-    format(stream, "  heapptr_t L_meth = L_temp.R0;\n");
-    format(stream, "  heapptr_t L_next_info = L_temp.R1;\n  ");
+           c-name, call-top-name, func, count, srcloc);
+    format(stream, "  heapptr_t L_meth = L_temp_gf_lookup.R0;\n");
+    format(stream, "  heapptr_t L_next_info = L_temp_gf_lookup.R1;\n  ");
     if (results)
       format(stream, "%s = ", return-top-name);
     end;

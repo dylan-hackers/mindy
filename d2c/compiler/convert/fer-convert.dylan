@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.7 2003/02/06 16:23:30 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.8 2003/02/17 17:36:53 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -441,9 +441,12 @@ define method fer-convert
     op-ptr.head := fer-convert(builder, arg, make(<lexenv>, inside: lexenv),
 			       #"leaf", name);
   end;
+  let ct-source-location 
+    = make-literal-constant(builder, format-to-string("%=", form.source-location));
   deliver-result
     (builder, lexenv.lexenv-policy, form.source-location, want, datum,
-     make-unknown-call(builder, func, #f, ops));
+     make-unknown-call(builder, func, #f, ops, 
+                       ct-source-location: ct-source-location));
 end;
 
 define method fer-convert
