@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.4 1996/02/17 15:58:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.5 1996/02/17 21:26:22 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -900,8 +900,7 @@ define generic optimize-known-call-leaf
 
 
 define method optimize-known-call-leaf
-    (component :: <component>, call :: <known-call>,
-     func :: type-union(<leaf>, <definition>))
+    (component :: <component>, call :: <known-call>, func :: <leaf>)
     => ();
 end;
 
