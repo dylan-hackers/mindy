@@ -2,7 +2,7 @@ module: string-hacking
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Random functionality for working with strings
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/string-hacking.dylan,v 1.2 2000/01/24 04:55:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/string-hacking.dylan,v 1.3 2001/04/04 10:33:03 bruce Exp $
 
 //======================================================================
 //
@@ -80,13 +80,12 @@ end method make-test;
 // keep the rest as sequences of ranges and single characters.
 //
 define sealed abstract class <character-set> (<collection>)
-  slot byte-characters :: <byte-character-table>,
-    init-function: method () make(<byte-character-table>) end;
-  slot char-ranges :: <vector>;
+  slot byte-characters :: <byte-character-table> = make(<byte-character-table>);
+  slot char-ranges :: <simple-object-vector> = make(<vector>);
                // sequence of begin-char/end-char pairs
-  slot single-chars :: <unicode-string>;
+  slot single-chars :: <unicode-string> = make(<unicode-string>);
                // Characters that aren't part of a range
-  slot negated-set? :: <boolean>;
+  slot negated-set? :: <boolean> = #f;
 end class <character-set>;
 
 // Uses == as a comparison
@@ -119,13 +118,13 @@ end method type-for-copy;
 // to vectors and strings, respectively.  negated: is handled by
 // an init-keyword.
 //
-define sealed method initialize (set :: <character-set>,
-				 #next next-method, 
-				 #key description = "",
-				 #all-keys)
+define inline method my-initialize (set :: <character-set>,
+				    #next next-method, 
+				    #key description = "",
+				    #all-keys)
  => false :: singleton(#f);
-  next-method();
-  let (ranges, chars, negated) = parse-description(description);
+  let (ranges :: <list>, chars :: <list>, negated :: <boolean>)
+    = parse-description(description);
   set.negated-set? := negated;
   if (negated)
     // Add all byte characters to the vector, and we will delete the ones we
@@ -138,12 +137,14 @@ define sealed method initialize (set :: <character-set>,
     
   handle-single-chars!(set, chars);
 
-  let unicode-ranges = #();
+  let unicode-ranges :: <list> = #();
   for (range in ranges)
     let first = head(range);
     let last = tail(range);
     if (byte-character?(first) & byte-character?(last))
-      for (c = first then successor(c), until: c > last)
+      let first-ch :: <byte-character> = first;
+      let last-ch :: <byte-character> = last;
+      for (c :: <byte-character> = first-ch then successor(c), until: c > last-ch)
 	add-to-byte-vector!(set, c);
       end for;
     else 
@@ -152,7 +153,25 @@ define sealed method initialize (set :: <character-set>,
   end for;
   set.char-ranges := as(<vector>, unicode-ranges);
   #f;
-end method initialize;
+end method my-initialize;
+
+define sealed inline method initialize (set :: <case-sensitive-character-set>,
+				 #next next-method, 
+				 #key description = "",
+				 #all-keys)
+ => false :: singleton(#f);
+  next-method();
+  my-initialize(set, description: description);
+end initialize;
+
+define sealed inline method initialize (set :: <case-insensitive-character-set>,
+				 #next next-method, 
+				 #key description = "",
+				 #all-keys)
+ => false :: singleton(#f);
+  next-method();
+  my-initialize(set, description: description);
+end initialize;
 
 // Not exported.  Turns the appropriate character or characters in the
 // byte-vector to #t.
@@ -176,8 +195,9 @@ define variable no-default = pair(#f, #f);
 
 // Call member? to do real work.
 //
-define method element (set :: <character-set>, char :: <character>,
-		       #key default = no-default)
+define sealed inline method element
+    (set :: <character-set>, char :: <character>,
+     #key default = no-default)
  => char-or-f :: false-or(<character>);
   if (member?(char, set))
     char;
@@ -190,7 +210,7 @@ end method element;
 
 // test: is accepted but ignored.
 //
-define method member? (char :: <byte-character>, set :: <character-set>, 
+define sealed method member? (char :: <byte-character>, set :: <character-set>, 
 		       #key test :: <function> = key-test(set))
  => answer :: <boolean>;
   if (test == key-test(set))
@@ -206,7 +226,7 @@ end method member?;
 
 // char is not a byte-character
 //
-define method member? (c :: <character>, set :: <character-set>,
+define sealed method member? (c :: <character>, set :: <character-set>,
 		       #key test :: <function> = key-test(set))
  => answer :: <boolean>;
   if (test == key-test(set))
@@ -237,13 +257,13 @@ end method handle-single-chars!;
 
 // Convert a character set string (without [ and ]) into a character set.
 //
-define method as (type == <character-set>, coll :: <collection>)
+define sealed method as (type == <character-set>, coll :: <collection>)
  => set :: <character-set>;
   error("Need to specify whether you want a <case-sensitive-character-set>"
 	  " or a <case-insensitive-character-set>");
 end method as;
 
-define method as
+define sealed method as
     (type == <case-sensitive-character-set>, coll :: <collection>)
  => set :: <character-set>;
   let set = make(<case-sensitive-character-set>);
@@ -251,7 +271,7 @@ define method as
   set;
 end method as;
 
-define method as
+define sealed method as
     (type == <case-insensitive-character-set>, coll :: <collection>)
  => set :: <character-set>;
   let set = make(<case-insensitive-character-set>);
@@ -262,23 +282,24 @@ end method as;
 // Not exported.
 // Type is either <case-sensitive..> or <case-insensitive...>
 //
-define method parse-description (string :: <sequence>);
+define method parse-description (string :: <sequence>)
+  => (range-list :: <list>, char-list :: <list>, negated :: <boolean>);
   let s = make(<parse-string>, string: string);
-  let negated = (lookahead(s) == '^');
+  let negated :: <boolean> = (lookahead(s) == '^');
   if (negated)   consume(s)   end;
 
-  let char-list  = #();
-  let range-list = #();
+  let char-list :: <list>  = #();
+  let range-list :: <list> = #();
 
-  until (lookahead(s) = #f)         // until end of string
+  until (lookahead(s) == #f)         // until end of string
     let char = lookahead(s);
     consume(s);
-    if (lookahead(s) = '-')
+    if (lookahead(s) == '-')
       consume(s);
       let second-char = lookahead(s);
       consume(s);
       range-list := add!(range-list, pair(char, second-char));
-    elseif (char = '\\')
+    elseif (char == '\\')
       let escaped-char = lookahead(s);
       consume(s);
       select (escaped-char by \==)
@@ -409,7 +430,7 @@ define method new-phase
   end if;
 end method new-phase;
 
-define method forward-iteration-protocol
+define sealed method forward-iteration-protocol
     (set :: <case-sensitive-character-set>)
  => (initial-state :: <object>, limit :: <object>, next-state :: <function>,
      finished-state? :: <function>, current-key :: <function>,
@@ -507,7 +528,7 @@ define method forward-iteration-protocol
   end if;
 end method forward-iteration-protocol;
   
-define method forward-iteration-protocol
+define sealed method forward-iteration-protocol
     (set :: <case-insensitive-character-set>)
  => (initial-state :: <object>, limit :: <object>, next-state :: <function>,
      finished-state? :: <function>, current-key :: <function>,
@@ -626,28 +647,26 @@ end method slow-char-set-iterator;
 // of integers as indices.
 //
 define class <byte-character-table> (<mutable-explicit-key-collection>)
-  slot jump-vector :: <simple-object-vector>, 
-    init-function: method () 
-		     make(<simple-object-vector>, size: 256, fill: #f) 
-		   end;
+  slot jump-vector :: <simple-object-vector> = make(<vector>, size: 256);
 end class <byte-character-table>;
 
 // This function doesn't believe in the concept of defaults.
 // The parameter is there only to make the compiler happy.
 //
-define method element 
+define sealed inline method element 
     (jt :: <byte-character-table>, key :: <character>,
      #key default: default = #f) 
  => elt :: <object>;
   jt.jump-vector [as(<integer>, key)];
 end method element;
 
-define method element-setter (value, jt :: <byte-character-table>, 
-			      key :: <character>) => value :: <object>;
+define sealed inline method element-setter
+    (value, jt :: <byte-character-table>, 
+     key :: <character>) => value :: <object>;
   jt.jump-vector [as(<integer>, key)] := value;
 end method element-setter;
 
-define method forward-iteration-protocol (jt :: <byte-character-table>)
+define sealed inline method forward-iteration-protocol (jt :: <byte-character-table>)
  => (initial-state :: <object>, limit :: <object>, next-state :: <function>,
      finished-state? :: <function>, current-key :: <function>,
      current-element :: <function>, current-element-setter :: <function>,
@@ -664,10 +683,15 @@ end method forward-iteration-protocol;
 
 // Seals for file string-hacking.dylan
 
-// <case-sensitive-character-set> -- subclass of <character-set>
 define sealed domain make(singleton(<case-sensitive-character-set>));
-// <case-insensitive-character-set> -- subclass of <character-set>
 define sealed domain make(singleton(<case-insensitive-character-set>));
-// <byte-character-table> -- subclass of <mutable-explicit-key-collection>
+define sealed domain initialize(<character-set>);
+
+define sealed domain make(singleton(<byte-character-table>));
+define sealed domain initialize(<byte-character-table>);
+
+define sealed domain make(singleton(<char-set-iterator>));
+define sealed domain initialize(<char-set-iterator>);
+
 define sealed domain make(singleton(<byte-character-table>));
 define sealed domain initialize(<byte-character-table>);
