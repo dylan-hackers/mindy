@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.13 1996/03/07 18:42:03 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.14 1996/04/22 23:38:31 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -285,12 +285,12 @@ mindy.o:  ${SRCDIR}/mindy.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
             ${SRCDIR}/func.h ${SRCDIR}/debug.h ${SRCDIR}/load.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/mindy.c
 
-misc.o:  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/thread.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
-           ${SRCDIR}/vec.h ${SRCDIR}/func.h ${SRCDIR}/obj.h \
-           ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/def.h \
-           ${SRCDIR}/num.h ${SRCDIR}/error.h ${SRCDIR}/str.h \
-           ${SRCDIR}/coll.h
+misc.o:  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+           ${SRCDIR}/mindy.h ${SRCDIR}/thread.h ${SRCDIR}/bool.h \
+           ${SRCDIR}/list.h ${SRCDIR}/vec.h ${SRCDIR}/func.h \
+           ${SRCDIR}/obj.h ${SRCDIR}/module.h ${SRCDIR}/sym.h \
+           ${SRCDIR}/def.h ${SRCDIR}/num.h ${SRCDIR}/error.h \
+           ${SRCDIR}/str.h ${SRCDIR}/coll.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/misc.c
 
 module.o:  ${SRCDIR}/module.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -321,6 +321,12 @@ obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/def.h ${SRCDIR}/gc.h ${SRCDIR}/num.h \
           ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
+
+parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
+                 ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser-tab.h \
+                 ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
+                 ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
             ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
