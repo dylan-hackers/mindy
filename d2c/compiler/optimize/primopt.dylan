@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.22 1996/04/18 17:05:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.23 1996/04/18 19:05:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -529,8 +529,9 @@ end method type-negated;
 
 define method type-negated
     (ctype :: <limited-integer-ctype>) => res :: <ctype>;
-  make-canonical-limited-integer
-    (ctype.base-class, ctype.high-bound, ctype.low-bound);
+  let high = ctype.high-bound;
+  let low = ctype.low-bound;
+  make-canonical-limited-integer(ctype.base-class, high & -high, low & -low);
 end method type-negated;
 
 
