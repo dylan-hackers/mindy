@@ -1,11 +1,11 @@
 
 $stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/standard-io -L../runtime/print -L../runtime/format -L../runtime/random -L. -L../runtime/coll-ext -L../runtime/string-ext -L../runtime/table-ext -L../runtime/format-out -L../runtime/itime -L../runtime/regexp';
+$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/standard-io -L../runtime/print -L../runtime/format -L../runtime/random -L. -L../runtime/coll-ext -L../runtime/string-ext -L../runtime/table-ext -L../runtime/format-out -L../runtime/itime -L../runtime/regexp -L../runtime/matrix -L../runtime/time -L../runtime/melange';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
-#do emit_library_rule(
-#    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
-#);
+do emit_library_rule(
+    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);
 do emit_library_rule(
     'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
@@ -18,9 +18,9 @@ do emit_library_rule(
 do emit_library_rule(
     'random-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
-#do emit_library_rule(
-#    'matrix-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
-#);
+do emit_library_rule(
+    'matrix-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+);
 do emit_library_rule(
     'coll-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
@@ -36,6 +36,6 @@ do emit_library_rule(
 #do emit_library_rule(
 #    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 #);
-#do emit_library_rule(
-#    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
-#);
+do emit_library_rule(
+    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+);
