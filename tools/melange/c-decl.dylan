@@ -1050,7 +1050,8 @@ end method compute-closure;
 define method mapped-name
     (decl :: <object-declaration>, #key explicit-only?)
  => (result :: union(<string>, <false>));
-  decl.map-type | mapped-name(decl.type, explicit-only?: #t) | decl.type-name;
+  decl.map-type | mapped-name(decl.type, explicit-only?: #t)
+    | (~explicit-only? & decl.type-name);
 end method mapped-name;
 
 define method type-name (decl :: <object-declaration>) => (result :: <string>);
