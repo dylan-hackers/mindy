@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.15 1996/01/15 17:21:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.16 1996/02/11 16:12:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -847,7 +847,7 @@ define method sequence-map-into
       states := pair(state, states);
       limits := pair(limit, limits);
       next-states := pair(next-state, next-states);
-      finished-state?s := pair(finished-state?s, finished-state?);
+      finished-state?s := pair(finished-state?, finished-state?s);
       current-elements := pair(current-element, current-elements);
     end;
     begin
