@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.6 1994/10/05 21:01:11 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.7 1995/09/14 19:24:49 nkramer Exp $
 *
 * This file implements breakpoints.
 *
@@ -143,7 +143,7 @@ void handle_byte_breakpoint(struct thread *thread)
     if (info)
 	thread->advance = skip_byte_breakpoint;
 
-    pause(pause_HitBreakpoint);
+    mindy_pause(pause_HitBreakpoint);
 }
 
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.19 1995/09/06 23:22:07 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.20 1995/09/14 19:24:49 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -347,7 +347,7 @@ void go_on(void)
     _longjmp(Catcher, 1);
 }
 
-void pause(enum pause_reason reason)
+void mindy_pause(enum pause_reason reason)
 {
     clear_interrupt_handler();
     if (reason != pause_NoReason)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.22 1995/02/08 00:05:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.23 1995/09/14 19:24:49 nkramer Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -171,7 +171,7 @@ static void stop_thread(struct thread *thread, obj_t *vals)
 
     THREAD(thread_obj)->status = status_Exited;
 
-    pause(pause_PickNewThread);
+    mindy_pause(pause_PickNewThread);
 }
 
 static void start_thread(struct thread *thread)
@@ -373,7 +373,7 @@ static obj_t dylan_kill_thread(obj_t thread_obj)
     thread_kill(thread);
 
     if (me)
-	pause(pause_PickNewThread);
+	mindy_pause(pause_PickNewThread);
 
     return thread_obj;
 }
@@ -389,7 +389,7 @@ void thread_debuggered(struct thread *thread, obj_t condition)
     suspend_thread(thread);
     set_status(thread, status_Debuggered);
     thread->datum = condition;
-    pause(pause_DebuggerInvoked);
+    mindy_pause(pause_DebuggerInvoked);
 }
 
 void thread_buggered(struct thread *thread)
@@ -470,7 +470,7 @@ void lock_grab(struct thread *thread, obj_t lock,
 	thread->datum = lock;
 	thread->advance = advance;
 
-	pause(pause_PickNewThread);
+	mindy_pause(pause_PickNewThread);
     }
     else {
 	LOCK(lock)->locked = TRUE;
@@ -589,7 +589,7 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
     if (lock != obj_False)
 	lock_release(lock);
 
-    pause(pause_PickNewThread);
+    mindy_pause(pause_PickNewThread);
 }    
 
 static obj_t dylan_event_wait(obj_t event, obj_t lock)

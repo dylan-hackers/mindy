@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.4 1994/10/05 21:01:48 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.5 1995/09/14 19:24:49 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -35,7 +35,7 @@ enum pause_reason {
 extern enum pause_reason do_stuff(void);
 extern enum pause_reason single_step(struct thread *);
 extern void go_on(void);
-extern void pause(enum pause_reason reason);
+extern void mindy_pause(enum pause_reason reason);
 
 extern void wait_for_input(struct thread *thread, int fd,
 			   void (*advance)(struct thread *thread));
