@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.3 2000/01/24 04:56:37 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/dig/dig.dylan,v 1.4 2000/12/11 19:54:34 andreas Exp $
 
 //======================================================================
 //
@@ -914,8 +914,15 @@ define method generic-function-generic-entries
     // faster results.  (Note -- after the first call, this will just be
     // a set of 6 hash table lookups, which should be faster than the rest
     // of the operation anyway.)
-    unless (select-any-variable("dylanZdylan_visceraZgeneric_function_methods")
-	      & select-any-variable("dylanZfalse")
+/*
+
+ Seems to be broken, because the functions don't have a representation
+ as a variable. FIXME.
+
+*/
+
+    unless ( select-any-variable("dylanZdylan_visceraZgeneric_function_methods")
+              & select-any-variable("dylanZfalse")
 	      & select-any-variable("dylanZdylan_visceraZmap")
 	      & select-any-variable("dylanZdylan_visceraZgeneric_entry")
 	      & select-any-variable("dylanZdylan_visceraZsize")
@@ -1150,7 +1157,9 @@ define method command-loop () => ();
 	$previous-command := command;
 	$previous-args := args;
       else
-	dispatch-command($previous-command, $previous-args);
+	// dispatch-command($previous-command, $previous-args);
+	// Repeat last command on empty input? Bad idea, if you ask me. --andreas
+	send-user-response("%s", *gdb-prompt*);
       end if;
       *cached-locals-vars* := #f;
     end while;
