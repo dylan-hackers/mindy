@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.91 1996/01/14 18:09:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.92 1996/01/18 22:38:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,6 +187,9 @@ define class <file-state> (<object>)
   slot file-guts-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
+  //
+  slot file-guts-overflow :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>, size: 0);
   //
   slot file-next-mv-result-struct :: <integer>, init-value: 0;
   //
@@ -983,11 +986,16 @@ define method emit-function
   format(stream, "/* %s */\n", function.name);
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
-  write(file.file-vars-stream.string-output-stream-string,
-	stream);
+  write(file.file-vars-stream.string-output-stream-string, stream);
   write('\n', stream);
-  write(file.file-guts-stream.string-output-stream-string,
-	stream);
+  let overflow = file.file-guts-overflow;
+  unless (overflow.empty?)
+    for (string in overflow)
+      write(string, stream);
+    end;
+    overflow.size := 0;
+  end unless;
+  write(file.file-guts-stream.string-output-stream-string, stream);
   write("}\n\n", stream);
 end;
 
@@ -1082,9 +1090,14 @@ end;
 define method emit-region
     (region :: <simple-region>, file :: <file-state>)
     => ();
+  let byte-string :: <byte-string-output-stream>
+    = file.file-guts-stream.is-target;
   for (assign = region.first-assign then assign.next-op,
        while: assign)
     emit-assignment(assign.defines, assign.depends-on.source-exp, file);
+    if (byte-string.stream-size >= 65536)
+      add!(file.file-guts-overflow, byte-string.string-output-stream-string);
+    end if;
   end;
 end;
 
