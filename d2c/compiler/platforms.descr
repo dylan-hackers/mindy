@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.46 2002/02/27 01:30:56 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.47 2002/02/28 23:54:52 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -175,12 +175,16 @@ big-endian?:			#t
 
 
 // Microsoft Windows '95 or NT
+// Note:  These rules depend on the presence of the MingW utilities in your
+// system PATH.  You may elect to build using Microsoft's compiler, but
+// you will have a bear of a time getting things to work without some
+// UNIX-alike commands like "mv", "cmp", and GNU make.
 platform-name:                  	win32
 default-features:               	compiled-for-win32
 					newlines-are-CRLF
 					no-time
 link-doesnt-search-for-libs?:   	#t
-delete-file-command:            	del
+delete-file-command:            	rm -f %s
 compare-file-command:           	cmp -s %s %s
 move-file-command:              	mv -f %s %s
 recursive-make-command:         	cmd /c "cd %s && $(MAKE) %s"
@@ -190,7 +194,7 @@ environment-variables-can-be-exported?: #t
 makefile-name:                  	Makefile
 make-supports-phony-targets?:   	#f
 makefiles-can-rebuild-themselves?:      #f
-make-command:                   	nmake 
+make-command:                   	make 
 
 // Generic Unix (parent class to linux, freebsd, solaris & hpux):
 platform-name:				generic-unix
@@ -459,6 +463,10 @@ inherit-from:			gcc bsdi x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			x86-beos-gcc
+// Note:  These rules depend on the presence of the MingW utilities in your
+// system PATH.  You may elect to build using Microsoft's compiler, but
+// you will have a bear of a time getting things to work without some
+// UNIX-alike commands like "mv", "cmp", and GNU make.
 inherit-from:			beos-gcc beos x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
