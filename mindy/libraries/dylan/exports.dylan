@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.7 1994/03/30 17:32:33 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.8 1994/03/31 22:45:38 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -25,7 +25,7 @@ define module Builtin-Stuff
   export
     \*, \+, \-, \/, \<, \<=, \=, \==, \/=,
     <array>,
-    <byte-string>,
+    <buffer>, <byte-string>,
     <character>, <class>, <collection>, <complex>,
     <double-float>,
     <empty-list>, <explicit-key-collection>, <extended-float>,
@@ -66,7 +66,8 @@ define module Builtin-Stuff
     singleton, size, slot-initialized?, sorted-applicable-methods,
     state-valid?, subtype?,
     tail, tail-setter, truncate/,
-    union,
+    union, unix-close, unix-lseek, unix-open, unix-read, unix-strerror,
+    unix-write,
     values, vector;
   create
     do, error, type-error, make-next-method-function, generic-apply,
@@ -83,7 +84,9 @@ define module Dylan
 	      format, prin1, print, putc, puts, getc, invoke-debugger,
 	      debugger-print, debugger-report-condition, debugger-abort,
 	      debugger-describe-restarts, debugger-restart, debugger-return,
-	      enable-error-system, apply-curry, state-valid?),
+	      enable-error-system, apply-curry, state-valid?, <buffer>,
+	      unix-close, unix-lseek, unix-open, unix-read, unix-strerror,
+	      unix-write),
     export: all;
   use Builtin-Stuff,
     import: (main, type-error, current-handler, handler-description,
@@ -141,3 +144,12 @@ define module Extensions
     import: (main, format, prin1, print, putc, puts, getc),
     export: all;
 end Extensions;
+
+define module System
+  use Dylan;
+  use Builtin-Stuff,
+    import: (<buffer>, unix-close, unix-lseek, unix-open, unix-read,
+	     unix-strerror, unix-write),
+    export: all;
+end System;
+
