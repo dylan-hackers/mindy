@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.48 2001/05/26 18:46:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.49 2001/06/08 22:12:53 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -530,6 +530,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
       // have as many elements as there are files mentioned in the
       // .lid file
       add!(state.unit-tlf-vectors, make(<stretchy-vector>));
+      add!(state.unit-modules, #f);
 
       if (state.unit-shared?)
 	let shared-file
