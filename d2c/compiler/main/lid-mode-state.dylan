@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.7 2002/10/13 20:11:31 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.8 2002/10/29 23:38:15 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -164,6 +164,9 @@ define method output-c-file-rule
     (state :: <lid-mode-state>, raw-c-name :: <string>, raw-o-name :: <string>,
      #key save-c-file = #f)
  => ();
+  let c-name = escape-pounds(raw-c-name);
+  let o-name = escape-pounds(raw-o-name);
+
   let cc-command
       = if (member?(c-name, state.unit-override-files, test: \=))
           state.unit-cc-override;
@@ -174,8 +177,6 @@ define method output-c-file-rule
 	  state.unit-target.compile-c-command;
 	end if;
 
-  let c-name = escape-pounds(raw-c-name);
-  let o-name = escape-pounds(raw-o-name);
 
   format(state.unit-makefile, "%s : %s\n", o-name, c-name);
   format(state.unit-makefile, "\t%s\n",
