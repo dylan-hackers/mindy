@@ -4,7 +4,7 @@ synopsis:   This file implements random numbers for the Gwydion
             implementation of Dylan.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/distributions.dylan,v 1.3 1994/12/06 11:20:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/distributions.dylan,v 1.4 1995/01/10 16:13:22 wlott Exp $
 
 //======================================================================
 //
@@ -452,9 +452,9 @@ define constant random-uniform =
       let random = (to-bound - from-bound)
 	 * random (*dylan-random-distribution*)
 	 + from-bound;
-      select (object-class (to-bound))
+      select (to-bound by instance?)
 	 <integer> =>
-	    round (random);
+	    floor (random);
 	 otherwise =>
 	    as (object-class (to-bound), random);
       end select;
