@@ -27,4 +27,10 @@ cc-ffi-files.mak
 melange
 source-location.c
 parse-conditions.c
+melange-c-init.c
+melange-c-heap.c
+cc-melange-c-files.mak
+melange-init.c
+melange-heap.c
+cc-melange-files.mak
 .libs
