@@ -2,16 +2,17 @@ library: getopt
 module: getopt
 author: Jeff Dubrule & Ole Tetlie
 copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.3 1998/09/23 17:23:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.4 1998/09/24 11:20:46 igor Exp $
 
 define class <option-table> (<object-table>)
   // perhaps we'll need something here later
 end;
 
-define method add-internal (table :: <option-table>, name :: <string>,
-			    option :: <option>)
-    // Note: names can't be symbols, as symbols are case-insensitive
-  table[name] := option;
+define method add-internal (table :: <option-table, option :: <option>)
+  // Note: names can't be symbols, as symbols are case-insensitive
+  for (name in option.names)
+    table[name] := option;
+  end for;
 end method;
 
 define class <option> (<object>)
@@ -31,9 +32,8 @@ define method add-option (table :: <option-table>, doc-string :: <string>,
 
   let option = make (<option>, names: real-names, doc-string: doc-string,
 		     value: value);
-  for (name in real-names)
-    add-internal (table, name, option);
-  end for;
+
+  add-internal (table, option);
 end method;
 
 define method element (table :: <option-table>, key :: <string>,
