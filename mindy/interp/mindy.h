@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.10 1995/09/14 19:24:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.11 1996/05/11 21:33:04 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -51,6 +51,9 @@ extern void lose _ANSI_ARGS_((char *fmt, ...));
 
 #ifdef WIN32
 #   define boolean unsigned char
+#   define LIBDIR ""
+#   define BINDIR ""
+#   define VERSION "1.5"
 #else
 #   define boolean int
 #endif
