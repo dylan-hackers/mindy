@@ -5,7 +5,7 @@ synopsis:   Contains the library and module definitions for the X-inspector
             library.
 copyright:  Copyright (C) 1996 Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.2 1996/04/24 12:29:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.3 1996/04/25 18:23:05 wlott Exp $
 
 //======================================================================
 //
@@ -41,6 +41,13 @@ define library X-inspector
     x-inspector;
 end library X-inspector;
 
+define module internals
+  create
+    <inspector-state>, state-lock, state-done?, state-done?-setter,
+    state-done, state-all-windows,
+    xinspect-one-object;
+end module internals;
+
 define module class-diagram
   use dylan;
   use extensions;
@@ -48,6 +55,7 @@ define module class-diagram
   use introspection;
   use tk;
   use tk-extension;
+  use internals;
   export 
     view-class-hierarchy;
 end module class-diagram;
@@ -62,6 +70,7 @@ define module X-inspector
   use tk-extension;
   use inspector-base, export: { *show-elements*, $all-libraries };
   use class-diagram;
-  export
-    xinspect;
+  use internals;
+
+  export xinspect;
 end module X-inspector;
