@@ -1,4 +1,4 @@
-$COPTS = "$COPTS $GC_CFLAGS";
+$COPTS = "$COPTS $GC_CFLAGS -I/usr/include/gc";
 
 $D2CFLAGS = '-L../dylan -L../melange';
 

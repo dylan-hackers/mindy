@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.11 2003/01/21 07:38:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.12 2003/01/26 14:04:07 andreas Exp $
 
 //======================================================================
 //
@@ -32,8 +32,6 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.11 2003/
 // d2c generated code.  Many of these are intended to support the code
 // produced by Melange rather than being explicitly referenced by users.
 //
-
-c-include("gc.h");
 
 // Usage: c-variable-ref(int: "&variable") { := expression }
 //
@@ -94,7 +92,7 @@ define method make
       error("Bad element-count: in make: %=", element-count);
     end if;
 
-    let rawptr = call-out("GC_malloc", ptr:,
+    let rawptr = call-out("allocate", ptr:,
 			  unsigned-int:
 			    (content-size(cls) + extra-bytes) * element-count);
     let ptr = next(cls, pointer: rawptr);
@@ -389,7 +387,7 @@ end method import-value;
 // Explicitly destroys C pointers, since we cannot garbage collect them.
 //
 define method destroy (ptr :: <statically-typed-pointer>) => ();
-  call-out("GC_free", void:, ptr: ptr.raw-value);
+  call-out("destroy", void:, ptr: ptr.raw-value);
 end method destroy;
 
 define functional class <machine-pointer> (<statically-typed-pointer>) 
@@ -564,7 +562,7 @@ define sealed  method as (cls == <c-string>, str :: <byte-string>)
  => string :: <c-string>;
   let sz = str.size;
   let result
-    = as(<c-string>, call-out("GC_malloc", ptr:, unsigned-int: sz + 1));
+    = as(<c-string>, call-out("allocate", ptr:, unsigned-int: sz + 1));
   for (i from 0 below sz)
     unsigned-byte-at(result, offset: i) := as(<integer>, str[i]);
   end for;

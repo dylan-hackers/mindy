@@ -1,3 +1,5 @@
+$CPPFLAGS = "$CPPFLAGS -I$buildroot";
+
 if ($target_platform{'long_long_size'}) {
     $CPPFLAGS = "$CPPFLAGS -DGD_HAVE_LONG_LONG";
 }

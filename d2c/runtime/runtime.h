@@ -31,6 +31,7 @@ typedef descriptor_t *(*entry_t)();
 
 extern heapptr_t allocate(int bytes);
 extern descriptor_t *allocate_stack(void);
+extern void destroy(void* ptr);
 extern heapptr_t make_trampoline(void *func, descriptor_t closure,
 				 int nkeys, char *signature);
 extern descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,

@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.108 2003/01/21 07:38:15 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.109 2003/01/26 14:03:49 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -490,12 +490,15 @@ save_CPPFLAGS="$CPPFLAGS"
 save_LIBS="$LIBS"
 CPPFLAGS="$GC_CFLAGS $CPPFLAGS"
 LIBS="$GC_LIBS $LIBS"
-AC_CHECK_HEADER(gc.h, , AC_MSG_ERROR([
+FOUND_BOEHM=no
+AC_CHECK_HEADERS(gc.h gc/gc.h, FOUND_BOEHM=yes,)
+if test "$FOUND_BOEHM" = no; then
+AC_MSG_ERROR([
 Cannot locate the Boehm-Weiser conservative garbage collector. Please
 download the library from http://www.hpl.hp.com/personal/Hans_Boehm/gc/
-or from your operating system distribution.]))
-AC_TRY_LINK([#include "gc.h"], [void *a = GC_malloc_ignore_off_page(512)],
-            , AC_MSG_ERROR([
+or from your operating system distribution.])
+fi
+AC_CHECK_LIB(gc, GC_malloc_ignore_off_page, ,AC_MSG_ERROR([
 Cannot link with the Boehm-Weiser conservative garbage collector library.
 Please download the library from http://www.hpl.hp.com/personal/Hans_Boehm/gc/
 or from your operating system distribution.]))

@@ -5,8 +5,6 @@
 #include <sys/cachectl.h>
 #endif
 
-#include "gc.h"
-
 #define KEY_OBJECT		'o'
 #define KEY_HEAPPTR		'h'
 #define KEY_BOOLEAN		'B'
@@ -119,7 +117,7 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 
   code_bytes = (code_bytes + 7) & ~3; /* space at end for closure ptr */
 
-  codep = code = GC_malloc(code_bytes);
+  codep = code = allocate(code_bytes);
 
   for(i = 0; i < arg_bytes; i += 4)
     {
@@ -268,7 +266,7 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 
   /* six instructions + #gr + ptr to closure */
   code_bytes = (gr + 7) * 4;
-  codep = code = GC_malloc(code_bytes);
+  codep = code = allocate(code_bytes);
 
   tmp = (long)func;                               /* load branch dest into ctr */
   *codep++ = (15 << 26) | ((tmp >> 16) & 0xFFFF); /* lis r0,hi(tmp) */
@@ -386,7 +384,7 @@ make_trampoline(void *func, descriptor_t closure, int n, char *sig)
 
     /* one shuffling instruction per arg, plus five other, and one extra ptr */
     size = ((n - 1) + 7) << 2;
-    c = code = GC_malloc(size);
+    c = code = allocate(size);
 
     /* step through args backwards, assembling code to shuffle regs */
     for (n--; n > 0; n--)

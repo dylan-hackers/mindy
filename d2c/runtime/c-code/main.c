@@ -1,11 +1,9 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.19 2003/01/21 07:38:21 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.20 2003/01/26 14:03:59 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "runtime.h"
 #include <math.h>
-
-#include <gc.h>
 
 int application_argc;
 char **application_argv;
@@ -38,7 +36,7 @@ void real_main(int argc, char *argv[])
 
 descriptor_t *allocate_stack(void)
 {
-    return (descriptor_t *) GC_malloc_ignore_off_page(64*1024);
+    return (descriptor_t *) allocate(64*1024);
 }
 
 

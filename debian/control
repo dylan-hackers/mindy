@@ -3,11 +3,11 @@ Section: devel
 Priority: optional
 Maintainer: Brent A. Fulgham <bfulgham@debian.org>
 Standards-Version: 3.5.4.0
-Build-Depends: sharutils, perl-base, perl5, debhelper, libtool, autoconf, automake, flex, libgtk1.2-dev
+Build-Depends: sharutils, perl-base, perl5, debhelper, libtool, autoconf, automake, flex, libgtk1.2-dev, libgc6-dev
 
 Package: gwydion-dylan
 Architecture: any
-Depends: gcc, ${shlibs:Depends}
+Depends: gcc, libgc6, ${shlibs:Depends}
 Recommends: gwydion-dylan-dev
 Suggests: mindy
 Description: The Gwydion Dylan Runtime Environment
@@ -23,7 +23,7 @@ Description: The Gwydion Dylan Runtime Environment
 
 Package: gwydion-dylan-dev
 Architecture: any
-Depends: gwydion-dylan, ${shlibs:Depends}
+Depends: gwydion-dylan, libgc6-dev, ${shlibs:Depends}
 Suggests: mindy
 Description: Gwydion Dylan Development Tools
  CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
