@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.6 1995/05/05 14:42:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.7 1995/05/05 18:53:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -780,4 +780,22 @@ end class;
 // Limited mumble classes.
 
 define class <limited-cclass> (<cclass>)
+end;
+
+
+// Proxies
+
+define class <proxy> (<ct-value>)
+  slot proxy-for :: <cclass>, required-init-keyword: for:;
+end;
+
+define constant $proxy-memo = make(<object-table>);
+
+define method make (class == <proxy>, #next next-method, #key for: cclass)
+  element($proxy-memo, cclass, default: #f)
+    | (element($proxy-memo, cclass) := next-method());
+end;
+
+define method print-object (proxy :: <proxy>, stream :: <stream>) => ();
+  pprint-fields(proxy, stream, for: proxy.proxy-for);
 end;

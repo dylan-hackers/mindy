@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.34 1995/05/05 16:55:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.35 1995/05/05 18:53:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1809,7 +1809,11 @@ define method emit-copy
      output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
-  format(stream, "%s.heapptr = ### proxy;\n", target);
+  let (proxy, proxy-rep)
+    = c-expr-and-rep(make(<proxy>, for: source-rep.representation-class),
+		     $heap-rep, output-info);
+  format(stream, "%s.heapptr = %s;\n",
+	 target, conversion-expr($heap-rep, proxy, proxy-rep, output-info));
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
 end;

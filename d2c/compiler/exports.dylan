@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.54 1995/05/05 16:57:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.55 1995/05/05 18:53:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -480,6 +480,8 @@ define module classes
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     slot-positions, find-slot-offset,
+
+    <proxy>, proxy-for,
 
     inherit-slots, assign-unique-ids, assign-slot-representations,
     layout-instance-slots;
