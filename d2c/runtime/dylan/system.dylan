@@ -1,5 +1,5 @@
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/system.dylan,v 1.1 1998/05/03 19:55:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/system.dylan,v 1.2 1998/08/10 15:17:33 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -84,10 +84,7 @@ end method exit;
 //
 define method no-core-dumps () => ();
   #if (~ compiled-for-win32)
-    let buf = make(<buffer>, size: 8);
-    call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
-    pointer-deref(#"int", buf.buffer-address, 0) := 0;
-    call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+   call-out("no_core_dumps", #"void");
   #endif
 end method no-core-dumps;
 

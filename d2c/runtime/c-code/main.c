@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.1 1998/05/03 19:55:41 andreas Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.2 1998/08/10 15:17:31 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -219,6 +219,22 @@ float sqrtf (float x)
 double log2 (double x)
 {
   return 0;
+}
+
+#endif
+
+#if !defined(WIN32)
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+void no_core_dumps(void)
+{
+  struct rlimit lim;
+  getrlimit(RLIMIT_CORE, &lim);
+  lim.rlim_cur = 0;
+  setrlimit(RLIMIT_CORE, &lim);
 }
 
 #endif
