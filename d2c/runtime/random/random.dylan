@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.7 1996/05/11 15:59:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.8 1996/08/14 15:53:13 dwatson Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -43,10 +43,6 @@ end class <threadsafe-random-state>;
 define sealed domain make (singleton(<threadsafe-random-state>));
 
 #endif
-
-define inline method get-time-of-day () => res :: <integer>;
-  call-out("time", int:, int: 0);
-end;
 
 define method initialize
     (state :: <random-state>, #next next-method, 
