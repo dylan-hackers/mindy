@@ -33,6 +33,7 @@ define module parsergen
   use format;
   use standard-io;
   use regular-expressions;
+  use %hash-tables;
   use lisp-read, import: { lisp-read };
 #if (~mindy)
   use system;

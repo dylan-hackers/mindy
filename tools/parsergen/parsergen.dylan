@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.2 1996/09/29 03:53:51 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.3 1996/09/29 13:07:03 rgs Exp $
 
 // **********************************************************************
 // Copyright (c) 1994, 1996 Carnegie Mellon University, all rights reserved.
@@ -495,6 +495,24 @@ define function compute-states (grammar :: <grammar>) => ();
 end function compute-states;
 
 
+define sealed class <done-table> (<table>) end class <done-table>;
+
+define inline function done-equal (x :: <pair>, y :: <pair>)
+  (x.head == y.head & x.tail == y.tail);
+end function done-equal;
+
+define inline function done-hash (x :: <pair>)
+ => (id :: <integer>, state :: <hash-state>);
+  let (id1, state1) = object-hash(x.head);
+  let (id2, state2) = object-hash(x.tail);
+  merge-hash-codes(id1, state1, id2, state2, ordered: #t);
+end function done-hash;
+
+define sealed inline method table-protocol (ht :: <done-table>) 
+ => (key-test :: <function>, key-hash :: <function>);
+  values(done-equal, done-hash);
+end method table-protocol;
+
 // Compute lookaheads.
 
 
@@ -515,7 +533,7 @@ define function compute-initial-lookaheads (grammar :: <grammar>) => ();
   end;
   for (state in grammar.grammar-all-states)
     for (kernel-item in item-set-items(state.state-kernels))
-      let done :: <list> = #();
+      let done :: <done-table> = make(<done-table>);
       local 
 	method grovel (item :: <item>, lookahead :: false-or(<token>))
 	 => ();
@@ -567,12 +585,9 @@ define function compute-initial-lookaheads (grammar :: <grammar>) => ();
 //	  format(*standard-output*, 
 //		 "maybe-grovel production=%= lookahead=%=\n",
 //		 production, lookahead);
-	  unless (find-if(method (x :: <pair>)  // production, lookahead pair
-			    (x.head == production 
-			       & x.tail == lookahead);
-			  end method, 
-			  done))
-	    done := add!(done, pair(production, lookahead));
+	  let new-entry = pair(production, lookahead);
+	  unless (element(done, new-entry, default: #f))
+	    done[new-entry] := new-entry;
 	    grovel(make(<item>, production: production), lookahead);
 	  end unless;
 	end method maybe-grovel;
@@ -702,7 +717,7 @@ end function add-action;
 define function compute-actions (grammar :: <grammar>) => ();
   for (state in grammar.grammar-all-states)
     for (kernel-item in state.state-kernels.item-set-items)
-      let done :: <list> = #();
+      let done :: <done-table> = make(<done-table>);
       local
 	method grovel (item :: <item>, lookahead :: <terminal>)
 	  let a-prod = item.item-production;
@@ -745,13 +760,10 @@ define function compute-actions (grammar :: <grammar>) => ();
 	method maybe-grovel 
 	    (production :: <production>, lookahead :: <terminal>)
 	  let entry = pair(production, lookahead);
-	  let thing = member?(entry, done, 
-			  test: method (x, y)
-				  (x.head == y.head & x.tail == y.tail);
-				end method);
+	  let thing = element(done, entry, default: #f);
 	  if (thing == #() ) error("unexpected"); end if;
 	  unless (thing)
-	    done := add!(done, entry);
+	    done[entry] := entry;
 	    grovel(make(<item>, production: production), lookahead);
 	  end unless;
 	end method maybe-grovel;
