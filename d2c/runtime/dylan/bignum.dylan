@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.2 2000/01/24 04:56:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.3 2001/12/19 12:37:25 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -32,7 +32,7 @@ module: dylan-viscera
 
 // Extended integer digits.
 
-define constant $digit-bits = 8;
+define constant $digit-bits = 15;
 define constant $digit-mask = lognot(ash(-1, $digit-bits));
 
 // <digit> -- internal.
@@ -796,7 +796,7 @@ define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
       let x3 = bignum-digit(x, i + y-len - 2);
       let y1 = bignum-digit(y, y-len - 1);
       let y2 = bignum-digit(y, y-len - 2);
-      let guess = division-guess(x1, x2, x2, y1, y2);
+      let guess = division-guess(x1, x2, x3, y1, y2);
 
       let carry = make-digit(0);
       let borrow = $no-borrow;
