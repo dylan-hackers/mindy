@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.2 1994/03/31 10:19:05 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.3 1994/04/18 05:42:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -150,7 +150,7 @@ void init_handler_functions(void)
 				    obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
 		    make_raw_function("current-handler", 0, FALSE, obj_False,
-				      obj_HandlerClass, obj_False,
+				      list1(obj_HandlerClass), obj_False,
 				      current_handler));
     define_function("handler-type", list1(obj_HandlerClass), FALSE, obj_False,
 		    obj_ObjectClass, handler_type);
