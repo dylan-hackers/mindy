@@ -52,7 +52,8 @@ define method initialize (object :: <canvas-item>, #next next, #key, #all-keys)
   object.window.items[object.name] := object;
 end method initialize;
 
-define method as (cls == <string>, value :: <canvas-item>);
+define method as (cls == <string>, value :: <canvas-item>)
+ => string :: <string>;
   value.name;
 end method as;
 

@@ -60,7 +60,8 @@ end method line-end;
 
 define constant text-index-matcher
   = make-regexp-positioner("^([0-9]+)\\.([0-9]+)$");
-define method as (cls == <text-index>, value :: <string>);
+define method as (cls == <text-index>, value :: <string>)
+ => text-index :: <text-index>;
   let (all-start, all-end, line-start, line-end, char-start, char-end)
     = text-index-matcher(value);
   if (all-start)
@@ -75,7 +76,8 @@ define method as (cls == <text-index>, value :: <string>);
   end if;
 end method as;
 
-define method as (cls == <string>, value :: <text-index>);
+define method as (cls == <string>, value :: <text-index>)
+ => string :: <string>;
   concatenate(tk-as(<string>, value.line), ".",
 	      tk-as(<string>, value.character));
 end method as;
@@ -119,6 +121,7 @@ define method as
 end method as;
 
 define method as (cls == <text-index>, mark :: <text-mark>)
+ => text-index :: <text-index>;
   as(<text-index>, call-tk-function(mark.widget, " index ", mark.name));
 end method as;
 
