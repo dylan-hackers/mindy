@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.8 1994/11/14 18:29:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.9 1995/09/28 02:04:56 rgs Exp $
 
 //======================================================================
 //
@@ -122,21 +122,28 @@ define method concatenate-as
       else
 	next-method();
       end if;
-    (~subtype?(cls, <vector>)
-       | ~every?(rcurry(instance?, <byte-string>), more_vectors)) =>
-      next-method();
     otherwise =>
-      let length = reduce(method (int, seq) int + size(seq) end method,
-			  size(vector), more_vectors);
-      let result = make(cls, size: length);
-      for (next in more_vectors,
-	   src = vector then next,
-	   sz = size(vector) then size(next),
-	   index = 0 then index + sz)
-	copy-bytes(result, index, src, 0, sz);
-      finally
-	copy-bytes(result, index, src, 0, sz);
-      end for;
-      result;
+      block (return)
+	// Strange test.  By combining size computation and checking that all
+	// args are byte-strings, we gain time in the typical case, while not
+	// losing much in the odd cases.  The main cost is in code clarity.
+	let length = for (sz = vector.size then sz + seq.size,
+			  seq in more_vectors)
+		       if (~instance?(seq, <byte-string>))
+			 return(next-method())
+		       end if;
+		     finally sz;
+		     end for;
+	let result = make(cls, size: length);
+	for (next in more_vectors,
+	     src = vector then next,
+	     sz = size(vector) then size(next),
+	     index = 0 then index + sz)
+	  copy-bytes(result, index, src, 0, sz);
+	finally
+	  copy-bytes(result, index, src, 0, sz);
+	end for;
+	result;
+      end block;
   end case;
 end method concatenate-as;
