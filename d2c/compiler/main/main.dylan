@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.26 1995/11/08 16:46:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.27 1995/11/08 18:35:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -252,12 +252,41 @@ define method compile-library (lid-file :: <byte-string>) => ();
 
   end-dumping(dump-buf);
 
-  begin
-    format(*debug-output*, "Emitting Initial Heap.\n");
-    let heap-stream 
-      = make(<file-stream>, name: "heap.s", direction: #"output");
-    build-initial-heap(*roots*, heap-stream);
-    close(heap-stream);
+  let executable = element(header, #"executable", default: #f);
+  if (executable)
+    begin
+      format(*debug-output*, "Emitting Initial Heap.\n");
+      let heap-stream 
+	= make(<file-stream>, name: "heap.s", direction: #"output");
+      build-initial-heap(*roots*, heap-stream);
+      close(heap-stream);
+    end;
+
+    begin
+      format(*debug-output*, "Building inits.c.\n");
+      let stream = make(<file-stream>, name: "inits.c", direction: #"output");
+      write("#include <runtime.h>\n\n", stream);
+      write("/* This file is machine generated.  Do not edit. */\n\n", stream);
+      write("void inits(descriptor_t *sp)\n{\n", stream);
+      for (unit in *roots*)
+	format(stream, "    %s_init(sp);\n", unit[0]);
+      end;
+      write("}\n", stream);
+      close(stream);
+    end;
+
+    begin
+      let command = " -lruntime";
+      for (unit in *roots*)
+	command := concatenate(" -l", unit[0], command);
+      end;
+      command := concatenate("gcc ", $cc-flags, " -o ", executable,
+			     " inits.c heap.s", command);
+      format(*debug-output*, "%s\n", command);
+      unless (zero?(system(command)))
+	cerror("so what", "cc failed?");
+      end;
+    end;
   end;
 
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
