@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.5 1994/11/28 06:31:58 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.6 1995/03/02 19:18:48 wlott Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -67,8 +67,8 @@ MINDYFLAGS = -lDylan
 
 OBJS = exports.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc list.dbc \
 	deque.dbc range.dbc stretchy.dbc ext.dbc table.dbc sort.dbc cond.dbc \
-	num.dbc char.dbc func.dbc misc.dbc debug.dbc exit.dbc multilock.dbc \
-	semaphore.dbc extern.dbc
+	num.dbc ratio.dbc char.dbc func.dbc misc.dbc debug.dbc exit.dbc \
+	multilock.dbc semaphore.dbc extern.dbc
 
 dylan.dbc: ${OBJS}
 	cat ${OBJS} > $@
@@ -101,6 +101,8 @@ cond.dbc: ${SRCDIR}/cond.dylan
 	${MC} ${MINDYFLAGS} -o cond.dbc ${SRCDIR}/cond.dylan
 num.dbc: ${SRCDIR}/num.dylan
 	${MC} ${MINDYFLAGS} -o num.dbc ${SRCDIR}/num.dylan
+ratio.dbc: ${SRCDIR}/num.dylan
+	${MC} ${MINDYFLAGS} -o ratio.dbc ${SRCDIR}/ratio.dylan
 char.dbc: ${SRCDIR}/char.dylan
 	${MC} ${MINDYFLAGS} -o char.dbc ${SRCDIR}/char.dylan
 func.dbc: ${SRCDIR}/func.dylan
