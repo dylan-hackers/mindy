@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.56 1996/02/11 16:59:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.57 1996/02/12 01:59:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1252,6 +1252,7 @@ define method convert-top-level-form
       let data-word? = instance?(representation, <data-word-representation>);
       let key-infos = make(<stretchy-vector>);
       let maker-args = make(<stretchy-vector>);
+      let setup-builder = make-builder(tl-builder);
       let maker-builder = make-builder(tl-builder);
       let init-builder = make-builder(tl-builder);
       let instance-leaf
@@ -1269,12 +1270,9 @@ define method convert-top-level-form
 
       local
 	method maker-slot-descriptors-leaf ()
-/* This doesn't work and I don't want to fix it correctly now.
 	  %maker-slot-descriptors-leaf
 	    | (%maker-slot-descriptors-leaf
-		 := make-descriptors-leaf(maker-builder, "all-slot", cclass));
-*/
-	  make-descriptors-leaf(maker-builder, "all-slot", cclass);
+		 := make-descriptors-leaf(setup-builder, "all-slot", cclass));
 	end,
 	method maker-override-descriptors-leaf (introducer :: <cclass>)
 	  block (return)
@@ -1283,7 +1281,7 @@ define method convert-top-level-form
 		return(entry.tail);
 	      end;
 	    end;
-	    let new = make-descriptors-leaf(maker-builder, "override",
+	    let new = make-descriptors-leaf(setup-builder, "override",
 					    introducer);
 	    %maker-override-descriptors-leaves
 	      := pair(pair(introducer, new),
@@ -1675,6 +1673,7 @@ define method convert-top-level-form
 	let maker-region
 	  = build-function-body(tl-builder, policy, source, #f, name,
 				as(<list>, maker-args), cclass, #t);
+	build-region(tl-builder, builder-result(setup-builder));
 	build-region(tl-builder, builder-result(maker-builder));
 	let bytes = cclass.instance-slots-layout.layout-length;
 	let base-len
@@ -1802,10 +1801,9 @@ end;
 define method slot-accessor-standin
     (slot :: <instance-slot-info>, kind :: one-of(#"getter", #"setter"))
     => standin :: false-or(<ct-function>);
-/*
   if (instance?(slot, <vector-slot-info>))
     #f;
-  else
+  elseif (find-slot-offset(slot, slot.slot-introduced-by))
     let rep = slot.slot-representation;
     let standin-name :: false-or(<symbol>)
       = if (rep == *general-rep*)
@@ -1826,8 +1824,6 @@ define method slot-accessor-standin
       #f;
     end if;
   end if;
-*/
-  #f;
 end method slot-accessor-standin;
 
 
