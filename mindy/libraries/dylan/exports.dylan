@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.97 1996/07/11 16:06:07 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.98 1996/07/12 16:32:28 dwatson Exp $
 
 //======================================================================
 //
@@ -33,7 +33,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 define library Dylan
   export
     Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
-    Namespace-Introspection, Cheap-IO, Extern, Transcendental;
+    Namespace-Introspection, Cheap-IO, Extern, Transcendental,
+    %Hash-Tables;
 end Dylan;
 
 define module Builtin-Stuff
@@ -257,10 +258,6 @@ define module Extensions
     export: all;
   use extras, exclude: { instantiable? },
     export: all;
-  create
-    <equal-table>, equal-hash, collection-hash, 
-    <value-table>, value-hash, sequence-hash, string-hash,
-    <string-table>;
   export
     one-of, ignore, key-exists?, <byte>;
 end Extensions;
@@ -338,11 +335,17 @@ define module Threads
 end;
 
 
-define module Hash-Tables
+define module %Hash-Tables
   use Dylan;
   use Builtin-Stuff,
     import: {state-valid?, pointer-hash, float-hash, symbol-hash};
   use Extensions;
+  export
+    remove-all-keys!, uppercase?,
+    <hash-state>, collection-hash,
+    <equal-table>, equal-hash,
+    <value-table>, value-hash,
+    string-hash, sequence-hash;
 end;
 
 
@@ -415,4 +418,3 @@ define module Transcendental
 	      $pi, $e }, 
     export: all;
 end module Transcendental;
-
