@@ -1,12 +1,7 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.3 2001/10/14 18:52:24 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.4 2001/10/15 20:31:39 gabor Exp $
 copyright: see below
 
-/*
-define function reoptimize (component :: <component>, frob) => ()
-//  dformat("*** Skipping re-optimization!\n");
-end;
-*/
 
 //======================================================================
 //
@@ -35,8 +30,14 @@ end;
 //
 //======================================================================
 
+/*
+define function reoptimize (component :: <component>, frob) => ()
+//  dformat("*** Skipping re-optimization!\n");
+end;
+*/
+
 // Routines to edit FER.
-// insert-after -- internal
+// insert-after -- external
 //
 // Insert the region immediate after the assignment.  All appropriate parent
 // and region links are updated.
@@ -80,7 +81,7 @@ define method insert-after
     => ();
 end;
 
-// split-after - internal
+// split-after - external
 //
 // Splits the region containing the assignment into two regions with the
 // split following the assignment.  The assignments in the two result
@@ -109,7 +110,7 @@ define method split-after (assign :: <abstract-assignment>)
   end;
 end;
 
-// combine-regions -- internal.
+// combine-regions -- external.
 //
 // Takes two subtrees of FER and combines them into one subtree.  The result
 // is interally consistent (i.e. the two input regions will have their
@@ -153,7 +154,7 @@ define method combine-regions
   end;
 end;
 
-// replace-subregion -- internal
+// replace-subregion -- external.
 //
 // Replace region's child old with new.  This is NOT a deletion.  None of the
 // code associated with old is deleted.  It is assumed that this routine will
@@ -219,6 +220,8 @@ define method replace-subregion
   end;
 end;
 
+// merge-simple-regions -- internal.
+//
 define method merge-simple-regions
     (component :: <component>, first :: <simple-region>,
      second :: <simple-region>, reoptimize :: <function>)
@@ -264,6 +267,8 @@ end;
 
 // Deletion routines
 
+// delete-dependent -- external.
+//
 define method delete-dependent
     (component :: <component>, dependent :: <dependent-mixin>, reoptimize :: <function>) => ();
   //
@@ -328,6 +333,8 @@ define method delete-dependent
 end;
 
 
+// remove-dependency-from-source -- external.
+//
 define method remove-dependency-from-source
     (component :: <component>, dependency :: <dependency>, reoptimize :: <function>) => ();
   let source = dependency.source-exp;
@@ -347,6 +354,8 @@ define method remove-dependency-from-source
   dropped-dependent(component, source, reoptimize);
 end;
 
+// dropped-dependent -- external.
+//
 define generic dropped-dependent
     (component :: <component>, expr :: <expression>,
      reoptimize :: <function>) => ();
@@ -425,6 +434,8 @@ define method dropped-dependent
 end;
 
 
+// delete-queueable -- external.
+//
 define method delete-queueable
     (component :: <component>, queueable :: <queueable-mixin>) => ();
   //
@@ -445,6 +456,8 @@ define method delete-queueable
 end;
 
 
+// function-movable? -- external.
+//
 define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
   #f;
 end;
@@ -471,6 +484,8 @@ define method function-movable?
 end;
 
 
+// expression-movable? -- external.
+//
 define method expression-movable? (expr :: <expression>)
     => res :: <boolean>;
   #f;
