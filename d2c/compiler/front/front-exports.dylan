@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.14 1996/04/13 21:15:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.15 1996/04/18 17:04:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,10 +46,12 @@ define module primitives
     <primitive-info>, define-primitive, primitive-info-or-lose,
     priminfo-name, priminfo-arg-types, priminfo-result-type,
     priminfo-side-effect-free?, priminfo-pure?,
-    priminfo-transformer, priminfo-emitter,
+    priminfo-type-deriver, priminfo-transformer, priminfo-emitter,
 
 
-    define-primitive-transformer, define-primitive-emitter;
+    define-primitive-type-deriver,
+    define-primitive-transformer,
+    define-primitive-emitter;
 end;
 
 

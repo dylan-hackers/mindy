@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.33 1996/04/14 13:24:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.34 1996/04/18 17:04:43 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,16 +42,19 @@ define class <primitive-info> (<identity-preserving-mixin>)
   slot priminfo-pure? :: <boolean>,
     required-init-keyword: pure:;
   //
+  // Function to dynamically compute the return type of this primitive.
+  // Gets passed the primitive operation and a list of the ctypes for each
+  // argument.
+  slot priminfo-type-deriver :: false-or(<function>) = #f;
+  //
   // Function to ``optimize'' uses of this primitive.  Gets passed
   // the component and the primitive operation.  Any return values are
   // ignored.
-  slot priminfo-transformer :: false-or(<function>),
-    init-value: #f;
+  slot priminfo-transformer :: false-or(<function>) = #f;
   //
   // Function to spew the C code corresponding to the primitive.  Gets
   // passed the primitive and the file-state.
-  slot priminfo-emitter :: false-or(<function>),
-    init-value: #f;
+  slot priminfo-emitter :: false-or(<function>) = #f;
 end;
 
 define sealed domain make (singleton(<primitive-info>));
@@ -123,6 +126,11 @@ define method priminfo-result-type (info :: <primitive-info>)
 	 := specifier-type(info.priminfo-result-type-specifier));
 end;
 
+
+define method define-primitive-type-deriver
+    (name :: <symbol>, func :: <function>) => ();
+  primitive-info-or-lose(name).priminfo-type-deriver := func;
+end method define-primitive-type-deriver;
 
 define method define-primitive-transformer
     (name :: <symbol>, func :: <function>) => ();
