@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.1 1994/03/24 21:49:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.2 1994/03/28 11:31:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -87,13 +87,14 @@
 
 #define fop_IN_LIBRARY 60
 #define fop_IN_MODULE 61
-#define fop_TOP_LEVEL_FORM 62
-#define fop_DEFINE_CONSTANT 63
-#define fop_DEFINE_VARIABLE 64
-#define fop_DEFINE_GENERIC 65
-#define fop_DEFINE_METHOD 66
-#define fop_DEFINE_CLASS 67
-#define fop_DEFINE_LIBRARY 68
-#define fop_DEFINE_MODULE 69
+#define fop_SOURCE_FILE 62
+#define fop_TOP_LEVEL_FORM 63
+#define fop_DEFINE_CONSTANT 64
+#define fop_DEFINE_VARIABLE 65
+#define fop_DEFINE_GENERIC 66
+#define fop_DEFINE_METHOD 67
+#define fop_DEFINE_CLASS 68
+#define fop_DEFINE_LIBRARY 69
+#define fop_DEFINE_MODULE 70
 
 #define fop_DONE 255
