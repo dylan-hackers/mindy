@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.56 1996/05/01 12:45:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.57 1996/05/01 14:26:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -646,6 +646,8 @@ define method fer-convert-method
      #key next-method-info :: false-or(<list>))
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
+  let policy = lexenv.lexenv-policy;
+  let specializer-policy = specializer-lexenv.lexenv-policy;
 
   local
     method param-type-and-var (param)
@@ -661,7 +663,7 @@ define method fer-convert-method
 		      #"assignment", temp);
 	  let var = make-lexical-var(builder, #"type", source,
 				     specifier-type(#"<type>"));
-	  build-let(builder, specializer-lexenv.lexenv-policy, source,
+	  build-let(builder, specializer-policy, source,
 		    var, temp);
 	  values(object-ctype(), var);
 	end;
@@ -726,7 +728,7 @@ define method fer-convert-method
     if (next-method-info == #())
       // We can statically tell that there is no next method.  So just bind
       // the #next var to #f.
-      build-let(body-builder, lexenv.lexenv-policy, source, var,
+      build-let(body-builder, policy, source, var,
 		make-literal-constant(body-builder, as(<ct-value>, #f)));
     else
       let orig-args-var
@@ -735,23 +737,23 @@ define method fer-convert-method
       if (rest-var)
 	let fixed = make-values-cluster(builder, #"fixed", wild-ctype());
 	build-assignment
-	  (body-builder, lexenv.lexenv-policy, source, fixed,
+	  (body-builder, policy, source, fixed,
 	   make-operation
 	     (body-builder, <primitive>, as(<list>, vars), name: #"values"));
 	let rest = make-values-cluster(builder, #"rest", wild-ctype());
 	build-assignment
-	  (body-builder, lexenv.lexenv-policy, source, rest,
+	  (body-builder, policy, source, rest,
 	   make-operation
 	     (body-builder, <primitive>, list(rest-var),
 	      name: #"values-sequence"));
 	let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
 	build-assignment
-	  (body-builder, lexenv.lexenv-policy, source, cluster,
+	  (body-builder, policy, source, cluster,
 	   make-operation
 	     (body-builder, <primitive>, list(fixed, rest),
 	      name: #"merge-clusters"));
 	build-assignment
-	  (body-builder, lexenv.lexenv-policy, source, orig-args-var,
+	  (body-builder, policy, source, orig-args-var,
 	   make-operation
 	     (body-builder, <primitive>,
 	      list(cluster,
@@ -759,13 +761,13 @@ define method fer-convert-method
 	      name: #"canonicalize-results"));
       else
 	build-assignment
-	  (body-builder, lexenv.lexenv-policy, source, orig-args-var,
+	  (body-builder, policy, source, orig-args-var,
 	   make-operation
 	     (body-builder, <primitive>, as(<list>, vars), name: #"vector"));
       end if;
 
       build-let
-	(body-builder, lexenv.lexenv-policy, source, var,
+	(body-builder, policy, source, var,
 	 make-operation
 	   (body-builder, <primitive>,
 	    list(if (next-method-info)
@@ -826,34 +828,30 @@ define method fer-convert-method
 				 specifier-type(#"<boolean>"));
 	    let rep = pick-representation(type, #"speed");
 	    if (rep.representation-has-bottom-value?)
-	      build-let(body-builder, lexenv.lexenv-policy,
-			source, supplied?-var,
-			make-operation
-			  (body-builder, <primitive>, list(pre-default),
-			   name: #"initialized?"));
+	      build-let
+		(body-builder, policy, source, supplied?-var,
+		 make-operation
+		   (body-builder, <primitive>, list(pre-default),
+		    name: #"initialized?"));
 	    else
 	      add!(vars, supplied?-var);
 	    end;
-	    build-if-body(body-builder, lexenv.lexenv-policy,
-			  source, supplied?-var);
-	    build-assignment(body-builder, lexenv.lexenv-policy,
-			     source, temp, pre-default);
-	    build-else(body-builder, lexenv.lexenv-policy,
-		       source);
+	    build-if-body(body-builder, policy, source, supplied?-var);
+	    build-assignment(body-builder, policy, source, temp, pre-default);
+	    build-else(body-builder, policy, source);
 	    fer-convert(body-builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
 			#"assignment", temp);
 	    end-body(body-builder);
-	    build-let(body-builder, lexenv.lexenv-policy, source,
-		      var, temp);
+	    build-let(body-builder, policy, source, var, temp);
 	  end;
 	  if (type-var)
 	    let checked = make-lexical-var(body-builder, name.token-symbol,
 					   source, object-ctype());
 	    build-assignment
-	      (body-builder, lexenv.lexenv-policy, source, checked,
+	      (body-builder, policy, source, checked,
 	       make-check-type-operation
-		 (body-builder, lexenv.lexenv-policy, source, var, type-var));
+		 (body-builder, policy, source, var, type-var));
 	    add-binding(lexenv, name, checked, type-var: type-var);
 	  else
 	    add-binding(lexenv, name, var);
@@ -883,9 +881,9 @@ define method fer-convert-method
 				type);
       add!(fixed-results, temp);
       build-assignment
-	(result-check-builder, specializer-lexenv.lexenv-policy, source, var,
+	(result-check-builder, specializer-policy, source, var,
 	 make-check-type-operation
-	   (result-check-builder, specializer-lexenv.lexenv-policy, source,
+	   (result-check-builder, specializer-policy, source,
 	    temp, type-var));
     else
       add!(result-type-leaves,
@@ -921,7 +919,7 @@ define method fer-convert-method
   let lambda?
     = visibility == #"local" | non-const-arg-types? | non-const-result-types?;
   let function-region
-    = build-function-body(builder, lexenv.lexenv-policy, source, lambda?,
+    = build-function-body(builder, policy, source, lambda?,
 			  name, vars, result-type, ~lambda?);
 
   build-region(builder, builder-result(body-builder));
@@ -932,8 +930,7 @@ define method fer-convert-method
       let cluster
 	= make-values-cluster(builder, rest-symbol, wild-ctype());
       fer-convert(builder, meth.method-body, lexenv, #"assignment", cluster);
-      build-return(builder, lexenv.lexenv-policy, source, function-region,
-		   cluster);
+      build-return(builder, policy, source, function-region, cluster);
     else
       let cluster = make-values-cluster(builder, #"results", wild-ctype());
       fer-convert(builder, meth.method-body, lexenv, #"assignment", cluster);
@@ -941,7 +938,7 @@ define method fer-convert-method
       let rest-result
 	= make-local-var(builder, rest-symbol, object-ctype());
       build-assignment
-	(builder, lexenv.lexenv-policy, source,
+	(builder, policy, source,
 	 concatenate(as(<list>, fixed-results), list(rest-result)),
 	 make-operation(builder, <primitive>,
 			list(cluster,
@@ -951,36 +948,42 @@ define method fer-convert-method
 			name: #"canonicalize-results"));
 
       build-region(builder, builder-result(result-check-builder));
-      if (need-to-check-rest?)
-	// ### Need to check the type of the rest results.
-	#f;
-      end;
+
+      let checked-rest-result
+	= if (need-to-check-rest?)
+	    let temp = make-local-var(builder, rest-symbol, object-ctype());
+	    build-assignment
+	      (builder, policy, source, temp,
+	       make-unknown-call
+		 (builder,
+		  ref-dylan-defn(builder, policy, source, #"check-types"),
+		  #f, list(rest-result, rest-type-leaf)));
+	    temp;
+	  else
+	    rest-result;
+	  end if;
 
       let checked-cluster
 	= make-values-cluster(builder, #"results", wild-ctype());
 
       let args = make(<stretchy-vector>);
-      add!(args,
-	   ref-dylan-defn(builder, lexenv.lexenv-policy, source, #"values"));
+      add!(args, ref-dylan-defn(builder, policy, source, #"values"));
       for (fixed in checked-fixed-results)
 	add!(args, fixed);
       end;
-      add!(args, rest-result);
+      add!(args, checked-rest-result);
       build-assignment
-	(builder, lexenv.lexenv-policy, source, checked-cluster,
+	(builder, policy, source, checked-cluster,
 	 make-unknown-call
-	   (builder,
-	    ref-dylan-defn(builder, lexenv.lexenv-policy, source, #"apply"),
-	    #f,
+	   (builder, ref-dylan-defn(builder, policy, source, #"apply"), #f,
 	    as(<list>, args)));
-      build-return(builder, lexenv.lexenv-policy, source,
-		   function-region, checked-cluster);
+      build-return(builder, policy, source, function-region, checked-cluster);
     end;
   else
     fer-convert(builder, meth.method-body, lexenv, #"assignment",
 		as(<list>, fixed-results));
     build-region(builder, builder-result(result-check-builder));
-    build-return(builder, lexenv.lexenv-policy, source,
+    build-return(builder, policy, source,
 		 function-region, as(<list>, checked-fixed-results));
   end;
 
@@ -1002,10 +1005,9 @@ define method fer-convert-method
       method build-call (name, args)
 	let temp = make-local-var(builder, name, object-ctype());
 	build-assignment
-	  (builder, lexenv.lexenv-policy, source, temp,
+	  (builder, policy, source, temp,
 	   make-unknown-call
-	     (builder,
-	      ref-dylan-defn(builder, lexenv.lexenv-policy, source, name), #f,
+	     (builder, ref-dylan-defn(builder, policy, source, name), #f,
 	      as(<list>, args)));
 	temp;
       end;
