@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.17 1995/03/12 16:41:57 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.18 1995/04/16 23:34:43 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -46,6 +46,7 @@
 #if SLOW_FUNCTION_POINTERS
 #   include "interp.h"
 #endif
+#include "fd.h"
 
 static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
@@ -134,20 +135,6 @@ static void check_fds(boolean block)
 {
     fd_set readfds, writefds;
     int nfound, fd;
-
-#ifdef FAKE_SELECT
-	for (fd = 0; fd < NumFds; fd++) {
-	    if (FD_ISSET(fd, &readfds)) {
-		event_broadcast(Readers.events[fd]);
-		FD_CLR(fd, &Readers.fds);
-	    }
-	    if (FD_ISSET(fd, &writefds)) {
-		event_broadcast(Writers.events[fd]);
-		FD_CLR(fd, &Writers.fds);
-	    }
-	}
-	NumFds = 0;
-#else
     struct timeval tv, *tvp;
 
     if (NumFds == 0) {
@@ -159,6 +146,26 @@ static void check_fds(boolean block)
     memcpy(&readfds, &Readers.fds, sizeof(readfds));
     memcpy(&writefds, &Writers.fds, sizeof(writefds));
 
+#ifdef WIN32
+    do {
+    	for (fd = 0; fd < NumFds; fd++) {
+	    if (FD_ISSET(fd, &Readers.fds) && input_available(fd)) {
+		event_broadcast(Readers.events[fd]);
+		FD_CLR(fd, &Readers.fds);
+		block = 0;
+	    }
+	    if (FD_ISSET(fd, &Writers.fds) && output_writable(fd)) {
+		event_broadcast(Writers.events[fd]);
+		FD_CLR(fd, &Writers.fds);
+		block = 0;
+	    }
+	}
+    } while (block);
+    for (fd = NumFds - 1; fd >= 0; fd--)   /* Adjust NumFds */
+        if (FD_ISSET(fd, &Readers.fds) || FD_ISSET(fd, &Writers.fds))
+	    break;
+    NumFds = fd+1;
+#else
     if (block)
 	tvp = NULL;
     else {

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.25 1995/04/08 19:17:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.26 1995/04/16 23:34:03 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -43,6 +43,63 @@
 #include "num.h"
 #include "obj.h"
 #include "def.h"
+#include "fd.h"
+
+#ifdef WIN32
+static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and chars_in_stdin_buffer */
+#define stdin_buffer_size 1000
+static char stdin_buffer[stdin_buffer_size];
+static char *stdin_buffer_start = &(stdin_buffer[0]);
+static int stdin_char_count = 0;
+static HANDLE stdin_buffer_empty, stdin_buffer_not_empty;   /* Events */
+
+static DWORD stdin_producer (LPDWORD unused_param)
+{
+    char local_buffer[stdin_buffer_size];
+    while (1) {
+        int chars_read;
+        WaitForSingleObject(stdin_buffer_empty, INFINITE);
+        chars_read = read(0, (void *) local_buffer, stdin_buffer_size);
+        EnterCriticalSection(&stdin_buffer_mutex); {
+            memcpy(stdin_buffer, local_buffer, chars_read);
+            stdin_buffer_start = &(stdin_buffer[0]);
+	    stdin_char_count = chars_read;
+            ResetEvent(stdin_buffer_empty); /* Set to false */
+            SetEvent(stdin_buffer_not_empty); /* Set to true */
+	} LeaveCriticalSection(&stdin_buffer_mutex);
+    }
+    return 0;    /* This line never reached */
+}
+
+static int stdin_consumer (char *buffer, int max_chars)
+{
+    int chars_to_read;
+    WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
+    EnterCriticalSection(&stdin_buffer_mutex); {
+                /* min(stdin_char_count, max_chars) */
+        chars_to_read = (stdin_char_count < max_chars) ? stdin_char_count : max_chars;
+	memcpy((void *) buffer, stdin_buffer_start, chars_to_read);
+	stdin_buffer_start += chars_to_read;
+	stdin_char_count -= chars_to_read;
+	if (stdin_char_count == 0) {
+	    SetEvent(stdin_buffer_empty);
+	    ResetEvent(stdin_buffer_not_empty);
+	}
+    } LeaveCriticalSection(&stdin_buffer_mutex);
+    return chars_to_read;
+}
+
+static boolean stdin_input_available (void)
+{
+    int answer;
+    EnterCriticalSection(&stdin_buffer_mutex); {
+        answer = stdin_char_count;
+    } LeaveCriticalSection(&stdin_buffer_mutex);
+    return answer;
+}
+
+#endif
+ /* WIN32 */	    
 
 static void results(struct thread *thread, obj_t *old_sp,
 		    int okay, obj_t result)
@@ -73,31 +130,30 @@ static obj_t fd_error_str(obj_t xerrno)
   return make_byte_string(strerror(fixnum_value(xerrno)));
 }
 
-static int input_available(int fd)
+int input_available(int fd)
 {
-#ifdef FAKE_SELECT
-    return 1;
-#else
     fd_set fds;
     struct timeval tv;
-
-#   ifdef WIN32
-    fd = _get_osfhandle(fd);
-    if (fd < 0) return 1;
-#   endif
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-#   ifdef WIN32
-	fd = select(0, &fds, NULL, NULL, &tv);
-	if (fd < 0) fd = WSAGetLastError();
-	return fd;
-#   else
-        return select(fd+1, &fds, NULL, NULL, &tv);
-#   endif
-#endif
+#ifdef WIN32
+    if (isatty(fd)) {
+	return stdin_input_available();
+    } else {
+        int select_result = select(fd+1, &fds, NULL, NULL, &tv);
+	if (select_result < 0) {
+	    /* fd is a file rather than a socket, so there must be input available */
+            return 1;
+	} else {
+	    return select_result;
+	}
+    }
+#else
+    return select(fd+1, &fds, NULL, NULL, &tv);
+#endif        
 }
 
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
@@ -126,12 +182,6 @@ static void maybe_read(struct thread *thread)
     int nfound, res;
     obj_t *old_sp;
 
-#ifdef FAKE_SELECT
- 	res = read(fd,
-		   buffer_data(fp[-8]) + fixnum_value(fp[-7]),
-		   fixnum_value(fp[-6]));
-	results(thread, pop_linkage(thread), res, make_fixnum(res));
-#else
     nfound = input_available(fd);
     if (nfound < 0) {
 	old_sp = pop_linkage(thread);
@@ -143,13 +193,18 @@ static void maybe_read(struct thread *thread)
     else if (nfound == 0)
 	wait_for_input(thread, fd, maybe_read);
     else {
+#if WIN32
+        if (isatty(fd)) 
+	    res = stdin_consumer(buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		                 fixnum_value(fp[-6]));
+        else 
+#endif
 	res = read(fd,
 		   buffer_data(fp[-8]) + fixnum_value(fp[-7]),
 		   fixnum_value(fp[-6]));
 	
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
-#endif
 }
 
 static void fd_read(obj_t self, struct thread *thread, obj_t *args)
@@ -189,45 +244,54 @@ static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 	results(thread, args-1, res, obj_True);
 }
 
-static void maybe_write(struct thread *thread)
+/* The output version of input_available
+ */
+int output_writable(int fd)
 {
-    obj_t *fp = thread->fp;
-    int fd = fixnum_value(fp[-9]);
-#ifndef FAKE_SELECT
     fd_set fds;
     struct timeval tv;
-#endif
-    int nfound, res;
-    obj_t *old_sp;
-
-#ifdef FAKE_SELECT
-	res = write(fd,
-		    buffer_data(fp[-8]) + fixnum_value(fp[-7]),
-		    fixnum_value(fp[-6]));
-	results(thread, pop_linkage(thread), res, make_fixnum(res));
-#else
-#   ifdef WIN32
-	fd = _get_osfhandle(fd);
-	assert(fd > 0);
-#   endif
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    nfound = select(fd+1, NULL, &fds, NULL, &tv);
+#ifdef WIN32
+    if (isatty(fd)) {
+        return 1;   /* You can always output to a tty */
+    } else {
+        int select_result = select(fd+1, NULL, &fds, NULL, &tv);
+	if (select_result < 0) {
+	    /* fd is a file rather than a socket, so we can write to it without blocking */
+            return 1;
+	} else {
+	    return select_result;
+	}
+    }
+#else
+    return select(fd+1, NULL, &fds, NULL, &tv);
+#endif        
+}
 
-    if (nfound < 0)
+
+static void maybe_write(struct thread *thread)
+{
+    obj_t *fp = thread->fp;
+    int fd = fixnum_value(fp[-9]);
+    int nfound, res;
+    obj_t *old_sp;
+
+    nfound = output_writable(fd);
+    if (nfound < 0) {
 	if (errno != EINTR) {
 	    old_sp = pop_linkage(thread);
 	    thread->sp = old_sp + 2;
 	    old_sp[0] = obj_False;
 	    old_sp[1] = make_fixnum(errno);
 	    do_return(thread, old_sp, old_sp);
-	}
-	else
+	} else {
 	    wait_for_output(thread, fd, maybe_write);
-    else if (nfound == 0)
+	}
+    } else if (nfound == 0)
 	wait_for_output(thread, fd, maybe_write);
     else {
 	res = write(fd,
@@ -236,7 +300,6 @@ static void maybe_write(struct thread *thread)
 
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
-#endif
 }
 
 static void fd_write(obj_t self, struct thread *thread, obj_t *args)
@@ -257,9 +320,67 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     oldargs = args - 1;
     thread->sp = args + 1;
 
+#if 0
+    /* This NT code doesn't work because it locks up on the first
+     * call to dup().
+     */
+    {
+        /* This code is a combination of the Unix version of this code and code in
+         * the Win32 Programmer's Reference volume 2, pages 40-45 
+         */
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo;
+	SECURITY_ATTRIBUTES saAttr;
+	const int pipe_size = 2000;
+        int old_stdin, old_stdout;
+        char *command_line = (char *) string_chars(args[0]);
+
+	//printf("Starting fd_exec\n");
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.lpReserved = NULL;
+	siStartInfo.lpReserved2 = NULL;
+	siStartInfo.cbReserved2 = 0;
+	siStartInfo.lpDesktop = NULL;
+	siStartInfo.dwFlags = 0;
+
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	/* Set up child's redirected stdin and stdout */
+        old_stdin = dup(0);
+	old_stdout = dup(1);
+	//printf("Duplicated some fd's\n");
+        _pipe(inpipes, pipe_size, O_TEXT);   /* open in text mode */
+        _pipe(outpipes, pipe_size, O_TEXT);
+	close(0);	      
+	close(1);
+	dup2(inpipes[0], 0);
+	dup2(outpipes[1], 1);
+
+	//printf("About to create process\n");
+	if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
+	                    NULL, NULL, &siStartInfo, &piProcInfo)) {
+	    oldargs[0] = obj_False;
+	    oldargs[1] = obj_False;
+	} else {
+	    oldargs[0] = make_fixnum(inpipes[1]);
+	    oldargs[1] = make_fixnum(outpipes[0]);
+	}
+	/* Restore the original stdin and stdout */
+	//printf("Process created\n");
+	close(0);
+	close(1);
+	dup2(old_stdin, 0);
+	dup2(old_stdout, 1);
+	close(old_stdin);
+	close(old_stdout);
+    } 
+#endif
+
 #ifdef WIN32
-	oldargs[0] = obj_False;
-	oldargs[1] = obj_False;
+    oldargs[0] = obj_False;
+    oldargs[1] = obj_False;
 #else
     if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
 	(forkresult = fork()) != -1)
@@ -391,7 +512,7 @@ void init_fd_functions(void)
     define_constant("O_CREAT", make_fixnum(O_CREAT));
     define_constant("O_EXCL", make_fixnum(O_EXCL));
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
-    define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK));
+    /* define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK)); */
 
     /* This compendium of error numbers comes from Tcl. */
 #ifdef E2BIG
@@ -814,18 +935,17 @@ void init_fd_functions(void)
 #endif
 		    );
 
-#if defined(WIN32) && !defined(FAKE_SELECT)
-{
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	int err;
-	wVersionRequested = MAKEWORD(1, 1);
-	err = WSAStartup(wVersionRequested, &wsaData);
-	if (err) lose("Couldn't startup Windows sockets");
-	if (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1 ) {
-		WSACleanup();
-		lose("Wrong version of Windows sockets");
-	}
-}
+#ifdef WIN32
+    if (isatty(0)) {   /* If stdin is a tty and not redirected */
+	DWORD thread_id;
+	HANDLE thread_handle;
+    	stdin_buffer_empty     = CreateEvent(NULL, TRUE, TRUE, NULL);
+	stdin_buffer_not_empty = CreateEvent(NULL, TRUE, FALSE, NULL);
+	       /* nameless "manual reset" events */
+	InitializeCriticalSection(&stdin_buffer_mutex);
+	thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) stdin_producer, NULL, 0, &thread_id);
+	if (thread_handle == NULL) 
+	    lose("Can't create stdin_producer thread");
+    }
 #endif
 }

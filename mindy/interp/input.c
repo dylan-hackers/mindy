@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.16 1995/03/12 16:42:10 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.17 1995/04/16 23:34:28 nkramer Exp $
 *
 * This file implements getc.
 *
