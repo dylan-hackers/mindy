@@ -2787,7 +2787,7 @@ define constant *production-table* = make(<vector>, size: 91);
              let temp1 = tail(temp2);
              pair(begin
                       let (container-opts, rest) = process-container-options($r3);
-                      let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+                      let new-clause = make(<union-clause>, name: $r2.value, options: rest);
                       new-clause.container-options := container-opts;
                       $state.clauses := add!($state.clauses, new-clause);
                   end,
@@ -2821,7 +2821,7 @@ define constant *production-table* = make(<vector>, size: 91);
                       $state.container-options.rename :=
                          pair(pair($r2.value, $r4.value), $state.container-options.rename);
                       let (container-opts, rest) = process-container-options($r5);
-                      let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+                      let new-clause = make(<union-clause>, name: $r2.value, options: rest);
                       new-clause.container-options := container-opts;
                       $state.clauses := add!($state.clauses, new-clause);
                   end,
@@ -3354,7 +3354,7 @@ define method find-action (table, token)
   if (action)
     action;
   else
-    parse-error(token, "Parse error at or before %=.", token);
+    parse-error(token, "Parse error at or before %=.", token.string-value);
   end;
 end;
 

@@ -559,7 +559,7 @@ interface-clause (<struct-token> <string-literal-token> <arrow-token>
 
 interface-clause (<union-token> <string-literal-token> structure-option-list)
   let (container-opts, rest) = process-container-options($r3);
-  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  let new-clause = make(<union-clause>, name: $r2.value, options: rest);
   new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
 %
@@ -569,7 +569,7 @@ interface-clause (<union-token> <string-literal-token> <arrow-token>
   $state.container-options.rename :=
      pair(pair($r2.value, $r4.value), $state.container-options.rename);
   let (container-opts, rest) = process-container-options($r5);
-  let new-clause = make(<struct-clause>, name: $r2.value, options: rest);
+  let new-clause = make(<union-clause>, name: $r2.value, options: rest);
   new-clause.container-options := container-opts;
   $state.clauses := add!($state.clauses, new-clause);
 %
@@ -714,7 +714,7 @@ define method find-action (table, token)
   if (action)
     action;
   else
-    parse-error(token, "Parse error at or before %=.", token);
+    parse-error(token, "Parse error at or before %=.", token.string-value);
   end;
 end;
 
