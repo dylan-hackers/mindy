@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.15 1996/10/13 20:51:04 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.16 1997/05/09 23:04:08 ram Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -39,3 +39,4 @@ condition.dylan
 debug.dylan
 thread.dylan
 system.dylan
+main.dylan
