@@ -1,11 +1,11 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.9 1996/02/07 12:57:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.10 1996/02/21 15:52:45 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define variable *Top-Level-Forms* = make(<stretchy-vector>);
 
-define open primary abstract class <top-level-form> (<object>)
+define open primary abstract class <top-level-form> (<source-location-mixin>)
 end;
 
 define open primary abstract class <define-tlf> (<top-level-form>)
@@ -27,7 +27,9 @@ end;
 define open generic process-top-level-form (form :: <constituent>) => ();
 
 define method process-top-level-form (form :: <local-declaration>) => ();
-  error("Local declarations cannot appear directly at top level.");
+  compiler-error-location(
+    form,
+    "Local declarations cannot appear directly at top level.");
 end;
 
 // finalize-top-level-form -- exported.
@@ -51,7 +53,7 @@ define method extract-modifiers (where :: <string>, name :: <symbol>,
 				 #rest names)
   for (modifier in modifiers)
     unless (member?(modifier.token-symbol, names))
-      error("Bogus modifier for %s %s: %s",
+      compiler-error("Bogus modifier for %s %s: %s",
 	    where, name, modifier.token-symbol);
     end;
   end;
