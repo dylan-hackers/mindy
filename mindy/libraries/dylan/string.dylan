@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.6 1994/08/30 21:44:35 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.7 1994/11/06 20:11:18 rgs Exp $
 
 //======================================================================
 //
@@ -28,6 +28,13 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.d
 //
 //  This file contains the support for strings that isn't built in.
 //
+
+// By adding this method, we insure that the one which follows isn't
+// erroneously applied to things which are already strings.
+//
+define method as (clas == <string>, collection :: <string>)
+  collection;
+end method as;
 
 define method as (clas == <string>, collection :: <collection>)
   as(<byte-string>, collection)
@@ -68,8 +75,6 @@ define method as-uppercase! (string :: <string>)
   map-into(string, as-uppercase, string)
 end as-uppercase!;
 
-
-
 // Provide a type error rather than a no applicable methods error when
 // someone tries to put something illegal into a <string>
 //
@@ -81,3 +86,56 @@ define method element-setter
     (new, string :: <unicode-string>, index :: <integer>)
   error(make(<type-error>, value: new, type: <character>));
 end;
+
+define method copy-sequence
+    (vector :: <byte-string>, #key start = 0, end: last)
+  let src-sz = size(vector);
+  let last = if (last & last < src-sz) last else src-sz end if;
+  let sz = last - start;
+  let result = make(<byte-string>, size: sz);
+  copy-bytes(result, 0, vector, start, sz);
+  result;
+end method copy-sequence;
+
+// Specialized method which takes advantage of "copy-bytes".  Yields ~15%
+// speedup for some apps.
+define method concatenate-as
+    (cls == <byte-string>, vector :: <byte-string>, #next next-method,
+     #rest more_vectors)
+  let vector-count = size(more_vectors);
+  case
+    vector-count == 0 =>
+      // We must check for this case
+      copy-sequence(vector);
+    vector-count == 1 =>
+      // We can get big wins in the common two-string case.
+      let second-vector = first(more_vectors);
+      if (instance?(second-vector, <byte-string>))
+	let size1 = size(vector);
+	let size2 = size(second-vector);
+      
+	let result = make(cls, size: size1 + size2);
+	copy-bytes(result, 0, vector, 0, size1);
+	copy-bytes(result, size1, second-vector, 0, size2);
+	result;
+      else
+	next-method();
+      end if;
+    (~subtype?(cls, <vector>)
+       | ~every?(rcurry(instance?, <byte-string>), more_vectors)) =>
+      next-method();
+    otherwise =>
+      let length = reduce(method (int, seq) int + size(seq) end method,
+			  size(vector), more_vectors);
+      let result = make(cls, size: length);
+      for (next in more_vectors,
+	   src = vector then next,
+	   sz = size(vector) then size(next),
+	   index = 0 then index + sz)
+	copy-bytes(result, index, src, 0, sz);
+      finally
+	copy-bytes(result, index, src, 0, sz);
+      end for;
+      result;
+  end case;
+end method concatenate-as;
