@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.2 2000/01/24 04:54:42 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.3 2000/12/20 12:34:02 dauclair Exp $
 
 
 ///======================================================================
@@ -793,7 +793,7 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
 	case
 	  (~ instance?(remaining, <list>)) =>
 	    // Object was not a proper list, so print dot notation.
-	    write(stream, ". ");
+	    write(stream, " . ");
 	    pprint-newline(#"fill", stream);
 	    print(remaining, stream);
 	    exit();
@@ -838,7 +838,7 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
 		// Print the tag and its value with dot notation so that
 		// the rest of the list does not appear to be a single
 		// element of the list (that is, a nested list).
-		write(stream, ". ");
+		write(stream, " . ");
 		pprint-newline(#"fill", stream);
 		write(stream, $circular-id-prestring);
 		write(stream, new-print-reference-id(stream, ref));
@@ -848,7 +848,7 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
 	      otherwise =>
 		// Print the tag with dot notation.  See previous cases's
 		// comment.
-		write(stream, ". ");
+		write(stream, " . ");
 		pprint-newline(#"fill", stream);
 		write(stream, $circular-id-prestring);
 		write(stream, ref-id);
