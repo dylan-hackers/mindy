@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.17 1996/10/06 14:51:56 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.18 1997/02/19 13:31:22 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -71,9 +71,12 @@ MINDYFLAGS =
 #
 MINDYPATH =   MINDYPATH=../libraries/transcendental:../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix::../libraries/format-out:../libraries/time:../libraries/regexp
 
-# We don't want to run threaded-io-test by default because it is interactive
+# We don't want to run threaded-io-test by default because it is
+# interactive. Time-test is not run because it won't work under any
+# platform without dynamic library support in Mindy (such as Solaris)
 #
-OBJS_TO_RUN = dylan-test-lib.dbc regexp-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc time-test-lib.dbc
+OBJS_TO_RUN = dylan-test-lib.dbc regexp-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc
+
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
