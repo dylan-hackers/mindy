@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.10 1996/03/20 00:24:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.11 1996/06/26 14:39:16 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -25,12 +25,6 @@ define constant $not-supplied :: <not-supplied-marker>
 // never returns.
 //
 define constant <never-returns> :: <type> = type-union();
-
-// $Newlines-are-CRLF -- exported from System.
-//
-// Change this if we ever port the compiler to a Microsoft OS like NT
-//
-define constant $Newlines-are-CRLF = #f;
 
 define flushable generic values-sequence (sequence :: <sequence>);
 
