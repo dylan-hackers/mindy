@@ -2,7 +2,7 @@ module:     string-conversions
 author:     Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Convert strings to numbers and numbers to strings.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/conversions.dylan,v 1.2 2000/01/24 04:55:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/conversions.dylan,v 1.3 2000/10/20 14:53:42 housel Exp $
 
 //======================================================================
 //
@@ -121,7 +121,7 @@ define method string-to-integer (string :: <sequence>, #key base = 10)
   for (i from start-index below string.size)
     let digit = digit-to-integer(string[i]);
     if (digit >= base)
-      error("\"%s\" isn't in base %d\n", string, base);
+      error("\"%s\" isn't in base %d", string, base);
     else
       number := number * base  + digit;
     end if;
@@ -177,7 +177,7 @@ define method string-to-number (string :: <sequence>, #key base: base = 10)
       otherwise =>
 	let digit = digit-to-integer(c);
 	if (digit >= base) 
-	  error("\"%s\" isn't in base %d\n", string, base);
+	  error("\"%s\" isn't in base %d", string, base);
 	elseif (seen-decimal)  
 	  decimal-divisor := decimal-divisor * base;
 	  number := number + as(<float>, digit) / as(<float>, decimal-divisor);
