@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.10 1995/04/28 15:39:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.11 1995/04/30 05:55:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -268,6 +268,7 @@ define macro method-definer
     { } => { }
     { open ... } => { open ... }
     { sealed ... } => { sealed ... }
+    { inline ... } => { inline ... }
 end;
 
 define macro variable-definer
