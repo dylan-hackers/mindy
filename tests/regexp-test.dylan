@@ -2,7 +2,7 @@ module: regression-test
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.1 1994/09/04 03:29:23 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.2 1994/09/11 11:29:34 nkramer Exp $
 
 //======================================================================
 //
@@ -50,7 +50,21 @@ define method main (#rest ignored)
   split-test();
   substring-search-test();
   case-insensitive-equal-test();
+  join-test();
 end method main;
+
+define method join-test ();
+  print("Join test");
+  if (join(", ", "dirty word", "clean word", "computer word", "spanish word")
+	~= "dirty word, clean word, computer word, spanish word")
+    print("Failed join test");
+    print(join(", ", "dirty word", "clean word", "computer word", "spanish word"));
+  end if;
+  if (join(", ") ~= "")
+    print("Failed join test #2");
+  end if;
+end method join-test;
+
 
 // Try all 256x256 combinations to make sure our fancy definition of
 // case-insensitive-equal works.
