@@ -2,7 +2,7 @@ module: format
 author: Robert Stockton (rgs@cs.cmu.edu).
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format-buf.dylan,v 1.1 1996/07/12 01:13:42 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format-buf.dylan,v 1.2 1996/07/23 17:25:08 rgs Exp $
 
 ///======================================================================
 ///
@@ -102,7 +102,7 @@ define function write-to-buffer (str :: <byte-string>, bd :: <buffer-desc>)
     bd.next-ele := next + sz;
   elseif (sz > bd.limit)
     // worst case -- punt to standard code.
-    with-buffer-released(bd, curry(write, str, bd.stream));
+    with-buffer-released(bd, curry(write, bd.stream, str));
   else
     // Request the number of bytes we know we need for str.  Even though most
     // streams will only have one buffer, since we know str.size is <= the
@@ -147,24 +147,24 @@ define method format (stream :: <buffered-stream>,
 	   // because the buffer can change depending on the stream.
 	   buff :: <buffer> = bd.buffer then buff,
 	   buff-index :: <buffer-index> from bd.next-ele below bd.limit,
-	   until: (control-string[i] = $dispatch-char))
+	   until: (control-string[i] == $dispatch-char))
 	buff[buff-index] := as(<integer> /***/, control-string[i]);
       finally
 	bd.next-ele := buff-index;
-	if (i = control-len)
+	if (i == control-len)
 	  exit();
 	else
 	  start := i;
 	end;
       end for;
 
-      if (bd.next-ele = buff-size)
+      if (bd.next-ele == buff-size)
 	get-next-output-buffer(bd, buff-size);
 	buff-size := bd.limit;
       else
 	// Parse for field within which to pad output.
 	let (field, field-spec-end)
-	  = if (char-classes[as(<integer> /***/, control-string[start + 1])] = #"digit")
+	  = if (char-classes[as(<integer> /***/, control-string[start + 1])] == #"digit")
 	      parse-integer(control-string, start + 1);
 	    end;
 	if (field)
@@ -227,7 +227,7 @@ define function buf-do-dispatch
     (char :: <byte-character>, bd :: <buffer-desc>, arg)
     => consumed-arg? :: <boolean>;
   let stream = bd.stream;
-  select (char by \=)
+  select (char by \==)
     ('s'), ('S') =>
       if (instance?(arg, <byte-string>))
 	// Simulate "write-message" upon the argument.  This code must be
@@ -243,7 +243,7 @@ define function buf-do-dispatch
 	  // Simulate "write-message" upon the argument.  This code must be
 	  // changed if the semantics of "write-message" changes.
 	  let next = bd.next-ele;
-	  if (next = bd.limit)
+	  if (next == bd.limit)
 	    get-next-output-buffer(bd, next);
 	    next := bd.next-ele;
 	  end if;
@@ -275,7 +275,7 @@ define function buf-do-dispatch
       #t;
     ('%') =>
       let next = bd.next-ele;
-      if (next = bd.limit)
+      if (next == bd.limit)
 	get-next-output-buffer(bd, next);
 	next := bd.next-ele;
       end if;
