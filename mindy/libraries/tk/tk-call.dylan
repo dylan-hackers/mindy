@@ -65,8 +65,11 @@ define generic do-callback (line :: <string>) => ();
 define class <active-variable> (<object>)
   virtual slot value;
   slot index :: <string>;
-  slot internal-value :: <object>; // Will be stored as a member of "cls"
+  slot internal-value :: <object>,  // Will be stored as a member of "cls"
+    init-value: pair(#f, #f);
   slot cls :: <class>, init-keyword: #"class", init-value: <string>;
+  slot command :: union(<function>, <false>),
+    init-keyword: #"command", init-value: #f;
   required keyword value:;
 end class <active-variable>;
 
@@ -105,9 +108,23 @@ define method value (var :: <active-variable>) => (result :: <object>);
 end method value;
 
 define method value-setter (value :: <object>, var :: <active-variable>)
-  var.internal-value := tk-as(var.cls, value);
-  let string-value = tk-quote(value);
-  put-tk-line("set dylan-vars(", var.index, ") {", string-value, "}");
+  block (return)
+    let handler <simple-error>
+      = method (error, next-handler)
+	  // Make this into a less serious error.
+	  apply(signal, concatenate("Error in setting active variable:\n  ",
+				    condition-format-string(error)),
+		condition-format-arguments(error));
+	  return();
+	end method;
+    let new-value = tk-as(var.cls, value);
+    if (var.command & new-value ~= var.internal-value)
+      var.command(new-value)
+    end if;
+    var.internal-value := new-value;
+    let string-value = tk-quote(value);
+    put-tk-line("set dylan-vars(", var.index, ") {", string-value, "}");
+  end block;
 end method value-setter;
 
 define method tk-as
@@ -186,12 +203,27 @@ define method do-callback (line :: <string>) => ();
   let frst = min(sep + 2, line.size); // skip over "! "
 
   if (callback-type == 'V')
-    let index = tk-as(<integer>, copy-sequence(line, start: index, end: sep));
     // Special callback for "set variable"
-    let var = tk-var-array[index];
-    var.internal-value
-      := tk-as(var.cls, parse-tk-list(line, start: frst,
-					depth: 1, unquote: #t).first);
+    block (return)
+      let handler <simple-error>
+	= method (error, next-handler)
+	    // Make this into a less serious error.
+	    apply(signal, concatenate("Error in setting active variable:  ",
+				      condition-format-string(error)),
+		  condition-format-arguments(error));
+	    return();
+	  end method;
+      let index = tk-as(<integer>,
+			copy-sequence(line, start: index, end: sep));
+      let var = tk-var-array[index];
+      let new-value
+	= tk-as(var.cls, parse-tk-list(line, start: frst,
+				       depth: 1, unquote: #t).first);
+      if (var.command & new-value ~= var.internal-value)
+	var.command(new-value)
+      end if;
+      var.internal-value := new-value;
+    end block;
   else
     let key = as(<symbol>, copy-sequence(line, start: index, end: sep));
     grab-lock(call-back-lock);
