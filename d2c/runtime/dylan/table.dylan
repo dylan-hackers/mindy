@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.9 2002/08/29 22:55:59 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.10 2002/08/30 02:20:21 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -121,8 +121,11 @@ define inline method merge-hash-ids
     // merge produces good results regardless of the argument order.
     // Failure to do this caused significant inefficiencies in earlier
     // versions. 
-    logxor(ash(id1, 5), ash(id1, 5 - *word-bits*),
-           ash(id2, -2), ash(id2, *word-bits* - 2));
+    //
+    // In our built-in stuff, the accumulator is always the first argument, so
+    // we'll bias (slightly) towards that one
+    logxor(ash(id1, 7), ash(id1, 7 - *word-bits*),
+           ash(id2, -6), ash(id2, *word-bits* - 6));
   else
     logxor(id1, id2);
   end if;
