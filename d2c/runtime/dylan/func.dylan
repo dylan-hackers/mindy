@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.13 2003/02/17 17:36:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.14 2003/10/22 20:41:14 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -1190,14 +1190,9 @@ define method internal-applicable-method?
 		   else
 		     specializer;
 		   end if;
-		 // (specializer == <byte-character>) =>
-		 // The following code works around a bug in the current
-		 // system.  It seems that there is one "<byte-character>"
-		 // constant per library, so the equality test above tends to
-		 // fail.
-		 (instance?(specializer, <byte-character-type>)) =>
+                 (specializer == <byte-character>) =>
 		   <byte-character>;
-		 otherwise => singleton(arg);
+                 otherwise => singleton(arg);
 	       end case;
 	  cache.simple := #f;
 	else

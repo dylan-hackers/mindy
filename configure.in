@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.146 2003/09/15 00:32:56 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.147 2003/10/22 20:41:13 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -46,7 +46,7 @@ AC_SUBST(VERSION)
 # $srcdir/version when incrementing this value.)
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=34
+CURRENT_BOOTSTRAP_COUNTER=35
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------
@@ -213,6 +213,7 @@ AC_PROG_INSTALL
 AC_PROG_CC			# Specify when cross-compiling.
 AC_PROG_LEX
 AC_PROG_YACC
+AC_PROG_LN_S
 
 AC_CHECK_TOOL(RANLIB, ranlib, :)
 
@@ -481,7 +482,7 @@ You may need to specify the --with-existing-runtime option to configure; see
     # Make a link to our runtime.h file.
     # XXX - We need to allow the user to specify a location for this!
     if test "$prefix" = NONE; then
-	existing_runtime_header="$ac_default_prefix/include/runtime.h"
+	existing_runtime_header="$d2c_path/include/runtime.h"
     else	
 	existing_runtime_header="$prefix/include/runtime.h"
     fi
@@ -633,7 +634,8 @@ if test $enable_debug = yes; then
     AC_DEFINE(GD_DEBUG)
 fi
 
-if test $CC = gcc; then 
+case `basename $CC` in
+gcc* | *-gcc*)
     if test $enable_debug = yes; then
         CCOPTS="-g -O -fno-inline -Wall -pedantic"
     elif test $enable_debug = minimum; then
@@ -645,15 +647,18 @@ if test $CC = gcc; then
     if test "X$EXTRA_INCLUDE_DIR" = Xinclude; then
 	EXTRA_INCLUDE_DIR=
     fi
-elif test $CC = "cl.exe" -o $CC = "cl"; then
-	if test $enable_debug = yes; then
-		CCOPTS="-nologo /W3 /ZI/Ge"
-	else
-		CCOPTS="-nologo"
-	fi
-else
-	CCOPTS="-g -O"
-fi
+    ;;
+cl|cl.exe)
+    if test $enable_debug = yes; then
+	CCOPTS="-nologo /W3 /ZI/Ge"
+    else
+	CCOPTS="-nologo"
+    fi
+    ;;
+*)
+    CCOPTS="-g -O"
+    ;;
+esac
 AC_SUBST(CCOPTS)
 AC_SUBST(EXTRA_INCLUDE_DIR)
 

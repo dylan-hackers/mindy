@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.13 2003/10/01 17:17:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.14 2003/10/22 20:41:13 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -877,7 +877,7 @@ define sealed domain make (singleton(<unknown-ctype>));
 
 define method print-message (ctype :: <unknown-ctype>, stream :: <stream>)
     => ();
-  write(stream, "<unknown>");
+  write(stream, "<unknown-type>");
 end;
 
 define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
@@ -1630,7 +1630,7 @@ end;
 
 // <byte-character-ctype>
 
-define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
+define class <byte-character-ctype> (<limited-ctype>, <eql-ct-value>)
 end;
 
 define sealed domain make (singleton(<byte-character-ctype>));
