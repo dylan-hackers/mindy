@@ -1,23 +1,23 @@
 module: Dylan
 
-######################################################################
-##
-##  Copyright (C) 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.1 1994/03/24 21:49:59 wlott Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.2 1994/03/30 06:07:22 wlott Exp $
+//
+//  This file does whatever.
+//
 
 
-## Classes
+// Classes
 
 define class <condition> (<object>)
 end;
@@ -60,7 +60,7 @@ define class <abort> (<restart>)
 end;
 
 
-## Condition reporting.
+// Condition reporting.
 
 define method report-condition (condition :: <condition>)
   prin1(condition);
@@ -79,7 +79,7 @@ define method report-condition (condition :: <type-error>)
 end;
 
 
-## Condition signaling
+// Condition signaling
 
 define method signal (string :: <string>, #rest arguments)
   signal(make(<simple-warning>,
@@ -195,7 +195,7 @@ define method default-handler (restart :: <restart>)
 end;
 
 
-## Introspection.
+// Introspection.
 
 define method do-handlers (function :: <function>)
   for (h = current-handler() then h.handler-next,
@@ -214,7 +214,7 @@ end;
 define generic return-description (cond);
 
 
-## Interactive handling.
+// Interactive handling.
 
 define method restart-query (restart :: <restart>)
   #f;

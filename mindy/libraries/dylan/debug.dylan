@@ -1,20 +1,20 @@
 module: dylan
 
-######################################################################
-##
-##  Copyright (C) 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.1 1994/03/24 21:49:59 wlott Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.2 1994/03/30 06:07:23 wlott Exp $
+//
+//  This file does whatever.
+//
 
 
 define method report-problem (problem)
@@ -243,5 +243,5 @@ end method;
 
 
 
-## Now that we have the dylan helper routines defined, enable the error system.
+// Now that we have the dylan helper routines defined, enable the error system.
 enable-error-system();

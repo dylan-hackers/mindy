@@ -1,20 +1,20 @@
 module: dylan-user
 
-######################################################################
-##
-##  Copyright (C) 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.3 1994/03/28 11:33:48 wlott Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.4 1994/03/30 06:07:25 wlott Exp $
+//
+//  This file does whatever.
+//
 
 define library Dylan
   export Dylan;
@@ -23,7 +23,7 @@ end Dylan;
 
 define module Builtin-Stuff
   export
-    `*`, `+`, `-`, `/`, `<`, `<=`, `=`, `==`, `/=`,
+    \*, \+, \-, \/, \<, \<=, \=, \==, \/=,
     <array>,
     <byte-string>,
     <character>, <class>, <collection>, <complex>,
@@ -92,7 +92,7 @@ define module Dylan
 	     debugger-describe-restarts, debugger-restart, debugger-return,
 	     enable-error-system);
   export
-    `>=`, `>`, `:=`, `|`, `&`,
+    \>=, \>, \:=, \|, \&,
     <abort>,
     <condition>,
     <deque>,

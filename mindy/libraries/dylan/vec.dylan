@@ -1,26 +1,26 @@
 module: dylan
 
-######################################################################
-##
-##  Copyright (C) 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.2 1994/03/28 16:54:28 rgs Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.3 1994/03/30 06:07:31 wlott Exp $
+//
+//  This file does whatever.
+//
 
 define constant vector-prev-state =
   begin
     local
       method vector-prev-state (vec :: <vector>, state :: <integer>)
-	:: <integer>;
+	  => <integer>;
 	state - 1;
       end;
     vector-prev-state;
@@ -30,7 +30,7 @@ define constant vector-next-state =
   begin
     local
       method vector-next-state (vec :: <vector>, state :: <integer>)
-	  :: <integer>;
+	  => <integer>;
 	state + 1;
       end;
     vector-next-state;
@@ -50,7 +50,7 @@ define constant vector-current-key =
   begin
     local
       method vector-current-key (vec :: <vector>, state :: <integer>)
-	  :: <object>;
+	  => <object>;
 	state;
       end;
     vector-current-key;
@@ -60,7 +60,7 @@ define constant vector-current-element =
   begin
     local
       method vector-current-element (vec :: <vector>, state :: <integer>)
-	  :: <object>;
+	  => <object>;
 	element(vec, state);
       end;
     vector-current-element;
@@ -71,7 +71,7 @@ define constant vector-current-element-setter =
     local
       method vector-current-element-setter (value :: <object>, vec :: <vector>,
 					    state :: <integer>)
-	  :: <object>;
+	  => <object>;
 	element(vec, state) := value;
       end;
     vector-current-element-setter;
@@ -81,7 +81,7 @@ define constant vector-copy-state =
   begin
     local
       method vector-copy-state (vec :: <vector>, state :: <integer>)
-	  :: <integer>;
+	  => <integer>;
 	state;
       end;
     vector-copy-state;
@@ -99,13 +99,13 @@ define method backward-iteration-protocol (vec :: <vector>)
 	 vector-current-element-setter, vector-copy-state);
 end;
 
-define method `=`(vec1 :: <vector>, vec2 :: <vector>)
+define method \=(vec1 :: <vector>, vec2 :: <vector>)
   let (size1, size2) = values(size(vec1), size(vec2));
   (size1 == size2) & for (index from 0 below size1,
 			 while vec1[index] = vec2[index])
 		    finally
-		      ## #t iff we fell off the end
+		      // #t iff we fell off the end
 		      index == size1;
 		    end for;
-end method `=`;
+end method \=;
 

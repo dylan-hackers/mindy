@@ -1,20 +1,20 @@
 module: Dylan
 
-######################################################################
-##
-##  Copyright (C) 1993, 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.1 1994/03/26 08:27:12 wlott Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1993, 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.2 1994/03/30 06:07:29 wlott Exp $
+//
+//  This file does whatever.
+//
 
 define method make (clas == <string>, #rest keyword-value-pairs)
   apply(make, <byte-string>, keyword-value-pairs)
@@ -24,9 +24,9 @@ define method as (clas == <string>, collection :: <collection>)
   as(<byte-string>, collection)
 end as;
 
-define method `<` (string1 :: <string>, string2 :: <string>)
+define method \< (string1 :: <string>, string2 :: <string>)
   block (return)
-    let init, limit, next, done?, key, elem =
+    let (init, limit, next, done?, key, elem) =
        forward-iteration-protocol(string2);
     for (char1 in string1,
 	 state = init then next(string2, state),
@@ -41,7 +41,7 @@ define method `<` (string1 :: <string>, string2 :: <string>)
       if (done?(string2, state, limit)) #f else #t end
     end for
   end block
-end `<`;
+end \<;
 
 define method as-lowercase (string :: <string>)
   map(as-lowercase, string)

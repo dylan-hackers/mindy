@@ -1,36 +1,36 @@
 module: Dylan
 
-######################################################################
-##
-##  Copyright (C) 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.1 1994/03/24 21:49:58 wlott Exp $
-##
-##  This file does whatever.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.2 1994/03/30 06:07:20 wlott Exp $
+//
+//  This file does whatever.
+//
 
 
-## Default methods for non-primitive compares.
+// Default methods for non-primitive compares.
 
-define method `<=` (x :: <object>, y :: <object>)
+define method \<= (x :: <object>, y :: <object>)
   ~(x > y);
 end;
 
-define method `/=` (x :: <object>, y :: <object>)
+define method \/= (x :: <object>, y :: <object>)
   ~(x = y);
 end;
 
-define method `>=` (x :: <object>, y :: <object>)
+define method \>= (x :: <object>, y :: <object>)
   y <= x;
 end;
 
-define method `>` (x :: <object>, y :: <object>)
+define method \> (x :: <object>, y :: <object>)
   y < x;
 end;

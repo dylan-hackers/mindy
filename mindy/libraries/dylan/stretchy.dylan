@@ -1,27 +1,27 @@
 module: dylan
 
-######################################################################
-##
-##  Copyright (C) 1993, 1994, Carnegie Mellon University
-##  All rights reserved.
-##
-##  This code was produced by the Gwydion Project at Carnegie Mellon
-##  University.  If you are interested in using this code, contact
-##  "Scott.Fahlman@cs.cmu.edu" (Internet).
-##
-######################################################################
-##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.2 1994/03/28 11:44:11 rgs Exp $
-##
-##  This file implements stretchy-vectors.
-##
+//////////////////////////////////////////////////////////////////////
+//
+//  Copyright (C) 1993, 1994, Carnegie Mellon University
+//  All rights reserved.
+//
+//  This code was produced by the Gwydion Project at Carnegie Mellon
+//  University.  If you are interested in using this code, contact
+//  "Scott.Fahlman@cs.cmu.edu" (Internet).
+//
+//////////////////////////////////////////////////////////////////////
+//
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.3 1994/03/30 06:07:29 wlott Exp $
+//
+//  This file implements stretchy-vectors.
+//
 
 
-#### <stretchy-vector>
+//// <stretchy-vector>
 
 define class <stretchy-vector> (<vector>)
-  ##
-  ## No slots in the abstract class <stretchy-vector>
+  //
+  // No slots in the abstract class <stretchy-vector>
 end class <stretchy-vector>;
 
 define method make(cls == <stretchy-vector>, #rest keys)
@@ -30,7 +30,7 @@ end method;
 
 
 
-#### <simple-stretchy-vector>
+//// <simple-stretchy-vector>
 
 define class <simple-stretchy-vector> (<stretchy-vector>)
   slot ssv-data :: <simple-object-vector>, init-keyword: data:;
@@ -40,7 +40,7 @@ end class <simple-stretchy-vector>;
 
 define method make(cls == <simple-stretchy-vector>,
 		   #next next-method,
-		   #key size: sz (#f), fill: fill, dimensions: dimensions (#f))
+		   #key size: sz = #f, fill, dimensions)
   if (sz & dimensions)
     error("Can't supply both a size: and dimensions:");
   else
@@ -70,7 +70,7 @@ define method make(cls == <simple-stretchy-vector>,
   end if;
 end method make;
 
-define method size(ssv :: <simple-stretchy-vector>) :: <integer>;
+define method size(ssv :: <simple-stretchy-vector>) => <integer>;
   ssv-fill(ssv);
 end method size;
 
@@ -99,7 +99,7 @@ define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
   ssv-fill(ssv) := new;
 end method size-setter;
 
-define method dimensions(ssv :: <simple-stretchy-vector>) :: <list>;
+define method dimensions(ssv :: <simple-stretchy-vector>) => <list>;
   list(size(ssv));
 end method dimensions;
 
@@ -107,7 +107,7 @@ end method dimensions;
 define constant ssv_no_default = pair(#f, #f);
 
 define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
-		      #key default: default (ssv_no_default))
+		      #key default = ssv_no_default)
   case
     key >= 0 & key < size(ssv) =>
       ssv-data(ssv)[key];
@@ -149,7 +149,7 @@ define method add!(ssv :: <simple-stretchy-vector>, new-element)
 end method add!;
 
 define method remove!(ssv :: <simple-stretchy-vector>, elem,
-		      #key test: test (`==`), count: count)
+		      #key test = \==, count)
   unless (count & (count = 0))
     let data = ssv-data(ssv);
     let sz = size(ssv);
