@@ -4,7 +4,7 @@ synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.3 1996/03/30 02:22:37 rgs Exp $
 
 //======================================================================
 //
@@ -347,7 +347,8 @@ end method remove-an-assertion;
 // assertions.
 //
 define method nfa-to-dfa 
-    (nfa-begin :: <NFA-state>, nfa-end :: <NFA-state>, equal? :: <function>) 
+    (nfa-begin :: <NFA-state>, nfa-end :: <NFA-state>,
+     case-sensitive? :: <boolean>) 
  => dfa :: <DFA-state>;
   let final-state = make(<assertion>, assertion: #"final-state");
   nfa-end.next-state := final-state;
@@ -374,7 +375,7 @@ define method nfa-to-dfa
 	let c = cur-key(coll, st);
 	let next-superstate = #();
 	for (nfa-state in T)
-	  if (atom-accepts?(nfa-state, c, equal?))
+	  if (atom-accepts?(nfa-state, c, case-sensitive?))
 	    next-superstate := add!(next-superstate, nfa-state.next-state);
 	  end if;
 	end for;
@@ -402,13 +403,15 @@ end method nfa-to-dfa;
 // atom to accept it.
 //
 define method atom-accepts? 
-    (atom :: <character-atom>, c :: <character>, equal? :: <function>) 
+    (atom :: <character-atom>, c :: <character>,
+     case-sensitive? :: <boolean>)
  => answer :: <boolean>;
-  equal?(c, atom.atom-char);
+  char-equal?(case-sensitive?, c, atom.atom-char);
 end method atom-accepts?;
 
 define method atom-accepts?
-    (atom :: <set-atom>, c :: <character>, equal? :: <function>)
+    (atom :: <set-atom>, c :: <character>,
+     case-sensitive? :: <boolean>)
  => answer :: <boolean>;
   member?(c, atom.atom-set);
 end method atom-accepts?;

@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.4 1996/03/26 22:46:21 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.5 1996/03/30 02:22:37 rgs Exp $
 
 //======================================================================
 //
@@ -44,27 +44,12 @@ define open generic regexp-position
      end: the-end, case-sensitive)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
 
-// This will be faster than the default == method because it has more
-// type information.
-//
-define constant char-==
-    = method (ch1 :: <character>, ch2 :: <character>) => (result :: <boolean>);
-	ch1 == ch2;
-      end method;
-
-// Type-specific version of case-insensitive-equal.
-define constant letter-==
-    = method (ch1 :: <character>, ch2 :: <character>) => (result :: <boolean>);
-	case-insensitive-equal(ch1, ch2);
-      end method;
-
 define method regexp-position
     (big :: <string>, regexp :: <string>, #key start: big-start = 0,
      end: big-end = #f, case-sensitive = #f)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
   let substring = make(<substring>, string: big, start: big-start,
 		       end: big-end | big.size);
-  let comparison = if (case-sensitive) char-== else letter-== end;
   let char-set-class = if (case-sensitive) 
 			 <case-sensitive-character-set>;
 		       else
@@ -74,13 +59,13 @@ define method regexp-position
 
   let (matched, marks)
     = if (parsed-regexp.is-anchored?)
-	anchored-match-root?(parsed-regexp, substring, comparison,
+	anchored-match-root?(parsed-regexp, substring, case-sensitive,
 			     last-group + 1, #f);
       else
 	let initial = parsed-regexp.initial-substring;
 	let searcher = ~initial.empty?
 	  & make-substring-positioner(initial, case-sensitive: case-sensitive);
-	match-root?(parsed-regexp, substring, comparison, last-group + 1,
+	match-root?(parsed-regexp, substring, case-sensitive, last-group + 1,
 		    searcher);
       end if;
   if (matched)  
@@ -106,7 +91,6 @@ define method make-regexp-positioner
      #key byte-characters-only = #f, need-marks = #t, maximum-compile = #f,
      case-sensitive = #f)
  => regexp-positioner :: <function>;
-  let comparison = if (case-sensitive) char-== else letter-== end;
   let char-set-class = if (case-sensitive) 
 			 <case-sensitive-character-set>;
 		       else
@@ -130,7 +114,7 @@ define method make-regexp-positioner
       let substring = make(<substring>, string: big, start: big-start,
 			   end: big-end | big.size);
       let (matched, marks)
-	= match-root-function(parsed-regexp, substring, comparison,
+	= match-root-function(parsed-regexp, substring, case-sensitive,
 			      last-group + 1, searcher);
       if (matched)  
 	apply(values, marks);
@@ -145,7 +129,7 @@ define method make-regexp-positioner
     let dot = make(<set-atom>, set: any-char);
     let star = make(<e-state>, next-state: dot, other-next-state: nfa-begin);
     dot.next-state := star;
-    let dfa = nfa-to-dfa(star, nfa-end, comparison);
+    let dfa = nfa-to-dfa(star, nfa-end, case-sensitive);
     method (big :: <string>, #key start: big-start = 0,
 	    end: big-end = #f)
         => answer :: <boolean>;
@@ -188,8 +172,7 @@ define method make-regexp-replacer
     end method;
   else
     method (input :: <string>, new-substring :: <string>, 
-	    #key count = #f, case-sensitive = #f,
-	    start = 0, end: input-end = #f)
+	    #key count = #f, start = 0, end: input-end = #f)
      => string :: <string>;
       do-replacement(positioner, new-substring, input, 
 		     start, input-end, count, #t);
@@ -398,7 +381,7 @@ define method split-string
     end while;
   end block;
   if (remove-empty-items)
-    apply(values, remove!(strings, "", test: \=));
+    apply(values, remove!(strings, #f, test: method (a, b) a.empty? end));
   else
     apply(values, strings);
   end if;

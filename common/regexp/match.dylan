@@ -4,7 +4,7 @@ synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.3 1996/03/30 02:22:37 rgs Exp $
 
 //======================================================================
 //
@@ -77,8 +77,9 @@ end class <substring>;
 // Match-root?: Set things up and call descend-re.
 //
 define method match-root?
-    (re :: <parsed-regexp>, target :: <substring>, equal? :: <function>,
-     num-groups :: <integer>, searcher :: false-or(<function>))
+    (re :: <parsed-regexp>, target :: <substring>,
+     case-sensitive? :: <boolean>, num-groups :: <integer>,
+     searcher :: false-or(<function>))
  => (answer :: <boolean>, marks :: <sequence>);
   let marks = make(<vector>, size: num-groups * 2, fill: #f);
   let answer
@@ -101,7 +102,7 @@ define method match-root?
 		 then searcher(string, start: index + 1, end: end-index),
 	       while: index)
 	    block (fail)
-	      descend-re(re, target, equal?, index,
+	      descend-re(re, target, case-sensitive?, index,
 			 marks, fail, list(up-proc));
 	      error("A regexp should either match or not match. Why did it "
 		      "reach this piece of code?");
@@ -111,7 +112,7 @@ define method match-root?
 	else
 	  for (index from target.start-index to end-index)
 	    block (fail)
-	      descend-re(re, target, equal?, index,
+	      descend-re(re, target, case-sensitive?, index,
 			 marks, fail, list(up-proc));
 	      error("A regexp should either match or not match. Why did "
 		      "it reach this piece of code?");
@@ -127,8 +128,9 @@ end method match-root?;
 // starts with "^".
 //
 define method anchored-match-root?
-    (re :: <parsed-regexp>, target :: <substring>, equal? :: <function>,
-     num-groups :: <integer>, searcher :: false-or(<function>))
+    (re :: <parsed-regexp>, target :: <substring>,
+     case-sensitive? :: <boolean>, num-groups :: <integer>,
+     searcher :: false-or(<function>))
  => (answer :: <boolean>, marks :: <sequence>);
   let marks = make(<vector>, size: num-groups * 2, fill: #f);
   let answer
@@ -140,7 +142,7 @@ define method anchored-match-root?
 	      end method up-proc;
 
 	block (fail)
-	  descend-re(re, target, equal?, target.start-index,
+	  descend-re(re, target, case-sensitive?, target.start-index,
 		     marks, fail, list(up-proc));
 	  error("A regexp should either match or not match. Why did it "
 		  "reach this piece of code?");
@@ -152,14 +154,14 @@ end method anchored-match-root?;
 
 define generic descend-re
     (re :: false-or(<parsed-regexp>), target :: <substring>,
-     equal? :: <function>, start-index :: <integer>,
+     case-sensitive? :: <boolean>, start-index :: <integer>,
      marks :: <mutable-sequence>, backtrack-past-me :: <non-local-exit>,
      up-list :: <list> /* of <non-local-exit> */) => ();
 
 // Marks
 //
 define method descend-re
-    (re :: <mark>, target :: <substring>, equal? :: <function>,
+    (re :: <mark>, target :: <substring>, case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
 
@@ -179,7 +181,7 @@ define method descend-re
   marks[2 * re.group-number] := start-index;
 
   block (backtrack-to-me)
-    descend-re(re.child, target, equal?, start-index,
+    descend-re(re.child, target, case-sensitive?, start-index,
 	       marks, backtrack-to-me, pair(up-proc, up-list));
   end block;
 
@@ -193,19 +195,19 @@ end method descend-re;
 // Union: Try one path.  If you get a backtrack, try the other.
 //
 define method descend-re
-    (re :: <union>, target :: <substring>, equal? :: <function>,
+    (re :: <union>, target :: <substring>, case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
 
   block (backtrack-to-me)
-    descend-re(re.left, target, equal?, start-index,
+    descend-re(re.left, target, case-sensitive?, start-index,
 	       marks, backtrack-to-me, up-list);
   end block;
 
   // If we've gotten this far, it means that the user backtracked.
   // Try the right, with the provision that we can do no more.
 
-  descend-re(re.right, target, equal?, start-index,
+  descend-re(re.right, target, case-sensitive?, start-index,
 	     marks, backtrack-past-me, up-list);
 end method descend-re;
 
@@ -215,7 +217,7 @@ end method descend-re;
 // paths)  So, just backtrack.
 //
 define method descend-re
-    (re == #f, target :: <substring>, equal? :: <function>,
+    (re == #f, target :: <substring>, case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   backtrack-past-me();
@@ -224,7 +226,7 @@ end method descend-re;
 // Concatenation
 //
 define method descend-re
-    (re :: <alternative>, target :: <substring>, equal? :: <function>,
+    (re :: <alternative>, target :: <substring>, case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
     // up-proc is "Ok, we've matched on the left, now match on the
@@ -233,20 +235,22 @@ define method descend-re
   local method up-proc (current-index :: <integer>, 
 			current-backtrack :: <non-local-exit>,
 			current-up-list :: <list>)
-	  descend-re(re.right, target, equal?, current-index, marks, 
+	  descend-re(re.right, target, case-sensitive?, current-index, marks, 
 		     current-backtrack, current-up-list);
 	end method up-proc;
 
-  descend-re(re.left, target, equal?, start-index, marks,
+  descend-re(re.left, target, case-sensitive?, start-index, marks,
 	     backtrack-past-me, pair(up-proc, up-list));
 end method descend-re;
   
 // Assertions
 //
 define method descend-re
-    (re :: <parsed-assertion>, target :: <substring>, equal? :: <function>,
-     start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
+    (re :: <parsed-assertion>, target :: <substring>,
+     case-sensitive? :: <boolean>, start-index :: <integer>,
+     marks :: <mutable-sequence>, backtrack-past-me :: <non-local-exit>, 
+     up-list :: <list>)
+ => (); 
   if (assertion-true?(re.asserts, target, start-index))
     head(up-list)(start-index, backtrack-past-me, tail(up-list));
   else
@@ -257,9 +261,10 @@ end method descend-re;
 // Quantified atoms
 //
 define method descend-re
-    (re :: <quantified-atom>, target :: <substring>, equal? :: <function>,
-     start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
+    (re :: <quantified-atom>, target :: <substring>, 
+     case-sensitive? :: <boolean>, start-index :: <integer>, 
+     marks :: <mutable-sequence>, backtrack-past-me :: <non-local-exit>,
+     up-list :: <list>) => ();
   local method descend-and-quantify (min :: <integer>, max, 
 				     re :: <parsed-regexp>, index :: <integer>,
 				     backtrack-past-me :: <non-local-exit>,
@@ -290,12 +295,12 @@ define method descend-re
 	    head(up-list)(index, backtrack-past-me, tail(up-list));
 
 	  elseif (min > 0) // Mandatory match
-	    descend-re(re, target, equal?, index, marks, backtrack-past-me, 
+	    descend-re(re, target, case-sensitive?, index, marks, backtrack-past-me, 
 		       pair(keep-quantifying, up-list));
 
 	  else   // We've made enough matches, but we'd like to make more
 	    block (backtrack-to-me)
-	      descend-re(re, target, equal?, index, marks, backtrack-to-me, 
+	      descend-re(re, target, case-sensitive?, index, marks, backtrack-to-me, 
 			 pair(keep-quantifying, up-list));
 	    end block;
 	       // If we reach here, there was a backtrack. Give up on
@@ -311,11 +316,13 @@ end method descend-re;
 // Characters
 //
 define method descend-re
-    (re :: <parsed-character>, target :: <substring>, equal? :: <function>,
+    (re :: <parsed-character>, target :: <substring>, 
+     case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   if (start-index < target.end-index
-	& equal?(re.character, target.entire-string[start-index]))
+	& char-equal?(case-sensitive?, re.character,
+		      target.entire-string[start-index]))
     head(up-list)(start-index + 1, backtrack-past-me, tail(up-list));
   else
     backtrack-past-me();
@@ -325,7 +332,8 @@ end method descend-re;
 // Strings
 //
 define method descend-re
-    (re :: <parsed-string>, target :: <substring>, equal? :: <function>,
+    (re :: <parsed-string>, target :: <substring>,
+     case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   let string = re.string;
@@ -335,7 +343,8 @@ define method descend-re
   else
     let target-string = target.entire-string;
     for (string-index from 0, target-index from start-index below final-index)
-      if (~equal?(string[string-index], target-string[target-index]))
+      if (~char-equal?(case-sensitive?, string[string-index],
+		       target-string[target-index]))
 	backtrack-past-me();
       end if;
     end for;
@@ -346,7 +355,7 @@ end method descend-re;
 // Character set
 //
 define method descend-re
-    (re :: <parsed-set>, target :: <substring>, equal? :: <function>,
+    (re :: <parsed-set>, target :: <substring>, case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   if (start-index < target.end-index
@@ -360,7 +369,8 @@ end method descend-re;
 // Backreferences
 //
 define method descend-re
-    (re :: <parsed-backreference>, target :: <substring>, equal? :: <function>,
+    (re :: <parsed-backreference>, target :: <substring>,
+     case-sensitive? :: <boolean>,
      start-index :: <integer>, marks :: <mutable-sequence>,
      backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   let backref-start = marks[2 * re.group-number];
@@ -368,7 +378,7 @@ define method descend-re
   let substring-2-end-pos = start-index + (backref-end - backref-start);
 
   if (substring-2-end-pos <= target.end-index
-	& substrings-equal?(equal?, 
+	& substrings-equal?(case-sensitive?, 
 			    target.entire-string, backref-start, backref-end,
 			    target.entire-string,
 			    start-index, substring-2-end-pos))
@@ -382,11 +392,21 @@ end method descend-re;
 // Supporting routines
 // ---------------------------------------------------------------
 
+define method char-equal?
+    (case-sensitive? :: <boolean>, char1 :: <character>, char2 :: <character>)
+ => (result :: <boolean>);
+  if (case-sensitive?)
+    char1 == char2;
+  else
+    case-insensitive-equal(char1, char2);
+  end if;
+end method char-equal?;
+
 // Efficiently compare two substrings, using a provided character by
 // character equal? predicate.
 //
 define method substrings-equal?
-    (equal? :: <function>, string1 :: <string>, start1 :: <integer>, 
+    (case-sensitive? :: <boolean>, string1 :: <string>, start1 :: <integer>, 
      end1 :: <integer>, string2 :: <string>, start2 :: <integer>, 
      end2 :: <integer>)
  => answer :: <boolean>;
@@ -395,7 +415,7 @@ define method substrings-equal?
   else
     block (return)
       for (index1 from start1 to end1, index2 from start2)
-	if (~ equal?(string1[index1], string2[index2]))
+	if (~ char-equal?(case-sensitive?, string1[index1], string2[index2]))
 	  return(#f);
 	end if;
       end for;
