@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.9 1994/10/05 21:03:59 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.10 1994/10/26 19:47:11 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -144,8 +144,13 @@ static void dylan_invoke_debugger(struct thread *thread, int nargs)
 
 void init_misc_functions(void)
 {
+#if ! NO_ARGV_0
+    define_generic_function("main", 1, TRUE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
+#else
     define_generic_function("main", 0, TRUE, obj_False, FALSE,
 			    obj_Nil, obj_ObjectClass);
+#endif
     define_function("raw-exit", list1(obj_IntegerClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, dylan_exit);
     define_constant("invoke-debugger",

@@ -18,7 +18,7 @@
 #include "../compat/std-c.h"
 #include "../compat/std-os.h"
 
-#define MINDYCOMP "mc"
+#define MINDYCOMP "mindycomp"
 
 int main(argc, argv) int argc; char *argv[];
 {

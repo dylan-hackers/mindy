@@ -1,5 +1,5 @@
 module: Hello-World
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.2 1994/10/26 15:10:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.3 1994/10/26 19:46:26 nkramer Exp $
 
 //======================================================================
 //
@@ -40,6 +40,6 @@ define module Hello-World
   use Extensions;
 end;
 
-define method main (#rest noise)
+define method main (argv0, #rest noise)
   puts("Hello, World.\n");
 end;

@@ -444,7 +444,7 @@ end method html2text;
 // "process-HTML".  Note that we had to import the generic function "main"
 // from module "extensions" in library "dylan".  This interface is Mindy
 // specific. 
-define method main (#rest args) => ();
+define method main (argv0, #rest args) => ();
   if (empty?(args))
     html2text(#t);
   else

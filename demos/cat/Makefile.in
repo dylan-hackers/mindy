@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/cat/Attic/Makefile.in,v 1.1 1994/10/05 21:12:17 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/cat/Attic/Makefile.in,v 1.2 1994/10/26 19:45:39 nkramer Exp $
 ##
 ##  This is the makefile for the cat demo.
 ##
@@ -61,7 +61,7 @@ LIBS	=		@LIBS@
 ## end of configure written portion
 ##
 
-MC	=	../../comp/mc
+MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -lConcatenate
 

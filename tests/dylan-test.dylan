@@ -505,7 +505,7 @@ define method tautology(arg :: <sequence>) => <integer>;
   warnings + fatals;
 end method;
 
-define method main(#rest args)
+define method main(argv0, #rest args)
   if (empty?(args))
     exit(exit-code: tautology(tautologies));
   else

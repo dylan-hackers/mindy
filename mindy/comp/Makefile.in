@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.4 1994/10/08 17:11:31 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.5 1994/10/26 19:47:21 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -69,7 +69,7 @@ SRCS = mindycomp.c parser.tab.c lexer.tab.c src.c sym.c print.c expand.c \
 	literal.c info.c lose.c lexenv.c envanal.c compile.c header.c \
 	dump.c free.c dup.c
 
-mc: ${OBJS}
+mindycomp: ${OBJS}
 	${CC} ${OBJS} -DVERSION=\""`/bin/date`"\" ${SRCDIR}/version.c ${LIBS} -o ,$@
 	mv ,$@ $@
 
@@ -82,13 +82,13 @@ ${SRCDIR}/lexer.tab.c: ${SRCDIR}/lexer.l
 	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer.tab.c
 
 clean:
-	rm -f ${OBJS} version.o mc *~ \#* core
+	rm -f ${OBJS} version.o mindycomp *~ \#* core
 
 realclean:
-	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.tab.c mc Makefile *~ \#* core
+	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.tab.c mindycomp Makefile *~ \#* core
 	
-install: mc
-	${INSTALL_PROGRAM} mc ${BINDIR}/mc
+install: mindycomp
+	${INSTALL_PROGRAM} mindycomp ${BINDIR}/mindycomp
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends

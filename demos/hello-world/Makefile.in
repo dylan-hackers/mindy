@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/hello-world/Attic/Makefile.in,v 1.1 1994/10/05 21:12:31 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/hello-world/Attic/Makefile.in,v 1.2 1994/10/26 19:46:22 nkramer Exp $
 ##
 ##  This is the makefile for the hello-world demo.
 ##
@@ -61,7 +61,7 @@ LIBS	=		@LIBS@
 ## end of configure written portion
 ##
 
-MC	=	../../comp/mc
+MC	=	../../comp/mindycomp
 
 MINDYFLAGS =
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.10 1994/10/05 21:03:56 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.11 1994/10/26 19:47:07 nkramer Exp $
 *
 * This file starts everything going.
 *
@@ -121,10 +121,8 @@ void main(int argc, char *argv[])
 	}
     }
 
-#if 0
-#   if ! NO_ARGV_0
+#if ! NO_ARGV_0
         *thread->sp++ = make_byte_string(argv0);    /* pass command name */
-#    endif
 #endif
     while (*argv != NULL)
         *thread->sp++ = make_byte_string(*argv++);
