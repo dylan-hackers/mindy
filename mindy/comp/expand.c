@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.13 1994/06/02 23:28:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.14 1994/06/03 00:37:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -990,6 +990,7 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 
 	for (slot = c->slots; slot != NULL; slot = slot->next) {
 	    struct arglist *slot_args;
+	    boolean default_setter = (slot->name != NULL);
 
 	    /* Extract the getter and setter. */
 	    if (slot->plist) {
@@ -997,7 +998,16 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 		prev = &slot->plist->head;
 		while ((prop = *prev) != NULL) {
 		    if (prop->keyword == getter || prop->keyword == setter) {
-			if (prop->expr->kind != expr_VARREF) {
+			if (prop->expr->kind == expr_LITERAL
+			      && ((struct literal_expr *)(prop->expr))
+			             ->lit->kind
+			          == literal_FALSE
+			      && prop->keyword == setter) {
+			    default_setter = FALSE;
+			    *prev = prop->next;
+			    free(prop);
+			}
+			else if (prop->expr->kind != expr_VARREF) {
 			    if (slot->name)
 				error(prop->line, "Bogus %s in slot %s",
 				      prop->keyword->name,
@@ -1029,7 +1039,7 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 			  "Must supply either the getter or the slot name");
 		else
 		    slot->getter = slot->name;
-	    if (slot->setter == NULL && slot->name != NULL) {
+	    if (slot->setter == NULL && default_setter) {
 		slot->setter = dup_id(slot->name);
 		change_to_setter(slot->setter);
 	    }
