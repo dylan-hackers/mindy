@@ -16,6 +16,11 @@ $CPPFLAGS = '-I$(D2CDIR)/include';
 $MELANGE = 'melange';
 $PARSERGEN = 'parsergen';
 
+$obj = "o";  # filename extension for object files
+$lib_prefix = "lib";  # Prefix for library files.
+$lib_type = "a";  # suffix for library files.
+
+
 # Find the defaults
 $subdir = '';
 $buildroot = $cwd;
@@ -54,9 +59,9 @@ if ($nmake) {
 }
 
 if ($win32) {
-    $obj = "obj";  # filename extension for object files
-} else {
-    $obj = "o";
+    $obj = "obj";
+    $lib_prefix = "";
+    $lib_type = "lib";
 }
 
 # Check to see if buildroot changed to something else.
@@ -291,8 +296,7 @@ sub emit_library_rule {
 
 sub emit_c_file_rule {
     local ($basefile, @headers) = @_;
-    local ($obj) = ($win32) ? ".obj" : ".o";
-    local ($objfile) = $basefile . $obj;
+    local ($objfile) = $basefile . ".$obj";
 
     do maybe_emit_d2c_defines();
 
@@ -310,8 +314,7 @@ sub emit_c_file_rule {
 #
 sub emit_cc_file_rule {
     local ($basefile, @headers) = @_;
-    local ($obj) = ($win32) ? ".obj" : ".o";
-    local ($objfile) = $basefile . $obj;
+    local ($objfile) = $basefile . ".$obj";
 
     do maybe_emit_d2c_defines();
 
@@ -491,11 +494,7 @@ sub dbc_link_rule {
 
 sub make_into_library_name {
     local($basename) = @_;
-    if ($win32) {
-	return "$basename.lib";
-    } else {
-	return "lib$basename.a";
-    }
+    return "$lib_prefix$basename.$lib_type";
 }
 
 # makegen_include is include, except it correctly handles the case
