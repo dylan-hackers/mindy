@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.29 1996/03/18 01:44:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.30 1996/03/18 14:47:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -477,7 +477,7 @@ define module ctype
     // The various types, their accessors and constructors.
     <values-ctype>,
     <multi-value-ctype>, make-values-ctype, min-values, positional-types,
-	rest-value-type, first-value,
+	rest-value-type,
     // <ctype> is picked from from the forwards.
     <unknown-ctype>, type-exp,
     <union-ctype>, members,
