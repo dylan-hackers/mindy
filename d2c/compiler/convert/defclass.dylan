@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.46 2003/03/12 22:44:09 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.47 2003/07/17 03:13:39 bruce Exp $
 copyright: see below
 
 
@@ -3970,7 +3970,7 @@ define method build-instance?-slot-posn-dispatch
       let best-yes-count = #f;
       let best-no-classes = #f;
       let best-no-count = #f;
-      let best-weight = 0;
+      let best-weight = -1;
 
       for (split :: <cclass> in possible-splits)
 	let yes-classes = #();
@@ -4012,9 +4012,9 @@ define method build-instance?-slot-posn-dispatch
 	let characteristic-class = best-yes-classes.first;
 	thunk(lookup-position(characteristic-class, positions),
 	      lookup-position(characteristic-class, init?-positions));
-      else
-	split(best-yes-classes,
-	      restrict-splits(possible-splits, best-test, #t));
+      elseif (best-test)
+        split(best-yes-classes,
+              restrict-splits(possible-splits, best-test, #t));
       end if;
 
       build-else(builder, policy, source);
@@ -4023,9 +4023,9 @@ define method build-instance?-slot-posn-dispatch
 	let characteristic-class = best-no-classes.first;
 	thunk(lookup-position(characteristic-class, positions),
 	      lookup-position(characteristic-class, init?-positions));
-      else
-	split(best-no-classes,
-	      restrict-splits(possible-splits, best-test, #f));
+      elseif (best-test)
+        split(best-no-classes,
+              restrict-splits(possible-splits, best-test, #f));
       end if;
 
       end-body(builder);
