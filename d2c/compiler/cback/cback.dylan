@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.51 2003/12/17 18:13:06 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.52 2003/12/21 14:26:59 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1414,7 +1414,7 @@ define method emit-prologue
     (file :: <file-state>, other-units :: <simple-object-vector>)
     => ();
   maybe-emit-include("stddef.h", file);
-  maybe-emit-include("stdlib.h", file);
+//  maybe-emit-include("stdlib.h", file);
 
   if (instance?(*double-rep*, <c-data-word-representation>))
     format(file.file-body-stream, "#define GD_DATAWORD_D\n");
@@ -1431,7 +1431,7 @@ define method emit-prologue
   // The most important thing math.h includes is a prototype for rint,
   // although it helps if we ever want to inline functions in the
   // Transcendental library
-  maybe-emit-include("math.h", file);
+//  maybe-emit-include("math.h", file);
 
   let stream = file.file-body-stream;
   format(stream, "#define obj_True %s.heapptr\n",

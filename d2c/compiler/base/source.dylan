@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.12 2003/09/15 18:45:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.13 2003/12/21 14:26:58 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -75,16 +75,19 @@ define sealed domain make (singleton(<unknown-source-location>));
 define sealed domain initialize (<unknown-source-location>);
 
 define variable *unknown-srcloc* :: false-or(<unknown-source-location>) = #f;
+define variable *unknown-srcloc-counter* :: <integer> = 0;
 
 define method make
     (class == <unknown-source-location>, #next next-method, #key)
     => res :: <unknown-source-location>;
+  *unknown-srcloc-counter* := *unknown-srcloc-counter* + 1;
   *unknown-srcloc* | (*unknown-srcloc* := next-method());
 end method make;
   
 define sealed method describe-source-location
     (srcloc :: <unknown-source-location>, stream :: <stream>)
     => ();
+  format(stream, "unknown source location");
 end method describe-source-location;
 
 add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,

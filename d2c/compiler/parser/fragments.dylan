@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/fragments.dylan,v 1.2 2000/01/24 04:56:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/fragments.dylan,v 1.3 2003/12/21 14:26:59 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -264,11 +264,7 @@ define generic copy-fragment
 define method copy-fragment
     (frag :: <empty-fragment>, #key preserve-source-locations :: <boolean>)
     => res :: <empty-fragment>;
-  if (preserve-source-locations)
-    frag;
-  else
-    make(<empty-fragment>);
-  end if;
+  frag;
 end method copy-fragment;
 
 // copy-fragment{<compound-fragment>}
@@ -303,11 +299,7 @@ define method copy-fragment
     => res :: <token-fragment>;
   make(<token-fragment>,
        source-location:
-	 if (preserve-source-locations)
-	   frag.source-location;
-	 else
-	   make(<unknown-source-location>);
-	 end if,
+         frag.source-location,
        token: frag.fragment-token);
 end method copy-fragment;
 
@@ -322,19 +314,11 @@ define method copy-fragment
   make(<bracketed-fragment>,
        left-token: frag.fragment-left-token,
        left-srcloc:
-	 if (preserve-source-locations)
-	   frag.fragment-left-srcloc;
-	 else
-	   make(<unknown-source-location>);
-	 end if,
+         frag.fragment-left-srcloc,
        contents: copy-fragment(frag.fragment-contents),
        right-token: frag.fragment-right-token,
        right-srcloc:
-	 if (preserve-source-locations)
-	   frag.fragment-right-srcloc;
-	 else
-	   make(<unknown-source-location>);
-	 end if);
+         frag.fragment-right-srcloc);
 end method copy-fragment;
 
 
