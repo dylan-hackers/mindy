@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.13 2001/07/21 07:17:19 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.14 2001/07/30 20:33:38 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -2069,6 +2069,15 @@ define method ctype-intersection-dispatch
   values(result, exact?);
 end method ctype-intersection-dispatch;
 
+define method ctype-intersection-dispatch
+    (type1 :: <direct-instance-ctype>, type2 :: <subclass-ctype>)
+    => (res :: false-or(<ctype>), exact? :: <boolean>);
+  if(csubtype?(type1.base-class, class-ctype()))
+    values(type2, #t);
+  else
+    values(#f, #t);
+  end if;
+end method;
 
 
 // Proxies
