@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.41 2002/08/29 22:34:10 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.42 2002/09/09 22:02:43 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -662,9 +662,9 @@ end;
 define function free-temp(name :: <string>, file :: <file-state>)
  => ();
   //dformat("var %s freed\n", name);
-  let var :: <local-var> = file.file-local-vars[name];
-  var.next := file.file-freed-locals;
-  file.file-freed-locals := var;
+//  let var :: <local-var> = file.file-local-vars[name];
+//  var.next := file.file-freed-locals;
+//  file.file-freed-locals := var;
 end;
 
 define inline function free-temp-if
@@ -1511,7 +1511,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
 	   c-code);
-    free-temp-if(temp?, c-code, file);
+//    free-temp-if(temp?, c-code, file); //bgh 01
 
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
@@ -1536,7 +1536,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
 	   c-code);
-    free-temp-if(temp?, c-code, file);
+//    free-temp-if(temp?, c-code, file); //bgh 02
 
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
@@ -1717,7 +1717,7 @@ define method emit-definition-gunk
       format(stream, "%s;\t/* %s */\n",
 	     c-code,
 	     defn.defn-name.clean-for-comment);
-      free-temp-if(temp?, c-code, file);
+//      free-temp-if(temp?, c-code, file); //bgh 03
     else
       format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
 	     defn.defn-name.clean-for-comment, name);
@@ -2179,7 +2179,7 @@ define method emit-return
       spew-pending-defines(file);
       format(stream, "return orig_sp + %d;\n", count);
     end;
-    free-temps(temps, file);
+//    free-temps(temps, file); //bgh 04
   end;
 end;
 
@@ -2191,7 +2191,7 @@ define method emit-return
   let (expr, temp?) = ref-leaf(result-rep, return.depends-on.source-exp, file);
   spew-pending-defines(file);
   format(stream, "return %s;\n", expr);
-  free-temp-if(temp?, expr, file);
+//  free-temp-if(temp?, expr, file); //bgh 05
 end;
 
 //define method emit-return
@@ -2226,7 +2226,7 @@ define method emit-return
 
     spew-pending-defines(file);
     format(stream, "return %s;\n", ret-val);
-    free-temps(temps, file);
+//    free-temps(temps, file); //bgh 06
   end if;
 end;
 
@@ -2281,7 +2281,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
       // up the temp when it goes non-pending.  Or, maybe it's not worth the
       // bother?
       deliver-result(defines, leaf, rep, temp?, file);
-      free-temp-if(temp?, leaf, file);
+//      free-temp-if(temp?, leaf, file); //bgh 07
     end;
   end;
 end;
@@ -2446,7 +2446,7 @@ define method emit-assignment
   deliver-cluster
     (results, bottom-name, return-top-name,
      call.derived-type.min-values, file);
-  free-temps(temps, file);
+//  free-temps(temps, file); //bgh 08
 end;
 
 define generic xep-expr-and-name
@@ -2679,12 +2679,12 @@ define method emit-assignment
 	    := pair(stringify(temp, ".R", index), rep);
 	end;
         deliver-results(results, result-exprs, #t, file);
-        free-temp(temp, file);
+//        free-temp(temp, file); //bgh 09
       end if;
     otherwise =>
       deliver-result(results, call, result-rep, #t, file);
   end;
-  free-temps(temps, file);
+//  free-temps(temps, file); //bgh 10
 end;
 
 define method find-main-entry-info
@@ -2821,7 +2821,7 @@ define method emit-assignment
       let temp = new-local(file, modifier: "temp", wanted-rep: c-type);
       format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
       deliver-result(defines, temp, rep, #t, file);
-      free-temp(temp, file);
+//      free-temp(temp, file); //bgh 11
 
     otherwise =>
       format(stream, "if (!%s_initialized) abort();\n", name);
@@ -2848,7 +2848,7 @@ define method emit-assignment
     let stream = file.file-guts-stream;
     format(stream, "%s_initialized = TRUE;\n", target);
   end;
-  free-temps(temps, file);
+//  free-temps(temps, file); //bgh 12
   deliver-results(defines, #[], #f, file);
 end;
 
@@ -2885,7 +2885,7 @@ define method emit-assignment
 	end if;
 	format(stream, " = %s;\n", source);
       end unless;
-      free-temp-if(source-temp?, source, file);
+//      free-temp-if(source-temp?, source, file); //bgh 13
     finally
       if (param)
 	error("Too many operands in a self-tail-call?");
@@ -2995,14 +2995,14 @@ define method emit-assignment
     format(file.file-guts-stream,
 	   "SLOT(%s, %s, %s + %s * sizeof(%s)) = %s;\n",
 	   instance, c-type, offset, index, c-type, new);
-    free-temps(temps, file);
+//    free-temps(temps, file); //bgh 14
   else
     let (temps, new, instance, offset)
       = extract-operands(op, file, slot-rep, *heap-rep*, *long-rep*);
     format(file.file-guts-stream,
 	   "SLOT(%s, %s, %s) = %s;\n",
 	   instance, slot-rep.representation-c-type, offset, new);
-    free-temps(temps, file);
+//    free-temps(temps, file); //bgh 15
   end;
   deliver-results(results, #[], #f, file);
 end;
@@ -3021,7 +3021,7 @@ define method emit-assignment
     // now-dammit was #f.  Should be passing the temps through
     // for deliver-result for storage
     deliver-result(results, source, rep, temps.size > 0, file);
-    free-temps(temps, file);
+//    free-temps(temps, file); //bgh 16
   end;
 end;
 
@@ -3061,7 +3061,7 @@ define method deliver-cluster
                     ')');
         end;
       deliver-single-result(defines, source, rep, #t, file);
-      free-temp-if(guts-temp?, guts, file);
+//      free-temp-if(guts-temp?, guts, file); //bgh 17
     else
       let count = for (var = defines then var.definer-next,
 		       index from 0,
@@ -3650,7 +3650,7 @@ define method emit-copy
 	 target, c-code);
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
-  free-temp-if(temp?, c-code, file);
+//  free-temp-if(temp?, c-code, file); //bgh 18
 end;
 
 define method emit-copy
@@ -3662,7 +3662,7 @@ define method emit-copy
   let (heapptr, temp?) = conversion-expr(*heap-rep*, source, source-rep, file);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
   format(stream, "%s.dataword.l = 0;\n", target);
-  free-temp-if(temp?, heapptr, file);
+//  free-temp-if(temp?, heapptr, file); //bgh 19
 end;
 
 define method emit-copy
@@ -3673,7 +3673,7 @@ define method emit-copy
   let stream = file.file-guts-stream;
   let (expr, temp?) = conversion-expr(target-rep, source, source-rep, file);
   target ~= expr & format(stream, "%s = %s;\n", target, expr);
-  free-temp-if(temp?, expr, file);
+//  free-temp-if(temp?, expr, file); //bgh 20
 end;
 
 
