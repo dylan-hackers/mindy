@@ -379,7 +379,8 @@ define method write-declaration
 	 raw-name, decl.simple-name, load-string);
 
   // Write a getter method (with an empty parameter list)
-  format(stream, "define %s method %s () => (%s);\n  %s;\nend method %s;\n\n",
+  format(stream, "define %s method %s () => (result :: %s);\n  %s;\n"
+	   "end method %s;\n\n",
 	 decl.sealed-string, decl.getter, decl.mapped-name,
 	 import-value(decl,
 		      c-accessor(decl.type, 0, raw-name, decl.type-name)),
@@ -647,19 +648,23 @@ define method write-declaration
 				  "ptr", target-type.type-name)),
 	  stream);
     write(";\nend method pointer-value;\n\n", stream);
-    
-    // Write setter method
-    format(stream,
-	   "define method pointer-value-setter\n"
-	     "    (value :: %s, ptr :: %s, #key index = 0)\n"
-	     " => (result :: %s);\n  ",
-	   target-map, decl.dylan-name, target-map);
-    write(c-accessor(target-type,
-		     format-to-string("index * %d", target-type.c-type-size),
-		     "ptr", target-type.type-name),
-	  stream);
-    format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
-	   export-value(target-type, "value"));
+
+    // Write setter method, if applicable.
+    unless (instance?(true-type(target-type), type-union(<struct-declaration>,
+					   <union-declaration>,
+					   <vector-declaration>)))
+      format(stream,
+	     "define method pointer-value-setter\n"
+	       "    (value :: %s, ptr :: %s, #key index = 0)\n"
+	       " => (result :: %s);\n  ",
+	     target-map, decl.dylan-name, target-map);
+      write(c-accessor(target-type,
+		       format-to-string("index * %d", target-type.c-type-size),
+		       "ptr", target-type.type-name),
+	    stream);
+      format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
+	     export-value(target-type, "value"));
+    end unless;
 
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
