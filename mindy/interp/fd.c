@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.28 1995/09/06 23:23:07 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.29 1996/05/12 22:55:27 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -46,13 +46,16 @@
 #include "fd.h"
 
 #ifdef WIN32
-static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and chars_in_stdin_buffer */
+static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and
+						chars_in_stdin_buffer */
 #define stdin_buffer_size 1000
 static char stdin_buffer[stdin_buffer_size];
 static char *stdin_buffer_start = &(stdin_buffer[0]);
 static int stdin_char_count = 0;
 static HANDLE stdin_buffer_empty, stdin_buffer_not_empty;   /* Events */
 
+/* Invoked as a thread by stdin_consumer
+ */
 static DWORD stdin_producer (LPDWORD unused_param)
 {
     char local_buffer[stdin_buffer_size];
@@ -73,11 +76,31 @@ static DWORD stdin_producer (LPDWORD unused_param)
 
 static int stdin_consumer (char *buffer, int max_chars)
 {
+    static int producer_initialized = FALSE;
     int chars_to_read;
+
+    /* We delay spawning the stdin_producer thread until now as a
+       kludge to prevent it from interfering with other parts of Mindy
+       which bypass it and access stdin directly.  (If they do that
+       while stdin_producer is running, they won't get what the user
+       most recently typed)
+       */
+    if (!producer_initialized) {
+	DWORD thread_id;
+	HANDLE thread_handle;
+	thread_handle 
+	    = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) stdin_producer, 
+			   NULL, 0, &thread_id);
+	if (thread_handle == NULL) 
+	    lose("Can't create stdin_producer thread");
+	producer_initialized = TRUE;
+    }
+
     WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
     EnterCriticalSection(&stdin_buffer_mutex); {
                 /* min(stdin_char_count, max_chars) */
-        chars_to_read = (stdin_char_count < max_chars) ? stdin_char_count : max_chars;
+        chars_to_read
+	    = (stdin_char_count < max_chars) ? stdin_char_count : max_chars;
 	memcpy((void *) buffer, stdin_buffer_start, chars_to_read);
 	stdin_buffer_start += chars_to_read;
 	stdin_char_count -= chars_to_read;
@@ -145,7 +168,8 @@ int input_available(int fd)
     } else {
         int select_result = select(fd+1, &fds, NULL, NULL, &tv);
 	if (select_result < 0) {
-	    /* fd is a file rather than a socket, so there must be input available */
+	    /* fd is a file rather than a socket, so there must
+	       be input available */
             return 1;
 	} else {
 	    return select_result;
@@ -261,7 +285,8 @@ int output_writable(int fd)
     } else {
         int select_result = select(fd+1, NULL, &fds, NULL, &tv);
 	if (select_result < 0) {
-	    /* fd is a file rather than a socket, so we can write to it without blocking */
+	    /* fd is a file rather than a socket, so we can write to 
+	       it without blocking */
             return 1;
 	} else {
 	    return select_result;
@@ -325,8 +350,9 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
      * call to dup().
      */
     {
-        /* This code is a combination of the Unix version of this code and code in
-         * the Win32 Programmer's Reference volume 2, pages 40-45 
+        /* This code is a combination of the Unix version of this code
+	 * and code in the Win32 Programmer's Reference volume 2, 
+	 * pages 40-45 
          */
 	PROCESS_INFORMATION piProcInfo;
 	STARTUPINFO siStartInfo;
@@ -942,15 +968,10 @@ void init_fd_functions(void)
 
 #ifdef WIN32
     if (isatty(0)) {   /* If stdin is a tty and not redirected */
-	DWORD thread_id;
-	HANDLE thread_handle;
     	stdin_buffer_empty     = CreateEvent(NULL, TRUE, TRUE, NULL);
 	stdin_buffer_not_empty = CreateEvent(NULL, TRUE, FALSE, NULL);
-	       /* nameless "manual reset" events */
+	       /* These are nameless "manual reset" events */
 	InitializeCriticalSection(&stdin_buffer_mutex);
-	thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) stdin_producer, NULL, 0, &thread_id);
-	if (thread_handle == NULL) 
-	    lose("Can't create stdin_producer thread");
     }
 #endif
 }
