@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.11 2003/01/29 22:31:31 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.12 2003/01/30 12:17:55 andreas Exp $
 
 //======================================================================
 //
@@ -35,7 +35,7 @@ end library melange-support;
 
 define module melange-support
   use dylan;
-  use extensions, export: {subclass};
+  use extensions, export: {subclass, <double-integer>};
   use system, export: {call-out, c-include, c-system-include, c-decl, c-local-decl,
                        c-expr, c-struct-field, c-struct-field-setter,
                        callback-method, callback-entry};
