@@ -23,14 +23,22 @@ define class <c-representation> (<representation>)
   slot more-general-representation :: union(<false>, <representation>),
     setter: #f, init-value: #f, init-keyword: more-general:;
   slot representation-depth :: <fixed-integer>;
+  slot representation-to-more-general :: union(<byte-string>, one-of(#t, #f)),
+    init-value: #t, init-keyword: to-more-general:;
+  slot representation-from-more-general
+    :: union(<byte-string>, one-of(#t, #f)),
+    init-value: #t, init-keyword: from-more-general:;
   slot representation-alignment :: <fixed-integer>, setter: #f,
     required-init-keyword: alignment:;
   slot representation-size :: <fixed-integer>, setter: #f,
     required-init-keyword: size:;
-  slot representation-has-bottom-value? :: <boolean>, setter: #f,
-    init-value: #f, init-keyword: has-bottom-value:;
   slot representation-c-type :: <string>, setter: #f,
     required-init-keyword: c-type:;
+end;
+
+define method representation-has-bottom-value? (res :: <representation>)
+    => res :: <boolean>;
+  #t;
 end;
 
 define method initialize (rep :: <c-representation>, #next next-method,
@@ -50,9 +58,20 @@ define method print-object (rep :: <c-representation>, stream :: <stream>)
 end;
 
 define class <general-representation> (<c-representation>)
+  keyword to-more-general:, init-value: #f;
+  keyword from-more-general:, init-value: #f;
 end;
 
-define class <data-word-representation> (<c-representation>)
+define class <immediate-representation> (<c-representation>)
+end;
+
+define method representation-has-bottom-value?
+    (res :: <immediate-representation>)
+    => res :: <boolean>;
+  #f;
+end;
+
+define class <data-word-representation> (<immediate-representation>)
   slot representation-class :: <cclass>, required-init-keyword: class:;
   slot representation-data-word-member :: <byte-string>,
     required-init-keyword: data-word-member:;
@@ -62,12 +81,18 @@ end;
 define constant $general-rep
   = make(<general-representation>,
 	 alignment: $pointer-alignment, size: $pointer-size + $data-word-size,
-	 has-bottom-value: #t, c-type: "descriptor_t");
+	 c-type: "descriptor_t");
 define constant $heap-rep
   = make(<c-representation>,
 	 alignment: $pointer-alignment, size: $pointer-size,
-	 has-bottom-value: #t,
-	 more-general: $general-rep, c-type: "heap_ptr_t");
+	 c-type: "heapptr_t", more-general: $general-rep,
+	 to-more-general: #f, from-more-general: "%s.heapptr");
+define constant $boolean-rep
+  = make(<immediate-representation>, more-general: $heap-rep,
+	 to-more-general: "(%s ? obj_True : obj_False)",
+	 from-more-general: "(%s != obj_False)",
+	 alignment: $int-alignment, size: $int-size,
+	 c-type: "int");
 
 define variable *long-rep* = #f;
 define variable *int-rep* = #f;
@@ -86,18 +111,21 @@ define method seed-representations () => ();
   set-representations(dylan-value(#"<object>"), $general-rep, $general-rep);
   set-representations(dylan-value(#"<functional-object>"),
 		      $general-rep, $general-rep);
-  set-representations(dylan-value(#"<boolean>"),
-		      make(<c-representation>, more-general: $heap-rep,
-			   alignment: $int-alignment, size: $int-size,
-			   c-type: "int"),
-		      make(<c-representation>, more-general: $heap-rep,
-			   alignment: 1, size: 1,
-			   c-type: "char"));
+  begin
+    let space-rep = make(<immediate-representation>,
+			 more-general: $boolean-rep,
+			 alignment: 1, size: 1, c-type: "char");
+    set-representations(dylan-value(#"<boolean>"), $boolean-rep, space-rep);
+    set-representations(dylan-value(#"<true>"), $boolean-rep, space-rep);
+    set-representations(dylan-value(#"<false>"), $boolean-rep, space-rep);
+  end;
   begin
     let fixed-int-cclass = dylan-value(#"<fixed-integer>");
     *long-rep* := make(<data-word-representation>,
 		       alignment: $long-alignment, size: $long-size,
 		       more-general: $general-rep, c-type: "long",
+		       to-more-general: #f,
+		       from-more-general: "%s.dataword.l",
 		       class: fixed-int-cclass, data-word-member: "l");
     *int-rep* := make(<data-word-representation>,
 		      alignment: $int-alignment, size: $int-size,
@@ -127,6 +155,7 @@ define method seed-representations () => ();
     let sf-cclass = dylan-value(#"<single-float>");
     let sf-rep
       = make(<data-word-representation>, more-general: $general-rep,
+	     to-more-general: #f, from-more-general: "%s.dataword.f",
 	     alignment: 4, size: 4, c-type: "float",
 	     class: sf-cclass, data-word-member: "f");
     set-representations(sf-cclass, sf-rep, sf-rep);
@@ -135,11 +164,14 @@ define method seed-representations () => ();
     let df-class = dylan-value(#"<double-float>");
     let df-rep
       = if ($double-size > $data-word-size)
-	  make(<c-representation>, more-general: $heap-rep,
+	  make(<immediate-representation>, more-general: $heap-rep,
+	       to-more-general: "make_double_float(%s)",
+	       from-more-general: "double_float_value(%s)",
 	       alignment: $double-alignment, size: $double-size,
 	       c-type: "double");
 	else
 	  make(<data-word-representation>, more-general: $general-rep,
+	       to-more-general: #f, from-more-general: "%s.dataword.d",
 	       alignment: $double-alignment, size: $double-size,
 	       c-type: "double", class: df-class, data-word-member: "d");
 	end;
@@ -148,12 +180,15 @@ define method seed-representations () => ();
   begin
     let xf-class = dylan-value(#"<double-float>");
     let xf-rep
-      = if ($double-size > $data-word-size)
-	  make(<c-representation>, more-general: $heap-rep,
-	       alignment: $double-alignment, size: $double-size,
+      = if ($long-double-size > $data-word-size)
+	  make(<immediate-representation>, more-general: $heap-rep,
+	       to-more-general: "make_extended_float(%s)",
+	       from-more-general: "extended_float_value(%s)",
+	       alignment: $long-double-alignment, size: $long-double-size,
 	       c-type: "double");
 	else
 	  make(<data-word-representation>, more-general: $general-rep,
+	       to-more-general: #f, from-more-general: "%s.dataword.x",
 	       alignment: $long-double-alignment, size: $long-double-size,
 	       c-type: "long double", class: xf-class, data-word-member: "x");
 	end;
@@ -209,9 +244,10 @@ define method assign-representations (class :: <cclass>) => ();
 	  method dup-rep (rep :: <data-word-representation>)
 	    make(<data-word-representation>,
 		 more-general: $general-rep,
+		 to-more-general: #f,
+		 from-more-general: rep.representation-from-more-general,
 		 alignment: rep.representation-alignment,
 		 size: rep.representation-size,
-		 has-bottom-value: rep.representation-has-bottom-value?,
 		 c-type: rep.representation-c-type,
 		 class: class,
 		 data-word-member: rep.representation-data-word-member);
