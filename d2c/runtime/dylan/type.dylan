@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.7 1995/12/08 22:15:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.8 1995/12/09 21:03:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -85,13 +85,11 @@ define inline method singleton (object :: <object>)
   make(<singleton>, object: object);
 end;
 
-/* ### not absolutly needed
 // one-of -- exported from Extensions.
 //
 define method one-of (#rest things) => res :: <type>;
   apply(type-union, map(singleton, things));
 end;
-*/
 
 // instance? -- exported generic function method.
 //
@@ -140,7 +138,6 @@ end;
 
 seal generic make (singleton(<union>));
 
-/* ### not absolutly needed
 // type-union -- exported from Dylan.
 //
 // N-ary constructor for <union> types.
@@ -295,7 +292,14 @@ define method merge-singleton
     values(members, pair(object, singletons));
   end;
 end;
-*/
+
+// false-or(<type>) -- exported from extensions.
+//
+// Shorthand for type-union(type, <false>).
+//
+define inline method false-or (type :: <type>) => res :: <type>;
+  type-union(type, <false>);
+end method false-or;
 
 // instance?(<object>,<union>) -- exported generic function method.
 //
@@ -359,7 +363,6 @@ end;
 
 seal generic make (singleton(<limited-integer>));
 
-/* ### not absolutly needed
 // limited(<integer>,...), limited(<extended-integer>) -- exported gf methods
 //
 define method limited (class :: one-of(<integer>, <extended-integer>),
@@ -414,7 +417,6 @@ define method limited (class == <fixed-integer>, #key min, max)
     end;
   end;
 end;
-*/
 
 // instance?(<object>,<limited-integer>) -- exported generic function method
 //
