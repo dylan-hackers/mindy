@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.1 1994/10/05 20:57:32 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.2 1994/10/07 18:42:39 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -51,7 +51,7 @@ YFLAGS	=		-d
 LEX	=		@LEX@
 LFLAGS	=		@LFLAGS@
 RANLIB	=		@RANLIB@
-INSTALL	=		@top_srcdir@/install.sh
+INSTALL	=		@INSTALL@
 INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
 

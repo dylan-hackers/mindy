@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/Makefile.in,v 1.1 1994/10/05 21:16:06 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/Makefile.in,v 1.2 1994/10/07 18:43:47 nkramer Exp $
 ##
 
 SHELL	=	/bin/sh

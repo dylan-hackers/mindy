@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.1 1994/10/05 21:11:17 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.2 1994/10/07 18:42:52 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -50,7 +50,7 @@ YFLAGS	=		-d
 LEX	=		@LEX@
 LFLAGS	=		@LFLAGS@
 RANLIB	=		@RANLIB@
-INSTALL	=		@top_srcdir@/install.sh
+INSTALL	=		@INSTALL@
 INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
 

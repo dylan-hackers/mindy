@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/Makefile.in,v 1.1 1994/10/05 21:05:45 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/Makefile.in,v 1.2 1994/10/07 18:43:30 nkramer Exp $
 ##
 
 SHELL	=	/bin/sh
