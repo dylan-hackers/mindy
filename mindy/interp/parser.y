@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.2 1994/03/31 10:19:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.3 1994/04/06 22:49:13 wlott Exp $
 *
 * This file does whatever.
 *
@@ -31,6 +31,7 @@ static obj_t result;
 %token tok_ERROR
 %token tok_LPAREN
 %token tok_RPAREN
+%token tok_DEBUGVAR
 %token tok_LITERAL
 %token tok_SYMBOL
 %token tok_KEYWORD
@@ -50,7 +51,8 @@ expr:		leaf				{ $$ = $1; }
 		    { $$ = pair(symbol("funcall"), pair($1, $3)); }
 ;
 
-leaf:		tok_LITERAL		{ $$ = pair(symbol("literal"), $1); }
+leaf:		tok_DEBUGVAR		{ $$ = pair(symbol("debug-var"), $1); }
+	|	tok_LITERAL		{ $$ = pair(symbol("literal"), $1); }
 	|	tok_KEYWORD		{ $$ = pair(symbol("literal"), $1); }
 	|	tok_SYMBOL		{ $$ = pair(symbol("variable"),$1); }
 ;
