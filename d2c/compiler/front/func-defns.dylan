@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.6 1996/04/15 18:29:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.7 1996/05/01 12:19:07 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -708,6 +708,65 @@ define method compare-methods
     end if;
   end block;
 end method compare-methods;
+
+
+// Static next-method-info determination stuff.
+
+// static-next-method-info
+//
+// If the next-method-info list is guaranteed to always be the same for all
+// invocations of the given method, then return that list.  Otherwise, return
+// #f.
+//
+define method static-next-method-info
+    (defn :: <method-definition>) => res :: false-or(<list>);
+  block (return)
+    if (defn.function-defn-hairy?)
+      return(#f);
+    end if;
+
+    let gf = defn.method-defn-of;
+    unless (gf)
+      return(#f);
+    end unless;
+    
+    let seal-info = find-seal(gf, defn.function-defn-signature.specializers);
+    unless (seal-info)
+      return(#f);
+    end unless;
+
+    let less-specific = #();
+    for (meth in seal-info.seal-methods | compute-seal-methods(seal-info, gf))
+      select (compare-methods(meth, defn, #f))
+	#"disjoint", #"unordered", #"more-specific" =>
+	  begin end;
+	#"less-specific" =>
+	  less-specific := pair(meth, less-specific);
+	otherwise =>
+	  return(#f);
+      end select;
+    end for;
+
+    let (ordered, ambiguous) = sort-methods(less-specific, #f);
+    unless (ordered)
+      return(#f);
+    end unless;
+
+    local method ct-value-or-give-up
+	      (defn :: <method-definition>) => res :: <ct-function>;
+	    ct-value(defn) | return(#f);
+	  end method ct-value-or-give-up;
+
+    let ordered = map(ct-value-or-give-up, ordered);
+    let ambiguous = map(ct-value-or-give-up, ambiguous);
+
+    if (ambiguous.empty?)
+      ordered;
+    else
+      concatenate(ordered, list(ambiguous));
+    end if;
+  end block;
+end method static-next-method-info;
 
 
 // Dumping stuff.
