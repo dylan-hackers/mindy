@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.7 1994/10/05 21:02:24 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.8 1994/11/30 16:18:51 rgs Exp $
 *
 \**********************************************************************/
 
@@ -34,6 +34,40 @@ enum slot_allocation {
 };
 
 struct library;
+
+struct defined_class {
+    obj_t class;
+    enum type_Id type_id;
+    boolean abstract_p;
+    boolean sealed_p;
+    struct library *library;
+    int (*scavenge)(struct object *ptr);
+    obj_t (*transport)(obj_t object);
+    void (*print)(obj_t object);
+    obj_t debug_name;
+    obj_t superclasses;
+    obj_t cpl;
+    obj_t direct_subclasses;
+    obj_t all_subclasses;
+
+    obj_t new_slots;
+    obj_t all_slots;
+    obj_t new_initargs;
+    obj_t all_initargs;
+    obj_t inheriteds;
+
+    obj_t instance_positions;
+    int instance_length;
+    obj_t instance_layout;
+
+    obj_t subclass_positions;
+    obj_t subclass_slots;
+    obj_t subclass_layout;
+};
+
+#define DC(o) obj_ptr(struct defined_class *, o)
+
+extern obj_t obj_DefinedClassClass;
 
 extern void describe(obj_t thing);
 

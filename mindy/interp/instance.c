@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.32 1994/11/29 06:41:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.33 1994/11/30 16:18:29 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -50,38 +50,6 @@
 #include "def.h"
 #include "print.h"
 #include "instance.h"
-
-struct defined_class {
-    obj_t class;
-    enum type_Id type_id;
-    boolean abstract_p;
-    boolean sealed_p;
-    struct library *library;
-    int (*scavenge)(struct object *ptr);
-    obj_t (*transport)(obj_t object);
-    void (*print)(obj_t object);
-    obj_t debug_name;
-    obj_t superclasses;
-    obj_t cpl;
-    obj_t direct_subclasses;
-    obj_t all_subclasses;
-
-    obj_t new_slots;
-    obj_t all_slots;
-    obj_t new_initargs;
-    obj_t all_initargs;
-    obj_t inheriteds;
-
-    obj_t instance_positions;
-    int instance_length;
-    obj_t instance_layout;
-
-    obj_t subclass_positions;
-    obj_t subclass_slots;
-    obj_t subclass_layout;
-};
-
-#define DC(o) obj_ptr(struct defined_class *, o)
 
 struct slot_descr {
     obj_t class;
@@ -151,7 +119,7 @@ struct instance {
 
 #define INST(o) obj_ptr(struct instance *, o)
 
-static obj_t obj_DefinedClassClass = NULL;
+obj_t obj_DefinedClassClass = NULL;
 static obj_t obj_SlotDescrClass = NULL;
 static obj_t obj_InitargDescrClass = NULL;
 static obj_t obj_InheritedDescrClass = NULL;
