@@ -331,9 +331,9 @@ link-executable-flags:          -L/lib/pa1.1 -lm
 supports-debugging?:            #f
 
 
-// Sparc Solaris 2
+// Sparc Solaris
 //
-platform-name:                   	sparc-solaris
+platform-name:                  sparc-solaris
 inherit-from:                   generic-unix
 default-features:               compiled-for-unix compiled-for-sparc 
                                 compiled-for-solaris C-compiler-is-GCC
