@@ -9,11 +9,11 @@
 
 // defines
 
-#define kSourceResourceType	'MNDI'
+#define kCodeFragmentType	'cfrg'
 #define kCodeResourceType	'PCOD'
 
 #define kCodeResourceNum	0	
-#define kCodeFragmentNum	0
+#define kCodeFragmentNum	128
 
 
 // Prototypes
@@ -22,7 +22,9 @@ OSErr MakeSelfRunner( FSSpec * from, int creator, int type );
 static OSErr StartResourceFile( FSSpec * from, short * refnum, int creator, int type );
 static OSErr CopyResources( short refnum, Handle pcod, Handle cfrg );
 OSErr SetFinderInfo( FSSpec * file, int creator, int type );
-
+OSErr GetSourceResource( Handle * into, int type, short number );
+OSErr GetDestinationResource( Handle * into, int type, short number );
+static void CopyHandle( Handle from, Handle to );
 
 // Functions
 
@@ -42,21 +44,11 @@ OSErr MakeSelfRunner( FSSpec * from, int creator, int type )
 			cfrg = NULL;
 			
 	// Get the cfrg and the code resource for the self-runner
-	pcod = GetResource( kSourceResourceType, 129 );
-	if( pcod == NULL )
-	{
-		err = -1;
+	err =  GetSourceResource( &pcod, kCodeResourceType, kCodeResourceNum );
+	if( err != noErr )
 		goto finally;
-	}
-	if( (err = ResError()) != noErr )
-		goto finally;
-	cfrg = GetResource( kSourceResourceType, 128 );
-	if( cfrg == NULL )
-	{
-		err = -1;
-		goto finally;
-	}
-	if( (err = ResError()) != noErr )
+	err = GetResource( &cfrg, kCodeFragmentType, kCodeFragmentNum );
+	if( err != noErr )
 		goto finally;
 			
 	// Save the old resource file
@@ -133,42 +125,19 @@ OSErr CopyResources( short refnum, Handle pcod, Handle cfrg )
 			cfrgCopy = NULL;
 
 	// Get or make PCOD in the target file
-	pcodCopy = Get1Resource( kCodeResourceType, kCodeResourceNum );
-	if( (pcodCopy == NULL) || (ResError() != noErr) )
-	{
-		pcodCopy = NewHandle( GetHandleSize( cfrg ) );
-		if( pcodCopy == NULL )
-		{
-			err = -1;
-			goto finally;
-		}
-		else if( (err = ResError())!= noErr )
-			goto finally;
-		
-		AddResource( pcodCopy, kCodeResourceType, kCodeResourceType, "\p" );
-	}
+	err = GetDestinationResource( &pcodCopy, kCodeResourceType, kCodeResourceNum );
+	if( err != noErr )
+		goto finally;
 		
 	// Get or make cfrg in the target file
-	cfrgCopy = Get1Resource( 'cfrg', kCodeFragmentNum );
-	if( (cfrgCopy == NULL) || (ResError() != noErr) )
-	{
-		cfrgCopy = NewHandle( GetHandleSize( cfrg ) );
-		if( cfrgCopy == NULL )
-		{
-			err = -1;
-			goto finally;
-		}
-		else if( (err = ResError())!= noErr )
-			goto finally;
-		
-		AddResource( cfrgCopy, 'cfrg', kCodeFragmentNum, "\p" );
-	}
+	err = Get1Resource( &cfrgCopy, kCodeFragmentType, 0 );
+	if( err != noErr )
+		goto finally;
 		
 	// Copy over the resources
-	// Safe because it's a single operation each
-	
-	**pcodCopy = **pcod;
-	**cfrgCopy = **cfrg;
+
+	CopyHandle( pcod, pcodCopy );
+	CopyHandle( cfrg, cfrgCopy );
 	
 	// Write ENTIRE RESOURCE MAP to disk
 	UpdateResFile( refnum );
@@ -214,4 +183,70 @@ OSErr SetFinderInfo( FSSpec * file, int creator, int type )
 	finally:
 	
 	return err;
+}
+
+// GetSourceResource
+
+OSErr GetSourceResource( Handle * into, int type, short number )
+{
+	OSErr err;
+	
+	// Get the cfrg and the code resource for the self-runner
+	*into = GetResource( type, number );
+	if( *into == NULL )
+	{
+		err = -1;
+		goto finally;
+	}
+	if( (err = ResError()) != noErr )
+		goto finally;
+	
+	// finally 
+	
+	finally:
+	
+	return err;
+}
+
+// GetDestinationResource
+
+OSErr GetDestinationResource( Handle * into, int type, short number )
+{
+	*into = Get1Resource( type, number );
+	if( (*into == NULL) || (ResError() != noErr) )
+	{
+		*into = NewHandle( 1 );
+		if( cfrgCopy == NULL )
+		{
+			err = -1;
+			goto finally;
+		}
+		else if( (err = ResError())!= noErr )
+			goto finally;
+		
+		AddResource( *into,type, number, "\p" );
+	}
+
+	
+	// finally 
+	
+	finally:
+	
+	return err;
+}
+
+
+// CopyHandle
+// Copy from one handle to another
+
+void CopyHandle( Handle from, Handle to )
+{
+	HLock( from );
+	HLock( to );
+	
+	SetResourceSize( to, GetResourceSize( from ) );
+	BlockMove( *from, *to, GetHandleSize( from ) );
+	
+	HUnlock( from );
+	HUnlock( to );
 }
