@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.107 1995/11/13 17:17:18 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.108 1995/11/13 17:59:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -300,6 +300,12 @@ define module definitions
 
 end;
 
+define module variables-dumper-vars
+  create
+    name-used, imports, prefix, excludes, renamings, exports,
+    orig-name, new-name;
+end;
+
 define module variables
   use common;
 
@@ -308,6 +314,7 @@ define module variables
   use tokens;
   use names;
   use definitions;
+  use variables-dumper-vars;
 
   use forwards, import: {<module>}, export: all;
   export
@@ -1220,6 +1227,7 @@ define module misc-dump
   use ctype;
   use classes;
   use variables;
+  use variables-dumper-vars;
   use names;
 end;
 

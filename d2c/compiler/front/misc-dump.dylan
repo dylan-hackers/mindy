@@ -1,7 +1,26 @@
 module: misc-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.2 1995/11/13 14:55:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.3 1995/11/13 17:59:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+
+add-make-dumper(#"use", *compiler-dispatcher*,
+  <use>, 
+  list(
+       name-used, #"name", #f,
+       imports, #"imports", #f,
+       prefix, #"prefix", #f,
+       excludes, #"excludes", #f,
+       renamings, #"renamings", #f,
+       exports, #"exports", #f
+   ));
+
+add-make-dumper(#"renaming", *compiler-dispatcher*,
+  <renaming>, 
+  list(
+       orig-name, #"orig-name", #f,
+       new-name, #"new-name", #f
+   ));
 
 
 define method dump-od (obj :: <module>, buf :: <dump-state>) => ();
