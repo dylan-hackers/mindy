@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.55 1997/01/13 03:12:11 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.56 1997/02/04 14:45:29 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -996,7 +996,7 @@ define method make-canonical-limited-integer
   
   if (base-class == specifier-type(#"<integer>"))
     let min-int = ash(as(<extended-integer>, -1),
-		      *current-target*.target-integer-length - 1);
+		      *current-target*.platform-integer-length - 1);
     let max-int = lognot(min-int);
     if (~low-bound | low-bound < min-int)
       low-bound := min-int;
