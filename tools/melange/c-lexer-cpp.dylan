@@ -69,7 +69,7 @@ define variable *framework-paths* :: <vector> = make( <vector> );
 // *frameworks* -- private variable
 // This is the table of (MacOSX/Darwin-style) framework include paths
 // keyed by framework name
-// This is of litle interest outside MacOSX but is here to make the code simpler
+// This is of little interest outside Mac OS X but is here to make the code simpler
 
 define variable *frameworks* :: <table> = make( <table> );
 
@@ -96,29 +96,37 @@ define method find-frameworks( frameworks :: <vector> )
     end for;
 end method find-frameworks;
 
-define method find-framework( name :: <string> )
-=> ()
-    for( path :: <string> in *framework-paths* )
-        let full-path :: <string> = concatenate( path, name, ".framework" ) ;
-        // If it has a headers directory
-        let framework-headers-path :: <string> = 
-                concatenate( full-path, "/Headers/" );
-        if( framework-exists?( framework-headers-path, name ) )
-            *frameworks*[ as( <symbol>, name ) ] := 
-                    framework-headers-path;
-						// Add it to the end of the normal include paths as well
-						// so non-prefixed includes within framework headers can be found
-						push-last( include-path, framework-headers-path );
+define method find-framework
+    ( framework-name :: <string> )
+ => ( framework-path :: false-or(<string>) )
+  let framework-key = as( <symbol>, framework-name );
+  
+  // First, see if we've already got the framework path cached.
+  element( *frameworks*, framework-key, default: #f )
+    | block (return)
+        for (path :: <string> in *framework-paths*)
+          let full-path :: <string> = concatenate( path, framework-name, ".framework" );
+          
+          // If it has a headers directory
+          let framework-headers-path :: <string> = concatenate( full-path, "/Headers/" );
+          if (framework-exists?( framework-headers-path, framework-name ))
+            *frameworks*[ framework-key ] := framework-headers-path;
+            
+            // Add it to the end of the normal include paths as well
+            // so non-prefixed includes within framework headers can be found
+            push-last( include-path, framework-headers-path );
+            
             // Guess that it has a frameworks directory and add this
             // It's a little wasteful, but it isolates us from file-system
             // And the path won't be added if we don't find a header
             // Note that this means that parent frameworks must be listed before children
-            let recursive-path :: <string> = 
-                    concatenate( full-path, "/Frameworks/" );
-            *framework-paths* := 
-                add!( *framework-paths*, recursive-path );
-        end if;
-    end for;
+            let recursive-path :: <string> = concatenate( full-path, "/Frameworks/" );
+            *framework-paths* := add!( *framework-paths*, recursive-path );
+
+            return( framework-headers-path );
+          end if;
+        end for;
+      end block;
 end method find-framework;
 
 // This routine grabs tokens from within the "parameter list" of a
@@ -298,40 +306,35 @@ end function check-cpp-expansion;
 // Check for #include<Framework/Framework.h>
 
 define method framework-include( filename :: <string> )
-=>( full-name :: false-or( <string> ), stream :: false-or( <stream> ) )
-	// Break the include down into a framework name and a file name
-	let slash-position :: false-or( <integer> ) = 
-		subsequence-position( filename, "/" );
-	if( slash-position )
-		let framework-name :: <string> = 
-			copy-sequence( filename, end: slash-position );
-		// Try to find the framework
-		let framework-path :: false-or( <string> ) = 
-			element( *frameworks*, as( <symbol>, framework-name), 
-				default: #f );
-		// If we found it, try to open the file
-		if( framework-path )
-			let file-name :: <string> = 
-				copy-sequence( filename, start: slash-position + 1 );
-			let full-path :: <string> =
-				concatenate( framework-path, file-name );
-			block()
-      			values(full-path, 
-      				make(<file-stream>, locator: full-path, 
-      					direction: #"input"));			
-			exception (<file-does-not-exist-error>)
-			  values( #f, #f );
-			end block;
-		else
-                        // It may be a nested framework
-                        // Try to find it
-			// Otherwise it's probably not a framework include.
-			// Let open-in-include-path try
-			values( #f, #f );
-		end if;
-	else
-		values( #f, #f );
-	end if;
+ => (full-name :: false-or( <string> ), stream :: false-or( <stream> ) )
+  
+  // Break the include down into a framework name and a file name
+  let slash-position :: false-or( <integer> ) = subsequence-position( filename, "/" );
+  if (slash-position)
+    let framework-name :: <string> = copy-sequence( filename, end: slash-position );
+    
+    // Try to find the framework
+    let framework-path :: false-or( <string> ) = find-framework( framework-name );
+    
+    // If we found it, try to open the file
+    if (framework-path)
+      let file-name :: <string> = copy-sequence( filename, start: slash-position + 1 );
+      let full-path :: <string> = concatenate( framework-path, file-name );
+      block()
+        values( full-path, make(<file-stream>, locator: full-path, direction: #"input") );
+      exception (<file-does-not-exist-error>)
+        values( #f, #f );
+      end block;
+    else
+      // It may be a nested framework
+      // Try to find it
+      // Otherwise it's probably not a framework include.
+      // Let open-in-include-path try
+      values( #f, #f );
+    end if;
+  else
+    values( #f, #f );
+  end if;
 end method framework-include;
 
 // open-in-include-path -- exported function.

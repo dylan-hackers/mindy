@@ -1,7 +1,7 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.34 2004/04/26 11:51:17 cpage Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.35 2004/05/31 00:03:22 cpage Exp $
 
 //======================================================================
 //
@@ -711,9 +711,14 @@ define method show-help(stream :: <stream>) => ()
 "  -U, --undefine:        Prevent definition of a default preprocessor symbol.\n"
 "                         (Default symbols are listed below.)\n"
 "  -I, --includedir:      Extra directories to search for C headers.\n"
-"  --framework:           The name of a framework bundle to search for C headers.\n"
-"                         (Note: Parent framework names must be given before child\n"
-"                         framework names.)\n"
+"  --framework:           The name of a framework bundle to search for C headers and\n"
+"                         child frameworks. Required when a child framework is\n"
+"                         directly referred to in an interface definition with no\n"
+"                         previous references to its parent; once a parent is seen,\n"
+"                         either via this option or in a clause of the interface\n"
+"                         definition, its children will be found automatically.\n"
+"                         (Note: Parent --framework options must be given before\n"
+"                         child framework options.)\n"
 "  --no-struct-accessors: Do not generate accessor functions for C struct members.\n"
 "  -m, --module-file:     Create a Dylan interchange file with a module definition\n"
 "                         that exports interface names.\n"
@@ -869,9 +874,7 @@ define method main (program, #rest args)
   	push(include-path, "./");
   #endif
   
-  // Handle --framework
-  //NOTE: Parent frameworks of child frameworks must be given, 
-  //	and must be given before their child frameworks
+  // Handle --framework.
   for (dir in framework-dirs)
     *framework-paths* := add(*framework-paths*, dir);
   end for;
