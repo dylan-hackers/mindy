@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.92 1995/10/31 11:22:33 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.93 1995/11/06 17:02:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -464,7 +464,7 @@ define module top-level-forms
   export
     <top-level-form>,
     <define-tlf>, <simple-define-tlf>, tlf-defn, tlf-defn-setter,
-    $Top-Level-Forms,
+    *Top-Level-Forms*,
 
     process-top-level-form, finalize-top-level-form, convert-top-level-form,
 
@@ -1128,7 +1128,8 @@ define module cback
   use signature-interface;
 
   export
-    <output-info>, output-info-init-roots,
+    <unit-info>, unit-info-init-roots,
+    <output-info>, 
     emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue,
     entry-point-c-name;
 end;
