@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . '-L../streams';
+$D2CFLAGS = $D2CFLAGS . ' -L../streams';
 
 do emit_library_rule(
     'standard-io', '$(BUILDROOT)/force.timestamp', '', 'compile', 
