@@ -1,4 +1,4 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS = $d2c_runtime;
 
 do emit_library_rule(
     'hello-world', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
