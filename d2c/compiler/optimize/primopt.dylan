@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.14 1995/12/07 00:38:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.15 1995/12/07 17:45:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,7 +95,7 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let nfixed-leaf = primitive.depends-on.dependent-next.source-exp;
      if (instance?(nfixed-leaf, <literal-constant>))
-       let nfixed = nfixed-leaf.value.literal-value;
+       let nfixed = as(<fixed-integer>, nfixed-leaf.value.literal-value);
        let cluster = primitive.depends-on.source-exp;
        let type = cluster.derived-type;
        if (fixed-number-of-values?(type))
