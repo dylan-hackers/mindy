@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.5 2000/01/24 04:56:51 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.6 2000/10/21 01:30:48 dauclair Exp $
 
 //======================================================================
 //
@@ -39,6 +39,8 @@ define module melange-support
   use system, export: {call-out, c-include, c-decl, c-expr, callback-method,
                        callback-entry};
 
+  use magic;
+
   export
     c-variable-ref, c-variable-ref-setter,
     <statically-typed-pointer>, raw-value, null-pointer,
@@ -53,5 +55,7 @@ define module melange-support
 
     destroy, pointer-value, pointer-value-setter, content-size,
     structure-size, export-value, import-value, <machine-pointer>,
-    <c-string>, <c-vector>, <function-pointer>;
+    <c-string>, <c-vector>, <function-pointer>,
+
+    c-struct-members;
 end module melange-support;

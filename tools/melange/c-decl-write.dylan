@@ -522,6 +522,59 @@ define method write-declaration
 	     "=> (result :: <integer>);\n"
 	     "  %d;\nend method content-size;\n\n",
 	   subclass-type(decl.dylan-name), decl.c-type-size);
+    if(*create-virtual-structs?*)
+      let virt-class :: <string> = concatenate("<virtual-",
+					       copy-sequence(decl.dylan-name,
+							     start: 1));
+      local method struct-slot-name(big :: <string>) => (ans :: <string>);
+	copy-sequence(big,
+		      start: find-key(big, method(char) char = '$' end) + 1);
+      end;
+
+      format(stream, "define class %s (<object>)\n  slot c-type :: %s;\n",
+	     virt-class,
+	     decl.dylan-name);
+      for(x in decl.coalesced-members)
+	format(stream,"  constant virtual slot %s :: %s;\n",
+	       // read-only virtual?
+	       struct-slot-name(x.dylan-name),
+	       x.type.mapped-name);
+      end for;
+      format(stream, "end class %s;\n\n", virt-class);
+      local method slot-fn(name :: <string>, kind :: <string>, #key setter?)
+	let fn-name :: <string> = concatenate(name,
+					      if(setter?) "-setter"
+					      else ""
+					      end if);
+	format(stream,
+	       concatenate("define method %s (",
+			   if(setter?) concatenate("value :: ", kind, ", ")
+			   else ""
+			   end if,
+			   "struct :: %s)\n => (ans :: %s);\n  %s(",
+			   if(setter?) "value, " else "" end if,
+			   "struct.c-type)\nend method %s;\n\n"),
+	       struct-slot-name(fn-name),
+	       virt-class,
+	       kind,
+	       fn-name,
+	       struct-slot-name(fn-name));
+      end;
+
+      format(stream, "define method c-struct-size(of == %s)\n"
+	       " => (ans :: <integer>);\n  content-size(%s)\n"
+	       "end method c-struct-size;\n\n",
+	     virt-class, decl.dylan-name);
+
+      for(x in decl.coalesced-members)
+	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #f);
+   /*** Right now, I don't want to think about -setter fns
+    *   if(as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")
+    *     slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
+    *      end if;
+    ***/
+      end for;
+    end if;
   end if;
 end method write-declaration;
 
@@ -921,15 +974,18 @@ define method write-declaration
     register-written-name(written-names, decl.dylan-name, decl);
     if (melange-target == #"d2c")
       format(stream, "define sealed domain make (singleton(%s));\n\n",
-	     decl.dylan-name)
+	     decl.dylan-name);
+      // Douglas Auclair:  we'll trust the C code for its size declarations. 
+      // Instead of querying an instance (which may need memory 
+      // (de)allocation), we'll trustingly ask the class its size 
+      // (particularly if it's anonymous). 
+      if (decl.length) 
+  	  format(stream, "define method content-size (value == %s) " 
+	  	   " => (result :: <integer>);\n" 
+		   "  %=;\nend method content-size;\n\n", 
+	         decl.dylan-name, decl.length); 
+      end if; 
     end if;
-    // We will eventually want to declare a size.  However, since the
-    // declarations sometimes lie about the true size, we must not do so until
-    // we have adequate mechanisms for changing the default.
-//    if (decl.length)
-//      format(stream, "define method size (%s)\n  %=;\nend method;\n\n",
-//	     decl.dylan-name, decl.length);
-//    end if;
   end if;
 end method write-declaration;
 

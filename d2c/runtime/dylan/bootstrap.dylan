@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.9 2000/05/09 20:02:18 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.10 2000/10/21 01:30:48 dauclair Exp $
 copyright: see below
 module: bootstrap
 
@@ -286,6 +286,7 @@ define module dylan-viscera
     slot-init-function-setter,
     slot-init-value,
     slot-init-value-setter,
+    slot-name,
     slot-type,
     slot-type-setter,
     slow-functional-==,

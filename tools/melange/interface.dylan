@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.12 2000/10/20 15:28:46 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.13 2000/10/21 01:30:49 dauclair Exp $
 
 //======================================================================
 //
@@ -99,7 +99,7 @@ end method count-whitespace;
 // the interesting work.
 //
 define method process-interface-file
-    (in-file :: <string>, out-stream :: <stream>, #key verbose) => ();
+    (in-file :: <string>, out-stream :: <stream>, #key verbose, structs) => ();
   let in-stream = make(<file-stream>, locator: in-file);
   let input-string = read-to-end(in-stream);
   let sz = input-string.size;
@@ -117,7 +117,7 @@ define method process-interface-file
 	      let newer-position
 		= process-define-interface(in-file, input-string,
 					   new-position, out-stream,
-					   verbose: verbose);
+					   verbose: verbose, structs: structs);
 	      if (newer-position < sz) try-define(newer-position) end if;
 	    else
 	      write(out-stream, input-string, start: new-position,
@@ -469,7 +469,8 @@ define variable target-switch :: <symbol> = #"all";
 // write-declaration for final processing.
 //
 define method process-parse-state
-    (state :: <parse-state>, out-stream :: <stream>, #key verbose) => ();
+    (state :: <parse-state>, out-stream :: <stream>, #key verbose, structs)
+ => ();
   if (~state.include-files)
     error("Missing #include in 'define interface'");
   end if;
@@ -493,7 +494,7 @@ define method process-parse-state
   end for;
 
   let c-state
-    = c-parse(full-names, defines: defines, verbose: verbose);
+    = c-parse(full-names, defines: defines, verbose: verbose, structs: structs);
 
   // The ordering of some of the following steps is important.  We must
   // process all of the clauses before doing apply-options so that any
@@ -554,14 +555,14 @@ end method process-parse-state;
 define method process-define-interface
     (file-name :: <string>, string :: <string>, start :: <integer>,
      out-stream :: <stream>,
-     #key verbose)
+     #key verbose, structs)
  => (end-position :: <integer>);
   let tokenizer = make(<tokenizer>, source-string: string,
 		       source-file: file-name, start: start);
   let state = make(<parse-state>, tokenizer: tokenizer);
   // If there is a problem with the parse, it will simply signal an error
   parse(state);
-  process-parse-state(state, out-stream, verbose: verbose);
+  process-parse-state(state, out-stream, verbose: verbose, structs: structs);
   // The tokenizer will be set at the next token after the "define
   // interface".  We can't just call tokenizer.position since there may have
   // been an "unget-token" call.
@@ -605,7 +606,8 @@ end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
   format(stream,
-"Usage: melange [-v] [--mindy|--d2c] -Iincludedir... infile [outfile]\n");
+"Usage:\n\n"
+"melange [-v] [--mindy|--d2c] [--shadow-structs] -Iincdir... infile [outfile]\n");
 end method show-usage;
 
 define method show-usage-and-exit() => ()
@@ -621,7 +623,8 @@ define method show-help(stream :: <stream>) => ()
 "       -v, --verbose:    Print progress messages while parsing.\n"
 "       --mindy:          Generate output for use only with Mindy.\n"
 "       --d2c:            Generate output for use only with d2c.\n"
-"       -I, --includedir: Extra directories to search for C headers.\n");
+"       -I, --includedir: Extra directories to search for C headers.\n"
+"	--shadow-structs: shadow C-style structs with virtual Dylan-style types\n");
 end method show-help;
 
 
@@ -665,6 +668,9 @@ define method main (program, #rest args)
 			    <repeated-parameter-option-parser>,
 			    long-options: #("includedir"),
 			    short-options: #("I"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("shadow-structs"));
   
   // Parse our command-line arguments.
   unless (parse-arguments(*argp*, args))
@@ -688,7 +694,8 @@ define method main (program, #rest args)
   let target = option-value-by-long-name(*argp*, "target");
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
   let regular-args = regular-arguments(*argp*);
-  
+  let structs? = option-value-by-long-name(*argp*, "shadow-structs");
+
   // Handle --verbose.
   if (verbose?)
     *show-parse-progress?* := #t;
@@ -740,7 +747,7 @@ define method main (program, #rest args)
 
   // Do our real work.
   process-interface-file(in-file, out-file | *standard-output*,
-			 verbose: verbose?);
+			 verbose: verbose?, structs: structs?);
   exit(exit-code: 0);  // ### seems to be necessary, even though I'd
                        // think all Dylan programs would exit with
                        // exit code 0 if they never called exit() at

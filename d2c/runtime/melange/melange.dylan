@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.7 2000/10/20 15:25:12 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.8 2000/10/21 01:30:48 dauclair Exp $
 
 //======================================================================
 //
@@ -669,3 +669,15 @@ end method forward-iteration-protocol;
 define open functional class <function-pointer>
     (<statically-typed-pointer>) 
 end class <function-pointer>;
+
+//------------------------------------------------------------------------
+// Takes a Dylan type that represents C-style structs and returns a 
+// <sequence> of all the C-struct slots (dylan type added by Douglas M.
+// Auclair, dauclair@hotmail.com)
+
+define method c-struct-members(c :: <class>) => (ans :: <sequence>);
+  copy-sequence(c.class-all-slot-descriptors,
+		start: 2,
+		end: size(c.class-all-slot-descriptors) - 1);
+end method c-struct-members;
+

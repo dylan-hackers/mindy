@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.9 2000/01/24 04:58:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.10 2000/10/21 01:30:48 dauclair Exp $
 
 //======================================================================
 //
@@ -82,6 +82,10 @@ rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.9 2000/01/24 0
 // upwards.
 //
 define variable *typedef-flag* = #f;
+
+// another *HACK* to tell melange if it should create Dylan-style reflective
+// types for C-style structs
+define variable *create-virtual-structs?* :: <boolean> = #f;
 
 // This function checks to see whether the given object can be interpreted as
 // an integer.  If so, it returns the integer value.  Otherwise, it raises an
@@ -1577,10 +1581,11 @@ end method parse-loop;
 // declarations in the returned parse state.
 //
 define method parse
-    (files :: <sequence> /* of <string> */, #key defines, verbose)
+    (files :: <sequence> /* of <string> */, #key defines, verbose, structs)
  => (result :: <parse-state>);
   let stream = make(<byte-string-stream>, contents: "",
                     direction: #"input-output");
+  *create-virtual-structs?* := structs;
   for (file in files)
     format(stream, "#include \"%s\"\n", file);
   end for;
