@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.13 2001/10/16 21:59:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.14 2001/10/17 20:55:31 gabor Exp $
 copyright: see below
 
 
@@ -232,13 +232,20 @@ define method reoptimize
   end;
 end;
 
-define method queue-dependents
+
+define inline function queue-dependents
+    (component :: <component>, expr :: <expression>) => ();
+  fer-queue-dependents(component, expr, reoptimize);
+end;
+
+
+/* define method queue-dependents
     (component :: <component>, expr :: <expression>) => ();
   for (dependency = expr.dependents then dependency.source-next,
        while: dependency)
     reoptimize(component, dependency.dependent);
   end;
-end;
+end; */
 
 /* define method delete-queueable
     (component :: <component>, queueable :: <queueable-mixin>) => ();
@@ -1085,7 +1092,7 @@ end;
 define function maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
-  fer-maybe-restrict-type(component, expr, type, reoptimize, queue-dependents);
+  fer-maybe-restrict-type(component, expr, type, reoptimize /*, queue-dependents*/);
 end;
 
 /* define method maybe-restrict-type
