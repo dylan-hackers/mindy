@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.2 1994/06/08 13:01:54 dpierce Exp $
+//   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.3 1994/06/11 02:14:35 wlott Exp $
 //
 // This file contains definitions of classes and functions for the
 // Dylan range collection class.  Ranges represent linear arithmetic
@@ -363,7 +363,7 @@ end method;
 // of one of the concrete subclasses <bounded-range> or
 // <unbounded-range>.
 //
-define method make (class-to-make == <range>, #rest keys)
+define method make (class-to-make == <range>, #rest keys, #all-keys)
       => <range>;
    apply (range, keys);
 end method;

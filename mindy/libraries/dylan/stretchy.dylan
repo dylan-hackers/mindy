@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.7 1994/05/31 18:12:43 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.8 1994/06/11 02:15:01 wlott Exp $
 //
 //  This file implements stretchy-vectors.
 //
@@ -24,7 +24,7 @@ define class <stretchy-vector> (<stretchy-collection>, <vector>)
   // No slots in the abstract class <stretchy-vector>
 end class <stretchy-vector>;
 
-define method make(cls == <stretchy-vector>, #rest keys)
+define method make(cls == <stretchy-vector>, #rest keys, #all-keys)
   apply(make, <simple-stretchy-vector>, keys);
 end method;
 
