@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.19 2001/03/30 13:50:46 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.20 2001/06/22 07:26:48 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -209,7 +209,7 @@ define module dylan-viscera
     // System stuff
     \%%primitive,
     call-out, c-include, c-system-include, c-decl, c-local-decl,
-    c-expr, c-literal,
+    c-expr, c-literal, c-struct-field, c-struct-field-setter,
     callback-method, callback-entry,
     <raw-pointer>, pointer-deref, pointer-deref-setter,
     object-address,

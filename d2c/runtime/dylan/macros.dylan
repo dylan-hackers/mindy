@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.13 2001/05/31 19:42:10 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.14 2001/06/22 07:26:48 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -654,7 +654,22 @@ define macro c-expr
 end;
 
 define macro c-literal
-    { c-literal (?lit:expression) } => { %%primitive(\c-literal, #"int", ?lit) }
+    { c-literal (?lit:expression) }
+      => { %%primitive(\c-literal, #"int", ?lit) }
+end;
+
+define macro c-struct-field
+    { c-struct-field (?kind:expression, ?ptr:expression,
+                      ?struct:expression, ?field:expression) }
+      => { %%primitive(\c-struct-field, ?kind, ?ptr, ?struct, ?field) }
+end;
+
+define macro c-struct-field-setter
+    { c-struct-field-setter (?new-val:expression, ?kind:expression, 
+                             ?ptr:expression, ?struct:expression,
+                             ?field:expression) }
+      => { %%primitive(\c-struct-field-setter, ?new-val, ?kind, ?ptr,
+		       ?struct, ?field) }
 end;
 
 // Callback-related macros
