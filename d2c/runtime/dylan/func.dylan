@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.6 1995/11/16 03:37:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.7 1995/12/09 02:49:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -93,7 +93,7 @@ define method make-closure
        closure-size: closure-size);
 end;
 
-define class <type-vector> (<builtin-vector>)
+define class <type-vector> (<simple-vector>)
   sealed slot %element :: <type>,
     init-value: type-union(), init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
@@ -101,6 +101,29 @@ end class <type-vector>;
 
 seal generic make (singleton(<type-vector>));
 seal generic initialize (<type-vector>);
+
+define sealed inline method element
+    (vec :: <type-vector>, index :: <fixed-integer>,
+     #key default = $not-supplied)
+    => element :: <object>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    element-error(vec, index);
+  else
+    default;
+  end;
+end;
+
+define sealed inline method element-setter
+    (new-value :: <type>, vec :: <type-vector>, index :: <fixed-integer>)
+    => new-value :: <type>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    element-error(vec, index);
+  end;
+end;
 
 define class <gf-cache> (<object>)
   slot simple :: <boolean>, init-value: #t;
@@ -531,8 +554,6 @@ end;
 
 // Functional Operations
 
-/* ### not absolutly needed
-
 define inline method compose (function :: <function>, #rest more-functions)
     => res :: <function>;
   reduce(binary-compose, function, more-functions);
@@ -573,8 +594,6 @@ define inline method binary-conjoin
   end;
 end;
 
-*/
-
 define inline method curry (function :: <function>, #rest curried-args)
     => res :: <function>;
   method (#rest more-args)
@@ -593,11 +612,8 @@ define inline method rcurry (function :: <function>, #rest curried-args)
   end;
 end;
 
-/* ### not absolutly needed
 define inline method always (object :: <object>) => res :: <function>;
   method (#rest ignore) => object :: <object>;
     object;
   end;
 end;
-
-*/
