@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.37 1995/05/11 14:32:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.38 1995/05/13 13:31:37 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -1376,9 +1376,20 @@ static void gf_xep(struct thread *thread, int nargs)
     }
     else {
 	push_linkage(thread, args);
-	error("No applicable methods for %= with arguments %=",
-	      function_debug_name_or_self(gf),
+	if (strcmp(sym_name(function_debug_name_or_self(gf)), "main") == 0) {
+	    error("No applicable methods for #\"main\" with arguments %=.\n"
+		  "\nYou need to define a method on the generic function\n"
+		  "Main with the specializers (<string>, #rest strings).\n"
+		  "The generic function Main is exported from the\n"
+		  "Extensions module; perhaps you forgot to import the\n"
+		  "Extensions module into the module that defines the\n"
+		  "method on Main?",
 	      make_vector(nargs, args));
+	} else {
+	    error("No applicable methods for %= with arguments %=",
+		  function_debug_name_or_self(gf),
+		  make_vector(nargs, args));
+	}
     }
 }
 
