@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.4 1995/11/11 22:44:05 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.5 1995/11/14 13:28:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -28,7 +28,9 @@ add-od-loader(*default-dispatcher*, #"true",
   end method
 );
 
-define method dump-od(obj == #f, buf :: <dump-state>) => ();
+// <dump-buffer> for extern-handle dumping.  
+//
+define method dump-od(obj == #f, buf :: <dump-buffer>) => ();
   dump-definition-header(#"false", buf);
 end method;
 
