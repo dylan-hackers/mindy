@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.7 2001/10/07 10:05:49 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.8 2001/12/24 13:34:48 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -185,10 +185,10 @@ define method seed-representations () => ();
 	      to-more-general: "(%s ? obj_True : obj_False)",
 	      from-more-general: "(%s != obj_False)",
 	      alignment: *int-alignment*, size: *int-size*,
-	      c-type: "boolean");
+	      c-type: "int");
     let space-rep = make(<immediate-representation>,
 			 more-general: *boolean-rep*,
-			 alignment: 1, size: 1, c-type: "bool");
+			 alignment: 1, size: 1, c-type: "char");
     set-representations(dylan-value(#"<boolean>"), *boolean-rep*, space-rep);
     set-representations(dylan-value(#"<true>"), *boolean-rep*, space-rep);
     set-representations(dylan-value(#"<false>"), *boolean-rep*, space-rep);
