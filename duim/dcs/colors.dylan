@@ -73,7 +73,7 @@ end function rgb->ihs;
 define inline function rgb->luminosity
     (r :: <single-float>, g :: <single-float>, b :: <single-float>)
  => (luminosity :: <single-float>)
-  0.299 * r + 0.587 * g + 0.114 * b
+  as(<single-float>, 0.299 * r + 0.587 * g + 0.114 * b);
 end function rgb->luminosity;
 
 
