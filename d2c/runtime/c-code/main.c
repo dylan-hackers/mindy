@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.7 1999/09/15 10:57:24 bruce Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.8 1999/11/12 21:21:55 robmyers Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -239,7 +239,7 @@ double log2 (double x)
 
 #endif
 
-#if !defined(WIN32) && !defined(__BEOS__)
+#if !defined(WIN32) && !defined(__BEOS__) && !defined(__MACOS__)
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -258,5 +258,12 @@ void no_core_dumps(void)
 void no_core_dumps(void)
 {
 	// What should go here?
+}
+#endif
+
+#if defined(__MACOS__)
+void no_core_dumps(void)
+{
+	/* The Mac doesn't core dump. It just crashes. */
 }
 #endif
