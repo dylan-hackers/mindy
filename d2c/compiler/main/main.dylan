@@ -1,8 +1,48 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.45 1996/02/01 00:00:11 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.46 1996/02/02 23:17:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
+
+#if (~mindy)
+
+define method import-string (ptr :: <raw-pointer>)
+    => string :: <byte-string>;
+  for (len :: <integer> from 0,
+       until: zero?(pointer-deref(#"char", ptr, len)))
+  finally
+    let res = make(<byte-string>, size: len);
+    for (index :: <integer> from 0 below len)
+      res[index] := as(<character>, pointer-deref(#"char", ptr, index));
+    end for;
+    res;
+  end for;
+end method import-string;
+
+define method export-string (string :: <byte-string>)
+    => ptr :: <raw-pointer>;
+  let len = string.size;
+  let buffer = make(<buffer>, size: len);
+  copy-bytes(buffer, 0, string, 0, len);
+  buffer-address(buffer);
+end method export-string;
+
+define method getenv (name :: <byte-string>)
+    => res :: false-or(<byte-string>);
+  let ptr = call-out("getenv", #"ptr", #"ptr", export-string(name));
+  if (zero?(as(<integer>, ptr)))
+    #f;
+  else
+    import-string(ptr);
+  end if;
+end method getenv;
+
+define method system (command :: <byte-string>)
+    => res :: <integer>;
+  call-out("system", #"int", #"ptr", export-string(command));
+end method system;
+
+#end
 
 define constant $cc-flags = getenv("CCFLAGS") | "";
 
@@ -205,6 +245,9 @@ define method compile-library
       *Current-Module* := #f;
     end;
   end;
+#if (mindy)
+  collect-garbage(purify: #t);
+#end
   format(*debug-output*, "Finalizing definitions\n");
   for (tlfs in tlf-vectors)
     *Top-Level-Forms* := tlfs;
@@ -289,11 +332,22 @@ define method compile-library
     end block;
   end;
 
+  let executable = element(header, #"executable", default: #f);
+  let entry-point = element(header, #"entry-point", default: #f);
+  let entry-function = #f;
+  if (entry-point & ~executable)
+    compiler-error("Can only specify an entry-point when producing an "
+		     "executable.");
+  end if;
+
   begin
     let c-name = concatenate(unit-prefix, "-init.c");
     let body-stream = make(<file-stream>, name: c-name, direction: #"output");
     let file = make(<file-state>, unit: unit, body-stream: body-stream);
     emit-prologue(file, other-units);
+    if (entry-point)
+      entry-function := build-command-line-entry(lib, entry-point, file);
+    end if;
     emit-epilogue(init-functions, file);
     close(body-stream);
 
@@ -334,7 +388,6 @@ define method compile-library
     end;
   end;
 
-  let executable = element(header, #"executable", default: #f);
   if (executable)
     begin
       format(*debug-output*, "Emitting Initial Heap.\n");
@@ -351,10 +404,15 @@ define method compile-library
       let stream = make(<file-stream>, name: "inits.c", direction: #"output");
       write("#include <runtime.h>\n\n", stream);
       write("/* This file is machine generated.  Do not edit. */\n\n", stream);
-      write("void inits(descriptor_t *sp)\n{\n", stream);
+      write("void inits(descriptor_t *sp, int argc, char *argv[])\n{\n",
+	    stream);
       for (unit in *units*)
 	format(stream, "    %s_init(sp);\n", unit.unit-name);
       end;
+      if (entry-function)
+	let ep = make(<ct-entry-point>, for: entry-function, kind: #"main");
+	format(stream, "    %s(sp, argc, argv);\n", ep.entry-point-c-name);
+      end if;
       write("}\n", stream);
       close(stream);
     end;
@@ -403,6 +461,71 @@ define method compile-library
 end;
 
 
+define method split-at-colon (string :: <byte-string>)
+    => (module :: <byte-string>, name :: <byte-string>);
+  block (return)
+    for (index :: <integer> from 0 below string.size)
+      if (string[index] == ':')
+	return(copy-sequence(string, end: index),
+	       copy-sequence(string, start: index + 1));
+      end if;
+    end for;
+    compiler-error("Invalid entry point: %s -- "
+		     "must be of the form module:variable.",
+		   string);
+  end block;
+end method split-at-colon;
+
+
+define method build-command-line-entry
+    (lib :: <library>, entry :: <byte-string>, file :: <file-state>)
+    => entry-function :: <ct-function>;
+  let (module-name, variable-name) = split-at-colon(entry);
+  let module = find-module(lib, as(<symbol>, module-name));
+  unless (module)
+    compiler-error("Invalid entry point: %s -- no module %s.",
+		   entry, module-name);
+  end unless;
+  let variable = find-variable(make(<basic-name>,
+				    symbol: as(<symbol>, variable-name),
+				    module: module));
+  unless (variable)
+    compiler-error("Invalid entry point: %s -- no variable %s in module %s.",
+		   entry, variable-name, module-name);
+  end unless;
+  let defn = variable.variable-definition;
+  unless (defn)
+    compiler-error("Invalid entry point: %s -- it isn't defined.", entry);
+  end unless;
+
+  let component = make(<fer-component>);
+  let builder = make-builder(component);
+  let source = make(<source-location>);
+  let policy = $Default-Policy;
+  let name = "Command Line Entry";
+  let int-type = specifier-type(#"<integer>");
+  let rawptr-type = specifier-type(#"<raw-pointer>");
+  let result-type = make-values-ctype(#(), #f);
+  let argc = make-local-var(builder, #"argc", int-type);
+  let argv = make-local-var(builder, #"argv", rawptr-type);
+  let func = build-function-body(builder, policy, source, #f, name,
+				 list(argc, argv), result-type, #t);
+  let user-func = fer-convert-defn-ref(builder, policy, source, defn);
+  // ### Should really spread the arguments out, but I'm lazy.
+  build-assignment(builder, policy, source, #(),
+		   make-unknown-call(builder, user-func, #f,
+				     list(argc, argv)));
+  build-return(builder, policy, source, func, #());
+  end-body(builder);
+  let sig = make(<signature>, specializers: list(int-type, rawptr-type),
+		 returns: result-type);
+  let ctv = make(<ct-function>, name: name, signature: sig);
+  make-function-literal(builder, ctv, #f, #"global", sig, func);
+  optimize-component(component);
+  emit-component(component, file);
+  ctv;
+end method build-command-line-entry;
+
 define method load-library (name :: <symbol>) => ();
   block ()
     *Current-Library* := find-library(name);
@@ -422,6 +545,7 @@ define method incorrect-usage () => ();
 end method incorrect-usage;
 
 define method main (argv0, #rest args)
+#if (mindy)
   if (args.size > 0 & args.first = "-autodump")
     if (args.size < 2 | args.size > 3)
       incorrect-usage();
@@ -434,6 +558,7 @@ define method main (argv0, #rest args)
 		       end if;
     autodump(component, next-free-id);
   else
+#end
     let library-dirs = make(<stretchy-vector>);
     let lid-file = #f;
     let features = #();
@@ -480,5 +605,25 @@ define method main (argv0, #rest args)
       incorrect-usage();
     end;
     compile-library(lid-file, reverse!(features));
+#if (mindy)
   end if;
+#end
 end method main;
+
+
+#if (~mindy)
+define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
+  let args = make(<vector>, size: argc);
+  for (index :: <integer> from 0 below argc)
+    let argptr = pointer-deref(#"ptr", argv,
+			       index * c-expr(#"int", "sizeof(void *)"));
+    args[index] := import-string(argptr);
+  end for;
+  apply(main, args);
+end method %main;
+#end
+
+
+#if (mindy)
+collect-garbage(purify: #t);
+#end
