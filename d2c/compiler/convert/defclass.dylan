@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.54 1996/02/09 00:03:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.55 1996/02/10 03:39:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1799,6 +1799,7 @@ end;
 define method slot-accessor-standin
     (slot :: <instance-slot-info>, kind :: one-of(#"getter", #"setter"))
     => standin :: false-or(<ct-function>);
+/*
   if (instance?(slot, <vector-slot-info>))
     #f;
   else
@@ -1822,6 +1823,8 @@ define method slot-accessor-standin
       #f;
     end if;
   end if;
+*/
+  #f;
 end method slot-accessor-standin;
 
 
