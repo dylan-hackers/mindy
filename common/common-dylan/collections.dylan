@@ -94,20 +94,6 @@ define generic remove-all-keys!
 
 
 //=========================================================================
-//  difference
-//=========================================================================
-//  Return a sequence consisting of all the elements in sequence A which
-//  do not appear in sequence B.
-//
-//  XXX - How should we implement difference?
-
-define open generic difference
-    (sequence-A :: <sequence>, sequence-B :: <sequence>,
-     #key test :: <function>)
- => (sequence :: <sequence>);
-
-
-//=========================================================================
 //  fill-table!
 //=========================================================================
 //  Insert a sequence of alternating keys and elements into a table.
