@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.36 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.37 1995/11/12 21:49:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,7 +10,7 @@ define class <class-definition> (<abstract-constant-definition>)
   // #"computing" if we are actively working on it.
   slot class-defn-cclass
     :: union(<cclass>, one-of(#f, #"not-computed-yet", #"computing")),
-    init-value: #"not-computed-yet";
+    init-value: #"not-computed-yet", init-keyword: class:;
   //
   // Defered evaluations function, of #f if there isn't one.
   slot %class-defn-defered-evaluations-function
@@ -149,11 +149,12 @@ end;
 
 // Top level form processing.
 
-// During top level form processing, we parse the define class form and
-// build the necessary <class-definition>, <slot-defn>, and <override-defn>
-// objects.  We only check for syntactic errors and local semantic errors.
-// By local semantic errors, I mean errors that can be detected by looking
-// at nothing more than this class itself.
+// During top level form processing, we parse the define class form
+// and build the necessary <local-class-definition>, <slot-defn>, and
+// <override-defn> objects.  We only check for syntactic errors and
+// local semantic errors.  By local semantic errors, I mean errors
+// that can be detected by looking at nothing more than this class
+// itself.
 //
 // We also note the class definition and any implicit definitions for slot
 // accessors.
@@ -1657,9 +1658,11 @@ define method convert-top-level-form
 	 make-unknown-call
 	   (builder, defered-evaluations-setter-leaf, #f,
 	    list(make-literal-constant(builder, cclass),
-		 make-function-literal(builder, #f, #f, #"local",
-				       make(<signature>, specializers: #()),
-				       flame-region))));
+		 make-function-literal
+		   (builder, #f, #f, #"local",
+		    make(<signature>, specializers: #(),
+			 returns: make-values-ctype(#(), #f)),
+		    flame-region))));
       // Splice in the guts we saved earlier.
       build-region(builder, guts);
       // ### install the key-defaulter function.
@@ -2048,17 +2051,115 @@ end;
 
 // Dumping stuff.
 
+// dump-od{<define-class-tlf>}
+//
+// We dump the a define-binding-tlf to establish the name of the
+// <class-definition>.  Then we dump all the accessor method definitions
+// to make sure they get re-instantiated.
+//
+define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
+  let defn = tlf.tlf-defn;
+  dump-simple-object(#"define-binding-tlf", state, defn);
+  for (slot in defn.class-defn-slots)
+    let getter = slot.slot-defn-getter;
+    if (getter.method-defn-of)
+      dump-od(slot.slot-defn-getter, state);
+    end;
+    let setter = slot.slot-defn-setter;
+    if (setter & setter.method-defn-of)
+      dump-od(setter, state);
+    end;
+  end;
+end;
+
+// These methods act like getters/setters on the <class-definition>, but
+// really get/set slots in the cclass.  They are used so that we can dump
+// cclass objects without having to reference non-type things.
+
+define method class-defn-new-slot-infos
+    (defn :: <class-definition>) => res :: <simple-object-vector>;
+  let class = defn.class-defn-cclass;
+  class & class.new-slot-infos;
+end;
+
+define method class-defn-new-slot-infos-setter
+    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    => ();
+  if (vec)
+    defn.class-defn-cclass.new-slot-infos := vec;
+  end;
+end;
+
+define method class-defn-all-slot-infos
+    (defn :: <class-definition>) => res :: <simple-object-vector>;
+  let class = defn.class-defn-cclass;
+  class & class.all-slot-infos;
+end;
+
+define method class-defn-all-slot-infos-setter
+    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    => ();
+  if (vec)
+    defn.class-defn-cclass.all-slot-infos := vec;
+  end;
+end;
+
+define method class-defn-override-infos
+    (defn :: <class-definition>) => res :: <simple-object-vector>;
+  let class = defn.class-defn-cclass;
+  class & class.override-infos;
+end;
+
+define method class-defn-override-infos-setter
+    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    => ();
+  if (vec)
+    defn.class-defn-cclass.override-infos := vec;
+  end;
+end;
+
+define method class-defn-vector-slot
+    (defn :: <class-definition>) => res :: false-or(<vector-slot-info>);
+  let class = defn.class-defn-cclass;
+  class & class.vector-slot;
+end;
+
+define method class-defn-vector-slot-setter
+    (info :: false-or(<vector-slot-info>), defn :: <class-definition>)
+    => ();
+  let class = defn.class-defn-cclass;
+  if (class)
+    class.vector-slot := info;
+  end;
+end;
+
 define constant $class-definition-slots
   = concatenate($definition-slots,
-		list(class-defn-cclass, #f, class-defn-cclass-setter,
+		list(class-defn-cclass, class:, #f,
 		     %class-defn-defered-evaluations-function, #f,
 		       %class-defn-defered-evaluations-function-setter,
 		     %class-defn-maker-function, #f,
-		       %class-defn-maker-function-setter));
+		       %class-defn-maker-function-setter,
+		     class-defn-new-slot-infos, #f,
+		       class-defn-new-slot-infos-setter,
+		     class-defn-all-slot-infos, #f,
+		       class-defn-all-slot-infos-setter,
+		     class-defn-override-infos, #f,
+		       class-defn-override-infos-setter,
+		     class-defn-vector-slot, #f,
+		       class-defn-vector-slot-setter));
 
 add-make-dumper(#"class-definition", *compiler-dispatcher*, <class-definition>,
-		$class-definition-slots, load-external: #t);
+		$class-definition-slots, load-external: #t,
+		load-side-effect:
+		  method (defn :: <class-definition>) => ();
+		    let class = defn.class-defn-cclass;
+		    if (class)
+		      class.class-defn := defn;
+		    end;
+		  end);
 
 add-make-dumper(#"class-definition", *compiler-dispatcher*,
 		<local-class-definition>, $class-definition-slots,
 		dumper-only: #t);
+

@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.4 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.5 1995/11/12 21:48:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -126,16 +126,11 @@ define constant $class-dump-slots =
        subclass-id-range-max, subclass-id-range-max:, #f,
        speed-representation, speed-representation:, #f,
        space-representation, space-representation:, #f,
-       new-slot-infos, slots: #f,
-       all-slot-infos, all-slot-infos:, #f,
-       override-infos, overrides:, #f,
-       instance-slots-layout, instance-slots-layout:, #f,
-       vector-slot, vector-slot:, #f,
        each-subclass-slots-count, each-subclass-slots-count:, #f);
 
 
 define constant $slot-info-dump-slots =
-  list(// slot-introduced-by, introduced-by:, #f,
+  list(slot-introduced-by, introduced-by:, #f,
        slot-type, type:, slot-type-setter,
        slot-getter, getter:, #f,
        slot-read-only?, read-only:, #f,
@@ -185,7 +180,7 @@ add-make-dumper(#"virtual-slot-info", *compiler-dispatcher*,
 
 add-make-dumper(#"override-info", *compiler-dispatcher*,
   <override-info>,
-  list(// override-introduced-by, introduced-by:, override-introduced-by-setter,
+  list(override-introduced-by, introduced-by:, override-introduced-by-setter,
        override-getter, getter:, #f,
        override-init-value, init-value:, override-init-value-setter,
        override-init-function, init-function:, override-init-function-setter),
@@ -199,9 +194,7 @@ add-make-dumper(#"layout-table", *compiler-dispatcher*,
 );
 
 add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
-  concatenate(
-    $class-dump-slots,
-    list(class-defn, defn:, class-defn-setter)),
+  $class-dump-slots,
   load-external: #t
 );
 
