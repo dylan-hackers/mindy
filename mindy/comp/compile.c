@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.7 1994/04/09 14:09:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.8 1994/04/10 15:12:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -542,7 +542,7 @@ static void compile_if_expr(struct if_expr *expr,
 			    int want)
 {
     unsigned char *cond_branch_loc;
-    unsigned char *done_branch_loc;
+    unsigned char *done_branch_loc = NULL;
     int concequent_pos;
     int alternate_pos;
     int done_pos;
