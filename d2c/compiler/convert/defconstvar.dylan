@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.3 2000/01/24 04:56:12 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.4 2000/10/17 10:44:11 gabor Exp $
 copyright: see below
 
 
@@ -56,6 +56,7 @@ define-procedural-expander
        (generator,
 	make-parsed-fragment
 	  (make(<define-constant-parse>,
+		source-location: generator.generator-call.source-location,
 		variables: parse-variable-list(make(<fragment-tokenizer>,
 						    fragment: variables-frag)),
 		expression: expression-from-fragment(expression-frag)),
@@ -76,6 +77,7 @@ define-procedural-expander
        (generator,
 	make-parsed-fragment
 	  (make(<define-variable-parse>,
+		source-location: generator.generator-source.source-location,
 		variables: parse-variable-list(make(<fragment-tokenizer>,
 						    fragment: variables-frag)),
 		expression: expression-from-fragment(expression-frag)),
@@ -198,11 +200,9 @@ define method process-top-level-form (form :: <define-constant-parse>) => ();
 	      = expand-until-method-ref(form.defbinding-expression);
 	    method-ref & (form.defbinding-expression := method-ref);
 	  end)
-    process-aux(form.defbinding-variables, form.defbinding-expression,
-		<define-constant-method-tlf>, <constant-method-definition>);
+    process-aux(form, <define-constant-method-tlf>, <constant-method-definition>);
   else
-    process-aux(form.defbinding-variables, form.defbinding-expression,
-		<define-constant-tlf>, <constant-definition>);
+    process-aux(form, <define-constant-tlf>, <constant-definition>);
   end;
 end;
 
@@ -233,24 +233,29 @@ define method expand-until-method-ref (expr :: <macro-call-parse>)
 end;
 
 define method process-top-level-form (form :: <define-variable-parse>) => ();
-  process-aux(form.defbinding-variables, form.defbinding-expression,
-	      <define-variable-tlf>, <variable-definition>);
+  process-aux(form, <define-variable-tlf>, <variable-definition>);
 end;
 
-define method process-aux
-    (variables :: <variable-list>, expr :: <expression-parse>,
-     tlf-class :: <class>, defn-class :: <class>)
-    => ();
+define method process-aux(form :: <define-binding-parse>,
+			  tlf-class :: <class>,
+			  defn-class :: <class>)
+	=> ();
+
+  let (variables :: <variable-list>, expr :: <expression-parse>, source :: <source-location>)
+	= values(form.defbinding-variables, form.defbinding-expression, form.source-location);
+
   local method make-and-note-defn (param :: <parameter>)
 	  let name = param.param-name;
 	  let defn = make(defn-class,
 			  name: make(<basic-name>,
 				     symbol: name.token-symbol,
 				     module: *Current-Module*),
+			  source-location: source,
 			  library: *Current-Library*);
 	  note-variable-definition(defn);
 	  defn;
 	end;
+
   let required-defns = map(make-and-note-defn, variables.varlist-fixed);
   let rest-param = variables.varlist-rest;
   let rest-defn = rest-param & make-and-note-defn(rest-param);
@@ -258,7 +263,8 @@ define method process-aux
 		 variables: variables,
 		 expression: expr,
 		 required-defns: required-defns,
-		 rest-defn: rest-defn);
+		 rest-defn: rest-defn,
+		 source-location: source);
   add!(*Top-Level-Forms*, tlf);
 end;
 
@@ -385,7 +391,7 @@ define method convert-top-level-form
   if (tlf.tlf-anything-non-constant?)
     let lexenv = lexenv-for-tlf(tlf);
     let policy = $Default-Policy;
-    let source = make(<source-location>);
+    let source = tlf.source-location;
     let init-builder = make-builder(builder);
     let variables = tlf.tlf-variables;
     local
@@ -449,8 +455,7 @@ define method convert-top-level-form
   let leaf = fer-convert-method(builder, meth, defn.defn-name, defn.ct-value, #"global",
 				lexenv, lexenv);
   if (defn.function-defn-hairy?)
-    let source = make(<source-location>);
-    build-defn-set(builder, lexenv.lexenv-policy, source, defn, leaf);
+    build-defn-set(builder, lexenv.lexenv-policy, tlf.source-location, defn, leaf);
   end;
 end;
 
