@@ -818,6 +818,13 @@ define constant unsigned-long-type = make(<integer-type-declaration>,
 					  name: "unsigned long",
 					  dylan-name: "<integer>",
 					  size: $long-int-size);
+// "long long" is an idiom supported by gcc, so we'll recognize it, without
+// actually supporting access.
+define constant longlong-type = make(<integer-type-declaration>,
+				     accessor: "longlong-at",
+				     name: "long long",
+				     dylan-name: "<integer>",
+				     size: $long-int-size * 2);
 define constant char-type = make(<integer-type-declaration>,
 				 accessor: "signed-byte-at",
 				 name: "char",

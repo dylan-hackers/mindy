@@ -204,7 +204,10 @@ define method process-type-list
 		  otherwise => parse-error(state, "Bad type specifier");
 		end select;
 	      <long-token> =>
+		// "long long" is an idiom supported by gcc, so we'll
+		// recognize it, without actually supporting access.
 		select (type)
+		  long-type => longlong-type;
 		  unknown-type, signed-type => long-type;
 		  unsigned-type => unsigned-long-type;
 		  otherwise => parse-error(state, "Bad type specifier");
