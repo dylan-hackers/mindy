@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.49 1994/11/04 13:14:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.50 1994/11/04 14:34:39 wlott Exp $
 
 //======================================================================
 //
@@ -39,6 +39,7 @@ end Dylan;
 define module Builtin-Stuff
   export
     \*, \+, \-, \/, \<, \<=, \=, \==, \~=,
+    $maximum-fixed-integer, $minimum-fixed-integer,
     <array>,
     <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
@@ -215,6 +216,7 @@ define module Extensions
   use Dylan;
   use Builtin-Stuff,
     import: {main, exit, on-exit,
+	     $maximum-fixed-integer, $minimum-fixed-integer,
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <fixed-integer>, <extended-integer>,

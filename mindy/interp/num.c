@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.13 1994/11/03 22:19:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.14 1994/11/04 14:34:55 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -2223,4 +2223,7 @@ void init_num_functions(void)
     define_method("as", list2(xf_sing, obj_ExtendedFloatClass),
 		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_as_identity);
+
+    define_constant("$maximum-fixed-integer", MAX_FIXNUM);
+    define_constant("$minimum-fixed-integer", MIN_FIXNUM);
 }
