@@ -23,18 +23,20 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.2 1994/06/27 16:31:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.3 1994/08/30 21:51:56 nkramer Exp $
 *
 \**********************************************************************/
 
 
 extern obj_t obj_CharacterClass;
+extern obj_t obj_ByteCharacterClass;
 
 struct character {
     obj_t class;
-    unsigned char c;
+    unsigned char high_byte, low_byte;
 };
 
 extern obj_t int_char(int c);
 
-#define char_int(o) (obj_ptr(struct character *, o)->c)
+#define char_int(o) (((obj_ptr(struct character *, o)->high_byte) << 8) \
+                     + (obj_ptr(struct character *, o)->low_byte))

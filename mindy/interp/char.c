@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.6 1994/06/27 16:31:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.7 1994/08/30 21:51:54 nkramer Exp $
 *
 * This file implements characters.
 *
@@ -44,16 +44,25 @@
 #include "def.h"
 #include "char.h"
 
+#define num_characters 65536
+
 obj_t obj_CharacterClass;
-static obj_t obj_Characters[256];
+obj_t obj_ByteCharacterClass;
+static obj_t obj_Characters[num_characters];
+
+/* C integer to Dylan character.  Does no error checking. */
 
 obj_t int_char(int c)
 {
     obj_t res = obj_Characters[c];
 
     if (res == NULL) {
-	res = alloc(obj_CharacterClass, sizeof(struct character));
-	obj_ptr(struct character *, res)->c = c;
+	if (c < 256)
+	    res = alloc(obj_ByteCharacterClass, sizeof(struct character));
+	else
+	    res = alloc(obj_CharacterClass, sizeof(struct character));
+	obj_ptr(struct character *, res)->low_byte = c & 255;
+	obj_ptr(struct character *, res)->high_byte = (c >> 8);
 	obj_Characters[c] = res;
     }
 
@@ -67,13 +76,26 @@ static obj_t int_as_char(obj_t class, obj_t i)
 {
     int c = fixnum_value(i);
 
-    if (0 <= c && c < 256)
+    if (0 <= c && c < num_characters)
 	return int_char(c);
     else {
 	error("Can't make a character out of %=", i);
 	return NULL;
     }
 }
+
+static obj_t int_as_byte_char(obj_t class, obj_t i)
+{
+    int c = fixnum_value(i);
+
+    if (0 <= c && c < 256)
+	return int_char(c);
+    else {
+	error("Can't make a byte character out of %=", i);
+	return NULL;
+    }
+}
+
 
 static obj_t char_as_int(obj_t class, obj_t c)
 {
@@ -87,7 +109,9 @@ static void print_char(obj_t obj)
 {
     int c = char_int(obj);
 
-    if (c < ' ' || c > '~')
+    if (c > 255)
+	printf("'\\{#x%x}'", c);
+    else if (c < ' ' || c > '~')
 	printf("'\\%03o'", c);
     else if (c == '\'')
 	printf("'\\''");
@@ -113,8 +137,9 @@ void scavenge_char_roots(void)
     int i;
 
     scavenge(&obj_CharacterClass);
+    scavenge(&obj_ByteCharacterClass);
 
-    for (i = 0; i < 256; i++)
+    for (i = 0; i < num_characters; i++)
 	if (obj_Characters[i] != NULL)
 	    scavenge(obj_Characters + i);
 }
@@ -125,6 +150,9 @@ void scavenge_char_roots(void)
 void make_char_classes()
 {
     obj_CharacterClass = make_builtin_class(scav_char, trans_char);
+    obj_ByteCharacterClass = make_builtin_class(scav_char, trans_char);
+    /* Since characters and byte characters actually have identical 
+       C structures, they can use the same functions. */
 }
 
 void init_char_classes()
@@ -132,12 +160,19 @@ void init_char_classes()
     init_builtin_class(obj_CharacterClass, "<character>",
 		       obj_ObjectClass, NULL);
     def_printer(obj_CharacterClass, print_char);
+       /* This will also work for byte characters */
+    init_builtin_class(obj_ByteCharacterClass, "<byte-character>",
+		       obj_CharacterClass, NULL);
 }
 
 void init_char_functions()
 {
     define_method("as", list2(singleton(obj_CharacterClass), obj_IntegerClass),
 		  FALSE, obj_False, FALSE, obj_CharacterClass, int_as_char);
+    define_method("as", 
+		  list2(singleton(obj_ByteCharacterClass), obj_IntegerClass),
+		  FALSE, obj_False, FALSE, obj_ByteCharacterClass, 
+		  int_as_byte_char);
     define_method("as", list2(singleton(obj_IntegerClass), obj_CharacterClass),
 		  FALSE, obj_False, FALSE, obj_IntegerClass, char_as_int);
 }
