@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.6 1994/03/31 10:19:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.7 1994/04/06 22:50:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -61,6 +61,8 @@ static boolean Continue;
 static obj_t do_funcall_func;
 static obj_t do_print_func;
 
+static struct variable *debugger_flush_var;
+static struct variable *debugger_call_var;
 static struct variable *debugger_print_var;
 static struct variable *debugger_report_var;
 static struct variable *debugger_abort_var;
@@ -665,6 +667,35 @@ static void locals_cmd()
 
 
 
+/* Flush command. */
+
+static void flush_cmd(void)
+{
+    struct thread *thread;
+
+    if (debugger_flush_var == NULL
+	  || debugger_flush_var->value == obj_Unbound) {
+	printf("debugger-flush undefined.\n");
+	return;
+    }
+
+    if ((thread = CurThread) == NULL) {
+	thread = thread_create(make_string("debugger flush cmd"));
+	set_c_continuation(thread, kill_me);
+    }
+
+    thread_push_escape(thread);
+    set_c_continuation(thread, debugger_cmd_finished);
+    
+    suspend_other_threads(thread);
+    
+    *thread->sp++ = debugger_flush_var->value;
+    thread_restart(thread);
+    Continue = TRUE;
+}
+
+
+
 /* print command. */
 
 static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
@@ -735,6 +766,8 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 	    }
 	}
     }
+    else if (kind == symbol("debug-var"))
+	*simple = FALSE;
     else if (kind == symbol("funcall")) {
 	obj_t args;
 
@@ -867,7 +900,7 @@ static void do_print_start(struct thread *thread, int nargs)
     do_more_prints(thread, args[0]);
 }
 
-static void call_or_print(boolean call)
+static void call_or_print(struct variable *var)
 {
     obj_t exprs = parse_exprs();
     boolean okay = TRUE;
@@ -886,19 +919,14 @@ static void call_or_print(boolean call)
     if (!okay)
 	return;
 
-    if (simple) {
+    if (simple && (var == NULL || var->value == obj_Unbound)) {
 	for (expr = exprs; expr != obj_Nil; expr = TAIL(expr))
 	    print(TAIL(HEAD(expr)));
 	return;
     }
 
     if (CurThread == NULL) {
-	obj_t debug_name;
-	if (call)
-	    debug_name = make_string("debugger call command");
-	else
-	    debug_name = make_string("debugger print command");
-	thread = thread_create(debug_name);
+	thread = thread_create(var ? var->name : obj_False);
 	set_c_continuation(thread, kill_me);
     }
     else {
@@ -909,11 +937,10 @@ static void call_or_print(boolean call)
 
     suspend_other_threads(thread);
 
-    if (call || debugger_print_var == NULL
-	  || debugger_print_var->value == obj_Unbound)
+    if (var == NULL || var->value == obj_Unbound)
 	*thread->sp++ = do_print_func;
     else
-	*thread->sp++ = debugger_print_var->value;
+	*thread->sp++ = var->value;
     *thread->sp++ = exprs;
 
     thread_restart(thread);
@@ -923,12 +950,12 @@ static void call_or_print(boolean call)
 
 static void call_cmd(void)
 {
-    call_or_print(TRUE);
+    call_or_print(debugger_call_var);
 }
 
 static void print_cmd(void)
 {
-    call_or_print(FALSE);
+    call_or_print(debugger_print_var);
 }
 
 
@@ -1302,6 +1329,7 @@ static struct cmd_entry Cmds[] = {
     {"down", "down\t\tMove down one frame.", down_cmd},
     {"disable", "disable thread\tRestart the given thread.", disable_cmd},
     {"enable", "enable thread\tSuspend the given thread.", enable_cmd},
+    {"flush", "flush\t\tFlush all debugger variables.", flush_cmd},
     {"frame", "frame num\tMove to the given frame.", frame_cmd},
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
     {"help", "help [topic]\tDisplay help about some topic.", help_cmd},
@@ -1344,7 +1372,8 @@ static void help_cmd(void)
     struct cmd_entry *ptr;
 
     for (ptr = Cmds; ptr->cmd != NULL; ptr++)
-	printf("%s\n", ptr->help);
+	if (ptr->help)
+	    printf("%s\n", ptr->help);
 }
 
 
@@ -1476,6 +1505,12 @@ void init_debug_functions(void)
     do_funcall_func = make_raw_function("debug-funcall", 1, FALSE, obj_False,
 					obj_Nil, obj_ObjectClass,
 					do_funcall_start);
+    debugger_flush_var = find_variable(module_BuiltinStuff,
+				      symbol("debugger-flush"),
+				      FALSE, TRUE);
+    debugger_call_var = find_variable(module_BuiltinStuff,
+				      symbol("debugger-call"),
+				      FALSE, TRUE);
     debugger_print_var = find_variable(module_BuiltinStuff,
 				       symbol("debugger-print"),
 				       FALSE, TRUE);
