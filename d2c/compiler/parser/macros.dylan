@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.6 1995/03/23 22:02:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -230,11 +230,13 @@ end;
 define method expand (form :: <define-parse>,
 		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
-  let name = form.define-word;
-  let var = find-variable(name.token-module,
-			  as(<symbol>,
-			     concatenate(as(<string>, name.token-symbol),
+  let define-word = form.define-word;
+  let name = make(<basic-name>,
+		  module: define-word.token-module,
+		  symbol: as(<symbol>,
+			     concatenate(as(<string>, define-word.token-symbol),
 					 "-definer")));
+  let var = find-variable(name);
   unless (var)
     error("syntax table and variable table inconsistent.");
   end;
@@ -248,11 +250,13 @@ end;
 define method expand (form :: <define-bindings-parse>,
 		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
-  let name = form.define-word;
-  let var = find-variable(name.token-module,
-			  as(<symbol>,
-			     concatenate(as(<string>, name.token-symbol),
+  let define-word = form.define-word;
+  let name = make(<basic-name>,
+		  module: define-word.token-module,
+		  symbol: as(<symbol>,
+			     concatenate(as(<string>, define-word.token-symbol),
 					 "-definer")));
+  let var = find-variable(name);
   unless (var)
     error("syntax table and variable table inconsistent.");
   end;
@@ -268,8 +272,7 @@ end;
 define method expand (form :: <macro-statement>,
 		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
-  let name = form.statement-begin-word;
-  let var = find-variable(name.token-module, name.token-symbol);
+  let var = find-variable(id-name(form.statement-begin-word));
   unless (var)
     error("syntax table and variable table inconsistent.");
   end;
@@ -285,9 +288,9 @@ define method expand (form :: <funcall>,
     => results :: union(<simple-object-vector>, <false>);
   let fun = form.funcall-function;
   if (instance?(fun, <varref>))
-    let name = fun.varref-name;
-    if (name.token-module)
-      let var = find-variable(name.token-module, name.token-symbol);
+    let id = fun.varref-id;
+    if (id.token-module)
+      let var = find-variable(id-name(id));
       if (var)
 	let defn = var.variable-definition;
 	if (instance?(defn, <function-macro-definition>))
@@ -1294,7 +1297,7 @@ define method match (pattern :: <property-list-pattern>,
 	for (prop in plist)
 	  block (okay)
 	    for (key in pattern.plistpat-keys)
-	      if (prop.prop-keyword.token-literal == key.patkey-name)
+	      if (prop.prop-keyword.token-literal.literal-value == key.patkey-name)
 		okay();
 	      end;
 	    end;
@@ -1306,7 +1309,7 @@ define method match (pattern :: <property-list-pattern>,
 	if (key.patkey-all?)
 	  let this-result = make(<stretchy-vector>);
 	  for (prop in plist)
-	    if (prop.prop-keyword.token-symbol == key.patkey-name)
+	    if (prop.prop-keyword.token-symbol.literal-value == key.patkey-name)
 	      let piece = make(<piece>, token: prop.prop-value);
 	      let frag = make(<fragment>, head: piece, tail: piece);
 	      add!(this-result, frag);
@@ -1321,7 +1324,7 @@ define method match (pattern :: <property-list-pattern>,
 	else
 	  block (found-key)
 	    for (prop in plist)
-	      if (prop.prop-keyword.token-literal == key.patkey-name)
+	      if (prop.prop-keyword.token-literal.literal-value == key.patkey-name)
 		let piece = make(<piece>, token: prop.prop-value);
 		let frag = make(<fragment>, head: piece, tail: piece);
 		results := add-binding(key.patkey-name, frag, results);
