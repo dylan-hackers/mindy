@@ -1,10 +1,4 @@
-do makegen_include("../common-Makegen");
 
-do d2c_library("compiler-cback", "cback",
-	       "cback-exports cback primemit heap stackanal");
-
-do emit_library_rule(
-    'Cback', '$(BUILDROOT)/force.timestamp',
-    '-L../base -L../front -L../parser -L../convert'
-);
+&makegen_include("../common-Makegen");
+&d2c_library('Cback', '-L../base -L../front -L../parser -L../convert');
 

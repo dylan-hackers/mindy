@@ -1,10 +1,3 @@
-do makegen_include("../common-Makegen");
 
-do d2c_library("compiler-optimize", "optimize", 
-               "optimize-exports optutil cheese fer-edit callopt xep"
-               . " tailcall funcopt primopt trans cse constraint typeinf");
-
-do emit_library_rule(
-    'Optimize', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
-);
-
+&makegen_include("../common-Makegen");
+&d2c_library('Optimize', '-L../base -L../front');

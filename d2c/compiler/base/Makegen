@@ -1,12 +1,3 @@
-do makegen_include('../common-Makegen');
 
-do d2c_library("compiler-base", "base", 
-               "base-exports utils file-system od-format dylan-dump"
-               . " ctv source tokens errors header names defns variables"
-               . " policy ctype rep cclass type-dump c-rep transdef"
-               . " ctfunc data-flow control-flow signature"
-               . " target");
-
-do emit_library_rule(
-    'Base', '$(BUILDROOT)/force.timestamp', ''
-);
+&makegen_include('../common-Makegen');
+&d2c_library('Base', '');

@@ -1,12 +1,4 @@
 
-do makegen_include("../common-Makegen");
-
-do emit_parsergen_rule('parser');
-
-do d2c_library("compiler-parser", "parser", 
-               "parser-exports tokenize srcutil lexer fragments parse-tree"
-	       . " support parser macros");
-
-do emit_library_rule(
-    'Parser', '$(BUILDROOT)/force.timestamp', '-L../base'
-);
+&makegen_include("../common-Makegen");
+&emit_parsergen_rule('parser');
+&d2c_library('Parser', '-L../base');

@@ -1,44 +1,18 @@
-do makegen_include("../common-Makegen");
 
-$d2c_binary = ($win32 ? "d2c.exe" : "d2c");
+&makegen_include("../common-Makegen");
+@potential_targets
+    = &d2c_library('Main', 
+		   '-L../base -L../front -L../optimize -L../parser '
+		   . '-L../convert -L../cback');
 
-if ($stage2) {
-    push(@compile_dependencies, $d2c_binary);
-    do install ('bin', $d2c_binary);
-    push(@files_to_clean, $d2c_binary);
-}
-else {
+&emit_dbc_link_rule
+    ('d2c.dbc', 
+     '../base/compiler-base-lib.dbc ../front/compiler-front-lib.dbc'
+     . ' ../optimize/compiler-optimize-lib.dbc '
+     . ' ../parser/compiler-parser-lib.dbc ../convert/compiler-convert-lib.dbc'
+     . ' ../cback/compiler-cback-lib.dbc compiler-main-lib.dbc');
+
+if (! $stage2) {
     push(@compile_dependencies, 'd2c.dbc');
-    do install ('lib', 'd2c.dbc');
-    print <<'EOF';
-
-LIBS = \
-	../base/baselib.dbc \
-	../front/frontlib.dbc \
-	../optimize/optimizelib.dbc \
-	../parser/parserlib.dbc \
-	../convert/convertlib.dbc \
-	../cback/cbacklib.dbc
-EOF
-
-
-    print "\n", 'd2c.dbc: $(LIBS) mainlib.dbc', "\n";
-    print "\t", &dbc_link_rule('d2c.dbc', '$(LIBS) mainlib.dbc'), "\n";
-
-    print '$(DESTDIR)/bin/', $d2c_binary, ': ', $d2c_binary, "\n";
-
-    print <<'EOF';
-	@-mv $@ $@.old
-	cp -p $< $@
-	@rm -f $@.old
-EOF
-
-    print "\n\nd2c-install: \$(DESTDIR)/bin/$d2c_binary\n\n";
 }
-
-do d2c_library("compiler-main", "main", "main-exports file-locations main");
-
-do emit_library_rule(
-    'Main', '$(BUILDROOT)/force.timestamp',
-    '-L../base -L../front -L../optimize -L../parser -L../convert -L../cback'
-);
+&install('bin', ($stage2) ? $potential_targets[0] : 'd2c.dbc');
