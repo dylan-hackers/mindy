@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.24 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.25 1996/02/17 15:14:16 nkramer Exp $
 *
 * This file implements the type system.
 *
@@ -1317,8 +1317,9 @@ void init_type_functions(void)
     define_method("make", list1(singleton(obj_SingletonClass)), FALSE,
 		  list1(pair(symbol("object"), obj_Unbound)), FALSE,
 		  obj_TypeClass, dylan_make_singleton);
-    define_method("union", list2(obj_TypeClass, obj_TypeClass), FALSE,
-		  obj_Nil, FALSE, obj_TypeClass, type_union);
+    define_function("binary-type-union", list2(obj_TypeClass, obj_TypeClass), 
+		    FALSE,
+		    obj_Nil, FALSE, obj_TypeClass, type_union);
     define_method("limited", list1(singleton(obj_IntegerClass)), FALSE,
 		  list2(pair(symbol("min"), obj_False),
 			pair(symbol("max"), obj_False)),
