@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.39 2003/02/05 19:38:34 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.40 2003/02/05 20:35:08 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1052,7 +1052,7 @@ sub emit_melange_rule {
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
-    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
+    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan, && mv \$(SRCDIR)/$basefile.dylan, \$(SRCDIR)/$basefile.dylan \n\n";
     push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
     push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
 }
