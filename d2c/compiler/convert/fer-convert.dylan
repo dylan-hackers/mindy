@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.11 1995/01/10 16:24:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.12 1995/01/26 18:02:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -994,11 +994,13 @@ define method canonicalize-results (builder :: <fer-builder>,
 				    fixed-results :: <list>,
 				    rest-result :: <abstract-variable>)
     => ();
-  // We either want a rest var.  So we have to spread the values-cluster out
+  // We want a rest var.  So we have to spread the values-cluster out
   // by mv-calling a method that looks like:
   //   method (x, y, z, #rest r)
   //     values(x, y, z, r);
   //   end
+  // But before we actually call it, we have to make sure there are enough
+  // values to feed all the required arguments.
   let ops = make(<stretchy-vector>);
   add!(ops, dylan-defn-leaf(builder, #"values"));
   let fixed-vars
@@ -1024,9 +1026,23 @@ define method canonicalize-results (builder :: <fer-builder>,
   build-assignment(builder, policy, source, cluster,
 		   make-operation(builder, as(<list>, ops)));
   end-body(builder);
-  build-assignment(builder, policy, source,
-		   concatenate(fixed-results, list(rest-result)),
-		   make-mv-operation(builder, list(method-leaf, results)));
+  if (empty?(fixed-results))
+    build-assignment(builder, policy, source,
+		     concatenate(fixed-results, list(rest-result)),
+		     make-mv-operation(builder, list(method-leaf, results)));
+  else
+    let cluster = make-values-cluster(builder, #"results", wild-ctype());
+    build-assignment
+      (builder, policy, source, cluster,
+       make-primitive-operation
+	 (builder, #"default-unsupplied-values",
+	  list(results,
+	       make-literal-constant
+		 (builder, make(<ct-literal>, value: fixed-results.size)))));
+    build-assignment(builder, policy, source,
+		     concatenate(fixed-results, list(rest-result)),
+		     make-mv-operation(builder, list(method-leaf, cluster)));
+  end;
 end;
 
 
