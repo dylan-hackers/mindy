@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.9 1994/04/30 02:48:38 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.10 1994/05/23 17:59:45 nkramer Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -115,6 +115,8 @@ define method \=(vec1 :: <vector>, vec2 :: <vector>)
 		    end for;
 end method \=;
 
+// No collection alignment done here because it only handles the
+// all-vector case.
 define method map-as(cls :: <class>, function :: <function>,
 		     vector :: <vector>,
 		     #next next-method,
@@ -177,6 +179,8 @@ define method empty?(vector :: <vector>)
   size(vector) = 0;
 end method empty?;
 
+// No collection alignment done here because it only handles the
+// all-vector case.
 define method every?(proc :: <function>, vector :: <vector>,
 		     #next next_method,
 		     #rest more_vectors) => <object>;
@@ -185,8 +189,8 @@ define method every?(proc :: <function>, vector :: <vector>,
       for (key from 0 below size(vector))
 	unless (proc(vector[key])) return(#f) end unless;
       end for;
+      #t;
     end block;
-    #t;
   elseif (every?(rcurry(instance?, <vector>), more_vectors))
     // since we only specify one sequence, this will not produce an infinite
     // recursion.
@@ -345,6 +349,8 @@ define method replace-elements!(vector :: <vector>,
   vector;
 end method replace-elements!;
 
+// No collection alignment done here because it only handles the
+// all-vector case.
 define method do(proc :: <function>, vector :: <vector>,
 		 #next next_method,
 		 #rest more_vectors)
