@@ -5,8 +5,11 @@
 # floats instead of doubles).
 #
 if (! $features{'compiled_for_solaris'}) {
-	do emit_library_rule(
-	    'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
-	    'compile', 'compile-mindy', 'install'
-	);
+   do emit_library_rule(
+       'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
+       'compile', 'no-mindy', 'install'
+   );
+   do emit_library_rule(
+       'Mindy-transcendental', '', '', 'compile-mindy', 'no-d2c', 'install'
+   );
 }
