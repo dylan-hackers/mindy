@@ -1,4 +1,5 @@
 Library: carbon
+object-files: call-by-value-wrappers.o
 
 carbon-exports.dylan
 mac-types-exports.dylan
@@ -8,8 +9,9 @@ memory-exports.dylan
 memory.dylan
 files-exports.dylan
 files.dylan
-quickdraw-exports.dylan
+carbon-quickdraw-exports.dylan
 quickdraw.dylan
+carbon-quickdraw.dylan
 gworlds.dylan
 windows-exports.dylan
 windows.dylan
@@ -33,6 +35,3 @@ sound-exports.dylan
 sound.dylan
 carbon-events-exports.dylan
 carbon-events.dylan
-carbon-quickdraw-exports.dylan
-carbon-quickdraw.dylan
-call-by-value-wrappers.o
