@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.48 2003/06/25 21:57:35 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.49 2003/08/15 04:34:43 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1078,6 +1078,9 @@ sub emit_melange_rule {
        print " \$(SRCDIR)/$header";
     }
     print "\n\t\$(MELANGE) --d2c -I\$(SRCDIR) ";
+    if($target_name =~ /gcc/) {
+      print "-I`gcc --print-file-name=include` ";
+    }
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
