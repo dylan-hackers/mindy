@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading and writing by lines.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.3 2000/01/24 04:55:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.4 2002/12/10 00:35:03 bruce Exp $
 
 //======================================================================
 //
@@ -31,27 +31,27 @@ rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.3 2000/0
 //
 //======================================================================
 
-/// $newline, $newline-byte -- Internal.
+/// newline & return, internal
 ///
 define constant $newline :: <byte-character> = '\n';
 define constant $newline-byte :: <integer> = as(<integer>, $newline);
 
-#if (newlines-are-CRLF)
-
-/// $return, $return-byte -- Internal.
-///
 define constant $return :: <byte-character> = '\r';
 define constant $return-byte :: <integer> = as(<integer>, '\r');
+
+#if (newlines-are-CRLF)
 
 /// $newline-size -- Internal.
 ///
 define constant $newline-size :: <integer> = 2;
+define constant newlines-are-CRLF = #t;
 
 #else
 
 /// $newline-size -- Internal.
 ///
 define constant $newline-size :: <integer> = 1;
+define constant newlines-are-CRLF = #f;
 
 #endif
 
@@ -114,18 +114,18 @@ define inline method read-line-safely
 	for (i :: <integer> from buf-next below buf-end,
 	     until: (buf[i] == $newline-byte))
 	finally
-	  #if (newlines-are-CRLF)	  
-	     let CR-pos :: <buffer-index> = i - 1;
-	     let line-end
-	       = if ((CR-pos >= buf-next) & (buf[CR-pos] == $return-byte))
-		   CR-pos;
-		 else
-		   i;
-		 end;
-	     res := collect(res, buf, buf-next, line-end);
-	  #else
-	     res := collect(res, buf, buf-next, i);
-	  #endif
+          if (newlines-are-CRLF)	  
+            let CR-pos :: <buffer-index> = i - 1;
+            let line-end
+              = if ((CR-pos >= buf-next) & (buf[CR-pos] == $return-byte))
+                  CR-pos;
+                else
+                  i;
+                end;
+            res := collect(res, buf, buf-next, line-end);
+          else
+            res := collect(res, buf, buf-next, i);
+          end if;
 	  if (i == buf-end)
 	    buf.buffer-next := buf-end;
 	    read-length := read-length + buf-length;
@@ -174,7 +174,115 @@ define method read-line (stream :: <buffered-stream>,
   read-line-safely(stream, on-end-of-stream: on-end-of-stream);
 end method read-line;
 
-define sealed domain read-line(<fd-stream>);
+
+// I don't know whether it is possible to optimize the general case above,
+// but it certainly involves a lot of indirection, so I'll just special-case
+// the one I care about by hand...
+
+define sealed method read-line
+    (stream :: <fd-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+  block (return)
+    let maybe-buf = 
+      // I don't know why, but d2c insists on using a GF call
+      // without this...
+      if (instance?(stream, <fd-file-stream>))
+        get-input-buffer(stream);
+      else
+        get-input-buffer(stream);
+      end;
+    if (~ maybe-buf)
+      // Hit eos right away.
+      if (instance?(stream, <fd-file-stream>))
+        release-input-buffer(stream);
+      else
+        release-input-buffer(stream);
+      end;
+
+      if (on-end-of-stream ~== $not-supplied)
+        return(on-end-of-stream, #f);
+      else
+        error(make(<end-of-stream-error>, stream: stream));
+      end if;
+    end;
+    let buf :: <buffer> = maybe-buf;
+
+    let parts :: <list> = #();
+    let saw-newline = #f;
+
+    let pos = buf.buffer-next;
+    
+    block (done)
+      local
+        method save-bytes(buf :: <buffer>, pos :: <buffer-index>, parts :: <list>)
+         => (parts :: <list>);
+          let len = pos - buf.buffer-next;
+          if (len > 0)
+            let s :: <byte-string> = make(<byte-string>, size: len);
+            copy-sequence!(s, 0, buf, buf.buffer-next, len);
+            buf.buffer-next := pos;
+            pair(s, parts);
+          else
+            parts;
+          end;
+        end method save-bytes;
+      
+      for ()
+        if (pos == buf.buffer-end)
+          parts := save-bytes(buf, pos, parts);
+          maybe-buf :=
+            if (instance?(stream, <fd-file-stream>))
+              next-input-buffer(stream)
+            else
+              next-input-buffer(stream)
+            end;
+          if (~ maybe-buf) done() end;
+          buf := maybe-buf;
+          pos := 0;
+        end;
+        
+        let ch = buf[pos];
+
+        if (ch == $newline-byte)
+          saw-newline := #t;
+          parts := save-bytes(buf, pos, parts);
+          buf.buffer-next := pos + 1;
+          done();
+        end;
+
+        if (newlines-are-CRLF & ch == $return-byte)
+          parts := save-bytes(buf, pos, parts);
+          buf.buffer-next := pos + 1;
+        end;
+        pos := pos + 1;
+      end for;
+
+    end block; // done
+
+    // .. yes, it's still crazy
+    if (instance?(stream, <fd-file-stream>))
+      release-input-buffer(stream);
+    else
+      release-input-buffer(stream);
+    end;
+
+    // assemble the blocks
+    parts := parts.reverse!;
+    let total-len = 0;
+    for (s :: <byte-string> in parts)
+      total-len := total-len + s.size;
+    end;
+    let res = make(<byte-string>, size: total-len);
+    for (s :: <byte-string> in parts,
+         pos = 0 then pos + s.size)
+      copy-sequence!(res, pos, s, 0, s.size);
+    end;
+    return(res, saw-newline);
+  end block; // return
+end method read-line;
+
+
 define sealed domain read-line(<buffered-byte-string-output-stream>);
 
 define sealed method read-line (stream :: <simple-sequence-stream>,

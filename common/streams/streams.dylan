@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.6 2000/02/11 00:31:30 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.7 2002/12/10 00:35:03 bruce Exp $
 
 //======================================================================
 //
@@ -42,7 +42,7 @@ RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.6 2000/02/11 
 //// Constants.
 ////
 
-define constant $default-buffer-size = 4096;
+define constant $default-buffer-size = 1024 * 64;
 
 // Better delete this if we ever actually have a locators library!
 //
@@ -66,7 +66,7 @@ define constant <unicode-character> = <character>;
 /// All other streams inherit from this class.
 ///
 
-define open abstract class <stream> (<object>)
+define open abstract primary class <stream> (<object>)
   slot stream-lock :: <multilock> = make(<multilock>);
   slot outer-stream :: <stream>, init-keyword: outer-stream:;
 end class <stream>;
@@ -74,7 +74,7 @@ end class <stream>;
 /// <buffered-stream> -- Exported.
 ///
 
-define open abstract class <buffered-stream> (<stream>)
+define open abstract primary class <buffered-stream> (<stream>)
   slot buffer-held? :: <boolean> = #f;
 end class <buffered-stream>;
 

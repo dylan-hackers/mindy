@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.10 2002/06/03 22:14:45 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.11 2002/12/10 00:35:03 bruce Exp $
 
 //======================================================================
 //
@@ -68,11 +68,11 @@ define class <fd-stream> (<buffered-stream>)
   // this slot indicates the direction the user last used the stream, and the
   // value of this slot changes as the user changes directions of the
   // <fd-file-stream>.
-  slot fd-direction :: one-of(#"input", #"output");
-  slot file-descriptor :: <integer>;
+  slot fd-direction :: one-of(#"input", #"output") = #"input";
+  slot file-descriptor :: <integer> = 0;
   //
   // The buffer slot is set to #f when the stream is closed.
-  slot buffer :: false-or(<buffer>);
+  slot buffer :: false-or(<buffer>) = #f;
 end class;
 
 define sealed domain make (singleton(<fd-stream>));
@@ -196,9 +196,10 @@ define function fill-input-buffer
 	buf.buffer-next := 0;
 	buf.buffer-end := avail;
       end if;
-      let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
-				   buf.buffer-end,
-				   buf.size - buf.buffer-end);
+      let count :: <integer> =
+        call-fd-function(fd-read, stream.file-descriptor, buf,
+                         buf.buffer-end,
+                         buf.size - buf.buffer-end);
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
@@ -214,8 +215,9 @@ define function fill-input-buffer
   elseif (wait?)
     if (buf.buffer-next == buf.buffer-end)
       // There's no input at all, might as well fill as much as we can
-      let count = call-fd-function(fd-read, stream.file-descriptor, buf,
-				   0, buf.size);
+      let count :: <integer> =
+        call-fd-function(fd-read, stream.file-descriptor, buf,
+                         0, buf.size);
       buf.buffer-next := 0;
       buf.buffer-end := count;
       if (count == 0) #f else buf end;
@@ -566,8 +568,8 @@ define sealed method stream-position (stream :: <fd-file-stream>)
     // Get the current position as recorded by the file-descritor module
     // and subtract what input we have in the buffer but haven't actually
     // read.
-    let pos = call-fd-function(fd-seek, stream.file-descriptor, 0,
-			       fd-seek-current)
+    let pos :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, 0, fd-seek-current)
       - (buf.buffer-end - buf.buffer-next);
     release-input-buffer(stream);
     pos;
@@ -607,7 +609,7 @@ define sealed method stream-position-setter
   end;
   // Set the position.
   let fd = stream.file-descriptor;
-  let fd-end = call-fd-function(fd-seek, fd, 0, fd-seek-end);
+  let fd-end :: <buffer-index> = call-fd-function(fd-seek, fd, 0, fd-seek-end);
   if (position == #"start") 
     position := 0;
   elseif (position == #"end")
@@ -638,12 +640,13 @@ define sealed method adjust-stream-position
     // possible to invalidate the buffer's contents.
     let buf :: <buffer> = get-input-buffer(stream, wait?: #f);
     buf.buffer-next := buf.buffer-end;
-    let pos = call-fd-function(fd-seek, stream.file-descriptor, delta,
-			       select (from)
-				 (#"start") => fd-seek-set;
-				 (#"current") => fd-seek-current;
-				 (#"end") => fd-seek-end;
-			       end);
+    let pos :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, delta,
+                       select (from)
+                         (#"start") => fd-seek-set;
+                         (#"current") => fd-seek-current;
+                         (#"end") => fd-seek-end;
+                       end);
     release-input-buffer(stream);
     if (from == #"current")
       // If moving the position relative to the current position, then
@@ -663,12 +666,13 @@ define sealed method adjust-stream-position
     if (buf.buffer-next > 0)
       force-output-buffers(stream);
     end;
-    let pos = call-fd-function(fd-seek, stream.file-descriptor, delta,
-			       select (from)
-				 (#"start") => fd-seek-set;
-				 (#"current") => fd-seek-current;
-				 (#"end") => fd-seek-end;
-			       end);
+    let pos :: <integer> =
+      call-fd-function(fd-seek, stream.file-descriptor, delta,
+                       select (from)
+                         (#"start") => fd-seek-set;
+                         (#"current") => fd-seek-current;
+                         (#"end") => fd-seek-end;
+                       end);
     release-output-buffer(stream);
     pos;
   end;
@@ -682,10 +686,10 @@ define sealed method stream-size (stream :: <fd-file-stream>)
     // Get the buffer to ensure no one else is using it and to make it
     // possible to correctly compute the actual file position.
     let buf :: <buffer> = get-input-buffer(stream, wait?: #f);
-    let pos = call-fd-function(fd-seek, stream.file-descriptor, 0,
-			       fd-seek-current);
-    let size = call-fd-function(fd-seek, stream.file-descriptor, 0,
-				fd-seek-end);
+    let pos :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, 0, fd-seek-current);
+    let size :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, 0, fd-seek-end);
     call-fd-function(fd-seek, stream.file-descriptor, pos, fd-seek-set);
     release-input-buffer(stream);
     size;
@@ -700,10 +704,10 @@ define sealed method stream-size (stream :: <fd-file-stream>)
     if (buf.buffer-next > 0)
       force-output-buffers(stream);
     end;
-    let pos = call-fd-function(fd-seek, stream.file-descriptor, 0,
-			       fd-seek-current);
-    let size = call-fd-function(fd-seek, stream.file-descriptor, 0,
-				fd-seek-end);
+    let pos :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, 0, fd-seek-current);
+    let size :: <buffer-index> =
+      call-fd-function(fd-seek, stream.file-descriptor, 0, fd-seek-end);
     call-fd-function(fd-seek, stream.file-descriptor, pos, fd-seek-set);
     release-output-buffer(stream);
     size;

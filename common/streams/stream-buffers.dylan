@@ -1,7 +1,7 @@
 module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: Buffered streams, Buffer Access Protocol, Stream Extension Protocol
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-buffers.dylan,v 1.2 2000/01/24 04:55:18 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/stream-buffers.dylan,v 1.3 2002/12/10 00:35:03 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -76,7 +76,7 @@ end method;
 
 /// get-input-buffer -- Exported.
 ///
-define method get-input-buffer 
+define inline method get-input-buffer 
     (stream :: <buffered-stream>,
      #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
@@ -94,7 +94,7 @@ end method get-input-buffer;
 
 /// release-input-buffer -- Exported.
 ///
-define method release-input-buffer (stream :: <buffered-stream>);
+define inline method release-input-buffer (stream :: <buffered-stream>);
   check-buffer-held(stream);
   do-release-input-buffer(stream);
   stream.buffer-held? := #f;
@@ -107,7 +107,7 @@ end method release-input-buffer;
 
 /// next-input-buffer -- Exported.
 ///
-define method next-input-buffer
+define inline method next-input-buffer
     (stream :: <buffered-stream>, 
      #key wait? :: <boolean> = #t, 
           bytes :: false-or(<integer>))
@@ -118,7 +118,7 @@ end method next-input-buffer;
 
 /// input-available-at-source? -- Exported.
 ///
-define method input-available-at-source? (stream :: <buffered-stream>)
+define inline method input-available-at-source? (stream :: <buffered-stream>)
   => input-available? :: <boolean>;
   check-buffer-held(stream);
   do-input-available-at-source?(stream);
@@ -126,7 +126,7 @@ end method input-available-at-source?;
 
 /// get-output-buffer -- Exported.
 ///
-define method get-output-buffer
+define inline method get-output-buffer
     (stream :: <buffered-stream>, #key bytes :: <integer> = 1) 
  => buffer :: <buffer>;
   // Isolate the calling thread's access to the stream.
@@ -142,7 +142,7 @@ end method get-output-buffer;
 
 /// release-output-buffer -- Exported.
 ///
-define method release-output-buffer (stream :: <buffered-stream>);
+define inline method release-output-buffer (stream :: <buffered-stream>);
   check-buffer-held(stream);
   do-release-output-buffer(stream);
   stream.buffer-held? := #f;
@@ -155,7 +155,7 @@ end method release-output-buffer;
 
 /// next-output-buffer -- Exported.
 ///
-define method next-output-buffer
+define inline method next-output-buffer
     (stream :: <buffered-stream>, #key bytes :: <integer> = 1)
   => buffer :: <buffer>;
   check-buffer-held(stream);
@@ -164,7 +164,7 @@ end method next-output-buffer;
 
 /// force-ouput-buffers -- Exported.
 ///
-define method force-output-buffers (stream :: <buffered-stream>);
+define inline method force-output-buffers (stream :: <buffered-stream>);
   check-buffer-held(stream);
   do-force-output-buffers(stream);
 end method force-output-buffers;
@@ -275,7 +275,7 @@ end method copy-from-buffer!;
 
 /// do-get-input-buffer -- Exported.
 ///
-define open generic do-get-input-buffer 
+define open generic do-get-input-buffer
     (stream :: <buffered-stream>, 
      #key wait? :: <boolean>, // = #t, 
           bytes :: false-or(<integer>))
