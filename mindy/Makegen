@@ -7,7 +7,20 @@ if ($features{'compiled_for_unix'}) {
         print STDERR "\nWarning: Mindy compiler and interpreter not found.\n",
              "You must compile them using VC++ or some other way.\n",
              "See $srcdir\\mindy\\MS-Windows\\README\n\n";
-    }             
+    }
+    print <<"EOF"
+
+$destdir\\bin\\mindy.exe: $srcdir\\Interpretter\\Release\\Interpretter.exe
+	copy $srcdir\\Interpretter\\Release\\Interpretter.exe $destdir\\bin\\mindy.exe
+
+$destdir\\bin\\mindycomp.exe: $srcdir\\Compiler\\Release\\Mindycomp.exe
+	copy $srcdir\\Compiler\\Release\\Mindycomp.exe $destdir\\bin\\mindycomp.exe
+
+EOF
+;
+    push(@install_dependencies, "$destdir\\bin\\mindy.exe");
+    push(@install_dependencies, "$destdir\\bin\\mindycomp.exe");
+
 } else {
     &unknown_platform_error();
 }
