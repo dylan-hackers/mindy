@@ -9,13 +9,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.10 1994/06/11 22:21:47 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.11 1994/06/13 22:48:08 hallgren Exp $
 *
 * Main driver routines for mindy.
 *
 \**********************************************************************/
 
 #include <setjmp.h>
+#ifdef sgi
+#define _BSD_SIGNALS
+#endif
 #include <signal.h>
 #include <string.h>
 #include <sys/types.h>
@@ -31,6 +34,13 @@ extern void bzero(char *string, int length);
 extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
 #include <exc_handling.h>
+#endif
+#ifdef sgi
+#define pause buttplug
+#include <unistd.h>
+#undef pause
+#include <bstring.h>
+#include <errno.h>
 #endif
 
 #include "mindy.h"

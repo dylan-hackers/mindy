@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.13 1994/06/11 17:48:23 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.14 1994/06/13 22:52:26 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -52,6 +52,15 @@ extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
 extern int fsync(int filedes);
 #endif __osf__
+#ifdef sgi
+#define pause buttplug
+#include <unistd.h>
+#undef pause
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <bstring.h>
+#include <stdlib.h>
+#endif sgi
 
 #include "mindy.h"
 #include "list.h"
