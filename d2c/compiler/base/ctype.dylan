@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.43 1996/02/23 17:49:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.44 1996/03/18 14:47:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -140,6 +140,9 @@ define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
 
 //// CINSTANCE? -- exported
 //
+define generic cinstance? (ctv :: <ct-value>, ctype :: <ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+
 define method cinstance? (ctv :: <ct-value>, ctype :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
   csubtype?(ctv.ct-value-cclass, ctype);
@@ -476,6 +479,8 @@ end method ctype-difference;
 
 //// Union types:
 
+define generic members (type :: <ctype>) => members :: <list>;
+
 define class <union-ctype> (<ctype>, <ct-value>)
   // list of ctypes in the union, which can only be classes, limited types or
   // singletons.  Any nested unions are flattened into this one, and the union
@@ -521,7 +526,7 @@ define method print-message (union :: <union-ctype>, stream :: <stream>) => ();
 end;
 
 // The "members" of any non-union type is a list of the type itself.
-define method members(type :: <ctype>) => result :: <list>;
+define method members (type :: <ctype>) => result :: <list>;
   list(type);
 end method;
 
@@ -1023,6 +1028,10 @@ define method make-canonical-singleton
 	 := really-make-canonical-singleton(thing, base-class));
 end;
 
+define generic really-make-canonical-singleton
+    (thing :: <eql-ct-value>, base-class-hint :: false-or(<cclass>))
+    => res :: <ctype>;
+
 define method really-make-canonical-singleton
     (thing :: <eql-ct-value>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
@@ -1317,36 +1326,24 @@ define constant make-values-ctype = method
 end method;
 
    
-define method positional-types(type :: <ctype>) => res :: <list>;
+define generic positional-types (type :: <values-ctype>) => res :: <list>;
+
+define method positional-types (type :: <ctype>) => res :: <list>;
   list(type);
 end method;
 
-define method min-values(type :: <ctype>) => res :: <integer>;
+define generic min-values (type :: <values-ctype>) => res :: <integer>;
+
+define method min-values (type :: <ctype>) => res :: <integer>;
   1;
 end;
 
-define method rest-value-type(type :: <ctype>) => res :: <ctype>;
+define generic rest-value-type (type :: <values-ctype>) => res :: <ctype>;
+
+define method rest-value-type (type :: <ctype>) => res :: <ctype>;
   empty-ctype();
 end method;
 
-
-// Convert a possibly multi-value type for a one-value context.
-define generic first-value(type :: <values-ctype>) => res :: <ctype>;
-
-define method first-value(type :: <ctype>) => res :: <ctype>;
-  type;
-end method;
-
-// If a positional value, return it, otherwise return the union of the rest
-// value and false.
-define method first-value(type :: <values-ctype>) => res :: <ctype>;
-  let types = type.positional-types;
-  if (type == #())
-    ctype-union(type.rest-value-type, specifier-type(#"<false>"));
-  else
-    types.head
-  end;
-end method;
 
 
 //// Multi-value type operations:
@@ -1362,6 +1359,7 @@ define constant fixed-values-op
   = method (types1 :: <list>, types2 :: <list>,
 	    rest1 :: <ctype>, rest2 :: <ctype>,
 	    operation :: <function>)
+	=> (res :: <list>, exact :: <boolean>);
       let exact = #t;
       let result = #();
       for (t1 = types1 then t1.tail,  t2 = types2 then t2.tail,
@@ -1386,6 +1384,11 @@ define constant fixed-values-op
 /// approximate the intersection of values types, the second value being true
 /// doesn't mean the result is exact.
 ///
+define generic args-type-op
+    (type1 :: <values-ctype>, type2 :: <values-ctype>, operation :: <function>,
+     min-fun :: <function>)
+    => (res :: <values-ctype>, win? :: <boolean>);
+///
 define method args-type-op
     (type1 :: <ctype>, type2 :: <ctype>, operation :: <function>,
      min-fun :: <function>)
@@ -1403,12 +1406,22 @@ define method args-type-op
   let (res, res-exact)
     = fixed-values-op(type1.positional-types, type2.positional-types,
 		      rest1, rest2, operation);
-  if (member?(empty-ctype(), res))
-    values(empty-ctype(), #t);
+  let min-values = min-fun(type1.min-values, type2.min-values);
+  let empty = empty-ctype();
+  if (min-values == 1 & rest == empty & res ~== #() & res.tail == #())
+    values(res.first, res-exact & rest-exact);
   else
-    let min-values = min-fun(type1.min-values, type2.min-values);
-    if (min-values == 1 & rest == empty-ctype() & res.size == 1)
-      values(res.first, res-exact & rest-exact);
+    let empty-type-posn :: false-or(<integer>)
+      = find-key(res, method (x) x == empty end);
+    if (empty-type-posn)
+      if (empty-type-posn < min-values)
+	values(empty-ctype(), #t);
+      else
+	values(make(<multi-value-ctype>,
+		    positional-types: copy-sequence(res, end: empty-type-posn),
+		    min-values: min-values, rest-value-type: empty),
+	       res-exact);
+      end if;
     else
       values(make(<multi-value-ctype>, positional-types: res,
 		  min-values: min-values, rest-value-type: rest),
@@ -1457,6 +1470,10 @@ end method;
 /// Note that due to the semantics of Values-Type-Intersection, this might
 /// return {T, T} when there isn't really any intersection (?).
 ///
+define generic values-types-intersect?
+    (type1 :: <values-ctype>, type2 :: <values-ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
+///
 define method values-types-intersect?
     (type1 :: <ctype>, type2 :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
@@ -1479,6 +1496,10 @@ end method;
 ///
 ///    A subtypep-like operation that can be used on any types, including
 /// values types.  This is something like the result type congruence rule.
+///
+define generic values-subtype?
+    (type1 :: <values-ctype>, type2 :: <values-ctype>)
+    => (result :: <boolean>, precise :: <boolean>);
 ///
 define method values-subtype?
     (type1 :: <ctype>, type2 :: <ctype>)
@@ -1604,14 +1625,21 @@ define method specifier-type (spec :: <type-specifier>)
   end;
 end;
 
+define generic slow-specifier-type (spec :: <type-specifier>)
+    => res :: <values-ctype>;
+
 define method slow-specifier-type (symbol :: <symbol>)
     => res :: <values-ctype>;
   dylan-value(symbol) | error("Type %s is undefined.", symbol);
 end;
 
 define method slow-specifier-type (list :: <list>)
+    => res :: <values-ctype>;
   slow-specifier-type-list(list.head, list.tail);
 end;
+
+define generic slow-specifier-type-list (sym :: <symbol>, args :: <list>)
+    => res :: <values-ctype>;
 
 define method slow-specifier-type-list (sym == #"union", args :: <list>)
     => res :: <values-ctype>;
@@ -1645,6 +1673,8 @@ define method slow-specifier-type-list
     result;
   end;
 end;
+
+define generic specifier-ct-value (arg :: <object>) => res :: <ct-value>;
 
 define method specifier-ct-value (arg :: <integer>) => res :: <ct-value>;
   make(<literal-integer>, value: arg);
