@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.19 2001/02/04 23:19:06 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.20 2001/02/08 22:31:39 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1038,54 +1038,94 @@ define method spew-object
 		subclass-of: object.subclass-of);
 end;
 
+
+// spew-object{<byte-string>,<defined-cclass>,<heap-file-state>}
+// and helpers.
+//
+define generic spew-class
+    (name :: <byte-string>,
+     state :: <heap-file-state>,
+     metaclass :: false-or(<meta-cclass>),
+     slots :: <simple-object-vector>)
+   => ();
+
+// Specific metaclass.
+define method spew-class
+    (name :: <byte-string>,
+     state :: <heap-file-state>,
+     metaclass :: <meta-cclass>,
+     slots :: <simple-object-vector>) => ();
+  apply(spew-instance, name, metaclass, state,
+	%object-class: specifier-type(#"<class>"),
+	slots);
+end;
+
+// Standard metaclass.
+define method spew-class
+    (name :: <byte-string>,
+     state :: <heap-file-state>,
+     metaclass == #f,
+     slots :: <simple-object-vector>) => ();
+  apply(spew-instance, name, specifier-type(#"<class>"), state, slots);
+end;
+
 define method spew-object
     (name :: <byte-string>,
      object :: <defined-cclass>, state :: <heap-file-state>) => ();
+
+  local method sharable-literal-vector(vec :: <sequence>)
+	  => literal-vector :: <literal-simple-object-vector>;
+	  make(<literal-simple-object-vector>,
+		contents: vec,
+		sharable: #t)
+	end,
+	method as-ct-value(slot :: <function>)
+	  => value :: <ct-value>;
+	  as(<ct-value>, object.slot)
+	end;
+
   let defn = object.class-defn;
-  spew-instance(name, specifier-type(#"<class>"), state,
-		class-name:
-		  make(<literal-string>,
-		       value: as(<byte-string>,
-				 object.cclass-name.name-symbol)),
-		unique-id:
-		  as(<ct-value>, object.unique-id | -1),
-		direct-superclasses:
-		  make(<literal-simple-object-vector>,
-		       contents: object.direct-superclasses,
-		       sharable: #t),
-		all-superclasses:
-		  make(<literal-simple-object-vector>,
-		       contents: object.precedence-list,
-		       sharable: #t),
-		closest-primary-superclass: object.closest-primary-superclass,
-		direct-subclasses:
-		  make(<literal-list>, contents: object.direct-subclasses),
-		class-functional?: as(<ct-value>, object.functional?),
-		class-primary?: as(<ct-value>, object.primary?),
-		class-abstract?: as(<ct-value>, object.abstract?),
-		class-sealed?: as(<ct-value>, object.sealed?),
-		class-defered-evaluations:
-		  defn.class-defn-defered-evaluations-function
-		  | as(<ct-value>, #f),
-		class-maker: defn.class-defn-maker-function
-		  | as(<ct-value>, #f),
-		class-new-slot-descriptors:
-		  make(<literal-simple-object-vector>,
-		       contents: object.new-slot-infos,
-		       sharable: #t),
-		class-slot-overrides:
-		  make(<literal-simple-object-vector>,
-		       contents: object.override-infos,
-		       sharable: #t),
-		class-all-slot-descriptors:
-		  make(<literal-simple-object-vector>,
-		       contents: object.all-slot-infos,
-		       sharable: #t),
-		class-bucket: as(<ct-value>, object.bucket),
-		class-row:
-		  make(<literal-simple-object-vector>,
-		       contents: map(curry(as,<ct-value>), object.row),
-		       sharable: #t));
+  
+  spew-class
+    (name, state,
+     object.class-metaclass,
+     vector
+       (class-name:
+	  make(<literal-string>,
+	       value: as(<byte-string>,
+			 object.cclass-name.name-symbol)),
+	unique-id:
+	  as(<ct-value>, object.unique-id | -1),
+	direct-superclasses:
+	  sharable-literal-vector(object.direct-superclasses),
+	all-superclasses:
+	  sharable-literal-vector(object.precedence-list),
+	closest-primary-superclass: object.closest-primary-superclass,
+	direct-subclasses:
+	  make(<literal-list>, contents: object.direct-subclasses),
+	class-functional?: functional?.as-ct-value,
+	class-primary?: primary?.as-ct-value,
+	class-abstract?: abstract?.as-ct-value,
+	class-sealed?: sealed?.as-ct-value,
+	class-defered-evaluations:
+	  defn.class-defn-defered-evaluations-function
+	  | as(<ct-value>, #f),
+	class-maker: defn.class-defn-maker-function
+	  | as(<ct-value>, #f),
+	class-new-slot-descriptors:
+	  sharable-literal-vector(object.new-slot-infos),
+	class-slot-overrides:
+	  sharable-literal-vector(object.override-infos),
+	class-all-slot-descriptors:
+	  sharable-literal-vector(object.all-slot-infos),
+	class-bucket: bucket.as-ct-value,
+	class-row: sharable-literal-vector
+		     (map(curry(as, <ct-value>), object.row))));
+end;
+
+define method spew-object
+    (name :: <byte-string>,
+     object :: <meta-cclass>, state :: <heap-file-state>) => ();
 end;
 
 define method spew-object
@@ -1464,7 +1504,7 @@ define method spew-instance
 	    error("Bogus length: %=", len-ctv);
 	  end;
 	  vector-size := as(<integer>, len-ctv.literal-value);
-	  if(vector-size > 0)
+	  if (vector-size > 0)
 	    format(stream, "{\n");
 	    indent(stream, $indentation-step);
 	    if (instance?(init-value, <sequence>))
@@ -1666,9 +1706,14 @@ define method find-init-value
     // it must be %object-class, and its value must be the class.  We
     // should double-check the validity of this assumption, but this
     // is an extremely expensive special case, so the potential
-    // savings are large.
+    // savings are large. Can be customized by providing it as
+    // the first pair in slots.
     if (slot.slot-introduced-by == object-type)
-      return(class);
+      return(if (slots.size >= 2 & slots[0] == #"%object-class")
+		slots[1]
+	     else
+		class
+	     end if);
     end if;
 
     // Check to see whether the caller provided an explict value for this
