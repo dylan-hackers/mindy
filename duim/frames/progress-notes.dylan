@@ -10,7 +10,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 /// Progress notes
 
 // The current progress note
-define /*thread*/ variable *progress-note* = #f;
+define thread variable *progress-note* = #f;
 
 define open generic clear-progress-note
     (framem :: <abstract-frame-manager>, note) => ();

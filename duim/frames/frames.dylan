@@ -301,7 +301,7 @@ define sealed domain make (singleton(<concrete-simple-frame>));
 define sealed domain initialize (<concrete-simple-frame>);
 
 //--- 'sideways' because <frame> is defined in DUIM-Sheets
-define sealed inline /*sideways*/ method make
+define sealed inline sideways method make
     (class == <frame>, #rest initargs, #key, #all-keys)
  => (pane :: <concrete-simple-frame>)
   apply(make, <concrete-simple-frame>, initargs)
@@ -1734,7 +1734,7 @@ end method note-frame-unmapped;
 
 
 // This is "sideways" because it is a forward reference from DUIM-Sheets.
-define /*sideways*/ method destroy-frame (frame :: <frame>) => ()
+define sideways method destroy-frame (frame :: <frame>) => ()
   unless (frame-state(frame) == #"destroyed")
     when (frame-mapped?(frame))
       frame-mapped?(frame) := #f

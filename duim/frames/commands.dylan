@@ -208,39 +208,39 @@ end method distribute-command-event;
 
 //--- Should we be worried that the arguments are being ignored?
 //--- It means that putting commands in for value callbacks will lose...
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (gadget :: <gadget>, command :: <command>, #rest args) => ()
   ignore(args);
   //--- This could copy the command and plug in the new server and client...
   execute-command(command)
 end method execute-callback;
 
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (gadget :: <gadget>, command-type :: subclass(<command>), #rest args) => ()
   ignore(args);
   execute-command-type(command-type, server: sheet-frame(gadget), client: gadget)
 end method execute-callback;
 
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (gadget :: <gadget>, command-type :: <list>, #rest args) => ()
   ignore(args);
   execute-command-type(command-type, server: sheet-frame(gadget), client: gadget)
 end method execute-callback;
 
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (frame :: <frame>, command :: <command>, #rest args) => ()
   ignore(args);
   //--- This could copy the command and plug in the new server and client...
   execute-command(command)
 end method execute-callback;
 
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (frame :: <frame>, command-type :: subclass(<command>), #rest args) => ()
   ignore(args);
   execute-command-type(command-type, server: frame, client: frame)
 end method execute-callback;
 
-define /*sideways*/ method execute-callback
+define sideways method execute-callback
     (frame :: <frame>, command-type :: <list>, #rest args) => ()
   ignore(args);
   execute-command-type(command-type, server: frame, client: frame)

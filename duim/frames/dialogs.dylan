@@ -261,7 +261,7 @@ define sealed domain initialize (<simple-chooser-dialog>);
 
 // Default implementation of dialog chooser when handed a sequence of items.
 // This is "sideways" because it is a forward reference from DUIM-Sheets.
-define /*sideways*/ method do-choose-from-dialog
+define sideways method do-choose-from-dialog
     (framem :: <frame-manager>, owner :: <sheet>, items :: <sequence>,
      #key title, value,
           selection-mode = #"single",
