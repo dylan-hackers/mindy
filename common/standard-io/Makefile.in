@@ -75,12 +75,10 @@ standard-io.dbc: ${SRCDIR}/standard-io.dylan
 	${MC} ${MINDYFLAGS} -o standard-io.dbc ${SRCDIR}/standard-io.dylan
 
 clean:
-	rm -f ${OBJS} *~ \#* core
+	rm -f ${OBJS} standard-io-lib.dbc *~ \#* core
 
 realclean:
-	rm -f ${OBJS} Makefile *~ \#* core
+	rm -f ${OBJS} standard-io-lib.dbc Makefile *~ \#* core
 
 install: standard-io-lib.dbc
 	${INSTALL_DATA} standard-io-lib.dbc ${LIBDIR}
-
-
