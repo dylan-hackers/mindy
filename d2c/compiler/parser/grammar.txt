@@ -1,0 +1,383 @@
+$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/grammar.txt,v 1.1 1995/04/30 02:09:56 wlott Exp $
+
+
+*** Program structure
+
+dylan-program:
+	body-opt
+
+body:
+	constituents ";"-opt
+
+constituents:
+	constituent ";" ...
+
+constituent:
+	defining-form
+	local-declaration
+	expression
+
+
+*** Property lists
+
+property-list:
+	property ...
+
+property:
+	"," KEYWORD value
+
+value:
+	expression
+	"{" property-set-opt "}"
+
+property-set:
+	property-set-member "," ...
+
+property-set-member:
+	property-set-item
+	property-set-item "=>" property-set-item
+
+property-set-item:
+	word
+
+word:
+	SYMBOL
+	reserved-word
+
+
+*** Defining Forms
+
+defining-form:
+	"define" modifiers-opt "generic" generic-function-definition
+	"define" modifiers-opt DEFINE-BINDING-WORD bindings
+	"define" modifiers-opt DEFINE-WORD definition
+	macro-definition
+
+modifiers:
+	modifier ...
+
+modifier:
+	SYMBOL
+
+generic-function-definition:
+	variable-name generic-function-body property-list-opt
+
+definition:
+	name fragment-opt "end" DEFINE-WORD-opt name-opt
+
+name:
+	SYMBOL
+	DEFINE-WORD
+	DEFINE-BINDING-WORD
+
+variable-name:
+	name
+
+
+*** Local declarations
+
+local-declaration
+	"let" bindings
+	"let" "handler" condition "=" handler
+	"local" local-methods
+
+bindings:
+	variable "=" expression
+	"(" variable-list ")" "=" expression
+
+variable-list:
+	variables
+	variables "," "#rest" variable-name
+	"#rest" variable-name
+
+variables:
+	variable "," ...
+
+variable:
+	variable-name
+	variable-name "::" type
+
+type:
+	operand
+
+condition:
+	type
+	"(" type property-list ")"
+
+handler:
+	expression
+
+local-methods:
+	"method"-opt method-definition "," ...
+
+method-definition:
+	variable-name method-body "end" "method"-opt variable-name-opt
+
+
+*** Expressions
+
+expressions:
+	expression "," ...
+
+expression:
+	binary-operand BINARY-OPERATOR ...
+
+binary-operand:
+	KEYWORD
+	UNARY-OPERATOR-opt operand
+
+operand:
+	operand "(" arguments-opt ")"
+	operand "[" arguments "]"
+	operand "." variable-name
+	leaf
+
+arguments:
+	KEYWORD-opt expression "," ...
+
+leaf:
+	literal
+	variable-name
+	"(" expression ")"
+	statement
+
+literal:
+	LITERAL
+	STRING ...
+	"#t"
+	"#f"
+	"#(" constants . constant ")"
+	"#(" constants-opt ")"
+	"#[" constants-opt "]"
+
+constants:
+	constant "," ...
+
+constant:
+	literal
+	KEYWORD
+
+
+*** Statements
+
+statement:
+	BEGIN-WORD fragment-opt end-clause
+
+fragment:
+	statement non-statement-etc-opt
+	non-statement-etc
+
+non-statement-etc:
+	defining-form semicolon-etc-opt
+	local-declaration semicolon-etc-opt
+	simple-fragment fragment-opt
+
+semicolon-etc:
+	";" fragment-opt
+
+simple-fragment:
+	variable-name
+	modified-constant
+	BINARY-OPERATOR
+	UNARY-OPERATOR
+	"(" fragment-opt ")"
+	"[" fragment-opt "]"
+	"." variable-name
+	"{" property-set-opt "}"
+	"#next"
+	"#rest"
+	"#key"
+	"#all-keys"
+	"#include"
+	"otherwise"
+	"=>"
+	"::"
+	","
+	";"
+
+modified-constant:
+	LITERAL
+	STRING
+	KEYWORD
+	"#t"
+	"#f"
+	"#(" constants . constant ")"
+	"#(" constants-opt ")"
+	"#[" constants-opt "]"
+	
+
+end-clause:
+	"end" BEGIN-WORD-opt
+
+case-body:
+	case-label constituents-opt ";" ...
+
+case-label:
+	expressions "=>"
+	"(" expressions ")" "=>"
+	"otherwise" "=>"-opt
+
+
+*** Methods and generic functions
+
+method-body:
+	"(" parameter-list-opt ")" ";"-opt body-opt
+	"(" parameter-list-opt ")" "=>" variable ";" body-opt
+	"(" parameter-list-opt ")" "=>" "(" variable-list-opt ")" ";"-opt body-opt
+
+generic-function-body:
+	"(" parameter-list-opt ")"
+	"(" parameter-list-opt ")" "=>" variable
+	"(" parameter-list-opt ")" "=>" "(" variable-list-opt ")"
+
+parameter-list:
+	parameters
+	parameters "," next-rest-key-parameter-list
+	next-rest-key-parameter-list
+
+next-rest-key-parameters:
+	"#next" variable-name
+	"#next" variable-name "," rest-key-parameter-list
+	rest-key-parameter-list
+
+rest-key-parameter-list:
+	"#rest" variable-name
+	"#rest" variable-name "," key-parameter-list
+	key-parameter-list
+
+key-parameter-list:
+	"#key" keyword-parameters-opt
+	"#key" keyword-parameters-opt "," "#all-keys"
+	"#all-keys"
+
+parameters:
+	parameter "," ...
+
+parameter:
+	variable
+	variable-name "==" expression
+
+keyword-parameters:
+	keyword-parameter "," ...
+
+keyword-parameter:
+	KEYWORD-opt variable-name default-opt
+
+default:
+	"(" expression ")"
+
+
+*** Macro definitions
+
+macro-definition:
+	"define" "macro" word main-rule-set auxiliary-rule-sets-opt "end" "macro"-opt
+
+main-rule-set:
+	statement-rule ...
+	define-rule ...
+	function-rule ...
+
+statement-rule:
+	"{" word pattern-opt "end" "}" "=>" "{" template-opt "}" ";"-opt
+
+define-rule:
+	"{" "define" define-head pattern "end"-opt "}" "=>" "{" template-opt "}" ";"-opt
+
+define-head:
+	DEFINE-WORD
+	DEFINE-BINDINGS-WORD
+	pattern-variable define-head
+	SYMBOL define-head
+
+function-rule:
+	"{" word "(" pattern-opt ")" "}" "=>" "{" template-opt "}" ";"-opt
+
+auxiliary-rule-sets:
+	auxiliary-rule-set ...
+
+auxiliary-rule-set:
+	KEYWORD auxiliary-rules
+
+auxiliary-rules:
+	auxiliary-rule ...
+
+auxiliary-rule:
+	"{" pattern-opt "}" "=>" "{" template-opt "}" ";"-opt
+
+
+*** Macro patterns
+
+pattern:
+	pattern-list ";"-opt
+	pattern-list ";" pattern
+
+pattern-list:
+	pattern-sequence
+	property-list-pattern
+	pattern-sequence "," pattern-list
+
+pattern-sequence:
+	simple-pattern ...
+
+property-list-pattern:
+	"#rest" "?" SYMBOL
+	"#rest" "?" SYMBOL "," "#key" pattern-keywords-opt
+	"#key" pattern-keywords-opt
+
+simple-pattern:
+	pattern-variable
+	variable-pattern
+	details-pattern
+	literal-pattern
+
+variable-pattern:
+	pattern-variable "::" pattern-variable
+	pattern-variable "=" pattern-variable
+	pattern-variable "::" pattern-variable "=" pattern-variable
+
+details-pattern:
+	"(" pattern-opt ")"
+
+literal-pattern:
+	word
+	"otherwise"
+	"=>"
+
+pattern-variable:
+	"?" SYMBOL
+	"?" CONSTRAINED-SYMBOL
+	"..."
+
+pattern-keywords:
+	"#all-keys"
+	pattern-keyword
+	pattern-keyword "," pattern-keywords
+
+pattern-keyword:
+	"?" word default-opt
+	"??" word default-opt
+
+template:
+	replacement
+
+replacement:
+	replacement-element ...
+
+replacement-element:
+	"(" replacement-opt ")"
+	"[" replacement-opt "]"
+	"{" replacement-opt "}"
+	"#(" replacement-opt ")"
+	"#[" replacement-opt "]"
+	"?" word
+	"??" word separator "..."
+	one of a whole bunch of stuff, macrosV5 page 14.
+	word
+	separator
+
+separator:
+	";"
+	","
+	BINARY-OPERATOR
+
+
