@@ -140,28 +140,34 @@ define method check-cpp-expansion
     instance?(token-list.head, <list>) =>
       // This is a parameterized macro.  Therefore we have to do some really
       // hairy expansion.
-      if (~instance?(get-token(tokenizer), <lparen-token>))
-	parse-error(tokenizer, "No left paren in parameterized macro use.");
-      end if;
-      let params = get-macro-params(tokenizer, #());
-      let formal-params = token-list.head;
-      if (params.size ~= formal-params.size)
-	parse-error(tokenizer, "Wrong number of parameters in macro use.")
-      end if;
-      let params-table = make(<self-organizing-list>, test: \=);
-      // Add params to params table, keyed by formal params.
-      for (key in formal-params, value in params)
-	params-table[key] := value;
-      end for;
-      for (token in token-list.tail)
-	if (~check-cpp-expansion(token.string-value, tokenizer,
-				 parameters: params-table))
-	  // Successful call will have already pushed the expanded tokens
-	  push(tokenizer.unget-stack, copy-token(token, tokenizer));
+      let lparen-token = get-token(tokenizer);
+      if (~instance?(lparen-token, <lparen-token>))
+	// Apparently some systems (i.e. VC++) accept non-parenthesized uses
+	// of parameterized macros as ordinary symbols.  Therefore, we'd
+	// better do likewise.
+	push(tokenizer.unget-stack, lparen-token);
+	#f;
+      else
+	let params = get-macro-params(tokenizer, #());
+	let formal-params = token-list.head;
+	if (params.size ~= formal-params.size)
+	  parse-error(tokenizer, "Wrong number of parameters in macro use.")
 	end if;
-      finally
-	#t;
-      end for;
+	let params-table = make(<self-organizing-list>, test: \=);
+	// Add params to params table, keyed by formal params.
+	for (key in formal-params, value in params)
+	  params-table[key] := value;
+	end for;
+	for (token in token-list.tail)
+	  if (~check-cpp-expansion(token.string-value, tokenizer,
+				   parameters: params-table))
+	    // Successful call will have already pushed the expanded tokens
+	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
+	  end if;
+	finally
+	  #t;
+	end for;
+      end if;
     otherwise =>
       // Depends upon the fact that tokens are stored in reverse order in the
       // stored macro expansion.
