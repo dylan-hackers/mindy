@@ -48,7 +48,7 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 //   #!BINDIR/mindy -f
 // to the compiled "dbc" file.  You must, of course, remember to specify the
 // MINDYPATH environment variable so that it points to the libraries "dylan",
-// "streams", "collection-extensions", and "string-extensions".
+// "streams", "standard-io", "collection-extensions", and "string-extensions".
 //
 // The basic translation strategy used by html2txt is to scan the file line by
 // line, looking for HTML "tags" and accumulating text that lies between any
@@ -79,7 +79,8 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 // not terribly well defined at present.
 define library html
   use dylan;
-  use streams;
+  use new-streams;
+  use standard-io;
   use collection-extensions;
   use string-extensions;
 end library html;
@@ -97,8 +98,8 @@ define module html
   // From string-extensions:
   use substring-search;
   
-  // I/O support from the "streams" library
-  use streams;
+  // I/O support from the "streams" and "standard-io" libraries
+  use new-streams;
   use standard-io;
   
   export html2text;
@@ -185,7 +186,7 @@ end method \*;
 
 // Simply a conventient shorthand for writing to *standard-output*.
 define method write-string(string :: <string>)
-  write(string, *standard-output*);
+  write(*standard-output*, string);
 end method write-string;
 
 // Print a line according to *margin* and *linelen*.  Add special handling for
@@ -194,10 +195,10 @@ end method write-string;
 // interactively. 
 define method print-with-prefix(str :: <string>, #rest args) 
   for (i from 1 to *margin* - size(prefix))
-    write(' ', *standard-output*);
+    write-element(*standard-output*, ' ');
   end for;
   write-string(prefix); 
-  apply(write-line, str, *standard-output*, args);
+  apply(write-line, *standard-output*, str, args);
   prefix := "" ;
   force-output(*standard-output*);
 end method print-with-prefix;
@@ -285,7 +286,7 @@ define method break-up(tag :: <symbol>, text :: <strings>,
   let full-text = if (text.empty?) "" else apply(concatenate, text) end;
   block ()
     break-up-table[tag](full-text, blank, want-blank);
-  exception <error>
+  exception (<error>)
     break-up-table[#"TEXT"](full-text, blank, want-blank);
   cleanup
     size(text) := 0;
@@ -306,7 +307,7 @@ define method tag-close(tag :: <symbol>, close :: <symbol>,
   end if;
   block ()
     tag-close-table[tag](tag, text, blank);
-  exception <error>
+  exception (<error>)
     tag-close-table[#"TEXT"](tag, text, blank);
   end block;
 end method tag-close;
@@ -322,7 +323,7 @@ define method tag-start(New-Tag :: <symbol>, Old-Tag :: <symbol>,
     => (New-Text :: <string>, blank :: <boolean>);
   let fun = block ()
 	      tag-start-table[New-Tag];
-	    exception <error>
+	    exception (<error>)
 	      signal("Unknown tag type: <%=>\n", New-Tag);
 	      tag-start-table[#"TEXT"];
 	    end block;
@@ -423,7 +424,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 			end if;
       end if;
     end while;
-  exception <end-of-file>
+  exception (<end-of-stream-error>)
     // End of file processing.  Dump accumulated text and then exit.
     let blank = break-up(Tag, Out-Text, blank, #f);
     values("", blank);
@@ -438,7 +439,7 @@ define method html2text(fd :: <stream>) => ();
 end method html2text;
 
 define method html2text(file :: <string>) => ();
-  let stream = make(<file-stream>, name: file);
+  let stream = make(<file-stream>, locator: file);
   html2text(stream);
 end method html2text;
 
@@ -612,8 +613,8 @@ add-tag(#["HR"],
 			   File :: <stream>, blank :: <boolean>)
 		       => (result :: <string>, blank :: <boolean>);
 		     break-up(Old-Tag, Out-Text, blank, #t);
-		     write-line(concatenate('-' * *linelen*, "\n"),
-				*standard-output*);
+		     write-line(*standard-output*,
+				concatenate('-' * *linelen*, "\n"));
 		     values(Current-Text, #t);
 		   end method);
 
@@ -623,9 +624,10 @@ add-tag(#["IMG"],
 			   File :: <stream>, blank :: <boolean>)
 		       => (result :: <string>, blank :: <boolean>);
 		     break-up(Old-Tag, Out-Text, blank, #t);
-		     write-line(concatenate(' ' * *margin* + 4,
-					    "*** INLINE IMAGE IGNORED ***\n"),
-				*standard-output*);
+		     write-line(*standard-output*,
+				concatenate(' ' * (*margin* + 4),
+					    "*** INLINE IMAGE IGNORED ***\n"));
+				
 		     values(Current-Text, #t);
 		   end method);
 
@@ -637,7 +639,7 @@ add-tag(#["IMG"],
 add-tag(#["PRE"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>) => (result :: <boolean>);
-		    unless(blank) write('\n', *standard-output*); end;
+		    unless(blank) write-element(*standard-output*, '\n') end;
 		    let first = sfind(text, curry(\~=, '\n'));
 		    let last = rsfind(text,
 				      complement(rcurry(member?, "\n ")));
@@ -739,7 +741,7 @@ add-tag(#["DD"],
 add-tag(#["H1"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *standard-output*); end;
+		    unless(blank) write-element(*standard-output*, '\n') end;
 		    let first = sfind(text, curry(\~=, ' ')); 
 		    let Text-Size = size(text);
 		    let Find-Break = 
@@ -764,13 +766,13 @@ add-tag(#["H1"],
 		      Max-Length := max(Max-Length, last - first);
 		      write-string(' ' * truncate/(*linelen* + first - last,
 						   2));
-		      write-line(text, *standard-output*,
+		      write-line(*standard-output*, text,
 				 start: first, end: last); 
 		      first := sfind(text, curry(\~=, ' '), start: last + 1)
 		    end while;
 		    if (*H1under*)
 		      write-string(' ' * truncate/(*linelen* - Max-Length, 2));
-		      write-line('=' * Max-Length, *standard-output*); 
+		      write-line(*standard-output*, '=' * Max-Length); 
 		    end if;
 		    if (want-blank) write-string("\n")  end if; 
 		    want-blank 
@@ -779,7 +781,7 @@ add-tag(#["H1"],
 add-tag(#["H2"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *standard-output*); end;
+		    unless(blank) write-element(*standard-output*, '\n') end;
 		    let first = sfind(text, curry(\~=, ' ')); 
 		    let Text-Size = size(text);
 		    let Find-Break = 
@@ -802,15 +804,15 @@ add-tag(#["H2"],
 		    while (first)
 		      let last = Find-Break(first, first + *linelen* - 20);
 		      Max-Length := max(Max-Length, last - first);
-		      write-line(text, *standard-output*,
+		      write-line(*standard-output*, text,
 				 start: first, end: last); 
 		      first := sfind(text, curry(\~=, ' '), start: last + 1)
 		    end while;
 		    if (*H2under*)
-		      write-line('-' * Max-Length, *standard-output*);
+		      write-line(*standard-output*, '-' * Max-Length);
 		      #f;
 		    else
-		      write('\n', *standard-output*);
+		      write-element(*standard-output*, '\n');
 		      #t
 		    end if;
 		  end method);
@@ -818,7 +820,7 @@ add-tag(#["H2"],
 add-tag(#["H3", "H4", "H5", "H6"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *standard-output*); end;
+		    unless(blank) write-element(*standard-output*, '\n') end;
 		    block ()
 		      push(margins, *margin*);
 		      *margin* := 0;

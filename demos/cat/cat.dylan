@@ -1,5 +1,5 @@
 module: Concatenate
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.3 1996/02/17 18:08:06 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.4 1996/06/14 15:39:25 bfw Exp $
 
 //======================================================================
 //
@@ -35,13 +35,14 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.3 1996
 
 define library Concatenate
   use Dylan;
-  use Streams;
+  use New-Streams;
+  use Standard-IO;
 end;
 
 define module Concatenate
   use Dylan;
   use Extensions;
-  use Streams;
+  use New-Streams;
   use Standard-IO;
 end;
 
@@ -53,7 +54,7 @@ define method main (argv0 :: <byte-string>, #rest names)
       let stream = if (name = "-")
 		     make(<fd-stream>, fd: 0);
 		   else
-		     make(<file-stream>, name: name);
+		     make(<file-stream>, locator: name);
 		   end;
       spew(stream);
       close(stream);
@@ -62,14 +63,11 @@ define method main (argv0 :: <byte-string>, #rest names)
 end;
 
 define method spew (stream :: <stream>)
-  let (buf, next, stop) = get-input-buffer(stream);
-  if (next ~= stop)
-    write(buf, *standard-output*, start: next, end: stop);
-  end;
-  for (stop = fill-input-buffer(stream, 0)
-	 then fill-input-buffer(stream, 0),
-       until: stop = 0)
-    write(buf, *standard-output*, start: 0, end: stop);
-  end;
-  release-input-buffer(stream, 0, 0);
+  let buf :: false-or(<buffer>) = get-input-buffer(stream);
+  while (buf)
+    write(*standard-output*, buf, start: buf.buffer-next, end: buf.buffer-end);
+    buf.buffer-next := buf.buffer-end;
+    buf := next-input-buffer(stream);
+  end while;
+  release-input-buffer(stream);
 end;
