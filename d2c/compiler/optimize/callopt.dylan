@@ -1,11 +1,11 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.4 2000/01/24 04:56:24 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.5 2001/02/08 22:34:28 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -1278,6 +1278,100 @@ define method optimize-known-call-defn
 		    listify-dependencies(call.depends-on.dependent-next));
 end;
 
+define method optimize-slot-ref
+    (component :: <component>, call :: <abstract-call>,
+     class-slot :: <class-slot-info>, args :: <list>)
+    => ();
+  let orig-instance = args.first;
+  let meta-slot = class-slot.associated-meta-slot;
+  let meta-instance = meta-slot.slot-introduced-by;
+  let offset = find-slot-offset(meta-slot, meta-instance /* instance.derived-type */);
+  if (offset)
+    let builder = make-builder(component);
+    let call-assign = call.dependents.dependent;
+    let policy = call-assign.policy;
+    let source = call-assign.source-location;
+    let init?-slot = meta-slot.slot-initialized?-slot;
+    let getter-name = class-slot.slot-getter.variable-name;
+    let slot-home
+      = build-slot-home(getter-name,
+			make-literal-constant(builder, class-slot.slot-introduced-by),
+			builder, policy, source);
+    let guaranteed-initialized?	// remove this altogether???
+      = slot-guaranteed-initialized?(meta-slot, meta-instance /* instance.derived-type */);
+
+    guaranteed-initialized?
+      & error("A class slot that is guaranteed initialized?");
+
+    if (init?-slot & ~guaranteed-initialized?)
+      let init?-offset = find-slot-offset(init?-slot, meta-instance /* instance.derived-type */);
+      unless (init?-offset)
+	error("The slot is at a fixed offset, but the initialized flag "
+		"isn't?");
+      end;
+      if (init?-offset == #"data-word")
+	error("The init? slot is in the data-word?");
+      end if;
+      let temp = make-local-var(builder, #"slot-initialized?", specifier-type(#"<boolean>"));
+      build-assignment
+	(builder, policy, source, temp,
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    list(slot-home,
+		 make-literal-constant(builder, as(<ct-value>, init?-offset))),
+	    derived-type: init?-slot.slot-type.ctype-extent,
+	    slot-info: init?-slot));
+      build-if-body(builder, policy, source, temp);
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation
+	   (builder, policy, source, #"uninitialized-slot-error",
+	    make-literal-constant(builder, class-slot), orig-instance));
+      end-body(builder);
+    end;
+    let value = make-local-var(builder, getter-name,
+			       meta-slot.slot-type);
+    build-assignment
+      (builder, policy, source, value,
+       if (offset == #"data-word")
+	 error("The class slot is in the data-word?");
+       else
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    pair(slot-home,
+		 pair(make-literal-constant(builder, as(<ct-value>, offset)),
+		      args.tail)),
+	    derived-type: meta-slot.slot-type.ctype-extent,
+	    slot-info: meta-slot);
+       end);
+    unless (init?-slot | guaranteed-initialized?)
+      let temp = make-local-var(builder, #"slot-initialized?", specifier-type(#"<boolean>") /* object-ctype() #elsewhere too!!!##*/);
+      build-assignment(builder, policy, source, temp,
+		       make-operation(builder, <primitive>, list(value),
+				      name: #"initialized?"));
+      build-if-body(builder, policy, source, temp);
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation
+	   (builder, policy, source, #"uninitialized-slot-error",
+	    make-literal-constant(builder, class-slot), orig-instance));
+      end-body(builder);
+    end;
+    insert-before(component, call-assign, builder-result(builder));
+
+    let dep = call-assign.depends-on;
+    replace-expression(component, dep, value);
+  end;
+end;
+
+define method optimize-slot-ref
+    (component :: <component>, call :: <abstract-call>,
+     slot :: <each-subclass-slot-info>, args :: <list>)
+    => ();
+// TBI###
+end;
 
 define method optimize-slot-ref
     (component :: <component>, call :: <abstract-call>,
@@ -1356,6 +1450,68 @@ define method optimize-slot-ref
     let dep = call-assign.depends-on;
     replace-expression(component, dep, value);
   end;
+end;
+
+define method optimize-slot-set
+    (component :: <component>, call :: <abstract-call>,
+     class-slot :: <class-slot-info>, args :: <list>)
+    => ();
+  let orig-instance = args.second;
+  let meta-slot = class-slot.associated-meta-slot;
+  let meta-instance = meta-slot.slot-introduced-by;
+  let offset = find-slot-offset(meta-slot, meta-instance);
+  if (offset)
+    let new = args.first;
+    let builder = make-builder(component);
+    let call-assign = call.dependents.dependent;
+    let policy = call-assign.policy;
+    let source = call-assign.source-location;
+    let slot-home
+      = build-slot-home(class-slot.slot-getter.variable-name,
+			make-literal-constant(builder, class-slot.slot-introduced-by),
+			builder, policy, source);
+    build-assignment
+      (builder, policy, source, #(),
+       make-operation
+	 (builder, <heap-slot-set>,
+	  apply(list,
+	  	new,
+		slot-home,
+		make-literal-constant
+		  (builder, as(<ct-value>, offset)),
+		   args.tail.tail),
+	  slot-info: meta-slot));
+    begin
+      let init?-slot = meta-slot.slot-initialized?-slot;
+      if (init?-slot)
+	let init?-offset = find-slot-offset(init?-slot, meta-instance);
+	unless (init?-offset)
+	  error("The slot is at a fixed offset, but the initialized flag "
+		  "isn't?");
+	end;
+	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let init-op = make-operation(builder, <heap-slot-set>,
+				     list(true-leaf,
+					  slot-home,
+					  make-literal-constant
+					    (builder,
+					     as(<ct-value>, init?-offset))),
+				     slot-info: init?-slot);
+	build-assignment(builder, policy, source, #(), init-op);
+      end;
+    end;
+    insert-before(component, call-assign, builder-result(builder));
+
+    let dep = call-assign.depends-on;
+    replace-expression(component, dep, new);
+  end;
+end;
+
+define method optimize-slot-set
+    (component :: <component>, call :: <abstract-call>,
+     slot :: <each-subclass-slot-info>, args :: <list>)
+    => ();
+// TBI###
 end;
 
 define method optimize-slot-set
