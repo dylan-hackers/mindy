@@ -25,12 +25,12 @@ if ($shared) {
 	printf($target_platform{'link_library_command'}, $lib_name,
 	       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj");
 	print "\n";
-}
-
-if($target_platform{'randomize_library_command'}) {
-	print "\t";
-	printf($target_platform{'randomize_library_command'}, $lib_name);
-	print "\n";
+	if($target_platform{'randomize_library_command'}) {
+		print "\t";
+		printf($target_platform{'randomize_library_command'},
+			$lib_name);
+		print "\n";
+	}
 }
 
 push(@compile_dependencies, $lib_name);
