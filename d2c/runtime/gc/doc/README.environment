@@ -8,7 +8,10 @@ GC_INITIAL_HEAP_SIZE=<bytes> -	Initial heap size in bytes.  May speed up
 GC_LOOP_ON_ABORT - Causes the collector abort routine to enter a tight loop.
 		   This may make it easier to debug, such a process, especially
 		   for multithreaded platforms that don't produce usable core
-		   files, or if a core file would be too large.
+		   files, or if a core file would be too large.  On some
+		   platforms, this also causes SIGSEGV to be caught and
+		   result in an infinite loop in a handler, allowing
+		   similar debugging techniques.
 
 GC_PRINT_STATS - Turn on as much logging as is easily feasible without
 		 adding signifcant runtime overhead.  Doesn't work if
@@ -25,6 +28,9 @@ GC_NPROCS=<n> - Linux w/threads only.  Explicitly sets the number of processors
 	        that the GC should expect to use.  Note that setting this to 1
 		when multiple processors are available will preserve
 		correctness, but may lead to really horrible performance.
+
+GC_NO_BLACKLIST_WARNING - Prevents the collector from issuing
+		"Needed to allocate blacklisted block at ..." warnings.
 
 The following turn on runtime flags that are also program settable.  Checked
 only during initialization.  We expect that they will usually be set through

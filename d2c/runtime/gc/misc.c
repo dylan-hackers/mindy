@@ -20,8 +20,7 @@
 #endif
 
 #define I_HIDE_POINTERS	/* To make GC_call_with_alloc_lock visible */
-#include "private/gc_priv.h"
-#include "private/gc_mark.h"
+#include "private/gc_pmark.h"
 
 #ifdef SOLARIS_THREADS
 # include <sys/syscall.h>
@@ -46,7 +45,7 @@
 	  mutex_t GC_allocate_ml;	/* Implicitly initialized.	*/
 #	else
 #          ifdef WIN32_THREADS
-#	      if defined(_DLL) || defined(GC_DLL)
+#	      if !defined(GC_NOT_DLL) && (defined(_DLL) || defined(GC_DLL))
 		 __declspec(dllexport) CRITICAL_SECTION GC_allocate_ml;
 #	      else
 		 CRITICAL_SECTION GC_allocate_ml;
@@ -72,6 +71,10 @@
 #   endif
 # endif
 
+#ifdef ECOS
+#undef STACKBASE
+#endif
+
 GC_FAR struct _GC_arrays GC_arrays /* = { 0 } */;
 
 
@@ -84,7 +87,13 @@ void (*GC_start_call_back) GC_PROTO((void)) = (void (*) GC_PROTO((void)))0;
 
 ptr_t GC_stackbottom = 0;
 
+#ifdef IA64
+  ptr_t GC_register_stackbottom = 0;
+#endif
+
 GC_bool GC_dont_gc = 0;
+
+GC_bool GC_dont_precollect = 0;
 
 GC_bool GC_quiet = 0;
 
@@ -266,7 +275,8 @@ ptr_t arg;
     register word sp = (word)GC_approx_sp();  /* Hotter than actual sp */
 #   ifdef THREADS
         word dummy[SMALL_CLEAR_SIZE];
-	unsigned random_no = 0;  /* Should be more random than it is ... */
+	static unsigned random_no = 0;
+       			 	 /* Should be more random than it is ... */
 				 /* Used to occasionally clear a bigger	 */
 				 /* chunk.				 */
 #   endif
@@ -431,6 +441,15 @@ void GC_init()
     UNLOCK();
     ENABLE_SIGNALS();
 
+#   if defined(PARALLEL_MARK) || defined(THREAD_LOCAL_ALLOC)
+	/* Make sure marker threads and started and thread local */
+	/* allocation is initialized, in case we didn't get 	 */
+	/* called from GC_init_parallel();			 */
+        {
+	  extern void GC_init_parallel(void);
+	  GC_init_parallel();
+	}
+#   endif /* PARALLEL_MARK || THREAD_LOCAL_ALLOC */
 }
 
 #if defined(MSWIN32) || defined(MSWINCE)
@@ -443,9 +462,21 @@ void GC_init()
 
 extern void GC_setpagesize();
 
+#ifdef UNIX_LIKE
+
+extern void GC_set_and_save_fault_handler GC_PROTO((void (*handler)(int)));
+
+static void looping_handler(sig)
+int sig;
+{
+    GC_err_printf1("Caught signal %d: looping in handler\n", sig);
+    for(;;);
+}
+#endif
+
 void GC_init_inner()
 {
-#   ifndef THREADS
+#   if !defined(THREADS) && defined(GC_ASSERTIONS)
         word dummy;
 #   endif
     word initial_heap_sz = (word)MINHINCR;
@@ -466,9 +497,14 @@ void GC_init_inner()
     if (0 != GETENV("GC_DONT_GC")) {
       GC_dont_gc = 1;
     }
+#   ifdef UNIX_LIKE
+      if (0 != GETENV("GC_LOOP_ON_ABORT")) {
+        GC_set_and_save_fault_handler(looping_handler);
+      }
+#   endif
     /* Adjust normal object descriptor for extra allocation.	*/
-    if (ALIGNMENT > DS_TAGS && EXTRA_BYTES != 0) {
-      GC_obj_kinds[NORMAL].ok_descriptor = ((word)(-ALIGNMENT) | DS_LENGTH);
+    if (ALIGNMENT > GC_DS_TAGS && EXTRA_BYTES != 0) {
+      GC_obj_kinds[NORMAL].ok_descriptor = ((word)(-ALIGNMENT) | GC_DS_LENGTH);
     }
 #   if defined(MSWIN32) || defined(MSWINCE)
 	InitializeCriticalSection(&GC_write_cs);
@@ -484,7 +520,6 @@ void GC_init_inner()
  	GC_init_win32();
 #   endif
 #   if defined(SEARCH_FOR_DATA_START)
-	/* This doesn't really work if the collector is in a shared library. */
 	GC_init_linux_data_start();
 #   endif
 #   if defined(NETBSD) && defined(__ELF__)
@@ -503,6 +538,9 @@ void GC_init_inner()
        || defined(HPUX_THREADS)
       if (GC_stackbottom == 0) {
 	GC_stackbottom = GC_get_stack_base();
+#       if defined(LINUX) && defined(IA64)
+	  GC_register_stackbottom = GC_get_register_stack_base();
+#       endif
       }
 #   endif
     GC_ASSERT(sizeof (ptr_t) == sizeof(word));
@@ -571,7 +609,7 @@ void GC_init_inner()
       GC_pcr_install();
 #   endif
     /* Get black list set up */
-      GC_gcollect_inner();
+      if (!GC_dont_precollect) GC_gcollect_inner();
     GC_is_initialized = TRUE;
 #   ifdef STUBBORN_ALLOC
     	GC_stubborn_init();
@@ -653,7 +691,7 @@ out:
   }
 
   int GC_write(buf, len)
-  char * buf;
+  GC_CONST char * buf;
   size_t len;
   {
       BOOL tmp;
@@ -706,7 +744,7 @@ int GC_tmp;  /* Should really be local ... */
 #if !defined(MSWIN32) && !defined(MSWINCE) && !defined(OS2) && !defined(MACOS)
 int GC_write(fd, buf, len)
 int fd;
-char *buf;
+GC_CONST char *buf;
 size_t len;
 {
      register int bytes_written = 0;
@@ -725,6 +763,15 @@ size_t len;
     return(bytes_written);
 }
 #endif /* UN*X */
+
+#if defined(ECOS)
+int GC_write(fd, buf, len)
+{
+  _Jv_diag_write (buf, len);
+  return len;
+}
+#endif
+
 
 #if defined(MSWIN32) || defined(MSWINCE)
 #   define WRITE(f, buf, len) GC_write(buf, len)
@@ -829,7 +876,7 @@ GC_CONST char * msg;
 	    /* It's arguably nicer to sleep, but that makes it harder	*/
 	    /* to look at the thread if the debugger doesn't know much	*/
 	    /* about threads.						*/
-	    for(;;);
+	    for(;;) {}
     }
 #   ifdef MSWIN32
 	DebugBreak();

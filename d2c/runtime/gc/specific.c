@@ -90,7 +90,6 @@ void *  PREFIXED(slow_getspecific) (tsd * key, unsigned long qtid,
     pthread_t self = pthread_self();
     unsigned hash_val = HASH(self);
     tse *entry = key -> hash[hash_val];
-    unsigned random = 1;	/* A (somewhat) random value	*/
 
     while (entry != NULL && entry -> thread != self) {
 	entry = entry -> next;
