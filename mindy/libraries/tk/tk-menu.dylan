@@ -34,7 +34,8 @@ define class <menu> (<window>) end class;
 
 define-widget(<menu>, "menu",
 	      #"activebackground", #"activeborderwidth", #"activeforeground",
-	      #"disabledforeground", #"font", #"postcommand", #"selector");
+	      #"disabledforeground", #"font", #"postcommand", #"selectcolor",
+	      #"tearoff");
 
 // <menu>s are independent windows, so it is meaningless to pack them.
 //
@@ -55,24 +56,31 @@ define method delete
   widget;
 end method delete;
 
+// Removed for tk 4.0
 define method disable-entry
     (menu :: <menu>, index :: <object>) => (menu :: <menu>);
-  put-tk-line(menu, " disable ", index);
-  menu;
+/*  put-tk-line(menu, " disable ", index);
+    menu;
+*/
+  error("Disable-entry has been removed from Tk 4.0.\n  Use configure with the state keyword instead");
 end method disable-entry;
 
 define method enable-entry
     (menu :: <menu>, index :: <object>) => (menu :: <menu>);
-  put-tk-line(menu, " enable ", index);
-  menu;
+/*  put-tk-line(menu, " enable ", index);
+    menu;
+*/
+  error("Enable-entry has been removed from Tk 4.0.\n Use configure with the state keyword instead.");
 end method enable-entry;
 
 define method configure-entry
     (menu :: <menu>, index :: <object>, #rest options) => (menu :: <menu>);
   apply(put-tk-line, menu, " entryconfigure ", index,
 	std-options(#[#"accelerator", #"activebackground", #"label", #"state",
-			#"command", #"label", #"menu", #"onvalue",
-			#"offvalue", #"value"],
+		      #"command", #"menu", #"onvalue", #"selectcolor",
+		      #"offvalue", #"value", #"bitmap", #"image", #"variable",
+		      #"indicatoron", #"selectimage", #"underline",
+		      #"activeforeground", #"font"],
 		    #f, options));
 end method configure-entry;
 
@@ -100,12 +108,17 @@ define method yposition-entry
   tk-as(<integer>, call-tk-function(menu, " invoke ", index));
 end method yposition-entry;
 
+define method post-cascade (menu :: <menu>, index :: <integer>);
+  put-tk-line(menu, " postcascade ", index);
+end method post-cascade;
+
 define method add-command
     (menu :: <menu>, #next next, #rest rest,
      #key state, command, label, #all-keys);
   apply(put-tk-line, menu, " add command ",
 	std-options(#[#"accelerator", #"activebackground", #"label", #"state",
-			#"command", #"label"],
+		      #"command", #"bitmap", #"image", #"underline",
+		      #"activeforeground", #"font"],
 		    #f, rest));
 end method add-command;
 
@@ -117,7 +130,8 @@ define method add-checkbutton
   end if;
   apply(put-tk-line, menu, " add checkbutton ",
 	std-options(#[#"accelerator", #"activebackground", #"variable",
-			#"command", #"onvalue", #"offvalue", #"label"],
+			#"command", #"onvalue", #"offvalue", #"label",
+		      #"bitmap", #"image", #"selectimage", #"state"],
 		    #f, rest));
 end method add-checkbutton;
 
