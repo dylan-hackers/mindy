@@ -95,6 +95,7 @@ if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
 }
 
 $have_gtk = '@HAVE_GTK@';
+$with_gtk = '@with_gtk@';
 $gtk_cflags = '@GTK_CFLAGS@';
 $gtk_libs = '@GTK_LIBS@';
 $enable_duim = '@enable_duim@';

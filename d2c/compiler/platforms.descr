@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.59 2002/12/23 20:41:33 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.60 2003/01/15 02:19:20 prom Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -420,7 +420,7 @@ path-separator:        		/
 supports-asm-stabs-hack?:	#t
 
 // FIXME:  Temporary measure until gcc-3.0 is the default
-platform-name:                 gcc-3.0
+platform-name:                 gcc30
 default-features:              C-compiler-is-GCC
 compile-c-command:              gcc-3.0 $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) gcc-3.0 $(CCFLAGS) -c %s -o %s
@@ -434,6 +434,21 @@ link-shared-executable-command: $(LIBTOOL) gcc-3.0 -o %s %s %s
 link-executable-flags:          -lm
 link-profile-flags:            -pg
 path-separator:                        /
+
+platform-name:			  gcc32
+default-features:		  C-compiler-is-GCC
+compile-c-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:	  $(LIBTOOL) gcc-3.2 $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:	  -I. -I%s -O2 -fomit-frame-pointer
+default-c-compiler-debug-flags:	  -I. -I%s -g -O -fno-inline-functions
+default-c-compiler-profile-flags: -I. -I%s -pg -g -O -fno-inline-functions
+assembler-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
+link-library-command:		  ar qc %s %s
+link-executable-command:	  $(LIBTOOL) gcc-3.2 -o %s %s %s
+link-shared-executable-command:	  $(LIBTOOL) gcc-3.2 -o %s %s %s
+link-executable-flags:		  -lm
+link-profile-flags:		  -pg
+path-separator:			  /
 
 platform-name:			beos-gcc
 default-features:		C-compiler-is-GCC
@@ -507,11 +522,23 @@ platform-name:			x86-beos-gcc
 inherit-from:			beos-gcc beos x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
-platform-name:                 ppc-linux-gcc-3.0
-inherit-from:                  gcc-3.0 linux ppc
-link-shared-library-command:    $(LIBTOOL) gcc-3.0 -o %s %s -rpath %s
+platform-name:			ppc-linux
+inherit-from:			linux ppc
 long-long-size:			8
-long-long-alignment:		4
+double-alignment:		8
+long-double-alignment:		8
+
+platform-name:			ppc-linux-gcc
+inherit-from:			gcc ppc-linux
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
+platform-name:                 ppc-linux-gcc30
+inherit-from:                  gcc30 ppc-linux
+link-shared-library-command:    $(LIBTOOL) gcc-3.0 -o %s %s -rpath %s
+
+platform-name:			ppc-linux-gcc32
+inherit-from:			gcc32 ppc-linux
+link-shared-library-command:	$(LIBTOOL) gcc-3.2 -o %s %s -rpath %s
 
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
@@ -520,12 +547,6 @@ inherit-from:			gcc freebsd x86
 // FreeBSD 3.x and above
 platform-name:			x86-freebsd-elf-gcc
 inherit-from:			gcc freebsd x86
-link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
-long-long-size:			8
-long-long-alignment:		4
-
-platform-name:			ppc-linux-gcc
-inherit-from:			gcc linux ppc
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 long-long-size:			8
 long-long-alignment:		4

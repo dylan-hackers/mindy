@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.106 2002/12/02 11:17:42 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.107 2003/01/15 02:19:15 prom Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -95,7 +95,7 @@ AC_DEFUN(GD_D2C_SYSTEM,[
 case $1 in
     i*86-pc-linux-gnu*) $2=x86-linux-gcc ;;
     i*86-pc-bsdi*) $2=x86-bsdi-gcc ;;
-    powerpc-*-linux-gnu*) $2=ppc-linux-gcc-3.0 ;;
+    powerpc-*-linux-gnu*) $2=ppc-linux-gcc32 ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
     s390*-*-linux-gnu*) $2=s390-linux-gcc ;;
@@ -481,7 +481,14 @@ AC_SUBST(with_site_dylan_prefix)
 #	Look for GTK+, set GTK_CFLAGS and GTK_LIBS
 #--------------------------------------------------------------------
 
-AM_PATH_GTK(1.2.0,HAVE_GTK=yes,HAVE_GTK=no)
+AC_ARG_WITH(gtk, [  --with-gtk               Dont compile the GTK and GLIB bindings],,with_gtk=yes)
+case $with_gtk in
+no)   HAVE_GTK=no
+      ;;
+yes)  AM_PATH_GTK(1.2.0,HAVE_GTK=yes,HAVE_GTK=no)
+      ;;
+esac
+AC_SUBST(with_gtk)
 AC_SUBST(HAVE_GTK)
 
 #--------------------------------------------------------------------

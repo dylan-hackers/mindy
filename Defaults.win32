@@ -70,6 +70,7 @@ if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
 }
 
 $have_gtk = 'no';
+$with_gtk = 'no';
 $gtk_cflags = '';
 $gtk_libs = '';
 $enable_duim = 'no';

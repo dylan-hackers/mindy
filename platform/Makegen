@@ -5,6 +5,6 @@
 if ($features{'compiled_for_darwin'}) {
     &compile_subdirs('carbon');
 }
-if ($have_gtk eq 'yes') {
+if ($with_gtk eq 'yes') {
     &compile_subdirs('gtk+');
 }
