@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.1 1998/05/03 19:55:14 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.2 1998/09/21 09:42:57 igor Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1241,7 +1241,7 @@ void init_defined_class(obj_t class, obj_t slots,
 
 		if (object_class(super) == obj_DefinedClassClass) {
 		    if (DC(super)->all_slots != obj_Nil
-			| DC(super)->all_initargs != obj_Nil)
+			|| DC(super)->all_initargs != obj_Nil)
 			error("Can't mix normal class %= with "
 			      "statically typed pointer classes in %=",
 			      super, class);
