@@ -32,7 +32,7 @@ define library new-streams
   use dylan;
   export new-streams;
 end library;
-/* These are defined in library.dylan
+
 #if (~mindy)
   define module File-Descriptors 
     use dylan;
@@ -72,7 +72,7 @@ end library;
       locked?;
   end module;
 #endif
-*/
+
 /// The Internals Module exports everything that is necessary to make the
 /// code in the Streams Module run, but only stuff that is of an internals
 /// nature to a Dylan implementation.
