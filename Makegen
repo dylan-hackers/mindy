@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.12 2001/03/15 12:42:39 bruce Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.13 2001/03/29 22:35:07 bruce Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -68,6 +68,7 @@ if ($enable_mindy) {
 }
 if ($enable_bootstrap) {
     if ($bootstrap_compiler eq "mindy") {
+	print "BYTES_CONSED_BETWEEN_GCS=20000000\n";
 	push(@compile_commands, 
 	     sprintf($host_platform{'recursive_make_command'}, 
 		     "common", "dbc_only"));
