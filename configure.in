@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.152 2004/03/20 17:50:08 robmyers Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.153 2004/05/18 11:19:26 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -91,7 +91,7 @@ AC_ARG_PROGRAM			# Provide support for name prefixes
 
 AC_DEFUN(GD_D2C_SYSTEM,[
 case $1 in
-    i*86-pc-linux-gnu*)
+    i*86-*-linux-gnu*)
         case `gcc -dumpversion` in
 	     3.3*) $2=x86-linux-gcc33 ;;
 	     3.2*) $2=x86-linux-gcc32 ;;
