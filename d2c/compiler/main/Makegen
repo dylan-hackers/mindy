@@ -49,13 +49,13 @@ token-dump.dylan: ../base/tokens.dylan autodump.dylan
 # autodump stuff is in the base library, even though we compile
 # them here.
 parse-dump.dbc: parse-dump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base parse-dump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
 
 token-dump.dbc: token-dump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base token-dump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
 
 autodump.dbc: autodump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base autodump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
 
 autodumper.dbc: ${LIBS} ${NORMAL_OBJS}
 	cat $^ > $@
