@@ -1,5 +1,5 @@
 module: misc-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.5 1996/02/06 15:49:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.6 1996/02/09 01:37:43 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,9 +24,11 @@ add-make-dumper(#"renaming", *compiler-dispatcher*,
 
 
 define method dump-od (obj :: <module>, buf :: <dump-state>) => ();
-  dump-simple-object(#"module", buf,
-		     obj.module-home.library-name,
-		     obj.module-name);
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"module", buf,
+		       obj.module-home.library-name,
+		       obj.module-name);
+  end if;
 end;
 
 add-od-loader(*compiler-dispatcher*, #"module",

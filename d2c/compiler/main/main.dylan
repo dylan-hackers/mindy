@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.47 1996/02/05 13:29:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.48 1996/02/09 01:37:43 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -365,7 +365,7 @@ define method compile-library
   let s-name = concatenate(unit-prefix, "-heap.s");
   let heap-stream = make(<file-stream>, name: s-name, direction: #"output");
   let undumped = build-local-heap(unit-prefix, unit.unit-init-roots,
-				  heap-stream);
+				  unit.unit-root-names, heap-stream);
   close(heap-stream);
   let o-name = concatenate(unit-prefix, "-heap.o");
   let cc-command
