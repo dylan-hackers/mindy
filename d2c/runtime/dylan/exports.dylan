@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.16 1996/01/12 02:10:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.17 1996/02/01 00:01:34 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Cheap-IO, System, Introspection;
+    Dylan, Extensions, Cheap-IO, System, Introspection, Magic;
 end;
 
 define module Dylan
@@ -190,6 +190,64 @@ define module Introspection
 	     <limited-integer>, limited-integer-base-class,
 	     limited-integer-minimum, limited-integer-maximum,
 	     <union>, union-members, union-singletons},
+    export: all;
+end;
+
+
+define module magic
+  use Dylan-Viscera,
+    import: {
+    %check-type,
+    %element-setter,
+    %instance?,
+    %make-gf,
+    %make-method,
+    %make-next-method-cookie,
+    %object-class,
+    ambiguous-method-error,
+    catch,
+    class-all-slot-descriptors,
+    class-maker-setter,
+    class-new-slot-descriptors,
+    closure-var,
+    closure-var-setter,
+    disable-catcher,
+    find-slot-offset,
+    functional-==,
+    general-call,
+    gf-call,
+    make-catcher,
+    make-closure,
+    make-exit-function,
+    make-rest-arg,
+    maybe-do-defered-evaluations,
+    missing-required-init-keyword-error,
+    no-applicable-methods-error,
+    odd-number-of-keyword/value-arguments-error,
+    override-init-function,
+    override-init-function-setter,
+    override-init-value,
+    override-init-value-setter,
+    pop-handler,
+    pop-unwind-protect,
+    push-handler,
+    push-unwind-protect,
+    slot-init-function,
+    slot-init-function-setter,
+    slot-init-value,
+    slot-init-value-setter,
+    slot-type,
+    slot-type-setter,
+    throw,
+    type-error,
+    uninitialized-slot-error,
+    unique-id,
+    unrecognized-keyword-error,
+    value,
+    value-setter,
+    values-sequence,
+    verify-keywords,
+    wrong-number-of-arguments-error},
     export: all;
 end;
 
