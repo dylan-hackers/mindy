@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.17 1995/05/05 14:45:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.18 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -828,16 +828,20 @@ end;
 define method build-getter
     (builder :: <fer-builder>, defn :: <slot-defn>,
      slot :: <instance-slot-info>, type :: <ctype>)
-    => res :: <lambda>;
+    => res :: <method-literal>;
   let lexenv = make(<lexenv>);
   let policy = lexenv.lexenv-policy;
   let source = make(<source-location>);
-  let instance = make-lexical-var(builder, #"object", source,
-				  slot.slot-introduced-by);
-  let meth = build-method-body
+  let cclass = slot.slot-introduced-by;
+  let instance = make-lexical-var(builder, #"object", source, cclass);
+  let region = build-function-body
     (builder, policy, source,
-     format-to-string("Slot Getter For %s", defn.slot-defn-getter.defn-name),
+     format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
      list(instance));
+  let meth = make-method-literal
+    (builder, #"global",
+     make(<signature>, specializers: list(cclass), returns: type),
+     region);
   let result = make-local-var(builder, #"result", type);
   local
     method get (offset :: <fixed-integer>,
@@ -875,7 +879,7 @@ define method build-getter
       end;
     end;
   build-slot-posn-dispatch(builder, slot, instance, get);
-  build-return(builder, policy, source, meth, result);
+  build-return(builder, policy, source, region, result);
   end-body(builder);
   meth;
 end;
@@ -883,18 +887,22 @@ end;
 define method build-setter
     (builder :: <fer-builder>, defn :: <slot-defn>,
      slot :: <instance-slot-info>, type :: <ctype>)
-    => res :: <lambda>;
+    => res :: <method-literal>;
   let init?-slot = slot.slot-initialized?-slot;
   let lexenv = make(<lexenv>);
   let policy = lexenv.lexenv-policy;
   let source = make(<source-location>);
   let new = make-lexical-var(builder, #"new-value", source, type);
-  let instance = make-lexical-var(builder, #"object", source,
-				  slot.slot-introduced-by);
-  let meth = build-method-body
+  let cclass = slot.slot-introduced-by;
+  let instance = make-lexical-var(builder, #"object", source, cclass);
+  let region = build-function-body
     (builder, policy, source,
-     format-to-string("Slot Setter For %s", defn.slot-defn-setter.defn-name),
+     format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
      list(new, instance));
+  let meth = make-method-literal
+    (builder, #"global",
+     make(<signature>, specializers: list(type, cclass), returns: type),
+     region);
   let result = make-local-var(builder, #"result", type);
   local
     method set (offset :: <fixed-integer>,
@@ -912,7 +920,7 @@ define method build-setter
       end;
     end;
   build-slot-posn-dispatch(builder, slot, instance, set);
-  build-return(builder, policy, source, meth, new);
+  build-return(builder, policy, source, region, new);
   end-body(builder);
   meth;
 end;

@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.13 1995/05/01 06:52:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.14 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -77,7 +77,7 @@ define class <queueable-mixin> (<object>)
 end;  
 
 // <dependent-mixin> is inherited by all things that can be the direct target
-// of a dependency: assignments, operations, IF-regions, and lambda results.
+// of a dependency: assignments, operations, IF-regions, returns and pitchers.
 //
 define class <dependent-mixin> (<queueable-mixin>)
   //
@@ -97,8 +97,8 @@ end class;
 // -- In the case of leaves, also by
 //     - <operation> expression operands, and
 //     - IF condition test values.
-// -- In the case of variables, also by
-//     - lambda results
+//     - returns
+//     - pitchers
 //
 // Expressions are only linked to the direct uses of that expression.  If I
 // have an expression like "X + Y", then the <operation> "X + Y" is a use of X

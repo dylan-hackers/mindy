@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.10 1995/05/03 07:16:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.11 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -87,7 +87,7 @@ define generic build-exit
 //
 define generic build-return
     (builder :: <flow-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <method-region>,
+     source :: <source-location>, target :: <function-region>,
      operands :: union(<list>, <leaf>))
  => ();
 
@@ -140,6 +140,22 @@ define generic make-operation
 
 define abstract class <fer-builder> (<flow-builder>)
 end class;
+
+
+// Starts building a <fer-function-region>.
+//
+define generic build-function-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <byte-string>, arg-vars :: <list>)
+ => res :: <fer-function-region>;
+
+// Identical to build-function-body, except builds a lambda instead of a
+// straight <fer-function-region>.
+// 
+define generic build-lambda-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <byte-string>, arg-vars :: <list>)
+ => res :: <lambda>;
 
 
 // Like BUILD-ASSIGNMENT, but also indicates the creation point of the assigned
@@ -217,17 +233,12 @@ define generic make-exit-function
  => res :: <leaf>;
 
 
-// Makes a fixed-arg method literal.  The formal argument variables are
-// represented by a list of already-allocated lexical-vars.
-//
-define generic build-method-body
-    (builder :: <fer-builder>, policy :: <policy>,
-     source :: <source-location>, name :: <byte-string>,
-     arg-vars :: <list>)
+define generic make-function-literal
+    (builder :: <fer-builder>, visibility :: <function-visibility>,
+     signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
 
-
-define generic make-hairy-method-literal
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     signature :: <signature>, main-entry :: <leaf>)
+define generic make-method-literal
+    (builder :: <fer-builder>, visibility :: <function-visibility>,
+     signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;

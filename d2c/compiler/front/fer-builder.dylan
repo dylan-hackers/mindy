@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.27 1995/05/05 08:50:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.28 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -205,8 +205,8 @@ end;
 
 
 // If "else", pop both bodies, otherwise a body-region with one body.  If the
-// region is a method, add it to the component all-methods, otherwise append it
-// to the parent body.
+// region is a function-region, set its parent to the component, otherwise
+// append it to the parent body.
 //
 define method end-body(builder :: <internal-builder>)
  => res :: <region>;
@@ -222,10 +222,8 @@ define method end-body(builder :: <internal-builder>)
     region;
   else    
     region.body := pop-canonical-body(builder, region);
-    if (instance?(region, <method-region>))
-      let comp = builder.component;
-      region.parent := comp;
-      comp.all-methods := pair(region, comp.all-methods);
+    if (instance?(region, <function-region>))
+      region.parent := builder.component;
     else
       add-body-region(builder, region);
     end;
@@ -574,33 +572,62 @@ define method make-exit-function
 end;
 
 
-// Note that pop-canonical-body places the method in the component all-methods.
+// Make the region and add it to the component's all-function-regions.
 //
-define method build-method-body
-    (builder :: <fer-builder>, policy :: <policy>,
-     source :: <source-location>, name :: <byte-string>, arg-vars :: <list>)
- => res :: <leaf>;
+define method build-function-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <byte-string>, arg-vars :: <list>)
+ => res :: <fer-function-region>;
   ignore(policy);
-  let leaf = make(<lambda>, source-location: source, name: name,
-		  argument-types: map(derived-type, arg-vars));
-  let comp = builder.component;
-  push-body(builder, leaf);
-  build-let(builder, policy, source, arg-vars, leaf.prologue);
-  comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
-  leaf;
+  let region = make(<fer-function-region>,
+		    source-location: source, name: name,
+		    argument-types: map(derived-type, arg-vars));
+  push-body(builder, region);
+  build-let(builder, policy, source, arg-vars, region.prologue);
+  add!(builder.component.all-function-regions, region);
+  region;
+end method;
+
+// Same thing as build-function-body, except build a <lambda> instead.
+//
+define method build-lambda-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <byte-string>, arg-vars :: <list>)
+ => res :: <lambda>;
+  ignore(policy);
+  let region = make(<lambda>,
+		    source-location: source, name: name,
+		    argument-types: map(derived-type, arg-vars));
+  push-body(builder, region);
+  build-let(builder, policy, source, arg-vars, region.prologue);
+  add!(builder.component.all-function-regions, region);
+  region;
 end method;
 
 
-define method make-hairy-method-literal
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     signature :: <signature>, main-entry :: <leaf>)
+define method make-function-literal
+    (builder :: <fer-builder>, visibility :: <function-visibility>,
+     signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
-  ignore(policy);
-  let res = make(<hairy-method-literal>,
-		 signature: signature,
-		 source-location: source,
-		 main-entry: main-entry);
-  let comp = builder.component;
-  comp.reanalyze-functions := pair(res, comp.reanalyze-functions);
-  res;
+  let leaf = make(<function-literal>, visibility: visibility,
+		  signature: signature, main-entry: main-entry);
+  if (instance?(main-entry, <lambda>))
+    main-entry.literal := leaf;
+  end;
+  add!(builder.component.all-function-literals, leaf);
+  leaf;
 end;
+
+define method make-method-literal
+    (builder :: <fer-builder>, visibility :: <function-visibility>,
+     signature :: <signature>, main-entry :: <fer-function-region>)
+ => res :: <leaf>;
+  let leaf = make(<method-literal>, visibility: visibility,
+		  signature: signature, main-entry: main-entry);
+  if (instance?(main-entry, <lambda>))
+    main-entry.literal := leaf;
+  end;
+  add!(builder.component.all-function-literals, leaf);
+  leaf;
+end;
+

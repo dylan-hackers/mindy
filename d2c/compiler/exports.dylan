@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.55 1995/05/05 18:53:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.56 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -508,7 +508,7 @@ define module c-representation
     <data-word-representation>, representation-class,
     representation-data-word-member,
 
-    $general-rep, $heap-rep, $boolean-rep, *long-rep*;
+    $general-rep, $heap-rep, $boolean-rep, *long-rep*, *ptr-rep*;
 end;
 
 define module compile-time-eval
@@ -598,8 +598,9 @@ define module builder-interface
     build-loop-body, build-assignment, build-join, make-operation,
     <fer-builder>, build-let, make-unknown-call, make-literal-constant,
     make-definition-leaf, make-lexical-var, make-ssa-var, make-local-var,
-    make-values-cluster, copy-variable, make-exit-function, build-method-body,
-    make-hairy-method-literal,
+    make-values-cluster, copy-variable, make-exit-function,
+    build-function-body, build-lambda-body,
+    make-function-literal, make-method-literal,
 
     <fer-component>;
 end;
@@ -614,7 +615,7 @@ define module flow
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <empty-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
-    <block-region>, <method-region>, <loop-region>, <exit>, <return>,
+    <block-region>, <function-region>, <loop-region>, <exit>, <return>,
     <component>,
 
     parent, parent-setter, first-assign, first-assign-setter, last-assign,
@@ -625,7 +626,7 @@ define module flow
     next-exit, next-exit-setter, returned-type, returned-type-setter,
     initial-definitions, initial-definitions-setter,
     reoptimize-queue, reoptimize-queue-setter,
-    all-methods, all-methods-setter,
+    all-function-regions,
 
     <expression>, <dependency>, <queueable-mixin>, <dependent-mixin>,
     <leaf>, <variable-info>, <definition-site-variable>,
@@ -682,7 +683,7 @@ define module front
 
     <abstract-call>, <known-call>, <unknown-call>, <error-call>, <mv-call>,
     <primitive>, name,
-    <prologue>, lambda,
+    <prologue>, function,
     <catcher>, exit-function, exit-function-setter, target-region,
     <set>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
@@ -697,16 +698,19 @@ define module front
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
-    <function-literal>, visibility, visibility-setter,
-    <method-literal>,
-    <lambda>, prologue, argument-types, argument-types-setter,
-    result-type, result-type-setter,
-    self-call-block, self-call-block-setter,
-    self-tail-calls, self-tail-calls-setter, environment,
-    <hairy-method-literal>, signature, main-entry,
+    <abstract-function-literal>,
+    <function-literal>, visibility, visibility-setter, <function-visibility>,
+    name, signature, main-entry, general-entry, general-entry-setter,
+    <method-literal>, generic-entry, generic-entry-setter,
     <exit-function>, catcher, catcher-setter,
 
-    all-lets, all-lets-setter,
+    <fer-function-region>, prologue, argument-types, argument-types-setter,
+    result-type, result-type-setter,
+    self-call-block, self-call-block-setter,
+    self-tail-calls, self-tail-calls-setter,
+    <lambda>, literal, environment,
+
+    all-function-literals, all-lets, all-lets-setter, name,
 
     <fer-exit-block-region>, catcher,
     <pitcher>, pitched-type, pitched-type-setter,
@@ -735,8 +739,9 @@ define module fer-convert
     rename: {<expression> => <fer-expression>},
     export: all;
   use front,
-    rename: {<primitive> => <fer-primitive>},
-    import: {catcher, <method-literal>, <set>};
+    rename: {<primitive> => <fer-primitive>, <mv-call> => <fer-mv-call>},
+    import: {catcher, <function-literal>, <method-literal>, <set>,
+	       <function-visibility>};
   use builder-interface, export: all;
   use ctype;
   use lexenv, export: all;
@@ -744,8 +749,7 @@ define module fer-convert
   use representation;
 
   export
-    build-general-method, fer-convert, fer-convert-body,
-    build-hairy-method-body,
+    fer-convert-method, fer-convert, fer-convert-body,
     dylan-defn-leaf, make-check-type-operation, make-error-operation;
 end;
 
@@ -767,7 +771,8 @@ define module define-functions
   use compile-time-eval;
   use lexenv;
   use source;
-  use front, import: {<method-literal>, <truly-the>, <set>};
+  use front,
+    import: {<function-literal>, <method-literal>, <truly-the>, <set>};
 
   export
     compute-signature,
@@ -826,7 +831,7 @@ define module define-classes
   use signature-interface;
   use source;
   use expand;
-  use front, import: {<slot-ref>, <slot-set>, <lambda>};
+  use front, import: {<slot-ref>, <slot-set>, <method-literal>};
 end;
 
 define module top-level-expressions
@@ -892,7 +897,7 @@ define module cback
 
   export
     <output-info>, output-info-results,
-    emit-tlf-gunk, emit-lambda, emit-region;
+    emit-tlf-gunk, emit-function, emit-region;
 end;
 
 define module init

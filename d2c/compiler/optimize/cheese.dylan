@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.52 1995/05/06 08:53:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.53 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,11 +41,22 @@ define method optimize-component (component :: <component>) => ();
       optimize(component, dependent);
     else
       local method try (function, what)
-	      if (*print-shit* & what)
-		format(*debug-output*, "\n********** %s\n\n", what);
+	      if (what)
+		if (*print-shit*)
+		  format(*debug-output*, "\n********** ");
+		end;
+		format(*debug-output*, "%s\n", what);
+		if (*print-shit*)
+		  write('\n', *debug-output*);
+		end;
 	      end;
 	      function(component);
-	      component.initial-definitions | component.reoptimize-queue;
+	      let start-over?
+		= component.initial-definitions | component.reoptimize-queue;
+	      if (start-over?)
+		format(*debug-output*, "\nstarting over...\n");
+	      end;
+	      start-over?;
 	    end;
       try(propagate-call-results, "propagating call result types")
 	| (*do-sanity-checks* & try(assure-all-done, #f))
@@ -53,6 +64,7 @@ define method optimize-component (component :: <component>) => ();
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(add-type-checks, "adding type checks")
 	| try(environment-analysis, "running environment analysis")
+	| try(build-external-entries, "building external entries")
 	| (done := #t);
     end;
   end;
@@ -179,21 +191,20 @@ define method pure-single-value-expression? (expr :: <expression>)
   #f;
 end;
 
-define method pure-single-value-expression? (var :: <ssa-variable>)
+define method pure-single-value-expression? (var :: <leaf>)
     => res :: <boolean>;
   #t;
 end;
 
-define method pure-single-value-expression? (var :: <constant>)
+define method pure-single-value-expression? (var :: <abstract-variable>)
     => res :: <boolean>;
-  #t;
+  ~instance?(var.var-info, <values-cluster-info>);
 end;
 
-define method pure-single-value-expression? (var :: <function-literal>)
+define method pure-single-value-expression? (var :: <global-variable>)
     => res :: <boolean>;
-  #t;
+  #f;
 end;
-
 
 define method trim-unneeded-defines
     (component :: <component>, assignment :: <assignment>) => ();
@@ -452,69 +463,10 @@ define method optimize-unknown-call
 	      function-ctype());
 end;
 
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <lambda>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-
-  // Observe the result type.
-  maybe-restrict-type(component, call, func.result-type);
-
-  block (return)
-
-    // Check the args to see if they are all okay.
-    let args-okay? = #t;
-    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-	 arg-type in func.argument-types)
-      unless (arg-dep)
-	compiler-warning("Not enough arguments.");
-	change-call-kind(component, call, <error-call>);
-	return();
-      end;
-      unless (ctypes-intersect?(arg-dep.source-exp.derived-type, arg-type))
-	compiler-warning("wrong type arg.");
-	args-okay? := #f;
-      end;
-    finally
-      if (arg-dep)
-	compiler-warning("Too many arguments.");
-	change-call-kind(component, call, <error-call>);
-      elseif (~args-okay?)
-	change-call-kind(component, call, <error-call>);
-      elseif (inline-expansion)
-	// Args are okay, and we want to inline it.  So make us a new function
-	// and do so.
-	let builder = make-builder(component);
-	let lexenv = make(<lexenv>);
-	let new-func
-	  = build-general-method(builder, inline-expansion, #f,
-				 lexenv, lexenv);
-	insert-before(component, call.dependents.dependent,
-		      builder-result(builder));
-	let func-dep = call.depends-on;
-	remove-dependency-from-source(component, func-dep);
-	func-dep.source-exp := new-func;
-	func-dep.source-next := new-func.dependents;
-	new-func.dependents := func-dep;
-	reoptimize(component, call);
-      else
-	// The args are all okay, so assert the arg types and convert the call
-	// into a <known-call>.
-	let assign = call.dependents.dependent;
-	for (arg-dep = call.depends-on.dependent-next
-	       then arg-dep.dependent-next,
-	     arg-type in func.argument-types)
-	  assert-type(component, assign, arg-dep, arg-type);
-	end;
-	change-call-kind(component, call, <known-call>);
-      end;
-    end;
-  end;
-end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <hairy-method-literal>,
+     func :: <function-literal>,
      inline-expansion :: false-or(<method-parse>))
     => ();
   // First, observe the result type.
@@ -614,7 +566,8 @@ define method optimize-unknown-call
     if (inline-expansion)
       let lexenv = make(<lexenv>);
       let new-func
-	= build-general-method(builder, inline-expansion, #f, lexenv, lexenv);
+	= fer-convert-method(builder, inline-expansion, #f,
+			     #"local", lexenv, lexenv);
       insert-before(component, call.dependents.dependent,
 		    builder-result(builder));
       let func-dep = call.depends-on;
@@ -638,6 +591,7 @@ define method optimize-unknown-call
 	  add!(new-ops,
 	       make-literal-constant(builder, make(<literal-false>)));
 	end;
+	// Need to assert the key types before we build the #rest vector.
 	if (sig.key-infos)
 	  for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
 	       while: key-dep)
@@ -653,7 +607,7 @@ define method optimize-unknown-call
 	    end;
 	  end;
 	end;
-	if (sig.rest-type)
+	if (sig.rest-type | (sig.next? & sig.key-infos))
 	  let rest-args = make(<stretchy-vector>);
 	  add!(rest-args, dylan-defn-leaf(builder, #"vector"));
 	  for (arg-dep = arg-dep then arg-dep.dependent-next,
@@ -864,13 +818,8 @@ define method optimize-known-call
 end;
 
 define method optimize-known-call
-    (component :: <component>, call :: <known-call>, func :: <lambda>) => ();
-  maybe-restrict-type(component, call, func.result-type);
-end;
-
-define method optimize-known-call
     (component :: <component>, call :: <known-call>,
-     func :: <hairy-method-literal>)
+     func :: <function-literal>)
     => ();
   maybe-restrict-type(component, call, func.main-entry.result-type);
 end;
@@ -1116,7 +1065,7 @@ end;
 define method optimize (component :: <component>, prologue :: <prologue>)
     => ();
   maybe-restrict-type(component, prologue,
-		      make-values-ctype(prologue.lambda.argument-types, #f));
+		      make-values-ctype(prologue.function.argument-types, #f));
 end;
 
 
@@ -1160,13 +1109,13 @@ define method optimize (component :: <component>, catcher :: <catcher>)
   // If there is still an exit function, there isn't much we can do.
   unless (catcher.exit-function)
     // Compute the result type of the catcher by unioning all the pitchers.
-    let catcher-home = home-lambda(catcher);
+    let catcher-home = home-function-region(catcher);
     let all-local? = #t;
     let result-type = empty-ctype();
     for (exit = catcher.target-region.exits then exit.next-exit,
 	 while: exit)
       if (instance?(exit, <pitcher>))
-	unless (home-lambda(exit) == catcher-home)
+	unless (home-function-region(exit) == catcher-home)
 	  all-local? := #f;
 	end;
 	result-type := values-type-union(result-type, exit.pitched-type);
@@ -1183,7 +1132,7 @@ end;
 
 define method replace-catcher-and-pitchers
     (component :: <component>, catcher :: <catcher>) => ();
-  // Okay, we are doing a transfer local to this lambda.  So where we had:
+  // Okay, we are doing a transfer local to this function.  So where we had:
   //   pitcher(cluster)
   //   ...
   //   vars... := catcher()
@@ -1247,33 +1196,42 @@ end;
 // Function optimization
 
 
-define method optimize (component :: <component>, lambda :: <lambda>)
+define method optimize
+    (component :: <component>, function :: <function-literal>)
     => ();
 
+  // If there is exactly one reference and that reference is the function
+  // in a local call, let convert the function.
+  if (function.visibility == #"local")
+    let dependents = function.dependents;
+    if (dependents & dependents.source-next == #f)
+      let dependent = dependents.dependent;
+      if (dependent.depends-on == dependents
+	    & instance?(dependent, <known-call>))
+	let-convert(component, function.main-entry, dependent);
+      end;
+    end;
+  end;
+end;
+
+define method optimize
+    (component :: <component>, function :: <fer-function-region>) => ();
+
   // Compute the result type by unioning all the returned types.  If it is
-  // more restrictive than last time, queue all the dependents of this lambda.
-  for (return = lambda.exits then return.next-exit,
+  // more restrictive than last time, queue all the dependents of this
+  // function.
+  for (return = function.exits then return.next-exit,
        type = empty-ctype()
 	 then values-type-union(type, return.returned-type),
        while: return)
   finally
-    let old-type = lambda.result-type;
+    let old-type = function.result-type;
     if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
-      lambda.result-type := type;
-      queue-dependents(component, lambda);
-    end;
-  end;
-
-  // If there is exactly one reference and that reference is the function
-  // in a local call, let convert the lambda.
-  if (lambda.visibility == #"local")
-    let dependents = lambda.dependents;
-    if (dependents & dependents.source-next == #f
-	  & dependents.dependent.depends-on == dependents)
-      let-convert(component, lambda);
+      function.result-type := type;
     end;
   end;
 end;
+
 
 define method optimize (component :: <component>, return :: <return>) => ();
   let results = return.depends-on;
@@ -1415,10 +1373,12 @@ define method expand-cluster
   end;
 end;
 
-define method let-convert (component :: <component>, lambda :: <lambda>) => ();
-  let call :: <known-call> = lambda.dependents.dependent;
+define method let-convert
+    (component :: <component>, function :: <fer-function-region>,
+     call :: <known-call>)
+    => ();
   let call-assign :: <assignment> = call.dependents.dependent;
-  let new-home = home-lambda(call-assign);
+  let new-home = home-function-region(call-assign);
 
   let builder = make-builder(component);
   let call-policy = call-assign.policy;
@@ -1430,7 +1390,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
     = begin
 	let temps = make(<stretchy-vector>);
 	for (dep = call.depends-on.dependent-next then dep.dependent-next,
-	     arg-type in lambda.argument-types)
+	     arg-type in function.argument-types)
 	  unless (dep)
 	    error("Wrong number of argument in let-convert?");
 	  end;
@@ -1450,7 +1410,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   // Replace the prologue with the arg-temps.
   begin
     let op = make-operation(builder, <primitive>, arg-temps, name: #"values");
-    let prologue = lambda.prologue;
+    let prologue = function.prologue;
     let dep = prologue.dependents;
     dep.source-exp := op;
     op.dependents := dep;
@@ -1459,14 +1419,14 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   end;
 
   // For each self-tail-call, change it into an assignment of the arg temps.
-  if (lambda.self-tail-calls)
+  if (function.self-tail-calls)
     // But first, peel off the temps that correspond to closure vars.
-    for (closure-var = lambda.environment.closure-vars
+    for (closure-var = function.environment.closure-vars
 	   then closure-var.closure-next,
 	 temps = arg-temps then temps.tail,
 	 while: closure-var)
     finally
-      for (self-tail-call = lambda.self-tail-calls
+      for (self-tail-call = function.self-tail-calls
 	     then self-tail-call.next-self-tail-call,
 	   while: self-tail-call)
 	let assign = self-tail-call.dependents.dependent;
@@ -1486,7 +1446,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   end;
 
   // If there are any returns,
-  if (lambda.exits)
+  if (function.exits)
     let results-temp = make-values-cluster(builder, #"results", wild-ctype());
 
     // Start a block for the returns to exit to.
@@ -1494,7 +1454,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
 
     // Replace each return with an assignment of the result cluster
     // followed by an exit to the body-block.
-    for (return = lambda.exits then return.next-exit,
+    for (return = function.exits then return.next-exit,
 	 while: return)
       let builder = make-builder(component);
       let source = return.source-location;
@@ -1526,7 +1486,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
     reoptimize(component, call-assign);
     
     // Insert the body block before the call assignment.
-    build-region(builder, lambda.body);
+    build-region(builder, function.body);
     end-body(builder);
     insert-before(component, call-assign, builder-result(builder));
 
@@ -1538,8 +1498,8 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
     results-temp.dependents := call-dep;
     reoptimize(component, call-assign);
   else
-    // Insert the lambda body before the call assignment.
-    insert-before(component, call-assign, lambda.body);
+    // Insert the function body before the call assignment.
+    insert-before(component, call-assign, function.body);
     // Insert an exit to the component after the call assignment.
     insert-exit-after(component, call-assign, component);
     // And delete the call assignment.
@@ -1547,17 +1507,19 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   end;
 
   // Queue the catchers for blocks in the new home that are exited to from
-  // the lambda's body.
+  // the function's body.
   queue-catchers(component, new-home, new-home.body);
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <simple-region>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <simple-region>)
     => ();
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <compound-region>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <compound-region>)
     => ();
   for (subregion in region.regions)
     queue-catchers(component, home, subregion);
@@ -1565,28 +1527,32 @@ define method queue-catchers
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <if-region>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <if-region>)
     => ();
   queue-catchers(component, home, region.then-region);
   queue-catchers(component, home, region.else-region);
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <body-region>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <body-region>)
     => ();
   queue-catchers(component, home, region.body);
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <exit>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <exit>)
     => ();
 end;
 
 define method queue-catchers
-    (component :: <component>, home :: <lambda>, region :: <pitcher>)
+    (component :: <component>, home :: <fer-function-region>,
+     region :: <pitcher>)
     => ();
   let target = region.block-of;
-  if (home-lambda(target) == home)
+  if (home-function-region(target) == home)
     reoptimize(component, target.catcher);
   end;
 end;
@@ -1823,8 +1789,8 @@ end;
 // Call result propagation.
 
 define method propagate-call-results (component :: <component>) => ();
-  for (lambda in component.all-methods)
-    propagate-call-results-in(component, lambda);
+  for (function in component.all-function-regions)
+    propagate-call-results-in(component, function);
   end;
 end;
 
@@ -1868,14 +1834,8 @@ define method propagate-call-results-of
 end;
 
 define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>, function :: <lambda>)
-    => ();
-  maybe-restrict-type(component, call, function.result-type);
-end;
-
-define method propagate-call-results-of
     (component :: <component>, call :: <abstract-call>,
-     function :: <hairy-method-literal>)
+     function :: <function-literal>)
     => ();
   maybe-restrict-type(component, call, function.main-entry.result-type);
 end;
@@ -1909,18 +1869,75 @@ end;
 
 
 define method identify-tail-calls (component :: <component>) => ();
-  for (lambda in component.all-methods)
-    for (return = lambda.exits then return.next-exit,
+  for (function in component.all-function-regions)
+    for (return = function.exits then return.next-exit,
 	 while: return)
-      identify-tail-calls-before(component, lambda, return.depends-on,
-				 return.parent, return);
+      let results = return.depends-on;
+      block (next-return)
+	for (dep = results then dep.dependent-next,
+	     while: dep)
+	  unless (instance?(dep.source-exp, <abstract-variable>))
+	    next-return();
+	  end;
+	end;
+	identify-tail-calls-before(component, function, results,
+				   return.parent, return);
+      end;
     end;
   end;
 end;
 
+
+define generic identify-tail-calls-before
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), in :: <region>, before :: <region>)
+    => ();
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), in :: <region>,
+     before :: <region>)
+    => ();
+  identify-tail-calls-before(component, home, results, in.parent, in);
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), in :: <compound-region>,
+     before :: <region>)
+    => ();
+  block (return)
+    for (subregion in in.regions,
+	 prev = #f then subregion)
+      if (subregion == before)
+	if (prev)
+	  identify-tail-calls-in(component, home, results, prev);
+	else
+	  identify-tail-calls-before(component, home, results, in.parent, in);
+	end;
+	return();
+      end;
+    end;
+  end;
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), in :: <if-region>,
+     before :: <region>)
+    => ();
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), in :: <function-region>,
+     before :: <region>)
+    => ();
+end;
+
   
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <simple-region>)
     => ();
   block (return)
@@ -1936,9 +1953,8 @@ define method identify-tail-calls-in
       end;
       let expr = assign.depends-on.source-exp;
       if (instance?(expr, <known-call>))
-	if (expr.depends-on.source-exp == home)
+	if (find-main-entry(expr.depends-on.source-exp) == home)
 	  // It's a self tail call.
-	  // ### Should also check to about calling things other than lambdas.
 	  convert-self-tail-call(component, home, expr);
 	end;
 	return();
@@ -1984,21 +2000,21 @@ define method identify-tail-calls-in
 end;
 
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <compound-region>)
     => ();
   identify-tail-calls-in(component, home, results, region.regions.last);
 end;
 
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <empty-region>)
     => ();
   identify-tail-calls-before(component, home, results, region.parent, region);
 end;
 
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <if-region>)
     => ();
   identify-tail-calls-in(component, home, results, region.then-region);
@@ -2006,18 +2022,18 @@ define method identify-tail-calls-in
 end;
   
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <loop-region>)
     => ();
 end;
 
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <block-region>)
     => ();
   for (exit = region.exits then exit.next-exit,
        while: exit)
-    if (home-lambda(exit) == home)
+    if (home-function-region(exit) == home)
       identify-tail-calls-before(component, home, results,
 				 exit.parent, exit);
     end;
@@ -2025,7 +2041,7 @@ define method identify-tail-calls-in
 end;
 
 define method identify-tail-calls-in
-    (component :: <component>, home :: <lambda>,
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <exit>)
     => ();
 end;
@@ -2048,56 +2064,36 @@ define method definition-for?
 end;
 
 
-define generic identify-tail-calls-before
-    (component :: <component>, home :: <lambda>,
-     results :: false-or(<dependency>), in :: <region>, before :: <region>)
-    => ();
-
-define method identify-tail-calls-before
-    (component :: <component>, home :: <lambda>,
-     results :: false-or(<dependency>), in :: <region>,
-     before :: <region>)
-    => ();
-  identify-tail-calls-before(component, home, results, in.parent, in);
+define method find-main-entry (func :: <leaf>)
+    => res :: false-or(<function-region>);
+  #f;
 end;
 
-define method identify-tail-calls-before
-    (component :: <component>, home :: <lambda>,
-     results :: false-or(<dependency>), in :: <compound-region>,
-     before :: <region>)
-    => ();
-  block (return)
-    for (subregion in in.regions,
-	 prev = #f then subregion)
-      if (subregion == before)
-	if (prev)
-	  identify-tail-calls-in(component, home, results, prev);
-	else
-	  identify-tail-calls-before(component, home, results, in.parent, in);
-	end;
-	return();
-      end;
-    end;
-  end;
+define method find-main-entry (func :: <function-literal>)
+    => res :: false-or(<function-region>);
+  func.main-entry;
 end;
 
-define method identify-tail-calls-before
-    (component :: <component>, home :: <lambda>,
-     results :: false-or(<dependency>), in :: <if-region>,
-     before :: <region>)
-    => ();
+define method find-main-entry (func :: <definition-constant-leaf>)
+    => res :: false-or(<function-region>);
+  find-main-entry(func.const-defn);
 end;
 
-define method identify-tail-calls-before
-    (component :: <component>, home :: <lambda>,
-     results :: false-or(<dependency>), in :: <method-region>,
-     before :: <region>)
-    => ();
+define method find-main-entry (defn :: <abstract-constant-definition>)
+    => res :: false-or(<function-region>);
+  #f;
+end;
+
+define method find-main-entry (defn :: <abstract-method-definition>)
+    => res :: false-or(<function-region>);
+  let leaf = defn.method-defn-leaf;
+  leaf & find-main-entry(leaf);
 end;
 
 
 define method convert-self-tail-call
-    (component :: <component>, func :: <lambda>, call :: <abstract-call>)
+    (component :: <component>, func :: <fer-function-region>,
+     call :: <abstract-call>)
     => ();
   // Set up the wrapper loop and blocks.
   unless (func.self-call-block)
@@ -2141,9 +2137,9 @@ end;
 // Control flow cleanup stuff.
 
 define method cleanup-control-flow (component :: <component>) => ();
-  for (lambda in component.all-methods)
-    if (cleanup-control-flow-aux(component, lambda.body) == #f)
-      error("control flow drops off the end of %=?", lambda);
+  for (function in component.all-function-regions)
+    if (cleanup-control-flow-aux(component, function.body) == #f)
+      error("control flow drops off the end of %=?", function);
     end;
   end;
 end;
@@ -2241,8 +2237,8 @@ end;
 
 
 define method add-type-checks (component :: <component>) => ();
-  for (lambda in component.all-methods)
-    add-type-checks-aux(component, lambda);
+  for (function in component.all-function-regions)
+    add-type-checks-aux(component, function);
   end;
 end;
 
@@ -2341,7 +2337,7 @@ define method environment-analysis (component :: <component>) => ();
   component.all-lets := #f;
   for (l = lets then l.let-next, while: l)
     unless (l.queue-next == #"deleted")
-      let home = home-lambda(l);
+      let home = home-function-region(l);
       let next = #f;
       for (var = l.defines then next,
 	   while: var)
@@ -2352,24 +2348,30 @@ define method environment-analysis (component :: <component>) => ();
   end;
 end;
 
-define method home-lambda (op :: <operation>) => home :: <lambda>;
-  home-lambda(op.dependents.dependent);
+define method home-function-region (op :: <operation>)
+    => home :: <fer-function-region>;
+  home-function-region(op.dependents.dependent);
 end;
 
-define method home-lambda (assign :: <assignment>) => home :: <lambda>;
-  home-lambda(assign.region);
+define method home-function-region (assign :: <assignment>)
+    => home :: <fer-function-region>;
+  home-function-region(assign.region);
 end;
 
-define method home-lambda (region :: <region>) => home :: <lambda>;
-  home-lambda(region.parent);
+define method home-function-region (region :: <region>)
+    => home :: <fer-function-region>;
+  home-function-region(region.parent);
 end;
 
-define method home-lambda (lambda :: <lambda>) => home :: <lambda>;
-  lambda;
+define method home-function-region (function :: <fer-function-region>)
+    => home :: <fer-function-region>;
+  function;
 end;
 
 define method maybe-close-over
-    (component :: <component>, var :: <ssa-variable>, home :: <lambda>) => ();
+    (component :: <component>, var :: <ssa-variable>,
+     home :: <fer-function-region>)
+    => ();
   let orig-dependents = var.dependents;
   var.dependents := #f;
   let next = #f;
@@ -2377,8 +2379,8 @@ define method maybe-close-over
        while: dep)
     next := dep.source-next;
     let ref = dep.dependent;
-    let ref-lambda = home-lambda(ref);
-    let copy = find-in-environment(component, ref-lambda, var, home);
+    let ref-function = home-function-region(ref);
+    let copy = find-in-environment(component, ref-function, var, home);
     dep.source-next := copy.dependents;
     copy.dependents := dep;
     dep.source-exp := copy;
@@ -2386,44 +2388,77 @@ define method maybe-close-over
 end;
 
 define method find-in-environment
-    (component :: <component>, lambda :: <lambda>,
-     var :: <ssa-variable>, home :: <lambda>)
+    (component :: <component>, function :: <fer-function-region>,
+     var :: <ssa-variable>, home :: <fer-function-region>)
     => copy :: <ssa-variable>;
-  if (lambda == home)
+  unless (function == home)
+    error("%= can't close over %= because it isn't a lambda.", function, var);
+  end;
+  var;
+end;
+
+define method find-in-environment
+    (component :: <component>, function :: <lambda>,
+     var :: <ssa-variable>, home :: <fer-function-region>)
+    => copy :: <ssa-variable>;
+  if (function == home)
     var;
   else
     block (return)
-      for (closure = lambda.environment.closure-vars then closure.closure-next,
+      for (closure = function.environment.closure-vars
+	     then closure.closure-next,
 	   while: closure)
 	if (closure.original-var == var)
 	  return(closure.copy-var);
 	end;
       end;
-      let prologue = lambda.prologue;
+      if (function.literal.visibility == #"global")
+	error("%= can't close over %= because it has hidden references.",
+	      function, var);
+      end;
+      let prologue = function.prologue;
       let assign = prologue.dependents.dependent;
       let copy = make(<ssa-variable>, var-info: var.var-info, definer: assign,
 		      definer-next: assign.defines,
 		      derived-type: var.derived-type);
       assign.defines := copy;
-      lambda.environment.closure-vars
+      function.environment.closure-vars
 	:= make(<closure-var>, original: var, copy: copy,
-		next: lambda.environment.closure-vars);
-      lambda.argument-types
-	:= pair(var.derived-type, lambda.argument-types);
+		next: function.environment.closure-vars);
+      function.argument-types
+	:= pair(var.derived-type, function.argument-types);
       prologue.derived-type := wild-ctype();
-      for (call-dep = lambda.dependents then call-dep.source-next,
-	   while: call-dep)
-	let call = call-dep.dependent;
-	let var-in-caller
-	  = find-in-environment(component, home-lambda(call), var, home);
-	let func-dep = call.depends-on;
-	let new-dep = make(<dependency>, source-exp: var-in-caller,
-			   source-next: var-in-caller.dependents,
-			   dependent: call,
-			   dependent-next: func-dep.dependent-next);
-	var-in-caller.dependents := new-dep;
-	func-dep.dependent-next := new-dep;
-	reoptimize(component, call);
+      for (ref-dep = function.literal.dependents then ref-dep.source-next,
+	   while: ref-dep)
+	let ref = ref-dep.dependent;
+	let var-at-ref
+	  = find-in-environment(component, home-function-region(ref),
+				var, home);
+	if ((instance?(ref, <known-call>)
+	       | (instance?(ref, <primitive>) & ref.name == #"make-closure"))
+	      & ref.depends-on == ref-dep)
+	  let new-dep = make(<dependency>, source-exp: var-at-ref,
+			     source-next: var-at-ref.dependents,
+			     dependent: ref,
+			     dependent-next: ref-dep.dependent-next);
+	  var-at-ref.dependents := new-dep;
+	  ref-dep.dependent-next := new-dep;
+	else
+	  let builder = make-builder(component);
+	  let op = make-operation(builder, <primitive>,
+				  list(function.literal, var-at-ref),
+				  name: #"make-closure",
+				  derived-type: function-ctype());
+	  let temp = make-local-var(builder, #"closure", function-ctype());
+	  build-assignment(builder, $Default-policy, make(<source-location>),
+			   temp, op);
+	  insert-before(component, ref-dep.dependent, builder-result(builder));
+	  remove-dependency-from-source(component, ref-dep);
+	  ref-dep.source-exp := temp;
+	  ref-dep.source-next := temp.dependents;
+	  temp.dependents := ref-dep;
+	end;
+	reoptimize(component, ref);
       end;
       reoptimize(component, prologue);
       copy;
@@ -2432,18 +2467,19 @@ define method find-in-environment
 end;
 
 define method maybe-close-over
-    (component :: <component>, defn :: <initial-definition>, home :: <lambda>)
+    (component :: <component>, defn :: <initial-definition>,
+     home :: <fer-function-region>)
     => ();
   let var = defn.definition-of;
   if (block (return)
 	for (defn in var.definitions)
-	  unless (home-lambda(defn.definer) == home)
+	  unless (home-function-region(defn.definer) == home)
 	    return(#t);
 	  end;
 	end;
 	for (dep = var.dependents then dep.source-next,
 	     while: dep)
-	  unless (home-lambda(dep.dependent) == home)
+	  unless (home-function-region(dep.dependent) == home)
 	    return(#t);
 	  end;
 	end;
@@ -2516,6 +2552,362 @@ define method maybe-close-over
     end;
     maybe-close-over(component, value-cell, home);
   end;
+end;
+
+
+
+// External entry construction.
+
+define method build-external-entries (component :: <component>) => ();
+  for (function in component.all-function-literals)
+    if (function.general-entry == #f)
+      maybe-build-external-entries-for(component, function);
+    end;
+  end;
+end;
+
+define method maybe-build-external-entries-for
+    (component :: <component>, func :: <function-literal>) => ();
+  select(func.visibility)
+    #"global" =>
+      build-external-entries-for(component, func);
+    #"local" =>
+      block (return)
+	for (dep = func.dependents then dep.source-next,
+	     while: dep)
+	  let dependent = dep.dependent;
+	  unless (instance?(dependent, <known-call>)
+		    & dependent.depends-on == dep)
+	    build-external-entries-for(component, func);
+	    return();
+	  end;
+	end;
+      end;
+  end;
+end;
+
+define method build-external-entries-for
+    (component :: <component>, function :: <function-literal>) => ();
+  function.general-entry
+    := build-xep(component, #f, function, function.signature);
+  if (instance?(function, <method-literal>))
+    function.generic-entry
+      := build-xep(component, #t, function, function.signature);
+  end;
+end;
+
+
+define method build-xep
+    (component :: <component>, generic-entry? :: <boolean>,
+     function :: <function-literal>, signature :: <signature>)
+    => xep :: <fer-function-region>;
+  let main-entry = function.main-entry;
+  let builder = make-builder(component);
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+  let self-leaf = make-local-var(builder, #"self", function-ctype());
+  let nargs-leaf = make-local-var(builder, #"nargs", 
+				  dylan-value(#"<fixed-integer>"));
+  let next-info-leaf
+    = generic-entry? & make-local-var(builder, #"next-method-info",
+				      dylan-value(#"<list>"));
+  let name = format-to-string("%s entry for %s",
+			      if (generic-entry?) "Generic" else "General" end,
+			      main-entry.name);
+  let xep = build-function-body(builder, policy, source, name,
+				if (generic-entry?)
+				  list(self-leaf, nargs-leaf, next-info-leaf);
+				else
+				  list(self-leaf, nargs-leaf);
+				end);
+  let new-args = make(<stretchy-vector>);
+  if (instance?(main-entry, <lambda>) & main-entry.environment.closure-vars)
+    let closure-ref-leaf = dylan-defn-leaf(builder, #"%closure-ref");
+    for (closure-var = main-entry.environment.closure-vars
+	   then closure-var.closure-next,
+	 index from 0,
+	 while: closure-var)
+      let copy = closure-var.copy-var;
+      let pre-type = make-local-var(builder, copy.var-info.debug-name,
+				    object-ctype());
+      let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+      build-assignment(builder, policy, source, pre-type,
+		       make-unknown-call(builder,
+					 list(closure-ref-leaf, self-leaf,
+					      index-leaf)));
+      let post-type = make-local-var(builder, copy.var-info.debug-name,
+				     copy.derived-type);
+      build-assignment(builder, policy, source, post-type,
+		       make-operation(builder, <truly-the>, list(pre-type),
+				      derived-type: copy.derived-type));
+      add!(new-args, post-type);
+    end;
+  end;
+
+  let arg-types = signature.specializers;
+  let raw-ptr-type = dylan-value(#"<raw-pointer>");
+  let args-leaf = make-local-var(builder, #"args", raw-ptr-type);
+  let wanted-leaf
+    = make-literal-constant(builder, as(<ct-value>, arg-types.size));
+  if (generic-entry?)
+    // We don't have to check the number of arguments, we just have to
+    // find the arg pointer.
+    build-assignment
+      (builder, policy, source, args-leaf,
+       make-operation(builder, <primitive>,
+		      list(if (signature.rest-type | signature.key-infos)
+			     nargs-leaf;
+			   else
+			     wanted-leaf;
+			   end),
+		      name: #"extract-args",
+		      derived-type: raw-ptr-type));
+  else
+    if (signature.rest-type == #f & signature.key-infos == #f)
+      let op = make-unknown-call
+	(builder,
+	 list(dylan-defn-leaf(builder, #"=="), nargs-leaf, wanted-leaf));
+      let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
+      build-assignment(builder, policy, source, temp, op);
+      build-if-body(builder, policy, source, temp);
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation
+	   (builder,
+	    "Wrong number of arguments.  Wanted exactly %d but got %d",
+	    wanted-leaf, nargs-leaf));
+      end-body(builder);
+      build-assignment(builder, policy, source, args-leaf,
+		       make-operation(builder, <primitive>, list(wanted-leaf),
+				      name: #"extract-args",
+				      derived-type: raw-ptr-type));
+    else
+      begin
+	let op = make-unknown-call
+	  (builder,
+	   list(dylan-defn-leaf(builder, #"<"), nargs-leaf, wanted-leaf));
+	let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
+	build-assignment(builder, policy, source, temp, op);
+	build-if-body(builder, policy, source, temp);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-error-operation
+	     (builder,
+	      "Wrong number of arguments.  Wanted at least %d but only got %d",
+	      wanted-leaf, nargs-leaf));
+	build-else(builder, policy, source);
+	end-body(builder);
+      end;
+      if (signature.key-infos)
+	let op = make-unknown-call(builder,
+				   list(dylan-defn-leaf
+					  (builder,
+					   if (odd?(arg-types.size))
+					     #"even?";
+					   else
+					     #"odd?";
+					   end),
+					nargs-leaf));
+	let temp = make-local-var(builder, #"nkeys-okay?", object-ctype());
+	build-assignment(builder, policy, source, temp, op);
+	build-if-body(builder, policy, source, temp);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-error-operation
+	     (builder, "Odd number of keyword/value arguments."));
+	build-else(builder, policy, source);
+	end-body(builder);
+      end;
+      build-assignment(builder, policy, source, args-leaf,
+		       make-operation(builder, <primitive>, list(nargs-leaf),
+				      name: #"extract-args",
+				      derived-type: raw-ptr-type));
+    end;
+  end;
+
+  for (type in arg-types,
+       index from 0)
+    let temp = make-local-var(builder, #"arg",
+			      if (generic-entry?)
+				object-ctype();
+			      else
+				type;
+			      end);
+    let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+    build-assignment(builder, policy, source, temp,
+		     make-operation(builder, <primitive>,
+				    list(args-leaf, index-leaf),
+				    name: #"extract-arg"));
+    if (generic-entry?)
+      let post-type = make-local-var(builder, #"arg", type);
+      build-assignment(builder, policy, source, post-type,
+		       make-operation(builder, <truly-the>, list(temp),
+				      derived-type: type));
+      add!(new-args, post-type);
+    else
+      add!(new-args, temp);
+    end;
+  end;
+
+  if (signature.next?)
+    add!(new-args,
+	 if (generic-entry?)
+	   next-info-leaf;
+	 else
+	   make-literal-constant(builder, as(<ct-value>, #()));
+	 end);
+  end;
+
+  if (signature.rest-type)
+    let op = make-operation(builder, <primitive>,
+			    list(args-leaf, wanted-leaf, nargs-leaf),
+			    name: #"make-rest-arg");
+    let rest-var = make-local-var(builder, #"rest", object-ctype());
+    build-assignment(builder, policy, source, rest-var, op);
+    add!(new-args, rest-var);
+  end;
+
+  if (signature.key-infos)
+    let key-var = make-local-var(builder, #"key", dylan-value(#"<symbol>"));
+    let val-var = make-local-var(builder, #"value", object-ctype());
+    let key-dispatch-builder = make-builder(builder);
+    local
+      method build-next-key (remaining)
+	if (empty?(remaining))
+	  unless (generic-entry? | signature.all-keys?)
+	    build-assignment(key-dispatch-builder, policy, source, #(),
+			     make-error-operation(key-dispatch-builder,
+						  "Bogus keyword: %=",
+						  key-var));
+	  end;
+	else
+	  let key-info = remaining.head;
+	  let key = key-info.key-name;
+	  let var = make-local-var(builder, key, key-info.key-type);
+	  let supplied?-var
+	    = if (key-info.key-supplied?-var)
+		make-local-var(builder,
+			       as(<symbol>,
+				  concatenate(as(<string>, key),
+					      "-supplied?")),
+			       dylan-value(#"<boolean>"));
+	      else
+		#f;
+	      end;
+	  add!(new-args, var);
+	  build-assignment
+	    (builder, policy, source, var,
+	     if (key-info.key-default)
+	       make-literal-constant(builder, key-info.key-default);
+	     else
+	       make(<uninitialized-value>, derived-type: key-info.key-type);
+	     end);
+	  if (supplied?-var)
+	    add!(new-args, supplied?-var);
+	    build-assignment
+	      (builder, policy, source, supplied?-var,
+	       make-literal-constant(builder, as(<ct-value>, #f)));
+	  end;
+	  let temp = make-local-var(key-dispatch-builder, #"condition",
+				    object-ctype());
+	  build-assignment
+	    (key-dispatch-builder, policy, source, temp,
+	     make-unknown-call
+	       (key-dispatch-builder,
+		list(dylan-defn-leaf(key-dispatch-builder, #"=="),
+		     key-var,
+		     make-literal-constant(key-dispatch-builder,
+					   as(<ct-value>, key)))));
+	  build-if-body(key-dispatch-builder, policy, source, temp);
+	  build-assignment(key-dispatch-builder, policy, source, var, val-var);
+	  if (supplied?-var)
+	    build-assignment
+	      (key-dispatch-builder, policy, source, supplied?-var, 
+	       make-literal-constant(key-dispatch-builder,
+				     as(<ct-value>, #t)));
+	  end;
+	  build-else(key-dispatch-builder, policy, source);
+	  build-next-key(remaining.tail);
+	  end-body(key-dispatch-builder);
+	end;
+      end;
+
+    let index-var = make-local-var(key-dispatch-builder, #"index",
+				   dylan-value(#"<fixed-integer>"));
+    build-assignment
+      (key-dispatch-builder, policy, source, index-var,
+       make-unknown-call
+	 (key-dispatch-builder,
+	  list(dylan-defn-leaf(key-dispatch-builder, #"-"),
+	       nargs-leaf,
+	       make-literal-constant
+		 (key-dispatch-builder, as(<ct-value>, 2)))));
+
+    let done-block = build-block-body(key-dispatch-builder, policy, source);
+    build-loop-body(key-dispatch-builder, policy, source);
+
+    let more-var
+      = make-local-var(key-dispatch-builder, #"more?", object-ctype());
+    build-assignment
+      (key-dispatch-builder, policy, source, more-var,
+       make-unknown-call(key-dispatch-builder,
+			 list(dylan-defn-leaf(key-dispatch-builder, #"<"),
+			      index-var, wanted-leaf)));
+    build-if-body(key-dispatch-builder, policy, source, more-var);
+    build-exit(key-dispatch-builder, policy, source, done-block);
+    build-else(key-dispatch-builder, policy, source);
+    begin
+      let op = make-operation(key-dispatch-builder, <primitive>,
+			      list(args-leaf, index-var),
+			      name: #"extract-arg");
+      if (generic-entry?)
+	let temp = make-local-var(key-dispatch-builder, #"key",
+				  object-ctype());
+	build-assignment(key-dispatch-builder, policy, source, temp, op);
+	op := make-operation(key-dispatch-builder, <truly-the>, list(temp),
+			     derived-type: dylan-value(#"<symbol>"));
+      end;
+      build-assignment(key-dispatch-builder, policy, source, key-var, op);
+    end;
+    let temp = make-local-var(key-dispatch-builder, #"temp",
+			      dylan-value(#"<fixed-integer>"));
+    build-assignment
+      (key-dispatch-builder, policy, source, temp,
+       make-unknown-call(key-dispatch-builder,
+			 list(dylan-defn-leaf(key-dispatch-builder, #"+"),
+			      index-var,
+			      make-literal-constant(key-dispatch-builder,
+						    as(<ct-value>, 1)))));
+    build-assignment(key-dispatch-builder, policy, source, val-var,
+		     make-operation(key-dispatch-builder, <primitive>,
+				    list(args-leaf, temp),
+				    name: #"extract-arg"));
+    build-next-key(signature.key-infos);
+    build-assignment
+      (key-dispatch-builder, policy, source, index-var,
+       make-unknown-call(key-dispatch-builder,
+			 list(dylan-defn-leaf(key-dispatch-builder, #"-"),
+			      index-var,
+			      make-literal-constant(key-dispatch-builder,
+						    as(<ct-value>, 2)))));
+    end-body(key-dispatch-builder); // if
+    end-body(key-dispatch-builder); // loop
+    end-body(key-dispatch-builder); // block
+    build-region(builder, builder-result(key-dispatch-builder));
+  end;
+
+  build-assignment(builder, policy, source, #(),
+		   make-operation(builder, <primitive>, list(args-leaf),
+				  name: #"pop-args"));
+  let cluster = make-values-cluster(builder, #"results", wild-ctype());
+  build-assignment(builder, policy, source, cluster,
+		   make-operation(builder, <known-call>,
+				  pair(function, as(<list>, new-args))));
+  build-return(builder, policy, source, xep, cluster);
+  end-body(builder);
+
+  xep;
 end;
 
 
@@ -2655,17 +3047,29 @@ define method dropped-dependent
 end;
 
 define method dropped-dependent
-    (component :: <component>, lambda :: <lambda>) => ();
-  if (lambda.visibility == #"local")
-    if (lambda.dependents == #f)
-      // Delete the lambda.
-      component.all-methods := remove!(component.all-methods, lambda);
-      delete-queueable(component, lambda);
-      lambda.visibility := #"deleted";
-    elseif (lambda.dependents.source-next == #f)
+    (component :: <component>, function :: <function-literal>) => ();
+  if (function.visibility == #"local")
+    if (function.dependents == #f)
+      // Delete the function.
+      remove!(component.all-function-literals, function);
+      delete-queueable(component, function);
+      function.visibility := #"deleted";
+      local
+	method delete-function-region (region)
+	  if (region)
+	    remove!(component.all-function-regions, region);
+	    delete-queueable(component, region);
+	  end;
+	end;
+      delete-function-region(function.main-entry);
+      delete-function-region(function.general-entry);
+      if (instance?(function, <method-literal>))
+	delete-function-region(function.generic-entry);
+      end;
+    elseif (function.dependents.source-next == #f)
       // Only one reference left, so queue it for reoptimization so that
       // it can be let converted.
-      reoptimize(component, lambda);
+      reoptimize(component, function);
     end;
   end;
 end;
@@ -2779,7 +3183,7 @@ define method exit-useless?
 end;
 
 define method exit-useless?
-    (from :: <method-region>, after :: <region>,
+    (from :: <function-region>, after :: <region>,
      target :: <block-region-mixin>)
     => res :: <boolean>;
   #f;
@@ -2892,9 +3296,9 @@ define method delete-stuff-after
 end;
 
 define method delete-stuff-after
-    (component :: <component>, lambda :: <lambda>, after :: <region>)
+    (component :: <component>, region :: <function-region>, after :: <region>)
     => ();
-  // There is nothing after the lambda.
+  // There is nothing after the function.
 end;
 
 
@@ -3196,8 +3600,8 @@ end;
 // Sanity checking code.
 
 define method assure-all-done (component :: <component>) => ();
-  for (lambda in component.all-methods)
-    assure-all-done-region(component, lambda);
+  for (function in component.all-function-regions)
+    assure-all-done-region(component, function);
   end;
 end;
 
@@ -3271,9 +3675,9 @@ define method check-sanity (component :: <component>) => ();
 	  component, component.parent);
   end;
   //
-  // Check the lambdas.
-  for (lambda in component.all-methods)
-    check-sanity(lambda);
+  // Check the functions.
+  for (function in component.all-function-regions)
+    check-sanity(function);
   end;
 end;
 
@@ -3348,19 +3752,6 @@ define method check-sanity (region :: <body-region>) => ();
 	  region, region.body, region.body.parent);
   end;
   check-sanity(region.body);
-end;
-
-define method check-sanity (lambda :: <lambda>) => ();
-  //
-  // Check the expression aspects of the lambda.
-  check-expression(lambda);
-  //
-  // Check the lambda's body.
-  unless (lambda.body.parent == lambda)
-    error("%='s body %= claims %= as its parent",
-	  lambda, lambda.body, lambda.body.parent);
-  end;
-  check-sanity(lambda.body);
 end;
 
 define method check-sanity (exit :: <exit>) => ();

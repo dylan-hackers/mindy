@@ -7,12 +7,12 @@ define class <state> (<object>)
 end;
 
 
-define method analize-stack-usage (lambda :: <lambda>)
+define method analize-stack-usage (func :: <fer-function-region>)
     => (max-depth :: <fixed-integer>);
   let state = make(<state>);
-  let want = analize(lambda.body, #(), state);
+  let want = analize(func.body, #(), state);
   unless (want == #())
-    error("We start the lambda wanting stuff?");
+    error("We start the function wanting stuff?");
   end;
   state.max-depth;
 end;

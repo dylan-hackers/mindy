@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.28 1995/05/05 16:58:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.29 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -31,7 +31,7 @@ variable-info
     module-var-info
 	module-almost-constant-var-info
     debug-named-info {abstract}
-        lambda-var-info [source-location-mixin]
+        lexical-var-info [source-location-mixin]
 	values-cluster-info
 	local-var-info
 
@@ -41,11 +41,14 @@ leaf
 	definition-constant-leaf
         uninitialized-value
 
-    function-literal
-	method-literal
-	    lambda [method-region, dependent-mixin, annotatable]
-	    hairy-method-literal [source-location-mixin]
+    abstract-function-literal {abstract}
+	function-literal [queueable-mixin]
+	    method-literal
         exit-function
+
+function-region
+    fer-function-region [queueable-mixin, annotatable]
+	lambda
 
 component
     fer-component
@@ -136,7 +139,7 @@ end class;
 // A prologue is used to represent the incomming arguments to a function.
 // 
 define class <prologue> (<operation>)
-  slot lambda :: <lambda>, required-init-keyword: lambda:;
+  slot function :: <fer-function-region>, required-init-keyword: function:;
 end;
 
 // A catcher is used to receive the values from an exit-function.
@@ -178,7 +181,7 @@ define class <self-tail-call> (<operation>)
     init-function: curry(make-values-ctype, #(), #f);
   //
   // The function we are self tail calling.
-  slot self-tail-call-of :: <lambda>,
+  slot self-tail-call-of :: <fer-function-region>,
     required-init-keyword: of:;
   //
   // The next self tail call in this method.
@@ -275,12 +278,19 @@ end class;
 
 /// Function literals:
 
+
+define abstract class <abstract-function-literal> (<leaf>)
+  
+  // All function literals are subclasses of <function>.
+  inherited slot derived-type, init-function: function-ctype;
+  
+end;
+
 define constant <function-visibility>
   = one-of(#"global", #"local", #"deleted");
 
-define abstract class <function-literal> (<leaf>)
-
-  inherited slot derived-type, init-function: function-ctype;
+define abstract class <function-literal>
+    (<abstract-function-literal>, <queueable-mixin>)
 
   // An indication of what kind of references to this function can exist:
   //
@@ -288,7 +298,16 @@ define abstract class <function-literal> (<leaf>)
   // Global: some other references might exist, so assume the worst.
   // Deleted: no references will ever exist from now on.
   //
-  slot visibility :: <function-visibility>, init-value: #"local";
+  slot visibility :: <function-visibility>,
+    init-value: #"local", init-keyword: visibility:;
+
+  // The signature of this function.
+  slot signature :: <signature>,
+    required-init-keyword: signature:;
+
+  // The function-region for the main body of code.
+  slot main-entry :: <fer-function-region>,
+    required-init-keyword: main-entry:;
 
   // This is the general-case used when we can't statically analyze a call, due
   // to either the function or the arguments not being sufficiently constant.
@@ -298,13 +317,11 @@ define abstract class <function-literal> (<leaf>)
   // sealed methods.  This is also false in methods that are themselves
   // entry-points.
   // 
-  slot general-entry :: false-or(<function-literal>), init-value: #f;
-
-  // ??? arg documentation?
+  slot general-entry :: false-or(<fer-function-region>), init-value: #f;
 end class;
 
 
-define abstract class <method-literal> (<function-literal>)
+define class <method-literal> (<function-literal>)
 
   // The generic entry is somewhat similar to the general-entry, but doesn't
   // have to deal with error cases that have been picked off by the generic
@@ -317,85 +334,16 @@ define abstract class <method-literal> (<function-literal>)
   // Keyword arg legality has already been done; unrecognized keywords are
   // quietly ignored.  This can also be false when not needed.
   //
-  slot generic-entry :: false-or(<lambda>), init-value: #f;
-
-  // ??? inlinep/inline expansion?  An <expression>?  convert environment?
+  slot generic-entry :: false-or(<fer-function-region>), init-value: #f;
 end class;
 
-
-// The Lambda only deals with required arguments.  Keyword and rest arguments
-// are represented by special helper lambdas and <hairy-method-literal>
-// objects.
-//
-define class <lambda> (<method-literal>, <method-region>, <annotatable>)
-
-  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
-
-  // List of lexical varibles for args.
-  slot prologue :: <prologue>;
-
-  // List of the argument types.
-  slot argument-types :: <list>, required-init-keyword: argument-types:;
-
-  // The result type of this function.
-  slot result-type :: <values-ctype>, init-function: wild-ctype;
-
-  // A list of all the functions directly called from this function
-  // using a non-let-converted local call.  May include deleted functions
-  // because nobody bothers to clear them out.
-  slot calls :: <list>, init-value: #();
-
-  // The block self tail calls should exit to.  #f if we haven't inserted it
-  // yet (i.e. haven't found any self tail calls yet).
-  slot self-call-block :: false-or(<block-region>), init-value: #f;
-
-  // Chain of all the self tail calls in this lambda.  Linked via
-  // next-self-tail-call.
-  slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
-
-  // The structure which represents the environment that this Function's
-  // variables are allocated in.
-  slot environment :: <environment>,
-    init-function: curry(make, <environment>);
-
-  // If this function is or ever was an entry-point for some other function,
-  // then this is that function.
-  slot entry-for :: false-or(<function-literal>), init-value: #f;
-end class;
-
-define method initialize (lambda :: <lambda>, #key) => ();
-  lambda.prologue
-    := make(<prologue>, lambda: lambda, depends-on: #f,
-	    // ### The depends-on: shouldn't be needed, but Mindy is broken.
-	    derived-type: make-values-ctype(lambda.argument-types, #f));
-end;
-
-// The <Hairy-Method-Literal> leaf is used to represent hairy methods.  The
-// value returned by the function is the value which results from calling the
-// <Hairy-Method-Literal>.
-// 
-// Local call analysis parses the arguments to calls with only fixed
-// arguments or recognizable keyword arguments, and turns it into a call to
-// the main entry.
-//
-define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
-
-  // The signature for this function.
-  slot signature :: <signature>, required-init-keyword: signature:;
-
-  // The main entry-point into the function, which takes all arguments
-  // including keywords as fixed arguments.  The format of the arguments must
-  // be determined by examining the signature.  This may be used by callers
-  // that supply the required arguments and know how to default any others.
-  slot main-entry :: <lambda>, required-init-keyword: main-entry:;
-end class;
 
 
 // An <exit-function> is a magical function literal that represents
 // the exit-function for a block in situations where a non-local exit is
 // possible.
 //
-define class <exit-function> (<function-literal>)
+define class <exit-function> (<abstract-function-literal>)
   //
   // The region that this exit function exits to.
   slot catcher :: <catcher>,
@@ -405,11 +353,67 @@ end class;
 
 // FE region classes:
 
+// <fer-function-region>
+//
+// A <fer-function-region> adds the FER specific information to control-flow's
+// <function-region>.
+//
+define class <fer-function-region>
+    (<function-region>, <queueable-mixin>, <annotatable>)
+
+  // Some random descriptive string describing this function.
+  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
+
+  // The prologue operation for this function.  The results of the prologue
+  // are the arguments to the function.
+  slot prologue :: <prologue>;
+
+  // List of the argument types.
+  slot argument-types :: <list>, required-init-keyword: argument-types:;
+
+  // The result type of this function.
+  slot result-type :: <values-ctype>, init-function: wild-ctype;
+
+  // The block self tail calls should exit to.  #f if we haven't inserted it
+  // yet (i.e. haven't found any self tail calls yet).
+  slot self-call-block :: false-or(<block-region>), init-value: #f;
+
+  // Chain of all the self tail calls in this function.  Linked via
+  // next-self-tail-call.
+  slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
+end;
+
+define method initialize (func :: <fer-function-region>, #key) => ();
+  func.prologue
+    := make(<prologue>, function: func, depends-on: #f,
+	    // ### The depends-on: shouldn't be needed, but Mindy is broken.
+	    derived-type: make-values-ctype(func.argument-types, #f));
+end;
+
+// <lambda>
+//
+// A <lambda> is a kind of <fer-function-region> that can close over values.
+// It can only be used as the main-entry for local function literals.
+//
+define class <lambda> (<fer-function-region>)
+
+  // The function-literal this lambda is the main-entry for.  Used to find
+  // all the references to this lambda.  Initialized when the function
+  // literal is made.
+  slot literal :: <function-literal>;
+
+  // The structure which represents the environment that this Function's
+  // variables are allocated in.
+  slot environment :: <environment>,
+    init-function: curry(make, <environment>);
+end;
+
+
 define class <fer-component> (<component>)
-  //
-  // List of <function-literal>s for functions that are newly introduced or
-  // that have new references to them.
-  slot reanalyze-functions :: <list>, init-value: #();
+
+  // All the function literals mentioned in this component.
+  slot all-function-literals :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>);
 
   // Chain of all the lets (though let-next) in this component.  Used by
   // environment analysis.  Deleted lets are left in this chain, so beware.
@@ -468,24 +472,3 @@ define class <closure-var> (<object>)
   slot closure-next :: false-or(<closure-var>), required-init-keyword: next:;
 end;
 
-
-// The Tail-Set structure is used to accmumlate information about
-// tail-recursive local calls.  The "tail set" is effectively the transitive
-// closure of the "is called tail-recursively by" relation.
-// 
-// All functions in the same tail set share the same <Tail-Set> structure.
-// When optimization discovers new TR calls, dinstinct tail sets will be
-// merged.  The tail set is somewhat approximate, because it is too early to be
-// sure which calls will be TR.  Any call that *might* end up TR causes
-// tail-set merging.
-//
-define class <tail-set> (<annotatable>)
-
-  // A list of all the lambdas in this tail set.
-  slot lambdas :: <list>, required-init-keyword: lambdas:;
-
-  // Our current best guess of the type returned by these functions.  This is
-  // the union across all the functions of the return <operation>'s Result-Type.
-  // excluding local calls.
-  slot type :: <values-ctype>, init-function: wild-ctype;
-end class;

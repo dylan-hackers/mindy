@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.25 1995/05/05 16:57:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.26 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,8 +240,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      build-general-method(builder, meth, #f,
-				   specializer-lexenv, lexenv));
+	      fer-convert-method(builder, meth, #f, #"local",
+				 specializer-lexenv, lexenv));
   end;
 
   // Supply #f as the result.
@@ -410,7 +410,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   let cluster = make-values-cluster(builder, #"results", wild-ctype());
   fer-convert-body(builder, form.exit-body, lexenv, #"assignment", cluster);
   build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		   make-operation(builder, <mv-call>, list(exit, cluster)));
+		   make-operation(builder, <fer-mv-call>,
+				  list(exit, cluster)));
   end-body(builder);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 blk.catcher);
@@ -448,9 +449,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <method-ref>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
-  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 build-general-method(builder, form.method-ref-method, #f,
-				      lexenv, lexenv));
+  let temp = make-local-var(builder, #"method", function-ctype());
+  build-assignment(builder, lexenv.lexenv-policy, source, temp,
+		   fer-convert-method(builder, form.method-ref-method, #f,
+				      #"local", lexenv, lexenv));
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
@@ -468,7 +471,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
   fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
 	      #"assignment", cluster);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-operation(builder, <mv-call>, list(function, cluster)));
+		 make-operation(builder, <fer-mv-call>,
+				list(function, cluster)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
@@ -508,9 +512,9 @@ end;
 
 // Method conversion.
 
-define method build-general-method
+define method fer-convert-method
     (builder :: <fer-builder>, meth :: <method-parse>,
-     name :: false-or(<string>),
+     name :: false-or(<string>), visibility :: <function-visibility>,
      specializer-lexenv :: <lexenv>, lexenv :: <lexenv>)
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
@@ -538,55 +542,64 @@ define method build-general-method
     end;
 
   let paramlist = meth.method-param-list;
-  let fixed-vars = make(<stretchy-vector>);
+  let vars = make(<stretchy-vector>);
+  let body-builder = make-builder(builder);
+
   let specializers = make(<stretchy-vector>);
   let specializer-leaves = make(<stretchy-vector>);
   let non-const-arg-types? = #f;
-  let arg-check-builder = make-builder(builder);
   for (param in paramlist.paramlist-required-vars)
     let (type, type-var) = param-type-and-var(param);
     add!(specializers, type);
     let name = param.param-name;
     let var = make-lexical-var(builder, name.token-symbol, source, type);
     add-binding(lexenv, name, var, type-var: type-var);
+    add!(vars, var);
     if (type-var)
       non-const-arg-types? := #t;
       add!(specializer-leaves, type-var);
-      let temp = make-lexical-var(builder, name.token-symbol, source, type);
-      add!(fixed-vars, temp);
-      let op = make-check-type-operation(arg-check-builder, temp, type-var);
-      build-assignment(arg-check-builder, specializer-lexenv.lexenv-policy,
-		       source, var, op);
     else
       add!(specializer-leaves, make-literal-constant(builder, type));
-      add!(fixed-vars, var);
     end;
   end;
-  let next-var
-    = begin
-	let next = paramlist.paramlist-next;
-	if (next)
-	  let var = make-lexical-var(builder, next.token-symbol, source,
-				     object-ctype());
-	  add-binding(lexenv, next, var);
-	  var;
-	end;
-      end;
+  let next = paramlist.paramlist-next;
+  let next-info-var
+    = next & make-lexical-var(builder, #"next-method-info", source,
+			      dylan-value(#"<list>"));
+  let rest = paramlist.paramlist-rest;
   let rest-var
-    = begin
-	let rest = paramlist.paramlist-rest;
-	if (rest)
-	  let var = make-lexical-var(builder, rest.token-symbol, source,
-				     object-ctype());
-	  add-binding(lexenv, rest, var);
-	  var;
-	end;
+    = if (rest)
+	let var = make-lexical-var(builder, rest.token-symbol, source,
+				   object-ctype());
+	add-binding(lexenv, rest, var);
+	var;
+      elseif (next & paramlist.paramlist-keys)
+	make-lexical-var(builder, #"rest", source, object-ctype());
       end;
-  let (keyword-defaulting-region, keyword-infos, keyword-vars)
+  if (next)
+    let var = make-lexical-var(builder, next.token-symbol, source,
+			       object-ctype());
+    let cookie-args = concatenate(list(next-info-var),
+				  as(<list>, vars),
+				  if (rest-var)
+				    list(rest-var);
+				  else
+				    #();
+				  end);
+    build-let(body-builder, lexenv.lexenv-policy, source, var,
+	      make-unknown-call
+		(builder,
+		 pair(dylan-defn-leaf(#"%make-next-method-cookie"),
+		      cookie-args)));
+    add!(vars, next-info-var);
+    add-binding(lexenv, next, var);
+  end;
+  if (rest-var)
+    add!(vars, rest-var);
+  end;
+  let keyword-infos
     = if (paramlist.paramlist-keys)
-	let keyword-defaulting-builder = make-builder(builder);
 	let infos = make(<stretchy-vector>);
-	let vars = make(<stretchy-vector>);
 	for (param in paramlist.paramlist-keys)
 	  let name = param.param-name;
 	  let (type, type-var) = param-type-and-var(param);
@@ -617,7 +630,7 @@ define method build-general-method
 				 dylan-value(#"<boolean>"));
 	    let rep = pick-representation(type, #"speed");
 	    if (rep.representation-has-bottom-value?)
-	      build-let(keyword-defaulting-builder, lexenv.lexenv-policy,
+	      build-let(body-builder, lexenv.lexenv-policy,
 			source, supplied?-var,
 			make-operation
 			  (builder, <fer-primitive>, list(pre-default),
@@ -626,42 +639,39 @@ define method build-general-method
 	      add!(vars, supplied?-var);
 	      info.key-supplied?-var := #t;
 	    end;
-	    build-if-body(keyword-defaulting-builder, lexenv.lexenv-policy,
+	    build-if-body(body-builder, lexenv.lexenv-policy,
 			  source, supplied?-var);
-	    build-assignment(keyword-defaulting-builder, lexenv.lexenv-policy,
+	    build-assignment(body-builder, lexenv.lexenv-policy,
 			     source, temp, pre-default);
-	    build-else(keyword-defaulting-builder, lexenv.lexenv-policy,
+	    build-else(body-builder, lexenv.lexenv-policy,
 		       source);
-	    fer-convert(keyword-defaulting-builder, param.param-default,
+	    fer-convert(body-builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
 			#"assignment", temp);
-	    end-body(keyword-defaulting-builder);
-	    build-let(keyword-defaulting-builder, lexenv.lexenv-policy, source,
+	    end-body(body-builder);
+	    build-let(body-builder, lexenv.lexenv-policy, source,
 		      var, temp);
 	  end;
 	  if (type-var)
 	    let checked = make-lexical-var(builder, name.token-symbol, source,
 					   object-ctype());
 	    build-assignment
-	      (keyword-defaulting-builder, lexenv.lexenv-policy, source,
+	      (body-builder, lexenv.lexenv-policy, source,
 	       checked, make-check-type-operation(builder, var, type-var));
 	    add-binding(lexenv, name, checked, type-var: type-var);
 	  else
 	    add-binding(lexenv, name, var);
 	  end;
 	end;
-	values(builder-result(keyword-defaulting-builder),
-	       as(<list>, infos),
-	       as(<list>, vars));
-      else
-	values(#f, #f, #f);
+	as(<list>, infos);
       end;
   
   let returns = meth.method-returns;
   let fixed-results = make(<stretchy-vector>);
-  let non-const-result-types? = #f;
+  let checked-fixed-results = make(<stretchy-vector>);
   let result-types = make(<stretchy-vector>);
   let result-type-leaves = make(<stretchy-vector>);
+  let non-const-result-types? = #f;
   let result-check-builder = make-builder(builder);
   for (param in returns.paramlist-required-vars)
     let (type, type-var) = param-type-and-var(param);
@@ -670,89 +680,118 @@ define method build-general-method
     if (type-var)
       non-const-result-types? := #t;
       add!(result-type-leaves, type-var);
-      let temp = make-local-var(builder, param.param-name.token-symbol, type);
-      let op = make-check-type-operation(result-check-builder, var, type-var);
-      build-assignment(result-check-builder, specializer-lexenv.lexenv-policy,
-		       source, temp, op);
+      let temp = make-local-var(result-check-builder,
+				param.param-name.token-symbol,
+				type);
       add!(fixed-results, temp);
+      let op = make-check-type-operation(result-check-builder, temp, type-var);
+      build-assignment(result-check-builder, specializer-lexenv.lexenv-policy,
+		       source, var, op);
     else
       add!(result-type-leaves, make-literal-constant(builder, type));
       add!(fixed-results, var);
     end;
+    add!(checked-fixed-results, var);
   end;
 
-  let rest-result
+  let (rest-type, rest-type-leaf, need-to-check-rest?)
     = if (returns.paramlist-rest)
-	make-local-var(builder, returns.paramlist-rest.token-symbol,
-		       object-ctype());
+	// ### This is wrong, but the parser doesn't give us the correct
+	// type.  We should be calling param-type-and-var with some param.
+	let (type, type-var) = object-ctype();
+
+	if (type-var)
+	  non-const-result-types? := #t;
+	  values(type, type-var, #t);
+	else
+	  values(type,
+		 make-literal-constant(builder, type),
+		 ~(type == object-ctype()));
+	end;
       end;
+
+  let name = if (name)
+	       name;
+	     elseif (meth.method-name)
+	       as(<string>, meth.method-name.token-symbol);
+	     else
+	       "Anonymous Method";
+	     end;
+  let function-region
+    = if (visibility == #"local" | non-const-arg-types?
+	    | non-const-result-types?)
+	build-lambda-body(builder, lexenv.lexenv-policy, source, name,
+			  as(<list>, vars));
+      else
+	build-function-body(builder, lexenv.lexenv-policy, source, name,
+			    as(<list>, vars));
+      end;
+
+  build-region(builder, builder-result(body-builder));
+
+  if (rest-type)
+    if (empty?(fixed-results) & ~need-to-check-rest?)
+      let cluster
+	= make-values-cluster(builder, returns.paramlist-rest.token-symbol,
+			      wild-ctype());
+      fer-convert-body(builder, meth.method-body, lexenv,
+		       #"assignment", cluster);
+      build-return(builder, lexenv.lexenv-policy, source, function-region,
+		   cluster);
+    else
+      let cluster = make-values-cluster(builder, #"results", wild-ctype());
+      fer-convert-body(builder, meth.method-body, lexenv,
+		       #"assignment", cluster);
+
+      let rest-result
+	= make-local-var(builder, returns.paramlist-rest.token-symbol,
+			 object-ctype());
+      build-assignment
+	(builder, lexenv.lexenv-policy, source,
+	 concatenate(as(<list>, fixed-results), list(rest-result)),
+	 make-operation(builder, <fer-primitive>, list(cluster),
+			name: #"canonicalize-results"));
+
+      build-region(builder, builder-result(result-check-builder));
+      if (need-to-check-rest?)
+	// ### Need to check the type of the rest results.
+	#f;
+      end;
+
+      let checked-cluster
+	= make-values-cluster(builder, #"results", wild-ctype());
+
+      let args = make(<stretchy-vector>);
+      add!(args, dylan-defn-leaf(builder, #"apply"));
+      add!(args, dylan-defn-leaf(builder, #"values"));
+      for (fixed in checked-fixed-results)
+	add!(args, fixed);
+      end;
+      add!(args, rest-result);
+      build-assignment(builder, lexenv.lexenv-policy, source, checked-cluster,
+		       make-unknown-call(builder, as(<list>, args)));
+      build-return(builder, lexenv.lexenv-policy, source,
+		   function-region, checked-cluster);
+    end;
+  else
+    fer-convert-body(builder, meth.method-body, lexenv,
+		     #"assignment", as(<list>, fixed-results));
+    build-region(builder, builder-result(result-check-builder));
+    build-return(builder, lexenv.lexenv-policy, source,
+		 function-region, as(<list>, checked-fixed-results));
+  end;
+
+  end-body(builder);
 
   let signature
     = make(<signature>,
 	   specializers: as(<list>, specializers),
-	   next: next-var & #t,
-	   rest-type: rest-var & object-ctype(),
+	   next: next & #t,
+	   rest-type: rest & object-ctype(),
 	   keys: keyword-infos & as(<list>, keyword-infos),
 	   all-keys?: paramlist.paramlist-all-keys?,
 	   returns: make-values-ctype(as(<list>, result-types),
-	   			      rest-result & object-ctype()));
-
-  let (results, results-temp)
-    = if (non-const-result-types?)
-	values(make-values-cluster(builder, #"results", wild-ctype()),
-	       make-values-cluster(builder, #"temps", wild-ctype()));
-      elseif (~rest-result)
-	values(as(<list>, fixed-results), #f);
-      elseif (empty?(fixed-results))
-	values(make-values-cluster(builder, #"results", wild-ctype()), #f);
-      else
-	values(make-values-cluster(builder, #"results", wild-ctype()),
-	       make-values-cluster(builder, #"temps", wild-ctype()));
-      end;
-  let (method-literal, method-region)
-    = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
-			      if (name)
-				name;
-			      elseif (meth.method-name)
-				as(<string>, meth.method-name.token-symbol);
-			      else
-				"Anonymous Method";
-			      end,
-			      signature, fixed-vars, next-var, rest-var,
-			      keyword-vars);
-  if (non-const-arg-types?)
-    build-region(builder, builder-result(arg-check-builder));
-  end;
-  if (keyword-defaulting-region)
-    build-region(builder, keyword-defaulting-region);
-  end;
-  fer-convert-body(builder, meth.method-body, lexenv,
-		   #"assignment", results-temp | results);
-
-  if (results-temp)
-    build-assignment
-      (builder, lexenv.lexenv-policy, source,
-       concatenate(as(<list>, fixed-results), list(rest-result)),
-       make-operation
-	 (builder, <fer-primitive>, list(results-temp),
-	  name: #"canonicalize-results"));
-    build-region(builder, builder-result(result-check-builder));
-    let args = make(<stretchy-vector>);
-    if (rest-result)
-      add!(args, dylan-defn-leaf(builder, #"apply"));
-    end;
-    add!(args, dylan-defn-leaf(builder, #"values"));
-    for (fixed in fixed-results)
-      add!(args, fixed);
-    end;
-    if (rest-result)
-      add!(args, rest-result);
-    end;
-    build-assignment(builder, lexenv.lexenv-policy, source, results,
-		     make-unknown-call(builder, as(<list>, args)));
-  end;
-  build-return(builder, lexenv.lexenv-policy, source, method-region, results);
-  end-body(builder);
+	   			      rest-type));
 
   if (non-const-arg-types? | non-const-result-types?)
     local
@@ -766,240 +805,14 @@ define method build-general-method
     build-call(#"%make-method",
 	       list(build-call(#"list", specializer-leaves),
 		    build-call(#"list", result-type-leaves),
-		    make-literal-constant
-		      (builder,
-		       if (rest-result)
-			 object-ctype();
-		       else
-			 make(<literal-false>);
-		       end),
-		    method-literal));
+		    rest-type-leaf
+		      | make-literal-constant(builder, make(<literal-false>)),
+		    make-function-literal(builder, #"local", signature,
+					  function-region)));
   else
-    method-literal;
+    make-method-literal(builder, visibility, signature, function-region);
   end;
 end;
-
-
-
-// build-hairy-method-body.
-
-define generic build-hairy-method-body
-    (builder :: <fer-builder>,
-     policy :: <policy>,
-     source :: <source-location>,
-     name :: <byte-string>,
-     signature :: <signature>,
-     fixed-vars :: <sequence>,
-     next-var :: union(<abstract-variable>, <false>),
-     rest-var :: union(<abstract-variable>, <false>),
-     keyword-vars :: union(<sequence>, <false>))
-    => (literal :: <method-literal>, region :: <method-region>);
-
-define method build-hairy-method-body
-    (builder :: <fer-builder>,
-     policy :: <policy>,
-     source :: <source-location>,
-     name :: <byte-string>,
-     signature :: <signature>,
-     fixed-vars :: <sequence>,
-     next-var :: <false>,
-     rest-var :: <false>,
-     keyword-vars :: <false>)
-    => (literal :: <method-literal>, region :: <method-region>);
-  let lambda = build-method-body(builder, policy, source, name,
-				 as(<list>, fixed-vars));
-  values(lambda, lambda);
-end;
-
-define method build-hairy-method-body
-    (builder :: <fer-builder>,
-     policy :: <policy>,
-     source :: <source-location>,
-     name :: <byte-string>,
-     signature :: <signature>,
-     fixed-vars :: <sequence>,
-     next-var :: union(<abstract-variable>, <false>),
-     rest-var :: union(<abstract-variable>, <false>),
-     keyword-vars :: union(<sequence>, <false>))
-    => (literal :: <method-literal>, region :: <method-region>);
-  let vars = map-as(<stretchy-vector>, identity, fixed-vars);
-  let body-builder = make-builder(builder);
-  if (next-var)
-    let var = make-lexical-var(body-builder, #"next-method-info", source,
-			       object-ctype());
-    add!(vars, var);
-    if (keyword-vars & ~rest-var)
-      rest-var := make-lexical-var(body-builder, #"rest", source,
-				   object-ctype());
-      signature
-	:= make(<signature>,
-		specializers: signature.specializers,
-		next: #t,
-		rest-type: object-ctype(),
-		keys: signature.key-infos,
-		all-keys: signature.all-keys?,
-		returns: signature.returns);
-    end;
-  end;
-  if (rest-var)
-    add!(vars, rest-var);
-  end;
-  if (next-var)
-    let ops = make(<stretchy-vector>);
-    if (rest-var)
-      add!(ops, dylan-defn-leaf(body-builder, #"apply"));
-    end;
-    add!(ops, dylan-defn-leaf(body-builder, #"%make-next-method"));
-    for (var in fixed-vars) add!(ops, var) end;
-    if (rest-var)
-      add!(ops, rest-var);
-    end;
-    build-let(body-builder, policy, source, next-var,
-	      make-unknown-call(body-builder, as(<list>, ops)));
-  end;
-  if (keyword-vars)
-    for (var in keyword-vars)
-      add!(vars, var);
-    end;
-  end;
-  let method-leaf = build-method-body(builder, policy, source, name,
-				      as(<list>, vars));
-  build-region(builder, builder-result(body-builder));
-
-  values(make-hairy-method-literal(builder, policy, source,
-				   signature, method-leaf),
-	 method-leaf);
-end;
-
-/*
-
-define method build-hairy-method-more-arg-entry (leaf)
-  let vars = make(<stretchy-vector>);
-  let args = make(<stretchy-vector>);
-  add!(args, leaf.hairy-method-main-entry);
-  let body-builder = make-builder(builder);
-  for (main-var in leaf.hairy-method-required-vars)
-    let var = copy-variable(main-var);
-    add!(vars, var);
-    add!(args, var);
-  end;
-  let next-var = if (leaf.hairy-method-next-var)
-		   let var = copy-variable(leaf.hairy-method-next-var);
-		   add!(args, var);
-		   var;
-		 else
-		   make-lexical-var(builder, #"next-method-info", source,
-				    object-ctype());
-		 end;
-  add!(vars, next-var);
-  if (leaf.hairy-method-rest-var | leaf.hairy-method-keywords)
-    let context = make-lexical-var(body-builder, #"context", source,
-				   object-ctype());
-    let count = make-lexical-var(body-builder, #"count", source,
-				 object-ctype());
-    add!(vars, context);
-    add!(vars, count);
-    if (leaf.hairy-method-rest-var)
-      add!(args, context);
-      add!(args, count);
-    end;
-    if (leaf.hairy-method-keywords)
-      build-keyword-dispatch(body-builder, policy, source, args,
-			     leaf.hairy-method-keywords,
-			     next-var, context, count);
-    end;
-  end;
-  let cluster = make-values-cluster(builder, #"results", wild-ctype());
-  let method-leaf = build-method-body(builder, policy, source,
-				      as(<list>, vars), cluster);
-  build-region(builder, builder-result(body-builder));
-  build-assignment(builder, policy, source, cluster,
-		   make-unknown-call(builder, as(<list>, args)));
-  end-body(builder);
-  method-leaf;
-end;
-
-
-define method build-keyword-dispatch(builder, policy, source, args, keywords,
-				     next-var, context-var, count-var)
-  let vars = make(<stretchy-vector>);
-  let ops = make(<stretchy-vector>);
-  add!(ops, dylan-defn-leaf(builder, #"%extract-keywords"));
-  add!(ops, context-var);
-  add!(ops, count-var);
-  add!(ops, next-var);
-  for (info in keywords)
-    let var = make-local-var(builder, info.keyinfo-symbol, object-ctype());
-    add!(vars, var);
-    add!(args, var);
-    add!(ops,
-	 make-literal-constant
-	   (builder, make(<literal-symbol>, value: info.keyinfo-symbol)));
-    add!(ops, make-literal-constant(builder, info.keyinfo-default));
-  end;
-  build-assignment(builder, policy, source, as(<list>, vars),
-		   make-unknown-call(builder, as(<list>, ops)));
-end;
-
-define method build-hairy-method-general-entry (leaf)
-  let context-var = make-lexical-var(builder, #"context", source,
-				     object-ctype());
-  let count-var = make-lexical-var(builder, #"count", source, object-ctype());
-  let args = make(<stretchy-vector>);
-  add!(args, leaf.hairy-method-more-arg-entry);
-  let body-builder = make-builder(builder);
-  let fixed-vars = leaf.hairy-method-required-vars;
-  let nfixed = fixed-vars.size;
-  let more? = (leaf.hairy-method-rest-var | leaf.hairy-method-keywords) & #t;
-  begin
-    let ops = list(dylan-defn-leaf(body-builder, #"%check-arg-count"),
-		   count-var,
-		   make-literal-constant
-		     (body-builder, make(<literal-fixed-integer>, value: nfixed)),
-		   make-literal-constant
-		     (body-builder,
-		      if (more?)
-			make(<literal-true>);
-		      else
-			make(<literal-false>);
-		      end));
-    build-assignment(body-builder, policy, source, #(),
-		     make-unknown-call(body-builder, ops));
-  end;
-  for (var in fixed-vars, index from 0)
-    let temp = make-lexical-var(builder, #"temp", source, object-ctype());
-    add!(args, temp);
-    let ops = list(dylan-defn-leaf(body-builder, #"%arg"),
-		   context-var,
-		   make-literal-constant
-		     (body-builder, make(<literal-fixed-integer>, value: index)));
-    build-let(body-builder, policy, source, temp,
-	      make-unknown-call(body-builder, ops));
-  end;
-  add!(args, make-literal-constant(body-builder, make(<literal-false>)));
-  if (more?)
-    let context = make-local-var(body-builder, #"context", object-ctype());
-    let count = make-local-var(body-builder, #"count", object-ctype());
-    let ops = list(dylan-defn-leaf(body-builder, #"%more-arg-context"),
-		   context-var, count-var,
-		   make-literal-constant
-		     (body-builder, make(<literal-fixed-integer>, value: nfixed)));
-    build-assignment(body-builder, policy, source, list(context, count),
-		     make-unknown-call(body-builder, ops));
-    add!(args, context);
-    add!(args, count);
-  end;
-  let cluster = make-values-cluster(builder, #"results", wild-ctype());
-  let method-leaf = build-method-body(builder, policy, source,
-				      list(context-var, count-var),
-				      cluster);
-  build-region(builder, builder-result(body-builder));
-  build-assignment(builder, policy, source, cluster,
-		   make-unknown-call(builder, as(<list>, args)));
-  end-body(builder);
-end;
-
-*/
 
 
 // Random utilities.

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.35 1995/05/05 18:53:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.36 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -233,15 +233,6 @@ define method new-root (init-value :: union(<false>, <ct-value>),
   format-to-string("roots[%d]", index);
 end;
 
-define method debug-name-string (name :: <basic-name>) => res :: <string>;
-  as(<string>, name.name-symbol);
-end;
-
-define method debug-name-string (name :: <type-cell-name>) => res :: <string>;
-  format-to-string("type cell for %s", name.type-cell-name-base.name-symbol);
-end;
-
-
 define method cluster-names (depth :: <fixed-integer>)
     => (bottom-name :: <string>, top-name :: <string>);
   if (zero?(depth))
@@ -361,30 +352,29 @@ end;
 
 
 
-// Lambda stuff.
+// function region stuff.
 
-define class <lambda-info> (<object>)
-  slot lambda-info-lambda :: <lambda>,
-    required-init-keyword: lambda:;
-  slot lambda-info-main-entry-name :: <byte-string>,
-    required-init-keyword: main-entry-name:;
-  slot lambda-info-prototype :: <byte-string>,
+define class <function-info> (<object>)
+  slot function-info-name :: <byte-string>,
+    required-init-keyword: name:;
+  slot function-info-prototype :: <byte-string>,
     required-init-keyword: prototype:;
-  slot lambda-info-argument-representations :: <list>,
+  slot function-info-argument-representations :: <list>,
     required-init-keyword: argument-reps:;
-  slot lambda-info-result-representation
+  slot function-info-result-representation
     :: type-or(<representation>, <list>,
 	       one-of(#"doesn't-return", #"cluster", #"void")),
     required-init-keyword: result-rep:;
 end;
 
-define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
-    => res :: <lambda-info>;
+define method make-info-for
+    (function :: <fer-function-region>, output-info :: <output-info>)
+    => res :: <function-info>;
   // Compute the prototype.
 
   let stream = make(<byte-string-output-stream>);
   let name = new-global(output-info);
-  let result-type = lambda.result-type;
+  let result-type = function.result-type;
   let result-rep
     = if (result-type == empty-ctype())
 	write("void", stream);
@@ -415,7 +405,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 		    positionals,
 		    make(<range>, from: 0));
 	    indent(header, -$indentation-step);
-	    format(header, "};\n");
+	    format(header, "};\n\n");
 	    format(stream, "struct %s_results", name);
 	    reps;
 	  end;
@@ -427,9 +417,9 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 
   format(stream, " %s(descriptor_t *orig_sp", name);
   let argument-reps = #();
-  for (arg-type in lambda.argument-types,
+  for (arg-type in function.argument-types,
        index from 0,
-       var = lambda.prologue.dependents.dependent.defines
+       var = function.prologue.dependents.dependent.defines
 	 then var & var.definer-next)
     let rep = pick-representation(arg-type, #"speed");
     format(stream, ", %s A%d", rep.representation-c-type, index);
@@ -443,9 +433,8 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
   end;
   write(')', stream);
 
-  make(<lambda-info>,
-       lambda: lambda,
-       main-entry-name: name,
+  make(<function-info>,
+       name: name,
        prototype: stream.string-output-stream-string,
        argument-reps: reverse!(argument-reps),
        result-rep: result-rep);
@@ -487,18 +476,18 @@ define method emit-bindings-definition-gunk
     if (init-value)
       let (init-value-expr, init-value-rep)
 	= c-expr-and-rep(init-value, rep, output-info);
-      format(stream, "= %s;\t/* %s */\n",
+      format(stream, "= %s;\t/* %s */\n\n",
 	     conversion-expr(rep, init-value-expr, init-value-rep,
 			     output-info),
-	     debug-name-string(defn.defn-name));
+	     defn.defn-name);
     else
-      format(stream, ";\t/* %s */\nstatic int %s_initialized = FALSE;\n",
-	     debug-name-string(defn.defn-name),
+      format(stream, ";\t/* %s */\nstatic int %s_initialized = FALSE;\n\n",
+	     defn.defn-name,
 	     info.backend-var-info-name);
     end;
   else
-    format(stream, "/* %s allocated as %s */\n",
-	   debug-name-string(defn.defn-name),
+    format(stream, "/* %s allocated as %s */\n\n",
+	   defn.defn-name,
 	   info.backend-var-info-name);
   end;
 end;
@@ -535,29 +524,32 @@ end;
 
 // Control flow emitters
 
-define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
+define method emit-function
+    (function :: <fer-function-region>, output-info :: <output-info>)
     => ();
   output-info.output-info-next-block := 0;
   output-info.output-info-next-local := 0;
   output-info.output-info-cur-stack-depth := 0;
   assert(output-info.output-info-local-vars.size == 0);
 
-  let lambda-info = get-info-for(lambda, output-info);
-  let prototype = lambda-info.lambda-info-prototype;
-  format(output-info.output-info-header-stream, "static %s;\n", prototype);
+  let function-info = get-info-for(function, output-info);
+  let prototype = function-info.function-info-prototype;
+  format(output-info.output-info-header-stream,
+	 "/* %s */\nstatic %s;\n\n",
+	 function.name, prototype);
 
   let stream = output-info.output-info-body-stream;
-  format(stream, "/* %s */\n", lambda.name);
+  format(stream, "/* %s */\n", function.name);
   format(stream, "static %s\n{\n", prototype);
 
-  let max-depth = analize-stack-usage(lambda);
+  let max-depth = analize-stack-usage(function);
   for (i from 0 below max-depth)
     format(output-info.output-info-vars-stream,
 	   "descriptor_t *cluster_%d_top;\n",
 	   i);
   end;
 
-  emit-region(lambda.body, output-info);
+  emit-region(function.body, output-info);
 
   write(output-info.output-info-vars-stream.string-output-stream-string,
 	stream);
@@ -682,9 +674,9 @@ end;
 define method emit-region (return :: <return>, output-info :: <output-info>)
     => ();
   /* ### emit-joins(region.join-region, output-info); */
-  let lambda :: <lambda> = return.block-of;
-  let lambda-info = get-info-for(lambda, output-info);
-  let result-rep = lambda-info.lambda-info-result-representation;
+  let function :: <fer-function-region> = return.block-of;
+  let function-info = get-info-for(function, output-info);
+  let result-rep = function-info.function-info-result-representation;
   emit-return(return, result-rep, output-info);
 end;
 
@@ -692,7 +684,7 @@ define method emit-return
     (return :: <return>, result-rep == #"doesn't-return",
      output-info :: <output-info>)
     => ();
-  error("have a return region for lambda that doesn't return?");
+  error("have a return region for a function that doesn't return?");
 end;
 
 define method emit-return
@@ -745,9 +737,9 @@ define method emit-return
     => ();
   let stream = output-info.output-info-guts-stream;  
   let temp = new-local(output-info);
-  let lambda = return.block-of;
-  let lambda-info = get-info-for(lambda, output-info);
-  let name = lambda-info.lambda-info-main-entry-name;
+  let function = return.block-of;
+  let function-info = get-info-for(function, output-info);
+  let name = function-info.function-info-name;
   format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
 	 name, temp);
   for (rep in result-reps,
@@ -897,7 +889,6 @@ define method emit-assignment
     => ();
   let setup-stream = make(<byte-string-output-stream>);
   let function = call.depends-on.source-exp;
-  let func = ref-leaf($heap-rep, function, output-info);
   
   let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
@@ -906,60 +897,83 @@ define method emit-assignment
     format(setup-stream, "%s[%d] = %s;\n", args, count,
 	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
   finally
+    let (entry, name) = general-entry-expr-and-name(function, output-info);
+    let func = ref-leaf($heap-rep, function, output-info);
     spew-pending-defines(output-info);
     let stream = output-info.output-info-guts-stream;
     write(setup-stream.string-output-stream-string, stream);
-    if (results)
-      format(stream, "%s = CALL(%s, %s, %d);\n", sp, func, args, count);
-      deliver-cluster(results, #f, args, sp, call.derived-type, output-info);
-    else
-      format(stream, "CALL(%s, %s, %d);\n", func, args, count);
+    if (name)
+      format(stream, "/* %s */\n", name);
     end;
+    if (results)
+      format(stream, "%s = ", sp);
+    end;
+    format(stream, "%s(%s + %d, %s, %d);\n", entry, args, count, func, count);
+    deliver-cluster(results, #f, args, sp, call.derived-type, output-info);
   end;
 end;
+
+define method general-entry-expr-and-name
+    (func :: <leaf>, output-info :: <output-info>)
+    => (expr :: <string>, name :: false-or(<string>));
+  spew-pending-defines(output-info);
+  values(format-to-string("GENERAL_ENTRY(%s)",
+			  ref-leaf($heap-rep, func, output-info)),
+	 #f);
+end;
+
+define method general-entry-expr-and-name
+    (func :: <function-literal>, output-info :: <output-info>)
+    => (expr :: <string>, name :: <string>);
+  let general-entry = func.general-entry;
+  let entry-info = get-info-for(general-entry, output-info);
+  values(entry-info.function-info-name,
+	 general-entry.name);
+end;
+
+define method general-entry-expr-and-name
+    (func :: <definition-constant-leaf>, output-info :: <output-info>,
+     #next next-method)
+    => (expr :: <string>, name :: <string>);
+  let defn = func.const-defn;
+  let (expr, name) = general-entry-expr-and-name(defn, output-info);
+  values(expr | next-method(),
+	 name | format-to-string("%s", defn.defn-name));
+end;
+
+define method general-entry-expr-and-name
+    (defn :: <abstract-constant-definition>, output-info :: <output-info>)
+    => (expr :: false-or(<string>), name :: false-or(<string>));
+  values(#f, #f);
+end;
+
+define method general-entry-expr-and-name
+    (defn :: <abstract-method-definition>, output-info :: <output-info>)
+    => (expr :: false-or(<string>), name :: false-or(<string>));
+  let leaf = defn.method-defn-leaf;
+  if (leaf)
+    general-entry-expr-and-name(leaf, output-info);
+  else
+    values(#f, #f);
+  end;
+end;
+
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <known-call>,
      output-info :: <output-info>)
     => ();
-  emit-known-call(results, call.depends-on.source-exp,
-		  call.depends-on.dependent-next, output-info);
-end;
 
-define method emit-known-call
-    (results :: false-or(<definition-site-variable>),
-     function :: <definition-constant-leaf>,
-     arguments :: false-or(<dependency>), output-info :: <output-info>)
-  emit-known-call(results, function.const-defn, arguments, output-info);
-end;
+  let function = call.depends-on.source-exp;
+  let main-entry = find-main-entry(function);
 
-define method emit-known-call
-    (results :: false-or(<definition-site-variable>),
-     function :: <abstract-method-definition>,
-     arguments :: false-or(<dependency>), output-info :: <output-info>)
-    => ();
-  emit-known-call(results, function.method-defn-leaf, arguments, output-info);
-end;
-
-define method emit-known-call
-    (results :: false-or(<definition-site-variable>),
-     function :: <hairy-method-literal>,
-     arguments :: false-or(<dependency>), output-info :: <output-info>)
-    => ();
-  emit-known-call(results, function.main-entry, arguments, output-info);
-end;
-
-define method emit-known-call
-    (results :: false-or(<definition-site-variable>), function :: <lambda>,
-     arguments :: false-or(<dependency>), output-info :: <output-info>)
-    => ();
-  let func-info = get-info-for(function, output-info);
+  let func-info = get-info-for(main-entry, output-info);
   let stream = make(<byte-string-output-stream>);
-  let name = func-info.lambda-info-main-entry-name;
+  let c-name = func-info.function-info-name;
   let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
-  format(stream, "%s(%s", name, sp);
-  for (arg-dep = arguments then arg-dep.dependent-next,
-       rep in func-info.lambda-info-argument-representations)
+  format(stream, "%s(%s", c-name, sp);
+  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+       rep in func-info.function-info-argument-representations)
     unless (arg-dep)
       error("Not enough arguments in a known call?");
     end;
@@ -972,7 +986,8 @@ define method emit-known-call
   end;
   write(')', stream);
   let call = string-output-stream-string(stream);
-  let result-rep = func-info.lambda-info-result-representation;
+  format(output-info.output-info-guts-stream, "/* %s */\n", main-entry.name);
+  let result-rep = func-info.function-info-result-representation;
   if (results == #f | result-rep == #"void")
     format(output-info.output-info-guts-stream, "%s;\n", call);
     deliver-results(results, #[], #f, output-info);
@@ -986,16 +1001,13 @@ define method emit-known-call
   elseif (instance?(result-rep, <list>))
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
-	   name, temp);
+	   c-name, temp);
     format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
-    let result-exprs = make(<stretchy-vector>);
-    for (dep = function.depends-on then dep.dependent-next,
-	 index from 0,
-	 while: dep)
-      let rep = variable-representation(dep.source-exp, output-info);
-      add!(result-exprs,
-	   pair(format-to-string("%s.R%d", temp, index),
-		rep));
+    let result-exprs = make(<vector>, size: result-rep.size);
+    for (rep in result-rep,
+	 index from 0)
+      result-exprs[index]
+	:= pair(format-to-string("%s.R%d", temp, index), rep);
     end;
     deliver-results(results, result-exprs, #f, output-info);
   else
@@ -1003,26 +1015,44 @@ define method emit-known-call
   end;
 end;
 
+define method find-main-entry
+    (func :: <function-literal>) => res :: <fer-function-region>;
+  func.main-entry;
+end;
+
+define method find-main-entry
+    (func :: <definition-constant-leaf>) => res :: <fer-function-region>;
+  find-main-entry(func.const-defn);
+end;
+
+define method find-main-entry
+    (defn :: <abstract-method-definition>) => res :: <fer-function-region>;
+  find-main-entry(defn.method-defn-leaf);
+end;
+
+
+
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <mv-call>, 
      output-info :: <output-info>)
     => ();
-  let stream = make(<byte-string-output-stream>);
-  let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
+  let stream = output-info.output-info-guts-stream;
+  let function = call.depends-on.source-exp;
+  let (entry, name) = general-entry-expr-and-name(function, output-info);
+  let func = ref-leaf($heap-rep, function, output-info);
   spew-pending-defines(output-info);
   let cluster = call.depends-on.dependent-next.source-exp;
   let (bottom-name, top-name) = consume-cluster(cluster, output-info);
-  if (results)
-    format(output-info.output-info-guts-stream,
-	   "%s = CALL(%s, %s, %s - %s);\n",
-	   top-name, func, bottom-name, top-name, bottom-name);
-    deliver-cluster(results, #f, bottom-name, top-name, call.derived-type,
-		    output-info);
-  else
-    format(output-info.output-info-guts-stream,
-	   "CALL(%s, %s, %s - %s);\n",
-	   func, bottom-name, top-name, bottom-name);
+  if (name)
+    format(stream, "/* %s */\n", name);
   end;
+  if (results)
+    format(stream, "%s = ", top-name);
+  end;
+  format(stream, "%s(%s, %s, %s - %s);\n",
+	 entry, top-name, func, top-name, bottom-name);
+  deliver-cluster(results, #f, bottom-name, top-name, call.derived-type,
+		  output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -1036,13 +1066,13 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <prologue>,
 			       output-info :: <output-info>)
     => ();
-  let lambda-info = get-info-for(expr.lambda, output-info);
+  let function-info = get-info-for(expr.function, output-info);
   deliver-results(defines,
 		  map(method (rep, index)
 			pair(format-to-string("A%d", index),
 			     rep);
 		      end,
-		      lambda-info.lambda-info-argument-representations,
+		      function-info.function-info-argument-representations,
 		      make(<range>, from: 0)),
 		  #f, output-info);
 end;
@@ -1080,10 +1110,10 @@ define method emit-assignment
      call :: <self-tail-call>, output-info :: <output-info>)
     => ();
   spew-pending-defines(output-info);
-  let lambda = call.self-tail-call-of;
-  for (param = lambda.prologue.dependents.dependent.defines
+  let function = call.self-tail-call-of;
+  for (param = function.prologue.dependents.dependent.defines
 	 then param.definer-next,
-       closure-var = lambda.environment.closure-vars
+       closure-var = function.environment.closure-vars
 	 then closure-var.closure-next,
        while: closure-var & param)
   finally
@@ -1168,39 +1198,42 @@ define method deliver-cluster
      last-gets-rest? :: <boolean>, src-start :: <string>, src-end :: <string>,
      type :: <values-ctype>, output-info :: <output-info>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  if (instance?(defines.var-info, <values-cluster-info>))
-    let (dst-start, dst-end) = produce-cluster(defines, output-info);
-    unless (src-start = dst-start)
-      format(stream, "%s = %s;\n", dst-end, dst-start);
-      format(stream, "while (%s < %s) {\n", src-start, src-end);
-      format(stream, "    *%s++ = *%s++;\n", dst-end, src-start);
-    end;
-  else
-    let count = for (var = defines then var.definer-next,
-		     index from 0,
-		     while: var)
-		finally
-		  if (last-gets-rest?)
-		    index - 1;
-		  else
-		    index;
+  if (defines)
+    let stream = output-info.output-info-guts-stream;
+    if (instance?(defines.var-info, <values-cluster-info>))
+      let (dst-start, dst-end) = produce-cluster(defines, output-info);
+      unless (src-start = dst-start)
+	format(stream, "%s = %s;\n", dst-end, dst-start);
+	format(stream, "while (%s < %s) {\n", src-start, src-end);
+	format(stream, "    *%s++ = *%s++;\n", dst-end, src-start);
+      end;
+    else
+      let count = for (var = defines then var.definer-next,
+		       index from 0,
+		       while: var)
+		  finally
+		    if (last-gets-rest?)
+		      index - 1;
+		    else
+		      index;
+		    end;
 		  end;
-		end;
-    unless (count <= type.min-values)
-      format(stream, "pad_cluster(%s, %s, %d);\n", src-start, src-end, count);
-    end;
-    for (var = defines then var.definer-next,
-	 index from 0,
-	 while: var)
-      let source
-	= if (index == count)
-	    format-to-string("make_rest_arg(%s + %d, %s)",
-			     src-start, index, src-end);
-	  else
-	    format-to-string("%s[%d]", src-start, index);
-	  end;
-      deliver-single-result(var, source, $general-rep, #t, output-info);
+      unless (count <= type.min-values)
+	format(stream, "pad_cluster(%s, %s, %d);\n",
+	       src-start, src-end, count);
+      end;
+      for (var = defines then var.definer-next,
+	   index from 0,
+	   while: var)
+	let source
+	  = if (index == count)
+	      format-to-string("make_rest_arg(%s + %d, %s)",
+			       src-start, index, src-end);
+	    else
+	      format-to-string("%s[%d]", src-start, index);
+	    end;
+	deliver-single-result(var, source, $general-rep, #t, output-info);
+      end;
     end;
   end;
 end;
@@ -1303,6 +1336,44 @@ define method default-primitive-emitter
   write(");\n", stream);
   deliver-results(defines, #[], #f, output-info);
 end;
+
+
+define-primitive
+  (#"extract-args",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let nargs = extract-operands(operation, output-info, *long-rep*);
+     let expr = format-to-string("((void *)(orig_sp - %s))", nargs);
+     deliver-results(results, vector(pair(expr, *ptr-rep*)), #f, output-info);
+   end);
+
+define-primitive
+  (#"extract-arg",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let (args, index) = extract-operands(operation, output-info,
+					  *ptr-rep*, *long-rep*);
+     let expr = format-to-string("(((descriptor_t *)%s)[%s])", args, index);
+     deliver-results(results, vector(pair(expr, $general-rep)), #t,
+		     output-info);
+   end);
+
+define-primitive
+  (#"pop-args",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let args = extract-operands(operation, output-info, *ptr-rep*);
+     spew-pending-defines(output-info);
+     format(output-info.output-info-guts-stream, "orig_sp = %s;\n", args);
+     deliver-results(results, #[], #f, output-info);
+   end);
+
 
 define-primitive
   (#"canonicalize-results",

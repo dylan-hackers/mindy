@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.15 1995/05/05 14:47:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.16 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,6 +33,11 @@ define class <generic-definition> (<function-definition>)
   // Information about sealed methods of this GF.  This is filled in on demand.
   // Use generic-defn-seal-info instead.  See "method-tree".
   slot %generic-defn-seal-info :: <list>;
+  //
+  // The leaf for the discriminator function, or #f if the generic function
+  // isn't sufficiently static to be able to build one.
+  slot generic-defn-discriminator-leaf :: union(<function-literal>, <false>),
+    init-value: #f;
 end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
@@ -345,10 +350,9 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();
   let defn = tlf.tlf-defn;
   let lexenv = make(<lexenv>);
-  let leaf = build-general-method
-    (builder, tlf.method-tlf-parse,
-     format-to-string("Define Method %s", defn.defn-name),
-     lexenv, lexenv);
+  let name = format-to-string("Define Method %s", defn.defn-name);
+  let leaf = fer-convert-method(builder, tlf.method-tlf-parse, name,
+				#"global", lexenv, lexenv);
   let literal-method? = instance?(leaf, <method-literal>);
   defn.method-defn-leaf := literal-method? & leaf;
   if (defn.function-defn-hairy? | ~literal-method?)
@@ -403,36 +407,38 @@ define method maybe-make-discriminator
 			       specializer);
       add!(vars, var);
     end;
+    let nspecs = vars.size;
     let rest-type = sig.rest-type | (sig.key-infos & object-ctype());
-    let rest-var = rest-type & make-local-var(builder, #"rest", rest-type);
+    if (rest-type)
+      let var = make-local-var(builder, #"rest", rest-type);
+      add!(vars, var);
+    end;
 
     let discriminator-sig
       = make(<signature>,
 	     specializers: sig.specializers,
 	     rest-type: rest-type,
 	     key-infos: sig.key-infos & #(),
-	     all-keys: sig.key-infos ~= #f,
+	     all-keys: sig.key-infos & #t,
 	     returns: sig.returns);
-    let (leaf, lambda)
-      = build-hairy-method-body(builder, policy, source,
-				format-to-string("Discriminator for %s",
-						 gf.defn-name),
-				sig, vars,
-				#f, rest-var, sig.key-infos & #());
-    let nspecs = vars.size;
-    if (rest-var)
-      add!(vars, rest-var);
-    end;
+
+    let region = build-function-body(builder, policy, source,
+				     format-to-string("Discriminator for %s",
+						      gf.defn-name),
+				     as(<list>, vars));
     let results = make-values-cluster(builder, #"results", wild-ctype());
     build-discriminator-tree
-      (builder, policy, source, as(<list>, vars), rest-var ~= #f, results,
+      (builder, policy, source, as(<list>, vars), rest-type & #t, results,
        as(<list>, make(<range>, from: 0, below: nspecs)),
        sort-methods(gf.generic-defn-methods,
 		    make(<vector>, size: nspecs, fill: #f),
 		    empty-ctype()),
        gf);
-    build-return(builder, policy, source, lambda, results);
+    build-return(builder, policy, source, region, results);
     end-body(builder);
+
+    gf.generic-defn-discriminator-leaf
+      := make-function-literal(builder, #"global", discriminator-sig, region);
   end;
 end;
 

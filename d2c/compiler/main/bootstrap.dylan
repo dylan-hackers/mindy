@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.13 1995/05/04 09:26:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.14 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -368,6 +368,10 @@ define class <value-cell> (<object>)
   slot value, required-init-keyword: value:
 end;
 
+define functional class <raw-pointer> (<object>)
+  slot value :: <raw-pointer>, required-init-keyword: value:;
+end;
+
 
 // Functions that need to be defined.
 
@@ -385,7 +389,15 @@ define open generic add-method (gf :: <generic-function>, meth :: <method>)
 define open generic check-type (value, type :: <type>) => value;
 define open generic error (msg, #rest args) => res :: type-or();
 define open generic make (class :: <class>, #key) => thing;
+define open generic \== (x, y) => res :: <boolean>;
+define open generic \= (x, y) => res :: <boolean>;
 define open generic \< (x, y) => res :: <boolean>;
+define open generic \+ (x :: <number>, y :: <number>) => res :: <number>;
+define open generic \- (x :: <number>, y :: <number>) => res :: <number>;
+define open generic even? (x :: <integer>) => res :: <boolean>;
+define open generic odd? (x :: <integer>) => res :: <boolean>;
+define open generic %closure-ref
+    (closure :: <method>, index :: <fixed-integer>) => res :: <object>;
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;
@@ -397,3 +409,19 @@ define inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <boolean>;
   %%primitive fixnum-< (x, y);
 end;
+
+define inline method \== (x :: <fixed-integer>, y :: <fixed-integer>)
+    => res :: <boolean>;
+  %%primitive fixnum-= (x, y);
+end;
+
+define inline method \+ (x :: <fixed-integer>, y :: <fixed-integer>)
+    => res :: <fixed-integer>;
+  %%primitive fixnum-+ (x, y);
+end;
+
+define inline method \- (x :: <fixed-integer>, y :: <fixed-integer>)
+    => res :: <fixed-integer>;
+  %%primitive fixnum-- (x, y);
+end;
+

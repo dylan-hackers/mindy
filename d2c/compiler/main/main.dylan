@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.10 1995/05/04 04:36:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.11 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,8 +38,8 @@ define method compile (#rest files) => res :: <component>;
   let component = make(<fer-component>);
   let builder = make-builder(component);
   let init-function
-    = build-method-body(builder, $Default-Policy, make(<source-location>),
-			"Top Level Initializations", #());
+    = build-function-body(builder, $Default-Policy, make(<source-location>),
+			  "Top Level Initializations", #());
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
   build-return(builder, $Default-Policy, make(<source-location>),
 	       init-function, #());
@@ -49,7 +49,7 @@ define method compile (#rest files) => res :: <component>;
   format(*debug-output*, "Emitting C code.\n");
   let output-info = make(<output-info>);
   do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
-  do(rcurry(emit-lambda, output-info), component.all-methods);
+  do(rcurry(emit-function, output-info), component.all-function-regions);
   output-info-results(output-info);
   component;
 end;

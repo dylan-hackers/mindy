@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.11 1995/05/02 03:56:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.12 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,7 +18,7 @@ region [source-location-mixin] {abstract}
         if-region [dependent-mixin]
 	body-region {abstract}
 	    block-region [block-region-mixin, queueable-mixin, annotatable]
-	    method-region
+	    function-region
 	    loop-region
 
     exit
@@ -119,12 +119,13 @@ define class <block-region>
     (<body-region>, <block-region-mixin>, <queueable-mixin>, <annotatable>)
 end;
 
-// A <method-region>'s Parent slot is the <component>, but conceptually it can
-// have multiple parent regions (call sites).  The phi function joins the
-// values coming from the different callers.  The exits to a <method-region>
-// must all be <return>s, and in fact indicate the return values.
+// A <function-region>'s Parent slot is the <component>, but
+// conceptually it can have multiple parent regions (call sites).  The
+// phi function joins the values coming from the different callers.
+// The exits to a <function-region> must all be <return>s, and in fact
+// indicate the return values.
 //
-define class <method-region> (<block-region>)
+define class <function-region> (<block-region>)
 end;
 
 // A <loop-region> repeats execution of the body indefinitely (terminate by
@@ -166,6 +167,7 @@ define class <component> (<block-region-mixin>)
   // Queue of things that need to be updated (threaded by queue-next.)
   slot reoptimize-queue :: false-or(<queueable-mixin>), init-value: #f;
   //
-  // List of all methods.
-  slot all-methods :: <list>, init-value: #();
+  // List of all the <function-regions>s in this component.
+  slot all-function-regions :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>);
 end;

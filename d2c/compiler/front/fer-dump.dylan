@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.24 1995/05/05 14:49:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.25 1995/05/08 11:43:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,12 +64,12 @@ define method dump (thing :: <object>, stream :: <stream>) => ();
 end;
 
 define method dump (component :: <component>, stream :: <stream>) => ();
-  for (meth in component.all-methods,
+  for (func in component.all-function-regions,
        first? = #t then #f)
     unless (first?)
       pprint-newline(#"mandatory", stream);
     end;
-    dump(meth, stream);
+    dump(func, stream);
   end;
 end;
 
@@ -99,7 +99,7 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
     (stream,
      body: method (stream)
 	     format(stream, "IF[%d] (", region.id);
-	     dump-expr(region.depends-on.source-exp, stream);
+	     dump(region.depends-on.source-exp, stream);
 	     write(')', stream);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
@@ -153,15 +153,55 @@ define method dump (region :: <exit>, stream :: <stream>) => ();
 end;
 
 define method dump (region :: <return>, stream :: <stream>) => ();
-  let target = region.block-of;
   format(stream, "RETURN[%d]", region.id);
   dump-operands(region.depends-on, stream);
 end;
 
 define method dump (region :: <pitcher>, stream :: <stream>) => ();
   format(stream, "PITCHER[%d](", region.id);
-  dump-expr(region.depends-on.source-exp, stream);
+  dump(region.depends-on.source-exp, stream);
   format(stream, ") to BLOCK[%d]", region.block-of.id);
+end;
+
+define method dump
+    (func :: <fer-function-region>, stream :: <stream>) => ();
+  pprint-logical-block
+    (stream,
+     body:
+       method (stream)
+	 pprint-logical-block
+	   (stream,
+	    body:
+	      method (stream)
+		format(stream, "%= [%d]", func.name, func.id);
+		write(' ', stream);
+		pprint-indent(#"block", 4, stream);
+		pprint-newline(#"fill", stream);
+		pprint-logical-block
+		  (stream,
+		   prefix: "(",
+		   body:
+		     method (stream)
+		       for (var = func.prologue.dependents.dependent.defines
+			      then var.definer-next,
+			    first? = #t then #f,
+			    while: var)
+			 unless (first?)
+			   write(", ", stream);
+			   pprint-newline(#"fill", stream);
+			 end;
+			 dump(var, stream);
+		       end;
+		     end,
+		   suffix: ")");
+	      end);
+	 pprint-indent(#"block", 2, stream);
+	 pprint-newline(#"mandatory", stream);
+	 dump(func.body, stream);
+	 pprint-indent(#"block", 0, stream);
+	 pprint-newline(#"mandatory", stream);
+	 write("END", stream);
+       end);
 end;
 
 define method dump (assignment :: <assignment>, stream :: <stream>) => ();
@@ -177,7 +217,7 @@ define method dump (assignment :: <assignment>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
 	     write(":= ", stream);
-	     dump-expr(assignment.depends-on.source-exp, stream);
+	     dump(assignment.depends-on.source-exp, stream);
 	     write(';', stream);
 	   end);
 end;
@@ -311,18 +351,10 @@ define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
 		 write(", ", stream);
 		 pprint-newline(#"fill", stream);
 	       end;
-	       dump-expr(dep.source-exp, stream);
+	       dump(dep.source-exp, stream);
 	     end;
 	   end,
      suffix: ")");
-end;
-
-define method dump-expr (expr :: <expression>, stream :: <stream>) => ();
-  dump(expr, stream);
-end;
-
-define method dump-expr (expr :: <lambda>, stream :: <stream>) => ();
-  format(stream, "METHOD %= [%d]", expr.name, expr.id);
 end;
 
 define method dump (var :: <abstract-variable>, stream :: <stream>) => ();
@@ -394,39 +426,14 @@ define method dump (leaf :: <definition-constant-leaf>, stream :: <stream>)
   format(stream, "[%d]", leaf.id);
 end;
 
-define method dump (lambda :: <lambda>, stream :: <stream>) => ();
-  pprint-logical-block
-    (stream,
-     body: method (stream)
-	     format(stream, "METHOD %= [%d] ", lambda.name, lambda.id);
-	     pprint-logical-block
-	       (stream,
-		prefix: "(",
-		body: method (stream)
-			for (var = lambda.prologue.dependents.dependent.defines
-			       then var.definer-next,
-			     first? = #t then #f,
-			     while: var)
-			  unless (first?)
-			    write(", ", stream);
-			    pprint-newline(#"fill", stream);
-			  end;
-			  dump(var, stream);
-			end;
-		      end,
-		suffix: ")");
-	     pprint-indent(#"block", 2, stream);
-	     pprint-newline(#"mandatory", stream);
-	     dump(lambda.body, stream);
-	     pprint-indent(#"block", 0, stream);
-	     pprint-newline(#"mandatory", stream);
-	     write("END", stream);
-	   end);
+define method dump
+    (expr :: <function-literal>, stream :: <stream>) => ();
+  format(stream, "FUNCTION %= [%d]", expr.main-entry.name, expr.id);
 end;
 
 define method dump
-    (hairy-method :: <hairy-method-literal>, stream :: <stream>) => ();
-  format(stream, "HAIRY-METHOD[%d]", hairy-method.id);
+    (expr :: <method-literal>, stream :: <stream>) => ();
+  format(stream, "METHOD %= [%d]", expr.main-entry.name, expr.id);
 end;
 
 define method dump
