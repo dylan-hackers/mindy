@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.7 1994/06/27 16:32:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.8 1994/08/02 15:06:50 dpierce Exp $
 *
 * This file implements the printer framework.
 *
@@ -122,12 +122,12 @@ int count_format_args(char *fmt)
     for (ptr = fmt; *ptr != '\0'; ptr++) {
 	if (*ptr == '%') {
 	    switch (*++ptr) {
-              case 'd':
-	      case 'b':
-	      case 'o':
-	      case 'x':
-	      case 'c':
-	      case 's':
+              case 'd': case 'D':
+	      case 'b': case 'B':
+	      case 'o': case 'O':
+	      case 'x': case 'X':
+	      case 'c': case 'C':
+	      case 's': case 'S':
 	      case '=':
 		args++;
 		break;
@@ -169,30 +169,37 @@ void vformat(char *fmt, obj_t *args)
 	if (*fmt == '%') {
 	    switch (*++fmt) {
               case 'd':
+	      case 'D':
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%ld", fixnum_value(*args++));
 		break;
               case 'b':
+	      case 'B':
 		check_type(*args, obj_IntegerClass);
 		print_number_in_binary(fixnum_value(*args++));
 		break;
               case 'o':
+	      case 'O':
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%lo", fixnum_value(*args++));
 		break;
               case 'x':
+	      case 'X':
 		check_type(*args, obj_IntegerClass);
 		fprintf(stdout, "%lx", fixnum_value(*args++));
 		break;
 	      case 'c':
+	      case 'C':
 		check_type(*args, obj_CharacterClass);
 		fputc(char_int(*args++), stdout);
 		break;
 	      case '=':
 		prin1(*args++);
 		break;
-	      case 's':		/* Gotta somehow have two cases,          */
-				/* one for strings and another for errors */
+	      case 's':
+	      case 'S':
+		/* Gotta somehow have two cases,          */
+		/* one for strings and another for errors */
 		if (instancep(*args, obj_ByteStringClass)) {
 		  fputs(string_chars(*args++), stdout);
 		}
