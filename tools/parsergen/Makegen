@@ -1,8 +1,9 @@
 &makegen_include("../common-Makegen");
 
-if ($stage2) {
+if (!$enable_mindy_bootstrap) {
   &emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
 		     'compile', 'install');
+} else {
+  &emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
+		     'no-d2c', 'compile-mindy');
 };
-
-&emit_dbc_link_rule('parsergen-lib.dbc', 'library.dbc lisp-read.dbc parsergen.dbc');

@@ -15,7 +15,7 @@ do compile_subdirs(
     $system_dependent_misc
 );
 
-if ($stage2) {
+if ($enable_d2c && !$enable_mindy_bootstrap) {
   do compile_subdirs(
       'lisp2dylan',
       'versioner',

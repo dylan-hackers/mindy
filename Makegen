@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.1 1998/05/03 19:54:57 andreas Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.2 1998/11/10 16:19:00 housel Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -43,24 +43,33 @@ force.timestamp:
 EOF
 ;
 
-&compile_subdirs("mindy");
-if ($stage2) {
-    &compile_subdirs("d2c", "common", "tools");
+if ($enable_mindy) {
+    &compile_subdirs("mindy");
+}
+if ($enable_mindy_bootstrap) {
+    push(@compile_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 "common", "dbc_only"));
+    &compile_subdirs("d2c", "common");
+    push(@compile_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 "d2c", "d2c-compile"));
+    push(@compile_commands,
+	 '@echo "Bootstrap complete; now install d2c, remove config.cache,"');
+    push(@compile_commands,
+	 '@echo "re-run configure, and make again."');
 }
 else {
-    &compile_subdirs("common", "tools", "d2c");
+    if ($enable_d2c) {
+	&compile_subdirs("d2c");
+    }
+    &compile_subdirs("common", "tools", "tests", "demos");
 }    
-
-&compile_subdirs("tests", "demos");
 
 push(@install_dependencies, "installdirs");
     
 if ($features{'compiled_for_unix'}) {
     print <<"EOF"
-d2c-compile: default
-	(cd common; \$(MAKE))
-	(cd d2c; \$(MAKE) d2c-compile)
-
 installdirs:
 	$srcdir/mkinstalldirs $bindir $libdir $libdir/elisp $includedir \\
 	   $sysconfdir

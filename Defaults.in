@@ -10,12 +10,15 @@ $host_name = '@d2c_host@';
 $srcroot = "@srcdir@";
 $buildroot = "@builddir@";
 $prefix = "@prefix@";
-$destdir = "@exec_prefix@";
+$destdir = $exec_prefix = "@exec_prefix@";
+$bindir = "@bindir@";
+$libdir = "@libdir@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
-$enable_mindy = "@enable_mindy@";
-$enable_d2c = "@enable_d2c@";
+$enable_mindy = "@enable_mindy@" eq "yes";
+$enable_d2c = "@enable_d2c@" eq "yes";
+$enable_mindy_bootstrap = "@enable_mindy_bootstrap@" eq "yes";
 $INSTALL = "@INSTALL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
@@ -28,7 +31,6 @@ if ($host_name ne $target_name) {
   $D2C = "$D2C -no-binaries";
 };
 
-$stage2 = @stage2@;
 $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
@@ -36,7 +38,10 @@ $CC = 'gcc';
 $CFLAGS = '-O4 -finline-functions';
 $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
 
-if (!$stage2) {
-  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen.dbc";
+if ($enable_mindy_bootstrap) {
+  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen-lib.dbc";
   $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
+} else {
+  $PARSERGEN = "$buildroot/tools/parsergen/parsergen";
+  $MELANGE = "$buildroot/tools/melange/melange";
 };

@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.19 1998/10/20 13:38:41 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.20 1998/11/10 16:19:01 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -118,10 +118,6 @@ AC_SUBST(d2c_target)
 #fi
 #AC_MSG_RESULT($cross_compiler)
 
-# We'll need to rethink how this works.
-stage2=1
-AC_SUBST(stage2)
-
 #--------------------------------------------------------------------
 # Look for various programs which we might need. If these are
 # missing, we want to deal with them early.
@@ -179,13 +175,10 @@ AC_SUBST(MC)
 # Do we want to use the installed platforms.descr or the current one?
 #--------------------------------------------------------------------
 
-AC_CHECK_TOOL(D2C, d2c, no)
+AC_PATH_PROG(D2C, d2c, no)
 
 if test "$D2C" != no; then
     AC_MSG_CHECKING(how to call d2c)
-    if test x$D2C = "xd2c"; then
-        D2C=`(cd /;which d2c)`
-    fi
     D2C_PREFIX=`echo "$D2C" | sed 's#/bin/.*##'`
     PREFERED_DESCR="$D2C_PREFIX/etc/platforms.descr"
     if test -f $PREFERED_DESCR; then
@@ -207,10 +200,9 @@ fi
 #--------------------------------------------------------------------
 
 AC_ARG_ENABLE(mindy, [  --disable-mindy         Don't build Mindy])
-AC_ARG_ENABLE(mindy, [  --disable-d2c           Don't build d2c])
+AC_ARG_ENABLE(d2c,   [  --disable-d2c           Don't build d2c])
 
 if test "$D2C" = no; then
-    AC_MSG_WARN(Cannot build tools requiring d2c)
     enable_d2c=no
 fi
 
@@ -234,9 +226,27 @@ Not intending to build either mindy or d2c. Please check to see if
 your system is supported, or specify fewer --disable-FOO flags.])
 fi
 
-# XXX - Now we need to do something with this decision...
-if test "$enable_d2c" = "no" -o "$enable_mindy" = "no"; then
-    AC_MSG_ERROR(building only either d2c or mindy is not yet supported)
+#--------------------------------------------------------------------
+# Check to see if we are bootstrapping with Mindy
+#--------------------------------------------------------------------
+AC_ARG_ENABLE(mindy-bootstrap, [  --enable-mindy-bootstrap Bootstrap d2c with Mindy])
+
+if test "$D2C" = no; then
+    enable_mindy_bootstrap=${enable_mindy_bootstrap:-no}
+    AC_MSG_CHECKING(whether to bootstrap d2c with Mindy)
+    AC_MSG_RESULT($enable_mindy_bootstrap)
+    AC_SUBST(enable_mindy_bootstrap)
+
+    if test $enable_mindy_bootstrap = yes; then
+	enable_mindy=yes
+	enable_d2c=yes
+	D2C="$MINDY -f $builddir/d2c/compiler/main/d2c.dbc -p$srcdir/d2c/compiler/platforms.descr"
+    else
+	AC_MSG_WARN([Cannot build tools requiring d2c, try obtaining a binary
+release for your platform or use the --enable-mindy-bootstrap option.])
+    fi
+else
+    enable_mindy_bootstrap=no
 fi
 
 #====================================================================

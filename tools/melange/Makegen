@@ -16,7 +16,7 @@ if ($features{'compiled_for_win32'}) {
 
 &emit_parsergen_rule('c-parse');
 
-if ($stage2) {
+if (!$enable_mindy_bootstrap) {
   &emit_library_rule
       ($c_decl_lid,
        '$(BUILDROOT)/force.timestamp',
@@ -34,7 +34,7 @@ if ($stage2) {
 
 &emit_parsergen_rule('int-parse');
 
-if ($stage2) {
+if (!$enable_mindy_bootstrap) {
   &emit_library_rule
       ('melange',
        '$(BUILDROOT)/force.timestamp melange-c.lib.du',

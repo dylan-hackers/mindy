@@ -12,11 +12,10 @@
      . ' ../parser/compiler-parser-lib.dbc ../convert/compiler-convert-lib.dbc'
      . ' ../cback/compiler-cback-lib.dbc compiler-main-lib.dbc');
 
-if ($stage2) {
-    &install_executable($bindir, $potential_targets[0]);
-} else {
+if ($enable_mindy_bootstrap) {
     push(@compile_dependencies, 'd2c.dbc');
 }
+&install_executable($bindir, $potential_targets[0]);
 
 open(FILELOC,">$srcdir/file-locations.dylan");
 

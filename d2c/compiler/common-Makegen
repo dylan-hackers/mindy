@@ -11,7 +11,7 @@ sub d2c_library {
     local (@makefile_targets)
 	= &emit_library_rule($lidfile_name, '$(BUILDROOT)/force.timestamp', 
 			     $more_flags, '');
-    if ($stage2) {
+    if (!$enable_mindy_bootstrap) {
 	push(@compile_dependencies, $makefile_targets[0]);
     } else {
 	push(@compile_dependencies, $makefile_targets[1]);

@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.1 1998/05/12 03:11:11 emk Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.2 1998/11/10 16:35:24 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -99,9 +99,9 @@
 #
 # In addition, the d2c Makegens use the following variables:
 #
-#     $stage2
-#         If 0, compile the compiler with Mindy.  If 1, compile it
-#         with d2c.
+#     $enable_d2c
+#     $enable_mindy
+#     $enable_mindy_bootstrap
 
 
 # Top level code
@@ -367,7 +367,9 @@ sub do_Makegen_file {
     }
 
     &emit_rule('cc_files');
-    &emit_rule('dbc_only');
+    if ($enable_mindy) {
+	&emit_rule('dbc_only');
+    }
     close(MAKEFILE);
     rename(",$makefile", $makefile);
 }
@@ -703,46 +705,50 @@ sub emit_library_rule {
     local($executable) = $lidfile{'executable'};
     local($executable_filename) = $executable . $dot_exe;
 
-    local($file);
-    for $file (split(' ', $lidfile{'files'})) {
-	$file =~ s/\.dylan$//;  # chop off ".dylan"
-	push(@files_to_clean, "$file.c", "$file$dot_obj");
-    }
-
-    push(@files_to_clean, "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
-    push(@files_to_clean, "$unit_prefix-heap.s", "$unit_prefix-heap$dot_obj");
-
     local($d2c_target);
 
-    if ($executable) {
-	push(@files_to_clean, $executable_filename, 'heap.s', 'inits.c');
+    if ($enable_d2c) {
+	local($file);
+	for $file (split(' ', $lidfile{'files'})) {
+	    $file =~ s/\.dylan$//;  # chop off ".dylan"
+	    push(@files_to_clean, "$file.c", "$file$dot_obj");
+	}
 
-	if (grep(/^compile$/, @keywords)) {
-	    push(@compile_dependencies, $executable_filename);
-	    grep(/^install$/, @keywords)
-	        && do install_executable($bindir, $executable_filename);
-        }
+	push(@files_to_clean,
+	     "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
+	push(@files_to_clean,
+	     "$unit_prefix-heap.s", "$unit_prefix-heap$dot_obj");
 
-	$d2c_target = $executable_filename;
+	if ($executable) {
+	    push(@files_to_clean, $executable_filename, 'heap.s', 'inits.c');
+
+	    if (grep(/^compile$/, @keywords)) {
+		push(@compile_dependencies, $executable_filename);
+		grep(/^install$/, @keywords)
+		    && do install_executable($bindir, $executable_filename);
+	    }
+
+	    $d2c_target = $executable_filename;
+	}
+	else {
+	    local($foo_lib_du, $libfoo_a);
+	    
+	    $foo_lib_du = "$library.lib.du";
+	    $libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
+	    
+	    push(@files_to_clean, $foo_lib_du, $libfoo_a);
+	    
+	    if (grep(/^compile$/, @keywords)) {
+		push(@compile_dependencies, $foo_lib_du);
+		grep(/^install$/, @keywords)
+		    && do install($libdir, $foo_lib_du, $libfoo_a);
+	    }
+	    
+	    $d2c_target = $foo_lib_du;
+	}
     }
-    else {
-	local($foo_lib_du, $libfoo_a);
 
-	$foo_lib_du = "$library.lib.du";
-	$libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
-
-	push(@files_to_clean, $foo_lib_du, $libfoo_a);
-
-	if (grep(/^compile$/, @keywords)) {
-	    push(@compile_dependencies, $foo_lib_du);
-	    grep(/^install$/, @keywords)
-	        && do install($libdir, $foo_lib_du, $libfoo_a);
-        }
-
-	$d2c_target = $foo_lib_du;
-    }
-
-    if (! grep(/^no-d2c$/, @keywords)) {
+    if (! grep(/^no-d2c$/, @keywords) && $enable_d2c) {
 	print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
 	print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags ",
 	    "$srcdir/$lidfilename.lid\n";
@@ -760,17 +766,21 @@ sub emit_library_rule {
 	}
     }
 
-    if (! grep(/^no-mindy$/, @keywords)) {
+    if (! grep(/^no-mindy$/, @keywords) && $enable_mindy) {
 	&emit_mindycomp_library_rule($library, $lidfile{'files'});
     }
-    if (grep(/^compile-mindy$/, @keywords)) {
+    if (grep(/^compile-mindy$/, @keywords) && $enable_mindy) {
 	push(@compile_dependencies, "$library-lib.dbc");
 	grep(/^install$/, @keywords)
 	    && do install($libdir, "$library-lib.dbc");
     }
     local(@return_val);
-    $return_val[0] = $d2c_target;
-    $return_val[1] = "$library-lib.dbc";
+    if ($enable_d2c) {
+	push(@return_val, $d2c_target);
+    }
+    if ($enable_mindy) {
+	push(@return_val, "$library-lib.dbc");
+    }
     return @return_val;
 }
 
@@ -842,7 +852,7 @@ sub emit_melange_rule {
     print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
     print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
     push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
-    push(@files_to_clean, "\$SRCDIR/$basefile.dylan");
+    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
 }
 
 # emit_parsergen_rule($base_file_name) -- exported
@@ -1024,6 +1034,7 @@ sub emit_mindycomp_library_rule {
     print "DASH_$uppercase_libname = -l$libname\n\n";
     print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n\n";
     push(@dbc_only_dependencies, "$libname-lib.dbc");
+    push(@files_to_clean, "$libname-lib.dbc");
 
     local($source);
     foreach $source (@sources) {
