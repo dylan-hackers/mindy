@@ -1,9 +1,22 @@
 module: front
 
 
+define variable *do-sanity-checks* = #f;
+
+define method enable-sanity-checks () => ();
+  *do-sanity-checks* := #t;
+end;
+define method disable-sanity-checks () => ();
+  *do-sanity-checks* := #f;
+end;
+
+
 define method optimize-component (component :: <component>) => ();
   let done = #f;
   until (done)
+    if (*do-sanity-checks*)
+      check-sanity(component);
+    end;
     if (component.initial-definitions)
       let init-defn = component.initial-definitions;
       component.initial-definitions := init-defn.next-initial-definition;
@@ -178,36 +191,40 @@ define method maybe-propagate-copy (component :: <component>,
 				    var :: <ssa-variable>,
 				    value :: <expression>)
     => ();
-  // Change all references to this variable to be references to value
-  // instead.
-  let next = #f;
-  for (dep = var.dependents then next,
-       prev = #f then dep,
-       while: dep)
-    next := dep.source-next;
+  unless (var.needs-type-check?)
+    // Change all references to this variable to be references to value
+    // instead.
+    let next = #f;
+    let prev = #f;
+    for (dep = var.dependents then next,
+	 while: dep)
+      next := dep.source-next;
 
-    let dependent = dep.dependent;
-    if (okay-to-propagate?(dependent, value))
-      // Remove the dependency from the source.
-      if (prev)
-	prev.source-next := next;
+      let dependent = dep.dependent;
+      if (okay-to-propagate?(dependent, value))
+	// Remove the dependency from the source.
+	if (prev)
+	  prev.source-next := next;
+	else
+	  var.dependents := next;
+	end;
+
+	// Link it into the new value.
+	dep.source-exp := value;
+	dep.source-next := value.dependents;
+	value.dependents := dep;
+
+	// Queue the dependent for reoptimization.
+	queue-dependent(component, dependent);
       else
-	var.dependents := next;
+	prev := dep;
       end;
-
-      // Link it into the new value.
-      dep.source-exp := value;
-      dep.source-next := value.dependents;
-      value.dependents := dep;
-
-      // Queue the dependent for reoptimization.
-      queue-dependent(component, dependent);
     end;
-  end;
-  
-  // If we removed all the uses of var, queue var's defn for reoptimization.
-  unless (var.dependents)
-    queue-dependent(component, var.definer);
+    
+    // If we removed all the uses of var, queue var's defn for reoptimization.
+    unless (var.dependents)
+      queue-dependent(component, var.definer);
+    end;
   end;
 end;
 
@@ -243,6 +260,76 @@ define method maybe-propagate-copy (component :: <component>,
     => ();
 end;
 
+
+define method optimize (component :: <component>, call :: <unknown-call>)
+    => ();
+  let func-dep = call.depends-on;
+  unless (func-dep)
+    error("No function in a call?");
+  end;
+  let assign = call.dependents.dependent;
+  assert-type(component, assign, func-dep, function-ctype());
+  let func = func-dep.source-exp;
+  if (instance?(func, <lambda>))
+    // Calling a lambda.  Convert it into either a known or an error call.
+    for (arg-dep = func-dep.dependent-next then arg-dep.dependent-next,
+	 var = func.prologue.dependents.dependent.defines
+	   then var.definer-next,
+	 while: arg-dep & var)
+      assert-type(component, assign, arg-dep, var.var-info.asserted-type);
+    finally
+      if (arg-dep | var)
+	compiler-warning("Wrong number of arguments.");
+	change-call-kind(component, call, <error-call>);
+      else
+	change-call-kind(component, call, <known-call>);
+      end;
+    end;
+  end;
+end;
+
+define method assert-type
+    (component :: <component>, before :: <assignment>,
+     dependent :: <dependency>, type :: <ctype>)
+    => ();
+  let source = dependent.source-exp;
+  unless (csubtype?(source.derived-type, type))
+    let builder = make-builder(component);
+    let temp = make-ssa-var(builder, #"temp", type);
+    build-assignment(builder, before.policy, before.source-location,
+		     temp, source);
+    for (dep = source.dependents then dep.source-next,
+	 prev = #f then dep,
+	 until: dep == dependent)
+    finally
+      if (prev)
+	prev.source-next := dep.source-next;
+      else
+	source.dependents := dep.source-next;
+      end;
+    end;
+    dependent.source-exp := temp;
+    temp.dependents := dependent;
+    dependent.source-next := #f;
+    insert-before(before, builder-result(builder));
+  end;
+end;
+
+define method change-call-kind
+    (component :: <component>, call :: <abstract-call>, new-kind :: <class>)
+    => ();
+  let new = make(new-kind, dependents: call.dependents,
+		 depends-on: call.depends-on);
+  for (dep = call.depends-on then dep.dependent-next,
+       while: dep)
+    dep.dependent := new;
+  end;
+  for (dep = call.dependents then dep.source-next,
+       while: dep)
+    dep.source-exp := new;
+  end;
+  queue-dependent(component, new);
+end;
 
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
@@ -548,6 +635,7 @@ define method remove-dependency
   for (dep = dependency.dependent.depends-on then dep.dependent-next,
        prev = #f then dep,
        until: dep == dependency)
+  finally
     if (prev)
       prev.dependent-next := dep.dependent-next;
     else
@@ -749,4 +837,128 @@ define method replace-subregion
       parent.regions := regions.tail;
     end;
   end;
+end;
+
+
+// Sanity checking code.
+
+define method check-sanity (component :: <component>) => ();
+  //
+  // Make sure the component's parent is #f.
+  if (component.parent)
+    error("Component %= has non-#f parent %=",
+	  component, component.parent);
+  end;
+  //
+  // Check the lambdas.
+  for (lambda in component.all-methods)
+    check-sanity(lambda);
+  end;
+end;
+
+define method check-sanity (reg :: <simple-region>) => ();
+  for (assign = reg.first-assign then assign.next-op,
+       prev = #f then assign,
+       while: assign)
+    //
+    // Check that the assigment has the correct region.
+    unless (assign.region == reg)
+      error("assignment %s claims %= as its region instead of %=",
+	    assign, assign.region, reg);
+    end;
+    //
+    // Check that the assignment is linked correctly.
+    unless (assign.prev-op == prev)
+      error("assignment %s claims %s as its predecessor instead of %s",
+	    assign, assign.prev-op, prev);
+    end;
+    //
+    // Check the defines.
+    for (defn = assign.defines then defn.definer-next,
+	 while: defn)
+      unless (defn.definer == assign)
+	error("assignment %s's result %s claims its definer is %s",
+	      assign, defn, defn.definer);
+      end;
+    end;
+    //
+    // Check the dependent aspect of this assignment.
+    check-dependent(assign);
+  end;
+end;
+
+define method check-sanity (region :: <compound-region>) => ();
+  for (subregion in region.regions)
+    //
+    // Check to make sure the subregion's parent is correct.
+    unless (subregion.parent == region)
+      error("%= claims %= for its parent instead of %=",
+	    subregion, subregion.parent, region);
+    end;
+    //
+    // Check the subregion.
+    check-sanity(subregion);
+  end;
+end;
+
+define method check-sanity (lambda :: <lambda>) => ();
+  //
+  // Check the expression aspects of the lambda.
+  check-expression(lambda);
+  //
+  // Check the dependent aspects of the lambda.
+  check-dependent(lambda);
+  //
+  // Check the lambda's body.
+  unless (lambda.body.parent == lambda)
+    error("%='s body %= claims %= as its parent",
+	  lambda, lambda.body, lambda.body.parent);
+  end;
+  check-sanity(lambda.body);
+end;
+
+
+define method check-expression (expr :: <expression>) => ();
+  //
+  // Make sure all the dependents refer to this source.
+  for (dep = expr.dependents then dep.source-next,
+       while: dep)
+    unless (dep.source-exp == expr)
+      error("%s's dependent %= claims %s for its source-exp",
+	    expr, dep, dep.source-exp);
+    end;
+  end;
+end;
+
+define method check-expression (op :: <operation>, #next next-method) => ();
+  //
+  // Check the expression aspects of an operation.
+  next-method();
+  //
+  // Check the dependent aspects of an operation.
+  check-dependent(op);
+end;
+
+define method check-dependent (dep :: <dependent-mixin>) => ();
+  for (dependency = dep.depends-on then dependency.dependent-next,
+       while: dependency)
+    //
+    // Make sure everything we depend on agrees.
+    unless (dependency.dependent == dep)
+      error("%s's dependency %= claims %s for its dependent",
+	    dep, dependency, dep.dependent);
+    end;
+    //
+    // Make make sure that source is okay.
+    check-expression(dependency.source-exp);
+  end;
+end;
+
+
+
+define method print-message
+    (thing :: union(<expression>, <dependent-mixin>),
+     stream :: <stream>)
+    => ();
+  dump(thing, stream);
 end;
