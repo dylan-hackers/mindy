@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.18 1995/04/28 15:39:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.19 1995/04/29 04:01:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -190,8 +190,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
     let cluster = make-values-cluster(builder, #"temps", wild-ctype());
     fer-convert(builder, bindings.bindings-expression,
 		make(<lexenv>, inside: lexenv), #"assignment", cluster);
-    canonicalize-results(builder, lexenv.lexenv-policy, source,
-			 cluster, temps, rest-temp);
+    build-assignment
+      (builder, lexenv.lexenv-policy, source,
+       concatenate(temps, list(rest-temp)),
+       make-primitive-operation
+	 (builder, #"canonicalize-results", list(cluster)));
   else
     fer-convert(builder, bindings.bindings-expression,
 		make(<lexenv>, inside: lexenv), #"assignment", temps);
@@ -694,8 +697,11 @@ define method build-general-method
 		   #"assignment", results-temp | results);
 
   if (results-temp)
-    canonicalize-results(builder, lexenv.lexenv-policy, source, results-temp,
-			 as(<list>, fixed-results), rest-result);
+    build-assignment
+      (builder, lexenv.lexenv-policy, source,
+       concatenate(as(<list>, fixed-results), list(rest-result)),
+       make-primitive-operation
+	 (builder, #"canonicalize-results", list(results-temp)));
     build-region(builder, builder-result(result-check-builder));
     let args = make(<stretchy-vector>);
     if (rest-result)
@@ -800,16 +806,7 @@ define method build-hairy-method-body
     end;
   end;
   if (rest-var)
-    let context = make-lexical-var(body-builder, #"context", source,
-				   object-ctype());
-    let count = make-lexical-var(body-builder, #"count", source,
-				 object-ctype());
-    add!(vars, context);
-    add!(vars, count);
-    let fn-leaf = dylan-defn-leaf(body-builder, #"%make-rest-arg");
-    build-let(body-builder, policy, source, rest-var,
-	      make-operation(body-builder,
-			     list(fn-leaf, context, count)));
+    add!(vars, rest-var);
   end;
   if (next-var)
     let ops = make(<stretchy-vector>);
@@ -965,91 +962,6 @@ define method build-hairy-method-general-entry (leaf)
 end;
 
 */
-
-
-// canonicalize-results
-//
-// Spread the values in results out into fixed-results and rest-result.
-//
-define generic canonicalize-results (builder :: <fer-builder>,
-				     policy :: <policy>,
-				     source :: <source-location>,
-				     results :: <abstract-variable>,
-				     fixed-results :: <list>,
-				     rest-result :: union(<abstract-variable>,
-							  <false>))
-    => ();
-
-
-define method canonicalize-results (builder :: <fer-builder>,
-				    policy :: <policy>,
-				    source :: <source-location>,
-				    results :: <abstract-variable>,
-				    fixed-results :: <list>,
-				    rest-result :: <false>,
-				    #next next-method)
-    => ();
-  build-assignment(builder, policy, source, fixed-results, results);
-end;
-
-define method canonicalize-results (builder :: <fer-builder>,
-				    policy :: <policy>,
-				    source :: <source-location>,
-				    results :: <abstract-variable>,
-				    fixed-results :: <list>,
-				    rest-result :: <abstract-variable>)
-    => ();
-  // We want a rest var.  So we have to spread the values-cluster out
-  // by mv-calling a method that looks like:
-  //   method (x, y, z, #rest r)
-  //     values(x, y, z, r);
-  //   end
-  // But before we actually call it, we have to make sure there are enough
-  // values to feed all the required arguments.
-  let ops = make(<stretchy-vector>);
-  add!(ops, dylan-defn-leaf(builder, #"values"));
-  let fixed-vars
-    = map(method (result)
-	    let var = make-lexical-var(builder, #"temp", source,
-				       object-ctype());
-	    add!(ops, var);
-	    var;
-	  end,
-	  fixed-results);
-  let rest-var = make-lexical-var(builder, #"rest-temp", source,
-				  object-ctype());
-  add!(ops, rest-var);
-  let cluster = make-values-cluster(builder, #"temps", wild-ctype());
-  let method-leaf
-    = build-hairy-method-body(builder, policy, source,
-			      make(<signature>,
-				   specializers:
-				     make(<list>, size: fixed-results.size),
-				   rest-type: object-ctype()),
-			      fixed-vars, #f, rest-var, #f,
-			      cluster);
-  build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, as(<list>, ops)));
-  end-body(builder);
-  if (empty?(fixed-results))
-    build-assignment(builder, policy, source,
-		     concatenate(fixed-results, list(rest-result)),
-		     make-mv-operation(builder, method-leaf, results));
-  else
-    let cluster = make-values-cluster(builder, #"results", wild-ctype());
-    build-assignment
-      (builder, policy, source, cluster,
-       make-primitive-operation
-	 (builder, #"default-unsupplied-values",
-	  list(results,
-	       make-literal-constant
-		 (builder,
-		  make(<literal-fixed-integer>, value: fixed-results.size)))));
-    build-assignment(builder, policy, source,
-		     concatenate(fixed-results, list(rest-result)),
-		     make-mv-operation(builder, method-leaf, cluster));
-  end;
-end;
 
 
 // Random utilities.
