@@ -105,6 +105,13 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 	}
     }
 
+#if 0
+  fprintf(stderr,
+	  "\n==> Making closure with arg bytes: %i, signature: %*s\n",
+	  arg_bytes, nkeys, signature);
+  fflush(stderr);
+#endif
+
   code_bytes += 14;		/* remaining instructions */
 
   code_bytes = (code_bytes + 7) & ~3; /* space at end for closure ptr */
@@ -143,6 +150,37 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 }
 #else
 #ifdef __powerpc__
+
+/* On the PowerPC we will just rearrange the integer/pointer arguments within the
+   integer registers, and then jump to the callback routine.  We don't need to make
+   a stack frame, or return to ourselves for cleanup, and we can totally ignore all
+   FP arguments, whether they are in registers or on the stack.  Effectively, we are
+   just a prolog to the callback function.
+
+   If there are too many integer arguments (more than seven explicit, plus our
+   environment pointer) then we will just punt.  Coping with this would require
+   building a stack frame, saving the return PC, saving the old stack pointer,
+   copying and enlarging the stack-based argument area, moving one argument from
+   r10 to the stack, shuffling r3 -> r10, and then calling the callback routine.
+   On return from the callback routine, we'd need to reload the return address to
+   the LR, reload the old stack pointer, and return to the calling routine.
+
+   NB. This implementation is for the System V ABI, as used e.g. on LinuxPPC and MKLinux.
+   It is *not* correct for the AIX/MacOS ABI.  For the current implementation, all that
+   should be needed is to allow two extra registers (R11 and R12) for integer args, plus
+   allowing for "func" being a pointer to the TOC entry rather than to the code for the
+   callback function.  If this function is extended to cope with situations requiring a
+   new stack frame then allowances will also have to be made for the different stack
+   frame format.
+
+   This implementation assumes that the PowerPC cache block size is 32 bytes.  This is
+   true for the 601, 603(e), 604(e) and 750 processors.  It may not be true for future
+   models, but hopefully it will only get bigger, not smaller, in which case the code
+   sequences used here will be safe, if perhaps mildly non-optimal.
+*/
+
+#define BLOCKSIZE 32
+
 heapptr_t make_trampoline(void *func, descriptor_t closure,
 			  int nkeys, char *signature)
 {
@@ -150,14 +188,15 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
   size_t code_bytes = 0;	/* trampoline byte count */
   size_t arg_bytes = 0;		/* number of bytes of arguments */
   void *code;			/* pointer to beginning of generated code */
-  char *codep;			/* pointer to next available code byte */
+  long *codep;			/* pointer to next available code instruction */
   int i;
+  long tmp;
 
-  int fr = 1;                   /* FP register count */
-  int gr = 3;                   /* general purpose reg count */
-  int starg = 0;               /* address of first argument of stack */
+  int fr = 0;                   /* FP register count */
+  int gr = 0;                   /* general purpose reg count */
+  int starg = 0;                /* address of first argument of stack */
 
-  /* make a first pass through the argument signature and determine
+  /* make a pass through the argument signature and determine
      how many bytes of code will be required, and how many bytes of
      arguments may be found on the stack. */
   for(keyp = signature + 1; keyp < signature + nkeys; ++keyp)
@@ -166,7 +205,8 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 	{
 	case KEY_OBJECT:
 	case KEY_LONG_DOUBLE:
-	  /* copy the struct somewhere, and fall through */
+	  /* the argument will be a pointer to a structure stored
+	     elsewhere, so just fall through */
 
 	case KEY_HEAPPTR:
 	case KEY_PTR:
@@ -180,7 +220,7 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 	case KEY_BYTE:
 	case KEY_UBYTE:
 
-	  if( gr > 10) {
+	  if( gr > 7) {
 	    starg += 4;
 	  } else {
 	    gr++;
@@ -189,7 +229,7 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 
 	case KEY_FLOAT:
 	case KEY_DOUBLE:
-	  if( fr > 8) {
+	  if( fr > 7) {
 	    starg = (starg + 7) & (~0x7);
 	    starg += 8;
 	  } else {
@@ -207,46 +247,104 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
 	}
     }
 
-  fprintf(stderr, "gr: %i, fr: %i, stdarg: %i\n", gr, fr, starg);
-
 #if 0
-  code_bytes += 14;		/* remaining instructions */
+  fprintf(stderr,
+	  "gr: %i, fr: %i, stdarg: %i, signature: %*s\n",
+	  gr, fr, starg, nkeys, signature);
+  fflush(stderr);
+#endif
 
-  code_bytes = (code_bytes + 7) & ~3; /* space at end for closure ptr */
+  if (gr >= 7){
+    fprintf(stderr,
+	    "\n\nOnly seven non-FP args are allowed in the current make_trampoline\n"
+	    "implementation on PPC.  The program attempted to make a trampoline\n"
+	    "with the signature: %*s, which needs %d integer registers.\n",
+	    nkeys, signature, gr);
+    fflush(stderr);
+    abort();
+  }
 
+  /* six instructions + #gr + ptr to closure */
+  code_bytes = (gr + 7) * 4;
   codep = code = GC_malloc(code_bytes);
 
-  for(i = 0; i < arg_bytes; i += 4)
-    {
-      *codep++ = 0xFF;		/* pushl <arg_bytes>(%esp) */
-      *codep++ = 0x74;
-      *codep++ = 0x24;
-      *codep++ = arg_bytes;
-    }
+  tmp = (long)func;                               /* load branch dest into ctr */
+  *codep++ = (15 << 26) | ((tmp >> 16) & 0xFFFF); /* lis r0,hi(tmp) */
+  *codep++ = (24 << 26) | (tmp & 0xFFFF);         /* ori r0,lo(tmp) */
+  *codep++ = (31 << 26) | (467 << 1) | (9 << 16); /* mtctr r0  =>  mtspr 9,r0 */
 
-  *codep++ = 0x68;		/* pushl $<closure> (curried arg) */
-  *((heapptr_t *)codep) = closure.heapptr;
-  codep += 4;
+  /* shuffle those integer args... */
+  for(i = gr+2; i>2; --i){
+    /* mr i+1,i => or i+1,i,i */
+    *codep++ = (31 << 26) | (444 << 1) | ((i+1) << 16) | (i << 21) | (i << 11);
+  }
 
-  *codep++ = 0xE8;		/* call <func> */
-  *((long *)codep) = (char *)func - (codep + 4);
-  codep += 4;
-
-  *codep++ = 0x83;		/* add $<arg_bytes+4>, %esp */
-  *codep++ = 0xC4;
-  *codep++ = arg_bytes + 4;
-
-  *codep++ = 0xC3;		/* ret */
+  tmp = (long)closure.heapptr;                                    /* load closure env into r3 */
+  *codep++ = (15 << 26) | (3 << 21) | ((tmp >> 16) & 0xFFFF);     /* lis r3,hi(tmp) */
+  *codep++ = (24 << 26) | (3 << 21) | (3 << 16) | (tmp & 0xFFFF); /* ori r3,lo(tmp) */
+  *codep++ = 0x4E800420;                                          /* bctr */
 
   /* At the end we place another pointer to the function closure
      object, word-aligned so the garbage collector can find it. */
-  *((heapptr_t *)((char *)code + code_bytes - 4)) = closure.heapptr;
+  *((heapptr_t *)codep) = closure.heapptr;
 
-  /* x86 platforms don't seem to require us to flush the cache or
-     call mprotect() or anything like that. */
+  /* On PowerPC we need to make sure the new code gets flushed from the data
+     cache and any old code in the same place gets flushed from the instruction
+     cache...
+     
+  */
+
+#ifdef __GNUC__
+
+#define SYNC()   asm ("sync" : : )
+#define ISYNC()  asm ("isync" : : )
+#define DCBST(x) asm ("dcbst 0,%0" :  : "g" (x))
+#define ICBI(x)  asm ("icbi 0,%0" :  : "g" (x))
+
+#else
+  /* I'm not going to cause compilation to fail, because everything will be fine
+     if their programs don't actually create callback closures */
+  fprintf(stderr,
+	  "\n\nError: attempt to make a callback closure.  The implementation of\n"
+	  "make_trampoline() does not know how to make self-modifying code safe\n"
+	  "on the compiler used to produce your Dylan runtime.  Your program is\n"
+	  "probably about to crash.  Sorry...\n");
+  fflush(stderr);
 #endif
+
+  {
+    /* flush new instructions from data cache */
+    char *block = (char*) ((long)code & ~(BLOCKSIZE-1));
+    do {
+      DCBST(block); /* Data Cache Block Store */
+      block += BLOCKSIZE;
+    } while (block < ((char*)code + code_bytes));
+
+    /* wait for stores to finish */
+    SYNC();
+
+    /* invalidate instruction cache */
+    block = (char*) ((long)code & ~(BLOCKSIZE-1));
+    do {
+      ICBI(block); /* Instruction Cache Block Invalidate */
+      block += BLOCKSIZE;
+    } while (block < ((char*)code + code_bytes));
+
+    /* This sync may or may not be necessary.  The 601 of course doesn't need any of
+       this cache flushing at all.  The 603(e) manual and the PPC Programming Environments
+       manual don't include this extra sync instruction in their discussion of self-
+       modifying code.  The 604(e) and 750 manuals do include the extra sync.  At the
+       worst it's harmless...
+    */
+    SYNC();
+
+    /* invalidate any pre-fetched instructions (unlikely, but...) */
+    ISYNC();
+  }
+
   return code;
 }
+#undef BLOCKSIZE
 #else
 heapptr_t make_trampoline(void *func, descriptor_t closure,
 			  int nkeys, char *signature)
