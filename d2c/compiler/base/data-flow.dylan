@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.24 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.25 1996/03/18 01:44:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -54,10 +54,12 @@ define open abstract primary class <expression> (<identity-preserving-mixin>)
     init-value: #f, init-keyword: dependents:;
   //
   // Type we have inferred for this expression.  Any actual value will be an
-  // instance of this type.  In <continuation>s and <operation>s this may be a
-  // multiple-value type.
+  // instance of this type.
   slot derived-type :: <values-ctype>, init-function: object-ctype,
     init-keyword: derived-type:;
+  //
+  // Optimistic guess about the type.  Used during optimistic type inference.
+  slot guessed-type :: <values-ctype>, init-function: empty-ctype;
 end class;
 
 
