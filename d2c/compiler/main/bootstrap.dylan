@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.1 1994/12/12 13:09:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.2 1994/12/13 18:36:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -341,8 +341,11 @@ define generic %extract-keywords (context, count, ignore-unknown,
 define generic %check-arg-count (nargs, nreq, more?) => ();
 define generic %arg (context, index) => res;
 define generic %more-arg-context (context, count, nreq) => (context, count);
+define generic %make-gf () => res :: <generic-function>;
+define generic add-method (gf :: <generic-function>, meth :: <method>)
+    => (new :: <method>, old :: union(<method>, <false>));
 define generic check-type (value, type :: <type>) => value;
-define generic error (msg, #rest args) => res :: type-or();
+define generic error (msg, #rest args) => (); // ### doesn't actually return
 
 
 // Other functions that we would like to use.
