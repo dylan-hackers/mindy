@@ -1,11 +1,11 @@
-documented: #t
+ocumented: #t
 module: define-interface
 copyright: Copyright (C) 1994, Carnegie Mellon University
 	   All rights reserved.
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.4 1998/09/28 19:17:46 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.5 1998/10/18 20:16:42 emk Exp $
 
 //======================================================================
 //
@@ -414,14 +414,42 @@ define method process-clause
 end method process-clause;
 
 define method process-clause
-    (clause :: <callback-clause>, state :: <parse-state>,
+    (clause :: <function-type-clause>, state :: <parse-state>,
      c-state :: <c-parse-state>)
- => ();
+ => ()
+
+  // Look up our type and make sure it's a function typedef.
   let decl = parse-type(clause.name, c-state).true-type;
+  if (instance?(decl, <pointer-declaration>))
+    // snap past a single level of indirection if present
+    decl := decl.referent;
+  end if;
   unless (instance?(decl, <function-type-declaration>))
-    error("melange: callback clause %= is not a function type", decl);
+    error("melange: %= is not a function type", decl);
   end unless;
-  decl.callback-generator-name := clause.callback-generator;
+
+  // Define a proper name mapper.
+  // XXX - This needs to be integrated with the real name-mapper system.
+  // The current implementation is a hack and causes no end of problems.
+  let (mapper, prefix) = merge-container-options(state.container-options);
+  decl.local-name-mapper :=
+    method (alternate-prefix, name)
+      concatenate(alternate-prefix, "-",
+		  mapper(#"function", prefix, name, #()));
+    end;
+  
+  // Process our options.
+  for (option in clause.options)
+    let tag = option.head;
+    let body = option.tail;
+    select (tag)
+      #"callback-maker" =>
+	decl.callback-maker-name := body;
+      #"callout-function" =>
+	decl.callout-function-name := body;
+      otherwise => #f;
+    end select;
+  end for;
 end method process-clause;
 
 //----------------------------------------------------------------------
@@ -547,7 +575,7 @@ define method invoke-debugger
   //fresh-line(*warning-output*);
   condition-format(*warning-output*, "%s\n", condition);
   force-output(*warning-output*);
-  exit(exit-code: 1);
+  call-out("abort", void:);
 end method invoke-debugger;
 
 *warning-output* := *standard-error*;

@@ -217,15 +217,17 @@ define token <sealed-token> :: <reserved-word-token> = 48;
 define token <open-token> :: <reserved-word-token> = 49;
 define token <inline-token> :: <reserved-word-token> = 50;
 define token <value-token> :: <reserved-word-token> = 51;
-define token <callback-token> :: <reserved-word-token> = 52;
+define token <function-type-token> :: <reserved-word-token> = 52;
+define token <callback-maker-token> :: <reserved-word-token> = 53;
+define token <callout-function-token> :: <reserved-word-token> = 54;
 
 // A whole bunch of punctuation
 
-define token <semicolon-token> :: <punctuation-token> = 53;
-define token <comma-token> :: <punctuation-token> = 54;
-define token <lbrace-token> :: <punctuation-token> = 55;
-define token <rbrace-token> :: <punctuation-token> = 56;
-define token <arrow-token> :: <punctuation-token> = 57;
+define token <semicolon-token> :: <punctuation-token> = 55;
+define token <comma-token> :: <punctuation-token> = 56;
+define token <lbrace-token> :: <punctuation-token> = 57;
+define token <rbrace-token> :: <punctuation-token> = 58;
+define token <arrow-token> :: <punctuation-token> = 59;
 #else
 define class <eof-token> (<simple-token>) 
   inherited slot token-id = 0;
@@ -386,26 +388,32 @@ end class;
 define class <value-token> (<reserved-word-token>) 
   inherited slot token-id = 51;
 end class;
-define class <callback-token> (<reserved-word-token>) 
+define class <function-type-token> (<reserved-word-token>) 
   inherited slot token-id = 52;
+end class;
+define class <callback-maker-token> (<reserved-word-token>) 
+  inherited slot token-id = 53;
+end class;
+define class <callout-function-token> (<reserved-word-token>) 
+  inherited slot token-id = 54;
 end class;
 
 // A whole bunch of punctuation
 
 define class <semicolon-token> (<punctuation-token>) 
-  inherited slot token-id = 53;
-end class;
-define class <comma-token> (<punctuation-token>) 
-  inherited slot token-id = 54;
-end class;
-define class <lbrace-token> (<punctuation-token>) 
   inherited slot token-id = 55;
 end class;
-define class <rbrace-token> (<punctuation-token>) 
+define class <comma-token> (<punctuation-token>) 
   inherited slot token-id = 56;
 end class;
-define class <arrow-token> (<punctuation-token>) 
+define class <lbrace-token> (<punctuation-token>) 
   inherited slot token-id = 57;
+end class;
+define class <rbrace-token> (<punctuation-token>) 
+  inherited slot token-id = 58;
+end class;
+define class <arrow-token> (<punctuation-token>) 
+  inherited slot token-id = 59;
 end class;
 #endif
 
@@ -612,7 +620,9 @@ define constant reserved-words
 	   "open", <open-token>,
 	   "inline", <inline-token>,
 	   "value:", <value-token>,
-	   "callback", <callback-token>,
+	   "function-type", <function-type-token>,
+	   "callback-maker:", <callback-maker-token>,
+	   "callout-function:", <callout-function-token>,
 	   "#t", <true-token>,
 	   "#f", <false-token>,
 	   ",", <comma-token>,
@@ -960,8 +970,12 @@ define sealed domain make(singleton(<open-token>));
 define sealed domain make(singleton(<inline-token>));
 // <value-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<value-token>));
-// <callback-token> -- subclass of <reserved-word-token>
-define sealed domain make(singleton(<callback-token>));
+// <function-type-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<function-type-token>));
+// <callback-maker-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<callback-maker-token>));
+// <callout-function-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<callout-function-token>));
 // <semicolon-token> -- subclass of <punctuation-token>
 define sealed domain make(singleton(<semicolon-token>));
 // <comma-token> -- subclass of <punctuation-token>

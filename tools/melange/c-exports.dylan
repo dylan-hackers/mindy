@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.5 1998/09/28 19:17:41 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.6 1998/10/18 20:16:37 emk Exp $
 
 //======================================================================
 //
@@ -171,7 +171,8 @@ define module c-parse
     process-declarator, declare-objects, make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
     <varargs-declaration>, <enum-slot-declaration>, constant-value,
-    <integer-type-declaration>, canonical-name, true-type, make-enum-slot;
+    <integer-type-declaration>, canonical-name, true-type, make-enum-slot,
+    referent;
   export
     parse, parse-type, parse-macro;
 end module c-parse;
@@ -189,7 +190,7 @@ define module c-declarations
   // classes are actually defined within this module but are exported
   // from c-parse.
   use c-parse, export: {<declaration>, <parse-state>, parse, parse-type,
-			constant-value, true-type, canonical-name};
+			constant-value, true-type, canonical-name, referent};
 
   use c-lexer;			// Tokens are used in process-type-list and
 				// make-struct-type
@@ -203,7 +204,9 @@ define module c-declarations
     <struct-declaration>, <union-declaration>, <variable-declaration>,
     <constant-declaration>, <typedef-declaration>, <pointer-declaration>,
     <vector-declaration>, <function-type-declaration>,
-    callback-generator-name, callback-generator-name-setter,
+    local-name-mapper, local-name-mapper-setter,
+    callback-maker-name, callback-maker-name-setter,
+    callout-function-name, callout-function-name-setter,
 
     // Preliminary "set declaration properties phase"
     ignored?-setter, find-result, find-parameter, find-slot,

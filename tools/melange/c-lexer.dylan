@@ -1041,6 +1041,8 @@ define constant reserved-words
 //	   "const", <const-token>,
 //	   "volatile", <volatile-token>,
 	   "void", <void-token>,
+	   "inline", <inline-token>,
+	   "__inline__", <inline-token>,
 	   "__inline", <inline-token>,
 	   "extern", <extern-token>,
 	   "static", <static-token>,

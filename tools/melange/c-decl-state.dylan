@@ -332,7 +332,12 @@ define method process-declarator
       // rgs: For now, we simple equate all function types to
       // <function-pointer>.  At some later date, we will actually
       // provide distinct types canonicalized by their signatures.
-      // XXX - this is starting to change...
+      // XXX - this is starting to change... There's a horrible problem
+      // in C with the semantics of 'typedef void (foo)(void)' versus
+      // 'typedef void (*foo)()'. For now, we only allow the latter form,
+      // which dates back to K&R C. When somebody explains the ANSI C
+      // semantics very precisely to me, I'll fix this code to handle all
+      // cases.
       let params = second(declarator);
       let real-params = if (params.size == 1 & first(params).type == void-type)
 			  #();
@@ -343,22 +348,32 @@ define method process-declarator
 	   param in params)
 	param.dylan-name := format-to-string("arg%d", count);
       end for;
-      let new-name = declarator.tail.tail;
-      let new-type = make(<function-type-declaration>,
-			  name: new-name.value,
+
+      // Force K&R semantics only (see above).
+//      let nested-type = declarator.tail.tail;
+//      unless (instance?(nested-type, <pair>)
+//		& instance?(nested-type.head, <list>)
+//		& nested-type.head.size == 1
+//		& nested-type.head.head == #"pointer"
+//		& instance?(nested-type.tail, <identifier-token>))
+//	parse-error(state, "function types must be of form 'void (*foo)()'");
+//      end unless;
+      
+//      let new-name = nested-type.tail;
+//      let new-type = make(<function-type-declaration>,
+//			  name: new-name.value,
+
+      let new-type = make(<function-type-declaration>, name: anonymous-name(),
 			  result: make(<result-declaration>,
 				       name: "result", type: tp),
 			  params: real-params);
       // XXX - We used to call process declarator here:
-      //   process-declarator(new-type, declarator.tail.tail, state)
       // Instead, we handle the terminal case ourselves. If anyone
-      // modifies that function down below, we'll need to re-examine
+      // figures out ANSI C function pointers, we'll need to re-examine
       // this.
-      // XXX - Actually, I did this to fix a bug which I latter found
-      // didn't occur here anyway. Nonetheless, I want to know why
-      // this was written the old way--the logic around here makes
-      // no sense.
-      values(new-type, new-name);
+      // process-declarator(new-type, declarator.tail.tail, state);
+      //values(new-type, new-name);
+      process-declarator(new-type, declarator.tail.tail, state);
     otherwise =>
       parse-error(state, "unknown type modifier");
   end case;

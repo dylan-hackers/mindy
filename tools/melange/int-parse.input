@@ -209,11 +209,7 @@ define class <function-clause> (<clause>) end class;
 define class <variable-clause> (<clause>) end class;
 define class <constant-clause> (<clause>) end class;
 define class <pointer-clause> (<clause>) end class;
-
-define class <callback-clause> (<clause>)
-  slot callback-generator :: <symbol>,
-    required-init-keyword: callback-generator:;
-end class;
+define class <function-type-clause> (<clause>) end class;
 
 define class <container-clause> (<clause>)
   slot container-options :: <container-options>;
@@ -290,7 +286,9 @@ define constant <source-location> = false-or(<parse-state>);
 :token <open-token> <reserved-word-token> 
 :token <inline-token> <reserved-word-token> 
 :token <value-token> <reserved-word-token> 
-:token <callback-token> <reserved-word-token>
+:token <function-type-token> <reserved-word-token> 
+:token <callback-maker-token> <reserved-word-token>
+:token <callout-function-token> <reserved-word-token>
 
 ;; A whole bunch of punctuation
 
@@ -791,17 +789,43 @@ variable-option (<getter-token> sealing)
   pair(#"seal", %2);
 %
 
-interface-clause (<callback-token> <string-literal-token> <arrow-token>
-                  <identifier-token> callback-option-list)
+interface-clause (<function-type-token> <string-literal-token> <arrow-token>
+                  <identifier-token> function-type-option-list)
+  @0.container-options.rename :=
+     pair(pair(%2.value, %4.value), @0.container-options.rename);
   @0.clauses := add!(@0.clauses,
-                     make(<callback-clause>,
+                     make(<function-type-clause>,
                           name: %2.value,
-                          callback-generator: %4.value,
                           options: %5));
 %
 
-callback-option-list ()
+interface-clause (<function-type-token> <string-literal-token> 
+                  function-type-option-list)
+  @0.clauses := add!(@0.clauses,
+                     make(<function-type-clause>,
+                          name: %2.value,
+                          options: %3));
+%
+
+function-type-option-list ()
   #();
+%
+
+function-type-option-list (function-type-option-list <comma-token>
+                           function-type-option)
+  pair(%3, %1);
+%
+
+function-type-option (function-option)
+  %1;
+%
+
+function-type-option (<callback-maker-token> <identifier-token>)
+  pair(#"callback-maker", %2.value);  
+%
+
+function-type-option (<callout-function-token> <identifier-token>)
+  pair(#"callout-function", %2.value);
 %
 
 %%

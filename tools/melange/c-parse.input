@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.4 1998/09/27 06:39:03 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.5 1998/10/18 20:16:39 emk Exp $
 
 //======================================================================
 //
@@ -708,19 +708,47 @@ declaration (declaration-specifiers <semicolon-token>)
   process-type-list(%1, @0);
 %
 
-declaration (declaration-specifiers extended-declarator-list
-             <lcurly-token> curly-list <rcurly-token>)
+declaration (inline-declaration)
   // Ignore inline declarations.  These occur in VC++ header files, so we'd
-  // better be able to handle them.
-  write-line(*standard-error*, "Warning: ignoring inline code declaration.");
+  // better be able to handle them. They also occur in Gtk+.
+  parse-warning(%1, "ignoring inline function declaration");
   #f;
 %
 
-declaration (<inline-token> declaration-specifiers extended-declarator-list
-             <lcurly-token> curly-list <rcurly-token>)
-  // Ignore inline declarations.  These occur in VC++ header files, so we'd
-  // better be able to handle them.
-  #f;
+inline-declaration (inline-specifiers declaration-specifiers
+                    extended-declarator-list
+                    <lcurly-token> curly-list <rcurly-token>)
+  %1;
+%
+
+inline-declaration (declaration-specifiers extended-declarator-list
+                    <lcurly-token> curly-list <rcurly-token>)
+  %3;
+%
+
+inline-specifiers (<inline-token>)
+  %1;
+%
+
+inline-specifiers (<static-token>)
+  // XXX - This rule might allow 'static extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  // This should go away when we handle static storage specifiers.
+  %1;
+%
+
+inline-specifiers (<static-token> <inline-token>)
+  // Bogus declarations of this form appear in Gtk+.
+  // XXX - This rule might allow 'static inline extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  %2;
+%
+
+inline-specifiers (<inline-token> <static-token>)
+  // XXX - This rule might allow 'inline static extern', which is
+  // clearly illegal. But we're going to ignore it, so why bother?
+  // This should go away when we handle static storage specifiers.
+  %1;
 %
 
 declaration (<extern-token> init-declarator-list <semicolon-token>)

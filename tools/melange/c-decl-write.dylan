@@ -215,10 +215,9 @@ end method c-accessor;
 
 define constant <non-atomic-types>
     = type-union(<struct-declaration>, <union-declaration>,
-		 <vector-declaration>);
+		 <vector-declaration>, <function-type-declaration>);
 define constant <pointer-rep-types>
-    = type-union(<pointer-declaration>, <non-atomic-types>,
-		 <function-type-declaration>);
+    = type-union(<pointer-declaration>, <non-atomic-types>);
 
 define method c-accessor
     (type :: <non-atomic-types>,
@@ -766,9 +765,8 @@ define method write-declaration
 end method write-declaration;
 
 // XXX - Callback and function pointer support is currently in transition.
-// For now, we equate all function pointers as <function-pointer> and don't
-// worry about the different types. Once callbacks work, we'll worry about
-// type safety.
+// We now create distinct types, but we don't yet generate code for
+// callback and callout support.
 
 define method write-declaration
     (decl :: <function-type-declaration>, load-string :: <string>,
@@ -779,16 +777,33 @@ define method write-declaration
 	   decl.dylan-name)
   end if;
 
-  let generator = as(<string>, decl.callback-generator-name);
-  if (generator)
+  // XXX - Hack alert. Because we haven't integrated the local name mapper
+  // with the standard name mapper, we must check for it's existence. This
+  // means that the user must explicity specify a function-type clause to
+  // get the default maker and caller names. This is inconsistent. See
+  // interface.dylan's handling of <function-type-clause> for more info.
+  if (decl.local-name-mapper)
+    local method get-name(name, alternate-prefix)
+	    if (name)
+	      as(<string>, name);
+	    else
+	      decl.local-name-mapper(alternate-prefix, decl.simple-name);
+	    end if;
+	  end method get-name;
+    
+    let maker = get-name(decl.callback-maker-name, "make");
+    let caller = get-name(decl.callout-function-name, "call");
     select (melange-target)
       #"d2c" =>
-	format(stream, "/* binding for %s goes here */\n\n", generator);
+	format(stream, "/* binding for %s goes here */\n\n", maker);
+	format(stream, "/* binding for %s goes here */\n\n", caller);    
       #"mindy" =>
-	format(stream, "/* skipping bindings for %s */\n\n", generator);
+	format(stream, "/* skipping bindings for %s, %s */\n\n",
+	       maker, caller);
 	signal(make(<simple-warning>,
-		    format-string: "melange: skipping mindy bindings for %s",
-		    format-arguments: list(generator)));
+		    format-string:
+		      "melange: skipping mindy bindings for %s, %s",
+		    format-arguments: list(maker, caller)));
       otherwise =>
 	error("melange: so, you wrote a new compiler?");
     end select;

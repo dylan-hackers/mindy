@@ -158,7 +158,6 @@ define method report-condition
 			   stream);
   apply(condition-format, stream, parse-condition.condition-format-string,
 	parse-condition.condition-format-arguments);
-  condition-format(stream, "\n");
   unless (stream == #"Cheap-IO")
     force-output(stream);
   end unless;
@@ -167,5 +166,6 @@ end method report-condition;
 define method default-handler(condition :: <parse-progress-report>)
   if (*show-parse-progress?*)
     report-condition(condition, *warning-output*);
+    condition-format(*warning-output*, "\n");
   end;
 end method default-handler;

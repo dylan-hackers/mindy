@@ -696,7 +696,9 @@ end method pointer-to;
 define class <function-type-declaration> (<type-declaration>)
   slot result :: <result-declaration>, required-init-keyword: #"result";
   slot parameters :: <sequence>, required-init-keyword: #"params";
-  slot callback-generator-name :: false-or(<symbol>) = #f;
+  slot local-name-mapper :: false-or(<function>) = #f;
+  slot callback-maker-name :: false-or(<symbol>) = #f;
+  slot callout-function-name :: false-or(<symbol>) = #f;
 end class <function-type-declaration>;
 
 define method canonical-name (decl :: <function-type-declaration>)
