@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.111 1996/03/02 19:59:23 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.112 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,14 +112,14 @@ define method indenting-stream-spew-output
     (stream :: <indenting-stream>, stop :: <buffer-index>)
     => ();
   unless (zero?(stop))
-    let (target-buffer, target-next, target-size)
+    let (target-buffer, target-next :: <integer>, target-size :: <integer>)
       = get-output-buffer(stream.is-target);
     let buffer = stream.is-buffer;
     local
-      method spew-n-chars (n, char)
-	let available = target-size - target-next;
+      method spew-n-chars (n :: <integer>, char :: <integer>)
+	let available :: <integer> = target-size - target-next;
 	while (available < n)
-	  for (i from target-next below target-size)
+	  for (i :: <integer> from target-next below target-size)
 	    target-buffer[i] := char;
 	  end;
 	  empty-output-buffer(stream.is-target, target-size);
@@ -127,13 +127,13 @@ define method indenting-stream-spew-output
 	  n := n - available;
 	  available := target-size;
 	end;
-	for (i from target-next below target-next + n)
+	for (i :: <integer> from target-next below target-next + n)
 	  target-buffer[i] := char;
 	finally
 	  target-next := i;
 	end;
       end,
-      method spew-range (finish, start)
+      method spew-range (finish :: <integer>, start :: <integer>)
 	let n = finish - start;
 	let available = target-size - target-next;
 	if (available < n)
@@ -183,7 +183,7 @@ define method indenting-stream-spew-output
 	    let spaces = 8 - modulo(col, 8);
 	    spew-n-chars($space, spaces);
 	    do-text(index + 1, index + 1, col + spaces);
-	  elseif (char = $newline)
+	  elseif (char == $newline)
 	    spew-range(index + 1, start-index);
 	    do-indentation(index + 1, 0);
 	  else
@@ -577,7 +577,7 @@ define method c-prefix (description :: <byte-string>) => (result :: <string>);
 		  (is-prefix?("General entry for ", description)) => 18;
 		  otherwise => 0;
 		end case;
-    for (i from start below description.size,
+    for (i :: <integer> from start below description.size,
 	 until: description[i] = ' ' | description[i] = '{')
     finally
       let (first, last, offset, result)
@@ -588,7 +588,7 @@ define method c-prefix (description :: <byte-string>) => (result :: <string>);
 	  else
 	    values(start, i, 0, make(<byte-string>, size: i - start));
 	  end if;
-      for (j from offset, i from first below last)
+      for (j :: <integer> from offset, i :: <integer> from first below last)
 	result[j] := c-prefix-transform[as(<integer>, description[i])];
       end for;
       result;
