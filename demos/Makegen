@@ -16,7 +16,7 @@ do emit_library_rule(
 do emit_library_rule(
     'gobbledygook',
     '../runtime/dylan/dylan.lib.du fact.lib.du',
-    '-L../runtime/c-code -L../runtime/dylan',
+    '-L../runtime/c-code -L../runtime/dylan -L.',
     'compile'
 );
 
