@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.11 1995/10/05 01:24:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.12 1995/11/15 17:25:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -379,14 +379,14 @@ define method ct-sorted-applicable-methods
 		next-seal();
 	      end;
 	    end;
-	  end;
 
-	  // Okay, we have a candidate seal.  Recursivly grovel its method
-	  // tree and return the results if we can come up with any.
-	  let (ordered, ambiguous)
-	    = find-applicable(seal-info.method-tree, #(), #(), call-types);
-	  if (ordered)
-	    return(ordered, ambiguous);
+	    // Okay, we have a candidate seal.  Recursivly grovel its method
+	    // tree and return the results if we can come up with any.
+	    let (ordered, ambiguous)
+	      = find-applicable(seal-info.method-tree, #(), #(), call-types);
+	    if (ordered)
+	      return(ordered, ambiguous);
+	    end;
 	  end;
 
 	otherwise =>
