@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.7 1994/06/27 17:10:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.8 1994/08/18 17:42:48 nkramer Exp $
 
 //======================================================================
 //
@@ -519,23 +519,22 @@ end method map-into;
 
 /// add -- public
 ///
-/// Create a new deque with the NEW element added to it.  It is not
-/// specified where the element should be added.  This implementation adds
-/// the new element to the end of the deque.
+/// Create a new deque with the NEW element added to it.  Add must
+/// function similarly to add!, so this adds to the front of the
+/// deque.
 ///
 define method add(deque :: <deque>, new) => <deque>;
   let new-deque = copy-sequence(deque);
-  push-last(new-deque, new);
+  push(new-deque, new);
 end method add;
 
 /// add! -- public
 ///
-/// Add a NEW element to a deque destructively.  It is not specified where
-/// the element should be added.  This implementation adds the element at
-/// the end of the deque.
+/// Add a NEW element to a deque destructively.  This is another name
+/// for push (so it adds to the front of the deque).
 ///
 define method add!(deque :: <deque>, new) => <deque>;
-  push-last(deque, new);
+  push(deque, new);
 end method add!;
 
 /// remove -- public
@@ -550,7 +549,8 @@ end method add!;
 define method remove(deque :: <deque>, value,
 		     #key test = \==, count) => <deque>;
   let count = count | size(deque);
-  local method copy(state :: <deque-element>, count :: <integer>) => <deque>;
+  local method copy(state :: union(singleton(#f), <deque-element>),
+		    count :: <integer>) => <deque>;
 	  case
 	    ~state =>
 	      make(<deque>);
@@ -576,7 +576,8 @@ end method remove;
 define method remove!(deque :: <deque>, value,
 		      #key test = \==, count: count) => <deque>;
   let count = count | size(deque);
-  local method scan!(state :: <deque-element>, count :: <integer>)
+  local method scan!(state :: union(singleton(#f), <deque-element>),
+		     count :: <integer>)
 	  case
 	    count <= 0 | ~state =>
 	      #t;
