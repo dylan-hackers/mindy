@@ -1,11 +1,11 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.5 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.6 2003/02/01 13:56:02 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -35,7 +35,7 @@ copyright: see below
 define class <clone-state> (<object>)
   //
   // The builder used to build the clone.
-  slot clone-builder :: <fer-builder>,
+  constant slot clone-builder :: <fer-builder>,
     required-init-keyword: builder:;
   //
   // The function-region we are currently building.  Needed for
@@ -44,7 +44,7 @@ define class <clone-state> (<object>)
     init-value: #f;
   //
   // Hash table mapping original things to new things.
-  slot cloned-stuff :: <object-table> = make(<object-table>);
+  constant slot cloned-stuff :: <object-table> = make(<object-table>);
 end;
 
 
