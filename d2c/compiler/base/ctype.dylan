@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.42 1996/02/23 15:05:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.43 1996/02/23 17:49:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -463,7 +463,7 @@ define method ctype-difference (type1 :: <ctype>, type2 :: <ctype>)
 	    end for;
 	    values(result, precise?);
 	  end block;
-      memo2-enter(type1, type2, val, win, $intersection-memo);
+      memo2-enter(type1, type2, val, win, $difference-memo);
       values(val, win);
     else
       values(memo-val, memo-win);
