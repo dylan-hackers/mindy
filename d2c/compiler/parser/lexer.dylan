@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.9 1995/12/10 15:24:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.10 1995/12/13 23:55:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -946,7 +946,7 @@ define class <conditional-state> (<object>)
   slot seen-else? :: <boolean>,
     init-value: #f;
   slot old-state :: false-or(<conditional-state>),
-    init-value: #f, init-keyword: old-state:;
+    required-init-keyword: old-state:;
 end class <conditional-state>;
 
 define method active? (state == #f) => res :: <boolean>;
@@ -1294,9 +1294,11 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
 	  let cond = parse-conditional(lexer);
 	  lexer.conditional-state
 	    := if (lexer.conditional-state.active?)
-		 make(<conditional-state>, active: cond, do-else: ~cond);
+		 make(<conditional-state>, active: cond, do-else: ~cond,
+		      old-state: lexer.conditional-state);
 	       else
-		 make(<conditional-state>, active: #f, do-else: #f);
+		 make(<conditional-state>, active: #f, do-else: #f,
+		      old-state: lexer.conditional-state);
 	       end if;
 	  
 	<feature-else-if-token> =>
