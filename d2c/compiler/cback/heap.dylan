@@ -345,7 +345,7 @@ define method spew-object (object :: <proxy>, state :: <state>) => ();
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
-  spew-instance(object.ct-value-cclass, state,
+  spew-function(object, state,
 		general-entry:
 		  make(<ct-entry-point>, for: object, kind: #"general"));
 end;
@@ -353,7 +353,7 @@ end;
 define method spew-object
     (object :: <ct-generic-function>, state :: <state>) => ();
   let defn = object.ct-function-definition;
-  spew-instance(object.ct-value-cclass, state,
+  spew-function(object, state,
 		general-entry:
 		  begin
 		    let discriminator = defn.generic-defn-discriminator;
@@ -374,7 +374,7 @@ define method spew-object
 end;
 
 define method spew-object (object :: <ct-method>, state :: <state>) => ();
-  spew-instance(object.ct-value-cclass, state,
+  spew-function(object, state,
 		general-entry:
 		  if (object.ct-method-hidden?)
 		    let tramp = dylan-defn(#"general-call");
@@ -390,6 +390,41 @@ define method spew-object (object :: <ct-method>, state :: <state>) => ();
 		  end,
 		generic-entry:
 		  make(<ct-entry-point>, for: object, kind: #"generic"));
+end;
+
+define method spew-function
+    (func :: <ct-function>, state :: <state>, #rest slots) => ();
+  unless (func.ct-function-closure-var-types == #())
+    error("Trying to dump a closure into the initial heap?");
+  end;
+  let sig = func.ct-function-signature;
+  let returns = sig.returns;
+  let positionals = returns.positional-types;
+  let min-values = returns.min-values;
+  apply(spew-instance, func.ct-value-cclass, state,
+	function-specializers:
+	  make(<literal-simple-object-vector>,
+	       contents: sig.specializers,
+	       sharable: #t),
+	function-rest?: as(<ct-value>, sig.rest-type & #t),
+	function-keywords:
+	  if (sig.key-infos)
+	    make(<literal-simple-object-vector>,
+		 contents: map(compose(curry(as, <ct-value>), key-name),
+			       sig.key-infos),
+		 sharable: #t);
+	  else
+	    as(<ct-value>, #f);
+	  end,
+	function-all-keys?: as(<ct-value>, sig.all-keys?),
+	function-values:
+	  make(<literal-simple-object-vector>,
+	       contents: copy-sequence(positionals, end: min-values),
+	       sharable: #t),
+	function-rest-value:
+	  reduce(ctype-union, returns.rest-value-type,
+		 copy-sequence(positionals, start: min-values)),
+	slots);
 end;
 
 
