@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.13 1996/01/12 02:10:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.14 1996/01/12 16:45:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -552,7 +552,7 @@ define method add-new
 end method add-new;
 
 define inline method add-new!
-    (seq :: <sequence>, new-element :: <object>, #key test)
+    (seq :: <sequence>, new-element :: <object>, #key test :: <function> = \==)
  => (new-seq :: <sequence>);
   add-new(seq, new-element, test: test);
 end method add-new!;
