@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.40 1995/12/10 15:24:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.41 1995/12/10 15:47:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -162,6 +162,19 @@ define method process-feature (feature :: <byte-string>) => ();
   end if;
 end method process-feature;
 
+define method extract-directory (path :: <byte-string>)
+    => dir :: <byte-string>;
+  block (return)
+    for (index from path.size - 1 to 0 by -1)
+      if (path[index] == '/')
+	return(copy-sequence(path, end: index + 1));
+      end if;
+    end for;
+    "";
+  end block;
+end method extract-directory;
+
+
 define method compile-library
     (lid-file :: <byte-string>, command-line-features :: <list>) => ();
   let (header, files) = parse-lid(lid-file);
@@ -176,9 +189,10 @@ define method compile-library
   let unit-prefix
     = element(header, #"unit-prefix", default: #f) | as-lowercase(lib-name);
   let tlf-vectors = make(<stretchy-vector>);
+  let source-path = extract-directory(lid-file);
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
-    let (tokenizer, mod) = file-tokenizer(lib, file);
+    let (tokenizer, mod) = file-tokenizer(lib, concatenate(source-path, file));
     complete-module(mod);
     block ()
       *Current-Library* := lib;
