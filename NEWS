@@ -1,9 +1,9 @@
 Gwydion Dylan 2.3.11 (2003-07-28)
 
-  This release features further improvements in introspection support,
-  and the build system, along with major work in floating-point
-  functionality, macro hygiene, and common-dylan compliance and
-  feature support.  There are further workarounds for buggy code
+  This release features major work in floating-point functionality,
+  macro hygiene, and common-dylan compliance and feature support,
+  along with further improvements in introspection support and the
+  build system.  We have added some more workarounds for buggy code
   generation in some versions of gcc, and of course we've fixed a few
   of our own bugs too.
 
