@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.19 1995/08/30 18:29:10 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.20 1995/09/28 19:39:27 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,7 +27,7 @@ end class;
 /// Our primary approach for getting good performance on the type operations is
 /// to use memoization, rather than trying to come up with clever ways to
 /// quickly determine type relationships.  This based on the observation that
-/// relatively few types are actually in use at any given type, and that the
+/// relatively few types are actually in use at any given time, and that the
 /// compiler does the same operations over and over.
 
 /// Memoization is based on the type-hash, which is a slot shared by all
@@ -36,14 +36,8 @@ end class;
 /// <ctype> objects are also hash-consed, which (modulo unknown types)
 /// means that == is type equivalence.
 
-
-/// make a pseudo-random type-hash value.
-
-define variable random-state = 
-  make(<integer-uniform-distribution>, from: 0, to: ash(1, 28));
-
 define constant make-type-hash = method ()
-  random(random-state);
+  random-bits();
 end;
 
 
