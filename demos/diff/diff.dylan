@@ -23,7 +23,7 @@ define module diff-program
   use streams, import: {<file-stream>, read-line, force-output};
   use standard-io, import: {*standard-output*};
   use format, import: {format};
-  use diff;
+  use sequence-diff;
 end module diff-program;
 
 define constant <script> = <sequence>;
@@ -107,5 +107,5 @@ end method print-diffs;
 define method main (argv0, #rest filenames)
   let file1 = slurp-file(filenames[0]);
   let file2 = slurp-file(filenames[1]);
-  print-diffs(diff(file1, file2), file1, file2);
+  print-diffs(sequence-diff(file1, file2), file1, file2);
 end method main;
