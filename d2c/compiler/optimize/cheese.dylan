@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.101 1995/08/30 18:24:51 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.102 1995/09/01 15:39:14 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -97,9 +97,10 @@ end;
 
 define method maybe-convert-to-ssa
     (component :: <component>, var :: <initial-variable>) => ();
-  if (var.definitions.size == 1)
+  let defns = var.definitions;
+  if (defns ~== #() & defns.tail == #())
     // Single definition -- replace it with an ssa variable.
-    let defn = var.definitions[0];
+    let defn = defns.head;
     let assign = defn.definer;
     if (assign)
       let ssa = make(<ssa-variable>,
