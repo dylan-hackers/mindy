@@ -31,14 +31,18 @@ define method optimize-component (component :: <component>) => ();
       optimize(component, dependent);
       //dump-fer(component);
     else
-      add-type-checks(component);
-      unless (component.initial-definitions | component.reoptimize-queue)
-	done := #t;
-      end;
+      local method try (function)
+	      function(component);
+	      component.initial-definitions | component.reoptimize-queue;
+	    end;
+      try(add-type-checks)
+	| (done := #t);
     end;
   end;
 end;
 
+
+// SSA conversion.
 
 define method maybe-convert-to-ssa (defn :: <initial-definition>) => ();
   let var :: <initial-variable> = defn.definition-of;
@@ -72,13 +76,22 @@ define method maybe-convert-to-ssa (defn :: <initial-definition>) => ();
   end;
 end;
 
+
+// Optimizations.
 
+define generic optimize
+    (component :: <component>, dependent :: <dependent-mixin>)
+    => ();
 
-define method optimize (component :: <component>,
-			dependent :: <dependent-mixin>)
+define method optimize
+    (component :: <component>, dependent :: <dependent-mixin>)
     => ();
   // By default, do nothing.
 end;
+
+
+
+// Assignment optimization.
 
 define method side-effect-free? (expr :: <expression>) => res :: <boolean>;
   #f;
@@ -127,26 +140,30 @@ end;
 
 define method optimize
     (component :: <component>, assignment :: <assignment>) => ();
-  block (return)
-    local
-      method trim-unused-definitions (defn, new-tail) => ();
-	if (~defn)
-	  if (new-tail)
-	    new-tail.definer-next := #f;
-	  else
-	    assignment.defines := #f;
-	  end;
-	elseif (~defn.dependents & ~defn.needs-type-check?
-		  & instance?(defn, <ssa-variable>))
-	  trim-unused-definitions(defn.definer-next, new-tail);
+  local
+    method trim-unused-definitions (defn, new-tail) => ();
+      if (~defn)
+	if (new-tail)
+	  new-tail.definer-next := #f;
 	else
-	  trim-unused-definitions(defn.definer-next, defn);
+	  assignment.defines := #f;
 	end;
+      elseif (~defn.dependents & ~defn.needs-type-check?
+		& instance?(defn, <ssa-variable>))
+	trim-unused-definitions(defn.definer-next, new-tail);
+      else
+	trim-unused-definitions(defn.definer-next, defn);
       end;
-    trim-unused-definitions(assignment.defines, #f);
+    end;
+  trim-unused-definitions(assignment.defines, #f);
 
-    let dependency = assignment.depends-on;
-    let source = dependency.source-exp;
+  let dependency = assignment.depends-on;
+  let source = dependency.source-exp;
+  let source-type = source.derived-type;
+
+  if (source-type == empty-ctype())
+    insert-exit-after(component, assignment, component);
+  else
     let defines = assignment.defines;
 
     if (defines)
@@ -174,7 +191,6 @@ define method optimize
 	end;
       end;
 
-      let source-type = source.derived-type;
       if (instance?(defines.var-info, <values-cluster-info>))
 	maybe-restrict-type(component, defines, source-type);
       else
@@ -201,31 +217,9 @@ define method optimize
 	end;
       end;
     elseif (side-effect-free?(source))
-      remove-dependency-from-source(component, dependency);
-      delete-assignment(assignment);
+      delete-and-unlink-assignment(component, assignment);
     end;
   end;
-end;
-
-define method delete-assignment (assignment :: <assignment>) => ();
-  let next = assignment.next-op;
-  let prev = assignment.prev-op;
-  if (next | prev)
-    if (next)
-      next.prev-op := prev;
-    else
-      assignment.region.last-assign := prev;
-    end;
-    if (prev)
-      prev.next-op := next;
-    else
-      assignment.region.first-assign := next;
-    end;
-  else
-    let region = assignment.region;
-    replace-subregion(region.parent, region, make(<empty-region>));
-  end;
-  assignment.region := #f;
 end;
 
 define method maybe-propagate-copy (component :: <component>,
@@ -301,6 +295,8 @@ define method maybe-propagate-copy (component :: <component>,
     => ();
 end;
 
+
+// Call optimization.
 
 define method optimize (component :: <component>, call :: <unknown-call>)
     => ();
@@ -381,9 +377,7 @@ define method optimize-unknown-call
       call-dependency.source-exp := pitcher;
       queue-dependent(component, assign);
       queue-dependent(component, pitcher);
-      let exit = make(<exit>, block: block-region, next: block-region.exits);
-      block-region.exits := exit;
-      insert-after(assign, exit);
+      insert-exit-after(component, assign, block-region);
     end;
   end;
 end;
@@ -399,6 +393,8 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
   end;
 end;
 
+
+// Primitive and other magic operator optimization
 
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
@@ -428,14 +424,11 @@ define method optimize (component :: <component>, primitive :: <primitive>)
 						 make(<literal-false>));
 			 end);
       end;
-      // Remove the primitive from arguments dependencies.
-      for (val-dep = primitive.depends-on then val-dep.dependent-next,      
-	   while: val-dep)
-	remove-dependency-from-source(component, val-dep);
-      end;
-      // Replace the assignment with the builder results.
+      assign.defines := #f;
+      // Insert the spred out assignments.
       insert-after(assign, builder.builder-result);
-      delete-assignment(assign);
+      // Nuke the original assignment.
+      delete-and-unlink-assignment(component, assign);
     end;
   end;
 end;
@@ -463,7 +456,7 @@ define method optimize (component :: <component>, catcher :: <catcher>)
   end;
 end;
 
-define method optimize (component :: <component>, pitcher :: <pitcher>)
+define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
   for (dep = pitcher.depends-on then dep.dependent-next,
        types = #() then pair(dep.source-exp.derived-type, types),
        while: dep)
@@ -476,6 +469,9 @@ define method optimize (component :: <component>, pitcher :: <pitcher>)
     end;
   end;
 end;
+
+
+// Function optimization
 
 define method optimize (component :: <component>, lambda :: <lambda>)
     => ();
@@ -512,6 +508,15 @@ define method maybe-restrict-result-type
   if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
     lambda.result-type := type;
     queue-dependents(component, lambda);
+
+    if (type == empty-ctype())
+      // We don't return.  So flush the return vars.
+      for (dep = lambda.depends-on then dep.dependent-next,
+	   while: dep)
+	remove-dependency-from-source(component, dep);
+      end;
+      lambda.depends-on := #f;
+    end;
   end;
 end;    
 
@@ -682,9 +687,14 @@ define method maybe-restrict-type
     (component :: <component>, var :: <abstract-variable>,
      type :: <values-ctype>, #next next-method)
     => ();
+  let var-info = var.var-info;
   next-method(component, var,
-	      values-type-intersection(type,
-				       var.var-info.asserted-type));
+	      if (instance?(var-info, <values-cluster-info>))
+		values-type-intersection(type, var-info.asserted-type);
+	      else
+		ctype-intersection(defaulted-first-type(type),
+				   var-info.asserted-type);
+	      end);
 end;
 
 define method maybe-restrict-type
@@ -697,6 +707,21 @@ define method maybe-restrict-type
     queue-dependent(component, var.definer);
   end;
   next-method();
+end;
+
+define method defaulted-first-type (ctype :: <ctype>) => res :: <ctype>;
+  ctype;
+end;
+
+define method defaulted-first-type (ctype :: <values-ctype>) => res :: <ctype>;
+  let positionals = ctype.positional-types;
+  if (positionals == #())
+    ctype-union(ctype.rest-value-type, dylan-value(#"<false>"));
+  elseif (zero?(ctype.min-values))
+    ctype-union(positionals[0], dylan-value(#"<false>"));    
+  else
+    positionals[0];
+  end;
 end;
 
 
@@ -759,6 +784,7 @@ for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
 end;
 
 
+
 
 // Cheesy type check stuff.
 
@@ -812,8 +838,9 @@ define method add-type-checks-aux
 			 defn, check);
 	// Seed the derived type of the check-type call.
 	let cur-type = assign.depends-on.source-exp.derived-type;
+	let cur-type-positionals = cur-type.positional-types;
 	let (checked-type, precise?)
-	  = values-type-intersection(asserted-type, cur-type);
+	  = ctype-intersection(asserted-type, defaulted-first-type(cur-type));
 	maybe-restrict-type(component, check,
 			    if (precise?)
 			      checked-type;
@@ -876,13 +903,110 @@ end;
 
 
 
-// FER editing stuff.
+// Deletion code.
+
+define method delete-dependent
+    (component :: <component>, dependent :: <dependent-mixin>) => ();
+  //
+  // Remove our dependency from whatever we depend on.
+  for (dep = dependent.depends-on then dep.dependent-next,
+       while: dep)
+    remove-dependency-from-source(component, dep);
+  end;
+  //
+  // If we are queued for reoptimization, belay that.
+  unless (dependent.queue-next == #"absent")
+    for (dep = component.reoptimize-queue then dep.queue-next,
+	 prev = #f then dep,
+	 until: dep == dependent)
+    finally
+      if (prev)
+	prev.queue-next := dep.queue-next;
+      else
+	component.reoptimize-queue := dep.queue-next;
+      end;
+    end;
+  end;
+  dependent.queue-next := #"deleted";
+end;
+
+define method delete-dependent
+    (component :: <component>, pitcher :: <pitcher>, #next next-method)
+    => ();
+  next-method();
+  let catcher = pitcher.catcher;
+  for (scan = catcher.pitchers then scan.pitcher-next,
+       prev = #f then scan,
+       until: scan == pitcher)
+  finally
+    if (prev)
+      prev.pitcher-next := pitcher.pitcher-next;
+    else
+      catcher.pitchers := pitcher.pitcher-next;
+    end;
+  end;
+  queue-dependent(component, catcher);
+end;
+
+define method delete-and-unlink-assignment
+    (component :: <component>, assignment :: <assignment>) => ();
+
+  // Do everything but the unlinking.
+  delete-assignment(component, assignment);
+
+  // Unlink the assignment from region.
+  let next = assignment.next-op;
+  let prev = assignment.prev-op;
+  if (next | prev)
+    if (next)
+      next.prev-op := prev;
+    else
+      assignment.region.last-assign := prev;
+    end;
+    if (prev)
+      prev.next-op := next;
+    else
+      assignment.region.first-assign := next;
+    end;
+  else
+    // It was the only assignment in the region, so flush the region.
+    let region = assignment.region;
+    replace-subregion(region.parent, region, make(<empty-region>));
+  end;
+
+  // Set the region to #f to indicate that we are a gonner.
+  assignment.region := #f;
+end;
+
+
+define method delete-assignment
+    (component :: <component>, assignment :: <assignment>) => ();
+
+  // Clean up the dependent aspects.
+  delete-dependent(component, assignment);
+
+  // Nuke the definitions.
+  for (var = assignment.defines then var.definer-next,
+       while: var)
+    delete-definition(component, var);
+  end;
+end;
+
+define method delete-definition
+    (component :: <component>, defn :: <ssa-variable>) => ();
+  defn.definer := #f;
+end;
+
+define method delete-definition
+    (component :: <component>, defn :: <initial-definition>) => ();
+  defn.definer := #f;
+  let var = defn.definition-of;
+  var.definitions := remove!(var.definitions, var);
+end;
 
 
 define method remove-dependency-from-source
     (component :: <component>, dependency :: <dependency>) => ();
-
-  // Remove the dependency from the source exp.
   let source = dependency.source-exp;
   for (dep = source.dependents then dep.source-next,
        prev = #f then dep,
@@ -909,10 +1033,7 @@ define method dropped-dependent
   if (op.dependents)
     error("%= had more than one dependent?");
   end;
-  for (dep = op.depends-on then dep.dependent-next,
-       while: dep)
-    remove-dependency-from-source(dep);
-  end;
+  delete-dependent(component, op);
 end;
 
 define method dropped-dependent
@@ -943,10 +1064,227 @@ define method dropped-dependent
   end;
 end;
 
+// insert-exit-after -- internal.
+//
+// Inserts an exit to the target after the assignment, and deletes everything
+// following it in the control flow.  This is the interface to control-flow
+// deletion.
+//
+define method insert-exit-after
+    (component :: <component>, assignment :: <abstract-assignment>,
+     target :: <block-region-mixin>)
+    => ();
+  let region = assignment.region;
+  let region-parent = region.parent;
+  unless (instance?(region-parent, <compound-region>)
+	    & begin
+		let siblings = region-parent.regions;
+		let num-sibs = siblings.size;
+		num-sibs >= 2
+		  & siblings[num-sibs - 2] == region
+		  & begin
+		      let following = siblings[num-sibs - 1];
+		      instance?(following, <exit>)
+			& following.block-of == target;
+		    end;
+	      end)
+    let exit = make(<exit>, block: target, next: target.exits);
+    target.exits := exit;
+    let (before, after) = split-after(assignment);
+    let new = combine-regions(before, exit);
+    replace-subregion(region-parent, region, new);
+    after.parent := #f;
+    delete-stuff-in(component, after);
+    delete-stuff-after(component, new.parent, new);
+  end;
+end;
+
+
+define method delete-stuff-in
+    (component :: <component>, simple-region :: <simple-region>) => ();
+  for (assign = simple-region.first-assign then assign.next-op,
+       while: assign)
+    delete-assignment(component, assign);
+    assign.region := #f;
+  end;
+end;
+
+define method delete-stuff-in
+    (component :: <component>, region :: <compound-region>) => ();
+  for (subregion in region.regions)
+    delete-stuff-in(component, subregion);
+  end;
+end;
+
+define method delete-stuff-in
+    (component :: <component>, region :: <if-region>) => ();
+  delete-dependent(component, region);
+  delete-stuff-in(component, region.then-region);
+  delete-stuff-in(component, region.else-region);
+end;
+
+define method delete-stuff-in
+    (component :: <component>, region :: <body-region>) => ();
+  delete-stuff-in(component, region.body);
+end;
+
+define method delete-stuff-in
+    (component :: <component>, region :: <exit>) => ();
+  let block-region = region.block-of;
+  for (scan = block-region.exits then scan.next-exit,
+       prev = #f then scan,
+       until: scan == region)
+  finally
+    let next = region.next-exit;
+    if (prev)
+      prev.next-exit := next;
+    else
+      block-region.exits := next;
+      unless (next)
+	all-exits-gone(component, block-region);
+      end;
+    end;
+  end;
+end;
+
+
+define method all-exits-gone
+    (component :: <component>, region :: <component>) => ();
+end;
+
+define method all-exits-gone
+    (component :: <component>, region :: <block-region>) => ();
+  let parent = region.parent;
+  if (parent)
+    delete-stuff-after(component, parent, region);
+    replace-subregion(parent, region, region.body);
+  end;
+end;
+
+define method all-exits-gone
+    (component :: <component>, region :: <fer-exit-block-region>,
+     #next next-method)
+    => ();
+  unless (region.catcher.exit-function)
+    next-method();
+  end;
+end;
+
+
+define method delete-stuff-after
+    (component :: <component>, region :: <compound-region>, after :: <region>)
+    => ();
+
+  // We have to delete the stuff after this region first, because calling
+  // replace-subregion (which we want to do below) modifies the tree
+  // structure above this node.
+  delete-stuff-after(component, region.parent, region);
+
+  for (remaining = region.regions then remaining.tail,
+       prev = #f then remaining,
+       until: remaining.head == after)
+  finally
+    if (prev)
+      prev.tail := #();
+      if (region.regions.size == 1)
+	replace-subregion(region.parent, region, region.regions[0]);
+      end;
+    else
+      replace-subregion(region.parent, region, make(<empty-region>));
+    end;
+    for (subregion in remaining)
+      delete-stuff-in(component, subregion);
+    end;
+  end;
+end;
+
+define method delete-stuff-after
+    (component :: <component>, region :: <if-region>, after :: <region>)
+    => ();
+  if (select (after)
+	region.then-region => doesnt-return?(region.else-region);
+	region.else-region => doesnt-return?(region.then-region);
+      end)
+    delete-stuff-after(component, region.parent, region);
+  end;
+end;
+
+define method delete-stuff-after
+    (component :: <component>, region :: <body-region>, after :: <region>)
+    => ();
+  // There is nothing ``after'' a loop or block region in the flow of control.
+end;
+
+define method delete-stuff-after
+    (component :: <component>, lambda :: <lambda>, after :: <region>)
+    => ();
+  // Deleting the stuff after a lambda means that the function doesn't return.
+  // So we change its return type to empty-ctype.
+  maybe-restrict-result-type(component, lambda, empty-ctype());
+end;
+
+
+define method doesnt-return? (region :: <simple-region>) => res :: <boolean>;
+  #f;
+end;
+
+define method doesnt-return? (region :: <compound-region>) => res :: <boolean>;
+  doesnt-return?(region.regions.last);
+end;
+
+define method doesnt-return? (region :: <empty-region>) => res :: <boolean>;
+  #f;
+end;
+
+define method doesnt-return? (region :: <if-region>) => res :: <boolean>;
+  doesnt-return?(region.then-region) & doesnt-return?(region.else-region);
+end;
+
+define method doesnt-return? (region :: <loop-region>) => res :: <boolean>;
+  #t;
+end;
+
+define method doesnt-return?
+    (region :: <fer-exit-block-region>) => res :: <boolean>;
+  unless (region.exits | region.catcher.exit-function)
+    error("Block still around with no exits?");
+  end;
+  #f;
+end;
+
+define method doesnt-return? (region :: <block-region>) => res :: <boolean>;
+  unless (region.exits)
+    error("Block still around with no exits?");
+  end;
+  #f;
+end;
+
+define method doesnt-return? (region :: <exit>) => res :: <boolean>;
+  #t;
+end;
+
+define method doesnt-return? (region :: <lambda>) => res :: <boolean>;
+  region.result-type == empty-ctype();
+end;
+
+
+
+
+// FER editing utilities.
+
+// combine-regions -- internal.
+//
+// Takes two subtrees of FER and combines them into one subtree.  The result
+// is interally consistent (i.e. the two input regions will have their
+// parent link updated if necessary).  This routine does NOT check the
+// first subregion to see if it exits or not (i.e. whether the second subregion
+// is actually reachable.
+// 
+define generic combine-regions
+    (first :: <region>, second :: <region>) => res :: <region>;
 
 define method combine-regions
-    (first :: <region>, second :: <region>)
-    => res :: <region>;
+    (first :: <region>, second :: <region>) => res :: <region>;
   first.parent := second.parent
     := make(<compound-region>, regions: list(first, second));
 end;
@@ -1028,7 +1366,13 @@ define method combine-regions
   first;
 end;
 
-
+// split-after - internal
+//
+// Splits the region containing the assignment into two regions with the
+// split following the assignment.  The assignments in the two result
+// regions will have correct region links, but the parent link of the two
+// results is undefined.
+// 
 define method split-after (assign :: <abstract-assignment>)
     => (before :: <linear-region>, after :: <linear-region>);
   let next = assign.next-op;
@@ -1051,6 +1395,13 @@ define method split-after (assign :: <abstract-assignment>)
   end;
 end;
 
+// split-before -- internal
+//
+// Splits the region containing the assignment into two regions with the
+// split preceding the assignment.  The assignments in the two result
+// regions will have correct region links, but the parent link of the two
+// results is undefined.
+// 
 define method split-before (assign :: <abstract-assignment>)
     => (before :: <linear-region>, after :: <linear-region>);
   let prev = assign.prev-op;
@@ -1061,10 +1412,16 @@ define method split-before (assign :: <abstract-assignment>)
   end;
 end;
 
+// insert-after -- internal
+//
+// Insert the region immediate after the assignment.  All appropriate parent
+// and region links are updated.
+//
+define generic insert-after
+    (assign :: <abstract-assignment>, insert :: <region>) => ();
 
-define method insert-after (assign :: <abstract-assignment>,
-			    insert :: <region>)
-    => ();
+define method insert-after
+    (assign :: <abstract-assignment>, insert :: <region>) => ();
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-after(assign);
@@ -1077,6 +1434,14 @@ define method insert-after (assign :: <abstract-assignment>,
 			    insert :: <empty-region>)
     => ();
 end;
+
+// insert-before -- internal
+//
+// Insert the region immediate before the assignment.  All appropriate parent
+// and region links are updated.
+//
+define generic insert-before
+    (assign :: <abstract-assignment>, insert :: <region>) => ();
 
 define method insert-before (assign :: <abstract-assignment>,
 			     insert :: <region>)
@@ -1094,6 +1459,16 @@ define method insert-before (assign :: <abstract-assignment>,
     => ();
 end;
 
+// replace-subregion -- internal
+//
+// Replace region's child old with new.  This is NOT a deletion.  None of the
+// code associated with old is deleted.  It is assumed that this routine will
+// be used to edit the tree structure of regions while keeping the underlying
+// assignments the same.
+//
+define generic replace-subregion
+    (region :: <body-region>, old :: <region>, new :: <region>)
+    => ();
 
 define method replace-subregion
     (region :: <body-region>, old :: <region>, new :: <region>)
@@ -1102,6 +1477,7 @@ define method replace-subregion
     error("Replacing unknown region");
   end;
   region.body := new;
+  new.parent := region;
 end;
 
 define method replace-subregion
@@ -1114,6 +1490,7 @@ define method replace-subregion
   else
     error("Replacing unknown region");
   end;
+  new.parent := region;
 end;
 
 define method replace-subregion
@@ -1127,6 +1504,7 @@ define method replace-subregion
     end;
     regions.head := new;
   end;
+  new.parent := region;
 end;
 
 define method replace-subregion
