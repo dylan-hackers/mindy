@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/rawptr.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/rawptr.dylan,v 1.3 2003/07/09 14:24:06 prom Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -35,7 +35,7 @@ end;
 
 define sealed method make (class == <raw-pointer>, #key)
     => res :: <never-returns>;
-  error("Can't make instances of <raw-poniter>, they just are.");
+  error("Can't make instances of <raw-pointer>, they just are.");
 end;
 
 define sealed inline method as
