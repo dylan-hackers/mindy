@@ -42,11 +42,7 @@ do emit_library_rule(
     'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 
-if (! $features{'compiled_for_solaris'}
-    && ! $features{'compiled_for_win32'}
-    && ! $features{'compiled_for_openbsd'}
-    && ! $features{'compiled_for_freebsd'}
-    && ! $features{'compiled_for_darwin'}) {
+unless ($features{'no_time'}) { 
 	do emit_library_rule(
 	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 	);
