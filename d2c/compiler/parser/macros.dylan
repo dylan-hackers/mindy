@@ -1,11 +1,11 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.5 2000/12/31 18:17:48 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.6 2001/01/06 18:41:34 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -40,11 +40,11 @@ define abstract class <macro-definition> (<definition>)
     init-keyword: intermediate-words:;
   //
   // The main rule set.
-  slot macro-main-rule-set :: <main-rule-set>,
+  constant slot macro-main-rule-set :: <main-rule-set>,
     required-init-keyword: main-rule-set:;
   //
   // The auxiliary rule sets.
-  slot macro-auxiliary-rule-sets :: <simple-object-vector>,
+  constant slot macro-auxiliary-rule-sets :: <simple-object-vector>,
     required-init-keyword: auxiliary-rule-sets:;
 end class <macro-definition>;
 
@@ -569,7 +569,7 @@ end method ends-in-body-variable?;
 
 // find-aux-rule-set -- internal.
 //
-// Finds the auxiliary rule set named by symbol.  This function is also used
+// Finds the auxiliary rule set named by symbol. This function is also used
 // way down below in do-replacement, but this is as good of a place as any
 // to define it.
 // 
@@ -935,7 +935,7 @@ end method annotate-variables-pattern;
 
 // annotate-variables-pattern{<property-list-pattern>}
 //
-// Annotate the pattern varibles buried inside this property list pattern.
+// Annotate the pattern variables buried inside this property list pattern.
 // 
 define method annotate-variables-pattern
     (pattern :: <property-list-pattern>,
@@ -992,7 +992,7 @@ define constant <pattern-binding-set>
 // the new set.  Note: it is critical that this operation does not modify the
 // old set of bindings.  Otherwise, the retry stuff would puke.
 // 
-define method add-binding
+define inline method add-binding
     (variable :: <pattern-variable>,
      value :: type-union(<fragment>, <template>, <simple-object-vector>),
      bindings :: <pattern-binding-set>)
@@ -1096,7 +1096,7 @@ end method consume-elementary-fragment;
 // after the split.
 //
 define generic split-at-separator
-    (fragment :: <fragment>, seperator :: <integer>)
+    (fragment :: <fragment>, separator :: <integer>)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
 
 // split-at-separator{<fragment>}
@@ -1104,7 +1104,7 @@ define generic split-at-separator
 // Catch-all method that gives up.
 // 
 define method split-at-separator
-    (fragment :: <fragment>, seperator :: <integer>)
+    (fragment :: <fragment>, separator :: <integer>)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
   values(#f,
 	 fragment,
@@ -1119,9 +1119,9 @@ end method split-at-separator;
 // is not the separator, then return it as the before fragment.
 //
 define method split-at-separator
-    (fragment :: <token-fragment>, seperator :: <integer>)
+    (fragment :: <token-fragment>, separator :: <integer>, #next next-method)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
-  if (fragment.fragment-token.token-kind == seperator)
+  if (fragment.fragment-token.token-kind == separator)
     values(#t,
 	   make(<empty-fragment>,
 		source-location:
@@ -1130,11 +1130,7 @@ define method split-at-separator
 		source-location:
 		  source-location-after(fragment.source-location)));
   else
-    values(#f,
-	   fragment,
-	   make(<empty-fragment>,
-		source-location:
-		  source-location-after(fragment.source-location)));
+    next-method();
   end if;
 end method split-at-separator;
 
@@ -1145,7 +1141,7 @@ end method split-at-separator;
 // subfragments.
 //
 define method split-at-separator
-    (fragment :: <compound-fragment>, seperator :: <integer>)
+    (fragment :: <compound-fragment>, separator :: <integer>, #next next-method)
     => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
   block (return)
     let head-fragment = fragment.fragment-head;
@@ -1154,7 +1150,7 @@ define method split-at-separator
     for (sub-fragment = head-fragment then sub-fragment.fragment-next,
 	 until: sub-fragment == end-fragment)
       if (instance?(sub-fragment, <token-fragment>)
-	    & sub-fragment.fragment-token.token-kind == seperator)
+	    & sub-fragment.fragment-token.token-kind == separator)
 	return(#t,
 	       if (head-fragment == sub-fragment)
 		 make(<empty-fragment>,
@@ -1178,7 +1174,7 @@ define method split-at-separator
 	       end if);
       end if;
     end for;
-    return(#f, fragment, make(<empty-fragment>));
+    next-method();
   end block;
 end method split-at-separator;
 
@@ -1435,8 +1431,7 @@ define method trim-until-parsable
       let (before, remaining) = split-fragment-at(fragment, end-point);
       let tokenizer = make(<fragment-tokenizer>, fragment: before);
       block ()
-	let result = parser(tokenizer);
-	return(result, before, remaining);
+	return(parser(tokenizer), before, remaining);
       exception (<compiler-error>)
 	if (before.more?)
 	  end-point := (tokenizer.tokenizer-potential-end-point
@@ -1804,44 +1799,44 @@ end method match;
 // match{<semicolon-pattern>}
 //
 // Match some stuff divided at a semicolon.  The real work is done by
-// match-seperated-patterns.
+// match-separated-patterns.
 // 
 define method match
     (pattern :: <semicolon-pattern>, fragment :: <fragment>,
      intermediate-words :: <simple-object-vector>,
      fail :: <function>, continue :: <function>,
      results :: <pattern-binding-set>)
-  match-seperated-patterns(pattern, $semicolon-token, fragment,
+  match-separated-patterns(pattern, $semicolon-token, fragment,
 			   intermediate-words, fail, continue, results);
 end method match;
 
 // match{<comma-pattern>}
 //
 // Match some stuff divided at a comma.  The real work is done by
-// match-seperated-patterns.
+// match-separated-patterns.
 // 
 define method match
     (pattern :: <comma-pattern>, fragment :: <fragment>,
      intermediate-words :: <simple-object-vector>,
      fail :: <function>, continue :: <function>,
      results :: <pattern-binding-set>)
-  match-seperated-patterns(pattern, $comma-token, fragment,
+  match-separated-patterns(pattern, $comma-token, fragment,
 			   intermediate-words, fail, continue, results);
 end method match;
 
-// match-seperated-pattern -- internal.
+// match-separated-patterns -- internal.
 //
 // Does the real work of matching <semicolon-pattern>s and <comma-pattern>s.
 // We pass in the original fail function when calling match on the right
 // hand side because we don't want to reconsider any wildcards that
 // precede the separator if the right hand side fails.
 //
-define method match-seperated-patterns
-    (pattern :: <binary-pattern>, seperator :: <integer>,
+define method match-separated-patterns
+    (pattern :: <binary-pattern>, separator :: <integer>,
      fragment :: <fragment>, intermediate-words :: <simple-object-vector>,
      fail :: <function>, continue :: <function>,
      results :: <pattern-binding-set>)
-  let (found?, before, after) = split-at-separator(fragment, seperator);
+  let (found?, before, after) = split-at-separator(fragment, separator);
   if (found? | pattern.pattern-last?)
     match(pattern.pattern-left, before, intermediate-words, fail,
 	  method (remaining :: <fragment>, left-fail :: <function>,
@@ -1857,7 +1852,7 @@ define method match-seperated-patterns
   else
     fail();
   end if;
-end method match-seperated-patterns;
+end method match-separated-patterns;
 
 // match{<sequential-pattern>}
 //
@@ -2799,14 +2794,14 @@ define method expand-fragment
     (generator :: <expansion-generator>, fragment :: <bracketed-fragment>)
     => ();
   let left-srcloc
-    = (generate-token-source-location
-	 (generator, came-from: fragment.fragment-left-srcloc));
+    = generate-token-source-location
+	 (generator, came-from: fragment.fragment-left-srcloc);
   start-sub-fragment(generator);
   expand-fragment(generator, fragment.fragment-contents);
   let contents = finish-sub-fragment(generator);
   let right-srcloc
-    = (generate-token-source-location
-	 (generator, came-from: fragment.fragment-right-srcloc));
+    = generate-token-source-location
+	 (generator, came-from: fragment.fragment-right-srcloc);
   generate-fragment(generator,
 		    make(<bracketed-fragment>,
 			 left-token: fragment.fragment-left-token,
@@ -2830,16 +2825,16 @@ define method append-element!
     => ends-in-separator? :: <boolean>;
   let left-token = piece.bracketed-element-left-token;
   let left-srcloc
-    = (generate-token-source-location
-	 (generator, came-from: left-token.source-location));
+    = generate-token-source-location
+	 (generator, came-from: left-token.source-location);
   start-sub-fragment(generator);
   expand-template(generator, piece.bracketed-element-guts, bindings,
 		  this-rule-set);
   let contents = finish-sub-fragment(generator);
   let right-token = piece.bracketed-element-right-token;
   let right-srcloc
-    = (generate-token-source-location
-	 (generator, came-from: right-token.source-location));
+    = generate-token-source-location
+	 (generator, came-from: right-token.source-location);
   generate-fragment(generator,
 		    make(<bracketed-fragment>,
 			 left-token: left-token,
