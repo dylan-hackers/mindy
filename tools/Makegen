@@ -8,6 +8,8 @@ if ($win32) {
 do compile_subdirs(
     'elisp',
     'melange',
+    'parsergen',
+    'lisp2dylan',
     'versioner',
     'shared-misc',
     $system_dependent_misc
