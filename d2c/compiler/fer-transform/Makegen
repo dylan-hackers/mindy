@@ -1,0 +1,3 @@
+
+&makegen_include("../common-Makegen");
+&d2c_library('FER-Transform', '-L../base -L../front');
