@@ -7,5 +7,5 @@
 
 heapptr_t allocate(int bytes)
 {
-    return GC_malloc(bytes);
+    return GC_malloc_ignore_off_page(bytes);
 }
