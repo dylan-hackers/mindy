@@ -144,8 +144,6 @@ end class <tokenizer>;
 //        <string-literal-token> -- value is the token string, minus
 //                                  bracketing '"'s and character escapes
 //        <character-token> -- value is a single character
-//        <cpp-token> -- value is the token string minus the initial "#".
-//                       This is only used internally.
 //======================================================================
 
 // <token> -- exported class.
@@ -202,7 +200,7 @@ define token <type-name-token>  :: <name-token> = 5;
 define /* exported */ token <integer-token> :: <literal-token> = 6;
 define /* exported */ token <character-token> :: <literal-token> = 7;
 define token <string-literal-token> :: <literal-token> = 8;
-define token <cpp-token> :: <literal-token> = 9;
+// define token <cpp-token> :: <literal-token> = 9;
 // A whole bunch of reserved words
 define /* exported */ token <struct-token> :: <reserved-word-token> = 10;
 define token <typedef-token> :: <reserved-word-token> = 11;
@@ -273,17 +271,18 @@ define token <ge-op-token> :: <punctuation-token> = 68;
 define token <ne-op-token> :: <punctuation-token> = 69;
 define token <and-op-token> :: <punctuation-token> = 70;
 define token <or-op-token> :: <punctuation-token> = 71;
-define token <pound-pound-token> :: <punctuation-token> = 72;
-define token <left-op-token> :: <punctuation-token> = 73;
-define token <right-op-token> :: <punctuation-token> = 74;
-define token <assign-token> :: <punctuation-token> = 75;
-define token <lcurly-token> :: <punctuation-token> = 76;
-define token <rcurly-token> :: <punctuation-token> = 77;
+define token <pound-token> :: <punctuation-token> = 72;
+define token <pound-pound-token> :: <punctuation-token> = 73;
+define token <left-op-token> :: <punctuation-token> = 74;
+define token <right-op-token> :: <punctuation-token> = 75;
+define token <assign-token> :: <punctuation-token> = 76;
+define token <lcurly-token> :: <punctuation-token> = 77;
+define token <rcurly-token> :: <punctuation-token> = 78;
 // "Magic" tokens which provide alternate entry points to the parser
-define /* exported */ token <alien-name-token> :: <token> = 78;
-define /* exported */ token <macro-parse-token> :: <token> = 79;
-define /* exported */ token <cpp-parse-token> :: <token> = 80;
-define /* exported */ token <machine-token> :: <token> = 81;
+define /* exported */ token <alien-name-token> :: <token> = 79;
+define /* exported */ token <macro-parse-token> :: <token> = 80;
+define /* exported */ token <cpp-parse-token> :: <token> = 81;
+define /* exported */ token <machine-token> :: <token> = 82;
 #else
 // The mindy declarations have to be a lot clumsier since we don't have macros.
 
@@ -316,9 +315,9 @@ end class;
 define class <string-literal-token> (<literal-token>) 
   inherited slot token-id = 8;
 end class;
-define class <cpp-token> (<literal-token>) 
-  inherited slot token-id = 9;
-end class;
+//define class <cpp-token> (<literal-token>) 
+//  inherited slot token-id = 9;
+//end class;
 // A whole bunch of reserved words
 define class <struct-token> (<reserved-word-token>) 
   inherited slot token-id = 10;
@@ -513,37 +512,40 @@ end class;
 define class <or-op-token> (<punctuation-token>) 
   inherited slot token-id = 71;
 end class;
-define class <pound-pound-token> (<punctuation-token>) 
+define class <pound-token> (<punctuation-token>) 
   inherited slot token-id = 72;
 end class;
-define class <left-op-token> (<punctuation-token>) 
+define class <pound-pound-token> (<punctuation-token>) 
   inherited slot token-id = 73;
 end class;
-define class <right-op-token> (<punctuation-token>) 
+define class <left-op-token> (<punctuation-token>) 
   inherited slot token-id = 74;
 end class;
-define class <assign-token> (<punctuation-token>) 
+define class <right-op-token> (<punctuation-token>) 
   inherited slot token-id = 75;
 end class;
-define class <lcurly-token> (<punctuation-token>) 
+define class <assign-token> (<punctuation-token>) 
   inherited slot token-id = 76;
 end class;
-define class <rcurly-token> (<punctuation-token>) 
+define class <lcurly-token> (<punctuation-token>) 
   inherited slot token-id = 77;
+end class;
+define class <rcurly-token> (<punctuation-token>) 
+  inherited slot token-id = 78;
 end class;
 // "Magic" tokens which provide alternate entry points to the parser
 define class <alien-name-token> (<token>) 
-  inherited slot token-id = 78;
-end class;
-define class <macro-parse-token> (<token>) 
   inherited slot token-id = 79;
 end class;
-define class <cpp-parse-token> (<token>) 
+define class <macro-parse-token> (<token>) 
   inherited slot token-id = 80;
+end class;
+define class <cpp-parse-token> (<token>) 
+  inherited slot token-id = 81;
 end class;
 // An extra token to handle Solaris's "#machine(foo)" construct
 define class <machine-token> (<token>) 
-  inherited slot token-id = 81;
+  inherited slot token-id = 82;
 end class;
 
 #endif
@@ -648,9 +650,9 @@ end method value;
 
 // "Cpp" tokens evaluate to the string minus the initial "#".
 //
-define method value (token :: <cpp-token>) => (result :: <string>);
-  copy-sequence(token.string-value, start: 1);
-end method value;
+//define method value (token :: <cpp-token>) => (result :: <string>);
+//  copy-sequence(token.string-value, start: 1);
+//end method value;
 
 // When we have a specific token that triggered an error, this routine can
 // used saved character positions to precisely identify the location.
@@ -1076,6 +1078,7 @@ define constant reserved-words
 	   "!=", <ne-op-token>,
 	   "&&", <and-op-token>,
 	   "||", <or-op-token>,
+	   "#", <pound-token>,
 	   "##", <pound-pound-token>,
 	   ";", <semicolon-token>,
 	   ",", <comma-token>,
@@ -1134,8 +1137,8 @@ define method lex-identifier
       make(<type-name-token>, string: string, position: position,
 	   generator: tokenizer);
     otherwise =>
-      let default
-	= if (string.first == '#') <cpp-token> else <identifier-token> end if;
+      let default = <identifier-token>;
+//	= if (string.first == '#') <cpp-token> else <identifier-token> end if;
       let cls = if(~cpp-line)
 		  element(reserved-word-table, string, default: default);
 		else
@@ -1152,10 +1155,8 @@ define method try-identifier
     (state :: <tokenizer>, position :: <integer>, #key expand = #t, cpp-line = #f)
  => (result :: type-union(<token>, <false>));
   let contents :: <long-byte-string> = state.contents;
-
-  let pos = if (contents[position] == '#') position + 1 else position end if;
-  if (alpha?(contents[pos]) | contents[pos] == '_')
-    for (index from pos + 1 below contents.size,
+  if (alpha?(contents[position]) | contents[position] == '_')
+    for (index from position + 1 below contents.size,
 	 until: ~alphanumeric?(contents[index]) & contents[index] ~= '_')
     finally
       state.position := index;
@@ -1169,7 +1170,7 @@ end method try-identifier;
 #if (~mindy)
 define multistring-checker match-punctuation
   ("-=", "*=", "/=", "%=", "+=", "<=", ">=", "&=", "^=", "|=", "==", "!=",
-   "++", "--", "->", "...", ">>", ">>=", "<<", "<<=", "||", "&&", "##", 
+   "++", "--", "->", "...", ">>", ">>=", "<<", "<<=", "||", "&&", "#", "##", 
    ";", ",", "(", ")", ".", "&", "*", "+", "~", "!", "/", "%", "<", ">", "^",
    "|", "?", ":", "=", "{", "}", "-", "[", "]");
 #else
@@ -1177,7 +1178,7 @@ define constant match-punctuation
   = make-multistring-checker("-=", "*=", "/=", "%=", "+=", "<=", ">=", "&=",
 			     "^=", "|=", "==", "!=",
 			     "++", "--", "->", "...", ">>", ">>=", "<<",
-			     "<<=", "||", "&&", "##",
+			     "<<=", "||", "&&", "#", "##",
 			     ";", ",", "(", ")", ".", "&", "*", "+", "~",
 			     "!", "/", "%", "<", ">", "^", "|", "?", ":",
 			     "=", "{", "}", "-", "[", "]");
@@ -1314,114 +1315,125 @@ define /* exported */ method get-token
     (state :: <tokenizer>,
      #key cpp-line, position: init-position, expand = ~cpp-line)
  => (token :: <token>);
-  block (return)
-    let pos = init-position | state.position;
-
-    // If we are recursively including another file, defer to the tokenizer
-    // for that file.
-    let sub-tokenizer = state.include-tokenizer;
-    if (sub-tokenizer)
-      let token = get-token(sub-tokenizer, expand: expand,
-			    cpp-line: cpp-line, position: init-position);
-      if (instance?(token, <eof-token>))
-	let macros = sub-tokenizer.cpp-decls;
-	let old-file = sub-tokenizer.file-name;
-	state.include-tokenizer := #f;
-	let ei-token = make(<end-include-token>, position: pos,
-			    generator: state, string: old-file,
-			    value: macros);
-	parse-progress-report(ei-token, "<<< exiting header <<<");
-        return(ei-token);
-      else
-	return(token);
-      end if;
-    end if;
-
-    // If we have old tokens, just pop them from the stack and return them
-    if (~state.unget-stack.empty?)
-      let stack = state.unget-stack;
-      let token = pop(stack);
-      if (~stack.empty? & instance?(stack.first, <pound-pound-token>))
-	// The pound-pound construct is nasty.  We must concatenate two tokens
-	// and then get a new token from the resulting string.  If this isn't
-	// a single token, we just ignore the rest -- "the results are
-	// undefined".
-	pop(stack);		// Get rid of the pound-pound-token
-	let new-string = concatenate(token.string-value,
-				     get-token(state).string-value);
-	if (new-string = "/" "/" & *handle-c++-comments*)
-	  // Cruft to handle VC++ 4.2, which attempts to make a comment out of
-	  // a boolean declaration.  Don't ask -- you don't wan to know.
-	  return(make(<char-token>, position: token.position,
-		      generator: token.generator, string: "char"));
-	else 
-	  let sub-tokenizer
-	    = make(<tokenizer>, contents: new-string);
-	  return(get-token(sub-tokenizer));
+  let token =
+    block (got-token)
+      let pos = init-position | state.position;
+      //parse-progress-report(state, "looking for token at %d", pos);
+      
+      // If we are recursively including another file, defer to the tokenizer
+      // for that file.
+      let sub-tokenizer = state.include-tokenizer;
+      if (sub-tokenizer)
+	let token = get-token(sub-tokenizer, expand: expand,
+			      cpp-line: cpp-line, position: init-position);
+	if (instance?(token, <eof-token>))
+	  let macros = sub-tokenizer.cpp-decls;
+	  let old-file = sub-tokenizer.file-name;
+	  state.include-tokenizer := #f;
+	  let ei-token = make(<end-include-token>,
+			      position: pos,
+			      generator: state,
+			      string: old-file,
+			      value: macros);
+	  parse-progress-report(ei-token, "<<< exiting header <<<");
+	  got-token(ei-token);
+	else
+	  got-token(token);
 	end if;
-      elseif (instance?(token, <identifier-token>)
-		& element(state.typedefs, token.value, default: #f))
-	// This is our last chance to deal with recently declared typedefs, so
-	// we check one more time.
-	return(make(<type-name-token>, position: token.position,
-		    generator: token.generator, string: token.string-value));
-      else
-	return(token);
       end if;
-    end if;
+      
+      // If we have old tokens, just pop them from the stack and return them
+      if (~state.unget-stack.empty?)
+	let stack = state.unget-stack;
+	let token = pop(stack);
 
-    let contents = state.contents;
-    local method string-value(start-index, end-index)
-	    copy-sequence(contents, start: start-index, end: end-index);
-	  end method string-value;
+	// This is our last chance to deal with recently declared typedefs,
+	// so we check one more time.
+	if (instance?(token, <identifier-token>)
+	      & element(state.typedefs, token.value, default: #f))
+	  got-token(make(<type-name-token>,
+			 position: token.position,
+			 generator: token.generator,
+			 string: token.string-value));
+	else
+	  got-token(token);
+	end if;
+      end if;
 
-    // There are different whitespace conventions for normal input and for
-    // preprocessor directives.
-    let pos = if (cpp-line)
-		     skip-cpp-whitespace(contents, pos);
-		   else
-		     skip-whitespace(contents, pos);
-		   end if;
-    if (pos = contents.size | (cpp-line & contents[pos] == '\n'))
-      state.position := pos;
-      return(make(<eof-token>, position: pos, generator: state,
-		  string: ""));
-    end if;
+      let contents = state.contents;
+      local method string-value(start-index, end-index)
+	      copy-sequence(contents, start: start-index, end: end-index);
+	    end method string-value;
+      
+      // There are different whitespace conventions for normal input and for
+      // preprocessor directives.
+      let pos = if (cpp-line)
+		  skip-cpp-whitespace(contents, pos);
+		else
+		  skip-whitespace(contents, pos);
+		end if;
+      if (pos = contents.size | (cpp-line & contents[pos] == '\n'))
+	state.position := pos;
+	got-token(make(<eof-token>,
+		       position: pos,
+		       generator: state,
+		       string: ""));
+      end if;
+      
+      // Deal with preprocessor lines.  Since these may change the state, we
+      // will simply re-call "get-token" after invoking the appropriate
+      // processing.  We don't look for preprocessor lines in the middle of
+      // other preprocessor lines.
+      //if (~cpp-line & try-cpp(state, pos))
+      //  got-token(get-token(state));
+      //end if;
+      
+      // Do the appropriate matching, and return an <error-token> if we don't
+      // find a match.
+      let token? =
+	try-identifier(state, pos, expand: expand, cpp-line: cpp-line) |
+	try-punctuation(state, pos);
+      if (token?) got-token(token?) end if;
+      
+      let (start-index, end-index, dummy1, dummy2, char-start, char-end,
+	   string-start, string-end, dummy3, dummy4, int-start, int-end)
+	= match-literal(contents, start: pos);
+      
+      if (start-index)
+	// At most one of the specialized start indices will be non-false.
+	// Look for that one and build the appropriate token.
+	state.position := end-index;
+	let token-type = case
+			   char-start => <character-token>;
+			   string-start => <string-literal-token>;
+			   int-start => <integer-token>;
+			 end case;
+	got-token(make(token-type,
+		       position: pos,
+		       string: string-value(pos, end-index),
+		       generator: state));
+      end if;
+      
+      // None of our searches matched, so we haven't the foggiest what this is.
+      parse-error(state, "Major botch in get-token.");
+    end block;
 
-    // Deal with preprocessor lines.  Since these may change the state, we
-    // will simply re-call "get-token" after invoking the appropriate
-    // processing.  We don't look for preprocessor lines in the middle of
-    // other preprocessor lines.
-    if (~cpp-line & try-cpp(state, pos))
-      return(get-token(state));
-    end if;
-
-    // Do the appropriate matching, and return an <error-token> if we don't
-    // find a match.
-    let token? =
-      try-identifier(state, pos, expand: expand, cpp-line: cpp-line) | try-punctuation(state, pos);
-    if (token?) return(token?) end if;
-
-    let (start-index, end-index, dummy1, dummy2, char-start, char-end,
-	 string-start, string-end, dummy3, dummy4, int-start, int-end)
-      = match-literal(contents, start: pos);
-
-    if (start-index)
-      // At most one of the specialized start indices will be non-false.  Look
-      // for that one and build the appropriate token.
-      state.position := end-index;
-      let token-type = case
-			 char-start => <character-token>;
-			 string-start => <string-literal-token>;
-			 int-start => <integer-token>;
-		       end case;
-      return(make(token-type, position: pos,
-		  string: string-value(pos, end-index), generator: state));
-    end if;
-
-    // None of our searches matched, so we haven't the foggiest what this is.
-    parse-error(state, "Major botch in get-token.");
-  end block;
+  //parse-progress-report(state,
+  //			"found %= of %= at %=",
+  //			token.string-value,
+  //			token.object-class,
+  //			token.position);
+  
+  // If this is a '#' token, and we're not already preprocessing, run the
+  // preprocessor.
+  if (~cpp-line & instance?(token, <pound-token>))
+    unless (try-cpp(state, token.position))
+      parse-error(state, "get-token is badly confused, aborting");
+    end;
+    get-token(state);
+  else
+    token;
+  end if;
 end method get-token;
 
 // Seals for file c-lexer.dylan
@@ -1447,8 +1459,6 @@ define sealed domain make(singleton(<integer-token>));
 define sealed domain make(singleton(<character-token>));
 // <string-literal-token> -- subclass of <literal-token>
 define sealed domain make(singleton(<string-literal-token>));
-// <cpp-token> -- subclass of <literal-token>
-define sealed domain make(singleton(<cpp-token>));
 // <struct-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<struct-token>));
 // <typedef-token> -- subclass of <reserved-word-token>
@@ -1579,6 +1589,8 @@ define sealed domain make(singleton(<ne-op-token>));
 define sealed domain make(singleton(<and-op-token>));
 // <or-op-token> -- subclass of <punctuation-token>
 define sealed domain make(singleton(<or-op-token>));
+// <pound-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<pound-token>));
 // <pound-pound-token> -- subclass of <punctuation-token>
 define sealed domain make(singleton(<pound-pound-token>));
 // <left-op-token> -- subclass of <punctuation-token>
