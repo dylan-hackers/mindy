@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Head$
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.15 1999/04/12 19:53:00 tree Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -485,6 +485,3 @@ descriptor-reference-string:    	\t.stabs\t"%s%s:G34",32,0,1,0\n
 omit-colon-after-label-declarations?:  	#t
 word-directive:                 	.word
 half-word-directive:            	.half
-
-
-
