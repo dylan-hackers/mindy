@@ -13,7 +13,7 @@ compile:
 
 install: compile
 	${INSTALL_DATA} dylan.7 ${DESTDIR}${MANDIR}/man7/dylan.7
-	${INSTALL_DATA} gwydion.7 ${DESTDIR}${MANDIR}/man7/dylan.7
+	${INSTALL_DATA} gwydion.7 ${DESTDIR}${MANDIR}/man7/gwydion.7
 	${INSTALL_DATA} d2c.1 ${DESTDIR}${MANDIR}/man1/d2c.1
 	${INSTALL_DATA} mindy.1 ${DESTDIR}${MANDIR}/man1/mindy.1
 	${INSTALL_DATA} mindy.1 ${DESTDIR}${MANDIR}/man1/mindycomp.1

@@ -2,7 +2,6 @@
 # Spec file for Gwydion Dylan RPM.
 #
 # Flaws in this spec file:
-#  * This package is not relocatable until the compiler is fixed.
 #  * This package does not support a build root until we clean up
 #    Makegen to allow an install prefix.
 #
@@ -66,6 +65,9 @@ on the web at <http://www.randomhacks.com/dylan/>.
 
 
 %changelog
+
+* Thu Dec 24 1998 Eric Kidd <eric.kidd@pobox.com>
+  - Added new man pages to RPMS.
 
 * Wed Nov 24 1998 Eric Kidd <eric.kidd@pobox.com>
   - Commented out LD_LIBRARY_PATH warning for relocated packages.
@@ -161,6 +163,7 @@ fi
 
 # Our documentation
 %doc docs/
+%doc src/README src/INSTALL src/NEWS src/ONEWS.html src/CREDITS
 
 # Our well-behaved files, including some programs with dumb names.
 /usr/bin/d2c
@@ -170,6 +173,14 @@ fi
 /usr/bin/make-dylan-app
 /usr/include/runtime.h
 /usr/lib/dylan/elisp/
+
+# Our man pages (but see below for mindy.1).
+/usr/man/man7/dylan.7
+/usr/man/man7/gwydion.7
+/usr/man/man1/d2c.1
+/usr/man/man1/melange.1
+/usr/man/man1/make-dylan-app.1
+/usr/man/man4/platforms.descr.4
 
 # Random libraries and other cruft. Be careful to keep this up-to-date.
 /usr/lib/dylan/libruntime.a
@@ -206,7 +217,8 @@ fi
 /usr/lib/dylan/libtranscendental.a
 /usr/lib/dylan/random.lib.du
 /usr/lib/dylan/librandom.a
-
+/usr/lib/dylan/parse-arguments.lib.du
+/usr/lib/dylan/libgetopt.a
 
 %files extras
 /usr/bin/line-count
@@ -222,6 +234,9 @@ fi
 /usr/bin/mindy
 /usr/bin/mindycomp
 /usr/bin/mindyexec
+
+/usr/man/man1/mindy.1
+/usr/man/man1/mindycomp.1
 
 /usr/lib/dylan/dylan-lib.dbc
 /usr/lib/dylan/random-lib.dbc
@@ -242,3 +257,4 @@ fi
 /usr/lib/dylan/time-lib.dbc
 /usr/lib/dylan/stream-extensions-lib.dbc
 /usr/lib/dylan/transcendental-lib.dbc
+/usr/lib/dylan/parse-arguments-lib.dbc
