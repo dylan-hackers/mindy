@@ -38,6 +38,25 @@ define constant $kControlStaticTextProc :: <integer>		= 288; /* Appearance 1.0 o
 define constant $kControlPictureProc :: <integer>			= 304; /* Appearance 1.0 or higher */
 define constant $kControlPictureNoTrackProc :: <integer>	= 305; /* Appearance 1.0 or higher */		
 
+define constant $kControlSeparatorLineProc	:: <integer> = c-expr(int: "kControlSeparatorLineProc");
+define constant $kControlGroupBoxTextTitleProc	:: <integer> = c-expr(int: "kControlGroupBoxTextTitleProc");
+define constant $kControlGroupBoxSecondaryTextTitleProc	:: <integer> = c-expr(int: "kControlGroupBoxSecondaryTextTitleProc");
+define constant $kControlSliderProc	:: <integer> = c-expr(int: "kControlSliderProc");
+define constant $kControlSliderLiveFeedback	:: <integer> = c-expr(int: "kControlSliderLiveFeedback");
+define constant $kControlSliderHasTickMarks	:: <integer> = c-expr(int: "kControlSliderHasTickMarks");
+define constant $kControlSliderReverseDirection	:: <integer> = c-expr(int: "kControlSliderReverseDirection");
+define constant $kControlSliderNonDirectional	:: <integer> = c-expr(int: "kControlSliderNonDirectional");
+define constant $kControlSliderPointsDownOrRight	:: <integer> = c-expr(int: "kControlSliderPointsDownOrRight");
+define constant $kControlSliderPointsUpOrLeft	:: <integer> = c-expr(int: "kControlSliderPointsUpOrLeft");
+define constant $kControlSliderDoesNotPoint	:: <integer> = c-expr(int: "kControlSliderDoesNotPoint");
+define constant $kControlListBoxProc	:: <integer> = c-expr(int: "kControlListBoxProc");
+define constant $kControlListBoxAutoSizeProc	:: <integer> = c-expr(int: "kControlListBoxAutoSizeProc");
+define constant $kControlScrollBarProc	:: <integer> = c-expr(int: "kControlScrollBarProc");
+define constant $kControlScrollBarLiveProc	:: <integer> = c-expr(int: "kControlScrollBarLiveProc");
+
+define constant $kControlPushButtonProc	:: <integer> = c-expr(int: "kControlPushButtonProc");
+define constant $kControlRadioButtonProc :: <integer> = c-expr(int: "kControlRadioButtonProc");
+define constant $kControlCheckBoxProc	:: <integer> = c-expr(int: "kControlCheckBoxProc");
 
 define constant $kControlLabelPart :: <integer>			= 1;
 define constant $kControlMenuPart :: <integer>			= 2;
@@ -103,7 +122,7 @@ define constant $kControlStaticTextTextTag :: <integer> = c-expr(int: "kControlS
 define constant $kControlEditTextSelectionTag :: <integer> = c-expr(int: "kControlEditTextSelectionTag");
 define constant $kControlEditTextPasswordTag :: <integer> = c-expr(int: "kControlEditTextPasswordTag"); 
 define constant $kControlEditTextTextTag :: <integer> = c-expr(int: "kControlEditTextTextTag");
-
+define constant $kControlListBoxListHandleTag :: <integer> = c-expr(int: "kControlListBoxListHandleTag");
 // etc.
 
 define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlSupportsEmbedding");
@@ -640,3 +659,46 @@ define method DeactivateControl( inControl :: <ControlHandle>)
   as(<OSErr>, call-out("DeactivateControl", int:, ptr: inControl.raw-value));
 end method DeactivateControl;
 
+
+// 32 Bit
+
+define method SetControl32BitValue
+    (inControl :: <ControlHandle>, value :: <integer>) => ()
+  call-out("SetControl32BitValue", void:, ptr: inControl.raw-value, int: value);
+end method SetControl32BitValue;
+
+define method SetControl32BitMinimum
+    (inControl :: <ControlHandle>, value :: <integer>) => ()
+  call-out("SetControl32BitMinimum", void:, ptr: inControl.raw-value, int: value);
+end method SetControl32BitMinimum;
+
+define method SetControl32BitMaximum
+    (inControl :: <ControlHandle>, value :: <integer>) => ()
+  call-out("SetControl32BitMaximum", void:, ptr: inControl.raw-value, int: value);
+end method SetControl32BitMaximum;
+
+define method SetControlViewSize
+    (inControl :: <ControlHandle>, value :: <integer>) => ()
+  call-out("SetControlViewSize", void:, ptr: inControl.raw-value, int: value);
+end method SetControlViewSize;
+
+
+define method GetControl32BitValue(inControl :: <ControlHandle>)
+=> (value :: <integer>)
+  call-out("GetControl32BitValue", int:, ptr: inControl.raw-value);
+end method GetControl32BitValue;
+
+define method GetControl32BitMinimum(inControl :: <ControlHandle>)
+=> (value :: <integer>)
+  call-out("GetControl32BitMinimum", int:, ptr: inControl.raw-value);
+end method GetControl32BitMinimum;
+
+define method GetControl32BitMaximum(inControl :: <ControlHandle>)
+=> (value :: <integer>)
+  call-out("GetControl32BitMaximum", int:, ptr: inControl.raw-value);
+end method GetControl32BitMaximum;
+
+define method GetControlViewSize(inControl :: <ControlHandle>)
+=> (value :: <integer>)
+  call-out("GetControlViewSize", int:, ptr: inControl.raw-value);
+end method GetControlViewSize;

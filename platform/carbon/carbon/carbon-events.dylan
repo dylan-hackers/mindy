@@ -166,7 +166,7 @@ define constant $kEventAppDeactivated :: <integer> = 2;		// Resume
 define constant $kEventAppQuit :: <integer> = 3;
 define constant $kEventAppLaunchNotification :: <integer> = 4;
 
-// kEventClassMouse
+// Event Classes
 
 define constant $kEventClassMouse :: <integer> = as( <OSType>, "mous");
 define constant $kEventClassKeyboard :: <integer> = as( <OSType>, "keyb");

@@ -148,13 +148,8 @@ define constant $kWindowAlertPositionOnParentWindowScreen :: <integer>  = 9;
 */
 
 define method FrontWindow()
-=>( result :: <object> )//type-union( <WindowRef>, <boolean> ) )
+=>( result :: <WindowRef> )
 	let ptr :: <WindowRef> = make( <WindowRef>, pointer: call-out( "FrontWindow", ptr: ) );
-	if( ptr = $NULL )
-		#f;
-	else
-		ptr
-	end if;
 end method FrontWindow;											
 
 

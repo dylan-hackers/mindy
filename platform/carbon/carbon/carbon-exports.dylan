@@ -167,7 +167,12 @@ define module carbon
 		$pushButProc, $checkBoxProc, $radioButProc, $scrollBarProc, $popupMenuProc,
 		$kControlEditTextProc, $kControlEditTextPasswordProc, $kControlEditTextInlineInputProc, 
 		$kControlStaticTextProc, $kControlPictureProc, $kControlPictureNoTrackProc,
-    $kControlUserPaneProc,
+    $kControlUserPaneProc, $kControlSeparatorLineProc, $kControlGroupBoxTextTitleProc,
+    $kControlGroupBoxSecondaryTextTitleProc, $kControlSliderProc, $kControlSliderLiveFeedback,
+    $kControlSliderHasTickMarks, $kControlSliderReverseDirection, $kControlSliderNonDirectional,
+    $kControlSliderPointsDownOrRight, $kControlSliderPointsUpOrLeft, $kControlSliderDoesNotPoint,
+    $kControlListBoxProc, $kControlListBoxAutoSizeProc, $kControlScrollBarProc,
+    $kControlScrollBarLiveProc, $kControlPushButtonProc, $kControlRadioButtonProc, $kControlCheckBoxProc,
 		$kControlLabelPart, $kControlMenuPart, $kControlTrianglePart, $kControlEditTextPart,
 		$kControlPicturePart, $kControlIconPart, $kControlClockPart, $kControlListBoxPart,
 		$kControlListBoxDoubleClickPart, $kControlImageWellPart, $kControlRadioGroupPart,
@@ -186,6 +191,7 @@ define module carbon
                 $kControlKindUserPane, $kControlKindWindowHeader,
     $kControlUserPaneDrawProcTag, $kControlStaticTextTextTag,
     $kControlEditTextSelectionTag, $kControlEditTextPasswordTag, $kControlEditTextTextTag,
+    $kControlListBoxListHandleTag, 
     $kControlNoPart, $kControlEntireControl, $kControlEditTextPart,
     $kControlSupportsEmbedding,
 		<ControlHandle>, <ControlActionUPP>,
@@ -202,7 +208,8 @@ define module carbon
     GetBestControlRect, ActivateControl, DeactivateControl,
     <ControlEditTextSelectionRec*>,
       selStart-value, selEnd-value, selStart-value-setter, selEnd-value-setter,
-    
+    SetControl32BitValue, SetControl32BitMinimum, SetControl32BitMaximum, SetControlViewSize,
+    GetControl32BitValue, GetControl32BitMinimum, GetControl32BitMaximum, GetControlViewSize,
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,
