@@ -1,8 +1,8 @@
 // File: inits.cpp
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.1 2002/03/17 00:13:37 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.2 2002/04/18 23:33:32 gabor Exp $
 // Purpose: present the correct interface to be a CW plugin
 // Author: Gabor Greif <gabor@mac.com>
-// Status: This version is of historical interest (being based on the Pro5 CW API)
+// Status: This version is is based on the Pro6 CW API, but sorely needs cleanup
 
 //======================================================================
 //
@@ -31,16 +31,24 @@
 //======================================================================
 
 
+// MacOS headers
+#include <Files.h>
+#include <Gestalt.h>
+#include <Threads.h>
 
-#include <CWPluginLibPrefix.h>
+// CW headers
 #include <CWPlugins.h>
 #include <CWPluginErrors.h>
 #include <DropInCompilerLinker.h>
+
+// MSL headers
 #include <pool_alloc.h>
 #include <string.h>
 #include <setjmp.h>
 #include <cstdlib>
 #include <cstdio>
+
+// GC headers
 #include "gc.h"
 
 
@@ -146,6 +154,7 @@ void  dylanZdylan_visceraZtype_error_METH(descriptor_t *orig_sp, descriptor_t A0
 
 int type__error__LINE__ = 0;
 const char* type__error__FILE__ = 0;
+
 
 extern "C" descriptor_t* allocate_stack(void)
 {
@@ -291,7 +300,8 @@ EXTERN_API( Ptr ) NewPtrClear (Size s)
 		return *new(s) GCBlock(s);
 	}
 	else
-		return ( Ptr )std::calloc(1, s);
+		return NULL;
+//		return ( Ptr )std::calloc(1, s);
 }
 
 void throw_long(long l)
@@ -305,7 +315,6 @@ extern "C" long warriorZwarriorZplugin_entry_FUN(descriptor_t *orig_sp, void * A
 
 extern "C" void primary_inits(descriptor_t *sp, int argc, char *argv[])
 {
-	GC_quiet = true;
 	GC_set_max_heap_size(55*(1 << 20));
 	GC_max_retries = 4;
 	GC_oom_fn = CallbackMemExhausted;
@@ -319,26 +328,10 @@ extern "C" void primary_inits(descriptor_t *sp, int argc, char *argv[])
 
 extern "C" void real_main(int argc, char *argv[]);
 
-/*/ from d2c/runtime/c-code/main.c
-extern "C" int application_argc;	// unneeded?ее
-extern "C" char **application_argv;*/
-
 void real_main(int argc, char *argv[])
 {
-//    descriptor_t *sp = allocate_stack();
-
-    /* Remember our arguments so we can support Harlequin-style
-       application-name and application-arguments functions. Once we
-       make these copies, we are no longer allowed to destructively
-       modify argv. But this is Dylan--you should know better than
-       to destructively modify things without express permission anyway. 
-    application_argc = argc;
-    application_argv = argv;*/
-
     /* Run all the top level initializations. */
-//    primary_inits(sp, argc, argv);
     primary_inits(allocate_stack(), argc, argv);
-
 }
 
 
@@ -355,11 +348,12 @@ class Gestalter
 Gestalter<gestaltSystemVersion> systemVersion;
 enum { macOSXversion = 10 << 8 };
 
-const bool qStackProfiling(false), qGuardPage(false);
+const bool qStackProfiling(false), qGuardPage(qStackProfiling);
 
 CW_CALLBACK plugin_main(CWPluginContext context)
 {
 	GC_stackbottom = (char*)&context;
+	GC_quiet = true;
 	unsigned long	freeStack;
 	char*	stackTop;
 	unsigned char macsbug[100];
@@ -372,22 +366,21 @@ CW_CALLBACK plugin_main(CWPluginContext context)
 	// otherwise exit with memError and errormessage
 
 	plugincontext = context;
-
+	
 	// Of course on MacOS X we have huge stack space...
 	if (systemVersion < macOSXversion && noErr == ThreadCurrentStackSpace(kCurrentThreadID, &freeStack))
 	{
 		if (ThisRequest(reqCompile))
 		{
-			if (freeStack < 1000000UL)
+			if (freeStack < 700000UL)
 			{
 				CWMessageRef	mess;
 				memset(&mess, 0, sizeof mess);
 
-				std::sprintf(dest, "Gwydion Dylan PPC requires 1 MB stack space (have %lu bytes)", freeStack);
+				std::sprintf(dest, "Gwydion Dylan PPC requires 0.7 MB stack space (have %lu bytes)", freeStack);
 
 				CWReportMessage(context, &mess,
 												dest,
-//												"Gwydion Dylan PPC requires 1 MB stack space",
 												"Please assign more compiler stack in \"Build Settings\" IDE preference panel",
 												messagetypeError, 0);
 				return cwErrSilent;
