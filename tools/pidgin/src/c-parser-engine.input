@@ -697,7 +697,19 @@ curly-list (curly-list lcurly-element)
   #f;
 %
 
-declaration (declaration-specifiers <semicolon-token>)
+declaration (declaration-without-semicolon <semicolon-token>)
+  // We need to be very, very careful when parsing typedefs. Consider the
+  // following code:
+  //   typedef int foo;
+  //   foo a;
+  // We must completely process 'typedef int foo' before we lex the second
+  // occurance of foo. Because we look ahead one token when parsing, the
+  // <semicolon-token> can't be part of any declaration which might create
+  // a new typedef name.
+  %1;
+%
+
+declaration-without-semicolon (declaration-specifiers)
   @0.processing-typedef? := #f;
   process-type-list(%1, @0);
 %
@@ -750,7 +762,7 @@ inline-specifiers (<inline-token> <static-token>)
   %1;
 %
 
-declaration (<extern-token> init-declarator-list <semicolon-token>)
+declaration-without-semicolon (<extern-token> init-declarator-list)
   // Storage class must be extern; unspecified type must be "int"
   let spec = list(make(<int-token>, generator: %1.generator, string: "int"));
   let type = process-type-list(spec, @0);
@@ -759,7 +771,7 @@ declaration (<extern-token> init-declarator-list <semicolon-token>)
   @0.processing-typedef? := #f;
 %
 
-declaration (declaration-specifiers extended-declarator-list <semicolon-token>)
+declaration-without-semicolon (declaration-specifiers extended-declarator-list)
   let type = process-type-list(%1, @0);
   let names = reverse!(%2);
   declare-objects(@0, type, names, @0.processing-typedef?);
