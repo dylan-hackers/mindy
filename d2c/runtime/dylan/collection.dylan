@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.16 1996/02/11 16:12:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.17 1996/02/11 21:57:49 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -833,53 +833,64 @@ define method sequence-map-into
 	:= proc(seq-current-element(sequence, seq-state));
     end;
   else
-    let sequences = #();
-    let states = #();
-    let limits = #();
-    let next-states = #();
-    let finished-state?s = #();
-    let current-elements = #();
-    for (index :: <integer> from more-sequences.size - 1 to 0 by -1)
-      let this-sequence = more-sequences[index];
-      let (state, limit, next-state, finished-state?, ignore, current-element)
-	= forward-iteration-protocol(this-sequence);
-      sequences := pair(this-sequence, sequences);
-      states := pair(state, states);
-      limits := pair(limit, limits);
-      next-states := pair(next-state, next-states);
-      finished-state?s := pair(finished-state?, finished-state?s);
-      current-elements := pair(current-element, current-elements);
-    end;
-    begin
-      let (state, limit, next-state, finished-state?, ignore, current-element)
-	= forward-iteration-protocol(sequence);
-      sequences := pair(sequence, sequences);
-      states := pair(state, states);
-      limits := pair(limit, limits);
-      next-states := pair(next-state, next-states);
-      finished-state?s := pair(finished-state?s, finished-state?);
-      current-elements := pair(current-element, current-elements);
-    end;
+    // Stuff all the forward-iteration-protocol info into a bunch of
+    // parallel vectors..
+    let sequences = make(<vector>, size: more-sequences.size + 1);
+    let states = make(<vector>, size: more-sequences.size + 1);
+    let limits = make(<vector>, size: more-sequences.size + 1);
+    let next-states = make(<vector>, size: more-sequences.size + 1);
+    let finished-state?s = make(<vector>, size: more-sequences.size + 1);
+    let current-elements = make(<vector>, size: more-sequences.size + 1);
+    local method remember-fip(this-sequence :: <sequence>, index :: <integer>);
+	    let (state, limit, next-state, finished-state?, 
+		 ignore, current-element)
+	      = forward-iteration-protocol(this-sequence);
+	    sequences[index] := this-sequence;
+	    states[index] := state;
+	    limits[index] := limit;
+	    next-states[index] := next-state;
+	    finished-state?s[index] := finished-state?;
+	    current-elements[index] := current-element;
+	  end method remember-fip;
+
+    remember-fip(sequence, 0);
+    for (i :: <integer> from 0 below more-sequences.size)
+      remember-fip(more-sequences[i], i + 1);
+    end for;
     
     until (target-finished-state?(target, target-state, target-limit)
 	     | any?(method (coll, state, limit, finished-state?)
 		      finished-state?(coll, state, limit);
 		    end,
 		    sequences, states, limits, finished-state?s))
-      target-current-element(target, target-state)
-	:= apply(proc,
-		 map(method (coll, state, current-element)
-		       current-element(coll, state);
-		     end,
-		     sequences, states, current-elements));
+
+      // To call the mapped function on the n'th elements of the
+      // sequences, we need to collect all the elements.
+      //
+      let elt-vector = make(<vector>, size: sequences.size);
+      for (seq in sequences, state in states, cur-elt in current-elements,
+	   i from 0)
+	elt-vector[i] := cur-elt(seq, state);
+      end for;
+      target-current-element(target, target-state) := apply(proc, elt-vector);
       target-state := target-next-state(target, target-state);
-      map-into(states, 
-	       method (coll, state, next-state)
-		 next-state(coll, state);
-	       end,
-	       sequence, states, next-states);
+
+      // Now we need to update the states of all the sequences we're
+      // iterating over, and we have to do it without using map-into().
+      //
+      for (i from 0 below sequences.size)
+	states[i] := next-states[i](sequences[i], states[i]);
+      end for;
+      
+      // With a sufficiently smart compiler, we might instead write
+      //
+      // map-into(states, 
+      //          method (coll, state, next-state)
+      //            next-state(coll, state);
+      //          end,
+      //          sequences, states, next-states);
     end until;
-  end;
+  end if;
   target;
 end method sequence-map-into;
 
