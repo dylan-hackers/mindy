@@ -1,7 +1,7 @@
 module: dylan-user
 
 define library common-dylan
-  use dylan;
+  use dylan, export: all;
   use common-extensions,
     export: { finalization,
 	      simple-debugging,
