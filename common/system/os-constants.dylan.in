@@ -1,0 +1,8 @@
+module: operating-system
+
+define constant $architecture-little-endian? = @DYLAN_LITTLE_ENDIAN_P@;
+define constant $os-name = "@DYLAN_OS_NAME@";
+define constant $os-variant = @DYLAN_OS_VARIANT@";
+define constant $os-version = "@DYLAN_OS_VERSION@";
+define constant $machine-name = "@DYLAN_MACHINE_NAME@";
+define constant $platform-name = "@DYLAN_PLATFORM_NAME@";
