@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.25 1996/03/20 19:27:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.26 1996/04/03 02:43:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -454,7 +454,7 @@ define method invoke-debugger
     => res :: <never-returns>;
   format(*debug-output*, "%s\n", condition);
   force-output(*debug-output*);
-  call-out("abort", void:);
+  call-out("exit", void:, int:, 1);
 end;
   
 method ()
