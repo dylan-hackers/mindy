@@ -701,32 +701,8 @@ define method source-location (token :: <token>)
 end method;
 
 //========================================================================
-// Support type -- <long-byte-string> and <string-table>
+// Support type -- <long-byte-string>
 //========================================================================
-
-// <string-table> -- private class.
-//
-// We attempt to optimize hashing of identifiers by using a specialized table
-// type.  The given hash functions is very fast and should be sufficient for
-// "typical" data.  Note that it will fail catastrophically for null strings,
-// but these should never appear in these tables.
-//
-define class <string-table> (<value-table>) end class;
-
-// fst-string-hash -- private function.
-//
-define function fst-string-hash
-    (string :: <byte-string>, initial-state :: <object>)
-  values(string.size * 256 + as(<integer>, string.first), initial-state);
-end function fst-string-hash;
-
-// table-protocol -- method on imported generic.
-//
-define method table-protocol (table :: <string-table>)
- => (equal :: <function>, hash :: <function>);
-  values(\=, fst-string-hash);
-end method;
-
 
 // $long-string-component-size -- private constant.
 //
@@ -1612,9 +1588,6 @@ define sealed domain make(singleton(<assign-token>));
 define sealed domain make(singleton(<lcurly-token>));
 // <rcurly-token> -- subclass of <punctuation-token>
 define sealed domain make(singleton(<rcurly-token>));
-// <string-table> -- subclass of <value-table>
-define sealed domain make(singleton(<string-table>));
-define sealed domain initialize(<string-table>);
 // <alien-name-token> -- subclass of <token>
 define sealed domain make(singleton(<alien-name-token>));
 define sealed domain initialize(<alien-name-token>);

@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.11 2002/08/21 20:05:57 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.12 2002/09/29 07:53:11 housel Exp $
 
 //======================================================================
 //
@@ -113,7 +113,7 @@ end module multistring-match;
 define module c-lexer
   use dylan;
   use extensions;
-  use table-extensions, exclude: {<string-table>};
+  use table-extensions;
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
@@ -182,7 +182,7 @@ end module c-parse;
 define module c-declarations
   use dylan;
   use extensions, exclude: {format};
-  use table-extensions, exclude: {<string-table>};
+  use table-extensions;
   use regular-expressions;
   use streams;
   use format;
