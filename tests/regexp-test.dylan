@@ -1,9 +1,9 @@
-module: string-ext-test
+module: regexp-test
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.13 1996/08/07 15:11:42 dwatson Exp $
+synopsis: A regression test for the regexp library.
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.14 1996/08/10 21:42:02 nkramer Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.13
 define variable has-errors = #f;
 
 define method main (argv0, #rest ignored)
-  format("\nRegression test for the string-extensions library.\n\n");
+  format("\nRegression test for the regular-expressions library.\n\n");
   run-several-tests("regexp-positioner", positioner-test);
   run-several-tests("regexp-replace", replace-test);
   run-several-tests("make-regexp-replacer", make-replacer-test);

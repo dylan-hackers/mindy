@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.13 1996/08/07 14:42:36 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.14 1996/08/10 21:42:02 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,11 +64,11 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS = 
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out:../libraries/time
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out:../libraries/time:../libraries/regexp
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test-lib.dbc string-ext-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc itime-test-lib.dbc time-test-lib.dbc
+OBJS_TO_RUN = dylan-test-lib.dbc regexp-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc itime-test-lib.dbc time-test-lib.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
@@ -84,12 +84,12 @@ dylan-test-exports.dbc: ${SRCDIR}/dylan-test-exports.dylan
 dylan-test.dbc: ${SRCDIR}/dylan-test.dylan
 	${MC} ${MINDYFLAGS} -ldylan-test -o dylan-test.dbc ${SRCDIR}/dylan-test.dylan
 
-string-ext-test-lib.dbc: string-ext-test-exports.dbc string-ext-test.dbc
-	cat string-ext-test-exports.dbc string-ext-test.dbc > $@
-string-ext-test-exports.dbc: ${SRCDIR}/string-ext-test-exports.dylan
-	${MC} ${MINDYFLAGS} -lstring-ext-test -o string-ext-test-exports.dbc ${SRCDIR}/string-ext-test-exports.dylan
-string-ext-test.dbc: ${SRCDIR}/string-ext-test.dylan
-	${MC} ${MINDYFLAGS} -lstring-ext-test -o string-ext-test.dbc ${SRCDIR}/string-ext-test.dylan
+regexp-test-lib.dbc: regexp-test-exports.dbc regexp-test.dbc
+	cat regexp-test-exports.dbc regexp-test.dbc > $@
+regexp-test-exports.dbc: ${SRCDIR}/regexp-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lregexp-test -o regexp-test-exports.dbc ${SRCDIR}/regexp-test-exports.dylan
+regexp-test.dbc: ${SRCDIR}/regexp-test.dylan
+	${MC} ${MINDYFLAGS} -lregexp-test -o regexp-test.dbc ${SRCDIR}/regexp-test.dylan
 
 stream-test-lib.dbc: stream-test-exports.dbc stream-test.dbc
 	cat stream-test-exports.dbc stream-test.dbc > $@
