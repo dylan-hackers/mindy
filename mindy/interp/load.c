@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.8 1994/04/18 03:25:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.9 1994/04/20 00:22:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -59,17 +59,23 @@ extern char *getenv(char *name);
 
 #define BUFFER_SIZE 4096
 
-struct top_level_form {
+struct form {
     obj_t method;
-    struct top_level_form *next;
+    struct form *next;
+};
+
+struct queue {
+    struct form *head;
+    struct form **tail;
 };
 
 struct load_state {
-    struct top_level_form *top_level_forms;
-    struct top_level_form **top_level_forms_tail;
+    struct queue everything;
+    struct queue classes;
+    struct queue top_level_forms;
 };
 
-static struct load_state State = {NULL};
+static struct load_state State;
 
 struct load_info {
     char *name;
@@ -703,22 +709,22 @@ static obj_t make_top_level_method(obj_t component)
 			    NULL);
 }
 
-static obj_t queue_top_level_form(obj_t component)
+static obj_t queue_form(struct queue *queue, obj_t component)
 {
-    struct top_level_form *new = malloc(sizeof(*new));
+    struct form *new = malloc(sizeof(*new));
 
     new->method = make_top_level_method(component);
     new->next = NULL;
 
-    *State.top_level_forms_tail = new;
-    State.top_level_forms_tail = &new->next;
+    *queue->tail = new;
+    queue->tail = &new->next;
 
     return function_debug_name_or_self(new->method);
 }
 
 static obj_t fop_top_level_form(struct load_info *info)
 {
-    return queue_top_level_form(read_thing(info));
+    return queue_form(&State.top_level_forms, read_thing(info));
 }
 
 static obj_t fop_define_class(struct load_info *info)
@@ -737,7 +743,8 @@ static obj_t fop_define_class(struct load_info *info)
     while ((slot = read_thing(info)) != obj_False)
 	define_variable(info->module, slot, var_Method);
 
-    queue_top_level_form(read_thing(info));
+    queue_form(&State.classes, read_thing(info));
+    queue_form(&State.top_level_forms, read_thing(info));
 
     return name;
 }
@@ -748,7 +755,7 @@ static obj_t fop_define_generic(struct load_info *info)
     obj_t tlf = read_thing(info);
 
     define_variable(info->module, name, var_GenericFunction);
-    queue_top_level_form(tlf);
+    queue_form(&State.top_level_forms, tlf);
 
     return name;
 }
@@ -759,7 +766,7 @@ static obj_t fop_define_method(struct load_info *info)
     obj_t tlf = read_thing(info);
 
     define_variable(info->module, name, var_Method);
-    queue_top_level_form(tlf);
+    queue_form(&State.top_level_forms, tlf);
 
     return name;
 }
@@ -771,7 +778,7 @@ static obj_t fop_define_constant(struct load_info *info)
 
     for (i = 0; i < num_names; i++)
 	define_variable(info->module, read_thing(info), var_Constant);
-    return queue_top_level_form(read_thing(info));
+    return queue_form(&State.top_level_forms, read_thing(info));
 }
 
 static obj_t fop_define_variable(struct load_info *info)
@@ -781,7 +788,7 @@ static obj_t fop_define_variable(struct load_info *info)
 
     for (i = 0; i < num_names; i++)
 	define_variable(info->module, read_thing(info), var_Variable);
-    return queue_top_level_form(read_thing(info));
+    return queue_form(&State.top_level_forms, read_thing(info));
 }
 
 static struct defn *read_defn(struct load_info *info, boolean read_creates)
@@ -952,7 +959,7 @@ void load_library(obj_t name)
 
 static void do_next_init(struct thread *thread);
 
-static void did_top_level_form(struct thread *thread, obj_t *vals)
+static void did_form(struct thread *thread, obj_t *vals)
 {
     thread->sp = vals;
     do_next_init(thread);
@@ -960,15 +967,15 @@ static void did_top_level_form(struct thread *thread, obj_t *vals)
 
 static void do_next_init(struct thread *thread)
 {
-    if (State.top_level_forms) {
-	struct top_level_form *tlf = State.top_level_forms;
-	State.top_level_forms = tlf->next;
+    if (State.everything.head) {
+	struct form *tlf = State.everything.head;
+	State.everything.head = tlf->next;
 
 	*thread->sp++ = tlf->method;
 
 	free(tlf);
 
-	set_c_continuation(thread, did_top_level_form);
+	set_c_continuation(thread, did_form);
 	invoke(thread, 0);
     }
     else
@@ -977,6 +984,14 @@ static void do_next_init(struct thread *thread)
 
 static void do_first_init(struct thread *thread, int nargs)
 {
+    *State.classes.tail = State.top_level_forms.head;
+    State.top_level_forms.head = NULL;
+    State.top_level_forms.tail = NULL;
+
+    *State.everything.tail = State.classes.head;
+    State.classes.head = NULL;
+    State.classes.tail = NULL;
+
     assert(nargs == 0);
     push_linkage(thread, thread->sp);
     do_next_init(thread);
@@ -995,9 +1010,13 @@ void load_do_inits(struct thread *thread)
 
 void scavenge_load_roots(void)
 {
-    struct top_level_form *tlf;
+    struct form *tlf;
 
-    for (tlf = State.top_level_forms; tlf != NULL; tlf = tlf->next)
+    for (tlf = State.everything.head; tlf != NULL; tlf = tlf->next)
+	scavenge(&tlf->method);
+    for (tlf = State.classes.head; tlf != NULL; tlf = tlf->next)
+	scavenge(&tlf->method);
+    for (tlf = State.top_level_forms.head; tlf != NULL; tlf = tlf->next)
 	scavenge(&tlf->method);
 }
 
@@ -1080,5 +1099,10 @@ void init_loader(void)
     opcodes[fop_DEFINE_MODULE] = fop_define_module;
     opcodes[fop_DONE] = fop_done;
 
-    State.top_level_forms_tail = &State.top_level_forms;
+    State.everything.head = NULL;
+    State.everything.tail = &State.everything.head;
+    State.classes.head = NULL;
+    State.classes.tail = &State.classes.head;
+    State.top_level_forms.head = NULL;
+    State.top_level_forms.tail = &State.top_level_forms.head;
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.8 1994/04/18 03:28:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.9 1994/04/20 00:23:26 wlott Exp $
 *
 * This file does whatever.
 *
@@ -614,8 +614,12 @@ static void
 
     printf("%sdefine class\n", indent(depth));
     printf("%sname: %s\n", indent(depth+1), c->name->symbol->name);
-    if (c->tlf)
-	print_method(c->tlf, depth+1);
+    if (c->tlf1) {
+	printf("%sphase 1:\n", indent(depth+1));
+	print_method(c->tlf1, depth+2);
+	printf("%sphase 2:\n", indent(depth+1));
+	print_method(c->tlf2, depth+2);
+    }
     else {
 	printf("%ssupers:\n", indent(depth+1));
 	for (super = c->supers; super != NULL; super = super->next)

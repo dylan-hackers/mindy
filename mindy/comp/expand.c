@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.10 1994/04/18 05:30:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.11 1994/04/20 00:23:21 wlott Exp $
 *
 * This file does whatever.
 *
@@ -951,33 +951,43 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 {
     char *name = c->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Class "));
-    struct body *body = make_body();
-    struct arglist *init_args = make_argument_list();
-    struct expr *expr;
 
     strcpy(debug_name, "Define Class ");
     strcat(debug_name, name);
 
-    add_argument(init_args, make_find_var_arg(c->name));
-
     {
 	struct arglist *list_args = make_argument_list();
+	struct arglist *init_args = make_argument_list();
+	struct body *body = make_body();
 	struct superclass *super;
-
+	struct expr *expr;
+	
+	add_argument(init_args, make_argument(make_varref(c->name)));
 	for (super = c->supers; super != NULL; super = super->next)
 	    add_argument(list_args, make_argument(super->expr));
 	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
 	add_argument(init_args, make_argument(expr));
+
+	expr = make_varref(id(symbol("%define-class-1")));
+	add_expr(body, make_function_call(expr, init_args));
+	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
+
+	c->tlf1 = make_top_level_method(debug_name, body);
     }
 
     {
 	struct arglist *list_args = make_argument_list();
-	struct slot_spec *slot;
+	struct arglist *init_args = make_argument_list();
+	struct body *body = make_body();
 	struct symbol *getter = symbol("getter");
 	struct symbol *setter = symbol("setter");
 	struct symbol *make_slot = symbol("make-slot");
 	struct symbol *defslot = symbol("%define-slot");
+	struct slot_spec *slot;
+	struct expr *expr;
 	
+	add_argument(init_args, make_argument(make_varref(dup_id(c->name))));
+
 	for (slot = c->slots; slot != NULL; slot = slot->next) {
 	    struct arglist *slot_args;
 
@@ -1081,17 +1091,18 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 
 	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
 	add_argument(init_args, make_argument(expr));
+
+	expr = make_varref(id(symbol("%define-class-2")));
+	add_expr(body, make_function_call(expr, init_args));
+	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
+
+	c->tlf2 = make_top_level_method(debug_name, body);
     }
-
-    expr = make_varref(id(symbol("%define-class")));
-    add_expr(body, make_function_call(expr, init_args));
-    add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
-
-    c->tlf = make_top_level_method(debug_name, body);
 
     free(debug_name);
 
-    expand_method_for_compile(c->tlf);
+    expand_method_for_compile(c->tlf1);
+    expand_method_for_compile(c->tlf2);
 }
 
 static boolean expand_defclass_constituent(struct defclass_constituent **ptr,

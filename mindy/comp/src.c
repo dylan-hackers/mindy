@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.14 1994/04/18 05:30:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.15 1994/04/20 00:23:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1425,6 +1425,8 @@ struct constituent
 	res->keywords = NULL;
 	res->inherits = NULL;
     }
+    res->tlf1 = NULL;
+    res->tlf2 = NULL;
 
     return (struct constituent *)res;
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.11 1994/04/18 05:29:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.12 1994/04/20 00:23:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -970,7 +970,9 @@ static void compile_tl_defgeneric_constituent(struct defgeneric_constituent *c)
 
 static void compile_tl_defclass_constituent(struct defclass_constituent *c)
 {
-    dump_defclass(c->name, c->slots, compile_method(c->tlf));
+    dump_defclass(c->name, c->slots,
+		  compile_method(c->tlf1),
+		  compile_method(c->tlf2));
 }
 
 static void compile_tl_expr_constituent(struct expr_constituent *c)

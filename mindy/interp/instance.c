@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.7 1994/04/10 19:03:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.8 1994/04/20 00:22:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -834,11 +834,10 @@ static void process_slot(obj_t class, obj_t slot)
     }
 }
 
-void init_defined_class(obj_t class, obj_t superclasses, obj_t slots)
+void init_defined_class(obj_t class, obj_t slots)
 {
     obj_t scan;
 
-    setup_class_supers(class, superclasses);
     DC(class)->new_slots = slots;
     DC(class)->all_slots = obj_Nil;
 
@@ -849,7 +848,7 @@ void init_defined_class(obj_t class, obj_t superclasses, obj_t slots)
     displaced_subclass_slots = obj_Nil;
     init_functions = obj_Nil;
 
-    for (scan = superclasses; scan != obj_Nil; scan = TAIL(scan))
+    for (scan = DC(class)->superclasses; scan != obj_Nil; scan = TAIL(scan))
 	inherit_slots(class, HEAD(scan));
 
     DC(class)->instance_positions

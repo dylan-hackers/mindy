@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.9 1994/04/18 05:30:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.10 1994/04/20 00:23:33 wlott Exp $
 *
 * This file does whatever.
 *
@@ -86,7 +86,8 @@ struct defclass_constituent {
     struct slot_spec *slots;
     struct keyword_spec *keywords;
     struct inherited_spec *inherits;
-    struct method *tlf;
+    struct method *tlf1;
+    struct method *tlf2;
 };
 
 struct expr_constituent {

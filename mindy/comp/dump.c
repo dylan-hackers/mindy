@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.8 1994/04/18 03:28:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.9 1994/04/20 00:23:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -585,7 +585,7 @@ void dump_defgeneric(struct id *name, struct component *tlf)
 }
 
 void dump_defclass(struct id *name, struct slot_spec *slots,
-		   struct component *tlf)
+		   struct component *tlf1, struct component *tlf2)
 {
     struct slot_spec *slot;
 
@@ -597,7 +597,8 @@ void dump_defclass(struct id *name, struct slot_spec *slots,
 	    dump_symbol(slot->setter->symbol);
     }
     dump_op(fop_FALSE);
-    dump_component(tlf);
+    dump_component(tlf1);
+    dump_component(tlf2);
 }
 
 void dump_defconst(struct param_list *params, struct component *initializer)

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.7 1994/04/18 05:30:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.8 1994/04/20 00:23:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -296,7 +296,8 @@ static void analize_defgeneric_constituent(struct defgeneric_constituent *c,
 static void analize_defclass_constituent(struct defclass_constituent *c,
 					 struct lexenv *lexenv)
 {
-    analize_method(c->tlf, lexenv);
+    analize_method(c->tlf1, lexenv);
+    analize_method(c->tlf2, lexenv);
 }
 
 static void analize_expr_constituent(struct expr_constituent *c,

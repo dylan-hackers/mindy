@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.2 1994/04/10 19:03:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.3 1994/04/20 00:22:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -24,5 +24,4 @@ enum slot_allocation {
 struct library;
 
 extern obj_t make_defined_class(obj_t debug_name, struct library *library);
-extern void init_defined_class(obj_t class, obj_t superclasses,
-			       obj_t slots_maker);
+extern void init_defined_class(obj_t class, obj_t slots);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.4 1994/04/18 05:40:35 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.5 1994/04/20 00:21:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -27,6 +27,7 @@
 #include "type.h"
 #include "instance.h"
 #include "error.h"
+#include "class.h"
 
 
 /* Stuff to define builtin stuff. */
@@ -182,12 +183,16 @@ static obj_t defgeneric(obj_t var_obj, obj_t signature, obj_t restp,
     return var->name;
 }
 
-static obj_t defclass(obj_t var_obj, obj_t superclasses, obj_t slots)
-
+static obj_t defclass1(obj_t class, obj_t superclasses)
 {
-    struct variable *var = obj_rawptr(var_obj);
+    setup_class_supers(class, superclasses);
 
-    init_defined_class(var->value, superclasses, slots);
+    return class;
+}
+
+static obj_t defclass2(obj_t class, obj_t slots)
+{
+    init_defined_class(class, slots);
     /* init_defined_class doesn't return */
     return NULL;
 }
@@ -226,9 +231,12 @@ void init_def_functions(void)
 		    listn(6, obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
 			  obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
 		    FALSE, obj_Nil, obj_ObjectClass, defgeneric);
-    define_function("%define-class",
-		    list3(obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, defclass);
+    define_function("%define-class-1",
+		    list2(obj_ObjectClass, obj_ObjectClass),
+		    FALSE, obj_False, obj_ObjectClass, defclass1);
+    define_function("%define-class-2",
+		    list2(obj_ObjectClass, obj_ObjectClass),
+		    FALSE, obj_False, obj_ObjectClass, defclass2);
     define_function("%define-slot", list2(obj_ObjectClass, obj_ObjectClass),
 		    FALSE, obj_False, obj_ObjectClass, defslot);
 }
