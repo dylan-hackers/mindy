@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.22 1995/04/26 05:45:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.23 1995/04/26 09:45:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -354,20 +354,68 @@ define method optimize-unknown-call
   end;
 end;
 
-define method change-call-kind
-    (component :: <component>, call :: <abstract-call>, new-kind :: <class>)
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <definition-constant-leaf>)
     => ();
-  let new = make(new-kind, dependents: call.dependents,
-		 depends-on: call.depends-on);
-  for (dep = call.depends-on then dep.dependent-next,
-       while: dep)
-    dep.dependent := new;
+  optimize-unknown-call(component, call, func.const-defn);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-constant-definition>)
+    => ();
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      function-ctype());
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <function-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-method-definition>)
+    => ();
+  let func-dep = call.depends-on;
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  if (sig.next? == #f & sig.rest-type == #f & sig.key-infos == #f)
+    let assign = call.dependents.dependent;
+    for (arg-dep = func-dep.dependent-next then arg-dep.dependent-next,
+	 count from 0,
+	 specializer in sig.specializers,
+	 while: arg-dep)
+      assert-type(component, assign, arg-dep, specializer);
+    finally
+      if (arg-dep)
+	compiler-warning("Too many arguments.");
+	change-call-kind(component, call, <error-call>);
+      elseif (count == sig.specializers.size)
+	let leaf = defn.method-defn-leaf;
+	if (leaf)
+	  remove-dependency-from-source(component, func-dep);
+	  func-dep.source-exp := leaf;
+	  func-dep.source-next := leaf.dependents;
+	  leaf.dependents := func-dep;
+	  // We just set the derived type instead of using maybe-restrict-type
+	  // because we don't need the propagation aspects of maybe-res-type
+	  // because change-call-kind will queue the call no matter way.
+	  // So we can avoid the extra overhead of maybe-restrict-type.
+	  call.derived-type := leaf.result-type;
+	  change-call-kind(component, call, <known-call>);
+	end;
+      else
+	compiler-warning("Too few arguments.");
+	change-call-kind(component, call, <error-call>);
+      end;
+    end;
   end;
-  for (dep = call.dependents then dep.source-next,
-       while: dep)
-    dep.source-exp := new;
-  end;
-  queue-dependent(component, new);
 end;
 
 define method optimize-unknown-call
@@ -400,7 +448,26 @@ define method optimize-unknown-call
   end;
 end;
 
-define method optimize (component :: <component>, call :: <local-call>) => ();
+define method change-call-kind
+    (component :: <component>, call :: <abstract-call>, new-kind :: <class>)
+    => ();
+  let new = make(new-kind, dependents: call.dependents,
+		 depends-on: call.depends-on,
+		 derived-type: call.derived-type);
+  for (dep = call.depends-on then dep.dependent-next,
+       while: dep)
+    dep.dependent := new;
+  end;
+  for (dep = call.dependents then dep.source-next,
+       while: dep)
+    dep.source-exp := new;
+  end;
+  queue-dependent(component, new);
+end;
+
+define method optimize
+    (component :: <component>, call :: union(<known-call>, <local-call>))
+    => ();
   maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
 end;
 
@@ -549,7 +616,7 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   end;
 
   // If there is exactly one reference and that reference is the function
-  // in a known call, let convert the lambda.
+  // in a local call, let convert the lambda.
   let dependents = lambda.dependents;
   if (dependents & dependents.source-next == #f)
     let dependent = dependents.dependent;
