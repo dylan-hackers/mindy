@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/exports.dylan,v 1.2 1995/12/11 19:53:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/exports.dylan,v 1.3 1996/02/19 10:37:05 wlott Exp $
 module: Dylan-User
 
 define library Random
@@ -13,7 +13,8 @@ define module Random
 //  use transcendental;
 //  use threads;
   export
-    <random-state>, random, random-bits, $random-bits-count /* ,
-    random-float, random-gaussian, random-exponential */;
+    *random-state*, <random-state>, random,
+//    random-float, random-gaussian, random-exponential,
+    random-bits, $random-bits-count;
 end module Random;
 
