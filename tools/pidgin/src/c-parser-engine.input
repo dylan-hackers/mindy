@@ -293,8 +293,36 @@ file (<alien-name-token> identifier EOF)
     | parse-error(%2, "Unknown identifier: %s", %2.string-value);
 %
 
+file (<macro-parse-token> EOF)
+  #"empty-macro";
+%
+
 file (<macro-parse-token> type-name EOF)
   %2;
+%
+
+file (<macro-parse-token> macro-string-expr EOF)
+  // A primitive matching routine for string constants in #defines. We
+  // only allow string concatenation and parentheses.
+  // XXX - In a distant future, we might want to fold this in with other,
+  // more standard rules for parsing expressions of different types.
+  %2;
+%
+
+macro-string-expr (<lparen-token> macro-string-expr <rparen-token>)
+  %2;
+%
+
+macro-string-expr (macro-string-value)
+  %1;
+%
+
+macro-string-value (macro-string-value <string-literal-token>)
+  concatenate(%1, %2.value);
+%
+
+macro-string-value (<string-literal-token>)
+  %1.value;
 %
 
 ;file (<macro-parse-token> identifier EOF)
