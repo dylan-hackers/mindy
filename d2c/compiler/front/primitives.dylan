@@ -170,20 +170,6 @@ define-primitive
    pure: #t);
 
 define-primitive
-  (#"catch", #(#"<function>"), #(values:, rest:, #"<object>"));
-
-define-primitive
-  (#"make-catcher", #(#(union:, #"<raw-pointer>", #"<false>")),
-   #(union:, #"<catcher>", #"<false>"));
-
-define-primitive
-  (#"disable-catcher", #(#(union:, #"<catcher>", #"<false>")), #(values:));
-
-define-primitive
-  (#"throw", #(#(union:, #"<catcher>", #"<false>"), #"<function>", cluster:),
-   #(union:));
-
-define-primitive
   (#"c-string", #(#"<string>"), #"<raw-pointer>",
    pure: #t);
 
@@ -202,6 +188,40 @@ define-primitive
 define-primitive
   (#"not", #(#"<object>"), #"<boolean>",
    pure: #t);
+
+define-primitive
+  (#"==", #(#"<object>", #"<object>"), #"<boolean>", pure: #t);
+
+
+// NLX operations.
+
+define-primitive
+  (#"catch", #(#"<function>"), #(values:, rest:, #"<object>"));
+
+define-primitive
+  (#"make-catcher", #(#(union:, #"<raw-pointer>", #"<false>")),
+   #(union:, #"<catcher>", #"<false>"));
+
+define-primitive
+  (#"disable-catcher", #(#(union:, #"<catcher>", #"<false>")), #(values:));
+
+define-primitive
+  (#"throw", #(#(union:, #"<catcher>", #"<false>"), #"<function>", cluster:),
+   #(union:));
+
+define-primitive
+  (#"current-sp", #(), #"<raw-pointer>", pure: #t);
+
+define-primitive
+  (#"unwind-stack", #(#"<raw-pointer>"), #(values:));
+
+define-primitive
+  (#"restore-state",
+   #(#"<raw-pointer>", #"<simple-object-vector>"),
+   #(union:));
+
+
+// Fixnum operations.
 
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
@@ -232,3 +252,151 @@ for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
      #(values:, #"<fixed-integer>", #"<fixed-integer>"));
 end;
 
+
+// Single float operations.
+
+define-primitive
+  (#"fixed-as-single", #(#"<fixed-integer>"), #"<single-float>", pure: #t);
+   
+define-primitive
+  (#"double-as-single", #(#"<double-float>"), #"<single-float>", pure: #t);
+   
+define-primitive
+  (#"extended-as-single", #(#"<extended-float>"), #"<single-float>", pure: #t);
+
+for (name in #[#"single-<", #"single-<=", #"single-=",
+		 #"single-==", #"single-~="])
+  define-primitive
+    (name, #(#"<single-float>", #"<single-float>"), #"<boolean>",
+     pure: #t);
+end;
+
+for (name in #[#"single-+", #"single-*", #"single--"])
+  define-primitive
+    (name, #(#"<single-float>", #"<single-float>"), #"<single-float>",
+     pure: #t);
+end;
+
+define-primitive
+  (#"single-/", #(#"<single-float>", #"<single-float>"), #"<single-float>");
+
+for (name in #[#"single-abs", #"single-negative"])
+  define-primitive
+    (name, #(#"<single-float>"), #"<single-float>", pure: #t);
+end;
+
+for (name in #[#"single-floor", #"single-ceiling", #"single-round",
+		 #"single-truncate"])
+  define-primitive
+    (name, #(#"<single-float>"),
+     #(values:, #"<fixed-integer>", #"<single-float>"),
+     pure: #t);
+end;
+
+
+// Double float operations.
+
+define-primitive
+  (#"fixed-as-double", #(#"<fixed-integer>"), #"<double-float>", pure: #t);
+   
+define-primitive
+  (#"single-as-double", #(#"<single-float>"), #"<double-float>", pure: #t);
+   
+define-primitive
+  (#"extended-as-double", #(#"<extended-float>"), #"<double-float>", pure: #t);
+
+for (name in #[#"double-<", #"double-<=", #"double-=",
+		 #"double-==", #"double-~="])
+  define-primitive
+    (name, #(#"<double-float>", #"<double-float>"), #"<boolean>",
+     pure: #t);
+end;
+
+for (name in #[#"double-+", #"double-*", #"double--"])
+  define-primitive
+    (name, #(#"<double-float>", #"<double-float>"), #"<double-float>",
+     pure: #t);
+end;
+
+define-primitive
+  (#"double-/", #(#"<double-float>", #"<double-float>"), #"<double-float>");
+
+for (name in #[#"double-abs", #"double-negative"])
+  define-primitive
+    (name, #(#"<double-float>"), #"<double-float>", pure: #t);
+end;
+
+for (name in #[#"double-floor", #"double-ceiling", #"double-round",
+		 #"double-truncate"])
+  define-primitive
+    (name, #(#"<double-float>"),
+     #(values:, #"<fixed-integer>", #"<double-float>"),
+     pure: #t);
+end;
+
+
+// Extended float operations.
+
+define-primitive
+  (#"fixed-as-extended", #(#"<fixed-integer>"), #"<extended-float>", pure: #t);
+   
+define-primitive
+  (#"single-as-extended", #(#"<single-float>"), #"<extended-float>", pure: #t);
+   
+define-primitive
+  (#"double-as-extended", #(#"<double-float>"), #"<extended-float>", pure: #t);
+
+for (name in #[#"extended-<", #"extended-<=", #"extended-=",
+		 #"extended-==", #"extended-~="])
+  define-primitive
+    (name, #(#"<extended-float>", #"<extended-float>"), #"<boolean>",
+     pure: #t);
+end;
+
+for (name in #[#"extended-+", #"extended-*", #"extended--"])
+  define-primitive
+    (name, #(#"<extended-float>", #"<extended-float>"), #"<extended-float>",
+     pure: #t);
+end;
+
+define-primitive
+  (#"extended-/", #(#"<extended-float>", #"<extended-float>"),
+   #"<extended-float>");
+
+for (name in #[#"extended-abs", #"extended-negative"])
+  define-primitive
+    (name, #(#"<extended-float>"), #"<extended-float>", pure: #t);
+end;
+
+for (name in #[#"extended-floor", #"extended-ceiling", #"extended-round",
+		 #"extended-truncate"])
+  define-primitive
+    (name, #(#"<extended-float>"),
+     #(values:, #"<fixed-integer>", #"<extended-float>"),
+     pure: #t);
+end;
+
+
+// raw pointer operations.
+
+define-primitive
+  (#"make-raw-pointer", #(#"<fixed-integer>"), #"<raw-pointer>", pure: #t);
+
+define-primitive
+  (#"raw-pointer-address", #(#"<raw-pointer>"), #"<fixed-integer>", pure: #t);
+
+define-primitive
+  (#"pointer-+", #(#"<raw-pointer>", #"<fixed-integer>"), #"<raw-pointer>",
+   pure: #t);
+
+define-primitive
+  (#"pointer--", #(#"<raw-pointer>", #"<raw-pointer>"), #"<fixed-integer>",
+   pure: #t);
+
+define-primitive
+  (#"pointer-<", #(#"<raw-pointer>", #"<raw-pointer>"), #"<boolean>",
+   pure: #t);
+
+define-primitive
+  (#"pointer-=", #(#"<raw-pointer>", #"<raw-pointer>"), #"<boolean>",
+   pure: #t);
