@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.2 1998/12/17 11:01:33 igor Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.3 1998/12/17 11:03:12 igor Exp $
 *
 * This file is the main driver.
 *
@@ -183,7 +183,7 @@ static char *make_output_name(char *source, char *new_extension)
     return output;
 }
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     boolean print_parse = FALSE;
     boolean print_expanded = FALSE;
@@ -382,6 +382,7 @@ void main(int argc, char *argv[])
     fclose(file);
 
     exit(0);
+    return 0;
 }
 
 /* Try to keep this consistent with interp/mindy.c */
