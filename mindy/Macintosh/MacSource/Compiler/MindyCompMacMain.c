@@ -280,19 +280,19 @@ void BuildArgs( void )
 static void DoCompile( int argc, char *argv[] )
 {
 	CFragConnectionID		id;
-	UniversalProcPtr 		MindyCompMain;
+	/*UniversalProcPtr 		MindyCompMain;
 	ProcInfoType			procInfo = 	kCStackBased
 										| RESULT_SIZE( SIZE_CODE( sizeof( int ) ) )
 										| STACK_ROUTINE_PARAMETER( 1, SIZE_CODE( sizeof( int ) ) )
 										| STACK_ROUTINE_PARAMETER( 2, SIZE_CODE( sizeof( char** ) ) )
-										| STACK_ROUTINE_PARAMETER( 3, SIZE_CODE( sizeof( FILE * ) ) );
+										| STACK_ROUTINE_PARAMETER( 3, SIZE_CODE( sizeof( FILE * ) ) );*/
 	CFragSymbolClass		sym;
 	Ptr						libraryMain;
-	Ptr						compileMain;
+	//Ptr						compileMain;
+	int(*					compileMain)(int, char**, FILE *) ;
 	Str255					errName;
 	OSErr 					err;
-	
-	long 					libraryNameLength;
+//	long 					libraryNameLength;
 
 	
 	err = GetSharedLibrary(	"\pMindy Compiler Library", kPowerPCCFragArch, kPrivateCFragCopy, &id,
@@ -302,23 +302,27 @@ static void DoCompile( int argc, char *argv[] )
 		AlertFatal( "\pCouldn't find Shared Lib:", errName );
 	}
 	
-	err = FindSymbol( id, "\pMindyComp", &compileMain, &sym );
+	err = FindSymbol( id, "\pMindyComp", (void *)&compileMain, &sym );
 	if( err != noErr )
 	{
 		AlertFatal( "\pAn Error Occurred.", "\pCouldn't find Compiler main!" );
 	}
 	
-	MindyCompMain = NewRoutineDescriptor( 	(ProcPtr)compileMain,
-											procInfo,
-											kPowerPCISA );
+	printf( "Compiling: %s\r", argv[ 2 ] );
+	
+	//MindyCompMain = NewRoutineDescriptor( 	(ProcPtr)compileMain, procInfo, kPowerPCISA );
 
 	// Do compile
 	
-	err= CallUniversalProc( MindyCompMain, procInfo, argc, argv, stderr );
+	compileMain( argc, argv, stderr  );
 	
+	/*err= CallUniversalProc( MindyCompMain, procInfo, argc, argv, stderr );
 	DisposeRoutineDescriptor( MindyCompMain );
-	err = CloseConnection( &id );
+	*/
 	
+	printf( "Done.\r" );
+	
+	err = CloseConnection( &id );
 	if(err != noErr )
 		AlertFatal( "\pError Closing Compiler Library", "\pApplication will now quit." );
 }
@@ -428,10 +432,10 @@ void DoMenuCommand( unsigned long menuAndItem )
 			{
 				case kCommandLineChoice:
 					{
-						/*int argc;
+						int argc;
 						char **argv;
 						argc = ccommand( &argv );
-						DoCompile( argc, argv );*/
+						DoCompile( argc, argv );
 					}
 					break;
 					

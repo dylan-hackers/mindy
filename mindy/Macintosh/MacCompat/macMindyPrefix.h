@@ -8,7 +8,7 @@
 	#define HAVE_LIBDLD			1		/* We can load POwerPC shared libraries only */
 	#define HAVE_LIBDLDELF		1
 	
-	#define VERSION				"2.3.1"
+	#define VERSION				"2.3.2"
 	#define TARGET				"MACOS" /* Change to MACOSX for X? */
 
 	#define _USING_PROTOTYPES_	1
