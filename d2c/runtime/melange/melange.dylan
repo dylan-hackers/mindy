@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.12 2003/01/26 14:04:07 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.13 2003/01/29 22:31:31 andreas Exp $
 
 //======================================================================
 //
@@ -137,6 +137,8 @@ end method as;
 
 define constant null-pointer :: <statically-typed-pointer>
   = as(<statically-typed-pointer>, 0);
+
+define constant $null-pointer :: <statically-typed-pointer> = null-pointer;
 
 define sealed inline method signed-byte-at
     (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
@@ -392,6 +394,9 @@ end method destroy;
 
 define functional class <machine-pointer> (<statically-typed-pointer>) 
 end class;
+
+define abstract functional class <void> (<object>)
+end class <void>;
 
 // <C-string> corresponds to C's native "char *" type.  We provide basic
 // functions so that it obeys the protocol of <string>.
