@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.8 1999/03/02 20:36:37 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.9 1999/05/24 17:10:52 housel Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1171,6 +1171,15 @@ define method spew-object
 		slot-positions:
 		  if (instance?(object, <instance-slot-info>))
 		    as(<ct-value>, as(<list>, object.slot-positions));
+		  end if,
+		slot-representation:
+		  if (instance?(object, <instance-slot-info>))
+		    as(<ct-value>,
+		       object.slot-representation.representation-name);
+		  end if,
+		slot-initialized?-slot:
+		  if (instance?(object, <instance-slot-info>))
+		    as(<ct-value>, object.slot-initialized?-slot);
 		  end if);
 end method spew-object;
 
