@@ -18,6 +18,10 @@ else {
     $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
     print <<'EOF';
 
+.PHONY: d2c-compile
+
+d2c-compile: d2c
+
 MC = mindycomp
 MINDYFLAGS = -lcompiler-main
 MINDY = mindy
