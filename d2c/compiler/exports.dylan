@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.123 1995/12/15 16:15:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.124 1995/12/16 04:22:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,14 +27,13 @@ end;
 define module common
   use Dylan, export: all;
   use Extensions,
-    import: {main,
-	     <fixed-integer>, <extended-integer>,
+    import: {<fixed-integer>, <extended-integer>,
 	     $maximum-fixed-integer, ratio,
-	     false-or, one-of,
-	     <boolean>, <false>, <true>,
-	     ignore,
-	     *debug-output*, <equal-table>, <string-table>, <dictionary>,
-	     key-exists?, equal-hash},
+	     false-or, one-of, <false>, <true>, ignore,
+#if (mindy)
+             <boolean>, *debug-output*, main, <dictionary>, key-exists?,
+#end
+	     <equal-table>, <string-table>, equal-hash},
 #if (mindy)
     rename: {type-or => type-union},
 #end
@@ -49,8 +48,13 @@ end;
 define module utils
   use common;
   use standard-io;
+#if (mindy)
   use Introspection, import: {object-address, class-name};
   use System, import: {copy-bytes};
+#else
+  use Introspection, import: {class-name};
+  use System, import: {object-address, copy-bytes};
+#end
 
   // Stuff defined in utils
   export
@@ -64,7 +68,9 @@ end;
 
 define module od-format
   use common;
+#if (mindy)
   use system, import: {get-time-of-day};
+#end
   use standard-io;
   use introspection, import: {function-name};
   use utils;
@@ -181,9 +187,11 @@ end;
 define module source
   use common;
   use System, import: {copy-bytes};
+#if (mindy)
   use File-Descriptors,
     import: {fd-close, fd-read, fd-seek, fd-open,
 	     O_RDONLY, SEEK_SET, SEEK_END};
+#end
   use utils;
   use od-format;
   use compile-time-values;
@@ -1036,7 +1044,7 @@ define module define-functions
     function-defn-signature-setter, function-defn-hairy?-setter,
     function-defn-ct-value,
     <generic-definition>, generic-defn-discriminator, generic-defn-methods,
-    add-seal, ct-add-method, ct-sorted-applicable-methods,
+    add-seal, ct-add-method, ct-applicable-methods, sort-methods,
     method-defn-inline-expansion, method-defn-inline-function,
     %method-defn-inline-function, %method-defn-inline-function-setter,
     <method-definition>, method-defn-of,
@@ -1295,7 +1303,11 @@ end module autodump;
 
 define module main
   use common;
+#if (mindy)
   use System, import: {system, copy-bytes, getenv};
+#else
+  use System, import: {copy-bytes};
+#end
 
   use utils;
   use define-classes;
@@ -1321,8 +1333,8 @@ define module main
   use ctype;
   use cheese;
   use od-format;
-  use string-conversions;
 #if (mindy)
+  use string-conversions;
   use autodump;
 #end
   use standard-io;
