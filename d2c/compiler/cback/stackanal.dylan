@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.1 1998/05/03 19:55:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.2 2000/01/21 23:42:49 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -102,6 +102,26 @@ define method analyze
   // Record the stack depth.
   let depth = size(want);
   op.info := depth;
+  //
+  // Analyze the wants.
+  analyze(op.depends-on, want, state);
+end;
+
+define method analyze
+    (op :: <primitive>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  //
+  // Record the stack depth.
+  let depth = size(want);
+  op.info := depth;
+  // HOTFIX: some primitives (need to figure out which)
+  // need a cluster. Example is values-sequence.
+  // Need to look at op.primitive-name ???
+  format-out("Analyzing primitive %s\n");
+  let new-depth = depth + 1;
+  if (new-depth > state.max-depth)
+    state.max-depth := new-depth;
+  end;
   //
   // Analyze the wants.
   analyze(op.depends-on, want, state);
