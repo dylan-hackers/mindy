@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.29 2001/12/11 04:53:42 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.30 2001/12/12 05:17:48 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -647,7 +647,7 @@ end;
 
 // defer-for-global-heap? -- internal.
 //
-// Decide if we should be defering the dump of this object, and queue it
+// Decide if we should be deferring the dump of this object, and queue it
 // for deferred dumping if so.
 // XXX - If we defer anything, we need to generate a unique label for it, too.
 // See 'object-label' above.
