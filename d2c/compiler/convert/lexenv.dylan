@@ -1,5 +1,5 @@
 module: lexenv
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.4 1996/01/12 00:58:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.5 1996/03/17 01:03:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -32,7 +32,7 @@ define method print-object (binding :: <binding>, stream :: <stream>) => ();
   pprint-fields(binding, stream, name: binding.binding-name);
 end;
 
-define method add-binding (lexenv :: <lexenv>, name :: <name-token>,
+define method add-binding (lexenv :: <lexenv>, name :: <identifier-token>,
 			   var :: <abstract-variable>, #key type-var)
     => ();
   let binding = make(<binding>, name: name, var: var, type-var: type-var);
