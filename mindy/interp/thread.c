@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.1 1994/03/24 21:49:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.2 1994/03/25 03:45:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -640,9 +640,11 @@ static scav_thread(struct thread *thread)
 {
     obj_t *ptr;
 
+    scavenge(&thread->debug_name);
     scavenge(&thread->datum);
     scavenge(&thread->component);
     scavenge(&thread->cur_catch);
+    scavenge(&thread->handlers);
 
     for (ptr = thread->stack_base; ptr < thread->sp; ptr++)
 	scavenge(ptr);
