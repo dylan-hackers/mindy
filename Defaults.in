@@ -27,6 +27,7 @@ $cross_compiling = "@d2c_cross_compiling@" eq "yes";
 $enable_bootstrap = "@enable_bootstrap@" eq "yes";
 $bootstrap_compiler = "@bootstrap_compiler@";
 $enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
+$recheck = "@recheck@";
 $INSTALL = "@INSTALL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
