@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.79 1996/07/19 02:57:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.80 1996/07/23 17:25:08 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -671,8 +671,12 @@ define method compile-library
 	else
 	  format(makefile, "\n%s : %s %s%s\n",
 		 executable, objects, ar-name, unit-libs);
+	  // MACHINE DEPENDENCY: The reference to "end.o" below only
+	  // makes sense in the HPUX architecture.  When we have a
+	  // configuration flag for HPUX, we should conditionalize
+	  // this.
 	  format(makefile,
-		 "\t%s%s %s -o %s inits.c heap.s %s%s\n",
+		 "\t%s%s %s -o %s inits.c heap.s %s%s /usr/lib/end.o\n",
 		 target.link-executable-command,
 		 flags, target.link-executable-flags, executable, 
 		 ar-name, linker-args);
