@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.27 1995/06/06 00:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.28 1995/06/09 16:13:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -866,6 +866,11 @@ define method class-defn-maker-function
       := block (return)
 	   let cclass = ct-value(defn);
 	   if (cclass == #f | cclass.abstract?)
+	     return(#f);
+	   end;
+	   let instance-rep = pick-representation(cclass, #"speed");
+	   if (instance?(instance-rep, <immediate-representation>)
+		 & ~instance?(instance-rep, <data-word-representation>))
 	     return(#f);
 	   end;
 	   let key-infos = make(<stretchy-vector>);
@@ -1931,9 +1936,9 @@ define method build-slot-posn-dispatch
 							   init?-positions));
 			    end,
 			    find-direct-classes(cclass)),
-			key: method (entry1, entry2)
-			       entry1[0] < entry2[0];
-			     end))
+			test: method (entry1, entry2)
+				entry1[0] < entry2[0];
+			      end))
       if (prev == #f)
 	ranges := list(entry);
 	prev := ranges;
