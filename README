@@ -30,13 +30,13 @@ web site (below). The following online resources are available:
   Gwydion group:           http://legend.gwydion.cs.cmu.edu/
   FTP Site:                ftp://berlin.ccc.de/pub/gd/
   FTP Site (mirror):       ftp://ftp.fu-berlin.de/pub/unix/languages/dylan/
-  Bug reports:             gd-bugs@randomhacks.com
-  Mail to the maintainers: gd-hackers@randomhacks.com
+  Bug reports:             gd-bugs@gwydiondylan.org
+  Mail to the maintainers: gd-hackers@gwydiondylan.org
   Newsgroup:               comp.lang.dylan
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
-majordomo@randomhacks.com with the body "subscribe gd-hackers". If you want
+gd-hackers-subscribe@gwydiondylan.org to subscribe. If you want
 to contribute code or documentation, we enthusiastically encourage you to
 do so.
 
