@@ -126,22 +126,21 @@ if [ ! -x /usr/bin/d2c -a ! -x /usr/local/bin/d2c ]; then
   echo "d2c prep: Trying installing the Gwydion Dylan RPMs."
   exit 1
 fi
-%setup -n gd -a 1
+%setup -n gd-@VERSION@ -a 1
 
 
 %build
-cd src/
 # If our source tarball came out of CVS, make a configure script.
 if [ ! -f configure ]; then
   ./autogen.sh --prefix=/usr --with-site-dylan-prefix=/usr/local
-fi
+else
 # This does the wrong thing if d2c isn't in PATH.
-./configure --prefix=/usr --with-site-dylan-prefix=/usr/local
+  ./configure --prefix=/usr --with-site-dylan-prefix=/usr/local
+fi
 make
 
 
 %install
-cd src/
 make DESTDIR=$RPM_BUILD_ROOT install
 
 
@@ -204,12 +203,12 @@ fi
 
 %files extras
 /usr/bin/line-count
-/usr/bin/lisp2dylan
-/usr/bin/make-exports
+#/usr/bin/lisp2dylan
+#/usr/bin/make-exports
 /usr/bin/mk-rcs-links
 /usr/bin/parsergen
-/usr/bin/synopsis
-/usr/bin/versioner
+#/usr/bin/synopsis
+#/usr/bin/versioner
 
 
 %files -n mindy

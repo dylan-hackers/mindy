@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.52 2000/10/31 13:52:22 dauclair Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.53 2000/11/06 11:30:50 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -34,9 +34,9 @@ AM_CONFIG_HEADER(config.h)
 
 PACKAGE="gwydion-dylan"
 
-VERSION="SNAP_`date +%y-%m-%d`"
+# VERSION="SNAP_`date +%y-%m-%d`"
 # Use this line instead before packaging up a release:
-# VERSION="`cat version`"
+VERSION="`cat $srcdir/version`"
 
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
