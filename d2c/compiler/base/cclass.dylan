@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.15 2001/08/02 07:03:09 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.16 2001/11/08 01:14:13 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -926,7 +926,7 @@ end class <bucket>;
 
 // inherit-slots -- exported.
 //
-// Populate each class with complete slot information by inhereting whatever
+// Populate each class with complete slot information by inheriting whatever
 // is necessary.
 //
 define method inherit-slots () => ();
@@ -2011,7 +2011,7 @@ define method make (class == <subclass-ctype>, #next next-method,
     | (of.subclass-ctype
 	 := next-method(class,
 			of: of,
-			base-class: base-class | specifier-type(#"<class>")));
+			base-class: base-class | class-ctype()));
 end method make;
 
 define method print-object
