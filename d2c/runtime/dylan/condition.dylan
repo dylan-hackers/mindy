@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.8 2001/03/14 23:34:29 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.9 2001/06/05 20:48:35 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -6,7 +6,7 @@ module: dylan-viscera
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -267,16 +267,16 @@ define method signal (cond :: <condition>, #rest noise)
   local
     method search (h :: false-or(<handler>))
       if (h)
+	let remaining = h.handler-prev;
 	if (instance?(cond, h.handler-type))
 	  let test = h.handler-test;
 	  if (~test | test(cond))
-	    let remaining = h.handler-prev;
 	    h.handler-function(cond, method () search(remaining) end);
 	  else
-	    search(h.handler-prev);
+	    search(remaining);
 	  end if;
 	else
-	  search(h.handler-prev);
+	  search(remaining);
 	end if;
       else
 	default-handler(cond);
@@ -394,17 +394,16 @@ end method check-types;
 //
 // Signals a <type-error> complaining that value is not of the correct type.
 //
-define constant type-error =
-  method (value :: <object>, type :: <type>)
-   => res :: <never-returns>;
-    error(make(<type-error>, value: value, type: type));
-  end method;
+define function type-error (value :: <object>, type :: <type>)
+ => res :: <never-returns>;
+  error(make(<type-error>, value: value, type: type));
+end function;
 
 // abort -- exported from Dylan
 //
 // Aborts and never returns.
 // 
-define constant abort = method () => res :: <never-returns>;
+define function abort () => res :: <never-returns>;
   error(make(<abort>));
 end;
 
@@ -606,11 +605,11 @@ end;
 // by the acccessor standins in func.dylan and by compiler generated code.
 // It just signals an <uninitialized-slot-error>.
 // 
-define constant uninitialized-slot-error =
-  method (slot :: <slot-descriptor>, instance :: <object>)
-   => res :: <never-returns>;
-    error(make(<uninitialized-slot-error>, slot: slot, instance: instance));
-  end;
+define function uninitialized-slot-error
+    (slot :: <slot-descriptor>, instance :: <object>)
+    => res :: <never-returns>;
+  error(make(<uninitialized-slot-error>, slot: slot, instance: instance));
+end;
 
 // <uninitialized-slot-error> -- internal.
 //
@@ -651,47 +650,44 @@ end method report-condition;
 
 
 
-define constant missing-required-init-keyword-error =
-  method (keyword :: <symbol>, class :: <class>) => res :: <never-returns>;
-    error("Missing required-init-keyword %= in make of %=", keyword, class);
-  end;
+define function missing-required-init-keyword-error
+    (keyword :: <symbol>, class :: <class>) => res :: <never-returns>;
+  error("Missing required-init-keyword %= in make of %=", keyword, class);
+end;
 
-define constant wrong-number-of-arguments-error =
-  method (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>)
-   => res :: <never-returns>;
-    error("Wrong number of arguments.  Wanted %s %d but got %d.",
-	  if (fixed?) "exactly" else "at least" end,
-	  wanted, got);
-  end;
+define function wrong-number-of-arguments-error
+    (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>)
+    => res :: <never-returns>;
+  error("Wrong number of arguments.  Wanted %s %d but got %d.",
+	if (fixed?) "exactly" else "at least" end,
+	wanted, got);
+end;
 
-define constant odd-number-of-keyword/value-arguments-error =
-  method () => res :: <never-returns>;
-    error("Odd number of keyword/value arguments.");
-  end;
+define function odd-number-of-keyword/value-arguments-error()
+ => res :: <never-returns>;
+  error("Odd number of keyword/value arguments.");
+end;
 
-define constant unrecognized-keyword-error =
-  method (key :: <symbol>) => res :: <never-returns>;
-    error("Unrecognized keyword: %=.", key);
-  end;
+define function unrecognized-keyword-error
+    (key :: <symbol>) => res :: <never-returns>;
+  error("Unrecognized keyword: %=.", key);
+end;
 
-define constant no-applicable-methods-error =
-  method (function :: <generic-function>, arguments :: <simple-object-vector>)
-   => res :: type-union();
-    error("No applicable methods in call of %= when given arguments:\n  %=",
-	  function, arguments);
-  end;
+define function no-applicable-methods-error (function :: <generic-function>, arguments :: <simple-object-vector>)
+ => res :: type-union();
+  error("No applicable methods in call of %= when given arguments:\n  %=",
+	function, arguments);
+end;
 
-define constant ambiguous-method-error =
-  method (methods :: <list>)
-   => res :: <never-returns>;
-    error("It is ambiguous which of these methods is most specific:\n  %=",
-	  methods);
-  end;
+define function ambiguous-method-error (methods :: <list>)
+ => res :: <never-returns>;
+  error("It is ambiguous which of these methods is most specific:\n  %=",
+	methods);
+end;
 
-define constant select-error =
-  method (target) => res :: <never-returns>;
-    error("select error: %= does not match any of the keys", target);
-  end;
+define function select-error (target) => res :: <never-returns>;
+  error("select error: %= does not match any of the keys", target);
+end;
 
 
 
@@ -739,10 +735,9 @@ define method apply-safely (fun :: <function>, #rest arguments)
   end block;
 end method apply-safely;
 
-define constant seg-fault-error =
-  method () => res :: <never-returns>;
-    error("GDB encountered a seg fault -- invalid data.");
-  end;
+define function seg-fault-error () => res :: <never-returns>;
+  error("GDB encountered a seg fault -- invalid data.");
+end;
 
 // WRETCHED HACK: We put this in an <object> variable so that we will have a
 // sample of an integer in the general representation.
