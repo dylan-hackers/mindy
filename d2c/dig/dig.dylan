@@ -1096,7 +1096,7 @@ define method main (prog-name :: <string>, #rest args);
   do-gdb-command("set confirm off");
   do-gdb-command("set height 10000");
   do-gdb-command("break dylan_invoke_debugger_generic");
-  do-gdb-command("break crash_and_burn");
+  do-gdb-command("break abort");
   command-loop();
 end method main;
 
