@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.4 1996/03/17 00:47:39 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.5 1996/03/20 19:33:45 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;
@@ -714,13 +714,18 @@
 (defun emit-production (production gotos ofile)
   (let* ((right-side (production-right-side production))
 	 (left-side (production-left-side production)))
-    (format ofile "define method production-~D (prev-state :: <integer>"
+    (format ofile "define method production-~D~%"
 	    (production-number production))
+    (format ofile
+	    "    (prev-state :: <integer>, srcloc-0 :: <source-location>")
     (let ((index 0))
       (dolist (grammar-sym right-side)
-	(format ofile ", rhs-~D~@[ :: ~A~]"
-		(incf index)
-		(grammar-symbol-type grammar-sym))))
+	(incf index)
+	(format ofile
+		",~%     rhs-~D~@[ :: ~A~], srcloc-~D :: <source-location>"
+		index
+		(grammar-symbol-type grammar-sym)
+		index)))
     (format ofile ")~%")
     (format ofile "    => (new-state :: <integer>, new-symbol~@[ :: ~A~]);~%"
 	    (nonterminal-type left-side))
