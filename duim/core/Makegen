@@ -1,0 +1,19 @@
+$D2CFLAGS
+    = $d2c_runtime
+    . "-L../../common/common-dylan ";
+
+&emit_library_rule('duim-core',
+		   '../utilities/duim-utilities.lib.du '
+		   . '../geometry/duim-geometry.lib.du '
+		   . '../dcs/duim-dcs.lib.du '
+                   . '../sheets/duim-sheets.lib.du '
+                   . '../graphics/duim-graphics.lib.du '
+                   . '../extended-geometry/duim-extended-geometry.lib.du '
+		   . '../layouts/duim-layouts.lib.du '
+		   . '../commands/commands.lib.du '
+                   . '../gadgets/duim-gadgets.lib.du '
+                   . '../frames/duim-frames.lib.du ',
+		   '-L../utilities -L../geometry -L../dcs -L../sheets '
+                   . '-L../graphics -L../extended-geometry '
+                   . '-L../layouts -L../commands -L../gadgets -L../frames', 
+	           'compile', 'install');

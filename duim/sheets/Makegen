@@ -1,0 +1,10 @@
+$D2CFLAGS
+    = $d2c_runtime
+    . "-L../../common/common-dylan ";
+
+&emit_library_rule('duim-sheets',
+		   '../utilities/duim-utilities.lib.du '
+		   . '../geometry/duim-geometry.lib.du '
+		   . '../dcs/duim-dcs.lib.du',
+		   '-L../utilities -L../geometry -L../dcs', 
+	           'compile', 'install');

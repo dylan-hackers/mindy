@@ -1,0 +1,7 @@
+$D2CFLAGS
+    = $d2c_runtime
+    . "-L../../common/common-dylan ";
+
+&emit_library_rule('commands', '../utilities/duim-utilities.lib.du',
+		   '-L../utilities ', 
+	           'compile', 'install');
