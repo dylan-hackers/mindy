@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.16 1995/10/23 23:10:49 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.17 1996/04/22 23:57:25 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -430,6 +430,8 @@ AC_OUTPUT(Makefile \
 	demos/hello-world/Makefile \
 	demos/cat/Makefile \
 	demos/html2txt/Makefile \
+	demos/tk-html2txt/Makefile \
+	demos/minesweeper/Makefile \
 	demos/diff/Makefile \
 	tests/Makefile \
 )
