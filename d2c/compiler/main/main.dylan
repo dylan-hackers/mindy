@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.81 1996/08/05 17:29:37 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.82 1996/08/07 00:37:39 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,7 +21,8 @@ define class <main-unit-state> (<object>)
     slot unit-files :: <stretchy-vector>;
     slot unit-lib-name :: <byte-string>;
     slot unit-lib :: <library>;
-    slot unit-prefix :: <byte-string>;
+    // unit-prefix already a <unit-state> accessor
+    slot unit-mprefix :: <byte-string>;
     slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
     slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
     slot unit-cback-unit :: <unit-state>;
@@ -383,7 +384,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
     format(*debug-output*, "Compiling library %s\n", lib-name);
     let lib = find-library(as(<symbol>, lib-name), create: #t);
     state.unit-lib := lib;
-    state.unit-prefix
+    state.unit-mprefix
       := element(state.unit-header, #"unit-prefix", default: #f) 
            | as-lowercase(lib-name);
 
@@ -453,10 +454,10 @@ define method emit-make-prologue (state :: <main-unit-state>) => ();
 		   end if;
     state.unit-cc-flags := cc-flags;
 
-    state.unit-cback-unit := make(<unit-state>, prefix: state.unit-prefix);
+    state.unit-cback-unit := make(<unit-state>, prefix: state.unit-mprefix);
     state.unit-other-cback-units := map-as(<simple-object-vector>, unit-name, *units*);
 
-    let makefile-name = format-to-string("cc-%s-files.mak", state.unit-prefix);
+    let makefile-name = format-to-string("cc-%s-files.mak", state.unit-mprefix);
     let temp-makefile-name = concatenate(makefile-name, "-temp");
     state.unit-makefile-name := makefile-name;
     state.unit-temp-makefile-name := temp-makefile-name;
@@ -602,7 +603,7 @@ define method build-library-inits (state :: <main-unit-state>) => ();
     end if;
 
     begin
-      let c-name = concatenate(state.unit-prefix, "-init.c");
+      let c-name = concatenate(state.unit-mprefix, "-init.c");
       let temp-c-name = concatenate(c-name, "-temp");
       let body-stream = make(<file-stream>, 
 			     locator: temp-c-name, direction: #"output");
@@ -613,11 +614,11 @@ define method build-library-inits (state :: <main-unit-state>) => ();
         state.unit-entry-function
 	  := build-command-line-entry(state.unit-lib, entry-point, file);
       end if;
-      build-unit-init-function(state.unit-prefix, state.unit-init-functions, body-stream);
+      build-unit-init-function(state.unit-mprefix, state.unit-init-functions, body-stream);
       close(body-stream);
 
       pick-which-file(c-name, temp-c-name, state.unit-target);
-      let o-name = concatenate(state.unit-prefix, "-init", 
+      let o-name = concatenate(state.unit-mprefix, "-init", 
 			       state.unit-target.object-filename-suffix);
       output-c-file-rule(state.unit-makefile, c-name, o-name, state.unit-target);
       state.unit-all-generated-files := add!(state.unit-all-generated-files, c-name);
@@ -630,7 +631,7 @@ end method build-library-inits;
 
 define method build-local-heap-file (state :: <main-unit-state>) => ();
     format(*debug-output*, "Emitting Library Heap.\n");
-    let s-name = concatenate(state.unit-prefix, "-heap.s");
+    let s-name = concatenate(state.unit-mprefix, "-heap.s");
     let temp-s-name = concatenate(s-name, "-temp");
     let heap-stream = make(<file-stream>, 
 			   locator: temp-s-name, direction: #"output");
@@ -639,7 +640,7 @@ define method build-local-heap-file (state :: <main-unit-state>) => ();
     close(heap-stream);
 
     pick-which-file(s-name, temp-s-name, state.unit-target);
-    let o-name = concatenate(state.unit-prefix, "-heap", 
+    let o-name = concatenate(state.unit-mprefix, "-heap", 
 			     state.unit-target.object-filename-suffix);
     let assemble-string
       = format-to-string(state.unit-target.assembler-command, s-name, o-name);
@@ -651,7 +652,7 @@ define method build-local-heap-file (state :: <main-unit-state>) => ();
     format(state.unit-real-clean-stream, " %s %s", o-name, s-name);
 
     let linker-options = element(state.unit-header, #"linker-options", default: #f);
-    state.unit-unit-info := make(<unit-info>, unit-name: state.unit-prefix,
+    state.unit-unit-info := make(<unit-info>, unit-name: state.unit-mprefix,
 				 undumped-objects: undumped,
 				 extra-labels: extra-labels,
 				 linker-options: linker-options);
@@ -661,7 +662,7 @@ end method build-local-heap-file;
 define method build-ar-file (state :: <main-unit-state>) => ();
     let objects = stream-contents(state.unit-objects-stream);
     let ar-name = concatenate(state.unit-target.library-filename-prefix,
-			      state.unit-prefix,
+			      state.unit-mprefix,
 			      state.unit-target.library-filename-suffix);
     state.unit-objects := objects;
     state.unit-ar-name := ar-name;
@@ -869,7 +870,7 @@ define method compile-library (state :: <main-unit-state>)
     end if;
 
     if (state.unit-log-dependencies)
-      spew-dependency-log(concatenate(state.unit-prefix, ".dep"));
+      spew-dependency-log(concatenate(state.unit-mprefix, ".dep"));
     end if;
 
     do-make(state);
