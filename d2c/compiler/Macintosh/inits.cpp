@@ -1,5 +1,5 @@
 // File: inits.cpp
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.4 2004/04/14 20:58:50 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.5 2004/04/15 23:51:43 gabor Exp $
 // Purpose: present the correct interface to be a CW plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is is based on the Pro6 CW API, but sorely needs cleanup
@@ -456,8 +456,23 @@ CW_CALLBACK plugin_main(CWPluginContext context)
 
 extern "C" FSSpec fsSpec(const CWFileSpec& spec);
 
-FSSpec fsSpec(const CWFileSpec& spec)
+FSSpec fsSpec(const CWFileSpec& ref)
 {
+   FSRef newRef;
+
+  FSMakeFSRefUnicode(&ref.parentDirRef,
+  ref.filename.length,
+  ref.filename.unicode,
+  kTextEncodingUnknown,
+  &newRef);
+  
+  
+	FSSpec spec;
+
+FSGetCatalogInfo(&newRef, kFSCatInfoNone, NULL, NULL, &spec, NULL);
+return spec;
+
+/*
 	UInt8 path[1024];
 	UInt8* path2;
 	FSSpec res;
@@ -478,7 +493,7 @@ FSSpec fsSpec(const CWFileSpec& spec)
 	*path2 = 0;
 	*path = path2 - path;
 	FSMakeFSSpec(0, 0, path, &res);
-	return res;
+	return res;*/
 }
 
 
