@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.21 1994/10/05 21:04:42 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.22 1995/02/08 00:05:20 wlott Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -201,6 +201,7 @@ struct thread *thread_create(obj_t debug_name)
     *AllThreadsTail = list;
     AllThreadsTail = &list->next;
 
+    memset(thread, 0, STACK_SIZE);
     thread->thread_obj = thread_obj;
     thread->id = NextId++;
     thread->next = NULL;
