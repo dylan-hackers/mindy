@@ -1,62 +1,68 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.2 1995/05/26 10:49:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.3 1995/06/01 14:41:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 define method extract-args
     (call :: <known-call>, nfixed :: <fixed-integer>, want-next? :: <boolean>,
-     rest? :: <boolean>, keys :: false-or(<list>));
-  let sig = find-signature(call.depends-on.source-exp);
-  unless (sig.specializers.size == nfixed)
-    error("Transformer inconsistent w/ function signature.");
-  end;
-  unless (if (rest?) sig.rest-type else ~sig.rest-type end)
-    error("Transformer inconsistent w/ function signature.");
-  end;
-  if (keys)
-    error("Can't extract keyword arguments yet.");
-  end;
-  local
-    method decode-fixed-and-on
-	(remaining :: <fixed-integer>, results :: <list>,
-	 args :: false-or(<dependency>))
-	=> result :: <list>;
-      if (zero?(remaining))
-	decode-next-and-on(results, args);
-      else
-	decode-fixed-and-on(remaining - 1,
-			    pair(args.source-exp, results),
-			    args.dependent-next);
-      end;
-    end,
-    method decode-next-and-on
-	(results :: <list>, args :: false-or(<dependency>))
-	=> result :: <list>;
-      if (sig.next?)
-	decode-rest-and-on(if (want-next?)
-			     pair(args.source-exp, results);
-			   else
-			     results;
-			   end,
-			   args.dependent-next);
-      elseif (want-next?)
-	error("Transformer inconsistent w/ function signature.");
-      else
-	decode-rest-and-on(results, args);
-      end;
-    end,
-    method decode-rest-and-on
-	(results :: <list>, args :: false-or(<dependency>))
-      if (rest?)
-	pair(extract-rest-arg(args.source-exp), results);
-      else
-	results;
-      end;
+     rest? :: <boolean>, keys :: false-or(<list>))
+    => (okay? :: <boolean>, #rest arg :: union(<leaf>, <list>));
+  block (return)
+    let sig = find-signature(call.depends-on.source-exp);
+    unless (sig.specializers.size == nfixed)
+      error("Transformer inconsistent w/ function signature.");
     end;
-  apply(values,
-	reverse!(decode-fixed-and-on(nfixed, #(),
-				     call.depends-on.dependent-next)));
+    unless (if (rest?) sig.rest-type else ~sig.rest-type end)
+      error("Transformer inconsistent w/ function signature.");
+    end;
+    if (keys)
+      error("Can't extract keyword arguments yet.");
+    end;
+    local
+      method decode-fixed-and-on
+	  (remaining :: <fixed-integer>, results :: <list>,
+	   args :: false-or(<dependency>))
+	  => result :: <list>;
+	if (zero?(remaining))
+	  decode-next-and-on(results, args);
+	else
+	  decode-fixed-and-on(remaining - 1,
+			      pair(args.source-exp, results),
+			      args.dependent-next);
+	end;
+      end,
+      method decode-next-and-on
+	  (results :: <list>, args :: false-or(<dependency>))
+	  => result :: <list>;
+	if (sig.next?)
+	  decode-rest-and-on(if (want-next?)
+			       pair(args.source-exp, results);
+			     else
+			       results;
+			     end,
+			     args.dependent-next);
+	elseif (want-next?)
+	  error("Transformer inconsistent w/ function signature.");
+	else
+	  decode-rest-and-on(results, args);
+	end;
+      end,
+      method decode-rest-and-on
+	  (results :: <list>, args :: false-or(<dependency>))
+	if (rest?)
+	  pair(extract-rest-arg(args.source-exp)
+		 | return(#f),
+	       results);
+	else
+	  results;
+	end;
+      end;
+    apply(values,
+	  #t,
+	  reverse!(decode-fixed-and-on(nfixed, #(),
+				       call.depends-on.dependent-next)));
+  end;
 end;
 
 define method find-signature (func :: union(<leaf>, <definition>))
@@ -80,15 +86,17 @@ define method find-signature (defn :: <function-definition>)
 end;
 
 
-define method extract-rest-arg (expr :: <expression>) => res :: <list>;
-  error("Can't extract a rest arg from ~=", expr);
+define method extract-rest-arg (expr :: <expression>) => res :: <false>;
+  #f;
 end;
 
-define method extract-rest-arg (expr :: <ssa-variable>) => res :: <list>;
+define method extract-rest-arg (expr :: <ssa-variable>)
+    => res :: false-or(<list>);
   extract-rest-arg(expr.definer.depends-on.source-exp);
 end;
 
-define method extract-rest-arg (expr :: <primitive>) => res :: <list>;
+define method extract-rest-arg (expr :: <primitive>)
+    => res :: false-or(<list>);
   if (expr.name == #"vector")
     for (arg = expr.depends-on then arg.dependent-next,
 	 results = #() then pair(arg.source-exp, results),
@@ -97,27 +105,27 @@ define method extract-rest-arg (expr :: <primitive>) => res :: <list>;
       reverse!(results);
     end;
   else
-    error("Can't extract a rest arg from ~=", expr);
+    #f;
   end;
 end;
 
-define method extract-rest-arg (expr :: <literal-constant>) => res :: <list>;
-  if (expr.value = #())
+define method extract-rest-arg (expr :: <literal-constant>)
+    => res :: false-or(<list>);
+  if (expr.value = #() | expr.value = #[])
     #();
   else
-    error("Can't extract a rest arg from ~=", expr);
+    #f;
   end;
 end;    
-
-
-
 
 
 define method apply-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
-  let (function, args) = extract-args(call, 1, #f, #t, #f);
-  if (empty?(args))
+  let (okay?, function, args) = extract-args(call, 1, #f, #t, #f);
+  if (~okay?)
+    #f;
+  elseif (empty?(args))
     compiler-warning("Apply must be given at least on argument in addition "
 		       "to the function.");
     #f;
@@ -172,8 +180,8 @@ define-transformer(#"apply", #f, apply-transformer);
 define method list-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
-  let args = extract-args(call, 0, #f, #t, #f);
-  if (empty?(args))
+  let (okay?, args) = extract-args(call, 0, #f, #t, #f);
+  if (okay? & empty?(args))
     let builder = make-builder(component);
     replace-expression(component, call.dependents,
 		       make-literal-constant(builder, as(<ct-value>, #())));
@@ -192,13 +200,17 @@ define method make-transformer
     => (did-anything? :: <boolean>);
   block (return)
     local method give-up () return(#f) end;
-    let (cclass-leaf, init-keywords) = extract-args(call, 1, #f, #t, #f);
-    unless (instance?(cclass-leaf, <literal-constant>))
+    let (okay?, cclass-leaf, init-keywords)
+      = extract-args(call, 1, #f, #t, #f);
+    unless (okay? & instance?(cclass-leaf, <literal-constant>))
       give-up();
     end;
     let cclass = cclass-leaf.value;
     if (cclass.abstract?)
-      compiler-warning("Trying to make an instance of an abstract class");
+      compiler-warning("In %s:\n  trying to make an instance of an abstract "
+			 "class %s",
+		       call.home-function-region.name,
+		       cclass.cclass-name);
       give-up();
     end;
     maybe-restrict-type(component, call, cclass);
