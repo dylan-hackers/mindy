@@ -150,7 +150,7 @@ define method report-condition
 
   // Temporary debugging code. Warn me when someone pulls this
   // stupid stunt.
-  if (stream == #"Cheap-IO")
+  if (~instance?(stream, <stream>))
     format(*standard-error*, "Somebody's using #\"Cheap-IO\"!\n");
     force-output(*standard-error*);
   end if;
@@ -159,9 +159,9 @@ define method report-condition
 			   stream);
   apply(condition-format, stream, parse-condition.condition-format-string,
 	parse-condition.condition-format-arguments);
-  unless (stream == #"Cheap-IO")
+  if (instance?(stream, <stream>))
     force-output(stream);
-  end unless;
+  end if;
 end method report-condition;
 
 define method default-handler(condition :: <parse-progress-report>)
