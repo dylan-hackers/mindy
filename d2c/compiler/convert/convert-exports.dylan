@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.1 1996/03/17 00:57:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.2 1996/04/06 07:10:55 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -183,7 +183,7 @@ define module define-functions
   use function-definitions;
   use front,
     import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>,
-	     optimize-component};
+	     <literal-constant>, value, optimize-component};
   use top-level-forms;
 
   use expanders;
