@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.31 1994/07/07 07:14:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.32 1994/08/04 21:05:13 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -403,7 +403,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 	while ((c = getc(cur_source_stream)) != EOF) {
 	    if (c == '\n') {
 		lines_found++;
-		if (lines_found > lines_alloced) {
+		if (lines_found >= lines_alloced) {
 		    lines_alloced *= 2;
 		    line_offsets = realloc(line_offsets,
 					   sizeof(long) * lines_alloced);
