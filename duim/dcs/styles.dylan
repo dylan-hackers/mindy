@@ -25,15 +25,13 @@ define open generic default-text-style-setter
     (text-style :: false-or(<text-style>), object) => (text-style :: false-or(<text-style>));
 
 
-//* Trying to seal these slots causes a GF type mismatch warning
-
 define sealed class <style-descriptor> (<object>)
   // Default these to #f so that the port can fill them in appropriately
-  /*sealed*/ slot default-foreground :: false-or(<ink>) = #f,
+  sealed slot default-foreground :: false-or(<ink>) = #f,
     init-keyword: foreground:;
-  /*sealed*/ slot default-background :: false-or(<ink>) = #f,
+  sealed slot default-background :: false-or(<ink>) = #f,
     init-keyword: background:;
-  /*sealed*/ slot default-text-style :: false-or(<text-style>) = #f,
+  sealed slot default-text-style :: false-or(<text-style>) = #f,
     init-keyword: text-style:;
 end class <style-descriptor>;
 

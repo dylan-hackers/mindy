@@ -498,5 +498,3 @@ define named-color blue-violet = (138, 43, 226);
 define named-color purple = (160, 32, 240);
 define named-color medium-purple = (147, 112, 219);
 define named-color thistle = (216, 191, 216);
-
-
