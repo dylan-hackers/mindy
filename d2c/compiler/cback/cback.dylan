@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.23 1995/04/29 04:06:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.24 1995/04/30 04:30:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -176,6 +176,10 @@ define class <output-info> (<object>)
   // Hash table mapping constants to indices in the roots table.
   slot output-info-constants :: <table>,
     init-function: curry(make, <object-table>);
+  //
+  // C variable holding the current stack top.
+  slot output-info-cur-stack-depth :: <fixed-integer>,
+    init-value: 0;
 end;
 
 
@@ -234,6 +238,47 @@ define method debug-name-string (name :: <type-cell-name>) => res :: <string>;
   format-to-string("type cell for %s", name.type-cell-name-base.name-symbol);
 end;
 
+
+define method cluster-names (depth :: <fixed-integer>)
+    => (bottom-name :: <string>, top-name :: <string>);
+  if (zero?(depth))
+    values("orig_sp", "cluster_0_top");
+  else
+    values(format-to-string("cluster_%d_top", depth - 1),
+	   format-to-string("cluster_%d_top", depth));
+  end;
+end;
+
+define method consume-cluster
+    (cluster :: <abstract-variable>, output-info :: <output-info>)
+    => (bottom-name :: <string>, top-name :: <string>);
+  let depth = cluster.info;
+  if (depth >= output-info.output-info-cur-stack-depth)
+    error("Consuming a cluster that isn't on the stack?");
+  end;
+  output-info.output-info-cur-stack-depth := depth;
+  cluster-names(depth);
+end;
+
+define method produce-cluster
+    (cluster :: <abstract-variable>, output-info :: <output-info>)
+    => (bottom-name :: <string>, top-name :: <string>);
+  let depth = cluster.info;
+  if (depth > output-info.output-info-cur-stack-depth)
+    error("Leaving a gap when producing a cluster?");
+  end;
+  output-info.output-info-cur-stack-depth := depth + 1;
+  cluster-names(depth);
+end;
+
+define method produce-cluster
+    (cluster :: <initial-definition>, output-info :: <output-info>)
+    => (bottom-name :: <string>, top-name :: <string>);
+  produce-cluster(cluster.definition-of, output-info);
+end;
+
+
+
 
 // variable stuff.
 
@@ -249,13 +294,7 @@ define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
 			     output-info :: <output-info>)
     => res :: <backend-var-info>;
   let varinfo = var.var-info;
-  let rep
-    = if (instance?(varinfo, <values-cluster-info>))
-	$cluster-rep;
-      else
-	pick-representation(var.derived-type, #"speed");
-      end;
-
+  let rep = pick-representation(var.derived-type, #"speed");
   make(<backend-var-info>, representation: rep, name: #f);
 end;
 
@@ -353,8 +392,12 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     write("void", stream);
   elseif (~result.dependent-next)
     let var = result.source-exp;
-    let rep = variable-representation(var, output-info);
-    write(rep.representation-c-type, stream);
+    if (instance?(var.var-info, <values-cluster-info>))
+      write("descriptor_t *", stream);
+    else
+      let rep = variable-representation(var, output-info);
+      write(rep.representation-c-type, stream);
+    end;
   else
     let header = output-info.output-info-header-stream;
     format(header, "struct %s_results {\n", name);
@@ -371,7 +414,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     format(stream, "struct %s_results", name);
   end;
 
-  format(stream, " %s(%s sp", name, $cluster-rep.representation-c-type);
+  format(stream, " %s(descriptor_t *orig_sp", name);
   if (defines)
     for (var = defines then var.definer-next,
 	 index from 0,
@@ -478,12 +521,19 @@ end;
 
 define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     => ();
-  let info = get-info-for(lambda, output-info);
-  let prototype = info.lambda-info-prototype;
+  let lambda-info = get-info-for(lambda, output-info);
+  let prototype = lambda-info.lambda-info-prototype;
   format(output-info.output-info-header-stream, "static %s;\n", prototype);
 
   let stream = output-info.output-info-body-stream;
   format(stream, "static %s\n{\n", prototype);
+
+  let max-depth = analize-stack-usage(lambda);
+  for (i from 0 below max-depth)
+    format(output-info.output-info-vars-stream,
+	   "descriptor_t *cluster_%d_top;\n",
+	   i);
+  end;
 
   emit-region(lambda.body, output-info);
   let result = lambda.depends-on;
@@ -492,7 +542,9 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     if (~result.dependent-next)
       let var = result.source-exp;
       if (instance?(var.var-info, <values-cluster-info>))
-	write("return sp;\n", stream);
+	let (bottom-name, top-name) = consume-cluster(var, output-info);
+	assert(bottom-name = "orig_sp");
+	write("return cluster_0_top;\n", stream);
       else
 	let rep = variable-representation(var, output-info);
 	format(stream, "return %s;\n", ref-leaf(rep, var, output-info));
@@ -500,7 +552,7 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     else
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
-	     info.lambda-info-main-entry-name, temp);
+	     lambda-info.lambda-info-main-entry-name, temp);
       let stream = output-info.output-info-guts-stream;
       for (dep = result then dep.dependent-next,
 	   index from 0,
@@ -548,6 +600,7 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
   let cond = ref-leaf($boolean-rep, region.depends-on.source-exp, output-info);
+  let depth = output-info.output-info-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
   emit-region(region.then-region, output-info);
@@ -555,6 +608,7 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
   spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
+  output-info.output-info-cur-stack-depth := depth;
   write("else {\n", stream);
   indent(stream, $indentation-step);
   emit-region(region.else-region, output-info);
@@ -587,10 +641,6 @@ define method emit-region (region :: <block-region>,
   end;
   let stream = output-info.output-info-guts-stream;
   let id = region.block-id;
-  let sp-temp = format-to-string("block%d_sp", id);
-  format(output-info.output-info-vars-stream, "%s %s;\n",
-	 $cluster-rep.representation-c-type, sp-temp);
-  format(stream, "block%d_sp = sp;\n", id);
   if (region.catcher)
     if (region.catcher.exit-function)
       error("An exit function still exists?");
@@ -604,8 +654,6 @@ define method emit-region (region :: <block-region>,
   if (region.catcher)
     indent(stream, - $indentation-step);
     format(stream, "}\n");
-    deliver-cluster(region.catcher.dependents.dependent.defines, #f,
-		    sp-temp, region.catcher.derived-type, output-info);
   end;
   let half-step = ash($indentation-step, -1);
   indent(stream, - half-step);
@@ -627,7 +675,7 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
     end;
     let id = target.block-id;
     if (id)
-      format(stream, "sp = block%d_sp;\ngoto block%d;\n", id, id);
+      format(stream, "goto block%d;\n", id);
     else
       format(stream, "abort();\n");
     end;
@@ -642,18 +690,17 @@ define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
   for (region = region.parent then region.parent,
        until: region == #f | region == target)
     finally
-    unless (region)
-      error("Non-local raw exit?");
+    if (region)
+      error("local pitcher left behind?");
     end;
     let id = target.block-id;
     unless (id)
       error("Pitcher to the component?");
     end;
 
-    let cluster = pitcher.depends-on.source-exp;
-    format(stream, "sp = setup_for_pitch(block%d_sp, %s, sp);\n",
-	   id, ref-leaf($cluster-rep, cluster, output-info));
-    format(stream, "goto block%d;\n", id);
+    let (top-name, bottom-name)
+      = consume-cluster(pitcher.depends-on.source-exp, output-info);
+    format(stream, "pitch(%s, %s);\n", bottom-name, top-name);
   end;
 end;
 
@@ -687,8 +734,9 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     => ();
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
-      deliver-cluster(defines, #f, ref-leaf($cluster-rep, var, output-info),
-		      var.derived-type, output-info);
+      let (bottom-name, top-name) = consume-cluster(var, output-info);
+      deliver-cluster(defines, #f, bottom-name, top-name, var.derived-type,
+		      output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
 		  $general-rep;
@@ -754,28 +802,25 @@ define method emit-assignment
      call :: union(<unknown-call>, <error-call>),
      output-info :: <output-info>)
     => ();
-  let temp = if (results) new-local(output-info) else "sp" end;
-  format(output-info.output-info-vars-stream, "%s %s;\n",
-	 $cluster-rep.representation-c-type, temp);
-  let stream = make(<byte-string-output-stream>);
+  let setup-stream = make(<byte-string-output-stream>);
   let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
-  if (results)
-    format(stream, "%s = sp;\n", temp);
-  end;
+  
+  let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        count from 0,
        while: arg-dep)
-    format(stream, "%s[%d] = %s;\n", temp, count, 
+    format(setup-stream, "%s[%d] = %s;\n", args, count,
 	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
   finally
     spew-pending-defines(output-info);
-    format(output-info.output-info-guts-stream, "%s%sCALL(%s, %s, %d);\n",
-	   stream.string-output-stream-string,
-	   if (results) "sp = " else "" end,
-	   func, temp, count);
-  end;
-  if (results)
-    deliver-cluster(results, #f, temp, call.derived-type, output-info);
+    let stream = output-info.output-info-guts-stream;
+    write(setup-stream.string-output-stream-string, stream);
+    if (results)
+      format(stream, "%s = CALL(%s, %s, %d);\n", sp, func, args, count);
+      deliver-cluster(results, #f, args, sp, call.derived-type, output-info);
+    else
+      format(stream, "CALL(%s, %s, %d);\n", func, args, count);
+    end;
   end;
 end;
 
@@ -786,12 +831,19 @@ define method emit-assignment
   let stream = make(<byte-string-output-stream>);
   let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
   spew-pending-defines(output-info);
-  let cluster
-    = ref-leaf($cluster-rep, call.depends-on.dependent-next.source-exp,
-	       output-info);
-  format(output-info.output-info-guts-stream, "%sCALL(%s, %s, sp - %s);\n",
-	 if (results) "sp = " else "" end, func, cluster, cluster);
-  deliver-cluster(results, #f, cluster, call.derived-type, output-info);
+  let cluster = call.depends-on.dependent-next.source-exp;
+  let (bottom-name, top-name) = consume-cluster(cluster, output-info);
+  if (results)
+    format(output-info.output-info-guts-stream,
+	   "%s = CALL(%s, %s, %s - %s);\n",
+	   top-name, func, bottom-name, top-name, bottom-name);
+    deliver-cluster(results, #f, bottom-name, top-name, call.derived-type,
+		    output-info);
+  else
+    format(output-info.output-info-guts-stream,
+	   "CALL(%s, %s, %s - %s);\n",
+	   func, bottom-name, top-name, bottom-name);
+  end;
 end;
 
 define method emit-assignment
@@ -802,8 +854,8 @@ define method emit-assignment
   let func-info = get-info-for(func, output-info);
   let stream = make(<byte-string-output-stream>);
   let name = func-info.lambda-info-main-entry-name;
-  write(name, stream);
-  write("(sp", stream);
+  let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
+  format(stream, "%s(%s", name, sp);
   for (arg-dep = expr.depends-on.dependent-next then arg-dep.dependent-next,
        param = func.prologue.dependents.dependent.defines
 	 then param.definer-next,
@@ -839,16 +891,8 @@ define method emit-assignment
     deliver-results(results, result-exprs, output-info);
   elseif (instance?(func.depends-on.source-exp.var-info,
 		      <values-cluster-info>))
-    let temp = new-local(output-info);
-    format(output-info.output-info-vars-stream, "%s %s;\n",
-	   $cluster-rep.representation-c-type, temp);
-    format(output-info.output-info-guts-stream, "%s = sp;\nsp = %s;\n",
-	   temp, call);
-    if (instance?(results.var-info, <values-cluster-info>))
-      deliver-single-result(results, temp, $cluster-rep, output-info, #f);
-    else
-      deliver-cluster(results, #f, temp, func.result-type, output-info);
-    end;
+    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
+    deliver-cluster(results, #f, sp, new-sp, func.result-type, output-info);
   else
     let rep = variable-representation(func.depends-on.source-exp, output-info);
     deliver-results(results, vector(pair(call, rep)), output-info);
@@ -872,6 +916,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <catcher>,
 			       output-info :: <output-info>)
     => ();
+  deliver-cluster(defines, #f, "caught_args", "caught_sp",
+		  region.catcher.derived-type, output-info);
 end;
 
 define method emit-assignment
@@ -925,12 +971,17 @@ end;
 
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
-     last-gets-rest? :: <boolean>, name :: <string>,
+     last-gets-rest? :: <boolean>, src-start :: <string>, src-end :: <string>,
      type :: <values-ctype>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
   if (instance?(defines.var-info, <values-cluster-info>))
-    deliver-single-result(defines, name, $cluster-rep, output-info, #f);
+    let (dst-start, dst-end) = produce-cluster(defines, output-info);
+    unless (src-start = dst-start)
+      format(stream, "%s = %s;\n", dst-end, dst-start);
+      format(stream, "while (%s < %s) {\n", src-start, src-end);
+      format(stream, "    *%s++ = *%s++;\n", dst-end, src-start);
+    end;
   else
     let count = for (var = defines then var.definer-next,
 		     index from 0,
@@ -965,14 +1016,11 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
   let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
-    let name = c-name-and-rep(defines, output-info);
-    format(stream, "%s = sp;\n", name);
-    unless (empty?(values))
-      format(stream, "sp += %d;\n", values.size);
-      for (val in values, index from 0)
-	emit-copy(format-to-string("%s[%d]", name, index), $general-rep,
-		  val.head, val.tail, output-info);
-      end;
+    let (bottom-name, top-name) = produce-cluster(defines, output-info);
+    format(stream, "%s = %s + %d;\n", top-name, bottom-name, values.size);
+    for (val in values, index from 0)
+      emit-copy(format-to-string("%s[%d]", bottom-name, index), $general-rep,
+		val.head, val.tail, output-info);
     end;
   else
     for (var = defines then var.definer-next,
@@ -1068,8 +1116,9 @@ define-primitive
 	   output-info :: <output-info>)
        => ();
      let cluster = operation.depends-on.source-exp;
-     deliver-cluster(defines, #t, ref-leaf($cluster-rep, cluster, output-info),
-		     cluster.derived-type, output-info);
+     let (bottom-name, top-name) = consume-cluster(cluster, output-info);
+     deliver-cluster(defines, #t, bottom-name, top-name, cluster.derived-type,
+		     output-info);
    end);
 
 define-primitive
@@ -1551,9 +1600,6 @@ define method emit-copy
      source :: <string>, source-rep :: <c-representation>,
      output-info :: <output-info>)
     => ();
-  if (source-rep == $cluster-rep)
-    error("Can't copy values clusters into regular variables.");
-  end;
   let stream = output-info.output-info-guts-stream;
   let heapptr = conversion-expr($heap-rep, source, source-rep, output-info);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
@@ -1578,8 +1624,6 @@ define method conversion-expr
     => res :: <string>;
   if (target-rep == source-rep)
     source;
-  elseif (source-rep == $cluster-rep)
-    error("Can't reference values clusters as regular values.");
   else
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "%s %s;\n",
