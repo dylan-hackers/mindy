@@ -33,12 +33,6 @@ synopsis: A regression test for core Dylan.
 // from the DIRM examples.
 //
 
-define module dylan-test
-  use Dylan;
-  use Extensions;
-  use Cheap-IO;
-end;
-
 define constant buggy? = #f;		// not bugs, features!
 
 define constant tautologies =
@@ -107,9 +101,17 @@ define method tautology(arg == #"numbers")
   odd?(1)				| signal("1 is not odd!\n");
   even?(2)				| signal("2 is not even!\n");
   zero?(0)				| signal("0 is not zero!\n");
+#if (mindy)
   positive?(+1)				| signal("+1 is not positive!\n");
+#else
+  positive?(1)				| signal("+1 is not positive!\n");
+#endif
   negative?(-1)				| signal("-1 is not negative!\n");
+#if (mindy)
   integral?(+1)				| signal("+1 is not integral!\n");
+#else
+  integral?(1)				| signal("+1 is not integral!\n");
+#endif
   integral?(0)				| signal("0 is not integral!\n");
   integral?(-1) 			| signal("-1 is not integral!\n");
   (1 + 1 = 2)				| signal("1 + 1 is not 2!\n");
@@ -117,10 +119,10 @@ define method tautology(arg == #"numbers")
   (1 - 1 = 0)				| signal("1 - 1 is not 0!\n");
   (4.0 / 2.0 = 2.0)			| signal("4 / 2 is not 2!\n");
   (negative(1) = -1)			| signal("negative(1) is not -1!\n");
-  (floor(3.14) = 3)			| signal("floor(3.14) is not 3\n");
-  (ceiling(3.14) = 4)			| signal("ceiling(3.14) is not 4!\n");
-  (round(3.14) = 3)			| signal("round(3.14) is not 3!\n");
-  (truncate(3.14) = 3)			| signal("truncate(3.14) is not 3!\n");
+  (floor(3.14) = 3)			| signal("floor(3.14) is not 3 but %=\n", floor(3.14));
+  (ceiling(3.14) = 4)			| signal("ceiling(3.14) is not 4 but %=\n", ceiling(3.14));
+  (round(3.14) = 3)			| signal("round(3.14) is not 3 but %=!\n", round(3.14));
+  (truncate(3.14) = 3)			| signal("truncate(3.14) is not 3 but %=!\n", truncate(3.14));
   //floor/
   //ceiling/
   //round/
@@ -170,7 +172,9 @@ end method;
 define method tautology(arg == #"symbols")
   instance?(#"foo", <symbol>)		| signal("instance?(#\"foo\", <symbol>) is false!\n");
   instance?(#"foo", <symbol>)		| signal("instance?(foo:, <symbol>) is false!\n");
+#if (mindy)
   (#"foo" = #"FOO")			| signal("#\"foo\" is not FOO:!\n");
+#endif
   (as(<symbol>, "FOO") = #"foo")	| signal("as(<symbol>, \"FOO\") is not foo:!\n");
   (as(<string>, #"Foo") = "foo")	| signal("as(<string>, Foo:) is not \"foo\"! It's %=\n",
 						 as(<string>, Foo:));
@@ -440,6 +444,7 @@ end method;
 define method tautology(arg == #"ranges")
   let a = make(<range>, from: 0, to: 10);
   let b = make(<range>, from: 5, to: 15);
+//  format("\na is %=\nb is %=\n", a.object-class, b.object-class);
   (first(a) = 0)	| signal("first(a) is not 0! It's %=\n", first(a));
   (first(b) = 5)	| signal("first(b) is not 5! It's %=\n", first(b));
   (last(a) = 10)	| signal("last(a) is not 10! It's %=\n", last(a));
@@ -449,12 +454,14 @@ define method tautology(arg == #"ranges")
   member?(3, b)		& signal("member?(3, b) is not false!\n");
   member?(12, b)	| signal("member?(12, b) is not true!\n");
   (size(a) = 11)	| signal("size(a) is not 11!  It's %=\n", size(a));
+//  format("checkpoint 1\n");
   (size(b) = 11)	| signal("size(b) is not 11!  It's %=\n", size(b));
   let c = intersection(a, b);
   (first(c) = 5)	| signal("first(c) is not 5!  It's %=\n", first(c));
   (last(c) = 10)	| signal("last(c) is not 10!  It's %=\n", last(c));
   member?(7, c)		| signal("member?(7, c) is not true!\n");
   member?(12, c)	& signal("member?(12, c) is not false!\n");
+//  format("checkpoint 2\n");
   (size(c) = 6)		| signal("size(c) is not 6!  It's %=\n", size(c));
   let d = reverse(c);
   (first(d) = 10)	| signal("first(d) is not 10!  It's %=\n", first(d));
@@ -510,19 +517,29 @@ define method tautology(arg :: <sequence>) => <integer>;
   warnings + fatals;
 end method;
 
-define method main(argv0 :: <byte-string>, #rest args)
+define method main(argv0, #rest args)
   if (empty?(args))
+#if (mindy)
     exit(exit-code: tautology(tautologies));
+#else
+    tautology(tautologies);
+#endif
   else
     let args = map(curry(as, <symbol>), args);
     if (every?(rcurry(member?, tautologies), args))
+#if (mindy)
       exit(exit-code: tautology(args));
+#else
+      tautology(args);
+#endif
     else
       format("usage: tautologies [package ...]\n");
       for (arg in tautologies)
 	format("\t%s\n", as(<string>, arg));
       end for;
+#if (mindy)
       exit(exit-code: -1);
+#endif
     end if;
   end if;
 end method;
