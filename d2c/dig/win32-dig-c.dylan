@@ -10,7 +10,7 @@ define method ignore-interrupts
 end method ignore-interrupts;
 
 #else
-c-include("c:/ram/dylan/src/d2c/dig/win32-dig-support.h");
+c-include("c:/fulgham/projects/gd/src/d2c/dig/win32-dig-support.h");
 
 define method ignore-interrupts
     ()

@@ -2,7 +2,17 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../../common/common-dylan '
     . '-L../../../common/getopt '
     . '-L../../../common/io '
-    . '-L../../../common/base-file-system ';
+    . '-L../../../common/base-file-system '
+    . '-L../../../common/collection-extensions '
+    . '-L../../../common/format '
+    . '-L../../../common/format-out '
+    . '-L../../../common/regular-expressions '
+    . '-L../../../common/standard-io '
+    . '-L../../../common/streams '
+    . '-L../../../common/string-ext '
+    . '-L../../../common/print '
+    . '-L../../../common/table-ext '
+    . '-L../../../common/transcendental ';
 
 &emit_library_rule('parser-utilities', '$(BUILDROOT)/force.timestamp', '', 
                    'compile', 'install');
