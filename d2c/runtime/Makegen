@@ -10,6 +10,7 @@ do compile_subdirs(
     'coll-ext',
     'table-ext',
     'string-ext',
+    'format-out',
 );
 
 do install('include', 'runtime.h');
