@@ -8,10 +8,10 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 // exponential distributions has been adapted from David Pierce's
 // library.
 
-define library new-Random
+define library Random
   use dylan;
-  export new-random;
-end library new-Random;
+  export random;
+end library Random;
 
 define module new-Random
   use dylan;
@@ -20,7 +20,7 @@ define module new-Random
   export
     random, <random-state>, *random-state*, random-bits,
     random-float, random-gaussian, random-exponential;
-end module new-Random;
+end module Random;
 
 // Random state hackery:
 //
