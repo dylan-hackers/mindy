@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.5 1994/04/22 17:29:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.6 1994/05/31 18:10:32 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -260,7 +260,7 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     *origin = '\0';
 
     if (old_entry)
-	error("~A clashes with ~A", entry->origin, old_entry->origin);
+	error("%s clashes with %s", entry->origin, old_entry->origin);
 
     table_add(table, name, entry);
 }
@@ -354,7 +354,7 @@ struct library *find_library(obj_t name, boolean createp)
 	use2->next = NULL;
 
 	make_entry(library->modules, module->name, module, FALSE,
-		   "module ~S implicitly defined in library ~S",
+		   "module %= implicitly defined in library %=",
 		   module->name, library->name);
     }
 
@@ -366,7 +366,7 @@ void define_library(struct defn *defn)
     struct library *library = find_library(defn->name, TRUE);
 
     if (library->defn)
-	error("Library ~S multiply defined.\n", defn->name);
+	error("Library %= multiply defined.\n", defn->name);
 
     library->defn = defn;
 }
@@ -380,20 +380,20 @@ static void complete_library(struct library *library)
     defn = library->defn;
     if (defn == NULL) {
 	if (library->loading)
-	    error("needed the definition of library ~S before the "
+	    error("needed the definition of library %= before the "
 		  "define library was found",
 		  library->name);
 	library->loading = TRUE;
 	load_library(library->name);
 	if (library->defn == NULL)
-	    error("loaded library ~S, but never found the define library.\n",
+	    error("loaded library %=, but never found the define library.\n",
 		  library->name);
 	library->loading = FALSE;
 	return;
     }
 
     if (library->busy)
-	error("Library ~S circularly defined.\n", library->name);
+	error("Library %= circularly defined.\n", library->name);
     library->busy = TRUE;
 
     for (ptr = defn->exports; ptr != obj_Nil; ptr = TAIL(ptr)) {
@@ -401,7 +401,7 @@ static void complete_library(struct library *library)
 	struct module *module = make_module(name, library);
 
 	make_entry(library->modules, name, module, TRUE,
-		   "module ~S defined in library ~S",
+		   "module %= defined in library %=",
 		   name, library->name);
     }
 
@@ -428,8 +428,8 @@ static void complete_library(struct library *library)
 			make_entry(library->modules, local_name, entry->datum,
 				   exported(local_name, use),
 				   name == local_name
-				   ? "module ~S imported from library ~S"
-				   :"module ~S imported from library ~S as ~S",
+				   ? "module %= imported from library %="
+				   :"module %= imported from library %= as %=",
 				   name, use_name, local_name);
 			imports = pair(local_name, imports);
 		    }
@@ -443,14 +443,14 @@ static void complete_library(struct library *library)
 		struct entry *entry
 		    = table_lookup(used_library->modules, name);
 		if (!entry || !entry->exported)
-		    error("library ~S can't import module ~S from library ~S "
+		    error("library %= can't import module %= from library %= "
 			  "because it isn't exported.\n",
 			  library->name, name, use_name);
 		make_entry(library->modules, local_name, entry->datum,
 			   exported(local_name, use),
 			   name == local_name
-			    ? "module ~S imported from library ~S"
-			    : "module ~S imported from library ~S as ~S",
+			    ? "module %= imported from library %="
+			    : "module %= imported from library %= as %=",
 			   name, use_name, local_name);
 		imports = pair(local_name, imports);
 	    }
@@ -461,14 +461,14 @@ static void complete_library(struct library *library)
 		struct entry *entry
 		    = table_lookup(used_library->modules, name);
 		if (!entry || !entry->exported)
-		    error("library ~S can't import module ~S from library ~S"
+		    error("library %= can't import module %= from library %="
 			  "because it isn't exported.\n",
 			  library->name, name, use_name);
 		make_entry(library->modules, local_name, entry->datum,
 			   exported(local_name, use),
 			   name == local_name
-			    ? "module ~S imported from library ~S"
-			    : "module ~S imported from library ~S as ~S",
+			    ? "module %= imported from library %="
+			    : "module %= imported from library %= as %=",
 			   name, use_name, local_name);
 		imports = pair(local_name, imports);
 	    }
@@ -476,7 +476,7 @@ static void complete_library(struct library *library)
 	if (use->export != obj_True)
 	    for (ptr = use->export; ptr != obj_Nil; ptr = TAIL(ptr))
 		if (!memq(HEAD(ptr), imports))
-		    error("library ~S can't re-export module ~S because it "
+		    error("library %= can't re-export module %= because it "
 			  "doesn't import it in the first place",
 			  library->name, HEAD(ptr));
     }
@@ -517,18 +517,18 @@ struct module *find_module(struct library *library, obj_t name,
 	if (!library->completed) {
 	    complete_library(library);
 	    if ((entry = table_lookup(library->modules, name)) == NULL)
-		error("Unknown module ~S in library ~S",
+		error("Unknown module %= in library %=",
 		      name, library->name);
 	}
 	else
-	    error("Unknown module ~S in library ~S", name, library->name);
+	    error("Unknown module %= in library %=", name, library->name);
     }
 
     module = entry->datum;
 
     if (lose_if_imported && module->home != library && module->home != NULL)
-	error("Can't add code to module ~S in library ~S because it "
-	      "is imported from library ~S",
+	error("Can't add code to module %= in library %= because it "
+	      "is imported from library %=",
 	      module->name,
 	      library->name,
 	      module->home->name);
@@ -549,18 +549,18 @@ void define_module(struct library *library, struct defn *defn)
     if (entry == NULL) {
 	module = make_module(defn->name, library);
 	make_entry(library->modules, defn->name, module, FALSE,
-		   "module ~S internal to library ~S",
+		   "module %= internal to library %=",
 		   defn->name, library->name);
     }
     else {
 	module = entry->datum;
 
 	if (module->home != library)
-	    error("Can't define ~A in library ~S.\n",
+	    error("Can't define %s in library %=.\n",
 		  entry->origin, library->name);
 
 	if (module->defn)
-	    error("Module ~S multiply defined.\n", defn->name);
+	    error("Module %= multiply defined.\n", defn->name);
     }
 
     module->defn = defn;
@@ -587,8 +587,8 @@ static void
 
     make_entry(module->variables, name, var, TRUE,
 	       created
-	       ? "variable ~S created in module ~S"
-	       : "variable ~S defined in module ~S",
+	       ? "variable %= created in module %="
+	       : "variable %= defined in module %=",
 	       name, module->name);
 
     var->created = created;
@@ -601,12 +601,12 @@ static void complete_module(struct module *module)
     struct use *use;
 
     if (module->busy)
-	error("Module ~S circularly defined.", module->name);
+	error("Module %= circularly defined.", module->name);
     module->busy = TRUE;
 
     defn = module->defn;
     if (defn == NULL)
-	error("Attempt to use module ~S before it is defined.", module->name);
+	error("Attempt to use module %= before it is defined.", module->name);
 
     for (ptr = defn->exports; ptr != obj_Nil; ptr = TAIL(ptr))
 	make_and_export_var(module, HEAD(ptr), FALSE);
@@ -637,9 +637,9 @@ static void complete_module(struct module *module)
 			make_entry(module->variables, local_name, entry->datum,
 				   exported(local_name, use),
 				   name == local_name
-				   ? "variable ~S imported from module ~S"
-				   : "variable ~S imported from "
-				     "module ~S as ~S",
+				   ? "variable %= imported from module %="
+				   : "variable %= imported from "
+				     "module %= as %=",
 				   name, use_name, local_name);
 			imports = pair(local_name, imports);
 		    }
@@ -653,14 +653,14 @@ static void complete_module(struct module *module)
 		struct entry *entry
 		    = table_lookup(used_module->variables, name);
 		if (!entry || !entry->exported)
-		    error("module ~S can't import variable ~S from module ~S "
+		    error("module %= can't import variable %= from module %= "
 			  "because it isn't exported.",
 			  module->name, name, use_name);
 		make_entry(module->variables, local_name, entry->datum,
 			   exported(local_name, use),
 			   name == local_name
-			    ? "variable ~S imported from module ~S"
-			    : "variable ~S imported from module ~S as ~S",
+			    ? "variable %= imported from module %="
+			    : "variable %= imported from module %= as %=",
 			   name, use_name, local_name);
 		imports = pair(local_name, imports);
 	    }
@@ -671,14 +671,14 @@ static void complete_module(struct module *module)
 		struct entry *entry
 		    = table_lookup(used_module->variables, name);
 		if (!entry || !entry->exported)
-		    error("module ~S can't import variable ~S from module ~S"
+		    error("module %= can't import variable %= from module %="
 			  "because it isn't exported.",
 			  module->name, name, use_name);
 		make_entry(module->variables, local_name, entry->datum,
 			   exported(local_name, use),
 			   name == local_name
-			    ? "variable ~S imported from module ~S"
-			    : "variable ~S imported from module ~S as ~S",
+			    ? "variable %= imported from module %="
+			    : "variable %= imported from module %= as %=",
 			   name, use_name, local_name);
 		imports = pair(local_name, imports);
 	    }
@@ -686,7 +686,7 @@ static void complete_module(struct module *module)
 	if (use->export != obj_True)
 	    for (ptr = use->export; ptr != obj_Nil; ptr = TAIL(ptr))
 		if (!memq(HEAD(ptr), imports))
-		    error("module ~S can't re-export variable ~S because it "
+		    error("module %= can't re-export variable %= because it "
 			  "doesn't import it in the first place",
 			  module->name, HEAD(ptr));
     }
@@ -736,7 +736,7 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
 	var = make_var(name, module,
 		       writeable ? var_AssumedWriteable : var_Assumed);
 	make_entry(module->variables, name, var, FALSE,
-		   "variable ~S internal to module ~S",
+		   "variable %= internal to module %=",
 		   name, module->name);
     }
     else {
@@ -750,7 +750,7 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
 	      case var_Variable:
 		break;
 	      default:
-		error("attempt to change constant ~S from module ~S.",
+		error("attempt to change constant %= from module %=.",
 		      name, module->name);
 	    }
 	}
@@ -782,12 +782,12 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 	if (kind == var_Variable)
 	    var->variable.kind = var_Variable;
 	else
-	    error("attempt to change constant ~S from module ~S.",
+	    error("attempt to change constant %= from module %=.",
 		  name, module->name);
 	break;
       case var_GenericFunction:
 	if (kind != var_Method)
-	    error("variable ~S in module ~S multiply defined.",
+	    error("variable %= in module %= multiply defined.",
 		  name, module->name);
 	break;
       case var_Method:
@@ -798,31 +798,31 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 	    var->variable.kind = var_GenericFunction;
 	    break;
 	  default:
-	    error("variable ~S in module ~S multiply defined.",
+	    error("variable %= in module %= multiply defined.",
 		  name, module->name);
 	}
 	break;
       default:
-	error("variable ~S in module ~S multiply defined.",
+	error("variable %= in module %= multiply defined.",
 	      name, module->name);
     }
 
     if (var->created) {
 	if (var->variable.home == module)
-	    error("variable ~S must be defined by a user of module ~S\n",
+	    error("variable %= must be defined by a user of module %=\n",
 		  name, module->name);
 	else if (kind!=var_Method && var->variable.home->home!=module->home)
 	    if (module->home)
-		error("variable ~S must be defined in library ~S, not ~S\n",
+		error("variable %= must be defined in library %=, not %=\n",
 		      name, var->variable.home->home->name,
 		      module->home->name);
 	    else
-		error("variable ~S must be defined in library ~S\n",
+		error("variable %= must be defined in library %=\n",
 		      name, var->variable.home->home->name);
     }
     else {
 	if (kind != var_Method && var->variable.home != module)
-	    error("variable ~S must be defined in module ~S, not ~S\n",
+	    error("variable %= must be defined in module %=, not %=\n",
 		  name, var->variable.home->name, module->name);
     }
 }
@@ -1009,7 +1009,7 @@ void init_modules(void)
 	
     module_BuiltinStuff = make_module(stuff, library_Dylan);
     make_entry(library_Dylan->modules, stuff, module_BuiltinStuff, FALSE,
-	       "module ~S internal to library ~S", stuff, dylan);
+	       "module %= internal to library %=", stuff, dylan);
 
     obj_Unbound = alloc(obj_UnboundClass, sizeof(struct object));
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.3 1994/04/28 04:47:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.4 1994/05/31 18:08:12 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -60,7 +60,7 @@ static obj_t dylan_buffer_element(obj_t buffer, obj_t index, obj_t def)
     else if (def != obj_Unbound)
 	return def;
     else {
-	error("No element ~S in ~S", index, buffer);
+	error("No element %= in %=", index, buffer);
 	return NULL;
     }
 }
@@ -72,7 +72,7 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
     if (0 <= i && i < obj_ptr(struct buffer *, buffer)->length)
 	buffer_data(buffer)[i] = fixnum_value(val);
     else
-	error("No element ~S in ~S", index, buffer);
+	error("No element %= in %=", index, buffer);
 
     return val;
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.15 1994/05/05 11:48:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.16 1994/05/31 18:09:29 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -393,7 +393,7 @@ static void push_value(struct thread *thread, int arg)
     if (value != obj_Unbound)
 	*thread->sp++ = value;
     else
-	error("Unbound variable: ~S", var->name);
+	error("Unbound variable: %=", var->name);
 }
 
 static void op_push_value_immed(int byte, struct thread *thread)
@@ -424,7 +424,7 @@ static void push_function(struct thread *thread, int arg)
 	    break;
 	}
 	else if (value == obj_Unbound)
-	    error("Unbound variable: ~S", var->name);
+	    error("Unbound variable: %=", var->name);
 	else {
 	    var->function = func_No;
 	    type_error(value, obj_FunctionClass);

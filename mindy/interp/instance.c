@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.10 1994/05/19 22:34:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.11 1994/05/31 18:09:26 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -608,51 +608,51 @@ static void add_slot(obj_t class, obj_t new_slot, boolean inherited)
 
 	if (new_getter == getter)
 	    if (inherited)
-		error("Can't inherit slot ~S from both ~S and ~S",
+		error("Can't inherit slot %= from both %= and %=",
 		      function_debug_name_or_self(getter), SD(slot)->creator,
 		      SD(new_slot)->creator);
 	    else
-		error("Slot ~S in ~S clashes with the slot inherited from ~S",
+		error("Slot %= in %= clashes with the slot inherited from %=",
 		      function_debug_name_or_self(getter), class,
 		      SD(slot)->creator);
 	if (new_getter == setter)
 	    if (inherited)
-		error("The getter for slot ~S inherited from ~S clashes with "
-		      "the setter for slot ~S inherited from ~S",
+		error("The getter for slot %= inherited from %= clashes with "
+		      "the setter for slot %= inherited from %=",
 		      function_debug_name_or_self(new_getter),
 		      SD(new_slot)->creator,
 		      function_debug_name_or_self(getter), SD(slot)->creator);
 	    else
-		error("The getter for slot ~S in ~S clashes with "
-		      "the setter for slot ~S inherited from ~S",
+		error("The getter for slot %= in %= clashes with "
+		      "the setter for slot %= inherited from %=",
 		      function_debug_name_or_self(new_getter), class,
 		      function_debug_name_or_self(getter), SD(slot)->creator);
 	if (new_setter != obj_False) {
 	    if (new_setter == getter)
 		if (inherited)
-		    error("The setter for slot ~S inherited from ~S clashes "
-			  "with the getter for slot ~S inherited from ~S",
+		    error("The setter for slot %= inherited from %= clashes "
+			  "with the getter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter),
 			  SD(new_slot)->creator,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
 		else
-		    error("The setter for slot ~S in ~S clashes "
-			  "with the getter for slot ~S inherited from ~S",
+		    error("The setter for slot %= in %= clashes "
+			  "with the getter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter), class,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
 	    if (new_setter == setter)
 		if (inherited)
-		    error("The setter for slot ~S inherited from ~S clashes "
-			  "with the setter for slot ~S inherited from ~S",
+		    error("The setter for slot %= inherited from %= clashes "
+			  "with the setter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter),
 			  SD(new_slot)->creator,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
 		else
-		    error("The setter for slot ~S in ~S clashes "
-			  "with the setter for slot ~S inherited from ~S",
+		    error("The setter for slot %= in %= clashes "
+			  "with the setter for slot %= inherited from %=",
 			  function_debug_name_or_self(new_getter), class,
 			  function_debug_name_or_self(getter),
 			  SD(slot)->creator);
@@ -875,7 +875,7 @@ void init_defined_class(obj_t class, obj_t slots)
 
 static obj_t dylan_make(obj_t class, obj_t key_and_value_pairs)
 {
-    error("Can't make instances of ~S with the default make method.",
+    error("Can't make instances of %= with the default make method.",
 	  class);
     return NULL;
 }
@@ -904,7 +904,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
 		}
 	    }
 	    if (SD(slot)->keyword_required && value == obj_Unbound)
-		error("Missing required init-keyword ~S", keyword);
+		error("Missing required init-keyword %=", keyword);
 	}
 	switch (SD(slot)->alloc) {
 	  case alloc_INSTANCE:
@@ -959,7 +959,7 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
     obj_t value = NULL;
 
     if (class != obj_DefinedClassClass)
-	error("~S doens't access a slot in ~S", getter, instance);
+	error("%= doens't access a slot in %=", getter, instance);
 
     for (scan = DC(class)->all_slots; scan != obj_Nil; scan = TAIL(scan)) {
 	slot = HEAD(scan);
@@ -993,7 +993,7 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 	}
     }
 
-    error("~S doens't access a slot in ~S", getter, instance);    
+    error("%= doens't access a slot in %=", getter, instance);    
     return NULL;
 }
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.3 1994/04/09 13:35:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.4 1994/05/31 18:09:19 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -93,7 +93,7 @@ void type_error(obj_t value, obj_t type)
 	go_on();
     }
     else
-	error("~S is not an instance of type ~S", value, type);
+	error("%= is not an instance of type %=", value, type);
 }
 
 void check_type(obj_t thing, obj_t type)

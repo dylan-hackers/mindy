@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.3 1994/04/09 13:35:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.4 1994/05/31 18:09:05 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -56,7 +56,7 @@ static obj_t int_as_char(obj_t class, obj_t i)
     if (0 <= c && c < 256)
 	return int_char(c);
     else {
-	error("Can't make a character out of ~S", i);
+	error("Can't make a character out of %=", i);
 	return NULL;
     }
 }

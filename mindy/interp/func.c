@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.24 1994/05/31 17:17:51 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.25 1994/05/31 18:09:21 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -175,7 +175,7 @@ void invoke(struct thread *thread, int nargs)
 
     if (nargs < required) {
 	push_linkage(thread, thread->sp - nargs);
-	error("Too few arguments for ~S: expected ~S, got ~S",
+	error("Too few arguments for %=: expected %d, got %d",
 	      function_debug_name_or_self(function),
 	      make_fixnum(required),
 	      make_fixnum(nargs));
@@ -184,7 +184,7 @@ void invoke(struct thread *thread, int nargs)
     if (!FUNC(function)->restp && FUNC(function)->keywords == obj_False
 	  && nargs > required) {
 	push_linkage(thread, thread->sp - nargs);
-	error("Too many arguments for ~S: expected ~S, got ~S",
+	error("Too many arguments for %=: expected %d, got %d",
 	      function_debug_name_or_self(function),
 	      make_fixnum(required),
 	      make_fixnum(nargs));
@@ -351,7 +351,7 @@ void invoke_methods(obj_t method, obj_t next_methods,
 {
     if (method == obj_False) {
 	push_linkage(thread, thread->sp - nargs);
-	error("It is ambiguous which of these methods to invoke:~%  ~S",
+	error("It is ambiguous which of these methods to invoke:\n  %=",
 	      next_methods);
     }
     else
@@ -478,7 +478,7 @@ static void method_xep(struct thread *thread, int nargs)
 	    while (ptr < thread->sp) {
 		if (!method_accepts_keyword(method, *ptr)) {
 		    push_linkage(thread, args);
-		    error("Method ~S does not accept the keyword ~S",
+		    error("Method %= does not accept the keyword %=",
 			  function_debug_name_or_self(method), *ptr);
 		}
 		ptr += 2;
@@ -488,7 +488,7 @@ static void method_xep(struct thread *thread, int nargs)
     }
     else {
 	push_linkage(thread, args);
-	error("Method ~S is not applicable when given the arguments ~S",
+	error("Method %= is not applicable when given the arguments %=",
 	      function_debug_name_or_self(method),
 	      make_vector(nargs, args));
     }
@@ -1165,8 +1165,8 @@ static void gf_xep(struct thread *thread, int nargs)
 	    while (ptr < thread->sp) {
 		if (!methods_accept_keyword(methods, *ptr)) {
 		    push_linkage(thread, args);
-		    error("The keyword ~S is accepted by none of the "
-			  "applicable methods:~%  ~S",
+		    error("The keyword %= is accepted by none of the "
+			  "applicable methods:\n  %=",
 			  *ptr, methods);
 		}
 		ptr += 2;
@@ -1178,7 +1178,7 @@ static void gf_xep(struct thread *thread, int nargs)
     }
     else {
 	push_linkage(thread, args);
-	error("No applicable methods for ~S with arguments ~S",
+	error("No applicable methods for %= with arguments %=",
 	      function_debug_name_or_self(gf),
 	      make_vector(nargs, args));
     }
@@ -1270,8 +1270,8 @@ obj_t add_method(obj_t gf, obj_t method)
     int i;
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
-	error("The method ~S has ~S required arguments, but the generic "
-	      "function ~S has ~S",
+	error("The method %= has %d required arguments, but the generic "
+	      "function %= has %=",
 	      function_debug_name_or_self(method),
 	      make_fixnum(METHOD(method)->required_args),
 	      function_debug_name_or_self(gf),
@@ -1284,8 +1284,8 @@ obj_t add_method(obj_t gf, obj_t method)
 	if (!restp) {
 	    obj_t methkeys = METHOD(method)->keywords;
 	    if (methkeys == obj_False)
-		error("The generic function ~S allows keyword arguments, "
-		      "but the method ~S does not.",
+		error("The generic function %= allows keyword arguments, "
+		      "but the method %= does not.",
 		      function_debug_name_or_self(gf),
 		      function_debug_name_or_self(method));
 	    while (gfkeys != obj_Nil) {
@@ -1295,8 +1295,8 @@ obj_t add_method(obj_t gf, obj_t method)
 		for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
 		    if (HEAD(HEAD(scan)) == gfkey)
 			goto okay;
-		error("The generic function ~S accepts the keyword ~S, "
-		      "but the method ~S does not.",
+		error("The generic function %= accepts the keyword %=, "
+		      "but the method %= does not.",
 		      function_debug_name_or_self(gf),
 		      gfkey,
 		      function_debug_name_or_self(method));
@@ -1309,14 +1309,14 @@ obj_t add_method(obj_t gf, obj_t method)
 	/* The generic function has a #rest argument. */
 	if (!METHOD(method)->restp && METHOD(method)->keywords == obj_False)
 	    /* But the method does not. */
-	    error("Generic function ~S allows a variable number of arguments, "
-		  "but method ~S does not.",
+	    error("Generic function %= allows a variable number of arguments, "
+		  "but method %= does not.",
 		  function_debug_name_or_self(gf),
 		  function_debug_name_or_self(method));
     }
     else if (METHOD(method)->restp || METHOD(method)->keywords != obj_False)
-	error("Method ~S allows a variable number of arguments, but generic "
-	      "function ~S does not.",
+	error("Method %= allows a variable number of arguments, but generic "
+	      "function %= does not.",
 	      function_debug_name_or_self(method),
 	      function_debug_name_or_self(gf));
 
@@ -1328,8 +1328,8 @@ obj_t add_method(obj_t gf, obj_t method)
 	obj_t methtype = HEAD(methscan);
 
 	if (!subtypep(methtype, gftype))
-	    error("Result ~S is an instance of ~S for generic function ~S, "
-		  "but is an instance of ~S for method ~S",
+	    error("Result %= is an instance of %= for generic function %=, "
+		  "but is an instance of %= for method %=",
 		  make_fixnum(i),
 		  gftype,
 		  function_debug_name_or_self(gf),
@@ -1348,15 +1348,15 @@ obj_t add_method(obj_t gf, obj_t method)
 	    gfscan = TAIL(gfscan);
 	}
 	if (GF(gf)->more_results_type != obj_False)
-	    error("Generic function ~S returns at least ~S results, but "
-		  "method ~S only returns ~S",
+	    error("Generic function %= returns at least %d results, but "
+		  "method %= only returns %d",
 		  function_debug_name_or_self(gf),
 		  make_fixnum(gf_returns),
 		  function_debug_name_or_self(method),
 		  make_fixnum(i));
 	else
-	    error("Generic function ~S returns exactly ~S results, but "
-		  "method ~S only returns ~S",
+	    error("Generic function %= returns exactly %d results, but "
+		  "method %= only returns %d",
 		  function_debug_name_or_self(gf),
 		  make_fixnum(gf_returns),
 		  function_debug_name_or_self(method),
@@ -1372,15 +1372,15 @@ obj_t add_method(obj_t gf, obj_t method)
 		meth_returns++;
 	    }
 	    if (METHOD(method)->more_results_type != obj_False)
-		error("Generic function ~S returns exactly ~S results, but "
-		      "method ~S returns at least ~S",
+		error("Generic function %= returns exactly %d results, but "
+		      "method %= returns at least %d",
 		      function_debug_name_or_self(gf),
 		      make_fixnum(i),
 		      function_debug_name_or_self(method),
 		      make_fixnum(meth_returns));
 	    else
-		error("Generic function ~S returns exactly ~S results, but "
-		      "method ~S returns ~S",
+		error("Generic function %= returns exactly %d results, but "
+		      "method %= returns %d",
 		      function_debug_name_or_self(gf),
 		      make_fixnum(i),
 		      function_debug_name_or_self(method),
@@ -1390,8 +1390,8 @@ obj_t add_method(obj_t gf, obj_t method)
 	    obj_t methtype = HEAD(methscan);
 
 	    if (!subtypep(methtype, gftype))
-		error("Result ~S is an instance of ~S for generic function "
-		      "~S, but is an instance of ~S for method ~S",
+		error("Result %d is an instance of %= for generic function "
+		      "%=, but is an instance of %= for method %=",
 		      make_fixnum(i),
 		      gftype,
 		      function_debug_name_or_self(gf),
@@ -1407,8 +1407,8 @@ obj_t add_method(obj_t gf, obj_t method)
 	if (GF(gf)->more_results_type != obj_False) {
 	    if (!subtypep(METHOD(method)->more_results_type,
 			  GF(gf)->more_results_type))
-		error("Results ~S and on are instances of ~S for generic "
-		      "function ~S, but are instances of ~S for method ~S",
+		error("Results %d and on are instances of %= for generic "
+		      "function %=, but are instances of %= for method %=",
 		      make_fixnum(i),
 		      GF(gf)->more_results_type,
 		      function_debug_name_or_self(gf),
@@ -1416,8 +1416,8 @@ obj_t add_method(obj_t gf, obj_t method)
 		      function_debug_name_or_self(method));
 	}
 	else
-	    error("Generic function ~S returns exactly ~S results, but "
-		  "method ~S returns ~S or more",
+	    error("Generic function %= returns exactly %d results, but "
+		  "method %= returns %d or more",
 		  function_debug_name_or_self(gf),
 		  make_fixnum(i),
 		  function_debug_name_or_self(method),
@@ -1539,7 +1539,7 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
 	}
 	prev = &TAIL(scan);
     }
-    error("~S isn't one of the methods in ~S", method, gf);
+    error("%= isn't one of the methods in %=", method, gf);
     return NULL;
 }
 

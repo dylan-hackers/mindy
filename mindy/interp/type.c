@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.13 1994/05/31 17:13:16 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.14 1994/05/31 18:11:10 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -201,7 +201,7 @@ static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
     obj_t remaining;
 
     if (cpl == obj_False)
-	error("Attempt to use ~S before it was initialized.", class1);
+	error("Attempt to use %= before it was initialized.", class1);
 
     for (remaining = cpl; remaining != obj_Nil; remaining = TAIL(remaining))
 	if (HEAD(remaining) == class2) {

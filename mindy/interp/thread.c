@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.12 1994/04/30 14:57:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.13 1994/05/31 18:11:09 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -481,7 +481,7 @@ void lock_release(obj_t lock)
 static obj_t dylan_lock_release(obj_t lock)
 {
     if (!LOCK(lock)->locked)
-	error("~S is already unlocked.", lock);
+	error("%= is already unlocked.", lock);
 
     lock_release(lock);
 
@@ -550,7 +550,7 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
 		void (*advance)(struct thread *thread))
 {
     if (lock != obj_False && !LOCK(lock)->locked)
-	error("~S is already unlocked.", lock);
+	error("%= is already unlocked.", lock);
 
     suspend_thread(thread);
     *EVENT(event)->last = thread;

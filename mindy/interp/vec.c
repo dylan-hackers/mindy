@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.4 1994/04/28 04:47:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.5 1994/05/31 18:11:17 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -75,7 +75,7 @@ static obj_t dylan_sovec_element(obj_t sovec, obj_t index, obj_t def)
     else if (def != obj_Unbound)
 	return def;
     else {
-	error("No element ~S in ~S", index, sovec);
+	error("No element %= in %=", index, sovec);
 	return NULL;
     }
 }
@@ -87,7 +87,7 @@ static obj_t dylan_sovec_element_setter(obj_t value, obj_t sovec, obj_t index)
     if (0 <= i && i < SOVEC(sovec)->length)
 	SOVEC(sovec)->contents[i] = value;
     else
-	error("No element ~S in ~S", index, sovec);
+	error("No element %= in %=", index, sovec);
 
     return value;
 }
@@ -104,7 +104,7 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
     obj_t *ptr;
 
     if (!instancep(size, obj_IntegerClass))
-	error("Bogus size: for make ~S: ~S", class, size);
+	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
     res = make_vector(len, NULL);
@@ -143,7 +143,7 @@ static obj_t dylan_bytevec_element(obj_t bytevec, obj_t index, obj_t def)
     else if (def != obj_Unbound)
 	return def;
     else {
-	error("No element ~S in ~S", index, bytevec);
+	error("No element %= in %=", index, bytevec);
 	return NULL;
     }
 }
@@ -156,7 +156,7 @@ static obj_t dylan_bytevec_element_setter(obj_t value, obj_t bytevec,
     if (0 <= i && i < BYTEVEC(bytevec)->length)
 	BYTEVEC(bytevec)->contents[i] = fixnum_value(value);
     else
-	error("No element ~S in ~S", index, bytevec);
+	error("No element %= in %=", index, bytevec);
 
     return value;
 }
@@ -172,12 +172,12 @@ static obj_t dylan_byte_vec_make(obj_t class, obj_t size, obj_t fill)
     int len;
 
     if (!obj_is_fixnum(size) || fixnum_value(size) < 0)
-	error("Bogus size: for make ~S: ~S", class, size);
+	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
     if (!obj_is_fixnum(fill) || fixnum_value(fill) < 0
 	  || fixnum_value(fill) > 255)
-	error("Bogus fill: for make ~S: ~S", class, fill);
+	error("Bogus fill: for make %=: %=", class, fill);
 
     res = make_byte_vector(len, NULL);
 

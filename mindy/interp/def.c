@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.6 1994/04/29 06:46:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.7 1994/05/31 18:09:16 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -155,7 +155,7 @@ static obj_t defmethod(obj_t var_obj, obj_t method)
     old = add_method(gf, method);
 
     if (old != obj_False)
-	error("Definition of ~S clashes with ~S", method, old);
+	error("Definition of %= clashes with %=", method, old);
 
     return var->name;
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.4 1994/04/10 19:02:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.5 1994/05/31 18:09:13 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -244,7 +244,7 @@ void setup_class_supers(obj_t class, obj_t supers)
 	obj_t super = HEAD(scan);
 	if (CLASS(super)->sealed_p
 	      && CLASS(super)->library != CLASS(class)->library)
-	    error("Can't add subclasses to sealed class ~S", super);
+	    error("Can't add subclasses to sealed class %=", super);
     }
 
     CLASS(class)->superclasses = supers;

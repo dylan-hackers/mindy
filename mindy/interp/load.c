@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.11 1994/04/28 19:24:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.12 1994/05/31 18:10:20 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -101,11 +101,11 @@ static int safe_read(struct load_info *info, void *ptr, int bytes)
     int count = read(info->fd, ptr, bytes);
 
     if (count < 0)
-	error("error loading ~A: ~A",
+	error("error loading %s: %s",
 	      make_string(info->name),
 	      make_string(strerror(errno)));
     if (count == 0)
-	error("premature EOF loading ~A", make_string(info->name));
+	error("premature EOF loading %s", make_string(info->name));
 
     return count;
 }
@@ -240,7 +240,7 @@ static void check_size(struct load_info *info, int desired, char *what)
     int bytes = read_byte(info);
 
     if (bytes != desired)
-	error("Wrong sized ~A in ~A: should be ~S but is ~S",
+	error("Wrong sized %s in %s: should be %= but is %=",
 	      make_string(what), make_string(info->name),
 	      make_fixnum(desired), make_fixnum(bytes));
 }
@@ -255,11 +255,11 @@ static obj_t fop_header(struct load_info *info)
     minor_version = read_byte(info);
 
     if (major_version < file_MajorVersion)
-	error("Obsolete .dbc file: ~A", make_string(info->name));
+	error("Obsolete .dbc file: %s", make_string(info->name));
     if (major_version > file_MajorVersion)
-	error("Obsolete version of Mindy for ~A", make_string(info->name));
+	error("Obsolete version of Mindy for %s", make_string(info->name));
     if (minor_version < file_MinorVersion)
-	error("Obsolete .dbc file: ~A", make_string(info->name));
+	error("Obsolete .dbc file: %s", make_string(info->name));
 
     check_size(info, sizeof(short), "short");
     check_size(info, sizeof(int), "int");
@@ -274,7 +274,7 @@ static obj_t fop_header(struct load_info *info)
     magic = read_int(info);
 
     if (magic != dbc_MagicNumber)
-	error("Invalid .dbc file: ~A", make_string(info->name));
+	error("Invalid .dbc file: %s", make_string(info->name));
 	
     return obj_False;
 }
@@ -896,7 +896,7 @@ static void skip_header(struct load_info *info)
 	    ;
 
     if (c != fop_HEADER)
-	error("Invalid .dbc file: ~A", make_string(info->name));
+	error("Invalid .dbc file: %s", make_string(info->name));
 
     unread_byte(info);
 }
@@ -946,7 +946,7 @@ void load(char *name)
     struct load_info *info;
 
     if (fd < 0)
-	error("Error loading ~A: ~A\n",
+	error("Error loading %s: %s\n",
 	      make_string(name),
 	      make_string(strerror(errno)));
 
@@ -957,7 +957,7 @@ void load(char *name)
 	if (info->ptr == info->end) {
 	    int count = read(fd, info->buffer, BUFFER_SIZE);
 	    if (count < 0)
-		error("error loading ~A: ~A",
+		error("error loading %s: %s",
 		      make_string(name),
 		      make_string(strerror(errno)));
 	    if (count == 0)
@@ -1009,7 +1009,7 @@ void load_library(obj_t name)
 	ptr++;
     } while (c != '\0');
 
-    error("Can't find library ~S", name);
+    error("Can't find library %=", name);
 }
 
 

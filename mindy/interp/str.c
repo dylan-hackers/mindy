@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.3 1994/04/09 13:36:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.4 1994/05/31 18:11:07 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -70,7 +70,7 @@ static obj_t dylan_str_element(obj_t str, obj_t index, obj_t def)
     else if (def != obj_Unbound)
 	return def;
     else {
-	error("No element ~S in ~S", index, str);
+	error("No element %= in %=", index, str);
 	return NULL;
     }
 }
@@ -82,7 +82,7 @@ static obj_t dylan_str_element_setter(obj_t value, obj_t str, obj_t index)
     if (0 <= i && i < obj_ptr(struct string *, str)->len)
 	string_chars(str)[i] = char_int(value);
     else
-	error("No element ~S in ~S", index, str);
+	error("No element %= in %=", index, str);
 
     return value;
 }
@@ -100,11 +100,11 @@ static obj_t dylan_str_make(obj_t class, obj_t size, obj_t fill)
     int fill_char;
 
     if (!instancep(size, obj_IntegerClass))
-	error("Bogus size: for make ~S: ~S", class, size);
+	error("Bogus size: for make %=: %=", class, size);
     len = fixnum_value(size);
 
     if (!instancep(fill, obj_CharacterClass))
-	error("Bogus fill: for make ~S: ~S", class, fill);
+	error("Bogus fill: for make %=: %=", class, fill);
     fill_char = char_int(fill);
 
     res = alloc_string(len);
@@ -127,7 +127,9 @@ static void print_string(obj_t str)
 
     putchar('"');
     while (len-- > 0) {
-	if (*ptr < ' ' || *ptr > '~')
+        if (*ptr == '\n')
+	    printf("\\n");
+	else if (*ptr < ' ' || *ptr > '~')
 	    printf("\\%03o", *ptr);
 	else if (*ptr == '"')
 	    printf("\\\"");

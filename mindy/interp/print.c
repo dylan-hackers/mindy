@@ -1,4 +1,4 @@
-/**********************************************************************\
+ /**********************************************************************\
 *
 *  Copyright (C) 1994, Carnegie Mellon University
 *  All rights reserved.
@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.2 1994/04/09 13:36:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.3 1994/05/31 18:11:05 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -32,6 +32,8 @@
 #include "def.h"
 #include "sym.h"
 #include "error.h"
+#include "num.h"
+#include "type.h"
 
 void def_printer(obj_t class, void (*print_fn)(obj_t object))
 {
@@ -104,19 +106,22 @@ int count_format_args(char *fmt)
     int args = 0;
 
     for (ptr = fmt; *ptr != '\0'; ptr++) {
-	if (*ptr == '~') {
+	if (*ptr == '%') {
 	    switch (*++ptr) {
+              case 'd':
+	      case 'b':
+	      case 'o':
+	      case 'x':
+	      case 'c':
 	      case 's':
-	      case 'S':
-	      case 'a':
-	      case 'A':
+	      case '=':
 		args++;
 		break;
 	      case '%':
-	      case '~':
 		break;
 	      default:
-		lose("Unknown format directive in error msg: %%%c", *ptr);
+		/* This may need to be a Dylan character, not a C character. */
+		error("Unknown format directive in error msg: %%%c", *ptr);
 	    }
 	}
     }
@@ -124,29 +129,77 @@ int count_format_args(char *fmt)
     return args;
 }
 
+/* Works only for numbers greater than 0. If zero, prints nothing. */
+
+void print_nonzero_in_binary(int number)
+{
+    if (number != 0) {
+	print_nonzero_in_binary(number >> 1);
+	fputc('0' + (number & 1), stdout);  /* Extract the low bit 
+                                               and convert to ASCII */
+    }
+}
+
+void print_number_in_binary(int number)
+{
+    if (number == 0)
+	fputc('0', stdout);
+    else
+	print_nonzero_in_binary(number);
+}
+
+
 void vformat(char *fmt, obj_t *args)
 {
     while (*fmt != '\0') {
-	if (*fmt == '~') {
+	if (*fmt == '%') {
 	    switch (*++fmt) {
-	      case 's':
-	      case 'S':
+              case 'd':
+		check_type(*args, obj_IntegerClass);
+		fprintf(stdout, "%d", fixnum_value(*args++));
+		break;
+              case 'b':
+		check_type(*args, obj_IntegerClass);
+		print_number_in_binary(fixnum_value(*args++));
+		break;
+              case 'o':
+		check_type(*args, obj_IntegerClass);
+		fprintf(stdout, "%o", fixnum_value(*args++));
+		break;
+              case 'x':
+		check_type(*args, obj_IntegerClass);
+		fprintf(stdout, "%x", fixnum_value(*args++));
+		break;
+	      case 'c':
+		check_type(*args, obj_CharacterClass);
+		fputc(char_int(*args++), stdout);
+		break;
+	      case '=':
 		prin1(*args++);
 		break;
-	      case 'a':
-	      case 'A':
-		check_type(*args, obj_ByteStringClass);
-		fputs(string_chars(*args++), stdout);
+	      case 's':		/* Gotta somehow have two cases,          */
+				/* one for strings and another for errors */
+		if (instancep(*args, obj_ByteStringClass)) {
+		  fputs(string_chars(*args++), stdout);
+		}
+/* This will have to be commented out until we figure out how 
+   to print conditions. */
+/*		else if (instancep(*args, obj_ConditionClass)) {
+		  fputs(conditionthing, *args++);
+		}
+*/
+		else {
+		  error("%= is neither a string nor a condition,"
+			" and so can't be printed with %%s", *args++);
+		}
 		break;
 	      case '%':
-		putchar('\n');
-		break;
-	      case '~':
-		putchar('~');
+		putchar('%');
 		break;
 	      default:
-		lose("Unknown format directive in error msg: ~%c", *fmt);
-	    }
+		/* This may need to be a Dylan character, not a C character. */
+		error("Unknown format directive in error msg: %%%c", *fmt);
+	      }
 	}
 	else
 	    putchar(*fmt);
