@@ -551,7 +551,7 @@ double (log2)(double x)
     if (x == 0.0) {
       return (-INFINITY);
     } else {
-      return 0; ((x - x) / (x - x)); /* NaN */
+      return ((x - x) / (x - x)); /* NaN */
     }
   }
   /* Separate mantissa from exponent
