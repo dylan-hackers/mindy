@@ -426,6 +426,29 @@ register-object-id(#"type-cell-name", #x0087);
 register-object-id(#"method-name", #x0088);
 register-object-id(#"module-variable", #x0089);
 
+// FER:
+register-object-id(#"compiler-policy", #x0090);
+register-object-id(#"unknown-source-location", #x0091);
+register-object-id(#"source-file", #x0092);
+register-object-id(#"file-source-location", #x0093);
+
+register-object-id(#"linear-region", #x0094);
+register-object-id(#"if-region", #x0095);
+register-object-id(#"block-region", #x0096);
+register-object-id(#"loop-region", #x0097);
+register-object-id(#"exit-region", #x0098);
+register-object-id(#"return-region", #x0099);
+
+register-object-id(#"ssa-variable", #x009A);
+register-object-id(#"initial-variable", #x009B);
+register-object-id(#"values-cluster-info", #x009C);
+register-object-id(#"local-var-info", #x009D);
+register-object-id(#"lexical-var-info", #x009E);
+
+register-object-id(#"let-assignment", #x00A0);
+register-object-id(#"set-assignment", #x00A1);
+
+
 /*
 generic-function
 gf-method
@@ -943,6 +966,15 @@ define /* exported */ class <load-state> (<object>)
   // objects.  Will contain <forward-ref>s where there are circular
   // cross-unit dependencies.
   slot extern-index :: <simple-object-vector>;
+  //
+  // A stack of stuff which can be pushed on by cliques of loader methods that
+  // have some common state they want to hack on.  The theory is that if a
+  // certain kind of object can only appear as a subobject of some other object
+  // which pushes the state on the stack, then the right info will be there.
+  // Pushers should pop when they're done.  Think of this as a shallow-bound
+  // dynamic variable.
+  /* exported */ slot state-stack :: <list>, init-value: #(),
+    /* exported */ setter: state-stack-setter;
 end class;
 
 
