@@ -4,9 +4,10 @@ if ($features{'compiled_for_unix'}) {
 
 } elsif ($features{'compiled_for_win32'}) {
     unless (-r $MINDY && -r $MC) {
-        print STDERR "\nWarning: Mindy compiler and interpreter not found.\n",
+        print STDERR "\n\nWarning: Mindy compiler and interpreter not found.\n",
              "You must compile them using VC++ or some other way.\n",
-             "See $srcdir\\mindy\\MS-Windows\\README\n\n";
+ "See http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/",
+ "win32-build.html\n\n";
     }
     print <<"EOF"
 
