@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.45 1995/12/16 04:14:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.46 1996/01/11 19:01:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -339,6 +339,7 @@ define class <class> (<type>)
   slot unique-id :: <fixed-integer>, required-init-keyword: unique-id:;
   slot class-functional? :: <boolean>, init-value: #f;
 end;
+define class <slot-descriptor> (<object>) end;
 
 define abstract open class <number> (<object>) end;
 define abstract open class <complex> (<number>) end;
@@ -423,6 +424,9 @@ end;
 
 
 // Functions that need to be defined.
+
+define open generic find-slot-offset
+    (class :: <class>, slot :: <slot-descriptor>) => res :: <fixed-integer>;
 
 define open generic %make-method
     (specializers :: <list>, result-types :: <list>,
