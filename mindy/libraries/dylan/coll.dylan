@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.32 1996/03/19 23:49:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.33 1996/03/25 19:23:56 rgs Exp $
 
 //======================================================================
 //
@@ -294,7 +294,7 @@ end method map-into;
 
 
 define method any?(proc :: <function>, collection :: <collection>,
-		   #rest more-collections) => answer :: <boolean>;
+		   #rest more-collections) => answer :: <object>;
   let test1 = key-test(collection);
   if (~ every?( method (c) test1 == key-test(c); end, more-collections))
     error("Can't do collection alignment over collections with different key tests");
@@ -323,7 +323,7 @@ end method any?;
 // Pick off 1-collection list case for efficency.
 define method any?(proc :: <function>, collection :: <list>,
 		    #next next-method, #rest more-collections)
- => answer :: <boolean>;
+ => answer :: <object>;
   if (empty?(more-collections))
     block (punt)
       for (cur = collection then cur.tail, until: cur == #())
