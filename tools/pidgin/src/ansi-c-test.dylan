@@ -77,7 +77,7 @@ define method main(appname, #rest args)
   let m2 = make(<c-member-variable>, name: "bar", type: int*);
   let b1 = make(<c-bit-field>, name: "baz", sign: #"signed", width: 10);
   let b2 = make(<c-bit-field>, name: #f, sign: #"unspecified", width: 2);
-  let struct = make(<c-struct-type>, tag: "showing_members");
+  let struct = make(<c-struct-type>, tag: "my_struct");
   add!(struct.c-type-members, m1);
   add!(struct.c-type-members, m2);
   add!(struct.c-type-members, b1);
@@ -88,7 +88,25 @@ define method main(appname, #rest args)
 	 format-c-tagged-type(struct, multi-line?: #t));
   force-output(*standard-output*);
 
-  format(*standard-output*, "----- C Type Declarations -----\n");
+  // Display a union
+  let union = make(<c-union-type>, tag: "my_union");
+  add!(union.c-type-members, m1);
+  add!(union.c-type-members, m2);
+  format(*standard-output*, "%s\n", format-c-tagged-type(union));
+  force-output(*standard-output*);
 
-  
+  // Display an enumeration
+  let e1 = make(<c-enum-constant>, name: "quux", value: 2);
+  let e2 = make(<c-enum-constant>, name: "quuux", value: 3);
+  let enum = make(<c-enum-type>, tag: "my_enum");
+  add!(enum.c-enum-members, e1);
+  add!(enum.c-enum-members, e2);
+  format(*standard-output*, "%s\n", format-c-tagged-type(enum));
+  force-output(*standard-output*);
+  format(*standard-output*, "%s\n",
+	 format-c-tagged-type(enum, multi-line?: #t));
+  force-output(*standard-output*);
+
+  // Now print some complete declarations
+  // format(*standard-output*, "----- C Type Declarations -----\n");
 end;
