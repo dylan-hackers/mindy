@@ -1,6 +1,6 @@
 module: mine-sweeper
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.2 1996/05/12 23:26:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.3 1996/07/14 20:33:46 bfw Exp $
 
 //======================================================================
 //
@@ -37,7 +37,8 @@ define library mine-sweeper
   use dylan;
   use tk;
   use string-extensions;
-  use streams;
+  use new-streams;
+  use standard-io;
   use format;
   use random;
 end library mine-sweeper;
@@ -48,7 +49,7 @@ define module mine-sweeper
   use tk;
   use tk-extension, import: { tk-quote, call-tk-function };
   use string-conversions;
-  use streams;
+  use new-streams, import: {force-output};
   use format;
   use standard-io;
   use random;
