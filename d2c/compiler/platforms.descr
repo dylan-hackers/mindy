@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.81 2003/08/10 23:59:04 gabor Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.82 2003/08/12 05:18:16 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -533,6 +533,10 @@ link-shared-executable-command: $(LIBTOOL) --mode=link gcc-3.0 -o %s %s %s
 link-executable-flags:          $(GC_LIBS) -lm
 link-profile-flags:            -pg
 path-separator:                        /
+
+platform-name:            gcc32
+default-features:		  C-compiler-is-GCC
+compile-c-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
 
 platform-name:			  ppc-gcc32
 default-features:		  C-compiler-is-GCC
