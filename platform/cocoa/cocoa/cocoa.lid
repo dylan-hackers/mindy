@@ -1,5 +1,6 @@
 library:	cocoa
-files:  cocoa-exports
+files:  cocoa-library
+	cocoa-exports
 	objective-c
 	cocoa-basics
 	cocoa-wrappers
