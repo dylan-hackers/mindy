@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.66 1996/04/13 21:36:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.67 1996/04/14 13:33:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -307,7 +307,11 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	      init-value: make(<varref-parse>, id: form.defclass-name)));
   end;
   for (option in form.defclass-slots)
-    process-slot(name, class-functional?, slots, overrides, option);
+    block ()
+      process-slot(name, class-functional?, slots, overrides, option);
+    exception (<fatal-error-recovery-restart>)
+      #f;
+    end block;
   end for;
   let slots = as(<simple-object-vector>, slots);
   let overrides = as(<simple-object-vector>, overrides);
@@ -364,9 +368,9 @@ define method process-slot
     => ();
   let (sealed?-frag, allocation-frag, type-frag, setter-frag,
        init-keyword-frag, req-init-keyword-frag, init-value-frag,
-       init-expr-frag, init-function-frag, sizer-frag, size-init-keyword-frag,
-       req-size-init-keyword-frag, size-init-value-frag,
-       size-init-function-frag)
+       init-expr-frag, init-function-frag, sizer-frag,
+       size-init-keyword-frag, req-size-init-keyword-frag,
+       size-init-value-frag, size-init-function-frag)
     = extract-properties(slot.slot-parse-options,
 			 sealed:, allocation:, type:, setter:,
 			 init-keyword:, required-init-keyword:,
@@ -383,10 +387,13 @@ define method process-slot
 		   end;
   let type = type-frag & expression-from-fragment(type-frag);
   let setter = if (class-functional? & allocation == #"instance")
-		 if (setter-frag & extract-identifier-or-false(setter-frag))
-		   compiler-warning("Instance allocation slots in "
-				      "functional classes can't "
-				      "have a setter.");
+		 let id
+		   = setter-frag & extract-identifier-or-false(setter-frag);
+		 if (id)
+		   compiler-warning-location
+		     (id,
+		      "Instance allocation slots in functional classes can't"
+			" have a setter.");
 		 end;
 		 #f;
 	       elseif (setter-frag)
@@ -398,7 +405,8 @@ define method process-slot
   let init-keyword = init-keyword-frag & extract-keyword(init-keyword-frag);
   let req-init-keyword
     = req-init-keyword-frag & extract-keyword(req-init-keyword-frag);
-  let init-value = init-value-frag & expression-from-fragment(init-value-frag);
+  let init-value
+    = init-value-frag & expression-from-fragment(init-value-frag);
   let init-expr = init-expr-frag & expression-from-fragment(init-expr-frag);
   let init-function
     = init-function-frag & expression-from-fragment(init-function-frag);
@@ -406,7 +414,8 @@ define method process-slot
   let size-init-keyword
     = size-init-keyword-frag & extract-keyword(size-init-keyword-frag);
   let req-size-init-keyword
-    = req-size-init-keyword-frag & extract-keyword(req-size-init-keyword-frag);
+    = (req-size-init-keyword-frag
+	 & extract-keyword(req-size-init-keyword-frag));
   let size-init-value
     = size-init-value-frag & expression-from-fragment(size-init-value-frag);
   let size-init-function
@@ -415,25 +424,30 @@ define method process-slot
 
   if (init-value)
     if (init-expr)
-      compiler-fatal-error
-	("Can't supply both an init-value: and an init-expression.");
+      compiler-fatal-error-location
+	(init-value,
+	 "Can't supply both an init-value: and an init-expression.");
     end if;
     if (init-function)
-      compiler-fatal-error
-	("Can't supply both an init-value: and an init-function:.");
+      compiler-fatal-error-location
+	(init-value,
+	 "Can't supply both an init-value: and an init-function:.");
     end;
     if (req-init-keyword)
-      compiler-fatal-error
-	("Can't supply both an init-value: and a required-init-keyword:.");
+      compiler-fatal-error-location
+	(init-value,
+	 "Can't supply both an init-value: and a required-init-keyword:.");
     end;
   elseif (init-expr)
     if (init-function)
-      compiler-fatal-error
-	("Can't supply both an init-function: and an init-expression.");
+      compiler-fatal-error-location
+	(init-expr,
+	 "Can't supply both an init-function: and an init-expression.");
     end if;
     if (req-init-keyword)
-      compiler-fatal-error
-	("Can't supply both an init-value: and a required-init-keyword:.");
+      compiler-fatal-error-location
+	(init-expr,
+	 "Can't supply both an init-value: and a required-init-keyword:.");
     end;
     if (instance?(init-expr, <literal-ref-parse>))
       init-value := init-expr;
@@ -446,13 +460,16 @@ define method process-slot
     end if;
   elseif (init-function)
     if (req-init-keyword)
-      compiler-fatal-error("Can't supply both an init-function: and a "
-		       "required-init-keyword:.");
+      compiler-fatal-error-location
+	(init-function,
+	 "Can't supply both an init-function: and a "
+	   "required-init-keyword:.");
     end;
   end;
   if (init-keyword & req-init-keyword)
-    compiler-fatal-error("Can't supply both an init-keyword: and a "
-			   "required-init-keyword:.");
+    compiler-fatal-error-location
+      (simplify-source-location(init-keyword-frag.source-location),
+       "Can't supply both an init-keyword: and a required-init-keyword:.");
   end;
 
   let getter-name = make(<basic-name>, symbol: getter,
@@ -466,23 +483,31 @@ define method process-slot
 	  = make(<basic-name>, symbol: sizer, module: *Current-Module*);
 	
 	unless (allocation == #"instance")
-	  compiler-fatal-error
-	    ("Only instance allocation slots can be variable length.");
+	  compiler-fatal-error-location
+	    (simplify-source-location(sizer-frag.source-location),
+	     "Only instance allocation slots can be variable length, but "
+	       "%s has %s allocation",
+	     getter, allocation);
 	end;
 	
 	if (size-init-value)
 	  if (size-init-function)
-	    compiler-fatal-error("Can't have both a size-init-value: and "
-				   "size-init-function:");
+	    compiler-fatal-error-location
+	      (size-init-value,
+	       "Can't have both a size-init-value: and size-init-function:");
 	  end;
 	elseif (~(size-init-function | req-size-init-keyword))
 	  compiler-fatal-error
-	    ("The Initial size must be supplied somehow.");
+	    ("The Initial size for vector slot %s must be supplied somehow.",
+	     getter);
 	end;
 	
 	if (size-init-keyword & req-size-init-keyword)
-	  compiler-fatal-error("Can't have both a size-init-keyword: and a "
-				 "required-size-init-keyword:");
+	  compiler-fatal-error-location
+	    (simplify-source-location
+	       (size-init-keyword-frag.source-location),
+	     "Can't have both a size-init-keyword: and a "
+	       "required-size-init-keyword:");
 	end;
 	
 	let slot = make(<slot-defn>,
@@ -507,20 +532,30 @@ define method process-slot
 	slot;
       else
 	if (size-init-value)
-	  compiler-fatal-error("Can't supply a size-init-value: without a "
-				 "sizer: generic function");
+	  compiler-fatal-error-location
+	    (size-init-value,
+	     "Can't supply a size-init-value: without a sizer: generic "
+	       "function");
 	end;
 	if (size-init-function)
-	  compiler-fatal-error("Can't supply a size-init-function: without a "
-				 "sizer: generic function");
+	  compiler-fatal-error-location
+	    (size-init-function,
+	     "Can't supply a size-init-function: without a "
+	       "sizer: generic function");
 	end;
 	if (size-init-keyword)
-	  compiler-fatal-error("Can't supply a size-init-keyword: without a "
-				 "sizer: generic function");
+	  compiler-fatal-error-location
+	    (simplify-source-location
+	       (size-init-keyword-frag.source-location),
+	     "Can't supply a size-init-keyword: without a "
+	       "sizer: generic function");
 	end;
 	if (req-size-init-keyword)
-	  compiler-fatal-error("Can't supply a required-size-init-keyword: "
-				 "without a sizer: generic function");
+	  compiler-fatal-error-location
+	    (simplify-source-location
+	       (req-size-init-keyword-frag.source-location),
+	     "Can't supply a required-size-init-keyword: "
+	       "without a sizer: generic function");
 	end;
 
 	#f;
@@ -556,17 +591,20 @@ define method process-slot
 
   if (init-value)
     if (init-expr)
-      compiler-fatal-error
-	("Can't supply both an init-value: and an init-expression.");
+      compiler-fatal-error-location
+	(init-expr,
+	 "Can't supply both an init-value: and an init-expression.");
     end if;
     if (init-function)
-      compiler-fatal-error
-	("Can't supply both an init-value: and an init-function:.");
+      compiler-fatal-error-location
+	(init-function,
+	 "Can't supply both an init-value: and an init-function:.");
     end;
   elseif (init-expr)
     if (init-function)
-      compiler-fatal-error
-	("Can't supply both an init-function: and an init-expression.");
+      compiler-fatal-error-location
+	(init-function,
+	 "Can't supply both an init-function: and an init-expression.");
     end if;
     if (instance?(init-expr, <literal-ref-parse>))
       init-value := init-expr;
@@ -606,17 +644,21 @@ define method process-slot
 
   if (required?)
     if (init-value)
-      compiler-fatal-error("Can't supply an init-value: for required keyword "
-			     "init arg specs");
+      compiler-fatal-error-location
+	(init-value,
+	 "Can't supply an init-value: for required keyword init arg specs");
     end;
     if (init-function)
-      compiler-fatal-error("Can't supply an init-function: for required "
-			     "keyword init arg specs");
+      compiler-fatal-error-location
+	(init-function,
+	 "Can't supply an init-function: for required keyword init arg specs");
     end;
   elseif (init-value)
     if (init-function)
-      compiler-fatal-error("Can't supply both an init-value: and an "
-			     "init-function: for keyword init arg specs");
+      compiler-fatal-error-location
+	(init-value,
+	 "Can't supply both an init-value: and an "
+	   "init-function: for keyword init arg specs");
     end;
   end;
   // ### Need to do something with it.
@@ -634,7 +676,7 @@ define method extract-identifier-or-false (fragment :: <token-fragment>)
       token;
     otherwise =>
       compiler-fatal-error
-	("Bogus name for setter generic function: %s", token);
+	("invalid identifier: %s", token);
   end select;
 end method extract-identifier-or-false;
 
@@ -647,7 +689,7 @@ define method extract-identifier (fragment :: <token-fragment>)
       token;
     otherwise =>
       compiler-fatal-error
-	("Bogus name for setter generic function: %s", token);
+	("invalid identifier: %s", token);
   end select;
 end method extract-identifier;
 
@@ -665,8 +707,10 @@ define method ct-value (defn :: <real-class-definition>)
     #"not-computed-yet" =>
       defn.class-defn-cclass := compute-cclass(defn);
     #"computing" =>
-      compiler-warning("class %s circularly defined.",
-		       defn.defn-name.name-symbol);
+      compiler-error-location
+	(defn,
+	 "class %s circularly defined.",
+	 defn.defn-name.name-symbol);
       #f;
     otherwise =>
       defn.class-defn-cclass;
@@ -696,7 +740,7 @@ define method compute-cclass (defn :: <real-class-definition>)
       //
       // Make sure we arn't trying to inherit from a sealed class.
       if (super.sealed? & super.loaded?)
-	compiler-warning-location
+	compiler-error-location
 	  (super-expr.source-location,
 	   "%s can't inherit from %s because %s is sealed.",
 	   defn.defn-name, super, super);
@@ -718,7 +762,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 	//
 	// Make sure we arn't trying to inherit from anything we can't.
 	if (super.not-functional?)
-	  compiler-warning-location
+	  compiler-error-location
 	    (super-expr.source-location,
 	     "functional class %s can't inherit from %s "
 	       "because %s %s and is not functional.",
@@ -735,7 +779,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 	// It isn't a functional class, so make sure we arn't trying to
 	// inherit from a functional class.
 	if (super.functional?)
-	  compiler-warning-location
+	  compiler-error-location
 	    (super-expr.source-location,
 	     "class %s can't inherit from %s because %s is functional.",
 	     defn.defn-name, super, super);
@@ -754,12 +798,12 @@ define method compute-cclass (defn :: <real-class-definition>)
 		if (primary == super)
 		  as(<string>, primary.cclass-name.name-symbol);
 		else
-		  format-to-string("~= (inherited via ~s)",
+		  format-to-string("~s (inherited via ~s)",
 				   primary.cclass-name.name-symbol,
 				   super.cclass-name.name-symbol);
 		end;
 	      end;
-	compiler-warning-location
+	compiler-error-location
 	  (super-expr.source-location,
 	   "%s can't inherit from %s and %s because they are both primary "
 	     "and neither is a subclass of the other.",
@@ -772,7 +816,7 @@ define method compute-cclass (defn :: <real-class-definition>)
       //
       // The superclass isn't a <class>.  So complain.
       if (super)
-	compiler-warning-location
+	compiler-error-location
 	  (super-expr.source-location,
 	   "%s superclass of %s is not a class: %s.",
 	   integer-to-english(index + 1, as: #"ordinal"),
@@ -794,7 +838,8 @@ define method compute-cclass (defn :: <real-class-definition>)
     end unless;
   else
     if (nsupers.zero?)
-      compiler-warning("%s has no superclasses.", defn.defn-name);
+      compiler-error-location
+	(defn, "%s has no superclasses.", defn.defn-name);
       bogus? := #t;
     elseif (closest-primary == #f & ~bogus?)
       error("<object> isn't being inherited or isn't primary?");
@@ -1018,7 +1063,7 @@ define method finalize-slot
       if (gf)
 	add-seal(gf, library, specializers, tlf);
       else
-	compiler-fatal-error
+	compiler-error
 	  ("%s doesn't name a generic function, so can't be sealed.",
 	   slot.slot-defn-getter-name);
       end;
@@ -1042,7 +1087,7 @@ define method finalize-slot
 	     if (gf)
 	       add-seal(gf, library, pair(object-ctype(), specializers), tlf);
 	     else
-	       compiler-fatal-error
+	       compiler-error
 		 ("%s doesn't name a generic function, so can't be sealed.",
 		  slot.slot-defn-setter-name);
 	     end;
@@ -1064,7 +1109,7 @@ define method maybe-define-init-function
     if (cinstance?(init-val, function-ctype()))
       values(init-val, #f);
     else
-      compiler-warning-location(expr, "Invalid init-function: %s.", init-val);
+      compiler-error-location(expr, "Invalid init-function: %s.", init-val);
       values(#f, #f);
     end if;
   else
@@ -1170,10 +1215,12 @@ define method class-defn-maker-function
 	     return(#f);
 	   end;
 	   let instance-rep = pick-representation(cclass, #"speed");
+	   /*
 	   if (instance?(instance-rep, <immediate-representation>)
 		 & ~instance?(instance-rep, <data-word-representation>))
 	     return(#f);
 	   end;
+	   */
 	   let key-infos = make(<stretchy-vector>);
 	   for (slot in cclass.all-slot-infos)
 	     if (instance?(slot, <instance-slot-info>))
@@ -1520,30 +1567,30 @@ define method convert-top-level-form
 				 #"override-init-function-setter"),
 		  #f,
 		  list(leaf, descriptor-var)));
-	  end;
-	end;
-      end;
+	  end if;
+	end if;
+      end for;
     end;
 
-    // ### Build the key-defaulter (if concrete)
+    unless (cclass.abstract?)
+      //
+      // Build the key-defaulter (if concrete)
+      // ### Need to write this.
 
-    // Build the maker (if concrete) and do any slot processing that
-    // has to happen for every slot in the class.
-
-    begin
-      let representation = pick-representation(cclass, #"speed");
-      let data-word? = instance?(representation, <data-word-representation>);
+      //
+      // Build the maker.
       let key-infos = make(<stretchy-vector>);
       let maker-args = make(<stretchy-vector>);
       let setup-builder = make-builder(tl-builder);
       let maker-builder = make-builder(tl-builder);
       let init-builder = make-builder(tl-builder);
-      let instance-leaf
-	= unless (cclass.abstract?
-		    | (instance?(representation, <immediate-representation>)
-			 & ~data-word?))
-	    make-local-var(init-builder, #"instance", cclass);
-	  end;
+      let direct = cclass.direct-type;
+      let instance-leaf = make-local-var(init-builder, #"instance", direct);
+      let representation = pick-representation(direct, #"speed");
+      let immediate-rep?
+	= instance?(representation, <immediate-representation>);
+      let make-immediate-args = make(<stretchy-vector>);
+      let data-word-leaf = #f;
       let size-leaf = #f;
       let vector-slot = cclass.vector-slot;
       let size-slot = vector-slot & vector-slot.slot-size-slot;
@@ -1594,22 +1641,17 @@ define method convert-top-level-form
 			 make-literal-constant
 			   (maker-builder, as(<ct-value>, index)))));
 	      %maker-slot-descriptor-leaf := var;
-	    end;
-	  end;
-	
+	    end if;
+	  end method maker-slot-descriptor-leaf;
+
 	select (slot by instance?)
 	  <instance-slot-info> =>
 	    //
-	    // If instance-leaf if #f, then we are an abstract class.
-	    // 
 	    // If there isn't a getter, this is a bound? slot.  Bound? slots
 	    // are initialized along with the regular slot.
-	    //
-	    // If this class is represented as a data-word, we want to ignore
-	    // the %object-class slot.
-	    // 
-	    if (instance-leaf & slot.slot-getter
-		  & ~(data-word? & zero?(index)))
+	    if (slot.slot-getter)
+	      //
+	      // Get ahold of the type.
 	      let slot-type = slot.slot-type;
 	      let (type, type-var)
 		= if (instance?(slot-type, <unknown-ctype>))
@@ -1628,7 +1670,8 @@ define method convert-top-level-form
 		  else
 		    values(slot-type, #f);
 		  end;
-
+	      //
+	      // Find the active override if there is one. 
 	      let override
 		= block (return)
 		    for (override in slot.slot-overrides)
@@ -1639,7 +1682,10 @@ define method convert-top-level-form
 		      #f;
 		    end;
 		  end;
-
+	      //
+	      // Get the init-value or init-function, either from the
+	      // active override or from the slot itself if there is no
+	      // active override.
 	      let (init-value, init-function)
 		= if (override)
 		    values(override.override-init-value,
@@ -1652,80 +1698,83 @@ define method convert-top-level-form
 		method build-slot-init
 		    (slot :: false-or(<slot-info>), leaf :: <leaf>) => ();
 		  if (slot)
-		    if (data-word?)
-		      assert(index == 1);
-		      build-assignment
-			(init-builder, policy, source, instance-leaf,
-			 make-operation
-			   (init-builder, <primitive>, list(leaf),
-			    name: #"make-data-word-instance",
-			    derived-type: cclass));
+		    if (immediate-rep?)
+		      add!(make-immediate-args, leaf);
 		    else
 		      let posn
-			= (get-direct-position(slot.slot-positions, cclass)
-			     | error("Couldn't find the position for %s",
-				     slot.slot-getter.variable-name));
-		      let posn-leaf
-			= make-literal-constant(init-builder,
-						as(<ct-value>, posn));
-		      if (instance?(slot, <vector-slot-info>))
-			// We need to build a loop to initialize every element.
-			let block-region
-			  = build-block-body(init-builder, policy, source);
-			let index
-			  = make-local-var(init-builder, #"index",
-					   specifier-type(#"<integer>"));
-			build-assignment
-			  (init-builder, policy, source, index,
-			   make-literal-constant
-			     (init-builder, as(<ct-value>, 0)));
-			build-loop-body(init-builder, policy, source);
-			let more?
-			  = make-local-var(init-builder, #"more?",
-					   specifier-type(#"<boolean>"));
-			build-assignment
-			  (init-builder, policy, source, more?,
-			   make-unknown-call
-			     (init-builder,
-			      ref-dylan-defn(init-builder, policy, source,
-					     #"<"),
-			      #f,
-			      list(index, size-leaf)));
-			build-if-body(init-builder, policy, source, more?);
-			build-assignment
-			  (init-builder, policy, source, #(),
-			   make-operation
-			     (init-builder, <heap-slot-set>,
-			      list(leaf, instance-leaf, posn-leaf, index),
-			      slot-info: slot));
-			build-assignment
-			  (init-builder, policy, source, index,
-			   make-unknown-call
-			     (init-builder,
-			      ref-dylan-defn(init-builder, policy, source,
-					     #"+"),
-			      #f,
-			      list(index,
-				   make-literal-constant
-				     (init-builder, as(<ct-value>, 1)))));
-			build-else(init-builder, policy, source);
-			build-exit(init-builder, policy, source, block-region);
-			end-body(init-builder);
-			end-body(init-builder);
-			end-body(init-builder);
+			= get-direct-position(slot.slot-positions, cclass);
+		      unless (posn)
+			error("Couldn't find the position for %s",
+			      slot.slot-getter.variable-name);
+		      end unless;
+		      if (posn == #"data-word")
+			data-word-leaf := leaf;
 		      else
-			build-assignment
-			  (init-builder, policy, source, #(),
-			   make-operation(init-builder, <heap-slot-set>,
-					  list(leaf, instance-leaf, posn-leaf),
-					  slot-info: slot));
-			if (slot == size-slot)
-			  size-leaf := leaf;
-			end;
-		      end;
-		    end;
-		  end;
-		end,
+			let posn-leaf
+			  = make-literal-constant(init-builder,
+						  as(<ct-value>, posn));
+			if (instance?(slot, <vector-slot-info>))
+			  // We need to build a loop to initialize every
+			  // element.
+			  let block-region
+			    = build-block-body(init-builder, policy, source);
+			  let index
+			    = make-local-var(init-builder, #"index",
+					     specifier-type(#"<integer>"));
+			  build-assignment
+			    (init-builder, policy, source, index,
+			     make-literal-constant
+			       (init-builder, as(<ct-value>, 0)));
+			  build-loop-body(init-builder, policy, source);
+			  let more?
+			    = make-local-var(init-builder, #"more?",
+					     specifier-type(#"<boolean>"));
+			  build-assignment
+			    (init-builder, policy, source, more?,
+			     make-unknown-call
+			       (init-builder,
+				ref-dylan-defn(init-builder, policy, source,
+					       #"<"),
+				#f,
+				list(index, size-leaf)));
+			  build-if-body(init-builder, policy, source, more?);
+			  build-assignment
+			    (init-builder, policy, source, #(),
+			     make-operation
+			       (init-builder, <heap-slot-set>,
+				list(leaf, instance-leaf, posn-leaf, index),
+				slot-info: slot));
+			  build-assignment
+			    (init-builder, policy, source, index,
+			     make-unknown-call
+			       (init-builder,
+				ref-dylan-defn(init-builder, policy, source,
+					       #"+"),
+				#f,
+				list(index,
+				     make-literal-constant
+				       (init-builder, as(<ct-value>, 1)))));
+			  build-else(init-builder, policy, source);
+			  build-exit
+			    (init-builder, policy, source, block-region);
+			  end-body(init-builder);
+			  end-body(init-builder);
+			  end-body(init-builder);
+			else
+			  build-assignment
+			    (init-builder, policy, source, #(),
+			     make-operation
+			       (init-builder, <heap-slot-set>,
+				list(leaf, instance-leaf, posn-leaf),
+				slot-info: slot));
+			  if (slot == size-slot)
+			    size-leaf := leaf;
+			  end if;
+			end if;
+		      end if;
+		    end if;
+		  end if;
+		end method build-slot-init,
 		method maker-override-descriptor-leaf () => res :: <leaf>;
 		  let debug-name = symcat(slot-name, "-descriptor");
 		  let var = make-local-var(maker-builder, debug-name,
@@ -1926,9 +1975,9 @@ define method convert-top-level-form
 		  build-slot-init
 		    (slot.slot-initialized?-slot,
 		     make-literal-constant(init-builder, as(<ct-value>, #f)));
-		end;
-	      end;
-	    end;
+		end if;
+	      end if;
+	    end if;
 	  <each-subclass-slot-info> =>
 	    // ### Add stuff to the derived-evaluations function to init the
 	    // slot.  If the slot is keyword-initializable, add stuff to the
@@ -1942,92 +1991,101 @@ define method convert-top-level-form
 	  <virtual-slot-info> =>
 	    // Don't need to do anything for virtual slots.
 	    #f;
-	end;
-      end;
+	end select;
+      end for;
       
-      if (instance-leaf)
-	let name = format-to-string("Maker for %s", defn.defn-name);
-	let maker-region
-	  = build-function-body(tl-builder, policy, source, #f, name,
-				as(<list>, maker-args), cclass, #t);
-	build-region(tl-builder, builder-result(setup-builder));
-	build-region(tl-builder, builder-result(maker-builder));
-	let bytes = cclass.instance-slots-layout.layout-length;
-	let base-len
-	  = make-literal-constant(tl-builder, as(<ct-value>, bytes));
-	let len-leaf
-	  = if (vector-slot)
-	      let fi = specifier-type(#"<integer>");
-	      let elsize
-		= vector-slot.slot-representation.representation-size;
-	      let extra
-		= if (elsize == 1)
-		    size-leaf;
-		  else
-		    let var = make-local-var(tl-builder, #"extra", fi);
-		    let elsize-leaf
-		      = make-literal-constant(tl-builder,
-					      as(<ct-value>, elsize));
-		    build-assignment
-		      (tl-builder, policy, source, var,
-		       make-unknown-call
-			 (tl-builder,
-			  ref-dylan-defn(tl-builder, policy, source, #"*"),
-			  #f,
-			  list(size-leaf, elsize-leaf)));
-		    var;
-		  end;
-	      let var = make-local-var(tl-builder, #"bytes", fi);
-	      build-assignment
-		(tl-builder, policy, source, var,
-		 make-unknown-call
-		   (tl-builder,
-		    ref-dylan-defn(tl-builder, policy, source, #"+"),
-		    #f,
-		    list(base-len, extra)));
-	      var;
-	    else
-	      base-len;
-	    end;
-	unless (data-word?)
-	  build-assignment
-	    (tl-builder, policy, source, instance-leaf,
-	     make-operation
-	       (tl-builder, <primitive>, list(len-leaf),
-		name: #"allocate", derived-type: cclass));
-	end;
-	build-region(tl-builder, builder-result(init-builder));
-	build-return(tl-builder, policy, source, maker-region,
-		     list(instance-leaf));
-	end-body(tl-builder);
-	
-	// Fill in the maker function.
-	let ctv = defn.class-defn-maker-function;
-	if (ctv)
-	  make-function-literal(tl-builder, ctv, #f, #"global",
-				ctv.ct-function-signature, maker-region);
-	else
-	  // The maker function isn't a compile-time constant, so add code to
-	  // the defered evaluations to install it.
-	  let maker-leaf
-	    = make-function-literal(tl-builder, #f, #f, #"local",
-				    make(<signature>, specializers: #(),
-					 keys: as(<list>, key-infos),
-					 all-keys: #t,
-					 returns: cclass.direct-type),
-				    maker-region);
-	  build-assignment
-	    (evals-builder, policy, source, #(),
-	     make-unknown-call
-	       (evals-builder,
-		ref-dylan-defn(evals-builder, policy, source,
-			       #"class-maker-setter"),
-		#f,
-		list(maker-leaf,
-		     make-literal-constant(evals-builder, cclass))));
-	end;
-      end;
-    end;
+      let name = format-to-string("Maker for %s", defn.defn-name);
+      let maker-region
+	= build-function-body(tl-builder, policy, source, #f, name,
+			      as(<list>, maker-args), cclass, #t);
+      build-region(tl-builder, builder-result(setup-builder));
+      build-region(tl-builder, builder-result(maker-builder));
+      let bytes = cclass.instance-slots-layout.layout-length;
+      let base-len
+	= make-literal-constant(tl-builder, as(<ct-value>, bytes));
+      let len-leaf
+	= if (vector-slot)
+	    let fi = specifier-type(#"<integer>");
+	    let elsize
+	      = vector-slot.slot-representation.representation-size;
+	    let extra
+	      = if (elsize == 1)
+		  size-leaf;
+		else
+		  let var = make-local-var(tl-builder, #"extra", fi);
+		  let elsize-leaf
+		    = make-literal-constant(tl-builder,
+					    as(<ct-value>, elsize));
+		  build-assignment
+		    (tl-builder, policy, source, var,
+		     make-unknown-call
+		       (tl-builder,
+			ref-dylan-defn(tl-builder, policy, source, #"*"),
+			#f,
+			list(size-leaf, elsize-leaf)));
+		  var;
+		end;
+	    let var = make-local-var(tl-builder, #"bytes", fi);
+	    build-assignment
+	      (tl-builder, policy, source, var,
+	       make-unknown-call
+		 (tl-builder,
+		  ref-dylan-defn(tl-builder, policy, source, #"+"),
+		  #f,
+		  list(base-len, extra)));
+	    var;
+	  else
+	    base-len;
+	  end;
+      build-assignment
+	(tl-builder, policy, source, instance-leaf,
+	 if (immediate-rep?)
+	   make-operation
+	     (tl-builder, <primitive>, as(<list>, make-immediate-args),
+	      name: #"make-immediate", derived-type: direct);
+	 elseif (data-word-leaf)
+	   make-operation
+	     (tl-builder, <primitive>,
+	      list(make-literal-constant(tl-builder, cclass),
+		   len-leaf, data-word-leaf),
+	      name: #"allocate-with-data-word", derived-type: direct);
+	 else
+	   make-operation
+	     (tl-builder, <primitive>,
+	      list(make-literal-constant(tl-builder, cclass), len-leaf),
+	      name: #"allocate", derived-type: direct);
+	 end if);
+      build-region(tl-builder, builder-result(init-builder));
+      build-return(tl-builder, policy, source, maker-region,
+		   list(instance-leaf));
+      end-body(tl-builder);
+      
+      // Fill in the maker function.
+      let ctv = defn.class-defn-maker-function;
+      if (ctv)
+	make-function-literal(tl-builder, ctv, #f, #"global",
+			      ctv.ct-function-signature, maker-region);
+      else
+	// The maker function isn't a compile-time constant, so add code to
+	// the defered evaluations to install it.
+	let maker-leaf
+	  = make-function-literal(tl-builder, #f, #f, #"local",
+				  make(<signature>, specializers: #(),
+				       keys: as(<list>, key-infos),
+				       all-keys: #t,
+				       returns: cclass.direct-type),
+				  maker-region);
+	build-assignment
+	  (evals-builder, policy, source, #(),
+	   make-unknown-call
+	     (evals-builder,
+	      ref-dylan-defn(evals-builder, policy, source,
+			     #"class-maker-setter"),
+	      #f,
+	      list(maker-leaf,
+		   make-literal-constant(evals-builder, cclass))));
+      end if;
+    end unless;
 
     let ctv = defn.class-defn-defered-evaluations-function;
     if (ctv)
@@ -2044,9 +2102,9 @@ define method convert-top-level-form
       end-body(tl-builder);
       make-function-literal(tl-builder, ctv, #f, #"global",
 			    ctv.ct-function-signature, func-region);
-    end;
-  end;
-end;
+    end if;
+  end if;
+end method convert-top-level-form;
 
 
 define method convert-init-function
