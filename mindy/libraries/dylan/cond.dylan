@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.12 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.13 1996/03/07 18:01:54 nkramer Exp $
 
 //======================================================================
 //
@@ -207,24 +207,30 @@ define method abort ()
   error(make(<abort>));
 end method abort;
 
+define generic default-handler (condition :: <condition>)
+ => return-val :: <object>;
 
 define method default-handler (condition :: <condition>)
+ => return-val :: singleton(#f);
   #f;
 end method default-handler;
 
 
 define method default-handler (condition :: <serious-condition>)
+ => return-val :: <object>;
   invoke-debugger(condition);
 end method default-handler;
 
 
 define method default-handler (condition :: <warning>)
+ => return-val :: singleton(#f);
   *format-function*(*debug-output*, "%s\n", condition);
   #f;
 end method default-handler;
 
 
 define method default-handler (restart :: <restart>)
+ => return-val :: <object>;
   error("No restart handler for %=", restart);
 end method default-handler;
 
@@ -236,7 +242,10 @@ define class <breakpoint> (<simple-warning>)
 end class <breakpoint>;
 
 
-define method return-allowed? (cond :: <breakpoint>)
+define generic return-allowed? (cond :: <condition>)
+ => answer :: <boolean>;
+
+define method return-allowed? (cond :: <breakpoint>) => answer :: <boolean>;
   #t;
 end method return-allowed?;
 
@@ -245,8 +254,11 @@ define method return-query (cond :: <breakpoint>)
   #f;
 end method return-query;
 
+define generic return-description (cond :: <condition>)
+ => descr :: type-union(singleton(#f), <string>, <restart>);
 
 define method return-description (cond :: <breakpoint>)
+ => descr :: <string>;
   "Return #f";
 end method return-description;
 
@@ -294,12 +306,10 @@ define method do-handlers (function :: <function>)
 end method do-handlers;
 
 
-define method return-allowed? (cond :: <condition>)
+define method return-allowed? (cond :: <condition>) => answer :: <boolean>;
   #f;
 end method return-allowed?;
 
-
-define generic return-description (cond);
 
 
 // Interactive handling.
