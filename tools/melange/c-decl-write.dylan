@@ -219,6 +219,16 @@ define method anonymous-name () => (name :: <string>);
   name;
 end method anonymous-name;
 
+// catch-all method, returning just a comment
+//
+define method c-accessor
+    (type :: <type-declaration>,  offset :: type-union(<integer>, <string>),
+     parameter :: <string>, equated :: <string>)
+ => (result :: <string>);
+  format-to-string("/* FIXME: no c-accessor defined for %=, named %=. */",
+                   type, type.type-name);
+end method c-accessor;
+
 // This method simply converts integral parameters into strings for later
 // processing by other methods.
 //

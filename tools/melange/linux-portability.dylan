@@ -81,7 +81,8 @@ define constant $default-defines
       "__linux__", "",
       "__unix", "",
       "__i386", "",
-      "__linux", ""];
+      "__linux", "",
+      "__builtin_va_list", "void*"];
   
 define constant linux-include-directories
   = #["/usr/include"];
