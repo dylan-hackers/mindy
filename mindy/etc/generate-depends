@@ -34,6 +34,10 @@ sub print_target {
     print "\n\t\${CC} -c \${CFLAGS} \${SRCDIR}/", $c_file, "\n\n";
 }
 
+print "# It's easiest to generate this part by machine.\n";
+print "# Try gcc -MM -E *.c ",
+    "| perl ../etc/generate-depends\n\n";
+
 while (<>) {
     chop;
     @these_words = split(" ", $_);
