@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/seals.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/seals.dylan,v 1.3 2001/07/06 05:55:27 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -62,17 +62,28 @@ define sealed domain second-setter (<object>, <builtin-mutable-sequence>);
 define sealed domain third-setter (<object>, <builtin-mutable-sequence>);
 define sealed domain last-setter (<object>, <builtin-mutable-sequence>);
 
+define constant <builtin-mutable-explicit-key-collection>
+  = type-union(<simple-object-table>, <equal-table>);
+
+define constant <builtin-explicit-key-collection>
+  = type-union(<builtin-mutable-explicit-key-collection>);
+
 define constant <builtin-mutable-collection>
-  = type-union(<builtin-mutable-sequence>);
+  = type-union(<builtin-mutable-sequence>, <builtin-mutable-explicit-key-collection>);
 
 define sealed domain element-setter
-  (<object>, <builtin-mutable-collection>, <integer>);
+  (<object>, <builtin-mutable-collection>, <object>);
 define sealed domain replace-elements!
   (<builtin-mutable-collection>, <function>, <function>);
 define sealed domain fill! (<builtin-mutable-collection>, <object>);
 
 define constant <builtin-sequence>
-  = type-union(<builtin-mutable-sequence>);
+  = type-union(<builtin-mutable-sequence>, <builtin-range>);
+
+define sealed domain first (<builtin-sequence>);
+define sealed domain second (<builtin-sequence>);
+define sealed domain third (<builtin-sequence>);
+define sealed domain last (<builtin-sequence>);
 
 define sealed domain add (<builtin-sequence>, <object>);
 define sealed domain add! (<builtin-sequence>, <object>);
@@ -95,18 +106,21 @@ define sealed domain sort! (<builtin-sequence>);
 define sealed domain last (<builtin-sequence>);
 define sealed domain subsequence-position (<builtin-sequence>, <builtin-sequence>);
 
-define constant <builtin-stretchy-collection>
+define constant <builtin-stretchy-sequence>
   = type-union(<stretchy-object-vector>, <simple-object-deque>);
 
-define sealed domain size-setter (<integer>, <builtin-stretchy-collection>);
+define sealed domain size-setter (<integer>, <builtin-stretchy-sequence>);
+
+define constant <builtin-stretchy-collection>
+  = type-union(<builtin-stretchy-sequence>, <builtin-mutable-explicit-key-collection>);
 
 define constant <builtin-collection>
-  = type-union(<builtin-sequence>);
+  = type-union(<builtin-sequence>, <builtin-explicit-key-collection>);
 
 define sealed domain initialize (<builtin-collection>);
 define sealed domain shallow-copy (<builtin-collection>);
 define sealed domain type-for-copy (<builtin-collection>);
-define sealed domain element (<builtin-collection>, <integer>);
+define sealed domain element (<builtin-collection>, <object>);
 define sealed domain key-sequence (<builtin-collection>);
 define sealed domain reduce (<function>, <object>, <builtin-collection>);
 define sealed domain reduce1 (<function>, <builtin-collection>);
@@ -119,3 +133,5 @@ define sealed domain \= (<builtin-collection>, <builtin-collection>);
 define sealed domain \~= (<builtin-collection>, <builtin-collection>);
 define sealed domain empty? (<builtin-collection>);
 define sealed domain size (<builtin-collection>);
+
+define sealed domain key-test (<sequence>);
