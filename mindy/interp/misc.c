@@ -23,16 +23,15 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.20 1996/03/18 19:05:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.21 1996/03/18 19:10:44 wlott Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
 *
 \**********************************************************************/
 
-#include <unistd.h>
-
 #include "../compat/std-c.h"
+#include "../compat/std-os.h"
 
 #include "mindy.h"
 #include "thread.h"
