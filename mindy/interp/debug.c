@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.25 1994/06/13 21:14:05 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.26 1994/06/17 18:04:41 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1566,7 +1566,7 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 	printf(" isn't a function or component\n");
     }
     else if (line == -1) {
-	printf("Can't install function start breakpoints."); /* ### */
+	printf("Can't install function start breakpoints.\n"); /* ### */
     }
     else if (!instancep(thing, obj_ByteMethodClass)) {
 	prin1(thing);
