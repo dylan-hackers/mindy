@@ -1,0 +1,374 @@
+dnl
+dnl	This file is an input file used by the GNU "autoconf" program
+dnl	to generate the file "configure", which is run during mindy
+dnl	installation to configure the system for the local
+dnl	environment. 
+dnl
+dnl	The dnl m4 macro discards the rest of the line as a comment.
+dnl
+dnl	Pound sign comments get copied into configure, which
+dnl	will be a normal shell script.
+dnl
+dnl	This macro determines whether the source root is the current
+dnl	directory or the parent of the current directory.  If you make
+dnl	a subdirectory of the source root, then configure will build a
+dnl	directory tree suitable for making mindy.
+dnl
+dnl	This must come first -- do not move.
+
+AC_INIT(interp/mindy.h)
+
+#--------------------------------------------------------------------
+#	See if the #!interpreter syntax is supported
+#--------------------------------------------------------------------
+
+AC_HAVE_POUNDBANG(,AC_DEFINE(NO_SHARP_BANG))
+
+#--------------------------------------------------------------------
+#	These macros find a BSD install, a C compiler, and so on, and
+#	establish bindings for @INSTALL@, @CC@, and so on.
+#--------------------------------------------------------------------
+
+AC_PROG_INSTALL
+AC_PROG_CC
+AC_PROG_LEX
+YACC=${YACC-yacc}
+AC_SUBST(YACC)dnl
+AC_PROG_RANLIB
+
+#--------------------------------------------------------------------
+#	Establish the default compile options for cc
+#--------------------------------------------------------------------
+
+CCOPTS=${CCOPTS--g}
+AC_SUBST(CCOPTS)dnl
+
+# Now find some optimization flags
+# (-Wall is actually "all warnings" and has nothing to do with optimization, 
+# but I put it here anyway because it is gcc specific)
+
+if test $CC = gcc
+then OPTIMIZE="-O4 -finline-functions -Wall"
+dnl ${OPTIMIZE--O4 --finline-functions --Wall}
+else OPTIMIZE=${OPTIMIZE--O}
+fi
+AC_SUBST(OPTIMIZE)dnl
+
+#--------------------------------------------------------------------
+#	Establish the default options for lex
+#--------------------------------------------------------------------
+
+if test $LEX = flex; then
+  LFLAGS=${LFLAGS--i}
+else
+  echo "I could not find flex, so do not try to rebuild comp/lexer.tab.c"
+  echo "because lex cannot do it."
+  LFLAGS=${LFLAGS-}
+fi
+AC_SUBST(LFLAGS)
+
+#--------------------------------------------------------------------
+#	Find out if sigaction is available.
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(sigaction, sigaction=1, sigaction=0)
+if test $sigaction = 0; then
+  AC_DEFINE(NO_SIGACTION)
+  LIBOBJS="${LIBOBJS-} sigaction.o"
+  AC_FUNC_CHECK(sigsetmask, sigsetmask=1, sigsetmask=0)
+  AC_FUNC_CHECK(sigrelse, sigrelse=1, sigrelse=0)
+  if test $sigsetmask = 1; then
+    echo "BSD_signals"
+    AC_DEFINE(BSD_SIGNALS)
+  elif test $sigrelse = 1; then
+    echo "USG_signals"
+    AC_DEFINE(USG_SIGNALS)
+  else
+    echo "I couldn't find posix, bsd, or sysV signal support."
+    echo "You may be able to compile compat/sigaction.c by hand."
+  fi
+fi
+
+#--------------------------------------------------------------------
+#	This next section is lifted from tcl-7.3, it deals with
+#	establishing which of the known faults in POSIX compliance
+#	need to be corrected.
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+#	Supply substitutes for missing POSIX library procedures, or
+#	set flags so Tcl uses alternate procedures.
+#--------------------------------------------------------------------
+
+AC_REPLACE_FUNCS(getcwd opendir strerror strstr)
+AC_REPLACE_FUNCS(strtol memmove tmpnam waitpid)
+AC_FUNC_CHECK(gettimeofday, , AC_DEFINE(NO_GETTOD))
+AC_FUNC_CHECK(getwd, , AC_DEFINE(NO_GETWD))
+AC_FUNC_CHECK(wait3, , AC_DEFINE(NO_WAIT3))
+
+#--------------------------------------------------------------------
+#	Supply substitutes for missing POSIX header files.  Special
+#	notes:
+#	    - Sprite's dirent.h exists but is bogus.
+#	    - stdlib.h doesn't define strtol, strtoul, or
+#	      strtod insome versions of SunOS
+#	    - some versions of string.h don't declare procedures such
+#	      as strstr
+#--------------------------------------------------------------------
+
+AC_HEADER_CHECK(unistd.h, , AC_DEFINE(NO_UNISTD_H))
+AC_COMPILE_CHECK(dirent.h, [#include <sys/types.h>
+#include <dirent.h>], [
+DIR *d;
+struct dirent *entryPtr;
+char *p;
+d = opendir("foobar");
+entryPtr = readdir(d);
+p = entryPtr->d_name;
+closedir(d);
+], tcl_ok=1, tcl_ok=0)
+AC_HEADER_EGREP([Sprite version.* NOT POSIX], dirent.h, tcl_ok=0)
+if test $tcl_ok = 0; then
+    AC_DEFINE(NO_DIRENT_H)
+fi
+AC_HEADER_CHECK(errno.h, , AC_DEFINE(NO_ERRNO_H))
+AC_HEADER_CHECK(float.h, , AC_DEFINE(NO_FLOAT_H))
+AC_HEADER_CHECK(limits.h, , AC_DEFINE(NO_LIMITS_H))
+AC_HEADER_CHECK(bstring.h, , AC_DEFINE(NO_BSTRING_H))
+AC_HEADER_CHECK(stdlib.h, tcl_ok=1, tcl_ok=0)
+AC_HEADER_EGREP(getenv, stdlib.h, , tcl_ok=0)
+AC_HEADER_EGREP(strtol, stdlib.h, , tcl_ok=0)
+AC_HEADER_EGREP(strtoul, stdlib.h, , tcl_ok=0)
+AC_HEADER_EGREP(strtod, stdlib.h, , tcl_ok=0)
+if test $tcl_ok = 0; then
+    AC_DEFINE(NO_STDLIB_H)
+fi
+AC_HEADER_CHECK(string.h, tcl_ok=1, tcl_ok=0)
+AC_HEADER_EGREP(strstr, string.h, , tcl_ok=0)
+AC_HEADER_EGREP(strerror, string.h, , tcl_ok=0)
+if test $tcl_ok = 0; then
+    AC_DEFINE(NO_STRING_H)
+fi
+AC_HEADER_CHECK(sys/time.h, , AC_DEFINE(NO_SYS_TIME_H))
+AC_HEADER_CHECK(sys/wait.h, , AC_DEFINE(NO_SYS_WAIT_H))
+
+#--------------------------------------------------------------------
+#	Include sys/select.h if it exists and if it supplies things
+#	that appear to be useful and aren't already in sys/types.h.
+#	This appears to be true only on the RS/6000 under AIX.  Some
+#	systems like OSF/1 have a sys/select.h that's of no use, and
+#	other systems like SCO UNIX have a sys/select.h that's
+#	pernicious.  If "fd_set" isn't defined anywhere then set a
+#	special flag.
+#--------------------------------------------------------------------
+
+echo checking for sys/select.h
+AC_COMPILE_CHECK(fd_set, [#include <sys/types.h>],
+	[fd_set readMask, writeMask;], ,
+	AC_HEADER_EGREP(fd_mask, sys/select.h, AC_DEFINE(HAVE_SYS_SELECT_H),
+		AC_DEFINE(NO_FD_SET)))
+
+# On the HP, select is defined in sys/time.h
+#
+AC_HEADER_EGREP(select, sys/time.h, AC_DEFINE(SELECT_IN_TIME_H))
+
+
+#--------------------------------------------------------------------
+#	On some systems strstr is broken: it returns a pointer even
+#	even if the original string is empty.
+#--------------------------------------------------------------------
+
+AC_TEST_PROGRAM([
+extern int strstr();
+int main()
+{
+    exit(strstr("\0test", "test") ? 1 : 0);
+}
+],  , [LIBOBJS="${LIBOBJS-} strstr.o"])
+
+#--------------------------------------------------------------------
+#	Check for strtoul function.  This is tricky because under some
+#	versions of AIX strtoul returns an incorrect terminator
+#	pointer for the string "0".
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(strtoul, tcl_ok=1, tcl_ok=0)
+AC_TEST_PROGRAM([
+extern int strtoul();
+int main()
+{
+    char *string = "0";
+    char *term;
+    int value;
+    value = strtoul(string, &term, 0);
+    if ((value != 0) || (term != (string+1))) {
+        exit(1);
+    }
+    exit(0);
+}], , tcl_ok=0)
+if test $tcl_ok = 0; then
+    LIBOBJS="${LIBOBJS-} strtoul.o"
+fi
+
+#--------------------------------------------------------------------
+#	Check for the strtod function.  This is tricky because under
+#	some versions of Linux it mis-parses the string "+".
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(strtod, tcl_ok=1, tcl_ok=0)
+AC_TEST_PROGRAM([
+extern double strtod();
+int main()
+{
+    char *string = "+";
+    char *term;
+    double value;
+    value = strtod(string, &term);
+    if (term != string) {
+	exit(1);
+    }
+    exit(0);
+}], , tcl_ok=0)
+if test $tcl_ok = 0; then
+    LIBOBJS="${LIBOBJS-} strtod.o"
+fi
+
+#--------------------------------------------------------------------
+#	Check for various typedefs and provide substitutes if
+#	they don't exist.
+#--------------------------------------------------------------------
+
+AC_MODE_T
+AC_PID_T
+AC_SIZE_T
+AC_UID_T
+
+#--------------------------------------------------------------------
+#	If a system doesn't have an opendir function (man, that's old!)
+#	then we have to supply a different version of dirent.h which
+#	is compatible with the substitute version of opendir that's
+#	provided.  This version only works with V7-style directories.
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(opendir, , AC_DEFINE(USE_DIRENT2_H))
+
+#--------------------------------------------------------------------
+#	Check for the existence of sys_errlist (this is only needed if
+#	there's no strerror, but I don't know how to conditionalize the
+#	check).
+#--------------------------------------------------------------------
+
+AC_COMPILE_CHECK(sys_errlist, , [
+extern char *sys_errlist[];
+extern int sys_nerr;
+sys_errlist[sys_nerr-1][0] = 0;
+], , AC_DEFINE(NO_SYS_ERRLIST))
+
+#--------------------------------------------------------------------
+#	The check below checks whether <sys/wait.h> defines the type
+#	"union wait" correctly.  It's needed because of weirdness in
+#	HP-UX where "union wait" is defined in both the BSD and SYS-V
+#	environments.  Checking the usability of WIFEXITED seems to do
+#	the trick.
+#--------------------------------------------------------------------
+
+AC_COMPILE_CHECK([union wait], [#include <sys/types.h> 
+#include <sys/wait.h>], [
+union wait x;
+WIFEXITED(x);		/* Generates compiler error if WIFEXITED
+			 * uses an int. */
+], , AC_DEFINE(NO_UNION_WAIT))
+
+#--------------------------------------------------------------------
+#	Check to see whether the system supports the matherr function
+#	and its associated type "struct exception".
+#--------------------------------------------------------------------
+
+AC_COMPILE_CHECK([matherr support], [#include <math.h>], [
+struct exception x;
+x.type = DOMAIN;
+x.type = SING;
+], [LIBOBJS="${LIBOBJS-} matherr.o"; AC_DEFINE(NEED_MATHERR)])
+
+#--------------------------------------------------------------------
+#	End of the section lifted from tcl.
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+#	Check for rint()
+#--------------------------------------------------------------------
+
+LIBS="${LIBS-} -lm"
+AC_REPLACE_FUNCS(rint)
+
+#--------------------------------------------------------------------
+#	Check to see whether we know how to read the number of bytes
+#	in a stdio buffer.
+#--------------------------------------------------------------------
+
+AC_COMPILE_CHECK([stdio support], [#include <stdio.h>], [
+FILE f;
+(f._IO_read_ptr >= f._IO_read_end);
+],AC_DEFINE(USE_LINUX_FBUFEMPTYP))
+
+#--------------------------------------------------------------------
+#	Check to see if fsync is available.
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(fsync, , AC_DEFINE(NO_FSYNC))
+
+#--------------------------------------------------------------------
+#	Look for select() in various places.
+#	Tk adds all of these libraries that are found.
+#	Under Irix 5.2, all three are found, but none should be
+#	used.  Go figure.  So I test to see when select() is
+#	found and stop adding libraries at that point.
+#--------------------------------------------------------------------
+
+AC_FUNC_CHECK(select, select=1, select=0)
+SAVE_LIBS="$LIBS"
+for lib in Xbsd socket nsl; do
+  if test $select = 0; then
+    AC_HAVE_LIBRARY($lib, tryit=1, tryit=0)
+    if test $tryit = 1; then
+      LIBS="$LIBS -l$lib"
+      AC_FUNC_CHECK(select, select=1, LIBS="$SAVE_LIBS")
+    fi
+  fi
+done
+if test $select = 0; then
+  echo "I can't find a select() in any library I've looked in,"
+  echo "and you won't be able to compile without it.  Sorry."
+fi
+
+#--------------------------------------------------------------------
+#	Finally, output the Makefiles for each part of the
+#	distribution.  As a side effect the necessary directories are
+#	created, too. 
+#
+#	In the best of all possible worlds, you would only need to add
+#	new files to this list as mindy expands, and create the
+#	Makefile.in for each of them;  in this world, however, you'll
+#	probably have to mess with the rest of the file, so be warned:
+#	autoconf is a very brittle programming language.
+#--------------------------------------------------------------------
+
+AC_OUTPUT(Makefile \
+	comp/Makefile \
+	interp/Makefile \
+	compat/Makefile \
+	etc/Makefile \
+	libraries/Makefile \
+	libraries/dylan/Makefile \
+	libraries/streams/Makefile \
+	libraries/coll-ext/Makefile \
+	libraries/random/Makefile \
+	libraries/string-ext/Makefile \
+	demos/Makefile \
+	demos/hello-world/Makefile \
+	demos/cat/Makefile \
+	demos/html2txt/Makefile \
+	tests/Makefile \
+)
+
+rm config.cache
