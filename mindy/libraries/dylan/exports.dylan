@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.96 1996/06/17 11:38:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.97 1996/07/11 16:06:07 nkramer Exp $
 
 //======================================================================
 //
@@ -39,7 +39,7 @@ end Dylan;
 define module Builtin-Stuff
   export
     \~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==, \^,
-    $maximum-integer, $minimum-integer, $Newlines-Are-CRLF,
+    $maximum-integer, $minimum-integer,
     <array>,
     <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
@@ -270,7 +270,7 @@ define module System
   use Builtin-Stuff,
     import: {<buffer>, buffer-next, buffer-next-setter,
 	     buffer-end, buffer-end-setter, copy-bytes,
-	     $Newlines-Are-CRLF, get-local-timezone,
+	     get-local-timezone,
 	     get-time-of-day, local-daylight-savings-time?,
 	     system, getcwd, getenv, collect-garbage},
     export: all;
