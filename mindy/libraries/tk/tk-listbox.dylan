@@ -94,7 +94,7 @@ end method selection-anchor-setter;
 
 define method clear-selection (listbox :: <listbox>, first :: <integer>,
 			       #rest last)
-  put-tk-line(listbox, "selection clear ", apply(join-tk-args, first, last));
+  put-tk-line(listbox, " selection clear ", apply(join-tk-args, first, last));
 end method clear-selection;
 
 define method selection-includes? (listbox :: <listbox>, index)
