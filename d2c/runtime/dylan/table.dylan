@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.8 2001/12/19 12:04:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.9 2002/08/29 22:55:59 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -316,10 +316,11 @@ end method object-hash;
 define method object-hash
     (key :: <ratio>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
-  values(logxor(as(<integer>, modulo(key.numerator, $really-big-prime)),
-                as(<integer>,
-                   modulo(key.denominator, $really-big-prime))),
-         initial-state);
+  values
+    (merge-hash-ids(as(<integer>, modulo(key.numerator, $really-big-prime)),
+                    as(<integer>, modulo(key.denominator, $really-big-prime)),
+                    ordered: #t),
+     initial-state);
 end method object-hash;
 
 define inline method object-hash
