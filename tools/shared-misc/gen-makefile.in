@@ -1,7 +1,9 @@
 #!@PERL@
 
+use Cwd;
+
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.26 2001/04/23 19:44:50 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.27 2001/06/29 03:08:39 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -208,8 +210,8 @@ sub set_default_defaults {
 # $orig_buildroot appropriately.
 #
 sub find_Defaults_file {
-    local($cwd) = `pwd`;
-    chop($cwd);
+    local($cwd) = cwd();  # cwd is more portable than `pwd`;
+    chomp($cwd);          # chomp is safer than chop
     $buildroot = $cwd;
     $subdir = '';
 
