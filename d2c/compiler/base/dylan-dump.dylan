@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.7 1996/02/06 15:40:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.8 1996/02/13 14:48:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -192,10 +192,10 @@ end method;
 
 add-od-loader(*default-dispatcher*, #"single-float",
   method (state :: <load-state>) => res :: <single-float>;
-    let frac = load-object-dispatch(state);
-    let exp = load-object-dispatch(state);
+    let frac :: <extended-integer> = load-object-dispatch(state);
+    let exp :: <integer> = load-object-dispatch(state);
     assert-end-object(state);
-    as(<single-float>, frac) * 2.0 ^ exp;
+    as(<single-float>, frac) * 2.0s0 ^ exp;
   end method
 );
 
