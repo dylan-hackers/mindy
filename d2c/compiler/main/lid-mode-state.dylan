@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.21 2003/05/12 15:10:15 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.22 2003/07/06 03:50:01 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -897,6 +897,10 @@ define method compile-library (state :: <lid-mode-state>)
     unless (state.unit-no-makefile)
       do-make(state);
     end;
+
+    if (state.dump-testworks-spec?)
+      do-dump-testworks-spec(state);
+    end if;
 
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "giving up.\n");

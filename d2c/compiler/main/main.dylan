@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.78 2003/06/24 21:00:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.79 2003/07/06 03:50:01 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -315,6 +315,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("profile"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
+			    long-options: #("testworks-spec"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
 			    long-options: #("optimizer-sanity-check"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
@@ -378,6 +381,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   else
     debug-optimizer := 0;
   end if;
+
+  let dump-testworks-spec? = option-value-by-long-name(argp, "testworks-spec");
 
   // Determine our compilation target.
   let targets-file = option-value-by-long-name(argp, "platforms") |
@@ -509,6 +514,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
                link-rpath: link-rpath,
                debug?: debug?,
                profile?: profile?,
+               dump-testworks-spec?: dump-testworks-spec?,
                cc-override: cc-override,
                override-files: as(<list>, override-files));
         end if;

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.44 2003/07/02 16:18:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.45 2003/07/06 03:49:58 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -553,9 +553,9 @@ define module variables
 
     $Bootstrap-Module, add-bootstrap-export, define-bootstrap-module,
 
-    find-library, library-name, note-library-definition,
+    find-library, library-name, note-library-definition, do-exported-modules,
     find-module, module-name, module-syntax-table,
-    note-module-definition, deferred-importers,
+    note-module-definition, deferred-importers, do-exported-variables,
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
     variable-ct-evaluator, variable-ct-evaluator-setter,

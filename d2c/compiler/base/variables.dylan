@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.8 2003/07/02 16:18:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.9 2003/07/06 03:49:58 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -650,7 +650,15 @@ define method note-library-definition
   end if;
 end method note-library-definition;
 
-
+// do-exported-modules -- exported.
+//
+define method do-exported-modules
+    (library :: <library>, function :: <function>)
+ => ();
+  for (name in library.exported-names)
+    function(name, library.entries[name].entry-constituent);
+  end for;
+end method;
 
 
 // Module access stuff.
@@ -788,6 +796,16 @@ define method note-module-definition
     note-namespace-definition(mod, uses, exports, creates);
   end if;
 end method note-module-definition;
+
+// do-exported-variables -- exported.
+//
+define method do-exported-variables
+    (module :: <module>, function :: <function>)
+ => ();
+  for (name in module.exported-names)
+    function(name, module.entries[name].entry-constituent);
+  end for;
+end method;
 
 
 // Variable stuff.

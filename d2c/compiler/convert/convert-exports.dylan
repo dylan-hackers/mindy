@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.10 2003/02/15 19:32:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.11 2003/07/06 03:50:00 housel Exp $
 copyright: see below
 
 
@@ -37,8 +37,8 @@ define library compiler-convert
   use compiler-parser;
 
   export
-    define-classes, define-functions,
-    fer-convert, top-level-expressions, // for great hacking
+    define-classes, define-libraries-and-modules, define-functions,
+    fer-convert, top-level-expressions,
     
     // for browser support:
     define-macros, define-constants-and-variables;
@@ -190,6 +190,14 @@ define module define-libraries-and-modules
   use macros;
   use expanders;
   use parser;
+
+  export
+    <define-library-tlf>,
+    define-library-name, define-library-library,
+    define-library-uses, define-library-exports,
+    <define-module-tlf>,
+    define-module-name, define-module-module,
+    define-module-uses, define-module-exports, define-module-creates;
 end;
 
 
@@ -326,6 +334,7 @@ define module define-classes
     
     // for browser support:
     <slot-defn>, slot-defn-getter-name,
+    class-defn-cclass,
     <local-class-definition>;
 end;
 

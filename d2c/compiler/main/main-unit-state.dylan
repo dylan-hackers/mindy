@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.5 2003/03/05 17:14:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.6 2003/07/06 03:50:01 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -52,6 +52,9 @@ define class <main-unit-state> (<object>)
   // We only have one of these right now.
   slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
   slot unit-profile? :: <boolean>, init-keyword: profile?:, init-value: #f;
+
+  slot dump-testworks-spec? :: <boolean>,
+    init-value: #f, init-keyword: dump-testworks-spec?:;
 
   slot unit-header :: <header>;
   constant slot unit-init-functions :: <stretchy-vector>

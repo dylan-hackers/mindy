@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deflibmod.dylan,v 1.3 2002/03/10 15:36:25 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deflibmod.dylan,v 1.4 2003/07/06 03:50:00 housel Exp $
 copyright: see below
 
 
@@ -37,6 +37,9 @@ define class <define-library-tlf> (<top-level-form>, <definition-parse>)
   constant slot define-library-name :: <symbol-token>,
     required-init-keyword: name:;
   //
+  slot define-library-library :: false-or(<library>) = #f,
+    init-keyword: library:;
+  //
   constant slot define-library-uses :: <simple-object-vector>,
     required-init-keyword: uses:;
   //
@@ -54,6 +57,8 @@ define method process-top-level-form (form :: <define-library-tlf>) => ();
   note-library-definition(form.define-library-name, form.define-library-uses,
 			  form.define-library-exports);
   end-of-context();
+  form.define-library-library
+    := find-library(form.define-library-name.token-symbol);
   add!(*Top-Level-Forms*, form);
 end;
 
