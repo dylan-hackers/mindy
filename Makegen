@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.14 2001/04/20 17:01:50 brent Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.15 2001/06/29 19:43:36 brent Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -123,11 +123,11 @@ EOF
 } elsif ($features{'compiled_for_win32'}) {
     print <<"EOF"
 installdirs:
-	-mkdir \${DESTDIR}$bindir
-	-mkdir \${DESTDIR}$libdir
-       	-mkdir \${DESTDIR}$libdir\\elisp
-       	-mkdir \${DESTDIR}$includedir
-	-mkdir \${DESTDIR}$sysconfdir
+	-mkdir \$(DESTDIR)$bindir
+	-mkdir \$(DESTDIR)$libdir
+       	-mkdir \$(DESTDIR)$libdir\\elisp
+       	-mkdir \$(DESTDIR)$includedir
+	-mkdir \$(DESTDIR)$sysconfdir
 
 EOF
 ;
