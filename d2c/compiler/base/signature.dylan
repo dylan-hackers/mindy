@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.4 1995/05/05 16:58:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.5 1995/05/18 13:26:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -54,7 +54,8 @@ define class <key-info> (<object>)
   // ??? if this means anything, it means the non-strictly-Dylan
   // concept of keywords that are effictively required, e.g. due to an
   // error-default.  Or a required-init-keyword on a make method?
-  slot required? :: <boolean>, init-value: #f;
+  slot required? :: <boolean>,
+    init-value: #f, init-keyword: required:;
 
   // The default, if it is a compile-time constant.  Otherwise, #f.
   slot key-default :: union(<false>, <ct-value>),
