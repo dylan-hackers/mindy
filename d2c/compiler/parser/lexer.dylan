@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.14 2001/10/10 00:43:56 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.15 2001/10/11 21:40:46 gabor Exp $
 copyright: see below
 
 
@@ -1287,8 +1287,9 @@ end method print-object;
 // This is just a simple state machine implemented via a loop and
 // a select statement.
 //
-define method skip-multi-line-comment (lexer :: <lexer>,
-				       start :: <integer>)
+define function skip-multi-line-comment (lexer :: <lexer>,
+				       start :: <integer>,
+				       #key inhibit-nesting :: <boolean>)
     => result :: false-or(<integer>);
   block (return)
     let contents = lexer.lexer-source.contents;
@@ -1308,7 +1309,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	    state := #"seen-star";
 	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
-	    lexer.line-start := posn;
+	    lexer.line-start := posn + 1;
 	    state := #"seen-nothing";
 	  else
 	    state := #"seen-nothing";
@@ -1318,13 +1319,17 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	  // one of /*, //, or just a random slash in the source code.
 	  //
 	  if (char == '/')
-	    state := #"seen-slash-slash";
+	    if (inhibit-nesting)
+	      state := #"seen-nothing";
+	    else
+	      state := #"seen-slash-slash";
+	    end if;
 	  elseif (char == '*')
-	    depth := depth + 1;
+	    inhibit-nesting | (depth := depth + 1);
 	    state := #"seen-nothing";
 	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
-	    lexer.line-start := posn;
+	    lexer.line-start := posn + 1;
 	    state := #"seen-nothing";
 	  else
 	    state := #"seen-nothing";
@@ -1346,7 +1351,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	    state := #"seen-star";
 	  elseif (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
-	    lexer.line-start := posn;
+	    lexer.line-start := posn + 1;
 	    state := #"seen-nothing";
 	  else
 	    state := #"seen-nothing";
@@ -1356,7 +1361,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 	  //
 	  if (char == '\n' | char == '\r')
 	    lexer.line := lexer.line + 1;
-	    lexer.line-start := posn;
+	    lexer.line-start := posn + 1;
 	    state := #"seen-nothing";
 	  else
 	    state := #"seen-slash-slash";
@@ -1367,7 +1372,29 @@ define method skip-multi-line-comment (lexer :: <lexer>,
     end for;
     #f;
   end block;
-end method;
+end function skip-multi-line-comment;
+
+
+// lexed-location -- internal.
+//
+// Extract location from lexer given token start and end position.
+//
+define function lexed-location
+  (token-start :: <integer>,
+   token-end :: <integer>,
+   lexer :: <lexer>,
+   #key start-line :: <integer> = lexer.line,
+	start-position :: <integer> = lexer.line-start)
+ => res :: <known-source-location>;
+make(<known-source-location>,
+     source: lexer.lexer-source,
+     start-posn: token-start,
+     start-line: start-line,
+     start-column: token-start - start-position,
+     end-posn: token-end,
+     end-line: lexer.line,
+     end-column: token-end - lexer.line-start);
+end function;
 
 // internal-get-token -- internal.
 //
@@ -1448,10 +1475,25 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	  #"multi-line-comment" =>
 	    let line-start :: <integer> = lexer.line-start;
 	    let line :: <integer> = lexer.line;
+	    let prev-result-end = result-end;
 	    result-end := skip-multi-line-comment(lexer, result-end);
+	    
 	    unless (result-end)
-	    	lexer.line-start := line-start;
-	    	lexer.line := line;
+	      lexer.line-start := line-start;
+	      lexer.line := line;
+	      result-end := skip-multi-line-comment(lexer,
+						    prev-result-end,
+						    inhibit-nesting: #t);
+	      if (result-end)
+		compiler-warning-location
+		  (lexed-location
+		    (prev-result-end - 2, result-end, lexer,
+		     start-line: line, start-position: line-start),
+		   "nested comment unterminated, ignoring nesting");
+	      else
+		lexer.line-start := line-start;
+		lexer.line := line;
+	      end;
 	    end;
 	end select;
 	result-kind := #f;
@@ -1486,7 +1528,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   //
   // Make a source location for the current token.
   // 
-  let source-location
+  let source-location // lexed-location!!!
     = make(<known-source-location>,
 	   source: lexer.lexer-source,
 	   start-posn: result-start,
