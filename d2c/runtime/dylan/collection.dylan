@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.7 1995/12/06 21:34:54 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.8 1995/12/08 22:15:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -56,19 +56,17 @@ define open generic backward-iteration-protocol
 
 define open generic element
     (collection :: <collection>, key :: <object>, #key default)
-    => element :: <object>;
+ => (element :: <object>);
 
 define open generic key-sequence
-    (collection :: <collection>)
-    => keys :: <sequence>;
+    (collection :: <collection>) => (keys :: <sequence>);
 
 define open generic element-setter
-    (new-value :: <object>, collection :: <collection>, key :: <object>)
-    => element :: <object>;
+    (new-value :: <object>, collection :: <mutable-collection>,
+     key :: <object>)
+ => (element :: <object>);
 
-define open generic size
-    (collection :: <collection>)
-    => res :: false-or(<integer>);
+define open generic size (object :: <object>) => (res :: <object>);
 
 define open generic empty?
     (collection :: <collection>)
@@ -83,14 +81,14 @@ define sealed generic map
     => new-collection :: <collection>;
 
 define sealed generic map-as
-    (class :: <class>, proc :: <function>, collection :: <collection>,
+    (type :: <type>, proc :: <function>, collection :: <collection>,
      #rest more-collections)
-    => new-collection :: <collection>;
+    => new-collection :: <mutable-collection>;
 
 define sealed generic map-into
     (target :: <mutable-collection>, proc :: <function>,
      collection :: <collection>, #rest more-collections)
-    => new-collection :: <collection>;
+    => new-collection :: <mutable-collection>;
 
 define sealed generic any?
     (pred :: <function>, collection :: <collection>, #rest more-collections)
@@ -126,8 +124,7 @@ define open generic fill!
     => target :: <mutable-collection>;
 
 define open generic key-test
-    (collection :: <collection>)
-    => test-function :: <function>;
+    (collection :: <collection>) => (test-function :: <function>);
 
 
 define inline method class-for-copy (coll :: <mutable-collection>)
@@ -193,7 +190,7 @@ end;
 define method map-as
     (class :: <class>, proc :: <function>, collection :: <collection>,
      #rest more-collections)
-    => res :: <collection>;
+    => res :: <mutable-collection>;
   if (empty?(more-collections))
     let (init, limit, next-state, finished?, current-key, current-element)
       = forward-iteration-protocol(collection);
@@ -271,7 +268,7 @@ define inline method every?
   end block;
 end method every?;
 
-define method reduce
+define inline method reduce
     (proc :: <function>, init-value :: <object>, collection :: <collection>)
     => res :: <object>;
   for (res = init-value then proc(res, element),
@@ -281,7 +278,7 @@ define method reduce
   end for;
 end method reduce;
 
-define method reduce1
+define inline method reduce1
     (proc :: <function>, collection :: <collection>)
     => res :: <object>;
   for (res = #f then if (first?) element else proc(res, element) end,
@@ -295,6 +292,32 @@ define method reduce1
     end if;
   end for;
 end method reduce1;
+
+define inline method choose
+    (predicate :: <function>, sequence :: <sequence>)
+ => (result :: <sequence>);
+  for (result = #()
+	 then if (predicate(elem)) pair(elem, result) else result end if,
+       elem in sequence)
+  finally
+    as(class-for-copy(sequence), reverse!(result));
+  end for;
+end choose;
+
+define inline method choose-by
+    (predicate :: <function>, test-seq :: <sequence>, value-seq :: <sequence>)
+ => (result :: <sequence>);
+  for (result = #() then if (predicate(test-elem))
+			   pair(value-elem, result);
+			 else
+			   result;
+			 end if,
+       value-elem in value-seq,
+       test-elem in test-seq)
+  finally
+    as(class-for-copy(value-seq), reverse!(result));
+  end for;
+end method;
 
 define inline method member?
     (value :: <object>, collection :: <collection>, #key test = \==)
@@ -310,15 +333,16 @@ define inline method member?
 end method member?;
 
 define method find-key
-    (collection :: <collection>, proc :: <function>, #key skip, failure = #f)
-    => key-or-failure :: <object>;
+    (collection :: <collection>, proc :: <function>,
+     #key skip :: <integer> = 0, failure = #f)
+ => (key-or-failure :: <object>);
   let (init-state, limit, next-state, done?, current-key, current-element)
     = forward-iteration-protocol(collection);
   block (return)
     for (state = init-state then next-state(collection, state),
 	 until: done?(collection, state, limit))
       if (proc(current-element(collection, state)))
-	if (skip & skip > 0)
+	if (skip > 0)
 	  skip := skip - 1;
 	else
 	  return(current-key(collection, state));
@@ -332,7 +356,7 @@ end method find-key;
 
 define method replace-elements!
     (collection :: <mutable-collection>, predicate :: <function>,
-     new-value-fn :: <function>, #key count)
+     new-value-fn :: <function>, #key count :: false-or(<integer>))
     => collection :: <mutable-collection>;
   let (init-state, limit, next-state, done?,
        current-key, current-element,
@@ -351,7 +375,7 @@ end method replace-elements!;
 
 define method fill!
     (collection :: <mutable-collection>, value :: <object>, #key)
-    => collection :: <mutable-collection>;
+ => collection :: <mutable-collection>;
   let (init-state, limit, next-state, done?,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(collection);
@@ -382,26 +406,28 @@ end method key-sequence;
 
 define open generic remove-key!
     (table :: <mutable-explicit-key-collection>, key :: <object>)
- => (table :: <mutable-explicit-key-collection>);
+ => (result :: <boolean>);
 
 
 // Sequence generics
 
-define open generic size-setter
-    (new :: <integer>, seq :: <stretchy-collection>)
-    => new :: <integer>;
+define open generic size-setter (new :: <object>, object :: <object>)
+ => (new :: <object>);
 
 define open generic add
-    (seq :: <sequence>, new-element :: <object>)
-    => new-seq :: <sequence>;
+    (seq :: <sequence>, new-element :: <object>) => (new-seq :: <sequence>);
 
 define open generic add!
     (seq :: <sequence>, new-element :: <object>)
-    => maybe-new-seq :: <sequence>;
+ => (maybe-new-seq :: <sequence>);
 
 define open generic add-new
     (seq :: <sequence>, new-element :: <object>, #key test)
-    => new-seq :: <sequence>;
+ => (new-seq :: <sequence>);
+
+define open generic add-new!
+    (seq :: <sequence>, new-element :: <object>, #key test)
+ => (new-seq :: <sequence>);
 
 define open generic remove
     (seq :: <sequence>, value :: <object>, #key test, count)
@@ -424,7 +450,7 @@ define open generic intersection
     => new-seq :: <sequence>;
 
 define open generic union
-    (seq1 :: <sequence>, seq2 :: <sequence>, #key)
+    (seq1 :: <sequence>, seq2 :: <sequence>, #key test)
     => new-seq :: <sequence>;
 
 define open generic remove-duplicates
@@ -440,7 +466,7 @@ define open generic copy-sequence
     => new-seq :: <sequence>;
 
 define sealed generic concatenate-as
-    (class :: <class>, seq :: <sequence>, #rest more-sequences)
+    (type :: <type>, seq :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
 
 define sealed generic concatenate
@@ -451,13 +477,9 @@ define open generic replace-subsequence!
     (seq :: <sequence>, insert-seq :: <sequence>, #key start, end: finis)
     => result-seq :: <sequence>;
 
-define open generic reverse
-    (seq :: <sequence>)
-    => new-seq :: <sequence>;
+define open generic reverse (seq :: <sequence>) => (new-seq :: <sequence>);
 
-define open generic reverse!
-    (seq :: <sequence>)
-    => new-seq :: <sequence>;
+define open generic reverse! (seq :: <sequence>) => (new-seq :: <sequence>);
 
 define open generic sort
     (seq :: <sequence>, #key test, stable)
@@ -468,43 +490,213 @@ define open generic sort!
     => new-seq :: <sequence>;
 
 define sealed generic first
-    (seq :: <sequence>, #key default)
-    => value :: <object>;
+    (seq :: <sequence>, #key default) => (value :: <object>);
 
 define sealed generic second
-    (seq :: <sequence>, #key default)
-    => value :: <object>;
+    (seq :: <sequence>, #key default) => (value :: <object>);
 
 define sealed generic third
-    (seq :: <sequence>, #key default)
-    => value :: <object>;
+    (seq :: <sequence>, #key default) => (value :: <object>);
 
 define sealed generic first-setter
-    (new-value :: <object>, seq :: <sequence>)
-    => value :: <object>;
+    (new-value :: <object>, seq :: <mutable-sequence>) => (value :: <object>);
 
 define sealed generic second-setter
-    (new-value :: <object>, seq :: <sequence>)
-    => value :: <object>;
+    (new-value :: <object>, seq :: <mutable-sequence>) => (value :: <object>);
 
 define sealed generic third-setter
-    (new-value :: <object>, seq :: <sequence>)
-    => value :: <object>;
+    (new-value :: <object>, seq :: <mutable-sequence>) => (value :: <object>);
 
 define open generic last
-    (seq :: <sequence>, #key default)
-    => value :: <object>;
+    (seq :: <sequence>, #key default) => (value :: <object>);
 
 define open generic last-setter
-    (new-value :: <object>, seq :: <sequence>)
-    => value :: <object>;
+    (new-value :: <object>, seq :: <mutable-sequence>) => (value :: <object>);
 
 define open generic subsequence-position
     (big :: <sequence>, pattern :: <sequence>, #key test, count)
-    => index :: <integer>;
+ => (index :: false-or(<fixed-integer>));
 
 
 // Sequence methods
+
+define inline method add
+    (seq :: <sequence>, new-element :: <object>) => (new-seq :: <sequence>);
+  concatenate(seq, vector(new-element));
+end method add;
+
+define inline method add!
+    (seq :: <sequence>, new-element :: <object>)
+ => (maybe-new-seq :: <sequence>);
+  add(seq, new-element);
+end method add!;
+
+define method add-new
+    (seq :: <sequence>, new-element :: <object>, #key test :: <function> = \==)
+ => (new-seq :: <sequence>);
+  let found?
+    = if (test == \==)
+	member?(new-element, seq);
+      else
+	member?(new-element, seq, test: method (a, b) test(b, a) end method);
+      end if;
+  if (found?) seq else add(seq, new-element) end if;
+end method add-new;
+
+define inline method add-new!
+    (seq :: <sequence>, new-element :: <object>, #key test)
+ => (new-seq :: <sequence>);
+  add-new(seq, new-element, test: test);
+end method add-new!;
+
+define method remove
+    (sequence :: <sequence>, value,
+     #key test :: <function> = \==, count :: false-or(<integer>))
+ => (result :: <sequence>);
+  for (result = #() then if (count = 0)
+			   pair(elem, result);
+			 elseif (~test(elem, value))
+			   if (count) count := count - 1 end if;
+			   pair(elem, result);
+			 else result
+			 end if,
+       elem in sequence)
+  finally
+    as(class-for-copy(sequence), reverse!(result));
+  end for;
+end remove;
+
+define inline method remove!
+    (sequence :: <sequence>, value,
+     #key test :: <function> = \==, count :: false-or(<integer>))
+ => (result :: <sequence>);
+  remove(sequence, value, test: test, count: count);
+end method remove!;
+
+define method reverse (sequence :: <sequence>) => (result :: <sequence>);
+  let result = make(sequence.class-for-copy, size: sequence.size);
+  let (res-state, res-limit, res-next, res-done?, res-key, res-elem,
+       res-elem-setter) = forward-iteration-protocol(result);
+  let (source-state, source-limit, source-next, source-done?, source-key,
+       source-elem) = forward-iteration-protocol(sequence);
+  local method reverse1(res-state, source-state) // :: res-state
+	  if (source-done?(sequence, source-state, source-limit))
+	    res-state
+	  else 
+	    let elem = source-elem(sequence, source-state);
+	    let new-res-state =
+	      reverse1(res-state, source-next(sequence, source-state));
+	    res-elem(result, new-res-state) := elem;
+	    res-next(result, new-res-state);
+	  end if;
+	end method reverse1;
+  reverse1(res-state, source-state);
+  result;
+end method;
+
+define inline method reverse! (sequence :: <sequence>)
+ => (result :: <sequence>);
+  reverse(sequence);
+end method reverse!;
+
+define method intersection
+    (sequence1 :: <sequence>, sequence2 :: <sequence>,
+     #key test :: <function> = \==)
+ => (result :: <sequence>);
+  choose(method (item) member?(item, sequence2, test: test) end method,
+	 sequence1);
+end method intersection;
+
+define method difference
+    (sequence1 :: <sequence>, sequence2 :: <sequence>,
+     #key test :: <function> = \==)
+ => (result :: <sequence>);
+  choose(method (item) ~member?(item, sequence2, test: test) end method,
+	 sequence1);
+end method difference;
+
+define method union
+    (sequence1 :: <sequence>, sequence2 :: <sequence>,
+     #key test :: <function> = \==)
+ => (result :: <sequence>);
+  concatenate(sequence1, difference(sequence2, sequence1,
+				    test: method (a, b) test(b, a) end));
+end method union;
+
+define method remove-duplicates
+    (sequence :: <sequence>, #key test :: <function> = \==)
+ => (result :: <sequence>);
+  local method true-test (a, b) test(b, a) end method;
+  for (result = #() then if (~member?(element, result, test: true-test))
+			   pair(element, result);
+			 else
+			   result;
+			 end if,
+       element in sequence)
+  finally
+    as(class-for-copy(sequence), reverse!(result));
+  end for;
+end method remove-duplicates;
+
+define inline method remove-duplicates!
+    (sequence :: <sequence>, #key test :: <function> = \==)
+ => (result :: <sequence>);
+  remove-duplicates(sequence, test: test);
+end method remove-duplicates!;
+
+define method replace-subsequence!
+    (sequence :: <sequence>, insert-sequence :: <sequence>,
+     #key start: first :: <fixed-integer> = 0,
+          end: last :: <fixed-integer> = sequence.size)
+ => (sequence :: <sequence>);
+  concatenate(copy-sequence(sequence, start: 0, end: first), insert-sequence,
+	      copy-sequence(sequence, start: last));
+end method replace-subsequence!;
+
+define method subsequence-position
+    (big :: <sequence>, pattern :: <sequence>,
+     #key test :: <function> = \==, count :: <integer> = 1)
+ => (result :: false-or(<fixed-integer>));
+  if (empty?(pattern))
+    0
+  else
+    let (init-state, limit, next-state, done?,
+	 current-key, current-element,
+	 current-element-setter, copy-state) = forward-iteration-protocol(big);
+    let (pat-init-state, pat-limit, pat-next-state,
+	 pat-done?, pat-current-key, pat-current-element,
+	 pat-current-element-setter,
+	 pat-copy-state) = forward-iteration-protocol(pattern);
+    local method search(index, index-state, big-state, pat-state, count)
+	    case
+	      pat-done?(pattern, pat-state, pat-limit) =>
+		// End of pattern -- We found one.
+		if (count = 1)
+		  index
+		else
+		  let next = next-state(big, index-state);
+		  search(index + 1, next, copy-state(big, next),
+			 pat-copy-state(pattern, pat-init-state), count - 1);
+		end if;
+	      done?(big, big-state, limit) =>
+		// End of big sequence -- it's not here.
+		#f;
+	      test(current-element(big, big-state),
+		   pat-current-element(pattern, pat-state)) =>
+		// They match -- try one more.
+		search(index, index-state, next-state(big, big-state),
+		       pat-next-state(pattern, pat-state), count);
+	      otherwise =>
+		// Don't match -- try one further along.
+		let next = next-state(big, index-state);
+	        search(index + 1, next, next & copy-state(big, next),
+		       pat-copy-state(pattern, pat-init-state), count);
+	    end case;
+	  end method search;
+    search(0, copy-state(big, init-state), copy-state(big, init-state),
+	   pat-copy-state(pattern, pat-init-state), count);
+  end if;
+end method subsequence-position;
 
 define method do
     (proc :: <function>, sequence :: <sequence>,
@@ -567,7 +759,7 @@ end;
 define method map-as
     (class :: <class>, proc :: <function>, collection :: <sequence>,
      #next next-method, #rest more-collections)
-    => res :: <collection>;
+    => res :: <mutable-collection>;
   if (subtype?(class, <sequence>)
 	& every?(rcurry(instance?, <sequence>), more-collections))
     apply(sequence-map-as, class, proc, collection, more-collections);
@@ -707,8 +899,9 @@ end method find-key;
 
 define method fill!
     (sequence :: <mutable-sequence>, value :: <object>,
-     #key start: first = 0, end: last)
-    => sequence :: <mutable-sequence>;
+     #key start: first :: <fixed-integer> = 0,
+          end: last :: false-or(<fixed-integer>))
+ => (sequence :: <mutable-sequence>);
     
   let (init-state, limit, next-state, done?,
        current-key, current-element,
@@ -792,7 +985,8 @@ define inline method first
 end;
 
 define inline method first-setter
-    (new-value :: <object>, sequence :: <sequence>) => new-value :: <object>;
+    (new-value :: <object>, sequence :: <mutable-sequence>)
+ => (new-value :: <object>);
   sequence[0] := new-value;
 end;
 
@@ -802,7 +996,8 @@ define inline method second
 end;
 
 define inline method second-setter
-    (new-value :: <object>, sequence :: <sequence>) => new-value :: <object>;
+    (new-value :: <object>, sequence :: <mutable-sequence>)
+ => (new-value :: <object>);
   sequence[1] := new-value;
 end;
 
@@ -812,7 +1007,8 @@ define inline method third
 end;
 
 define inline method third-setter
-    (new-value :: <object>, sequence :: <sequence>) => new-value :: <object>;
+    (new-value :: <object>, sequence :: <mutable-sequence>)
+ => (new-value :: <object>);
   sequence[2] := new-value;
 end;
 
@@ -847,12 +1043,12 @@ define method copy-sequence
 end method copy-sequence;
 
 define inline method last
-    (seq :: <sequence>, #key default) => value :: <object>;
-  element(seq, seq.size - 1);
+    (seq :: <sequence>, #rest keys, #key default) => value :: <object>;
+  apply(element, seq, seq.size - 1, keys);
 end method last;
 
 define inline method last-setter
-    (new-value :: <object>, seq :: <sequence>) => value :: <object>;
+    (new-value :: <object>, seq :: <mutable-sequence>) => value :: <object>;
   element(seq, seq.size - 1) := new-value;
 end method last-setter;
 
