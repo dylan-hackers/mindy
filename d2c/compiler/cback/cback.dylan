@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.78 1995/11/12 03:33:34 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.79 1995/11/14 13:52:07 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -682,12 +682,17 @@ end;
 
 // Prologue and epilogue stuff.
 
-define method emit-prologue (output-info :: <output-info>) => ();
+define method emit-prologue
+    (output-info :: <output-info>, other-units :: <simple-object-vector>)
+    => ();
   let stream = output-info.output-info-body-stream;
   format(stream, "#include <stdlib.h>\n\n");
 
   format(stream, "#include <runtime.h>\n\n");
 
+  for (unit in other-units)
+    format(stream, "extern descriptor_t %s_roots[];\n", unit);
+  end;
   format(stream, "extern descriptor_t %s_roots[];\n\n",
 	 output-info.output-info-unit-info.unit-info-prefix);
   format(stream, "#define obj_True %s.heapptr\n",
