@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.23 1994/06/11 02:23:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.24 1994/06/11 17:16:39 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -23,7 +23,7 @@
 #ifdef MACH
 extern int isatty(int fd);
 #endif
-#ifdef hpux
+#if defined(hpux) || defined(__osf__)
 #define pause buttplug
 #include <unistd.h>
 #undef pause
@@ -1544,7 +1544,7 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 
 	    if (pc < -1) {
 		prin1(func);
-		printf(" does not span line number %ld\n", line);
+		printf(" does not span line number %d\n", line);
 	    }
 	    else {
 		int id = install_byte_breakpoint(thing, pc);
@@ -1554,7 +1554,7 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 		else
 		    printf("breakpoint %d installed in ", id);
 		prin1(func);
-		printf(" at line %ld (pc %d)\n", line, pc);
+		printf(" at line %d (pc %d)\n", line, pc);
 	    }
 	}
     }
@@ -1817,8 +1817,8 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 	      case 't':
 		ptr += 4;
 		sprintf(fill, "%d",
-			ptr - (unsigned char *)component
-			+ disassem_int4(ptr-4));
+			(int) (ptr - (unsigned char *)component
+			       + disassem_int4(ptr-4)));
 		break;
 
 	      case 'v':
@@ -1907,7 +1907,7 @@ static void disassemble_component(obj_t component)
 		printf("\nline %d:", line);
 	    next_line += fixnum_value(SOVEC(entry)->contents[1]);
 	}
-	printf("\n%6d:", ptr - (unsigned char *)component);
+	printf("\n%6d:", (int)(ptr - (unsigned char *)component));
 	ptr = disassemble_op(component, ptr);
     }
     putchar('\n');
