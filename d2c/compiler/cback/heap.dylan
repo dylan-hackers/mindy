@@ -248,10 +248,12 @@ define method spew-object
     (object :: <literal-extended-integer>, state :: <state>) => ();
   let digits = make(<stretchy-vector>);
   local
-    method repeat (remainder :: <integer>);
-      let (remainder :: <integer>, digit :: <integer>)
+    method repeat (remainder :: <extended-integer>);
+      let (remainder :: <extended-integer>, digit :: <integer>)
 	= floor/(remainder, 256);
-      add!(digits, make(<literal-fixed-integer>, value: digit));
+      add!(digits,
+	   make(<literal-fixed-integer>,
+		value: as(<extended-integer>, digit)));
       unless (if (logbit?(7, digit))
 		remainder = -1;
 	      else
@@ -570,7 +572,7 @@ define method spew-instance
 	  unless (instance?(len-ctv, <literal-fixed-integer>))
 	    error("Bogus length: %=", len-ctv);
 	  end;
-	  let len = len-ctv.literal-value;
+	  let len = as(<fixed-integer>, len-ctv.literal-value);
 	  if (instance?(init-value, <sequence>))
 	    unless (init-value.size == len)
 	      error("Size mismatch.");

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.44 1995/12/07 00:21:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.45 1995/12/07 14:30:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -968,8 +968,7 @@ define method build-discriminator-tree
 	else
 	  let half-way-point = ash(min + max, -1);
 	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
-	  let ctv = make(<literal-fixed-integer>,
-			 value: ranges[half-way-point].second + 1);
+	  let ctv = as(<ct-value>, ranges[half-way-point].second + 1);
 	  let bound = make-literal-constant(builder, ctv);
 	  build-assignment(builder, policy, source, cond-temp,
 			   make-unknown-call(builder, less-then, #f,

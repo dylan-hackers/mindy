@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.8 1995/05/18 13:27:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.9 1995/12/07 14:30:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -379,7 +379,7 @@ define method process-for-clause (clause :: <for-from-clause>,
       end;
   let by-expr
     = if (~clause.for-clause-by)
-	make(<literal-ref>, literal: make(<literal-fixed-integer>, value: 1));
+	make(<literal-ref>, literal: as(<ct-value>, 1));
       elseif (instance?(clause.for-clause-by, <literal-ref>))
 	clause.for-clause-by;
       else
@@ -400,20 +400,25 @@ define method process-for-clause (clause :: <for-from-clause>,
 	  #"to" =>
 	    if (instance?(by-expr, <literal-ref>)
 		  & instance?(by-expr.litref-literal, <literal-number>))
-	      make-dylan-id(if (by-expr.litref-literal < 0) #"<" else #">" end);
+	      make-dylan-id(if (by-expr.litref-literal < 0)
+			      #"<";
+			    else
+			      #">";
+			    end);
 	    else
-	      let cmp = make(<funcall>,
-			     function: make(<varref>, id: make-dylan-id(#"<")),
-			     arguments: vector(by-expr,
-					       make(<literal-ref>,
-						    literal:
-						      make(<literal-fixed-integer>,
-							   value: 0))));
+	      let cmp
+		= make(<funcall>,
+		       function: make(<varref>, id: make-dylan-id(#"<")),
+		       arguments: vector(by-expr,
+					 make(<literal-ref>,
+					      literal: as(<ct-value>, 0))));
 	      let test
 		= make(<if>,
 		       condition: cmp,
-		       consequent: vector(make(<varref>, id: make-dylan-id(#"<"))),
-		       alternate: vector(make(<varref>, id: make-dylan-id(#">"))));
+		       consequent:
+			 vector(make(<varref>, id: make-dylan-id(#"<"))),
+		       alternate:
+			 vector(make(<varref>, id: make-dylan-id(#">"))));
 	      let (fn-temp, fn-bind) = bind-temp(symcat(name, "-test"), test);
 	      add!(outer-body, fn-bind);
 	      fn-temp;
