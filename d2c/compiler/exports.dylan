@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.18 1995/03/04 22:00:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.19 1995/03/23 21:54:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,6 +46,7 @@ define module forwards
   create
     <module>,
     <ctype>,
+    <cclass>,
     <abstract-variable>,
     expand;
 end;
@@ -164,11 +165,12 @@ define module names
   use common;
   use forwards, import: {<module>};
   use utils;
+  use tokens;
   use signature-interface;
 
   export
     <name>,
-    <basic-name>, name-symbol, name-module,
+    <basic-name>, id-name, name-symbol, name-module,
     <type-cell-name>, type-cell-name-base,
     <method-name>, method-name-generic-function, method-name-signature;
 end;
@@ -307,7 +309,7 @@ define module parse-tree
     <binop-series>, binop-series-operands, binop-series-operators,
     <funcall>, funcall-function, funcall-arguments,
     <dot>, dot-operand, dot-name,
-    <varref>, varref-name,
+    <varref>, varref-id,
     <macro-statement>, statement-begin-word, statement-fragment,
     <assignment>, assignment-place, assignment-value,
     <begin>, begin-body,
@@ -353,6 +355,7 @@ define module top-level-forms
   use common;
   use utils;
   use tokens;
+  use compile-time-values;
   use parse-tree;
   use definitions;
   use builder-interface, import: {<fer-builder>};
@@ -396,36 +399,86 @@ define module ctype
   use compile-time-values;
   use names;
   use variables;
+  use forwards, import: {<cclass>};
 
   use forwards, import: {<ctype>}, export: all;
   export
-    <values-ctype>, csubtype?, ctype-union, ctype-intersection,
-    ctype-difference, ctypes-intersect?, ctype-eq?, ctype-neq?, <union-ctype>,
-    <singleton-ctype>, <unknown-ctype>, <limited-ctype>,
-    <limited-integer-ctype>,
-    <direct-instance-ctype>, <byte-character-ctype>, 
-    make-canonical-singleton, singleton-value, type-exp, base-class,
-    low-bound, high-bound, <cclass>, cclass-name,
-    closest-primary-superclass,
-    <primitive-cclass>, <defined-cclass>,
-    precedence-list, subclasses, sealed?, abstract?, primary?, functional?,
-    not-functional?,
-    wild-ctype, empty-ctype, object-ctype, function-ctype,
+    // The various types, their accessors and constructors.
+    <values-ctype>,
+    <multi-value-ctype>, make-values-ctype, min-values, positional-types,
+	rest-value-type, first-value,
+    // <ctype> is picked from from the forwards.
+    <unknown-ctype>, type-exp,
+    <union-ctype>, members,
+    <limited-ctype>, base-class,
+    <singleton-ctype>, make-canonical-singleton, singleton-value,
+    <limited-integer-ctype>, make-canonical-limited-integer,
+    low-bound, high-bound,
+    <direct-instance-ctype>,
+    <byte-character-ctype>, 
+
+    // Operations on types.
+    values-subtype?, values-types-intersect?, values-type-intersection,
+    values-type-union, csubtype?, ctype-union, ctype-intersection,
+    ctype-difference, ctypes-intersect?, ctype-eq?, ctype-neq?, 
     find-direct-classes,
 
-    values-subtype?, values-types-intersect?, values-type-intersection,
-    values-type-union, min-values, positional-types, rest-value-type,
-    first-value, <multi-value-ctype>, make-values-ctype;
+    // Shorthand constructor functions.
+    wild-ctype, object-ctype, function-ctype, empty-ctype,
+
+    // Ctype extension generic functions.
+    csubtype-dispatch, ctype-intersection-dispatch;
+end;
+
+define module representation
+  use common;
+
+  use utils;
+  use variables;
+  use ctype;
+  use forwards, import: {<cclass>};
+
+  export
+    <representation>, pick-representation, representation-alignment,
+    representation-size, representation-has-bottom-value?;
+end;
+
+define module classes
+  use common;
+
+  use utils;
+  use names;
+  use definitions;
+  use variables;
+  use compile-time-values;
+  use ctype;
+  use representation;
+
+  use forwards, import: {<cclass>}, export: all;
+
+  export
+    cclass-name, closest-primary-superclass, precedence-list, subclasses,
+    sealed?, abstract?, primary?, functional?, not-functional?,
+    <defined-cclass>,
+
+    <slot-allocation>, <slot-info>, slot-introduced-by,
+    slot-type, slot-type-setter, slot-init-value, slot-init-value-setter,
+    slot-init-function, slot-init-function-setter, slot-init-keyword,
+    slot-init-keyword-required?,
+
+    layout-instance-slots;
 end;
 
 define module compile-time-eval
   use common;
 
   use utils;
+  use names;
   use variables;
   use definitions;
   use compile-time-values;
   use ctype;
+  use classes;
   use tokens;
   use parse-tree;
   use forwards, import: {expand};
@@ -447,9 +500,6 @@ define module expand
   use ctype;
 
   use forwards, import: {expand}, export: all;
-
-  export
-    make-dylan-name;
 end;
 
 define module parser
@@ -570,6 +620,7 @@ define module front
   use variables;
   use flow;
   use ctype;
+  use classes;
   use signature-interface;
   use source;
   use builder-interface;
@@ -584,6 +635,7 @@ define module fer-convert
   use utils;
   use source;
   use tokens;
+  use names;
   use compile-time-values;
   use compile-time-eval;
   use signature-interface;
@@ -620,6 +672,7 @@ define module define-functions
   use fer-convert;
   use signature-interface;
   use ctype;
+  use classes;
   use compile-time-eval;
   use lexenv;
   use source;
@@ -628,6 +681,8 @@ define module define-functions
     <generic-definition>,
     <abstract-method-definition>,
     <method-definition>, method-defn-of,
+    <accessor-method-definition>, accessor-method-defn-slot-info,
+    <getter-method-definition>, <setter-method-definition>,
     <define-generic-tlf>,
     <define-method-tlf>,
     implicitly-define-generic;
@@ -663,6 +718,7 @@ define module define-classes
   use parse-tree;
   use top-level-forms;
   use ctype;
+  use classes;
   use compile-time-eval;
   use define-functions;
   use builder-interface;
@@ -724,4 +780,5 @@ define module main
   use fer-convert;
   use front;
   use dump;
+  use classes;
 end;
