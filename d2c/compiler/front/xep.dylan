@@ -1,5 +1,5 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.3 2001/12/01 13:57:54 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.4 2002/05/11 16:31:01 gabor Exp $
 copyright: see below
 
 
@@ -102,16 +102,16 @@ end;
 
 define class <keyarg-info> (<object>)
 
-  slot keyarg-key-info :: <key-info>,
+  constant slot keyarg-key-info :: <key-info>,
     required-init-keyword: key-info:;
 
-  slot keyarg-var :: <abstract-variable>,
+  constant slot keyarg-var :: <abstract-variable>,
     required-init-keyword: var:;
 
-  slot keyarg-default-bogus? :: <boolean>,
+  constant slot keyarg-default-bogus? :: <boolean>,
     required-init-keyword: default-bogus?:;
 
-  slot keyarg-supplied?-var :: false-or(<abstract-variable>),
+  constant slot keyarg-supplied?-var :: false-or(<abstract-variable>),
     required-init-keyword: supplied?-var:;
 end class <keyarg-info>;
 
@@ -361,7 +361,7 @@ define method aux-build-xep
 			     as(<symbol>,
 				concatenate(as(<string>, key),
 					    "-supplied?")),
-			     dylan-value(#"<boolean>"));
+			     boolean-ctype());
 	    else
 	      #f;
 	    end;
