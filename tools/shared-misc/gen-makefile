@@ -13,6 +13,7 @@ $D2C = '$(D2CDIR)/bin/d2c';
 $D2CFLAGS = '-L$(D2CDIR)/lib';
 $CFLAGS = '-g';
 $CPPFLAGS = '-I$(D2CDIR)/include';
+$MELANGE = 'melange';
 
 # Find the defaults
 $subdir = '';
@@ -166,18 +167,18 @@ sub compile_subdir {
     }
 }
 
-
-sub emit_library_rule {
-    local($lidfile, $extradeps, $extraflags, @keywords) = @_;
-    local($library, $unit_prefix, $executable);
-
+sub maybe_emit_d2c_defines {
     unless ($d2c_defines) {
+	if ($CC) {
+	    print("CC=$CC\n");
+	}
 	print <<EOF;
 D2CDIR=$D2CDIR
 D2C=$D2C
 D2CFLAGS=$D2CFLAGS
 CFLAGS=$CFLAGS
 CPPFLAGS=$CPPFLAGS
+MELANGE=$MELANGE
 
 EOF
         if (! $nmake) {
@@ -187,6 +188,13 @@ EOF
 	}
 	$d2c_defines = 1;
     }
+}
+
+sub emit_library_rule {
+    local($lidfile, $extradeps, $extraflags, @keywords) = @_;
+    local($library, $unit_prefix, $executable);
+
+    do maybe_emit_d2c_defines();
 
     open(LIDFILE, $srcdir.'/'.$lidfile.'.lid')
       || die("Can't open $lidfile.lid: $!\n");
@@ -260,6 +268,10 @@ EOF
     }
     print ": $srcdir/$lidfile.lid $extradeps\n";
     print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $srcdir/$lidfile.lid\n";
+    if ($delayed_binaries) {
+	local ($make_name) = $nmake ? '$(MAKE) /nologo' : '$(MAKE)';
+	print "\t$make_name -f cc-", $unit_prefix, "-files.mak\n";
+    }
     print "\ninclude $unit_prefix.dep\n\n";
 
     unless (-e "$unit_prefix.dep") {
@@ -267,6 +279,56 @@ EOF
 	    || die("Can't create $unit_prefix.dep: $!\n");
 	close(DEP);
     }
+}
+
+sub emit_c_file_rule {
+    local ($basefile, @headers) = @_;
+    local ($obj) = ($win32) ? ".obj" : ".o";
+    local ($objfile) = $basefile . $obj;
+
+    do maybe_emit_d2c_defines();
+
+    print "$objfile: \$(SRCDIR)/$basefile.c";
+    foreach $header (@headers) {
+	print " \$(SRCDIR)/$header";
+    }
+    print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    print "-c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
+    push(@compile_dependencies, $objfile);
+    push(@files_to_clean, $objfile);
+}
+
+# Just like emit_c_file_rule, except uses .cc as an extension instead of .c
+#
+sub emit_cc_file_rule {
+    local ($basefile, @headers) = @_;
+    local ($obj) = ($win32) ? ".obj" : ".o";
+    local ($objfile) = $basefile . $obj;
+
+    do maybe_emit_d2c_defines();
+
+    print "$objfile: \$(SRCDIR)/$basefile.cc";
+    foreach $header (@headers) {
+	print " \$(SRCDIR)/$header";
+    }
+    print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    print "-c \$(SRCDIR)/$basefile.cc -o $objfile\n\n";
+    push(@compile_dependencies, $objfile);
+    push(@files_to_clean, $objfile);
+}
+
+sub emit_melange_rule {
+    local ($basefile) = @_;
+    do maybe_emit_d2c_defines();
+
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+    foreach $header (@headers) {
+	print " \$(SRCDIR)/$header";
+    }
+    print "\n\t\$(MELANGE) -d2c -I\$(SRCDIR) ";
+    print "\$(SRCDIR)/$basefile.intr > $basefile.dylan\n\n";
+    push(@compile_dependencies, "$basefile.dylan");
+    push(@files_to_clean, "$basefile.dylan");
 }
 
 sub install {
