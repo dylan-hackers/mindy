@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.86 1996/08/22 11:46:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.87 1996/08/22 18:34:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1128,12 +1128,14 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   if (~key-exists?(possible-targets, target-machine))
     error("Unknown target architecture %=.", target-machine);
   end if;
+  let target = possible-targets[target-machine];
+  *current-target* := target;
   let state
       = make(<main-unit-state>,
              lid-file: lid-file,
 	     command-line-features: reverse!(features), 
 	     log-dependencies: log-dependencies,
-	     target: possible-targets[target-machine],
+	     target: target,
 	     no-binaries: no-binaries);
   let worked? = compile-library(state);
   exit(exit-code: if (worked?) 0 else 1 end);

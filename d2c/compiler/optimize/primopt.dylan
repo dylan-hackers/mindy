@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.27 1996/05/29 23:12:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.28 1996/08/22 18:32:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -544,7 +544,7 @@ define generic sign-and-bits-from-type (ctype :: <ctype>)
 
 define method sign-and-bits-from-type (ctype :: <ctype>)
     => (sign :: one-of(#"on", #"off", #"either"), bits :: <integer>);
-  sign-and-bits-from-range(runtime-$minimum-integer, runtime-$maximum-integer);
+  values(#"either", *current-target*.target-integer-length - 1);
 end method sign-and-bits-from-type;
 
 define method sign-and-bits-from-type (ctype :: <limited-integer-ctype>)

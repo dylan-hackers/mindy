@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.7 1996/04/14 13:25:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.8 1996/08/22 18:32:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -58,6 +58,8 @@ define module lexer
   use errors;
   use source;
   use compile-time-values;
+  use target-environment,
+    import: {*current-target*, target-integer-length};
   use tokens;
   use variables;
   use tokenize;

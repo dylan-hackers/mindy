@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.7 1996/08/22 11:34:54 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.8 1996/08/22 18:31:18 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,6 +17,9 @@ define sealed class <target-environment> (<object>)
 
   constant slot default-features :: <byte-string>,
     required-init-keyword: #"default-features";
+
+  constant slot target-integer-length :: <integer>,
+    required-init-keyword: #"integer-length";
 
   constant slot heap-preamble :: <byte-string>,
     required-init-keyword: #"heap-preamble";
@@ -128,14 +131,11 @@ define function add-target!
       select (key)
 	#"target-name" =>
 	  keyword-values := add!(keyword-values, as(<symbol>, val));
-	#"link-like-a-windows-machine?" =>
+	#"link-like-a-windows-machine?", #"link-doesnt-search-for-libs?",
+	#"import-directive-required?", #"supports-debugging?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
-	#"link-doesnt-search-for-libs?" =>
-	  keyword-values := add!(keyword-values, string-to-boolean(val));
-	#"import-directive-required?" =>
-	  keyword-values := add!(keyword-values, string-to-boolean(val));
-	#"supports-debugging?" =>
-	  keyword-values := add!(keyword-values, string-to-boolean(val));
+	#"integer-length" =>
+	  keyword-values := add!(keyword-values, string-to-integer(val));
 	otherwise =>
 	  keyword-values := add!(keyword-values, val);
       end select;
@@ -176,3 +176,7 @@ define method get-targets (filename :: <byte-string>)
 
   repeat(1, 0);
 end method get-targets;
+
+
+
+define variable *current-target* :: false-or(<target-environment>) = #f;

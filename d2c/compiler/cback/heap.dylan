@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.53 1996/08/22 11:37:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.54 1996/08/22 18:33:02 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -882,13 +882,17 @@ define method spew-object
   local method make-lit (x :: false-or(<general-integer>))
 	  if (x == #f)
 	    as(<ct-value>, x);
-	  elseif (x < runtime-$minimum-integer
-		    | x > runtime-$maximum-integer)
-	    make(<literal-extended-integer>, value: x);
 	  else
-	    make(<literal-integer>, value: x);
-	  end;
-	end;
+	    let min-int = ash(as(<extended-integer>, -1),
+			      *current-target*.target-integer-length - 1);
+	    let max-int = lognot(min-int);
+	    if (x < min-int | x > max-int)
+	      make(<literal-extended-integer>, value: x);
+	    else
+	      make(<literal-integer>, value: x);
+	    end if;
+	  end if;
+	end method make-lit;
   spew-instance(specifier-type(#"<limited-integer>"), state,
 		limited-integer-base-class: object.base-class,
 		limited-integer-minimum: make-lit(object.low-bound),

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.128 1996/07/16 00:15:39 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.129 1996/08/22 18:33:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -652,15 +652,6 @@ end method c-prefix;
 define method c-prefix (description :: <symbol>) => (result :: <string>);
   as(<byte-string>, description).c-prefix;
 end method c-prefix;
-
-//========================================================================
-
-#if (~mindy)
-define method key-exists? (table :: <string-table>, key :: <byte-string>)
-    => res :: <boolean>;
-  element(table, key, default: #f) ~== #f;
-end method key-exists?;
-#endif
 
 //========================================================================
 // New-{scope}
@@ -2944,7 +2935,8 @@ define method c-expr-and-rep (lit :: <literal-integer>,
     => (name :: <string>, rep :: <c-representation>);
   let val = lit.literal-value;
   // Can't use stringify, because val is an extended integer.
-  values(if (val == runtime-$minimum-integer)
+  values(if (val == ash(as(<extended-integer>, -1),
+			*current-target*.target-integer-length - 1))
 	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
 	   // print it in hex (assuming 2's compliment).
 	   format-to-string("0x%x", -val);

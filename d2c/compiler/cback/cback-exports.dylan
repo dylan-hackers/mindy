@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.13 1996/06/26 14:46:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.14 1996/08/22 18:33:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -36,6 +36,8 @@ define module cback
   use common;
   use compile-time-functions;
   use compile-time-values;
+  use target-environment,
+    import: {*current-target*, target-integer-length};
   use ctype;
   use definitions;
   // use define-functions;

@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.20 1996/07/20 15:09:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.21 1996/08/22 18:32:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,8 +299,11 @@ define method parse-integer-literal
   let int = parse-integer(source-location, radix: radix, start: posn);
 
   if (~extended &
-	(int < runtime-$minimum-integer
-	   | int > runtime-$maximum-integer))
+	begin
+	  let min-int = ash(as(<extended-integer>, -1),
+			    *current-target*.target-integer-length - 1);
+	  int < min-int | int > lognot(min-int);
+	end)
     compiler-warning("%d doesn't fit as a <integer>, "
 		       "using <extended-integer> instead",
 		     int);
