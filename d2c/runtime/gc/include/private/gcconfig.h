@@ -645,7 +645,7 @@
 #     endif
 #     define OS_TYPE "MACOS"
 			/* see os_dep.c for details of global data segments. */
-#     define STACKBOTTOM ((ptr_t) LMGetCurStackBase())
+#     define STACKBOTTOM ((ptr_t)(((unsigned long)LMGetCurStackBase() == 0xffffffffUL) ? 0xc0000000 : LMGetCurStackBase()))
 #     define DATAEND  /* not needed */
 #   endif
 #   ifdef LINUX
