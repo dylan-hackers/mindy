@@ -132,3 +132,52 @@ define constant $i386-freebsd-platform =
 	 #["/usr/include"]);
 
        
+define constant $sparc-solaris-platform =
+  make(<c-platform>,
+       default-defines:
+	 #["const", "",
+	   "volatile", "",
+	   "__STDC__", "",
+	   
+	   // Parameterized macros which remove various GCC extensions from our
+	   // source code. The last item in the list is the right-hand side of
+	   // the define; all the items preceding it are named parameters.
+	   "__attribute__", #(#("x"), ""), 
+	   "__signed__", "", 
+	   "__signed", "", 
+	   "__inline__", "",
+	   "inline", "",
+	   "__inline", "",
+	   
+	   // These are the standard platform defines. Some day, configure should
+	   // figure them out by running gcc -E -o - -dM on an empty file.
+	   "sun", "1",
+	   "__sun", "1",
+	   "__sun__", "1",
+	   "__svr4__", "1",
+	   "__SVR4", "1",
+	   "__sparc", "1",
+	   "__sparc__", "1",
+	   "sparc", "1",
+	   "__VERSION__", "\"3.0\"",
+	   "__REGISTER_PREFIX__", "",
+	   "__GCC_NEW_VARARGS__", "1",
+	   "__USER_LABEL_PREFIX__", "",
+	   "__SIZE_TYPE__", "unsigned int",
+	   "__PTRDIFF_TYPE__", "int",
+	   "__WCHAR_TYPE__", "long int",
+	   "__WINT_TYPE__", "long int",
+	   "__builtin_va_list", "const struct __builtin_va_list_TRICK*", // trick
+	   "__HAVE_BUILTIN_SETJMP__", "1",
+	   "__STDC_HOSTED__", "1",
+	   "__NO_INLINE__", "1",
+	   "__unix", "1",
+	   "__unix__", "1",
+	   "unix", "1"], 
+       default-include-path:
+	 #["/usr/include",
+	   // Find out the correct value for this path by calling
+	   // gcc -print-file-name=include
+	   " /cadappl/gcc/3.0/lib/gcc-lib/sparc-sun-solaris2.7/3.0/include"]);
+
+       
