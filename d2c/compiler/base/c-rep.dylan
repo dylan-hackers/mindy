@@ -1,4 +1,7 @@
 module: c-representation
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.5 1995/04/25 02:49:45 wlott Exp $
+copyright: Copyright (c) 1995  Carnegie Mellon University
+	   All rights reserved.
 
 define constant $byte-bits = 8;
 

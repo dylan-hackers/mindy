@@ -1,4 +1,7 @@
 module: cback
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.9 1995/04/25 02:49:45 wlott Exp $
+copyright: Copyright (c) 1995  Carnegie Mellon University
+	   All rights reserved.
 
 define constant $indentation-step = 4;
 
