@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.13 1994/04/17 17:47:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.14 1994/04/28 19:25:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1010,8 +1010,9 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 
 /* Component allocation. */
 
-obj_t make_component(obj_t debug_name, int frame_size, obj_t source_file,
-		     obj_t debug_info, int nconst, int nbytes)
+obj_t make_component(obj_t debug_name, int frame_size, obj_t mtime,
+		     obj_t source_file, obj_t debug_info, int nconst,
+		     int nbytes)
 {
     int len = sizeof(struct component) + sizeof(obj_t)*nconst + nbytes;
     obj_t res = alloc(obj_ComponentClass, len);
@@ -1020,6 +1021,7 @@ obj_t make_component(obj_t debug_name, int frame_size, obj_t source_file,
     COMPONENT(res)->length = len;
     COMPONENT(res)->debug_name = debug_name;
     COMPONENT(res)->frame_size = frame_size;
+    COMPONENT(res)->mtime = mtime;
     COMPONENT(res)->source_file = source_file;
     COMPONENT(res)->debug_info = debug_info;
     COMPONENT(res)->n_constants = nconst;
@@ -1039,6 +1041,7 @@ static int scav_component(struct object *ptr)
     int i;
 
     scavenge(&component->debug_name);
+    scavenge(&component->mtime);
     scavenge(&component->source_file);
     scavenge(&component->debug_info);
     for (i = 0; i < component->n_constants; i++)
