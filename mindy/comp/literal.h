@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.3 1994/03/31 10:16:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.4 1994/04/09 00:09:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -97,3 +97,6 @@ extern struct literal *make_dotted_list_literal(struct literal_list *list,
 extern struct literal_list *make_literal_list(void);
 extern struct literal_list *add_literal(struct literal_list *list,
 					struct literal *literal);
+
+extern void free_literal(struct literal *literal);
+extern struct literal *dup_literal(struct literal *literal);

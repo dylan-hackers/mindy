@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.3 1994/03/31 10:16:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.4 1994/04/09 00:08:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -182,3 +182,92 @@ struct literal_list *add_literal(struct literal_list *list,
     return list;
 }
 
+void free_literal(struct literal *literal)
+{
+    struct literal *part, *next;
+
+    switch (literal->kind) {
+      case literal_SYMBOL:
+      case literal_INTEGER:
+      case literal_FLOAT:
+      case literal_CHARACTER:
+      case literal_STRING:
+      case literal_TRUE:
+      case literal_FALSE:
+      case literal_UNBOUND:
+	break;
+      case literal_LIST:
+	if (((struct list_literal *)literal)->tail)
+	    free_literal(((struct list_literal *)literal)->tail);
+	/* Fall though */
+      case literal_VECTOR:
+	for (part = ((struct vector_literal *)literal)->first;
+	     part != NULL;
+	     part = next) {
+	    next = part->next;
+	    free_literal(part);
+	}
+	break;
+    }
+    free(literal);
+}
+
+struct literal *dup_literal(struct literal *literal)
+{
+    size_t size;
+    struct literal *res;
+    struct literal *l, **prev;
+
+    switch (literal->kind) {
+      case literal_SYMBOL:
+	size = sizeof(struct symbol_literal);
+	break;
+      case literal_INTEGER:
+	size = sizeof(struct integer_literal);
+	break;
+      case literal_FLOAT:
+	size = sizeof(struct float_literal);
+	break;
+      case literal_CHARACTER:
+	size = sizeof(struct character_literal);
+	break;
+      case literal_STRING:
+	size = sizeof(struct string_literal)
+	    + ((struct string_literal *)literal)->length + 1;
+	break;
+      case literal_TRUE:
+      case literal_FALSE:
+      case literal_UNBOUND:
+	size = sizeof(struct literal);
+	break;
+      case literal_LIST:
+	size = sizeof(struct list_literal);
+	break;
+      case literal_VECTOR:
+	size = sizeof(struct vector_literal);
+	break;
+    }
+
+    res = malloc(size);
+    bcopy(literal, res, size);
+
+    switch (literal->kind) {
+      case literal_LIST:
+	((struct list_literal *)res)->tail
+	    = dup_literal(((struct list_literal *)literal)->tail);
+	/* Fall though */
+      case literal_VECTOR:
+	prev = &((struct vector_literal *)res)->first;
+	for (l = *prev; l != NULL; l = l->next) {
+	    *prev = dup_literal(l);
+	    prev = &(*prev)->next;
+	}
+	break;
+    }
+
+    res->next = NULL;
+
+    return res;
+}
+	    
+	
