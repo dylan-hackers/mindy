@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.127 1996/07/12 14:36:48 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.128 1996/07/16 00:15:39 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -241,7 +241,10 @@ end;
 
 define method do-release-output-buffer (stream :: <indenting-stream>)
  => ();
-  indenting-stream-spew-output(stream, stream.is-buffer.buffer-next);
+  let buf :: <buffer> = stream.is-buffer;
+  indenting-stream-spew-output(stream, buf.buffer-next);
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
 end;
 
 define method do-next-output-buffer (stream :: <indenting-stream>,
