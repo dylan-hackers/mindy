@@ -1,11 +1,11 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.11 1996/01/27 00:17:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.12 1996/02/07 12:56:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-define generic expand (form :: <constituent>,
-		       lexenv :: false-or(<lexenv>))
+define open generic expand
+    (form :: <constituent>, lexenv :: false-or(<lexenv>))
     => results :: false-or(<simple-object-vector>);
 
 // expand-macro -- gf method.
