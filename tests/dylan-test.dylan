@@ -605,6 +605,10 @@ define method tautology(arg :: <sequence>) => <integer>;
   warnings + fatals;
 end method;
 
+define inline function ensure-valid-args(args)
+  every?(rcurry(member?, tautologies), args)
+end function;
+
 define method main(argv0, #rest args)
 #if (mindy)
   if (empty?(args))
@@ -619,7 +623,7 @@ define method main(argv0, #rest args)
   else
     // Need to figure out how to convert a raw pointer...
     let args = #[];
-    if (every?(rcurry(member?, tautologies), args))
+    if (ensure-valid-args(args))
       tautology(args);
 #endif
     else
