@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.20 1994/04/24 21:41:56 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.21 1994/04/26 15:26:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -44,7 +44,7 @@ static obj_t obj_RawMethodClass;
 static obj_t obj_BuiltinMethodClass = NULL;
 static obj_t obj_AccessorMethodClass = NULL;
 static obj_t obj_GFClass = NULL;
-static obj_t obj_MethodInfoClass = NULL;
+obj_t obj_MethodInfoClass = NULL;
 static obj_t obj_GFCacheClass = NULL;
 
 

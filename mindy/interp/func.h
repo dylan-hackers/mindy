@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.5 1994/04/17 17:46:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.6 1994/04/26 15:26:41 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,7 @@
 
 
 extern obj_t obj_FunctionClass;
+extern obj_t obj_MethodInfoClass;
 extern obj_t obj_MethodClass;
 extern obj_t obj_ByteMethodClass;
 
