@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.1 1994/03/24 21:49:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.2 1994/03/30 06:04:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -46,11 +46,15 @@ static struct body *chain_bodies(struct body *body1, struct body *body2)
     }
 }
 
+static void bind_params(struct body *body, struct param_list *vars,
+			struct expr *expr)
+{
+    add_constituent(body, make_let(make_bindings(vars, expr)));
+}
+
 static void bind_param(struct body *body, struct param *var, struct expr *expr)
 {
-    struct param_list *params = push_param(var, make_param_list());
-
-    add_constituent(body, make_let(make_bindings(params, expr)));
+    bind_params(body, push_param(var, make_param_list()), expr);
 }
 
 static void bind_temp(struct body *body, struct id *id, struct expr *expr)
@@ -89,16 +93,21 @@ static void bind_rettypes(struct body *body,
     struct arglist *list_args = make_argument_list();
     struct symbol *ctype = symbol("check-type");
     struct symbol *type_class = symbol("<type>");
+    struct symbol *object = symbol("<object>");
     struct expr *expr;
 
     for (r = rettypes->req_types; r != NULL; r = r->next) {
-	struct arglist *args = make_argument_list();
-	add_argument(args, make_argument(r->type));
-	add_argument(args, make_argument(make_varref(id(type_class))));
-	r->type = make_function_call(make_varref(id(ctype)), args);
-	r->temp = gensym();
-	bind_temp(body, id(r->temp), r->type);
-	add_argument(list_args, make_argument(make_varref(id(r->temp))));
+	if (r->type) {
+	    struct arglist *args = make_argument_list();
+	    add_argument(args, make_argument(r->type));
+	    add_argument(args, make_argument(make_varref(id(type_class))));
+	    r->type = make_function_call(make_varref(id(ctype)), args);
+	    r->temp = gensym();
+	    bind_temp(body, id(r->temp), r->type);
+	    add_argument(list_args, make_argument(make_varref(id(r->temp))));
+	}
+	else
+	    add_argument(list_args, make_argument(make_varref(id(object))));
     }
     rettypes->req_types_list
 	= make_function_call(make_varref(id(symbol("list"))), list_args);
@@ -1400,13 +1409,16 @@ struct for_info {
     struct body *step_body;
 };
 
-static void cache_type(struct param *param, struct for_info *info)
+static void cache_types(struct param_list *params, struct for_info *info)
 {
-    if (param->type) {
-	struct symbol *temp = gensym();
+    struct param *param;
 
-	bind_temp(info->outer_body, id(temp), param->type);
-	param->type = make_varref(id(temp));
+    for (param = params->required_params; param != NULL; param = param->next) {
+	if (param->type) {
+	    param->type_temp = gensym();
+	    bind_temp(info->outer_body, id(param->type_temp), param->type);
+	    param->type = NULL;
+	}
     }
 }
 
@@ -1418,11 +1430,46 @@ static void add_set(struct body *body, struct id *id, struct expr *expr)
 static void grovel_equal_then_for_clause(struct equal_then_for_clause *clause,
 					 struct for_info *info)
 {
-    struct symbol *temp = gensym();
+    struct param_list *params = clause->vars;
+    struct param *init_params_head = NULL;
+    struct param **init_params_tail = &init_params_head;
+    struct param_list *step_params = make_param_list();
+    struct param *step_params_head = NULL;
+    struct param **step_params_tail = &step_params_head;
+    struct param *param, *next;
 
-    bind_temp(info->outer_body, id(temp), clause->equal);
-    bind_param(info->middle_body, clause->var, make_varref(id(temp)));
-    add_set(info->step_body, id(temp), clause->then);
+    bind_params(info->outer_body, params, clause->equal);
+    bind_params(info->step_body, step_params, clause->then);
+
+    for (param = params->required_params; param != NULL; param = next) {
+	struct symbol *temp1 = gensym();
+	struct symbol *temp2 = gensym();
+	struct param *init_param = make_param(id(temp1), NULL);
+	struct param *step_param = make_param(id(temp2), NULL);
+
+	*init_params_tail = init_param;
+	init_params_tail = &init_param->next;
+	*step_params_tail = step_param;
+	step_params_tail = &step_param->next;
+
+	next = param->next;
+	bind_param(info->middle_body, param, make_varref(id(temp1)));
+	add_set(info->step_body, id(temp1), make_varref(id(temp2)));
+    }
+    params->required_params = init_params_head;
+    step_params->required_params = step_params_head;
+
+    if (params->rest_param) {
+	struct id *rest = params->rest_param;
+	struct symbol *temp1 = gensym();
+	struct symbol *temp2 = gensym();
+
+	params->rest_param = id(temp1);
+	step_params->rest_param = id(temp2);
+
+	bind_temp(info->middle_body, rest, make_varref(id(temp1)));
+	add_set(info->step_body, id(temp1), make_varref(id(temp2)));
+    }
 }
 
 static void add_test(struct expr *test, struct for_info *info)
@@ -1483,7 +1530,7 @@ static void grovel_in_for_clause(struct in_for_clause *clause,
     add_argument(args, make_argument(make_varref(id(coll))));
     add_argument(args, make_argument(make_varref(id(state))));
     expr = make_function_call(make_varref(id(curel)), args);
-    bind_param(info->inner_body, clause->var, expr);
+    bind_params(info->inner_body, clause->vars, expr);
 
     /* Advance the state in the steps. */
     args = make_argument_list();
@@ -1524,7 +1571,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 	by = make_literal_ref(make_integer_literal(1));
     
     /* Bind the user variable in the middle body. */
-    bind_param(info->middle_body, clause->var, make_varref(id(temp)));
+    bind_params(info->middle_body, clause->vars, make_varref(id(temp)));
 
     /* Add the end test. */
     switch (clause->to_kind) {
@@ -1614,7 +1661,7 @@ static void expand_for_expr(struct expr **ptr)
 
     /* Grovel the clauses. */
     for (clause = e->clauses; clause != NULL; clause = next) {
-	cache_type(clause->var, &info);
+	cache_types(clause->vars, &info);
 	(*ForClauseGrovelers[(int)clause->kind])(clause, &info);
 	next = clause->next;
 	free(clause);
@@ -1925,8 +1972,8 @@ static void expand_body(struct body *body, boolean top_level)
 
     next = body->head;
     if (next == NULL) {
-	add_expr(body, make_literal_ref(make_false_literal()));
-	next = body->head;
+	next = make_expr_constituent(make_literal_ref(make_false_literal()));
+	body->head = next;
     }
 
     ptr = &body->head;
