@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.3 1994/12/16 16:34:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.4 1995/01/10 16:23:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -140,6 +140,13 @@ define generic build-let
      target-vars :: type-or(<leaf>, <list>),
      source-exp :: <expression>)
  => ();
+
+
+// Like MAKE-OPERATION, but creates a primitive operation.
+// 
+define generic make-primitive-operation
+    (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
+ => res :: <operation>;
 
 
 // Like MAKE-OPERATION, but creates an mv-operation.
