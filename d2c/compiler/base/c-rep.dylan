@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.2 1998/07/09 22:41:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.3 1999/01/06 06:51:36 igor Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,22 +30,22 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 
 define constant $byte-bits = 8;
 
-define constant $pointer-alignment = 4;
-define constant $pointer-size = 4;
-define constant $short-alignment = 2;
-define constant $short-size = 2;
-define constant $int-alignment = 2;
-define constant $int-size = 2;
-define constant $long-alignment = 4;
-define constant $long-size = 4;
-define constant $single-alignment = 4;
-define constant $single-size = 4;
-define constant $double-alignment = 8;
-define constant $double-size = 8;
-define constant $long-double-alignment = 8;
-define constant $long-double-size = 8;
+define variable *pointer-alignment* = #f;
+define variable *pointer-size* = #f;
+define variable *short-alignment* = #f;
+define variable *short-size* = #f;
+define variable *int-alignment* = #f;
+define variable *int-size* = #f;
+define variable *long-alignment* = #f;
+define variable *long-size* = #f;
+define variable *single-alignment* = #f;
+define variable *single-size* = #f;
+define variable *double-alignment* = #f;
+define variable *double-size* = #f;
+define variable *long-double-alignment* = #f;
+define variable *long-double-size* = #f;
 
-define constant $data-word-size = max($pointer-size, $long-size);
+define variable *data-word-size* = #f;
 
 define abstract class <c-representation>
     (<representation>, <identity-preserving-mixin>)
@@ -146,17 +146,34 @@ define method seed-representations () => ();
       class.general-speed-representation := speed-rep;
       class.general-space-representation := space-rep;
     end;
+
+  *pointer-alignment* := *current-target*.pointer-size;
+  *pointer-size* := *current-target*.pointer-size;
+  *short-alignment* := *current-target*.short-size;
+  *short-size* := *current-target*.short-size;
+  *int-alignment* := *current-target*.integer-size;
+  *int-size* := *current-target*.integer-size;
+  *long-alignment* := *current-target*.long-size;
+  *long-size* := *current-target*.long-size;
+  *single-alignment* := *current-target*.single-size;
+  *single-size* := *current-target*.single-size;
+  *double-alignment* := *current-target*.double-size;
+  *double-size* := *current-target*.double-size;
+  *long-double-alignment* := *current-target*.long-double-size;
+  *long-double-size* := *current-target*.long-double-size;
+  *data-word-size* := max(*pointer-size*, *long-size*);
+
   unless (*general-rep*)
     *general-rep*
       := make(<general-representation>, name: #"general",
-	      alignment: $pointer-alignment,
-	      size: $pointer-size + $data-word-size,
+	      alignment: *pointer-alignment*,
+	      size: *pointer-size* + *data-word-size*,
 	      c-type: "descriptor_t");
   end;
   unless (*heap-rep*)
     *heap-rep*
       := make(<heap-representation>, name: #"heap",
-	      alignment: $pointer-alignment, size: $pointer-size,
+	      alignment: *pointer-alignment*, size: *pointer-size*,
 	      c-type: "heapptr_t", more-general: *general-rep*,
 	      to-more-general: #f, from-more-general: "%s.heapptr");
   end;
@@ -166,7 +183,7 @@ define method seed-representations () => ();
 	      more-general: *heap-rep*,
 	      to-more-general: "(%s ? obj_True : obj_False)",
 	      from-more-general: "(%s != obj_False)",
-	      alignment: $int-alignment, size: $int-size,
+	      alignment: *int-alignment*, size: *int-size*,
 	      c-type: "boolean");
     let space-rep = make(<immediate-representation>,
 			 more-general: *boolean-rep*,
@@ -179,7 +196,7 @@ define method seed-representations () => ();
     let fixed-int-cclass = dylan-value(#"<integer>");
     unless (*long-rep*)
       *long-rep* := make(<c-data-word-representation>, name: #"long",
-			 alignment: $long-alignment, size: $long-size,
+			 alignment: *long-alignment*, size: *long-size*,
 			 more-general: *general-rep*, c-type: "long",
 			 to-more-general: #f,
 			 from-more-general: "%s.dataword.l",
@@ -188,25 +205,25 @@ define method seed-representations () => ();
     end;
     unless (*int-rep*)
       *int-rep* := make(<c-data-word-representation>, name: #"int",
-			alignment: $int-alignment, size: $int-size,
+			alignment: *int-alignment*, size: *int-size*,
 			more-general: *long-rep*, c-type: "int",
 			class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*uint-rep*)
       *uint-rep* := make(<c-data-word-representation>, name: #"uint",
-			 alignment: $int-alignment, size: $int-size,
+			 alignment: *int-alignment*, size: *int-size*,
 			 more-general: *long-rep*, c-type: "unsigned int",
 			 class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*short-rep*)
       *short-rep* := make(<c-data-word-representation>, name: #"short",
-			  alignment: $short-alignment, size: $short-size,
+			  alignment: *short-alignment*, size: *short-size*,
 			  more-general: *int-rep*, c-type: "short",
 			  class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*ushort-rep*)
       *ushort-rep* := make(<c-data-word-representation>, name: #"ushort",
-			   alignment: $short-alignment, size: $short-size,
+			   alignment: *short-alignment*, size: *short-size*,
 			   more-general: *uint-rep*, c-type: "unsigned short",
 			   class: fixed-int-cclass, data-word-member: "l");
     end;
@@ -237,18 +254,18 @@ define method seed-representations () => ();
   unless (*double-rep*)
     let df-class = dylan-value(#"<double-float>");
     let df-rep
-      = if ($double-size > $data-word-size)
+      = if (*double-size* > *data-word-size*)
 	  make(<immediate-representation>, name: #"double",
 	       more-general: *heap-rep*,
 	       to-more-general: "make_double_float(%s)",
 	       from-more-general: "double_float_value(%s)",
-	       alignment: $double-alignment, size: $double-size,
+	       alignment: *double-alignment*, size: *double-size*,
 	       c-type: "double");
 	else
 	  make(<c-data-word-representation>, name: #"double",
 	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.d",
-	       alignment: $double-alignment, size: $double-size,
+	       alignment: *double-alignment*, size: *double-size*,
 	       c-type: "double", class: df-class, data-word-member: "d");
 	end;
     set-representations(df-class, df-rep, df-rep);
@@ -257,18 +274,18 @@ define method seed-representations () => ();
   unless (*long-double-rep*)
     let xf-class = dylan-value(#"<extended-float>");
     let xf-rep
-      = if ($long-double-size > $data-word-size)
+      = if (*long-double-size* > *data-word-size*)
 	  make(<immediate-representation>, name: #"long-double",
 	       more-general: *heap-rep*,
 	       to-more-general: "make_extended_float(%s)",
 	       from-more-general: "extended_float_value(%s)",
-	       alignment: $long-double-alignment, size: $long-double-size,
+	       alignment: *long-double-alignment*, size: *long-double-size*,
 	       c-type: "long double");
 	else
 	  make(<c-data-word-representation>, name: #"long-double",
 	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.x",
-	       alignment: $long-double-alignment, size: $long-double-size,
+	       alignment: *long-double-alignment*, size: *long-double-size*,
 	       c-type: "long double", class: xf-class, data-word-member: "x");
 	end;
     set-representations(xf-class, xf-rep, xf-rep);
@@ -277,7 +294,7 @@ define method seed-representations () => ();
   unless (*ptr-rep*)
     let ptr-cclass = dylan-value(#"<raw-pointer>");
     *ptr-rep* := make(<c-data-word-representation>, name: #"ptr",
-		      alignment: $pointer-alignment, size: $pointer-size,
+		      alignment: *pointer-alignment*, size: *pointer-size*,
 		      more-general: *general-rep*, c-type: "void *",
 		      to-more-general: #f,
 		      from-more-general: "%s.dataword.ptr",
@@ -474,9 +491,9 @@ define method pick-representation
       let bytes = ceiling/(bits + 1, $byte-bits);
       if (bytes <= 1)
 	*byte-rep*;
-      elseif (bytes <= $short-size)
+      elseif (bytes <= *short-size*)
 	*short-rep*;
-      elseif (bytes <= $int-size)
+      elseif (bytes <= *int-size*)
 	*int-rep*;
       else
 	*long-rep*;
@@ -485,9 +502,9 @@ define method pick-representation
       let bytes = ceiling/(bits, $byte-bits);
       if (bytes <= 1)
 	*ubyte-rep*;
-      elseif (bytes <= $short-size)
+      elseif (bytes <= *short-size*)
 	*ushort-rep*;
-      elseif (bytes <= $int-size)
+      elseif (bytes <= *int-size*)
 	*uint-rep*;
       else
 	*long-rep*;

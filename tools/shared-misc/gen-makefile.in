@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.3 1998/12/02 12:36:25 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.4 1999/01/06 06:52:02 igor Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -605,11 +605,17 @@ sub read_platforms_dot_descr {
 	    $platform_name =~ tr/-A-Z/_a-z/; # mash to lowercase; - to _
 
 	    if ($platform{'inherit_from'}) {
-		local(%parent) = &get_platform($platform{'inherit_from'});
 		local($key);
-		foreach $key (keys(%parent)) {
-		    if (! $platform{$key}) {
-			$platform{$key} = $parent{$key};
+		foreach $parent (split(/\s+/, $platform{'inherit_from'})) {
+		    local(%parent_plat) = &get_platform($parent);
+		    local($key);
+		    foreach $key (keys(%parent_plat)) {
+			if (!$platform{$key}) {
+			    $platform{$key} = $parent_plat{$key};
+			} elsif ($key == 'default_features') {
+			    $platform{$key} = 
+				$platform{$key} . " " . $parent_plat{$key};
+			}
 		    }
 		}
 	    }

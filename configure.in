@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.23 1998/12/24 08:49:34 emk Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.24 1999/01/06 06:51:32 igor Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -19,11 +19,13 @@ dnl	it.
 
 #--------------------------------------------------------------------
 # Emit configure initialization, verify that we're in the right
-# source directory, and require autoconf version 2.12.
+# source directory, require autoconf version 2.12, and start 
+# processing config.h.in.
 #--------------------------------------------------------------------
 
 AC_INIT(common/format/format.dylan)
 AC_PREREQ(2.12)
+AC_CONFIG_HEADER(config.h)
 
 #--------------------------------------------------------------------
 # Try to guess the right prefix based on a previous installation.
@@ -64,13 +66,14 @@ AC_ARG_PROGRAM			# Provide support for name prefixes
 
 AC_MSG_CHECKING(d2c build system type)
 case $build in
-    i*86-pc-linux-gnu*) d2c_build=x86-linux ;;
-    hppa*-hp-hpux*) d2c_build=hppa-hpux ;;
-    sparc*-solaris*) d2c_build=sparc-solaris ;;
-    i*86-*-freebsd*) d2c_build=x86-freebsd ;;
+    i*86-pc-linux-gnu*) d2c_build=x86-linux-gcc ;;
+    hppa*-hp-hpux*) d2c_build=hppa-hpux-gcc ;;
+    sparc*-solaris*) d2c_build=sparc-solaris-gcc ;;
+    i*86-*-freebsd*) d2c_build=x86-freebsd-gcc ;;
     i*86-pc-cygwin32) d2c_build=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_build=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_build=ppc-linux ;;
+    powerpc-*-linux-gnu*) d2c_build=ppc-linux-gcc ;;
+    alpha*-*-linux-gnu*) d2c_build=alpha-linux-gcc ;;
     *) d2c_build=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_build)
@@ -78,13 +81,14 @@ AC_SUBST(d2c_build)
 
 AC_MSG_CHECKING(d2c host system type)
 case $host in
-    i*86-pc-linux-gnu*) d2c_host=x86-linux ;;
-    hppa*-hp-hpux*) d2c_host=hppa-hpux ;;
-    sparc*-solaris*) d2c_host=sparc-solaris ;;
-    i*86-*-freebsd*) d2c_host=x86-freebsd ;;
+    i*86-pc-linux-gnu*) d2c_host=x86-linux-gcc ;;
+    hppa*-hp-hpux*) d2c_host=hppa-hpux-gcc ;;
+    sparc*-solaris*) d2c_host=sparc-solaris-gcc ;;
+    i*86-*-freebsd*) d2c_host=x86-freebsd-gcc ;;
     i*86-pc-cygwin32) d2c_host=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_host=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_host=ppc-linux ;;
+    powerpc-*-linux-gnu*) d2c_host=ppc-linux-gcc ;;
+    alpha*-*-linux-gnu*) d2c_host=alpha-linux-gcc ;;
     *) d2c_host=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_host)
@@ -92,13 +96,14 @@ AC_SUBST(d2c_host)
 
 AC_MSG_CHECKING(d2c target system type)
 case $target in
-    i*86-pc-linux-gnu*) d2c_target=x86-linux ;;
-    hppa*-hp-hpux*) d2c_target=hppa-hpux ;;
-    sparc*-solaris*) d2c_target=sparc-solaris ;;
-    i*86-*-freebsd*) d2c_target=x86-freebsd ;;
+    i*86-pc-linux-gnu*) d2c_target=x86-linux-gcc ;;
+    hppa*-hp-hpux*) d2c_target=hppa-hpux-gcc ;;
+    sparc*-solaris*) d2c_target=sparc-solaris-gcc ;;
+    i*86-*-freebsd*) d2c_target=x86-freebsd-gcc ;;
     i*86-pc-cygwin32) d2c_target=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_target=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_target=ppc-linux ;;
+    powerpc-*-linux-gnu*) d2c_target=ppc-linux-gcc ;;
+    alpha*-*-linux-gnu*) d2c_target=alpha-linux-gcc ;;
     *) d2c_target=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_target)
@@ -273,9 +278,20 @@ fi
 #--------------------------------------------------------------------
 #	Establish the default compile options for cc
 #--------------------------------------------------------------------
+AC_ARG_ENABLE(debug, [  --enable-debug=[no/minimum/yes] turn on debugging [default=minimum]],,enable_debug=minimum)
+AC_SUBST(enable_debug)
+if test $enable_debug = yes; then
+    AC_DEFINE(GD_DEBUG)
+fi
 
-if test $CC = gcc
-then CCOPTS="-g -O4 -finline-functions -Wall"
+if test $CC = gcc; then 
+    if test $enable_debug = yes; then
+        CCOPTS="-g -O -fno-inline -Wall -Werror -pedantic"
+    elif test $enable_debug = minimum; then
+	CCOPTS="-g -O2 -Wall"
+    else
+ 	CCOPTS="-O4"
+    fi
 else CCOPTS="-g -O"
 fi
 AC_SUBST(CCOPTS)
@@ -442,7 +458,7 @@ int main()
 {
     exit(strstr("\0test", "test") ? 1 : 0);
 }
-],  , [LIBOBJS="${LIBOBJS-} strstr.o"])
+],  , [LIBOBJS="${LIBOBJS-} strstr.o"], [LIBOBJS="${LIBOBJS-} strstr.o"])
 
 #--------------------------------------------------------------------
 #	Check for strtoul function.  This is tricky because under some
@@ -463,7 +479,7 @@ int main()
         exit(1);
     }
     exit(0);
-}], , tcl_ok=0)
+}], , tcl_ok=0, tcl_ok=0)
 if test $tcl_ok = 0; then
     LIBOBJS="${LIBOBJS-} strtoul.o"
 fi
@@ -486,7 +502,7 @@ int main()
 	exit(1);
     }
     exit(0);
-}], , tcl_ok=0)
+}], , tcl_ok=0, tcl_ok=0)
 if test $tcl_ok = 0; then
     LIBOBJS="${LIBOBJS-} strtod.o"
 fi
@@ -658,6 +674,13 @@ AC_CHECK_FUNCS(_longjmp)
 # End of section lifted from original configure.in.
 #====================================================================
 
+#--------------------------------------------------------------------
+#  Determine sizes of important C types, used by mindy's gc.
+#--------------------------------------------------------------------
+
+AC_CHECK_SIZEOF(long, 4)
+AC_CHECK_SIZEOF(int, 4)
+AC_CHECK_SIZEOF(void *, 4)
 
 #--------------------------------------------------------------------
 # Build and run config.status.

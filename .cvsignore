@@ -8,3 +8,5 @@ Defaults
 GNUmakefile
 force.timestamp
 
+config.h
+config.h.in

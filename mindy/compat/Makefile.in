@@ -39,13 +39,14 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
+CONFIGDIR = 		@top_srcdir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
 
 AR      =               ar
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
-CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} -I${CONFIGDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
 YACC	=		@YACC@
 YFLAGS	=		-d
 LEX	=		@LEX@

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/mindy.h,v 1.1 1998/05/03 19:55:18 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.h,v 1.2 1999/01/06 06:51:56 igor Exp $
 *
 \**********************************************************************/
 
@@ -67,6 +67,10 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 
 #ifdef sparc
+#define SLOW_LONGJMP 1
+#endif
+
+#ifdef GD_DEBUG
 #define SLOW_LONGJMP 1
 #endif
 

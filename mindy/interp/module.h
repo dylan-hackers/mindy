@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/module.h,v 1.1 1998/05/03 19:55:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/module.h,v 1.2 1999/01/06 06:51:57 igor Exp $
 *
 \**********************************************************************/
 
@@ -87,15 +87,15 @@ extern void define_variable(struct module *module, obj_t name,
 			    enum var_kind kind);
 
 struct variable {
-    obj_t name;
+    obj_t /* symbol */ name;
     struct module *home;
     boolean defined;
     enum var_kind kind;
     obj_t binding;
     obj_t value;
-    obj_t type;
+    obj_t /* type */ type;
     enum { func_Yes, func_No, func_Maybe, func_Always } function;
-    obj_t ref_file;
+    obj_t /* symbol */ ref_file;
     int ref_line;
 };
 

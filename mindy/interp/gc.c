@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.2 1998/12/17 08:56:06 igor Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.3 1999/01/06 06:51:54 igor Exp $
 *
 * This file is the garbage collector.
 *
@@ -51,6 +51,7 @@
 #include "list.h"
 #include "str.h"
 #include "obj.h"
+#include <config.h>
 
 extern void scavenge_thread_roots(void);
 extern void scavenge_symbol_roots(void);
@@ -61,7 +62,8 @@ extern void scavenge_driver_roots(void);
 extern void scavenge_brkpt_roots(void);
 extern void scavenge_c_roots(void);
 
-#define CHECKGC 0
+/* A 'DWORD' is 64 bits in a 32-bit arch and 128 bits in a 64-bit arch */
+#define ALIGN_DWORD(p) (((p)+(sizeof(void *)*2)-1) & ~((sizeof(void *)*2)-1))
 
 #ifdef hpux
 #define PURIFY 1
@@ -112,6 +114,7 @@ static struct space _Dynamic0Space
 static struct space _Dynamic1Space 
     = {0, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, 1, NULL};
 #define Dynamic1Space (&_Dynamic1Space)
+
 #if PURIFY
 static struct space _StaticSpace
     = {0, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, 0, NULL};
@@ -131,7 +134,7 @@ static struct space *NewSpace = NULL;
 static struct space *OldSpace = NULL;
 
 static struct block *FreeBlocks = NULL;
-#if CHECKGC
+#if GD_DEBUG
 static struct block *OldBlocks = NULL;
 #endif
 
@@ -204,7 +207,7 @@ static struct block *alloc_block(void)
 	struct block *aligned
 	    = (struct block *)(((unsigned long)block + BLOCK_SIZE)
 			       & ~(BLOCK_SIZE-1));
-	int before = (char *)aligned - (char *)block;
+	long before = (char *)aligned - (char *)block;
 	if (munmap((caddr_t)block, before))
 	    lose("munmap flamed.");
 	if (munmap((caddr_t)((char *)aligned + BLOCK_SIZE),
@@ -253,7 +256,7 @@ static void grow_space (struct space *space)
 	block = alloc_block();
 	if (block == NULL)
 	    lose("Heap is full!\n");
-	block->base = (char *)block + ((sizeof(struct block) + 7) & ~7);
+	block->base = (char *)block + ALIGN_DWORD(sizeof(struct block));
 	block->end = (char *)block + BLOCK_SIZE;
     }
 #if PURIFY
@@ -291,12 +294,12 @@ static void *raw_alloc(int bytes, struct space *space)
 	lose("Can't allocate a negative number of bytes: %d", bytes);
 
     /* round bytes up to the next dual-word boundy. */
-    bytes = (bytes + 7) & ~7;
+    bytes = ALIGN_DWORD(bytes);
 
     /* check to see if the object fits in the current block */
     if ((char *)space->cur_fill + bytes > (char *)space->cur_end)
 	/* check to see if it can fit in a block. */
-	if (bytes > BLOCK_SIZE - ((sizeof(struct block) + 7) & ~7))
+	if (bytes > BLOCK_SIZE - ALIGN_DWORD(sizeof(struct block)))
 	    /* it can't fit, so complain it is too large. */
 	    return NULL;
 	else
@@ -311,8 +314,8 @@ static void *raw_alloc(int bytes, struct space *space)
 
 obj_t alloc(obj_t class, int bytes)
 {
-#if CHECKGC
-    unsigned int *ptr;
+#ifdef GD_DEBUG
+    unsigned long *ptr;
 #else
     void *ptr;
 #endif
@@ -321,12 +324,13 @@ obj_t alloc(obj_t class, int bytes)
     if (class == NULL)
 	lose("Tried to allocate a class that hasn't been created yet.");
 
-#if CHECKGC
+#ifdef GD_DEBUG
+
     if (class != ptr_obj(NULL)
-	  && *obj_ptr(int *, class) == 0xfacefeed)
+	  && *obj_ptr(unsigned long *, class) == COLLECTED_COOKIE)
 	lose("Tried to allocate a class that wasn't scavenged.");
 
-    ptr = raw_alloc(bytes + sizeof(int)*2, CurrentSpace);
+    ptr = raw_alloc(bytes + sizeof(unsigned long)*2, CurrentSpace);
 #else
     ptr = raw_alloc(bytes, CurrentSpace);
 #endif
@@ -336,8 +340,8 @@ obj_t alloc(obj_t class, int bytes)
 	      make_fixnum(bytes),
 	      CLASS(class)->debug_name);
 
-#if CHECKGC
-    ptr[0] = 0xbeadbabe;
+#ifdef GD_DEBUG
+    ptr[0] = ALLOC_HEADER_COOKIE;
     ptr[1] = bytes;
 
     result = ptr_obj(ptr + 2);
@@ -352,8 +356,11 @@ obj_t alloc(obj_t class, int bytes)
 
 void shrink(obj_t obj, int old_bytes, int new_bytes)
 {
-#if CHECKGC
-    unsigned int *ptr = obj_ptr(unsigned int *, obj) - 2;
+#ifdef GD_DEBUG
+    unsigned long *ptr = obj_ptr(unsigned long *, obj) - 2;
+
+    if (ptr[0] != ALLOC_HEADER_COOKIE)
+        lose("Bogus pointer passed to shrink().");
 
     if (ptr[1] != old_bytes)
 	lose("Someone lied to shrink about the old size.");
@@ -363,8 +370,7 @@ void shrink(obj_t obj, int old_bytes, int new_bytes)
 
     ptr[1] = new_bytes;
 #endif
-    memset(obj_ptr(char *, obj) + new_bytes, 0,
-	   ((old_bytes + 7) & ~7) - new_bytes);
+    memset(obj_ptr(char *, obj) + new_bytes, 0, ALIGN_DWORD(old_bytes) - new_bytes);
 }
 
 struct forwarding_pointer {
@@ -384,52 +390,55 @@ void scavenge(obj_t *addr)
 	obj_t class = obj_ptr(struct object *, obj)->class;
 	if (class == ForwardingMarker)
 	    *addr = obj_ptr(struct forwarding_pointer *, obj)->new_value;
-	else
+	else {
+	    ASSERT_VALID_OBJ(class);
 	    *addr = obj_ptr(struct class *, class)->transport(obj);
+	}
     }
 }
 
 obj_t transport(obj_t obj, int bytes, boolean read_only)
 {
-#if CHECKGC
-    unsigned int *new;
-    unsigned int *ptr = obj_ptr(unsigned int *, obj) - 2;
+#ifdef GD_DEBUG
+    unsigned long *new;
+    unsigned long *ptr = obj_ptr(unsigned long *, obj) - 2;
 #else
     void *new;
-    void *ptr = obj_ptr(unsigned int *, obj);
+    void *ptr = obj_ptr(void *, obj);
 #endif
     obj_t new_obj;
+    int raw_bytes = bytes;
 
-#if CHECKGC
-    if (ptr[0] != 0xbeadbabe)
+#ifdef GD_DEBUG
+    if (ptr[0] != ALLOC_HEADER_COOKIE)
 	lose("Someone called transport with a bogus object.");
     if (ptr[1] != bytes)
 	lose("Someone told transport that %d byte object was %d bytes.",
 	     ptr[1], bytes);
 
-    bytes += sizeof(int)*2;
+    raw_bytes += sizeof(long)*2;
 
 #endif
 #if PURIFY
     if (Purifying)
 	if (read_only)
-	    new = raw_alloc(bytes, ReadOnlySpace);
+	    new = raw_alloc(raw_bytes, ReadOnlySpace);
 	else
-	    new = raw_alloc(bytes, StaticSpace);
+	    new = raw_alloc(raw_bytes, StaticSpace);
     else
 #endif
-	new = raw_alloc(bytes, NewSpace);
+	new = raw_alloc(raw_bytes, NewSpace);
 
     if (new == NULL)
-	lose("raw_alloc failed duing GC");
+	lose("raw_alloc failed during GC");
 
-#if CHECKGC
+#ifdef GD_DEBUG
     new_obj = ptr_obj(new + 2);
 #else
     new_obj = ptr_obj(new);
 #endif
 
-    memcpy(new, ptr, bytes);
+    memcpy(new, ptr, raw_bytes);
 
     obj_ptr(struct forwarding_pointer *, obj)->marker = ForwardingMarker;
     obj_ptr(struct forwarding_pointer *, obj)->new_value = new_obj;
@@ -439,14 +448,19 @@ obj_t transport(obj_t obj, int bytes, boolean read_only)
 
 static void scavenge_ref_list(struct ref_list *list)
 {
-    obj_t **ptr;
     int i;
 
-    ptr = list->refs;
-    for (i = list->used; i > 0; i--)
-	scavenge(*ptr++);
+    for (i = 0; i < list->used; i++)
+	scavenge(list->refs[i]);
 }
 
+
+/* This is called after all top-level root objects have been moved into the
+   new heap.  This goes after the contained objects by calling the 
+   class-specific scavenger on each object and having it move additional
+   objects into the end of the heap.  These objects will be encountered later
+   by the still-running scavenge space and processed recursively.  The net 
+   effect is a breadth-first search & copy. */
 static boolean scavenge_space(struct space *space)
 {
     struct block *block = space->scan_block;
@@ -463,22 +477,22 @@ static boolean scavenge_space(struct space *space)
 	/* do the block->next conditional each time around the inner loop. */
 	while (ptr < (end = (block->next ? block->fill : space->cur_fill))) {
 	    do {
-#if CHECKGC
-		unsigned int *header = ptr;
-		if (header[0] != 0xbeadbabe)
-		    lose("Scavenge_newspace found a bogus object.");
-		ptr = (char *)ptr + sizeof(int)*2;
+#ifdef GD_DEBUG
+		unsigned long *header = ptr;
+		if (header[0] != ALLOC_HEADER_COOKIE)
+		    lose("Scavenge_space found a bogus object.");
+                ptr = (char *)ptr + sizeof(long)*2;
 #endif
 		scavenge((obj_t *)ptr);
 		class = *(obj_t *)ptr;
 		bytes = obj_ptr(struct class *, class)->scavenge(ptr);
-#if CHECKGC
+#ifdef GD_DEBUG
 		if (header[1] != bytes)
 		    lose("Some scavenger claimed a %d byte object "
 			 "was %d bytes.",
 			 header[1], bytes);
 #endif
-		ptr = (char *)ptr + ((bytes + 7) & ~7);
+		ptr = (char *)ptr + ALIGN_DWORD(bytes);
 	    } while (ptr < end);
 	}
 	space->scan_block = block;
@@ -533,6 +547,8 @@ void collect_garbage(boolean purify)
 	OldSpace->hash_state = NULL;
     }
 
+    /* These all go through the first level of their in-mindy-heap objects
+       moving them and leaving a forwarding_pointer behind. */
     scavenge_thread_roots();
     scavenge_symbol_roots();
     scavenge_module_roots();
@@ -580,7 +596,7 @@ void collect_garbage(boolean purify)
 
     break_weak_pointers();
 
-#if CHECKGC
+#ifdef GD_DEBUG
     {
 	struct block *block, *next;
 	for (block = OldBlocks; block != NULL; block = next) {
@@ -590,12 +606,12 @@ void collect_garbage(boolean purify)
 	}
 	OldBlocks = NULL;
 	for (block = OldSpace->blocks; block != NULL; block = next) {
-	    unsigned int *ptr;
+	    unsigned long *ptr;
 	    next = block->next;
 	    block->next = OldBlocks;
 	    OldBlocks = block;
-	    for (ptr = block->base; ptr < (unsigned int *)block->end; ptr++)
-		*ptr = 0xfacefeed;
+	    for (ptr = block->base; ptr < (unsigned long *)block->end; ptr++)
+		*ptr = COLLECTED_COOKIE;
 	}
     }
 #else

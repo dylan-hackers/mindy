@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.7 1998/10/15 13:51:23 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.8 1999/01/06 06:51:35 igor Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -425,10 +425,17 @@ define module platform
   use string-conversions, import: { string-to-integer };
 
   export
-    get-platforms, <platform>, *current-target*,
+    parse-platforms-file, <platform>, *current-target*, get-platform-named,
     default-features,
 
     platform-integer-length,
+    pointer-size,
+    integer-size,
+    long-size,
+    short-size,
+    single-size,
+    double-size,
+    long-double-size,
 
     heap-preamble,
     align-directive,
@@ -761,7 +768,7 @@ define module c-representation
   use classes;
   use od-format;
   use compile-time-values;
-
+  use platform;
   export
     seed-representations,
 

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.10 1998/12/30 03:56:03 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.11 1999/01/06 06:51:39 igor Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1448,12 +1448,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   if (targets-file == #f)
     error("Can't find platforms.descr");
   end if;
-  let possible-targets = get-platforms(targets-file);
-  if (~key-exists?(possible-targets, target-machine))
-    error("Unknown platform %=.", target-machine);
-  end if;
-  let target = possible-targets[target-machine];
-  *current-target* := target;
+  parse-platforms-file(targets-file);
+  *current-target* := get-platform-named(target-machine);
 
   // Stuff in DYLANPATH goes after any explicitly listed directories.
   let dylanpath = getenv("DYLANPATH") | $default-dylan-path;
@@ -1472,7 +1468,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
              lid-file: lid-file,
 	     command-line-features: as(<list>, features), 
 	     log-dependencies: log-dependencies,
-	     target: target,
+	     target: *current-target*,
 	     no-binaries: no-binaries,
 	     link-static: link-static,
 	     cc-override: cc-override,

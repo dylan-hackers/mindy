@@ -23,10 +23,11 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.h,v 1.1 1998/05/03 19:55:13 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.h,v 1.2 1999/01/06 06:51:55 igor Exp $
 *
 \**********************************************************************/
 
+#include <config.h>
 
 extern void add_constant_root(obj_t *addr);
 extern void add_variable_root(obj_t *addr);
@@ -43,4 +44,30 @@ extern obj_t pointer_hash_state(obj_t pointer);
 
 extern boolean TimeToGC;
 
-#define ForwardingMarker ((obj_t)(0xDEADBEEF))
+#if (SIZEOF_VOID_P == 4)
+#    define ForwardingMarker ((obj_t)(0xdeadbeef))
+#elif (SIZEOF_VOID_P == 8)
+#    define ForwardingMarker ((obj_t)(0xdeadbeefdeadbeefL))
+#else
+#    error Neither 32 nor 64-bit architecture.
+#endif
+
+#ifdef GD_DEBUG
+#    if (SIZEOF_VOID_P == 4)
+#        define COLLECTED_COOKIE 0xfacefeed
+#        define ALLOC_HEADER_COOKIE 0xbeadbabe
+#    elif (SIZEOF_VOID_P == 8)
+#        define COLLECTED_COOKIE 0xfacefeedfacefeedL
+#        define ALLOC_HEADER_COOKIE 0xbeadbabebeadbabeL
+#    else
+#        error Running on neither 32-bit nor 64-bit arch.
+#    endif
+    
+#    define ASSERT_VALID_OBJ(o) \
+         if ((o) != NULL && obj_is_ptr(o) &&\
+	     ((obj_ptr(struct object *, o)->class == ForwardingMarker) \
+		 && obj_ptr(unsigned long *, o)[-2] != ALLOC_HEADER_COOKIE)) \
+		 lose("Invalid object pointer encountered.")
+#else
+#    define ASSERT_VALID_OBJ(o)
+#endif

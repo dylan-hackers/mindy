@@ -33,12 +33,14 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.2 1998/08/10 15:12:27 housel Exp $ SPRITE (Berkeley)
- * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.2 1998/08/10 15:12:27 housel Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.3 1999/01/06 06:51:47 igor Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.3 1999/01/06 06:51:47 igor Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_
 #define _STD_C_H_
+
+#include <config.h>
 
 /*
  * Definitions that allow this header file to be used either with or

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.2 1998/12/17 08:52:22 igor Exp $
+* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.3 1999/01/06 06:51:52 igor Exp $
 *
 * This file implements functions.
 *
@@ -151,10 +151,14 @@ obj_t make_raw_function(char *debug_name, obj_t specializers,
     FUNC(res)->debug_name = symbol(debug_name);
     FUNC(res)->required_args = length(specializers);
     FUNC(res)->restp = restp;
+    ASSERT_VALID_OBJ(keywords);
     FUNC(res)->keywords = keywords;
     FUNC(res)->all_keys = all_keys;
+    ASSERT_VALID_OBJ(result_types);    
     FUNC(res)->result_types = result_types;
+    ASSERT_VALID_OBJ(more_results_type);
     FUNC(res)->more_results_type = more_results_type;
+    ASSERT_VALID_OBJ(specializers);
     FUNC(res)->specializers = specializers;
 
     return res;
@@ -561,10 +565,14 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
     METHOD(res)->debug_name = symbol(debug_name);
     METHOD(res)->required_args = length(specializers);
     METHOD(res)->restp = restp;
+    ASSERT_VALID_OBJ(keywords);
     METHOD(res)->keywords = keywords;
     METHOD(res)->all_keys = all_keys;
+    ASSERT_VALID_OBJ(result_types);
     METHOD(res)->result_types = result_types;
+    ASSERT_VALID_OBJ(more_results_type);
     METHOD(res)->more_results_type = more_results_type;
+    ASSERT_VALID_OBJ(specializers);
     METHOD(res)->specializers = specializers;
     METHOD(res)->class_cache = obj_False;
     METHOD(res)->iep = iep;
@@ -910,10 +918,13 @@ obj_t make_builtin_method(char *debug_name, obj_t specializers,
     BUILTIN_METHOD(res)->debug_name = symbol(debug_name);
     BUILTIN_METHOD(res)->required_args = req_args;
     BUILTIN_METHOD(res)->restp = restp;
+    ASSERT_VALID_OBJ(keywords);
     BUILTIN_METHOD(res)->keywords = keywords;
     BUILTIN_METHOD(res)->all_keys = all_keys;
+    ASSERT_VALID_OBJ(result_type);
     BUILTIN_METHOD(res)->result_types = list1(result_type);
     BUILTIN_METHOD(res)->more_results_type = obj_False;
+    ASSERT_VALID_OBJ(specializers);
     BUILTIN_METHOD(res)->specializers = specializers;
     BUILTIN_METHOD(res)->class_cache = obj_False;
     BUILTIN_METHOD(res)->iep = builtin_method_ieps[num_args];
@@ -928,7 +939,7 @@ obj_t make_builtin_method(char *debug_name, obj_t specializers,
 struct byte_method {
     obj_t class;
     void (*xep)(struct thread *thread, int nargs);
-    obj_t debug_name;
+    obj_t /* symbol */ debug_name;
     int required_args;
     boolean restp;
     obj_t keywords;
@@ -992,25 +1003,32 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     obj_t component = METHOD_INFO(method_info)->component;
     int i;
 
+    ASSERT_VALID_OBJ(method_info); /* yeah, I know we already used it... */     
+
     BYTE_METHOD(res)->xep = method_xep;
     BYTE_METHOD(res)->debug_name = COMPONENT(component)->debug_name;
     BYTE_METHOD(res)->required_args = length(specializers);
     BYTE_METHOD(res)->restp = METHOD_INFO(method_info)->restp;
     BYTE_METHOD(res)->keywords = METHOD_INFO(method_info)->keys;
     BYTE_METHOD(res)->all_keys = METHOD_INFO(method_info)->all_keys;
+    ASSERT_VALID_OBJ(result_types);
     BYTE_METHOD(res)->result_types = result_types;
     if (more_results_type == obj_True)
 	BYTE_METHOD(res)->more_results_type = obj_ObjectClass;
-    else
+    else {
+	ASSERT_VALID_OBJ(more_results_type);
 	BYTE_METHOD(res)->more_results_type = more_results_type;
+    }
+    ASSERT_VALID_OBJ(specializers);
     BYTE_METHOD(res)->specializers = specializers;
     BYTE_METHOD(res)->class_cache = obj_False;
     BYTE_METHOD(res)->iep = byte_method_iep;
     BYTE_METHOD(res)->component = component;
     BYTE_METHOD(res)->n_closure_vars = n_closure_vars;
-    for (i = 0; i < n_closure_vars; i++)
+    for (i = 0; i < n_closure_vars; i++) {
+	ASSERT_VALID_OBJ(res);
 	BYTE_METHOD(res)->lexenv[i] = lexenv[i];
-
+    }
     return res;
 }
 
@@ -1043,17 +1061,20 @@ obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
     obj_t res = alloc(obj_AccessorMethodClass, sizeof(struct accessor_method));
 
     ACCESSOR_METHOD(res)->xep = method_xep;
+    ASSERT_VALID_OBJ(debug_name);
     ACCESSOR_METHOD(res)->debug_name = debug_name;
     ACCESSOR_METHOD(res)->required_args = setter ? 2 : 1;
     ACCESSOR_METHOD(res)->restp = FALSE;
     ACCESSOR_METHOD(res)->keywords = obj_False;
     ACCESSOR_METHOD(res)->all_keys = FALSE;
+    ASSERT_VALID_OBJ(type);
     ACCESSOR_METHOD(res)->result_types = list1(type);
     ACCESSOR_METHOD(res)->more_results_type = obj_False;
     ACCESSOR_METHOD(res)->specializers
 	= setter ? list2(type, class) : list1(class);
     ACCESSOR_METHOD(res)->class_cache = obj_False;
     ACCESSOR_METHOD(res)->iep = iep;
+    ASSERT_VALID_OBJ(datum);
     ACCESSOR_METHOD(res)->datum = datum;
 
     return res;
@@ -1176,6 +1197,7 @@ obj_t make_c_function(obj_t debug_name, void *pointer)
     obj_t res = alloc(obj_CFunctionClass, sizeof(struct c_function));
 
     C_FUNCTION(res)->xep = c_function_xep;
+    ASSERT_VALID_OBJ(debug_name);
     C_FUNCTION(res)->debug_name = debug_name;
     C_FUNCTION(res)->required_args = 0;
     C_FUNCTION(res)->restp = TRUE;
@@ -1405,16 +1427,22 @@ obj_t make_generic_function(obj_t debug_name, obj_t specializers,
     int req_args = length(specializers);
 
     GF(res)->xep = gf_xep;
+    ASSERT_VALID_OBJ(debug_name);
     GF(res)->debug_name = debug_name;
     GF(res)->required_args = req_args;
     GF(res)->restp = restp;
+    ASSERT_VALID_OBJ(keywords);
     GF(res)->keywords = keywords;
     GF(res)->all_keys = all_keys;
+    ASSERT_VALID_OBJ(result_types);
     GF(res)->result_types = result_types;
     if (more_results_type == obj_True)
 	GF(res)->more_results_type = obj_ObjectClass;
-    else
+    else {
+	ASSERT_VALID_OBJ(more_results_type);
 	GF(res)->more_results_type = more_results_type;
+    }
+    ASSERT_VALID_OBJ(specializers);
     GF(res)->specializers = specializers;
     GF(res)->methods = obj_Nil;
     GF(res)->methods_clock = obj_False;
@@ -1444,6 +1472,8 @@ obj_t make_default_generic_function(obj_t debug_name, obj_t method)
 
     if (keywords != obj_False)
 	keywords = obj_Nil;
+
+    ASSERT_VALID_OBJ(method);
 
     return make_generic_function(debug_name, specializers, restp, keywords,
 				 all_keys, obj_Nil, obj_ObjectClass);

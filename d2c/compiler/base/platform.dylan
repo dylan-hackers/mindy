@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.4 1998/08/13 05:21:15 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.5 1999/01/06 06:51:37 igor Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,6 +33,10 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 // from disk and presenting it to the rest of the program in a
 // reasonable way.
 
+// Usage:
+//   parse-platforms-file("/usr/share/dylan/platforms.descr");
+//   let platform :: <platform> = get-platform-named("alpha-linux");
+
 // <platform> -- exported
 //
 // Information about a specific platform.  Our definition of
@@ -61,6 +65,7 @@ define sealed /* exported */ class <platform> (<object>)
   // Then the platform x86-win32-vc, which is supposed to be another
   // name for x86-win32, wouldn't behave the same as x86-win32.
   //
+// Required:
   constant slot platform-name :: <symbol>, 
     required-init-keyword: #"platform-name";
 
@@ -69,6 +74,20 @@ define sealed /* exported */ class <platform> (<object>)
 
   constant /* exported */ slot platform-integer-length :: <integer>,
     required-init-keyword: #"integer-length";
+  constant /* exported */ slot pointer-size :: <integer>,
+    required-init-keyword: #"pointer-size";
+  constant /* exported */ slot short-size :: <integer>,
+    required-init-keyword: #"short-size";
+  constant /* exported */ slot integer-size :: <integer>,
+    required-init-keyword: #"integer-size";
+  constant /* exported */ slot long-size :: <integer>,
+    required-init-keyword: #"long-size";
+  constant /* exported */ slot double-size :: <integer>,
+    required-init-keyword: #"double-size";
+  constant /* exported */ slot single-size :: <integer>,
+    required-init-keyword: #"single-size";
+  constant /* exported */ slot long-double-size :: <integer>,
+    required-init-keyword: #"long-double-size";
 
   constant /* exported */ slot heap-preamble :: <byte-string>,
     required-init-keyword: #"heap-preamble";
@@ -93,10 +112,6 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"library-filename-prefix";
   constant /* exported */ slot library-filename-suffix :: <byte-string>,
     required-init-keyword: #"library-filename-suffix";
-  // if this is defined, search for shared libraries
-  constant /* exported */ slot shared-library-filename-suffix
-      :: false-or(<byte-string>) = #f,
-    init-keyword: #"shared-library-filename-suffix";
   constant /* exported */ slot executable-filename-suffix :: <byte-string>,
     required-init-keyword: #"executable-filename-suffix";
 
@@ -108,14 +123,6 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"assembler-command";
   constant /* exported */ slot link-library-command :: <byte-string>,
     required-init-keyword: #"link-library-command";
-  constant /* exported */ slot randomize-library-command
-      :: false-or(<byte-string>) = #f,
-    init-keyword: #"randomize-library-command";
-
-  // if this is defined, we can build shared libraries
-  constant /* exported */ slot link-shared-library-command
-      :: false-or(<byte-string>) = #f,
-    init-keyword: #"link-shared-library-command";
   constant /* exported */ slot link-executable-command :: <byte-string>,
     required-init-keyword: #"link-executable-command";
   constant /* exported */ slot link-executable-flags :: <byte-string>,
@@ -153,6 +160,20 @@ define sealed /* exported */ class <platform> (<object>)
   constant slot use-dbclink? :: <boolean>,
     required-init-keyword: #"use-dbclink?";
 
+// Optional:
+
+  // if this is defined, search for shared libraries
+  constant /* exported */ slot shared-library-filename-suffix
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"shared-library-filename-suffix";
+  constant /* exported */ slot randomize-library-command
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"randomize-library-command";
+
+  // if this is defined, we can build shared libraries
+  constant /* exported */ slot link-shared-library-command
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"link-shared-library-command";
   // The remaining slots are really just a way for the compiler to
   // know when it needs to do black magic, but without knowing the
   // platform's name.
@@ -166,7 +187,7 @@ define sealed /* exported */ class <platform> (<object>)
 
   // used for debugging
   constant /* exported */ slot descriptor-type-string :: <byte-string>,
-    init-keyword: #"descriptor-type-string";
+    required-init-keyword: #"descriptor-type-string";
   constant /* exported */ slot descriptor-reference-string :: <byte-string>,
     init-keyword: #"descriptor-reference-string";
   constant /* exported */ slot object-size-string :: false-or(<byte-string>)
@@ -178,10 +199,70 @@ define sealed /* exported */ class <platform> (<object>)
     init-keyword: #"omit-colon-after-label-declarations?";
   constant /* exported */ slot align-arg-is-power-of-two? :: <boolean> = #f,
     init-keyword: #"align-arg-is-power-of-two?";
+
 end class <platform>;
 
 define sealed domain make(singleton(<platform>));
 define sealed domain initialize(<platform>);
+
+define variable *valid-properties* = make(<table>);
+// Value defines whether or not property is required.
+*valid-properties*[#"platform-name"] := #t;
+*valid-properties*[#"default-features"] := #t;
+*valid-properties*[#"integer-length"] := #t;
+*valid-properties*[#"integer-size"] := #t;
+*valid-properties*[#"pointer-size"] := #t;
+*valid-properties*[#"short-size"] := #t;
+*valid-properties*[#"long-size"] := #t;
+*valid-properties*[#"single-size"] := #t;
+*valid-properties*[#"double-size"] := #t;
+*valid-properties*[#"long-double-size"] := #t;
+*valid-properties*[#"heap-preamble"] := #t;
+*valid-properties*[#"align-directive"] := #t;
+*valid-properties*[#"export-directive"] := #t;
+*valid-properties*[#"word-directive"] := #t;
+*valid-properties*[#"half-word-directive"] := #t;
+*valid-properties*[#"byte-directive"] := #t;
+*valid-properties*[#"comment-token"] := #t;
+*valid-properties*[#"mangled-name-prefix"] := #t;
+*valid-properties*[#"object-filename-suffix"] := #t;
+*valid-properties*[#"library-filename-prefix"] := #t;
+*valid-properties*[#"library-filename-suffix"] := #t;
+*valid-properties*[#"executable-filename-suffix"] := #t;
+*valid-properties*[#"compile-c-command"] := #t;
+*valid-properties*[#"default-c-compiler-flags"] := #t;
+*valid-properties*[#"assembler-command"] := #t;
+*valid-properties*[#"link-library-command"] := #t;
+*valid-properties*[#"link-executable-command"] := #t;
+*valid-properties*[#"link-executable-flags"] := #t;
+*valid-properties*[#"make-command"] := #t;
+*valid-properties*[#"delete-file-command"] := #t;
+*valid-properties*[#"compare-file-command"] := #t;
+*valid-properties*[#"move-file-command"] := #t;
+*valid-properties*[#"path-separator"] := #t;
+*valid-properties*[#"big-endian?"] := #t;
+*valid-properties*[#"makefile-name"] := #t;
+*valid-properties*[#"make-supports-phony-targets?"] := #t;
+*valid-properties*[#"recursive-make-command"] := #t;
+*valid-properties*[#"makefiles-can-rebuild-themselves?"] := #t;
+*valid-properties*[#"uses-drive-letters?"] := #t;
+*valid-properties*[#"environment-variables-can-be-exported?"] := #t;
+*valid-properties*[#"use-dbclink?"] := #t;
+*valid-properties*[#"shared-library-filename-suffix"] := #f;
+*valid-properties*[#"randomize-library-command"] := #f;
+*valid-properties*[#"link-shared-library-command"] := #f;
+*valid-properties*[#"link-doesnt-search-for-libs?"] := #f;
+*valid-properties*[#"import-directive-required?"] := #f;
+*valid-properties*[#"supports-debugging?"] := #f;
+*valid-properties*[#"descriptor-type-string"] := #t;
+*valid-properties*[#"descriptor-reference-string"] := #f;
+*valid-properties*[#"object-size-string"] := #f;
+*valid-properties*[#"omit-colon-after-label-declarations?"] := #f;
+*valid-properties*[#"align-arg-is-power-of-two?"] := #f;
+
+// Contains a table of tables, keyed by platform-name, each of which contains a
+// table of values keyed by property name.
+define variable *platform-property-value-table* :: <table> = make(<table>);
 
 // string-to-boolean -- internal
 //
@@ -198,7 +279,7 @@ define function string-to-boolean (string :: <string>) => bool :: <boolean>;
 	return(#f);
       end if;
     end if;
-    error("%s is no boolean I've ever heard of", string);
+    error("%s is no boolean I've ever heard of.", string);
   end block;
 end function string-to-boolean;
 
@@ -217,29 +298,62 @@ define function string-to-character (string :: <string>)
   end if;
 end function string-to-character;
 
+
+// Used to do inheritance (swiped from main/main.dylan):
+// Split a string at locations where test returns true, removing the delimiter
+// characters.
+define method split-at (test :: <function>, string :: <byte-string>)
+    => res :: <list>;
+  let size = string.size;
+  local
+    method scan (posn :: <integer>, results :: <list>)
+        => res :: <list>;
+      if (posn == size)
+        results;
+      elseif (test(string[posn]))
+        scan(posn + 1, results);
+      else
+        copy(posn + 1, posn, results);
+      end;
+    end method scan,
+    method copy (posn :: <integer>, start :: <integer>,
+                 results :: <list>)
+        => res :: <list>;
+      if (posn == size | test(string[posn]))
+        scan(posn,
+             pair(copy-sequence(string, start: start, end: posn), results));
+      else
+        copy(posn + 1, start, results);
+      end;
+    end method copy;
+  reverse!(scan(0, #()));
+end method split-at;
+
+// Considers anything with an ASCII value less than 32 (' ') to be
+// whitespace.  This includes control characters as well as what we
+// normally consider whitespace.
+define method split-at-whitespace (string :: <byte-string>)
+    => res :: <list>;
+  split-at(method (x :: <character>) x <= ' ' end, string);
+end method split-at-whitespace;
+
+
 // add-platform! -- internal
 //
 // Given a header (which describes a single platform), construct a
-// sequence of keyword/values, and pass it to make().  Not only will
-// this work, it will even catch duplicate and missing keywords
-// (although the error message might not be readily understood by the
-// most casual observer)
-//
-// defaults-table is used to implement platform inheritance.
-// Conceptually it contains exactly the same data as the platforms
-// table, but the platforms-table stores <platform>s, while the
-// defaults-table stores sequences of keyword/value pairs.
-//
-define function add-platform!
-    (header :: <header>, platforms-table :: <object-table>,
-     defaults-table :: <object-table>)
+// sequence of keyword/values, and fill it into *platform-property-value-table*.
+
+define function add-platform! (header :: <header>)
  => ();
   // keyword-values must be some kind of sequence that add! adds
   // elements to the end of
-  let keyword-values = #();  // It's critical that new keyword/value pairs 
-                             // come before old keyword-value pairs
   let name :: false-or(<symbol>) = #f;
-  let from :: <list> = #();
+  let local-platform-info :: <table> = make(<table>);
+  let property-value-table :: <table> = make(<table>);
+  
+  local-platform-info[#"default-features"] := "";
+  property-value-table[#"default-features"] := "";
+
   for (val keyed-by key in header)
     let val = substring-replace(val, "\\t", "\t");
     let val = substring-replace(val, "\\n", "\n");
@@ -250,50 +364,71 @@ define function add-platform!
       // we've completely parsed this header.  Otherwise, the inherit
       // could override things in this header that came before the
       // "inherit-from" line
-      from := element(defaults-table, as(<symbol>, val), default: #f);
-      if (from == #f)
-	error("Platform tries to inherit from %s, which isn't any "
-		"platform I know of", val);
-      end if;
+      for (platform in reverse(split-at-whitespace(val)))
+	let inherited-stuff =
+	  element(*platform-property-value-table*, as(<symbol>, platform), 
+		  default: #f);
+	if (inherited-stuff == #f)
+	  error("Platform tries to inherit from %s, which isn't any "
+		  "platform I know of", platform);
+	end if;
+
+	for (inherited-val keyed-by inherited-key in inherited-stuff)
+	  unless (inherited-key == #"default-features")
+	    property-value-table[inherited-key] := inherited-val;
+	  end unless;
+	end for;
+	property-value-table[#"default-features"] := 
+	  concatenate(inherited-stuff[#"default-features"], 
+		      property-value-table[#"default-features"]);
+      end for;
     else
       // Do a select here to do conversions for the slot's type (and a
       // few other hacks)
+
+      unless (key-exists?(*valid-properties*, key))
+	error("platforms.descr contains unknown property, '%s'.", key);
+      end;
+
       select (key)
 	#"platform-name" =>
-	  keyword-values := add!(keyword-values, as(<symbol>, val));
+	  local-platform-info[key] := (name := as(<symbol>, val));
 	#"make-supports-phony-targets?", #"makefiles-can-rebuild-themselves?",
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
 	#"use-dbclink?", #"link-doesnt-search-for-libs?",
 	#"import-directive-required?", #"supports-debugging?",
 	#"big-endian?", #"omit-colon-after-label-declarations?",
 	#"align-arg-is-power-of-two?"  =>
-	  keyword-values := add!(keyword-values, string-to-boolean(val));
-	#"integer-length" =>
-	  keyword-values := add!(keyword-values, string-to-integer(val));
+	  local-platform-info[key] := string-to-boolean(val);
+	#"integer-length", #"integer-size", #"long-size", #"pointer-size", 
+	#"single-size", #"double-size", #"long-double-size", #"short-size" =>
+	  local-platform-info[key] := string-to-integer(val);
 	#"path-separator" =>
-	  keyword-values := add!(keyword-values, string-to-character(val));
+          local-platform-info[key] := string-to-character(val);
 	otherwise =>
-	  keyword-values := add!(keyword-values, val);
+          local-platform-info[key] := val;
       end select;
-      keyword-values := add!(keyword-values, key);
     end if;
   end for;
-  keyword-values := concatenate(keyword-values, from);  // inherit!
-  let platform = apply(make, <platform>, keyword-values);
-  if (key-exists?(platforms-table, platform.platform-name))
-    error("Redefinition of platform %s", platform.platform-name);
-  end if;
-  platforms-table[platform.platform-name] := platform;
-  defaults-table[platform.platform-name] := keyword-values;
+  
+  for (new-val keyed-by new-key in local-platform-info)
+    unless (new-key == #"default-features")
+      property-value-table[new-key] := new-val;
+    end unless;
+  end for;
+  property-value-table[#"default-features"] := 
+    concatenate(local-platform-info[#"default-features"], 
+		property-value-table[#"default-features"]);
+
+  *platform-property-value-table*[name] := property-value-table;
 end function add-platform!;
 
-// get-platforms -- exported
+// parse-platforms-file -- exported
 //
 // Reads the platform information out of the specified file.  Returns
 // a table mapping platform names (as symbols) to <platform>s.
 //
-define /* exported */ function get-platforms (filename :: <byte-string>)
- => platforms :: <object-table>;
+define /* exported */ function parse-platforms-file (filename :: <byte-string>);
   let source = make(<source-file>, name: filename);
   let result = make(<object-table>);
   let state = make(<object-table>);
@@ -309,14 +444,47 @@ define /* exported */ function get-platforms (filename :: <byte-string>)
 	if (~ header.empty?)
 	  // The "if" is so we can allow header blocks which are nothing
 	  // but comments
-	  add-platform!(header, result, state);
+	  add-platform!(header);
 	end if;
 	repeat(line, posn);
       end if;
     end method repeat;
 
   repeat(1, 0);
-end function get-platforms;
+end function parse-platforms-file;
+
+define variable *platforms-table* :: <table> = make(<table>);
+
+// get-platform-named -- exported
+// 
+// Creates and returns a <platform> previously parsed.
+
+define function get-platform-named(name :: type-union(<string>, <symbol>)) 
+ => platform :: <platform>;
+  let keyword-values :: <list> = make(<list>);
+  let property-table = element(*platform-property-value-table*,
+			       as(<symbol>, name), default: #f);
+  if (property-table == #f)
+    error("Unknown platform '%s'", name);
+  end if;
+
+  for (required? keyed-by key in *valid-properties*)
+    if (required?)
+      unless (key-exists?(property-table, key))
+	error("Platform '%s' does not define required property, '%s'", 
+	      name, key);
+      end unless;
+    end if;
+  end for;
+
+  for (val keyed-by key in property-table)
+    keyword-values := add!(keyword-values, val);
+    keyword-values := add!(keyword-values, key);
+  end for;
+			     
+  apply(make, <platform>, keyword-values);
+
+end function get-platform-named;
 
 // *current-target* -- exported
 //
