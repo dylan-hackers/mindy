@@ -78,6 +78,7 @@ define class <class> (<type>)
   // is computed.
   slot class-each-subclass-slots :: <simple-object-vector>;
 */
+  slot subtype-cache :: false-or(<class>), init-value: #f;
 end;
 
 /*
@@ -321,7 +322,15 @@ end;
 
 define method subtype? (class1 :: <class>, class2 :: <class>)
     => res :: <boolean>;
-  class1 == class2 | member?(class2, class1.all-superclasses);
+  case
+    class1 == class2.subtype-cache =>
+      #t;
+    member?(class2, class1.all-superclasses) =>
+      class2.subtype-cache := class1;
+      #t;
+    otherwise =>
+      #f;
+  end case;
 end;
 
 
