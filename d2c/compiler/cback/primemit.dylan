@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.4 1995/06/06 19:30:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.5 1995/06/07 22:36:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -503,15 +503,20 @@ define-primitive-emitter
      deliver-results(defines, #[], #f, output-info);
    end);
 
-/*
 define-primitive-emitter
-  (#"restore-state",
+  (#"throw",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     let state-expr
+       = ref-leaf(*ptr-rep*, operation.depends-on.source-exp, output-info);
+     let cluster = operation.depends-on.dependent-next.source-exp;
+     let (bottom-name, top-name) = consume-cluster(cluster, output-info);
+     spew-pending-defines(output-info);
+     format(output-info.output-info-guts-stream,
+	    "throw(%s, %s);\n", state-expr, top-name);
    end);
-*/
 
 
 // Fixnum primitives.
