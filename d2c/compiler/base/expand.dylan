@@ -1,17 +1,19 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.1 1994/12/12 13:01:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.2 1994/12/16 11:55:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-define generic expand (form :: <constituent>)
+define generic expand (form :: <constituent>,
+		       lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
 
 // expand-macro -- gf method.
 //
 // By default, just return #f indicating the form doesn't expand.
 //
-define method expand (form :: <constituent>)
+define method expand (form :: <constituent>,
+		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
   #f;
 end;
@@ -52,7 +54,8 @@ end;
 
 // binop series expander.
 
-define method expand (series :: <binop-series>)
+define method expand (series :: <binop-series>,
+		      lexenv :: union(<false>, <lexenv>))
     => res :: <simple-object-vector>;
   local
     method repeat (operator-stack :: <list>, operand-stack :: <list>,
@@ -120,7 +123,7 @@ end;
 
 // assignment expander.
 
-define method expand (form :: <assignment>)
+define method expand (form :: <assignment>, lexenv :: union(<false>, <lexenv>))
     => res :: union(<false>, <simple-object-vector>);
   expand-assignment(form.assignment-place, form.assignment-value);
 end;
@@ -201,85 +204,94 @@ end;
 //       end;
 // repeat(init-forms);
 
-define method expand (form :: <for>)
+define method expand (form :: <for>, lexenv :: union(<false>, <lexenv>))
     => res :: union(<false>, <simple-object-vector>);
-  let outer-body = make(<stretchy-vector>);
-  let inner-body = make(<stretchy-vector>);
-  let step-vars = make(<stretchy-vector>);
-  let init-forms = make(<stretchy-vector>);
-  let step-forms = make(<stretchy-vector>);
-  let implied-end-tests = make(<stretchy-vector>);
-  let explicit-end-test = #f;
-  for (clause in form.for-header)
-    explicit-end-test
-      := process-for-clause(clause, outer-body, inner-body,
-			    step-vars, init-forms, step-forms,
-			    implied-end-tests);
+  if (lexenv)
+    let outer-body = make(<stretchy-vector>);
+    let inner-body = make(<stretchy-vector>);
+    let step-vars = make(<stretchy-vector>);
+    let init-forms = make(<stretchy-vector>);
+    let step-forms = make(<stretchy-vector>);
+    let implied-end-tests = make(<stretchy-vector>);
+    let explicit-end-test = #f;
+    for (clause in form.for-header)
+      explicit-end-test
+	:= process-for-clause(clause, outer-body, inner-body,
+			      step-vars, init-forms, step-forms,
+			      implied-end-tests, lexenv);
+    end;
+    let repeat = make-temp(#"repeat");
+    let repeat-call = make(<funcall>,
+			   function: make(<varref>, name: repeat),
+			   arguments: as(<simple-object-vector>, step-forms));
+    let return = make-temp(#"return");
+    unless (empty?(form.for-finally))
+      repeat-call
+	:= make(<funcall>,
+		function: make(<varref>,
+			       name: make-dylan-name(#"mv-call")),
+		arguments: vector(make(<varref>, name: return),
+				  repeat-call));
+    end;
+    if (explicit-end-test)
+      add!(inner-body,
+	   make(<if>,
+		condition: explicit-end-test,
+		consequent: add(form.for-body, repeat-call),
+		alternate: #[]));
+    else
+      inner-body := concatenate(inner-body, form.for-body);
+      add!(inner-body, repeat-call);
+    end;
+    for (index from implied-end-tests.size - 1 to 0 by -1)
+      inner-body := vector(make(<if>,
+				condition: implied-end-tests[index],
+				consequent: #[],
+				alternate: as(<simple-object-vector>,
+					      inner-body)));
+    end;
+    let method-body = as(<simple-object-vector>, inner-body);
+    unless (empty?(form.for-finally))
+      method-body
+	:= vector(make(<bind-exit>,
+		       name: return,
+		       body: concatenate(method-body, form.for-finally)));
+    end;
+    let param-list = make(<parameter-list>,
+			  required: as(<simple-object-vector>, step-vars));
+    let method-parse = make(<method-parse>,
+			    name: repeat,
+			    parameter-list: param-list,
+			    body: method-body);
+    add!(outer-body, make(<local>, methods: vector(method-parse)));
+    add!(outer-body,
+	 make(<funcall>,
+	      function: make(<varref>, name: repeat),
+	      arguments: as(<simple-object-vector>, init-forms)));
+    as(<simple-object-vector>, outer-body);
   end;
-  let repeat = make-temp(#"repeat");
-  let repeat-call = make(<funcall>,
-			 function: make(<varref>, name: repeat),
-			 arguments: as(<simple-object-vector>, step-forms));
-  let return = make-temp(#"return");
-  unless (empty?(form.for-finally))
-    repeat-call
-      := make(<funcall>,
-	      function: make(<varref>,
-			     name: make-dylan-name(#"mv-call")),
-	      arguments: vector(make(<varref>, name: return),
-				repeat-call));
-  end;
-  if (explicit-end-test)
-    add!(inner-body,
-	 make(<if>,
-	      condition: explicit-end-test,
-	      consequent: add(form.for-body, repeat-call),
-	      alternate: #[]));
-  else
-    inner-body := concatenate(inner-body, form.for-body);
-    add!(inner-body, repeat-call);
-  end;
-  for (index from implied-end-tests.size - 1 to 0 by -1)
-    inner-body := vector(make(<if>,
-			      condition: implied-end-tests[index],
-			      consequent: #[],
-			      alternate: as(<simple-object-vector>,
-					    inner-body)));
-  end;
-  let method-body = as(<simple-object-vector>, inner-body);
-  unless (empty?(form.for-finally))
-    method-body
-      := vector(make(<bind-exit>,
-		     name: return,
-		     body: concatenate(method-body, form.for-finally)));
-  end;
-  let param-list = make(<parameter-list>,
-			required: as(<simple-object-vector>, step-vars));
-  let method-parse = make(<method-parse>,
-			  name: repeat,
-			  parameter-list: param-list,
-			  body: method-body);
-  add!(outer-body, make(<local>, methods: vector(method-parse)));
-  add!(outer-body,
-       make(<funcall>,
-	    function: make(<varref>, name: repeat),
-	    arguments: as(<simple-object-vector>, init-forms)));
-  as(<simple-object-vector>, outer-body);
 end;
-
-
+  
 define method process-for-clause (clause :: <for-while-clause>,
-				  outer-body, inner-body,
-				  step-vars, init-forms, step-forms,
-				  implied-end-tests)
+				  outer-body :: <stretchy-vector>,
+				  inner-body :: <stretchy-vector>,
+				  step-vars :: <stretchy-vector>,
+				  init-forms :: <stretchy-vector>,
+				  step-forms :: <stretchy-vector>,
+				  implied-end-tests :: <stretchy-vector>,
+				  lexenv :: union(<false>, <lexenv>))
   clause.for-clause-condition;
 end;
 
 define method process-for-clause (clause :: <for-in-clause>,
-				  outer-body, inner-body,
-				  step-vars, init-forms, step-forms,
-				  implied-end-tests)
-  let var = bind-type(clause.for-clause-variable, outer-body);
+				  outer-body :: <stretchy-vector>,
+				  inner-body :: <stretchy-vector>,
+				  step-vars :: <stretchy-vector>,
+				  init-forms :: <stretchy-vector>,
+				  step-forms :: <stretchy-vector>,
+				  implied-end-tests :: <stretchy-vector>,
+				  lexenv :: union(<false>, <lexenv>))
+  let var = bind-type(clause.for-clause-variable, outer-body, lexenv);
   let name = var.param-name.token-symbol;
   let (coll-temp, coll-bind)
     = bind-temp(symcat(name, "-coll"),
@@ -331,10 +343,14 @@ define method process-for-clause (clause :: <for-in-clause>,
 end;
 
 define method process-for-clause (clause :: <for-step-clause>,
-				  outer-body, inner-body,
-				  step-vars, init-forms, step-forms,
-				  implied-end-tests)
-  add!(step-vars, bind-type(clause.for-clause-variable, outer-body));
+				  outer-body :: <stretchy-vector>,
+				  inner-body :: <stretchy-vector>,
+				  step-vars :: <stretchy-vector>,
+				  init-forms :: <stretchy-vector>,
+				  step-forms :: <stretchy-vector>,
+				  implied-end-tests :: <stretchy-vector>,
+				  lexenv :: union(<false>, <lexenv>))
+  add!(step-vars, bind-type(clause.for-clause-variable, outer-body, lexenv));
   let (temp, bind-form)
     = bind-temp(symcat(clause.for-clause-variable.param-name.token-symbol,
 		       "-init"),
@@ -346,10 +362,14 @@ define method process-for-clause (clause :: <for-step-clause>,
 end;
 
 define method process-for-clause (clause :: <for-from-clause>,
-				  outer-body, inner-body,
-				  step-vars, init-forms, step-forms,
-				  implied-end-tests)
-  let var = bind-type(clause.for-clause-variable, outer-body);
+				  outer-body :: <stretchy-vector>,
+				  inner-body :: <stretchy-vector>,
+				  step-vars :: <stretchy-vector>,
+				  init-forms :: <stretchy-vector>,
+				  step-forms :: <stretchy-vector>,
+				  implied-end-tests :: <stretchy-vector>,
+				  lexenv :: union(<false>, <lexenv>))
+  let var = bind-type(clause.for-clause-variable, outer-body, lexenv);
   add!(step-vars, var);
   let name = var.param-name.token-symbol;
   let (start-temp, start-bind)
@@ -413,9 +433,10 @@ define method process-for-clause (clause :: <for-from-clause>,
   #f;
 end;
 
-define method bind-type (var :: <parameter>, outer-body)
+define method bind-type (var :: <parameter>, outer-body :: <stretchy-vector>,
+			 lexenv :: <lexenv>)
     => new-var :: <parameter>;
-  if (var.param-type)
+  if (var.param-type & instance?(ct-eval(var.param-type, lexenv), <ctype>))
     let (temp, bind-form)
       = bind-temp(symcat(var.param-name.token-symbol, "-type"),
 		  var.param-type);
