@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/control-flow.dylan,v 1.2 2000/01/24 04:55:55 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/control-flow.dylan,v 1.3 2001/05/26 16:45:07 gabor Exp $
 copyright: see below
 
 
@@ -213,8 +213,7 @@ define open abstract primary class <component> (<block-region-mixin>)
   slot reoptimize-queue :: false-or(<queueable-mixin>), init-value: #f;
   //
   // List of all the <function-regions>s in this component.
-  slot all-function-regions :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  slot all-function-regions :: <stretchy-vector> = make(<stretchy-vector>);
 end;
 
 define method add-to-queue
