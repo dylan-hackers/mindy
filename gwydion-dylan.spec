@@ -10,7 +10,7 @@
 # latest source and documentation tarball from the FTP site and
 # put them into /usr/src/redhat/SOURCES. Edit your local copy of
 # this file, replacing:
-#   * VERSION with a number of the form '2.2.1'.
+#   * VERSION with a number of the form '2.2.1'. (2 occurances)
 #   * libcX with either libc5 or libc6, depending on your Linux
 #     distribution.
 # Then type 'cd /usr/src/redhat/SPECS/; rpm -ba gwydion-dylan.spec`.
