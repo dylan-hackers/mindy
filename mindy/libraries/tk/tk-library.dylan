@@ -40,6 +40,7 @@ define library tk
   use string-extensions;
   use collection-extensions;
   use table-extensions;
+  use regular-expressions;
   use format;
   export tk;
   export tk-extension;
