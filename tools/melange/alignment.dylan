@@ -75,7 +75,7 @@ end module c-declarations;
 
 
 // Returns the number of bytes required to store instances of some C type.
-// This was written on HP, but should be valid on all *nix platforms.
+// This was written on HP, but seems valid on all *nix platforms.
 //
 define generic unix-type-size (type :: <type-declaration>);
 
@@ -91,18 +91,19 @@ define constant $default-alignment :: <integer> = 4;
 
 define method aligned-slot-position
     (prev-slot-end :: <integer>, slot-type :: <type-declaration>,
-     #key alignment: alignment :: <integer> = $default-alignment)
+     #key alignment: unused :: <integer> = $default-alignment)
  => (this-slot-end :: <integer>, this-slot-start :: <integer>);
   if (instance?(slot-type, <typedef-declaration>))
     aligned-slot-position(prev-slot-end, slot-type.type);
   else
-    let size =
+    let (size, alignment) =
       select (slot-type by instance?)
 	<predefined-type-declaration>, <function-type-declaration>,
 	<pointer-declaration>, <enum-declaration>, <struct-declaration>,
 	<union-declaration>, <vector-declaration> =>
 	  let sz = c-type-size(slot-type);
-	  sz;
+	  let align = c-type-alignment(slot-type);
+	  values (sz, align);
 	otherwise =>
 	  error("Unhandled c type in aligned-slot-position");
       end select;
@@ -189,9 +190,17 @@ end method unix-type-size;
 define method unix-type-size (decl :: <union-declaration>)
  => size :: <integer>;
   if (decl.members)
-    reduce(method (sz :: <integer>, member)
-	     max(sz, unix-type-size(member.type)) end method,
-	   0, decl.members);
+    let base-size =
+      reduce(method (sz :: <integer>, member)
+	       max(sz, unix-type-size(member.type)) end method,
+	     0, decl.members);
+    let align = unix-type-alignment(decl);
+    let rem = remainder(base-size, align);
+    if (rem = 0)
+      base-size;
+    else
+      (truncate/(base-size, align) * align) + align;
+    end if;
   else
     0;
   end if;
@@ -200,11 +209,17 @@ end method unix-type-size;
 define method unix-type-size (decl :: <struct-declaration>)
  => size :: <integer>;
   if (decl.members)
-    reduce(method (sz :: <integer>, member)
-	     aligned-slot-position(sz, member.type,
-				   alignment: unix-type-alignment(decl))
-	   end method,
-	   0, decl.members);
+    let base-size =
+      reduce(method (sz :: <integer>, member)
+	       aligned-slot-position(sz, member.type); end method,
+	     0, decl.members);
+    let align = unix-type-alignment(decl);
+    let rem = remainder(base-size, align);
+    if (rem = 0)
+      base-size;
+    else
+      (truncate/(base-size, align) * align) + align;
+    end if;
   else
     0;
   end if;
