@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.19 1996/06/11 14:38:35 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.20 1996/08/21 10:06:30 nkramer Exp $
 *
 * This file implements getc.
 *
@@ -42,6 +42,16 @@
 #include "error.h"
 #include "def.h"
 #include "fd.h"
+
+static int mindy_getchar ()
+{
+    char c;
+    int num_read = mindy_read(0, &c, 1);
+    if (num_read < 1)
+	return EOF;
+    else
+	return c;
+}
 
 /* The buffer will always come back with a newline and null
    termination at the end, even if that means truncating some of the
@@ -108,17 +118,8 @@ static void getc_or_wait(struct thread *thread)
     }
 
     {
-	int c;
 	obj_t *old_sp;
-#ifdef WIN32
-        if (isatty(0)) {
-	    char character;
-	    int bytes_read = read_stdin(&character, 1);
-	    c = (bytes_read == 0) ? EOF : character;
-	} 
-	else 
-#endif
-	    c = getchar();
+	int c = mindy_getchar();
 
 	old_sp = pop_linkage(thread);
 
