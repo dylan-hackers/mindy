@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.2 1998/12/17 11:01:33 igor Exp $
 *
 * This file is the main driver.
 *
@@ -142,7 +142,7 @@ static void set_module(char *value)
 
 static void set_library(char *value)
 {
-    if (LibraryName != NULL && strcasecmp(LibraryName->name, value)) {
+    if (LibraryName != NULL && strcasecmp((char *)LibraryName->name, value)) {
 	fprintf(stderr,
 		"Library name specified on the command line differs from\n"
 		"the library name specified in the file.\n");
