@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.2 1994/12/16 11:55:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.3 1994/12/16 14:28:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -436,7 +436,7 @@ end;
 define method bind-type (var :: <parameter>, outer-body :: <stretchy-vector>,
 			 lexenv :: <lexenv>)
     => new-var :: <parameter>;
-  if (var.param-type & instance?(ct-eval(var.param-type, lexenv), <ctype>))
+  if (var.param-type & ~instance?(ct-eval(var.param-type, lexenv), <ctype>))
     let (temp, bind-form)
       = bind-temp(symcat(var.param-name.token-symbol, "-type"),
 		  var.param-type);
