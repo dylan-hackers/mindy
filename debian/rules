@@ -9,6 +9,9 @@ STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	fi)
 VERSION=2.3.6pre2
 MACHINE=$(shell uname -m)
+ifeq ("$(MACHINE)", "sparc64")
+	MACHINE=sparc
+endif
 
 bootstrap-stage1:  bootstrap-stage1-stamp
 bootstrap-stage1-stamp:
