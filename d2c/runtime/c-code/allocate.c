@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <runtime.h>
+#include "runtime.h"
 
 #include "../gc/include/gc.h"
 

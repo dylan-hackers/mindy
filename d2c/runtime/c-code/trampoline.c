@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <runtime.h>
+#include "runtime.h"
 #ifdef __sgi__
 #include <sys/cachectl.h>
 #endif

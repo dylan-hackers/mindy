@@ -1,8 +1,8 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.16 2002/03/17 03:29:51 gabor Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.17 2002/04/06 12:45:55 gabor Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <runtime.h>
+#include "runtime.h"
 #include <math.h>
 
 #include "../gc/include/gc.h"
