@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.10 1996/10/07 21:48:34 rgs Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.11 1996/11/04 11:53:22 nkramer Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,6 +23,10 @@ void real_main(int argc, char *argv[])
 
     /* Run all the top level initializations. */
     inits(sp, argc, argv);
+
+    /* exit(0) -- I would have thought this to be the default, but it
+       seems to be neccessary, at least on win32 */
+    exit(0);
 }
 
 
