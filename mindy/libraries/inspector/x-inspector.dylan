@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.3 1996/04/07 22:23:46 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.4 1996/04/10 20:40:34 nkramer Exp $
 
 //======================================================================
 //
@@ -33,19 +33,21 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-in
 
 define library X-inspector
   use dylan;
-  use inspector-base;
-  use tk;
   use string-extensions;
+  use tk;
+  use inspector-base;
+  use class-diagram;
 end library X-inspector;
 
 define module X-inspector
   use dylan;
   use extensions;
-  use inspector-base, export: { *show-elements* };
   use regular-expressions, import: { split };
   use substring-search, import: { substring-position };
   use tk;
   use tk-extension;
+  use inspector-base, export: { *show-elements* };
+  use class-diagram;
   export
     xinspect;
 end module X-inspector;
@@ -121,16 +123,25 @@ define function xinspect (obj :: <object>) => ();
       end for;
     end if;
   end for;
+
   let button-frame = make(<frame>, side: "top", in: window);
+  if (instance?(obj, <class>))
+    make(<button>, text: "See Class Diagram",
+	 relief: "raised", side: "left", anchor: "w", in: button-frame,
+	 command: method () 
+		    let title = concatenate("Diagram ", short-string(obj));
+		    view-class-hierarchy(obj, title);
+		  end method);
+  end if;
   make(<button>, text: "Close", command: method () destroy-window(window) end,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
   make(<button>, text: "Quit", command: exit,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
 end function xinspect;
 
-/*
+
 define method main (prog-name :: <byte-string>, #rest args)
-  xinspect(xinspect);
+  xinspect($all-libraries);
 //  map-window(*root-window*);
 end method main;
-*/
+
