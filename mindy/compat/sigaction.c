@@ -27,9 +27,14 @@
  * these are common to the emulations.
  * Taken from p. 292, Advanced Programming in the Unix Environment 
  * (W. Richard Stevens)
+ *
+ * On Linux, sigemptyset and sigfillset are macros, so we'd best not
+ * try to redeclare them.
  */
-int sigemptyset(sigset_t *set) { return *set = 0; }
-int sigfillset(sigset_t *set) { *set = ~(sigset_t)0; return 0; }
+#ifndef sigemptyset
+    int sigemptyset(sigset_t *set) { return *set = 0; }
+    int sigfillset(sigset_t *set) { *set = ~(sigset_t)0; return 0; }
+#endif
 
 /* We define a dummy definition of SIGBAD because we can get away
  * with it in Mindy.

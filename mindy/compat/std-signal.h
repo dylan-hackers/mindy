@@ -18,8 +18,15 @@ extern int	sigprocmask(int op, sigset_t *set, sigset_t *oset);
 extern int	sigaddset(sigset_t *set, int sig);
 extern int	sigdelset(sigset_t *set, int sig);
 extern int	sigemptyset(sigset_t *set);
-extern int	sigfillset(sigset_t *set);
-extern int	sigismember(sigset_t *set, int sig);
+
+/*
+ * On Linux, sigemptyset and sigfillset are macros, so we'd best not
+ * try to redeclare them.
+ */
+#ifndef sigemptyset
+    extern int	sigfillset(sigset_t *set);
+    extern int	sigismember(sigset_t *set, int sig);
+#endif
 
 #define SIG_NOP		0
 #define SIG_BLOCK	1
