@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.3 1995/01/10 16:26:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.4 1995/03/04 21:51:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -220,8 +220,8 @@ define class <while-token> (<core-word-token>) end;
 //
 define class <abstract-literal-token> (<token>)
   //
-  // The object this is a literal token of.
-  slot token-literal, required-init-keyword: literal:;
+  // The literal this is a literal token of.
+  slot token-literal :: <literal>, required-init-keyword: literal:;
 end;
 
 define method print-object (token :: <abstract-literal-token>,
