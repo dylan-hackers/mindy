@@ -40,6 +40,7 @@ end module;
 
 define module gobject-tool
   use common-dylan;
+  use Extensions, import: { *warning-output* };
   use parse-arguments;
   use streams;
   use standard-io;
