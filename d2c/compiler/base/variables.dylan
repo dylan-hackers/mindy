@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.7 1995/05/26 10:50:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.8 1995/05/26 13:11:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -122,6 +122,7 @@ define method initialize (mod :: <module>, #key) => ();
   table[#"local"] := <local-token>;
   table[#"macro"] := <macro-token>;
   table[#"otherwise"] := <otherwise-token>;
+  table[#"seal"] := <seal-token>;
 end;
 
 // module-name -- exported.
