@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.4 1994/03/28 11:09:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.5 1994/04/06 13:49:52 rgs Exp $
 *
 * This file does whatever.
 *
@@ -32,8 +32,6 @@
 #include "../comp/byteops.h"
 
 static obj_t obj_ComponentClass = 0;
-
-static void (*byte_ops[256])(int byte, struct thread *thread);
 
 
 /* Various utility routines. */
@@ -404,7 +402,120 @@ static void interpret_byte(struct thread *thread)
 {
     int byte = decode_byte(thread);
 
-    (*byte_ops[byte])(byte, thread);
+    switch (byte) {
+    case op_BREAKPOINT:
+	op_breakpoint(byte, thread);
+	break;
+    case op_RETURN_SINGLE:
+	op_return_single(byte, thread);
+	break;
+    case op_MAKE_VALUE_CELL:
+	op_make_value_cell(byte, thread);
+	break;
+    case op_VALUE_CELL_REF:
+	op_value_cell_ref(byte, thread);
+	break;
+    case op_VALUE_CELL_SET:
+	op_value_cell_set(byte, thread);
+	break;
+    case op_VARIABLE_VALUE:
+	op_variable_value(byte, thread);
+	break;
+    case op_VARIABLE_FUNCTION:
+	op_variable_function(byte, thread);
+	break;
+    case op_SET_VARIABLE_VALUE:
+	op_set_variable_value(byte, thread);
+	break;
+    case op_MAKE_METHOD:
+	op_make_method(byte, thread);
+	break;
+    case op_CHECK_TYPE:
+	op_check_type(byte, thread);
+	break;
+    case op_CHECK_TYPE_FUNCTION:
+	op_check_type_function(byte, thread);
+	break;
+    case op_CANONICALIZE_VALUE:
+	op_canonicalize_value(byte, thread);
+	break;
+    case op_PUSH_BYTE:
+	op_push_byte(byte, thread);
+	break;
+    case op_PUSH_INT:
+	op_push_int(byte, thread);
+	break;
+    case op_CONDITIONAL_BRANCH:
+	op_conditional_branch(byte, thread);
+	break;
+    case op_BRANCH:
+	op_branch(byte, thread);
+	break;
+    case op_PUSH_NIL:
+	op_push_nil(byte, thread);
+	break;
+    case op_PUSH_UNBOUND:
+	op_push_unbound(byte, thread);
+	break;
+    case op_PUSH_TRUE:
+	op_push_true(byte, thread);
+	break;
+    case op_PUSH_FALSE:
+	op_push_false(byte, thread);
+	break;
+    case op_DUP:
+	op_dup(byte, thread);
+	break;
+    case op_PUSH_CONSTANT|15:
+	op_push_constant(byte, thread);
+	break;
+    case op_PUSH_ARG|15:
+	op_push_arg(byte, thread);
+	break;
+    case op_POP_ARG|15:
+	op_pop_arg(byte, thread);
+	break;
+    case op_PUSH_LOCAL|15:
+	op_push_local(byte, thread);
+	break;
+    case op_POP_LOCAL|15:
+	op_pop_local(byte, thread);
+	break;
+    case op_CALL_TAIL|15:
+	op_call_tail(byte, thread);
+	break;
+    case op_CALL_FOR_MANY|15:
+    case op_CALL_FOR_SINGLE|15:
+	op_call(byte, thread);
+	break;
+    default:
+	switch (byte & 240) {
+	case op_PUSH_CONSTANT:
+	    op_push_constant_immed(byte, thread);
+	    break;
+	case op_PUSH_ARG:
+	    op_push_arg_immed(byte, thread);
+	    break;
+	case op_POP_ARG:
+	    op_pop_arg_immed(byte, thread);
+	    break;
+	case op_PUSH_LOCAL:
+	    op_push_local_immed(byte, thread);
+	    break;
+	case op_POP_LOCAL:
+	    op_pop_local_immed(byte, thread);
+	    break;
+	case op_CALL_TAIL:
+	    op_call_tail_immed(byte, thread);
+	    break;
+	case op_CALL_FOR_MANY:
+	case op_CALL_FOR_SINGLE:
+	    op_call_immed(byte, thread);
+	    break;
+	default:
+	    op_flame(byte, thread);
+	}
+    }
 }
 
 
@@ -504,52 +615,8 @@ void init_interp_classes(void)
 		       obj_ObjectClass, NULL);
 }
 
+/* Probably obsolete, but keep it around just in case. */
 void init_interpreter(void)
 {
-    int i;
-
-    for (i = 0; i < 256; i++)
-	byte_ops[i] = op_flame;
-
-    byte_ops[op_BREAKPOINT] = op_breakpoint;
-    byte_ops[op_RETURN_SINGLE] = op_return_single;
-    byte_ops[op_MAKE_VALUE_CELL] = op_make_value_cell;
-    byte_ops[op_VALUE_CELL_REF] = op_value_cell_ref;
-    byte_ops[op_VALUE_CELL_SET] = op_value_cell_set;
-    byte_ops[op_VARIABLE_VALUE] = op_variable_value;
-    byte_ops[op_VARIABLE_FUNCTION] = op_variable_function;
-    byte_ops[op_SET_VARIABLE_VALUE] = op_set_variable_value;
-    byte_ops[op_MAKE_METHOD] = op_make_method;
-    byte_ops[op_CHECK_TYPE] = op_check_type;
-    byte_ops[op_CHECK_TYPE_FUNCTION] = op_check_type_function;
-    byte_ops[op_CANONICALIZE_VALUE] = op_canonicalize_value;
-    byte_ops[op_PUSH_BYTE] = op_push_byte;
-    byte_ops[op_PUSH_INT] = op_push_int;
-    byte_ops[op_CONDITIONAL_BRANCH] = op_conditional_branch;
-    byte_ops[op_BRANCH] = op_branch;
-    byte_ops[op_PUSH_NIL] = op_push_nil;
-    byte_ops[op_PUSH_UNBOUND] = op_push_unbound;
-    byte_ops[op_PUSH_TRUE] = op_push_true;
-    byte_ops[op_PUSH_FALSE] = op_push_false;
-    byte_ops[op_DUP] = op_dup;
-
-    for (i = 0; i < 15; i++) {
-	byte_ops[op_PUSH_CONSTANT|i] = op_push_constant_immed;
-	byte_ops[op_PUSH_ARG|i] = op_push_arg_immed;
-	byte_ops[op_POP_ARG|i] = op_pop_arg_immed;
-	byte_ops[op_PUSH_LOCAL|i] = op_push_local_immed;
-	byte_ops[op_POP_LOCAL|i] = op_pop_local_immed;
-	byte_ops[op_CALL_TAIL|i] = op_call_tail_immed;
-	byte_ops[op_CALL_FOR_MANY|i] = op_call_immed;
-	byte_ops[op_CALL_FOR_SINGLE|i] = op_call_immed;
-    }
-
-    byte_ops[op_PUSH_CONSTANT|15] = op_push_constant;
-    byte_ops[op_PUSH_ARG|15] = op_push_arg;
-    byte_ops[op_POP_ARG|15] = op_pop_arg;
-    byte_ops[op_PUSH_LOCAL|15] = op_push_local;
-    byte_ops[op_POP_LOCAL|15] = op_pop_local;
-    byte_ops[op_CALL_TAIL|15] = op_call_tail;
-    byte_ops[op_CALL_FOR_MANY|15] = op_call;
-    byte_ops[op_CALL_FOR_SINGLE|15] = op_call;
+    ;
 }
