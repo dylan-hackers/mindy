@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.19 1995/03/02 18:05:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.20 1995/03/02 21:11:25 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -1752,48 +1752,65 @@ static obj_t dylan_ei_as_sf(obj_t class, obj_t x)
 {
     int length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
+    digit_t digit = 0;
     float res = 0;
     float base = (float) (1 << DIGIT_BITS);
     float place = 1;
     int i;
 
     for (i = 0; i < length; i++) {
-	res += ((float) digits[i]) * place;
+	digit = digits[i];
+	res += ((float) digit) * place;
 	place *= base;
     }
-    return make_single(res);
+
+    if (digit & SIGN_MASK)
+	return make_single(res - base);
+    else
+	return make_single(res);
 }
 
 static obj_t dylan_ei_as_df(obj_t class, obj_t x)
 {
     int length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
+    digit_t digit = 0;
     double res = 0;
     double base = (double) (1 << DIGIT_BITS);
     double place = 1;
     int i;
 
     for (i = 0; i < length; i++) {
-	res += ((double) digits[i]) * place;
+	digit = digits[i];
+	res += ((double) digit) * place;
 	place *= base;
     }
-    return make_double(res);
+
+    if (digit & SIGN_MASK)
+	return make_double(res - base);
+    else
+	return make_double(res);
 }
 
 static obj_t dylan_ei_as_xf(obj_t class, obj_t x)
 {
     int length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
+    digit_t digit = 0;
     long double res = 0;
     long double base = (long double) (1 << DIGIT_BITS);
     long double place = 1;
     int i;
 
     for (i = 0; i < length; i++) {
-	res += ((long double) digits[i]) * place;
+	digit = digits[i];
+	res += ((long double) digit) * place;
 	place *= base;
     }
-    return make_extended(res);
+    if (digit & SIGN_MASK)
+	return make_extended(res - base);
+    else
+	return make_extended(res);
 }
 
 static obj_t dylan_sf_as_df(obj_t class, obj_t x)
