@@ -40,7 +40,8 @@ GNU's Flex and Bison, respectively.  They can be obtained from
 
 We have built and tested Mindy under MACH on the DECstation and HP-UX
 on HP 700's.  We have built and run Mindy, but not tested it
-extensivly, under Irix, Linux, SunOS, and Ultrix.
+extensivly, under Irix, Linux, SunOS, AIX, Solaris, Ultrix, and
+Windows/NT.
 
 The Mindy release also includes some rough documentation, various
 libraries (Streams, Format, Print, Collection-extensions,
