@@ -1,4 +1,5 @@
 module: d2c-gnu
+rcs-header: $header$
 
 //========================================================================
 //
@@ -161,9 +162,19 @@ define variable $from-gdb :: <stream> = *standard-input*;
 // specialized for GDB.
 //
 define method open-gdb-process (#rest args) => ();
-  let (to-fd, from-fd) = fd-exec(apply(join, " ", "gdb", args));
+  let cmd-line = apply(join, " ", "gdb", args);
+#if (compiled-for-hppa-hpux)
+  let (to-fd, from-fd) = mutant-fd-exec(cmd-line);
   $to-gdb := make(<fd-stream>, direction: #"output", fd: to-fd);
   $from-gdb := make(<fd-stream>, direction: #"input", fd: from-fd);
+#else
+  let (to-stream, from-stream) = piped-exec(cmd-line);
+  $to-gdb := to-stream;
+  $from-gdb := from-stream;
+  #if (compiled-for-x86-win32)
+     ignore-interrupts();
+  #endif
+#endif
 end method open-gdb-process;
 
 // Find out if we are at the GDB prompt.  We must magically match this
@@ -260,7 +271,9 @@ define method receive-gdb-response
 	  write-element($to-gdb, read-element(*standard-input*));
 	end while;
 	force-output($to-gdb);
-#if (~mindy)
+#if (~mindy & compiled-for-hppa-hpux)
+        // ### sleep(0) delays us just long enough to give other
+        // processes a chance to run
 	call-out("sleep", void:, int: 0);
 #endif
       end while;
@@ -1007,10 +1020,14 @@ end;
 
 define dig-command "run" (line)
   clear-gdb-variable-types();	// See expr-token for more info
+#if (compiled-for-hppa-hpux)
   do-gdb-command("handle SIGSEGV nostop noprint pass");
+#endif
   send-gdb-command("run %s", line);
   receive-gdb-response();
+#if (compiled-for-hppa-hpux)
   do-gdb-command("handle SIGSEGV stop print nopass");
+#endif
   #"prompt-sent";
 end;
 
@@ -1063,7 +1080,6 @@ define method command-loop () => ();
   end block;
 end method command-loop;
 
-#if (mindy)
 define method main (prog-name :: <string>, #rest args);
   let raw-args = args;
   let args = make(<stretchy-vector>);
@@ -1080,25 +1096,18 @@ define method main (prog-name :: <string>, #rest args);
   do-gdb-command("set confirm off");
   do-gdb-command("set height 10000");
   do-gdb-command("break dylan_invoke_debugger_generic");
+  do-gdb-command("break crash_and_burn");
   command-loop();
 end method main;
-#else
-define method %main (argc :: <integer>, argv :: <object>)
-  let raw-args = as(<arg-vector>, argv);
-  let args = make(<stretchy-vector>);
-  for (i from 1 below argc)
-    if (raw-args[i] = "-d")
-      $dig-debug := #t;
-    else
-      add!(args, raw-args[i])
-    end if;
-  end for;
-  apply(open-gdb-process, args);
 
-  receive-gdb-response();
-  do-gdb-command("set confirm off");
-  do-gdb-command("set height 10000");
-  do-gdb-command("break dylan_invoke_debugger_generic");
-  command-loop();
+#if (~mindy)
+define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
+  let args = make(<vector>, size: argc);
+  for (index :: <integer> from 0 below argc)
+    let argptr = pointer-deref(#"ptr", argv,
+			       index * c-expr(#"int", "sizeof(void *)"));
+    args[index] := import-string(argptr);
+  end for;
+  apply(main, args);
 end method %main;
 #endif
