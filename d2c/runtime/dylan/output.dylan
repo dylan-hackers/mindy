@@ -209,6 +209,7 @@ define method write-integer
   local
     method repeat (int :: <extended-integer>, digits :: <list>)
       let (remaining, digit) = floor/(int, radix);
+      let digit = as(<fixed-integer>, digit);
       let digits
 	= pair(if (digit < 10)
 		 digit + as(<integer>, '0');
