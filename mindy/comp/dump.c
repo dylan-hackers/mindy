@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.2 1994/03/25 05:00:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.3 1994/03/28 11:31:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -245,16 +245,8 @@ static void dump_list_literal(struct list_literal *literal)
 	dump_literal(literal->tail);
 }
 
-static void dump_vector_literal(struct vector_literal *literal)
+static void dump_vector_header(int length)
 {
-    struct literal *part;
-    int length;
-    int i;
-
-    length = 0;
-    for (part = literal->first; part != NULL; part = part->next)
-	length++;
-
     switch (length) {
       case 0: dump_op(fop_VECTOR0); break;
       case 1: dump_op(fop_VECTOR1); break;
@@ -269,16 +261,30 @@ static void dump_vector_literal(struct vector_literal *literal)
 	dump_op(fop_VECTORN);
 	if (length-9 < 254)
 	    dump_byte(length-9);
-	else if (length-9 < (1<<16)) {
+	else if (length-9-254 < (1<<16)) {
 	    dump_byte(254);
-	    dump_int2(length-9);
+	    dump_int2(length-9-254);
 	}
 	else {
 	    dump_byte(255);
-	    dump_int4(length-9);
+	    dump_int4(length-9-254-(1<<16));
 	}
 	break;
     }
+}
+
+static void dump_vector_literal(struct vector_literal *literal)
+{
+    struct literal *part;
+    int length;
+    int i;
+
+    length = 0;
+    for (part = literal->first; part != NULL; part = part->next)
+	length++;
+
+    dump_vector_header(length);
+
     for (part = literal->first; part != NULL; part = part->next)
 	dump_literal(part);
 }
@@ -312,6 +318,57 @@ static void dump_literal(struct literal *literal)
 
 
 
+/* Debug info dumping. */
+
+static void dump_vars(struct scope_info *scope)
+{
+    struct var_info *var_info;
+
+    if (scope->handle != -1)
+	dump_ref(scope->handle);
+    else {
+	scope->handle = dump_store();
+
+	if (scope->outer)
+	    dump_op(fop_DOTTED_LIST1);
+	else
+	    dump_op(fop_LIST1);
+
+	dump_vector_header(scope->nvars);
+	for (var_info=scope->vars; var_info != NULL; var_info=var_info->next) {
+	    int loc_info = var_info->offset << 2;
+	    if (var_info->indirect)
+		loc_info |= 2;
+	    if (var_info->argument)
+		loc_info |= 1;
+
+	    dump_op(fop_VECTOR2);
+	    dump_symbol(var_info->var->symbol);
+	    dump_integer(loc_info);
+	}
+
+	if (scope->outer)
+	    dump_vars(scope->outer);
+    }
+}
+
+static void dump_debug_info(struct component *c)
+{
+    struct debug_info *info;
+    
+    dump_vector_header(c->ndebug_infos);
+    for (info = c->debug_info; info != NULL; info = info->next) {
+	dump_op(fop_VECTOR3);
+	dump_integer(info->line);
+	dump_integer(info->bytes);
+	if (info->scope)
+	    dump_vars(info->scope);
+	else
+	    dump_op(fop_NIL);
+    }
+}
+
+
 /* Method Dumping */
 
 static void dump_component(struct component *c)
@@ -335,6 +392,10 @@ static void dump_component(struct component *c)
 	dump_literal(c->debug_name);
     else
 	dump_op(fop_FALSE);
+
+    dump_integer(c->frame_size);
+
+    dump_debug_info(c);
 
     for (constant = c->constants; constant != NULL; constant = constant->next)
 	dump_constant(constant);
@@ -504,6 +565,8 @@ void dump_setup_output(char *source, FILE *file)
 	dump_symbol(symbol("Dylan-User"));
     dump_op(fop_IN_MODULE);
     dump_symbol(ModuleName);
+    dump_op(fop_SOURCE_FILE);
+    dump_string_guts(fop_SHORT_STRING, fop_STRING, source, strlen(source));
 }
 
 void dump_top_level_form(struct component *c)
