@@ -381,7 +381,7 @@ void r2n( char * buffer, int count)
 long OpenApplicationAsFile( void )
 {
 	OSErr 				err;
-	long 				fd;
+	short 				fd;
 	FSSpec				spec;
 	ProcessSerialNumber	serial;
 	ProcessInfoRec 		info;
@@ -405,5 +405,5 @@ long OpenApplicationAsFile( void )
 	{
 		return -1;
 	}
-	return fd;
+	return (short)fd;
 }
