@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.110 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.111 1995/12/16 04:16:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -655,38 +655,187 @@ define method optimize-unknown-call
   if (bogus?)
     change-call-kind(component, call, <error-call>);
   else
-    let arg-types = reverse!(arg-types);
-    let (ordered, ambiguous) = ct-sorted-applicable-methods(defn, arg-types);
-    if (ordered == #())
-      no-applicable-methods-warning(call, defn, ambiguous, arg-types);
-      change-call-kind(component, call, <error-call>);
-    elseif (ordered)
-      // ### Need to check the keywords before the ct method selection
-      // is valid.
-      let builder = make-builder(component);
-      let assign = call.dependents.dependent;
-      let policy = assign.policy;
-      let source = assign.source-location;
-      let new-func
-	= fer-convert-defn-ref(builder, policy, source, ordered.head);
-      let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
-      insert-before(component, assign, builder-result(builder));
-      let new-call = make-unknown-call(builder, new-func, next-leaf,
-				       reverse!(arg-leaves));
-      replace-expression(component, call.dependents, new-call);
-    elseif (defn.generic-defn-discriminator)
-      // There is a static descriminator function.  We can change into a
-      // known call.  We don't reference the discriminator directly because
-      // we still want to be able to do method selection if we can derive
-      // a better idea of the argument types.
-      convert-to-known-call
-	(component, defn.generic-defn-discriminator.ct-function-signature,
-	 call);
-    end;
-  end;
-end;    
+    optimize-generic(component, call, defn, reverse!(arg-types),
+		     reverse!(arg-leaves));
+  end if;
+end method optimize-unknown-call;
 
-define method no-applicable-methods-warning
+
+define method optimize-generic
+    (component :: <component>, call :: <abstract-call>,
+     defn :: <generic-definition>, arg-types :: <list>,
+     arg-leaves :: <list>)
+    => ();
+  block (return)
+    local
+      method maybe-change-to-known ()
+	if (~instance?(call, <known-call>) & defn.generic-defn-discriminator)
+	  // There is a static descriminator function.  We can change into a
+	  // known call.  We don't reference the discriminator directly because
+	  // we still want to be able to do method selection if we can derive
+	  // a better idea of the argument types.
+	  convert-to-known-call
+	    (component, defn.generic-defn-discriminator.ct-function-signature,
+	     call);
+	end if;
+	return();
+      end method maybe-change-to-known,
+      method change-to-error ()
+	if (instance?(call, <known-call>))
+	  // We can't just change a <known-call> into an <error-call> because
+	  // all the #rest args are lumped into a vector.
+	  let builder = make-builder(component);
+	  let new-call
+	    = make-operation(builder, <error-call>,
+			     pair(call.depends-on.source-exp, arg-leaves));
+	  replace-expression(component, call.dependents, new-call);
+	else
+	  change-call-kind(component, call, <error-call>);
+	end;
+	return();
+      end method change-to-error;
+
+    let (definitely, maybe) = ct-applicable-methods(defn, arg-types);
+    if (definitely == #f)
+      maybe-change-to-known();
+    end if;
+
+    let applicable = concatenate(definitely, maybe);
+
+    if (applicable == #())
+      no-applicable-methods-warning(call, defn, arg-types);
+      change-to-error();
+    end if;
+
+    // Improve the result type based on the actually applicable methods.
+    for (meth in applicable,
+	 result-type = wild-ctype()
+	   then values-type-union(result-type,
+				  meth.function-defn-signature.returns))
+    finally
+      maybe-restrict-type(component, call, result-type);
+    end for;
+
+    // Blow out of here if applicable isn't a valid set of methods.
+    unless (maybe == #() | (maybe.tail == #() & definitely == #()))
+      return();
+    end unless;
+
+    // Compute the set of valid keywords.
+    let sig = defn.function-defn-signature;
+    let valid-keys
+      = if (sig.key-infos)
+	  if (sig.all-keys?)
+	    #"all";
+	  else
+	    block (return)
+	      reduce(method (keys :: <simple-object-vector>,
+			     meth :: <method-definition>)
+			 => res :: <simple-object-vector>;
+		       let sig = meth.function-defn-signature;
+		       if (sig.all-keys?)
+			 return(#"all");
+		       end if;
+		       union(keys, map(key-name, sig.key-infos));
+		     end method,
+		     #[],
+		     applicable);
+	    end block;
+	  end if;
+	else
+	  #f;
+	end if;
+
+    // Check the keyword arguments for validity.
+    if (valid-keys)
+      let bogus? = #f;
+      for (remaining = arg-leaves then remaining.tail,
+	   fixed in arg-types,
+	   index from 0)
+      finally
+	for (remaining = remaining then remaining.tail.tail,
+	     index from index by 2,
+	     until: remaining == #())
+	  let key-leaf = remaining.head;
+	  
+	  if (~instance?(key-leaf, <literal-constant>))
+	    unless (ctypes-intersect?(key-leaf.derived-type,
+				      specifier-type(#"<symbol>")))
+	      compiler-warning("In %s:\n  bogus keyword as argument "
+				 "%d in call of %s",
+			       call.home-function-region.name,
+			       index,
+			       defn.defn-name);
+	      bogus? := #t;
+	    end;
+	  elseif (instance?(key-leaf.value, <literal-symbol>))
+	    unless (valid-keys == #"all"
+		      | member?(key-leaf.value.literal-value, valid-keys))
+	      compiler-warning
+		("In %s:\n  invalid keyword (%=) in call of %s",
+		 call.home-function-region.name,
+		 key-leaf.value.literal-value,
+		 defn.defn-name);
+	      bogus? := #t;
+	    end;
+	  else
+	    compiler-warning
+	      ("In %s:\n  bogus keyword (%s) as argument %d in call of %s",
+	       call.home-function-region.name,
+	       key-leaf.value,
+	       index,
+	       defn.defn-name);
+	    bogus? := #t;
+	  end;
+
+	  if (remaining.tail == #())
+	    compiler-warning("In %s:\n  odd number of keyword/value arguments "
+			       "in call of %s.",
+			     call.home-function-region.name,
+			     defn.defn-name);
+	    change-to-error();
+	  end if;
+	end for;
+      end for;
+      if (bogus?)
+	change-to-error();
+      end if;
+    end if;
+
+    // Sort the applicable methods.
+    let (ordered, ambiguous) = sort-methods(applicable, #f);
+
+    if (ordered == #f)
+      // We can't tell jack about how to order the methods.  So just change
+      // to a known call of the discriminator if possible.
+      maybe-change-to-known();
+    end if;
+
+    if (ordered == #())
+      // It's ambiguous which is the most specific method.  So bitch.
+      ambiguous-method-warning(call, defn, ambiguous, arg-types);
+      change-to-error();
+    end if;
+    
+    // Change to an unknown call of the most specific method.
+    let builder = make-builder(component);
+    let assign = call.dependents.dependent;
+    let policy = assign.policy;
+    let source = assign.source-location;
+    let new-func
+      = fer-convert-defn-ref(builder, policy, source, ordered.head);
+    let next-leaf
+      = make-next-method-info-leaf(builder, ordered, ambiguous);
+    insert-before(component, assign, builder-result(builder));
+    let new-call = make-unknown-call(builder, new-func, next-leaf, arg-leaves);
+    replace-expression(component, call.dependents, new-call);
+  end block;
+end method optimize-generic;
+
+
+
+
+define method ambiguous-method-warning
     (call :: <abstract-call>, defn :: <generic-definition>,
      ambiguous :: <list>, arg-types :: <list>)
     => ();
@@ -700,22 +849,35 @@ define method no-applicable-methods-warning
   end;
   write(")", stream);
   let arg-types-string = stream.string-output-stream-string;
-  if (ambiguous == #())
-    compiler-warning("In %s:\n  no applicable methods for argument types\n"
-		       "%s\n  in call of %s",
-		     call.home-function-region.name,
-		     arg-types-string,
-		     defn.defn-name);
-  else
-    for (meth in ambiguous)
-      format(stream, "    %s\n", meth.defn-name);
-    end;
-    compiler-warning("In %s:\n  can't pick between\n%s\n  when given "
-		       "arguments of types:\n%s",
-		     call.home-function-region.name,
-		     stream.string-output-stream-string,
-		     arg-types-string);
+  for (meth in ambiguous)
+    format(stream, "    %s\n", meth.defn-name);
   end;
+  compiler-warning("In %s:\n  can't pick between\n%s\n  when given "
+		     "arguments of types:\n%s",
+		   call.home-function-region.name,
+		   stream.string-output-stream-string,
+		   arg-types-string);
+end;
+
+define method no-applicable-methods-warning
+    (call :: <abstract-call>, defn :: <generic-definition>,
+     arg-types :: <list>)
+    => ();
+  let stream = make(<byte-string-output-stream>);
+  write("    (", stream);
+  for (arg-type in arg-types, first? = #t then #f)
+    unless (first?)
+      write(", ", stream);
+    end;
+    print-message(arg-type, stream);
+  end;
+  write(")", stream);
+  let arg-types-string = stream.string-output-stream-string;
+  compiler-warning("In %s:\n  no applicable methods for argument types\n"
+		     "%s\n  in call of %s",
+		   call.home-function-region.name,
+		   arg-types-string,
+		   defn.defn-name);
 end;
 
 define method make-next-method-info-leaf
@@ -908,7 +1070,7 @@ define method compare-unknown-call-against-signature
 	  end;
 	  let leaf = key-dep.source-exp;
 	  if (~instance?(leaf, <literal-constant>))
-	    unless (ctypes-intersect?(key-dep.source-exp.derived-type,
+	    unless (ctypes-intersect?(leaf.derived-type,
 				      specifier-type(#"<symbol>")))
 	      compiler-warning("In %s:\n  bogus keyword as argument "
 				 "%d in call of %s",
@@ -939,7 +1101,7 @@ define method compare-unknown-call-against-signature
 		  found-key();
 		end;
 	      end;
-	      unless (sig.all-keys?)
+	      unless (sig.all-keys? | call.use-generic-entry?)
 		compiler-warning
 		  ("In %s:\n  invalid keyword (%=) in call of %s",
 		   call.home-function-region.name,
@@ -1223,67 +1385,41 @@ define method optimize-known-call
      defn :: <generic-definition>)
     => ();
   // We might be able to do a bit more method selection.
+
   let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+
   let nfixed = sig.specializers.size;
   for (i from 0 below nfixed,
        arg-leaves = #() then pair(dep.source-exp, arg-leaves),
        arg-types = #() then pair(dep.source-exp.derived-type, arg-types),
        dep = call.depends-on.dependent-next then dep.dependent-next)
   finally
-    let arg-types = reverse!(arg-types);
-    let (ordered, ambiguous) = ct-sorted-applicable-methods(defn, arg-types);
-    if (ordered)
-      // Okay, we now have enough of a better idea of the types that we can
-      // actually select the methods.  We need to extract the original
-      // arguments and change into a call of the first applicable method.
-      // But we have already extracted the fixed arguments, so just extract
-      // the rest args if there are any.
-      if (sig.rest-type)
-	unless (dep & dep.dependent-next == #f)
-	  error("Strange number of arguments in a known call to a generic "
-		  "function?");
-	end;
-	let rest-var = dep.source-exp;
-	unless (instance?(rest-var, <ssa-variable>))
-	  error("Strange leaf for rest-var in known call to a generic "
-		  "function");
-	end;
-	let rest-op = rest-var.definer.depends-on.source-exp;
-	unless (instance?(rest-op, <primitive>) & rest-op.name == #"vector")
-	  error("Strange value for rest-var in known call to a generic "
-		  "function");
-	end;
-	for (dep = rest-op.depends-on then dep.dependent-next,
-	     while: dep)
-	  arg-leaves := pair(dep.source-exp, arg-leaves);
-	end;
+    if (sig.rest-type)
+      unless (dep & dep.dependent-next == #f)
+	error("Strange number of arguments in a known call to a generic "
+		"function?");
       end;
-      arg-leaves := reverse!(arg-leaves);
-      // Okay, we now have all the arguments.  Change into a call of the
-      // first method.
-      let builder = make-builder(component);
-      let new-call
-	= if (ordered == #())
-	    no-applicable-methods-warning(call, defn, ambiguous, arg-types);
-	    make-operation(builder, <error-call>,
-			   pair(call.depends-on.source-exp, arg-leaves));
-	  else
-	    let assign = call.dependents.dependent;
-	    let policy = assign.policy;
-	    let source = assign.source-location;
-	    let new-func
-	      = fer-convert-defn-ref(builder, policy, source, ordered.head);
-	    let next-leaf
-	      = make-next-method-info-leaf(builder, ordered, ambiguous);
-	    insert-before(component, assign, builder-result(builder));
-	    make-unknown-call(builder, new-func, next-leaf, arg-leaves);
-	  end;
-      replace-expression(component, call.dependents, new-call);
-    else
-      maybe-restrict-type(component, call, sig.returns);
+      let rest-var = dep.source-exp;
+      unless (instance?(rest-var, <ssa-variable>))
+	error("Strange leaf for rest-var in known call to a generic "
+		"function");
+      end;
+      let rest-op = rest-var.definer.depends-on.source-exp;
+      unless (instance?(rest-op, <primitive>) & rest-op.name == #"vector")
+	error("Strange value for rest-var in known call to a generic "
+		"function");
+      end;
+      for (dep = rest-op.depends-on then dep.dependent-next,
+	   while: dep)
+	arg-leaves := pair(dep.source-exp, arg-leaves);
+      end;
     end;
-  end;
-end;
+
+    optimize-generic(component, call, defn, reverse!(arg-types),
+		     reverse!(arg-leaves));
+  end for;
+end method optimize-known-call;
 
 define method optimize-known-call
     (component :: <component>, call :: <known-call>,
