@@ -1,5 +1,5 @@
 // File: inits.cpp
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.2 2002/04/18 23:33:32 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.3 2004/04/13 20:57:29 gabor Exp $
 // Purpose: present the correct interface to be a CW plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is is based on the Pro6 CW API, but sorely needs cleanup
@@ -37,7 +37,7 @@
 #include <Threads.h>
 
 // CW headers
-#include <CWPlugins.h>
+#define CWPLUGIN_LONG_FILENAME_SUPPORT 1
 #include <CWPluginErrors.h>
 #include <DropInCompilerLinker.h>
 
@@ -101,10 +101,10 @@ extern "C" int fd_close(int fd)
 	return true;
 }
 
+/* done now by linking unistd.mac.c
 #define _POSIX
 #define __inline
 #include <unistd.h>
-/*
 //extern "C" long _lseek(int a, long b, int c);
 extern "C" long lseek(int a, long b, int c)
 {
@@ -135,6 +135,7 @@ extern "C" int MacWrite(int fd, const char *buf, int count)
 
 extern "C"
 {
+#define _MSL_CERRNO
 #pragma cplusplus off
 #	include <runtime.h>
 #pragma cplusplus reset
@@ -351,7 +352,7 @@ enum { macOSXversion = 10 << 8 };
 const bool qStackProfiling(false), qGuardPage(qStackProfiling);
 
 CW_CALLBACK plugin_main(CWPluginContext context)
-{
+{//Debugger();
 	GC_stackbottom = (char*)&context;
 	GC_quiet = true;
 	unsigned long	freeStack;
@@ -435,7 +436,7 @@ CW_CALLBACK plugin_main(CWPluginContext context)
 	}
 
 	if (ThisRequest(reqTerminate))
-		__pool_free_all();	// warning! destructors may run after this###
+		__malloc_free_all();	// warning! destructors may run after this###
 
 	if (qStackProfiling && ThisRequest(reqCompile))
 	{
