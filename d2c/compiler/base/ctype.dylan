@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.39 1996/01/12 00:58:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.40 1996/02/06 20:54:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -548,7 +548,8 @@ end method;
 define class <union-table> (<table>)
 end class;
 
-define method table-protocol(table :: <union-table>);
+define method table-protocol(table :: <union-table>)
+    => (test :: <function>, hash :: <function>);
   values(\=,
   	 method(key :: <list>)
 	   for(elt :: <ctype> in key,
@@ -668,6 +669,7 @@ define class <limited-integer-table> (<table>)
 end;
 
 define method table-protocol (table :: <limited-integer-table>)
+    => (test :: <function>, hash :: <function>);
   values(\=,
 	 method (key :: <vector>)
 	   let (min-id, min-state) = equal-hash(key.second);
