@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.7 1995/03/12 16:43:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.8 1995/07/24 20:50:07 panda Exp $
 *
 \**********************************************************************/
 
@@ -85,10 +85,19 @@ extern void lose _ANSI_ARGS_((char *fmt, ...));
  * Also, try to keep this section consistent with comp/mindycomp.h
  */
 void *check_malloc();
+#ifdef malloc
+#undef malloc
+#endif
 #define malloc(sz) check_malloc(sz, __FILE__, __LINE__)
 
 void *check_calloc();
+#ifdef calloc
+#undef calloc
+#endif
 #define calloc(nobj,sz) check_calloc(nobj, sz, __FILE__, __LINE__)
 
 void *check_realloc();
+#ifdef realloc
+#undef realloc
+#endif
 #define realloc(ptr,sz) check_realloc(ptr, sz, __FILE__, __LINE__)
