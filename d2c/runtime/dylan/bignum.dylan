@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.6 1996/01/12 02:10:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.7 1996/02/22 23:29:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -24,15 +24,32 @@ seal generic initialize (<digit>);
 // The fact that we are a functional class should automatically define this,
 // but it doesn't yet.
 //
-define sealed inline method functional-== (a :: <digit>, b :: <digit>)
+define inline method functional-==
+    (class == <digit>, a :: <digit>, b :: <digit>)
     => res :: <boolean>;
   a.value == b.value;
 end;
 
-// Seal = and ~= on digits
+seal generic functional-== (singleton(<digit>), <object>, <object>);
+
+// Seal = on digits
 // 
-seal generic \= (<digit>, <digit>);
-seal generic \~= (<digit>, <digit>);
+seal generic \= (<digit>, <object>);
+seal generic \= (<object>, <digit>);
+
+// < -- exported GF method.
+//
+// Return #t if the first digit is less than the second digit.
+//
+define inline method \< (digit1 :: <digit>, digit2 :: <digit>)
+    => res :: <boolean>;
+  digit1.value < digit2.value;
+end;
+
+// Seal < on digits.
+// 
+seal generic \< (<digit>, <object>);
+seal generic \< (<object>, <digit>);
 
 // make-digit -- internal.
 //
@@ -87,20 +104,6 @@ define inline method digit-sign-bit-set? (digit :: <digit>)
     => res :: <boolean>;
   logbit?($digit-bits - 1, digit.value);
 end;
-
-// < -- internal.
-//
-// Return #t if the first digit is less than the second digit.
-//
-define inline method \< (digit1 :: <digit>, digit2 :: <digit>)
-    => res :: <boolean>;
-  digit1.value < digit2.value;
-end;
-
-// Seal < and <= on digits.
-// 
-seal generic \< (<digit>, <digit>);
-seal generic \<= (<digit>, <digit>);
 
 // $no-carry -- internal.
 //
@@ -415,13 +418,6 @@ define inline method \== (num :: <extended-integer>, thing :: <object>)
     => res :: <boolean>;
   #f;
 end;
-
-/* Damn ambiguity rules.
-define inline method \== (thing :: <object>, num :: <extended-integer>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
 
 define method \< (num1 :: <extended-integer>, num2 :: <extended-integer>)
     => res :: <boolean>;
