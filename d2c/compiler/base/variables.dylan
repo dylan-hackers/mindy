@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.18 1995/12/15 16:14:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.19 1995/12/15 19:36:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -667,8 +667,8 @@ define method complete-module (mod :: <module>) => ();
       // Import all the exported variables, unless compute-new-name
       // tells us it should be skipped.
       //
-      for (var in used-mod.exported-variables)
-	let orig-name = var.variable-name;
+      for (orig-name in key-sequence(used-mod.exported-variables))
+	let var = used-mod.exported-variables[orig-name];
 	let new-name = compute-new-name(u, orig-name);
 	if (new-name)
 	  do-import(var, orig-name, new-name);
