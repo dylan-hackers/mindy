@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.2 2001/01/25 03:50:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cdclass.dylan,v 1.3 2001/03/24 04:40:38 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -108,7 +108,7 @@ define class <struct-slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
     init-keyword: setter:, init-value: #f;
   //
   // The address-getter generic function definition, or #f if none is defined
-  slot struct-slot-address-getter :: <variable>,
+  slot struct-slot-address-getter :: false-or(<variable>),
     init-keyword: address-getter:, init-value: #f;
   //
   // The array dimensions of the slot, or #f if it is not an array
