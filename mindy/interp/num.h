@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.2 1994/06/11 17:51:01 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.3 1994/06/19 01:21:09 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -23,6 +23,9 @@
 #define MIN_FIXNUM ((obj_t)~(((unsigned long)~0)>>1))
 
 extern obj_t obj_IntegerClass;
+extern obj_t obj_SingleFloatClass;     /* table.c needs the floats */
+extern obj_t obj_DoubleFloatClass;
+extern obj_t obj_ExtendedFloatClass;
 
 struct single_float {
     obj_t class;
