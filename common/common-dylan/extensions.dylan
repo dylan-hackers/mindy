@@ -80,11 +80,6 @@ end;
 //  Conversions
 //=========================================================================
 //  Convert numbers to and from strings.
-//  XXX - Much hackiness lurks here:
-//		No scientific notation
-//		No optimization
-//		No error handling to speak of
-//		String-to-number functions are very tolerant of input
 
 define method float-to-string( float :: <float> ) 
 => ( string :: <string> )
@@ -148,12 +143,25 @@ define method integer-to-string
   returned-string;
 end method integer-to-string;
 
+define open generic number-to-string
+    (number :: <number>) => (string :: <string>);
+
+define method number-to-string
+    (float :: <float>) => (string :: <string>)
+  float-to-string(float)
+end method number-to-string;
+
+define method number-to-string
+    (integer :: <integer>) => (string :: <string>)
+  integer-to-string(integer, base: 10)
+end method number-to-string;
+
 define method string-to-integer
     (string :: <byte-string>,
      #key base :: <integer> = 10, 
           start :: <integer> = 0, 
           end: _end :: <integer> = size(string),
-          default = $unsupplied )
+          default = $unsupplied)
  => (result :: <integer>, next-key :: <integer>);
   // Set initial state
   let valid? :: <boolean> = #f;
@@ -256,3 +264,245 @@ define method string-to-integer
   end block;
 end method string-to-integer;
 
+define method string-to-float
+    (string :: <byte-string>,
+     #key _start :: <integer> = 0, 
+          end: _end :: <integer> = size(string),
+          default-class :: subclass(<float>) = <double-float>)
+ => (result :: <float>, next-key :: <integer>);
+  local
+    method integer-part
+        (index :: <integer>, neg? :: <boolean>, mantissa :: <extended-integer>)
+     => (result :: <float>, next-key :: <integer>);
+      if(index >= _end)
+        finish-float(index, neg?, mantissa, 0, #f, 0, default-class);
+      else
+        select(string[index])
+          '0' => integer-part(index + 1, neg?, mantissa * 10 + 0);
+          '1' => integer-part(index + 1, neg?, mantissa * 10 + 1);
+          '2' => integer-part(index + 1, neg?, mantissa * 10 + 2);
+          '3' => integer-part(index + 1, neg?, mantissa * 10 + 3);
+          '4' => integer-part(index + 1, neg?, mantissa * 10 + 4);
+          '5' => integer-part(index + 1, neg?, mantissa * 10 + 5);
+          '6' => integer-part(index + 1, neg?, mantissa * 10 + 6);
+          '7' => integer-part(index + 1, neg?, mantissa * 10 + 7);
+          '8' => integer-part(index + 1, neg?, mantissa * 10 + 8);
+          '9' => integer-part(index + 1, neg?, mantissa * 10 + 9);
+            
+          '.' => fraction-part(index + 1, neg?, mantissa, 0);
+
+          'e', 'E' =>
+            exponent-sign(index + 1, neg?, mantissa, 0, default-class);
+          's', 'S' =>
+            exponent-sign(index + 1, neg?, mantissa, 0, <single-float>);
+          'd', 'D' =>
+            exponent-sign(index + 1, neg?, mantissa, 0, <double-float>);
+          'x', 'X' =>
+            exponent-sign(index + 1, neg?, mantissa, 0, <extended-float>);
+          
+          otherwise =>
+            finish-float(index, neg?, mantissa, 0, #f, 0, default-class);
+        end select;
+      end if;
+    end,
+    method fraction-part
+        (index :: <integer>, neg? :: <boolean>, mantissa :: <extended-integer>,
+         scale :: <integer>)
+     => (result :: <float>, next-key :: <integer>);
+      if(index >= _end)
+        finish-float(index, neg?, mantissa, scale, #f, 0, default-class);
+      else
+        select(string[index])
+          '0' => fraction-part(index + 1, neg?, mantissa * 10 + 0, scale + 1);
+          '1' => fraction-part(index + 1, neg?, mantissa * 10 + 1, scale + 1);
+          '2' => fraction-part(index + 1, neg?, mantissa * 10 + 2, scale + 1);
+          '3' => fraction-part(index + 1, neg?, mantissa * 10 + 3, scale + 1);
+          '4' => fraction-part(index + 1, neg?, mantissa * 10 + 4, scale + 1);
+          '5' => fraction-part(index + 1, neg?, mantissa * 10 + 5, scale + 1);
+          '6' => fraction-part(index + 1, neg?, mantissa * 10 + 6, scale + 1);
+          '7' => fraction-part(index + 1, neg?, mantissa * 10 + 7, scale + 1);
+          '8' => fraction-part(index + 1, neg?, mantissa * 10 + 8, scale + 1);
+          '9' => fraction-part(index + 1, neg?, mantissa * 10 + 9, scale + 1);
+      
+          'e', 'E' =>
+            exponent-sign(index + 1, neg?, mantissa, scale, default-class);
+          's', 'S' =>
+            exponent-sign(index + 1, neg?, mantissa, scale, <single-float>);
+          'd', 'D' =>
+            exponent-sign(index + 1, neg?, mantissa, scale, <double-float>);
+          'x', 'X' =>
+            exponent-sign(index + 1, neg?, mantissa, scale, <extended-float>);
+          
+          otherwise =>
+            finish-float(index, neg?, mantissa, scale, #f, 0, default-class);
+        end select;
+      end if;
+    end,
+    method exponent-sign
+        (index :: <integer>, neg? :: <boolean>, mantissa :: <extended-integer>,
+         scale :: <integer>,
+         class :: subclass(<float>))
+     => (result :: <float>, next-key :: <integer>);
+      if (index >= _end)
+        error("unrecognized floating-point number");
+      else
+        select(string[index])
+          '-' =>
+            if (index + 1 >= _end)
+              error("unrecognized floating-point number");
+            else
+              exponent-part(index + 1, neg?, mantissa, scale, #t, 0, class);
+            end;
+          '+' =>
+            if (index + 1 >= _end)
+              error("unrecognized floating-point number");
+            else
+              exponent-part(index + 1, neg?, mantissa, scale, #f, 0, class);
+            end;
+
+          '0' => exponent-part(index + 1, neg?, mantissa, scale, #f, 0, class);
+          '1' => exponent-part(index + 1, neg?, mantissa, scale, #f, 1, class);
+          '2' => exponent-part(index + 1, neg?, mantissa, scale, #f, 2, class);
+          '3' => exponent-part(index + 1, neg?, mantissa, scale, #f, 3, class);
+          '4' => exponent-part(index + 1, neg?, mantissa, scale, #f, 4, class);
+          '5' => exponent-part(index + 1, neg?, mantissa, scale, #f, 5, class);
+          '6' => exponent-part(index + 1, neg?, mantissa, scale, #f, 6, class);
+          '7' => exponent-part(index + 1, neg?, mantissa, scale, #f, 7, class);
+          '8' => exponent-part(index + 1, neg?, mantissa, scale, #f, 8, class);
+          '9' => exponent-part(index + 1, neg?, mantissa, scale, #f, 9, class);
+
+          otherwise =>
+            finish-float(index, neg?, mantissa, scale, #f, 0, class);
+        end select;
+      end if;
+    end,
+    method exponent-part
+        (index :: <integer>, neg? :: <boolean>, mantissa :: <extended-integer>,
+         scale :: <integer>, eneg? :: <boolean>, exponent :: <integer>,
+         class :: subclass(<float>))
+     => (result :: <float>, next-key :: <integer>);
+      if(index >= _end)
+        finish-float(index, neg?, mantissa, scale, eneg?, exponent, class);
+      else
+        select(string[index])
+          '0' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 0, class);
+          '1' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 1, class);
+          '2' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 2, class);
+          '3' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 3, class);
+          '4' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 4, class);
+          '5' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 5, class);
+          '6' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 6, class);
+          '7' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 7, class);
+          '8' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 8, class);
+          '9' => exponent-part(index + 1, neg?, mantissa, scale,
+                               eneg?, exponent * 10 + 9, class);
+          otherwise =>
+            finish-float(index, neg?, mantissa, scale, eneg?, exponent, class);
+        end select;
+      end if;
+    end,
+    method finish-float
+        (index :: <integer>, neg? :: <boolean>, mantissa :: <extended-integer>,
+         scale :: <integer>, eneg? :: <boolean>, exponent :: <integer>,
+         class :: subclass(<float>))
+     => (result :: <float>, next-key :: <integer>);
+      let exponent = if(eneg?) -exponent else exponent end;
+      values(if(neg?)
+               -algorithm-M(mantissa, exponent - scale, class);
+             else
+               algorithm-M(mantissa, exponent - scale, class);
+             end, index);
+    end,
+/*
+    method bellerophon
+        (f :: <extended-integer>,
+         e :: <integer>,
+         class :: subclass(<float>))
+     => (result :: <float>);
+      let bits
+        = select(class)
+            <single-float> => float-digits(1.0s0);
+            <double-float> => float-digits(1.0d0);
+            <extended-float> => float-digits(1.0x0);
+          end;
+      0.0;
+    end,
+*/
+    // Implements Algorithm M from William Clinger's "How to Read Floating-
+    // Point Numbers Accurately" (PLDI 1990)
+    //
+    // ### Algorithm Bellerophon is much faster, need to implement it
+    //
+    method algorithm-M
+        (f :: <extended-integer>,
+         e :: <integer>,
+         class :: subclass(<float>))
+     => (result :: <float>);
+      let bits
+        = select(class)
+            <single-float> => float-digits(1.0s0);
+            <double-float> => float-digits(1.0d0);
+            <extended-float> => float-digits(1.0x0);
+          end;
+      let low = ash(#e1, bits - 1) - 1;
+      let high = ash(#e1, bits) - 1;
+      local
+        method loop
+            (u :: <extended-integer>, v :: <extended-integer>, k :: <integer>)
+         => (result :: <float>);
+          let x = floor/(u, v);
+          if (low <= x & x < high)
+            ratio-to-float(class, u, v, k);
+          elseif (x < low)
+            loop(u * 2, v, k - 1);
+          else // x <= high
+            loop(u, v * 2, k + 1);
+          end if;
+        end;
+      if (negative?(e))
+        loop(f, #e10 ^ -e, 0);
+      else
+        loop(f * #e10 ^ e, #e1, 0);
+      end;
+    end,
+    method ratio-to-float
+        (class :: subclass(<float>),
+         u :: <extended-integer>, v :: <extended-integer>, k :: <integer>)
+     => (result :: <float>);
+      let (q, r) = floor/(u, v);
+      let v-r = v - r;
+      if (r < v-r)
+        make-float(class, q, k);
+      elseif (r > v-r)
+        make-float(class, q + 1, k);
+      elseif (even?(q))
+        make-float(class, q, k);
+      else
+        make-float(class, q + 1, k);
+      end if;
+    end,
+    method make-float
+        (class :: subclass(<float>), q :: <extended-integer>, k :: <integer>)
+     => (result :: <float>);
+      scale-float(as(class, q), k);
+    end method;
+
+  if (_start >= _end)
+    error("unrecognized floating-point number");
+  elseif (string[_start] == '-')
+    integer-part(_start + 1, #t, #e0);
+  elseif (string[_start] == '+')
+    integer-part(_start + 1, #f, #e0);
+  else
+    integer-part(_start, #f, #e0);
+  end if;
+end method;
