@@ -218,13 +218,13 @@ define method process-type-list
 		select (type)
 		  unknown-type, signed-type => char-type;
 		  unsigned-type => unsigned-char-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <char-token>, got %=", type);
 		end select;
 	      <short-token> =>
 		select (type)
 		  unknown-type, signed-type => short-type;
 		  unsigned-type => unsigned-short-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <short-token>, got %=", type);
 		end select;
 	      <long-token> =>
 		// "long long" is an idiom supported by gcc, so we'll
@@ -234,7 +234,7 @@ define method process-type-list
 		  unsigned-long-type => unsigned-longlong-type;
 		  unknown-type, signed-type => long-type;
 		  unsigned-type => unsigned-long-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <long-token>, got %=", type);
 		end select;
 	      <int-token> =>
 		select (type)
@@ -243,44 +243,44 @@ define method process-type-list
 		  longlong-type, unsigned-longlong-type,
 		  long-type, unsigned-long-type,
 		  short-type, unsigned-short-type => type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <int-token>, got %=", type);
 		end select;
 	      <signed-token> =>
 		select (type)
 		  unknown-type => signed-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <signed-token>, got %=", type);
 		end select;
 	      <unsigned-token> =>
 		select (type)
 		  unknown-type => unsigned-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <unsigned-token>, got %=", type);
 		end select;
 	      <float-token> =>
 		select (type)
 		  unknown-type => float-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <float-token>, got %=", type);
 		end select;
 	      <double-token> =>
 		select (type)
 		  unknown-type => double-type;
 		  long-type => long-double-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <double-token>, got %=", type);
 		end select;
 	      <void-token> =>
 		select (type)
 		  unknown-type => void-type;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier, expected <void-token>, got %=", type);
 		end select;
 	      otherwise =>
 		// user defined types are passed on unmodified
 		select (type)
 		  unknown-type => specifier;
-		  otherwise => parse-error(state, "Bad type specifier");
+		  otherwise => parse-error(state, "Bad type specifier for user type, got %=", type);
 		end select;
 	    end select;
   end for;
   select (type)
-    unknown-type => parse-error(state, "Bad type specifier");
+    unknown-type => parse-error(state, "Bad type specifier (unknown type)");
     unsigned-type => unsigned-int-type;
     signed-type => int-type;
     otherwise => type;
