@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.26 1995/11/09 13:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.27 1995/12/06 23:27:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -247,7 +247,7 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 		      else
 			make(<literal-false>);
 		      end;
-	  if (csubtype?(make-canonical-singleton(value), type))
+	  if (cinstance?(value, type))
 	    defn.defn-init-value := value;
 	  else
 	    // ### Should also spew a warning about the type not being correct.
