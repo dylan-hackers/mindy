@@ -29,7 +29,9 @@ copyright: See below.
 //======================================================================
 
 define open class <wrapper-stream> (<stream>)
-  slot inner-stream :: <stream>, required-init-keyword: init-stream:;
+  // ### This slot's init keyword should be required, but right now
+  // I can't un-require it in subclasses with d2c.
+  slot inner-stream :: <stream>, init-keyword: inner-stream:;
 end class;
 
 define open generic inner-stream (stream :: <wrapper-stream>) 
@@ -168,53 +170,4 @@ end method;
 
 define inline method new-line (stream :: <wrapper-stream>) => ();
   new-line(stream.inner-stream);
-end method;
-
-define inline method get-input-buffer 
-    (stream :: <wrapper-stream>,
-     #key wait? :: <boolean> = #t,
-          bytes :: false-or(<integer>))
- => buffer :: false-or(<buffer>);
-  get-input-buffer(stream.inner-stream, wait?: wait?, bytes: bytes);
-end method;
-
-define inline method release-input-buffer (stream :: <wrapper-stream>);
-  release-input-buffer(stream.inner-stream);
-end method;
-
-define inline method next-input-buffer
-    (stream :: <wrapper-stream>, 
-     #key wait? :: <boolean> = #t, 
-          bytes :: false-or(<integer>))
- => buffer :: false-or(<buffer>);
-  next-input-buffer(stream.inner-stream, wait?: wait?, bytes: bytes);
-end method;
-
-define inline method input-available-at-source? (stream :: <wrapper-stream>)
-  => input-available? :: <boolean>;
-  input-available-at-source?(stream.inner-stream);
-end method;
-
-define inline method get-output-buffer
-    (stream :: <wrapper-stream>, #key bytes :: <integer> = 1) 
- => buffer :: <buffer>;
-  get-output-buffer(stream.inner-stream, bytes: bytes);
-end method;
-
-define inline method release-output-buffer (stream :: <wrapper-stream>);
-  release-output-buffer(stream.inner-stream);
-end method;
-
-define inline method next-output-buffer
-    (stream :: <wrapper-stream>, #key bytes :: <integer> = 1)
-  => buffer :: <buffer>;
-  next-output-buffer(stream.inner-stream, bytes: bytes);
-end method;
-
-define inline method force-output-buffers (stream :: <wrapper-stream>);
-  force-output-buffers(stream.inner-stream);
-end method;
-
-define inline method synchronize (stream :: <wrapper-stream>);
-  synchronize(stream.inner-stream);
 end method;
