@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.36 1995/04/29 02:45:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.37 1995/04/29 03:02:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -379,6 +379,33 @@ end;
 
 // Call optimization.
 
+// Calls are processed in the following way:
+//
+// All calls start out as <unknown-call>s.  As we find things out about the
+// function and the call, we change the kind of call and possibly the
+// arguments as well.  Specifically:
+//
+//   If the call is to a lambda:
+//     Check the syntax, and change it into either an error call of a local
+//     call.
+//   If the call is to a hairy method literal
+//     Check the syntax and see if we can replace it with a call to the
+//     main entry.  If the syntax is bad, change it to an error call.  If
+//     we can change it to the main entry, do so.  If neither, leave it alone.
+//   If the call is to an exit-function.
+//     Convert it into a pitcher.
+//   If the call is to an abstract-method-definition
+//     If the defn has a method-defn-leaf
+//       process it like above except convert it into a known call instead of
+//       a local call when appropriate.
+//     otherwise
+//       check the syntax against what we know about the signature.  If we find
+//       any problems, change it to an error call.
+//   If the call is to a generic-definition
+//     ...
+//   Otherwise
+//     Assert that the function is indeed a <function>.
+
 define method optimize (component :: <component>, call :: <unknown-call>)
     => ();
   let func-dep = call.depends-on;
@@ -389,6 +416,13 @@ define method optimize (component :: <component>, call :: <unknown-call>)
   optimize-unknown-call(component, call, func-dep.source-exp, #t);
 end;
 
+define method optimize
+    (component :: <component>, call :: union(<known-call>, <local-call>))
+    => ();
+  maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
+end;
+
+
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
      func :: <leaf>, local? :: <boolean>)
@@ -398,6 +432,7 @@ define method optimize-unknown-call
 	      function-ctype());
 end;
 
+
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
      func :: <lambda>, local? :: <boolean>)
@@ -406,7 +441,7 @@ define method optimize-unknown-call
   // Observe the result type.
   maybe-restrict-type(component, call, func.result-type);
 
-  // Convert it into either a known or an error call.
+  // Check the args to see if they are all okay.
   let args-okay? = #t;
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        var = func.prologue.dependents.dependent.defines
@@ -424,6 +459,8 @@ define method optimize-unknown-call
     elseif (~args-okay?)
       change-call-kind(component, call, <error-call>);
     else
+      // The args are all okay, so assert the arg types and convert the call
+      // into either a <local-call> or a <known-call>.
       let assign = call.dependents.dependent;
       for (arg-dep = call.depends-on.dependent-next
 	     then arg-dep.dependent-next,
@@ -431,11 +468,11 @@ define method optimize-unknown-call
 	     then var.definer-next,
 	   while: arg-dep)
 	assert-type(component, assign, arg-dep, var.var-info.asserted-type);
-	if (local?)
-	  change-call-kind(component, call, <local-call>);
-	else
-	  change-call-kind(component, call, <known-call>);
-	end;
+      end;
+      if (local?)
+	change-call-kind(component, call, <local-call>);
+      else
+	change-call-kind(component, call, <known-call>);
       end;
     end;
   end;
@@ -447,6 +484,8 @@ define method optimize-unknown-call
      func :: <hairy-method-literal>, local? :: <boolean>)
     => ();
   let sig = func.signature;
+
+  // First, observe the result type.
   maybe-restrict-type(component, call, sig.returns);
 
   let bogus? = #f;
@@ -459,8 +498,13 @@ define method optimize-unknown-call
 	bogus? := #t;
 	return();
       end;
+      unless (ctypes-intersect?(arg-dep.source-exp.derived-type, spec))
+	compiler-warning("wrong type arg.");
+	bogus? := #t;
+      end;
     finally
       if (sig.key-infos)
+	// Make sure all the supplied keywords are okay.
 	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
 	     while: key-dep)
 	  let val-dep = key-dep.dependent-next;
@@ -473,15 +517,19 @@ define method optimize-unknown-call
 	  if (~instance?(leaf, <literal-constant>))
 	    known? := #f;
 	  elseif (instance?(leaf.value, <literal-symbol>))
-	    unless (sig.all-keys?)
-	      let key = leaf.value.literal-value;
-	      block (found-key)
-		for (keyinfo in sig.key-infos)
-		  if (keyinfo.key-name == key)
-		    // ### Should check its type.
-		    found-key();
+	    let key = leaf.value.literal-value;
+	    block (found-key)
+	      for (keyinfo in sig.key-infos)
+		if (keyinfo.key-name == key)
+		  unless (ctypes-intersect?(val-dep.source-exp.derived-type,
+					    keyinfo.key-type))
+		    compiler-warning("wrong type keyword arg.");
+		    bogus? := #t;
 		  end;
+		  found-key();
 		end;
+	      end;
+	      unless (sig.all-keys?)
 		compiler-warning("Invalid keyword %=", key);
 		bogus? := #t;
 	      end;
@@ -491,9 +539,37 @@ define method optimize-unknown-call
 	    bogus? := #t;
 	  end;
 	end;
+	if (known?)
+	  // Now make sure all the required keywords are supplied and all the
+	  // unsupplied keywords are defaultable.
+	  for (keyinfo in sig.key-infos)
+	    block (found-key)
+	      for (key-dep = arg-dep
+		     then key-dep.dependent-next.dependent-next,
+		   while: key-dep)
+		if (keyinfo.key-name = key-dep.source-exp.value.literal-value)
+		  found-key();
+		end;
+	      end;
+	      if (keyinfo.required?)
+		compiler-warning("Required keyword %= unsupplied.",
+				 keyinfo.key-name);
+		bogus? := #t;
+	      elseif (~keyinfo.key-default)
+		known? := #f;
+	      end;
+	    end;
+	  end;
+	end;
       elseif (sig.rest-type)
-	// ### Should check the remainders types.
-	#f;
+	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     while: arg-dep)
+	  unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
+				    sig.rest-type))
+	    compiler-warning("wrong type rest arg");
+	    bogus? := #t;
+	  end;
+	end;
       elseif (arg-dep)
 	compiler-warning("Too many arguments.");
 	bogus? := #t;
@@ -513,10 +589,24 @@ define method optimize-unknown-call
       add!(new-args, arg-dep.source-exp);
     finally
       if (sig.next?)
+	// ### Need to actually deal with #next args.
 	add!(new-args, make-literal-constant(builder, make(<literal-false>)));
       end;
-      // ### Need to assert the keyword types before building the rest
-      // argument.
+      if (sig.key-infos)
+	for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
+	     while: key-dep)
+	  block (next-key)
+	    let key = key-dep.source-exp.value.literal-value;
+	    for (keyinfo in sig.key-infos)
+	      if (keyinfo.key-name == key)
+		assert-type(component, assign, key-dep.dependent-next,
+			    keyinfo.key-type);
+		next-key();
+	      end;
+	    end;
+	  end;
+	end;
+      end;
       if (sig.rest-type)
 	let rest-args = make(<stretchy-vector>);
 	add!(rest-args, dylan-defn-leaf(builder, #"vector"));
@@ -634,12 +724,13 @@ define method change-call-kind
   delete-dependent(component, call);
 end;
 
-define method optimize
-    (component :: <component>, call :: union(<known-call>, <local-call>))
-    => ();
-  maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
-end;
 
+// <mv-call> optimization.
+//
+// If the cluster feeding the mv call has a fixed number of values, then
+// convert the <mv-call> into an <unknown-call>.  Otherwise, if the called
+// function is an exit function, then convert it into a pitcher.
+// 
 define method optimize (component :: <component>, call :: <mv-call>) => ();
   let cluster = call.depends-on.dependent-next.source-exp;
   if (maybe-expand-cluster(component, cluster))
