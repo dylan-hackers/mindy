@@ -1,0 +1,399 @@
+Mindy 1.3 Change Log
+
+The following are enhancements added since release 1.2:
+
+   Mindy now runs on Windows/NT.  Thanks are due to Gary Palter for
+   doing the bulk of the port.
+
+   Garbage collection reporting is now optional, with the default
+   value being no reporting.  See mindy.doc for details.
+
+   A new test, threaded-io-test, has been added to the tests
+   directory.  This program tries to read from three different streams
+   simultaneously.  However, the program is interactive, and for that
+   reason is not run by the makefile.
+
+   Added the Tk library, which contains code to create graphical user
+   interfaces using Tk (of TCL/TK fame).  See tk.doc for details.
+
+
+The following are bug fixes since release 1.2:
+
+   Printing, formatting, and converting $minimum-fixed-integer now
+   work correctly.  (String-extensions, format)
+
+   NaN's now compare correctly.
+
+   remove-key! now works on <self-organizing-list>s.
+
+   Corrected the precedence and associativity of ^.
+
+?  In comp/compile.c, compile_repeat_expr no longer depends on the
+   execution order of function arguments.
+
+
+I don't know what these mean:
+
+RCS file:        ./comp/RCS/expand.c,v;   Working file:    expand.c
+----------------------------
+revision 1.22        
+date: 94/12/17 01:23:22;  author: wlott;  state: Exp;  lines added/del: 5/2
+After changing the name of the function to function-setter, look the info
+up again instead of just continuing to use the old info.
+
+RCS file:        ./comp/RCS/lexer.l,v;   Working file:    lexer.l
+----------------------------
+revision 1.13        
+date: 94/12/16 19:18:01;  author: wlott;  state: Exp;  lines added/del: 9/6
+Changed mumble_OPTION to mumble_KEYWORD.  Added UNTIL_KEYWORD and
+WHILE_KEYWORD.  Added \name notation.
+
+RCS file:        ./comp/RCS/parser.y,v;   Working file:    parser.y
+----------------------------
+revision 1.16        
+date: 94/12/16 19:19:41;  author: wlott;  state: Exp;  lines added/del: 102/57
+Added while: and until: syntax to for statement.  Allow words like class,
+keyed-by, and module as variable names.
+
+RCS file:        ./interp/RCS/class.c,v;   Working file:    class.c
+----------------------------
+revision 1.13        
+date: 95/02/14 02:30:00;  author: rgs;  state: Exp;  lines added/del: 2/10
+Fixes for statically typed pointer classes.
+
+RCS file:        ./interp/RCS/init.c,v;   Working file:    init.c
+----------------------------
+revision 1.12        
+date: 95/02/09 18:26:25;  author: wlott;  state: Exp;  lines added/del: 3/1
+Added call to init_load_functions.
+
+RCS file:        ./interp/RCS/load.c,v;   Working file:    load.c
+----------------------------
+revision 1.28        
+date: 95/02/09 18:26:44;  author: wlott;  state: Exp;  lines added/del: 53/10
+Added a dylan interface to load.
+
+RCS file:        ./interp/RCS/misc.c,v;   Working file:    misc.c
+----------------------------
+revision 1.12        
+date: 94/12/16 12:12:11;  author: wlott;  state: Exp;  lines added/del: 5/1
+In dylan_apply, make sure the applied thing is a function.
+
+RCS file:        ./interp/RCS/num.c,v;   Working file:    num.c
+----------------------------
+revision 1.20        
+date: 95/03/02 21:11:25;  author: wlott;  state: Exp;  lines added/del: 24/7
+Fixed as(<mumble-float>, <extended-integer>) to return a negative number if the
+extended integer is negative instead of treating the extended integer as an
+unsigned quantity.
+----------------------------
+revision 1.19        
+date: 95/03/02 18:05:09;  author: wlott;  state: Exp;  lines added/del: 3/2
+Changed logbit? on <extended-integer> to return #f when given a negative index
+instead of seg faulting trying to signal an error.
+----------------------------
+revision 1.18        
+date: 95/02/08 02:45:01;  author: wlott;  state: Exp;  lines added/del: 92/51
+Fixed <extended-integer> ceiling and round.  Actually install the
+<extended-integer> round method.  Couple minor tweeks to get it to
+compile cleanly.
+
+RCS file:        ./interp/RCS/table.c,v;   Working file:    table.c
+----------------------------
+revision 1.13        
+date: 95/02/14 02:33:08;  author: rgs;  state: Exp;  lines added/del: 3/3
+Made object-hash on pointers a bit more random.
+
+RCS file:        ./interp/RCS/thread.c,v;   Working file:    thread.c
+----------------------------
+revision 1.22        
+date: 95/02/08 00:05:20;  author: wlott;  state: Exp;  lines added/del: 2/1
+Zero the stack after allocating it so that GC doesn't find random stuff
+on it.
+
+RCS file:        ./interp/RCS/extern.c,v;   Working file:    extern.c
+----------------------------
+revision 1.3        
+date: 95/02/14 02:30:58;  author: rgs;  state: Exp;  lines added/del: 28/8
+Fixed copyright headers.
+Added class: keyword to pointer-at-setter.
+
+RCS file:        ./interp/RCS/make-init.pl,v;   Working file:    make-init.pl
+----------------------------
+revision 1.3        
+date: 95/02/14 02:34:04;  author: rgs;  state: Exp;  lines added/del: 15/3
+Reorganized for easier GCC -O compilation.
+
+RCS file:        ./libraries/dylan/RCS/exports.dylan,v;   Working file:    exports.dylan
+----------------------------
+revision 1.63        
+date: 95/03/13 15:39:32;  author: wlott;  state: Exp;  lines added/del: 2/2
+Added rationalize.
+----------------------------
+revision 1.62        
+date: 95/03/02 19:41:06;  author: wlott;  state: Exp;  lines added/del: 2/2
+Added ratio to extras so that it will get exported from Extensions.
+----------------------------
+revision 1.61        
+date: 95/03/02 19:15:24;  author: wlott;  state: Exp;  lines added/del: 3/3
+Added make-ratio to the builtin-stuff exports so that it can be called from the
+dylan module.  Removed a commented out create of some ratio related exports,
+because we have something for real now.
+----------------------------
+revision 1.60        
+date: 95/02/14 02:39:51;  author: rgs;  state: Exp;  lines added/del: 3/3
+Exported *print-GC-messages*.
+----------------------------
+revision 1.59        
+date: 95/02/09 18:25:53;  author: wlott;  state: Exp;  lines added/del: 3/3
+Added export of load from the extensions module.
+
+RCS file:        ./libraries/dylan/RCS/cond.dylan,v;   Working file:    cond.dylan
+----------------------------
+revision 1.10        
+date: 95/01/10 16:12:15;  author: wlott;  state: Exp;  lines added/del: 2/2
+Added the stream argument to a call to report-condition that was missing
+it.
+
+RCS file:        ./libraries/dylan/RCS/stretchy.dylan,v;   Working file:    stretchy.dylan
+----------------------------
+revision 1.11        
+date: 95/01/10 16:12:40;  author: wlott;  state: Exp;  lines added/del: 3/3
+Fixed two uses of ceiling to ceiling/.
+
+RCS file:        ./libraries/dylan/RCS/table.dylan,v;   Working file:    table.dylan
+----------------------------
+revision 1.15        
+date: 95/03/12 22:06:35;  author: rgs;  state: Exp;  lines added/del: 3/2
+Proper fix for size: 0 bug.
+----------------------------
+revision 1.14        
+date: 95/03/12 21:34:06;  author: rgs;  state: Exp;  lines added/del: 2/2
+Bug fix: make(<table>, size: 0) allocated no buckets, causing crashes.
+----------------------------
+revision 1.13        
+date: 95/02/14 02:41:10;  author: rgs;  state: Exp;  lines added/del: 140/276
+Added extensive optimizations.  Mostly traded apparently unneeded generality
+for efficiency.  Also added code to make table size "mostly prime", which
+should reduce clustering.
+
+RCS file:        ./libraries/dylan/RCS/extern.dylan,v;   Working file:    extern.dylan
+----------------------------
+revision 1.2        
+date: 95/02/14 02:43:25;  author: rgs;  state: Exp;  lines added/del: 2/2
+Fixed bug in malloc code.
+,
+
+
+RCS file:        ./libraries/dylan/RCS/ratio.dylan,v;   Working file:    ratio.dylan
+----------------------------
+revision 1.3        
+date: 95/03/13 15:39:32;  author: wlott;  state: Exp;  lines added/del: 38/4
+Added rationalize.
+----------------------------
+revision 1.2        
+date: 95/03/02 19:31:37;  author: wlott;  state: Exp;  lines added/del: 1/2
+Removed a spurious newline from the file header.
+----------------------------
+revision 1.1        
+date: 95/03/02 19:19:20;  author: wlott;  state: Exp;  
+Initial revision
+
+RCS file:        ./libraries/streams/RCS/streams.dylan,v;   Working file:    streams.dylan
+----------------------------
+revision 1.26        
+date: 95/02/03 11:00:02;  author: chiles;  state: Exp;  lines added/del: 2/2
+I deleted a declaration that was breaking buffer-subsequence.
+It would only return <byte-string>s.  Now it reutnturns 
+everything it should.
+
+RCS file:        ./libraries/random/RCS/distributions.dylan,v;   Working file:    distributions.dylan
+----------------------------
+revision 1.4        
+date: 95/01/10 16:13:22;  author: wlott;  state: Exp;  lines added/del: 3/3
+Fixed random-uniform to not assume all <integer>s are direct instances of
+<integer> and to use floor instead of round.
+
+RCS file:        ./libraries/print/RCS/print.dylan,v;   Working file:    print.dylan
+----------------------------
+revision 1.12        
+date: 95/03/13 15:40:07;  author: wlott;  state: Exp;  lines added/del: 104/2
+Added ratio and (simplistic) float printing.
+
+RCS file:        ./libraries/print/RCS/pprint.dylan,v;   Working file:    pprint.dylan
+----------------------------
+revision 1.6        
+date: 95/02/10 12:36:50;  author: wlott;  state: Exp;  lines added/del: 2/2
+Incorporated fix to set-indentation supplied by Paul Haar.
+
+
+
+
+
+The following are enhancements added since release 1.1:
+
+   Mindy now runs on even more Unix platforms.  See ``INSTALL'' for a
+   listing of known successful builds.  Thanks are due to Roger
+   Critchlow for doing the bulk of the portability enhancements.
+
+   Mindy installation now only requires an ANSI C compiler, any ``make''
+   utiltiy, and ``/bin/sh''.  Previous versions of Mindy required GNU CC
+   (gcc), GNU flex, GNU bison, and GNU make (gmake).
+
+   Mindy now uses a ``configure'' script to handle configuration.
+   See ``INSTALL'' for more details.
+
+   Mindy now comes with several files that have been compiled for you
+   (they compile into portable C).  There is no need to re-compile these
+   files, but if you should desire to do so you will need GNU flex, GNU
+   bison, and Perl.
+
+   Mindy now contains a new subdirectory ``compat'', which in
+   combination with the configure script is used to smooth out the
+   differences between the different kinds of Unix machines.
+
+   There is now a Mindy test suite in the ``tests'' subdirectory.  The
+   tests cover the Dylan module of the Dylan library and the
+   Regular-Expressions module of the String-Extensions library.
+
+   ``mc'' has been renamed ``mindycomp''.
+
+   main() now has a required parameter argv0 which contains the name
+   of the file that was executed (similar to C's argv[0]).  See
+   mindy.doc for details.
+
+   Added the Print library, which contains extendable code for
+   printing arbitrary objects.  If an object has a Dylan literal
+   syntax, then it is printed with that syntax.  All other objects are
+   printed in an implementation-dependent manner.  See
+   $INSTALL/doc/print.{ps,txt} for more information.
+
+   Added the Format library, which contains extendable code for
+   concisely expressing formatted output.  The format control strings
+   supported by this library are upwardly compatibile with the error
+   function's format strings.  See $INSTALL/doc/format.{ps,txt} for
+   more information.
+
+   Moved all the Extensions module I/O routines to the Cheap-IO module
+   of the Dylan library.  Added fflush to the Cheap-IO module.  See
+   $INSTALL/doc/mindy.{ps,txt} for more information.
+
+   The Streams library now exports stream locking functions.  The
+   generic functions used to extend the streams protocol to new
+   streams have changed slightly.  The Streams interface now returns
+   no values for functions that are called purely for side-effects;
+   these functions used to return a meaningless #f value.  See
+   $INSTALL/doc/streams.{ps,txt} for more information.
+
+   Added the String-Extensions library, which contains code to deal
+   with regular expressions, substring searches, and other string and
+   character related issues.  Moved the string searching functions
+   from Collection-Extensions to the Substring-Search module of
+   String-Extensions.  Renamed the String-Search module of the
+   Collection-Extensions library to Vector-Search.  See
+   collection-extensions.txt and string-extensions.doc for details. 
+
+   <so-list> and the Solist module of Collection-extensions have been
+   renamed <self-organizing-list> and Self-organizing-list,
+   respectively.
+
+   There is a new abstract collection class called <dictionary>.
+   <table> from the Dylan module and <self-organizing-list> from the
+   Self-Organizing-List module of Collection-extensions are now
+   subclasses of <dictionary>.  Remove-key! is now a generic function 
+   on <dictionary>s.  <Dictionary> is exported from the Extensions
+   module; see mindy.doc for details.
+
+   Mindy now gives warnings about undefined variables.
+
+   Mindy now has infinite precision integer arithmetic.  Added <fixed-integer>,
+   <extended-integer>, $minimum-fixed-integer, and $maximum-fixed-integer
+   to the Extensions module.
+
+   Mindy now has Unicode support.  <byte-character> is now exported
+   from the Extensions module, and is a subclass of <character>
+   (<character> is really a unicode character).
+
+   When searching for a library, Foo, Mindy first looks for foo-lib.dbc
+   in $MINDYPATH, and failing to find that file, searches for foo.dbc.
+
+   Added key-exits?(collection, key) to the Extensions module.  See
+   mindy.doc for details.
+
+   Created the Introspective module in the Dylan library.  See
+   mindy.doc for deatils.
+
+   An error is now signalled if the parent of a subclass has not yet
+   been initialized when the subclass is defined.
+
+
+The following are bug fixes since release 1.1:
+
+   Can no longer add methods to things that aren't generic functions.
+
+   Logbit now takes its arguments in the correct order.
+
+   Logand, logxor, and logior are now binary operators.
+
+   size: on a <table> now does the right thing.
+
+   Fixed a pair of bugs in the garbage collection.
+
+   
+The following are enhancements added since release 1.0:
+
+   Mindy now compiles under SunOS, Ultrix, and Linux.
+
+   Inherited and keyword class slot options are now supported.
+
+   Added support for \a, \e, and \0 in string and character literals.
+
+   Added some additional error checking.
+
+   Added a "describe" debugger command.  See debug.doc for details.
+
+   The debugger "module" command now annotates the listing of modules with
+   "i"s and "x"s to indicate modules that are imported, exported, or both.
+
+
+The following are bug fixes since release 1.0:
+
+   Return type declarations such as "#rest foo :: <integer>" are interpreted
+   correctly now.
+
+   "Large functions" no longer trigger an internal error in the compiler.
+
+   Literal list syntax inside 'if' bodies no longer cause the compiler to
+   die.
+
+   Fixed an off-by-one error that made it impossible to debug source files
+   longer than 1000 lines.
+
+   Fixed 'define class' to generate correct implicit generic function
+   signatures for the slot getters and setters.  Mindy used to define the
+   generic function as returning one value, but now Mindy defines it to
+   return "#rest results :: <object>".  This new behavior corresponds to a
+   proposal for how implicit generic function signatures should be generated
+   in Dylan.  The basic idea is that implicit generic function signatures
+   should be as general as possible to allow methods added later by users
+   the greatest chance of matching the generic function's signature.
+
+   Slot-initialized? works now.
+
+   Fixed a typo bug that caused a setter to be called instead of a getter
+   for some slots of classes that had multiple direct superclasses.
+
+   Mindy no longer gets a segmentation violation when it is invoked with a
+   -f switch that is not followed by a filename.
+
+   Error's format control strings were previously case-sensitive with
+   respect to format directives.  Now the directives are case-insensitive.
+
+   The Dylan module of the Dylan library now exports the identifiers
+   row-major-index, rank, and dimension.
+
+   The arguments for adjust-stream-position on <fd-file-stream>s were
+   backwards, and now they agree with the stream specification.
+
+   The arguments for write and write-line were backwards in the
+   documentation, and now the documentation agrees with the code.
