@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.45 1996/04/13 21:36:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.46 1996/04/14 19:46:05 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -874,6 +874,10 @@ define method spew-object
 		  make(<literal-simple-object-vector>,
 		       contents: object.new-slot-infos,
 		       sharable: #t),
+		class-slot-overrides:
+		  make(<literal-simple-object-vector>,
+		       contents: object.override-infos,
+		       sharable: #t),
 		class-all-slot-descriptors:
 		  make(<literal-simple-object-vector>,
 		       contents: object.all-slot-infos,
@@ -915,6 +919,19 @@ define method spew-object
 		  if (instance?(object, <instance-slot-info>))
 		    as(<ct-value>, as(<list>, object.slot-positions));
 		  end if);
+end method spew-object;
+
+define method spew-object
+    (object :: <override-info>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<override-descriptor>"), state,
+		slot-init-value:
+		  if (instance?(object.override-init-value, <ct-value>))
+		    object.slot-init-value;
+		  end,
+		slot-init-function:
+		  if (instance?(object.override-init-function, <ct-value>))
+		    object.slot-init-function;
+		  end);
 end method spew-object;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
