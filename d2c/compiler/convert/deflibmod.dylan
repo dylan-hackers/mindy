@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.6 1995/11/09 13:23:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.7 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,15 +95,19 @@ end;
 define method dump-od (tlf :: <define-module-tlf>, state :: <dump-state>)
     => ();
   dump-simple-object(#"define-module-tlf", state, tlf.define-module-name,
-		     tlf.define-module-uses, tlf.define-module-exports);
+		     tlf.define-module-uses, tlf.define-module-exports,
+		     tlf.define-module-creates);
 end;
 
 add-od-loader(*compiler-dispatcher*, #"define-module-tlf",
 	      method (state :: <load-state>) => res :: <symbol>;
-		let name = load-object-dispatch(state);
-		let uses = load-object-dispatch(state);
-		let exports = load-object-dispatch(state);
-		let creates = load-object-dispatch(state);
+		let name :: <symbol> = load-object-dispatch(state);
+		let uses :: <simple-object-vector>
+		  = load-object-dispatch(state);
+		let exports :: <simple-object-vector>
+		  = load-object-dispatch(state);
+		let creates :: <simple-object-vector>
+		  = load-object-dispatch(state);
 		assert-end-object(state);
 		note-module-definition(*Current-Library*, name, uses, exports,
 				       creates);

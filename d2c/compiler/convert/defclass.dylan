@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.35 1995/11/09 13:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.36 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -578,6 +578,7 @@ define method compute-cclass (defn :: <class-definition>)
     //
     // Make and return the <cclass>.
     make(<defined-cclass>,
+	 loading: #f,
 	 name: defn.defn-name,
 	 defn: defn,
 	 direct-superclasses: as(<list>, supers),
@@ -2055,10 +2056,9 @@ define constant $class-definition-slots
 		     %class-defn-maker-function, #f,
 		       %class-defn-maker-function-setter));
 
-/* ### Need to dump both kinds of these.
 add-make-dumper(#"class-definition", *compiler-dispatcher*, <class-definition>,
 		$class-definition-slots, load-external: #t);
-*/
 
 add-make-dumper(#"class-definition", *compiler-dispatcher*,
-		<local-class-definition>, $class-definition-slots);
+		<local-class-definition>, $class-definition-slots,
+		dumper-only: #t);

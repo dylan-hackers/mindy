@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.17 1995/11/09 23:34:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.18 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -81,7 +81,7 @@ define method representation-has-bottom-value?
 end;
 
 define class <data-word-representation> (<immediate-representation>)
-  slot representation-class :: <cclass>, required-init-keyword: class:;
+  slot representation-class :: <cclass>, init-keyword: class:;
   slot representation-data-word-member :: <byte-string>,
     required-init-keyword: data-word-member:;
 end;
@@ -568,7 +568,8 @@ add-make-dumper(#"immediate-representation", *compiler-dispatcher*,
 add-make-dumper(#"data-word-representation", *compiler-dispatcher*,
 		<data-word-representation>,
 		concatenate($rep-slots,
-			    list(representation-class, class:, #f,
+			    list(representation-class, class:,
+				   representation-class-setter,
 				 representation-data-word-member,
 				   data-word-member:, #f)),
 		load-external: #t);

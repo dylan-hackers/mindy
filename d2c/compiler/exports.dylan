@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.100 1995/11/09 23:36:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.101 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -50,6 +50,7 @@ define module od-format
   use common;
   use system;
   use standard-io;
+  use introspection, import: {function-name};
   use utils;
   use self-organizing-list;
   export
@@ -580,14 +581,15 @@ define module classes
   use forwards, import: {<cclass>}, export: all;
 
   export
-    cclass-name, closest-primary-superclass, precedence-list, subclasses,
+    cclass-name, closest-primary-superclass, closest-primary-superclass-setter,
+    precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
     all-slot-infos, new-slot-infos, override-infos, unique-id,
     subclass-id-range-min, subclass-id-range-max, direct-type,
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     instance-slots-layout, vector-slot,
-    <defined-cclass>, class-defn,
+    <defined-cclass>, class-defn, class-defn-setter,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
     slot-type, slot-type-setter, slot-getter, slot-read-only?,
@@ -598,12 +600,13 @@ define module classes
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     slot-positions, find-slot-offset,
 
-    <vector-slot-info>, slot-size-slot,
+    <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
     <virtual-slot-info>, <constant-slot-info>, <class-slot-info>,
     <each-subclass-slot-info>,
 
-    <override-info>, override-introduced-by, override-getter, override-slot,
+    <override-info>, override-introduced-by, override-introduced-by-setter, 
+    override-getter, override-slot,
     override-init-value, override-init-value-setter,
     override-init-function, override-init-function-setter,
 
@@ -994,7 +997,7 @@ define module define-functions
     function-defn-ct-value,
     <generic-definition>, generic-defn-discriminator, generic-defn-methods,
     add-seal, ct-add-method, ct-sorted-applicable-methods,
-    method-defn-inline-expansion,
+    method-defn-inline-expansion, method-defn-inline-function,
     %method-defn-inline-function, %method-defn-inline-function-setter,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,

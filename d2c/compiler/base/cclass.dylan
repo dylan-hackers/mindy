@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.20 1995/10/13 15:03:40 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.21 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -44,7 +44,7 @@ define abstract class <cclass>
 
   // class precedence list of all classes inherited, including this class and
   // indirectly inherited classes.  Unbound if not yet computed.
-  slot precedence-list :: <list>;
+  slot precedence-list :: <list>, init-keyword: precedence-list:;
 
   // List of the direct subclasses.
   slot direct-subclasses :: <list>, init-value: #();
@@ -102,56 +102,77 @@ define abstract class <cclass>
 end class;
 
 define method initialize
-    (obj :: <cclass>, #next next-method, #key slots, overrides) => ();
+    (class :: <cclass>, #next next-method,
+     #key loading: loading? = #t, precedence-list, slots, overrides)
+    => ();
   next-method();
   
   // Record the class.
-  add!($All-Classes, obj);
+  add!($All-Classes, class);
 
   // Make the direct-type for this cclass.
-  obj.direct-type
-    := if (obj.abstract?)
+  class.direct-type
+    := if (class.abstract?)
 	 empty-ctype();
        else
-	 make(<direct-instance-ctype>, base-class: obj);
+	 make(<direct-instance-ctype>, base-class: class);
        end;
 
-  // Compute the cpl.
-  let supers = obj.direct-superclasses;
-  let cpl = compute-cpl(obj, supers);
-  obj.precedence-list := cpl;
+  // Compute the cpl if it wasn't already handed to us.
+  let supers = class.direct-superclasses;
+  let cpl = (precedence-list
+	       | (class.precedence-list := compute-cpl(class, supers)));
 
   // Add us to all our direct superclasses direct-subclass lists.
   for (super in supers)
-    super.direct-subclasses := pair(obj, super.direct-subclasses);
+    if (super.obj-resolved?)
+      super.direct-subclasses := pair(class, super.direct-subclasses);
+    else
+      request-backpatch(super,
+			method (actual)
+			  actual.direct-subclasses
+			    := pair(class, actual.direct-subclasses);
+			end);
+    end;
   end;
 
   // Add us to all our superclasses subclass lists.
   for (super in cpl)
-    super.subclasses := pair(obj, super.subclasses);
+    if (super.obj-resolved?)
+      super.subclasses := pair(class, super.subclasses);
+    else
+      request-backpatch(super,
+			method (actual)
+			  actual.subclasses := pair(class, actual.subclasses);
+			end);
+    end;
   end;
 
   // Find the closest primary superclass.  Note: we don't have to do any
   // error checking, because that is done for us in defclass.dylan.
-  if (obj.primary?)
-    obj.closest-primary-superclass := obj;
-  else
-    let closest = #f;
-    for (super in obj.direct-superclasses)
-      let primary-super = super.closest-primary-superclass;
-      if (~closest | csubtype?(primary-super, closest))
-	closest := primary-super;
+  // Unless we are loading this class, in which case the loader will set
+  // it up for us.
+  unless (loading?)
+    if (class.primary?)
+      class.closest-primary-superclass := class;
+    else
+      let closest = #f;
+      for (super in class.direct-superclasses)
+	let primary-super = super.closest-primary-superclass;
+	if (~closest | csubtype?(primary-super, closest))
+	  closest := primary-super;
+	end;
       end;
+      class.closest-primary-superclass := closest;
     end;
-    obj.closest-primary-superclass := closest;
   end;
 
   // Fill in introduced-by for the slots and overrides.
   for (slot in slots)
-    slot.slot-introduced-by := obj;
+    slot.slot-introduced-by := class;
   end;
   for (override in overrides)
-    override.override-introduced-by := obj;
+    override.override-introduced-by := class;
   end;
 end;
 
@@ -248,7 +269,7 @@ end;
 
 define class <vector-slot-info> (<instance-slot-info>)
   slot slot-size-slot :: <instance-slot-info>,
-    required-init-keyword: size-slot:;
+    init-keyword: size-slot:;
 end;
 
 define class <class-slot-info> (<slot-info>)
@@ -285,12 +306,12 @@ define class <override-info> (<identity-preserving-mixin>)
   // The initial value.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
   slot override-init-value :: union(<ct-value>, <boolean>),
-    required-init-keyword: init-value:;
+    init-value: #f, init-keyword: init-value:;
   //
   // The init-function.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
   slot override-init-function :: union(<ct-value>, <boolean>),
-    required-init-keyword: init-function:;
+    init-value: #f, init-keyword: init-function:;
 end;
 
 
@@ -953,7 +974,7 @@ end;
 define class <defined-cclass> (<cclass>)
   //
   // The <class-definition> that installed this class.
-  slot class-defn :: <class-definition>, required-init-keyword: defn:;
+  slot class-defn :: <class-definition>, init-keyword: defn:;
 end class;
 
 

@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.24 1995/10/13 15:05:20 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.25 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -942,39 +942,44 @@ end;
 
 // Return the ctype equivalent to singleton(object), where object is a
 // compile-time value.
-define generic make-canonical-singleton (thing :: <ct-value>)
+define generic make-canonical-singleton (thing :: <ct-value>, #key)
     => res :: <ctype>;
 
-define method make-canonical-singleton (thing :: <ct-value>)
+define method make-canonical-singleton (thing :: <ct-value>, #key)
     => res :: <ctype>;
   empty-ctype();
 end;
 
-define method make-canonical-singleton (thing :: <eql-ct-value>)
+define method make-canonical-singleton
+    (thing :: <eql-ct-value>, #key base-class)
     => res :: <ctype>;
   thing.ct-value-singleton
-    | (thing.ct-value-singleton := really-make-canonical-singleton(thing));
+    | (thing.ct-value-singleton
+	 := really-make-canonical-singleton(thing, base-class));
 end;
 
-define method really-make-canonical-singleton (thing :: <eql-ct-value>)
+define method really-make-canonical-singleton
+    (thing :: <eql-ct-value>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
   make(<singleton-ctype>,
-       base-class: ct-value-cclass(thing),
+       base-class: base-class-hint | ct-value-cclass(thing),
        singleton-value: thing);
 end;
 
-define method really-make-canonical-singleton (thing :: <literal-integer>)
+define method really-make-canonical-singleton
+    (thing :: <literal-integer>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
   let value = thing.literal-value;
   make(<limited-integer-ctype>,
-       base-class: ct-value-cclass(thing),
+       base-class: base-class-hint | ct-value-cclass(thing),
        low-bound: value, high-bound: value);
 end;
 
 define method really-make-canonical-singleton
-    (thing :: union(<literal-boolean>, <literal-empty-list>))
+    (thing :: union(<literal-boolean>, <literal-empty-list>),
+     base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
-  ct-value-cclass(thing);
+  base-class-hint | ct-value-cclass(thing);
 end;
 
 

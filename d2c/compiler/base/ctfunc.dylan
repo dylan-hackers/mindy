@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.7 1995/11/09 13:52:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.8 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -43,7 +43,7 @@ define constant $ct-function-dump-slots =
   list(info, #f, info-setter,
        ct-function-name, name:, #f,
        ct-function-signature, signature:, #f,
-       ct-function-definition, definition:, #f,
+       ct-function-definition, definition:, ct-function-definition-setter,
        ct-function-closure-var-types, closure-var-types:, #f);
 
 add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-function>,

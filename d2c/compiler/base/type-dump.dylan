@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.3 1995/11/09 17:34:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.4 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,7 @@ end method;
 
 add-od-loader(*compiler-dispatcher*, #"union-type",
   method (state :: <load-state>) => res :: <union-ctype>;
-    reduce1(ctype-union, load-sole-subobject(state));
+    reduce(ctype-union, empty-ctype(), load-sole-subobject(state));
   end method
 );
 
@@ -64,26 +64,28 @@ add-od-loader(*compiler-dispatcher*, #"direct-instance-type",
 
 define method dump-od (obj :: <singleton-ctype>, buf :: <dump-state>)
  => ();
-  dump-simple-object(#"singleton-type", buf, obj.singleton-value);
+  dump-simple-object(#"singleton-type", buf,
+		     obj.base-class, obj.singleton-value);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"singleton-type",
   method (state :: <load-state>) => res :: <singleton-ctype>;
-    make-canonical-singleton(load-sole-subobject(state));
+    let base-class = load-object-dispatch(state);
+    let object = load-object-dispatch(state);
+    assert-end-object(state);
+    make-canonical-singleton(object, base-class: base-class);
   end method
 );
 
 
-// No slots...
-// 
 define method dump-od (obj :: <byte-character-ctype>, buf :: <dump-state>)
  => ();
-  dump-definition-header(#"byte-character-type", buf);
+  dump-simple-object(#"byte-character-type", buf, obj.base-class);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"byte-character-type",
   method (state :: <load-state>) => res :: <byte-character-ctype>;
-    make(<byte-character-ctype>);
+    make(<byte-character-ctype>, base-class: load-sole-subobject(state));
   end method
 );
 
@@ -112,11 +114,13 @@ define constant $class-dump-slots =
   list(info, #f, info-setter,
        cclass-name, name:, #f,
        direct-superclasses, direct-superclasses:, #f,
+       closest-primary-superclass, #f, closest-primary-superclass-setter,
        not-functional?, not-functional:, #f,
        functional?, functional: #f,
        sealed?, sealed:, #f,
        abstract?, abstract: #f,
        primary?, primary: #f,
+       precedence-list, precedence-list:, #f,
        unique-id, unique-id: #f,
        subclass-id-range-min, subclass-id-range-min:, #f,
        subclass-id-range-max, subclass-id-range-max:, #f,
@@ -124,18 +128,18 @@ define constant $class-dump-slots =
        space-representation, space-representation:, #f,
        new-slot-infos, slots: #f,
        all-slot-infos, all-slot-infos:, #f,
-       override-infos, override-infos:, #f,
+       override-infos, overrides:, #f,
        instance-slots-layout, instance-slots-layout:, #f,
        vector-slot, vector-slot:, #f,
        each-subclass-slots-count, each-subclass-slots-count:, #f);
 
 
 define constant $slot-info-dump-slots =
-  list(slot-introduced-by, introduced-by:, #f,
-       slot-type, type:, #f,
+  list(// slot-introduced-by, introduced-by:, #f,
+       slot-type, type:, slot-type-setter,
        slot-getter, getter:, #f,
        slot-read-only?, read-only:, #f,
-       slot-init-value, init-value:, #f,
+       slot-init-value, init-value:, slot-init-value-setter,
        slot-init-function, init-function:, #f,
        slot-init-keyword, init-keyword:, #f,
        slot-init-keyword-required?, init-keyword-required:, #f);
@@ -154,7 +158,7 @@ add-make-dumper(#"instance-slot-info", *compiler-dispatcher*,
 add-make-dumper(#"vector-slot-info", *compiler-dispatcher*, <vector-slot-info>,
   concatenate(
     $slot-info-dump-slots,
-    list(slot-size-slot, size-slot:, #f)),
+    list(slot-size-slot, size-slot:, slot-size-slot-setter)),
   load-external: #t
 );
 
@@ -181,10 +185,10 @@ add-make-dumper(#"virtual-slot-info", *compiler-dispatcher*,
 
 add-make-dumper(#"override-info", *compiler-dispatcher*,
   <override-info>,
-  list(override-introduced-by, introduced-by:, #f,
+  list(// override-introduced-by, introduced-by:, override-introduced-by-setter,
        override-getter, getter:, #f,
-       override-init-value, init-value:, #f,
-       override-init-function, init-function:, #f),
+       override-init-value, init-value:, override-init-value-setter,
+       override-init-function, init-function:, override-init-function-setter),
   load-external: #t
 );
 
@@ -197,7 +201,7 @@ add-make-dumper(#"layout-table", *compiler-dispatcher*,
 add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
   concatenate(
     $class-dump-slots,
-    list(class-defn, defn:, #f)),
+    list(class-defn, defn:, class-defn-setter)),
   load-external: #t
 );
 

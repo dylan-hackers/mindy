@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.37 1995/11/09 13:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.38 1995/11/10 15:10:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,6 +101,16 @@ define abstract class <abstract-method-definition> (<function-definition>)
     init-value: #"not-computed-yet", init-keyword: inline-function:;
 end;
 
+// The actual definition of this is in cheese.dylan because it wants to call
+// optimize-component, but the module system won't let us do yet.  Well, okay,
+// we could have played some games with creating optimize-component somewhere
+// and forward referencing it, but hell, if we have to be gross, we might as
+// well be way gross.
+// 
+define generic method-defn-inline-function
+    (defn :: <abstract-method-definition>)
+    => res :: false-or(<function-literal>);
+
 define method defn-type (defn :: <abstract-method-definition>)
     => res :: <cclass>;
   dylan-value(#"<method>");
@@ -111,7 +121,7 @@ define class <method-definition> (<abstract-method-definition>)
   // The generic function this method is part of, or #f if the base-name is
   // undefined or not a generic function.
   slot method-defn-of :: union(<generic-definition>, <false>),
-    required-init-keyword: method-of:;
+    init-value: #f, init-keyword: method-of:;
   //
   // True if this method is congruent with the corresponding GF.
   slot method-defn-congruent? :: <boolean>,
@@ -383,22 +393,26 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		    #key base-name, signature, hairy: hairy?,
 		         movable: movable?, flushable: flushable?)
     => res :: <method-definition>;
-  let var = find-variable(base-name);
-  let generic-defn
-    = if (var & instance?(var.variable-definition, <generic-definition>))
-	var.variable-definition;
-      end;
-  apply(next-method, wot,
-	name: make(<method-name>,
-		   generic-function: base-name,
-		   specializers: signature.specializers),
-	hairy: hairy?,
-	movable: movable?
-	  | (generic-defn & generic-defn.function-defn-movable?),
-	flushable: flushable?
-	  | (generic-defn & generic-defn.function-defn-flushable?),
-	method-of: generic-defn,
-	keys);
+  if (base-name)
+    let var = find-variable(base-name);
+    let generic-defn
+      = if (var & instance?(var.variable-definition, <generic-definition>))
+	  var.variable-definition;
+	end;
+    apply(next-method, wot,
+	  name: make(<method-name>,
+		     generic-function: base-name,
+		     specializers: signature.specializers),
+	  hairy: hairy?,
+	  movable: movable?
+	    | (generic-defn & generic-defn.function-defn-movable?),
+	  flushable: flushable?
+	    | (generic-defn & generic-defn.function-defn-flushable?),
+	  method-of: generic-defn,
+	  keys);
+  else
+    next-method();
+  end;
 end;
 
 // This method exists just so make will recognize base-name as a valid
@@ -1358,7 +1372,7 @@ add-make-dumper(#"implicit-generic-definition", *compiler-dispatcher*,
 
 define constant $abstract-method-definition-slots
   = concatenate($function-definition-slots,
-		list(%method-defn-inline-function, inline-function:,
+		list(method-defn-inline-function, inline-function:,
 		       %method-defn-inline-function-setter));
 
 define constant $method-definition-slots
