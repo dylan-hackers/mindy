@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.36 1995/11/08 19:53:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.37 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,21 +49,22 @@ define class <generic-definition> (<function-definition>)
   //
   // All the <method-definition>s defined on this generic function.
   slot generic-defn-methods :: <list>,
-    init-value: #();
+    init-value: #(), init-keyword: methods:;
   //
   // List of all the seals on this generic function.  Each seal is a list of
   // types.
   slot generic-defn-seals :: <list>,
-    init-value: #();
+    init-value: #(), init-keyword: seals:;
   //
   // Information about sealed methods of this GF.  This is filled in on demand.
   // Use generic-defn-seal-info instead.  See "method-tree".
-  slot %generic-defn-seal-info :: false-or(<list>), init-value: #f;
+  slot %generic-defn-seal-info :: false-or(<list>),
+    init-value: #f, init-keyword: seal-info:;
   //
   // The discriminator ct-value, if there is one.
   slot %generic-defn-discriminator
     :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet";
+    init-value: #"not-computed-yet", init-keyword: discriminator:;
 end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
@@ -97,7 +98,7 @@ define abstract class <abstract-method-definition> (<function-definition>)
   // inline it, and #"not-computed-yet" if we haven't tried yet.
   slot %method-defn-inline-function
     :: union(<function-literal>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet";
+    init-value: #"not-computed-yet", init-keyword: inline-function:;
 end;
 
 define method defn-type (defn :: <abstract-method-definition>)
@@ -113,7 +114,8 @@ define class <method-definition> (<abstract-method-definition>)
     required-init-keyword: method-of:;
   //
   // True if this method is congruent with the corresponding GF.
-  slot method-defn-congruent? :: <boolean>, init-value: #f;
+  slot method-defn-congruent? :: <boolean>,
+    init-value: #f, init-keyword: congruent:;
 end;
 
 define abstract class <accessor-method-definition> (<method-definition>)
@@ -1325,3 +1327,58 @@ define method dump-od
     (tlf :: <seal-generic-tlf>, state :: <dump-state>) => ();
   // Do nothing because all the seals are dumped as part of the generic.
 end;
+
+define constant $function-definition-slots
+  = concatenate($definition-slots,
+		list(function-defn-signature, signature:,
+		       function-defn-signature-setter,
+		     function-defn-hairy?, hairy:, #f,
+		     function-defn-ct-value, #f, function-defn-ct-value-setter,
+		     function-defn-flushable?, flushable:, #f,
+		     function-defn-movable?, movable:, #f));
+
+define constant $generic-definition-slots
+  = concatenate($function-definition-slots,
+		list(generic-defn-sealed?, sealed:, #f,
+		     generic-defn-methods, methods:,
+		       generic-defn-methods-setter,
+		     generic-defn-seals, seals:, #f,
+		     // %generic-defn-seal-info, seal-info:,
+		     //   %generic-defn-seal-info-setter,
+		     generic-defn-discriminator, discriminator:,
+		       %generic-defn-discriminator-setter));
+
+add-make-dumper(#"generic-definition", *compiler-dispatcher*,
+		<generic-definition>, $generic-definition-slots,
+		load-external: #t);
+
+add-make-dumper(#"implicit-generic-definition", *compiler-dispatcher*,
+		<implicit-generic-definition>, $generic-definition-slots,
+		load-external: #t);
+
+define constant $abstract-method-definition-slots
+  = concatenate($function-definition-slots,
+		list(%method-defn-inline-function, inline-function:,
+		       %method-defn-inline-function-setter));
+
+define constant $method-definition-slots
+  = concatenate($abstract-method-definition-slots,
+		list(method-defn-of, method-of:, method-defn-of-setter,
+		     method-defn-congruent?, congruent:, #f));
+
+add-make-dumper(#"method-definition", *compiler-dispatcher*,
+		<method-definition>, $method-definition-slots,
+		load-external: #t);
+
+define constant $accessor-method-definition-slots
+  = concatenate($method-definition-slots,
+		list(accessor-method-defn-slot-info, slot:,
+		       accessor-method-defn-slot-info-setter));
+
+add-make-dumper(#"getter-method-definition", *compiler-dispatcher*,
+		<getter-method-definition>, $accessor-method-definition-slots,
+		load-external: #t);
+
+add-make-dumper(#"setter-method-definition", *compiler-dispatcher*,
+		<setter-method-definition>, $accessor-method-definition-slots,
+		load-external: #t);

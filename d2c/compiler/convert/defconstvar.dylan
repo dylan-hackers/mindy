@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.25 1995/11/08 19:52:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.26 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,7 +49,7 @@ define class <variable-definition> (<bindings-definition>)
   // The <constant-definition> for the type if the type isn't a compile-time
   // constant.  Filled in by finalize-top-level-form.
   slot var-defn-type-defn :: union(<false>, <constant-definition>),
-    init-value: #f;
+    init-value: #f, init-keyword: type-defn:;
 end;
 
 
@@ -401,3 +401,27 @@ define method dump-od (tlf :: <define-bindings-tlf>, state :: <dump-state>)
   end;
 end;
 
+define constant $bindings-definition-slots
+  = list(defn-type, type:, defn-type-setter,
+	 defn-init-value, value:, defn-init-value-setter);
+
+add-make-dumper(#"constant-definition", *compiler-dispatcher*,
+		<constant-definition>,
+		concatenate($definition-slots,
+			    $bindings-definition-slots),
+		load-external: #t);
+
+add-make-dumper(#"constant-method-definition", *compiler-dispatcher*,
+		<constant-method-definition>,
+		// abstract-method-definition-slots includes defn-slots
+		concatenate($abstract-method-definition-slots,
+			    $bindings-definition-slots),
+		load-external: #t);
+
+add-make-dumper(#"variable-definition", *compiler-dispatcher*,
+		<variable-definition>,
+		concatenate($definition-slots,
+			    $bindings-definition-slots,
+			    list(var-defn-type-defn, type-defn:,
+				   var-defn-type-defn-setter)),
+		load-external: #t);

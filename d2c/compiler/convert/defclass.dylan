@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.34 1995/11/06 16:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.35 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,6 +11,23 @@ define class <class-definition> (<abstract-constant-definition>)
   slot class-defn-cclass
     :: union(<cclass>, one-of(#f, #"not-computed-yet", #"computing")),
     init-value: #"not-computed-yet";
+  //
+  // Defered evaluations function, of #f if there isn't one.
+  slot %class-defn-defered-evaluations-function
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
+  //
+  // The maker function, of #f if there isn't one.
+  slot %class-defn-maker-function
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
+end;
+
+define method defn-type (defn :: <class-definition>) => res :: <cclass>;
+  dylan-value(#"<class>");
+end;
+
+define class <local-class-definition> (<class-definition>)
   // 
   // Vector of <expression>s for the superclasses.
   slot class-defn-supers :: <simple-object-vector>,
@@ -33,21 +50,7 @@ define class <class-definition> (<abstract-constant-definition>)
   // Vector of slot init value overrides.
   slot class-defn-overrides :: <simple-object-vector>,
     required-init-keyword: overrides:;
-  //
-  // Defered evaluations function, of #f if there isn't one.
-  slot %class-defn-defered-evaluations-function
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet";
-  //
-  // The maker function, of #f if there isn't one.
-  slot %class-defn-maker-function
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet";
-end;
-
-define method defn-type (defn :: <class-definition>) => res :: <cclass>;
-  dylan-value(#"<class>");
-end;
+end;  
 
 define class <slot-defn> (<object>)
   //
@@ -454,7 +457,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
   end;
   let slots = as(<simple-object-vector>, slots);
   let overrides = as(<simple-object-vector>, overrides);
-  let defn = make(<class-definition>,
+  let defn = make(<local-class-definition>,
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
@@ -2039,3 +2042,23 @@ define method try-split
     values(yes-count * no-count, yes, #f, no, #f);
   end;
 end;
+
+
+
+// Dumping stuff.
+
+define constant $class-definition-slots
+  = concatenate($definition-slots,
+		list(class-defn-cclass, #f, class-defn-cclass-setter,
+		     %class-defn-defered-evaluations-function, #f,
+		       %class-defn-defered-evaluations-function-setter,
+		     %class-defn-maker-function, #f,
+		       %class-defn-maker-function-setter));
+
+/* ### Need to dump both kinds of these.
+add-make-dumper(#"class-definition", *compiler-dispatcher*, <class-definition>,
+		$class-definition-slots, load-external: #t);
+*/
+
+add-make-dumper(#"class-definition", *compiler-dispatcher*,
+		<local-class-definition>, $class-definition-slots);

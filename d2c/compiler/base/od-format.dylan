@@ -452,8 +452,21 @@ register-object-id(#"define-library-tlf", #x00B0);
 register-object-id(#"define-module-tlf", #x00B1);
 register-object-id(#"define-library/module-use-clause", #x00B2);
 register-object-id(#"define-binding-tlf", #x00B3);
+register-object-id(#"here-be-roots", #x00B4);
 
-register-object-id(#"here-be-roots", #x00BF);
+register-object-id(#"generic-definition", #x00C0);
+register-object-id(#"implicit-generic-definition", #x00C1);
+register-object-id(#"method-definition", #x00C2);
+register-object-id(#"getter-method-definition", #x00C3);
+register-object-id(#"setter-method-definition", #x00C4);
+register-object-id(#"constant-definition", #x00C5);
+register-object-id(#"constant-method-definition", #x00C6);
+register-object-id(#"variable-definition", #x00C7);
+register-object-id(#"class-definition", #x00C8);
+register-object-id(#"define-bindings-macro-definition", #x00C9);
+register-object-id(#"define-macro-definition", #x00CA);
+register-object-id(#"function-macro-definition", #x00CB);
+register-object-id(#"statement-macro-definition", #x00CC);
 
 /*
 generic-function

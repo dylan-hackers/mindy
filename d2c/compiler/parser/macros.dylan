@@ -1,10 +1,11 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.7 1995/11/08 19:54:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.8 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define abstract class <macro-definition> (<definition>)
-  slot macro-intermediate-words :: <simple-object-vector>;
+  slot macro-intermediate-words :: <simple-object-vector>,
+    init-keyword: intermediate-words:;
   slot macro-main-rule-set :: <simple-object-vector>,
     required-init-keyword: main-rule-set:;
   slot macro-auxiliary-rule-sets :: <simple-object-vector>,
@@ -1542,3 +1543,24 @@ define method expand-template-aux (piece :: <operator-token>,
 				  module: piece.token-module,
 				  uniquifier: uniquifier)));
 end;
+
+
+// Dump/Load stuff.
+
+define constant $define-macro-slots
+  = list(macro-intermediate-words, intermediate-words:, #f,
+	 macro-main-rule-set, main-rule-set:, #f,
+	 macro-auxiliary-rule-sets, auxiliary-rule-sets:, #f);
+
+add-make-dumper(#"define-bindings-macro-definition", *compiler-dispatcher*,
+		<define-bindings-macro-definition>,
+		$define-macro-slots, load-external: #t);
+add-make-dumper(#"define-macro-definition", *compiler-dispatcher*,
+		<define-macro-definition>,
+		$define-macro-slots, load-external: #t);
+add-make-dumper(#"function-macro-definition", *compiler-dispatcher*,
+		<function-macro-definition>,
+		$define-macro-slots, load-external: #t);
+add-make-dumper(#"statement-macro-definition", *compiler-dispatcher*,
+		<statement-macro-definition>,
+		$define-macro-slots, load-external: #t);

@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.6 1995/04/26 07:03:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.7 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // definitions exist for things like the type of a variable (when it isn't a
 // compile-time constant).
 // 
-define abstract class <definition> (<annotatable>)
+define abstract class <definition> (<annotatable>, <identity-preserving-mixin>)
   //
   // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
@@ -20,6 +20,11 @@ end;
 define method print-object (defn :: <definition>, stream :: <stream>) => ();
   pprint-fields(defn, stream, name: defn.defn-name);
 end;
+
+define constant $definition-slots
+  = list(info, #f, info-setter,
+	 defn-name, name:, #f);
+	 
 
 define generic defn-type (defn :: <definition>)
     => res :: union(<false>, <ctype>);

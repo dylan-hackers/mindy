@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.95 1995/11/08 19:54:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.96 1995/11/09 13:32:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -274,10 +274,11 @@ define module definitions
   use tokens;
   use compile-time-values;
   use names;
+  use od-format;
   use forwards, import: {<ctype>};
 
   export
-    <definition>, defn-name, defn-type, ct-value,
+    <definition>, defn-name, defn-type, ct-value, $definition-slots,
     check-syntax-table-additions, make-syntax-table-additions,
     <abstract-constant-definition>,
     <implicit-definition>;
@@ -740,6 +741,7 @@ define module macros
   use expand;
   use lexenv, exclude: {add-binding};
   use builder-interface, import: {<fer-builder>};
+  use od-format;
 
   export
     <define-macro-definition>, <define-bindings-macro-definition>,
@@ -994,7 +996,9 @@ define module define-functions
     <getter-method-definition>, <setter-method-definition>,
     <define-generic-tlf>,
     <define-method-tlf>,
-    implicitly-define-generic;
+    implicitly-define-generic,
+
+    $abstract-method-definition-slots;
 end;
 
 define module define-constants-and-variables
@@ -1050,6 +1054,7 @@ define module define-classes
   use representation;
   use c-representation;
   use compile-time-functions;
+  use od-format;
 
   export
     class-defn-defered-evaluations-function, class-defn-maker-function;
