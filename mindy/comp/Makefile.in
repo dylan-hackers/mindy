@@ -1,0 +1,182 @@
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.1 1994/10/05 20:53:51 nkramer Exp $
+##
+##  This is the makefile for the Mindy byte-compiler.
+##
+
+SHELL	=	/bin/sh
+
+##
+## begin autoconf'ed source
+##
+
+prefix	=		@prefix@
+exec_prefix	=	@exec_prefix@
+srcdir	=		@srcdir@
+
+SRCDIR	=		${srcdir}
+BINDIR	=		${exec_prefix}/bin
+LIBDIR	=		${exec_prefix}/lib/mindy
+
+CC	=		@CC@
+CCOPTS	=		@CCOPTS@
+OPTIMIZE=               @OPTIMIZE@
+CFLAGS	=		$(CCOPTS) $(OPTIMIZE) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+YACC	=		@YACC@
+YFLAGS	=		-d
+LEX	=		@LEX@
+LFLAGS	=		@LFLAGS@
+RANLIB	=		@RANLIB@
+INSTALL	=		@top_srcdir@/install.sh
+INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
+INSTALL_DATA	=	@INSTALL_DATA@
+
+LIBOBJS =		@LIBOBJS@
+LIBS	=		../compat/libcompat.a @LIBS@
+
+##
+## end of configure written portion
+##
+
+OBJS = mindycomp.o parser.tab.o lexer.tab.o src.o sym.o print.o expand.o \
+	literal.o info.o lose.o lexenv.o envanal.o compile.o header.o \
+	dump.o free.o dup.o
+
+SRCS = mindycomp.c parser.tab.c lexer.tab.c src.c sym.c print.c expand.c \
+	literal.c info.c lose.c lexenv.c envanal.c compile.c header.c \
+	dump.c free.c dup.c
+
+mc: ${OBJS}
+	${CC} ${OBJS} -DVERSION=\""`/bin/date`"\" ${SRCDIR}/version.c ${LIBS} -o ,$@
+	mv ,$@ $@
+
+${SRCDIR}/parser.tab.c: ${SRCDIR}/parser.y
+	${YACC} -d ${SRCDIR}/parser.y
+	mv y.tab.c ${SRCDIR}/parser.tab.c
+	mv y.tab.h ${SRCDIR}/parser.tab.h
+
+${SRCDIR}/lexer.tab.c: ${SRCDIR}/lexer.l
+	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer.tab.c
+
+clean:
+	rm -f ${OBJS} version.o mc *~ \#* core
+
+realclean:
+	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.tab.c mc Makefile *~ \#* core
+	
+install: mc
+	${INSTALL_PROGRAM} mc ${BINDIR}/mc
+
+# It's easiest to generate this part by machine.
+# Try gcc -MM -E *.c | perl /afs/cs/project/gwydion/hackers/nkramer/hack-depends.pl
+
+compile.o :  ${SRCDIR}/compile.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/src.h ${SRCDIR}/dump.h ${SRCDIR}/lexenv.h \
+             ${SRCDIR}/envanal.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
+             ${SRCDIR}/compile.h ${SRCDIR}/byteops.h ${SRCDIR}/info.h \
+             ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/compile.c
+
+dump.o :  ${SRCDIR}/dump.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+          ${SRCDIR}/mindycomp.h ${SRCDIR}/src.h ${SRCDIR}/literal.h \
+          ${SRCDIR}/sym.h ${SRCDIR}/fileops.h ${SRCDIR}/compile.h \
+          ${SRCDIR}/dump.h ${SRCDIR}/version.h ${SRCDIR}/envanal.h \
+          ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/dump.c
+
+dup.o :  ${SRCDIR}/dup.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+         ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
+         ${SRCDIR}/lose.h ${SRCDIR}/dup.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/dup.c
+
+envanal.o :  ${SRCDIR}/envanal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/src.h ${SRCDIR}/lexenv.h ${SRCDIR}/envanal.h \
+             ${SRCDIR}/sym.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/envanal.c
+
+expand.o :  ${SRCDIR}/expand.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+            ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/dup.h \
+            ${SRCDIR}/free.h ${SRCDIR}/sym.h ${SRCDIR}/expand.h \
+            ${SRCDIR}/info.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/expand.c
+
+free.o :  ${SRCDIR}/free.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+          ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
+          ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/free.c
+
+header.o :  ${SRCDIR}/header.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+            ${SRCDIR}/header.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/header.c
+
+info.o :  ${SRCDIR}/info.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+          ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/info.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/info.c
+
+lexenv.o :  ${SRCDIR}/lexenv.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+            ${SRCDIR}/src.h ${SRCDIR}/lexenv.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/lexenv.c
+
+lexer.tab.o :  ${SRCDIR}/lexer.tab.c ${SRCDIR}/./lexer.h ${SRCDIR}/./src.h \
+               ${SRCDIR}/./parser.tab.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/lexer.tab.c
+
+literal.o :  ${SRCDIR}/literal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+             ${SRCDIR}/literal.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/literal.c
+
+lose.o :  ${SRCDIR}/lose.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/lose.c
+
+mindycomp.o :  ${SRCDIR}/mindycomp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+               ${SRCDIR}/mindycomp.h ${SRCDIR}/parser.h ${SRCDIR}/src.h \
+               ${SRCDIR}/print.h ${SRCDIR}/expand.h ${SRCDIR}/envanal.h \
+               ${SRCDIR}/lexer.h ${SRCDIR}/header.h ${SRCDIR}/sym.h \
+               ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/mindycomp.c
+
+parser.tab.o :  ${SRCDIR}/parser.tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindycomp.h \
+                ${SRCDIR}/./header.h ${SRCDIR}/./parser.h ${SRCDIR}/./lexer.h \
+                ${SRCDIR}/./literal.h ${SRCDIR}/./src.h ${SRCDIR}/./sym.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/parser.tab.c
+
+print.o :  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+           ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \
+           ${SRCDIR}/print.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/print.c
+
+src.o :  ${SRCDIR}/src.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+         ${SRCDIR}/sym.h ${SRCDIR}/lexer.h ${SRCDIR}/literal.h \
+         ${SRCDIR}/src.h ${SRCDIR}/info.h ${SRCDIR}/lose.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/src.c
+
+sym.o :  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+         ${SRCDIR}/sym.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/sym.c
+
+version.o :  ${SRCDIR}/version.c ${SRCDIR}/version.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/version.c
