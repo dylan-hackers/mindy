@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.23 1995/04/26 09:45:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.24 1995/04/26 11:58:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -156,35 +156,47 @@ define method pure-expression? (var :: <function-literal>) => res :: <boolean>;
 end;
 
 
+define method defines-unneeded? (defn :: <false>) => res :: <boolean>;
+  #t;
+end;
+
+define method defines-unneeded? (defn :: <ssa-variable>)
+    => res :: <boolean>;
+  if (defn.dependents | defn.needs-type-check?)
+    #f;
+  else
+    defines-unneeded?(defn.definer-next);
+  end;
+end;
+
+define method defines-unneeded? (defn :: <initial-definition>)
+    => res :: <boolean>;
+  if (defn.definition-of.dependents | defn.needs-type-check?)
+    #f;
+  else
+    defines-unneeded?(defn.definer-next);
+  end;
+end;
+
+
 define method optimize
     (component :: <component>, assignment :: <assignment>) => ();
-  local
-    method trim-unused-definitions (defn, new-tail) => ();
-      if (~defn)
-	if (new-tail)
-	  new-tail.definer-next := #f;
-	else
-	  assignment.defines := #f;
-	end;
-      elseif (~defn.dependents & ~defn.needs-type-check?
-		& instance?(defn, <ssa-variable>))
-	trim-unused-definitions(defn.definer-next, new-tail);
-      else
-	trim-unused-definitions(defn.definer-next, defn);
-      end;
-    end;
-  trim-unused-definitions(assignment.defines, #f);
-
   let dependency = assignment.depends-on;
   let source = dependency.source-exp;
   let source-type = source.derived-type;
-
+  let defines = assignment.defines;
+  
   if (source-type == empty-ctype())
     insert-exit-after(component, assignment, component);
+    for (defn = assignment.defines then defn.definer-next,
+	 while: defn)
+      delete-definition(defn);
+    end;
+    assignment.defines := #f;
   else
-    let defines = assignment.defines;
-
-    if (defines)
+    if (defines-unneeded?(defines) & side-effect-free?(source))
+      delete-and-unlink-assignment(component, assignment);
+    else
       if (pure-expression?(source))
 	if (instance?(defines.var-info, <values-cluster-info>))
 	  if (instance?(source, <ssa-variable>)
@@ -209,7 +221,7 @@ define method optimize
 	end;
       end;
 
-      if (instance?(defines.var-info, <values-cluster-info>))
+      if (instance?(defines & defines.var-info, <values-cluster-info>))
 	maybe-restrict-type(component, defines, source-type);
       else
 	for (var = defines then var.definer-next,
@@ -234,8 +246,6 @@ define method optimize
 	  end;
 	end;
       end;
-    elseif (side-effect-free?(source))
-      delete-and-unlink-assignment(component, assignment);
     end;
   end;
 end;
