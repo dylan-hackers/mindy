@@ -42,7 +42,9 @@ define constant tautologies =
     #"characters",
     #"symbols",
     #"collections",
-    #"limited collections",
+#if (~mindy)
+    #"limited collections",  // Mindy doesn't support limited collections
+#endif
     #"sequences",
     #"arrays",
     #"deques",
@@ -262,6 +264,10 @@ define method tautology(arg == #"collections")
     | signal("no key-test for vector()!\n");
 end method;
 
+#if (~mindy)
+
+// Mindy doesn't support limited collections
+
 define constant <type1> = limited(<vector>, of: <byte-character>);
 define constant <type2> = limited(<vector>, of: <byte-character>, size: 3);
 define constant <type3> = limited(<vector>, of: <integer>);
@@ -333,6 +339,8 @@ define method tautology(arg == #"limited collections")
   (instance?(stretchy, <type4>)
      | signal("instance?(%=, %=) is false!\n", stretchy, <type4>));
 end method tautology;
+
+#endif
 
 define method tautology(arg == #"sequences")
   let numbers = #(3, 4, 5);
