@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.46 2001/03/17 03:43:34 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.47 2001/03/30 16:16:08 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -696,6 +696,10 @@ end method emit-make-prologue;
 // The actual meat of compilation.  Does FER conversion, optimizes and emits
 // output code.
 //
+#if (~mindy)
+define variable *last-time-flushed* :: <integer> = 0;
+#endif
+
 define method compile-1-tlf
     (tlf :: <top-level-form>, file :: <file-state>, state :: <main-unit-state>) 
  => ();
@@ -707,7 +711,15 @@ define method compile-1-tlf
     end if;
   end;
   format(*debug-output*, ".");
+#if (mindy)
   force-output(*debug-output*);
+#else
+  let now :: <integer> = call-out("time", int:, int: 0);
+  if (now ~= *last-time-flushed*)
+    force-output(*debug-output*);
+    *last-time-flushed* := now;
+  end;
+#endif
   note-context(name);
   let component = make(<fer-component>);
   let builder = make-builder(component);
