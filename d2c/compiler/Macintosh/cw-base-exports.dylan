@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-base-exports.dylan,v 1.2 2002/03/16 23:23:16 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-base-exports.dylan,v 1.3 2002/03/24 20:05:28 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -701,7 +701,7 @@ define module classes
     slot-init-keyword-required?, slot-overrides,
     <meta-slot-info>, referred-slot-info,
 
-    <position-table>, get-direct-position, // get-general-position,
+    <position-table>, get-direct-position,
     get-universal-position, <slot-position>,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
@@ -709,7 +709,8 @@ define module classes
 
     <vector-slot-info>, slot-size-slot, slot-size-slot-setter,
 
-    <virtual-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
+    <virtual-slot-info>,
+    <indirect-slot-info>, <class-slot-info>, <each-subclass-slot-info>,
     associated-meta-slot, associated-meta-slot-setter,
 
     <override-info>, override-introduced-by, override-introduced-by-setter, 
@@ -742,7 +743,7 @@ define module classes
     calculate-type-inclusion-matrix,
 
     // For dumper...
-    <limited-cclass>, each-subclass-slots-count;
+    <limited-cclass>;
 end;
 
 define module type-dump
