@@ -1,7 +1,7 @@
 module: Dylan-User
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Definition of the Transcendental library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/library.dylan,v 1.1 1996/10/06 13:27:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/library.dylan,v 1.2 1996/10/13 20:52:23 bfw Exp $
 
 //======================================================================
 //
@@ -34,8 +34,18 @@ define library Transcendental
 end library Transcendental;
 
 define module Transcendental
-  use Dylan;
-  use %Transcendental, 
-    import: all,
-    export: all;
+  use Dylan,
+    export: {\^};
+  use Extensions;
+  use System;
+
+  export
+    $double-pi, $single-pi, $double-e, $single-e,
+    sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
+    log, exp, sqrt, isqrt
+  // ### Need to implement these for x86
+  #if (compiled-for-hppa-hpux)
+    , asinh, acosh, atanh
+  #endif
+    ;
 end module Transcendental;
