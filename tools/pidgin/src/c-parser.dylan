@@ -69,10 +69,13 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 // All <parse-state> objects share these slots.
 //
 define abstract class <parse-state> (<object>)
+  slot repository :: <c-type-repository>,
+    required-init-keyword: repository:; // XXX - fix everyone to pass this
   slot objects :: <table>;
   slot structs :: <table>;
-  slot tokenizer :: <tokenizer>, required-init-keyword: #"tokenizer";
-  slot pointers :: <table>;
+  slot tokenizer :: <tokenizer>,
+    required-init-keyword: tokenizer:;
+  slot pointers :: <table>; // XXX - will probably go away
   slot verbose :: <boolean>;
 end class <parse-state>;
 
@@ -312,23 +315,27 @@ end function process-type-list;
 // #(#"vector", length . name)
 // #(#"bitfield", bits . name)
 //
-define method process-declarator (#rest foo)
-
-  /* XXX - needs updating
-    (tp :: <type-declaration>, declarator :: <pair>, state :: <parse-state>)
- => (new-type :: <type-declaration>, name :: <object>);
+define method process-declarator
+    (tp :: <c-type>, declarator :: <pair>, state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <object>);
   case 
+
+    // Process pointer types.
     (instance?(declarator.head, <list>)) =>
       for (tp = tp
 	     then if (ptr ~= #"pointer")
 		    parse-error(state, "unknown type modifier");
 		  else
-		    pointer-to(tp, state);
+		    make(<c-pointer-type>,
+			 repository: state.repository,
+			 referent: tp);
 		  end if,
 	   ptr in head(declarator))
       finally
 	process-declarator(tp, tail(declarator), state);
       end for;
+      
+/* XXX - skip bitfields for now
     (declarator.head == #"bitfield") =>
       if (instance?(tp.true-type, <integer-type-declaration>))
 	let decl = make(<bitfield-declaration>, bits: second(declarator),
@@ -339,14 +346,20 @@ define method process-declarator (#rest foo)
 	parse-error(state, "Bit-fields must be of an integral type.  "
 		      "This is of type %=.", tp);
       end if;
+*/
+
+    // Process vector types.
     (declarator.head == #"vector") =>
       let length = second(declarator);
       // Vector types are represented the same as the corresponding pointer
       // types, but are accessed differently, so make sure that we share names
       // with the corresponding pointer type.
-      let decl = make(<vector-declaration>, length: length, 
-		      name: anonymous-name(), equiv: pointer-to(tp, state));
+      let decl = make(<c-array-type>,
+		      repository: state.repository,
+		      size: length);
       process-declarator(decl, declarator.tail.tail, state);
+
+/* XXX - skip functions for now
     (declarator.head == #"function") =>
       // rgs: For now, we simple equate all function types to
       // <function-pointer>.  At some later date, we will actually
@@ -393,21 +406,21 @@ define method process-declarator (#rest foo)
       // process-declarator(new-type, declarator.tail.tail, state);
       //values(new-type, new-name);
       process-declarator(new-type, declarator.tail.tail, state);
+*/
+
     otherwise =>
       parse-error(state, "unknown type modifier");
   end case;
-*/
 end method process-declarator;
 
 // This handles the trivial case in which we are down to the bare "name" and
 // are therefore done.
 //
-define method process-declarator (#rest foo) /* XXX - needs updating
-    (type :: <type-declaration>, declarator :: <object>,
+define method process-declarator
+    (type :: <c-type>, declarator :: <object>,
      state :: <parse-state>)
- => (new-type :: <type-declaration>, name :: <object>);
+ => (new-type :: <c-type>, name :: <object>);
   values(type, declarator);
-*/
 end method process-declarator;
 
 // Walks through the "parse tree" for a c declaration and adds the

@@ -73,7 +73,7 @@ define module c-parser-engine
   // Defined by c-parser.
   create
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
-    <parse-macro-state>, tokenizer, verbose, verbose-setter,
+    <parse-macro-state>, repository, tokenizer, verbose, verbose-setter,
     push-include-level, pop-include-level, objects, process-type-list,
     process-declarator, declare-objects;
 

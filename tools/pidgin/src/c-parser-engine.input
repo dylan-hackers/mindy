@@ -1576,7 +1576,9 @@ end method parse-loop;
 // declarations in the returned parse state.
 //
 define method parse
-    (files :: <sequence> /* of <string> */, #key defines, verbose)
+    (repository :: <c-type-repository>,
+     files :: <sequence> /* of <string> */,
+     #key defines, verbose)
  => (result :: <parse-state>);
   let stream = make(<byte-string-stream>, contents: "",
                     direction: #"input-output");
@@ -1587,7 +1589,9 @@ define method parse
   let tokenizer = make(<tokenizer>, name: "<top-level>", defines: defines,
                        contents: stream.stream-contents);
 
-  let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
+  let parse-state = make(<parse-file-state>,
+			 repository: repository,
+			 tokenizer: tokenizer);
   parse-state.verbose := verbose;
 
   parse-loop(parse-state);
@@ -1609,7 +1613,10 @@ define method parse-type
   unget-token(tokenizer, make(<alien-name-token>,
 			      generator: tokenizer, string: ""));
   let parse-state
-    = make(<parse-type-state>, tokenizer: tokenizer, parent: old-state);
+    = make(<parse-type-state>,
+	   repository: old-state.repository,
+	   tokenizer: tokenizer,
+	   parent: old-state);
   parse-loop(parse-state);
 end;
 
@@ -1628,7 +1635,10 @@ define method parse-macro
     unget-token(tokenizer, make(<macro-parse-token>,
 				generator: tokenizer, string: ""));
     let parse-state
-      = make(<parse-macro-state>, tokenizer: tokenizer, parent: old-state);
+      = make(<parse-macro-state>,
+	     repository: old-state.repository,	     
+	     tokenizer: tokenizer,
+	     parent: old-state);
     parse-loop(parse-state);
   else
     error("Macro not defined in 'parse-macro'.");
@@ -1646,7 +1656,9 @@ end;
 define method cpp-parse (tokenizer :: <tokenizer>) => result :: <integer>;
   block ()
     let parse-state
-      = make(<parse-cpp-state>, tokenizer: tokenizer);
+      = make(<parse-cpp-state>,
+	     repository: make(<c-type-repository>), // XXX - Not used. Fix.
+	     tokenizer: tokenizer);
     unget-token(tokenizer, make(<cpp-parse-token>,
 				generator: tokenizer, string: ""));
     parse-loop(parse-state);
