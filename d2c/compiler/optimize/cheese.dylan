@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.47 1995/05/04 09:13:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.48 1995/05/04 09:23:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1721,6 +1721,15 @@ define method values-type-deriver
 end;
 
 define-primitive-deriver(#"values", values-type-deriver);
+
+
+define method boolean-result
+    (component :: <component>, primitive :: <primitive>)
+    => res :: <values-ctype>;
+  dylan-value(#"<boolean>");
+end;
+    
+define-primitive-deriver(#"initialized?", boolean-result);
 
 
 define method fixnum-args-boolean-result
