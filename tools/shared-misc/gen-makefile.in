@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.32 2002/02/25 22:15:27 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.33 2002/02/26 00:48:55 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -792,7 +792,13 @@ sub emit_library_rule {
         local($file);
         for $file (split(' ', $lidfile{'files'})) {
             $file =~ s/\.dylan$//;  # chop off ".dylan"
-            push(@files_to_clean, "$file.c", "$file$dot_obj");
+			if ($&) {				# This was a "something.dylan"
+	            push(@files_to_clean, "$file.c", "$file$dot_obj");
+			} else {
+				# This is a *.o or something that is handled by the
+				# emit_c_file_rule ...
+				next;
+			}
             if ($shared && $static) {
                 push(@files_to_clean, "$file$dot_static");
             }
