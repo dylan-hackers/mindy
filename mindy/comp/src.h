@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.16 1994/10/05 20:56:05 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.17 1995/07/11 12:41:26 wlott Exp $
 *
 \**********************************************************************/
 
@@ -620,10 +620,10 @@ extern struct binop_series
     *add_binop(struct binop_series *series, struct binop *op,
 	       struct expr *operand);
 extern struct binop *make_binop(struct id *id);
-extern struct expr *make_negate(struct expr *expr);
-extern struct expr *make_not(struct expr *expr);
+extern struct expr *make_negate(int line, struct expr *expr);
+extern struct expr *make_not(int line, struct expr *expr);
 extern struct expr
-    *make_aref_or_element(struct expr *expr, struct arglist *args);
+    *make_aref_or_element(int line, struct expr *expr, struct arglist *args);
 extern struct expr
     *make_function_call(struct expr *expr, struct arglist *args);
 extern struct expr *make_method_ref(struct method *method);
@@ -759,7 +759,7 @@ extern struct method
     *make_method_description(struct param_list *params,
 			     struct return_type_list *rettypes,
 			     struct body *body);
-extern struct expr *make_singleton(struct expr *expr);
+extern struct expr *make_singleton(int line, struct expr *expr);
 extern struct param_list
     *set_next_param(struct param_list *list, struct id *var);
 extern struct constituent *make_error_constituent(void);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.16 1994/12/16 19:19:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.17 1995/07/11 12:41:26 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -457,8 +457,8 @@ binop:
 ;
 
 operand:
-	MINUS operand { free($1); $$ = make_negate($2); }
-    |	TILDE operand { free($1); $$ = make_not($2); }
+	MINUS operand { $$ = make_negate($1->line, $2); free($1); }
+    |	TILDE operand { $$ = make_not($1->line, $2); free($1); }
     |	leaf { $$ = $1; }
 ;
 
@@ -466,7 +466,7 @@ leaf:
 	constant { $$ = make_literal_ref($1); }
     |	variable_name { $$ = make_varref(make_id($1)); }
     |	leaf LBRACKET arguments_opt RBRACKET
-	{ free($2); free($4); $$ = make_aref_or_element($1, $3); }
+	{ free($4); $$ = make_aref_or_element($2->line, $1, $3); free($2); }
     |	leaf LPAREN arguments_opt RPAREN
 	{ free($2); free($4); $$ = make_function_call($1, $3); }
     |	anonymous_method { $$ = make_method_ref($1); }
@@ -581,8 +581,9 @@ statement:
 	}
     |	WHILE LPAREN expression RPAREN { push_yacc_recovery(END); }
 	body_opt END while_opt
-	{ free($1);free($2);free($4);free($7);pop_yacc_recoveries(1);
-	  $$ = make_for(make_for_header(make_not($3)), $6, NULL);
+	{ free($2);free($4);free($7);pop_yacc_recoveries(1);
+	  $$ = make_for(make_for_header(make_not($1->line, $3)), $6, NULL);
+	  free($1);
 	}
 ;
 
@@ -608,9 +609,9 @@ for_header:
     |	UNTIL_KEYWORD expression
 	{ free($1); $$ = make_for_header($2); }
     |	WHILE expression
-	{ free($1); $$ = make_for_header(make_not($2)); }
+	{ $$ = make_for_header(make_not($1->line, $2)); free($1); }
     |	WHILE_KEYWORD expression
-	{ free($1); $$ = make_for_header(make_not($2)); }
+	{ $$ = make_for_header(make_not($1->line, $2)); free($1); }
     |	for_clause
 	{ $$ = push_for_clause($1, make_for_header(NULL)); }
     |	for_clause COMMA for_header
@@ -949,7 +950,8 @@ positional_parameter:
     |	variable_name COLON_COLON expression
 	{ free($2); $$ = make_param(make_id($1), $3); }
     |	variable_name EQUAL_EQUAL expression
-	{ free($2); $$ = make_param(make_id($1), make_singleton($3)); }
+	{ $$ = make_param(make_id($1), make_singleton($2->line, $3));
+	  free($2); }
 ;
 
 next_parameters:
