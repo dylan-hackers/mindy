@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.8 1995/06/15 00:45:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.9 1995/06/15 15:03:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -521,6 +521,7 @@ define method do-transformer
       build-if-body(builder, policy, source,
 		    iteration-done(builder, policy, source, iteration-vars));
       build-exit(builder, policy, source, block-region);
+      build-else(builder, policy, source);
       end-body(builder); // if
     end;
     build-assignment(builder, policy, source, #(),
@@ -539,13 +540,35 @@ define method do-transformer
   end;
 end;
 
+define-transformer(#"do", #(#"<function>", #"<sequence>"), do-transformer);
+
 
 // Utilities for building iterators.
 
+define class <iteration-vars> (<object>)
+  slot iteration-collection-var :: <leaf>,
+    required-init-keyword: collection-var:;
+  slot iteration-state-var :: <leaf>,
+    required-init-keyword: state-var:;
+  slot iteration-limit-var :: <leaf>,
+    required-init-keyword: limit-var:;
+  slot iteration-next-state-func :: <leaf>,
+    required-init-keyword: next-state-func:;
+  slot iteration-finished?-func :: <leaf>,
+    required-init-keyword: finished?-func:;
+  slot iteration-current-key-func :: <leaf>,
+    required-init-keyword: current-key-func:;
+  slot iteration-current-element-func :: <leaf>,
+    required-init-keyword: current-element-func:;
+  slot iteration-current-element-setter-func :: <leaf>,
+    required-init-keyword: current-element-setter-func:;
+end;
+
 define method iteration-setup
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>)
-    => res :: <simple-object-vector>;
+     orig-coll :: <leaf>)
+    => res :: <iteration-vars>;
+  let coll = make-lexical-var(builder, #"collection", source, object-ctype());
   let state = make-lexical-var(builder, #"state", source, object-ctype());
   let limit = make-lexical-var(builder, #"limit", source, object-ctype());
   let next = make-lexical-var(builder, #"next", source, function-ctype());
@@ -554,83 +577,88 @@ define method iteration-setup
   let curel = make-lexical-var(builder, #"curel", source, function-ctype());
   let curel-setter
     = make-lexical-var(builder, #"curel-setter", source, function-ctype());
-  let copy-state
-    = make-lexical-var(builder, #"copy-state", source, function-ctype());
+  build-let(builder, policy, source, coll, orig-coll);
   build-let(builder, policy, source,
-	    list(state, limit, next, done, curkey, curel,
-		 curel-setter, copy-state),
+	    list(state, limit, next, done, curkey, curel, curel-setter),
 	    make-unknown-call(builder,
 			      ref-dylan-defn(builder, policy, source,
 					     #"forward-iteration-protocol"),
 			      #f,
 			      list(coll)));
-  vector(state, limit, next, done, curkey, curel, curel-setter, copy-state);
+  make(<iteration-vars>,
+       collection-var: coll,
+       state-var: state,
+       limit-var: limit,
+       next-state-func: next,
+       finished?-func: done,
+       current-key-func: curkey,
+       current-element-func: curel,
+       current-element-setter-func: curel-setter);
 end;
 
 define method iteration-advance
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
-  build-assignment(builder, policy, source, iteration-vars[0],
-		   make-unknown-call(builder, iteration-vars[2], #f,
-				     list(coll, iteration-vars[0])));
+     iteration-vars :: <iteration-vars>)
+  build-assignment
+    (builder, policy, source, iteration-vars.iteration-state-var,
+     make-unknown-call
+       (builder, iteration-vars.iteration-next-state-func, #f,
+	list(iteration-vars.iteration-collection-var,
+	     iteration-vars.iteration-state-var)));
 end;
 
 define method iteration-done
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+     iteration-vars :: <iteration-vars>)
     => var :: <leaf>;
   let var = make-local-var(builder, #"done?", object-ctype());
-  build-assignment(builder, policy, source, var,
-		   make-unknown-call(builder, iteration-vars[3], #f,
-				     list(coll,
-					  iteration-vars[0],
-					  iteration-vars[1])));
+  build-assignment
+    (builder, policy, source, var,
+     make-unknown-call
+       (builder, iteration-vars.iteration-finished?-func, #f,
+	list(iteration-vars.iteration-collection-var,
+	     iteration-vars.iteration-state-var,
+	     iteration-vars.iteration-limit-var)));
   var;
 end;
 
 define method iteration-current-key
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+     iteration-vars :: <iteration-vars>)
     => var :: <leaf>;
   let var = make-local-var(builder, #"current-key", object-ctype());
-  build-assignment(builder, policy, source, var,
-		   make-unknown-call(builder, iteration-vars[4], #f,
-				     list(coll, iteration-vars[0])));
+  build-assignment
+    (builder, policy, source, var,
+     make-unknown-call
+       (builder, iteration-vars.iteration-current-key-func, #f,
+	list(iteration-vars.iteration-collection-var,
+	     iteration-vars.iteration-state-var)));
   var;
 end;
 
 define method iteration-current-element
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+     iteration-vars :: <iteration-vars>)
     => var :: <leaf>;
   let var = make-local-var(builder, #"current-element", object-ctype());
-  build-assignment(builder, policy, source, var,
-		   make-unknown-call(builder, iteration-vars[5], #f,
-				     list(coll, iteration-vars[0])));
+  build-assignment
+    (builder, policy, source, var,
+     make-unknown-call
+       (builder, iteration-vars.iteration-current-element-func, #f,
+	list(iteration-vars.iteration-collection-var,
+	     iteration-vars.iteration-state-var)));
   var;
 end;
 
 define method iteration-current-element-setter
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     new-value :: <leaf>, coll :: <leaf>,
-     iteration-vars :: <simple-object-vector>)
+     new-value :: <leaf>, iteration-vars :: <iteration-vars>)
     => ();
-  build-assignment(builder, policy, source, #(),
-		   make-unknown-call(builder, iteration-vars[6], #f,
-				     list(new-value, coll,
-					  iteration-vars[0])));
-end;
-
-define method iteration-copy-state
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
-    => res :: <simple-object-vector>;
-  let var = make-lexical-var(builder, #"state", object-ctype());
-  build-assignment(builder, policy, source, var,
-		   make-unknown-call(builder, iteration-vars[7], #f,
-				     list(coll, iteration-vars[0])));
-  let res = shallow-copy(iteration-vars);
-  res[0] := var;
-  res;
+  build-assignment
+    (builder, policy, source, #(),
+     make-unknown-call
+       (builder, iteration-vars.iteration-current-element-setter-func, #f,
+	list(new-value, iteration-vars.iteration-collection-var,
+	     iteration-vars.iteration-state-var)));
 end;
 
