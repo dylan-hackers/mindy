@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.3 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.4 1995/12/09 02:47:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -121,7 +121,7 @@ define sealed method make
   end block;
 end method make;
 
-define sealed method as (class == <symbol>, string :: <string>)
+define method as (class == <symbol>, string :: <string>)
     => res :: <symbol>;
   make(<symbol>, string: string);
 end;
