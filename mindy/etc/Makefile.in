@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/etc/Makefile.in,v 1.2 1999/01/06 06:51:49 igor Exp $
+##  $Header: /scm/cvs/src/mindy/etc/Makefile.in,v 1.3 1999/01/08 06:21:32 housel Exp $
 ##
 ##  This is the makefile for the Mindy load and go executive
 ##	and any other small programs that might be useful.
@@ -40,7 +40,7 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-CONFIGDIR = 		@top_srcdir@
+CONFIGDIR = 		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
 

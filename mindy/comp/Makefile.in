@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.4 1999/01/06 06:51:45 igor Exp $
+##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.5 1999/01/08 06:21:28 housel Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -39,7 +39,7 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-CONFIGDIR =		@top_srcdir@
+CONFIGDIR =		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
 

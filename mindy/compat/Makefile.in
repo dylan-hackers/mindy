@@ -39,7 +39,7 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-CONFIGDIR = 		@top_srcdir@
+CONFIGDIR = 		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
 
