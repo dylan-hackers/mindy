@@ -9,17 +9,96 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.6 1994/04/04 14:46:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.7 1994/04/09 13:33:43 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include "init.h"
+
+extern void make_class_classes(void);
+extern void make_obj_classes(void);
+extern void make_type_classes(void);
+extern void make_bool_classes(void);
+extern void make_sym_classes(void);
+extern void make_func_classes(void);
+extern void make_coll_classes(void);
+extern void make_str_classes(void);
+extern void make_vec_classes(void);
+extern void make_list_classes(void);
+extern void make_char_classes(void);
+extern void make_num_classes(void);
+extern void make_interp_classes(void);
+extern void make_thread_classes(void);
+extern void make_module_classes(void);
+extern void make_value_classes(void);
+extern void make_nlx_classes(void);
+extern void make_handler_classes(void);
+extern void make_instance_classes(void);
+extern void make_buffer_classes(void);
+extern void make_weak_classes(void);
+
+extern void init_nil(void);
+extern void init_symbol_tables(void);
+extern void init_modules(void);
+
+extern void init_obj_classes(void);
+extern void init_type_classes(void);
+extern void init_class_classes(void);
+extern void init_bool_classes(void);
+extern void init_sym_classes(void);
+extern void init_func_classes(void);
+extern void init_coll_classes(void);
+extern void init_str_classes(void);
+extern void init_vec_classes(void);
+extern void init_list_classes(void);
+extern void init_char_classes(void);
+extern void init_num_classes(void);
+extern void init_interp_classes(void);
+extern void init_thread_classes(void);
+extern void init_module_classes(void);
+extern void init_value_classes(void);
+extern void init_nlx_classes(void);
+extern void init_handler_classes(void);
+extern void init_instance_classes(void);
+extern void init_buffer_classes(void);
+extern void init_weak_classes(void);
+
+extern void init_obj_functions(void);
+extern void init_type_functions(void);
+extern void init_sym_functions(void);
+extern void init_list_functions(void);
+extern void init_str_functions(void);
+extern void init_vec_functions(void);
+extern void init_nlx_functions(void);
+extern void init_misc_functions(void);
+extern void init_def_functions(void);
+extern void init_debug_functions(void);
+extern void init_char_functions(void);
+extern void init_num_functions(void);
+extern void init_handler_functions(void);
+extern void init_error_functions(void);
+extern void init_instance_functions(void);
+extern void init_func_functions(void);
+extern void init_class_functions(void);
+extern void init_print_functions(void);
+extern void init_input_functions(void);
+extern void init_thread_functions(void);
+extern void init_table_functions(void);
+extern void init_fd_functions(void);
+extern void init_buffer_functions(void);
+extern void init_weak_functions(void);
+
+extern void done_initializing_vars(void);
+
+extern void init_driver(void);
+extern void init_loader(void);
+extern void init_interpreter(void);
 
 
 void init(void)
 {
-
     make_class_classes();
     make_obj_classes();
     make_type_classes();
@@ -40,7 +119,8 @@ void init(void)
     make_handler_classes();
     make_instance_classes();
     make_buffer_classes();
-    
+    make_weak_classes();
+
     init_nil();
     init_symbol_tables();
     init_modules();
@@ -65,6 +145,7 @@ void init(void)
     init_handler_classes();
     init_instance_classes();
     init_buffer_classes();
+    init_weak_classes();
 
     init_obj_functions();
     init_type_functions();
@@ -89,6 +170,7 @@ void init(void)
     init_table_functions();
     init_fd_functions();
     init_buffer_functions();
+    init_weak_functions();
 
     done_initializing_vars();
 

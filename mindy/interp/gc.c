@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.5 1994/04/05 21:58:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.6 1994/04/09 13:31:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,6 +20,33 @@
 #include "mindy.h"
 #include "class.h"
 #include "gc.h"
+#include "weak.h"
+#include "table.h"
+
+extern void scavenge_thread_roots(void);
+extern void scavenge_bool_roots(void);
+extern void scavenge_class_roots(void);
+extern void scavenge_coll_roots(void);
+extern void scavenge_func_roots(void);
+extern void scavenge_interp_roots(void);
+extern void scavenge_list_roots(void);
+extern void scavenge_num_roots(void);
+extern void scavenge_obj_roots(void);
+extern void scavenge_vec_roots(void);
+extern void scavenge_str_roots(void);
+extern void scavenge_char_roots(void);
+extern void scavenge_symbol_roots(void);
+extern void scavenge_type_roots(void);
+extern void scavenge_module_roots(void);
+extern void scavenge_value_roots(void);
+extern void scavenge_debug_roots(void);
+extern void scavenge_handler_roots(void);
+extern void scavenge_load_roots(void);
+extern void scavenge_nlx_roots(void);
+extern void scavenge_driver_roots(void);
+extern void scavenge_buffer_roots(void);
+extern void scavenge_weak_roots(void);
+
 
 #define CHECKGC 1
 
@@ -45,7 +72,7 @@ static void *cur_fill = 0, *cur_end = 0;
 static int BytesInUse = 0;
 static int GCTrigger = BYTES_CONSED_BETWEEN_GCS;
 
-static int bytes_in_use()
+static int bytes_in_use(void)
 {
     if (cur_block)
 	return BytesInUse + (cur_fill - cur_block->base);
@@ -137,8 +164,6 @@ struct forwarding_pointer {
     obj_t new_value;
 };
 
-#define ForwardingMarker ((obj_t)(0xDEADBEEF))
-
 void scavenge(obj_t *addr)
 {
     obj_t obj = *addr;
@@ -172,11 +197,11 @@ obj_t transport(obj_t obj, int bytes)
     new = raw_alloc(bytes + 8);
     new_obj = ptr_obj(new + 2);
 
-    bcopy(ptr, new, bytes + 8);
+    memcpy(new, ptr, bytes + 8);
 #else
     new = raw_alloc(bytes);
     new_obj = ptr_obj(new);
-    bcopy(obj_ptr(void *, obj), new, bytes);
+    memcpy(new, obj_ptr(void *, obj), bytes);
 #endif
 
     obj_ptr(struct forwarding_pointer *, obj)->marker = ForwardingMarker;
@@ -258,8 +283,11 @@ void collect_garbage(void)
     scavenge_nlx_roots();
     scavenge_driver_roots();
     scavenge_buffer_roots();
+    scavenge_weak_roots();
 
     scavenge_newspace();
+
+    break_weak_pointers();
 
 #if CHECKGC
     {
