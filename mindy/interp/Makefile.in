@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.10 1995/03/13 21:42:49 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.11 1996/02/02 11:49:59 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -106,7 +106,8 @@ install: mindy
 
 bool.o:  ${SRCDIR}/bool.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/print.h ${SRCDIR}/gc.h ${SRCDIR}/class.h \
-           ${SRCDIR}/obj.h ${SRCDIR}/bool.h
+           ${SRCDIR}/obj.h ${SRCDIR}/bool.h ${SRCDIR}/def.h \
+           ${SRCDIR}/list.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/bool.c
 
 brkpt.o:  ${SRCDIR}/brkpt.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -161,7 +162,8 @@ def.o:  ${SRCDIR}/def.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 
 driver.o:  ${SRCDIR}/driver.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
              ${SRCDIR}/mindy.h ${SRCDIR}/gc.h ${SRCDIR}/thread.h \
-             ${SRCDIR}/driver.h ${SRCDIR}/bool.h ${SRCDIR}/interp.h
+             ${SRCDIR}/driver.h ${SRCDIR}/bool.h ${SRCDIR}/interp.h \
+             ${SRCDIR}/fd.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/driver.c
 
 error.o:  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -190,7 +192,7 @@ fd.o:  ${SRCDIR}/fd.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
          ${SRCDIR}/mindy.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
          ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/driver.h \
          ${SRCDIR}/buf.h ${SRCDIR}/str.h ${SRCDIR}/num.h \
-         ${SRCDIR}/obj.h ${SRCDIR}/def.h
+         ${SRCDIR}/obj.h ${SRCDIR}/def.h ${SRCDIR}/fd.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/fd.c
 
 func.o:  ${SRCDIR}/func.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -205,7 +207,9 @@ func.o:  ${SRCDIR}/func.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 gc.o:  ${SRCDIR}/gc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
          ${SRCDIR}/class.h ${SRCDIR}/gc.h ${SRCDIR}/weak.h \
          ${SRCDIR}/table.h ${SRCDIR}/module.h ${SRCDIR}/bool.h \
-         ${SRCDIR}/sym.h
+         ${SRCDIR}/sym.h ${SRCDIR}/num.h ${SRCDIR}/error.h \
+         ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/def.h \
+         ${SRCDIR}/list.h ${SRCDIR}/str.h ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/gc.c
 
 handler.o:  ${SRCDIR}/handler.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -221,7 +225,8 @@ init.o:  ${SRCDIR}/init.c ${SRCDIR}/init.h
 input.o:  ${SRCDIR}/input.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
             ${SRCDIR}/mindy.h ${SRCDIR}/char.h ${SRCDIR}/list.h \
             ${SRCDIR}/bool.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
-            ${SRCDIR}/driver.h ${SRCDIR}/error.h ${SRCDIR}/def.h
+            ${SRCDIR}/driver.h ${SRCDIR}/error.h ${SRCDIR}/def.h \
+            ${SRCDIR}/fd.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/input.c
 
 instance.o:  ${SRCDIR}/instance.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -282,7 +287,7 @@ misc.o:  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/thread.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
            ${SRCDIR}/vec.h ${SRCDIR}/func.h ${SRCDIR}/obj.h \
            ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/def.h \
-           ${SRCDIR}/num.h ${SRCDIR}/error.h
+           ${SRCDIR}/num.h ${SRCDIR}/error.h ${SRCDIR}/str.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/misc.c
 
 module.o:  ${SRCDIR}/module.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -314,10 +319,10 @@ obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
 
-parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
-                 ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser-tab.h \
-                 ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
-                 ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
+parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+                 ${SRCDIR}/lexer.h ${SRCDIR}/parser.h ${SRCDIR}/parser-tab.h \
+                 ${SRCDIR}/list.h ${SRCDIR}/str.h ${SRCDIR}/sym.h \
+                 ${SRCDIR}/num.h ${SRCDIR}/bool.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -340,7 +345,7 @@ sym.o:  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/gc.h ${SRCDIR}/bool.h ${SRCDIR}/class.h \
           ${SRCDIR}/obj.h ${SRCDIR}/coll.h ${SRCDIR}/str.h \
           ${SRCDIR}/def.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
-          ${SRCDIR}/print.h ${SRCDIR}/sym.h
+          ${SRCDIR}/print.h ${SRCDIR}/sym.h ${SRCDIR}/num.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/sym.c
 
 table.o:  ${SRCDIR}/table.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -385,3 +390,4 @@ weak.o:  ${SRCDIR}/weak.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/error.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
            ${SRCDIR}/weak.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/weak.c
+
