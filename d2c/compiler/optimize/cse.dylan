@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cse.dylan,v 1.1 1998/05/03 19:55:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cse.dylan,v 1.2 1998/09/17 13:05:50 andreas Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -247,7 +247,7 @@ define method cse-region
 		  end for;
 		end unless;
 	      finally
-		old-vars;
+		reverse(old-vars);
 	      end for;
 	    end block;
 	replace-expression
