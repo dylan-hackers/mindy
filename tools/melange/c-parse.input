@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.18 2003/04/12 23:36:41 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.19 2003/10/15 20:04:13 housel Exp $
 
 //======================================================================
 //
@@ -734,26 +734,32 @@ declaration (declaration-specifiers <semicolon-token>)
 %
 
 declaration (inline-declaration)
-  // Ignore inline declarations.  These occur in VC++ header files, so we'd
-  // better be able to handle them. They also occur in Gtk+.
-  parse-warning(%1, "ignoring inline function declaration");
   #f;
 %
 
 inline-declaration (inline-specifiers declaration-specifiers
                     extended-declarator-list <semicolon-token>)
-  %1;
+  let type = process-type-list(%2, @0);
+  let names = reverse!(%3);
+  declare-objects(@0, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
 %
 
 inline-declaration (inline-specifiers declaration-specifiers
                     extended-declarator-list
                     <lcurly-token> curly-list <rcurly-token>)
-  %1;
+  let type = process-type-list(%2, @0);
+  let names = reverse!(%3);
+  declare-objects(@0, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
 %
 
 inline-declaration (declaration-specifiers extended-declarator-list
                     <lcurly-token> curly-list <rcurly-token>)
-  %3;
+  let type = process-type-list(%1, @0);
+  let names = reverse!(%2);
+  declare-objects(@0, type, names, *typedef-flag*);
+  *typedef-flag* := #f;
 %
 
 inline-specifiers (<inline-token>)
@@ -964,7 +970,7 @@ struct-declaration (type-specifier-list struct-declarator-list <semicolon-token>
   let return = #();
   for (declarator in %2)
     let (type, name) = process-declarator(type, declarator, @0);
-    return := pair(pair(name.value, type), return);
+    return := pair(pair(name & name.value, type), return);
   end for;
   return;
 %
@@ -987,9 +993,9 @@ struct-declarator (declarator)
   %1;
 %
 
-;struct-declarator (<colon-token> constant-expr)
-;  error("struct-declarator not yet handled.");
-;%
+struct-declarator (<colon-token> constant-expr)
+  pair(#"bitfield", pair(int-value(%2, @0), #f));
+%
 
 struct-declarator (declarator <colon-token> constant-expr)
   pair(#"bitfield", pair(int-value(%3, @0), %1));

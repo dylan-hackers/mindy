@@ -502,7 +502,10 @@ define method make-struct-type
 	end method;
       else
 	method (elem :: <pair>)
-	  make(<slot-declaration>, name: elem.head, type: elem.tail);
+	  make(<slot-declaration>,
+               name: elem.head | anonymous-name(),
+               type: elem.tail,
+               excluded?: ~elem.head);
 	end method;
       end if;
 
@@ -995,7 +998,7 @@ define class <variable-declaration> (<object-declaration>)
   slot setter :: type-union(<string>, <false>), init-value: #f;
 end class;
 define class <slot-declaration> (<object-declaration>)
-  slot excluded? :: <boolean>, init-value: #f;
+  slot excluded? :: <boolean>, init-value: #f, init-keyword: #"excluded?";
 end class;
 define class <result-declaration> (<object-declaration>) end class;
 define class <arg-declaration> (<object-declaration>)
