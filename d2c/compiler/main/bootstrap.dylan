@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.47 1996/01/12 00:58:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.48 1996/02/08 23:52:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -318,6 +318,11 @@ define class <method> (<function>)
   slot generic-entry :: <raw-pointer>,
     required-init-keyword: generic-entry:;
 end;
+
+define class <accessor-method> (<method>)
+  slot accessor-slot :: <slot-descriptor>,
+    required-init-keyword: slot:;
+end class <accessor-method>;
 
 define class <method-closure> (<method>, <closure>)
 end;
