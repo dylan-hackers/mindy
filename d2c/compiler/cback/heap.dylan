@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.63 1997/01/16 17:13:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.64 1997/02/04 14:39:14 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -58,7 +58,7 @@ define abstract class <state> (<object>)
   constant slot stream :: <stream>, required-init-keyword: stream:;
   // 
   // The architecture we are compiling for.
-  constant slot target :: <target-environment>, required-init-keyword: target:;
+  constant slot target :: <platform>, required-init-keyword: target:;
   //
   // linker symbol that points to the base of the heap.
   constant slot heap-base :: <byte-string> = "heap_base",
@@ -183,7 +183,7 @@ add-make-dumper
 // 
 define method build-global-heap
     (undumped-objects :: <simple-object-vector>, stream :: <stream>,
-     target :: <target-environment>)
+     target :: <platform>)
     => ();
   let state = make(<global-state>, stream: stream, target: target);
   format(stream, "%s\n", target.heap-preamble);
@@ -208,7 +208,7 @@ end;
 // for some reason or other.
 // 
 define method build-local-heap
-    (unit :: <unit-state>, stream :: <stream>, target :: <target-environment>)
+    (unit :: <unit-state>, stream :: <stream>, target :: <platform>)
  => (undumped :: <simple-object-vector>,
      extra-labels :: <simple-object-vector>);
   let prefix = unit.unit-prefix;
@@ -996,7 +996,7 @@ define method spew-object
 	    as(<ct-value>, x);
 	  else
 	    let min-int = ash(as(<extended-integer>, -1),
-			      *current-target*.target-integer-length - 1);
+			      *current-target*.platform-integer-length - 1);
 	    let max-int = lognot(min-int);
 	    if (x < min-int | x > max-int)
 	      make(<literal-extended-integer>, value: x);
