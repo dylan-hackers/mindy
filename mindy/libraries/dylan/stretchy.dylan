@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.3 1994/03/30 06:07:29 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.4 1994/04/06 22:52:15 wlott Exp $
 //
 //  This file implements stretchy-vectors.
 //
@@ -95,6 +95,8 @@ define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
       ssv-data(ssv) := new-data;
     end if;
     fill!(data, #f, start: fill);
+  else
+    fill!(data, #f, start: new, end: fill);
   end if;
   ssv-fill(ssv) := new;
 end method size-setter;
