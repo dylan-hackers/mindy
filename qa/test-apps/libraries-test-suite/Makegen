@@ -14,3 +14,5 @@ $D2CFLAGS
 
 do emit_library_rule(
     'libraries-test-suite-app', '$(BUILDROOT)/force.timestamp', '', 'compile');
+
+do emit_run_tests_rule('libraries-test-suite-app');
