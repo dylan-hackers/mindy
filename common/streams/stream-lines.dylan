@@ -173,9 +173,10 @@ define open generic read-line-into! (stream :: <stream>, string :: <string>,
 /// cross newlines-are-CRLF.) They're in RCS rev 1.3, if there's a need...
 ///
 define method read-line-into! (stream :: <stream>, string :: <string>,
-                               #key start = 0,
-			            on-end-of-stream = $not-supplied,
-			            grow? = #f)
+                               #key start :: <integer> = 0,
+			            on-end-of-stream :: <object> 
+				      = $not-supplied,
+			            grow? :: <boolean> = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block(exit)
     let (one-line, newline?)
@@ -366,8 +367,8 @@ define sealed method new-line (stream :: <simple-sequence-stream>) => ();
 			    stream.contents.size + $default-grow-amount);
     end if;
     let pos :: <integer> = stream.position;
-    stream.contents[pos] := as(stream.stream-element-type($return));
-    stream.contents[pos + 1] := as(stream.stream-element-type($newline));
+    stream.contents[pos] := as(stream.stream-element-type, $return));
+    stream.contents[pos + 1] := as(stream.stream-element-type, $newline));
     stream.position := pos + 2;
     if (stream.stream-end < stream.position) 
       stream.stream-end := stream.position;
