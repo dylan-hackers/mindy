@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.85 1995/06/07 23:06:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.86 1995/06/08 00:44:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2659,17 +2659,23 @@ define method replace-placeholder
 end;
   
 define method replace-placeholder
-    (component :: <component>, dep :: <dependency>, op :: <throw>)
-    => ();
+    (component :: <component>, dep :: <dependency>, op :: <throw>) => ();
   op.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
-  replace-expression
-    (component, dep,
-     make-operation(builder, <mv-call>,
-		    list(dylan-defn-leaf(builder, #"throw"),
-			 op.depends-on.source-exp,
-			 op.depends-on.dependent-next.source-exp),
-		    use-generic-entry: #f));
+  let assign = dep.dependent;
+  let catcher = op.depends-on.source-exp;
+  let cluster = op.depends-on.dependent-next.source-exp;
+  let temp = make-local-var(builder, #"values", object-ctype());
+  let zero-leaf = make-literal-constant(builder, as(<ct-value>, 0));
+  build-assignment(builder, assign.policy, assign.source-location, temp,
+		   make-operation(builder, <primitive>,
+				  list(cluster, zero-leaf),
+				  name: #"canonicalize-results"));
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, dep,
+		     make-unknown-call
+		       (builder, dylan-defn-leaf(builder, #"throw"), #f,
+			list(op.depends-on.source-exp, temp)));
 end;
 
 
