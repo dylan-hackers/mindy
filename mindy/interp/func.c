@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.4 1994/04/06 13:50:54 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.5 1994/04/07 18:34:58 rgs Exp $
 *
 * This file does whatever.
 *
@@ -35,7 +35,7 @@ static obj_t obj_RawFunctionClass = 0;
 static obj_t obj_MethodClass, obj_ByteMethodClass;
 static obj_t obj_RawMethodClass, obj_BuiltinMethodClass;
 static obj_t obj_AccessorMethodClass;
-static obj_t obj_GFClass, obj_MethodInfoClass;
+static obj_t obj_GFClass, obj_MethodInfoClass, obj_GFCacheClass;
 
 
 /* Tracing support. */
@@ -805,7 +805,6 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 {
     int i, count;
     obj_t *fp;
-    obj_t component;
 
     /* push the closure vars */
     count = BYTE_METHOD(method)->n_closure_vars;
@@ -912,6 +911,28 @@ void set_accessor_method_datum(obj_t method, obj_t datum)
 
 /* Generic functions. */
 
+struct gf_cache {
+    obj_t class;
+    obj_t cached_result;
+    int size;
+    obj_t cached_classes[0];
+};
+
+obj_t make_gf_cache(int req_args, obj_t cached_result)
+{
+    obj_t res = alloc(obj_GFCacheClass, (sizeof(struct gf_cache) +
+					 req_args * sizeof(obj_t)));
+    struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
+    int i;
+
+    gfc->cached_result = cached_result;
+    gfc->size = req_args;
+    for (i = 0; i < req_args; i++)
+	gfc->cached_classes[i] = obj_Nil;
+
+    return res;
+}
+
 struct gf {
     obj_t class;
     void (*xep)(struct thread *thread, int nargs);
@@ -922,8 +943,7 @@ struct gf {
     obj_t result_types;
     obj_t more_results_type;
     obj_t methods;
-    obj_t cached_result;
-    obj_t cached_classes[0];
+    obj_t cache;
 };
 
 #define GF(o) obj_ptr(struct gf *, o)
@@ -986,12 +1006,14 @@ static obj_t
     }
 
     if (can_cache) {
-	obj_t *arg = args, *cache = gf->cached_classes;
 	int i, max = gf->required_args;
+	obj_t cache_elem = make_gf_cache(max, ordered);
+	obj_t *cache = obj_ptr(struct gf_cache *, cache_elem)->cached_classes;
+	obj_t *arg = args;
 
 	for (i = 0; i < max; i++, arg++, cache++)
 	    *cache = object_class(*arg);
-	gf->cached_result = ordered;
+	gf->cache = pair(cache_elem, gf->cache);
     }
     return ordered;
 }
@@ -999,41 +1021,39 @@ static obj_t
 static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 {
     struct gf *true_gf = GF(gf);
-    boolean use_cache = TRUE;
+    obj_t *prev, cache;
+    static boolean report = FALSE;
+    obj_t methods = true_gf->methods;
+    int max = true_gf->required_args;
+	
+    /* If there are no methods, then nothing is applicable. */
+    if (methods == obj_Nil)
+	return obj_Nil;
 
-    if (true_gf->cached_result == obj_False)
-	use_cache = FALSE;
-    else {
-	obj_t *arg = args, *cache = true_gf->cached_classes;
-	int i, max = true_gf->required_args;
+    for (prev = &true_gf->cache, cache = *prev;
+	 cache != obj_Nil; prev = &TAIL(cache), cache = *prev) {
+	struct gf_cache *cache_elem = obj_ptr(struct gf_cache *, HEAD(cache));
+	obj_t *cache_class = cache_elem->cached_classes;
+	obj_t *arg = args;
+	int i;
+	boolean found = TRUE;
 
-	for (i = 0; i < max; i++, arg++, cache++)
-	    if (*cache != object_class(*arg)) {
-		use_cache = FALSE;
+	for (i = 0; i < max; i++, arg++, cache_class++) {
+	    if (*cache_class != object_class(*arg)) {
+		found = FALSE;
 		break;
 	    }
+	}
+	if (found) {
+	    *prev = TAIL(cache);
+	    TAIL(cache) = true_gf->cache;
+	    true_gf->cache = cache;
+	    return cache_elem->cached_result;
+	}
     }
 
-    if (use_cache)
-	return true_gf->cached_result;
-    else {
-	/* We have to do it the slow way */
-	obj_t methods = true_gf->methods;
-	
-	/* If there are no methods, then nothing is applicable. */
-	if (methods == obj_Nil)
-	    return obj_Nil;
-	
-	/* If there is only one method, then sorted it is going to */
-	/* be easy. */
-	if (TAIL(methods) == obj_Nil)
-	    if (applicable_method_p(HEAD(methods), args))
-		return methods;
-	    else
-		return obj_Nil;
-	
-	return slow_sorted_applicable_methods(true_gf, methods, args);
-    }
+    /* We have to do it the slow way */
+    return slow_sorted_applicable_methods(true_gf, methods, args);
 }
 
 static boolean methods_accept_keyword(obj_t methods, obj_t keyword)
@@ -1052,7 +1072,6 @@ static void gf_xep(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;
     obj_t gf = args[-1];
-    int required = GF(gf)->required_args;
     obj_t methods, primary_method;
 
     methods = sorted_applicable_methods(gf, args);
@@ -1086,9 +1105,7 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
 			    boolean restp, obj_t keywords,
 			    obj_t result_types, obj_t more_results_type)
 {
-    obj_t res = alloc(obj_GFClass,
-		      sizeof(struct gf) + sizeof(obj_t) * req_args);
-    int i;
+    obj_t res = alloc(obj_GFClass, sizeof(struct gf));
 
     GF(res)->xep = gf_xep;
     GF(res)->debug_name = debug_name;
@@ -1098,9 +1115,7 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     GF(res)->result_types = result_types;
     GF(res)->more_results_type = more_results_type;
     GF(res)->methods = obj_Nil;
-    GF(res)->cached_result = obj_False;
-    for (i = 0; i < req_args; i++)
-	GF(res)->cached_classes[i] = obj_Nil;
+    GF(res)->cache = obj_Nil;
 
     return res;
 }
@@ -1145,7 +1160,7 @@ static obj_t really_add_method(obj_t gf, obj_t method)
     obj_t specializers = METHOD(method)->specializers;
     obj_t scan;
 
-    GF(gf)->cached_result = obj_False;
+    GF(gf)->cache = obj_Nil;
 
     for (scan = methods; scan != obj_Nil; scan = TAIL(scan)) {
 	obj_t old = HEAD(scan);
@@ -1308,7 +1323,7 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
 {
     obj_t scan, *prev;
 
-    GF(gf)->cached_result = obj_False;
+    GF(gf)->cache = obj_Nil;
 
     prev = &GF(gf)->methods;
     while ((scan = *prev) != obj_Nil) {
@@ -1465,21 +1480,36 @@ static obj_t trans_accessor_method(obj_t method)
 static int scav_gf(struct object *ptr)
 {
     struct gf *gf = (struct gf *)ptr;
-    int i, max = gf->required_args;
 
     scav_func((struct function *)gf);
     scavenge(&gf->methods);
-    scavenge(&gf->cached_result);
-    for (i = 0; i < max; i++)
-	scavenge(&gf->cached_classes[i]);
+    scavenge(&gf->cache);
 
-    return sizeof(struct gf) + sizeof(obj_t) * max;
+    return sizeof(struct gf);
 }
 
 static obj_t trans_gf(obj_t gf)
 {
-    return transport(gf, (sizeof(struct gf)
-			  + sizeof(obj_t) * GF(gf)->required_args));
+    return transport(gf, sizeof(struct gf));
+}
+
+static int scav_gf_cache(struct object *ptr)
+{
+    struct gf_cache *gf_cache = (struct gf_cache *)ptr;
+    int i, max = gf_cache->size;
+
+    scavenge(&gf_cache->cached_result);
+    for (i = 0; i < max; i++)
+	scavenge(&gf_cache->cached_classes[i]);
+
+    return sizeof(struct gf_cache) + max * sizeof(obj_t);
+}
+
+static obj_t trans_gf_cache(obj_t gf_cache)
+{
+    return transport(gf_cache, (sizeof(struct gf_cache) +
+				obj_ptr(struct gf_cache *, gf_cache)->size
+				* sizeof(obj_t)));
 }
 
 void scavenge_func_roots(void)
@@ -1491,6 +1521,7 @@ void scavenge_func_roots(void)
     scavenge(&obj_ByteMethodClass);
     scavenge(&obj_MethodInfoClass);
     scavenge(&obj_GFClass);
+    scavenge(&obj_GFCacheClass);
 }
 
 
@@ -1512,6 +1543,7 @@ void make_func_classes(void)
     obj_MethodInfoClass
 	= make_builtin_class(scav_method_info, trans_method_info);
     obj_GFClass = make_builtin_class(scav_gf, trans_gf);
+    obj_GFCacheClass = make_builtin_class(scav_gf_cache, trans_gf_cache);
 }
 
 void init_func_classes(void)
@@ -1533,6 +1565,8 @@ void init_func_classes(void)
 		       obj_MethodClass, NULL);
     init_builtin_class(obj_GFClass, "<generic-function>",
 		       obj_FunctionClass, NULL);
+    init_builtin_class(obj_GFCacheClass, "<generic-function-cache>",
+		       obj_ObjectClass, NULL);
 }
 
 void init_func_functions(void)
