@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.7 1994/06/01 18:11:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.8 1994/06/02 18:01:48 rgs Exp $
 *
 * This file does whatever.
 *
@@ -308,6 +308,7 @@ static struct library *make_library(obj_t name)
     library->defn = NULL;
     library->modules = make_table();
     library->completed = FALSE;
+    library->loading = FALSE;
     library->busy = FALSE;
     library->next = Libraries;
     Libraries = library;
