@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.7 1994/12/15 21:48:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.8 1994/12/16 11:49:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,7 +38,8 @@ define module forwards
   create
     <module>,
     <ctype>,
-    <abstract-variable>;
+    <abstract-variable>,
+    expand;
 end;
 
 define module source
@@ -403,7 +404,7 @@ define module compile-time-eval
   use ctype;
   use tokens;
   use parse-tree;
-  use expand;
+  use forwards, import: {expand};
   use lexenv;
 
   export
@@ -414,11 +415,13 @@ define module expand
   use common;
   use utils;
   use tokens;
+  use lexenv;
   use parse-tree;
   use variables;
+  use compile-time-eval;
+  use ctype;
 
-  export
-    expand;
+  use forwards, import: {expand}, export: all;
 end;
 
 define module parser
@@ -449,6 +452,7 @@ define module macros
   use top-level-forms;
   use parser;
   use expand;
+  use lexenv, exclude: {add-binding};
 
   export
     <define-macro-definition>, <define-bindings-macro-definition>,
@@ -631,6 +635,7 @@ define module top-level-expressions
   use lexenv;
   use builder-interface;
   use fer-convert;
+  use expand;
 end;
 
 define module init
