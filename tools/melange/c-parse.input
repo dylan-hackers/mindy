@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.5 1998/10/18 20:16:39 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.6 1998/12/04 21:29:45 housel Exp $
 
 //======================================================================
 //
@@ -978,27 +978,31 @@ Enum-Specifier (<ENUM-Token> NAME)
   make-struct-type(%2.value, #f, %1, @0);
 %
 
-enum-elements (<Lcurly-Token> Enumerator-List <Rcurly-Token>)
-  reverse!(%2);
+enum-elements (<Lcurly-Token> internal-include-boundary Enumerator-List
+               internal-include-boundary <Rcurly-Token>)
+  reverse!(%3);
 %
 
 ;; VC++ apparently allows commas as terminators
-enum-elements (<Lcurly-Token> Enumerator-List <comma-token> <Rcurly-Token>)
-  reverse!(%2);
+enum-elements (<Lcurly-Token> internal-include-boundary Enumerator-List
+               internal-include-boundary <comma-token>
+               internal-include-boundary <Rcurly-Token>)
+  reverse!(%3);
 %
 
 enumerator-list (enumerator)
   list(make-enum-slot(%1.head, %1.tail, #f, @0));
 %
 
-enumerator-list (enumerator-list <comma-token> enumerator)
+enumerator-list (enumerator-list internal-include-boundary <comma-token>
+                 internal-include-boundary enumerator)
   // HACK: We depend here on the fact that this parser generator evaluates
   // the subtrees left-to-right.
   //
   // We do all of this on the fly because some (i.e. Apple's) C compilers
   // let later enum values be computed based upon those earlier in the 
   // same enum declaration.
-  pair(make-enum-slot(%3.head, %3.tail, %1.head, @0), %1);
+  pair(make-enum-slot(%5.head, %5.tail, %1.head, @0), %1);
 %
 
 enumerator (identifier)
@@ -1368,6 +1372,18 @@ external-definition (<begin-include-token>)
 external-definition (<end-include-token>)
   do(curry(add-cpp-declaration, @0), %1.value);
   pop-include-level(@0);
+%
+
+internal-include-boundary ()
+  #f;
+%
+
+internal-include-boundary (<begin-include-token>)
+  #f;
+%
+
+internal-include-boundary (<end-include-token>)
+  do(curry(add-cpp-declaration, @0), %1.value);
 %
 
 external-definition (declaration)
