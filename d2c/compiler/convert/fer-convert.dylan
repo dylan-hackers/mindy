@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.23 1995/05/05 08:51:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.24 1995/05/05 14:48:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,7 +240,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      build-general-method(builder, meth,
+	      build-general-method(builder, meth, #f,
 				   specializer-lexenv, lexenv));
   end;
 
@@ -449,7 +449,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <method-ref>,
 			   datum :: <result-datum>)
     => res :: <result>;
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 build-general-method(builder, form.method-ref-method,
+		 build-general-method(builder, form.method-ref-method, #f,
 				      lexenv, lexenv));
 end;
 
@@ -510,6 +510,7 @@ end;
 
 define method build-general-method
     (builder :: <fer-builder>, meth :: <method-parse>,
+     name :: false-or(<string>),
      specializer-lexenv :: <lexenv>, lexenv :: <lexenv>)
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
@@ -691,7 +692,9 @@ define method build-general-method
       end;
   let (method-literal, method-region)
     = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
-			      if (meth.method-name)
+			      if (name)
+				name;
+			      elseif (meth.method-name)
 				as(<string>, meth.method-name.token-symbol);
 			      else
 				"Anonymous Method";
