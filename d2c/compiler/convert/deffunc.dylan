@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.10 1995/04/26 09:47:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.11 1995/04/27 00:53:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -317,11 +317,14 @@ define method convert-generic-definition
     let source = make(<source-location>);
     let args = make(<stretchy-vector>);
     // ### compute the args.
+    let temp = make-local-var(builder, #"gf", object-ctype());
     build-assignment
-      (builder, policy, source, make-definition-leaf(builder, defn),
+      (builder, policy, source, temp,
        make-operation(builder,
 		      pair(dylan-defn-leaf(builder, #"%make-gf"),
 			   as(<list>, args))));
+    build-assignment(builder, policy, source, #(),
+		     make-set-operation(builder, defn, temp));
   end;
 end;  
 
