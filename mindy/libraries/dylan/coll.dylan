@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/coll.dylan,v 1.2 1998/11/23 14:52:15 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/coll.dylan,v 1.3 1999/10/18 12:01:55 andreas Exp $
 
 //======================================================================
 //
@@ -815,9 +815,10 @@ define method remove(sequence :: <sequence>, value,
   for (result = #() then if (count = 0)
 			   pair(elem, result);
 			 elseif (~test(elem, value))
-			   if (count) count := count - 1 end if;
 			   pair(elem, result);
-			 else result
+			 else 
+			   if (count) count := count - 1 end if;
+			   result;
 			 end if,
        elem in sequence)
   finally
