@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.30 1996/01/31 23:57:06 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.31 1996/02/05 23:12:05 wlott Exp $
 
 /*
 
@@ -461,6 +461,7 @@ begin
 
   // late additions to category
   register-object-id(#"ct-open-generic", #x008B);
+  register-object-id(#"library", #x008C);
 
   // FER:
   register-object-id(#"compiler-policy", #x0090);
@@ -2234,11 +2235,11 @@ define method dump-od (obj :: <object>, buf :: <dump-buffer>) => ();
   let found = element(*make-dumpers*, oclass, default: #f);
   if (~found)
     // Now check to see if we've complained once before about this class
-    if (element(*classes-I-cant-dump*, oclass, default: #f))
+    unless (element(*classes-I-cant-dump*, oclass, default: #f))
       *classes-I-cant-dump*[oclass] := #t;
       signal("Don't know how to dump instances of %=.  Dump stack: %=\n",
 	     oclass, buf.dump-stack);
-    end if;
+    end unless;
   elseif (~instance?(obj, <identity-preserving-mixin>)
             | maybe-dump-reference(obj, buf))
     apply(dump-simple-object, found.obj-name, buf,
