@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.8 1995/02/28 22:38:55 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.9 1995/03/24 12:23:49 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,7 +103,7 @@ define method make-operand-dependencies(result, ops);
     if (prev)
       prev.dependent-next := dep;
     else
-      result.operands := dep;
+      result.depends-on := dep;
     end;
     prev := dep;
     op.dependents := dep;
@@ -224,19 +224,19 @@ end method;
 define method build-assignment-aux
     (res :: <assignment>, builder :: <internal-builder>,
      target-vars :: type-or(<leaf>, <list>),
-     source-exp :: <expression>)
+     expr :: <expression>)
 
-  let dep = make(<dependency>, source-exp: source-exp,
-  		 source-next: source-exp.dependents,
+  let dep = make(<dependency>, source-exp: expr,
+  		 source-next: expr.dependents,
 		 dependent: res);
-  source-exp.dependents := dep;
+  expr.dependents := dep;
+  res.depends-on := dep;
 		 
   if (list?(target-vars))
     let prev = #f;
     for (var in target-vars)
       let new = make(<initial-definition>, var-info: var.var-info,
-                     definition: var, definer: res,
-		     expression: source-exp);
+                     definition: var, definer: res);
       if (prev)
         prev.definer-next := new;
       else
@@ -257,12 +257,11 @@ define method build-assignment
     (builder :: <internal-builder>, policy :: <policy>,
      source :: <source-location>,
      target-vars :: type-or(<leaf>, <list>),
-     source-exp :: <expression>)
+     expr :: <expression>)
  => ();
   build-assignment-aux
-    (make(<set-assignment>, source-location: source, policy: policy,
-          expression: source-exp),
-     builder, target-vars, source-exp);
+    (make(<set-assignment>, source-location: source, policy: policy),
+     builder, target-vars, expr);
 end method;
 
 // Make a join operation and a join assignment.  Add the assignment to the
@@ -278,11 +277,12 @@ define method build-join
   let exp = make-operand-dependencies(make(<join-operation>),
   				      list(source1, source2));
   let res = make(<join-assignment>, source-location: source, policy: policy,
-  		 defines: target-var, expression: exp);
+  		 defines: target-var);
 
   let dep = make(<dependency>, source-exp: exp, source-next: #f,
 		 dependent: res);
   exp.dependents := dep;
+  res.depends-on := dep;
 
   target-var.definer := res;
   add-body-assignment(builder, res);
@@ -334,12 +334,11 @@ define method build-let
     (builder :: <fer-builder>, policy :: <policy>,
      source :: <source-location>,
      target-vars :: type-or(<leaf>, <list>),
-     source-exp :: <expression>)
+     expr :: <expression>)
  => ();
   build-assignment-aux
-    (make(<let-assignment>, source-location: source, policy: policy,
-          expression: source-exp),
-     builder, target-vars, source-exp);
+    (make(<let-assignment>, source-location: source, policy: policy),
+     builder, target-vars, expr);
 end method;
 
 
