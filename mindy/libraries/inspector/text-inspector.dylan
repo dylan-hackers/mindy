@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.2 1996/04/07 17:42:46 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.3 1996/04/07 18:36:41 nkramer Exp $
 
 //======================================================================
 //
@@ -58,9 +58,7 @@ define method display-object-info (object :: <object>) => ();
   for (attribute in info)
     condition-format(*debug-output*, "%s\n", attribute.attrib-header);
     for (body in attribute.attrib-body)
-      let descr1 = substring-replace(body.description, "#!", "");
-      let descr = substring-replace(descr1, "!#", "");
-      condition-format(*debug-output*, "    %s\n", body.description);
+      condition-format(*debug-output*, "    %s\n", body.stripped-description);
     end for;
   end for;
 end method display-object-info;
