@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.5 1995/05/05 14:40:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.6 1995/05/08 11:42:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,6 +27,8 @@ define method id-name (token :: <identifier-token>) => res :: <basic-name>;
   make(<basic-name>, symbol: token.token-symbol, module: token.token-module);
 end;
 
+
+
 define class <type-cell-name> (<name>)
   slot type-cell-name-base :: <basic-name>,
     required-init-keyword: base:;
@@ -36,6 +38,13 @@ define method print-object (name :: <type-cell-name>, stream :: <stream>)
     => ();
   pprint-fields(name, stream, base: name.type-cell-name-base);
 end;
+
+define method print-message (name :: <type-cell-name>, stream :: <stream>)
+    => ();
+  format(stream, "type cell for %s", name.type-cell-name-base);
+end;
+
+
 
 define class <method-name> (<name>)
   slot method-name-generic-function :: <basic-name>,
