@@ -1,6 +1,6 @@
 module: autodump
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.9 1996/02/08 02:23:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.10 1996/02/21 02:53:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,7 +101,7 @@ define method autodump
     #"parse-tree" =>
       output-dumper("parse-tree-dump", "parse-dump.dylan", id,
 		    <property>, <bindings>, <parameter-list>, <parameter>,
-		    <keyword-parameter>, <method-parse>, <case-clause>,
+		    <keyword-parameter>, <method-parse>,
 		    <property-set>, <use-clause>, <export-clause>,
 		    <create-clause>, <for-clause>, <for-while-clause>,
 		    <for-var-clause>, <for-in-clause>, <for-step-clause>,
