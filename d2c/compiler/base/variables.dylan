@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.13 1995/11/13 23:11:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.14 1995/11/14 13:42:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -114,7 +114,9 @@ define method print-message (mod :: <module>, stream :: <stream>) => ();
 	 mod.module-home.library-name);
 end;
 
-define method initialize (mod :: <module>, #next next-method, #key) => ();
+define method initialize
+    (mod :: <module>, #next next-method, #key magic-tokens: magic-tokens?)
+    => ();
   next-method();
   //
   // Fill in the built in core words.
@@ -129,6 +131,32 @@ define method initialize (mod :: <module>, #next next-method, #key) => ();
   table[#"macro"] := <macro-token>;
   table[#"otherwise"] := <otherwise-token>;
   table[#"seal"] := <seal-token>;
+
+  if (magic-tokens?)
+    table[#"%%begin"] := <begin-token>;
+    table[#"%%bind-exit"] := <bind-exit-token>;
+    table[#"%%class"] := <class-token>;
+    table[#"%%cleanup"] := <cleanup-token>;
+    table[#"%%constant"] := <constant-token>;
+    table[#"%%create"] := <create-token>;
+    table[#"%%finally"] := <finally-token>;
+    table[#"%%for"] := <for-token>;
+    table[#"%%from"] := <from-token>;
+    table[#"%%else"] := <else-token>;
+    table[#"%%export"] := <export-token>;
+    table[#"%%if"] := <if-token>;
+    table[#"%%in"] := <in-token>;
+    table[#"%%library"] := <library-token>;
+    table[#"%%method"] := <method-token>;
+    table[#"%%module"] := <module-token>;
+    table[#"%%mv-call"] := <mv-call-token>;
+    table[#"%%primitive"] := <primitive-token>;
+    table[#"%%set"] := <set-token>;
+    table[#"%%unwind-protect"] := <uwp-token>;
+    table[#"%%use"] := <use-token>;
+    table[#"%%variable"] := <variable-token>;
+    table[#"%%while"] := <while-token>;
+  end;
 end;
 
 // module-name -- exported.
@@ -243,60 +271,45 @@ define constant $Libraries :: <object-table> = make(<object-table>);
 
 // find-library -- exported.
 //
-// Find the library with the given name.  If create: is #t and the
-// library doesn't already exist, create it.  Otherwise, return #f.
+// Find the library with the given name.  If we haven't asked for it
+// before, create it.
 //
-define method find-library (name :: <symbol>, #key create: create?)
-    => result :: union(<library>, <false>);
-  //
-  // Look it up in the global table.
-  // 
+define method find-library (name :: <symbol>) => result :: <library>;
   let lib = element($Libraries, name, default: #f);
-
   if (lib)
-    //
-    // Already exists, just return it.
-    //
     lib;
-
-  elseif (create?)
+  else
     //
     // Make a new library and stuff it into the global table.
     //
     let new = make(<library>, name: name);
     element($Libraries, name) := new;
-    //
-    // Create the built in dylan-user module.  Even though the
-    // dylan-user module is defined in this library, we record the
-    // home of the dylan-user module as the dylan library, so that the
-    // dylan-user module's uses (dylan and extensions) get looked up
-    // in the correct library.
-    // 
-    let dylan-user = make(<module>,
-			  name: name,
-			  home: find-library(#"Dylan", create: #t));
-    new.local-modules[name] := dylan-user;
-    //
-    // And now define the dylan-user module.
-    // 
-    note-module-definition(new, #"Dylan-User",
-			   map(method (name)
-				 make(<use>, name: name, imports: #t,
-				      prefix: #f, excludes: #[],
-				      renamings: #[], exports: #[]);
-			       end,
-			       $Dylan-User-Uses),
-		  #[], #[]);
-    //
-    // And return the new library.
-    // 
-    new;
 
-  else
-    //
-    // It doesn't exist.
-    //
-    #f;
+    // Create the Dylan-User module.  Even though the dylan-user
+    // module is defined in this library, we record the home of the
+    // dylan-user module as the dylan library, so that the dylan-user
+    // module's uses (dylan, extensions, etc.) get looked up in the
+    // correct (i.e. dylan) library.
+    let dylan-user = make(<module>,
+			  name: #"Dylan-User",
+			  home: find-library(#"Dylan"),
+			  magic-tokens: name == #"Dylan");
+    new.local-modules[#"Dylan-User"] := dylan-user;
+    note-module-definition(new, #"Dylan-User",
+			   if (name == #"Dylan")
+			     #[];
+			   else
+			     map(method (name)
+				   make(<use>, name: name, imports: #t,
+					prefix: #f, excludes: #[],
+					renamings: #[], exports: #[]);
+				 end,
+				 $Dylan-User-Uses);
+			   end,
+			   #[], #[]);
+
+    // And return the new library.
+    new;
   end;
 end method;
 
@@ -307,12 +320,15 @@ end method;
 // of <use> structures, and exports is a sequence of names from export
 // clauses.
 //
-define method note-library-definition (name :: <symbol>, uses :: <sequence>,
-				       exports :: <sequence>)
+define method note-library-definition
+    (name :: <symbol>, uses :: <sequence>, exports :: <sequence>)
     => ();
-  let lib = find-library(name, create: #t);
+  let lib = find-library(name);
+  unless (lib == *Current-Library*)
+    compiler-error("Defining strange library.");
+  end;
   if (lib.defined?)
-    error("Library %s is already defined.", name);
+    compiler-error("Library %s is already defined.", name);
   end;
   lib.defined? := #t;
   lib.used-libraries := as(<simple-object-vector>, uses);
@@ -343,7 +359,8 @@ define method find-module (lib :: <library>, name :: <symbol>,
   if (mod)
     mod;
   elseif (create?)
-    let new = make(<module>, name: name, home: lib);
+    let new = make(<module>, name: name, home: lib,
+		   magic-tokens: lib == $Dylan-Library);
     lib.local-modules[name] := new;
     if (lib.defined?)
       // ### Check to see if this name classes with any of the
@@ -353,8 +370,13 @@ define method find-module (lib :: <library>, name :: <symbol>,
     new;
   elseif (lib.defined?)
     find-in-library-uses(lib, name, #f);
+  elseif (lib == *Current-Library*)
+    compiler-error("Can't look up modules in library %s "
+		     "before it is defined.",
+		   lib.library-name);
   else
-    error("Library %s has not been defined yet", lib.library-name);
+    load-library(lib);
+    find-module(lib, name);
   end;
 end method;
 
@@ -365,7 +387,7 @@ end method;
 define method find-exported-module (lib :: <library>, name :: <symbol>)
     => result :: union(<module>, <false>);
   unless (lib.defined?)
-    error("Undefined library %s", lib.library-name);
+    load-library(lib);
   end;
   element(lib.exported-modules, name, default: #f)
     | find-in-library-uses(lib, name, #t);
@@ -384,11 +406,8 @@ define method find-in-library-uses (lib :: <library>, name :: <symbol>,
     for (u in lib.used-libraries)
       let orig-name = guess-orig-name(u, name, exported-only);
       if (orig-name)
-	let used-lib = find-library(u.name-used);
-	unless (used-lib)
-	  error("Undefined library %s", u.name-used);
-	end;
-	let imported = find-exported-module(used-lib, orig-name);
+	let imported = find-exported-module(find-library(u.name-used),
+					    orig-name);
 	if (imported)
 	  return(imported);
 	end;
@@ -474,14 +493,21 @@ end;
 // We don't actually do anything with the uses just yet in order to
 // simplify bootstrapping.
 //
-define method note-module-definition (lib :: <library>, name :: <symbol>,
-				      uses :: <sequence>,
-				      exports :: <sequence>,
-				      creates :: <sequence>)
+define method note-module-definition
+    (lib :: <library>, name :: <symbol>, uses :: <sequence>,
+     exports :: <sequence>, creates :: <sequence>)
     => ();
   let mod = find-module(lib, name, create: #t);
+  unless (mod.module-home == lib | name == #"Dylan-User")
+    // We suppress this test for dylan-user modules, because they are
+    // homed in the dylan library.  Hence this test would always flame out.
+    compiler-error("Can't define module %s in library %s, "
+		     "because library %s already imports a module %s.",
+		   name, lib.library-name, lib.library-name, name);
+  end;
   if (mod.defined?)
-    error("Module %s is already defined.", name);
+    compiler-error("Module %s is already defined in library %s.",
+		   name, lib.library-name);
   end;
   //
   // Mark it as defined, and record the uses for later.
@@ -533,7 +559,7 @@ define method note-module-definition (lib :: <library>, name :: <symbol>,
   end;
 end;
 
-// complete-module -- internal
+// complete-module -- exported
 //
 // Called whenever we need the complete variable names for the given
 // module and we don't have them yet.  This is where the use clauses
@@ -548,7 +574,8 @@ define method complete-module (mod :: <module>) => ();
     error("Circular module use chain detected at module %s", mod.module-name);
   end;
   unless (mod.defined?)
-    error("Module %s has not been defined yet.", mod.module-name);
+    compiler-error("Module %s in library %s has not been defined yet.",
+		   mod.module-name, mod.module-home.library-name);
   end;
   mod.busy? := #t;
   //
@@ -824,24 +851,42 @@ define method note-variable-definition (defn :: <implicit-definition>,
 end;
 
 
+// Loading stuff.
+
+define method load-library (lib :: <library>) => ();
+  let previous-library = *Current-Library*;
+  block ()
+    *Current-Library* := lib;
+    let name = lib.library-name;
+    format(*debug-output*, "Loading library %s\n", name);
+    find-data-unit(name, $library-summary-unit-type,
+		   dispatcher: *compiler-dispatcher*);
+    unless (lib.defined?)
+      error("Loaded library %s but it wasn't ever defined.", name);
+    end;
+  cleanup
+    *Current-Library* := previous-library;
+  end;
+end;
+
+
 // Initilization stuff.
+
+// *Current-Library* and *Current-Module* -- exported.
+// 
+// The Current Library and Module during a parse or load, or #f if we arn't
+// parsing or loading at the moment.
+// 
+define variable *Current-Library* :: false-or(<library>) = #f;
+define variable *Current-Module* :: false-or(<module>) = #f;
 
 // $Dylan-Library and $Dylan-Module -- exported.
 //
 // The Dylan library and Dylan-Viscera module.
 //
-define constant $Dylan-Library
-  = find-library(#"Dylan", create: #t);
+define constant $Dylan-Library = find-library(#"Dylan");
 define constant $Dylan-Module
   = find-module($Dylan-Library, #"Dylan-Viscera", create: #t);
-
-// *Current-Library* and *Current-Module* -- exported.
-// 
-// The Current Library and Module during a parse, or #f if we arn't parsing
-// at the moment.
-// 
-define variable *Current-Library* :: false-or(<library>) = #f;
-define variable *Current-Module* :: false-or(<module>) = #f;
 
 // done-initializing-module-system -- exported.
 //
