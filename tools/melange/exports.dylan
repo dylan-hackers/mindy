@@ -122,7 +122,7 @@ define module define-interface
   use System,
      import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
 	      pointer-deref};
-#end
+#endif
 
   // From string-extensions
   use regular-expressions;

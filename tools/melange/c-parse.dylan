@@ -6068,7 +6068,7 @@ define method parse-loop
 	     token :: <token>, parse-state :: <parse-state>)
 #if (~mindy)
 	 => (result :: <object>);
-#end
+#endif
 	  let action = find-action(*action-table*[state-stack.head], token);
 	  select (action by instance?)
 	    <shift> =>
