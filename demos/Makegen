@@ -2,21 +2,21 @@
 do emit_library_rule(
     'craps',
     '../runtime/dylan/dylan.lib.du ../runtime/random/random.lib.du',
-    '-L../runtime/c-code -L../runtime/dylan -L../runtime/random',
+    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/random',
     'compile', 'install'
 );
 
 do emit_library_rule(
     'test',
     '../runtime/dylan/dylan.lib.du ../runtime/streams/streams.lib.du',
-    '-L../runtime/c-code -L../runtime/dylan -L../runtime/streams',
+    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams',
     'compile'
 );
 
 do emit_library_rule(
     'gobbledygook',
     '../runtime/dylan/dylan.lib.du fact.lib.du',
-    '-L../runtime/c-code -L../runtime/dylan -L.',
+    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L.',
     'compile'
 );
 
