@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.6 1998/09/09 13:40:11 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.7 1998/10/15 13:51:23 igor Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -303,12 +303,11 @@ define module source
 
     <unknown-source-location>,
 
-    <source-file>, contents, <file-contents>,
+    <source-file>, contents, <file-contents>, full-file-name, file-name,
 
     <file-source-location>, source-file,
     start-posn, start-line, start-column,
     end-posn, end-line, end-column,
-    file-name,
 
     extract-string;
 end;
