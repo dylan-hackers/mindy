@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.29 2002/12/02 11:17:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.30 2003/03/28 00:30:37 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -197,7 +197,8 @@ define module dylan-viscera
     report-condition, condition-format, condition-force-output,
     *warning-output*, *gdb-output*,
     <debugger>, invoke-debugger, *debugger*,
-    <byte>, <byte-vector>,
+    <bit>, <byte>, <byte-vector>,
+    <set>, <object-set>,
     $not-supplied, $unsupplied, unsupplied?,
     supplied?, unsupplied, $unfound, unfound?,
     found?, unfound, ignore,
@@ -231,15 +232,17 @@ define module dylan-viscera
     <machine-word>, $machine-word-size, $machine-word-zero,
     $maximum-signed-machine-word, $minimum-signed-machine-word,
     $maximum-unsigned-machine-word, $minimum-unsigned-machine-word,
-    // as-unsigned, %logior, %logxor, %logand, %lognot, %logbit?,
+    // as-unsigned,
+    %logior, %logxor, %logand, %lognot, %logbit?,
     // %count-low-zeros, %count-high-zeros, %+, %-, %*,
     // %floor/, %ceiling/, %ceiling/, %round/, %truncate/,
-    // %negative, %abs, %shift-left, %shift-right,
+    // %negative, %abs,
+    %shift-left, %shift-right,
     // so%+, so%-, so%*, so%negative, so%abs, so%shift-left,
     // d%floor/, d%ceiling/, d%truncate/, d%divide,
-    // u%+, u%-, u%*, u%divide, u%rotate-left, u%rotate-right,
-    // u%shift-left. u%shift-right, u%<,
-    // ud%divide, ud%shift-left, ud%shift-right,
+    // u%+, u%-, u%*, u%divide, 
+    u%rotate-left, u%rotate-right, u%shift-left, u%shift-right,
+    // u%<, ud%divide, ud%shift-left, ud%shift-right,
 
     // Introspection Stuff
     class-name, function-name,

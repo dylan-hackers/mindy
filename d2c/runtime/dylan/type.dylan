@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.8 2002/03/30 01:48:13 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.9 2003/03/28 00:30:37 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -474,6 +474,12 @@ define method restrict-limited-ints
   make(<limited-integer>, base-class: lim2.limited-integer-base-class,
        min: min, max: max);
 end method restrict-limited-ints;
+
+// <bit> -- exported from Extensions
+
+define /* exported */ constant <bit>
+  = limited(<integer>, min: 0, max: 1);
+
 
 // <limited-collection> -- internal
 //

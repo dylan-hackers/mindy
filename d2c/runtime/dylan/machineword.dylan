@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.5 2002/08/09 20:24:35 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.6 2003/03/28 00:30:37 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -30,7 +30,7 @@ module: dylan-viscera
 //======================================================================
 
 define functional class <machine-word> (<object>)
-  slot value :: <integer>,
+  constant slot value :: <integer>,
     init-value: 0, init-keyword: value:;
 end;
 
@@ -47,7 +47,9 @@ end class;
 define sealed domain make (singleton(<invalid-bit-index>));
 define sealed domain initialize (<invalid-bit-index>);
 
-define function invalid-bit-index (index :: <integer>)
+define function invalid-bit-index
+    (index :: <integer>)
+ => (res :: <never-returns>);
   error(make(<invalid-bit-index>, bit-number: index));
 end;
 
@@ -121,11 +123,11 @@ define inline function check-bit-index(idx :: <integer>)
   end unless;
 end;
 
-define sealed inline method %logbit? (idx :: <integer>, a :: <machine-word>)
+define sealed inline method %logbit?
+    (idx :: <integer>, a :: <machine-word>)
  => (res :: <boolean>);
   check-bit-index(idx);
-  //machine-word-logbit?(idx, a);
-  odd?(ash(as(<integer>, a), -idx));
+  logbit?(idx, as(<integer>, a));
 end method %logbit?;
 
 define sealed inline method odd? (a :: <machine-word>)
@@ -152,6 +154,85 @@ define sealed inline method negative? (a :: <machine-word>)
  => (res :: <boolean>)
   a < $machine-word-zero
 end method negative?;
+
+define inline method %lognot
+    (a :: <machine-word>)
+ => (res :: <machine-word>);
+  as(<machine-word>, lognot(as(<integer>, a)));
+end method;
+
+define inline method %logand
+    (a :: <machine-word>, b :: <machine-word>)
+ => (res :: <machine-word>);
+  as(<machine-word>, logand(as(<integer>, a), as(<integer>, b)));
+end method;
+
+define inline method %logior
+    (a :: <machine-word>, b :: <machine-word>)
+ => (res :: <machine-word>);
+  as(<machine-word>, logior(as(<integer>, a), as(<integer>, b)));
+end method;
+
+define inline method %logxor
+    (a :: <machine-word>, b :: <machine-word>)
+ => (res :: <machine-word>);
+  as(<machine-word>, logxor(as(<integer>, a), as(<integer>, b)));
+end method;
+
+define inline method %shift-left
+    (a :: <machine-word>, count :: <integer>)
+ => (low :: <machine-word>, high :: <machine-word>, overflow? :: <boolean>);
+  check-bit-index(count);
+  let a = as(<integer>, a);
+  let low = %%primitive(fixnum-shift-left, a, count);
+  let high
+    = %%primitive(fixnum-shift-right, a, $fixed-integer-bits - count); // ###
+  values(as(<machine-word>, low), as(<machine-word>, high),
+         high ~= 0 & high ~= -1);
+end method;
+
+define inline method %shift-right
+    (a :: <machine-word>, count :: <integer>)
+ => (res :: <machine-word>)
+  check-bit-index(count);
+  as(<machine-word>, %%primitive(fixnum-shift-left, as(<integer>, a), count));
+end method;
+
+define inline method u%rotate-left
+    (a :: <machine-word>, count :: <integer>)
+ => (res :: <machine-word>);
+  check-bit-index(count);
+  let a = as(<integer>, a);
+  as(<machine-word>,
+     logior(%%primitive(fixnum-shift-left, a, count),
+            %%primitive(fixnum-logical-shift-right, a,
+                        $fixed-integer-bits - count)));
+end method;
+
+define inline method u%rotate-right
+    (a :: <machine-word>, count :: <integer>)
+ => (res :: <machine-word>)
+  check-bit-index(count);
+  let a = as(<integer>, a);
+  as(<machine-word>,
+     logior(%%primitive(fixnum-logical-shift-right, a, count),
+            %%primitive(fixnum-shift-left, a, $fixed-integer-bits - count)));
+end method;
+
+define inline method u%shift-left
+    (a :: <machine-word>, count :: <integer>)
+ => (res :: <machine-word>);
+  check-bit-index(count);
+  as(<machine-word>, %%primitive(fixnum-shift-left, as(<integer>, a), count));
+end method;
+
+define inline method u%shift-right
+    (a :: <machine-word>, count :: <integer>)
+ => (res :: <machine-word>)
+  check-bit-index(count);
+  as(<machine-word>,
+     %%primitive(fixnum-logical-shift-right, as(<integer>, a), count));
+end method;
 
 define constant $machine-word-size :: <integer> = $fixed-integer-bits;
 define constant $maximum-signed-machine-word :: <machine-word>

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.30 2002/12/02 11:17:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.31 2003/03/28 00:30:37 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -180,8 +180,14 @@ define module Extensions
 	     // Collection operations.
 	     difference, concatenate!,
 
+             // Bits
+             <bit>,
+
 	     // Byte vector stuff.
 	     <byte>, <byte-vector>,
+
+             // Sets
+             <set>, <object-set>,
 
 	     // Misc other stuff.
 	     $not-supplied, $unsupplied, unsupplied?,
@@ -245,15 +251,17 @@ define module Machine-Words
              $maximum-signed-machine-word, $minimum-signed-machine-word,
              $maximum-unsigned-machine-word, $minimum-unsigned-machine-word,
              odd?, even?, zero?, negative?, positive?,
-             // as-unsigned, %logior, %logxor, %logand, %lognot, %logbit?
+             // as-unsigned,
+             %logior, %logxor, %logand, %lognot, %logbit?,
              // %count-low-zeros, %count-high-zeros, %+, %-, %*,
              // %floor/, %ceiling/, %ceiling/, %round/, %truncate/,
-             // %negative, %abs, %shift-left, %shift-right,
+             // %negative, %abs,
+             %shift-left, %shift-right,
              // so%+, so%-, so%*, so%negative, so%abs, so%shift-left,
              // d%floor/, d%ceiling/, d%truncate/, d%divide,
-             // u%+, u%-, u%*, u%divide, u%rotate-left, u%rotate-right,
-             // u%shift-left. u%shift-right, u%<,
-             // ud%divide, ud%shift-left, ud%shift-right
+             // u%+, u%-, u%*, u%divide,
+             u%rotate-left, u%rotate-right, u%shift-left, u%shift-right,
+             // u%<, ud%divide, ud%shift-left, ud%shift-right
             },
     export: all;
 end;

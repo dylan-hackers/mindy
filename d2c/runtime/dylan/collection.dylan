@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.12 2002/11/20 04:25:01 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.13 2003/03/28 00:30:37 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -494,8 +494,8 @@ define open generic add
     (seq :: <sequence>, new-element :: <object>) => (new-seq :: <sequence>);
 
 define open generic add!
-    (seq :: <sequence>, new-element :: <object>)
- => (maybe-new-seq :: <sequence>);
+    (seq :: type-union(<sequence>, <set>), new-element :: <object>)
+ => (maybe-new-seq :: type-union(<sequence>, <set>));
 
 define open generic add-new
     (seq :: <sequence>, new-element :: <object>, #key test)
@@ -510,8 +510,8 @@ define open generic remove
     => new-seq :: <sequence>;
 
 define open generic remove!
-    (seq :: <sequence>, value :: <object>, #key test, count)
-    => maybe-new-seq :: <sequence>;
+    (seq :: type-union(<sequence>, <set>), value :: <object>, #key test, count)
+ => (maybe-new-seq :: type-union(<sequence>, <set>));
 
 define open generic choose
     (pred :: <function>, seq :: <sequence>)
