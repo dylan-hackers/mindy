@@ -1203,12 +1203,14 @@ define method compute-dylan-name
     (decl :: <enum-slot-declaration>, mapper :: <function>, prefix :: <string>,
      containers :: <sequence>, rd-only :: <boolean>, sealing :: <string>)
  => (result :: <string>);
-  if (empty?(containers))
-    mapper(#"constant", prefix, decl.simple-name,
-	   list(decl.containing-enum-declaration.simple-name));
-  else
-    mapper(#"constant", prefix, decl.simple-name, containers);
-  end if;
+  let enum = decl.containing-enum-declaration;
+  let actual-containers =
+    case
+      ~empty?(containers) => containers; // XXX - I don't understand this bit.
+      enum.anonymous? => #();
+      otherwise => list(enum.simple-name);
+    end case;
+  mapper(#"constant", prefix, decl.simple-name, actual-containers);
 end method compute-dylan-name;
 
 define class <macro-declaration> (<constant-declaration>) end class;
