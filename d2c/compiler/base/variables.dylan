@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.12 1995/10/17 04:28:15 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.13 1995/11/13 23:11:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -555,7 +555,7 @@ define method complete-module (mod :: <module>) => ();
   // Pull in everything from the uses.
   //
   for (u in mod.used-modules)
-    let used-mod = find-module(mod.module-home, u.module-name);
+    let used-mod = find-module(mod.module-home, u.name-used);
     unless (used-mod)
       error("No module %s in library %s",
 	    u.module-name, mod.module-home.library-name);
@@ -828,12 +828,12 @@ end;
 
 // $Dylan-Library and $Dylan-Module -- exported.
 //
-// The Dylan library and module.
+// The Dylan library and Dylan-Viscera module.
 //
 define constant $Dylan-Library
   = find-library(#"Dylan", create: #t);
 define constant $Dylan-Module
-  = find-module($Dylan-Library, #"Dylan", create: #t);
+  = find-module($Dylan-Library, #"Dylan-Viscera", create: #t);
 
 // *Current-Library* and *Current-Module* -- exported.
 // 
