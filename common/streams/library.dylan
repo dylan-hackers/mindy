@@ -2,7 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.5 2001/12/20 20:09:52 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.6 2001/12/23 06:00:39 dauclair Exp $
 
 //======================================================================
 //
@@ -53,6 +53,7 @@ end library;
       fd-O_WRONLY,
       fd-O_RDWR,
       fd-O_CREAT,
+      fd-O_APPEND,
       fd-O_TRUNC,
       fd-O_EXCL,
       fd-ENOENT,
@@ -281,7 +282,7 @@ define module streams
     //
     <fd-stream>,
     <buffered-byte-string-output-stream>,
-      file-descriptor;
+        file-descriptor;
 end module;
 
 define module piped-exec

@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.4 2000/01/24 04:55:12 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.5 2001/12/23 06:00:39 dauclair Exp $
 
 //======================================================================
 //
@@ -67,6 +67,9 @@ define /* exported */ constant fd-o_rdwr :: <integer>
 
 define /* exported */ constant fd-o_creat :: <integer>
  = c-expr(int:, "O_CREAT");
+
+define /* exported */ constant fd-o_append :: <integer>
+ = c-expr(int:, "O_APPEND");
 
 define /* exported */ constant fd-o_trunc :: <integer>
  = c-expr(int:, "O_TRUNC");

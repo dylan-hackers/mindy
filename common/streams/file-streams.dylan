@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.6 2000/10/31 13:26:20 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.7 2001/12/23 06:00:39 dauclair Exp $
 
 //======================================================================
 //
@@ -461,6 +461,8 @@ define sealed method initialize
 		   => logior(flags, fd-o_trunc);
 		 (#"truncate")
 		   => logior(flags, fd-o_trunc);
+		 (#"append")
+		   => logior(flags, fd-o_append);
 		 (#"new-version") 
 		   => error("<fd-file-stream> does not support new-version.");
 		 otherwise
