@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.14 1996/01/12 16:45:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.15 1996/01/15 17:21:34 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1058,3 +1058,35 @@ define inline method last-setter
   element(seq, seq.size - 1) := new-value;
 end method last-setter;
 
+// Note: This function depends upon a definition of \= for sequences, which
+// will be supplied later in this file.
+//
+define method \= (a :: <collection>, b :: <collection>) => answer :: <boolean>;
+  let a-test = key-test(a);
+  let b-test = key-test(b);
+  
+  a-test == b-test
+    & key-sequence(a) = key-sequence(b) 
+    & every?(a-test, a, b);
+end method \=;
+
+define method \= (a :: <sequence>, b :: <sequence>) => answer :: <boolean>;
+  let (a-init, a-limit, a-next, a-done?, a-key, a-elem)
+    = forward-iteration-protocol(a);
+  let (b-init, b-limit, b-next, b-done?, b-key, b-elem)
+    = forward-iteration-protocol(b);
+  block (return)
+    for (a-state = a-init then a-next(a, a-state),
+	 b-state = b-init then b-next(b, b-state),
+	 until: a-done?(a, a-state, a-limit) | b-done?(b, b-state, b-limit))
+      if (a-elem(a, a-state) ~= b-elem(b, b-state))
+	return(#f);
+      end if;
+    finally
+      if (~a-done?(a, a-state, a-limit) | ~b-done?(b, b-state, b-limit))
+	return(#f);
+      end if;
+    end for;
+    #t;
+  end block;
+end method \=;
