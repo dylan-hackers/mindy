@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.4 1998/11/13 06:51:33 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.5 1999/04/12 03:40:08 emk Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,6 +6,9 @@
 #include <math.h>
 
 #include "../gc/gc.h"
+
+int application_argc;
+char **application_argv;
 
 void not_reached(void)
 {
@@ -20,6 +23,11 @@ void not_reached(void)
 void real_main(int argc, char *argv[])
 {
     descriptor_t *sp = allocate_stack();
+
+    /* Remember our arguments so we can support Harlequin-style
+       application-name and application-arguments functions. */
+    application_argc = argc;
+    application_argv = argv;
 
     /* Run all the top level initializations. */
     inits(sp, argc, argv);
