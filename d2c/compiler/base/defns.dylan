@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.14 1996/02/12 01:57:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.15 1996/02/21 16:09:38 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // compile-time constant).
 // 
 define open primary abstract class <definition>
-    (<annotatable>, <identity-preserving-mixin>)
+    (<annotatable>, <identity-preserving-mixin>, <source-location-mixin>)
   //
   // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
