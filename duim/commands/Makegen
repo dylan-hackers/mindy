@@ -1,6 +1,6 @@
 $D2CFLAGS
     = $d2c_runtime
-    . "-L../../common/common-dylan ";
+    . "-L../../common/common-dylan -L../../common/threads ";
 
 &emit_library_rule('commands', '../utilities/duim-utilities.lib.du',
 		   '-L../utilities ', 

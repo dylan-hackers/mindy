@@ -106,7 +106,10 @@ define module common-extensions
 	     <stretchy-sequence>,
 	     <object-deque>,
 	     <stretchy-object-vector>,
-             <byte-character>};
+             <byte-character>,
+             \with-bounds-checks, 
+             \without-bounds-checks,
+             element-range-error};
   use %Hash-Tables,
     export: {remove-all-keys!};
   use table-extensions,

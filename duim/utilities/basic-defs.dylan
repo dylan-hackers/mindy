@@ -172,7 +172,6 @@ define method count
   c
 end method count;
 
-
 define inline function primitive-position
     (sequence :: <sequence>, item,
      #key test = \==,
@@ -223,6 +222,7 @@ define sealed method position
  => (index :: false-or(<integer>))
   primitive-position(string, item, test: test, start: _start, end: _end)
 end method position;
+
 
 
 /// Array hacking

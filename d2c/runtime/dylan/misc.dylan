@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.5 2002/10/31 10:17:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.6 2002/11/01 21:40:56 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -150,6 +150,14 @@ define macro without-bounds-checks
     => {let ?=element = %element;
         let ?=element-setter = %element-setter;
         ?body}
+end;
+
+define macro fake-without-bounds-checks
+  {fake-without-bounds-checks () ?:body end}
+    => {fake-without-bounds-checks ?body end}
+
+  {fake-without-bounds-checks ?:body end}
+    => {?body}
 end;
 
 define macro with-bounds-checks

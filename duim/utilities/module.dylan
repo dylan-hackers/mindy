@@ -24,8 +24,9 @@ define module duim-imports
 	      element-no-bounds-check-setter,
 	      element-range-error };
   use simple-debugging, export: all;
-  use simple-format, export: all;
-  use threads, export: all;*/
+  use simple-format, export: all; */
+  use common-extensions, export: all, exclude: { position };
+  use threads, export: all;
   use transcendental, export: all;	//transcendentals
   use table-extensions, export: all;
   //use plists, export: all;
@@ -37,14 +38,12 @@ define module duim-utilities
 
   // Gwydion compatibility
   // common-dylan
-  use common-dylan, export: all, exclude: { position, assert };
+  use common-dylan, export: all, exclude: { position };
   use format, export: all;
 
   // Debug support
   export *debug-duim-function*,
          duim-debug-message;
-
-  export assert;
 
   //---*** Per-thread (i.e., dynamically bindable) slots
   export \thread-slot-definer;

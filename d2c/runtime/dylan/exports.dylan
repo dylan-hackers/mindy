@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.26 2002/10/31 20:59:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.27 2002/11/01 21:40:56 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -188,7 +188,8 @@ define module Extensions
              found?, unfound,
              ignore, functional-==, key-exists?, assert,
              debug-assert, \with-bounds-checks, 
-             \without-bounds-checks, element-range-error,
+             \fake-without-bounds-checks => \without-bounds-checks, 
+             element-range-error,
 	     exit, on-exit, limited-collection-definer,
 	     limited-vector-class, element-type, %elem, %elem-setter,
 	     limited-sv-class, ssv-data, ssv-data-setter, lsv-data-type,
@@ -286,6 +287,7 @@ define module magic
     import: {%check-type,
              %element,
 	     %element-setter,
+             \without-bounds-checks,
 	     %instance?,
 	     %make-method,
 	     %make-next-method-cookie,

@@ -14,5 +14,5 @@ define module threads
     <read-write-lock>,
     <lock>, <simple-lock>, with-lock,
     <thread>, atomic-increment!, current-thread,
-    <notification>, wait-for ;
+    <notification>, wait-for, release-all;
 end module threads;

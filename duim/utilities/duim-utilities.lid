@@ -8,7 +8,6 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 Files:  library
 	module
-        fun-dev-compat
         native-stubs
         basic-macros
         basic-defs

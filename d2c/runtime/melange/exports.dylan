@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.9 2002/03/17 13:24:33 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.10 2002/11/01 21:40:58 andreas Exp $
 
 //======================================================================
 //
@@ -40,7 +40,7 @@ define module melange-support
                        c-expr, c-struct-field, c-struct-field-setter,
                        callback-method, callback-entry};
 
-  use magic;
+  use magic, exclude: {\without-bounds-checks };
 
   export
     c-variable-ref, c-variable-ref-setter,
