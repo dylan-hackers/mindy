@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.13 1995/04/26 05:56:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.14 1995/05/03 07:27:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -638,12 +638,12 @@ define method convert-top-level-form
       end;
       let temp = make-local-var(builder, #"supers", object-ctype());
       build-assignment(builder, policy, source, temp,
-		       make-operation(builder, as(<list>, supers-args)));
+		       make-unknown-call(builder, as(<list>, supers-args)));
       add!(args, temp);
     end;
     build-assignment(builder, policy, source,
 		     make-definition-leaf(builder, defn),
-		     make-operation(builder, as(<list>, args)));
+		     make-unknown-call(builder, as(<list>, args)));
   end;
 
     begin
@@ -719,12 +719,12 @@ define method convert-top-level-form
 				  slot.slot-getter.defn-name.name-symbol,
 				  object-ctype());
 	build-assignment(builder, policy, source, temp,
-			 make-operation(builder, as(<list>, slot-args)));
+			 make-unknown-call(builder, as(<list>, slot-args)));
 	add!(slots-args, temp);
       end;
       let temp = make-local-var(builder, #"slots", object-ctype());
       build-assignment(builder, policy, source, temp,
-		       make-operation(builder, as(<list>, slots-args)));
+		       make-unknown-call(builder, as(<list>, slots-args)));
       add!(args, temp);
     end;
   end;
