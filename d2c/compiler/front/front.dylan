@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.26 1995/05/04 04:37:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.27 1995/05/05 08:53:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -405,6 +405,10 @@ define class <fer-component> (<component>)
 
   // String that is some sort of name for the code in this component.
   slot name :: <byte-string>, init-value: "<unknown>";
+
+  // Table mapping <ct-value>s to <literal-constant>s.
+  slot constants :: <object-table>,
+    init-function: curry(make, <object-table>);
 
 end class;
 
