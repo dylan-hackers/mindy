@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.3 1994/03/31 10:19:05 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.4 1994/04/08 17:59:21 wlott Exp $
 *
 * This file does whatever.
 *
@@ -434,13 +434,14 @@ static void do_init_functions(struct thread *thread, obj_t init_functions)
 	set_c_continuation(thread, do_finish_inits);
 	invoke(thread, len+1);
     }
-
-    slot = HEAD(init_functions);
-    sp[-1] = init_functions;
-    thread->sp = sp+1;
-    sp[0] = SD(slot)->init_function_or_value;
-    set_c_continuation(thread, do_next_init);
-    invoke(thread, 0);
+    else {
+	slot = HEAD(init_functions);
+	sp[-1] = init_functions;
+	thread->sp = sp+1;
+	sp[0] = SD(slot)->init_function_or_value;
+	set_c_continuation(thread, do_next_init);
+	invoke(thread, 0);
+    }
 }
 
 static void do_next_init(struct thread *thread, obj_t *vals)
@@ -487,6 +488,7 @@ static void do_inits(obj_t inst_or_class, obj_t key_and_value_pairs,
     sp[-3] = inst_or_class;
     sp[-2] = key_and_value_pairs;
     do_init_functions(thread, init_functions);
+    go_on();
 }
 
 
