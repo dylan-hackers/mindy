@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.19 1996/03/15 16:30:19 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.20 1996/06/26 14:39:16 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1108,3 +1108,20 @@ define method \= (a :: <sequence>, b :: <sequence>) => answer :: <boolean>;
     #t;
   end block;
 end method \=;
+
+// Key-exists -- Exported
+//
+// If the given key is present in the collection, return #t and the value
+// associated with the key.  Otherwise, return #f and an undefined value.
+//
+// Can't use $not-supplied, because we're passing undefined as an
+// argument to element(), which itself probably uses $not-supplied..
+//
+define constant undefined = pair(#f, #f);
+
+define method key-exists? (coll :: <collection>, key :: <object>)
+ => (result :: <boolean>, value :: <object>);
+  let value = element(coll, key, default: undefined);
+  values(value ~= undefined, value);
+end method key-exists?;
+
