@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.33 1995/08/29 15:22:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.34 1995/10/05 01:11:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -92,6 +92,12 @@ define abstract class <abstract-method-definition> (<function-definition>)
   // The <method-parse> if we are to inline this method, #f otherwise.
   slot method-defn-inline-expansion :: false-or(<method-parse>),
     init-value: #f, init-keyword: inline-expansion:;
+  //
+  // The <function-literal> to clone when inlining this method, #f if we can't
+  // inline it, and #"not-computed-yet" if we haven't tried yet.
+  slot %method-defn-inline-function
+    :: union(<function-literal>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
 end;
 
 define method defn-type (defn :: <abstract-method-definition>)
