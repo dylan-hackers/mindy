@@ -8,15 +8,9 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library duim-utilities
-  //use functional-dylan;
-  // Gwydion compatibility 
-  use dylan;
   use common-dylan;
   use format;
-  use Table-Extensions;
-
-  use transcendental;	//transcendentals;
-  //use threads;
+  use collections;
 
   export duim-utilities;
   export duim-imports;

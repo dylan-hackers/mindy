@@ -27,9 +27,9 @@ define module duim-imports
   use simple-format, export: all; */
   use common-extensions, export: all, exclude: { position };
   use threads, export: all;
-  use transcendental, export: all;	//transcendentals
+  use transcendentals, export: all;
   use table-extensions, export: all;
-  //use plists, export: all;
+  use plists, export: all;
 end module duim-imports;
 
 define module duim-utilities
