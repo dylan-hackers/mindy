@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.107 1996/02/17 06:48:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.108 1996/02/17 20:39:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2153,7 +2153,8 @@ define method emit-assignment
   let function = call.self-tail-call-of;
   for (param = function.prologue.dependents.dependent.defines
 	 then param.definer-next,
-       closure-var = function.environment.closure-vars
+       closure-var
+	 = instance?(function, <lambda>) & function.environment.closure-vars
 	 then closure-var.closure-next,
        index from 0,
        while: closure-var & param)
