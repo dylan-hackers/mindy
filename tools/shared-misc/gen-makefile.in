@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.25 2001/04/20 18:28:20 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.26 2001/04/23 19:44:50 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -566,7 +566,7 @@ sub parse_dylan_header {
         # remember, in Perl "." is any character other than newline.
         # Also, Perl handles all newline hassles by turning win32
         # style CRLFs into LFs (\n's) before it shows us the string.
-
+	
         if ($target_name eq 'x86-cygnus-gcc') {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
@@ -620,6 +620,11 @@ sub parse_lid_file {
     # Just ignore em, since there should be a seperate C rule to clean, etc.
     while (<LIDFILE>) {
         $lidfile_line = $lidfile_line + 1;
+
+        if ($target_name eq 'x86-cygnus-gcc') {
+            $_ =~ s/\r//g;      # Get rid of bogus carriage returns
+        }
+
         if ($_ !~ m/.*$dot_obj$/ && $_ !~ m/.*$dot_static$/) {
             chop; # kill newline
             $contents{'files'} .= " $_";
