@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.10 2000/10/21 01:30:48 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.11 2000/12/12 22:21:13 igor Exp $
 
 //======================================================================
 //
@@ -399,7 +399,28 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   // "defined".
   //
   if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
-    parse-error(@0,"Function calls not allowed in constant expressions.");
+    let definition = element(%1.generator.cpp-table, %1.string-value,
+			  default: #f);
+    if (definition ~= #f)
+      if (instance?(definition.head, <token>))	
+	parse-error(@0,concatenate(%1.string-value, " isn't a parameterized macro."));
+      else
+	// XXX: We don't actually substitute here like we should, but
+	// it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
+	for (token in definition.tail)
+/*	  for (count from 0, param in definition.head)
+	    if (token.string-value = param.string-value)
+	      token := %3[count];
+	    end if;
+	  end for;
+*/
+	  unget-token(%1.generator, token);
+	end for;
+	cpp-parse(%1.generator);
+      end if;
+    else
+      parse-error(@0,"Function calls not allowed in constant expressions.");
+    end if;
   elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
     1;
   else
@@ -433,9 +454,10 @@ argument-expr-list (assignment-expr)
   %1;
 %
 
-;argument-expr-list (argument-expr-list <comma-token> assignment-expr)
-;  error("argument-expr-list not yet handled.");
-;%
+argument-expr-list (argument-expr-list <comma-token> assignment-expr)
+  %1;
+//  error("argument-expr-list not yet handled.");
+%
 
 unary-expr (postfix-expr)
   %1;
