@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.55 2001/07/23 02:38:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.56 2001/07/28 05:28:53 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -704,7 +704,7 @@ define method compile-1-tlf
 #if (mindy)
   force-output(*debug-output*);
 #else
-  let now :: <integer> = call-out("time", int:, int: 0);
+  let now :: <integer> = get-time-of-day();
   if (now ~= *last-time-flushed*)
     force-output(*debug-output*);
     *last-time-flushed* := now;
