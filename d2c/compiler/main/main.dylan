@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.58 1996/03/17 00:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.59 1996/03/20 19:14:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -83,9 +83,10 @@ add-make-dumper(#"unit-info", *compiler-dispatcher*, <unit-info>,
 
 // Compilation driver.
 
-define method file-tokenizer (lib :: <library>, name :: <byte-string>)
+define method file-tokenizer
+    (lib :: <library>, name :: <byte-string>, dir :: false-or(<byte-string>))
     => (tokenizer :: <tokenizer>, module :: <module>);
-  let source = make(<source-file>, name: name);
+  let source = make(<source-file>, name: name, directory: dir);
   let (header, start-line, start-posn) = parse-header(source);
   values(make(<lexer>,
 	      source: source,
@@ -98,7 +99,7 @@ end;
 
 
 define method test-lexer (file :: <byte-string>) => ();
-  let (tokenizer, module) = file-tokenizer($dylan-library, file);
+  let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
   block (return)
     *Current-Module* := module;
     while (#t)
@@ -136,8 +137,8 @@ end method set-library;
 define method test-parse
     (parser :: <function>, file :: <byte-string>,
      #key debug: debug? :: <boolean>)
-    => result;
-  let (tokenizer, module) = file-tokenizer($dylan-library, file);
+    => result :: <object>;
+  let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
   let orig-library = *current-library*;
   let orig-module = *current-module*;
   block ()
@@ -268,18 +269,21 @@ end method extract-directory;
 
 define method find-source-file
     (file :: <byte-string>, source-path :: <byte-string>)
-    => name :: <byte-string>;
-  local method try (name :: <byte-string>) => res :: false-or(<byte-string>);
-	  block ()
-	    close(make(<file-stream>, name: name));
-	    name;
-	  exception (<file-not-found>)
-	    #f;
-	  end block;
-	end method try;
-  try(file)
-    | try(concatenate(source-path, file))
-    | error("Can't find source file %=.", file);
+    => (name :: <byte-string>, dir :: false-or(<byte-string>));
+  block (return)
+    local
+      method try (name :: <byte-string>, dir :: false-or(<byte-string>)) => ();
+	block ()
+	  close(make(<file-stream>, name: name));
+	  return(name, dir);
+	exception (<file-not-found>)
+	  #f;
+	end block;
+      end method try;
+    try(file, #f);
+    try(concatenate(source-path, file), source-path);
+    error("Can't find source file %=.", file);
+  end block;
 end method find-source-file;
 
 
@@ -302,9 +306,9 @@ define method compile-library
   let source-path = extract-directory(lid-file);
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
-    let name = find-source-file(file, source-path);
+    let (name, dir) = find-source-file(file, source-path);
     log-dependency(name);
-    let (tokenizer, mod) = file-tokenizer(lib, name);
+    let (tokenizer, mod) = file-tokenizer(lib, file, dir);
     use-module(mod);
     block ()
       *Current-Library* := lib;
