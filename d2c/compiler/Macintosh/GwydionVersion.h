@@ -1,5 +1,5 @@
 // File: GwydionVersion.h
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/GwydionVersion.h,v 1.3 2002/04/03 23:09:54 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/GwydionVersion.h,v 1.4 2002/06/14 13:55:04 gabor Exp $
 // Purpose: list necessary #defines for .r (and .cpp)  files
 // Author: Gabor Greif <gabor@mac.com>
 
@@ -30,13 +30,13 @@
 //======================================================================
 
 
-#define DevelopmentState "b3"
+#define DevelopmentState "b3pre2"
 #define DevelopmentStage beta
 #define DevelopmentVersion 3
 
-#define CodebaseVersion "2.3.8"
+#define CodebaseVersion "2.3.9"
 #define CodebaseMajor 2
-#define CodebaseMinor 0x38
+#define CodebaseMinor 0x39
 
 #define CopyrightYears "2000-2002"
 
