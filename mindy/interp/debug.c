@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.44 1995/09/14 19:25:25 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.45 1996/01/16 20:49:23 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -640,7 +640,7 @@ static void should_be_no_args(obj_t args)
 static void quit_cmd(obj_t args)
 {
     should_be_no_args(args);
-    exit(0);
+    exit(1);
 }
 
 static void tron_cmd(obj_t args)
