@@ -11,13 +11,13 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.16 1994/04/12 21:49:49 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.17 1994/04/12 22:38:00 wlott Exp $
 //
 //  This file does whatever.
 //
 
 define library Dylan
-  export Dylan, Extensions, System;
+  export Dylan, Extensions, System, Threads;
 end Dylan;
 
 define module Builtin-Stuff
@@ -27,12 +27,12 @@ define module Builtin-Stuff
     <boolean>, <buffer>, <byte-string>,
     <character>, <class>, <collection>, <complex>,
     <double-float>,
-    <empty-list>, <explicit-key-collection>, <extended-float>,
+    <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
     <false>, <float>, <function>,
     <generic-function>,
     <integer>,
     <keyword>,
-    <list>,
+    <list>, <lock>,
     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
     <mutable-sequence>,
     <number>,
@@ -41,69 +41,94 @@ define module Builtin-Stuff
     <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
     <string>, <symbol>,
-    <true>, <type>,
+    <thread>, <true>, <type>,
     <unicode-string>,
     <vector>,
     <weak-pointer>,
     $permanent-hash-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
-    broken?,
+    broken?, broadcast-event,
     direct-subclasses, direct-superclasses,
     ceiling/, current-handler,
     do-next-method,
     element, element-setter, enable-error-system,
     floor/, format, function-arguments,
-    generic-function-methods, getc,
+    generic-function-methods, getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
-    limited, list, logand, logbit?, logior, lognot, logxor,
+    kill-thread,
+    limited, list, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, merge-hash-codes, method-specializers,
     negative,
     object, object-class, object-hash,
     pair, prin1, print, putc, puts,
-    remove-method, round/,
-    singleton, size, slot-initialized?, sorted-applicable-methods,
-    state-valid?, subtype?,
+    release-lock, remove-method, round/,
+    signal-event, singleton, size, slot-initialized?, spawn-thread,
+    sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate/,
     union, fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write,
-    values, vector;
+    values, vector,
+    wait-for-event;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
     forward-iteration-protocol, backward-iteration-protocol, negative?,
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
-    debugger-return;
+    debugger-return, debugger-eval;
 end Builtin-Stuff;
 
 define module Dylan
   use Builtin-Stuff,
-    exclude: (main, type-error, current-handler, handler-description,
-	      handler-function, handler-next, handler-test, handler-type,
-	      make-next-method-function, do-next-method, generic-apply,
-	      <boolean>, <true>, <false>,
-	      format, prin1, print, putc, puts, getc, invoke-debugger,
-	      debugger-flush, debugger-call, debugger-print,
-	      debugger-report-condition, debugger-abort,
-	      debugger-describe-restarts, debugger-restart, debugger-return,
-	      enable-error-system, apply-curry, state-valid?, <buffer>,
-	      fd-close, fd-error-string, fd-input-available?, fd-open,
-	      fd-read, fd-seek, fd-sync-output, fd-write,
-	      <weak-pointer>, broken?, object),
-    export: all;
-  use Builtin-Stuff,
-    import: (main, type-error, current-handler, handler-description,
-	     handler-function, handler-next, handler-test, handler-type,
-	     make-next-method-function, do-next-method, generic-apply,
-	     <boolean>, <true>, <false>,
-	     format, prin1, print, putc, puts, getc, invoke-debugger, 
-	     debugger-flush, debugger-call, debugger-print,
-	     debugger-report-condition, debugger-abort,
-	     debugger-describe-restarts, debugger-restart, debugger-return,
-	     enable-error-system, apply-curry, state-valid?);
+    import: all,
+    export: (\*, \+, \-, \/, \<, \<=, \=, \==, \~=,
+	     <array>,
+	     <byte-string>,
+	     <character>, <class>, <collection>, <complex>,
+	     <double-float>,
+	     <empty-list>, <explicit-key-collection>, <extended-float>,
+	     <float>, <function>,
+	     <generic-function>,
+	     <integer>,
+	     <keyword>,
+	     <list>,
+	     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
+	     <mutable-sequence>,
+	     <number>,
+	     <object>,
+	     <pair>,
+	     <ratio>, <rational>, <real>,
+	     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
+	     <string>, <symbol>,
+	     <type>,
+	     <unicode-string>,
+	     <vector>,
+	     $permanent-hash-state,
+	     add-method, all-superclasses, applicable-method?, apply,
+	     aref, aref-setter, as, ash,
+	     backward-iteration-protocol,
+	     direct-subclasses, direct-superclasses,
+	     ceiling/,
+	     do,
+	     element, element-setter, error,
+	     floor/, forward-iteration-protocol, function-arguments,
+	     generic-function-methods,
+	     head, head-setter,
+	     initialize, instance?,
+	     limited, list, logand, logbit?, logior, lognot, logxor,
+	     make, merge-hash-codes, method-specializers,
+	     negative, negative?,
+	     object-class, object-hash,
+	     pair,
+	     remove-method, round/,
+	     singleton, size, slot-initialized?, sorted-applicable-methods,
+	     subtype?,
+	     tail, tail-setter, truncate/,
+	     union,
+	     values, vector);
   export
     \>=, \>, \:=, \|, \&,
     <abort>,
@@ -162,3 +187,10 @@ define module System
     export: all;
 end System;
 
+define module Threads
+  use Dylan;
+  use Builtin-Stuff,
+    import: (<thread>, spawn-thread, kill-thread,
+	     <lock>, locked?, grab-lock, release-lock,
+	     <event>, wait-for-event, signal-event, broadcast-event);
+end;
