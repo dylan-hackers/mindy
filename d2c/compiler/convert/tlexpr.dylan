@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.1 1994/12/12 13:01:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.2 1994/12/16 11:53:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,7 +9,12 @@ define class <expression-tlf> (<top-level-form>)
 end;
 
 define method process-top-level-form (form :: <expression>) => ();
-  add!($Top-Level-Forms, make(<expression-tlf>, expression: form));
+  let expansion = expand(form, #f);
+  if (expansion)
+    do(process-top-level-form, expansion);
+  else
+    add!($Top-Level-Forms, make(<expression-tlf>, expression: form));
+  end;
 end;
 
 define method process-top-level-form (form :: <begin>) => ();
