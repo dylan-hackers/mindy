@@ -324,10 +324,12 @@ define method spew-object
 		unique-id:
 		  as(<ct-value>, object.unique-id | -1),
 		direct-superclasses:
-		  make(<literal-list>, contents: object.direct-superclasses,
+		  make(<literal-simple-object-vector>,
+		       contents: object.direct-superclasses,
 		       sharable: #t),
 		all-superclasses:
-		  make(<literal-list>, contents: object.precedence-list,
+		  make(<literal-simple-object-vector>,
+		       contents: object.precedence-list,
 		       sharable: #t),
 		closest-primary-superclass: object.closest-primary-superclass,
 		direct-subclasses:
