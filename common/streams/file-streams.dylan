@@ -57,7 +57,6 @@ define class <fd-stream> (<buffered-stream>)
 end class;
 
 define sealed domain make (singleton(<fd-stream>));
-define sealed domain initialize (<fd-stream>);
 
 define sealed method close (stream :: <fd-stream>, #all-keys) => ();
   if (stream.fd-direction == #"input")
@@ -390,7 +389,7 @@ define sealed domain make (singleton(<fd-file-stream>));
 define sealed method initialize
     (stream :: <fd-file-stream>, #next next-method, #rest rest-args,
      #key locator :: false-or(<byte-string>),
-          direction // :: one-of(#"input", #"output", #"input-output")
+          direction :: one-of(#"input", #"output", #"input-output")
             = #"input",
           if-exists :: one-of(#f, #"new-version", #"overwrite", #"replace",
 			      #"append", #"truncate", #"signal")
@@ -404,7 +403,6 @@ define sealed method initialize
             = select (element-type) 
 		(<byte>) => #f;
 		(<byte-character>) => #"ANSI";
-		(<unicode-character>) => #"big-endian";
 	      end,
           buffer-size :: <buffer-index> = $default-buffer-size)
     => result :: <fd-file-stream>;
@@ -428,7 +426,7 @@ define sealed method initialize
     end if;
     stream.file-name := locator;
     stream.file-direction := #"input";
-    apply(next-method, stream, fd: fd, direction: #"input", rest-args); 
+    next-method(stream, fd: fd, direction: #"input", size: buffer-size); 
   else
     // Make an #"output" or #"input-output" stream.
     let flags :: <integer> = fd-o_creat;
@@ -467,9 +465,13 @@ define sealed method initialize
     end;
     stream.file-name := locator;
     stream.file-direction := direction;
-    apply(next-method, stream, fd: fd,
-	  direction: if (direction == #"output") #"output" else #"input" end,
-	  rest-args); 
+    next-method(stream, fd: fd,
+		direction: if (direction == #"output")
+			     #"output" 
+			   else 
+			     #"input" 
+			   end,
+		size: buffer-size);
     register-output-stream(stream);
   end;
 end method;
