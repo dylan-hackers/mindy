@@ -9,7 +9,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library testworks
   use common-dylan;
-  use common-extensions;
+
   export testworks;
 end library testworks;
 
@@ -18,8 +18,8 @@ define module testworks
   use simple-io,
     import: { format-out };
   //use threads,
-  use functional-extensions,
-    import: { dynamic-bind, profiling };
+  use common-extensions,
+    import: { dynamic-bind };
 
   // Debugging options
   export *debug?*,
@@ -141,6 +141,6 @@ define module testworks
          do-check-condition,
          do-benchmark,
          record-test-unit-crash,
-         print-failure-reason,
-         \maybe-trap-errors;
+         \maybe-trap-errors,
+         print-failure-reason;
 end module testworks;
