@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.48 1995/05/24 19:30:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.49 1995/05/26 11:21:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1448,26 +1448,6 @@ define-primitive-emitter
        add!(results, pair(expr, $general-rep));
      end;
      deliver-results(defines, results, #f, output-info);
-   end);
-
-define-primitive-emitter
-  (#"vector",
-   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     let stream = output-info.output-info-guts-stream;
-     let stack-top = cluster-names(output-info.output-info-cur-stack-depth);
-     for (arg-dep = operation.depends-on then arg-dep.dependent-next,
-	  count from 0,
-	  while: arg-dep)
-       format(stream, "%s[%d] = %s;\n", stack-top, count,
-	      ref-leaf($general-rep, arg-dep.source-exp, output-info));
-     finally
-       let expr = format-to-string("make_rest_arg(%s, %s + %d)",
-				   stack-top, stack-top, count);
-       deliver-result(defines, expr, $heap-rep, #t, output-info);
-     end;
    end);
 
 define-primitive-emitter
