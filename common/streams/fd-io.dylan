@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.2 1996/05/01 14:40:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.3 1996/07/11 16:09:04 nkramer Exp $
 
 //======================================================================
 //
@@ -31,7 +31,11 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1
 //
 
 method () => ();
+#if (i386-win32)
+  c-include("errno.h");
+#else
   c-include("unistd.h");
+#endif
   c-include("fcntl.h");
   c-include("string.h");
 end();
@@ -137,9 +141,15 @@ end method;
 define inline method fd-open
     (name :: <byte-string>, flags :: <integer>)
  => (fd :: false-or(<integer>), errno :: false-or(<integer>));
+  let real-flags =
+#if (newlines-are-CRLF)
+     logior(flags, c-expr(int:, "O_BINARY"));
+#else
+     flags;
+#endif
   let res = call-out("open", int:,
 		     ptr: string->c-string(name),
-		     int: flags,
+		     int: real-flags,
 		     int: #o666);
   results(res, res);
 end method;
