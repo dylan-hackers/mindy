@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.4 2000/10/20 15:21:41 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.5 2002/08/01 15:42:58 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -50,8 +50,9 @@ define class <empty-list> (<list>)
 end;
 
 define sealed method make (class == <empty-list>, #key)
-    => res :: <never-returns>;
-  error("Can't make new instances of <empty-list>, #() is it.");
+    => res :: <empty-list>;
+//  error("Can't make new instances of <empty-list>, #() is it.");
+  #()
 end;
 
 define class <pair> (<list>)
