@@ -1,5 +1,5 @@
 module: init
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/init.dylan,v 1.1 1994/12/12 13:01:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/init.dylan,v 1.2 1995/01/10 16:25:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,6 +22,7 @@ begin
   table[#"%%method"] := <method-token>;
   table[#"%%module"] := <module-token>;
   table[#"%%mv-call"] := <mv-call-token>;
+  table[#"%%primitive"] := <primitive-token>;
   table[#"%%set"] := <set-token>;
   table[#"%%unwind-protect"] := <uwp-token>;
   table[#"%%use"] := <use-token>;
