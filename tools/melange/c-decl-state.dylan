@@ -253,6 +253,7 @@ define method process-type-list
 	      <unsigned-token> =>
 		select (type)
 		  unknown-type => unsigned-type;
+		  long-type => unsigned-long-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <unsigned-token>, got %=", type);
 		end select;
 	      <float-token> =>
