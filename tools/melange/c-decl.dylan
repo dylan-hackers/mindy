@@ -47,13 +47,15 @@ define module c-declarations
     // Basic type declarations
     <function-declaration>, <structured-type-declaration>,
     <struct-declaration>, <union-declaration>, <variable-declaration>,
-    <constant-declaration>, <typedef-declaration>, 
+    <constant-declaration>, <typedef-declaration>, <pointer-declaration>,
+    <vector-declaration>,
 
     // Preliminary "set declaration properties phase"
     ignored?-setter, find-result, find-parameter, find-slot,
     argument-direction-setter, constant-value-setter, getter-setter,
     setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
-    exclude-slots, equate, remap, rename, superclasses-setter,
+    exclude-slots, equate, remap, rename, superclasses-setter, pointer-equiv,
+    dylan-name,
 
     // "Import declarations phase" 
     declaration-closure, // also calls compute-closure
@@ -92,6 +94,8 @@ end module c-declarations;
 //         <enum-declaration>
 //       <pointer-declaration>
 //            operations include referent, pointer-to
+//       <vector-declaration>
+//            operations include length, pointer-equiv
 //       <function-type-declaration>
 //           operations include find-parameter, find-result
 //       <typedef-declaration> (uses <typed> mixin)
@@ -510,17 +514,21 @@ end method make-struct-type;
 define method find-slot
     (decl :: <structured-type-declaration>, name :: <string>) 
  => (result :: <declaration>);
-  any?(method (member) member.simple-name = name & member end method,
-       decl.members) | error("No such slot: %s", name);
+  decl.members
+    & any?(method (member) member.simple-name = name & member end method,
+	   decl.members)
+    | error("No such slot: %s", name);
 end method find-slot;
 
 define method exclude-slots
     (decl :: <structured-type-declaration>,
      imports :: <explicit-key-collection>, import-all? :: <boolean>)
  => ();
-  for (member in decl.members)
-    member.excluded? := ~element(imports, member, default: import-all?);
-  end for;
+  if (decl.members)
+    for (member in decl.members)
+      member.excluded? := ~element(imports, member, default: import-all?);
+    end for;
+  end if;
 end method exclude-slots;
 
 define method find-dylan-name
@@ -549,15 +557,21 @@ define method apply-container-options
      sealing :: <string>)
  => ();
   let sub-containers = list(decl.simple-name);
-  for (elem in decl.members)
-    find-dylan-name(elem, map-function, prefix, sub-containers, read-only,
-		    sealing);
-  end for;
+  if (decl.members)
+    for (elem in decl.members)
+      find-dylan-name(elem, map-function, prefix, sub-containers, read-only,
+		      sealing);
+    end for;
+  end if;
 end method apply-container-options;
 
 define method c-type-size (decl :: <union-declaration>) => size :: <integer>;
-  reduce(method (sz, member) max(sz, c-type-size(member.type)) end method,
-	 0, decl.members);
+  if (decl.members)
+    reduce(method (sz, member) max(sz, c-type-size(member.type)) end method,
+	   0, decl.members);
+  else
+    0;
+  end if;
 end method c-type-size;
 
 // Returns both the start and end of the memory occupied by the given slot,
