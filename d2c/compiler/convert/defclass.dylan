@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.39 2002/04/16 21:37:50 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.40 2002/04/16 22:54:33 gabor Exp $
 copyright: see below
 
 
@@ -1623,7 +1623,7 @@ define function find-override
   => override :: false-or(<override-info>);
   block (found)
     for (override in slot.slot-overrides)
-      if ((override.override-init-value,
+      if ((override.override-init-value
 	   | override.override-init-function)
 	  & csubtype?(cclass, override.override-introduced-by))
 	found(override);
