@@ -16,10 +16,11 @@ end library Random;
 define module Random
   use dylan;
   use extensions;
+  use system;
   use transcendental;
   use threads;
   export
-    random, <random-state>, random-bits,
+    random, <random-state>, random-bits, $random-bits-count,
     random-float, random-gaussian, random-exponential;
 end module Random;
 
@@ -48,15 +49,7 @@ define variable rand-seed :: <integer> = 0;  // Dummy value; assigned in make.
 define sealed class <random-state> (<object>)
   slot state-j :: <integer>, init-value: 24;
   slot state-k :: <integer>, init-value: 0;
-  slot state-seed :: <simple-object-vector>, 
-    init-function: method () 
-		     for (list-rands = #() then pair(rand1(), list-rands), 
-			  i from 0,
-			  until i > random-max)
-		     finally
-		       as(<vector>, list-rands);
-		     end for;
-		   end method;
+  slot state-seed :: <simple-object-vector>;
 end class <random-state>;
 
 define class <threadsafe-random-state> (<random-state>)
@@ -65,18 +58,28 @@ end class <threadsafe-random-state>;
 
 // Seed with the system clock
 //
-define method make (cls == <random-state>, #next next-method, #all-keys)
-  rand-seed := get-time-of-day();
+define method initialize (state :: <random-state>, #next next-method, 
+			  #key seed = #f)
   next-method();
-end method make;
+  let rand-seed = if (~seed)
+		    get-time-of-day();
+		  elseif (~ instance?(seed, <integer>))
+		    error("Seed must be an integer");
+		  else
+		    seed;
+		  end if;
+  local method rand1 () => random-number :: <integer>;
+	  rand-seed := modulo((rand-seed * random-const-a) + random-const-c,
+			      random-upper-bound + 1);
+	end method rand1;
+  for (list-rands = #() then pair(rand1(), list-rands), 
+       i from 0,
+       until i > random-max)
+  finally
+    state.state-seed := as(<vector>, list-rands);
+  end for;
+end method initialize;
 		     
-// Generates a random number from rand-seed.
-//
-define method rand1 () => random-number :: <integer>;
-  rand-seed := modulo((rand-seed * random-const-a) + random-const-c,
-		      random-upper-bound + 1);
-end method rand1;
-
 define variable *random-state* = make(<random-state>);
 
 define method shallow-copy (state :: <random-state>)
@@ -148,7 +151,7 @@ define method random (arg :: <integer>, #key state = *random-state*)
   end if;
 end method random;
 
-define constant $bits-returned-by-random-bits-function
+define constant $random-bits-count
   = random-chunk-length - random-integer-extra-bits;
 
 define method random-bits (#key state = *random-state*) 
@@ -164,7 +167,7 @@ define method random-float
   let max-value = as(<float>, arg);
   let random-num = as(<float>, random-bits(state: state));
   let random-bits-max-value
-    = as(<float>, ash(1, $bits-returned-by-random-bits-function - 1));
+    = as(<float>, ash(1, $random-bits-count - 1));
   (random-num / random-bits-max-value) * max-value;
 end method random-float;
 
@@ -190,13 +193,13 @@ end method random-float;
 // linear transformation to adjust to the real mean and sigma of the
 // desired distribution.
 // 
-define method random-gaussian (#key mean = 0, sigma = 1, 
+define method random-gaussian (#key mean = 0, standard-deviation = 1, 
 			       state = *random-state*)
  => random :: <float>;
   let unit-gaussian
     = sqrt(-2 * log(random-float(1.0, state: state))) 
-              * cos(2 * pi * random-float(1.0, state: state));
-   sigma * unit-gaussian + mean;
+              * cos(2 * $pi * random-float(1.0, state: state));
+   standard-deviation * unit-gaussian + mean;
 end method random-gaussian;
 
 // Exponential Distribution
