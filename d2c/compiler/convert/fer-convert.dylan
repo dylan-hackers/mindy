@@ -1,51 +1,150 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.6 1994/12/16 11:54:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.7 1994/12/16 14:31:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-define constant <var-or-vars> = union(<abstract-variable>, <list>);
+define constant <var-or-vars>
+  = union(<abstract-variable>, <list>);
+
+
+// Result stuff.
+
+define constant <result-designator>
+  = one-of(#"nothing", #"assignment", #"let", #"expr", #"leaf");
+
+define constant <result-datum>
+  = type-or(<var-or-vars>, <symbol>, <false>);
+
+define constant <result> = union(<false>, <fer-expression>);
+
+
+define generic deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			       source :: <source-location>, 
+			       want :: <result-designator>,
+			       datum :: <result-datum>,
+			       result :: <result>)
+    => res :: <result>;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"nothing",
+			      datum :: <result-datum>,
+			      result :: <result>)
+    => res :: <result>;
+  #f;
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"nothing",
+			      datum :: <result-datum>,
+			      result :: <operation>)
+    => res :: <result>;
+  build-assignment(builder, policy, source, #(), result);
+  #f;
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"assignment",
+			      datum :: <result-datum>,
+			      result :: <result>)
+    => res :: <result>;
+  build-assignment
+    (builder, policy, source, datum,
+     result | make-literal-constant(builder, make(<ct-literal>, value: #f)));
+
+  #f;
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"let",
+			      datum :: <result-datum>,
+			      result :: <result>)
+    => res :: <result>;
+  build-let
+    (builder, policy, source, datum,
+     result | make-literal-constant(builder, make(<ct-literal>, value: #f)));
+
+  #f;
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"expr",
+			      datum :: <result-datum>,
+			      result :: <result>)
+    => res :: <result>;
+  result | make-literal-constant(builder, make(<ct-literal>, value: #f));
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"leaf",
+			      datum :: <result-datum>,
+			      result :: <result>)
+    => res :: <result>;
+  result | make-literal-constant(builder, make(<ct-literal>, value: #f));
+end;
+
+define method deliver-result (builder :: <fer-builder>, policy :: <policy>,
+			      source :: <source-location>, 
+			      want == #"leaf",
+			      datum :: <result-datum>,
+			      result :: <operation>)
+    => res :: <result>;
+  let temp = make-local-var(builder, datum, object-ctype());
+  build-assignment(builder, policy, source, temp, result);
+  temp;
+end;
+
+
+
+// fer-convert
 
 define constant source = make(<source-location>);
 
 define generic fer-convert (builder :: <fer-builder>,
 			    form :: <constituent>,
 			    lexenv :: <lexenv>,
-			    target-vars :: <var-or-vars>)
-    => ();
+			    want :: <result-designator>,
+			    datum :: <result-datum>)
+    => res :: <result>;
 
 
 define method fer-convert-body (builder :: <fer-builder>,
 				body :: <simple-object-vector>,
 				lexenv :: <lexenv>,
-				target-vars :: <var-or-vars>)
-    => ();
+				want :: <result-designator>,
+				datum :: <result-datum>)
+    => res :: <result>;
   if (empty?(body))
-    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		     make-literal-constant(builder,
-					   make(<ct-literal>, value: #f)));
+    deliver-result(builder, lexenv.lexenv-policy, source, want, datum, #f);
   else
     for (i from 0 below body.size - 1)
-      fer-convert(builder, body[i], lexenv, #());
+      fer-convert(builder, body[i], lexenv, #"nothing", #f);
     end;
-    fer-convert(builder, body[body.size - 1], lexenv, target-vars);
+    fer-convert(builder, body[body.size - 1], lexenv, want, datum);
   end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <constituent>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let expansion = expand(form, lexenv);
   if (expansion)
-    fer-convert-body(builder, expansion, lexenv, target-vars);
+    fer-convert-body(builder, expansion, lexenv, want, datum);
   else
     error("Can't fer-convert %=", form);
   end;
 end;
 
-
 define method fer-convert (builder :: <fer-builder>, form :: <let>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let bindings = form.let-bindings;
   let paramlist = bindings.bindings-parameter-list;
   let params = paramlist.paramlist-required-vars;
@@ -69,7 +168,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 	      = make-local-var(builder, #"type", dylan-value(#"<type>"));
 	    fer-convert(builder, param.param-type,
 			make(<lexenv>, inside: lexenv),
-			type-local);
+			#"assignment", type-local);
 	    let type-temp
 	      = make-lexical-var(builder, #"type", source,
 				 dylan-value(#"<type>"));
@@ -90,12 +189,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   if (paramlist.paramlist-rest)
     let cluster = make-values-cluster(builder, #"temps", wild-ctype());
     fer-convert(builder, bindings.bindings-expression,
-		make(<lexenv>, inside: lexenv), cluster);
+		make(<lexenv>, inside: lexenv), #"assignment", cluster);
     canonicalize-results(builder, lexenv.lexenv-policy, source,
 			 cluster, temps, rest-temp);
   else
     fer-convert(builder, bindings.bindings-expression,
-		make(<lexenv>, inside: lexenv), temps);
+		make(<lexenv>, inside: lexenv), #"assignment", temps);
   end;
 
   // Copy the temps into real lexical vars and update the lexenv with em.
@@ -118,16 +217,15 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   end;
 
   // Supply #f as the result.
-  unless (target-vars == #())
-    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		     make-literal-constant(builder,
-					   make(<ct-literal>, value: #f)));
-  end;
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 make-literal-constant(builder,
+				       make(<ct-literal>, value: #f)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <local>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let specializer-lexenv = make(<lexenv>, inside: lexenv);
   let vars
     = map(method (meth)
@@ -142,19 +240,21 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
     build-let(builder, lexenv.lexenv-policy, source, var,
 	      build-general-method(builder, meth, specializer-lexenv, lexenv));
   end;
-  unless (target-vars == #())
-    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		     make-literal-constant(builder,
-					   make(<ct-literal>, value: #f)));
-  end;
+
+  // Supply #f as the result.
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 make-literal-constant(builder,
+				       make(<ct-literal>, value: #f)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <literal>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
-  build-assignment
-    (builder, lexenv.lexenv-policy, source, target-vars,
-     make-literal-constant(builder, make(<ct-literal>,value: form.lit-value)));
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 make-literal-constant(builder,
+				       make(<ct-literal>,
+					    value: form.lit-value)));
 end;
 
 define constant $arg-names
@@ -162,140 +262,141 @@ define constant $arg-names
 	#"arg8", #"arg9"];
 
 define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let expansion = expand(form, lexenv);
   if (expansion)
-    fer-convert-body(builder, expansion, lexenv, target-vars);
+    fer-convert-body(builder, expansion, lexenv, want, datum);
   else
-    let fun-temp = make-local-var(builder, #"function", function-ctype());
-    fer-convert(builder, form.funcall-function, make(<lexenv>, inside: lexenv),
-		fun-temp);
     let ops = make(<list>, size: form.funcall-arguments.size + 1);
-    ops.head := fun-temp;
+    ops.head := fer-convert(builder, form.funcall-function,
+			    make(<lexenv>, inside: lexenv),
+			    #"leaf", #"function");
     for (arg in form.funcall-arguments,
 	 op-ptr = ops.tail then op-ptr.tail,
 	 index from 0)
-      let temp = make-local-var(builder,
-				if (index < $arg-names.size)
-				  $arg-names[index];
-				else
-				  as(<symbol>,
-				     format-to-string("arg%d", index));
-				end,
-				object-ctype());
-      fer-convert(builder, arg, make(<lexenv>, inside: lexenv), temp);
-      op-ptr.head := temp;
+      let name = if (index < $arg-names.size)
+		   $arg-names[index];
+		 else
+		   as(<symbol>, format-to-string("arg%d", index));
+		 end;
+      op-ptr.head := fer-convert(builder, arg, make(<lexenv>, inside: lexenv),
+				 #"leaf", name);
     end;
-    build-assignment(builder, lexenv.lexenv-policy, source,
-		     target-vars, make-operation(builder, ops));
+    deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		   make-operation(builder, ops));
   end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <dot>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let expansion = expand(form, lexenv);
   if (expansion)
-    fer-convert-body(builder, expansion, lexenv, target-vars);
+    fer-convert-body(builder, expansion, lexenv, want, datum);
   else
-    let arg-temp = make-local-var(builder, #"argument", object-ctype());
-    fer-convert(builder, form.dot-operand, make(<lexenv>, inside: lexenv),
-		arg-temp);
-    let fun-temp = make-local-var(builder, #"function", function-ctype());
-    fer-convert(builder, make(<varref>, name: form.dot-name),
-		lexenv, fun-temp);
-    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		     make-operation(builder, list(fun-temp, arg-temp)));
+    let arg-leaf = fer-convert(builder, form.dot-operand,
+			       make(<lexenv>, inside: lexenv),
+			       #"leaf", #"argument");
+    let fun-leaf = fer-convert(builder, make(<varref>, name: form.dot-name),
+			       make(<lexenv>, inside: lexenv),
+			       #"leaf", #"function");
+    deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		   make-operation(builder, list(fun-leaf, arg-leaf)));
   end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <varref>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let name = form.varref-name;
   let binding = find-binding(lexenv, name);
-  build-assignment
-    (builder, lexenv.lexenv-policy, source, target-vars,
-     if (binding)
-       binding.binding-var;
-     else
-       let var = find-variable(name.token-module, name.token-symbol);
-       let defn = var & var.variable-definition;
-       if (defn)
-	 make-definition-leaf(builder, defn);
-       else
-	 make-error-operation(builder, "Undefined variable");
-       end;
-     end);
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 if (binding)
+		   binding.binding-var;
+		 else
+		   let var = find-variable(name.token-module,
+					   name.token-symbol);
+		   let defn = var & var.variable-definition;
+		   if (defn)
+		     make-definition-leaf(builder, defn);
+		   else
+		     make-error-operation(builder, "Undefined variable");
+		   end;
+		 end);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let expansion = expand(form, lexenv);
   if (expansion)
-    fer-convert-body(builder, expansion, lexenv, target-vars);
+    fer-convert-body(builder, expansion, lexenv, want, datum);
   else
     let place = form.assignment-place;
     unless (instance?(place, <varref>))
       error("Assignment to complex place didn't get expanded away?");
     end;
     let name = place.varref-name;
-    let temp = make-local-var(builder, #"temp", object-ctype());
-    fer-convert(builder, form.assignment-value, make(<lexenv>, inside: lexenv),
-		temp);
     let binding = find-binding(lexenv, name);
-    let (leaf, type-leaf)
-      = if (binding)
-	  values(binding.binding-var, binding.binding-type-var);
-	else
-	  let var = find-variable(name.token-module, name.token-symbol);
-	  let defn = var & var.variable-definition;
-	  if (~defn)
-	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, target-vars,
-	       make-error-operation(builder, "Undefined variable"));
-	    values(#f, #f);
-	  elseif (instance?(defn, <variable-definition>))
-	    let type-defn = defn.var-defn-type-defn;
-	    values(make-definition-leaf(builder, defn),
-		   type-defn & make-definition-leaf(builder, type-defn));
+    block (return)
+      let (leaf, type-leaf)
+	= if (binding)
+	    values(binding.binding-var, binding.binding-type-var);
 	  else
-	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, target-vars,
-	       make-error-operation(builder,
-				    "Can't assign constant module varaibles"));
-	    values(#f, #f);
+	    let var = find-variable(name.token-module, name.token-symbol);
+	    let defn = var & var.variable-definition;
+	    if (~defn)
+	      return(deliver-result
+		       (builder, lexenv.lexenv-policy, source, want, datum,
+			make-error-operation(builder, "Undefined variable")));
+	    elseif (instance?(defn, <variable-definition>))
+	      let type-defn = defn.var-defn-type-defn;
+	      values(make-definition-leaf(builder, defn),
+		     type-defn & make-definition-leaf(builder, type-defn));
+	    else
+	      return(deliver-result
+		       (builder, lexenv.lexenv-policy, source, want, datum,
+			make-error-operation
+			  (builder,
+			   "Can't assign constant module varaibles")));
+	    end;
 	  end;
-	end;
-    if (leaf)
+      let temp = fer-convert(builder, form.assignment-value,
+			     make(<lexenv>, inside: lexenv),
+			     #"leaf", #"temp");
       if (type-leaf)
 	let checked = make-local-var(builder, #"checked", object-ctype());
 	build-assignment(builder, lexenv.lexenv-policy, source, checked,
 			 make-check-type-operation(builder, temp, type-leaf));
 	build-assignment(builder, lexenv.lexenv-policy, source, leaf, checked);
-	build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-			 checked);
+	deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		       checked);
       else
 	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
-	build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-			 temp);
+	deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		       temp);
       end;
     end;
   end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <begin>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   fer-convert-body(builder, form.begin-body, make(<lexenv>, inside: lexenv),
-		   target-vars);
+		   want, datum);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
   let blk = build-block-body(builder, lexenv.lexenv-policy, source);
   let lexenv = make(<lexenv>, inside: lexenv);
   let name = form.exit-name;
@@ -304,48 +405,63 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   add-binding(lexenv, name, exit);
   build-let(builder, lexenv.lexenv-policy, source, exit,
 	    make-exit-function(builder, blk));
-  fer-convert-body(builder, form.exit-body, lexenv, target-vars);
+  fer-convert-body(builder, form.exit-body, lexenv, want, datum);
   end-body(builder);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <if>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
-  let temp = make-local-var(builder, #"condition", object-ctype());
-  fer-convert(builder, form.if-condition, make(<lexenv>, inside: lexenv),
-	      temp);
-  build-if-body(builder, lexenv.lexenv-policy, source, temp);
+			   lexenv :: <lexenv>,
+			   want :: one-of(#"leaf", #"expr"),
+			   datum :: <result-datum>)
+    => res :: <result>;
+  let leaf = make-local-var(builder, datum, object-ctype());
+  fer-convert(builder, form, lexenv, #"assignment", leaf);
+  leaf;
+end;
+
+define method fer-convert (builder :: <fer-builder>, form :: <if>,
+			   lexenv :: <lexenv>,
+			   want :: one-of(#"nothing", #"assignment"),
+			   datum :: <result-datum>)
+    => res :: <result>;
+  build-if-body(builder, lexenv.lexenv-policy, source,
+		fer-convert(builder, form.if-condition,
+			    make(<lexenv>, inside: lexenv),
+			    #"leaf", #"condition"));
   fer-convert-body(builder, form.if-consequent, make(<lexenv>, inside: lexenv),
-		   target-vars);
+		   want, datum);
   build-else(builder, lexenv.lexenv-policy, source);
   fer-convert-body(builder, form.if-alternate, make(<lexenv>, inside: lexenv),
-		   target-vars);
+		   want, datum);
   end-body(builder);
+  #f;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <method-ref>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
-  build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		   build-general-method(builder, form.method-ref-method,
-					lexenv, lexenv));
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 build-general-method(builder, form.method-ref-method,
+				      lexenv, lexenv));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
-			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
-    => ();
-  let ops = make(<list>, size: form.mv-call-operands.size);
-  for (op in form.mv-call-operands,
-       op-ptr = ops then op-ptr.tail,
-       type = function-ctype() then object-ctype(),
-       name = #"function" then #"mv-operand",
-       index from 0)
-    let temp = make-local-var(builder, name, type);
-    fer-convert(builder, op, make(<lexenv>, inside: lexenv), temp);
-    op-ptr.head := temp;
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  let operands = form.mv-call-operands;
+  unless (operands.size == 2)
+    error("%%mv-call with other than two operands?");
   end;
-  build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		   make-mv-operation(builder, ops));
+  let function
+    = fer-convert(builder, operands[0], make(<lexenv>, inside: lexenv),
+		  #"leaf", #"function");
+  let argument
+    = fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
+		  #"leaf", #"argument");
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 make-mv-operation(builder, list(function, argument)));
 end;
 
 // ### <uwp>?
@@ -369,7 +485,7 @@ define method build-general-method
 	  let temp = make-local-var(builder, #"type", dylan-value(#"<type>"));
 	  fer-convert(builder, param.param-type,
 		      make(<lexenv>, inside: specializer-lexenv),
-		      temp);
+		      #"assignment", temp);
 	  let var = make-lexical-var(builder, #"type", source,
 				     dylan-value(#"<type>"));
 	  build-let(builder, specializer-lexenv.lexenv-policy, source,
@@ -394,8 +510,7 @@ define method build-general-method
     if (type-var)
       non-const-arg-types? := #t;
       add!(specializers, type-var);
-      //let temp = make-lexical-var(builder, name.token-symbol, source, type);
-      let temp = var;
+      let temp = make-lexical-var(builder, name.token-symbol, source, type);
       add!(fixed-vars, temp);
       let op = make-check-type-operation(arg-check-builder, temp, type-var);
       build-assignment(arg-check-builder, specializer-lexenv.lexenv-policy,
@@ -455,7 +570,7 @@ define method build-general-method
 	    build-if-body(builder, lexenv.lexenv-policy, source, temp);
 	    fer-convert(builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
-			var);
+			#"assignment", var);
 	    build-else(builder, lexenv.lexenv-policy, source);
 	    build-assignment(builder, lexenv.lexenv-policy, source, var,
 			     pre-default);
@@ -518,7 +633,8 @@ define method build-general-method
   if (non-const-arg-types?)
     build-region(builder, builder-result(arg-check-builder));
   end;
-  fer-convert-body(builder, meth.method-body, lexenv, results-temp | results);
+  fer-convert-body(builder, meth.method-body, lexenv,
+		   #"assignment", results-temp | results);
 
   if (results-temp)
     canonicalize-results(builder, lexenv.lexenv-policy, source, results-temp,
@@ -823,7 +939,8 @@ define generic canonicalize-results (builder :: <fer-builder>,
 				     source :: <source-location>,
 				     results :: <abstract-variable>,
 				     fixed-results :: <list>,
-				     rest-result :: union(<abstract-variable>, <false>))
+				     rest-result :: union(<abstract-variable>,
+							  <false>))
     => ();
 
 
