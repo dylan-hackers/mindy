@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.27 2000/05/25 16:51:40 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.28 2000/06/07 09:26:46 robmyers Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -249,6 +249,7 @@ platform-name:				darwin
 inherit-from:				generic-unix
 default-features:			compiled-for-darwin
 make-command:                   	gnumake
+randomize-library-command:              ranlib -c %s
 
 
 // Build-environment properties:
@@ -394,7 +395,7 @@ assembler-command:		cc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-executable-command:        $(LIBTOOL) cc -o %s %s %s
 link-shared-executable-command: $(LIBTOOL) cc -o %s %s %s
-link-executable-flags:          -lm
+link-executable-flags:          
 path-separator:        		/
 
 
