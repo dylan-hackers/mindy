@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.42 1995/12/07 00:21:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.43 1995/12/09 00:11:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -687,7 +687,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 
   // Finalize the slots.
   for (slot in defn.class-defn-slots)
-    finalize-slot(slot, cclass, class-type);
+    finalize-slot(slot, cclass, class-type, tlf);
   end;
 
   // Finalize the overrides.
@@ -712,7 +712,9 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 end;
 
 define method finalize-slot
-    (slot :: <slot-defn>, cclass :: <cclass>, class-type :: <ctype>) => ();
+    (slot :: <slot-defn>, cclass :: <cclass>, class-type :: <ctype>,
+     tlf :: <define-class-tlf>)
+    => ();
   //
   // Compute the type of the slot.
   let slot-type
@@ -776,7 +778,7 @@ define method finalize-slot
     end;
     if (slot.slot-defn-sealed?)
       if (gf)
-	add-seal(gf, specializers);
+	add-seal(gf, specializers, tlf);
       else
 	compiler-error
 	  ("%s doesn't name a generic function, so can't be sealed.",
@@ -799,7 +801,7 @@ define method finalize-slot
 	   end;
 	   if (slot.slot-defn-sealed?)
 	     if (gf)
-	       add-seal(gf, pair(object-ctype(), specializers));
+	       add-seal(gf, pair(object-ctype(), specializers), tlf);
 	     else
 	       compiler-error
 		 ("%s doesn't name a generic function, so can't be sealed.",
