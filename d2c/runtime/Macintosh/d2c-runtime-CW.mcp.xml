@@ -2569,7 +2569,7 @@
             <FILELIST>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>garbage-collection-exports.dyl</PATH>
+                    <PATH>garbage-collection-exports.dylan</PATH>
                     <PATHFORMAT>MacOS</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
                     <FILEFLAGS></FILEFLAGS>
@@ -2592,7 +2592,7 @@
             <LINKORDER>
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>garbage-collection-exports.dyl</PATH>
+                    <PATH>garbage-collection-exports.dylan</PATH>
                     <PATHFORMAT>MacOS</PATHFORMAT>
                 </FILEREF>
                 <FILEREF>
@@ -7796,7 +7796,7 @@
 
                 <!-- Settings for "Access Paths" panel -->
                 <SETTING><NAME>AlwaysSearchUserPaths</NAME><VALUE>false</VALUE></SETTING>
-                <SETTING><NAME>InterpretDOSAndUnixPaths</NAME><VALUE>true</VALUE></SETTING>
+                <SETTING><NAME>InterpretDOSAndUnixPaths</NAME><VALUE>false</VALUE></SETTING>
                 <SETTING><NAME>UserSearchPaths</NAME>
                     <SETTING>
                         <SETTING><NAME>SearchPath</NAME>
@@ -7841,6 +7841,15 @@
                             <SETTING><NAME>Path</NAME><VALUE>:d2c-runtime-CW Data:</VALUE></SETTING>
                             <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
                             <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
+                        </SETTING>
+                        <SETTING><NAME>Recursive</NAME><VALUE>true</VALUE></SETTING>
+                        <SETTING><NAME>HostFlags</NAME><VALUE>All</VALUE></SETTING>
+                    </SETTING>
+                    <SETTING>
+                        <SETTING><NAME>SearchPath</NAME>
+                            <SETTING><NAME>Path</NAME><VALUE>MSL</VALUE></SETTING>
+                            <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
+                            <SETTING><NAME>PathRoot</NAME><VALUE>CodeWarrior</VALUE></SETTING>
                         </SETTING>
                         <SETTING><NAME>Recursive</NAME><VALUE>true</VALUE></SETTING>
                         <SETTING><NAME>HostFlags</NAME><VALUE>All</VALUE></SETTING>
@@ -13789,10 +13798,13 @@
             </LINKORDER>
             <SUBTARGETLIST>
                 <SUBTARGET>
-                    <TARGETNAME>melange</TARGETNAME>
+                    <TARGETNAME>transcendental</TARGETNAME>
                 </SUBTARGET>
                 <SUBTARGET>
-                    <TARGETNAME>transcendental</TARGETNAME>
+                    <TARGETNAME>table-ext</TARGETNAME>
+                </SUBTARGET>
+                <SUBTARGET>
+                    <TARGETNAME>format-out</TARGETNAME>
                 </SUBTARGET>
             </SUBTARGETLIST>
         </TARGET>
@@ -13836,6 +13848,15 @@
                     </SETTING>
                 </SETTING>
                 <SETTING><NAME>SystemSearchPaths</NAME>
+                    <SETTING>
+                        <SETTING><NAME>SearchPath</NAME>
+                            <SETTING><NAME>Path</NAME><VALUE>MSL</VALUE></SETTING>
+                            <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
+                            <SETTING><NAME>PathRoot</NAME><VALUE>CodeWarrior</VALUE></SETTING>
+                        </SETTING>
+                        <SETTING><NAME>Recursive</NAME><VALUE>true</VALUE></SETTING>
+                        <SETTING><NAME>HostFlags</NAME><VALUE>All</VALUE></SETTING>
+                    </SETTING>
                     <SETTING>
                         <SETTING><NAME>SearchPath</NAME>
                             <SETTING><NAME>Path</NAME><VALUE>:</VALUE></SETTING>
@@ -16751,7 +16772,7 @@
             <FILEREF>
                 <TARGETNAME>garbage-collection</TARGETNAME>
                 <PATHTYPE>Name</PATHTYPE>
-                <PATH>garbage-collection-exports.dyl</PATH>
+                <PATH>garbage-collection-exports.dylan</PATH>
                 <PATHFORMAT>MacOS</PATHFORMAT>
             </FILEREF>
             <FILEREF>
