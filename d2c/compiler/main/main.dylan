@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.77 1996/07/12 02:10:13 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.78 1996/07/12 14:38:46 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -701,10 +701,10 @@ define method compile-library
 
     format(makefile, "\nclean :\n");
     format(makefile, "\t%s %s\n", target.delete-file-command, 
-	   clean-stream.string-output-stream-string);
+	   clean-stream.stream-contents);
     format(makefile, "\nrealclean :\n");
     format(makefile, "\t%s %s\n", target.delete-file-command, 
-	   real-clean-stream.string-output-stream-string);
+	   real-clean-stream.stream-contents);
     close(makefile);
     if (pick-which-file(makefile-name, temp-makefile-name, target) = #t)
       // If the new makefile is different from the old one, then we need
