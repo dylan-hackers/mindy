@@ -2,7 +2,7 @@ module: random-test
 author: David Watson, Nick Kramer
 synopsis: Test for the random library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/random-test.dylan,v 1.2 1996/07/19 09:47:48 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/random-test.dylan,v 1.3 1996/08/07 14:56:05 dwatson Exp $
 
 //======================================================================
 //
@@ -28,18 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/random-test.dylan,v 1.2 
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library random-test
-  use Dylan;
-  use Random;
-end library random-test;
-
-define module random-test
-  use Dylan;
-  use Extensions;
-  use Random;
-  use Cheap-io;
-end module random-test;
 
 define variable has-errors = #f;
 
@@ -72,12 +60,14 @@ end method run-test;
 define method random-test () => ();
   let random-1 :: <integer> = random(20);
   let random-2 :: <integer> = random-bits();
+#if (mindy)
   let random-3 :: <float> = random-float(30);
   let random-4 :: <float> = random-gaussian();
   let random-5 :: <float> = random-exponential();
+#endif
 end method random-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the random library.\n\n");
   run-several-tests("random", random-test);
   if (has-errors)
@@ -86,13 +76,3 @@ define method main (argv0 :: <byte-string>, #rest ignored)
     format("All random tests pass.\n");
   end if;
 end method main;
-
-
-
-
-
-
-
-
-
-

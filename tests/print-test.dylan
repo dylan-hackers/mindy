@@ -2,7 +2,7 @@ module: print-test
 author: David Watson, Nick Kramer
 synopsis: Test for the print library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.1 1996/07/18 11:00:11 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.2 1996/08/07 14:53:39 dwatson Exp $
 
 //======================================================================
 //
@@ -28,18 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.1 1
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library print-test
-  use Dylan;
-  use Print;
-end library print-test;
-
-define module print-test
-  use Dylan;
-  use Extensions;
-  use Print;
-  use Cheap-io, exclude: {print};
-end module print-test;
 
 define variable has-errors = #f;
 
@@ -78,13 +66,23 @@ define method print-test () => ();
   run-test(print-to-string(eint), "#e-1", "extended-integer");
 	   
   let sequence-1 = make(<stretchy-vector>);
+#if (mindy)
   run-test(print-to-string(sequence-1), "{<simple-stretchy-vector>: }",
 	   "empty sequence");
+#else
+  run-test(print-to-string(sequence-1), "{<stretchy-object-vector>: }",
+	   "empty sequence");
+#endif
 
   let sequence-2 = make(<stretchy-vector>, size: 5);
   sequence-2[3] := 3;
+#if (mindy)
   run-test(print-to-string(sequence-2),
 	   "{<simple-stretchy-vector>: #f, #f, #f, 3, #f}", "sequence");
+#else
+  run-test(print-to-string(sequence-2),
+	   "{<stretchy-object-vector>: #f, #f, #f, 3, #f}", "sequence");
+#endif
 
   let sequence-3 = #[4, 5, 6, 2];
   run-test(print-to-string(sequence-3), "#[4, 5, 6, 2]", "vector");
@@ -92,7 +90,11 @@ define method print-test () => ();
   let deque-1 = make(<deque>);
   push(deque-1, 4);
   push(deque-1, 5);
+#if (mindy)
   run-test(print-to-string(deque-1), "{<deque>: 5, 4}", "deque");
+#else
+  run-test(print-to-string(deque-1), "{<simple-object-deque>: 5, 4}", "deque");
+#endif
 
   let table-1 = make(<table>);
   table-1[5] := 42;
@@ -117,7 +119,7 @@ define method print-test () => ();
   run-test(print-to-string(array-1), "{<array>: {{0, 1}, {2, 3}}}", "array");
 end method print-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the print library.\n\n");
   run-several-tests("print", print-test);
   if (has-errors)

@@ -2,7 +2,7 @@ module: format-out-test
 author: David Watson, Nick Kramer
 synopsis: Test for the format-out library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-out-test.dylan,v 1.2 1996/07/30 19:37:50 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-out-test.dylan,v 1.3 1996/08/07 14:49:31 dwatson Exp $
 
 //======================================================================
 //
@@ -29,23 +29,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-out-test.dylan,v 
 //
 //======================================================================
 
-define library format-out-test
-  use Dylan;
-  use Standard-io;
-  use Format-out;
-  use streams;
-end library format-out-test;
-
-define module format-out-test
-  use Dylan;
-  use Extensions;
-  use Format-out;
-  use streams;
-  use Standard-io;
-  use Format;
-end module format-out-test;
-
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format(*standard-output*, "\nRegression test for the streams library.\n\n");
   format-out("All Format-out tests pass.\n");
   force-output(*standard-output*);
