@@ -1,5 +1,5 @@
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.3 1996/08/10 20:19:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.4 1996/08/14 15:52:45 dwatson Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -65,3 +65,7 @@ define method no-core-dumps () => ();
     call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
   #endif
 end method no-core-dumps;
+
+define inline method get-time-of-day () => res :: <integer>;
+  call-out("time", int:, int: 0);
+end;
