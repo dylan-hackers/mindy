@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.16 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.17 1996/07/12 02:16:13 bfw Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -441,7 +441,9 @@ define method optimize-generic
 	  end if;
 	end if;
 	
-	// Change to an unknown call of the most specific method.
+      // Change to an unknown call of the most specific method if we know
+      // what that method is.
+      if (ordered)
 	let builder = make-builder(component);
 	let assign = call.dependents.dependent;
 	let policy = assign.policy;
@@ -455,6 +457,7 @@ define method optimize-generic
 	       (builder, new-func, next-leaf,
 		listify-dependencies(call.depends-on.dependent-next)));
 	replace-expression(component, call.dependents, new-call);
+      end if;
     end select;
   end block;
 end method optimize-generic;
