@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.2 1994/12/12 21:20:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.3 1994/12/13 13:28:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -87,7 +87,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 
   // Evaluate the expression, getting the results in the temps
   if (paramlist.paramlist-rest)
-    let cluster = make-values-cluster(builder);
+    let cluster = make-values-cluster(builder, #"temps", wild-ctype());
     fer-convert(builder, bindings.bindings-expression,
 		make(<lexenv>, inside: lexenv), cluster);
     canonicalize-results(builder, lexenv.lexenv-policy, source,
@@ -115,10 +115,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   end;
 
   // Supply #f as the result.
-  build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		   make-literal-constant(builder,
-					 make(<ct-literal>, value: #f)));
-
+  unless (target-vars == #())
+    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
+		     make-literal-constant(builder,
+					   make(<ct-literal>, value: #f)));
+  end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <local>,
@@ -138,9 +139,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	      build-general-method(builder, meth.method-ref-method,
 				   specializer-lexenv, lexenv));
   end;
-  build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		   make-literal-constant(builder,
-					 make(<ct-literal>, value: #f)));
+  unless (target-vars == #())
+    build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
+		     make-literal-constant(builder,
+					   make(<ct-literal>, value: #f)));
+  end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <literal>,
@@ -152,9 +155,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <literal>,
 end;
 
 define constant $arg-names
-  = #[#"argument-0", #"argument-1", #"argument-2", #"argument-3",
-	#"argument-4", #"argument-5", #"argument-6", #"argument-7",
-	#"argument-8", #"argument-9"];
+  = #[#"arg0", #"arg1", #"arg2", #"arg3", #"arg4", #"arg5", #"arg6", #"arg7",
+	#"arg8", #"arg9"];
 
 define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
@@ -176,7 +178,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
 				  $arg-names[index];
 				else
 				  as(<symbol>,
-				     format-to-string("argument-%d", index));
+				     format-to-string("arg%d", index));
 				end,
 				object-ctype());
       fer-convert(builder, arg, make(<lexenv>, inside: lexenv), temp);
@@ -237,7 +239,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
       error("Assignment to complex place didn't get expanded away?");
     end;
     let name = place.varref-name;
-    let temp = make-local-var(builder, "temp", object-ctype());
+    let temp = make-local-var(builder, #"temp", object-ctype());
     fer-convert(builder, form.assignment-value, make(<lexenv>, inside: lexenv),
 		temp);
     let binding = find-binding(lexenv, name);
@@ -266,12 +268,17 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 	end;
     if (leaf)
       if (type-leaf)
-	build-assignment(builder, lexenv.lexenv-policy, source, temp,
+	let checked = make-local-var(builder, #"checked", object-ctype());
+	build-assignment(builder, lexenv.lexenv-policy, source, checked,
 			 make-check-type-operation(builder, temp, type-leaf));
+	build-assignment(builder, lexenv.lexenv-policy, source, leaf, checked);
+	build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
+			 checked);
+      else
+	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
+	build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
+			 temp);
       end;
-      build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
-      build-assignment(builder, lexenv.lexenv-policy, source, target-vars,
-		       temp);
     end;
   end;
 end;
@@ -293,20 +300,20 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   add-binding(lexenv, name, exit);
   build-let(builder, lexenv.lexenv-policy, source, exit,
 	    make-exit-function(builder, blk));
-  fer-convert-body(builder, form.exit-body, source, lexenv, target-vars);
+  fer-convert-body(builder, form.exit-body, lexenv, target-vars);
   end-body(builder);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <if>,
 			   lexenv :: <lexenv>, target-vars :: <var-or-vars>)
     => ();
-  let temp = make-local-var(builder, "condition", object-ctype());
+  let temp = make-local-var(builder, #"condition", object-ctype());
   fer-convert(builder, form.if-condition, make(<lexenv>, inside: lexenv),
 	      temp);
   build-if-body(builder, lexenv.lexenv-policy, source, temp);
   fer-convert-body(builder, form.if-consequent, make(<lexenv>, inside: lexenv),
 		   target-vars);
-  build-else(builder, source);
+  build-else(builder, lexenv.lexenv-policy, source);
   fer-convert-body(builder, form.if-alternate, make(<lexenv>, inside: lexenv),
 		   target-vars);
   end-body(builder);
@@ -472,13 +479,15 @@ define method build-general-method
 
   let (results, results-temp)
     = if (non-const-result-types?)
-	values(make-values-cluster(builder), make-values-cluster(builder));
+	values(make-values-cluster(builder, #"results", wild-ctype()),
+	       make-values-cluster(builder, #"temps", wild-ctype()));
       elseif (~rest-result)
 	values(as(<list>, fixed-results), #f);
       elseif (empty?(fixed-results))
-	values(make-values-cluster(builder), #f);
+	values(make-values-cluster(builder, #"results", wild-ctype()), #f);
       else
-	values(make-values-cluster(builder), make-values-cluster(builder));
+	values(make-values-cluster(builder, #"results", wild-ctype()),
+	       make-values-cluster(builder, #"temps", wild-ctype()));
       end;
   let method-literal
     = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
@@ -591,7 +600,8 @@ define method build-hairy-method-body
      keywords :: <false>,
      result-vars :: <var-or-vars>)
     => res :: <leaf>;
-  build-method-body(builder, policy, source, fixed-vars, result-vars);
+  build-method-body(builder, policy, source, as(<list>, fixed-vars),
+		    result-vars);
 end;
 
 /*
@@ -688,7 +698,7 @@ define method build-hairy-method-more-arg-entry (leaf)
 			     next-var, context, count);
     end;
   end;
-  let cluster = make-values-cluster(builder);
+  let cluster = make-values-cluster(builder, #"results", wild-ctype());
   let method-leaf = build-method-body(builder, policy, source,
 				      as(<list>, vars), cluster);
   build-region(builder, builder-result(body-builder));
@@ -761,7 +771,7 @@ define method build-hairy-method-general-entry (leaf)
     add!(args, context);
     add!(args, count);
   end;
-  let cluster = make-values-cluster(builder);
+  let cluster = make-values-cluster(builder, #"results", wild-ctype());
   let method-leaf = build-method-body(builder, policy, source,
 				      list(context-var, count-var),
 				      cluster);
@@ -821,7 +831,7 @@ define method canonicalize-results (builder :: <fer-builder>,
 	  fixed-results);
   let rest-var = make-lexical-var(builder, source, object-ctype());
   add!(ops, rest-var);
-  let cluster = make-values-cluster(builder);
+  let cluster = make-values-cluster(builder, #"temps", wild-ctype());
   let method-leaf
     = build-hairy-method-body(builder, policy, source, fixed-vars, #f,
 			      rest-var, #f, cluster);
@@ -837,13 +847,14 @@ end;
 // Random utilities.
 
 define method dylan-defn-leaf (builder :: <fer-builder>, name :: <symbol>)
+    => res :: <leaf>;
   make-definition-leaf(builder, dylan-defn(name))
     | error("%s undefined?", name);
 end;
 
 define method make-check-type-operation (builder :: <fer-builder>,
 					 value-leaf :: <leaf>,
-					 type-leaf :: <list>)
+					 type-leaf :: <leaf>)
     => res :: <operation>;
   make-operation(builder,
 		 list(dylan-defn-leaf(builder, #"check-type"),
