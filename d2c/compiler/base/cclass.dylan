@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.24 2003/06/10 06:16:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.25 2003/07/07 16:48:03 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1045,7 +1045,7 @@ define method inherit-overrides ()
 	  end;
 	end;
 	compiler-fatal-error
-	  ("Class %s can't override slot %s, because is doesn't "
+	  ("Class %s can't override slot %s, because it doesn't "
 	     "have that slot.",
 	   cclass, override.override-getter.variable-name);
       end;
