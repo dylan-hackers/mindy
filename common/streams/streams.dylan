@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.2 1999/02/24 16:57:34 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.3 1999/04/17 17:43:57 andreas Exp $
 
 //======================================================================
 //
@@ -117,18 +117,21 @@ define class <simple-sequence-stream> (<sequence-stream>)
   slot position :: <integer> = 0;
 end class;
 
+// Older versions of d2c don't support the keyword clause. So in oder to support
+// bootstrapping with them, we override the make method instead.
+// XXX one day we want to get rid of that.
+
 /// <byte-string-stream> -- Exported.
 ///
 define class <byte-string-stream> (<simple-sequence-stream>, <string-stream>)
-  keyword contents:, type: <byte-string>, init-value: make(<byte-string>);
+  // keyword contents: = make(<byte-string-stream>), type: <byte-string>;
 end class;
 
 /// <unicode-string-stream> -- Exported.
 ///
 define class <unicode-string-stream> 
     (<simple-sequence-stream>, <string-stream>)
-  keyword contents:, type: <unicode-string>,
-    init-value: make(<unicode-string>);
+//  keyword contents: = make(<unicode-string>), type: <unicode-string>;
 end class;
 
 
@@ -271,6 +274,35 @@ define sealed method initialize
   stream.stream-end := stop;
   stream.position := start;
 end method initialize;
+
+define sealed method make
+    (stream == <byte-string-stream>,
+     #next next-method,
+     #rest all-parameters,
+     #key contents :: type-union(singleton($not-supplied), <byte-string>) = $not-supplied, 
+     #all-keys)
+ => (result :: <byte-string-stream>)
+  if(contents == $not-supplied)
+    apply(next-method, stream, contents:, make(<byte-string>), all-parameters);
+  else
+    next-method();
+  end if;
+end method make;
+
+define sealed method make
+    (stream == <unicode-string-stream>,
+     #next next-method,
+     #rest all-parameters,
+     #key contents :: type-union(singleton($not-supplied), <unicode-string>) = $not-supplied, 
+     #all-keys)
+ => (result :: <unicode-string-stream>)
+  if(contents == $not-supplied)
+    apply(next-method, stream, contents:, make(<unicode-string>), all-parameters);
+  else
+    next-method();
+  end if;
+end method make;
+
 
 /// close -- Exported.
 ///
