@@ -41,7 +41,8 @@ define module common-extensions
     rename: {$not-supplied => $unsupplied,
 	     on-exit => register-exit-application-function,
 	     subclass => hackish-subclass},
-    export: {integer-length,
+    export: {$unsupplied,
+             integer-length,
 	     false-or,
 	     one-of,
 	     //subclass,
@@ -52,7 +53,8 @@ define module common-extensions
 	     register-exit-application-function,
 	     <stretchy-sequence>,
 	     <object-deque>,
-	     <stretchy-object-vector>};
+	     <stretchy-object-vector>,
+             <byte-character>};
   use %Hash-Tables,
     export: {remove-all-keys!};
   use c-support;
@@ -105,9 +107,10 @@ define module common-extensions
 
     /* Converting to and from numbers */
     float-to-string,
+    string-to-float,
     integer-to-string,
-    // Not part of common? number-to-string,
     string-to-integer,
+    // Not part of common? number-to-string,
 
     /* Appliation runtime environment */
     application-name,

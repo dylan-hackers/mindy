@@ -1,5 +1,6 @@
 module: common-extensions
 
+
 //=========================================================================
 //  Streams protocol (will move elsewhere)
 //=========================================================================
@@ -249,8 +250,9 @@ end method integer-to-string;
 // XXX - number-to-string isn't in common-dylan? ASK FUN-O: about this.
 
 define method string-to-integer( string :: <byte-string>, #key base :: <integer> = 10, 
-                                    start-position :: <integer> = 0, end-position :: <integer> = $unsupplied,
-                                    default :: <integer> = $unsupplied )
+                                    start-position :: <integer> = 0, 
+                                    end-position :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied,
+                                    default :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied )
 => ( result :: <integer> )
     // Get the string we're actually parsing
     if( ~ supplied?( end-position ) )
@@ -262,6 +264,11 @@ define method string-to-integer( string :: <byte-string>, #key base :: <integer>
     let negative :: <boolean> = #f;
     let this-base :: <integer> = 1;
     let integer :: <integer> = 0;
+    
+    if( substring.size = 0 )
+        base := string-to-number-error( default );
+    end if;
+    
     block( exit-loop )
         for( i :: <integer> from substring.size - 1 to 0 by - 1   )
             let char :: <character> = substring[ i ];
@@ -278,14 +285,7 @@ define method string-to-integer( string :: <byte-string>, #key base :: <integer>
                 '8' => integer := integer + (8 * this-base);
                 '9' => integer := integer + (9 * this-base);
                 ',' => #f;
-                // XXX - If it's not a valid character, throw an error. ASK FUN-O: What about spaces, etc?
-                otherwise => if( supplied?( default ) ) 
-                                integer := default; 
-                                exit-loop();
-                            else 
-                                break("Invalid string in string-to-integer.");
-                                exit-loop(); 
-                            end if;
+                otherwise => integer := string-to-number-error( default );
             end select; 
             this-base := this-base * base;
         end for;
@@ -298,26 +298,43 @@ define method string-to-integer( string :: <byte-string>, #key base :: <integer>
     integer;
 end method string-to-integer;
 
+define method string-to-number-error( default :: type-union( <number>, object-class( $unsupplied ) ) )
+=> ( result :: <number> )
+    let result :: <number> = 0;	// This will never be returned
+    
+    if( supplied?( default ) )
+        result := default;
+    else
+        break("Invalid string for conversion to number.");
+    end if;
+    
+    result;
+end method string-to-number-error;
+
 // XXX - ASK FUN-O: Not part of common-dylan, but used in DUIM?
 // Rewrite along the same lines as string-to-integer: find the decimal then work left & right
 
-define method string-to-float( string :: <string>, #key base :: <integer> = 10, 
-                                    start-position :: <integer> = 0, end-position :: <integer> = $unsupplied,
-                                    default :: <integer> = $unsupplied   )
+define method string-to-float( string :: <string>, #key base :: <integer> = 10, start-position :: <integer> = 0, 
+                                end-position :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied,
+                                default :: type-union( <float>, object-class( $unsupplied ) ) = $unsupplied   )
 =>( result :: <float> )
     // Get the string we're actually parsing
     if( ~ supplied?( end-position ) )
-        end-position := string.size();
+        end-position := string.size;
     end if;
     let substring :: <string> = copy-sequence( string, start: start-position, end: end-position );
     
     // Set up the parsing state
-    let base-float = as( <float>, base );	// as <float> doesn't work when divided!
+    let base-float :: <float> = as( <float>, base );
     let float :: <float> = 0.0;
-    let left = make( <stretchy-vector> );
-    let right = make( <stretchy-vector> );
-    let current = left;
-    let negative = #f;
+    let left :: <stretchy-vector>  = make( <stretchy-vector> );
+    let right :: <stretchy-vector>  = make( <stretchy-vector> );
+    let current :: <stretchy-vector> = left;
+    let negative :: <boolean> = #f;
+    
+    if( substring.size = 0 )
+        float := string-to-number-error( default );
+    end if;
     
     block( exit-loop )
         for( char in substring  )
@@ -334,15 +351,8 @@ define method string-to-float( string :: <string>, #key base :: <integer> = 10,
                 '8' => add!( current, 8.0 );
                 '9' => add!( current, 9.0 );
                 '.' => current := right;		//TODO Use decimal-separator
-                ',' => #f;				// TODO Use thousands-separator
-                // XXX - If it's not a valid character, throw an error. ASK FUN-O: What about spaces, etc?
-                otherwise => if( supplied?( default ) ) 
-                                float := default; 
-                                exit-loop();
-                            else 
-                                break("Invalid string in string-to-integer.");
-                                exit-loop(); 
-                            end if;
+                ',' => #f;				//TODO Use thousands-separator
+                otherwise => float := string-to-number-error( default );
             end select; 
         end for;
     
@@ -367,6 +377,10 @@ define method string-to-float( string :: <string>, #key base :: <integer> = 10,
             float := float * -1.0;
         end if;
     end block;
+    
+    if( ~ float )
+        break("Invalid string in string-to-float.");
+    end if;
     
     float;
 end method string-to-float;
