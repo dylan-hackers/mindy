@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.4 1996/01/11 18:43:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.5 1996/03/07 17:57:43 nkramer Exp $
 
 //======================================================================
 //
@@ -64,6 +64,7 @@ define method ratio (num :: <general-integer>, denom :: <general-integer>)
 end;
 
 define method as (class == <ratio>, num :: <number>)
+ => number :: <ratio>;
   rationalize(num);
 end;
 
