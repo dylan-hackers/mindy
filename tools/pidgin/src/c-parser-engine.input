@@ -134,8 +134,8 @@ end method;
 define method int-value
     (value :: <identifier-token>, state :: <parse-state>)
   let object-decl = element(state.objects, value.string-value, default: #f);
-  if (instance?(object-decl, <enum-slot-declaration>))
-    object-decl.constant-value;
+  if (instance?(object-decl, <c-enum-constant>))
+    object-decl.c-enum-constant-value;
   else
     parse-error(value, "Value in constant expression must be an integer.");
   end if;
@@ -902,15 +902,15 @@ type-specifier (<TYPE-NAME-token>)
 ;; edition of K&R. This seems correct to me.  -- emk
 struct-or-union-specifier (struct-or-union NAME <lcurly-token>
                            struct-declaration-list <rcurly-token>)
-  make-struct-type(%2.value, %4, %1, @0);
+  make-tagged-type(%2.value, %4, %1, @0);
 %
 
 struct-or-union-specifier (struct-or-union <lcurly-token> struct-declaration-list <rcurly-token>)
-  make-struct-type(#f, %3, %1, @0);
+  make-tagged-type(#f, %3, %1, @0);
 %
 
 struct-or-union-specifier (struct-or-union NAME)
-  make-struct-type(%2.value, #f, %1, @0);
+  make-tagged-type(%2.value, #f, %1, @0);
 %
 
 Struct-Or-Union (<STRUCT-Token>)
@@ -975,15 +975,15 @@ struct-declarator (declarator <colon-token> constant-expr)
 ; %
 
 Enum-Specifier (<ENUM-Token> enum-elements)
-  make-struct-type(#f, %2, %1, @0);
+  make-tagged-type(#f, %2, %1, @0);
 %
 
 Enum-Specifier (<ENUM-Token> NAME enum-elements)
-  make-struct-type(%2.value, %3, %1, @0);
+  make-tagged-type(%2.value, %3, %1, @0);
 %
 
 Enum-Specifier (<ENUM-Token> NAME)
-  make-struct-type(%2.value, #f, %1, @0);
+  make-tagged-type(%2.value, #f, %1, @0);
 %
 
 enum-elements (<Lcurly-Token> internal-include-boundary Enumerator-List
@@ -1419,9 +1419,10 @@ internal-include-boundary (<end-include-token>)
 %
 
 external-definition (declaration)
-  if (%1)
-    parse-progress-report(@0, "Declaration: %s", format-c-declaration(%1));
-  end if;
+  // XXX - sometimes this is a type instead of a declaration. Find out when.
+  //if (%1)
+  //  parse-progress-report(@0, "Declaration: %s", format-c-declaration(%1));
+  //end if;
   %1;
 %
 

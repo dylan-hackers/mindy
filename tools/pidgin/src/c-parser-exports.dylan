@@ -79,9 +79,8 @@ define module c-parser-engine
 
   // Defined by c-decl.dylan, which we don't have.
   create
-    make-struct-type, c-type-size,
-    add-cpp-declaration, unknown-type, <arg-declaration>,
-    <varargs-declaration>, <enum-slot-declaration>, constant-value,
+    make-tagged-type, c-type-size,
+    add-cpp-declaration,
     <integer-type-declaration>, true-type, make-enum-slot;
 
   export
