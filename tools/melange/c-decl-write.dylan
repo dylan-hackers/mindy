@@ -473,10 +473,9 @@ define method write-declaration
 		      select (melange-target)
 			#"mindy" => c-accessor(decl.type,
 					       0, raw-name, decl.type-name);
-			#"d2c" => concatenate("c-expr(",
-					      d2c-arg(decl.type,
-						      decl.simple-name),
-					      ")");
+			#"d2c" => concatenate("c-variable-ref(",
+					      decl.type.d2c-type-tag, " \"&",
+					      decl.simple-name, "\")");
 		      end select),
 	 decl.getter);
 
@@ -490,9 +489,9 @@ define method write-declaration
 	   decl.mapped-name,
 	   select (melange-target)
 	     #"mindy" => c-accessor(decl.type, 0, raw-name, decl.type-name);
-	     #"d2c" => concatenate("c-expr(",
-				   d2c-arg(decl.type, decl.simple-name),
-				   ")");
+	     #"d2c" => concatenate("c-variable-ref(",
+				   decl.type.d2c-type-tag, " \"&",
+				   decl.simple-name, "\")");
 	   end select,
 	   export-value(decl, "value"), decl.setter);
   end if;
@@ -597,7 +596,7 @@ define method write-declaration
 	for (count from 1, arg in params)
 	  if (count > 1) write(stream, ", ") end if;
 	  if (instance?(arg, <varargs-declaration>))
-	    write(arg.stream, dylan-name);
+	    write(arg.stream, arg.dylan-name);
 	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
 	    format(stream, "%s-ptr", arg.dylan-name);
 	  else
