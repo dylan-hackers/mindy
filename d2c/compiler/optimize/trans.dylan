@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.10 1995/07/19 19:41:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.11 1995/08/07 12:26:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -269,50 +269,336 @@ define method always-the-same?
 end;
 
 
+// Type transforms.
+
+// check-type
+//
+// We transforms calls of check-type where the type is a compile-time constant
+// into assignments with a type assertion so the other parts of the compiler
+// can more easily identify the type restriction.
+// 
 define method check-type-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
-  let (okay?, object-leaf, type-leaf) = extract-args(call, 2, #f, #f, #f);
-  if (okay? & instance?(type-leaf, <literal-constant>))
-    let type = type-leaf.value;
-    if (csubtype?(object-leaf.derived-type, type))
-      replace-expression(component, call.dependents, object-leaf);
-      #t;
-    else
+  let (okay?, object, type) = extract-args(call, 2, #f, #f, #f);
+  if (okay?)
+    let type = extract-constant-type(type);
+    if (type)
       let builder = make-builder(component);
       let dep = call.dependents;
       let assign = dep.dependent;
       let policy = assign.policy;
       let source = assign.source-location;
 
-      let temp = make-ssa-var(builder, #"cond", specifier-type(#"<boolean>"));
-      let res = make-ssa-var(builder, #"result", type);
-      build-assignment
-	(builder, policy, source, temp,
-	 make-unknown-call
-	   (builder, ref-dylan-defn(builder, policy, source, #"instance?"),
-	    #f, list(object-leaf, type-leaf)));
-      build-if-body(builder, policy, source, temp);
-      build-assignment
-	(builder, policy, source, res,
-	 make-operation(builder, <truly-the>, list(object-leaf),
-			guaranteed-type: type));
-      build-else(builder, policy, source);
-      build-assignment
-	(builder, policy, source, #(),
-	 make-error-operation
-	   (builder, policy, source, #"type-error", object-leaf, type-leaf));
-      end-body(builder);
+      let checked = make-ssa-var(builder, #"checked", type);
+      build-assignment(builder, policy, source, checked, object);
       insert-before(component, assign, builder-result(builder));
-      replace-expression(component, dep, res);
+      replace-expression(component, dep, checked);
+      #t;
+    else
+      #f;
     end;
   else
     #f;
   end;
 end;
-
+//
 define-transformer(#"check-type", #f, check-type-transformer);
 
+define method extract-constant-type (leaf :: <leaf>)
+    => res :: false-or(<ctype>);
+  #f;
+end;
+
+define method extract-constant-type (leaf :: <literal-constant>)
+  leaf.value;
+end;
+
+define method extract-constant-type (leaf :: <definition-constant-leaf>)
+  leaf.const-defn.ct-value;
+end;
+
+define method instance?-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, value-leaf, type-leaf) = extract-args(call, 2, #f, #f, #f);
+  if (okay?)
+    let type = extract-constant-type(type-leaf);
+    if (type)
+      let derived-type = value-leaf.derived-type;
+      replace-expression
+	(component, call.dependents,
+	 if (csubtype?(derived-type, type))
+	   make-literal-constant(make-builder(component), as(<ct-value>, #t));
+	 elseif (~ctypes-intersect?(derived-type, type))
+	   make-literal-constant(make-builder(component), as(<ct-value>, #f));
+	 else
+	   make-operation
+	     (make-builder(component), <instance?>, list(value-leaf),
+	      type: type);
+	 end);
+      #t;
+    end;
+  end;
+end;
+
+define-transformer(#"instance?", #f, instance?-transformer);
+
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <instance?>)
+    => ();
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    replace-placeholder(component, dep, dep.source-exp);
+  end;
+
+  let builder = make-builder(component);
+  let assign = dep.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+  
+  let expr = build-instance?(builder, policy, source,
+			     op.depends-on.source-exp, op.type);
+
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, dep, expr);
+end;
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <ctype>)
+    => res :: <expression>;
+  make-unknown-call
+    (builder, ref-dylan-defn(builder, policy, source, #"%instance?"),
+     #f, list(value, make-literal-constant(builder, type)));
+end;
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <union-ctype>)
+    => res :: <expression>;
+  let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+  local
+    method repeat (remaining :: <list>)
+      if (remaining == #())
+	build-assignment(builder, policy, source, res,
+			 make-literal-constant(builder, as(<ct-value>, #f)));
+      else
+	let member-type = remaining.head;
+	if (ctypes-intersect?(value.derived-type, member-type))
+	  let temp = make-local-var(builder, #"temp",
+				    specifier-type(#"<boolean>"));
+	  build-assignment(builder, policy, source, temp,
+			   build-instance?(builder, policy, source, value,
+					   member-type));
+	  build-if-body(builder, policy, source, temp);
+	  build-assignment(builder, policy, source, res,
+			   make-literal-constant(builder, as(<ct-value>, #t)));
+	  build-else(builder, policy, source);
+	  repeat(remaining.tail);
+	  end-body(builder);
+	else
+	  repeat(remaining.tail);
+	end;
+      end;
+    end;
+  repeat(type.members);
+  res;
+end;
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <singleton-ctype>)
+    => res :: <expression>;
+  make-unknown-call
+    (builder, ref-dylan-defn(builder, policy, source, #"=="),
+     #f, list(value, make-literal-constant(builder, type.singleton-value)));
+end;
+
+// ### limited integers?
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <byte-character-ctype>)
+    => res :: <expression>;
+  let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+  let char-ctype = specifier-type(#"<character>");
+  let guaranteed-character? = csubtype?(value.derived-type, char-ctype);
+  unless (guaranteed-character?)
+    let temp = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    build-assignment(builder, policy, source, temp,
+		     build-instance?(builder, policy, source,
+				     value, char-ctype));
+    build-if-body(builder, policy, source, temp);
+  end;
+  let char-code-temp = make-local-var(builder, #"code", object-ctype());
+  build-assignment
+    (builder, policy, source, char-code-temp,
+     make-unknown-call
+       (builder, ref-dylan-defn(builder, policy, source, #"as"), #f,
+	list(make-literal-constant(builder, specifier-type(#"<integer>")),
+	     value)));
+  build-assignment
+    (builder, policy, source, res,
+     make-unknown-call
+       (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
+	list(char-code-temp,
+	     make-literal-constant(builder, as(<ct-value>, 256)))));
+  unless (guaranteed-character?)
+    build-else(builder, policy, source);
+    build-assignment(builder, policy, source, res,
+		     make-literal-constant(builder, as(<ct-value>, #f)));
+    end-body(builder);
+  end;
+  res;
+end;
+
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, class :: <cclass>, #next next-method)
+    => res :: <expression>;
+  if (class.sealed?)
+    let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    if (class == specifier-type(#"<false>"))
+      build-assignment
+	(builder, policy, source, res,
+	 make-unknown-call
+	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
+	    list(value, make-literal-constant(builder, as(<ct-value>, #f)))));
+    elseif (class == specifier-type(#"<true>"))
+      build-assignment
+	(builder, policy, source, res,
+	 make-unknown-call
+	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
+	    list(value, make-literal-constant(builder, as(<ct-value>, #f)))));
+    elseif (class == specifier-type(#"<empty-list>"))
+      build-assignment
+	(builder, policy, source, res,
+	 make-unknown-call
+	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
+	    list(value, make-literal-constant(builder, as(<ct-value>, #())))));
+    else
+      let class-temp = make-local-var(builder, #"class", object-ctype());
+      build-assignment
+	(builder, policy, source, class-temp,
+	 make-unknown-call
+	   (builder, ref-dylan-defn(builder, policy, source, #"%object-class"),
+	    #f, list(value)));
+      let direct-classes
+	= choose(method (direct-class)
+		   ctypes-intersect?(value.derived-type,
+				     direct-class.direct-type);
+		 end,
+		 find-direct-classes(class));
+      if (empty?(direct-classes))
+	error("None of the direct classes intersect the derived type but we "
+		"didn't optimize the test away?");
+      elseif (class.subclass-id-range-min & direct-classes.size > 2)
+	// There is a range we can check the unique-id against.
+	let id-temp = make-local-var(builder, #"unique-id", object-ctype());
+	build-assignment
+	  (builder, policy, source, id-temp,
+	   make-unknown-call
+	     (builder, ref-dylan-defn(builder, policy, source, #"unique-id"),
+	      #f, list(class-temp)));
+	let test-min? = #f;
+	let test-max? = #f;
+	let possible-classes = find-direct-classes(value.derived-type);
+	if (possible-classes)
+	  for (possible-class in possible-classes)
+	    if (possible-class.unique-id < class.subclass-id-range-min)
+	      test-min? := #t;
+	    elseif (possible-class.unique-id > class.subclass-id-range-max)
+	      test-max? := #t;
+	    end;
+	  end;
+	  unless (test-min? | test-max?)
+	    error("None of the potential direct classes are not subtypes of "
+		    "the class we are testing against?");
+	  end;
+	else
+	  test-min? := #t;
+	  test-max? := #t;
+	end;
+	if (test-min?)
+	  let temp = make-local-var(builder, #"temp",
+				    specifier-type(#"<boolean>"));
+	  build-assignment
+	    (builder, policy, source, temp,
+	     make-unknown-call
+	       (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
+		list(id-temp,
+		     make-literal-constant
+		       (builder,
+			as(<ct-value>, class.subclass-id-range-min)))));
+	  build-if-body(builder, policy, source, temp);
+	  build-assignment(builder, policy, source, res,
+			   make-literal-constant(builder, as(<ct-value>, #f)));
+	  build-else(builder, policy, source);
+	end;
+	if (test-max?)
+	  let temp = make-local-var(builder, #"temp",
+				    specifier-type(#"<boolean>"));
+	  build-assignment
+	    (builder, policy, source, temp,
+	     make-unknown-call
+	       (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
+		list(make-literal-constant
+		       (builder, as(<ct-value>, class.subclass-id-range-max)),
+		     id-temp)));
+	  build-if-body(builder, policy, source, temp);
+	  build-assignment(builder, policy, source, res,
+			   make-literal-constant(builder, as(<ct-value>, #f)));
+	  build-else(builder, policy, source);
+	end;
+	build-assignment(builder, policy, source, res,
+			 make-literal-constant(builder, as(<ct-value>, #t)));
+	if (test-max?)
+	  end-body(builder);
+	end;
+	if (test-min?)
+	  end-body(builder);
+	end;
+      else
+	local
+	  method repeat (remaining :: <list>)
+	    if (remaining.tail == #())
+	      build-assignment
+		(builder, policy, source, res,
+		 make-unknown-call
+		   (builder, ref-dylan-defn(builder, policy, source, #"=="),
+		    #f,
+		    list(class-temp,
+			 make-literal-constant(builder, remaining.head))));
+	    else
+	      let temp = make-local-var(builder, #"temp",
+					specifier-type(#"<boolean>"));
+	      build-assignment
+		(builder, policy, source, temp,
+		 make-unknown-call
+		   (builder, ref-dylan-defn(builder, policy, source, #"=="),
+		    #f,
+		    list(class-temp,
+			 make-literal-constant(builder, remaining.head))));
+	      build-if-body(builder, policy, source, temp);
+	      build-assignment(builder, policy, source, res,
+			       make-literal-constant
+				 (builder, as(<ct-value>, #t)));
+	      build-else(builder, policy, source);
+	      repeat(remaining.tail);
+	      end-body(builder);
+	    end;
+	  end;
+	repeat(direct-classes);
+      end;
+    end;
+    res;
+  else
+    next-method();
+  end;
+end;  
 
 
 define method apply-transformer
