@@ -1,6 +1,6 @@
 module: File-system
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Attic/file-system.dylan,v 1.3 1998/10/15 08:42:17 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Attic/file-system.dylan,v 1.4 1999/11/11 21:12:02 robmyers Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -96,7 +96,11 @@ define constant <filename> = <byte-string>;
 define constant $search-path-separator = #if (compiled-for-win32)
                                             ';';
                                          #else 
-                                            ':';
+                                         	#if (macos)
+                                         		'\t';
+                                         	#else
+                                            	':';
+                                            #endif
                                          #endif
 
 define constant foo = 0;  // reset indentation
@@ -110,13 +114,22 @@ end function search-path-separator?;
 // if you want to find out if the character you're looking at is a
 // path separator.
 //
-define constant $a-path-separator = '/';
+define constant $a-path-separator = #if (macos)
+                                        ':';
+                                    #else
+                                        '/';
+                                    #endif
+
 
 define function path-separator? (c :: <character>) => answer :: <boolean>;
   #if (compiled-for-win32)
      (c == '/') | (c == '\\') | (c == ':');
   #else
-     c == '/';
+	#if (macos)
+		c == ':';
+	#else
+		c == '/';
+	#endif
   #endif
 end function path-separator?;
 
@@ -215,7 +228,7 @@ define method find-and-open-file
 	end block;
       end method try;
     for (dir in dir-sequence)
-      try(concatenate(dir, as(<string>, $a-path-separator), pathless-name));
+      try(concatenate( fully-separated-path( dir ), pathless-name ) );
     end for;
     values(#f, #f);
   end block;
@@ -231,6 +244,17 @@ define function find-file
   end if;
   filename;
 end function find-file;
+
+// Makes sure a directory path ends with the file path separator
+
+define function fully-separated-path( path :: <filename> )
+=>( full-path :: <filename> )
+	if( (size(path) > 0) & last( as( <string>, path ) ) = $a-path-separator )
+		path;
+	else
+		concatenate( path, as( <string>, $a-path-separator ) );
+	end if;
+end function fully-separated-path;
 
 
 // getcwd -- Mindy defines this in the System module.  d2c does not.
