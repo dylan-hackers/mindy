@@ -1,7 +1,7 @@
 /**********************************************************************\
 *
 *  Copyright (c) 1994  Carnegie Mellon University
-*  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+*  Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 *  All rights reserved.
 *  
 *  Use and copying of this software and preparation of derivative
@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.5 2003/03/15 22:12:01 gabor Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.6 2003/03/15 22:25:03 gabor Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -673,438 +673,95 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-__inline__ void interpret_byte(int byte, struct thread *thread)
-{
-
-static void (*const preters[0x100])(int byte, struct thread *thread)
- = {
- 	op_flame,
- 	op_breakpoint,
- 	op_return_single,
- 	op_make_value_cell,
- 	op_value_cell_ref,
- 	op_value_cell_set,
- 	op_make_method,
- 	op_check_type,
- 	op_check_type_function,
- 	op_canonicalize_value,
- 	op_push_byte,
- 	op_push_int,
- 	op_conditional_branch,
- 	op_branch,
- 	op_push_nil,
- 	op_push_unbound,
- 	op_push_true,
- 	op_push_false,
- 	op_dup,
- 	op_dot_tail,
- 	op_dot,  // twice!
- 	op_dot, // twice!
- 	
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
-
-
-#define FIFTEEN_TIMES(op) \
-  op,op,op,op,op,op,op,op,op,op,op,op,op,op,op
-
-#define SIXTEEN_TIMES(op) \
-  FIFTEEN_TIMES(op ## _immed),op
-
-/* 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant_immed,
- 	op_push_constant,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg_immed,
- 	op_push_arg,*/
- 	SIXTEEN_TIMES(op_push_constant),
- 	SIXTEEN_TIMES(op_push_arg),
- 	
- 	SIXTEEN_TIMES(op_pop_arg),
- 	SIXTEEN_TIMES(op_push_local),
- 	SIXTEEN_TIMES(op_pop_local),
- 	SIXTEEN_TIMES(op_call_tail),
- 	SIXTEEN_TIMES(op_call), // twice!
- 	SIXTEEN_TIMES(op_call), // twice!
- 	SIXTEEN_TIMES(op_push_value),
- 	SIXTEEN_TIMES(op_push_function),
- 	SIXTEEN_TIMES(op_pop_value),
-
- 	FIFTEEN_TIMES(op_flame), op_flame,
- 	FIFTEEN_TIMES(op_flame), op_flame,
-
- 	op_plus,
- 	op_minus,
- 	op_lt,
- 	op_le,
- 	op_eq,
- 	op_idp,
- 	op_ne,
- 	op_ge,
- 	op_gt,
-
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame,
- 	op_flame
- 	
- };
- 
-preters[byte](byte, thread);
- 
-/*    switch (byte) {
-      case op_BREAKPOINT:
-	op_breakpoint(byte, thread);
-	break;
-      case op_RETURN_SINGLE:
-	op_return_single(byte, thread);
-	break;
-      case op_MAKE_VALUE_CELL:
-	op_make_value_cell(byte, thread);
-	break;
-      case op_VALUE_CELL_REF:
-	op_value_cell_ref(byte, thread);
-	break;
-      case op_VALUE_CELL_SET:
-	op_value_cell_set(byte, thread);
-	break;
-      case op_MAKE_METHOD:
-	op_make_method(byte, thread);
-	break;
-      case op_CHECK_TYPE:
-	op_check_type(byte, thread);
-	break;
-      case op_CHECK_TYPE_FUNCTION:
-	op_check_type_function(byte, thread);
-	break;
-      case op_CANONICALIZE_VALUE:
-	op_canonicalize_value(byte, thread);
-	break;
-      case op_PUSH_BYTE:
-	op_push_byte(byte, thread);
-	break;
-      case op_PUSH_INT:
-	op_push_int(byte, thread);
-	break;
-      case op_CONDITIONAL_BRANCH:
-	op_conditional_branch(byte, thread);
-	break;
-      case op_BRANCH:
-	op_branch(byte, thread);
-	break;
-      case op_PUSH_NIL:
-	op_push_nil(byte, thread);
-	break;
-      case op_PUSH_UNBOUND:
-	op_push_unbound(byte, thread);
-	break;
-      case op_PUSH_TRUE:
-	op_push_true(byte, thread);
-	break;
-      case op_PUSH_FALSE:
-	op_push_false(byte, thread);
-	break;
-      case op_DUP:
-	op_dup(byte, thread);
-	break;
-      case op_DOT_TAIL:
-	op_dot_tail(byte, thread);
-	break;
-      case op_DOT_FOR_SINGLE:
-      case op_DOT_FOR_MANY:
-	op_dot(byte, thread);
-	break;
-      case op_PUSH_CONSTANT|0:
-      case op_PUSH_CONSTANT|1:
-      case op_PUSH_CONSTANT|2:
-      case op_PUSH_CONSTANT|3:
-      case op_PUSH_CONSTANT|4:
-      case op_PUSH_CONSTANT|5:
-      case op_PUSH_CONSTANT|6:
-      case op_PUSH_CONSTANT|7:
-      case op_PUSH_CONSTANT|8:
-      case op_PUSH_CONSTANT|9:
-      case op_PUSH_CONSTANT|10:
-      case op_PUSH_CONSTANT|11:
-      case op_PUSH_CONSTANT|12:
-      case op_PUSH_CONSTANT|13:
-      case op_PUSH_CONSTANT|14:
-	op_push_constant_immed(byte, thread);
-	break;
-      case op_PUSH_CONSTANT|15:
-	op_push_constant(byte, thread);
-	break;
-      case op_PUSH_ARG|0:
-      case op_PUSH_ARG|1:
-      case op_PUSH_ARG|2:
-      case op_PUSH_ARG|3:
-      case op_PUSH_ARG|4:
-      case op_PUSH_ARG|5:
-      case op_PUSH_ARG|6:
-      case op_PUSH_ARG|7:
-      case op_PUSH_ARG|8:
-      case op_PUSH_ARG|9:
-      case op_PUSH_ARG|10:
-      case op_PUSH_ARG|11:
-      case op_PUSH_ARG|12:
-      case op_PUSH_ARG|13:
-      case op_PUSH_ARG|14:
-	op_push_arg_immed(byte, thread);
-	break;
-      case op_PUSH_ARG|15:
-	op_push_arg(byte, thread);
-	break;
-      case op_POP_ARG|0:
-      case op_POP_ARG|1:
-      case op_POP_ARG|2:
-      case op_POP_ARG|3:
-      case op_POP_ARG|4:
-      case op_POP_ARG|5:
-      case op_POP_ARG|6:
-      case op_POP_ARG|7:
-      case op_POP_ARG|8:
-      case op_POP_ARG|9:
-      case op_POP_ARG|10:
-      case op_POP_ARG|11:
-      case op_POP_ARG|12:
-      case op_POP_ARG|13:
-      case op_POP_ARG|14:
-	op_pop_arg_immed(byte, thread);
-	break;
-      case op_POP_ARG|15:
-	op_pop_arg(byte, thread);
-	break;
-      case op_PUSH_LOCAL|0:
-      case op_PUSH_LOCAL|1:
-      case op_PUSH_LOCAL|2:
-      case op_PUSH_LOCAL|3:
-      case op_PUSH_LOCAL|4:
-      case op_PUSH_LOCAL|5:
-      case op_PUSH_LOCAL|6:
-      case op_PUSH_LOCAL|7:
-      case op_PUSH_LOCAL|8:
-      case op_PUSH_LOCAL|9:
-      case op_PUSH_LOCAL|10:
-      case op_PUSH_LOCAL|11:
-      case op_PUSH_LOCAL|12:
-      case op_PUSH_LOCAL|13:
-      case op_PUSH_LOCAL|14:
-	op_push_local_immed(byte, thread);
-	break;
-      case op_PUSH_LOCAL|15:
-	op_push_local(byte, thread);
-	break;
-      case op_POP_LOCAL|0:
-      case op_POP_LOCAL|1:
-      case op_POP_LOCAL|2:
-      case op_POP_LOCAL|3:
-      case op_POP_LOCAL|4:
-      case op_POP_LOCAL|5:
-      case op_POP_LOCAL|6:
-      case op_POP_LOCAL|7:
-      case op_POP_LOCAL|8:
-      case op_POP_LOCAL|9:
-      case op_POP_LOCAL|10:
-      case op_POP_LOCAL|11:
-      case op_POP_LOCAL|12:
-      case op_POP_LOCAL|13:
-      case op_POP_LOCAL|14:
-	op_pop_local_immed(byte, thread);
-	break;
-      case op_POP_LOCAL|15:
-	op_pop_local(byte, thread);
-	break;
-      case op_CALL_TAIL|0:
-      case op_CALL_TAIL|1:
-      case op_CALL_TAIL|2:
-      case op_CALL_TAIL|3:
-      case op_CALL_TAIL|4:
-      case op_CALL_TAIL|5:
-      case op_CALL_TAIL|6:
-      case op_CALL_TAIL|7:
-      case op_CALL_TAIL|8:
-      case op_CALL_TAIL|9:
-      case op_CALL_TAIL|10:
-      case op_CALL_TAIL|11:
-      case op_CALL_TAIL|12:
-      case op_CALL_TAIL|13:
-      case op_CALL_TAIL|14:
-	op_call_tail_immed(byte, thread);
-	break;
-      case op_CALL_TAIL|15:
-	op_call_tail(byte, thread);
-	break;
-      case op_CALL_FOR_MANY|0:
-      case op_CALL_FOR_MANY|1:
-      case op_CALL_FOR_MANY|2:
-      case op_CALL_FOR_MANY|3:
-      case op_CALL_FOR_MANY|4:
-      case op_CALL_FOR_MANY|5:
-      case op_CALL_FOR_MANY|6:
-      case op_CALL_FOR_MANY|7:
-      case op_CALL_FOR_MANY|8:
-      case op_CALL_FOR_MANY|9:
-      case op_CALL_FOR_MANY|10:
-      case op_CALL_FOR_MANY|11:
-      case op_CALL_FOR_MANY|12:
-      case op_CALL_FOR_MANY|13:
-      case op_CALL_FOR_MANY|14:
-      case op_CALL_FOR_SINGLE|0:
-      case op_CALL_FOR_SINGLE|1:
-      case op_CALL_FOR_SINGLE|2:
-      case op_CALL_FOR_SINGLE|3:
-      case op_CALL_FOR_SINGLE|4:
-      case op_CALL_FOR_SINGLE|5:
-      case op_CALL_FOR_SINGLE|6:
-      case op_CALL_FOR_SINGLE|7:
-      case op_CALL_FOR_SINGLE|8:
-      case op_CALL_FOR_SINGLE|9:
-      case op_CALL_FOR_SINGLE|10:
-      case op_CALL_FOR_SINGLE|11:
-      case op_CALL_FOR_SINGLE|12:
-      case op_CALL_FOR_SINGLE|13:
-      case op_CALL_FOR_SINGLE|14:
-	op_call_immed(byte, thread);
-	break;
-      case op_CALL_FOR_MANY|15:
-      case op_CALL_FOR_SINGLE|15:
-	op_call(byte, thread);
-	break;
-      case op_PUSH_VALUE|0:
-      case op_PUSH_VALUE|1:
-      case op_PUSH_VALUE|2:
-      case op_PUSH_VALUE|3:
-      case op_PUSH_VALUE|4:
-      case op_PUSH_VALUE|5:
-      case op_PUSH_VALUE|6:
-      case op_PUSH_VALUE|7:
-      case op_PUSH_VALUE|8:
-      case op_PUSH_VALUE|9:
-      case op_PUSH_VALUE|10:
-      case op_PUSH_VALUE|11:
-      case op_PUSH_VALUE|12:
-      case op_PUSH_VALUE|13:
-      case op_PUSH_VALUE|14:
-	op_push_value_immed(byte, thread);
-	break;
-      case op_PUSH_VALUE|15:
-	op_push_value(byte, thread);
-	break;
-      case op_PUSH_FUNCTION|0:
-      case op_PUSH_FUNCTION|1:
-      case op_PUSH_FUNCTION|2:
-      case op_PUSH_FUNCTION|3:
-      case op_PUSH_FUNCTION|4:
-      case op_PUSH_FUNCTION|5:
-      case op_PUSH_FUNCTION|6:
-      case op_PUSH_FUNCTION|7:
-      case op_PUSH_FUNCTION|8:
-      case op_PUSH_FUNCTION|9:
-      case op_PUSH_FUNCTION|10:
-      case op_PUSH_FUNCTION|11:
-      case op_PUSH_FUNCTION|12:
-      case op_PUSH_FUNCTION|13:
-      case op_PUSH_FUNCTION|14:
-	op_push_function_immed(byte, thread);
-	break;
-      case op_PUSH_FUNCTION|15:
-	op_push_function(byte, thread);
-	break;
-      case op_POP_VALUE|0:
-      case op_POP_VALUE|1:
-      case op_POP_VALUE|2:
-      case op_POP_VALUE|3:
-      case op_POP_VALUE|4:
-      case op_POP_VALUE|5:
-      case op_POP_VALUE|6:
-      case op_POP_VALUE|7:
-      case op_POP_VALUE|8:
-      case op_POP_VALUE|9:
-      case op_POP_VALUE|10:
-      case op_POP_VALUE|11:
-      case op_POP_VALUE|12:
-      case op_POP_VALUE|13:
-      case op_POP_VALUE|14:
-	op_pop_value_immed(byte, thread);
-	break;
-      case op_POP_VALUE|15:
-	op_pop_value(byte, thread);
-	break;
-      case op_PLUS:
-	op_plus(byte, thread);
-	break;
-      case op_MINUS:
-	op_minus(byte, thread);
-	break;
-      case op_LT:
-	op_lt(byte, thread);
-	break;
-      case op_LE:
-	op_le(byte, thread);
-	break;
-      case op_EQ:
-	op_eq(byte, thread);
-	break;
-      case op_IDP:
-	op_idp(byte, thread);
-	break;
-      case op_NE:
-	op_ne(byte, thread);
-	break;
-      case op_GE:
-	op_ge(byte, thread);
-	break;
-      case op_GT:
-	op_gt(byte, thread);
-	break;
-      default:
-	op_flame(byte, thread);
-    }*/
-}
-
 void interpret_next_byte(struct thread *thread)
 {
+# define FIFTEEN_TIMES(op) \
+  op,op,op,op,op,op,op,op,op,op,op,op,op,op,op
+
+# define SIXTEEN_TIMES(op) \
+  FIFTEEN_TIMES(op ## _immed),op
+
+  static void (*const preters[0x100])(int byte, struct thread *thread)
+   = {
+       op_flame,
+       op_breakpoint,
+       op_return_single,
+       op_make_value_cell,
+       op_value_cell_ref,
+       op_value_cell_set,
+       op_make_method,
+       op_check_type,
+       op_check_type_function,
+       op_canonicalize_value,
+       op_push_byte,
+       op_push_int,
+       op_conditional_branch,
+       op_branch,
+       op_push_nil,
+       op_push_unbound,
+       op_push_true,
+       op_push_false,
+       op_dup,
+       op_dot_tail,
+       op_dot,  // twice!
+       op_dot, // twice!
+
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+
+       SIXTEEN_TIMES(op_push_constant),
+       SIXTEEN_TIMES(op_push_arg),
+
+       SIXTEEN_TIMES(op_pop_arg),
+       SIXTEEN_TIMES(op_push_local),
+       SIXTEEN_TIMES(op_pop_local),
+       SIXTEEN_TIMES(op_call_tail),
+       SIXTEEN_TIMES(op_call), // twice!
+       SIXTEEN_TIMES(op_call), // twice!
+       SIXTEEN_TIMES(op_push_value),
+       SIXTEEN_TIMES(op_push_function),
+       SIXTEEN_TIMES(op_pop_value),
+
+       FIFTEEN_TIMES(op_flame), op_flame,
+       FIFTEEN_TIMES(op_flame), op_flame,
+
+       op_plus,
+       op_minus,
+       op_lt,
+       op_le,
+       op_eq,
+       op_idp,
+       op_ne,
+       op_ge,
+       op_gt,
+
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame,
+       op_flame
+     };
+
+# undef FIFTEEN_TIMES
+# undef SIXTEEN_TIMES
+
   int timer = OPS_PER_TIME_SLICE ;
 
-  while(timer-- > 0) 
-    interpret_byte(decode_byte(thread), thread);
+  while(timer-- > 0)
+  {
+    int byte = decode_byte(thread);
+    preters[byte](byte, thread);
+  }
 }
 
 
