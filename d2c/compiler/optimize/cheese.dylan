@@ -1,5 +1,5 @@
-module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.37 1995/04/29 03:02:04 wlott Exp $
+module: cheese
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.38 1995/04/29 08:37:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -402,7 +402,8 @@ end;
 //       check the syntax against what we know about the signature.  If we find
 //       any problems, change it to an error call.
 //   If the call is to a generic-definition
-//     ...
+//     Check to see if we can compile-time select a method.  If so, change to
+//     a call of that method definition.
 //   Otherwise
 //     Assert that the function is indeed a <function>.
 
@@ -413,7 +414,7 @@ define method optimize (component :: <component>, call :: <unknown-call>)
     error("No function in a call?");
   end;
   // Dispatch of the thing we are calling.
-  optimize-unknown-call(component, call, func-dep.source-exp, #t);
+  optimize-unknown-call(component, call, func-dep.source-exp);
 end;
 
 define method optimize
@@ -424,8 +425,7 @@ end;
 
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <leaf>, local? :: <boolean>)
+    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -434,8 +434,7 @@ end;
 
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <lambda>, local? :: <boolean>)
+    (component :: <component>, call :: <unknown-call>, func :: <lambda>)
     => ();
 
   // Observe the result type.
@@ -469,9 +468,14 @@ define method optimize-unknown-call
 	   while: arg-dep)
 	assert-type(component, assign, arg-dep, var.var-info.asserted-type);
       end;
-      if (local?)
+      let func-dep = call.depends-on;
+      if (func-dep.source-exp == func)
 	change-call-kind(component, call, <local-call>);
       else
+	remove-dependency-from-source(component, func-dep);
+	func-dep.source-exp := func;
+	func-dep.source-next := func.dependents;
+	func.dependents := func-dep;
 	change-call-kind(component, call, <known-call>);
       end;
     end;
@@ -481,7 +485,7 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <hairy-method-literal>, local? :: <boolean>)
+     func :: <hairy-method-literal>)
     => ();
   let sig = func.signature;
 
@@ -636,13 +640,14 @@ define method optimize-unknown-call
 	end;
       end;
       insert-before(component, assign, builder-result(builder));
+      let orig-func = call.depends-on.source-exp;
       let new-call = make-operation(builder, as(<list>, new-args));
       let call-dep = call.dependents;
       call.dependents := #f;
       new-call.dependents := call-dep;
       call-dep.source-exp := new-call;
       delete-dependent(component, call);
-      if (local?)
+      if (orig-func == func)
 	change-call-kind(component, new-call, <local-call>);
       else
 	change-call-kind(component, new-call, <known-call>);
@@ -653,14 +658,14 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <definition-constant-leaf>, local? :: <boolean>)
+     func :: <definition-constant-leaf>)
     => ();
-  optimize-unknown-call(component, call, func.const-defn, #f);
+  optimize-unknown-call(component, call, func.const-defn);
 end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-constant-definition>, local? :: <boolean>)
+     defn :: <abstract-constant-definition>)
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -669,7 +674,7 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <function-definition>, local? :: <boolean>)
+     defn :: <function-definition>)
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
@@ -677,19 +682,74 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-method-definition>, local? :: <boolean>)
+     defn :: <generic-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+
+  let bogus? = #f;
+  let arg-types = #();
+  block (return)
+    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+	 gf-spec in sig.specializers)
+      unless (arg-dep)
+	compiler-warning("Not enough arguments.");
+	bogus? := #t;
+	return();
+      end;
+      let arg-type = arg-dep.source-exp.derived-type;
+      unless (ctypes-intersect?(arg-type, gf-spec))
+	compiler-warning("Invalid type argument.");
+	bogus? := #t;
+      end;
+      arg-types := pair(arg-type, arg-types);
+    finally
+      if (arg-dep & ~sig.key-infos & ~sig.rest-type)
+	compiler-warning("Too many arguments.");
+	bogus? := #t;
+      end;
+    end;
+  end;
+  if (bogus?)
+    change-call-kind(component, call, <error-call>);
+  else
+    let meths = ct-sorted-applicable-methods(defn, reverse!(arg-types));
+    if (meths == #())
+      compiler-warning("No applicable methods.");
+      change-call-kind(component, call, <error-call>);
+    elseif (meths)
+      // ### Need to check the keywords before the ct method selection
+      // is valid.
+      let new-func = make-definition-leaf(make-builder(component),meths.first);
+      let func-dep = call.depends-on;
+      remove-dependency-from-source(component, func-dep);
+      func-dep.source-exp := new-func;
+      func-dep.source-next := new-func.dependents;
+      new-func.dependents := func-dep;
+      queue-dependent(component, call);
+    else
+      // ### Check to see if the generic function has a discriminator
+      // function.  If so, change the function to it.
+      #f;
+    end;
+  end;
+end;    
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-method-definition>)
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
   let leaf = defn.method-defn-leaf;
   if (leaf)
-    optimize-unknown-call(component, call, leaf, #f);
+    optimize-unknown-call(component, call, leaf);
   end;
 end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <exit-function>, local? :: <boolean>)
+     func :: <exit-function>)
     => ();
   // Make a values operation, steeling the args from the call.
   let args = call.depends-on.dependent-next;
