@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.45 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.46 1995/05/18 23:20:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1499,6 +1499,28 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
+  (#"catch",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let func = extract-operands(operation, output-info, $heap-rep);
+     let (values, sp) = cluster-names(output-info.output-info-cur-stack-depth);
+     let stream = output-info.output-info-guts-stream;
+     if (defines)
+       format(stream, "%s = ", sp);
+     end;
+     let catch-defn = dylan-defn(#"catch");
+     assert(instance?(catch-defn, <abstract-method-definition>));
+     let catch-info = get-info-for(find-main-entry(catch-defn), output-info);
+     format(stream, "save_state(%s, %s, %s);\n",
+	    catch-info.function-info-name, values, func);
+     if (defines)
+       deliver-cluster(defines, values, sp, wild-ctype(), output-info);
+     end;
+   end);
+
+define-primitive-emitter
   (#"fixnum-=",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1821,6 +1843,14 @@ define method ref-leaf (target-rep :: <representation>,
   let info = get-info-for(leaf.const-defn, output-info);
   conversion-expr(target-rep, info.backend-var-info-name,
 		  info.backend-var-info-rep, output-info);
+end;
+
+define method ref-leaf (target-rep :: <representation>,
+			leaf :: <function-literal>,
+			output-info :: <output-info>)
+    => res :: <string>;
+  conversion-expr(target-rep, "{### Function Literal}",
+		  $heap-rep, output-info);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
