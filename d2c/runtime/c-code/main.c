@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.5 1999/04/12 03:40:08 emk Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.6 1999/04/12 05:19:42 emk Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,7 +25,10 @@ void real_main(int argc, char *argv[])
     descriptor_t *sp = allocate_stack();
 
     /* Remember our arguments so we can support Harlequin-style
-       application-name and application-arguments functions. */
+       application-name and application-arguments functions. Once we
+       make these copies, we are no longer allowed to destructively
+       modify argv. But this is Dylan--you should know better than
+       to destructively modify things without express permission anyway. */
     application_argc = argc;
     application_argv = argv;
 
