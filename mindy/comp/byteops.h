@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.2 1994/04/08 15:23:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.3 1994/04/14 19:13:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,22 +21,22 @@
 #define op_MAKE_VALUE_CELL 3
 #define op_VALUE_CELL_REF 4
 #define op_VALUE_CELL_SET 5
-#define op_VARIABLE_VALUE 6
-#define op_VARIABLE_FUNCTION 7
-#define op_SET_VARIABLE_VALUE 8
-#define op_MAKE_METHOD 9
-#define op_CHECK_TYPE 10
-#define op_CHECK_TYPE_FUNCTION 11
-#define op_CANONICALIZE_VALUE 12
-#define op_PUSH_BYTE 13
-#define op_PUSH_INT 14
-#define op_CONDITIONAL_BRANCH 15
-#define op_BRANCH 16
-#define op_PUSH_NIL 17
-#define op_PUSH_UNBOUND 18
-#define op_PUSH_TRUE 19
-#define op_PUSH_FALSE 20
-#define op_DUP 21
+#define op_MAKE_METHOD 6
+#define op_CHECK_TYPE 7
+#define op_CHECK_TYPE_FUNCTION 8
+#define op_CANONICALIZE_VALUE 9
+#define op_PUSH_BYTE 10
+#define op_PUSH_INT 11
+#define op_CONDITIONAL_BRANCH 12
+#define op_BRANCH 13
+#define op_PUSH_NIL 14
+#define op_PUSH_UNBOUND 15
+#define op_PUSH_TRUE 16
+#define op_PUSH_FALSE 17
+#define op_DUP 18
+#define op_DOT_TAIL 19
+#define op_DOT_FOR_MANY 20
+#define op_DOT_FOR_SINGLE 21
 
 #define op_PUSH_CONSTANT 0x20
 #define op_PUSH_ARG 0x30
@@ -46,7 +46,9 @@
 #define op_CALL_TAIL 0x70
 #define op_CALL_FOR_MANY 0x80
 #define op_CALL_FOR_SINGLE 0x90
-
+#define op_PUSH_VALUE 0xa0
+#define op_PUSH_FUNCTION 0xb0
+#define op_POP_VALUE 0xc0
 
 #define op_PLUS 0xf0
 #define op_MINUS 0xf1
