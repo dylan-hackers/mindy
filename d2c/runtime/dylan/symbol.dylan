@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.9 1996/02/23 00:02:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.10 1996/03/02 19:21:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -66,7 +66,7 @@ define method rehash-symbols (table :: <symbol-table>) => ();
   let new-cells = make(<simple-object-vector>, size: new-size, fill: #f);
 
   local method iterate (sym :: false-or(<symbol>)) => ();
-	  if (sym ~= #f)
+	  if (sym)
 	    let sym :: <symbol> = sym;
 	    let next = sym.symbol-next;
 	    let cell-index = modulo(sym.symbol-hashing, new-size);
@@ -114,7 +114,7 @@ define sealed method make
   block (return)
     for (sym = table.cells[cell-index]
 	   then sym.symbol-next,
-	 until: sym == #f)
+	 while: sym)
       if (symbol-equal(string, sym.symbol-string))
 	return(sym);
       end if;
@@ -164,10 +164,10 @@ end method symbol-hash;
 // 
 define method symbol-equal
     (str1 :: <byte-string>, str2 :: <byte-string>) => (result :: <boolean>);
-  if (str1.size = str2.size)
+  if (str1.size == str2.size)
     block (return)
       for (char1 in str1, char2 in str2)
-	if (char1 ~= char2 & as-lowercase(char1) ~= as-lowercase(char2))
+	if (char1 ~== char2 & as-lowercase(char1) ~== as-lowercase(char2))
 	  return(#f);
 	end if;
       end for;
@@ -186,7 +186,7 @@ define constant $symbol-table :: <symbol-table>
   = begin
       let sz = for (sym = %%primitive initial-symbols () then sym.symbol-next,
 		    count :: <integer> from 0,
-		    until: sym == #f)
+		    while: sym)
 	       finally count;
 	       end for;
       let table = make(<symbol-table>, size: sz);
