@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.51 1995/05/29 00:32:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.52 1995/05/29 02:08:24 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1793,6 +1793,33 @@ define-primitive-emitter
      write('"', stream);
      deliver-result(defines, string-output-stream-string(stream), *ptr-rep*,
 		    #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"as-boolean",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let expr = extract-operands(operation, output-info, $boolean-rep);
+     deliver-result(defines, expr, $boolean-rep, #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"not",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let arg = operation.depends-on.source-exp;
+     let expr
+       = if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
+	   format-to-string("!%s", ref-leaf($boolean-rep, arg, output-info));
+	 else
+	   format-to-string("(%s == obj_False)",
+			    ref-leaf($heap-rep, arg, output-info));
+	 end;
+     deliver-result(defines, expr, $boolean-rep, #f, output-info);
    end);
 
 define-primitive-emitter

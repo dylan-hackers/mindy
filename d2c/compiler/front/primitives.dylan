@@ -195,6 +195,14 @@ define-primitive
    #(union:, #"<fixed-integer>", #"<raw-pointer>",
      #"<single-float>", #"<double-float>", #"<extended-float>"));
 
+define-primitive
+  (#"as-boolean", #(#"<object>"), #"<boolean>",
+   pure: #t);
+
+define-primitive
+  (#"not", #(#"<object>"), #"<boolean>",
+   pure: #t);
+
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
     (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<boolean>",
