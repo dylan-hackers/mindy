@@ -9,13 +9,14 @@ clean:
 
 # parser-utilities library
 
-parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan parse-conditions.dylan multistring.dylan
+parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan \
+		      parse-conditions.dylan multistring.dylan
 	touch $@
 
 parser-utilities.lib.du: parser-utilities.lid
 	d2c $<
 
-# ansi-c-library
+# ansi-c library
 
 ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan
 	touch $@
@@ -23,11 +24,22 @@ ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan
 ansi-c.lib.du: ansi-c.lid parser-utilities.lib.du
 	d2c $<
 
+# c-parser library
+
+c-parser.dylan: c-parser.input	
+	parsergen $< $@
+
+c-parser.lid: c-parser-exports.dylan c-parser-interface.dylan \
+	      c-parser.dylan c-lexer.dylan c-lexer-cpp.dylan 
+	touch $@
+
+c-parser.lib.du: c-parser.lid
+	d2c $<
+
 # ansi-c-test library
 
 ansi-c-test.lid: ansi-c-test-exports.dylan ansi-c-test.dylan
 	touch $@
 
-ansi-c-test: ansi-c-test.lid ansi-c.lib.du
+ansi-c-test: ansi-c-test.lid ansi-c.lib.du c-parser.lib.du
 	d2c $<
-
