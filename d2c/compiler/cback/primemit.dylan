@@ -1,12 +1,12 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.13 1995/11/16 04:11:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.14 1995/11/20 16:16:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 define method default-primitive-emitter
     (results :: false-or(<definition-site-variable>),
-     operation :: <primitive>, output-info :: <output-info>)
+     operation :: <primitive>, file :: <file-state>)
     => ();
   let stream = make(<byte-string-output-stream>);
 
@@ -20,12 +20,12 @@ define method default-primitive-emitter
 	    unless (first?)
 	      write(", ", stream);
 	    end;
-	    write(c-name-and-rep(var, output-info), stream);
+	    write(c-name-and-rep(var, file), stream);
 	  end;
 	  write("] = ", stream);
 	  #f;
 	elseif (instance?(results.var-info, <values-cluster-info>))
-	  let (bottom-name, top-name) = produce-cluster(results, output-info);
+	  let (bottom-name, top-name) = produce-cluster(results, file);
 	  format(stream, "%s = ", top-name);
 	  #f;
 	else
@@ -52,7 +52,7 @@ define method default-primitive-emitter
 	  unless (first?)
 	    write(", ", stream);
 	  end;
-	  write(ref-leaf(rep, dep.source-exp, output-info), stream);
+	  write(ref-leaf(rep, dep.source-exp, file), stream);
 	end;
 	return();
       else
@@ -61,11 +61,11 @@ define method default-primitive-emitter
 	end;
 	if (type == #"cluster")
 	  let (bottom-name, top-name)
-	    = consume-cluster(dep.source-exp, output-info);
+	    = consume-cluster(dep.source-exp, file);
 	  format(stream, "%s...%s", bottom-name, top-name);
 	else
 	  let rep = pick-representation(type, #"speed");
-	  write(ref-leaf(rep, dep.source-exp, output-info), stream);
+	  write(ref-leaf(rep, dep.source-exp, file), stream);
 	end;
       end;
     end;
@@ -74,16 +74,16 @@ define method default-primitive-emitter
   let expr = stream.string-output-stream-string;
 
   if (use-deliver-result?)
-    let (name, rep) = c-name-and-rep(results, output-info);
-    deliver-result(results, expr, rep, #f, output-info);
+    let (name, rep) = c-name-and-rep(results, file);
+    deliver-result(results, expr, rep, #f, file);
   else
-    format(output-info.output-info-guts-stream, "%s;\n", expr);
+    format(file.file-guts-stream, "%s;\n", expr);
   end;
 end;
 
 
 define method extract-operands
-    (operation :: <operation>, output-info :: <output-info>,
+    (operation :: <operation>, file :: <file-state>,
      #rest representations)
     => (#rest str :: <string>);
   let results = make(<stretchy-vector>);
@@ -102,12 +102,12 @@ define method extract-operands
 	  if (index + 2 == representations.size)
 	    let rep = representations[index + 1];
 	    for (op = op then op.dependent-next)
-	      add!(results, ref-leaf(rep, op.source-exp, output-info));
+	      add!(results, ref-leaf(rep, op.source-exp, file));
 	    end;
 	    return();
 	  end;
 	elseif (op)
-	  add!(results, ref-leaf(rep, op.source-exp, output-info));
+	  add!(results, ref-leaf(rep, op.source-exp, file));
 	else
 	  error("Not enough operands for %s", operation);
 	end;
@@ -125,59 +125,59 @@ define-primitive-emitter
   (#"extract-args",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let nargs = extract-operands(operation, output-info, *long-rep*);
+     let nargs = extract-operands(operation, file, *long-rep*);
      let expr = format-to-string("((void *)(orig_sp - %s))", nargs);
-     deliver-result(results, expr, *ptr-rep*, #f, output-info);
+     deliver-result(results, expr, *ptr-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extract-arg",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (args, index) = extract-operands(operation, output-info,
+     let (args, index) = extract-operands(operation, file,
 					  *ptr-rep*, *long-rep*);
      let expr = format-to-string("(((descriptor_t *)%s)[%s])", args, index);
-     deliver-result(results, expr, *general-rep*, #t, output-info);
+     deliver-result(results, expr, *general-rep*, #t, file);
    end);
 
 define-primitive-emitter
   (#"make-rest-arg",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let (args, nfixed, nargs)
-       = extract-operands(operation, output-info,
+       = extract-operands(operation, file,
 			  *ptr-rep*, *long-rep*, *long-rep*);
-     let cur-top = cluster-names(output-info.output-info-cur-stack-depth);
+     let cur-top = cluster-names(file.file-cur-stack-depth);
      let mra-defn = dylan-defn(#"make-rest-arg");
-     let mra-info = find-main-entry-info(mra-defn, output-info);
+     let mra-info = find-main-entry-info(mra-defn, file);
      let expr
        = format-to-string("%s(%s, (descriptor_t *)%s + %s, %s - %s)",
-			  main-entry-name(mra-info, output-info), cur-top,
+			  main-entry-name(mra-info, file), cur-top,
 			  args, nfixed, nargs, nfixed);
-     deliver-result(defines, expr, *heap-rep*, #t, output-info);
+     deliver-result(defines, expr, *heap-rep*, #t, file);
    end);
 
 define-primitive-emitter
   (#"pop-args",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let stream = output-info.output-info-guts-stream;
-     let args = extract-operands(operation, output-info, *ptr-rep*);
-     spew-pending-defines(output-info);
-     assert(zero?(output-info.output-info-cur-stack-depth));
+     let stream = file.file-guts-stream;
+     let args = extract-operands(operation, file, *ptr-rep*);
+     spew-pending-defines(file);
+     assert(zero?(file.file-cur-stack-depth));
      if (results)
        format(stream, "cluster_0_top = orig_sp;\n");
      end;
      format(stream, "orig_sp = %s;\n", args);
-     deliver-cluster(results, "orig_sp", "cluster_0_top", 0, output-info);
+     deliver-cluster(results, "orig_sp", "cluster_0_top", 0, file);
    end);
 
 
@@ -187,9 +187,9 @@ define-primitive-emitter
   (#"canonicalize-results",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let stream = output-info.output-info-guts-stream;
+     let stream = file.file-guts-stream;
      let cluster = operation.depends-on.source-exp;
      let nfixed-leaf = operation.depends-on.dependent-next.source-exp;
      let nfixed = if (instance?(nfixed-leaf, <literal-constant>))
@@ -198,7 +198,7 @@ define-primitive-emitter
 		    error("nfixed arg to %%%%primitive canonicalize-results "
 			    "isn't constant?");
 		  end;
-     let (bottom-name, top-name) = consume-cluster(cluster, output-info);
+     let (bottom-name, top-name) = consume-cluster(cluster, file);
      format(stream, "%s = pad_cluster(%s, %s, %d);\n",
 	    top-name, bottom-name, top-name, nfixed);
      let results = make(<vector>, size: nfixed + 1);
@@ -207,22 +207,22 @@ define-primitive-emitter
 			      *general-rep*);
      end;
      let mra-defn = dylan-defn(#"make-rest-arg");
-     let mra-info = find-main-entry-info(mra-defn, output-info);
+     let mra-info = find-main-entry-info(mra-defn, file);
      results[nfixed]
        := pair(format-to-string("%s(%s, %s + %d, %s - %s - %d)",
-				main-entry-name(mra-info, output-info),
+				main-entry-name(mra-info, file),
 				top-name,
 				bottom-name, nfixed,
 				top-name, bottom-name, nfixed),
 	       *heap-rep*);
-     deliver-results(defines, results, #t, output-info);
+     deliver-results(defines, results, #t, file);
    end);
 
 define-primitive-emitter
   (#"merge-clusters",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      local
        method repeat (dep :: false-or(<dependency>))
@@ -231,7 +231,7 @@ define-primitive-emitter
 	   let (next-bottom, next-top, values-count)
 	     = repeat(dep.dependent-next);
 	   let cluster = dep.source-exp;
-	   let (my-bottom, my-top) = consume-cluster(cluster, output-info);
+	   let (my-bottom, my-top) = consume-cluster(cluster, file);
 	   unless (next-bottom == #f | my-top = next-bottom)
 	     error("Merging two clusters that arn't adjacent?");
 	   end;
@@ -245,9 +245,9 @@ define-primitive-emitter
        = repeat(operation.depends-on);
      if (bottom-name)
        deliver-cluster(defines, bottom-name, top-name, values-count,
-		       output-info);
+		       file);
      else
-       deliver-results(defines, #[], #f, output-info);
+       deliver-results(defines, #[], #f, file);
      end;
    end);
 
@@ -255,29 +255,29 @@ define-primitive-emitter
   (#"values-sequence",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let vec = extract-operands(operation, output-info, *heap-rep*);
+     let vec = extract-operands(operation, file, *heap-rep*);
      let (cur-sp, new-sp)
-       = cluster-names(output-info.output-info-cur-stack-depth);
-     format(output-info.output-info-guts-stream,
+       = cluster-names(file.file-cur-stack-depth);
+     format(file.file-guts-stream,
 	    "%s = values_sequence(%s, %s);\n", new-sp, cur-sp, vec);
-     deliver-cluster(defines, cur-sp, new-sp, 0, output-info);
+     deliver-cluster(defines, cur-sp, new-sp, 0, file);
    end);
 
 define-primitive-emitter
   (#"values",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let results = make(<stretchy-vector>);
      for (dep = operation.depends-on then dep.dependent-next,
 	  while: dep)
-       let expr = ref-leaf(*general-rep*, dep.source-exp, output-info);
+       let expr = ref-leaf(*general-rep*, dep.source-exp, file);
        add!(results, pair(expr, *general-rep*));
      end;
-     deliver-results(defines, results, #f, output-info);
+     deliver-results(defines, results, #f, file);
    end);
 
 
@@ -287,18 +287,18 @@ define-primitive-emitter
   (#"allocate",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let bytes = extract-operands(operation, output-info, *long-rep*);
+     let bytes = extract-operands(operation, file, *long-rep*);
      deliver-result(defines, format-to-string("allocate(%s)", bytes),
-		    *heap-rep*, #f, output-info);
+		    *heap-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"make-data-word-instance",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let cclass = operation.derived-type;
      let target-rep = pick-representation(cclass, #"speed");
@@ -310,8 +310,8 @@ define-primitive-emitter
        error("The instance and slot representations don't match in a "
 	       "data-word reference?");
      end;
-     let source = extract-operands(operation, output-info, source-rep);
-     deliver-result(defines, source, target-rep, #f, output-info);
+     let source = extract-operands(operation, file, source-rep);
+     deliver-result(defines, source, target-rep, #f, file);
    end);
 
 
@@ -321,7 +321,7 @@ define-primitive-emitter
   (#"call-out",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let stream = make(<byte-string-output-stream>);
 
@@ -346,7 +346,7 @@ define-primitive-emitter
 	   let next = dep.dependent-next;
 	   format(stream, "(%s)%s",
 		  rep.representation-c-type,
-		  ref-leaf(rep, next.source-exp, output-info));
+		  ref-leaf(rep, next.source-exp, file));
 	   repeat(next.dependent-next, #f);
 	 end;
        end;
@@ -354,14 +354,14 @@ define-primitive-emitter
 
      write(')', stream);
 
-     spew-pending-defines(output-info);
+     spew-pending-defines(file);
      if (result-rep)
        deliver-result(defines, string-output-stream-string(stream),
-		      result-rep, #t, output-info);
+		      result-rep, #t, file);
      else
-       format(output-info.output-info-guts-stream, "%s;\n",
+       format(file.file-guts-stream, "%s;\n",
 	      string-output-stream-string(stream));
-       deliver-results(defines, #[], #f, output-info);
+       deliver-results(defines, #[], #f, file);
      end;
    end);
 
@@ -369,23 +369,23 @@ define-primitive-emitter
   (#"c-decl",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let decl = operation.depends-on.source-exp;
      unless (instance?(decl, <literal-constant>)
 	       & instance?(decl.value, <literal-string>))
        error("decl in c-decl isn't a constant string?");
      end;
-     format(output-info.output-info-body-stream, "%s\n",
+     format(file.file-body-stream, "%s\n",
 	    decl.value.literal-value);
-     deliver-results(defines, #[], #f, output-info);
+     deliver-results(defines, #[], #f, file);
    end);
 
 define-primitive-emitter
   (#"c-expr",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let stream = make(<byte-string-output-stream>);
 
@@ -398,14 +398,14 @@ define-primitive-emitter
        error("expr in c-expr isn't a constant string?");
      end;
 
-     spew-pending-defines(output-info);
+     spew-pending-defines(file);
      if (result-rep)
        deliver-result(defines, expr.value.literal-value,
-		      result-rep, #t, output-info);
+		      result-rep, #t, file);
      else
-       format(output-info.output-info-guts-stream, "%s;\n",
+       format(file.file-guts-stream, "%s;\n",
 	      expr.value.literal-value);
-       deliver-results(defines, #[], #f, output-info);
+       deliver-results(defines, #[], #f, file);
      end;
    end);
 
@@ -440,7 +440,7 @@ define-primitive-emitter
   (#"c-string",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let leaf = operation.depends-on.source-exp;
      unless (instance?(leaf, <literal-constant>))
@@ -480,7 +480,7 @@ define-primitive-emitter
      end;
      write('"', stream);
      deliver-result(defines, string-output-stream-string(stream), *ptr-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 
@@ -490,61 +490,61 @@ define-primitive-emitter
   (#"as-boolean",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let expr = extract-operands(operation, output-info, *boolean-rep*);
-     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
+     let expr = extract-operands(operation, file, *boolean-rep*);
+     deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"not",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let arg = operation.depends-on.source-exp;
      let expr
        = if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
-	   format-to-string("!%s", ref-leaf(*boolean-rep*, arg, output-info));
+	   format-to-string("!%s", ref-leaf(*boolean-rep*, arg, file));
 	 else
 	   format-to-string("(%s == obj_False)",
-			    ref-leaf(*heap-rep*, arg, output-info));
+			    ref-leaf(*heap-rep*, arg, file));
 	 end;
-     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
+     deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"==",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *heap-rep*, *heap-rep*);
      deliver-result(defines, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"initialized?",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let expr = format-to-string("(%s != NULL)",
-				 extract-operands(operation, output-info,
+				 extract-operands(operation, file,
 						  *heap-rep*));
-     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
+     deliver-result(defines, expr, *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"initial-symbols",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     extract-operands(operation, output-info);
-     deliver-result(defines, "initial_symbols", *heap-rep*, #f, output-info);
+     extract-operands(operation, file);
+     deliver-result(defines, "initial_symbols", *heap-rep*, #f, file);
    end);
    
 
@@ -555,36 +555,36 @@ define-primitive-emitter
   (#"current-sp",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let sp = cluster-names(output-info.output-info-cur-stack-depth);
-     deliver-result(defines, sp, *ptr-rep*, #t, output-info);
+     let sp = cluster-names(file.file-cur-stack-depth);
+     deliver-result(defines, sp, *ptr-rep*, #t, file);
    end);
 
 define-primitive-emitter
   (#"unwind-stack",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let sp = cluster-names(output-info.output-info-cur-stack-depth);
-     format(output-info.output-info-guts-stream, "%s = %s;\n",
-	    sp, extract-operands(operation, output-info, *ptr-rep*));
-     deliver-results(defines, #[], #f, output-info);
+     let sp = cluster-names(file.file-cur-stack-depth);
+     format(file.file-guts-stream, "%s = %s;\n",
+	    sp, extract-operands(operation, file, *ptr-rep*));
+     deliver-results(defines, #[], #f, file);
    end);
 
 define-primitive-emitter
   (#"throw",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
      let state-expr
-       = ref-leaf(*ptr-rep*, operation.depends-on.source-exp, output-info);
+       = ref-leaf(*ptr-rep*, operation.depends-on.source-exp, file);
      let cluster = operation.depends-on.dependent-next.source-exp;
-     let (bottom-name, top-name) = consume-cluster(cluster, output-info);
-     spew-pending-defines(output-info);
-     format(output-info.output-info-guts-stream,
+     let (bottom-name, top-name) = consume-cluster(cluster, file);
+     spew-pending-defines(file);
+     format(file.file-guts-stream,
 	    "throw(%s, %s);\n", state-expr, top-name);
    end);
 
@@ -595,159 +595,159 @@ define-primitive-emitter
   (#"fixnum-=",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-<",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s < %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-+",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s + %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-*",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s * %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum--",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s - %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-negative",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(defines, format-to-string("(- %s)", x), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-divide",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     spew-pending-defines(output-info);
-     let (x, y) = extract-operands(operation, output-info,
+     spew-pending-defines(file);
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-results(defines,
 		     vector(pair(format-to-string("(%s / %s)", x, y),
 				 *long-rep*),
 			    pair(format-to-string("(%s %% %s)", x, y),
 				 *long-rep*)),
-		     #f, output-info);
+		     #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-logior",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s | %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-logxor",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s ^ %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-logand",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s & %s)", x, y), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-lognot",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(defines, format-to-string("(~ %s)", x), *long-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-shift-left",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s << %s)", x, y),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"fixnum-shift-right",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s >> %s)", x, y),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 
@@ -757,199 +757,199 @@ define-primitive-emitter
   (#"fixed-as-single",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(results, format-to-string("((float)%s)", x),
-		    *float-rep*, #f, output-info);
+		    *float-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-as-single",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("((float)%s)", x),
-		    *float-rep*, #f, output-info);
+		    *float-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-as-single",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("((float)%s)", x),
-		    *float-rep*, #f, output-info);
+		    *float-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-<",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-<=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results,
 		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-==",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-~=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results,
 		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-+",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s + %s)", x, y), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-*",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s * %s)", x, y), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single--",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s - %s)", x, y), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-/",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s / %s)", x, y), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-abs",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("fabsf(%s)", x), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-negative",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("(-%s)", x), *float-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"single-floor",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("((long)floor(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-ceiling",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("((long)ceil(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-round",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("((long)rint(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 
@@ -959,199 +959,199 @@ define-primitive-emitter
   (#"fixed-as-double",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(results, format-to-string("((double)%s)", x),
-		    *double-rep*, #f, output-info);
+		    *double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-as-double",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("((double)%s)", x),
-		    *double-rep*, #f, output-info);
+		    *double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-as-double",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("((double)%s)", x),
-		    *double-rep*, #f, output-info);
+		    *double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-<",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-<=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
 		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-==",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-~=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
 		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-+",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s + %s)", x, y), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-*",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s * %s)", x, y), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double--",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s - %s)", x, y), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-/",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s / %s)", x, y), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-abs",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("fabsf(%s)", x), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-negative",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("(-%s)", x), *double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"double-floor",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("((long)floor(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-ceiling",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("((long)ceil(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-round",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("((long)rint(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 
@@ -1161,199 +1161,199 @@ define-primitive-emitter
   (#"fixed-as-extended",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(results, format-to-string("((long double)%s)", x),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"single-as-extended",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
+     let x = extract-operands(operation, file, *float-rep*);
      deliver-result(results, format-to-string("((long double)%s)", x),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"double-as-extended",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
+     let x = extract-operands(operation, file, *double-rep*);
      deliver-result(results, format-to-string("((long double)%s)", x),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-<",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-<=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
 		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-==",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-~=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
 		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-+",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s + %s)", x, y),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-*",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s * %s)", x, y),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended--",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s - %s)", x, y),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-/",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s / %s)", x, y),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-abs",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("fabsf(%s)", x),
-		    *long-double-rep*, #f, output-info);
+		    *long-double-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-negative",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("(-%s)", x), *long-double-rep*,
-		    #f, output-info);
+		    #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-floor",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("((long)floor(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-ceiling",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("((long)ceil(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"extended-round",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
+     let x = extract-operands(operation, file, *long-double-rep*);
      deliver-result(results, format-to-string("((long)rint(%s))", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 
@@ -1363,71 +1363,71 @@ define-primitive-emitter
   (#"make-raw-pointer",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *long-rep*);
+     let x = extract-operands(operation, file, *long-rep*);
      deliver-result(results, format-to-string("((void *)%s)", x),
-		    *ptr-rep*, #f, output-info);
+		    *ptr-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"raw-pointer-address",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let x = extract-operands(operation, output-info, *ptr-rep*);
+     let x = extract-operands(operation, file, *ptr-rep*);
      deliver-result(results, format-to-string("((long)%s)", x),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"pointer-+",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *ptr-rep*, *long-rep*);
      deliver-result(results,
 		    format-to-string("((void *)((char *)%s + %s))", x, y),
-		    *ptr-rep*, #f, output-info);
+		    *ptr-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"pointer--",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *ptr-rep*, *ptr-rep*);
      deliver-result(results,
 		    format-to-string("((char *)%s - (char *)%s)", x, y),
-		    *long-rep*, #f, output-info);
+		    *long-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"pointer-<",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *ptr-rep*, *ptr-rep*);
      deliver-result(results,
 		    format-to-string("((char *)%s < (char *)%s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);
 
 define-primitive-emitter
   (#"pointer-=",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
-	   output-info :: <output-info>)
+	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, output-info,
+     let (x, y) = extract-operands(operation, file,
 				   *ptr-rep*, *ptr-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    *boolean-rep*, #f, output-info);
+		    *boolean-rep*, #f, file);
    end);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.114 1995/11/16 17:07:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.115 1995/11/20 16:16:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1169,8 +1169,8 @@ define module cback
   use od-format;
 
   export
-    <unit-info>, unit-info-init-roots,
-    <output-info>, 
+    <unit-state>, unit-init-roots,
+    <file-state>, 
     emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue,
     entry-point-c-name;
 end;

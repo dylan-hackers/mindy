@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.81 1995/11/19 02:40:11 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.82 1995/11/20 16:16:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -143,64 +143,64 @@ end;
 
 // Output file state
 
-define class <unit-info> (<object>)
+define class <unit-state> (<object>)
   //
   // String prefix for this unit.
-  slot unit-info-prefix :: <byte-string>, required-init-keyword: prefix:;
+  slot unit-prefix :: <byte-string>, required-init-keyword: prefix:;
   //
   // id number for the next global.
-  slot unit-info-next-global :: <fixed-integer>, init-value: 0;
+  slot unit-next-global :: <fixed-integer>, init-value: 0;
   //
   //
   // keeps track of names used already.
-  slot unit-info-global-table :: <dictionary>,
+  slot unit-global-table :: <dictionary>,
     init-function: method () make(<string-table>) end method;
   // Vector of the initial values for the roots vector.
-  slot unit-info-init-roots :: <stretchy-vector>,
+  slot unit-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
 
-define class <output-info> (<object>)
+define class <file-state> (<object>)
   //
   // The unit info for this output info.
-  slot output-info-unit-info :: <unit-info>,
-    required-init-keyword: unit-info:;
+  slot file-unit :: <unit-state>,
+    required-init-keyword: unit:;
   //
   // Things we have already spewed defns for.
-  slot output-info-prototypes-exist-for :: <string-table>,
+  slot file-prototypes-exist-for :: <string-table>,
     init-function: curry(make, <string-table>);
   //
-  slot output-info-result-structures :: <equal-table>,
+  slot file-result-structures :: <equal-table>,
     init-function: curry(make, <equal-table>);
   //
-  slot output-info-body-stream :: <stream>,
+  slot file-body-stream :: <stream>,
     required-init-keyword: body-stream:;
   //
-  slot output-info-vars-stream :: <stream>,
+  slot file-vars-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
   //
-  slot output-info-guts-stream :: <stream>,
+  slot file-guts-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
   //
-  slot output-info-next-mv-result-struct :: <fixed-integer>, init-value: 0;
+  slot file-next-mv-result-struct :: <fixed-integer>, init-value: 0;
   //
-  slot output-info-local-vars :: <object-table>,
+  slot file-local-vars :: <object-table>,
     init-function: curry(make, <object-table>);
   //
   // id number for the next block.
-  slot output-info-next-block :: <fixed-integer>, init-value: 0;
+  slot file-next-block :: <fixed-integer>, init-value: 0;
   //
   // id number for the next local.  Reset at the start of each function.
-  slot output-info-next-local :: <fixed-integer>, init-value: 0;
+  slot file-next-local :: <fixed-integer>, init-value: 0;
   //
   // keeps track of names used already.
-  slot output-info-local-table :: <dictionary>,
+  slot file-local-table :: <dictionary>,
     init-function: method () make(<string-table>) end method;
   //
   // C variable holding the current stack top.
-  slot output-info-cur-stack-depth :: <fixed-integer>,
+  slot file-cur-stack-depth :: <fixed-integer>,
     init-value: 0;
 end;
 
@@ -210,24 +210,24 @@ end;
 // Utilities.
 
 define method maybe-emit-prototype
-    (name :: <byte-string>, info :: <object>, output-info :: <output-info>)
+    (name :: <byte-string>, info :: <object>, file :: <file-state>)
     => ();
-  unless (element(output-info.output-info-prototypes-exist-for, name,
+  unless (element(file.file-prototypes-exist-for, name,
 		  default: #f))
-    emit-prototype-for(name, info, output-info);
-    output-info.output-info-prototypes-exist-for[name] := #t;
+    emit-prototype-for(name, info, file);
+    file.file-prototypes-exist-for[name] := #t;
   end;
 end;
 
 define generic emit-prototype-for
-    (name :: <byte-string>, info :: <object>, output-info :: <output-info>)
+    (name :: <byte-string>, info :: <object>, file :: <file-state>)
     => ();
 
 
 define method get-info-for (thing :: <annotatable>,
-			    output-info :: <output-info>)
+			    file :: <file-state>)
     => res :: <object>;
-  thing.info | (thing.info := make-info-for(thing, output-info));
+  thing.info | (thing.info := make-info-for(thing, file));
 end;
 
 define constant c-prefix-transform :: <vector>
@@ -295,47 +295,47 @@ define method c-prefix (description :: <symbol>) => (result :: <string>);
 end method c-prefix;
 
 define method new-local
-    (output-info :: <output-info>,
+    (file :: <file-state>,
      #key prefix :: <string> = "L_", modifier :: <string> = "anon")
  => res :: <string>;
   let result = format-to-string("%s%s", prefix, modifier);
-  if (key-exists?(output-info.output-info-local-table, result))
-    let num = output-info.output-info-next-local;
-    output-info.output-info-next-local := num + 1;
-    new-local(output-info, prefix: prefix,
+  if (key-exists?(file.file-local-table, result))
+    let num = file.file-next-local;
+    file.file-next-local := num + 1;
+    new-local(file, prefix: prefix,
 	      modifier: format-to-string("%s_%d", modifier, num));
   else
-    output-info.output-info-local-table[result] := result;
+    file.file-local-table[result] := result;
   end if;
 end;
 
 define method new-global
-    (output-info :: <output-info>,
+    (file :: <file-state>,
      #key prefix :: <string> = "G", modifier :: <string> = "")
  => res :: <string>;
-  let unit-info = output-info.output-info-unit-info;
+  let unit = file.file-unit;
 
-  let result = format-to-string("%s_%s%s", unit-info.unit-info-prefix,
+  let result = format-to-string("%s_%s%s", unit.unit-prefix,
 				prefix, modifier);
-  if (key-exists?(unit-info.unit-info-global-table, result))
-    let num = unit-info.unit-info-next-global;
-    unit-info.unit-info-next-global := num + 1;
-    new-global(output-info, prefix: prefix,
+  if (key-exists?(unit.unit-global-table, result))
+    let num = unit.unit-next-global;
+    unit.unit-next-global := num + 1;
+    new-global(file, prefix: prefix,
 	       modifier: format-to-string("%s_%d", modifier, num));
   else
-    unit-info.unit-info-global-table[result] := result;
+    unit.unit-global-table[result] := result;
   end if;
 end method new-global;
 
 define method new-root (init-value :: union(<false>, <ct-value>),
-			output-info :: <output-info>,
+			file :: <file-state>,
 			#key prefix)
-  let unit-info = output-info.output-info-unit-info;
-  let roots = unit-info.unit-info-init-roots;
+  let unit = file.file-unit;
+  let roots = unit.unit-init-roots;
   let index = roots.size;
   add!(roots, init-value);
 
-  format-to-string("%s_roots[%d]", unit-info.unit-info-prefix, index);
+  format-to-string("%s_roots[%d]", unit.unit-prefix, index);
 end;
 
 define method cluster-names (depth :: <fixed-integer>)
@@ -349,31 +349,31 @@ define method cluster-names (depth :: <fixed-integer>)
 end;
 
 define method consume-cluster
-    (cluster :: <abstract-variable>, output-info :: <output-info>)
+    (cluster :: <abstract-variable>, file :: <file-state>)
     => (bottom-name :: <string>, top-name :: <string>);
   let depth = cluster.info;
-  if (depth >= output-info.output-info-cur-stack-depth)
+  if (depth >= file.file-cur-stack-depth)
     error("Consuming a cluster that isn't on the stack?");
   end;
-  output-info.output-info-cur-stack-depth := depth;
+  file.file-cur-stack-depth := depth;
   cluster-names(depth);
 end;
 
 define method produce-cluster
-    (cluster :: <abstract-variable>, output-info :: <output-info>)
+    (cluster :: <abstract-variable>, file :: <file-state>)
     => (bottom-name :: <string>, top-name :: <string>);
   let depth = cluster.info;
-  if (depth > output-info.output-info-cur-stack-depth)
+  if (depth > file.file-cur-stack-depth)
     error("Leaving a gap when producing a cluster?");
   end;
-  output-info.output-info-cur-stack-depth := depth + 1;
+  file.file-cur-stack-depth := depth + 1;
   cluster-names(depth);
 end;
 
 define method produce-cluster
-    (cluster :: <initial-definition>, output-info :: <output-info>)
+    (cluster :: <initial-definition>, file :: <file-state>)
     => (bottom-name :: <string>, top-name :: <string>);
-  produce-cluster(cluster.definition-of, output-info);
+  produce-cluster(cluster.definition-of, file);
 end;
 
 
@@ -394,7 +394,7 @@ add-make-dumper(#"backend-var-info", *compiler-dispatcher*, <backend-var-info>,
 
 define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
 			     // ### Should really only be ssa-variable.
-			     output-info :: <output-info>)
+			     file :: <file-state>)
     => res :: <backend-var-info>;
   let varinfo = var.var-info;
   let rep = pick-representation(var.derived-type, #"speed");
@@ -402,7 +402,7 @@ define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
 end;
 
 define method make-info-for (defn :: <definition>,
-			     output-info :: <output-info>)
+			     file :: <file-state>)
     => res :: <backend-var-info>;
   let type = defn.defn-type;
   let rep = if (type)
@@ -411,7 +411,7 @@ define method make-info-for (defn :: <definition>,
 	      *general-rep*;
 	    end;
   if (instance?(rep, <immediate-representation>))
-    let name = new-global(output-info, prefix: defn.defn-name.c-prefix);
+    let name = new-global(file, prefix: defn.defn-name.c-prefix);
     make(<backend-var-info>, representation: rep, name: name);
   else
     let name = new-root(if (instance?(defn, <variable-definition>))
@@ -419,32 +419,32 @@ define method make-info-for (defn :: <definition>,
 			else
 			  defn.ct-value;
 			end,
-			output-info);
+			file);
     make(<backend-var-info>, representation: *general-rep*, name: name);
   end;
 end;
 
 
 define method get-info-for (leaf :: <initial-definition>,
-			    output-info :: <output-info>)
+			    file :: <file-state>)
     => res :: <backend-var-info>;
-  get-info-for(leaf.definition-of, output-info);
+  get-info-for(leaf.definition-of, file);
 end;
 
 define method c-name-and-rep (leaf :: <abstract-variable>,
 			      // ### Should really be ssa-variable
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  let info = get-info-for(leaf, output-info);
+  let info = get-info-for(leaf, file);
   let name = info.backend-var-info-name;
   unless (name)
     if (instance?(leaf.var-info, <debug-named-info>))
-      name := new-local(output-info,
+      name := new-local(file,
 			modifier: leaf.var-info.debug-name.c-prefix);
     else
-      name := new-local(output-info);
+      name := new-local(file);
     end if;
-    let stream = output-info.output-info-vars-stream;
+    let stream = file.file-vars-stream;
     format(stream, "%s %s;",
 	   info.backend-var-info-rep.representation-c-type, name);
     if (instance?(leaf.var-info, <debug-named-info>))
@@ -458,9 +458,9 @@ end;
 
 define method variable-representation (leaf :: <abstract-variable>,
 				       // ### Should really be ssa-variable
-				       output-info :: <output-info>)
+				       file :: <file-state>)
     => rep :: <representation>;
-  get-info-for(leaf, output-info).backend-var-info-rep;
+  get-info-for(leaf, file).backend-var-info-rep;
 end;
 
 
@@ -502,17 +502,17 @@ define constant $function-info-slots
 	 function-info-result-type, result-type:, #f);
 
 define method main-entry-name
-    (info :: <function-info>, output-info :: <output-info>)
+    (info :: <function-info>, file :: <file-state>)
     => res :: <byte-string>;
   info.function-info-main-entry-name
     | (info.function-info-main-entry-name
-	 := new-global(output-info, modifier: "_main",
+	 := new-global(file, modifier: "_main",
 		       prefix: info.function-info-name.c-prefix));
 end;
 
 define method make-function-info
     (class :: <class>, name :: <string>, signature :: <signature>,
-     closure-var-types :: <list>, output-info :: <output-info>)
+     closure-var-types :: <list>, file :: <file-state>)
     => res :: <function-info>;
   let argument-reps
     = begin
@@ -573,12 +573,12 @@ end;
 
 
 define method make-info-for
-    (function :: <fer-function-region>, output-info :: <output-info>)
+    (function :: <fer-function-region>, file :: <file-state>)
     => res :: <function-info>;
   make-function-info(<function-info>, function.name,
 		     make(<signature>, specializers: function.argument-types,
 			  returns: function.result-type),
-		     #(), output-info);
+		     #(), file);
 end;
 
 define method entry-point-c-name (entry :: <ct-entry-point>)
@@ -613,7 +613,7 @@ define constant $constant-info-slots
 add-make-dumper(#"constant-info", *compiler-dispatcher*, <constant-info>,
 		$constant-info-slots);
 
-define method make-info-for (ctv :: <ct-value>, output-info :: <output-info>)
+define method make-info-for (ctv :: <ct-value>, file :: <file-state>)
     => res :: <constant-info>;
   make(<constant-info>);
 end;
@@ -633,21 +633,21 @@ add-make-dumper(#"constant-function-info", *compiler-dispatcher*,
 		<constant-function-info>, $constant-function-info-slots);
 
 define method general-entry-name
-    (info :: <constant-function-info>, output-info :: <output-info>)
+    (info :: <constant-function-info>, file :: <file-state>)
     => res :: <byte-string>;
   info.function-info-general-entry-name
     | (info.function-info-general-entry-name
-	 := new-global(output-info, modifier: "_general",
+	 := new-global(file, modifier: "_general",
 		       prefix: info.function-info-name.c-prefix));
 
 end;
 
 define method make-info-for
-    (ctv :: <ct-function>, output-info :: <output-info>)
+    (ctv :: <ct-function>, file :: <file-state>)
     => res :: <constant-function-info>;
   make-function-info(<constant-function-info>, ctv.ct-function-name,
 		     ctv.ct-function-signature,
-		     ctv.ct-function-closure-var-types, output-info);
+		     ctv.ct-function-closure-var-types, file);
 end;
 
 define class <constant-method-info> (<constant-function-info>)
@@ -664,29 +664,29 @@ add-make-dumper(#"constant-method-info", *compiler-dispatcher*,
 		<constant-method-info>, $constant-method-info-slots);
 
 define method generic-entry-name
-    (info :: <constant-method-info>, output-info :: <output-info>)
+    (info :: <constant-method-info>, file :: <file-state>)
     => res :: <byte-string>;
   info.function-info-generic-entry-name
     | (info.function-info-generic-entry-name
-	 := new-global(output-info, modifier: "_generic",
+	 := new-global(file, modifier: "_generic",
 		       prefix: info.function-info-name.c-prefix));
 end;
 
 define method make-info-for
-    (ctv :: <ct-method>, output-info :: <output-info>)
+    (ctv :: <ct-method>, file :: <file-state>)
     => res :: <constant-function-info>;
   make-function-info(<constant-method-info>, ctv.ct-function-name,
 		     ctv.ct-function-signature,
-		     ctv.ct-function-closure-var-types, output-info);
+		     ctv.ct-function-closure-var-types, file);
 end;
 
 
 // Prologue and epilogue stuff.
 
 define method emit-prologue
-    (output-info :: <output-info>, other-units :: <simple-object-vector>)
+    (file :: <file-state>, other-units :: <simple-object-vector>)
     => ();
-  let stream = output-info.output-info-body-stream;
+  let stream = file.file-body-stream;
   format(stream, "#include <stdlib.h>\n\n");
 
   format(stream, "#include <runtime.h>\n\n");
@@ -695,11 +695,11 @@ define method emit-prologue
     format(stream, "extern descriptor_t %s_roots[];\n", unit);
   end;
   format(stream, "extern descriptor_t %s_roots[];\n\n",
-	 output-info.output-info-unit-info.unit-info-prefix);
+	 file.file-unit.unit-prefix);
   format(stream, "#define obj_True %s.heapptr\n",
-	 c-expr-and-rep(as(<ct-value>, #t), *general-rep*, output-info));
+	 c-expr-and-rep(as(<ct-value>, #t), *general-rep*, file));
   format(stream, "#define obj_False %s.heapptr\n\n",
-	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, output-info));
+	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, file));
   format(stream, "#define GENERAL_ENTRY(func) \\\n");
   format(stream, "    ((entry_t)SLOT(func, void *, %d))\n",
 	 dylan-slot-offset(function-ctype(), #"general-entry"));
@@ -709,17 +709,17 @@ define method emit-prologue
 end;
 
 define method emit-epilogue
-    (init-functions :: <vector>, output-info :: <output-info>) => ();
-  let bstream = output-info.output-info-body-stream;
-  let gstream = output-info.output-info-guts-stream;
+    (init-functions :: <vector>, file :: <file-state>) => ();
+  let bstream = file.file-body-stream;
+  let gstream = file.file-guts-stream;
 
   format(bstream, "void %s_init(descriptor_t *sp)\n{\n",
-	 output-info.output-info-unit-info.unit-info-prefix);
+	 file.file-unit.unit-prefix);
   for (init-function in init-functions)
     let main-entry = init-function.main-entry;
-    let func-info = get-info-for(main-entry, output-info);
+    let func-info = get-info-for(main-entry, file);
     format(gstream, "/* %s */\n", main-entry.name);
-    format(gstream, "%s(sp);\n\n", main-entry-name(func-info, output-info));
+    format(gstream, "%s(sp);\n\n", main-entry-name(func-info, file));
     write(gstream.string-output-stream-string, bstream);
   end;
   write("}\n", bstream);
@@ -742,22 +742,22 @@ end;
 // Top level form processors.
 
 define generic emit-tlf-gunk (tlf :: <top-level-form>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => ();
 
 define method emit-tlf-gunk (tlf :: <top-level-form>,
-			     output-info :: <output-info>)
+			     file :: <file-state>)
     => ();
-  format(output-info.output-info-body-stream, "/* %s */\n\n", tlf);
+  format(file.file-body-stream, "/* %s */\n\n", tlf);
 end;
 
 define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
-			     output-info :: <output-info>)
+			     file :: <file-state>)
     => ();
-  let bstream = output-info.output-info-body-stream;
+  let bstream = file.file-body-stream;
   format(bstream, "/* %s */\n\n", tlf);
 
-  let gstream = output-info.output-info-guts-stream;
+  let gstream = file.file-guts-stream;
 
   format(bstream, "descriptor_t *pad_cluster(descriptor_t *start, "
 	   "descriptor_t *end,\n");
@@ -765,7 +765,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   format(gstream, "descriptor_t *ptr = start + min_values;\n\n");
   format(gstream, "while (end < ptr)\n");
   format(gstream, "    *end++ = %s;\n",
-	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, output-info));
+	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, file));
   format(gstream, "return end;\n");
   write(gstream.string-output-stream-string, bstream);
   write("}\n\n", bstream);
@@ -788,10 +788,10 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_double_float(double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
-    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, output-info);
+    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr(*heap-rep*, expr, rep, output-info));
+	   conversion-expr(*heap-rep*, expr, rep, file));
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -809,10 +809,10 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
-    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, output-info);
+    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr(*heap-rep*, expr, rep, output-info));
+	   conversion-expr(*heap-rep*, expr, rep, file));
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -827,22 +827,22 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 end;
 
 define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
-			     output-info :: <output-info>)
+			     file :: <file-state>)
     => ();
-  format(output-info.output-info-body-stream, "/* %s */\n\n", tlf);
+  format(file.file-body-stream, "/* %s */\n\n", tlf);
   for (defn in tlf.tlf-required-defns)
-    emit-bindings-definition-gunk(defn, output-info);
+    emit-bindings-definition-gunk(defn, file);
   end;
   if (tlf.tlf-rest-defn)
-    emit-bindings-definition-gunk(tlf.tlf-rest-defn, output-info);
+    emit-bindings-definition-gunk(tlf.tlf-rest-defn, file);
   end;
-  write('\n', output-info.output-info-body-stream);
+  write('\n', file.file-body-stream);
 end;
 
 define method emit-bindings-definition-gunk
-    (defn :: <bindings-definition>, output-info :: <output-info>) => ();
-  let info = get-info-for(defn, output-info);
-  let stream = output-info.output-info-body-stream;
+    (defn :: <bindings-definition>, file :: <file-state>) => ();
+  let info = get-info-for(defn, file);
+  let stream = file.file-body-stream;
   let rep = info.backend-var-info-rep;
   if (instance?(rep, <immediate-representation>))
     let name = info.backend-var-info-name;
@@ -854,16 +854,16 @@ define method emit-bindings-definition-gunk
 		     end;
     if (init-value)
       let (init-value-expr, init-value-rep)
-	= c-expr-and-rep(init-value, rep, output-info);
+	= c-expr-and-rep(init-value, rep, file);
       format(stream, "%s;\t/* %s */\n",
 	     conversion-expr(rep, init-value-expr, init-value-rep,
-			     output-info),
+			     file),
 	     defn.defn-name);
     else
       format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
 	     defn.defn-name, name);
     end;
-    output-info.output-info-prototypes-exist-for[name] := #t;
+    file.file-prototypes-exist-for[name] := #t;
   else
     format(stream, "/* %s allocated as %s */\n",
 	   defn.defn-name,
@@ -873,10 +873,10 @@ end;
 
 define method emit-prototype-for
     (name :: <byte-string>, defn :: <bindings-definition>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let info = get-info-for(defn, output-info);
-  let stream = output-info.output-info-body-stream;
+  let info = get-info-for(defn, file);
+  let stream = file.file-body-stream;
   let rep = info.backend-var-info-rep;
   if (instance?(rep, <immediate-representation>))
     format(stream, "extern %s %s;\t/* %s */\n",
@@ -897,18 +897,18 @@ define method emit-prototype-for
 end;  
 
 define method emit-bindings-definition-gunk
-    (defn :: <variable-definition>, output-info :: <output-info>,
+    (defn :: <variable-definition>, file :: <file-state>,
      #next next-method)
     => ();
   next-method();
   let type-defn = defn.var-defn-type-defn;
   if (type-defn)
-    emit-bindings-definition-gunk(type-defn, output-info);
+    emit-bindings-definition-gunk(type-defn, file);
   end;
 end;
 
 define method emit-bindings-definition-gunk
-    (defn :: <constant-definition>, output-info :: <output-info>,
+    (defn :: <constant-definition>, file :: <file-state>,
      #next next-method)
     => ();
   unless (instance?(defn.ct-value, <eql-ct-value>))
@@ -920,11 +920,11 @@ end;
 // Emitting Components.
 
 define method emit-component
-    (component :: <fer-component>, output-info :: <output-info>) => ();
+    (component :: <fer-component>, file :: <file-state>) => ();
   for (func-lit in component.all-function-literals)
     let ctv = func-lit.ct-function;
     if (ctv)
-      let ctv-info = get-info-for(ctv, output-info);
+      let ctv-info = get-info-for(ctv, file);
       begin
 	let main-entry = func-lit.main-entry;
 	if (main-entry.info)
@@ -933,25 +933,25 @@ define method emit-component
 	main-entry.info := ctv-info;
       end;
       if (func-lit.general-entry)
-	let gen-info = get-info-for(func-lit.general-entry, output-info);
+	let gen-info = get-info-for(func-lit.general-entry, file);
 	if (gen-info.function-info-main-entry-name)
 	  error("%= already has a name?", func-lit.general-entry);
 	end;
 	gen-info.function-info-main-entry-name
-	  := general-entry-name(ctv-info, output-info);
+	  := general-entry-name(ctv-info, file);
       end;
       if (instance?(func-lit, <method-literal>) & func-lit.generic-entry)
-	let gen-info = get-info-for(func-lit.generic-entry, output-info);
+	let gen-info = get-info-for(func-lit.generic-entry, file);
 	if (gen-info.function-info-main-entry-name)
 	  error("%= already has a name?", func-lit.general-entry);
 	end;
 	gen-info.function-info-main-entry-name
-	  := generic-entry-name(ctv-info, output-info);
+	  := generic-entry-name(ctv-info, file);
       end;
     end;
   end;
 
-  do(rcurry(emit-function, output-info), component.all-function-regions);
+  do(rcurry(emit-function, file), component.all-function-regions);
 end;
 
 
@@ -959,34 +959,34 @@ end;
 // Control flow emitters
 
 define method emit-function
-    (function :: <fer-function-region>, output-info :: <output-info>)
+    (function :: <fer-function-region>, file :: <file-state>)
     => ();
-  output-info.output-info-next-block := 0;
-  output-info.output-info-next-local := 0;
-  output-info.output-info-local-table := make(<string-table>);
-  output-info.output-info-cur-stack-depth := 0;
-  assert(output-info.output-info-local-vars.size == 0);
+  file.file-next-block := 0;
+  file.file-next-local := 0;
+  file.file-local-table := make(<string-table>);
+  file.file-cur-stack-depth := 0;
+  assert(file.file-local-vars.size == 0);
 
-  let function-info = get-info-for(function, output-info);
-  let c-name = main-entry-name(function-info, output-info);
-  output-info.output-info-prototypes-exist-for[c-name] := #t;
+  let function-info = get-info-for(function, file);
+  let c-name = main-entry-name(function-info, file);
+  file.file-prototypes-exist-for[c-name] := #t;
 
   let max-depth = analize-stack-usage(function);
   for (i from 0 below max-depth)
-    format(output-info.output-info-vars-stream,
+    format(file.file-vars-stream,
 	   "descriptor_t *cluster_%d_top;\n",
 	   i);
   end;
-  emit-region(function.body, output-info);
+  emit-region(function.body, file);
 
-  let stream = output-info.output-info-body-stream;
+  let stream = file.file-body-stream;
   format(stream, "/* %s */\n", function.name);
   format(stream, "%s\n{\n",
-	 compute-function-prototype(function, function-info, output-info));
-  write(output-info.output-info-vars-stream.string-output-stream-string,
+	 compute-function-prototype(function, function-info, file));
+  write(file.file-vars-stream.string-output-stream-string,
 	stream);
   write('\n', stream);
-  write(output-info.output-info-guts-stream.string-output-stream-string,
+  write(file.file-guts-stream.string-output-stream-string,
 	stream);
   write("}\n\n", stream);
 end;
@@ -994,9 +994,9 @@ end;
 define method compute-function-prototype
     (function :: false-or(<fer-function-region>),
      function-info :: <function-info>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => res :: <byte-string>;
-  let c-name = main-entry-name(function-info, output-info);
+  let c-name = main-entry-name(function-info, file);
   let stream = make(<byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
   if (result-rep == #() | result-rep == #"doesn't-return")
@@ -1005,7 +1005,7 @@ define method compute-function-prototype
     write("descriptor_t *", stream);
   elseif (instance?(result-rep, <pair>))
     format(stream, "struct %s",
-	   pick-result-structure(result-rep, output-info));
+	   pick-result-structure(result-rep, file));
   else
     write(result-rep.representation-c-type, stream);
   end;
@@ -1027,17 +1027,17 @@ define method compute-function-prototype
 end;
 
 define method pick-result-structure
-    (results :: <list>, output-info :: <output-info>) => res :: <byte-string>;
+    (results :: <list>, file :: <file-state>) => res :: <byte-string>;
   let types = map-as(<simple-object-vector>, representation-c-type, results);
-  let table = output-info.output-info-result-structures;
+  let table = file.file-result-structures;
   let struct = element(table, types, default: #f);
   if (struct)
     struct;
   else
-    let id = output-info.output-info-next-mv-result-struct;
-    output-info.output-info-next-mv-result-struct := id + 1;
+    let id = file.file-next-mv-result-struct;
+    file.file-next-mv-result-struct := id + 1;
     let name = format-to-string("mv_result_%d", id);
-    let stream = output-info.output-info-body-stream;
+    let stream = file.file-body-stream;
     format(stream, "struct %s {\n", name);
     for (type in types, index from 0)
       format(stream, "    %s R%d;\n", type, index);
@@ -1050,19 +1050,19 @@ end;
 
 define method emit-prototype-for
     (name :: <byte-string>, function-info :: <function-info>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  format(output-info.output-info-body-stream,
+  format(file.file-body-stream,
 	 "extern %s;\t/* %s */\n\n",
-	 compute-function-prototype(#f, function-info, output-info),
+	 compute-function-prototype(#f, function-info, file),
 	 function-info.function-info-name);
 end;
 
 define method emit-prototype-for
     (name :: <byte-string>, function-info == #"general",
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  format(output-info.output-info-body-stream,
+  format(file.file-body-stream,
 	 "extern descriptor_t * %s(descriptor_t *orig_sp, "
 	   "heapptr_t A0 /* self */, long A1 /* nargs */);\n\n",
 	 name);
@@ -1070,9 +1070,9 @@ end;
 
 define method emit-prototype-for
     (name :: <byte-string>, function-info == #"generic",
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  format(output-info.output-info-body-stream,
+  format(file.file-body-stream,
 	 "extern descriptor_t * %s(descriptor_t *orig_sp, "
 	   "heapptr_t A0 /* self */, long A1 /* nargs */, "
 	   "heapptr_t A2 /* next-info */);\n\n",
@@ -1080,98 +1080,98 @@ define method emit-prototype-for
 end;
 
 define method emit-region
-    (region :: <simple-region>, output-info :: <output-info>)
+    (region :: <simple-region>, file :: <file-state>)
     => ();
   for (assign = region.first-assign then assign.next-op,
        while: assign)
-    emit-assignment(assign.defines, assign.depends-on.source-exp, output-info);
+    emit-assignment(assign.defines, assign.depends-on.source-exp, file);
   end;
 end;
 
 define method emit-region (region :: <compound-region>,
-			   output-info :: <output-info>)
+			   file :: <file-state>)
     => ();
   for (subregion in region.regions)
-    emit-region(subregion, output-info);
+    emit-region(subregion, file);
   end;
 end;
 
-define method emit-region (region :: <if-region>, output-info :: <output-info>)
+define method emit-region (region :: <if-region>, file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, output-info);
-  spew-pending-defines(output-info);
-  let initial-depth = output-info.output-info-cur-stack-depth;
+  let stream = file.file-guts-stream;
+  let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, file);
+  spew-pending-defines(file);
+  let initial-depth = file.file-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
-  emit-region(region.then-region, output-info);
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
+  emit-region(region.then-region, file);
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write("}\n", stream);
-  let after-then-depth = output-info.output-info-cur-stack-depth;
-  output-info.output-info-cur-stack-depth := initial-depth;
+  let after-then-depth = file.file-cur-stack-depth;
+  file.file-cur-stack-depth := initial-depth;
   write("else {\n", stream);
   indent(stream, $indentation-step);
-  emit-region(region.else-region, output-info);
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
+  emit-region(region.else-region, file);
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write("}\n", stream);
-  let after-else-depth = output-info.output-info-cur-stack-depth;
-  output-info.output-info-cur-stack-depth
+  let after-else-depth = file.file-cur-stack-depth;
+  file.file-cur-stack-depth
     := max(after-then-depth, after-else-depth);
 end;
 
 define method emit-region (region :: <loop-region>,
-			   output-info :: <output-info>)
+			   file :: <file-state>)
     => ();
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
-  let stream = output-info.output-info-guts-stream;
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
+  let stream = file.file-guts-stream;
   write("while (1) {\n", stream);
   indent(stream, $indentation-step);
-  emit-region(region.body, output-info);
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
+  emit-region(region.body, file);
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write("}\n", stream);
 end;
 
 define method make-info-for
-    (block-region :: <block-region>, output-info :: <output-info>) => res;
-  let id = output-info.output-info-next-block;
-  output-info.output-info-next-block := id + 1;
+    (block-region :: <block-region>, file :: <file-state>) => res;
+  let id = file.file-next-block;
+  file.file-next-block := id + 1;
   id;
 end;
 
 define method emit-region (region :: <block-region>,
-			   output-info :: <output-info>)
+			   file :: <file-state>)
     => ();
   unless (region.exits)
     error("A block with no exits still exists?");
   end;
-  let stream = output-info.output-info-guts-stream;
-  emit-region(region.body, output-info);
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
+  let stream = file.file-guts-stream;
+  emit-region(region.body, file);
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
   let half-step = ash($indentation-step, -1);
   indent(stream, - half-step);
-  format(stream, "block%d:;\n", get-info-for(region, output-info));
+  format(stream, "block%d:;\n", get-info-for(region, file));
   indent(stream, half-step);
 end;
 
 define method emit-region (region :: <unwind-protect-region>,
-			   output-info :: <output-info>)
+			   file :: <file-state>)
     => ();
-  emit-region(region.body, output-info);
+  emit-region(region.body, file);
 end;
 
-define method emit-region (region :: <exit>, output-info :: <output-info>)
+define method emit-region (region :: <exit>, file :: <file-state>)
     => ();
-  /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
-  let stream = output-info.output-info-guts-stream;
+  /* ### emit-joins(region.join-region, file); */
+  spew-pending-defines(file);
+  let stream = file.file-guts-stream;
   let target = region.block-of;
   for (region = region.parent then region.parent,
        until: region == #f | region == target)
@@ -1181,51 +1181,51 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
     end;
   end;
   if (instance?(target, <block-region>))
-    format(stream, "goto block%d;\n", get-info-for(target, output-info));
+    format(stream, "goto block%d;\n", get-info-for(target, file));
   else
     format(stream, "abort();\n");
   end;
 end;
 
-define method emit-region (return :: <return>, output-info :: <output-info>)
+define method emit-region (return :: <return>, file :: <file-state>)
     => ();
-  /* ### emit-joins(region.join-region, output-info); */
+  /* ### emit-joins(region.join-region, file); */
   let function :: <fer-function-region> = return.block-of;
-  let function-info = get-info-for(function, output-info);
+  let function-info = get-info-for(function, file);
   let result-rep = function-info.function-info-result-representation;
-  emit-return(return, result-rep, output-info);
+  emit-return(return, result-rep, file);
 end;
 
 define method emit-return
     (return :: <return>, result-rep == #"doesn't-return",
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
   error("have a return region for a function that doesn't return?");
 end;
 
 define method emit-return
     (return :: <return>, result-rep == #"cluster",
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   let results = return.depends-on;
   if (results & instance?(results.source-exp, <abstract-variable>)
 	& instance?(results.source-exp.var-info, <values-cluster-info>))
     let (bottom-name, top-name)
-      = consume-cluster(results.source-exp, output-info);
+      = consume-cluster(results.source-exp, file);
     unless (bottom-name = "orig_sp")
       error("Delivering a cluster that isn't at the bottom of the frame?");
     end;
-    spew-pending-defines(output-info);
+    spew-pending-defines(file);
     format(stream, "return %s;\n", top-name);
   else
     for (dep = results then dep.dependent-next,
 	 count from 0,
 	 while: dep)
       format(stream, "orig_sp[%d] = %s;\n", count,
-	     ref-leaf(*general-rep*, dep.source-exp, output-info));
+	     ref-leaf(*general-rep*, dep.source-exp, file));
     finally
-      spew-pending-defines(output-info);
+      spew-pending-defines(file);
       format(stream, "return orig_sp + %d;\n", count);
     end;
   end;
@@ -1233,38 +1233,38 @@ end;
 
 define method emit-return
     (return :: <return>, result-rep :: <representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  let expr = ref-leaf(result-rep, return.depends-on.source-exp, output-info);
-  spew-pending-defines(output-info);
+  let stream = file.file-guts-stream;
+  let expr = ref-leaf(result-rep, return.depends-on.source-exp, file);
+  spew-pending-defines(file);
   format(stream, "return %s;\n", expr);
 end;
 
 define method emit-return
-    (return :: <return>, result-rep == #(), output-info :: <output-info>)
+    (return :: <return>, result-rep == #(), file :: <file-state>)
     => ();
-  spew-pending-defines(output-info);
-  write("return;\n", output-info.output-info-guts-stream);
+  spew-pending-defines(file);
+  write("return;\n", file.file-guts-stream);
 end;
 
 define method emit-return
-    (return :: <return>, result-reps :: <list>, output-info :: <output-info>)
+    (return :: <return>, result-reps :: <list>, file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;  
-  let temp = new-local(output-info, modifier: "temp");
+  let stream = file.file-guts-stream;  
+  let temp = new-local(file, modifier: "temp");
   let function = return.block-of;
-  let function-info = get-info-for(function, output-info);
-  let name = pick-result-structure(result-reps, output-info);
-  format(output-info.output-info-vars-stream, "struct %s %s;\n",
+  let function-info = get-info-for(function, file);
+  let name = pick-result-structure(result-reps, file);
+  format(file.file-vars-stream, "struct %s %s;\n",
 	 name, temp);
   for (rep in result-reps,
        index from 0,
        dep = return.depends-on then dep.dependent-next)
     format(stream, "%s.R%d = %s;\n",
-	   temp, index, ref-leaf(rep, dep.source-exp, output-info));
+	   temp, index, ref-leaf(rep, dep.source-exp, file));
   end;
-  spew-pending-defines(output-info);
+  spew-pending-defines(file);
   format(stream, "return %s;\n", temp);
 end;
 
@@ -1295,68 +1295,68 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       var :: <abstract-variable>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
-      let (bottom-name, top-name) = consume-cluster(var, output-info);
+      let (bottom-name, top-name) = consume-cluster(var, file);
       deliver-cluster(defines, bottom-name, top-name,
-		      var.derived-type.min-values, output-info);
+		      var.derived-type.min-values, file);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
 		  *general-rep*;
 		else
-		  variable-representation(defines, output-info)
+		  variable-representation(defines, file)
 		end;
 
-      deliver-result(defines, ref-leaf(rep, var, output-info), rep, #f,
-		     output-info);
+      deliver-result(defines, ref-leaf(rep, var, file), rep, #f,
+		     file);
     end;
   end;
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <literal-constant>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
   if (defines)
     let rep-hint = if (instance?(defines.var-info, <values-cluster-info>))
 		     *general-rep*;
 		   else
-		     variable-representation(defines, output-info)
+		     variable-representation(defines, file)
 		   end;
-    let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
-    deliver-result(defines, expr, rep, #f, output-info);
+    let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, file);
+    deliver-result(defines, expr, rep, #f, file);
   end;
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <function-literal>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
-  deliver-result(defines, ref-leaf(*heap-rep*, leaf, output-info),
-		 *heap-rep*, #f, output-info);
+  deliver-result(defines, ref-leaf(*heap-rep*, leaf, file),
+		 *heap-rep*, #f, file);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <definition-constant-leaf>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
-  let info = get-info-for(leaf.const-defn, output-info);
+  let info = get-info-for(leaf.const-defn, file);
   deliver-result(defines, info.backend-var-info-name,
-		  info.backend-var-info-rep, #f, output-info);
+		  info.backend-var-info-rep, #f, file);
 end;
 
 define method emit-assignment (results :: false-or(<definition-site-variable>),
 			       leaf :: <uninitialized-value>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
   if (results)
-    let rep = variable-representation(results, output-info);
+    let rep = variable-representation(results, file);
     if (rep == *general-rep*)
-      deliver-result(results, "0", *heap-rep*, #f, output-info);
+      deliver-result(results, "0", *heap-rep*, #f, file);
     else
-      deliver-result(results, "0", rep, #f, output-info);
+      deliver-result(results, "0", rep, #f, file);
     end;
   end;
 end;
@@ -1364,7 +1364,7 @@ end;
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
      call :: union(<unknown-call>, <error-call>),
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
   let setup-stream = make(<byte-string-output-stream>);
   let function = call.depends-on.source-exp;
@@ -1373,23 +1373,23 @@ define method emit-assignment
   let (next-info, arguments)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
-	values(ref-leaf(*heap-rep*, dep.source-exp, output-info),
+	values(ref-leaf(*heap-rep*, dep.source-exp, file),
 	       dep.dependent-next);
       else
 	values(#f, call.depends-on.dependent-next);
       end;
-  let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
+  let (args, sp) = cluster-names(file.file-cur-stack-depth);
   for (arg-dep = arguments then arg-dep.dependent-next,
        count from 0,
        while: arg-dep)
     format(setup-stream, "%s[%d] = %s;\n", args, count,
-	   ref-leaf(*general-rep*, arg-dep.source-exp, output-info));
+	   ref-leaf(*general-rep*, arg-dep.source-exp, file));
   finally
     let (entry, name)
-      = xep-expr-and-name(function, use-generic-entry?, output-info);
-    let func = ref-leaf(*heap-rep*, function, output-info);
-    spew-pending-defines(output-info);
-    let stream = output-info.output-info-guts-stream;
+      = xep-expr-and-name(function, use-generic-entry?, file);
+    let func = ref-leaf(*heap-rep*, function, file);
+    spew-pending-defines(file);
+    let stream = file.file-guts-stream;
     write(setup-stream.string-output-stream-string, stream);
     if (name)
       format(stream, "/* %s */\n", name);
@@ -1404,76 +1404,76 @@ define method emit-assignment
     end;
     write(");\n", stream);
     deliver-cluster(results, args, sp, call.derived-type.min-values,
-		    output-info);
+		    file);
   end;
 end;
 
 define method xep-expr-and-name
-    (func :: <leaf>, generic-entry? :: <boolean>, output-info :: <output-info>)
+    (func :: <leaf>, generic-entry? :: <boolean>, file :: <file-state>)
     => (expr :: <string>, name :: false-or(<string>));
-  spew-pending-defines(output-info);
+  spew-pending-defines(file);
   values(format-to-string(if (generic-entry?)
 			    "GENERIC_ENTRY(%s)";
 			  else
 			    "GENERAL_ENTRY(%s)";
 			  end,
-			  ref-leaf(*heap-rep*, func, output-info)),
+			  ref-leaf(*heap-rep*, func, file)),
 	 #f);
 end;
 
 define method xep-expr-and-name
     (func :: <function-literal>, generic-entry? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: <string>, name :: <string>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
   let general-entry = func.general-entry;
-  let entry-info = get-info-for(general-entry, output-info);
-  let entry-name = main-entry-name(entry-info, output-info);
-  maybe-emit-prototype(entry-name, entry-info, output-info);
+  let entry-info = get-info-for(general-entry, file);
+  let entry-name = main-entry-name(entry-info, file);
+  maybe-emit-prototype(entry-name, entry-info, file);
   values(entry-name, general-entry.name);
 end;
 
 define method xep-expr-and-name
     (func :: <method-literal>, generic-entry? :: <true>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: <string>, name :: <string>);
   let generic-entry = func.generic-entry;
-  let entry-info = get-info-for(generic-entry, output-info);
-  let entry-name = main-entry-name(entry-info, output-info);
-  maybe-emit-prototype(entry-name, entry-info, output-info);
+  let entry-info = get-info-for(generic-entry, file);
+  let entry-name = main-entry-name(entry-info, file);
+  maybe-emit-prototype(entry-name, entry-info, file);
   values(entry-name, generic-entry.name);
 end;
 
 define method xep-expr-and-name
     (func :: <definition-constant-leaf>, generic-entry? :: <boolean>,
-     output-info :: <output-info>,
+     file :: <file-state>,
      #next next-method)
     => (expr :: <string>, name :: <string>);
   let defn = func.const-defn;
-  let (expr, name) = xep-expr-and-name(defn, generic-entry?, output-info);
+  let (expr, name) = xep-expr-and-name(defn, generic-entry?, file);
   values(expr | next-method(),
 	 name | format-to-string("%s", defn.defn-name));
 end;
 
 define method xep-expr-and-name
     (func :: <literal-constant>, generic-entry? :: <boolean>,
-     output-info :: <output-info>, #next next-method)
+     file :: <file-state>, #next next-method)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   let ctv = func.value;
-  let (expr, name) = xep-expr-and-name(ctv, generic-entry?, output-info);
+  let (expr, name) = xep-expr-and-name(ctv, generic-entry?, file);
   values(expr | next-method(),
 	 name | ctv.ct-function-name);
 end;
 
 define method xep-expr-and-name
     (defn :: <abstract-constant-definition>, generic-entry? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   let ctv = ct-value(defn);
   if (ctv)
-    xep-expr-and-name(ctv, generic-entry?, output-info);
+    xep-expr-and-name(ctv, generic-entry?, file);
   else
     values(#f, #f);
   end;
@@ -1481,20 +1481,20 @@ end;
 
 define method xep-expr-and-name
     (ctv :: <ct-function>, generic-entry? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
-  let info = get-info-for(ctv, output-info);
-  let name = general-entry-name(info, output-info);
-  maybe-emit-prototype(name, #"general", output-info);
+  let info = get-info-for(ctv, file);
+  let name = general-entry-name(info, file);
+  maybe-emit-prototype(name, #"general", file);
   values(name, ctv.ct-function-name);
 end;
 
 define method xep-expr-and-name
     (ctv :: <ct-generic-function>, generic-entry? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
@@ -1503,7 +1503,7 @@ define method xep-expr-and-name
   if (defn)
     let discriminator = defn.generic-defn-discriminator;
     if (discriminator)
-      xep-expr-and-name(discriminator, #f, output-info);
+      xep-expr-and-name(discriminator, #f, file);
     else
       values(#f, #f);
     end;
@@ -1514,24 +1514,24 @@ end;
 
 define method xep-expr-and-name
     (ctv :: <ct-method>, generic-entry? :: <true>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
-  let info = get-info-for(ctv, output-info);
-  let name = generic-entry-name(info, output-info);
-  maybe-emit-prototype(name, #"generic", output-info);
+  let info = get-info-for(ctv, file);
+  let name = generic-entry-name(info, file);
+  maybe-emit-prototype(name, #"generic", file);
   values(name, ctv.ct-function-name);
 end;
 
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <known-call>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
   let function = call.depends-on.source-exp;
-  let func-info = find-main-entry-info(function, output-info);
+  let func-info = find-main-entry-info(function, file);
   let stream = make(<byte-string-output-stream>);
-  let c-name = main-entry-name(func-info, output-info);
-  let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
+  let c-name = main-entry-name(func-info, file);
+  let (sp, new-sp) = cluster-names(file.file-cur-stack-depth);
   format(stream, "%s(%s", c-name, sp);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        rep in func-info.function-info-argument-representations)
@@ -1539,7 +1539,7 @@ define method emit-assignment
       error("Not enough arguments in a known call?");
     end;
       write(", ", stream);
-      write(ref-leaf(rep, arg-dep.source-exp, output-info), stream);
+      write(ref-leaf(rep, arg-dep.source-exp, file), stream);
   finally
     if (arg-dep)
       error("Too many arguments in a known call?");
@@ -1547,111 +1547,111 @@ define method emit-assignment
   end;
   write(')', stream);
   let call = string-output-stream-string(stream);
-  format(output-info.output-info-guts-stream, "/* %s */\n",
+  format(file.file-guts-stream, "/* %s */\n",
 	 func-info.function-info-name);
   let result-rep = func-info.function-info-result-representation;
   if (results == #f | result-rep == #())
-    format(output-info.output-info-guts-stream, "%s;\n", call);
-    deliver-results(results, #[], #f, output-info);
+    format(file.file-guts-stream, "%s;\n", call);
+    deliver-results(results, #[], #f, file);
   elseif (result-rep == #"doesn't-return")
     error("Trying to get some values back from a function that "
 	    "doesn't return?");
   elseif (result-rep == #"cluster")
-    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
+    format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
     deliver-cluster(results, sp, new-sp,
 		    func-info.function-info-result-type.min-values,
-		    output-info);
+		    file);
   elseif (instance?(result-rep, <list>))
-    let temp = new-local(output-info, modifier: "temp");
-    format(output-info.output-info-vars-stream, "struct %s %s;\n",
-	   pick-result-structure(result-rep, output-info),
+    let temp = new-local(file, modifier: "temp");
+    format(file.file-vars-stream, "struct %s %s;\n",
+	   pick-result-structure(result-rep, file),
 	   temp);
-    format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
+    format(file.file-guts-stream, "%s = %s;\n", temp, call);
     let result-exprs = make(<vector>, size: result-rep.size);
     for (rep in result-rep,
 	 index from 0)
       result-exprs[index]
 	:= pair(format-to-string("%s.R%d", temp, index), rep);
     end;
-    deliver-results(results, result-exprs, #f, output-info);
+    deliver-results(results, result-exprs, #f, file);
   else
-    deliver-result(results, call, result-rep, #t, output-info);
+    deliver-result(results, call, result-rep, #t, file);
   end;
 end;
 
 define method find-main-entry-info
-    (func :: <function-literal>, output-info :: <output-info>)
+    (func :: <function-literal>, file :: <file-state>)
     => res :: <function-info>;
   let entry = func.main-entry;
-  let info = get-info-for(entry, output-info);
-  maybe-emit-prototype(main-entry-name(info, output-info), info, output-info);
+  let info = get-info-for(entry, file);
+  maybe-emit-prototype(main-entry-name(info, file), info, file);
   info;
 end;
 
 define method find-main-entry-info
-    (func :: <definition-constant-leaf>, output-info :: <output-info>)
+    (func :: <definition-constant-leaf>, file :: <file-state>)
     => res :: <function-info>;
-  find-main-entry-info(func.const-defn.ct-value, output-info);
+  find-main-entry-info(func.const-defn.ct-value, file);
 end;
 
 define method find-main-entry-info
-    (func :: <literal-constant>, output-info :: <output-info>)
+    (func :: <literal-constant>, file :: <file-state>)
     => res :: <function-info>;
-  find-main-entry-info(func.value, output-info);
+  find-main-entry-info(func.value, file);
 end;
 
 define method find-main-entry-info
-    (defn :: <generic-definition>, output-info :: <output-info>)
+    (defn :: <generic-definition>, file :: <file-state>)
     => res :: <function-info>;
   let discriminator = defn.generic-defn-discriminator;
   if (discriminator)
-    find-main-entry-info(discriminator, output-info);
+    find-main-entry-info(discriminator, file);
   else
     error("Known call of a generic function without a static discriminator?");
   end;
 end;
 
 define method find-main-entry-info
-    (defn :: <abstract-method-definition>, output-info :: <output-info>)
+    (defn :: <abstract-method-definition>, file :: <file-state>)
     => res :: <function-info>;
-  find-main-entry-info(defn.ct-value, output-info);
+  find-main-entry-info(defn.ct-value, file);
 end;
 
 define method find-main-entry-info
-    (ctv :: <ct-function>, output-info :: <output-info>)
+    (ctv :: <ct-function>, file :: <file-state>)
     => res :: <function-info>;
-  let info = get-info-for(ctv, output-info);
-  maybe-emit-prototype(main-entry-name(info, output-info), info, output-info);
+  let info = get-info-for(ctv, file);
+  maybe-emit-prototype(main-entry-name(info, file), info, file);
   info;
 end;
 
 define method find-main-entry-info
-    (ctv :: <ct-generic-function>, output-info :: <output-info>)
+    (ctv :: <ct-generic-function>, file :: <file-state>)
     => res :: <function-info>;
-  find-main-entry-info(ctv.ct-function-definition, output-info);
+  find-main-entry-info(ctv.ct-function-definition, file);
 end;
 
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <mv-call>, 
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   let function = call.depends-on.source-exp;
   let use-generic-entry? = call.use-generic-entry?;
   let (next-info, cluster)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
-	values(ref-leaf(*heap-rep*, dep.source-exp, output-info),
+	values(ref-leaf(*heap-rep*, dep.source-exp, file),
 	       dep.dependent-next.source-exp);
       else
 	values(#f, call.depends-on.dependent-next.source-exp);
       end;
   let (entry, name)
-    = xep-expr-and-name(function, use-generic-entry?, output-info);
-  let func = ref-leaf(*heap-rep*, function, output-info);
-  spew-pending-defines(output-info);
-  let (bottom-name, top-name) = consume-cluster(cluster, output-info);
+    = xep-expr-and-name(function, use-generic-entry?, file);
+  let func = ref-leaf(*heap-rep*, function, file);
+  spew-pending-defines(file);
+  let (bottom-name, top-name) = consume-cluster(cluster, file);
   if (name)
     format(stream, "/* %s */\n", name);
   end;
@@ -1666,42 +1666,42 @@ define method emit-assignment
   end;
   write(");\n", stream);
   deliver-cluster(results, bottom-name, top-name, call.derived-type.min-values,
-		  output-info);
+		  file);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
   let emitter = expr.info.primitive-emitter | default-primitive-emitter;
-  emitter(defines, expr, output-info);
+  emitter(defines, expr, file);
 end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>), expr :: <catch>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let func = extract-operands(expr, output-info, *heap-rep*);
-  let (values, sp) = cluster-names(output-info.output-info-cur-stack-depth);
-  let stream = output-info.output-info-guts-stream;
+  let func = extract-operands(expr, file, *heap-rep*);
+  let (values, sp) = cluster-names(file.file-cur-stack-depth);
+  let stream = file.file-guts-stream;
   if (defines)
     format(stream, "%s = ", sp);
   end;
   let catch-defn = dylan-defn(#"catch");
   assert(instance?(catch-defn, <abstract-method-definition>));
-  let catch-info = find-main-entry-info(catch-defn, output-info);
+  let catch-info = find-main-entry-info(catch-defn, file);
   format(stream, "catch(%s, %s, %s);\n",
-	 main-entry-name(catch-info, output-info), values, func);
+	 main-entry-name(catch-info, file), values, func);
   if (defines)
-    deliver-cluster(defines, values, sp, 0, output-info);
+    deliver-cluster(defines, values, sp, 0, file);
   end;
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <prologue>,
-			       output-info :: <output-info>)
+			       file :: <file-state>)
     => ();
-  let function-info = get-info-for(expr.function, output-info);
+  let function-info = get-info-for(expr.function, file);
   deliver-results(defines,
 		  map(method (rep, index)
 			pair(format-to-string("A%d", index),
@@ -1709,23 +1709,23 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		      end,
 		      function-info.function-info-argument-representations,
 		      make(<range>, from: 0)),
-		  #f, output-info);
+		  #f, file);
 end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>),
-     ref :: <module-var-ref>, output-info :: <output-info>)
+     ref :: <module-var-ref>, file :: <file-state>)
     => ();
   let defn = ref.variable;
-  let info = get-info-for(defn, output-info);
+  let info = get-info-for(defn, file);
   let name = info.backend-var-info-name;
-  maybe-emit-prototype(name, defn, output-info);
+  maybe-emit-prototype(name, defn, file);
   let rep = info.backend-var-info-rep;
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   unless (defn.defn-init-value)
     if (rep.representation-has-bottom-value?)
-      let temp = new-local(output-info, modifier: "temp");
-      format(output-info.output-info-vars-stream, "%s %s;\n",
+      let temp = new-local(file, modifier: "temp");
+      format(file.file-vars-stream, "%s %s;\n",
 	     rep.representation-c-type, temp);
       format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
       name := temp;
@@ -1733,33 +1733,33 @@ define method emit-assignment
       format(stream, "if (!%s_initialized) abort();\n", name);
     end;
   end;
-  deliver-result(defines, name, rep, #f, output-info);
+  deliver-result(defines, name, rep, #f, file);
 end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>),
-     set :: <module-var-set>, output-info :: <output-info>)
+     set :: <module-var-set>, file :: <file-state>)
     => ();
   let defn = set.variable;
-  let info = get-info-for(defn, output-info);
+  let info = get-info-for(defn, file);
   let target = info.backend-var-info-name;
-  maybe-emit-prototype(target, defn, output-info);
+  maybe-emit-prototype(target, defn, file);
   let rep = info.backend-var-info-rep;
-  let source = extract-operands(set, output-info, rep);
-  spew-pending-defines(output-info);
-  emit-copy(target, rep, source, rep, output-info);
+  let source = extract-operands(set, file, rep);
+  spew-pending-defines(file);
+  emit-copy(target, rep, source, rep, file);
   unless (defn.defn-init-value | rep.representation-has-bottom-value?)
-    let stream = output-info.output-info-guts-stream;
+    let stream = file.file-guts-stream;
     format(stream, "%s_initialized = TRUE;\n", target);
   end;
-  deliver-results(defines, #[], #f, output-info);
+  deliver-results(defines, #[], #f, file);
 end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     call :: <self-tail-call>, output-info :: <output-info>)
+     call :: <self-tail-call>, file :: <file-state>)
     => ();
-  spew-pending-defines(output-info);
+  spew-pending-defines(file);
   let function = call.self-tail-call-of;
   for (param = function.prologue.dependents.dependent.defines
 	 then param.definer-next,
@@ -1768,26 +1768,26 @@ define method emit-assignment
        index from 0,
        while: closure-var & param)
   finally
-    let stream = output-info.output-info-guts-stream;
+    let stream = file.file-guts-stream;
     for (param = param then param.definer-next,
 	 arg-dep = call.depends-on then arg-dep.dependent-next,
 	 index from index,
 	 while: arg-dep & param)
-      let (name, rep) = c-name-and-rep(param, output-info);
+      let (name, rep) = c-name-and-rep(param, file);
       format(stream, "A%d = %s;\n",
-	     index, ref-leaf(rep, arg-dep.source-exp, output-info));
+	     index, ref-leaf(rep, arg-dep.source-exp, file));
     finally
       if (arg-dep | param)
 	error("Wrong number of operands in a self-tail-call?");
       end;
     end;
   end;
-  deliver-results(results, #[], #f, output-info);
+  deliver-results(results, #[], #f, file);
 end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <slot-ref>, output-info :: <output-info>)
+     op :: <slot-ref>, file :: <file-state>)
     => ();
   let offset = op.slot-offset;
   let instance-leaf = op.depends-on.source-exp;
@@ -1803,62 +1803,62 @@ define method emit-assignment
 	  error("The instance and slot representations don't match in a "
 		  "data-word reference?");
 	end;
-	values(ref-leaf(instance-rep, instance-leaf, output-info), #f);
+	values(ref-leaf(instance-rep, instance-leaf, file), #f);
       else
-	let instance-expr = ref-leaf(*heap-rep*, instance-leaf, output-info);
+	let instance-expr = ref-leaf(*heap-rep*, instance-leaf, file);
 	let offset-expr
 	  = if (op.depends-on.dependent-next)
 	      let index = ref-leaf(*long-rep*,
 				   op.depends-on.dependent-next.source-exp,
-				   output-info);
+				   file);
 	      format-to-string("%d + %s * sizeof(%s)",
 			       offset, index, slot-rep.representation-c-type);
 	    else
 	      format-to-string("%d", offset);
 	    end;
-	spew-pending-defines(output-info);
+	spew-pending-defines(file);
 	values(format-to-string("SLOT(%s, %s, %s)",
 				instance-expr,
 				slot-rep.representation-c-type,
 				offset-expr),
 	       ~slot.slot-read-only?);
       end;
-  deliver-result(results, expr, slot-rep, now-dammit?, output-info);
+  deliver-result(results, expr, slot-rep, now-dammit?, file);
 end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <slot-set>, output-info :: <output-info>)
+     op :: <slot-set>, file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let offset = op.slot-offset;
   let slot-rep = slot.slot-representation;
   if (instance?(slot, <vector-slot-info>))
     let (new, instance, index)
-      = extract-operands(op, output-info, slot-rep, *heap-rep*, *long-rep*);
+      = extract-operands(op, file, slot-rep, *heap-rep*, *long-rep*);
     let c-type = slot-rep.representation-c-type;
-    format(output-info.output-info-guts-stream,
+    format(file.file-guts-stream,
 	   "SLOT(%s, %s, %d + %s * sizeof(%s)) = %s;\n",
 	   instance, c-type, offset, index, c-type, new);
   else
     let (new, instance)
-      = extract-operands(op, output-info, slot-rep, *heap-rep*);
-    format(output-info.output-info-guts-stream,
+      = extract-operands(op, file, slot-rep, *heap-rep*);
+    format(file.file-guts-stream,
 	   "SLOT(%s, %s, %d) = %s;\n",
 	   instance, slot-rep.representation-c-type, offset, new);
   end;
-  deliver-results(results, #[], #f, output-info);
+  deliver-results(results, #[], #f, file);
 end;
 
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <truly-the>, output-info :: <output-info>)
+     op :: <truly-the>, file :: <file-state>)
     => ();
   if (results)
-    let rep = variable-representation(results, output-info);
-    let source = extract-operands(op, output-info, rep);
-    deliver-result(results, source, rep, #f, output-info);
+    let rep = variable-representation(results, file);
+    let source = extract-operands(op, file, rep);
+    deliver-result(results, source, rep, #f, file);
   end;
 end;
 
@@ -1866,13 +1866,13 @@ end;
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
      src-start :: <string>, src-end :: <string>,
-     min-values :: <fixed-integer>, output-info :: <output-info>)
+     min-values :: <fixed-integer>, file :: <file-state>)
     => ();
 
   if (defines)
-    let stream = output-info.output-info-guts-stream;
+    let stream = file.file-guts-stream;
     if (instance?(defines.var-info, <values-cluster-info>))
-      let (dst-start, dst-end) = produce-cluster(defines, output-info);
+      let (dst-start, dst-end) = produce-cluster(defines, file);
       if (src-start ~= dst-start)
 	format(stream, "%s = %s;\n", dst-end, dst-start);
 	format(stream, "while (%s < %s) {\n", src-start, src-end);
@@ -1895,7 +1895,7 @@ define method deliver-cluster
 	   index from 0,
 	   while: var)
 	let source = format-to-string("%s[%d]", src-start, index);
-	deliver-single-result(var, source, *general-rep*, #t, output-info);
+	deliver-single-result(var, source, *general-rep*, #t, file);
       end;
     end;
   end;
@@ -1903,30 +1903,30 @@ end;
 
 define method deliver-results
     (defines :: false-or(<definition-site-variable>), values :: <sequence>,
-     now-dammit? :: <boolean>, output-info :: <output-info>)
+     now-dammit? :: <boolean>, file :: <file-state>)
     => ();
   if (defines & instance?(defines.var-info, <values-cluster-info>))
-    let stream = output-info.output-info-guts-stream;
-    let (bottom-name, top-name) = produce-cluster(defines, output-info);
+    let stream = file.file-guts-stream;
+    let (bottom-name, top-name) = produce-cluster(defines, file);
     format(stream, "%s = %s + %d;\n", top-name, bottom-name, values.size);
     for (val in values, index from 0)
       emit-copy(format-to-string("%s[%d]", bottom-name, index), *general-rep*,
-		val.head, val.tail, output-info);
+		val.head, val.tail, file);
     end;
   else
     for (var = defines then var.definer-next,
 	 val in values,
 	 while: var)
-      deliver-single-result(var, val.head, val.tail, now-dammit?, output-info);
+      deliver-single-result(var, val.head, val.tail, now-dammit?, file);
     finally
       if (var)
 	let false = make(<literal-false>);
 	for (var = var then var.definer-next,
 	     while: var)
-	  let target-rep = variable-representation(var, output-info);
+	  let target-rep = variable-representation(var, file);
 	  let (source-name, source-rep)
-	    = c-expr-and-rep(false, target-rep, output-info);
-	  deliver-single-result(var, source-name, source-rep, #f, output-info);
+	    = c-expr-and-rep(false, target-rep, file);
+	  deliver-single-result(var, source-name, source-rep, #f, file);
 	end;
       end;
     end;
@@ -1936,26 +1936,26 @@ end;
 define method deliver-result
     (defines :: false-or(<definition-site-variable>), value :: <string>,
      rep :: <representation>, now-dammit? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
   if (defines)
     if (instance?(defines.var-info, <values-cluster-info>))
-      let stream = output-info.output-info-guts-stream;
-      let (bottom-name, top-name) = produce-cluster(defines, output-info);
+      let stream = file.file-guts-stream;
+      let (bottom-name, top-name) = produce-cluster(defines, file);
       format(stream, "%s = %s + 1;\n", top-name, bottom-name);
       emit-copy(format-to-string("%s[0]", bottom-name), *general-rep*,
-		value, rep, output-info);
+		value, rep, file);
     else
-      deliver-single-result(defines, value, rep, now-dammit?, output-info);
+      deliver-single-result(defines, value, rep, now-dammit?, file);
       let next = defines.definer-next;
       if (next)
 	let false = make(<literal-false>);
 	for (var = next then var.definer-next,
 	     while: var)
-	  let target-rep = variable-representation(var, output-info);
+	  let target-rep = variable-representation(var, file);
 	  let (source-name, source-rep)
-	    = c-expr-and-rep(false, target-rep, output-info);
-	  deliver-single-result(var, source-name, source-rep, #f, output-info);
+	    = c-expr-and-rep(false, target-rep, file);
+	  deliver-single-result(var, source-name, source-rep, #f, file);
 	end;
       end;
     end;
@@ -1965,14 +1965,14 @@ end;
 define method deliver-single-result
     (var :: <abstract-variable>, // ### Should really be ssa-variable
      source :: <string>, source-rep :: <representation>,
-     now-dammit? :: <boolean>, output-info :: <output-info>)
+     now-dammit? :: <boolean>, file :: <file-state>)
     => ();
   if (var.dependents)
     if (now-dammit? | var.dependents.source-next)
-      let (target-name, target-rep) = c-name-and-rep(var, output-info);
-      emit-copy(target-name, target-rep, source, source-rep, output-info);
+      let (target-name, target-rep) = c-name-and-rep(var, file);
+      emit-copy(target-name, target-rep, source, source-rep, file);
     else
-      output-info.output-info-local-vars[var] := pair(source, source-rep);
+      file.file-local-vars[var] := pair(source, source-rep);
     end;
   end;
 end;
@@ -1980,66 +1980,66 @@ end;
 define method deliver-single-result
     (var :: <initial-definition>, source :: <string>,
      source-rep :: <representation>, now-dammit? :: <boolean>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  spew-pending-defines(output-info);
+  spew-pending-defines(file);
   deliver-single-result(var.definition-of, source, source-rep, now-dammit?,
-			output-info);
+			file);
 end;
 
 
 // Value manipulation utilities.
 
-define method spew-pending-defines (output-info :: <output-info>) => ();
-  let table = output-info.output-info-local-vars;
+define method spew-pending-defines (file :: <file-state>) => ();
+  let table = file.file-local-vars;
   let vars = key-sequence(table);
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   for (var in vars)
-    let (target, target-rep) = c-name-and-rep(var, output-info);
+    let (target, target-rep) = c-name-and-rep(var, file);
     let noise = table[var];
-    emit-copy(target, target-rep, noise.head, noise.tail, output-info);
+    emit-copy(target, target-rep, noise.head, noise.tail, file);
     remove-key!(table, var);
   end;
 end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <abstract-variable>,
-			output-info :: <output-info>)
+			file :: <file-state>)
     => res :: <string>;
   let (expr, rep)
     = begin
 	let info
-	  = element(output-info.output-info-local-vars, leaf, default: #f);
+	  = element(file.file-local-vars, leaf, default: #f);
 	if (info)
-	  remove-key!(output-info.output-info-local-vars, leaf);
+	  remove-key!(file.file-local-vars, leaf);
 	  values(info.head, info.tail);
 	else
-	  c-name-and-rep(leaf, output-info);
+	  c-name-and-rep(leaf, file);
 	end;
       end;
-  conversion-expr(target-rep, expr, rep, output-info);
+  conversion-expr(target-rep, expr, rep, file);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <literal-constant>,
-			output-info :: <output-info>)
+			file :: <file-state>)
     => res :: <string>;
-  let (expr, rep) = c-expr-and-rep(leaf.value, target-rep, output-info);
-  conversion-expr(target-rep, expr, rep, output-info);
+  let (expr, rep) = c-expr-and-rep(leaf.value, target-rep, file);
+  conversion-expr(target-rep, expr, rep, file);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <definition-constant-leaf>,
-			output-info :: <output-info>)
+			file :: <file-state>)
     => res :: <string>;
-  let info = get-info-for(leaf.const-defn, output-info);
+  let info = get-info-for(leaf.const-defn, file);
   conversion-expr(target-rep, info.backend-var-info-name,
-		  info.backend-var-info-rep, output-info);
+		  info.backend-var-info-rep, file);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <function-literal>,
-			output-info :: <output-info>)
+			file :: <file-state>)
     => res :: <string>;
   let ctv = leaf.ct-function;
   if (ctv == #f)
@@ -2050,27 +2050,27 @@ define method ref-leaf (target-rep :: <representation>,
 		end,
 		name: leaf.main-entry.name,
 		signature: leaf.signature);
-    let ctv-info = get-info-for(ctv, output-info);
+    let ctv-info = get-info-for(ctv, file);
     ctv-info.function-info-general-entry-name
-      := main-entry-name(get-info-for(leaf.general-entry, output-info),
-			 output-info);
+      := main-entry-name(get-info-for(leaf.general-entry, file),
+			 file);
     if (instance?(leaf, <method-literal>))
       ctv-info.function-info-generic-entry-name
-	:= main-entry-name(get-info-for(leaf.generic-entry, output-info),
-			   output-info);
+	:= main-entry-name(get-info-for(leaf.generic-entry, file),
+			   file);
     end;
     leaf.ct-function := ctv;
   end;
-  let (expr, rep) = c-expr-and-rep(ctv, target-rep, output-info);
-  conversion-expr(target-rep, expr, rep, output-info);
+  let (expr, rep) = c-expr-and-rep(ctv, target-rep, file);
+  conversion-expr(target-rep, expr, rep, file);
 end;
 
 define method ref-leaf (target-rep :: <representation>,
 			leaf :: <uninitialized-value>,
-			output-info :: <output-info>)
+			file :: <file-state>)
     => res :: <string>;
   if (target-rep == *general-rep*)
-    conversion-expr(target-rep, "0", *heap-rep*, output-info);
+    conversion-expr(target-rep, "0", *heap-rep*, file);
   else
     "0";
   end;
@@ -2078,31 +2078,31 @@ end;
 
 define method c-expr-and-rep (lit :: <ct-value>,
 			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  let info = get-info-for(lit, output-info);
+  let info = get-info-for(lit, file);
   values(info.const-info-expr
-	   | (info.const-info-expr := new-root(lit, output-info)),
+	   | (info.const-info-expr := new-root(lit, file)),
 	 *general-rep*);
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-true>, rep-hint :: <immediate-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values("TRUE", rep-hint);
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-false>, rep-hint :: <immediate-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values("FALSE", rep-hint);
 end;
 
 define method c-expr-and-rep (lit :: <literal-fixed-integer>,
 			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values(format-to-string("%d", lit.literal-value),
 	 pick-representation(dylan-value(#"<fixed-integer>"), #"speed"));
@@ -2110,7 +2110,7 @@ end;
 
 define method c-expr-and-rep (lit :: <literal-single-float>,
 			      rep-hint :: <immediate-representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values(float-to-string(lit.literal-value, 8),
 	 pick-representation(dylan-value(#"<single-float>"), #"speed"));
@@ -2118,7 +2118,7 @@ end;
 
 define method c-expr-and-rep (lit :: <literal-double-float>,
 			      rep-hint :: <immediate-representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values(float-to-string(lit.literal-value, 16),
 	 pick-representation(dylan-value(#"<double-float>"), #"speed"));
@@ -2126,7 +2126,7 @@ end;
 
 define method c-expr-and-rep (lit :: <literal-extended-float>,
 			      rep-hint :: <immediate-representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values(float-to-string(lit.literal-value, 35),
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
@@ -2196,7 +2196,7 @@ end;
 
 define method c-expr-and-rep (lit :: <literal-character>,
 			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   let char = lit.literal-value;
   values(if (char == '\0')
@@ -2223,10 +2223,10 @@ end;
 
 define method c-expr-and-rep (ep :: <ct-entry-point>,
 			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
+			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   values(format-to-string("((void *)%s)",
-			  entry-point-c-name(ep, output-info)),
+			  entry-point-c-name(ep, file)),
 	 *ptr-rep*);
 end;
 
@@ -2234,29 +2234,29 @@ end;
 define generic emit-copy
     (target :: <string>, target-rep :: <representation>,
      source :: <string>, source-rep :: <representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
 
 define method emit-copy
     (target :: <string>, target-rep :: <general-representation>,
      source :: <string>, source-rep :: <general-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   format(stream, "%s = %s;\n", target, source);
 end;
 
 define method emit-copy
     (target :: <string>, target-rep :: <general-representation>,
      source :: <string>, source-rep :: <data-word-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
+  let stream = file.file-guts-stream;
   let (proxy, proxy-rep)
     = c-expr-and-rep(make(<proxy>, for: source-rep.representation-class),
-		     *heap-rep*, output-info);
+		     *heap-rep*, file);
   format(stream, "%s.heapptr = %s;\n",
-	 target, conversion-expr(*heap-rep*, proxy, proxy-rep, output-info));
+	 target, conversion-expr(*heap-rep*, proxy, proxy-rep, file));
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
 end;
@@ -2264,10 +2264,10 @@ end;
 define method emit-copy
     (target :: <string>, target-rep :: <general-representation>,
      source :: <string>, source-rep :: <c-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  let heapptr = conversion-expr(*heap-rep*, source, source-rep, output-info);
+  let stream = file.file-guts-stream;
+  let heapptr = conversion-expr(*heap-rep*, source, source-rep, file);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
   format(stream, "%s.dataword.l = 0;\n", target);
 end;
@@ -2275,10 +2275,10 @@ end;
 define method emit-copy
     (target :: <string>, target-rep :: <c-representation>,
      source :: <string>, source-rep :: <c-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  let expr = conversion-expr(target-rep, source, source-rep, output-info);
+  let stream = file.file-guts-stream;
+  let expr = conversion-expr(target-rep, source, source-rep, file);
   format(stream, "%s = %s;\n", target, expr);
 end;
 
@@ -2286,15 +2286,15 @@ end;
 define method conversion-expr
     (target-rep :: <general-representation>,
      source :: <string>, source-rep :: <c-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => res :: <string>;
   if (target-rep == source-rep)
     source;
   else
-    let temp = new-local(output-info, modifier: "temp");
-    format(output-info.output-info-vars-stream, "%s %s;\n",
+    let temp = new-local(file, modifier: "temp");
+    format(file.file-vars-stream, "%s %s;\n",
 	   target-rep.representation-c-type, temp);
-    emit-copy(temp, target-rep, source, source-rep, output-info);
+    emit-copy(temp, target-rep, source, source-rep, file);
     temp;
   end;
 end;
@@ -2302,7 +2302,7 @@ end;
 define method conversion-expr
     (target-rep :: <c-representation>,
      source :: <string>, source-rep :: <c-representation>,
-     output-info :: <output-info>)
+     file :: <file-state>)
     => res :: <string>;
   if (target-rep == source-rep)
     source;
@@ -2315,11 +2315,11 @@ define method conversion-expr
 		      otherwise => format-to-string(to-more-general, source);
 		    end,
 		    source-rep.more-general-representation,
-		    output-info);
+		    file);
   else
     let from-more-general = target-rep.representation-from-more-general;
     let more-general = conversion-expr(target-rep.more-general-representation,
-				       source, source-rep, output-info);
+				       source, source-rep, file);
     select (from-more-general)
       #t => more-general;
       #f => error("Can't happen.");

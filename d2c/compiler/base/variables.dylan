@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.15 1995/11/16 03:45:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.16 1995/11/20 16:16:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -538,12 +538,13 @@ define method note-module-definition
     let old = element(mod.variables, name, default: #f);
     if (old)
       if (old.exported?)
-	error("%s in both a create clause and an export clause in module %s",
-	      name, mod.module-name);
+	compiler-error
+	  ("%s in both a create clause and an export clause in module %s",
+	   name, mod.module-name);
       elseif (old.defined?)
-	error("%s in create clause for module %s, so must be "
-		"defined elsewhere.",
-	      name, mod.module-name);
+	compiler-error("%s in create clause for module %s, so must be "
+			 "defined elsewhere.",
+		       name, mod.module-name);
       else
 	mod.exported-variables[name] := old;
 	old.created? := #t;
@@ -571,7 +572,8 @@ define method complete-module (mod :: <module>) => ();
   // and that it has been defined.
   //
   if (mod.busy?)
-    error("Circular module use chain detected at module %s", mod.module-name);
+    compiler-error("Circular module use chain detected at module %s",
+		   mod.module-name);
   end;
   unless (mod.defined?)
     compiler-error("Module %s in library %s has not been defined yet.",
@@ -584,24 +586,33 @@ define method complete-module (mod :: <module>) => ();
   for (u in mod.used-modules)
     let used-mod = find-module(mod.module-home, u.name-used);
     unless (used-mod)
-      error("No module %s in library %s",
-	    u.module-name, mod.module-home.library-name);
+      compiler-error("No module %s in library %s",
+		     u.module-name, mod.module-home.library-name);
     end;
 
     local
-      method do-import (var :: <variable>, orig-name :: <symbol>,
+      method do-import (var :: false-or(<variable>), orig-name :: <symbol>,
 			new-name :: <symbol>)
+	//
+	// Make sure it was even there.
+	unless (var)
+	  compiler-error("Can't import %s from module %s because it "
+			   "isn't exported.",
+			 orig-name, used-mod.module-name);
+	end;
 	//
 	// Check to see if the new import causes a clash.
 	// 
 	let old = element(mod.variables, new-name, default: #f);
 	if (old & ~(old == var))
 	  if (new-name == orig-name)
-	    error("Importing %s from module %s into module %s clashes.",
-		  new-name, mod.module-name, used-mod.module-name);
+	    compiler-error
+	      ("Importing %s from module %s into module %s clashes.",
+	       new-name, mod.module-name, used-mod.module-name);
 	  else
-	    error("Importing %s from module %s into module %s as %s clashes.",
-		  orig-name, mod.module-name, used-mod.module-name, new-name);
+	    compiler-error
+	      ("Importing %s from module %s into module %s as %s clashes.",
+	       orig-name, mod.module-name, used-mod.module-name, new-name);
 	  end;
 	end;
 	//
@@ -755,7 +766,7 @@ end method;
 define method find-exported-variable (mod :: <module>, name :: <symbol>)
     => result :: union(<variable>, <false>);
   unless (mod.defined?)
-    error("Module %s is not defined.", mod.module-name);
+    compiler-error("Module %s is not defined.", mod.module-name);
   end;
   let var = element(mod.exported-variables, name, default: #f);
   if (var)
@@ -787,14 +798,15 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.created?)
     if (var.variable-home == mod)
-      error("%s in create clause for module %s, so must be "
-	      "defined elsewhere.",
-	    name.name-symbol, mod.module-name);
+      compiler-error("%s in create clause for module %s, so must be "
+		       "defined elsewhere.",
+		     name.name-symbol, mod.module-name);
     end;
   else
     unless (var.variable-home == mod)
-      error("%s is imported into module %s, so can't be defined locally.",
-	    name.name-symbol, mod.module-name);
+      compiler-error
+	("%s is imported into module %s, so can't be defined locally.",
+	 name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -802,8 +814,8 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.variable-definition)
     unless (instance?(var.variable-definition, <implicit-definition>))
-      error("%s in module %s multiply defined.",
-	    name.name-symbol, mod.module-name);
+      compiler-error("%s in module %s multiply defined.",
+		     name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -862,7 +874,7 @@ define method load-library (lib :: <library>) => ();
     find-data-unit(name, $library-summary-unit-type,
 		   dispatcher: *compiler-dispatcher*);
     unless (lib.defined?)
-      error("Loaded library %s but it wasn't ever defined.", name);
+      compiler-error("Loaded library %s but it wasn't ever defined.", name);
     end;
   cleanup
     *Current-Library* := previous-library;

@@ -46,7 +46,7 @@ define class <primitive-info> (<identity-preserving-mixin>)
     init-value: #f;
   //
   // Function to spew the C code corresponding to the primitive.  Gets
-  // passed the primitive and the output-info.
+  // passed the primitive and the file-state.
   slot primitive-emitter :: false-or(<function>),
     init-value: #f;
 end;

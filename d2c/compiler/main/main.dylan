@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.38 1995/11/16 17:07:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.39 1995/11/20 16:16:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -155,7 +155,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
   let init-functions = make(<stretchy-vector>);
-  let unit-info = make(<unit-info>, prefix: unit-prefix);
+  let unit = make(<unit-state>, prefix: unit-prefix);
   let objects-stream = make(<byte-string-output-stream>);
   let other-units = map-as(<simple-object-vector>, first, *roots*);
   for (file in files, tlfs in tlf-vectors)
@@ -166,9 +166,8 @@ define method compile-library (lid-file :: <byte-string>) => ();
       let body-stream
 	= make(<file-stream>, name: c-name, direction: #"output");
       block ()
-	let output-info
-	= make(<output-info>, unit-info: unit-info, body-stream: body-stream);
-	emit-prologue(output-info, other-units);
+	let file = make(<file-state>, unit: unit, body-stream: body-stream);
+	emit-prologue(file, other-units);
 
 	for (tlf in tlfs)
 	  let name = format-to-string("%s", tlf);
@@ -194,8 +193,8 @@ define method compile-library (lid-file :: <byte-string>) => ();
 				       init-function));
 	  end;
 	  optimize-component(component);
-	  emit-tlf-gunk(tlf, output-info);
-	  emit-component(component, output-info);
+	  emit-tlf-gunk(tlf, file);
+	  emit-component(component, file);
 	end;
       cleanup
 	close(body-stream);
@@ -220,10 +219,9 @@ define method compile-library (lid-file :: <byte-string>) => ();
   begin
     let c-name = concatenate(unit-prefix, "-init.c");
     let body-stream = make(<file-stream>, name: c-name, direction: #"output");
-    let output-info
-      = make(<output-info>, unit-info: unit-info, body-stream: body-stream);
-    emit-prologue(output-info, other-units);
-    emit-epilogue(init-functions, output-info);
+    let file = make(<file-state>, unit: unit, body-stream: body-stream);
+    emit-prologue(file, other-units);
+    emit-epilogue(init-functions, file);
     close(body-stream);
 
     let o-name = concatenate(unit-prefix, "-init.o");
@@ -255,7 +253,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
 	= make(<file-stream>, name: "heap.s", direction: #"output");
       here-be-roots(unit-prefix,
 		    as(<simple-object-vector>,
-		       unit-info.unit-info-init-roots));
+		       unit.unit-init-roots));
       build-initial-heap(*roots*, heap-stream);
       close(heap-stream);
     end;
@@ -305,7 +303,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
 
     dump-simple-object(#"here-be-roots", dump-buf, unit-prefix,
 		       as(<simple-object-vector>,
-			  unit-info.unit-info-init-roots));
+			  unit.unit-init-roots));
 
     end-dumping(dump-buf);
   end;
