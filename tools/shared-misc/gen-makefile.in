@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.8 1999/07/16 16:30:53 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.9 1999/07/20 21:21:36 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -639,9 +639,9 @@ sub read_platforms_dot_descr {
 		    local(%parent_plat) = &get_platform($parent);
 		    local($key);
 		    foreach $key (keys(%parent_plat)) {
-			if (!$platform{$key}) {
+			if (!defined $platform{$key}) {
 			    $platform{$key} = $parent_plat{$key};
-			} elsif ($key == 'default_features') {
+			} elsif ($key eq 'default_features') {
 			    $platform{$key} = 
 				$platform{$key} . " " . $parent_plat{$key};
 			}
