@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.12 1996/02/07 02:22:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.13 1996/02/07 12:55:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,8 +112,12 @@ end class;
 // These functions are called to check and make changes to a modules syntax
 // table when some definition becomes accessable.
 //
-define generic check-syntax-table-additions (table, defn, name) => ();
-define generic make-syntax-table-additions (table, defn, name) => ();
+define open generic check-syntax-table-additions
+    (table :: <table>, defn :: false-or(<definition>), name :: <symbol>)
+    => ();
+define open generic make-syntax-table-additions
+    (table :: <table>, defn :: false-or(<definition>), name :: <symbol>)
+    => ();
 
 
 define method check-syntax-table-additions
