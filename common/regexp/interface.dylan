@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.2 1996/03/07 18:53:58 nkramer Exp $
 
 //======================================================================
 //
@@ -374,15 +374,22 @@ define method split-string
 	end-of-last-match := substring-end;
 	start-of-where-to-look := end-of-last-match;
       else
-	push-last(strings, copy-sequence(input, start: end-of-last-match, 
-					 end: substring-start));
-	string-number := string-number + 1;
-	end-of-last-match := substring-end;
-	start-of-where-to-look := end-of-last-match;
+	let new-string = copy-sequence(input, start: end-of-last-match, 
+				       end: substring-start);
+	if (new-string ~= "" | ~remove-empty-items)
+	  push-last(strings, new-string);
+	  string-number := string-number + 1;
+	  end-of-last-match := substring-end;
+	  start-of-where-to-look := end-of-last-match;
+	end if;
       end if;
     end while;
   end block;
-  apply(values, strings);
+  if (remove-empty-items)
+    apply(values, remove!(strings, "", test: \=));
+  else
+    apply(values, strings);
+  end if;
 end method split-string;
 
 // join--like Perl's join
@@ -393,13 +400,13 @@ define open generic join (delimiter :: <string>, #rest strings)
 // This is not really any more efficient than concatenate-as, but it's
 // more convenient.
 //
-define method join (delimiter :: <string>, #rest strings)
- => big-string :: <string>;
+define method join (delimiter :: <byte-string>, #rest strings)
+ => big-string :: <byte-string>;
   let length = max(0, (strings.size - 1 ) * delimiter.size);
   for (string in strings)
     length := length + string.size;
   end for;
-  let big-string = make(<unicode-string>, size: length);
+  let big-string = make(<byte-string>, size: length);
   let big-index = 0;
   for (i from 0 to strings.size - 2)  // Don't iterate over the last string
     let string = strings[i];
