@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.22 1997/05/19 14:06:55 ram Exp $
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.23 1997/06/02 12:11:32 ram Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -150,7 +150,7 @@ if ($ARGV[0] =~ /-p(.*)/) {
     $platforms_dot_descr = $1;
     shift(@ARGV);
 } else {
-    $platforms_dot_descr = $ENV{'GWYDIONDIR'} . '/etc/platforms.descr';
+    $platforms_dot_descr = $ENV{'DYLANDIR'} . '/etc/platforms.descr';
 }
 $#ARGV == 0 || die "Usage: $0 [-pPlatforms.descr] directory\n";
 chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n";
