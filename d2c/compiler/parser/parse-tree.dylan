@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.1 1994/12/12 13:01:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.2 1994/12/17 14:50:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -940,6 +940,10 @@ define class <pattern-variable> (<simple-pattern>)
   // True if this pattern variable is a wildcard.
   slot patvar-wildcard? :: <boolean>,
     init-value: #f;
+  //
+  // True if this pattern variable is at the end of the pattern.
+  slot patvar-at-end? :: <boolean>,
+    init-value: #f;
 end;
 
 define method print-object (pattern :: <pattern-variable>, stream :: <stream>)
@@ -949,7 +953,9 @@ define method print-object (pattern :: <pattern-variable>, stream :: <stream>)
 		if (pattern.patvar-constraint) constraint: end,
 		pattern.patvar-constraint,
 		if (pattern.patvar-wildcard?) wildcard?: end,
-		pattern.patvar-wildcard?);
+		pattern.patvar-wildcard?,
+		if (pattern.patvar-at-end?) at-end?: end,
+		pattern.patvar-at-end?);
 end;
 
 define method initialize (pv :: <pattern-variable>, #key token)
