@@ -12,16 +12,14 @@ define library common-extensions
   // Only import transcendentals if we have them.
 //#if (~compiled-for-solaris)
   use transcendental,
-     import: { transcendental => transcendentals},
-     export: all;
+    import: { transcendental => transcendentals },
+    export: all;
 //#endif
 
-  use random,
-     import: all,
-     export: all;
+  use random;
   use regular-expressions,
-     import: all,
-     export: all;
+    import: all,
+    export: all;
 
   export
     common-extensions,
@@ -53,7 +51,9 @@ define module simple-io
 end module;
 
 define module simple-random
-  // XXX - Needs definition.
+  use random,
+    import: { <random-state> => <random>, random },
+    export: all;
 end module;
 
 define module simple-profiling
@@ -79,7 +79,7 @@ define module common-extensions
   use dylan;
   use system, import: { copy-bytes }, export: { copy-bytes };
   use extensions,
-    rename: {on-exit => register-exit-application-function},
+    rename: {on-exit => register-application-exit-function},
     export: {$unsupplied,
              supplied?,
              unsupplied?,
@@ -99,7 +99,7 @@ define module common-extensions
 	     key-exists?,
 	     difference,
              concatenate!,
-	     register-exit-application-function,
+	     register-application-exit-function,
 	     <stretchy-sequence>,
 	     <object-deque>,
 	     <stretchy-object-vector>,
@@ -163,8 +163,9 @@ define module common-extensions
     /* Converting to and from numbers */
     float-to-string,
     integer-to-string,
+    number-to-string,
     string-to-integer,
-    // Not part of common? number-to-string,
+    string-to-float,
 
     /* Appliation runtime environment */
     application-name,
