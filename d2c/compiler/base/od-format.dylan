@@ -1,10 +1,10 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.9 2001/01/27 22:30:57 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.10 2001/02/08 22:20:12 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -467,7 +467,7 @@ begin
   register-object-id(#"vector-slot-info", #x0068);
   register-object-id(#"class-slot-info", #x0069);
   register-object-id(#"each-subclass-slot-info", #x006A);
-  // #x006B unused (was constant-slot-info).
+  register-object-id(#"meta-slot-info", #x006B);
   register-object-id(#"virtual-slot-info", #x006C);
   register-object-id(#"override-info", #x006D);
   register-object-id(#"layout-table", #x006E);
@@ -476,6 +476,7 @@ begin
   register-object-id(#"class-proxy", #x0071);
   register-object-id(#"subclass-type", #x0072);
   register-object-id(#"limited-collection", #x0073);
+  register-object-id(#"meta-class", #x0074);
   register-object-id(#"defined-designator-class", #x014B);
   register-object-id(#"struct-slot-info", #x014C);
 
@@ -806,8 +807,7 @@ define /* exported */ class <dump-buffer> (<object>)
 
   //
   // Area where we are currently writing output.
-  slot dump-buffer :: <buffer>, 
-    init-function: curry(make, <buffer>, size: $od-initial-buffer-size);
+  slot dump-buffer :: <buffer> = make(<buffer>, size: $od-initial-buffer-size);
 
   // Current position and end are byte offsets in dump-buffer, but are always
   // word-aligned.
@@ -842,12 +842,11 @@ define /* exported */ class <dump-state> (<dump-buffer>)
   // A vector mapping local IDs to their offsets in the buffer.  An entry of #f
   // is created add!'ed when a new ID is created.  The actual dumped local
   // index has to to be adjusted to take the header size into account.
-  slot dump-local-index :: <stretchy-vector>, 
-    init-function: curry(make, <stretchy-vector>);
+  slot dump-local-index :: <stretchy-vector> = make(<stretchy-vector>);
   //
   // Dump buffer used to accumulate the extern-index (and its enclosed
   // extern-handle objects.)
-  slot extern-buf :: <dump-buffer>, init-function: curry(make, <dump-buffer>);
+  slot extern-buf :: <dump-buffer> = make(<dump-buffer>);
   //
   // Next extern ID to be allocated.
   slot next-extern-id :: <integer>, init-value: 0;
@@ -1389,9 +1388,9 @@ end method;
 
 define constant $dispatcher-table-size = #x400;
 define /* exported */ class <dispatcher> (<object>)
-  slot table :: <simple-object-vector>,
-    init-function: curry(make, <vector>, size: $dispatcher-table-size,
-    			 fill: undefined-entry-type);
+  slot table :: <simple-object-vector>
+    = make(<vector>, size: $dispatcher-table-size,
+	   fill: undefined-entry-type);
 end class;
 
 define sealed domain make (singleton(<dispatcher>));
@@ -2179,7 +2178,7 @@ end method;
 //
 define /* exported */ method load-external-definition
     (state :: <load-state>, body :: <function>) 
- => res :: <identity-preserving-mixin>;
+ => res :: type-union(<identity-preserving-mixin>, <forward-ref>);
 
   let unit = state.load-unit;
   let id = state.raw-local-map[state.next-labeled - 1];
