@@ -1,15 +1,29 @@
 /**********************************************************************\
 *
-*  Copyright (C) 1994, Carnegie Mellon University
+*  Copyright (c) 1994  Carnegie Mellon University
 *  All rights reserved.
-*
-*  This code was produced by the Gwydion Project at Carnegie Mellon
-*  University.  If you are interested in using this code, contact
-*  "Scott.Fahlman@cs.cmu.edu" (Internet).
+*  
+*  Use and copying of this software and preparation of derivative
+*  works based on this software are permitted, including commercial
+*  use, provided that the following conditions are observed:
+*  
+*  1. This copyright notice must be retained in full on any copies
+*     and on appropriate parts of any derivative works.
+*  2. Documentation (paper or online) accompanying any system that
+*     incorporates this software, or any part of it, must acknowledge
+*     the contribution of the Gwydion Project at Carnegie Mellon
+*     University.
+*  
+*  This software is made available "as is".  Neither the authors nor
+*  Carnegie Mellon University make any warranty about the software,
+*  its performance, or its conformity to any specification.
+*  
+*  Bug reports, questions, comments, and suggestions should be sent by
+*  E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.2 1994/11/30 16:17:18 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.3 1995/02/14 02:30:58 rgs Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -555,13 +569,18 @@ obj_t pointer_at(obj_t /* <statically-typed-pointer> */ pointer,
 
 obj_t pointer_at_setter(obj_t /* <statically-typed-pointer> */ value,
 			obj_t /* <statically-typed-pointer> */ pointer,
-			obj_t /* <integer> */ offset)
+			obj_t /* <integer> */ offset,
+			obj_t /* <class> */ cls)
 {
     void *ptr = C_PTR(pointer)->pointer;
     int true_offset = fixnum_value(offset);
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    if (!instancep(cls, obj_StaticTypeClass))
+	error("class is not statically typed pointer: %=", cls);
+    if (!instancep(value, cls))
+	error("supplied value is not an instance of class %=", cls);
     /* pointer size object -- dereference as (void **) */
     *((void **)((char *)ptr + true_offset)) = get_c_object(value);
     return value;
@@ -782,7 +801,8 @@ void init_c_functions(void)
 		  obj_IntegerClass, pointer_at);
     define_method("pointer-at-setter",
 		  list2(obj_CPointerClass, obj_CPointerClass), FALSE,
-		  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+		  list2(pair(symbol("offset"), make_fixnum(0)),
+			pair(symbol("class"), obj_CPointerClass)), FALSE,
 		  obj_IntegerClass, pointer_at_setter);
     define_method("+", list2(obj_CPointerClass, obj_IntegerClass), FALSE,
 		  obj_False, FALSE, obj_CPointerClass, pointer_add);
