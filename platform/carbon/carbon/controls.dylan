@@ -9,6 +9,7 @@ module: carbon
 */
 
 c-include( "Carbon.h" );
+c-include( "struct.h" );
 
 /*
 	Constants
@@ -780,6 +781,10 @@ define constant $kDataBrowserItemsAdd :: <integer> = c-expr(int: "kDataBrowserIt
 define constant $kDataBrowserItemsAssign :: <integer> = c-expr(int: "kDataBrowserItemsAssign");
 define constant $kDataBrowserItemsToggle :: <integer> = c-expr(int: "kDataBrowserItemsToggle");
 define constant $kDataBrowserItemsRemove :: <integer> = c-expr(int: "kDataBrowserItemsRemove");
+
+define constant $kDataBrowserItemNoProperty :: <integer> = c-expr(int: "kDataBrowserItemNoProperty");
+
+define constant $kDataBrowserCmdTogglesSelection :: <integer> = c-expr(int: "kDataBrowserCmdTogglesSelection");
         
 define method CreateDataBrowserControl
     (window :: <WindowRef>, bounds :: <Rect*>, style :: <integer>, control :: <ControlRef>)
@@ -810,11 +815,11 @@ define method propertyDesc-value
   pointer-at(desc, offset: 0, class: <DataBrowserTableViewColumnDesc*>);
 end method propertyDesc-value;
 
-/*define method headerBtnDesc-value
+define method headerBtnDesc-value
     (desc :: <DataBrowserListViewColumnDesc*>)
- => (result :: <DataBrowserListViewHeaderDesc*>)    
-  ptr-at(desc, offset: 0, class: <DataBrowserListViewHeaderDesc*>);
-end method headerBtnDesc-value;*/
+ => (result :: <ControlButtonContentInfo*>)    
+  pointer-at(desc, offset: 4, class: <ControlButtonContentInfo*>);
+end method headerBtnDesc-value;
 
 define functional class <DataBrowserPropertyDesc*>
     (<statically-typed-pointer>)
@@ -864,31 +869,243 @@ end method propertyFlags-value-setter;
 
 define constant <DataBrowserTableViewColumnDesc*> = <DataBrowserPropertyDesc*>;
 
-/*typedef SInt16                          ControlContentType;
-struct ControlButtonContentInfo {
-  ControlContentType  contentType;
-  union {
-    SInt16              resID;
-    CIconHandle         cIconHandle;
-    Handle              iconSuite;
-    IconRef             iconRef;
-    PicHandle           picture;
-    Handle              ICONHandle;
-  }                       u;
-};
+define functional class <ControlButtonContentInfo*>
+    (<statically-typed-pointer>)
+end class <ControlButtonContentInfo*>;
 
-struct DataBrowserListViewHeaderDesc {
-    UInt32 version; // Use kDataBrowserListViewLatestHeaderDesc
+// We don't handle the second, union, field
 
-    UInt16 minimumWidth;
-    UInt16 maximumWidth;
+define method content-size
+    (cls == <ControlButtonContentInfo*>)
+ => (result :: <integer>)
+  c-expr(int: "sizeof(ControlButtonContentInfo)");
+end method content-size;
 
-    SInt16 titleOffset;
-    CFStringRef titleString;
-    DataBrowserSortOrder initialOrder;
-    ControlFontStyleRec btnFontStyle;
-    ControlButtonContentInfo btnContentInfo;
-}*/
+define method contentType-value
+    (target :: <ControlButtonContentInfo*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: 0);
+end method contentType-value;
+
+define method contentType-value-setter
+    (value :: <integer>, target :: <ControlButtonContentInfo*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: 0) := value;
+end method contentType-value-setter;
+
+define functional class <ControlFontStyleRec*>
+    (<statically-typed-pointer>)
+end class <ControlFontStyleRec*>;
+
+define method content-size
+    (cls == <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  c-expr(int: "sizeof(ControlFontStyleRec)");
+end method content-size;
+
+define method flags-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, flags)"));
+end method flags-value;
+
+define method flags-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, flags)")) := value;
+end method flags-value-setter;
+
+define method font-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, font)"));
+end method font-value;
+
+define method font-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, font)")) := value;
+end method font-value-setter;
+
+define method size-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, size)"));
+end method size-value;
+
+define method size-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, size)")) := value;
+end method size-value-setter;
+
+define method style-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, style)"));
+end method style-value;
+
+define method style-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, style)")) := value;
+end method style-value-setter;
+
+define method mode-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, mode)"));
+end method mode-value;
+
+define method mode-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, mode)")) := value;
+end method mode-value-setter;
+
+define method just-value
+    (target :: <ControlFontStyleRec*>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, just)"));
+end method just-value;
+
+define method just-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, just)")) := value;
+end method just-value-setter;
+
+define method foreColor-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <RGBColor*>)
+  make(<RGBColor*>, 
+    pointer: as(<raw-pointer>, target.raw-value + 
+      c-expr(int: "fldoff(ControlFontStyleRec, foreColor)")));
+end method foreColor-value;
+
+define method foreColor-value-setter
+    (value :: <RGBColor*>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <RGBColor*>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, foreColor)")) := value.red-value;
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, foreColor)") + 2) := value.green-value;
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, foreColor)") + 4) := value.blue-value;
+  value;
+end method foreColor-value-setter;
+
+define method backColor-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <RGBColor*>)
+  make(<RGBColor*>, 
+    pointer: as(<raw-pointer>, target.raw-value + 
+      c-expr(int: "fldoff(ControlFontStyleRec, backColor)")));
+end method backColor-value;
+
+define method backColor-value-setter
+    (value :: <RGBColor*>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <RGBColor*>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, backColor)")) := value.red-value;
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, backColor)") + 2) := value.green-value;
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(ControlFontStyleRec, backColor)") + 4) := value.blue-value;
+  value;
+end method backColor-value-setter;
+
+define functional class <DataBrowserListViewHeaderDesc>
+    (<statically-typed-pointer>)
+end class <DataBrowserListViewHeaderDesc>;
+
+define method content-size
+    (cls == <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  c-expr(int: "sizeof(DataBrowserListViewHeaderDesc)");
+end method content-size;
+
+define method version-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: 0);
+end method version-value;
+
+define method version-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: 0) := value;
+end method version-value-setter;
+
+define method minimumWidth-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, minimumWidth)"));
+end method minimumWidth-value;
+
+define method minimumWidth-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, minimumWidth)")) := value;
+end method minimumWidth-value-setter;
+
+define method maximumWidth-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, maximumWidth)"));
+end method maximumWidth-value;
+
+define method maximum-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, maximumWidth)")) := value;
+end method maximum-value-setter;
+
+define method titleOffset-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, titleOffset)"));
+end method titleOffset-value;
+
+define method titleOffset-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, titleOffset)")) := value;
+end method titleOffset-value-setter;
+
+define method titleString-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <CFStringRef>)
+  pointer-at(target, class: <CFStringRef>, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, titleString)"));
+end method titleString-value;
+
+define method titleString-value-setter
+    (value :: <CFStringRef>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <CFStringRef>)
+  pointer-at(target, class: <CFStringRef>, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, titleString)")) := value;
+end method titleString-value-setter;
+
+define method initialOrder-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-long-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)"));
+end method initialOrder-value;
+
+define method initialOrder-value-setter
+    (value :: <integer>, target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  signed-long-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)")) := value;
+end method initialOrder-value-setter;
+
+define method btnFontStyle-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  make(<ControlFontStyleRec*>, 
+    pointer: as(<raw-pointer>, target.raw-value + 
+      c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, btnFontStyle)")));
+end method btnFontStyle-value;
+
+define method btnContentInfo-value
+    (target :: <DataBrowserListViewHeaderDesc>)
+ => (result :: <integer>)
+  make(<ControlButtonContentInfo*>, 
+    pointer: as(<raw-pointer>, target.raw-value + 
+      c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, btnContentInfo)")));
+end method btnContentInfo-value;
         
 define method AddDataBrowserListViewColumn
     (browser :: <ControlRef>, desc :: <DataBrowserListViewColumnDesc*>, position :: <integer>)
@@ -920,6 +1137,23 @@ define method GetDataBrowserItemState
   values(as(<OSErr>, call-out("GetDataBrowserItemState", int:, ptr: browser.raw-value,
     int: item, ptr: temp.raw-value)), signed-long-at(temp));
 end method GetDataBrowserItemState; 
+  
+define method GetDataBrowserItemCount
+    (browser :: <ControlRef>, container :: <integer>, recurse :: <boolean>,
+     state :: <integer>)
+ => (status :: <OSStatus>, numItems :: <integer>)
+  let recurse? :: <integer> = if(recurse) 1 else 0 end;
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSStatus>, call-out("GetDataBrowserItemCount", int:, ptr: browser.raw-value, 
+      int: container, int: recurse, int: state, ptr: temp.raw-value)),
+    unsigned-long-at(temp, offset: 0));
+end method GetDataBrowserItemCount;
+  
+define method SetDataBrowserSelectionFlags
+    (browser :: <ControlRef>, flags :: <integer>)
+ => (status :: <OSStatus>)
+  as(<OSStatus>, call-out("SetDataBrowserSelectionFlags", int:, ptr: browser.raw-value, int: flags));
+end method SetDataBrowserSelectionFlags;
 
 define functional class <DataBrowserCallbacks*>
     (<statically-typed-pointer>)
