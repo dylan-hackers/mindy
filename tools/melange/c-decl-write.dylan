@@ -260,6 +260,70 @@ define method write-c-accessor-method
   end if;
 end method write-c-accessor-method;
 
+// write-c-bitfield-methods -- internal
+//
+// This writes a series of accessor methods for the various bitfields
+// which are stored in a single <coalesced-bitfields> pseudo-slot.  It
+// is roughly parallel to "write-c-accessor-method" above, but care must
+// be taken to distinguish between the "glob-type" which is the
+// pseudo-slot holding some kind of integer, and "slot-type" which is
+// the actual bitfield slot that must be extracted from that integer.
+//
+// No attempt has (yet) been made to optimize bitfield access.
+//
+define method write-c-bitfield-methods
+    (compound-type :: <struct-declaration>, 
+     glob-type :: <coalesced-bitfields>, offset :: <integer>,
+     stream :: <stream>)
+ => ();
+  for (slot-type in glob-type.fields)
+    unless (slot-type.excluded?)
+      let slot-name = slot-type.dylan-name;
+      let real-type = true-type(slot-type.type);
+
+      let extractor =
+	format-to-string("logand(ash(%s, -%d), (2 ^ %d) - 1)",
+			 c-accessor(glob-type.type, offset,
+				    "ptr", compound-type.type-name),
+			 real-type.start-bit, real-type.bits-in-field);
+      // Write getter method
+      format(stream,
+	     "define %s method %s\n"
+	       "    (ptr :: %s) => (result :: %s);\n"
+	       "  %s;\n"
+	       "end method %s;\n\n",
+	     slot-type.sealed-string, slot-name, compound-type.type-name,
+	     slot-type.mapped-name, import-value(slot-type, extractor),
+	     slot-name);
+
+      if (~slot-type.read-only
+	    & ~instance?(real-type, <non-atomic-types>))
+	// Write setter method
+	format(stream,
+	       "define %s method %s-setter\n"
+		 "    (value :: %s, ptr :: %s) => (result :: %s);\n"
+		 "  let mask = lognot(ash((2 ^ %d) - 1, %d));\n"
+		 "  %s := logand(%s, mask) + ash(%s, %d);\n"
+		 "  value;\n"
+		 "end method %s-setter;\n\n",
+	       // header
+	       slot-type.sealed-string, slot-name, slot-type.mapped-name,
+	       compound-type.type-name, slot-type.mapped-name,
+	       // mask
+	       real-type.bits-in-field, real-type.start-bit,
+	       // setter
+	       c-accessor(glob-type.type, offset,
+			  "ptr", compound-type.type-name),
+	       c-accessor(glob-type.type, offset,
+			  "ptr", compound-type.type-name),
+	       export-value(slot-type, "value"), real-type.start-bit,
+	       // footer
+	       slot-name);
+      end if;
+    end unless;
+  end for;
+end method write-c-bitfield-methods;
+
 define method d2c-type-tag
     (type :: <pointer-rep-types>) => (result :: <byte-string>);
   "ptr:";
@@ -332,20 +396,26 @@ define method write-declaration
     local method slot-accessors
 	      (end-offset :: <integer>, c-slot :: <declaration>)
 	   => (end-offset :: <integer>);
-	    let name = c-slot.dylan-name;
 	    let slot-type = c-slot.type;
 	    let (end-offset, start-offset)
 	      = aligned-slot-position(end-offset, slot-type);
-	    if (~c-slot.excluded?)
-	      write-c-accessor-method(decl, name, c-slot,
-				      start-offset, stream);
-	    end if;
+	    case
+	      (instance?(c-slot, <coalesced-bitfields>)) =>
+		write-c-bitfield-methods(decl, c-slot, start-offset, stream);
+	      (c-slot.excluded?) => #f;
+	      otherwise =>
+		write-c-accessor-method(decl, c-slot.dylan-name, c-slot,
+					start-offset, stream);
+	    end case;
 	    end-offset;
 	  end method slot-accessors;
 
     // This may still be an "incomplete type".  If so, we define the class,
     // but don't write any slot accessors.
-    if (decl.members) reduce(slot-accessors, 0, decl.members) end if;
+    if (decl.members)
+      reduce(slot-accessors, 0,
+	     decl.coalesced-members | do-coalesce-members(decl));
+    end if;
 
     format(stream,
 	   "define method pointer-value (value :: %s, #key index = 0) "
@@ -777,8 +847,9 @@ define method write-declaration
     write(stream,
 	  import-value(target-type,
 		       c-accessor(target-type,
-				  format-to-string("index * %d",
-						   target-type.c-type-size),
+				  format-to-string
+				    ("index * %d",
+				     target-type.c-type-size),
 				  "ptr", target-type.type-name)));
     write(stream, ";\nend method pointer-value;\n\n");
 
@@ -791,7 +862,8 @@ define method write-declaration
 	     target-map, decl.dylan-name, target-map);
       write(stream,
 	    c-accessor(target-type,
-		       format-to-string("index * %d", target-type.c-type-size),
+		       format-to-string("index * %d",
+					target-type.c-type-size),
 		       "ptr", target-type.type-name));
       format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
 	     export-value(target-type, "value"));
@@ -803,7 +875,7 @@ define method write-declaration
 	     "(value :: %s) "
 	     "=> (result :: <integer>);\n  %d;\n"
 	     "end method content-size;\n\n",
-	   subclass-type(decl.dylan-name), target-type.c-type-size)
+	   subclass-type(decl.dylan-name), target-type.c-type-size);
   end if;
 end method write-declaration;
 

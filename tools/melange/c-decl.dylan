@@ -56,6 +56,8 @@ rcs-header: $Header:
 //         <integer-type-declaration>
 //             operations include accessor-name
 //         <float-type-declaration>
+//       <bitfield-declaration>
+//           operations include bits-in-field, base-type
 //     <value-declaration> (includes <typed> mixin)
 //         operations include sealed-string
 //       <function-declaration>
@@ -77,6 +79,8 @@ rcs-header: $Header:
 //       <enum-slot-declaration>
 //       <macro-declaration>
 //           operations include add-cpp-declaration
+//     <coalesced-bitfields>
+//        operations include type, bit-size, fields
 //   <typed> (Mix-in class)
 //     operations include type
 //   <new-static-pointer> (Mix-in class)
@@ -302,9 +306,15 @@ end method true-type;
 define abstract class <structured-type-declaration> (<type-declaration>) 
   slot members :: type-union(<sequence>, <false>), init-value: #f;
 end class <structured-type-declaration>;
+
 define class <struct-declaration>
     (<new-static-pointer>, <structured-type-declaration>)
+  // This slot (initialized lazily by "do-coalesce-members" stores an
+  // alternate version of the "members" sequence in which adjacent
+  // bitfields are combined into a <coalesced-bitfields> pseudo-slot.
+  slot coalesced-members :: false-or(<sequence>) = #f;
 end class;
+
 define class <union-declaration>
     (<new-static-pointer>, <structured-type-declaration>)
 end class;
@@ -825,6 +835,38 @@ define method compute-closure
     (results :: <deque>, decl :: <predefined-type-declaration>)
  => (results :: <deque>);
   // We don't need to declare it -- it's predefined.
+  results;
+end method compute-closure;
+
+//------------------------------------------------------------------------
+
+// Bitfields are special integer objects which are packed together at the bit
+// level.  As far as I know, they may only appear in structs.  We handle
+// bitfields by packing them together into a <coalesced-bitfields> object,
+// which is a pseudo-slot holding some sort of integer.  We end up with two
+// parallel sequences of members.  The normal one can have slots with
+// <bitfield-declaration>s, while the "coalesced-members" sequence contains
+// <coalesced-bitfields> pseudo-slots.  <bitfield-declarations> and
+// <coalesced-bitfields> are cross-linked to each other (by the
+// "do-coalesce-members" function).
+
+define class <bitfield-declaration> (<type-declaration>)
+  slot bits-in-field :: <integer>, required-init-keyword: #"bits";
+  slot base-type :: <type-declaration>, required-init-keyword: #"base";
+  slot composite-field :: false-or(<coalesced-bitfields>) = #f;
+  slot start-bit :: <integer> = 0;	// only meaningful if composite ~= #f
+end class <bitfield-declaration>;
+
+define class <coalesced-bitfields> (<declaration>)
+  slot type :: <predefined-type-declaration> = unsigned-char-type;
+  slot bit-size :: <integer> = 0;
+  slot fields :: <stretchy-vector> = make(<stretchy-vector>);
+end class <coalesced-bitfields>;
+
+define method compute-closure 
+    (results :: <deque>, decl :: <bitfield-declaration>)
+ => (results :: <deque>);
+  // We don't need to declare it -- we just use <integer>
   results;
 end method compute-closure;
 

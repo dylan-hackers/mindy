@@ -251,12 +251,13 @@ end method process-type-list;
 // #((#"pointer", #"pointer", ...) . name) or
 // #(#"function", args . name) or
 // #(#"vector", length . name)
+// #(#"bitfield", bits . name)
 //
 define method process-declarator
     (tp :: <type-declaration>, declarator :: <pair>, state :: <parse-state>)
  => (new-type :: <type-declaration>, name :: <object>);
   case 
-    instance?(head(declarator), <list>) =>
+    (instance?(declarator.head, <list>)) =>
       for (tp = tp
 	     then if (ptr ~= #"pointer")
 		    parse-error(state, "unknown type modifier");
@@ -267,15 +268,24 @@ define method process-declarator
       finally
 	process-declarator(tp, tail(declarator), state);
       end for;
-    head(declarator) == #"vector" =>
+    (declarator.head == #"bitfield") =>
+      if (tp == unsigned-int-type) 
+	let decl = make(<bitfield-declaration>, bits: second(declarator),
+			base: tp, name: anonymous-name(),
+			dylan-name: "<integer>");
+	process-declarator(decl, declarator.tail.tail, state);
+      else
+	parse-error(state, "Bit-fields must be of type unsigned int");
+      end if;
+    (declarator.head == #"vector") =>
       let length = second(declarator);
       // Vector types are represented the same as the corresponding pointer
       // types, but are accessed differently, so make sure that we share names
       // with the corresponding pointer type.
       let decl = make(<vector-declaration>, length: length, 
 		      name: anonymous-name(), equiv: pointer-to(tp, state));
-      process-declarator(decl, tail(tail(declarator)), state);
-    head(declarator) == #"function" =>
+      process-declarator(decl, declarator.tail.tail, state);
+    (declarator.head == #"function") =>
       // rgs: We must add code later to canonicalize these and declare the
       // ones which we have pointers to.  On the other hand, we can't easily
       // create c function pointers anyway, so it probably doesn' matter in
@@ -294,7 +304,7 @@ define method process-declarator
 			  result: make(<result-declaration>,
 				       name: "result", type: tp),
 			  params: real-params);
-      process-declarator(new-type, tail(tail(declarator)), state);
+      process-declarator(new-type, declarator.tail.tail, state);
     otherwise =>
       parse-error(state, "unknown type modifier");
   end case;

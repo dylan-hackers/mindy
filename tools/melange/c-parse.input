@@ -734,9 +734,9 @@ struct-declarator (declarator)
 ;  error("struct-declarator not yet handled.");
 ;%
 
-;struct-declarator (declarator <colon-token> constant-expr)
-;  error("struct-declarator not yet handled.");
-;%
+struct-declarator (declarator <colon-token> constant-expr)
+  pair(#"bitfield", pair(int-value($r3, $state), $r1));
+%
 
 Enum-Specifier (<ENUM-Token> <Lcurly-Token> Enumerator-List <Rcurly-Token>)
   make-struct-type(#f, reverse!($r3), $r1, $state);
@@ -1115,7 +1115,7 @@ abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <r
 
 external-definition (<begin-include-token>)
   if ($state.verbose)
-    write('[', *standard-error*);
+    write-element(*standard-error*, '[');
     force-output(*standard-error*);
   end if;
   push-include-level($state);
@@ -1123,7 +1123,7 @@ external-definition (<begin-include-token>)
 
 external-definition (<end-include-token>)
   if ($state.verbose)
-    write(']', *standard-error*);
+    write-element(*standard-error*, ']');
     force-output(*standard-error*);
   end if;
   do(curry(add-cpp-declaration, $state), $r1.value);
@@ -1132,7 +1132,7 @@ external-definition (<end-include-token>)
 
 external-definition (declaration)
   if ($state.verbose)
-    write('.', *standard-error*);
+    write-element(*standard-error*, '.');
     force-output(*standard-error*);
   end if;
   $r1;
@@ -1245,7 +1245,7 @@ define method parse-type
  => (result :: <declaration>);
   let tokenizer = make(<tokenizer>, name: type,
 		       typedefs-from: old-state.tokenizer,
-                       source: make(<byte-string-input-stream>, string: type));
+                       source: make(<byte-string-stream>, contents: type));
   unget-token(tokenizer, make(<alien-name-token>,
 			      generator: tokenizer, string: ""));
   let parse-state
@@ -1263,7 +1263,7 @@ define method parse-macro
  => (result :: <object>);
   let old-tokenizer = old-state.tokenizer;
   let tokenizer = make(<tokenizer>, name: name, parent: old-tokenizer,
-                       source: make(<byte-string-input-stream>, string: " "));
+                       source: make(<byte-string-stream>, contents: " "));
   for (token in old-tokenizer.cpp-table[name])
     unget-token(tokenizer, token);
   end for;
