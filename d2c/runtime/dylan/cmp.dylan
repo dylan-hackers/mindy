@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.6 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.7 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -39,7 +39,7 @@ define method \== (x :: <object>, y :: <object>)
   if (x-class.class-functional?)
     x-class == y.object-class & functional-==(x-class, x, y);
   else
-    %%primitive \== (x, y);
+    %%primitive(\==, x, y);
   end;
 end;
 

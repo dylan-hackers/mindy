@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.5 1996/01/12 02:10:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.6 1996/03/17 00:11:23 wlott Exp $
 
 //======================================================================
 //
@@ -89,7 +89,7 @@ define sealed class <deque-element> (<object>)
   sealed slot next-deque-element :: false-or(<deque-element>), init-value: #f;
 end class <deque-element>;
 
-seal generic make (singleton(<deque-element>));
+define sealed domain make (singleton(<deque-element>));
 
 // <simple-object-deque> -- public
 //
@@ -129,8 +129,8 @@ define method initialize (deque :: <simple-object-deque>,
   end if;
 end method initialize;
 
-seal generic make (singleton(<simple-object-deque>));
-seal generic initialize (<simple-object-deque>);
+define sealed domain make (singleton(<simple-object-deque>));
+define sealed domain initialize (<simple-object-deque>);
 
 
 //; Iteration Protocol

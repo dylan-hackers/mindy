@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/char.dylan,v 1.6 1996/02/22 23:56:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/char.dylan,v 1.7 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -35,8 +35,8 @@ end;
 // Seal make and initialize so that we can fully inline construction of
 // characters.
 // 
-seal generic make (singleton(<character>));
-seal generic initialize (<character>);
+define sealed domain make (singleton(<character>));
+define sealed domain initialize (<character>);
 
 // The fact that we are a functional class should automatically define this,
 // but it doesn't yet.
@@ -47,7 +47,7 @@ define inline method functional-==
   a.value == b.value;
 end;
 //
-seal generic functional-== (singleton(<character>), <object>, <object>);
+define sealed domain functional-== (singleton(<character>), <object>, <object>);
 
 // as{singleton(<character>),<integer>} -- exported GF method.
 //
@@ -83,8 +83,8 @@ end;
 
 // Seal < on characters.
 // 
-seal generic \< (<character>, <object>);
-seal generic \< (<object>, <character>);
+define sealed domain \< (<character>, <object>);
+define sealed domain \< (<object>, <character>);
 
 // as-uppercase -- exported GF method.
 //

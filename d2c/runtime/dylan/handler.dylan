@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/handler.dylan,v 1.4 1995/11/16 03:37:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/handler.dylan,v 1.5 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -34,8 +34,8 @@ define class <handler> (<object>)
     required-init-keyword: prev:;
 end;
 
-seal generic make (singleton(<handler>));
-seal generic initialize (<handler>);
+define sealed domain make (singleton(<handler>));
+define sealed domain initialize (<handler>);
 
 
 // push-handler -- internal.

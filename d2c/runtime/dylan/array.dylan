@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.6 1996/03/13 03:18:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.7 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -212,7 +212,7 @@ define class <simple-object-array> (<array>)
     init-value: 0, sizer: rank, required-size-init-keyword: rank:;
 end;
 
-seal generic make (singleton(<simple-object-array>));
+define sealed domain make (singleton(<simple-object-array>));
 
 // dimensions(<simple-object-array>) -- exported gf method.
 //

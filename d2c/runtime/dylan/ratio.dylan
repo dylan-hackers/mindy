@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.6 1996/02/23 00:01:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.7 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -46,7 +46,7 @@ define sealed inline method make
   end;
 end;
 
-seal generic initialize (<ratio>);
+define sealed domain initialize (<ratio>);
 
 define inline method ratio
     (num :: <general-integer>, denom :: <general-integer>)
@@ -54,7 +54,7 @@ define inline method ratio
   make(<ratio>, numerator: num, denominator: denom);
 end;
 
-seal generic as (singleton(<ratio>), <complex>);
+define sealed domain as (singleton(<ratio>), <complex>);
 
 define inline method as (class == <ratio>, num :: <general-integer>)
     => res :: <ratio>;
@@ -85,7 +85,7 @@ define inline method functional-==
   a.numerator == b.numerator & a.denominator == b.denominator;
 end;
 
-seal generic functional-== (singleton(<ratio>), <object>, <object>);
+define sealed domain functional-== (singleton(<ratio>), <object>, <object>);
 
 define inline method \< (a :: <ratio>, b :: <ratio>)
     => res :: <boolean>;

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.8 1995/12/13 19:21:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -36,20 +36,20 @@ end;
 
 define inline method values-sequence
     (vector :: <simple-object-vector>)
-  %%primitive values-sequence (vector);
+  %%primitive(values-sequence, vector);
 end;
 
 
 define movable generic values (#rest values);
 
 define inline method values (#rest values)
-  %%primitive values-sequence (values);
+  %%primitive(values-sequence, values);
 end;
 
 
 define inline method object-address (object :: <object>)
     => res :: <raw-pointer>;
-  %%primitive object-address (object);
+  %%primitive(object-address, object);
 end method object-address;
 
 
@@ -57,4 +57,4 @@ define inline method ignore (#rest noise) => ();
 end method ignore;
 
 
-%%primitive magic-internal-primitives-placeholder ();
+%%primitive(magic-internal-primitives-placeholder);

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.9 1996/03/13 03:18:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.10 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -69,7 +69,7 @@ define class <unicode-string> (<string>, <vector>)
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
-seal generic make (singleton(<unicode-string>));
+define sealed domain make (singleton(<unicode-string>));
 
 define sealed method as (class == <unicode-string>, collection :: <collection>)
     => res :: <unicode-string>;
@@ -162,7 +162,7 @@ define class <byte-string> (<string>, <vector>)
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
-seal generic make (singleton(<byte-string>));
+define sealed domain make (singleton(<byte-string>));
 
 define sealed method as (class == <byte-string>, collection :: <collection>)
     => res :: <byte-string>;

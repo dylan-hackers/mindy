@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.8 1996/03/13 03:18:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -135,7 +135,7 @@ define inline method pointer-hash (object :: <object>)
   //
   // If we get a non-conservative garbage collector, we will have to return
   // some non-permanent state.
-  values(ash(as(<integer>, %%primitive object-address(object)), -2),
+  values(ash(as(<integer>, %%primitive(object-address, object)), -2),
 	 $permanent-hash-state);
 end method pointer-hash;
   
@@ -181,8 +181,8 @@ define class <bucket-entry> (<object>)
   slot entry-next :: false-or(<bucket-entry>) = #f, init-keyword: #"next";
 end class <bucket-entry>;
 
-seal generic make (singleton(<bucket-entry>));
-seal generic initialize (<bucket-entry>);
+define sealed domain make (singleton(<bucket-entry>));
+define sealed domain initialize (<bucket-entry>);
 
 #if (mindy)
 
@@ -195,8 +195,8 @@ define class <entry-vector> (<vector>)
     init-value: #f, init-keyword: fill:,
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end class <entry-vector>;
-seal generic make(singleton(<entry-vector>));
-seal generic initialize(<entry-vector>);
+define sealed domain make(singleton(<entry-vector>));
+define sealed domain initialize(<entry-vector>);
 
 #end
 
@@ -250,16 +250,16 @@ end class <object-table>;
 
 define sealed class <simple-object-table> (<object-table>) end class;
 
-seal generic make (singleton(<simple-object-table>));
-seal generic initialize (<simple-object-table>);
+define sealed domain make (singleton(<simple-object-table>));
+define sealed domain initialize (<simple-object-table>);
 
 // Uses = as key comparison
 //
 define sealed class <equal-table> (<table>)
 end class <equal-table>;
 
-seal generic make (singleton(<equal-table>));
-seal generic initialize (<equal-table>);
+define sealed domain make (singleton(<equal-table>));
+define sealed domain initialize (<equal-table>);
 
 // Uses a user defined key comparison and hash function, so long as
 // the hash function doesn't involve addresses.
@@ -292,7 +292,7 @@ define inline method key-test (ht :: <table>) => test :: <function>;
   values(table-protocol(ht));    // drop the second return value
 end method key-test;
 
-seal generic key-test (<simple-object-table>);
+define sealed domain key-test (<simple-object-table>);
 
 define inline method object-hash (key :: <object>)
  => (id :: <integer>, state :: <hash-state>);
@@ -517,7 +517,7 @@ define method table-protocol (ht :: <object-table>)
   values(\==, object-hash);
 end method table-protocol;
 
-seal generic table-protocol (<simple-object-table>);
+define sealed domain table-protocol (<simple-object-table>);
 
 define sealed method table-protocol (ht :: <equal-table>) 
  => (key-test :: <function>, key-hash :: <function>);
@@ -642,7 +642,7 @@ end method element;
 //  end if;
 //end method element;
 
-seal generic element (<table>, <object>);
+define sealed domain element (<table>, <object>);
 
 // Return a size that's "almost prime", i.e., not divisible by any
 // prime less than 11.
@@ -941,8 +941,8 @@ define class <table-iterator> (<object>)
   slot current :: <integer> = 0, init-keyword: #"current";
   slot entries :: <entry-vector>, required-init-keyword: #"entries";
 end class <table-iterator>;
-seal generic make(singleton(<table-iterator>));
-seal generic initialize(<table-iterator>);
+define sealed domain make(singleton(<table-iterator>));
+define sealed domain initialize(<table-iterator>);
 
 define method forward-iteration-protocol (ht :: <table>)
  => (initial-state :: <table-iterator>,
@@ -1018,8 +1018,8 @@ end method forward-iteration-protocol;
 define class <string-table> (<value-table>)
 end class <string-table>;
 
-seal generic make(singleton(<string-table>));
-seal generic initialize(<string-table>);
+define sealed domain make(singleton(<string-table>));
+define sealed domain initialize(<string-table>);
 
 define sealed inline method table-protocol (ht :: <string-table>)
  => (key-test :: <function>, key-hash :: <function>);

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.8 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -31,7 +31,7 @@ end;
 define class <pair> (<list>)
 end;
 
-seal generic make (singleton(<pair>));
+define sealed domain make (singleton(<pair>));
 
 define inline method head-setter (new, pair :: <pair>) => new;
   pair.%head := new;

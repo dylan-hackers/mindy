@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.7 1996/02/22 23:29:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.8 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -18,8 +18,8 @@ define functional class <digit> (<object>)
     required-init-keyword: value:;
 end;
 
-seal generic make (singleton(<digit>));
-seal generic initialize (<digit>);
+define sealed domain make (singleton(<digit>));
+define sealed domain initialize (<digit>);
 
 // The fact that we are a functional class should automatically define this,
 // but it doesn't yet.
@@ -30,12 +30,12 @@ define inline method functional-==
   a.value == b.value;
 end;
 
-seal generic functional-== (singleton(<digit>), <object>, <object>);
+define sealed domain functional-== (singleton(<digit>), <object>, <object>);
 
 // Seal = on digits
 // 
-seal generic \= (<digit>, <object>);
-seal generic \= (<object>, <digit>);
+define sealed domain \= (<digit>, <object>);
+define sealed domain \= (<object>, <digit>);
 
 // < -- exported GF method.
 //
@@ -48,8 +48,8 @@ end;
 
 // Seal < on digits.
 // 
-seal generic \< (<digit>, <object>);
-seal generic \< (<object>, <digit>);
+define sealed domain \< (<digit>, <object>);
+define sealed domain \< (<object>, <digit>);
 
 // make-digit -- internal.
 //
@@ -213,8 +213,8 @@ define class <extended-integer> (<general-integer>)
     required-init-keyword: fill:;
 end;
 
-seal generic make (singleton(<extended-integer>));
-seal generic initialize (<extended-integer>);
+define sealed domain make (singleton(<extended-integer>));
+define sealed domain initialize (<extended-integer>);
 
 // make-bignum -- internal.
 //
@@ -233,7 +233,7 @@ end;
 define method shrink-bignum
     (num :: <extended-integer>, new-size :: <integer>)
     => new :: <extended-integer>;
-  // %%primitive shrink-bignum (num, new-size);
+  // %%primitive(shrink-bignum, num, new-size);
   if (new-size == num.bignum-size)
     num;
   else
@@ -283,7 +283,7 @@ end;
 
 // as methods.
 
-seal generic as (singleton(<extended-integer>), <complex>);
+define sealed domain as (singleton(<extended-integer>), <complex>);
 
 define inline method as
     (class == <extended-integer>, num :: <extended-integer>)

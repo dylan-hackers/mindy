@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.8 1996/01/12 02:10:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -258,7 +258,7 @@ define generic write (thing :: <object>) => ();
 
 define inline method write
     (int :: limited(<integer>, min: 0, max: 255)) => ();
-  %%primitive call-out ("putchar", void:, int: int);
+  call-out("putchar", void:, int: int);
 end;
 
 define inline method write (char :: <byte-character>) => ();

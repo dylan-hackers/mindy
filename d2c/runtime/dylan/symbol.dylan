@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.10 1996/03/02 19:21:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.11 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -44,7 +44,7 @@ end class <symbol-table>;
 
 // Seal make on <symbol-table>.
 // 
-seal generic make (singleton(<symbol-table>));
+define sealed domain make (singleton(<symbol-table>));
 
 // initialize -- exported GF method.
 //
@@ -136,7 +136,7 @@ end method make;
 
 // Seal initialize on <symbol>.
 // 
-seal generic initialize (<symbol>);
+define sealed domain initialize (<symbol>);
 
 // Seal = on symbols.
 // 
@@ -184,7 +184,7 @@ end method symbol-equal;
 // 
 define constant $symbol-table :: <symbol-table>
   = begin
-      let sz = for (sym = %%primitive initial-symbols () then sym.symbol-next,
+      let sz = for (sym = %%primitive(initial-symbols) then sym.symbol-next,
 		    count :: <integer> from 0,
 		    while: sym)
 	       finally count;
@@ -203,7 +203,7 @@ define constant $symbol-table :: <symbol-table>
 		iterate(next);
 	      end if;
 	    end method iterate;
-      iterate(%%primitive initial-symbols ());
+      iterate(%%primitive(initial-symbols));
       table;
     end;
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/weak.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/weak.dylan,v 1.3 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -8,12 +8,12 @@ end;
 
 define method make (class == <weak-pointer>,
 		    #key object = required-keyword(object:))
-  %%primitive make-weak-pointer (object);
+  %%primitive(make-weak-pointer, object);
 end;
 
 define method weak-pointer-object (weak-ptr :: <weak-pointer>)
     => (object :: <object>, broken :: <boolean>);
-  %%primitive weak-pointer-object (weak-ptr);
+  %%primitive(weak-pointer-object, weak-ptr);
 end;
 
 

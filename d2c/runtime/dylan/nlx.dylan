@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/nlx.dylan,v 1.4 1995/11/16 03:38:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/nlx.dylan,v 1.5 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -17,13 +17,13 @@ define class <unwind-protect> (<unwind-block>)
     required-init-keyword: cleanup:;
 end;
 
-seal generic make (singleton(<unwind-protect>));
-seal generic initialize (<unwind-protect>);
+define sealed domain make (singleton(<unwind-protect>));
+define sealed domain initialize (<unwind-protect>);
 
 define method push-unwind-protect (cleanup :: <function>) => ();
   let thread = this-thread();
   thread.cur-uwp := make(<unwind-protect>,
-			 saved-stack: %%primitive current-sp(),
+			 saved-stack: %%primitive(current-sp),
 			 saved-uwp: thread.cur-uwp,
 			 saved-handler: thread.cur-handler,
 			 cleanup: cleanup);
@@ -40,13 +40,13 @@ define class <catcher> (<unwind-block>)
   slot thread :: <thread>, required-init-keyword: thread:;
 end;
 
-seal generic make (singleton(<catcher>));
-seal generic initialize (<catcher>);
+define sealed domain make (singleton(<catcher>));
+define sealed domain initialize (<catcher>);
 
 define method make-catcher (saved-state :: <raw-pointer>) => res :: <catcher>;
   let thread = this-thread();
   make(<catcher>,
-       saved-stack: %%primitive current-sp(),
+       saved-stack: %%primitive(current-sp),
        saved-uwp: thread.cur-uwp,
        saved-handler: thread.cur-handler,
        saved-state: saved-state,
@@ -81,7 +81,7 @@ define method throw (catcher :: <catcher>, values :: <simple-object-vector>)
   let target-uwp = catcher.saved-uwp;
   let uwp = this-thread.cur-uwp;
   until (uwp == target-uwp)
-    %%primitive unwind-stack(uwp.saved-stack);
+    %%primitive(unwind-stack, uwp.saved-stack);
     let prev = uwp.saved-uwp;
     this-thread.cur-uwp := prev;
     this-thread.cur-handler := uwp.saved-handler;
@@ -89,8 +89,8 @@ define method throw (catcher :: <catcher>, values :: <simple-object-vector>)
     uwp := prev;
   end;
   catcher.disabled := #t;
-  %%primitive unwind-stack(catcher.saved-stack);
+  %%primitive(unwind-stack, catcher.saved-stack);
   this-thread.cur-handler := catcher.saved-handler;
   // Note: the values-sequence has to happen after the unwind-stack.
-  %%primitive throw(catcher.saved-state, values-sequence(values));
+  %%primitive(throw, catcher.saved-state, values-sequence(values));
 end;

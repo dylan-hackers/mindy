@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/value-cell.dylan,v 1.3 1995/11/16 03:40:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/value-cell.dylan,v 1.4 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -44,6 +44,6 @@ define class <value-cell> (<object>)
   slot value, required-init-keyword: value:
 end;
 
-seal generic make (singleton(<value-cell>));
-seal generic initialize (<value-cell>);
+define sealed domain make (singleton(<value-cell>));
+define sealed domain initialize (<value-cell>);
 

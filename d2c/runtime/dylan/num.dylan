@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.8 1996/02/23 00:00:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -58,29 +58,29 @@ define open generic abs (num :: <object>) => res :: <object>;
 
 // Complex methods.
 
-seal generic \= (<complex>, <complex>);
+define sealed domain \= (<complex>, <complex>);
 
 define sealed inline method zero? (num :: <complex>) => res :: <boolean>;
   num = 0;
 end;
 
-seal generic \+ (<complex>, <complex>);
+define sealed domain \+ (<complex>, <complex>);
 
-seal generic \* (<complex>, <complex>);
+define sealed domain \* (<complex>, <complex>);
 
-seal generic \- (<complex>, <complex>);
+define sealed domain \- (<complex>, <complex>);
 
-seal generic \/ (<complex>, <complex>);
+define sealed domain \/ (<complex>, <complex>);
 
-seal generic \^ (<complex>, <complex>);
+define sealed domain \^ (<complex>, <complex>);
 
-seal generic abs (<complex>);
+define sealed domain abs (<complex>);
 
 
 
 // Real methods.
 
-seal generic \< (<real>, <real>);
+define sealed domain \< (<real>, <real>);
 
 define sealed inline method positive? (num :: <real>) => res :: <boolean>;
   num > 0;
@@ -281,11 +281,11 @@ define constant $minimum-integer :: <integer>
 define constant $maximum-integer :: <integer>
   = lognot($minimum-integer);
 
-seal generic as (singleton(<integer>), <complex>);
+define sealed domain as (singleton(<integer>), <complex>);
 
 define inline method \== (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
-  %%primitive fixnum-= (a, b);
+  %%primitive(fixnum-=, a, b);
 end;
 
 define inline method \== (a :: <integer>, b :: <object>)
@@ -295,7 +295,7 @@ end;
 
 define inline method \< (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
-  %%primitive fixnum-< (a, b);
+  %%primitive(fixnum-<, a, b);
 end;
 
 define inline method even? (a :: <integer>) => res :: <boolean>;
@@ -304,22 +304,22 @@ end;
 
 define inline method \+ (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-+ (a, b);
+  %%primitive(fixnum-+, a, b);
 end;
 
 define inline method \* (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-* (a, b);
+  %%primitive(fixnum-*, a, b);
 end;
 
 define inline method \- (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-- (a, b);
+  %%primitive(fixnum--, a, b);
 end;
 
 define inline method negative (a :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-negative (a);
+  %%primitive(fixnum-negative, a);
 end;
 
 define method floor/ (a :: <integer>, b :: <integer>)
@@ -327,7 +327,7 @@ define method floor/ (a :: <integer>, b :: <integer>)
   if (zero?(b))
     error("Division by zero.");
   else
-    let (q, r) = %%primitive fixnum-divide (a, b);
+    let (q, r) = %%primitive(fixnum-divide, a, b);
 
     if (zero?(r) | negative?(r) == negative?(b))
       values(q, r);
@@ -342,7 +342,7 @@ define method ceiling/ (a :: <integer>, b :: <integer>)
   if (zero?(b))
     error("Division by zero.");
   else
-    let (q, r) = %%primitive fixnum-divide (a, b);
+    let (q, r) = %%primitive(fixnum-divide, a, b);
 
     if (zero?(r) | negative?(r) ~== negative?(b))
       values(q, r);
@@ -357,7 +357,7 @@ define method round/ (a :: <integer>, b :: <integer>)
   if (zero?(b))
     error("Division by zero.");
   else
-    let (q, r) = %%primitive fixnum-divide (a, b);
+    let (q, r) = %%primitive(fixnum-divide, a, b);
 
     if (zero?(r))
       values(q, r);
@@ -389,7 +389,7 @@ define method truncate/
   if (zero?(b))
     error("Division by zero.");
   else
-    let (q, r) = %%primitive fixnum-divide (a, b);
+    let (q, r) = %%primitive(fixnum-divide, a, b);
 
     if (zero?(r) | negative?(r) == negative?(a))
       values(q, r);
@@ -426,22 +426,22 @@ end;
 
 define inline method binary-logior (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-logior (a, b);
+  %%primitive(fixnum-logior, a, b);
 end;
 
 define inline method binary-logxor (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-logxor (a, b);
+  %%primitive(fixnum-logxor, a, b);
 end;
 
 define inline method binary-logand (a :: <integer>, b :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-logand (a, b);
+  %%primitive(fixnum-logand, a, b);
 end;
 
 define inline method lognot (a :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-lognot (a);
+  %%primitive(fixnum-lognot, a);
 end;
 
 define inline method logbit?
@@ -453,9 +453,9 @@ end;
 define inline method ash (integer :: <integer>, count :: <integer>)
     => res :: <integer>;
   if (negative?(count))
-    %%primitive fixnum-shift-right (integer, -count);
+    %%primitive(fixnum-shift-right, integer, -count);
   else
-    %%primitive fixnum-shift-left (integer, count);
+    %%primitive(fixnum-shift-left, integer, count);
   end;
 end;
 
@@ -554,7 +554,7 @@ end;
 
 // Float methods.
 
-seal generic as (singleton(<float>), <complex>);
+define sealed domain as (singleton(<float>), <complex>);
 
 define inline method as (class == <float>, num :: <float>)
     => res :: <float>;
@@ -578,11 +578,11 @@ define sealed method make (class == <single-float>, #key)
   error("Can't make instances of <single-float>, they just are.");
 end;
 
-seal generic as (singleton(<single-float>), <complex>);
+define sealed domain as (singleton(<single-float>), <complex>);
 
 define inline method as (class == <single-float>, num :: <integer>)
     => res :: <single-float>;
-  %%primitive fixed-as-single (num);
+  %%primitive(fixed-as-single, num);
 end;
 
 define inline method as (class == <single-float>, num :: <single-float>)
@@ -592,17 +592,17 @@ end;
 
 define inline method as (class == <single-float>, num :: <double-float>)
     => res :: <single-float>;
-  %%primitive double-as-single (num);
+  %%primitive(double-as-single, num);
 end;
 
 define inline method as (class == <single-float>, num :: <extended-float>)
     => res :: <single-float>;
-  %%primitive extended-as-single (num);
+  %%primitive(extended-as-single, num);
 end;
 
 define inline method \== (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
-  %%primitive single-== (a, b);
+  %%primitive(single-==, a, b);
 end;
 
 define inline method \== (a :: <single-float>, b :: <object>)
@@ -612,7 +612,7 @@ end;
 
 define inline method \= (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
-  %%primitive single-= (a, b);
+  %%primitive(single-=, a, b);
 end;
 
 define inline method \= (a :: <single-float>, b :: <integer>)
@@ -627,7 +627,7 @@ end;
 
 define inline method \< (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
-  %%primitive single-< (a, b);
+  %%primitive(single-<, a, b);
 end;
 
 define inline method \< (a :: <single-float>, b :: <integer>)
@@ -642,7 +642,7 @@ end;
 
 define inline method \<= (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
-  %%primitive single-<= (a, b);
+  %%primitive(single-<=, a, b);
 end;
 
 define inline method \<= (a :: <single-float>, b :: <integer>)
@@ -657,7 +657,7 @@ end;
 
 define inline method \~= (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
-  %%primitive single-~= (a, b);
+  %%primitive(single-~=, a, b);
 end;
 
 define inline method \~= (a :: <single-float>, b :: <integer>)
@@ -672,7 +672,7 @@ end;
 
 define inline method \+ (a :: <single-float>, b :: <single-float>)
     => res :: <single-float>;
-  %%primitive single-+ (a, b);
+  %%primitive(single-+, a, b);
 end;
 
 define inline method \+ (a :: <single-float>, b :: <integer>)
@@ -687,7 +687,7 @@ end;
 
 define inline method \* (a :: <single-float>, b :: <single-float>)
     => res :: <single-float>;
-  %%primitive single-* (a, b);
+  %%primitive(single-*, a, b);
 end;
 
 define inline method \* (a :: <single-float>, b :: <integer>)
@@ -702,7 +702,7 @@ end;
 
 define inline method \- (a :: <single-float>, b :: <single-float>)
     => res :: <single-float>;
-  %%primitive single-- (a, b);
+  %%primitive(single--, a, b);
 end;
 
 define inline method \- (a :: <single-float>, b :: <integer>)
@@ -717,7 +717,7 @@ end;
 
 define inline method \/ (a :: <single-float>, b :: <single-float>)
     => res :: <single-float>;
-  %%primitive single-/ (a, b);
+  %%primitive(single-/, a, b);
 end;
 
 define inline method \/ (a :: <single-float>, b :: <integer>)
@@ -732,41 +732,41 @@ end;
 
 define inline method negative (a :: <single-float>)
     => res :: <single-float>;
-  let quo = %%primitive single-negative (a);
+  let quo = %%primitive(single-negative, a);
   values(quo, a - quo);
 end;
 
 define inline method floor (a :: <single-float>)
     => (quo :: <integer>, rem :: <single-float>);
-  let quo = %%primitive single-floor (a);
+  let quo = %%primitive(single-floor, a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <single-float>)
     => (quo :: <integer>, rem :: <single-float>);
-  let quo = %%primitive single-ceiling (a);
+  let quo = %%primitive(single-ceiling, a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <single-float>)
     => (quo :: <integer>, rem :: <single-float>);
-  let quo = %%primitive single-round (a);
+  let quo = %%primitive(single-round, a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <single-float>)
     => (quo :: <integer>, rem :: <single-float>);
   let quo = if (negative?(a))
-	      %%primitive single-ceiling (a);
+	      %%primitive(single-ceiling, a);
 	    else
-	      %%primitive single-floor (a);
+	      %%primitive(single-floor, a);
 	    end;
   values(quo, a - quo);
 end;
 
 define inline method abs (a :: <single-float>)
     => abs :: <single-float>;
-  %%primitive single-abs (a);
+  %%primitive(single-abs, a);
 end;
 
 
@@ -781,16 +781,16 @@ define sealed method make (class == <double-float>, #key)
   error("Can't make instances of <double-float>, they just are.");
 end;
 
-seal generic as (singleton(<double-float>), <complex>);
+define sealed domain as (singleton(<double-float>), <complex>);
 
 define inline method as (class == <double-float>, num :: <integer>)
     => res :: <double-float>;
-  %%primitive fixed-as-double (num);
+  %%primitive(fixed-as-double, num);
 end;
 
 define inline method as (class == <double-float>, num :: <single-float>)
     => res :: <double-float>;
-  %%primitive single-as-double (num);
+  %%primitive(single-as-double, num);
 end;
 
 define inline method as (class == <double-float>, num :: <double-float>)
@@ -800,12 +800,12 @@ end;
 
 define inline method as (class == <double-float>, num :: <extended-float>)
     => res :: <double-float>;
-  %%primitive extended-as-double (num);
+  %%primitive(extended-as-double, num);
 end;
 
 define inline method \== (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
-  %%primitive double-== (a, b);
+  %%primitive(double-==, a, b);
 end;
 
 define inline method \== (a :: <double-float>, b :: <object>)
@@ -815,7 +815,7 @@ end;
 
 define inline method \= (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
-  %%primitive double-= (a, b);
+  %%primitive(double-=, a, b);
 end;
 
 define inline method \= (a :: <double-float>, b :: <integer>)
@@ -840,7 +840,7 @@ end;
 
 define inline method \< (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
-  %%primitive double-< (a, b);
+  %%primitive(double-<, a, b);
 end;
 
 define inline method \< (a :: <double-float>, b :: <integer>)
@@ -865,7 +865,7 @@ end;
 
 define inline method \<= (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
-  %%primitive double-<= (a, b);
+  %%primitive(double-<=, a, b);
 end;
 
 define inline method \<= (a :: <double-float>, b :: <integer>)
@@ -890,7 +890,7 @@ end;
 
 define inline method \~= (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
-  %%primitive double-~= (a, b);
+  %%primitive(double-~=, a, b);
 end;
 
 define inline method \~= (a :: <double-float>, b :: <integer>)
@@ -915,7 +915,7 @@ end;
 
 define inline method \+ (a :: <double-float>, b :: <double-float>)
     => res :: <double-float>;
-  %%primitive double-+ (a, b);
+  %%primitive(double-+, a, b);
 end;
 
 define inline method \+ (a :: <double-float>, b :: <integer>)
@@ -940,7 +940,7 @@ end;
 
 define inline method \* (a :: <double-float>, b :: <double-float>)
     => res :: <double-float>;
-  %%primitive double-* (a, b);
+  %%primitive(double-*, a, b);
 end;
 
 define inline method \* (a :: <double-float>, b :: <integer>)
@@ -965,7 +965,7 @@ end;
 
 define inline method \- (a :: <double-float>, b :: <double-float>)
     => res :: <double-float>;
-  %%primitive double-- (a, b);
+  %%primitive(double--, a, b);
 end;
 
 define inline method \- (a :: <double-float>, b :: <integer>)
@@ -990,7 +990,7 @@ end;
 
 define inline method \/ (a :: <double-float>, b :: <double-float>)
     => res :: <double-float>;
-  %%primitive double-/ (a, b);
+  %%primitive(double-/, a, b);
 end;
 
 define inline method \/ (a :: <double-float>, b :: <integer>)
@@ -1015,40 +1015,40 @@ end;
 
 define inline method negative (a :: <double-float>)
     => res :: <double-float>;
-  %%primitive double-negative (a);
+  %%primitive(double-negative, a);
 end;
 
 define inline method floor (a :: <double-float>)
     => (quo :: <integer>, rem :: <double-float>);
-  let quo = %%primitive double-floor (a);
+  let quo = %%primitive(double-floor, a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <double-float>)
     => (quo :: <integer>, rem :: <double-float>);
-  let quo = %%primitive double-ceiling (a);
+  let quo = %%primitive(double-ceiling, a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <double-float>)
     => (quo :: <integer>, rem :: <double-float>);
-  let quo = %%primitive double-round (a);
+  let quo = %%primitive(double-round, a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <double-float>)
     => (quo :: <integer>, rem :: <double-float>);
   let quo = if (negative?(a))
-	      %%primitive double-ceiling (a);
+	      %%primitive(double-ceiling, a);
 	    else
-	      %%primitive double-floor (a);
+	      %%primitive(double-floor, a);
 	    end;
   values(quo, a - quo);
 end;
 
 define inline method abs (a :: <double-float>)
     => abs :: <double-float>;
-  %%primitive double-abs (a);
+  %%primitive(double-abs, a);
 end;
 
 
@@ -1063,21 +1063,21 @@ define sealed method make (class == <extended-float>, #key)
   error("Can't make instances of <extended-float>, they just are.");
 end;
 
-seal generic as (singleton(<extended-float>), <complex>);
+define sealed domain as (singleton(<extended-float>), <complex>);
 
 define inline method as (class == <extended-float>, num :: <integer>)
     => res :: <extended-float>;
-  %%primitive fixed-as-extended (num);
+  %%primitive(fixed-as-extended, num);
 end;
 
 define inline method as (class == <extended-float>, num :: <single-float>)
     => res :: <extended-float>;
-  %%primitive single-as-extended (num);
+  %%primitive(single-as-extended, num);
 end;
 
 define inline method as (class == <extended-float>, num :: <double-float>)
     => res :: <extended-float>;
-  %%primitive double-as-extended (num);
+  %%primitive(double-as-extended, num);
 end;
 
 define inline method as (class == <extended-float>, num :: <extended-float>)
@@ -1087,7 +1087,7 @@ end;
 
 define inline method \== (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;
-  %%primitive extended-== (a, b);
+  %%primitive(extended-==, a, b);
 end;
 
 define inline method \== (a :: <extended-float>, b :: <object>)
@@ -1097,7 +1097,7 @@ end;
 
 define inline method \= (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;
-  %%primitive extended-= (a, b);
+  %%primitive(extended-=, a, b);
 end;
 
 define inline method \= (a :: <extended-float>, b :: <integer>)
@@ -1132,7 +1132,7 @@ end;
 
 define inline method \< (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;
-  %%primitive extended-< (a, b);
+  %%primitive(extended-<, a, b);
 end;
 
 define inline method \< (a :: <extended-float>, b :: <integer>)
@@ -1167,7 +1167,7 @@ end;
 
 define inline method \<= (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;
-  %%primitive extended-<= (a, b);
+  %%primitive(extended-<=, a, b);
 end;
 
 define inline method \<= (a :: <extended-float>, b :: <integer>)
@@ -1202,7 +1202,7 @@ end;
 
 define inline method \~= (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;
-  %%primitive extended-~= (a, b);
+  %%primitive(extended-~=, a, b);
 end;
 
 define inline method \~= (a :: <extended-float>, b :: <integer>)
@@ -1237,7 +1237,7 @@ end;
 
 define inline method \+ (a :: <extended-float>, b :: <extended-float>)
     => res :: <extended-float>;
-  %%primitive extended-+ (a, b);
+  %%primitive(extended-+, a, b);
 end;
 
 define inline method \+ (a :: <extended-float>, b :: <integer>)
@@ -1272,7 +1272,7 @@ end;
 
 define inline method \* (a :: <extended-float>, b :: <extended-float>)
     => res :: <extended-float>;
-  %%primitive extended-* (a, b);
+  %%primitive(extended-*, a, b);
 end;
 
 define inline method \* (a :: <extended-float>, b :: <integer>)
@@ -1307,7 +1307,7 @@ end;
 
 define inline method \- (a :: <extended-float>, b :: <extended-float>)
     => res :: <extended-float>;
-  %%primitive extended-- (a, b);
+  %%primitive(extended--, a, b);
 end;
 
 define inline method \- (a :: <extended-float>, b :: <integer>)
@@ -1342,7 +1342,7 @@ end;
 
 define inline method \/ (a :: <extended-float>, b :: <extended-float>)
     => res :: <extended-float>;
-  %%primitive extended-/ (a, b);
+  %%primitive(extended-/, a, b);
 end;
 
 define inline method \/ (a :: <extended-float>, b :: <integer>)
@@ -1377,38 +1377,38 @@ end;
 
 define inline method negative (a :: <extended-float>)
     => res :: <extended-float>;
-  %%primitive extended-negative (a);
+  %%primitive(extended-negative, a);
 end;
 
 define inline method floor (a :: <extended-float>)
     => (quo :: <integer>, rem :: <extended-float>);
-  let quo = %%primitive extended-floor (a);
+  let quo = %%primitive(extended-floor, a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <extended-float>)
     => (quo :: <integer>, rem :: <extended-float>);
-  let quo = %%primitive extended-ceiling (a);
+  let quo = %%primitive(extended-ceiling, a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <extended-float>)
     => (quo :: <integer>, rem :: <extended-float>);
-  let quo = %%primitive extended-round (a);
+  let quo = %%primitive(extended-round, a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <extended-float>)
     => (quo :: <integer>, rem :: <extended-float>);
   let quo = if (negative?(a))
-	      %%primitive extended-ceiling (a);
+	      %%primitive(extended-ceiling, a);
 	    else
-	      %%primitive extended-floor (a);
+	      %%primitive(extended-floor, a);
 	    end;
   values(quo, a - quo);
 end;
 
 define inline method abs (a :: <extended-float>)
     => abs :: <extended-float>;
-  %%primitive extended-abs (a);
+  %%primitive(extended-abs, a);
 end;

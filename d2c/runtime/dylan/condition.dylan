@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.8 1996/01/12 02:10:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -43,8 +43,8 @@ end class <format-string-condition>;
 define class <simple-error> (<error>, <format-string-condition>)
 end class <simple-error>;
 
-seal generic make(singleton(<simple-error>));
-seal generic initialize(<simple-error>);
+define sealed domain make(singleton(<simple-error>));
+define sealed domain initialize(<simple-error>);
 
 // <type-error> -- exported from Dylan
 //
@@ -57,16 +57,16 @@ define class <type-error> (<error>)
   slot type-error-expected-type :: <type>, required-init-keyword: type:;
 end class <type-error>;
 
-seal generic make(singleton(<type-error>));
-seal generic initialize(<type-error>);
+define sealed domain make(singleton(<type-error>));
+define sealed domain initialize(<type-error>);
 
 // <sealed-object-error> -- exported from Dylan
 //
 define class <sealed-object-error> (<error>)
 end class <sealed-object-error>;
 
-seal generic make(singleton(<sealed-object-error>));
-seal generic initialize(<sealed-object-error>);
+define sealed domain make(singleton(<sealed-object-error>));
+define sealed domain initialize(<sealed-object-error>);
 
 // <warning> -- exported from Dylan
 //
@@ -78,8 +78,8 @@ end class <warning>;
 define class <simple-warning> (<warning>, <format-string-condition>)
 end class <simple-warning>;
 
-seal generic make(singleton(<simple-warning>));
-seal generic initialize(<simple-warning>);
+define sealed domain make(singleton(<simple-warning>));
+define sealed domain initialize(<simple-warning>);
 
 // <restart> -- exported from Dylan
 // 
@@ -91,8 +91,8 @@ end class <restart>;
 define class <simple-restart> (<restart>, <format-string-condition>)
 end class <simple-restart>;
 
-seal generic make(singleton(<simple-restart>));
-seal generic initialize(<simple-restart>);
+define sealed domain make(singleton(<simple-restart>));
+define sealed domain initialize(<simple-restart>);
 
 // <abort> -- exported from Dylan
 //
@@ -102,8 +102,8 @@ define class <abort> (<restart>)
     init-value: "<abort>";
 end class <abort>;
 
-seal generic make(singleton(<abort>));
-seal generic initialize(<abort>);
+define sealed domain make(singleton(<abort>));
+define sealed domain initialize(<abort>);
 
 
 // IO abstraction.
@@ -526,7 +526,7 @@ define method lose
   write("internal error: ");
   apply(format, str, args);
   write('\n');
-  %%primitive call-out ("abort", void:);
+  call-out("abort", void:);
 end;
 
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/boolean.dylan,v 1.4 1996/02/22 23:53:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/boolean.dylan,v 1.5 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -46,6 +46,6 @@ end;
 // so that the compiler can more easily identify ~~x.
 //
 define inline method \~ (thing :: <object>) => res :: <boolean>;
-  %%primitive not (thing);
+  %%primitive(not, thing);
 end;
 

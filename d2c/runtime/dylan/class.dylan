@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.14 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.15 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -214,8 +214,8 @@ define class <position-cache-node> (<object>)
     required-init-keyword: next:;
 end class <position-cache-node>;
 
-seal generic make (singleton(<position-cache-node>));
-seal generic initialize (<position-cache-node>);
+define sealed domain make (singleton(<position-cache-node>));
+define sealed domain initialize (<position-cache-node>);
 
 /*
 define method make (class == <class>,

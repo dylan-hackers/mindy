@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/debug.dylan,v 1.2 1995/11/17 02:31:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/debug.dylan,v 1.3 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -44,6 +44,6 @@ define sealed method invoke-debugger
     (debugger :: <null-debugger>, condition :: <condition>)
     => res :: <never-returns>;
   format("%s\n", condition);
-  %%primitive c-expr (void: "fflush(stdout)");
-  %%primitive call-out ("abort", void:);
+  c-expr(void: "fflush(stdout)");
+  call-out("abort", void:);
 end;

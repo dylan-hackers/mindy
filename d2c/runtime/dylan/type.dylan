@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.13 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.14 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -12,8 +12,8 @@ end;
 
 // Seal make and initialize for types.
 // 
-seal generic make (singleton(<type>));
-seal generic initialize (<type>);
+define sealed domain make (singleton(<type>));
+define sealed domain initialize (<type>);
 
 // limited -- exported from Dylan.
 //
@@ -44,7 +44,7 @@ define class <union> (<type>)
     init-value: #(), init-keyword: singletons:;
 end;
 
-seal generic make (singleton(<union>));
+define sealed domain make (singleton(<union>));
 
 // type-union -- exported from Dylan.
 //
@@ -224,7 +224,7 @@ define class <direct-instance> (<type>)
   constant slot direct-instance-of :: <class>, required-init-keyword: of:;
 end class <direct-instance>;
 
-seal generic make (singleton(<direct-instance>));
+define sealed domain make (singleton(<direct-instance>));
 
 // direct-instance -- exported.
 //
@@ -252,7 +252,7 @@ define class <subclass> (<type>)
   constant slot subclass-of :: <class>, required-init-keyword: of:;
 end;
 
-seal generic make (singleton(<subclass>));
+define sealed domain make (singleton(<subclass>));
 
 // subclass -- exported.
 //
@@ -272,7 +272,7 @@ define class <singleton> (<type>)
     required-init-keyword: object:;
 end;
 
-seal generic make (singleton(<singleton>));
+define sealed domain make (singleton(<singleton>));
 
 // singleton -- exported from Dylan.
 //
@@ -305,7 +305,7 @@ define class <limited-integer> (<type>)
     required-init-keyword: max:;
 end;
 
-seal generic make (singleton(<limited-integer>));
+define sealed domain make (singleton(<limited-integer>));
 
 // limited(<general-integer>,...), limited(<extended-integer>)
 //   -- exported gf methods
@@ -449,7 +449,7 @@ end method restrict-limited-ints;
 define class <byte-character-type> (<type>)
 end;
 
-seal generic make (singleton(<byte-character-type>));
+define sealed domain make (singleton(<byte-character-type>));
 
 // <byte-character> -- exported from Extensions.
 //
@@ -479,7 +479,7 @@ define class <none-of> (<type>)
     required-init-keyword: #"excluded";
 end;
 
-seal generic make (singleton(<none-of>));
+define sealed domain make (singleton(<none-of>));
 
 // restrict-types -- internal.
 //

@@ -1,5 +1,5 @@
 module: Dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.4 1996/02/12 01:08:35 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.5 1996/03/17 00:11:23 wlott Exp $
 
 //======================================================================
 //
@@ -124,8 +124,8 @@ define sealed class <bounded-range> (<builtin-range>)
       required-init-keyword: #"size";
 end class;
 
-seal generic make (singleton(<unbounded-range>));
-seal generic make (singleton(<bounded-range>));
+define sealed domain make (singleton(<unbounded-range>));
+define sealed domain make (singleton(<bounded-range>));
 
 
 /* Range Utility Functions

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.22 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.23 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -33,8 +33,8 @@ define abstract class <function> (<object>)
     required-init-keyword: rest-value:;
 end;
   
-seal generic make (singleton(<function>));
-seal generic initialize (<function>);
+define sealed domain make (singleton(<function>));
+define sealed domain initialize (<function>);
 
 
 
@@ -45,21 +45,21 @@ define abstract class <closure> (<function>)
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
 
-seal generic make(singleton(<closure>));
+define sealed domain make(singleton(<closure>));
 
 
 
 define class <raw-function> (<function>)
 end;
 
-seal generic make(singleton(<raw-function>));
+define sealed domain make(singleton(<raw-function>));
 
 
 
 define class <raw-closure> (<raw-function>, <closure>)
 end;
 
-seal generic make(singleton(<raw-closure>));
+define sealed domain make(singleton(<raw-closure>));
 
 define method make-closure
     (func :: <function>, closure-size :: <integer>)
@@ -85,7 +85,7 @@ define class <method> (<function>)
     required-init-keyword: general-entry:;
 end;
 
-seal generic make(singleton(<method>));
+define sealed domain make(singleton(<method>));
 
 
 
@@ -96,14 +96,14 @@ define class <accessor-method> (<method>)
     required-init-keyword: slot:;
 end class <accessor-method>;
 
-seal generic make(singleton(<accessor-method>));
+define sealed domain make(singleton(<accessor-method>));
 
 
 
 define class <method-closure> (<method>, <closure>)
 end;
 
-seal generic make(singleton(<method-closure>));
+define sealed domain make(singleton(<method-closure>));
 
 define method make-closure
     (func :: <method>, closure-size :: <integer>)
@@ -129,8 +129,8 @@ define class <type-vector> (<simple-vector>)
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end class <type-vector>;
 
-seal generic make (singleton(<type-vector>));
-seal generic initialize (<type-vector>);
+define sealed domain make (singleton(<type-vector>));
+define sealed domain initialize (<type-vector>);
 
 define sealed inline method element
     (vec :: <type-vector>, index :: <integer>,
@@ -168,8 +168,8 @@ define class <gf-cache> (<object>)
   slot call-count :: <integer>, init-value: 1;
 end class <gf-cache>;
 
-seal generic make(singleton(<gf-cache>));
-seal generic initialize (<gf-cache>);
+define sealed domain make(singleton(<gf-cache>));
+define sealed domain initialize (<gf-cache>);
 
 define class <generic-function> (<function>)
   //
@@ -178,7 +178,7 @@ define class <generic-function> (<function>)
   slot method-cache :: type-union(<false>, <gf-cache>), init-value: #f;
 end;
 
-seal generic make(singleton(<generic-function>));
+define sealed domain make(singleton(<generic-function>));
 
 
 // Function information routines.
@@ -250,7 +250,7 @@ define constant make-rest-arg
       else
 	let res = make(<simple-object-vector>, size: count);
 	for (index :: <integer> from 0 below count)
-	  %element(res, index) := %%primitive extract-arg (arg-ptr, index);
+	  %element(res, index) := %%primitive(extract-arg, arg-ptr, index);
 	end;
 	res;
       end if;
@@ -302,9 +302,9 @@ define method apply (function :: <function>, #rest arguments)
     error("Apply must be given at least one argument.");
   end;
   let len-1 = size(arguments) - 1;
-  %%mv-call(function,
-	    values-sequence(copy-sequence(arguments, end: len-1)),
-	    values-sequence(arguments[len-1]));
+  mv-call(function,
+	  values-sequence(copy-sequence(arguments, end: len-1)),
+	  values-sequence(arguments[len-1]));
 end;
 
 
@@ -333,27 +333,27 @@ define constant general-call
 	  wrong-number-of-arguments-error(#t, nfixed, nargs);
 	end;
       end;
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(nargs);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
       for (index :: <integer> from 0,
 	   specializer :: <type> in specializers)
-	check-type(%%primitive extract-arg (arg-ptr, index), specializer);
+	check-type(%%primitive(extract-arg, arg-ptr, index), specializer);
       end for;
       if (keywords)
 	if (self.function-all-keys?)
 	  for (index :: <integer> from nfixed below nargs by 2)
-	    check-type(%%primitive extract-arg (arg-ptr, index), <symbol>);
+	    check-type(%%primitive(extract-arg, arg-ptr, index), <symbol>);
 	  end for;
 	else
 	  for (index :: <integer> from nfixed below nargs by 2)
-	    let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
+	    let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
 	    unless (member?(key, keywords))
 	      unrecognized-keyword-error(key);
 	    end unless;
 	  end for;
 	end if;
       end if;
-      %%primitive invoke-generic-entry
-	(self, #(), %%primitive pop-args(arg-ptr));
+      %%primitive(invoke-generic-entry, self, #(),
+		  %%primitive(pop-args, arg-ptr));
     end method;
 
 
@@ -379,12 +379,12 @@ define constant gf-call
 	  wrong-number-of-arguments-error(#t, nfixed, nargs);
 	end;
       end;
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(nargs);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
       let (ordered, ambiguous, valid-keywords)
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
       if (valid-keywords)
 	for (index :: <integer> from nfixed below nargs by 2)
-	  let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
+	  let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
 	  unless (valid-keywords == #"all"
 		    | member?(key,
 			      check-type(valid-keywords,
@@ -397,13 +397,13 @@ define constant gf-call
 	if (ordered == #())
 	  for (index :: <integer> from 0 below nfixed)
 	    let specializer :: <type> = %element(specializers, index);
-	    let arg = %%primitive extract-arg(arg-ptr, index);
+	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    %check-type(arg, specializer);
 	  end;
 	  no-applicable-methods-error();
 	else
-	  %%primitive invoke-generic-entry
-	    (ordered.head, ordered.tail, %%primitive pop-args(arg-ptr));
+	  %%primitive(invoke-generic-entry, ordered.head, ordered.tail,
+		      %%primitive(pop-args, arg-ptr));
 	end;
       else
 	for (prev :: false-or(<pair>) = #f then remaining,
@@ -412,8 +412,8 @@ define constant gf-call
 	finally
 	  if (prev)
 	    prev.tail := list(ambiguous);
-	    %%primitive invoke-generic-entry
-	      (ordered.head, ordered.tail, %%primitive pop-args(arg-ptr));
+	    %%primitive(invoke-generic-entry, ordered.head, ordered.tail,
+			%%primitive(pop-args, arg-ptr));
 	  else
 	    ambiguous-method-error(ambiguous);
 	  end;
@@ -433,7 +433,7 @@ define method internal-sorted-applicable-methods
   let cache-classes = make(<type-vector>, size: nargs);
   for (i :: <integer> from 0 below nargs)
     %element(cache-classes, i)
-      := (%%primitive extract-arg(arg-ptr, i)).object-class;
+      := (%%primitive(extract-arg, arg-ptr, i)).object-class;
   end for;
   let cache = make(<gf-cache>, classes: cache-classes);
 
@@ -586,13 +586,13 @@ define method cached-sorted-applicable-methods
 	if (cache.simple)
 	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
-	    let arg = %%primitive extract-arg(arg-ptr, index);
+	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    unless (type == arg.object-class) no-match() end unless;
 	  end for;
 	else
 	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
-	    let arg = %%primitive extract-arg(arg-ptr, index);
+	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    case
 	      // The easy check for matches
 	      (type == arg.object-class) => #t;
@@ -632,7 +632,7 @@ define method internal-applicable-method?
     for (specializer :: <type> in meth.function-specializers,
 	 index :: <integer> from 0)
       let arg-type = classes[index];
-      let arg :: <object> = %%primitive extract-arg(arg-ptr, index);
+      let arg :: <object> = %%primitive(extract-arg, arg-ptr, index);
 
       // arg-type may be either a singleton, a limited-int, or a class.  This
       // stuff has been worked out on a case by case basis.  It could
@@ -711,7 +711,7 @@ define method compare-methods
 		    #"less-specific";
 		  else
 		    compare-overlapping-specializers
-		      (spec1, spec2, %%primitive extract-arg(arg-ptr, index));
+		      (spec1, spec2, %%primitive(extract-arg, arg-ptr, index));
 		  end if;
 	unless (result == cmp)
 	  if (cmp == #"ambiguous" | result ~== #"identical")
@@ -766,12 +766,12 @@ define constant general-rep-getter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
-      let instance = %%primitive extract-arg(arg-ptr, 0);
-      %%primitive pop-args(arg-ptr);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 1);
+      let instance = %%primitive(extract-arg, arg-ptr, 0);
+      %%primitive(pop-args, arg-ptr);
       let posn = find-slot-offset(instance.object-class, self.accessor-slot);
-      let result = %%primitive ref-slot(instance, #"general", posn);
-      unless (%%primitive initialized? (result))
+      let result = %%primitive(ref-slot, instance, #"general", posn);
+      unless (%%primitive(initialized?, result))
 	uninitialized-slot-error();
       end unless;
       result;
@@ -781,12 +781,12 @@ define constant general-rep-setter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(2);
-      let new-value = %%primitive extract-arg(arg-ptr, 0);
-      let instance = %%primitive extract-arg(arg-ptr, 1);
-      %%primitive pop-args(arg-ptr);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 2);
+      let new-value = %%primitive(extract-arg, arg-ptr, 0);
+      let instance = %%primitive(extract-arg, arg-ptr, 1);
+      %%primitive(pop-args, arg-ptr);
       let posn = find-slot-offset(instance.object-class, self.accessor-slot);
-      %%primitive set-slot(new-value, instance, #"general", posn);
+      %%primitive(set-slot, new-value, instance, #"general", posn);
       new-value;
     end;
 
@@ -795,12 +795,12 @@ define constant heap-rep-getter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
-      let instance = %%primitive extract-arg(arg-ptr, 0);
-      %%primitive pop-args(arg-ptr);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 1);
+      let instance = %%primitive(extract-arg, arg-ptr, 0);
+      %%primitive(pop-args, arg-ptr);
       let posn = find-slot-offset(instance.object-class, self.accessor-slot);
-      let result = %%primitive ref-slot(instance, #"heap", posn);
-      unless (%%primitive initialized? (result))
+      let result = %%primitive(ref-slot, instance, #"heap", posn);
+      unless (%%primitive(initialized?, result))
 	uninitialized-slot-error();
       end unless;
       result;
@@ -810,12 +810,12 @@ define constant heap-rep-setter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(2);
-      let new-value = %%primitive extract-arg(arg-ptr, 0);
-      let instance = %%primitive extract-arg(arg-ptr, 1);
-      %%primitive pop-args(arg-ptr);
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 2);
+      let new-value = %%primitive(extract-arg, arg-ptr, 0);
+      let instance = %%primitive(extract-arg, arg-ptr, 1);
+      %%primitive(pop-args, arg-ptr);
       let posn = find-slot-offset(instance.object-class, self.accessor-slot);
-      %%primitive set-slot(new-value, instance, #"heap", posn);
+      %%primitive(set-slot, new-value, instance, #"heap", posn);
       new-value;
     end;
 
@@ -861,9 +861,9 @@ define constant %make-next-method-cookie = method
 		 else
 		   replacement-args;
 		 end;
-      %%primitive invoke-generic-entry
-	(next-method-info.head, next-method-info.tail,
-	 values-sequence(args));
+      %%primitive(invoke-generic-entry,
+		  next-method-info.head, next-method-info.tail,
+		  values-sequence(args));
     end;
   end;
 end;
@@ -914,18 +914,18 @@ end;
 define inline method curry (function :: <function>, #rest curried-args)
     => res :: <function>;
   method (#rest more-args)
-    %%mv-call(function,
-	      values-sequence(curried-args),
-	      values-sequence(more-args));
+    mv-call(function,
+	    values-sequence(curried-args),
+	    values-sequence(more-args));
   end;
 end;
 
 define inline method rcurry (function :: <function>, #rest curried-args)
     => res :: <function>;
   method (#rest more-args)
-    %%mv-call(function,
-	      values-sequence(more-args),
-	      values-sequence(curried-args));
+    mv-call(function,
+	    values-sequence(more-args),
+	    values-sequence(curried-args));
   end;
 end;
 

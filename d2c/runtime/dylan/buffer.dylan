@@ -3,10 +3,10 @@ author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.8 1996/01/12 02:10:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
 
 
-%%primitive c-include ("string.h");
+c-include("string.h");
 
 define /* exported */ constant <byte> =
   limited(<integer>, min: 0, max: 255);
@@ -17,7 +17,7 @@ define /* exported */ class <byte-vector> (<simple-vector>)
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
-seal generic make (singleton(<byte-vector>));
+define sealed domain make (singleton(<byte-vector>));
 
 define /* exported */ constant <buffer> = <byte-vector>;
 define /* exported */ constant <buffer-index> = <integer>;
@@ -63,47 +63,43 @@ define method copy-bytes
     (dest :: <byte-vector>, dstart :: <integer>,
      src :: <byte-vector>, sstart :: <integer>, count :: <integer>)
  => ();
-  %%primitive call-out
-    ("memmove", void:,
-     ptr: %%primitive vector-elements(dest) + dstart,
-     ptr: %%primitive vector-elements(src) + sstart,
-     int: count);
+  call-out("memmove", void:,
+	   ptr: %%primitive(vector-elements, dest) + dstart,
+	   ptr: %%primitive(vector-elements, src) + sstart,
+	   int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-string>, dstart :: <integer>,
      src :: <byte-vector>, sstart :: <integer>, count :: <integer>)
  => ();
-  %%primitive call-out
-    ("memcpy", void:,
-     ptr: %%primitive vector-elements(dest) + dstart,
-     ptr: %%primitive vector-elements(src) + sstart,
-     int: count);
+  call-out("memcpy", void:,
+	   ptr: %%primitive(vector-elements, dest) + dstart,
+	   ptr: %%primitive(vector-elements, src) + sstart,
+	   int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-vector>, dstart :: <integer>,
      src :: <byte-string>, sstart :: <integer>, count :: <integer>)
  => ();
-  %%primitive call-out
-    ("memcpy", void:,
-     ptr: %%primitive vector-elements(dest) + dstart,
-     ptr: %%primitive vector-elements(src) + sstart,
-     int: count);
+  call-out("memcpy", void:,
+	   ptr: %%primitive(vector-elements, dest) + dstart,
+	   ptr: %%primitive(vector-elements, src) + sstart,
+	   int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-string>, dstart :: <integer>,
      src :: <byte-string>, sstart :: <integer>, count :: <integer>)
  => ();
-  %%primitive call-out
-    ("memmove", void:,
-     ptr: %%primitive vector-elements(dest) + dstart,
-     ptr: %%primitive vector-elements(src) + sstart,
-     int: count);
+  call-out("memmove", void:,
+	   ptr: %%primitive(vector-elements, dest) + dstart,
+	   ptr: %%primitive(vector-elements, src) + sstart,
+	   int: count);
 end method;
 
 define /* exported */ method buffer-address (x :: <buffer>)
  => res :: <raw-pointer>;
-  %%primitive vector-elements(x);
+  %%primitive(vector-elements, x);
 end method;

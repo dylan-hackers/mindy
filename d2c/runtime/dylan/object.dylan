@@ -1,18 +1,15 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/object.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/object.dylan,v 1.3 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 // <object> -- exported.
 //
-// We have to use define %%class, because define class insists on there being
-// at least one superclass.
-//
-define primary abstract open %%class <object> ()
+define primary abstract open class <object> ()
   //
   // The class of the instance.  Non-abstract classes automatically override
   // the init-value to be the correct class.
-  slot %object-class, type: <class>, setter: #f, init-value: <object>
+  constant slot %object-class :: <class> = <object>;
 end;
 
 // object-class -- exported function.

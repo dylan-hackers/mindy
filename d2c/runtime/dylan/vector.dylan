@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.10 1996/03/13 03:18:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.11 1996/03/17 00:11:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -93,7 +93,7 @@ define class <simple-object-vector> (<simple-vector>)
     sizer: size, size-init-value: 0, size-init-keyword: size:;
 end;
 
-seal generic make (singleton(<simple-object-vector>));
+define sealed domain make (singleton(<simple-object-vector>));
 
 define sealed inline method element
     (vec :: <simple-object-vector>, index :: <integer>,
