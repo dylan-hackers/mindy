@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.6 1996/03/27 23:59:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.7 1996/04/14 13:25:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,6 +8,7 @@ define library compiler-parser
   use compiler-base;
 
   export tokenize;
+  export source-utilities;
   export lexer;
   export parse-tree;
   export fragments;
