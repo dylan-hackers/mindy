@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.93 1995/11/06 17:02:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.94 1995/11/08 16:45:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -751,6 +751,8 @@ define module define-libraries-and-modules
   use parse-tree;
   use variables;
   use top-level-forms;
+  use od-format;
+  use builder-interface, import: {<fer-builder>};
 end;
 
 define module builder-interface
@@ -1058,6 +1060,7 @@ define module top-level-expressions
   use builder-interface;
   use fer-convert;
   use expand;
+  use od-format;
 
   export <magic-interal-primitives-placeholder>;
 end;
@@ -1212,6 +1215,8 @@ end;
 
 define module main
   use common;
+  use System;
+
   use utils;
   use define-classes;
   use variables;
@@ -1230,6 +1235,7 @@ define module main
   use c-representation;
   use cback;
   use heap;
+  use compile-time-values;
   use compile-time-functions;
   use signature-interface;
   use ctype;
