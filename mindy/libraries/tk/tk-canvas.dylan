@@ -33,6 +33,7 @@ define method configure-item
 			#"justify", #"text", #"bitmap", #"extent", #"fill",
 			#"outline", #"start", #"stipple", #"style", #"width"],
 		    #t, options));
+  item;
 end method configure-item;
 
 define method item-configuration
@@ -87,7 +88,8 @@ end method item-coords;
 
 define method item-coords-setter
     (value :: <sequence>, item :: <canvas-item>) => ();
-  apply(put-tk-line, item.window, " coords ", value);
+  put-tk-line(item.window, " coords ", item.name, " ",
+	      apply(join-tk-args, value));
 end method item-coords-setter;
 
 define method item-type (item :: <canvas-item>) => (result :: <string>);
