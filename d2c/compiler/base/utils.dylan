@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.6 1995/02/23 17:10:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.7 1995/03/22 14:24:07 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -239,6 +239,37 @@ define method report-condition (condition :: type-or(<simple-error>,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
 end;
+
+
+// foo-IN collection-like functions for threaded lists.
+
+
+define method find-in
+    (next :: <function>, elt, coll, #key key :: <function> = identity,
+     test :: false-or(<function>), test-not :: false-or(<function>))
+  if (test & test-not)
+    error("Both test: and test-not:");
+  end;
+  block (done)
+    if (test-not)
+      for (cur = coll then cur.next, while: cur)
+        unless (test-not(cur.key, elt)) done(cur) end;
+      end for;
+    else
+      let test = test | \==;
+      for (cur = coll then cur.next, while: cur)
+        if (test(cur.key, elt)) done(cur) end;
+      end for;
+    end if;
+  end block;
+end method;
+
+
+define method size-in(next :: <function>, coll) => <fixed-integer>;
+  for (cur = coll then coll.next, len from 0, while: cur)
+    finally len;
+  end;
+end method;
 
 
 // Simple utility functions.
