@@ -3,7 +3,7 @@
 ##
 
 if ($features{'compiled_for_darwin'}) {
-    &compile_subdirs('cocoa');
+#    &compile_subdirs('cocoa');
 }
 if ($have_gtk eq 'yes') {
     &compile_subdirs('gtk+');
