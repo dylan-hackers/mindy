@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.28 1995/11/09 13:33:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.29 1995/11/10 15:09:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -301,7 +301,15 @@ define method compile-library (lid-file :: <byte-string>) => ();
 end;
 
 
-  
+define method load-library (name :: <symbol>) => ();
+  block ()
+    *Current-Library* := find-library(name, create: #t);
+    find-data-unit(name, $library-summary-unit-type,
+		   dispatcher: *compiler-dispatcher*);
+  cleanup
+    *Current-Library* := #f;
+  end;
+end;
 
 define method main (argv0, #rest args)
   if (args.size ~== 1)
