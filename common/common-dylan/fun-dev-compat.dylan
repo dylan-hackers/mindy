@@ -36,16 +36,3 @@ end;
 // simple alias to differently named equivalent d2c method
 
 define constant find-value = find-element;
-
-/// Profiling macro
-//  Do-nothing version
-define macro profiling
-  { profiling
-        (?options:*)
-      ?body:body
-    results
-      ?result-body:body
-    end }
- => { ?body;
-      ?result-body }
-end macro profiling;

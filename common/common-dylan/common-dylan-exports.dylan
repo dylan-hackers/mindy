@@ -11,10 +11,6 @@ define library common-dylan
   use table-extensions;
   use format-out;
   use random;
-  use regular-expressions,
-    import: all,
-    export: all;
-
   use transcendental,
      import: { transcendental => transcendentals },
      export: all;
@@ -39,8 +35,7 @@ define module functional-extensions
   use Magic, import: {%element, %element-setter};
   use common-extensions, import: { find-element };
   export 
-    find-value,
-    \profiling;
+    find-value;
   export
     with-bounds-checks,
     without-bounds-checks;
@@ -53,7 +48,8 @@ define module c-support
 
   export
     application-argc,
-    application-argv;
+    application-argv,
+    cpu-time;
 end module c-support;
 
 define module finalization
@@ -72,8 +68,14 @@ define module simple-random
 end module;
 
 define module simple-profiling
-  // XXX - Needs definition.
-end module;
+  create \profiling,
+         \profiling-keywords,   // ###
+         \profiling-results,    // ###
+         <profiling-state>,
+         start-profiling-type,
+         stop-profiling-type,
+         profiling-type-result;
+end module simple-profiling;
 
 define module simple-debugging
   use Extensions,
@@ -135,12 +137,15 @@ define module common-extensions
   use format, export: { format-to-string };
   use streams, import: { <stream> },
     export: {<stream>};
-  use random,
-     export: all;
-  use regular-expressions,
-     export: all;
-  use functional-extensions,
-     export: all;
+  use simple-profiling,
+    export: { \profiling, 
+	      profiling-type-result };
+
+  create
+    position,
+    split,
+    fill-table!,
+    find-element;
 
   export
     /* Numerics */
@@ -161,11 +166,11 @@ define module common-extensions
     //<stretchy-sequence>,
     //<stretchy-object-vector>,
     //concatenate!,
-    position,
+    //position,
     //remove-all-keys!,
     //difference,
-    fill-table!,
-    find-element,
+    //fill-table!,
+    //find-element,
     //key-exists?,
 
     /* Conditions */
@@ -272,6 +277,9 @@ end module streams-protocol;
 
 define module common-dylan-internals
   use common-dylan;
+  use melange-support;
+  use c-support;
+  use simple-profiling;
   use locators-protocol;
-  use streams-protocol, export: all;
+  use streams-protocol;
 end module common-dylan-internals;
