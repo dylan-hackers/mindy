@@ -141,7 +141,7 @@ EOF
 
 } else { # unix
 
-    print <<'EOF';
+    print <<"EOF";
 
 # Primary targets:
 # libgc.a - builds basic library
@@ -151,12 +151,14 @@ EOF
 #      	 and runs some tests of collector and cords.  Does not add cords or
 #	 c++ interface to libgc.a
 # cord/de - builds dumb editor based on cords.
-CC=gcc
+CC=$CC
 CXX=g++ -ansi
 # Needed only for "make c++", which adds the c++ interface
 AS=as
-
 CFLAGS= -O -DNO_SIGNALS -DSILENT
+EOF
+
+    print <<'EOF';
 # Setjmp_test may yield overly optimistic results when compiled
 # without optimization.
 # -DSILENT disables statistics printing, and improves performance.
@@ -274,11 +276,16 @@ $(OBJS) test.o dyn_load.o dyn_load_sunos53.o: $(srcdir)/gc_priv.h $(srcdir)/gc_h
 
 mark.o typd_mlc.o finalize.o: $(srcdir)/gc_mark.h
 
-libgc.a: $(OBJS) dyn_load.o
+libgc.sl: $(OBJS) dyn_load.o
 	rm -f on_sparc_sunos5
 	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
 	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(OBJS) dyn_load.o
-	./if_not_there on_sparc_sunos5 $(AR) ru libgc.a $(OBJS) dyn_load.o
+EOF
+
+      print <<"EOF";
+	./if_not_there on_sparc_sunos5 $lib_linker libgc.$lib_type \$(OBJS) dyn_load.o
+EOF
+    print <<'EOF';
 	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
 #	ignore ranlib failure; that usually means it doesn't exist, and isn't needed
 
@@ -423,11 +430,12 @@ gctest_dyn_link: test.o libgc.so
 
 EOF
 
-    push(@compile_dependencies, 'libgc.a');
+    push(@compile_dependencies, "libgc.$lib_type");
 
-    do install('lib', 'libgc.a');
+    do install('lib', "libgc.$lib_type");
 
-    push(@files_to_clean, '$(OBJS)', 'libgc.a', 'gctest', 'gctest_dyn_link',
+    push(@files_to_clean, '$(OBJS)', "libgc.$lib_type", 'gctest',
+	 'gctest_dyn_link', 
 	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
 	 'if_not_there', 'if_mach', '$(CORD_OBJS)', 'cord/cordtest', 
 	 'cord/de');
