@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.16 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.17 1996/10/06 12:57:16 nkramer Exp $
 *
 * This file starts everything going.
 *
@@ -76,6 +76,8 @@ static void missing_arg(char *whose)
     exit(1);
 }
   
+/* exec_file_name is used by extern.c, so it can find the executable
+   again and search it for symbol table stuff */
 char *exec_file_name;
 
 void main(int argc, char *argv[])
