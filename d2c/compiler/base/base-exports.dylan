@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.13 1996/02/08 02:24:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.14 1996/02/08 16:04:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -726,6 +726,8 @@ define module compile-time-functions
     <ct-generic-function>, <ct-open-generic>, <ct-sealed-generic>,
 
     <ct-method>, ct-method-hidden?,
+    <ct-accessor-method>, ct-accessor-method-slot-info,
+    ct-accessor-standin, ct-accessor-standin-setter,
 
     <ct-entry-point>, ct-entry-point-for, ct-entry-point-kind;
 end;
