@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.8 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.9 1996/01/27 20:10:36 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -44,25 +44,51 @@ define constant $ct-function-dump-slots =
        ct-function-name, name:, #f,
        ct-function-signature, signature:, #f,
        ct-function-definition, definition:, ct-function-definition-setter,
-       ct-function-closure-var-types, closure-var-types:, #f);
+       ct-function-closure-var-types, closure-var-types:, #f,
+       ct-value-heap-labels, heap-labels:, #f);
 
 add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-function>,
 		$ct-function-dump-slots,
 		load-external: #t);
 
 
-define class <ct-generic-function> (<ct-function>, <eql-ct-value>)
+define abstract class <ct-generic-function> (<ct-function>, <eql-ct-value>)
+  slot ct-generic-sealed?, required-init-keyword: #"sealed?", setter: #f;
 end;
+
+define class <ct-open-generic> (<ct-generic-function>) end class;
+define class <ct-sealed-generic> (<ct-generic-function>) end class;
+
+define method make
+    (class == <ct-generic-function>, #rest rest, #key sealed?)
+ => (result :: <ct-generic-function>);
+  if (sealed?)
+    apply(make, <ct-sealed-generic>, rest);
+  else
+    apply(make, <ct-open-generic>, rest);
+  end if;
+end method make;
 
 define method ct-value-cclass (ctv :: <ct-generic-function>)
     => res :: <cclass>;
   specifier-type(#"<generic-function>");
 end;
 
-add-make-dumper(#"ct-generic-function", *compiler-dispatcher*,
-		<ct-generic-function>, $ct-function-dump-slots,
+// Add-make-dumper requires direct classes -- bletch.  If we
+// accidentally fail to specify both concrete classes the dumper
+// quietly omits the data, with unpleasant results.
+
+add-make-dumper(#"ct-sealed-generic", *compiler-dispatcher*,
+		<ct-sealed-generic>,
+		concatenate($ct-function-dump-slots,
+			    list(ct-generic-sealed?, #"sealed?", #f)),
 		load-external: #t);
 
+add-make-dumper(#"ct-open-generic", *compiler-dispatcher*,
+		<ct-open-generic>,
+		concatenate($ct-function-dump-slots,
+			    list(ct-generic-sealed?, #"sealed?", #f)),
+		load-external: #t);
 
 
 define class <ct-method> (<ct-function>)
