@@ -81,6 +81,8 @@ copyright: see below
 //       <predefined-type-declaration>
 //         <integer-type-declaration>
 //             operations include accessor-name
+//           <signed-integer-type-declaration>
+//           <unsigned-integer-type-declaration>
 //         <float-type-declaration>
 //       <bitfield-declaration>
 //           operations include bits-in-field, base-type
@@ -436,7 +438,7 @@ define method canonical-name (decl :: <enum-declaration>)
 end method canonical-name;
 
 define method make-enum-slot
-    (name :: <string>, value :: false-or(<integer>),
+    (name :: <string>, value :: false-or(<general-integer>),
      prev :: false-or(<enum-slot-declaration>), state :: <parse-state>)
  => (result :: <enum-slot-declaration>);
   if (element(state.objects, name, default: #f))
@@ -862,6 +864,9 @@ define class <integer-type-declaration> (<predefined-type-declaration>)
   slot accessor-name :: <string>, required-init-keyword: #"accessor";
 end class;
 
+define class <signed-integer-type-declaration>   (<integer-type-declaration>) end class;
+define class <unsigned-integer-type-declaration> (<integer-type-declaration>) end class;
+
 define class <float-type-declaration> (<predefined-type-declaration>)
   slot accessor-name :: <string>, required-init-keyword: #"accessor";
 end class;
@@ -877,53 +882,54 @@ define constant void-type = make(<predefined-type-declaration>,
                                  abstract-type?: #t,
 				 name: "void-type", size: 0);
 
-define constant int-type = make(<integer-type-declaration>,
+define constant int-type = make(<signed-integer-type-declaration>,
 				accessor: "signed-long-at",
 				name: "int",
-				dylan-name: "<integer>", size: $integer-size);
-define constant unsigned-int-type = make(<integer-type-declaration>,
+				dylan-name: "<integer>",
+                                size: $integer-size);
+define constant unsigned-int-type = make(<unsigned-integer-type-declaration>,
 					 accessor: "unsigned-long-at",
 					 name: "unsigned-int",
 					 dylan-name: "<integer>",
 					 size: $integer-size);
-define constant short-type = make(<integer-type-declaration>,
+define constant short-type = make(<signed-integer-type-declaration>,
 				  accessor: "signed-short-at",
 				  name: "short",
 				  dylan-name: "<integer>",
 				  size: $short-int-size);
-define constant unsigned-short-type = make(<integer-type-declaration>,
+define constant unsigned-short-type = make(<unsigned-integer-type-declaration>,
 					   accessor: "unsigned-short-at",
 					   name: "unsigned-short",
 					   dylan-name: "<integer>",
 					   size: $short-int-size);
-define constant long-type = make(<integer-type-declaration>,
+define constant long-type = make(<signed-integer-type-declaration>,
 				 accessor: "signed-long-at",
 				 name: "long",
 				 dylan-name: "<integer>",
 				 size: $long-int-size);
-define constant unsigned-long-type = make(<integer-type-declaration>,
+define constant unsigned-long-type = make(<unsigned-integer-type-declaration>,
 					  accessor: "unsigned-long-at",
 					  name: "unsigned-long",
 					  dylan-name: "<integer>",
 					  size: $long-int-size);
 // "long long" is an idiom supported by gcc, so we'll recognize it, without
 // actually supporting access.
-define constant longlong-type = make(<integer-type-declaration>,
+define constant longlong-type = make(<signed-integer-type-declaration>,
 				     accessor: "longlong-at",
 				     name: "long-long",
 				     dylan-name: "<double-integer>",
 				     size: $long-int-size * 2);
-define constant unsigned-longlong-type = make(<integer-type-declaration>,
+define constant unsigned-longlong-type = make(<unsigned-integer-type-declaration>,
 					      accessor: "unsigned-longlong-at",
 					      name: "unsigned-long-long",
 					      dylan-name: "<double-integer>",
 					      size: $longlong-int-size);
-define constant char-type = make(<integer-type-declaration>,
+define constant char-type = make(<signed-integer-type-declaration>,
 				 accessor: "signed-byte-at",
 				 name: "char",
 				 dylan-name: "<integer>",
 				 size: $char-size);
-define constant unsigned-char-type = make(<integer-type-declaration>,
+define constant unsigned-char-type = make(<unsigned-integer-type-declaration>,
 					  accessor: "unsigned-byte-at",
 					  name: "unsigned-char",
 					  dylan-name: "<integer>",
@@ -1345,6 +1351,10 @@ define sealed domain make(singleton(<incomplete-type-declaration>));
 define sealed domain make(singleton(<predefined-type-declaration>));
 // <integer-type-declaration> -- subclass of <predefined-type-declaration>
 define sealed domain make(singleton(<integer-type-declaration>));
+// <signed-integer-type-declaration> -- subclass of <integer-type-declaration>
+define sealed domain make(singleton(<signed-integer-type-declaration>));
+// <unsigned-integer-type-declaration> -- subclass of <integer-type-declaration>
+define sealed domain make(singleton(<unsigned-integer-type-declaration>));
 // <float-type-declaration> -- subclass of <predefined-type-declaration>
 define sealed domain make(singleton(<float-type-declaration>));
 // <function-declaration> -- subclass of <value-declaration>

@@ -119,6 +119,8 @@ define module c-lexer
   use substring-search;
   use character-type;
   use streams;
+  use format;
+  use standard-io;
   use source-locations;
   use parse-conditions,
     // XXX - These should probably go away.
@@ -174,7 +176,10 @@ define module c-parse
     process-declarator, declare-objects, make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
     <varargs-declaration>, <enum-slot-declaration>, constant-value,
-    <integer-type-declaration>, canonical-name, true-type, make-enum-slot,
+    <integer-type-declaration>,
+    <signed-integer-type-declaration>,
+    <unsigned-integer-type-declaration>,
+    canonical-name, true-type, type-size-slot, make-enum-slot,
     referent;
   export
     parse, parse-type, parse-macro;

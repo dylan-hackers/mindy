@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.20 2004/05/11 21:59:44 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.21 2004/05/15 09:56:51 cpage Exp $
 
 //======================================================================
 //
@@ -517,8 +517,14 @@ cast-expr (unary-expr)
 cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
   let result = int-value(%4, @0);
   if (instance?(result, <general-integer>)
-       & instance?(%2.true-type, <integer-type-declaration>))
-    result;
+        & instance?(%2.true-type, <integer-type-declaration>))
+    // Handle casting a large unsigned value to a signed integer type.
+    if (instance?(%2.true-type, <signed-integer-type-declaration>)
+          & result > (2 ^ (8 * %2.type-size-slot - 1) - 1))
+      as(<integer>, result - #e2 ^ (8 * %2.type-size-slot))
+    else
+      result
+    end if
   else
     parse-error
       (@0,
