@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.12 1996/09/18 18:59:00 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.13 1996/09/26 11:30:53 nkramer Exp $
 
 //======================================================================
 //
@@ -488,7 +488,13 @@ define method main (program, #rest args)
     if (arg = "-v")
       verbose := #t;
     elseif (is-prefix?("-I", arg))
-      push(include-path, copy-sequence(arg, start: 2));
+      let include-string = copy-sequence(arg, start: 2);
+      #if (compiled-for-x86-win32)
+	 // translate \ to /, because \ does bad things when inside a
+	 // string literal, like c-include("d:\foo\bar.h")
+	 let include-string = translate(include-string, "\\\\", "/");
+      #endif
+      push(include-path, include-string);
     elseif (is-prefix?("-T", arg))
       // This should allow specification of arbitrary targets, just in case
       //    I get lazy, and forget to add explicit switches for them.  It's
