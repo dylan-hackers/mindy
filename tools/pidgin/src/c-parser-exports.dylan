@@ -115,5 +115,6 @@ define module c-parser
     $generic-platform,
     $i386-linux-platform,
     $ppc-linux-platform,
-    $i386-freebsd-platform;
+    $i386-freebsd-platform,
+    $sparc-solaris-platform;
 end module c-parser;
