@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.7 1994/04/06 22:50:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.8 1994/04/08 17:55:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -817,6 +817,7 @@ static void do_funcall(struct thread *thread, obj_t args, int nargs)
 	    *thread->sp++ = TAIL(arg);
 	    set_c_continuation(thread, continue_funcall);
 	    invoke(thread, 1);
+	    return;
 	}
 	else
 	    lose("Print command found a strange expression.");
@@ -878,6 +879,7 @@ static void do_more_prints(struct thread *thread, obj_t exprs)
 	    *thread->sp++ = TAIL(expr);
 	    set_c_continuation(thread, do_print);
 	    invoke(thread, 1);
+	    return;
 	}
 	else
 	    lose("Print command found a strange expression.");
