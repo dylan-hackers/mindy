@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.8 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.9 1996/04/16 17:26:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -963,9 +963,9 @@ define method shift-until-odd (x :: <extended-integer>, len :: <integer>)
     end;
   else
     let new-len = len - digits;
-    let prev-digit = bignum-digit(x, 0);
+    let prev-digit = bignum-digit(x, digits);
     for (index :: <integer> from 1 below new-len)
-      let next-digit = bignum-digit(x, index);
+      let next-digit = bignum-digit(x, index + digits);
       bignum-digit(x, index - 1)
 	:= digit-shift(next-digit, prev-digit, $digit-bits - bits);
       prev-digit := next-digit;
