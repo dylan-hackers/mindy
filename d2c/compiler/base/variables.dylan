@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.22 1996/01/27 20:10:36 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.23 1996/01/31 23:58:02 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -706,6 +706,49 @@ define method find-variable (name :: <basic-name>, #key create: create?)
     #f;
   end;
 end method;
+
+
+// name-inherited-or-exported?  --  exported
+//
+// Return #t if the variable named by name is inherited from another library or
+// is exported from this library.  This function is used to determine which
+// definitions might semantically be visible to other libraries, hence need to
+// be dumped in the library dummary.  A name is exposed if:
+//  1] The variable's home library is different from the referencing library.
+//     This first case deals with situations where the name is implicitly made
+//     visible due to being referenced by an exported macro or inline function.
+//  2] The variable is exported from some exported module.
+//
+// Determining whether the variable is exported from some module that it is
+// visible in is pretty inefficient, since we have no idea what name(s) it
+// might be exported under.
+//
+define method name-inherited-or-exported? (name :: <basic-name>)
+  => res :: <boolean>;
+  let var = find-variable(name);
+ let res =
+  (var.variable-home.module-home ~== name.name-module.module-home)
+    | block (hit)
+        for (modu in var.accessing-modules)
+	  if (element(modu.module-home.exported-modules, modu.module-name,
+	              default: #f)
+	       & key-of(var, modu.exported-variables))
+	    hit(#t);
+	  end if;
+	finally #f;
+	end for;
+      end block;
+ unless (res)
+ dformat("nih: %= = %=\n", name, res);
+ end;
+ res;
+end method;
+
+define method name-inherited-or-exported? (name :: <method-name>)
+  => res :: <boolean>;
+ name-inherited-or-exported?(name.method-name-generic-function);
+end method;
+
 
 // find-exported-variable -- internal.
 //
