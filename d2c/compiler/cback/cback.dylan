@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.11 2000/01/24 04:56:06 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.12 2000/08/11 12:54:44 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -145,19 +145,16 @@ define class <unit-state> (<object>)
   //  required-init-keyword: prefix:;
   //
   // keeps track of names used already.
-  slot unit-global-table :: <table>,
-    init-function: method () make(<string-table>) end method;
+  slot unit-global-table :: <table> = make(<string-table>);
   //
   // Vector of the initial values for the roots vector.
-  /* exported */ slot unit-init-roots :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  /* exported */ slot unit-init-roots :: <stretchy-vector> = make(<stretchy-vector>);
   //
   // Vector of the ctvs we want to force into the local heap irrespective of
   // whether or not they are actually referenced.  We do this for things we
   // are optimistic about being referenced someplace but don't want to have
   // to wait until the global heap to dump.
-  /* exported */ slot unit-eagerly-reference :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  /* exported */ slot unit-eagerly-reference :: <stretchy-vector> = make(<stretchy-vector>);
 end;
 
 define method initialize(obj :: <unit-state>, #next next-method, #key prefix) => ()
@@ -191,17 +188,14 @@ define class <file-state> (<object>)
     required-init-keyword: unit:;
   //
   // Files we have already included.
-  slot file-includes-exist-for :: <string-table>,
-    init-function: curry(make, <string-table>);
+  slot file-includes-exist-for :: <string-table> = make(<string-table>);
   //
   // Things we have already spewed defns for.
-  slot file-prototypes-exist-for :: <string-table>,
-    init-function: curry(make, <string-table>);
+  slot file-prototypes-exist-for :: <string-table> = make(<string-table>);
   //
   // Maps from vectors of C type name strings to the name of an already-defined
   // structure type which can be used to return those multiple values.
-  slot file-result-structures :: <equal-table>,
-    init-function: curry(make, <equal-table>);
+  slot file-result-structures :: <equal-table> = make(<equal-table>);
   //
   // Used to uniquely name the structure types that we generate.
   slot file-next-mv-result-struct :: <integer>, init-value: 0;
@@ -213,18 +207,15 @@ define class <file-state> (<object>)
   // These two streams seperately collect the local variable declarations and
   // the function body so that we can emit variable declarations on the fly
   // during code generation.
-  slot file-vars-stream :: <stream>,
-    init-function: curry(make-indenting-string-stream,
-			 indentation: $indentation-step);
-  slot file-guts-stream :: <stream>,
-    init-function: curry(make-indenting-string-stream,
-			 indentation: $indentation-step);
+  slot file-vars-stream :: <stream>
+  	    = make-indenting-string-stream(indentation: $indentation-step);
+  slot file-guts-stream :: <stream>
+        = make-indenting-string-stream(indentation: $indentation-step);
   //
   // Whenever the guts stream buffer exceeds 64K, we push the contents here and
   // empty the stream.  In addition to being more efficient, this avoids object
   // size limitations in Mindy.
-  slot file-guts-overflow :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>, size: 0);
+  slot file-guts-overflow :: <stretchy-vector> = make(<stretchy-vector>, size: 0);
   //
   // Chain of <pending-define>s.
   slot file-pending-defines :: false-or(<pending-define>),
@@ -236,8 +227,7 @@ define class <file-state> (<object>)
   //
   // keeps track of names used already.  This is cleared whenever we start
   // emitting a new function.
-  slot file-local-table :: <table>,
-    init-function: method () make(<string-table>) end method;
+  slot file-local-table :: <table> = make(<string-table>);
   //
   // we keep track of the components for all the xeps that we lazily generated
   // and dump them after the referencing component has compiled, since we are
@@ -290,32 +280,40 @@ end;
 // Lots of places we emit ``useful'' information inside comments.  But if the
 // useful information contains a ``*/'' it will confuse the C compiler.  So
 // we use this routine to clobber all occurances of */ before actually writing
-// the comment.
+// the comment. We also clobber ``/*'' because some C compilers warn about nested
+// comments if they encounter it.
 // 
 define method clean-for-comment
     (string :: <byte-string>, #key copy? :: <boolean> = #t)
     => res :: <byte-string>;
-  let len = string.size;
-  unless (len < 2)
-    let previous-is-star? = string[0] == '*';
-    for (index :: <integer> from 1 below len)
-      let char = string[index];
-      if (char == '*')
-	previous-is-star? := #t;
-      elseif (previous-is-star?)
-	previous-is-star? := #f;
-	if (char == '/')
-	  if (copy?)
-	    string := copy-sequence(string);
-	    copy? := #f;
-	  end if;
-	  string[index - 1] := 'X';
-	  string[index] := 'X';
-	end if;
-      end if;
-    end for;
-  end unless;
-  string;
+    let len = string.size;
+    unless (len < 2)
+      let previous-is-star? = string[0] == '*';
+      for (index :: <integer> from 1 below len)
+        local method punch(at :: <integer>) => ();
+            if (copy?)
+              string := copy-sequence(string);
+              copy? := #f;
+            end if;
+            string[at] := 'X';
+            string[at + 1] := 'X';
+          end method punch;
+
+        let char = string[index];
+
+        if (char == '*')
+          previous-is-star? := #t;
+        elseif (char == '/')
+          if (previous-is-star?)
+            previous-is-star? := #f;
+            punch(index - 1);
+          elseif (index + 1 < len & string[index + 1] == '*')
+            punch(index);
+          end if;
+        end if;
+      end for;
+    end unless;
+    string;
 end method clean-for-comment;
 //
 define method clean-for-comment (thing :: <object>, #key)
@@ -463,7 +461,7 @@ end method;
 define method maybe-emit-source-location(source-loc :: <file-source-location>,
 				   file :: <file-state>) => ();
   if (file.file-source-location ~= source-loc)
-    format(file.file-guts-stream, "\n#line %d \"%s\"\n", 
+    format(file.file-guts-stream, "\n#line %d \"%s\"\n",
 	   source-loc.end-line, source-loc.source-file.full-file-name);
     file.file-source-location := source-loc;
   end if;
@@ -1411,7 +1409,7 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   if (ctv)
     if (ctv.sealed?)
       //
-      // By adding sealed classes to the heap now, we save effort duing the
+      // By adding sealed classes to the heap now, we save effort doing the
       // global dump phase.  And this costs us nothing, because all classes
       // are referenced through the super/subclass links.
       eagerly-reference(ctv, file);
@@ -2618,7 +2616,7 @@ define method emit-assignment
 		 = slot-rep.representation-data-word-member);
 	ref-leaf(instance-rep, instance-leaf, file);
       else
-	error("Trying to extract the data-word from something that doens't "
+	error("Trying to extract the data-word from something that doesn't "
 		"have one.");
       end if;
 
