@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.47 2003/07/17 03:13:39 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.48 2003/10/18 04:36:31 housel Exp $
 copyright: see below
 
 
@@ -2456,7 +2456,13 @@ define method build-key-defaulter-function-body
            var: var,
            supplied?-var: supplied?-var);
     end method;
-  let initkey-infos = map(make-initkey-info, keyword-infos);
+  let initkey-infos = map(make-initkey-info,
+                          choose(method(info :: <keyword-info>)
+                                   info.keyword-init-value
+                                     | info.keyword-init-function
+                                     | info.keyword-required?
+                                 end,
+                                 keyword-infos));
 
   //
   // Loop over the keyword arguments starting from the leftmost
