@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.7 1999/01/15 19:46:18 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.8 1999/01/25 01:21:57 andreas Exp $
 
 //======================================================================
 //
@@ -1490,7 +1490,7 @@ define method parse-loop
 
       if (debug)
 	dformat("top = %d, state = %d, lookahead = %s\n",
-		top, state, lookahead);
+		top, state, lookahead.string-value);
       end if;
 
       let actions :: <simple-object-vector> = $action-table[state];
