@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/ext-init.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/ext-init.c,v 1.2 1998/09/21 09:23:30 igor Exp $
 *
 * This file does whatever.
 *
@@ -36,6 +36,7 @@
 #include "bool.h"
 #include "extern.h"
 #include "error.h"
+#include "str.h"
 
 void add_explicit_symbol(char *name, void *address);
 
