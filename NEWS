@@ -1,16 +1,20 @@
 Gwydion Dylan 2.3.1
 
-  This is the first release of the new development branch. Lots of things
-  changed: the build system has been completely revamped by Eric Kidd to
-  support bootstrapping under various conditions, the instance? test
-  has been made faster by Andreas Bogk, there's an OpenBSD port by
-  Brad Dominy, work has been done (but not yet finished) on a
-  Harlequin Dylan compatible c-ffi by Peter Housel, Eric Kidd started
-  work on replacing melange by pidgin. There's now support for Common
-  Dylan, which should give source code compatibility with Harlequin;
-  dig, a debugging frontend to gdb which understands Dylan now works
-  on Posix systems, Jeff Dubrule has provided a mindy port to Linux
-  on Alpha, and of course bugs have been fixed by various people.
+  This is the first release of the new development branch. Lots of
+  things changed: the build system has been completely revamped by
+  Eric Kidd to support bootstrapping under various conditions, the
+  instance? test has been made faster by Andreas Bogk, there's an
+  OpenBSD port by Brad Dominy, work has been done (but not yet
+  finished) on a Harlequin Dylan compatible c-ffi by Peter Housel,
+  Eric Kidd started work on replacing melange by pidgin. There's now
+  support for Common Dylan (which includes a file-system and an
+  operating-system library by Tom Emerson), which should give source
+  code compatibility with Harlequin; dig, a debugging frontend to gdb
+  which understands Dylan now works on Posix systems, Jeff Dubrule has
+  provided a mindy port to Linux on Alpha, Tom Emerson implemented
+  Unicode escape in strings, and of course bugs have been fixed by
+  various people.
+
 
 Gwydion Dylan 2.2.0 
 
