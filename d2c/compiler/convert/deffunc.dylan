@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.48 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.49 1995/12/16 04:15:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,8 +41,6 @@ end;
 define method defn-type (defn :: <function-definition>) => res :: <cclass>;
   dylan-value(#"<function>");
 end;
-
-define constant $ct-sam-cache-size = 97;  // handy prime.
 
 define class <generic-definition> (<function-definition>)
   //
@@ -545,12 +543,7 @@ define method check-congruence
 	  ("GF %s accepts keywords but method %s doesn't.",
 	   gf.defn-name, meth.defn-name);
 	win := #f;
-      elseif (msig.all-keys? & ~gsig.all-keys?)
-	compiler-warning
-	  ("Method %s accepts all keys but GF %s doesn't.",
-	   meth.defn-name, gf.defn-name);
-	win := #f;
-      else
+      elseif (~msig.all-keys?)
 	for (gkey in gsig.key-infos)
 	  let gkey-name = gkey.key-name;
 	  let gspec = gkey.key-type;
@@ -814,18 +807,22 @@ define method make-discriminator
   let nspecs = vars.size;
 
   assert(~sig.next?);
-  if (sig.rest-type)
-    let var = make-local-var(builder, #"rest",
-			     specifier-type(#"<simple-object-vector>"));
-    add!(vars, var);
-  end;
+  let rest-var
+    = if (sig.rest-type)
+	let var = make-local-var(builder, #"rest",
+				 specifier-type(#"<simple-object-vector>"));
+	add!(vars, var);
+	var;
+      else
+	#f;
+      end;
   assert(sig.key-infos == #f | sig.key-infos == #());
 
   let region = build-function-body(builder, policy, source, #f, name,
 				   as(<list>, vars), sig.returns, #t);
   let results = make-values-cluster(builder, #"results", sig.returns);
   build-discriminator-tree
-    (builder, policy, source, as(<list>, vars), sig.rest-type & #t, results,
+    (builder, policy, source, as(<list>, vars), rest-var, results,
      as(<list>, make(<range>, from: 0, below: nspecs)),
      sort-methods-set(gf.generic-defn-methods,
 		      make(<vector>, size: nspecs, fill: #f),
@@ -839,8 +836,8 @@ end;
 
 define method build-discriminator-tree
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     arg-vars :: <list>, rest? :: <boolean>, results :: <abstract-variable>,
-     remaining-discriminations :: <list>,
+     arg-vars :: <list>, rest-var :: false-or(<abstract-variable>),
+     results :: <abstract-variable>, remaining-discriminations :: <list>,
      method-set :: <method-set>, gf :: <generic-definition>)
     => ();
   if (empty?(method-set.all-methods))
@@ -871,7 +868,38 @@ define method build-discriminator-tree
 				     contents: ordered-ctvs,
 				     tail: ambig-lit,
 				     sharable: #t));
-      if (rest?)
+      if (rest-var)
+	let sig = gf.function-defn-signature;
+	if (sig.key-infos)
+	  let valid-keys
+	    = as(<ct-value>,
+		 if (sig.all-keys?)
+		   #"all";
+		 else
+		   block (return)
+		     map(curry(as, <ct-value>),
+			 reduce(method (keys :: <simple-object-vector>,
+					meth :: <method-definition>)
+				    => res :: <simple-object-vector>;
+				  let sig = meth.function-defn-signature;
+				  if (sig.all-keys?)
+				    return(#"all");
+				  end if;
+				  union(keys, map(key-name, sig.key-infos));
+				end method,
+				#[],
+				method-set.all-methods));
+		   end block;
+		 end if);
+	  build-assignment
+	    (builder, policy, source, #(),
+	     make-unknown-call
+	       (builder,
+		ref-dylan-defn(builder, policy, source, #"verify-keywords"),
+		#f,
+		list(rest-var, make-literal-constant(builder, valid-keys))));
+	end if;
+
 	let apply-leaf = ref-dylan-defn(builder, policy, source, #"apply");
 	let values-leaf = ref-dylan-defn(builder, policy, source, #"values");
 	let cluster = make-values-cluster(builder, #"args", wild-ctype());
@@ -955,7 +983,7 @@ define method build-discriminator-tree
 			    guaranteed-type: method-set.restriction-type));
 	  arg-vars[discriminate-on] := temp;
 	  build-discriminator-tree
-	    (builder, policy, source, arg-vars, rest?, results,
+	    (builder, policy, source, arg-vars, rest-var, results,
 	     remaining-discriminations, method-set, gf);
 	  arg-vars[discriminate-on] := arg;
 	else
@@ -1248,12 +1276,11 @@ end;
 
 
 
-// ct-sorted-applicable-methods
+// ct-applicable-methods
 
-define method ct-sorted-applicable-methods
+define method ct-applicable-methods
     (gf :: <generic-definition>, call-types :: <list>)
-    => (ordered :: false-or(<list>),
-	ambiguous :: false-or(<list>));
+    => (definitely :: false-or(<list>), maybe :: false-or(<list>));
   let seal-info = find-seal(gf, call-types);
   if (seal-info)
     let definitely-applicable = #();
@@ -1268,24 +1295,7 @@ define method ct-sorted-applicable-methods
 	  maybe-applicable := pair(meth, maybe-applicable);
       end select;
     end for;
-
-    if (maybe-applicable == #())
-      // The things we know, we know we know.
-      if (definitely-applicable == #() | definitely-applicable.tail == #())
-	// No need to sort unless there are two or more methods.
-	values(definitely-applicable, #());
-      else
-	sort-methods(definitely-applicable, #f);
-      end;
-    elseif (maybe-applicable.tail == #() & definitely-applicable == #())
-      // There is one method that might be applicable and none that definitely
-      // are.  So assume that it is, because it is a type-error if it is not.
-      values(maybe-applicable, #());
-    else
-      // There is more than one method we don't know about, so we can't tell
-      // anything at compile-time.
-      values(#f, #f);
-    end if;
+    values(definitely-applicable, maybe-applicable);
   else
     // The argument types arn't covered by a seal.
     values(#f, #f);
