@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.5 1994/06/03 00:39:02 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.6 1994/06/22 14:19:54 rgs Exp $
 //
 // This file contains definitions of classes and functions for the Dylan
 // deque collection class.  The data structure used for deque is a
@@ -42,7 +42,7 @@ module: Dylan
 /// NEXT-DEQUE-ELEMENT, the marker #f should be used in these slots.
 ///
 define class <deque-element> (<object>)
-  slot deque-element-data, init-keyword: data:;
+    slot deque-element-data, init-keyword: data:;
   slot prev-deque-element, init-value: #f;
   slot next-deque-element, init-value: #f;
 end class <deque-element>;
@@ -427,6 +427,7 @@ define method map-as(cls == <deque>, proc :: <function>,
     for (element in sequence)
       push-last(result, proc(element));
     end for;
+    result;
   else 
     next-method();
   end if;
