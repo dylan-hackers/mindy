@@ -59,13 +59,14 @@ Mindy has been successfully built on the following platforms:
 	Hardware	OS		Compiler
 	--------	--		--------
 	HP Apollo	HPUX 9.03	gcc
+	HP 9000/800	HPUX A.09.04	cc
 	DEC pmax 	Mach 2.6	gcc
 	DEC pmax	Ultrix 4.x	gcc
 	SGI 		IRIX 4.0.5 	gcc and sgi-cc
 	SGI 		IRIX 5.2 	sgi-cc
 	Sun 		SunOS 4.11	gcc
-	Sun		Solaris		cc
-	???		AIX 4.2		cc
+	Sun		Solaris	2.3	cc
+	IBM PowerPC 250	AIX 4.1		cc
 	PC clone 	Linux 1.2.0     gcc
 
 If you have successfully compiled Mindy on another architecture,
