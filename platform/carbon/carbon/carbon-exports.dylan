@@ -211,6 +211,37 @@ define module carbon
     SetControl32BitValue, SetControl32BitMinimum, SetControl32BitMaximum, SetControlViewSize,
     GetControl32BitValue, GetControl32BitMinimum, GetControl32BitMaximum, GetControlViewSize,
     SetControlAction,
+    $kDataBrowserListView, $kDataBrowserColumnView, 
+    $kDataBrowserDragSelect, $kDataBrowserSelectOnlyOne, $kDataBrowserResetSelection,
+    $kDataBrowserNoItem,
+    $kDataBrowserItemNoState, $kDataBrowserItemAnyState, $kDataBrowserItemIsSelected, 
+    $kDataBrowserListViewLatestHeaderDesc, $kDataBrowserListViewLatestHeaderDesc, $kDataBrowserListViewLatestHeaderDesc,
+    $kDataBrowserItemsAdd, $kDataBrowserItemsAssign, $kDataBrowserItemsToggle, $kDataBrowserItemsRemove,
+    CreateDataBrowserControl,
+    $kDataBrowserListViewLatestHeaderDesc,
+    $kDataBrowserIconType, $kDataBrowserTextType, $kDataBrowserIconAndTextType,
+    <DataBrowserListViewColumnDesc*>,
+    propertyDesc-value,
+    <DataBrowserPropertyDesc*>, <DataBrowserTableViewColumnDesc*>,
+    propertyID-value, propertyType-value, propertyFlags-value, 
+    propertyID-value-setter, propertyType-value-setter, propertyFlags-value-setter,
+    AddDataBrowserListViewColumn, AddDataBrowserItems, RemoveDataBrowserItems, GetDataBrowserItemState,
+    <DataBrowserCallbacks*>,
+    version-value-setter, clientDataCallback-value-setter,
+    <DataBrowserItemDataUPP>,
+    NewDataBrowserItemDataUPP,
+    $kDataBrowserLatestCallbacks,
+    InitDataBrowserCallbacks, SetDataBrowserCallbacks,     
+    
+// Core Foundation
+    <CFTypeRef>,
+    CFRetain, CFRelease,
+    <CFAllocatorRef>,
+    $kCFAllocatorNull,
+    CFAllocatorGetDefault,
+    <CFStringRef>,
+    $kCFStringEncodingMacRoman, $kCFStringEncodingASCII, $kCFStringEncodingUnicode, $kCFStringEncodingUTF8,
+    CFStringCreateWithBytes, CFStringCreateWithCStringNoCopy,
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,
@@ -274,12 +305,12 @@ define module carbon
 		$gestaltSystemVersion,
     
 // Lists
-
-      <ListRef>, <Cell>,
+      /*<ListRef>, <Cell>, <ListBounds>,
       $lDoVAutoscrollBit, $lDoHAutoscrollBit, $lDoVAutoscroll, $lDoHAutoscroll,
       $lOnlyOneBit, $lExtendDragBit, $lNoDisjointBit, $lNoExtendBit, $lNoRectBit, $lUseSenseBit, $lNoNilHiliteBit, 
       $lOnlyOne, $lExtendDrag, $lNoDisjoint, $lNoExtend, $lNoRect, $lUseSense, 
       $lNoNilHilite, $kListDefUserProcType, $kListDefStandardTextType, $kListDefStandardIconType,
+      */
     
 // Mac Types
     // Basic Types

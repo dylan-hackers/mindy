@@ -3,11 +3,11 @@ Library: carbon
 carbon-exports.dylan
 mac-types.dylan
 pascal-string.dylan
+core-foundation.dylan
 memory.dylan
 files.dylan
 quickdraw.dylan
 quickdraw-text.dylan
-lists.dylan
 gworlds.dylan
 windows.dylan
 menus.dylan

@@ -5,11 +5,6 @@ module: carbon
 */
 
 /*
-   TODO: Is it ControlRef or ControlHandle?
-*/
-
-
-/*
 	Includes
 */
 
@@ -136,6 +131,8 @@ define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlS
 define functional class <ControlHandle> ( <Handle> )
 end class <ControlHandle>;
 
+define constant <ControlRef> = <ControlHandle>;
+
 define constant <ControlActionUPP> = <UniversalProcPtr>;
 define constant <ControlEditTextValidationUPP> = <UniversalProcPtr>;
 define constant <ControlKeyFilterUPP> = <UniversalProcPtr>;
@@ -198,11 +195,11 @@ end method DrawControls;
 define method NewControl( window :: <WindowRef>, bounds :: <Rect*>, title :: <pascal-string>,
 						 	visible :: <boolean>, initialValue :: <integer>, minimumValue :: <integer>,
 							maximumValue :: <integer>, procID :: <integer>, controlReference :: <integer> )
-=> ( result :: <ControlHandle> )
+=> ( result :: <ControlRef> )
 
 	let visBool = if( visible ) 1 else 0 end if;
 
-	make( <ControlHandle>, pointer: 
+	make( <ControlRef>, pointer: 
 		call-out( "NewControl", ptr:, ptr: window.raw-value, ptr: bounds.raw-value, 
 					ptr: title.raw-value, unsigned-char: visBool, 
 					short: initialValue, short: minimumValue, short: maximumValue,
@@ -215,7 +212,7 @@ end method NewControl;
 	DisposeControl
 */
 
-define method DisposeControl( control :: <ControlHandle> )
+define method DisposeControl( control :: <ControlRef> )
 => ()
 	
 	call-out( "DisposeControl", void:, ptr: control.raw-value );
@@ -244,7 +241,7 @@ end method KillControls;
 	GetControlBounds
 */
 
-define method GetControlBounds( control :: <ControlHandle>, r :: <Rect*> )
+define method GetControlBounds( control :: <ControlRef>, r :: <Rect*> )
 => (r :: <Rect*>)
 	
 	call-out( "GetControlBounds", void:, ptr: control.raw-value, ptr: r.raw-value );
@@ -259,7 +256,7 @@ end method GetControlBounds;
 	HiliteControl
 */
 
-define method HiliteControl( control :: <ControlHandle>, part :: <integer> )
+define method HiliteControl( control :: <ControlRef>, part :: <integer> )
 => ()
 	
 	call-out( "HiliteControl", void:, ptr: control.raw-value, short: part );
@@ -273,7 +270,7 @@ end method HiliteControl;
 	ShowControl
 */
 
-define method ShowControl( control :: <ControlHandle> )
+define method ShowControl( control :: <ControlRef> )
 => ()
 	
 	call-out( "ShowControl", void:, ptr: control.raw-value );
@@ -287,7 +284,7 @@ end method ShowControl;
 	HideControl
 */
 
-define method HideControl( control :: <ControlHandle> )
+define method HideControl( control :: <ControlRef> )
 => ()
 	
 	call-out( "HideControl", void:, ptr: control.raw-value );
@@ -301,7 +298,7 @@ end method HideControl;
 	GetControlValue
 */
 
-define method GetControlValue( control :: <ControlHandle> )
+define method GetControlValue( control :: <ControlRef> )
 => ( result :: <integer> )
 	
 	call-out( "GetControlValue", short:, ptr: control.raw-value );
@@ -313,7 +310,7 @@ end method GetControlValue;
 	SetControlValue
 */
 
-define method SetControlValue( control :: <ControlHandle>, value :: <integer> )
+define method SetControlValue( control :: <ControlRef>, value :: <integer> )
 => ()
 	
 	call-out( "SetControlValue", void:, ptr: control.raw-value, short: value );
@@ -327,7 +324,7 @@ end method SetControlValue;
 	MoveControl
 */
 
-define method MoveControl( control :: <ControlHandle>, h :: <integer>, v :: <integer> )
+define method MoveControl( control :: <ControlRef>, h :: <integer>, v :: <integer> )
 => ()
 	
 	call-out( "MoveControl", void:, ptr: control.raw-value, short: h, short: v );
@@ -341,7 +338,7 @@ end method MoveControl;
 	SizeControl
 */
 
-define method SizeControl( control :: <ControlHandle>, h :: <integer>, v :: <integer> )
+define method SizeControl( control :: <ControlRef>, h :: <integer>, v :: <integer> )
 => ()
 	
 	call-out( "SizeControl", void:, ptr: control.raw-value, short: h, short: v );
@@ -355,7 +352,7 @@ end method SizeControl;
 	SetControlTitle
 */
 
-define method SetControlTitle( item :: <ControlHandle>, text :: <pascal-string> )
+define method SetControlTitle( item :: <ControlRef>, text :: <pascal-string> )
 => ()
 	
 	call-out( "SetControlTitle", void:, ptr: item.raw-value, ptr: text.raw-value );
@@ -369,7 +366,7 @@ end method SetControlTitle;
 	GetControlTitle
 */
 
-define method GetControlTitle( item :: <ControlHandle>, text :: <pascal-string> )
+define method GetControlTitle( item :: <ControlRef>, text :: <pascal-string> )
 => ()
 	
 	call-out( "GetControlTitle", void:, ptr: item.raw-value, ptr: text.raw-value );
@@ -383,7 +380,7 @@ end method GetControlTitle;
 	DragControl
 */
 
-define method DragControl( control :: <ControlHandle> , start :: <Point*>, limit<Rect*> :: <Rect*>, slop<Rect*> :: <Rect*>, axis :: <integer>)
+define method DragControl( control :: <ControlRef> , start :: <Point*>, limit<Rect*> :: <Rect*>, slop<Rect*> :: <Rect*>, axis :: <integer>)
 => ()
 
 	call-out( "dragcontrol", void:, ptr: control.raw-value, ptr: start.raw-value, 
@@ -399,11 +396,11 @@ end method DragControl;
 */
 
 define method FindControl( point :: <Point*>, window :: <WindowRef> )
-=> ( control :: <ControlHandle>, result :: <ControlPartCode> )
+=> ( control :: <ControlRef>, result :: <ControlPartCode> )
 
     let temp = make( <Handle> ); // used as a pointer parameter
     let result = call-out( "findcontrol", short:, ptr: point.raw-value, ptr: window.raw-value, ptr: temp.raw-value );
-    values( pointer-at( temp, offset: 0, class: <ControlHandle> ), as( <ControlPartCode>, result ) );
+    values( pointer-at( temp, offset: 0, class: <ControlRef> ), as( <ControlPartCode>, result ) );
 
 end method FindControl;
 
@@ -412,7 +409,7 @@ end method FindControl;
 	HandleControlClick
 */
 
-define method HandleControlClick( inControl :: <ControlHandle>, inWhere :: <Point*>, 
+define method HandleControlClick( inControl :: <ControlRef>, inWhere :: <Point*>, 
                                     inModifiers :: <EventModifiers>, inAction :: <ControlActionUPP> )
 => ( result :: <ControlPartCode> )
 
@@ -425,7 +422,7 @@ end method HandleControlClick;
 	HandleControlKey
 */
 
-define method HandleControlKey( control :: <ControlHandle>, inKeyCode :: <SInt16>, 
+define method HandleControlKey( control :: <ControlRef>, inKeyCode :: <SInt16>, 
                                 inCharCode :: <SInt16>, inModifiers :: <EventModifiers> )
 => ( result :: <SInt16> )
 
@@ -452,7 +449,7 @@ end method IdleControls;
 	TrackControl
 */
 
-define method TrackControl( control :: <ControlHandle>, point :: <Point*>, proc :: <ControlActionUPP> )
+define method TrackControl( control :: <ControlRef>, point :: <Point*>, proc :: <ControlActionUPP> )
 => ( result :: <integer> )
 
 	call-out( "trackcontrol", short:, ptr: control.raw-value, ptr: point.raw-value, ptr: proc.raw-value );
@@ -463,7 +460,7 @@ end method TrackControl;
 	TestControl
 */
 
-define method TestControl( control :: <ControlHandle>, point :: <Point*> )
+define method TestControl( control :: <ControlRef>, point :: <Point*> )
 => ( result :: <integer> )
 
 	call-out( "testcontrol", short:, ptr: control.raw-value, ptr: point.raw-value );
@@ -501,11 +498,11 @@ end method ClearKeyboardFocus;
 */
 
 define method GetKeyboardFocus( inWindow :: <WindowRef> )
-=> ( control :: <ControlHandle>, error :: <OSErr> )
+=> ( control :: <ControlRef>, error :: <OSErr> )
 
         let temp = make( <Handle> );	// Used as a ControlHandle * parameter
 	let error = call-out( "GetKeyboardFocus", int:, ptr: inWindow.raw-value, ptr: temp.raw-value );
-        values( pointer-at( temp, offset: 0, class: <ControlHandle> ), as( <OSErr>, error) );
+        values( pointer-at( temp, offset: 0, class: <ControlRef> ), as( <OSErr>, error) );
 
 end method GetKeyboardFocus;
 
@@ -526,7 +523,7 @@ end method ReverseKeyboardFocus;
     SetKeyboardFocus
 */
 
-define method SetKeyboardFocus( inWindow :: <WindowRef>, inControl :: <ControlHandle>,
+define method SetKeyboardFocus( inWindow :: <WindowRef>, inControl :: <ControlRef>,
                                 inPart :: <ControlFocusPart> )
 => ( result :: <OSErr> )
 
@@ -539,7 +536,7 @@ end method SetKeyboardFocus;
     IsControlVisible
 */
 
-define method IsControlVisible( inControl :: <ControlHandle> )
+define method IsControlVisible( inControl :: <ControlRef> )
 => ( result :: <OSErr> )
 
 	if( call-out( "IsControlVisible", int:, ptr: inControl.raw-value ))
@@ -555,11 +552,11 @@ end method IsControlVisible;
 */
 
 define method CreateRootControl( for-window :: <WindowRef> )
-=> ( result :: <OSErr>, root-control :: <ControlHandle> )
+=> ( result :: <OSErr>, root-control :: <ControlRef> )
 
   let temp :: <Handle> = make(<Handle>);
 	let err = call-out( "CreateRootControl", int:, ptr: for-window.raw-value, ptr: temp.raw-value );
-  values(as(<OSErr>, err), pointer-at(temp, class: <ControlHandle>, offset: 0));
+  values(as(<OSErr>, err), pointer-at(temp, class: <ControlRef>, offset: 0));
 
 end method CreateRootControl;
 
@@ -567,14 +564,14 @@ end method CreateRootControl;
   SetControlData
 */
 
-define method SetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+define method SetControlData( inControl :: <ControlRef>, inPart :: <integer>, inTagName :: <integer>,
                         inSize :: <integer>, inData :: <statically-typed-pointer>)
 => (result :: <OSErr>)
   as(<OSErr>, call-out("SetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
                         int: inSize, ptr: inData.raw-value));
 end method SetControlData;
 
-define method SetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+define method SetControlData( inControl :: <ControlRef>, inPart :: <integer>, inTagName :: <integer>,
                         inSize :: <integer>, inData :: <raw-pointer>)
 => (result :: <OSErr>)
   as(<OSErr>, call-out("SetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
@@ -585,7 +582,7 @@ end method SetControlData;
   GetControlData
 */
 
-define method GetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+define method GetControlData( inControl :: <ControlRef>, inPart :: <integer>, inTagName :: <integer>,
                         inSize :: <integer>, inData :: <statically-typed-pointer>)
 => (result :: <OSErr>, outSize :: <integer>)
   let temp :: <Handle> = make(<Handle>);
@@ -594,7 +591,7 @@ define method GetControlData( inControl :: <ControlHandle>, inPart :: <integer>,
   signed-long-at(temp, offset: 0));	// Yes, signed
 end method GetControlData;
 
-define method GetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+define method GetControlData( inControl :: <ControlRef>, inPart :: <integer>, inTagName :: <integer>,
                         inSize :: <integer>, inData :: <raw-pointer>)
 => (result :: <OSErr>, outSize :: <integer>)
   let temp :: <Handle> = make(<Handle>);
@@ -607,7 +604,7 @@ end method GetControlData;
   GetControlDataSize
 */
 
-define method GetControlDataSize( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>)
+define method GetControlDataSize( inControl :: <ControlRef>, inPart :: <integer>, inTagName :: <integer>)
 => (result :: <OSErr>, outSize :: <integer>)
   let temp :: <Handle> = make(<Handle>);
   values(as(<OSErr>, call-out("GetControlDataSize", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
@@ -687,14 +684,14 @@ end method NewControlActionUPP;
   EmbedControl
 */
 
-define method EmbedControl( inControl :: <ControlHandle>, inContainer :: <ControlHandle>)
+define method EmbedControl( inControl :: <ControlRef>, inContainer :: <ControlRef>)
 => (result :: <OSErr>)
   as(<OSErr>, call-out("EmbedControl", int:, ptr: inControl.raw-value, 
                         ptr: inContainer.raw-value));
 end method EmbedControl;
 
 
-define method GetBestControlRect(inControl :: <ControlHandle>, 
+define method GetBestControlRect(inControl :: <ControlRef>, 
                                   outRect :: <Rect*>)
 => (result :: <OSErr>, baselineOffset :: <integer>)
   let temp :: <Handle> = make(<Handle>);
@@ -703,12 +700,12 @@ define method GetBestControlRect(inControl :: <ControlHandle>,
      signed-short-at(temp, offset: 0));
 end method GetBestControlRect;
 
-define method ActivateControl( inControl :: <ControlHandle>)
+define method ActivateControl( inControl :: <ControlRef>)
 => (result :: <OSErr>)
   as(<OSErr>, call-out("ActivateControl", int:, ptr: inControl.raw-value));
 end method ActivateControl;
 
-define method DeactivateControl( inControl :: <ControlHandle>)
+define method DeactivateControl( inControl :: <ControlRef>)
 => (result :: <OSErr>)
   as(<OSErr>, call-out("DeactivateControl", int:, ptr: inControl.raw-value));
 end method DeactivateControl;
@@ -717,42 +714,42 @@ end method DeactivateControl;
 // 32 Bit
 
 define method SetControl32BitValue
-    (inControl :: <ControlHandle>, value :: <integer>) => ()
+    (inControl :: <ControlRef>, value :: <integer>) => ()
   call-out("SetControl32BitValue", void:, ptr: inControl.raw-value, int: value);
 end method SetControl32BitValue;
 
 define method SetControl32BitMinimum
-    (inControl :: <ControlHandle>, value :: <integer>) => ()
+    (inControl :: <ControlRef>, value :: <integer>) => ()
   call-out("SetControl32BitMinimum", void:, ptr: inControl.raw-value, int: value);
 end method SetControl32BitMinimum;
 
 define method SetControl32BitMaximum
-    (inControl :: <ControlHandle>, value :: <integer>) => ()
+    (inControl :: <ControlRef>, value :: <integer>) => ()
   call-out("SetControl32BitMaximum", void:, ptr: inControl.raw-value, int: value);
 end method SetControl32BitMaximum;
 
 define method SetControlViewSize
-    (inControl :: <ControlHandle>, value :: <integer>) => ()
+    (inControl :: <ControlRef>, value :: <integer>) => ()
   call-out("SetControlViewSize", void:, ptr: inControl.raw-value, int: value);
 end method SetControlViewSize;
 
 
-define method GetControl32BitValue(inControl :: <ControlHandle>)
+define method GetControl32BitValue(inControl :: <ControlRef>)
 => (value :: <integer>)
   call-out("GetControl32BitValue", int:, ptr: inControl.raw-value);
 end method GetControl32BitValue;
 
-define method GetControl32BitMinimum(inControl :: <ControlHandle>)
+define method GetControl32BitMinimum(inControl :: <ControlRef>)
 => (value :: <integer>)
   call-out("GetControl32BitMinimum", int:, ptr: inControl.raw-value);
 end method GetControl32BitMinimum;
 
-define method GetControl32BitMaximum(inControl :: <ControlHandle>)
+define method GetControl32BitMaximum(inControl :: <ControlRef>)
 => (value :: <integer>)
   call-out("GetControl32BitMaximum", int:, ptr: inControl.raw-value);
 end method GetControl32BitMaximum;
 
-define method GetControlViewSize(inControl :: <ControlHandle>)
+define method GetControlViewSize(inControl :: <ControlRef>)
 => (value :: <integer>)
   call-out("GetControlViewSize", int:, ptr: inControl.raw-value);
 end method GetControlViewSize;
@@ -760,6 +757,213 @@ end method GetControlViewSize;
 // Actions
 
 define method SetControlAction
-    (inControl :: <ControlHandle>, action :: <UniversalProcPtr>) => ()
+    (inControl :: <ControlRef>, action :: <UniversalProcPtr>) => ()
   call-out("SetControlAction", void:, ptr: inControl.raw-value, ptr: action.raw-value);
 end method SetControlAction;
+
+// That ListView Thing
+
+define constant $kDataBrowserListView :: <integer> = c-expr(int: "kDataBrowserListView");
+define constant $kDataBrowserColumnView :: <integer> = c-expr(int: "kDataBrowserColumnView");
+
+define constant $kDataBrowserDragSelect :: <integer> = c-expr(int: "kDataBrowserDragSelect");
+define constant $kDataBrowserSelectOnlyOne :: <integer> = c-expr(int: "kDataBrowserSelectOnlyOne");
+define constant $kDataBrowserResetSelection :: <integer> = c-expr(int: "kDataBrowserResetSelection");
+
+define constant $kDataBrowserNoItem :: <integer> = c-expr(int: "kDataBrowserNoItem");
+
+define constant $kDataBrowserItemNoState :: <integer> = c-expr(int: "kDataBrowserItemNoState");
+define constant $kDataBrowserItemAnyState :: <integer> = c-expr(int: "kDataBrowserItemAnyState");
+define constant $kDataBrowserItemIsSelected :: <integer> = c-expr(int: "kDataBrowserItemIsSelected");
+
+define constant $kDataBrowserItemsAdd :: <integer> = c-expr(int: "kDataBrowserItemsAdd");
+define constant $kDataBrowserItemsAssign :: <integer> = c-expr(int: "kDataBrowserItemsAssign");
+define constant $kDataBrowserItemsToggle :: <integer> = c-expr(int: "kDataBrowserItemsToggle");
+define constant $kDataBrowserItemsRemove :: <integer> = c-expr(int: "kDataBrowserItemsRemove");
+        
+define method CreateDataBrowserControl
+    (window :: <WindowRef>, bounds :: <Rect*>, style :: <integer>, control :: <ControlRef>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("CreateDataBrowserControl", int:, ptr: window.raw-value, 
+          ptr: bounds.raw-value, int: style, int: control.raw-value));
+end method CreateDataBrowserControl;       
+
+define constant $kDataBrowserListViewLatestHeaderDesc = c-expr(int: "kDataBrowserListViewLatestHeaderDesc");
+
+define constant $kDataBrowserIconType = c-expr(int: "kDataBrowserIconType");
+define constant $kDataBrowserTextType = c-expr(int: "kDataBrowserTextType");
+define constant $kDataBrowserIconAndTextType = c-expr(int: "kDataBrowserIconAndTextType");
+
+define functional class <DataBrowserListViewColumnDesc*>
+    (<statically-typed-pointer>)
+end class <DataBrowserListViewColumnDesc*>;
+
+define method content-size
+  (thing == <DataBrowserListViewColumnDesc*>)
+=>(result :: <integer>)
+  c-expr(int: "sizeof(DataBrowserListViewColumnDesc)");
+end method content-size;
+
+define method propertyDesc-value
+    (desc :: <DataBrowserListViewColumnDesc*>)
+ => (result :: <DataBrowserTableViewColumnDesc*>)    
+  pointer-at(desc, offset: 0, class: <DataBrowserTableViewColumnDesc*>);
+end method propertyDesc-value;
+
+/*define method headerBtnDesc-value
+    (desc :: <DataBrowserListViewColumnDesc*>)
+ => (result :: <DataBrowserListViewHeaderDesc*>)    
+  ptr-at(desc, offset: 0, class: <DataBrowserListViewHeaderDesc*>);
+end method headerBtnDesc-value;*/
+
+define functional class <DataBrowserPropertyDesc*>
+    (<statically-typed-pointer>)
+end class <DataBrowserPropertyDesc*>;
+
+define method content-size
+  (thing == <DataBrowserPropertyDesc*>)
+=>(result :: <integer>)
+  c-expr(int: "sizeof(DataBrowserPropertyDesc)");
+end method content-size;
+
+define method propertyID-value
+    (desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 0);
+end method propertyID-value;
+
+define method propertyType-value
+    (desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 4);
+end method propertyType-value;
+
+define method propertyFlags-value
+    (desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 8);
+end method propertyFlags-value;
+
+define method propertyID-value-setter
+    (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 0) := value;
+end method propertyID-value-setter;
+
+define method propertyType-value-setter
+    (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 4) := value;
+end method propertyType-value-setter;
+
+define method propertyFlags-value-setter
+    (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
+ => (result :: <integer>)    
+  signed-long-at(desc, offset: 8) := value;
+end method propertyFlags-value-setter;
+
+define constant <DataBrowserTableViewColumnDesc*> = <DataBrowserPropertyDesc*>;
+
+/*typedef SInt16                          ControlContentType;
+struct ControlButtonContentInfo {
+  ControlContentType  contentType;
+  union {
+    SInt16              resID;
+    CIconHandle         cIconHandle;
+    Handle              iconSuite;
+    IconRef             iconRef;
+    PicHandle           picture;
+    Handle              ICONHandle;
+  }                       u;
+};
+
+struct DataBrowserListViewHeaderDesc {
+    UInt32 version; // Use kDataBrowserListViewLatestHeaderDesc
+
+    UInt16 minimumWidth;
+    UInt16 maximumWidth;
+
+    SInt16 titleOffset;
+    CFStringRef titleString;
+    DataBrowserSortOrder initialOrder;
+    ControlFontStyleRec btnFontStyle;
+    ControlButtonContentInfo btnContentInfo;
+}*/
+        
+define method AddDataBrowserListViewColumn
+    (browser :: <ControlRef>, desc :: <DataBrowserListViewColumnDesc*>, position :: <integer>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("AddDataBrowserListViewColumn", int:, ptr: browser.raw-value, 
+          ptr: desc.raw-value, int: position));
+end method AddDataBrowserListViewColumn; 
+        
+define method AddDataBrowserItems
+    (browser :: <ControlRef>, container :: <integer>, numItems :: <integer>,
+     items :: <statically-typed-pointer>, preSortProperty :: <integer>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("AddDataBrowserItems", int:, ptr: browser.raw-value,
+          int: container, int: numItems, ptr: items.raw-value, int: preSortProperty));
+end method AddDataBrowserItems; 
+        
+define method RemoveDataBrowserItems
+    (browser :: <ControlRef>, container :: <integer>, numItems :: <integer>,
+     items :: <statically-typed-pointer>, preSortProperty :: <integer>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("RemoveDataBrowserItems", int:, ptr: browser.raw-value,
+          int: container, int: numItems, ptr: items.raw-value, int: preSortProperty));
+end method RemoveDataBrowserItems; 
+        
+define method GetDataBrowserItemState
+    (browser :: <ControlRef>, item :: <integer>)
+ => (result :: <OSStatus>, state :: <integer>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("GetDataBrowserItemState", int:, ptr: browser.raw-value,
+    int: item, ptr: temp.raw-value)), signed-long-at(temp));
+end method GetDataBrowserItemState; 
+
+define functional class <DataBrowserCallbacks*>
+    (<statically-typed-pointer>)
+end class <DataBrowserCallbacks*>;
+
+define method version-value-setter
+    (version :: <integer>, callbacks :: <DataBrowserCallbacks*>)
+ => (version :: <integer>)
+  unsigned-long-at(callbacks, offset: 0) := version;
+end method version-value-setter;
+
+define method clientDataCallback-value-setter
+    (version :: <integer>, callbacks :: <DataBrowserCallbacks*>)
+ => (version :: <integer>)
+  unsigned-long-at(callbacks, offset: 4) := version;
+end method clientDataCallback-value-setter;
+
+define constant <DataBrowserItemDataUPP> = <UniversalProcPtr>;
+
+define method NewDataBrowserItemDataUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemDataUPP;
+
+define method NewDataBrowserItemDataUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemDataUPP;
+
+define constant $kDataBrowserLatestCallbacks = c-expr(int: "kDataBrowserLatestCallbacks");
+        
+define method InitDataBrowserCallbacks
+    (callbacks :: <DataBrowserCallbacks*>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("InitDataBrowserCallbacks", int:, ptr: callbacks.raw-value));
+end method InitDataBrowserCallbacks;        
+        
+define method SetDataBrowserCallbacks
+    (control :: <ControlRef>, callbacks :: <DataBrowserCallbacks*>)
+ => (result :: <OSStatus>)
+        as(<OSErr>, call-out("SetDataBrowserCallbacks", int:, ptr: control.raw-value, 
+          ptr: callbacks.raw-value));
+end method SetDataBrowserCallbacks;       
+
+
