@@ -1,4 +1,4 @@
-module: t
+module: PR#90
 
 define function print-usage
     (app-name :: <string>, stream :: <stream>) => ();

@@ -1,4 +1,4 @@
-module: dinterp
+module: PR#93
 copyright: Copyright © 2002 Colin Walters <walters@debian.org>
 synopsis: interpret dylan (really scheme)
 license: public domain

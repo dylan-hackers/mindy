@@ -1,4 +1,4 @@
-module: t
+module: PR#70
 
 define variable fubar = method() #() end;
 
