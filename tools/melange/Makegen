@@ -1,11 +1,12 @@
+
 $D2CFLAGS = "-L. -L/afs/cs/project/gwydion/compiler/lib";
 
-push(@files_to_clean, "*.dbc");
-
-if ($win32) {
+if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "win32-vc-decl";
-} else {
+} elsif ($features{'compiled_for_hpux'}) {
     $c_decl_lid = "hp-c-decl";
+} else {
+    &uknown_platform_error();
 }
 
 &emit_parsergen_rule('c-parse');
@@ -23,69 +24,6 @@ if ($win32) {
     ('melange',
      '$(BUILDROOT)/force.timestamp melange-c.lib.du',
      '-L.',
-     'compile',
+     'compile', 'install'
      );
-
-$melange_binary = ($win32 ? "melange.exe" : "melange");
-push(@compile_dependencies, $melange_binary);
-do install ('bin', $melange_binary);
-
-print <<'EOF';
-MC = mindycomp
-
-c-exports.dbc: $(SRCDIR)/c-exports.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-exports.dylan -o c-exports.dbc
-multistring.dbc: $(SRCDIR)/multistring.dylan
-	$(MC) -lmelange-c $(SRCDIR)/multistring.dylan -o multistring.dbc
-c-lexer.dbc: $(SRCDIR)/c-lexer.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-lexer.dylan -o c-lexer.dbc
-c-lexer-cpp.dbc: $(SRCDIR)/c-lexer-cpp.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-lexer-cpp.dylan -o c-lexer-cpp.dbc
-c-parse.dbc: c-parse.dylan
-	$(MC) -lmelange-c c-parse.dylan -o c-parse.dbc
-alignment.dbc: $(SRCDIR)/alignment.dylan
-	$(MC) -lmelange-c $(SRCDIR)/alignment.dylan -o alignment.dbc
-c-decl.dbc: $(SRCDIR)/c-decl.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-decl.dylan -o c-decl.dbc
-c-decl-state.dbc: $(SRCDIR)/c-decl-state.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-decl-state.dylan -o c-decl-state.dbc
-c-decl-write.dbc: $(SRCDIR)/c-decl-write.dylan
-	$(MC) -lmelange-c $(SRCDIR)/c-decl-write.dylan -o c-decl-write.dbc
-exports.dbc: $(SRCDIR)/exports.dylan
-	$(MC) -lmelange $(SRCDIR)/exports.dylan -o exports.dbc
-name-map.dbc: $(SRCDIR)/name-map.dylan
-	$(MC) -lmelange $(SRCDIR)/name-map.dylan -o name-map.dbc
-int-lexer.dbc: $(SRCDIR)/int-lexer.dylan
-	$(MC) -lmelange $(SRCDIR)/int-lexer.dylan -o int-lexer.dbc
-int-parse.dbc: int-parse.dylan
-	$(MC) -lmelange int-parse.dylan -o int-parse.dbc
-interface.dbc: $(SRCDIR)/interface.dylan
-	$(MC) -lmelange $(SRCDIR)/interface.dylan -o interface.dbc
-
-EOF
-if ($win32) {
-    print <<'EOF';
-OBJS = c-exports.dbc multistring.dbc c-lexer.dbc c-lexer-cpp.dbc \
-        win32-vc-portability.dbc c-parse.dbc alignment.dbc c-decl.dbc \
-        c-decl-state.dbc c-decl-write.dbc exports.dbc name-map.dbc \
-        int-lexer.dbc int-parse.dbc interface.dbc
-
-melange.dbc: $(OBJS)
-	dbclink $@ $(OBJS)
-win32-vc-portability.dbc: $(SRCDIR)/win32-vc-portability.dylan
-	$(MC) -lmelange-c $(SRCDIR)/win32-vc-portability.dylan -o win32-vc-portability.dbc
-EOF
-} else {
-    print <<'EOF';
-OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc hp-portability.dbc \
-	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
-	c-decl-write.dbc exports.dbc name-map.dbc int-lexer.dbc \
-	int-parse.dbc interface.dbc
-
-melange.dbc: $(OBJS)
-	cat $(OBJS) > $@
-hp-portability.dbc: $(SRCDIR)/hp-portability.dylan
-	$(MC) -lmelange-c $(SRCDIR)/hp-portability.dylan -o hp-portability.dbc
-EOF
-}
-
+&emit_dbc_link_rule('melange.dbc', 'melange-c-lib.dbc melange-lib.dbc');
