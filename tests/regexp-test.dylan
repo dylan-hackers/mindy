@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.11 1996/04/22 15:51:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.12 1996/07/19 09:50:21 dwatson Exp $
 
 //======================================================================
 //
@@ -75,7 +75,7 @@ define method run-several-tests (test-name :: <string>,
   if (has-errors == #f)
     format("ok.\n");
   end if;
-  has-errors := temp-has-errors;
+  has-errors := temp-has-errors | has-errors;
 end method run-several-tests;
 
 

@@ -2,7 +2,7 @@ module: table-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the table-extensions library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1.1 1996/07/18 11:00:40 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1.2 1996/07/19 09:49:29 dwatson Exp $
 
 //======================================================================
 //
@@ -53,7 +53,7 @@ define method run-several-tests (test-name :: <string>,
   if (has-errors == #f)
     format("ok.\n");
   end if;
-  has-errors := temp-has-errors;
+  has-errors := temp-has-errors | has-errors;
 end method run-several-tests;
 
 define method run-test (input, expected-result, test-name :: <string>)
