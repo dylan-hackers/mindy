@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.58 1995/06/05 21:59:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.59 1995/06/06 01:18:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -448,16 +448,9 @@ define method make-info-for
   make-function-info(<function-info>, function.name,
 		     make(<signature>, specializers: function.argument-types,
 			  returns: function.result-type),
-		     for (var = function.environment.closure-vars
-			    then var.closure-next,
-			  results = #()
-			    then pair(var.original-var.derived-type,
-				      results),
-			  while: var)
-		     finally
-		       reverse!(results);
-		     end,
-		     output-info);
+		     // the closure vars have already been rolled into
+		     // the function.argument-types
+		     #(), output-info);
 end;
 
 define method compute-function-prototype
