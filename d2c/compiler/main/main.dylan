@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.44 1996/01/27 20:25:57 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.45 1996/02/01 00:00:11 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -388,6 +388,7 @@ define method compile-library
 	dump-od(tlf, dump-buf);
       end;
     end;
+    dump-queued-methods(dump-buf);
 
     dump-simple-object(#"unit-info", dump-buf, unit-prefix,
 		       as(<simple-object-vector>, undumped));
