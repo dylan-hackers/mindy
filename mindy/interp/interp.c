@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.11 1994/04/14 19:19:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.12 1994/04/14 20:00:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -978,12 +978,12 @@ void set_byte_continuation(struct thread *thread, obj_t component)
 
 void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
-    int opcode = ((unsigned char *)(thread->component))[thread->pc - 1] & 0xf0;
+    int opcode = ((unsigned char *)(thread->component))[thread->pc - 1];
 
     if (opcode == op_BREAKPOINT)
-	opcode = original_byte(thread->component, thread->pc - 1) & 0xf0;
+	opcode = original_byte(thread->component, thread->pc - 1);
 
-    if (opcode == op_CALL_FOR_SINGLE || opcode == op_DOT_FOR_SINGLE
+    if ((opcode&0xf0) == op_CALL_FOR_SINGLE || opcode == op_DOT_FOR_SINGLE
 	  || opcode >= op_PLUS) {
 	if (vals == thread->sp)
 	    *old_sp = obj_False;
@@ -991,7 +991,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 	    *old_sp = vals[0];
 	thread->sp = old_sp + 1;
     }
-    else if (opcode == op_CALL_FOR_MANY || opcode == op_DOT_FOR_MANY)
+    else if ((opcode&0xf0) == op_CALL_FOR_MANY || opcode == op_DOT_FOR_MANY)
 	canonicalize_values(thread, old_sp, vals);
     else
 	lose("Strange call opcode: 0x%02x", opcode);
