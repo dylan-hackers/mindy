@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.5 1995/12/11 19:49:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.6 1996/02/19 20:22:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -81,7 +81,14 @@ define macro for
     { ?body } => { ?body %%finally }
     { ?body:b1 finally ?body:b2 } => { ?b1 %%finally ?b2 }
   header:
-    { ?var in ?expr, ... } => { %%in ?var, ?expr; ... }
+    { ?var in ?expr, ... } 
+      => { %%in ?var, ?expr, #f, forward-iteration-protocol; ... }
+    { ?var in ?expr keyed-by ?var:keyed-by, ... }
+       => { %%in ?var, ?expr, ?keyed-by, forward-iteration-protocol; ... }
+    { ?var in ?expr using ?expr:using, ... }
+       => { %%in ?var, ?expr, #f, ?using; ... }
+    { ?var in ?expr keyed-by ?var:keyed-by using ?expr:using, ... }
+       => { %%in ?var, ?expr, ?keyed-by, ?using; ... }
     { ?var = ?expr:e1 then ?expr:e2, ... } => { = ?var, ?e1, ?e2; ... }
     { ?var from ?expr ?to, ... } => { %%from ?var, ?expr, ?to; ... }
     { #key ?while } => { %%while ?while }
@@ -206,8 +213,18 @@ define macro class-definer
       => { keyword ?key, ?options; ... }
     { ?slot-modifiers slot ?name, #rest ?options; ... }
       => { slot ?name, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name = ?expr, #rest ?options; ... }
+      => { slot ?name, ?slot-modifiers,
+             init-function: method () ?expr end,
+             ?options;
+           ... }
     { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
       => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name :: ?type = ?expr, #rest ?options; ... }
+      => { slot ?name, type: ?type, ?slot-modifiers,
+	     init-function: method () ?expr end,
+	     ?options;
+	   ... }
   slot-modifiers:
     { } => { }
     { instance } => { allocation: #"instance" }
