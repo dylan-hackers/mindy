@@ -11,9 +11,13 @@
 #
 sub print_target {
     local($first_word) = shift @words;
-    local($colon) = shift @words;
+    if ($first_word =~ /:/) {
+	print $first_word, " ";
+    } else {
+	local($colon) = shift @words;
+	print $first_word, " : ";
+    }
     local($c_file) = $words[0];
-    print $first_word, " : ";
     local($count) = 0;
     while (@words) {
 	local($this_word) = shift(@words);
