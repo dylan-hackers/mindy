@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/free.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/free.c,v 1.2 1999/06/08 14:42:37 andreas Exp $
 *
 * This file frees parts of the parse tree.
 *
@@ -277,6 +277,7 @@ static void free_for_expr(struct for_expr *e)
 		    free_expr(c->to);
 		if (c->by)
 		    free_expr(c->by);
+		break;
 	    }
 	  default:
 	    lose("Bogus for clause kind.");
