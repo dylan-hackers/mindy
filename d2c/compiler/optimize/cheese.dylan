@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.44 1995/05/02 16:35:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.45 1995/05/03 07:21:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -272,7 +272,8 @@ define method optimize
       for (nvals from 0, defn = defines then defn.definer-next, while: defn)
       finally
 	let builder = make-builder(component);
-	let op = make-primitive-operation(builder, #"values", list(source));
+	let op = make-operation(builder, <primitive>, list(source),
+				name: #"values");
 	remove-dependency-from-source(component, dependency);
 	dependency.source-exp := op;
 	dependency.source-next := op.dependents;
@@ -703,7 +704,7 @@ define method optimize-unknown-call
 	  let rest-temp = make-local-var(builder, #"rest", object-ctype());
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, rest-temp,
-	     make-operation(builder, as(<list>, rest-args)));
+	     make-unknown-call(builder, as(<list>, rest-args)));
 	  add!(new-args, rest-temp);
 	end;
 	if (sig.key-infos)
@@ -724,7 +725,7 @@ define method optimize-unknown-call
 	end;
 	insert-before(component, assign, builder-result(builder));
 	let orig-func = call.depends-on.source-exp;
-	let new-call = make-operation(builder, as(<list>, new-args));
+	let new-call = make-unknown-call(builder, as(<list>, new-args));
 	let call-dep = call.dependents;
 	call.dependents := #f;
 	new-call.dependents := call-dep;
@@ -1272,7 +1273,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
 
   // Replace the prologue with the arg-temps.
   begin
-    let op = make-primitive-operation(builder, #"values", arg-temps);
+    let op = make-operation(builder, <primitive>, arg-temps, name: #"values");
     let prologue = lambda.prologue;
     let dep = prologue.dependents;
     dep.source-exp := op;
@@ -1297,8 +1298,8 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
 	     args = #() then pair(dep.source-exp, args),
 	     while: dep)
 	finally
-	  let op = make-primitive-operation(builder, #"values",
-					    reverse!(args));
+	  let op = make-operation(builder, <primitive>, reverse!(args),
+				  name: #"values");
 	  build-assignment(builder, assign.policy, assign.source-location,
 			   temps, op);
 	  insert-before(component, assign, builder-result(builder));
@@ -2205,22 +2206,23 @@ define method maybe-close-over
       temp.definer := assign;
       select (defn.definer by instance?)
 	<let-assignment> =>
+	  let make-leaf = dylan-defn-leaf(builder, #"make");
+	  let value-cell-type-leaf
+	    = make-literal-constant(builder, value-cell-type);
+	  let value-keyword-leaf
+	    = make-literal-constant(builder,
+				    make(<literal-symbol>, value: #"value"));
 	  let op
-	    = make-operation(builder,
-			     list(dylan-defn-leaf(builder, #"make"),
-				  make-literal-constant
-				    (builder, value-cell-type),
-				  make-literal-constant
-				    (builder,
-				     make(<literal-symbol>, value: #"value")),
-				  temp));
+	    = make-unknown-call(builder,
+				list(make-leaf, value-cell-type-leaf,
+				     value-keyword-leaf, temp));
 	  op.derived-type := value-cell-type;
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, value-cell, op);
 	<set-assignment> =>
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, #(),
-	     make-operation(builder, list(value-setter, temp, value-cell)));
+	     make-unknown-call(builder, list(value-setter, temp, value-cell)));
       end;
       insert-after(component, assign, builder-result(builder));
       reoptimize(component, assign);
@@ -2235,7 +2237,7 @@ define method maybe-close-over
       dep.source-exp := temp;
       temp.dependents := dep;
       dep.source-next := #f;
-      let op = make-operation(builder, list(value, value-cell));
+      let op = make-unknown-call(builder, list(value, value-cell));
       op.derived-type := var.derived-type;
       build-assignment(builder, $Default-Policy, make(<source-location>),
 		       temp, op);
