@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.21 1994/07/26 18:33:30 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.22 1994/08/21 00:41:53 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -766,7 +766,7 @@ static obj_t fop_in_module(struct load_info *info)
 {
     obj_t name = read_thing(info);
     info->module = find_module(info->library, name, TRUE, TRUE);
-    if (CurModule == NULL)
+    if (CurLibrary == info->library && CurModule == NULL)
 	CurModule = info->module;
     return name;
 }
