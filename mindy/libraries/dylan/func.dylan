@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/func.dylan,v 1.2 1994/03/30 06:07:26 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/func.dylan,v 1.3 1994/04/13 03:00:54 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -57,13 +57,13 @@ end;
 
 define method curry (function, #rest curried-args)
   method (#rest args)
-    apply(function, concatenate(curried-args, args));
+    apply-curry(function, curried-args, args);
   end;
 end;
 
 define method rcurry (function, #rest curried-args)
   method (#rest args)
-    apply(function, concatenate(args, curried-args));
+    apply-curry(function, args, curried-args);
   end;
 end;
 
