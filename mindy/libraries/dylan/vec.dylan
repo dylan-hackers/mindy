@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.15 1994/11/03 23:51:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.16 1995/03/27 22:31:47 rgs Exp $
 
 //======================================================================
 //
@@ -130,13 +130,12 @@ end method \=;
 
 // No collection alignment done here because it only handles the
 // all-vector case.
-define method map-as(cls :: <class>, function :: <function>,
+define method map-as(cls :: limited(<class>, subclass-of: <vector>),
+		     function :: <function>,
 		     vector :: <vector>,
 		     #next next-method,
 		     #rest more_vectors)
-  if (~subtype?(cls, <vector>))
-    next-method();
-  elseif (empty?(more_vectors))
+  if (empty?(more_vectors))
     let size = size(vector);
     let result = make(cls, size: size);
     for (key from 0 below size)
