@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.2 1994/03/26 07:45:51 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.3 1994/03/27 02:11:52 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -19,7 +19,7 @@ include ../Config
 OBJS = bool.o class.o coll.o debug.o def.o error.o func.o gc.o init.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
 	obj.o print.o str.o sym.o thread.o type.o load.o value.o vec.o \
-	char.o lexer.o parser.tab.o handler.o instance.o input.o
+	char.o lexer.o parser.tab.o handler.o instance.o input.o driver.o
 SRCS = $(patsubst %.o,%.c,$(OBJS))
 
 mindy: $(OBJS)
