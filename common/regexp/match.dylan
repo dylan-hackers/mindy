@@ -4,7 +4,7 @@ synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.4 1996/04/06 18:30:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.5 1996/10/14 18:14:55 nkramer Exp $
 
 //======================================================================
 //
@@ -437,13 +437,13 @@ define method assertion-true? (assertion :: <symbol>, target :: <substring>,
     #"end-of-string"       => index >= target.end-index;
     #"word-boundary"       =>
       index = 0 | index >= target.end-index
-	| (member?(target.entire-string[index], whitespace-chars) 
-	     ~== member?(target.entire-string[index - 1], whitespace-chars));
+	| (member?(target.entire-string[index], word-chars) 
+	     ~== member?(target.entire-string[index - 1], word-chars));
 
     #"not-word-boundary"   =>
       index ~== 0 & index < target.end-index
-	& (member?(target.entire-string[index], whitespace-chars)
-	     == member?(target.entire-string[index - 1], whitespace-chars));
+	& (member?(target.entire-string[index], word-chars)
+	     == member?(target.entire-string[index - 1], word-chars));
 
     otherwise              => 
       error("Unknown assertion %=", assertion);
