@@ -1,5 +1,5 @@
 module:      operating-system
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.7 2002/08/04 22:36:30 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.8 2003/06/12 15:41:50 housel Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -27,6 +27,8 @@ synopsis:    Implementation of Harlequin Dylan 1.2 operating-system library
    Bug reports, questions, comments, and suggestions should be sent by
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
+
+c-system-include("unistd.h");
 
 define function login-name()
  => (name :: false-or(<string>))
@@ -86,41 +88,9 @@ define function environment-variable-setter(new-value :: false-or(<byte-string>)
   end if;
 end;
 
-/* Have that in the regex library. Keep this as a remainder to
-   make split a g.f. some say that works on characters as 
-   delimiters too.
-
-define function split(character :: <character>, string :: <byte-string>)
- => (components :: <vector>)
-
-  let result = make(<stretchy-vector>);
-
-  let current-start = 0;
-  let current-offset = 0;
-
-  for (c in string)
-    current-offset := current-offset + 1;
-    if (c = character)
-      unless (current-start = current-offset - 1)
-        // don't copy empty entries
-        add!(result, copy-sequence(string, start: current-start, end: current-offset - 1));
-      end unless;
-      current-start := current-offset;
-    end if;
-  end for;
-
-  unless(current-start = current-offset)
-    // don't copy empty entries
-    add!(result, copy-sequence(string, start: current-start));
-  end unless;
-
-  result;
-end;
-*/
-
 define function tokenize-environment-variable(variable :: <byte-string>)
  => (components :: <vector>)
-  split(":", variable);
+  split(variable, ':');
 end function;
 
 /*
