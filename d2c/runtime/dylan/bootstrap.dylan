@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.34 2003/05/28 20:42:17 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.35 2003/06/05 19:09:00 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -204,7 +204,7 @@ define module dylan-viscera
     false-or, one-of, <never-returns>, subclass, direct-instance,
     report-condition, condition-format, condition-force-output,
     *warning-output*, *gdb-output*,
-    <debugger>, invoke-debugger, *debugger*,
+    <debugger>, invoke-debugger, debugger-message, *debugger*, debug-message,
     <bit>, <byte>, <byte-vector>,
     <set>, <object-set>,
     $not-supplied, $unsupplied, unsupplied?,

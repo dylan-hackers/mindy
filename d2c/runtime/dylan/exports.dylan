@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.35 2003/05/28 20:42:17 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.36 2003/06/05 19:09:00 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -186,7 +186,8 @@ define module Extensions
 	     condition-force-output, *warning-output*,
 
 	     // Debugger hooks.
-	     <debugger>, invoke-debugger, *debugger*,
+	     <debugger>, invoke-debugger, debugger-message, *debugger*,
+             debug-message,
 
 	     // Collection operations.
 	     difference, concatenate!,
