@@ -1,3 +1,8 @@
+#ifndef INFINITY
+# define INFINITY (1.0F/0.0F)
+#endif
+
+
 #if defined(__i386__)
 # define HAVE_LDBL_UNION
 union ldbl {
@@ -14,7 +19,6 @@ union ldbl {
 				            | (e + 0x3FFE))
 
 #if defined(__CYGWIN__)
-# define INFINITY (1.0F/0.0F)
 # undef HAVE_LOGL
 #endif
 
