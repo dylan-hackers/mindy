@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.21 1996/01/12 00:58:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.22 1996/01/14 18:09:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -35,11 +35,11 @@ define method default-primitive-emitter
 	#f;
       end;
 
-  let info = operation.info;
-  format(stream, "### %%primitive %s (", info.primitive-name);
+  let info = operation.primitive-info;
+  format(stream, "### %%primitive %s (", info.priminfo-name);
   block (return)
     for (dep = operation.depends-on then dep.dependent-next,
-	 types = info.primitive-arg-types then types.tail,
+	 types = info.priminfo-arg-types then types.tail,
 	 first? = #t then #f,
 	 while: dep)
       let type = types.head;
@@ -153,7 +153,7 @@ define-primitive-emitter
      let (args, nfixed, nargs)
        = extract-operands(operation, file,
 			  *ptr-rep*, *long-rep*, *long-rep*);
-     let cur-top = cluster-names(file.file-cur-stack-depth);
+     let cur-top = cluster-names(operation.info);
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
      let expr
@@ -172,7 +172,7 @@ define-primitive-emitter
      let stream = file.file-guts-stream;
      let args = extract-operands(operation, file, *ptr-rep*);
      spew-pending-defines(file);
-     assert(zero?(file.file-cur-stack-depth));
+     assert(zero?(operation.info));
      if (results)
        format(stream, "cluster_0_top = orig_sp;\n");
      end;
@@ -256,8 +256,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let vec = extract-operands(operation, file, *heap-rep*);
-     let (cur-sp, new-sp)
-       = cluster-names(file.file-cur-stack-depth);
+     let (cur-sp, new-sp) = cluster-names(operation.info);
      format(file.file-guts-stream,
 	    "%s = values_sequence(%s, %s);\n", new-sp, cur-sp, vec);
      deliver-cluster(defines, cur-sp, new-sp, 0, file);
@@ -568,7 +567,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let sp = cluster-names(file.file-cur-stack-depth);
+     let sp = cluster-names(operation.info);
      deliver-result(defines, sp, *ptr-rep*, #t, file);
    end);
 
@@ -578,7 +577,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let sp = cluster-names(file.file-cur-stack-depth);
+     let sp = cluster-names(operation.info);
      format(file.file-guts-stream, "%s = %s;\n",
 	    sp, extract-operands(operation, file, *ptr-rep*));
      deliver-results(defines, #[], #f, file);

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.90 1996/01/12 00:58:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.91 1996/01/14 18:09:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -202,10 +202,6 @@ define class <file-state> (<object>)
   // keeps track of names used already.
   slot file-local-table :: <dictionary>,
     init-function: method () make(<string-table>) end method;
-  //
-  // C variable holding the current stack top.
-  slot file-cur-stack-depth :: <integer>,
-    init-value: 0;
 end;
 
 
@@ -362,23 +358,13 @@ end;
 define method consume-cluster
     (cluster :: <abstract-variable>, file :: <file-state>)
     => (bottom-name :: <string>, top-name :: <string>);
-  let depth = cluster.info;
-  if (depth >= file.file-cur-stack-depth)
-    error("Consuming a cluster that isn't on the stack?");
-  end;
-  file.file-cur-stack-depth := depth;
-  cluster-names(depth);
+  cluster-names(cluster.info);
 end;
 
 define method produce-cluster
     (cluster :: <abstract-variable>, file :: <file-state>)
     => (bottom-name :: <string>, top-name :: <string>);
-  let depth = cluster.info;
-  if (depth > file.file-cur-stack-depth)
-    error("Leaving a gap when producing a cluster?");
-  end;
-  file.file-cur-stack-depth := depth + 1;
-  cluster-names(depth);
+  cluster-names(cluster.info);
 end;
 
 define method produce-cluster
@@ -979,7 +965,6 @@ define method emit-function
   file.file-next-block := 0;
   file.file-next-local := 0;
   file.file-local-table := make(<string-table>);
-  file.file-cur-stack-depth := 0;
   assert(file.file-local-vars.size == 0);
 
   let function-info = get-info-for(function, file);
@@ -1116,7 +1101,6 @@ define method emit-region (region :: <if-region>, file :: <file-state>)
   let stream = file.file-guts-stream;
   let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, file);
   spew-pending-defines(file);
-  let initial-depth = file.file-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
   emit-region(region.then-region, file);
@@ -1124,8 +1108,6 @@ define method emit-region (region :: <if-region>, file :: <file-state>)
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write("}\n", stream);
-  let after-then-depth = file.file-cur-stack-depth;
-  file.file-cur-stack-depth := initial-depth;
   write("else {\n", stream);
   indent(stream, $indentation-step);
   emit-region(region.else-region, file);
@@ -1133,9 +1115,6 @@ define method emit-region (region :: <if-region>, file :: <file-state>)
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write("}\n", stream);
-  let after-else-depth = file.file-cur-stack-depth;
-  file.file-cur-stack-depth
-    := max(after-then-depth, after-else-depth);
 end;
 
 define method emit-region (region :: <loop-region>,
@@ -1393,7 +1372,7 @@ define method emit-assignment
       else
 	values(#f, call.depends-on.dependent-next);
       end;
-  let (args, sp) = cluster-names(file.file-cur-stack-depth);
+  let (args, sp) = cluster-names(call.info);
   for (arg-dep = arguments then arg-dep.dependent-next,
        count from 0,
        while: arg-dep)
@@ -1547,7 +1526,7 @@ define method emit-assignment
   let func-info = find-main-entry-info(function, file);
   let stream = make(<byte-string-output-stream>);
   let c-name = main-entry-name(func-info, file);
-  let (sp, new-sp) = cluster-names(file.file-cur-stack-depth);
+  let (sp, new-sp) = cluster-names(call.info);
   format(stream, "%s(%s", c-name, sp);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        rep in func-info.function-info-argument-representations)
@@ -1689,7 +1668,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
 			       file :: <file-state>)
     => ();
-  let emitter = expr.info.primitive-emitter | default-primitive-emitter;
+  let emitter
+    = expr.primitive-info.priminfo-emitter | default-primitive-emitter;
   emitter(defines, expr, file);
 end;
 
@@ -1698,7 +1678,7 @@ define method emit-assignment
      file :: <file-state>)
     => ();
   let func = extract-operands(expr, file, *heap-rep*);
-  let (values, sp) = cluster-names(file.file-cur-stack-depth);
+  let (values, sp) = cluster-names(expr.info);
   let stream = file.file-guts-stream;
   if (defines)
     format(stream, "%s = ", sp);
@@ -1894,7 +1874,7 @@ define method deliver-cluster
       let (dst-start, dst-end) = produce-cluster(defines, file);
       if (src-start ~= dst-start)
 	format(stream, "%s = %s;\n", dst-end, dst-start);
-	format(stream, "while (%s < %s) {\n", src-start, src-end);
+	format(stream, "while (%s < %s)\n", src-start, src-end);
 	format(stream, "    *%s++ = *%s++;\n", dst-end, src-start);
       elseif (src-end ~= dst-end)
 	format(stream, "%s = %s;\n", dst-end, src-end);
