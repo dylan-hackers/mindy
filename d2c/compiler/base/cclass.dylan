@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.29 1995/12/18 05:02:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.30 1995/12/18 17:27:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,8 +42,10 @@ define abstract class <cclass>
   slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
 
   // Type describing direct instances of this class.  Either a
-  // <direct-instance-ctype> (if concrete) or the empty type (if abstract).
-  slot direct-type :: <ctype>;
+  // <direct-instance-ctype> (if concrete and there are subclasses), the
+  // class itself (if concrete and no subclasses) the empty type
+  // (if abstract), or #f is we haven't decided yet.
+  slot %direct-type :: false-or(<ctype>), init-value: #f;
 
   // class precedence list of all classes inherited, including this class and
   // indirectly inherited classes.  Unbound if not yet computed.
@@ -117,14 +119,6 @@ define method initialize
   
   // Record the class.
   add!($All-Classes, class);
-
-  // Make the direct-type for this cclass.
-  class.direct-type
-    := if (class.abstract?)
-	 empty-ctype();
-       else
-	 make(<direct-instance-ctype>, base-class: class);
-       end;
 
   // Compute the cpl if it wasn't already handed to us.
   let supers = class.direct-superclasses;
@@ -336,16 +330,25 @@ end;
 
 // Ctype operations.
 
+define method direct-type (class :: <cclass>, #key loading?)
+    => res :: <ctype>;
+  class.%direct-type
+    | (class.%direct-type
+	 := if (class.abstract?)
+	      assert(~loading?);
+	      empty-ctype();
+	    elseif (~loading? & class.sealed? & class.subclasses.tail == #())
+	      class;
+	    else
+	      make(<direct-instance-ctype>, base-class: class);
+	    end);
+end method direct-type;
+
+
 define method csubtype-dispatch (type1 :: <cclass>, type2 :: <cclass>)
     => result :: <boolean>;
   member?(type2, type1.precedence-list);
 end method;
-
-define method csubtype-dispatch
-    (type1 :: <cclass>, type2 :: <direct-instance-ctype>)
-    => result :: <boolean>;
-  type1 == type2.base-class & type1.sealed? & type1.subclasses.tail == #();
-end;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
     => (result :: <ctype>, precise :: <boolean>);
