@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.2 1994/12/13 18:36:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.3 1994/12/17 02:27:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -137,24 +137,28 @@ end;
 
 define macro until
     { until (?expr) ?body end }
-      => { local method loop () 
-		   unless (?expr)
-		     ?body;
-		     loop();
+      => { begin
+	     local method loop () 
+		     unless (?expr)
+		       begin ?body end;
+		       loop();
+		     end;
 		   end;
-		 end;
-	   loop() }
+	     loop();
+	   end }
 end;
 
 define macro while
     { while (?expr) ?body end }
-      => { local method loop () 
-		   if (?expr)
-		     ?body;
-		     loop();
+      => { begin
+	     local method loop () 
+		     if (?expr)
+		       begin ?body end;
+		       loop();
+		     end;
 		   end;
-		 end;
-	   loop() }
+	     loop();
+	   end }
 end;
 
 
@@ -201,14 +205,14 @@ define macro class-definer
     { } => { }
     { inherited slot ?name, #rest ?options; ... }
       => { inherited ?name, ?options; ... }
-    { ?slot-modifiers slot ?name, #rest ?options; ... }
-      => { slot ?name, ?slot-modifiers, ?options; ... }
-    { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
-      => { slot ?name, type: ?type, ?slot-modifiers, ?options }
     { required keyword ?key, #rest ?options; ... }
       => { keyword ?key, required: #t, ?options; ... }
     { keyword ?key, #rest ?options; ... }
       => { keyword ?key, ?options; ... }
+    { ?slot-modifiers slot ?name, #rest ?options; ... }
+      => { slot ?name, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
+      => { slot ?name, type: ?type, ?slot-modifiers, ?options }
   slot-modifiers:
     { } => { }
     { instance } => { allocation: #"instance" }
