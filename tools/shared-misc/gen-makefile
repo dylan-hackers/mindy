@@ -251,8 +251,8 @@ EOF
 
 	print $foo_lib_du;
     }
-    print ": $lidfile.lid $extradeps\n";
-    print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $lidfile.lid\n";
+    print ": $srcdir/$lidfile.lid $extradeps\n";
+    print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $srcdir/$lidfile.lid\n";
     print "\ninclude $unit_prefix.dep\n\n";
 
     unless (-e "$unit_prefix.dep") {
@@ -273,10 +273,16 @@ sub install {
 	$dst = "\$(DESTDIR)/$subdir/$file";
 
 	print "$dst: $file\n";
-	print "\t", '@-mv $@ $@.old', "\n";
-	print "\t", 'cp -p $< $@', "\n";
-	print "\t", '@rm -f $@.old', "\n";
-	print "\n";
+	if ($win32) {
+	    local ($rule) = "\tcopy $file $dst\n\n";
+	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
+	    print $rule;
+	} else {
+	    print "\t", '@-mv $@ $@.old', "\n";
+	    print "\t", 'cp -p $< $@', "\n";
+	    print "\t", '@rm -f $@.old', "\n";
+	    print "\n";
+	}
 
 	push(@install_dependencies, $dst);
     }
@@ -286,8 +292,13 @@ sub install {
 # $CPPFLAGS, then call this subroutine, and finally a emit_library_rule
 sub d2c_library {
     local ($dylan_lib_name, $unit_prefix, $source_files) = @_;
-    local ($du_name) = "compiler-" . $unit_prefix . ".lib.du";
     local ($ar_name) = &make_into_library_name($unit_prefix);
+    local ($du_name);
+    if ($dylan_lib_name eq "main") {  # hack...
+	$du_name = "";
+    } else {
+	$du_name = "compiler-" . $unit_prefix . ".lib.du";
+    }
     if ($stage2) {
 	push(@compile_dependencies, "$du_name $ar_name");
     } else {
@@ -317,8 +328,9 @@ sub d2c_library {
 # Use global $srcdir for where to get sources
 sub spew_dbc_rules {
     local($sources) = @_;
+    local($source);
     foreach $source (split(/\s/, $sources)) {
-	print "$source.dbc: $builddir/$source.dylan\n";
+	print "$source.dbc: $srcdir/$source.dylan\n";
 	print "\t\$(MC) \$(MINDYFLAGS) ";
 	print "-o $source.dbc $srcdir/$source.dylan\n\n";
     }
