@@ -3,13 +3,18 @@ module: dylan-user
 define library common-extensions
   use dylan;
 
+  // Only import transcendentals if we have them.
+#if (~compiled-for-solaris)
+  use transcendental,
+    export: { transcendental };
+#endif
+
   export
     common-extensions,
     finalization,
     simple-debugging,
     simple-io,
     simple-random,
-    transcendentals,
     machine-word,
     byte-vector;
 end library;
@@ -43,6 +48,7 @@ define module common-extensions
     supports-list-locator?,
     list-locator;
 
+/* UNIMPLEMENTED:
   export
     <object-deque>,
     <object-set>,
@@ -56,6 +62,7 @@ define module common-extensions
     difference,
     fill-table,
     find-element,
+*/
 
   export
     // <format-string-condition>,
@@ -63,22 +70,24 @@ define module common-extensions
 
   export
     // assert,
-    debug-assert,
-    debug-message;
+    // UNIMPLEMENTED: debug-message,
+    debug-assert;
 
   export
     // ignore,
     ignorable;
 
+/* UNIMPLEMENTED:
   export
     float-to-string,
     integer-to-string,
     number-to-string,
     string-to-integer;
+*/
 
 #if (d2c)
   export
-    \table-definer,
+    // UNIMPLEMENTED: \table-definer,
     \iterate,
     \when;
 #endif
@@ -88,15 +97,7 @@ define module finalization
   // XXX - Needs definition. No-op stubs OK.
 end module;
 
-define module simple-debugging
-  // XXX - Needs specification & definition.
-end module;
-
 define module simple-random
-  // XXX - Needs definition.
-end module;
-
-define module transcendentals
   // XXX - Needs definition.
 end module;
 

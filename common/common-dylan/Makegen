@@ -1,0 +1,8 @@
+&makegen_include("../common-Makegen");
+
+$D2CFLAGS = $D2CFLAGS . ' -L../transcendental -L.' ;
+
+do emit_library_rule ('common-extensions', '$(BUILDROOT)/force.timestamp', '',
+		      'compile', 'no-mindy', 'install');
+do emit_library_rule ('common-dylan', '$(BUILDROOT)/force.timestamp', '',
+		      'compile', 'no-mindy', 'install');

@@ -1,6 +1,14 @@
 module: common-extensions
 
 //=========================================================================
+//  Streams protocol (will move elsewhere)
+//=========================================================================
+
+define open abstract class <stream> (<object>)
+end class;
+
+
+//=========================================================================
 //  Unsupplied, unfound.
 //=========================================================================
 //  Unique objects which can be used as default values for keywords and
