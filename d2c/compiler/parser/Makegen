@@ -1,0 +1,27 @@
+
+print <<'EOF';
+
+MC = mindycomp
+MINDYFLAGS = 
+MINDY = mindy
+
+%.dbc: %.dylan
+	$(MC) ${MINDYFLAGS} -lcompiler-parser -o $@ $<
+
+OBJS = \
+	parser-exports.dbc \
+	parser.dbc \
+	macros.dbc
+
+
+parserlib.dbc: ${OBJS}
+	cat $^ > $@
+
+parser.dylan: parsergen.lisp parser.input do-parsergen.lisp
+	cmucl $(word 1, $^) $(word 2, $^) -load $(word 3, $^)
+
+EOF
+
+push(@compile_dependencies, 'parserlib.dbc');
+
+push(@files_to_clean, '*.dbc', 'parser.dylan');
