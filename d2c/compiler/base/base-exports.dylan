@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.46 1996/07/12 01:23:02 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.47 1996/07/12 17:56:53 dwatson Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,6 +16,7 @@ define library compiler-base
   use Debugger-Format;
 #endif
   use String-extensions, export: all;   // used by target
+  use Table-extensions, export: all;
   
   export c-representation;
   export classes;
@@ -61,12 +62,14 @@ define module common
              <format-string-condition>, <never-returns>,
              <ratio>, numerator, denominator,
 #if (mindy)
-             *debug-output*, main, key-exists?,
+             *debug-output*, main, key-exists?},
 #else
              *warning-output*,
-             <debugger>, *debugger*, invoke-debugger,
+             <debugger>, *debugger*, invoke-debugger},
 #endif
-	     <equal-table>, <string-table>, equal-hash},
+    export: all;
+  use Table-Extensions,
+    import: {<equal-table>, <string-table>, equal-hash},
     export: all;
   use New-Streams, export: all;
   use Print, export: all;
