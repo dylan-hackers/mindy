@@ -57,7 +57,8 @@ define method main(name, arguments)
   let platform-name = option-value-by-long-name(arg-parser, "platform");
   let platform
     = select(platform-name by \=)
-        "x86-linux-gcc" =>
+        "x86-linux-gcc",
+        "x86-linux-gcc32" =>
           $i386-linux-platform;
         "ppc-linux-gcc" =>
           $ppc-linux-platform;
