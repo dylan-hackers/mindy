@@ -5,7 +5,7 @@ if ($win32) {
     $binary_name = 'versioner';
 } 
    
-do emit_library_rule('versioner', '$(BUILDROOT)/force.timestamp', '');
+do emit_library_rule('Versioner', '$(BUILDROOT)/force.timestamp', '');
 push(@compile_dependencies, $binary_name);
 push(@files_to_clean, $binary_name);
 do install ('bin', $binary_name);
