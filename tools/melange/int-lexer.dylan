@@ -78,6 +78,7 @@ define module int-lexer
     <ignore-result-token>, <map-argument-token>, <equate-argument-token>,
     <input-argument-token>, <output-argument-token>,
     <input-output-argument-token>, <struct-token>, <union-token>,
+    <pointer-token>,
     <constant-token>, <variable-token>, <getter-token>, <setter-token>,
     <read-only-token>, <seal-token>, <seal-functions-token>, <boolean-token>,
     <sealed-token>, <open-token>, <inline-token>, <value-token>,
@@ -302,6 +303,7 @@ define class <output-argument-token> (<reserved-word-token>) end class;
 define class <input-output-argument-token> (<reserved-word-token>) end class;
 define class <struct-token> (<reserved-word-token>) end class;
 define class <union-token> (<reserved-word-token>) end class;
+define class <pointer-token> (<reserved-word-token>) end class;
 define class <constant-token> (<reserved-word-token>) end class;
 define class <variable-token> (<reserved-word-token>) end class;
 define class <getter-token> (<reserved-word-token>) end class;
@@ -400,6 +402,7 @@ define constant reserved-words
            "input-output-argument:", <input-output-argument-token>,
 	   "struct", <struct-token>,
 	   "union", <union-token>,
+	   "pointer", <pointer-token>,
 	   "constant", <constant-token>,
 	   "variable", <variable-token>,
 	   "getter:", <getter-token>,
