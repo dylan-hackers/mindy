@@ -1,17 +1,16 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.20 1995/04/25 20:55:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.21 1995/04/26 03:26:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 define variable *do-sanity-checks* = #f;
+define method enable-sanity-checks () => (); *do-sanity-checks* := #t; end;
+define method disable-sanity-checks () => (); *do-sanity-checks* := #f; end;
 
-define method enable-sanity-checks () => ();
-  *do-sanity-checks* := #t;
-end;
-define method disable-sanity-checks () => ();
-  *do-sanity-checks* := #f;
-end;
+define variable *print-shit* = #f;
+define method print-shit () => (); *print-shit* := #t; end;
+define method dont-print-shit () => (); *print-shit* := #f; end;
 
 
 define method optimize-component (component :: <component>) => ();
@@ -20,29 +19,42 @@ define method optimize-component (component :: <component>) => ();
     if (*do-sanity-checks*)
       check-sanity(component);
     end;
+    if (*print-shit*) dump-fer(component) end;
     if (component.initial-definitions)
       let init-defn = component.initial-definitions;
       component.initial-definitions := init-defn.next-initial-definition;
       init-defn.next-initial-definition := #f;
+      if (*print-shit*)
+	format(*debug-output*,
+	       "\n********* considering %= for ssa conversion\n\n",
+	       init-defn.definition-of);
+      end;
       maybe-convert-to-ssa(component, init-defn);
     elseif (component.reoptimize-queue)
       let dependent = component.reoptimize-queue;
       component.reoptimize-queue := dependent.queue-next;
       dependent.queue-next := #"absent";
-      //dump-fer(component);
-      //format(*debug-output*, "\n********** about to optimize %=\n\n",
-      //       dependent);
+      if (*print-shit*)
+	format(*debug-output*, "\n********** about to optimize %=\n\n",
+	       dependent);
+      end;
       optimize(component, dependent);
     else
-      local method try (function)
+      local method try (function, what)
+	      if (*print-shit* & what)
+		format(*debug-output*, "\n********** %s\n\n", what);
+	      end;
 	      function(component);
 	      component.initial-definitions | component.reoptimize-queue;
 	    end;
-      try(add-type-checks)
+      (*do-sanity-checks* & try(assure-all-done, #f))
+	| try(add-type-checks, "adding type checks")
+	| try(environment-analysis, "running environment analysis")
 	| (done := #t);
     end;
   end;
 end;
+
 
 
 // SSA conversion.
@@ -536,9 +548,15 @@ define method optimize (component :: <component>, lambda :: <lambda>)
 			       make-values-ctype(as(<list>, types), #f));
   end;
 
-  // If there is exactly one reference, let convert the lambda.
-  if (lambda.dependents & ~lambda.dependents.source-next)
-    let-convert(component, lambda);
+  // If there is exactly one reference and that reference is the function
+  // in a known call, let convert the lambda.
+  let dependents = lambda.dependents;
+  if (dependents & dependents.source-next == #f)
+    let dependent = dependents.dependent;
+    if (instance?(dependent, <known-call>)
+	  & dependent.depends-on == dependents)
+      let-convert(component, lambda);
+    end;
   end;
 end;
 
@@ -1054,6 +1072,188 @@ end;
 
 
 
+// Environment analysis
+
+define method environment-analysis (component :: <component>) => ();
+  let lets = component.all-lets;
+  component.all-lets := #f;
+  for (l = lets then l.let-next, while: l)
+    unless (l.queue-next == #"deleted")
+      let home = home-lambda(l);
+      let next = #f;
+      for (var = l.defines then next,
+	   while: var)
+	next := var.definer-next;
+	maybe-close-over(component, var, home);
+      end;
+    end;
+  end;
+end;
+
+define method home-lambda (op :: <operation>) => home :: <lambda>;
+  home-lambda(op.dependents.dependent);
+end;
+
+define method home-lambda (assign :: <assignment>) => home :: <lambda>;
+  home-lambda(assign.region);
+end;
+
+define method home-lambda (region :: <region>) => home :: <lambda>;
+  home-lambda(region.parent);
+end;
+
+define method home-lambda (lambda :: <lambda>) => home :: <lambda>;
+  lambda;
+end;
+
+define method maybe-close-over
+    (component :: <component>, var :: <ssa-variable>, home :: <lambda>) => ();
+  let orig-dependents = var.dependents;
+  var.dependents := #f;
+  let next = #f;
+  for (dep = orig-dependents then next,
+       while: dep)
+    next := dep.source-next;
+    let ref = dep.dependent;
+    let ref-lambda = home-lambda(ref);
+    let copy = find-in-environment(component, ref-lambda, var, home);
+    dep.source-next := copy.dependents;
+    copy.dependents := dep;
+    dep.source-exp := copy;
+  end;
+end;
+
+define method find-in-environment
+    (component :: <component>, lambda :: <lambda>,
+     var :: <ssa-variable>, home :: <lambda>)
+    => copy :: <ssa-variable>;
+  if (lambda == home)
+    var;
+  else
+    block (return)
+      for (closure = lambda.environment.closure-vars then closure.closure-next,
+	   while: closure)
+	if (closure.original-var == var)
+	  return(closure.copy-var);
+	end;
+      end;
+      let prologue = lambda.prologue;
+      let assign = prologue.dependents.dependent;
+      let copy = make(<ssa-variable>, var-info: var.var-info, definer: assign,
+		      derived-type: var.derived-type);
+      lambda.environment.closure-vars
+	:= make(<closure-var>, original: var, copy: copy,
+		next: lambda.environment.closure-vars);
+      assign.defines := copy;
+      prologue.derived-type := wild-ctype();
+      for (call-dep = lambda.dependents then call-dep.source-next,
+	   while: call-dep)
+	let call = call-dep.dependent;
+	let var-in-caller
+	  = find-in-environment(component, home-lambda(call), var, home);
+	let func-dep = call.depends-on;
+	let new-dep = make(<dependency>, source-exp: var-in-caller,
+			   source-next: var-in-caller.dependents,
+			   dependent: call,
+			   dependent-next: func-dep.dependent-next);
+	var-in-caller.dependents := new-dep;
+	func-dep.dependent-next := new-dep;
+	queue-dependent(component, call);
+      end;
+      queue-dependent(component, prologue);
+      copy;
+    end;
+  end;
+end;
+
+define method maybe-close-over
+    (component :: <component>, defn :: <initial-definition>, home :: <lambda>)
+    => ();
+  let var = defn.definition-of;
+  if (block (return)
+	for (defn in var.definitions)
+	  unless (home-lambda(defn.definer) == home)
+	    return(#t);
+	  end;
+	end;
+	for (dep = var.dependents then dep.source-next,
+	     while: dep)
+	  unless (home-lambda(dep.dependent) == home)
+	    return(#t);
+	  end;
+	end;
+	#f;
+      end)
+    let value-cell-type = dylan-value(#"<value-cell>");
+    let builder = make-builder(component);
+    let value-cell = make(<ssa-variable>,
+			  var-info: make(<lexical-var-info>,
+					 debug-name: var.var-info.debug-name,
+					 asserted-type: value-cell-type,
+					 source-location:
+					   var.var-info.source-location),
+			  derived-type: value-cell-type);
+    let value-setter = dylan-defn-leaf(builder, #"value-setter");
+    for (defn in var.definitions)
+      let temp = make-ssa-var(builder, var.var-info.debug-name,
+			      defn.derived-type);
+      let assign = defn.definer;
+      for (other = assign.defines then other.definer-next,
+	   prev = #f then other,
+	   until: other == defn)
+      finally
+	if (prev)
+	  prev.definer-next := temp;
+	else
+	  assign.defines := temp;
+	end;
+	temp.definer-next := other.definer-next;
+      end;
+      temp.definer := assign;
+      select (defn.definer by instance?)
+	<let-assignment> =>
+	  let op
+	    = make-operation(builder,
+			     list(dylan-defn-leaf(builder, #"make"),
+				  make-literal-constant
+				    (builder, value-cell-type),
+				  make-literal-constant
+				    (builder,
+				     make(<literal-symbol>, value: #"value")),
+				  temp));
+	  op.derived-type := value-cell-type;
+	  build-assignment
+	    (builder, assign.policy, assign.source-location, value-cell, op);
+	<set-assignment> =>
+	  build-assignment
+	    (builder, assign.policy, assign.source-location, #(),
+	     make-operation(builder, list(value-setter, temp, value-cell)));
+      end;
+      insert-after(component, assign, builder-result(builder));
+      queue-dependent(component, assign);
+    end;
+    let value = dylan-defn-leaf(builder, #"value");
+    let next = #f;
+    for (dep = var.dependents then next,
+	 while: dep)
+      next := dep.source-next;
+      let temp = make-ssa-var(builder, var.var-info.debug-name,
+			      var.derived-type);
+      dep.source-exp := temp;
+      temp.dependents := dep;
+      dep.source-next := #f;
+      let op = make-operation(builder, list(value, value-cell));
+      op.derived-type := var.derived-type;
+      build-assignment(builder, $Default-Policy, make(<source-location>),
+		       temp, op);
+      insert-before(component, dep.dependent, builder-result(builder));
+    end;
+    maybe-close-over(component, value-cell, home);
+  end;
+end;
+
+
+
 // Deletion code.
 
 define method delete-dependent
@@ -1559,7 +1759,7 @@ define method split-after (assign :: <abstract-assignment>)
     new.first-assign := next;
     next.prev-op := #f;
     new.last-assign := last;
-    for (foo = next then next.next-op,
+    for (foo = next then foo.next-op,
 	 while: foo)
       foo.region := new;
     end;
@@ -1618,7 +1818,7 @@ end;
 // and region links are updated.
 //
 define generic insert-before
-    (component :: <component>, assign :: <abstract-assignment>,
+    (component :: <component>, before :: <dependent-mixin>,
      insert :: <region>)
     => ();
 
@@ -1638,6 +1838,30 @@ define method insert-before
     (component :: <component>, assign :: <abstract-assignment>,
      insert :: <empty-region>)
     => ();
+end;
+
+define method insert-before
+    (component :: <component>, region :: <if-region>, insert :: <region>)
+    => ();
+  // Note: the region.parent must be evaluated first because combine-regions
+  // is allowed to dick with the parent links.
+  replace-subregion(component, region.parent, region,
+		    combine-regions(insert, region));
+end;
+
+define method insert-before
+    (component :: <component>, op :: <operation>, insert :: <region>)
+    => ();
+  insert-before(component, op.dependents.dependent, insert);
+end;
+
+define method insert-before
+    (component :: <component>, lambda :: <lambda>, insert :: <region>)
+    => ();
+  // Note: when we are inserting before a lambda, we are really inserting
+  // before the *end* of the lambda.
+  replace-subregion(component, lambda, lambda.body,
+		    combine-regions(lambda.body, insert));
 end;
 
 // replace-subregion -- internal
@@ -1717,6 +1941,66 @@ end;
 
 // Sanity checking code.
 
+define method assure-all-done (component :: <component>) => ();
+  for (lambda in component.all-methods)
+    assure-all-done-region(component, lambda);
+  end;
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <simple-region>) => ();
+  for (assign = region.first-assign then assign.next-op,
+       while: assign)
+    assure-all-done-expr(component, assign.depends-on.source-exp);
+    assure-all-done-dependent(component, assign);
+  end;
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <compound-region>) => ();
+  for (subregion in region.regions)
+    assure-all-done-region(component, subregion);
+  end;
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <if-region>) => ();
+  assure-all-done-dependent(component, region);
+  assure-all-done-region(component, region.then-region);
+  assure-all-done-region(component, region.else-region);
+end;
+
+define method assure-all-done-region
+    (component :: <component>, region :: <body-region>) => ();
+  assure-all-done-region(component, region.body);
+end;
+
+define method assure-all-done-region
+    (component :: <component>, lambda :: <lambda>) => ();
+  assure-all-done-region(component, lambda.body);
+  assure-all-done-dependent(component, lambda);
+end;
+
+define method assure-all-done-dependent
+    (component :: <component>, dependent :: <dependent-mixin>) => ();
+  optimize(component, dependent);
+  if (component.initial-definitions | component.reoptimize-queue)
+    error("optimizing %= did something, but we thought we were done.",
+	  dependent);
+  end;
+end;
+
+define method assure-all-done-expr
+    (component :: <component>, expr :: <expression>) => ();
+end;
+
+define method assure-all-done-expr
+    (component :: <component>, op :: <operation>) => ();
+  assure-all-done-dependent(component, op);
+end;
+
+
+
 define method check-sanity (component :: <component>) => ();
   //
   // Make sure the component's parent is #f.
@@ -1738,13 +2022,13 @@ define method check-sanity (reg :: <simple-region>) => ();
     //
     // Check that the assigment has the correct region.
     unless (assign.region == reg)
-      error("assignment %s claims %= as its region instead of %=",
+      error("assignment %= claims %= as its region instead of %=",
 	    assign, assign.region, reg);
     end;
     //
     // Check that the assignment is linked correctly.
     unless (assign.prev-op == prev)
-      error("assignment %s claims %s as its predecessor instead of %s",
+      error("assignment %= claims %= as its predecessor instead of %=",
 	    assign, assign.prev-op, prev);
     end;
     //
@@ -1752,7 +2036,7 @@ define method check-sanity (reg :: <simple-region>) => ();
     for (defn = assign.defines then defn.definer-next,
 	 while: defn)
       unless (defn.definer == assign)
-	error("assignment %s's result %s claims its definer is %s",
+	error("assignment %='s result %= claims its definer is %=",
 	      assign, defn, defn.definer);
       end;
     end;
@@ -1839,7 +2123,7 @@ define method check-expression (expr :: <expression>) => ();
   for (dep = expr.dependents then dep.source-next,
        while: dep)
     unless (dep.source-exp == expr)
-      error("%s's dependent %= claims %s for its source-exp",
+      error("%='s dependent %= claims %= for its source-exp",
 	    expr, dep, dep.source-exp);
     end;
     //
@@ -1870,7 +2154,7 @@ define method check-dependent (dep :: <dependent-mixin>) => ();
     //
     // Make sure everything we depend on agrees.
     unless (dependency.dependent == dep)
-      error("%s's dependency %= claims %s for its dependent",
+      error("%='s dependency %= claims %= for its dependent",
 	    dep, dependency, dep.dependent);
     end;
     //
@@ -1883,17 +2167,8 @@ define method check-dependent (dep :: <dependent-mixin>) => ();
 	 until: sources-dependency == dependency)
       unless (sources-dependency)
 	error("%= depends on %=, but isn't listed as a dependent.",
-	      dep, dep.source-exp);
+	      dep, dependency.source-exp);
       end;
     end;
   end;
-end;
-
-
-
-define method print-message
-    (thing :: union(<expression>, <dependent-mixin>),
-     stream :: <stream>)
-    => ();
-  dump(thing, stream);
 end;
