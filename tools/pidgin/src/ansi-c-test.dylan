@@ -217,6 +217,19 @@ define function test-c-type-repositories () => ()
   do-c-type-repository-entries(dump-entry, r);
 end function test-c-type-repositories;
 
+//=========================================================================
+//  Test C parser
+//  type-rep, header name, header-file-finder object
+//  outputs c-file object.
+//=========================================================================
+define function test-c-parser(args)
+  test-section-header("C Parser");
+  let r :: <c-type-repository> = make(<c-type-repository>);
+  /* let c-f :: <c-file> = */ parse-header(r, args[0]);
+  
+  // Print out results (c-f & r) ...
+end function test-c-parser;
+
 
 //=========================================================================
 //  Test program
@@ -225,4 +238,7 @@ end function test-c-type-repositories;
 define method main(appname, #rest args)
   test-c-types-and-declarations();
   test-c-type-repositories();
+  if (~empty?(args))
+    test-c-parser(args);
+  end if;
 end;

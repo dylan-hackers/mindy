@@ -7,6 +7,7 @@ define library ansi-c-test
   use standard-io;
 
   use ansi-c;
+  use c-parser;
 end;
 
 define module ansi-c-test
@@ -17,4 +18,5 @@ define module ansi-c-test
   use standard-io;
 
   use ansi-c;
+  use c-parser;
 end;
