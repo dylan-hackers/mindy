@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.20 2003/03/14 07:34:52 brent Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.21 2003/03/28 08:08:33 housel Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -24,8 +24,8 @@
 # compatibility with 2.2.0 and port everything to build against these
 # libraries.
 @newer_libraries =
-    ('threads', 'common-dylan', 'io', 'file-system', 'date', 'system', 
-     'locators', 'network');
+    ('threads', 'common-dylan', 'collections', 'io', 'file-system',
+     'date', 'system', 'locators', 'network');
 
 &compile_subdirs(@pre_melange_libraries_needed_to_bootstrap);
 # Parsergen is needed to compile Melange
