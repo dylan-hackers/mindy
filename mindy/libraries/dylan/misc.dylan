@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.2 1994/03/30 06:07:27 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.3 1994/06/01 20:33:17 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -19,3 +19,8 @@ module: Dylan
 define method identity (x)
   x;
 end;
+
+// The built-in "as(<symbol>...)" method only handles byte-strings.
+define method as(cls == <symbol>, str :: <string>)
+  as(<symbol>, as(<byte-string>, str));
+end method as;
