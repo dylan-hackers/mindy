@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.19 2003/07/11 03:17:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.20 2003/07/18 10:31:19 bruce Exp $
 copyright: see below
 
 
@@ -2281,8 +2281,7 @@ define-primitive-emitter
 
      spew-pending-defines(file);
      deliver-result(results,
-		    stringify("(*(", rep.representation-c-type, " *)((char *)",
-			      ptr, " + ", offset, " ))"),
+		    stringify("DEREF(", rep.representation-c-type, ", ", ptr, ", ", offset, ")"),
 		    rep, #f, file);
    end);
 
@@ -2303,7 +2302,7 @@ define-primitive-emitter
      contact-bgh-if(new-temp? | ptr-temp? | offset-temp?);
 
      spew-pending-defines(file);
-     format(file.file-guts-stream, "*(%s *)((char *)%s + %s) = %s;\n",
+     format(file.file-guts-stream, "DEREF(%s, %s, %s) = %s;\n",
 	    rep.representation-c-type, ptr, offset, new);
      
      deliver-results(results, #[], #f, file);
