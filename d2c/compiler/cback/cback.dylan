@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.74 1995/11/06 17:04:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.75 1995/11/08 16:43:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -474,16 +474,23 @@ define method make-info-for
 		     #(), output-info);
 end;
 
-define method entry-point-c-name
-    (entry :: <ct-entry-point>, output-info :: <output-info>)
+define method entry-point-c-name (entry :: <ct-entry-point>)
     => res :: <string>;
-  let info = get-info-for(entry.ct-entry-point-for, output-info);
-  select (entry.ct-entry-point-kind)
-    #"main" => main-entry-name(info, output-info);
-    #"general" => general-entry-name(info, output-info);
-    #"generic" => generic-entry-name(info, output-info);
-  end;
-end;
+  let info = entry.ct-entry-point-for.info;
+  unless (info)
+    error("Too late to be making an info for %=", entry.ct-entry-point-for);
+  end unless;
+  let name
+    = select (entry.ct-entry-point-kind)
+	#"main" => info.function-info-main-entry-name;
+	#"general" => info.function-info-general-entry-name;
+	#"generic" => info.function-info-generic-entry-name;
+      end select;
+  unless (name)
+    error("Too late to be picking a name for %=", entry);
+  end unless;
+  name;
+end method;
 
 
 // Constant stuff.
