@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.11 1994/11/28 07:16:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.12 1994/11/28 07:55:34 wlott Exp $
 *
 * This file defines the various file opcodes.
 *
@@ -33,7 +33,7 @@
 #define dbc_MagicNumber 0x6e789abe
 
 #define file_MajorVersion 2
-#define file_MinorVersion 0
+#define file_MinorVersion 1
 
 #define fop_FLAME 0
 #define fop_HEADER 1
@@ -96,6 +96,7 @@
 #define fop_WRITABLE_VALUE_CELL 51
 #define fop_BUILTIN_VALUE_CELL 52
 #define fop_BUILTIN_WRITABLE_VALUE_CELL 53
+#define fop_NOTE_REFERENCE 54
 
 #define fop_SHORT_COMPONENT 55
 #define fop_COMPONENT 56
