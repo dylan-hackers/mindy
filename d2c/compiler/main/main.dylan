@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.85 1996/08/12 14:02:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.86 1996/08/22 11:46:03 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -647,7 +647,8 @@ define method build-ar-file (state :: <main-unit-state>) => ();
     format(state.unit-makefile, "\n%s : %s\n", ar-name, objects);
     format(state.unit-makefile, "\t%s %s\n",
     	   state.unit-target.delete-file-command, ar-name);
-    if (state.unit-target.target-name == #"x86-win32")
+    if (state.unit-target.link-like-a-windows-machine?)
+      let objects = slash-to-backslash(objects);
       format(state.unit-makefile, "\t$(LINK_LIBRARY) /out:%s%s\n",
       	     ar-name, objects);
     else
@@ -699,6 +700,16 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
   close(stream);
 end method;
 
+// Converts / to \, useful for converting pathnames on Windows
+//
+define function slash-to-backslash (string :: <byte-string>) 
+ => new-string :: <byte-string>;
+  map(method (c :: <character>) => new-char :: <character>;
+	if (c == '/') '\\' else c end if;
+      end method,
+      string);
+end function slash-to-backslash;
+
 define method build-executable (state :: <main-unit-state>) => ();
   let flags
     = if (state.unit-cc-flags.empty?)
@@ -729,48 +740,49 @@ define method build-executable (state :: <main-unit-state>) => ();
 					 state.unit-no-binaries);
   let runtime-filename = find-library-archive("runtime", state.unit-target, 
 					      state.unit-no-binaries);
-  if (state.unit-target.target-name == #"x86-win32")
+  let inits-dot-o 
+    = concatenate("inits", state.unit-target.object-filename-suffix);
+  let heap-dot-o
+    = concatenate("heap", state.unit-target.object-filename-suffix);
+  if (state.unit-target.link-like-a-windows-machine?)
+    // We make sure the linker is not given any source files, only
+    // library and object files
     format(state.unit-makefile, "\n");
-    output-c-file-rule(state.unit-makefile, "inits.c", "inits.obj",
+    output-c-file-rule(state.unit-makefile, "inits.c", inits-dot-o,
     		       state.unit-target);
     let assemble-heap-string
-      = format-to-string(state.unit-target.assembler-command, "heap.s",
-      			 "heap.obj");
-    format(state.unit-makefile, "heap.obj : heap.s\n");
+      = format-to-string(state.unit-target.assembler-command, 
+			 "heap.s", heap-dot-o);
+    format(state.unit-makefile, "%s : heap.s\n", heap-dot-o);
     format(state.unit-makefile, "\t%s\n", assemble-heap-string);
-    format(state.unit-makefile, "\n%s : %s%s inits.obj heap.obj\n",
-	   state.unit-executable, state.unit-ar-name, unit-libs);
-    format(state.unit-makefile,
-	   "\tlink %s /out:%s %s %s"
-	     " inits.obj heap.obj %s %s\n",
+    format(state.unit-makefile, "\n%s : %s%s %s %s\n",
+	   state.unit-executable, state.unit-ar-name, unit-libs,
+	   inits-dot-o, heap-dot-o);
+    // translate / to \
+    let unit-libs = slash-to-backslash(unit-libs);
+    let gc-filename = slash-to-backslash(gc-filename);
+    let runtime-filename = slash-to-backslash(runtime-filename);
+    format(state.unit-makefile, "\t%s %s /out:%s %s %s %s %s %s %s\n",
+	   state.unit-target.link-executable-command,
 	   state.unit-target.link-executable-flags,
 	   state.unit-executable, state.unit-ar-name, unit-libs,
-	   gc-filename, runtime-filename);
-    format(state.unit-clean-stream, " %s inits.obj heap.obj %s", 
-	   state.unit-ar-name, state.unit-executable);
-    format(state.unit-real-clean-stream,
-	   " %s inits.c inits.obj heap.s heap.obj %s", 
-	   state.unit-ar-name, state.unit-executable);
+	   inits-dot-o, heap-dot-o, gc-filename, runtime-filename);
   else
     format(state.unit-makefile, "\n%s : %s %s%s\n",
 	   state.unit-executable, state.unit-objects, state.unit-ar-name, 
 	   unit-libs);
-    // MACHINE DEPENDENCY: The reference to "end.o" below only
-    // makes sense in the HPUX architecture.  When we have a
-    // configuration flag for HPUX, we should conditionalize
-    // this.
-    format(state.unit-makefile,
-	   "\t%s%s %s -o %s inits.c heap.s %s%s /usr/lib/end.o\n",
+    format(state.unit-makefile, "\t%s%s %s -o %s inits.c heap.s %s%s\n",
 	   state.unit-target.link-executable-command,
-	   flags, state.unit-target.link-executable-flags, state.unit-executable, 
-	   state.unit-ar-name, linker-args);
-    format(state.unit-clean-stream, " %s inits.o heap.o %s", state.unit-ar-name,
-    	   state.unit-executable);
-    format(state.unit-real-clean-stream,
-    	   " %s inits.c inits.o heap.s heap.o %s", 
-	   state.unit-ar-name, state.unit-executable);
+	   flags, state.unit-target.link-executable-flags,
+	   state.unit-executable, state.unit-ar-name, linker-args);
   end if;
-  format(state.unit-makefile, "\nall-at-end-of-file : %s\n", state.unit-executable);
+  format(state.unit-clean-stream, " %s %s %s %s", 
+	 state.unit-ar-name, inits-dot-o, heap-dot-o, state.unit-executable);
+  format(state.unit-real-clean-stream,
+	 " %s inits.c %s heap.s %s %s", 
+	 state.unit-ar-name, inits-dot-o, heap-dot-o, state.unit-executable);
+  format(state.unit-makefile, "\nall-at-end-of-file : %s\n", 
+	 state.unit-executable);
 end method;
 
 
@@ -1037,7 +1049,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	  #"unknown";
        #endif
   let no-binaries = #f;
-  let targets-file = #f;
+  let targets-file = $default-targets-dot-descr;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
       if (arg.size >= 2)
@@ -1109,11 +1121,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   unless (lid-file)
     incorrect-usage();
   end;
-     // bug
   if (targets-file == #f)
-    targets-file 
-      := find-file("targets.descr", *Data-Unit-Search-Path*)
-           | error("Can't find targets.descr");
+    error("Can't find targets.descr");
   end if;
   let possible-targets = get-targets(targets-file);
   if (~key-exists?(possible-targets, target-machine))
