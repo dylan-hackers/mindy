@@ -1,0 +1,64 @@
+.\" @(#)dybug.1		-*- nroff -*-
+.TH DYBUG 1 "03 March 2001" "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+dybug \- The GNU Debugger for Dylan
+.SH SYNOPSIS
+.B dybug
+.RB "[\|" \-help "\|]"
+.RB "[\|" \-nx "\|]"
+.RB "[\|" \-q "\|]"
+.RB "[\|" \-batch "\|]"
+.RB "[\|" \-cd=\c
+.I dir\c
+\|]
+.RB "[\|" \-f "\|]"
+.RB "[\|" "\-b\ "\c
+.IR bps "\|]"
+.RB "[\|" "\-tty="\c
+.IR dev "\|]"
+.RB "[\|" "\-s "\c
+.I symfile\c
+\&\|]
+.RB "[\|" "\-e "\c
+.I prog\c
+\&\|]  
+.RB "[\|" "\-se "\c
+.I prog\c
+\&\|]
+.RB "[\|" "\-c "\c
+.I core\c
+\&\|]
+.RB "[\|" "\-x "\c
+.I cmds\c
+\&\|]
+.RB "[\|" "\-d "\c
+.I dir\c
+\&\|]
+.RB "[\|" \c
+.I prog\c
+.RB "[\|" \c
+.IR core \||\| procID\c
+\&\|]\&\|]
+.ad b
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.B dybug
+is a front-end to GDB that allows you to debug Dylan programs.  It uses
+the same command-line options as GDB, so you should refer to that
+documentation for additional details.
+.SH SEE ALSO
+gdb(1), dylan(7), gwydion(7).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The Gwydion Group at CMU and the current Gwydion Dylan maintainers. See the
+CREDITS file in the Gwydion Dylan distribution for more information.
+
