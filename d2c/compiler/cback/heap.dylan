@@ -295,7 +295,7 @@ end;
 
 define method spew-object
     (object :: <literal-simple-object-vector>, state :: <state>) => ();
-  let contents = object.literal-contents;
+  let contents = object.literal-value;
   spew-instance(specifier-type(#"<simple-object-vector>"), state,
 		size: as(<ct-value>, contents.size),
 		%element: contents);
