@@ -67,10 +67,14 @@ define constant $default-defines
       // but of course it's not.
       "__IMPORT", "",
 
-      // Get rid of the Microsoft-specific cruft such as __declspec(dllimport)
-      // found in some places in the cygwin headers. Again, cygwin uses a 
-      // hodge-podge of declarations.
+      // Microsoft-specific function calling conventions. For more info, see
+      // http://msdn.microsoft.com/library/en-us/vclang/html/_core_Calling_Conventions_Topics.asp
       "__cdecl", "",
+      "__stdcall", "",
+      "__fastcall", "",
+
+      // Microsoft-specific storage-class attributes. For more info, see
+      // http://msdn.microsoft.com/library/en-us/vclang/html/_pluslang_extended_attribute_syntax.asp
       "__declspec", #(#("x"), ""),
 
       "const", "",
