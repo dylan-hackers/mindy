@@ -1,5 +1,6 @@
 do compile_subdirs(
     'c-code',
+    'gc',
     'dylan',
     'streams',
     'print',
