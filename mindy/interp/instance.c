@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.19 1994/08/05 11:58:36 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.20 1994/08/12 14:29:32 dpierce Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1199,7 +1199,6 @@ static void process_inherited(obj_t class, obj_t inherited)
 	      case alloc_INSTANCE:
 		break;
 	      case alloc_SUBCLASS:
-	      case alloc_CLASS:
 		for (inits = initializers; inits != obj_Nil;
 		     inits = TAIL(inits)) {
 		    obj_t init = HEAD(inits);
@@ -1215,13 +1214,11 @@ static void process_inherited(obj_t class, obj_t inherited)
 			     initializers);
 		}
 		break;
+	      case alloc_CLASS:
 	      case alloc_CONSTANT:
-		error("Can't change constant slot %=",
-		      INHD(inherited)->name);
-		break;
 	      case alloc_VIRTUAL:
 		if (INHD(inherited)->init_function_or_value != obj_Unbound)
-		    error("Can't init inherited virtual slot %=",
+		    error("Can't init inherited slot %=",
 			  INHD(inherited)->name);
 		break;
 	      default:
