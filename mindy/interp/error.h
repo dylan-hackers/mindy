@@ -23,10 +23,10 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.h,v 1.3 1994/10/05 21:01:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.h,v 1.4 1994/11/29 06:41:37 wlott Exp $
 *
 \**********************************************************************/
 
 extern void error _ANSI_ARGS_((char *msg, ...));
 extern void type_error(obj_t value, obj_t type);
-extern void check_type(obj_t thing, obj_t type);
+extern obj_t check_type(obj_t thing, obj_t type);

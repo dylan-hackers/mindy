@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.9 1994/10/20 03:05:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.10 1994/11/29 06:41:29 wlott Exp $
 *
 * This file implements the stuff to signal errors from C code.
 *
@@ -122,10 +122,15 @@ void type_error(obj_t value, obj_t type)
 	error("%= is not an instance of type %=", value, type);
 }
 
-void check_type(obj_t thing, obj_t type)
+obj_t check_type(obj_t thing, obj_t type)
 {
-    if (!instancep(thing, type))
+    if (!instancep(thing, type)) {
 	type_error(thing, type);
+	/* Never reached, but keeps the compiler happy. */
+	return 0;
+    }
+    else
+	return thing;
 }
 
 static obj_t enable_error_system(void)
