@@ -33,7 +33,7 @@ define method set-mirror-parent
     (child :: <menu-mirror>, parent :: <menu-mirror>)
  => ()
   let widget = mirror-widget(child);
-  let menu = gtk-menu-new();
+  let menu = GTK-MENU(gtk-menu-new());
   debug-message("Creating submenu for %s",
 		gadget-label(mirror-sheet(child)));
   gtk-menu-item-set-submenu(GTK-MENU-ITEM(widget), menu);
@@ -338,8 +338,8 @@ end method refresh-menu-bar;
 // menu which will be mirrored.
 
 define open abstract class <gtk-menu-button-mixin>
-    (<value-gadget>,
-     <gtk-gadget-mixin>)
+    (<gtk-gadget-mixin>,
+     <value-gadget>)
 end class <gtk-menu-button-mixin>;
 
 define sealed method make-gtk-mirror
@@ -356,7 +356,7 @@ define sealed method make-gtk-mirror
     mnemonic := allocate-unique-mnemonic(gadget, text)
   end;
   with-c-string (c-string = text)
-    let widget = gtk-menu-item-new-with-label(c-string);
+    let widget = GTK-MENU-ITEM(gtk-menu-item-new-with-label(c-string));
     make(<menu-button-mirror>,
 	 widget: widget,
 	 sheet:  gadget)
@@ -400,7 +400,7 @@ define sealed method make-gtk-mirror
     ignoring("menu with image")
   end;
   with-c-string (c-string = text)
-    let widget = gtk-menu-item-new-with-label(c-string);
+    let widget = GTK-MENU-ITEM(gtk-menu-item-new-with-label(c-string));
     let owner = menu-owner(gadget);
     let owner = if (frame?(owner)) top-level-sheet(owner) else owner end;
     make-menu-mirror-for-owner(owner, gadget, widget)
