@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.5 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.6 1995/11/16 03:39:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -89,7 +89,7 @@ end;
 // one-of -- exported from Extensions.
 //
 define method one-of (#rest things) => res :: <type>;
-  apply(type-or, map(singleton, things));
+  apply(type-union, map(singleton, things));
 end;
 */
 
@@ -141,21 +141,11 @@ end;
 seal generic make (singleton(<union>));
 
 /* ### not absolutly needed
-// union -- exported from Dylan.
-//
-// Cheesy binary constructor for <union> types that is overloaded on top of
-// a collection routine.  Man, sometimes Apple can really fuck up.
-//
-define sealed inline method union (type1 :: <type>, type2 :: <type>, #key)
-    => res :: <type>;
-  type-or(type1, type2);
-end;
-
-// type-or -- exported from Extensions.
+// type-union -- exported from Dylan.
 //
 // N-ary constructor for <union> types.
 // 
-define method type-or (#rest types)
+define method type-union (#rest types)
   //
   // First scan across the types using merge-type to build up the members
   // and singletons list.
@@ -377,7 +367,7 @@ define method limited (class :: one-of(<integer>, <extended-integer>),
     => res :: <type>;
   if (max & min & max < min)
     // If the range is empty, return the empty type.
-    type-or();
+    type-union();
   else
     // Otherwise, make a limited integer.
     make(<limited-integer>, base-class: class, min: min, max: max);
@@ -395,7 +385,7 @@ define method limited (class == <fixed-integer>, #key min, max)
 		<fixed-integer> => min;
 		<extended-integer> =>
 		  if (min > $maximum-fixed-integer)
-		    return(type-or());
+		    return(type-union());
 		  elseif (min <= $minimum-fixed-integer)
 		    $minimum-fixed-integer;
 		  else
@@ -408,7 +398,7 @@ define method limited (class == <fixed-integer>, #key min, max)
 		<fixed-integer> => max;
 		<extended-integer> =>
 		  if (max < $minimum-fixed-integer)
-		    return(type-or());
+		    return(type-union());
 		  elseif (max >= $maximum-fixed-integer)
 		    $maximum-fixed-integer;
 		  else
@@ -417,7 +407,7 @@ define method limited (class == <fixed-integer>, #key min, max)
 	      end;
     if (max < min)
       // Empty range.
-      type-or();
+      type-union();
     else
       // Otherwise, make the limited integer.
       make(<limited-integer>, base-class: <fixed-integer>, min: min, max: max);
@@ -528,7 +518,7 @@ end;
 //
 define method intersect-limited-ints
     (lim1 :: <limited-integer>, lim2 :: <limited-integer>)
- => (res :: union(<false>, <limited-integer>));
+ => (res :: type-union(<false>, <limited-integer>));
   if (lim1.limited-integer-base-class ~= lim2.limited-integer-base-class)
     error("interesect-limited-ints only works on homogenous types");
   end if;
