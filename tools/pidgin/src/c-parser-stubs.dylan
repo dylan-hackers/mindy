@@ -2,14 +2,6 @@ module: c-parser
 synopsis: Stuff which will only stay around during the integration process.
 
 //=========================================================================
-//  Parser functions from c-parse-engine.input
-//=========================================================================
-
-define function cpp-parse (#rest rest)
-end;
-
-
-//=========================================================================
 //  C Declarations from c-decl.dylan
 //=========================================================================
 

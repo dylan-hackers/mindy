@@ -85,9 +85,8 @@ define module c-parser-engine
     <integer-type-declaration>, canonical-name, true-type, make-enum-slot,
     referent;
 
-  // Defined by the parser engine, which we're not compiling yet.
-  //export
-  //  parse, parse-type, parse-macro;
+  export
+    parse, parse-type, parse-macro;
 end module c-parser-engine;
 
 define module c-parser
