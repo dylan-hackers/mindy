@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.10 1996/03/18 02:50:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.11 1996/09/05 12:06:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -216,7 +216,15 @@ define method write-integer (int :: <integer>, radix :: <integer>)
     end;
   if (negative?(int))
     write('-');
-    repeat(-int);
+    let (negative-remaining, negative-digit) = truncate/(int, radix);
+    unless (zero?(negative-remaining))
+      repeat(-negative-remaining);
+    end unless;
+    if (negative-digit > -10)
+      write(as(<integer>, '0') - negative-digit);
+    else
+      write(as(<integer>, 'a') - negative-digit - 10);
+    end if;
   else
     repeat(int);
   end;
