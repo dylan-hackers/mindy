@@ -187,7 +187,10 @@ end method initialize;
 define method configure
     (tag :: <text-tag>, #rest options, #all-keys) => (tag :: <text-tag>);
   apply(put-tk-line, tag.widget, " tag configure ", tag.name,
-	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline"],
+	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline",
+		      #"justify", #"lmargin1", #"lmargin2", #"offset",
+		      #"overstrike", #"relief", #"rmargin", #"spacing1",
+		      #"spacing2", #"spacing3", #"tabs", #"wrap"],
 		    #t, options));
 end method configure;
 
