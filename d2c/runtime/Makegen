@@ -9,8 +9,7 @@ do compile_subdirs(
     'dylan',
     'melange',
     '../../common',
-    'random',
-    '../../tools/parsergen'
+    'random'
 );
 
 do install_from_src($includedir, "runtime.h");
