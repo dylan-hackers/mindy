@@ -25,12 +25,12 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/def.h,v 1.2 2000/01/24 04:58:11 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/def.h,v 1.3 2000/12/19 02:02:17 andreas Exp $
 *
 \**********************************************************************/
 
 
-extern void define(char *name, obj_t value);
+/* extern void define(char *name, obj_t value); */
 extern void define_constant(char *name, obj_t value);
 extern void define_function(char *name, obj_t specializers, boolean restp,
 			    obj_t keys, boolean all_keys, obj_t result_type,
