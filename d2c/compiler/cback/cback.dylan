@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.92 1996/01/18 22:38:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.93 1996/01/27 20:19:17 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -159,6 +159,15 @@ define class <unit-state> (<object>)
   slot unit-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
+
+// Information which needs to go into the library dump file.  Perhaps
+// this should be merged with <unit-state>.
+define class <unit-info> (<object>)
+  slot unit-name :: <byte-string>, required-init-keyword: #"unit-name";
+  slot undumped-objects :: <vector>,
+    init-function: method () make(<stretchy-vector>) end method,
+    init-keyword: #"undumped-objects";
+end class <unit-info>;
 
 define class <file-state> (<object>)
   //
@@ -778,6 +787,37 @@ define method emit-tlf-gunk (tlf :: <top-level-form>,
 			     file :: <file-state>)
     => ();
   format(file.file-body-stream, "/* %s */\n\n", tlf);
+end;
+
+// This method does useful stuff to insure that heap dumping does the
+// right thing for generic functions.
+//
+define method emit-tlf-gunk (tlf :: type-union(<define-generic-tlf>,
+					       <define-implicit-generic-tlf>),
+			     file :: <file-state>)
+ => ();
+  format(file.file-body-stream, "/* %s */\n\n", tlf);
+  let defn = tlf.tlf-defn;
+  let ctv = defn.ct-value;
+  if (instance?(ctv, <ct-sealed-generic>))
+    // This is a sealed generic.  We can avoid having to dump it in
+    // the global heap generation by eagerly adding it as a root now.
+    // This appears to be a win, although it means we'll dump heap
+    // info for functions which may never be called.
+    new-root(ctv, file);
+  else
+    // Unsealed generics must be written (if the are written) during
+    // the global heap dump.  However, we must give them a name now so
+    // that every library that references them will use the same name.
+    // This forces special case processing in the heap dumper -- see
+    // "object-name".
+    ctv.ct-value-heap-labels := vector(new-global(file));
+    // By adding generic function methods to the heap now, we save
+    // effort during the global dump phase.  There is, of course, the
+    // possibility of writing heap info for methods which will not be
+    // referenced.
+    map(method (a) new-root(a.ct-value, file) end, defn.generic-defn-methods);
+  end if;
 end;
 
 define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
