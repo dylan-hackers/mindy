@@ -39,7 +39,7 @@ end protocol <<caret-protocol>>;
 
 
 define open abstract primary class <basic-caret> (<caret>)
-  sealed slot port :: false-or(<port>) = #f,
+  /*sealed*/ slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   sealed slot caret-sheet :: false-or(<sheet>) = #f,

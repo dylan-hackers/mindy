@@ -110,18 +110,18 @@ end protocol <<port-protocol>>;
 define open abstract primary class <basic-port> (<port>)
   sealed slot port-server-path;
   sealed constant slot port-lock :: <simple-lock> = make(<simple-lock>);
-  sealed slot port-properties :: <stretchy-object-vector> = make(<stretchy-vector>);
-  sealed slot port-displays :: <stretchy-object-vector> = make(<stretchy-vector>);
+  /*sealed*/ slot port-properties :: <stretchy-object-vector> = make(<stretchy-vector>);
+  /*sealed*/ slot port-displays :: <stretchy-object-vector> = make(<stretchy-vector>);
   // This tells us what policy we use for event processing:
   //  - #"n" means event processing happens in each user thread
   //  - #"n+1" means there's a single event processing thread that
   //    distributes events to each user thread
   //  - #"2n" means there's an event processing thread for each and
   //    every user thread
-  sealed constant slot port-event-processor-type :: <event-processor-type> = #"n",
+  sealed constant slot port-event-processor-type :: <event-processor-type> = #"single",
     init-keyword: event-processor-type:;
   sealed slot port-event-thread = #f;
-  sealed slot port-frame-managers :: <stretchy-object-vector> = make(<stretchy-vector>);
+  /*sealed*/ slot port-frame-managers :: <stretchy-object-vector> = make(<stretchy-vector>);
   sealed slot port-input-focus :: false-or(<sheet>) = #f,
     setter: %input-focus-setter;
   sealed constant slot port-focus-policy :: <focus-policy> = #"sheet-under-pointer",
@@ -139,12 +139,12 @@ define open abstract primary class <basic-port> (<port>)
   sealed slot %last-button-press-time = 0;
   //--- The next two should really be in the display, no?
   //--- Fix this when you change sheet.%port to sheet.%display
-  sealed slot port-default-palette :: false-or(<palette>) = #f;
+  /*sealed*/ slot port-default-palette :: false-or(<palette>) = #f;
   sealed slot %medium-cache :: <object-deque> = make(<object-deque>);
   // Text style -> font mapping tables and one-element cache
   sealed constant slot port-font-mapping-table :: <object-table> = make(<table>);
   sealed constant slot port-font-mapping-cache :: <pair> = pair(#f, #f);
-  sealed slot port-undefined-text-style :: <text-style> = $undefined-text-style;
+  /*sealed*/ slot port-undefined-text-style :: <text-style> = $undefined-text-style;
   // This specifies how size mapping is done.
   //  - #"exact" -- the size given in the text style is exactly the size
   //    that should be used during mapping.

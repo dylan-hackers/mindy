@@ -11,7 +11,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 //--- Should these be added to the display instead of the port?
 define open abstract primary class <basic-frame-manager> (<frame-manager>)
-  sealed slot port :: false-or(<port>) = #f,
+  /*sealed*/ slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   sealed slot frame-manager-frames  :: <stretchy-object-vector> = make(<stretchy-vector>);
@@ -212,7 +212,7 @@ end method make-pane;
 
 //--- If you change this method, change the one in gadgets/gadget-mixins
 define method make
-    (pane-class :: subclass(<sheet>),
+    (pane-class == <sheet>, //* THIS WILL BE PROBLEMATIC subclass(<sheet>),
      #rest pane-options,
      #key port, frame-manager: framem, #all-keys)
  => (pane :: <sheet>)

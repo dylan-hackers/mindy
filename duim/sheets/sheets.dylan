@@ -256,6 +256,7 @@ define generic sheet-flags-setter
 
 
 /// Basic sheet implementation class
+//* Some slots unsealed to prevent compiler warnings
 
 define open abstract primary class <basic-sheet> (<sheet>)
   sealed slot sheet-parent :: false-or(<sheet>) = #f,
@@ -270,13 +271,13 @@ define open abstract primary class <basic-sheet> (<sheet>)
   sealed slot sheet-cached-device-transform :: false-or(<transform>) = #f;
   // This is the port to which the sheet has been grafted
   //--- This should really be a %display slot (but see <basic-display>)
-  sealed slot port :: false-or(<port>) = #f,
+  /*sealed*/ slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   // #t if the sheet (and it's mirror, if it has one) has been mapped,
   // #f otherwise (by "mapped" we mean "visible on the display" -- ignoring
   // issues of occlusion, of course)
-  sealed slot sheet-flags :: <integer> = $initial-sheet-flags;
+  /*sealed*/ slot sheet-flags :: <integer> = $initial-sheet-flags;
   // Default style, for when we create mediums and mirrors
   sealed slot %style-descriptor :: false-or(<style-descriptor>) = #f,
     init-keyword: style-descriptor:;

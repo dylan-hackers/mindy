@@ -324,7 +324,7 @@ end method handle-event;
 //--- have different event queues.  Would it be better to simply always
 //--- get the event queue from the frame and flush this?
 define open abstract class <sheet-with-event-queue-mixin> (<abstract-sheet>)
-  sealed slot sheet-event-queue :: false-or(<event-queue>) = #f,
+  /*sealed*/ slot sheet-event-queue :: false-or(<event-queue>) = #f,
     init-keyword: event-queue:;
 end class <sheet-with-event-queue-mixin>;
 

@@ -51,7 +51,7 @@ end protocol <<pointer-protocol>>;
 
 
 define sealed class <standard-pointer> (<pointer>)
-  sealed slot port :: false-or(<port>) = #f,
+  /*sealed*/ slot port :: false-or(<port>) = #f,
     init-keyword: port:,
     setter: %port-setter;
   sealed slot pointer-sheet :: false-or(<sheet>) = #f;
