@@ -1,8 +1,3 @@
-@runtime_directories = ('c-code', 'gc', 'dylan', 'melange');
-foreach (@runtime_directories) {
-    $d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
-}
-
 $D2CFLAGS = $d2c_runtime
     . '-L../../common/streams '
     . '-L../../common/print -L../../common/format '
