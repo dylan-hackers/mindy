@@ -125,7 +125,7 @@ define function do-coalesce-members (decl :: <struct-declaration>)
   for (member :: <declaration> in decl.members)
     let decl-type = member.type;
     if (instance?(decl-type, <bitfield-declaration>))
-      let composite = result.first;
+      let composite = first(result, default: #f);
       if (~instance?(composite, <coalesced-bitfields>)
 	    | (composite.bit-size + decl-type.bits-in-field
 		 > $default-alignment * 8))

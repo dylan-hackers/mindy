@@ -438,7 +438,7 @@ define method d2c-type-tag (type :: <predefined-type-declaration>)
     double-type => "double:";
     long-double-type => "long-double:";
     void-type => "void:";
-    otherwise => error("unknown-type");
+    otherwise => error("unknown-type: %s", type.simple-name);
   end select;
 end method d2c-type-tag;
 
