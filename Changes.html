@@ -1,0 +1,618 @@
+<HTML>
+<HEAD>
+<TITLE>Gwydion Dylan Change Log </TITLE>
+</HEAD>
+<BODY>
+<H2>
+Gwydion Dylan 1.6 Change Log
+</H2>
+<H3>The following are enhancements added since Mindy release 1.5:</H3>
+<P>
+<H3>New stuff:</H3>
+<UL>
+<LI>The 
+  <A HREF="../docs/htdocs/d2c.html">d2c dylan-to-C compiler</A>
+     allows efficient compilation of Dylan.
+<LI>The 
+    <A HREF="../docs/maker-out/melange.htm"> Melange interface generator</A>
+     provides a general mechanism for calling C libraries from Dylan.
+</UL>
+<P>
+<H3>Mindy:</H3>
+<UL>
+   Give much better error in the case where we went to load a library and
+   loaded the wrong file, hence didn't find the library definition.  Now if
+   you load something in a different library, you get an error, including the
+   filename actually loaded.
+<P>
+   Use ; as a path separator character under NT, rather than the Unix-ish
+   colon (:).
+<P>
+   Now if you have a name clash when trying to import something into a module,
+   it'll tell you what module this name clash is taking place in.
+<P>
+   On Win32, force stdin, stdout, and stderr into binary mode, so that the
+   streams library will work correctly on those files.
+</UL>
+<H3>Common libraries:</H3>
+<UL>
+   The Streams library has been converted to a spec that both CMU and
+   Harlequin agree on.  See
+    <A HREF="../docs/maker-out/streams.htm">streams.htm</A> details on the new
+    streams.  See 
+    <A HREF="../docs/misc/stream-diffs.txt">stream-diffs.txt</A> for how the
+    new streams differs from the previous Gwydion streams.
+<P>
+   The Standard-io module of the Streams library has been moved into
+   its own library, called Standard-io.  See
+    <A HREF="../docs/maker-out/STANDA~1.htm">standard-io</A>.
+<P>
+   The Streams library now contains the piped-exec module, which
+   exports the piped-exec function.  Similar functionality used to be
+   provided by the fd-exec function; see 
+   <A HREF="../docs/maker-out/EXTENS~1.htm#E8E44">stream extensions</A>.
+<P>
+   See also
+ <A HREF="../src/common/streams/bbso-stream.dylan">bbso-stream.dylan</A>
+    for an efficient string output stream class.
+<P>
+   The Stream-extensions library has been effectively gutted and
+   started over.  Most of the functions that used to be part of
+   Stream-extensions are now part of the Streams library; the
+   Stream-extensions library now contains the Indenting-streams and
+   Concatenated-streams modules.
+<P>
+   The Regular-expressions module of the String-extensions library has
+   been spun off into its own library.  There are also some improvements in
+   functionality.  See 
+    <A HREF="../docs/maker-out/REGULA~1.htm">regular-expressions</A>.
+<P>
+   Added the time library.  See time.txt 
+    <A HREF="../docs/maker-out/time.htm">time.htm</A>.  Note however that this
+    library doesn't compile on all platforms under d2c.
+<P>
+   The Table-Extensions library has been added.  Most of the
+   functionality used to be in the Extensions module of the Dylan
+   library; however, see 
+    <A HREF="../docs/maker-out/TABLE-~1.htm">table-extensions</A>.
+<P>
+   The assert() function has been added to the Extensions module of
+   the Dylan library.
+<P>
+   The conditional compilation features compiled-for-x86-win32 and
+   compiled-for-hppa-hpux are now defined, if appropriate.  
+   See <A HREF="../docs/maker-out/EXTENS~1.htm#E8E38">conditional compilation</A>.
+<P>
+   The conditional compilation feature newlines-are-CRLF has been
+   added.  Consequently, the constant $newlines-are-CRLF, exported
+   from the Extensions module of the Dylan library, no longer exists.
+<P>
+   Added print-object methods for &lt;sequence&gt;, &lt;array&gt;, &lt;table&gt;, and
+   &lt;range&gt;.
+    see <A HREF="../docs/maker-out/print.htm">print</A>.
+<P>
+   Added the format-out library.  This provides a shorthand for formatting to
+    standard output.
+<P>
+   Added a whole bunch of new tests to the tests directory.
+</UL>
+<H3>Inspector:</H3>
+<UL>
+   Added the "store" command to the text Inspector.  This command
+   allows you to store the object currently under inspection into a
+   debugger variable; see inspector.txt for details.
+<P>
+   The Inspector no longer tells you about slot getters and setters or
+   type constaints on a slot when you inspect an instance of an
+   object.  If you want to see those things, inspect that object's
+   class.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are bug fixes since release 1.5:</H3>
+<UL>
+   TK now works on Windows/NT.
+<P>
+   Piped-exec (formerly fd-exec) now works on Windows/NT.
+<P>
+   WinMindy now uses a special linker (dbclink) to link .dbc files.
+   Previously, the Unixish "cat" command was used, which sometimes
+   corrupted the .dbc files.  See mindy.txt for details.
+<P>
+   fd-exec and piped-exec now collect finished child processes.
+   Previously, on Unix if you fd-exec'ed enough processes, you could
+   overflow the process table, even if those processes had terminated.
+<P>
+   In interp/module.c, an unreferenced function referenced a
+   non-existent function.  This has been fixed.
+<P>
+   Fixed a bug where if a size: keyword was given to make(&lt;deque&gt;),
+   the deque would think it was twice as big as it really was.
+<P>
+   Fixed ``for (x from 0 below 10) x := x + 1 end'' to work correctly
+<P>
+   Slot init-args are now processed first to last (ie, the second
+   occurence of a init-keyword is ignored when initializing
+   instances).
+<P>
+   Fixed obscure bug in the SAM cache code which caused incorrect
+   handling of non-leaf concrete classes.
+<P>
+   When using the Transcendental module, not all documented methods
+   for \^ were present.  This has been fixed.
+<P>
+   Fixed a bug in the Inspector where strings beginning with # (like
+   "#f") would not display correctly.
+<P>
+   The random-float function in the Random library would sometimes
+   produce numbers outside the range asked for.  This has been fixed.
+<P>
+   Fixed print-object when printing single digit negative integers.
+<P>
+   &lt;table&gt; and &lt;self-organizing-list&gt; are once again subclasses of
+   &lt;stretchy-collection&gt;.  See collext.txt for details on
+   &lt;self-organizing-list&gt;.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are enhancements added since release 1.4:</H3>
+<UL>
+   Mindy is now compliant with most of the DRM; previous versions of
+   Mindy were based on the older DIRM.  See mindy.txt for Mindy's
+   deficiencies with respect to the DRM.  The file DIRM-to-DRM.txt
+   contains tips on bringing DIRM code up to the new standard.
+<P>
+   Added the TK library, which is a Dylan binding for TK 4.0 (of
+   TCL/TK fame).  See dylan-tk.txt for details.  Also added a
+   graphical version of html2txt and a game of Minesweeper.
+<P>
+   Added the inspect and xinspect commands to the debugger, which
+   allow interactive examining of Dylan objects.  See debug.txt and
+   inspector.txt for details.
+<P>
+   Mindy now supports conditional compilation; see mindy.txt for
+   details.
+<P>
+   Added a new defining form, "define function".  See mindy.txt for
+   details.
+<P>
+   For loops now support the "using" option for using iteration
+   protocols other than the forward-iteration-protocol.  See mindy.txt
+   for details.
+<P>
+   Added $not-supplied to the Extensions module.  See mindy.txt for
+   details.
+<P>
+   Added the Matrix library, which contains standard matrix
+   manipulations like matrix multiply and gaussian elimination.  See
+   matrix.txt for details.
+<P>
+   Mindycomp now gives warning messages when "while" or "until" are
+   used inside a for loop (you should use "while:" or "until:"), or  
+   when the "foo: (default)" keyword default syntax is used.
+   Mindycomp also gives warning messages when the exception name in an
+   exception clause is not surrounded by parentheses.
+<P>
+   Mindycomp now gives warning messages when function return values
+   have names but not types.
+<P>
+   Mindy now gives warnings when next-method() is called without #next
+   being declared in the parameter list, because that's required in
+   Mindy.  See mindy.txt for details on this deficiency.
+<P>
+   Mindy now gives warnings when a method's return types do not match
+   the generic's return types because return types were not specified
+   for the method.  This used to be an error.
+<P>
+   The function collect-garbage has been added to the System module of
+   the Dylan library.  This function can also do a purifying garbage
+   collection; see mindy.txt for details.
+<P>
+   Mindy now supports a different integer model.  In brief, the
+   following renaming has been done:
+        &lt;integer&gt;              =&gt; &lt;general-integer&gt;
+        &lt;fixed-integer&gt;        =&gt; &lt;integer&gt;
+        $minimum-fixed-integer =&gt; $minimum-integer
+        $maximum-fixed-integer =&gt; $maximum-integer
+   See mindy.txt for details.
+<P>
+   *format-function* and *force-output-function* have been replaced by
+   condition-format.  See mindy.txt for details.
+<P>
+   The functions load-file and load-library have been added to the
+   Extensions module.  See mindy.txt for details.
+<P>
+   The function abstract?, which tells you if a class is an abstract
+   class, has been added to the Introspections module of the Dylan
+   library.
+<P>
+   The function instantiable?, which tells you if a class is either
+   concrete or has an applicable method on make which is not the
+   default make method, has been added to the Introspections module of
+   the Dylan library.
+<P>
+   Added &lt;byte&gt; to the Extensions module.  See mindy.txt for details.
+<P>
+   Added &lt;buffer-index&gt; and $maximum-buffer-size to System module.
+   See mindy.txt for details.
+<P>
+   Object printing in the Print library is now generally more terse,
+   but still within the spec laid out in print.txt.
+<P>
+   Limited-integer-class is now limited-integer-base-class,
+   limited-integer-min is now limited-integer-minimum, and
+   limited-integer-max is now limited-integer-maximum.  See mindy.txt
+   for details.
+<P>
+   Mindy will now return an exit status of 1 if the debugger "quit"
+   command was used to exit the interpretter.
+<P>
+   The function type-or in the Extensions module of the Dylan library
+   has been removed.  Use type-union instead.
+<P>
+   Since the Dylan language no longer has ratios, all ratio stuff
+   (&lt;ratio&gt;, ratio, numerator, denominator) has been moved to the
+   Extensions library.  See mindy.txt for details.
+<P>
+   The class &lt;dictionary&gt; in the Extensions module of the Dylan
+   library has been removed.  Use &lt;mutable-explicit-key-collection&gt;
+   instead.
+<P>
+   In the Regular-expressions module of the String-Extensions library,
+   the join() function now only works on byte strings.
+</UL>
+
+<P>
+<BR>
+<H3>The following are bug fixes since release 1.4:</H3>
+<UL>
+   Abstract classes may no longer be intantiated with the default make
+   method.
+<P>
+   &lt;object-table&gt;s now work when given &lt;extended-integer&gt;s or &lt;ratio&gt;s
+   for keys.
+<P>
+   Find-method() now accepts any type of &lt;sequence&gt; as an argument,
+   not just &lt;list&gt;.
+<P>
+   Sort() now handles pathological cases better.
+<P>
+   Fixed a bug in ash where it would try to allocate extended integers
+   of a negative length.
+<P>
+   Mindy now drops to the debugger when asked to allocate an
+   excessively large object, rather than dumping core.
+<P>
+   "Subclass" slots are now "each-subclass" slots.
+<P>
+   In the Regular-expressions module of the String-Extensions library,
+   the split() function will now remove empty items correctly in all
+   cases.
+<P>
+   Regular expressions functions will now signal an &lt;illegal-regexp&gt;
+   error when given a regular expression that is parsable but would be
+   uninterpretable.  See String-extensions.txt for details.
+<P>
+   Fixed a bug in the Regular-expressions module of the
+   String-Extensions library where escaped characters would be unescaped
+   once too many times.
+<P>
+   Fill! now returns a value of the correct type.
+<P>
+   Under Win32, the first line of console input would sometimes be
+   dropped.  This has been fixed.
+<P>
+   The Mindy documentation now documents &lt;string-table&gt;.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are enhancements added since release 1.3:</H3>
+<UL>
+   Ported Mindy to Windows/NT, Solaris, and AIX.  See README for
+   details on obtaining the different versions of Mindy.
+<P>
+   Replaced the old Random library with a brand new library of the
+   same name.  See random.txt for details.
+<P>
+   Added the Transcendental module to the Dylan library.  See
+   mindy.txt for details.
+<P>
+   Added the Sequence-diff module to the Collection-Extensions
+   library.  Added a Unix style "diff" program the demo directory.
+   See collection-extensions.txt and demos.html for details.
+<P>
+   Added the "next" debugger command which is like "step" but skips over
+   function calls.
+<P>
+   Extended the "continue" debugger command to be able to continue
+   from more contexts.
+<P>
+   Added an option to specify how often to run the garbage
+   collector.  If the environment variable BYTES_CONSED_BETWEEN_GCS
+   is set, that value will be used; otherwise a default value of 2
+   megs will be used.  See mindy.txt for details.
+<P>
+   Added the ~== operator described in the DRM.  See mindy.txt for
+   details.
+<P>
+   Made ~ a true function, rather than mere syntax.
+</UL>
+<H3>The following are bug fixes since release 1.3:</H3>
+<UL>
+   When initializing a class, an error is now signalled if the
+   argument to an init-function is not actually a function.
+<P>
+   Fixed a bug in the Streams library where read-as would sometimes
+   return #f even though to-eof? was supplied as #t.
+<P>
+   In the Streams library, &lt;random-access-stream&gt; is now exported.  See
+   streams.txt for details.
+<P>
+   In the fd module of the Dylan library, if an exec fails while doing
+   an fd-exec(), the child process will now exit gracefully.  An error
+   is not signalled.
+</UL>
+<H3>The following are enhancements added since release 1.2:</H3>
+<UL>
+   Mindy now supports ratios.  For details, please see mindy.txt.
+<P>
+   Garbage collection reporting is now optional, with the default
+   value being no reporting.  See mindy.txt for details.
+<P>
+   Added while: and until: syntax to for statement.  The old syntax is
+   still supported.  Words like class, keyed-by, and module are now
+   unresevered words.
+<P>
+   Added &lt;string-table&gt; to the Extensions module.  See mindy.txt for
+   details.
+<P>
+   A new test, threaded-io-test, has been added to the tests
+   directory.  This program tries to read from three different streams
+   simultaneously.  However, the program is interactive, and for that
+   reason is not run by the makefile.
+<P>
+   The constants in the File-Descriptors module of the Dylan library
+   have been made POSIX conformant.  The seek constants L_SET, L_INCR,
+   L_XTND have been replaced with the POSIX equivalents SEEK_SET,
+   SEEK_CUR, SEEK_END.  ONDELAY has been changed to ONONBLOCK.  The
+   non-POSIX constants FCREAT, FTRUNC, and FEXCL have been removed,
+   since they already had POSIX equivalents.  ONDELAY, FNDELAY ELOOP,
+   EDQUOT, EOPNOTSUPP, and ETXTBSY have been removed, since they are
+   unused and cause portability problems.  See mindy.txt for more
+   details.
+<P>
+   In the Streams library, modified read-line and write-line to make
+   use of the constant $newlines-are-CRLF, which is exported from the
+   System module of the Dylan library.  Whenever $newlines-are-CRLF is
+   not #f, read-line drops any \r characters that appear before a
+   linefeed character.  Neither the \r nor the linefeed appear in the
+   resulting string that represents the line.  Whenever
+   $newlines-are-CRLF, write-line writes a \r before writing the
+   linefeed.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are bug fixes since release 1.2:</H3>
+<UL>
+   Printing, formatting, and converting $minimum-fixed-integer now
+   work correctly.
+<P>
+   make(&lt;table&gt;, size: 0) now works.
+<P>
+   NaN's now compare correctly.
+<P>
+   remove-key! now works on &lt;self-organizing-list&gt;s.
+<P>
+   Corrected the precedence of ^.  Brought the associativity of ^ into
+   line with other languages; used to be left associative (as
+   specified in the DIRM), now is right associative.
+<P>
+   Apply now makes sure the object being applied is really a function.
+<P>
+   as(&lt;float&gt;, extended-integer) now works correctly when the extended
+   integer is negative.
+<P>
+   logbit? on extended integers now returns #f when given a negative
+   index.
+<P>
+   ceiling and round now work for extended integers.
+<P>
+   every? for vectors now works.
+<P>
+   Random-uniform from the Random library now works in the presence of
+   extended integers.
+<P>
+   Weak pointers now will not crash the garbage collector, even in
+   obscure cases.
+<P>
+   applicable-method?, when called with the same arguments twice in a
+   row, would always return #t.  That has been fixed.
+<P>
+   shrink! now works correctly.
+<P>
+   Fixed a bug in buffer-subsequences from the Streams library.  This
+   function had worked only when the result type requested was a
+   &lt;byte-string&gt;.  If you requested a result type of &lt;buffer&gt; or
+   &lt;byte-string&gt;, you got a run-time type error.
+<P>
+   Fixed a bug in the Streams library that was triggered when reading
+   to the end of a &lt;random-access-stream&gt; in one high-level call with
+   the to-eof: keyword argument.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are enhancements added since release 1.1:</H3>
+<UL>
+   Mindy now runs on even more Unix platforms.  See ``INSTALL'' for a
+   listing of known successful builds.  Thanks are due to Roger
+   Critchlow for doing the bulk of the portability enhancements.
+<P>
+   Mindy installation now only requires an ANSI C compiler, any ``make''
+   utiltiy, and ``/bin/sh''.  Previous versions of Mindy required GNU CC
+   (gcc), GNU flex, GNU bison, and GNU make (gmake).
+<P>
+   Mindy now uses a ``configure'' script to handle configuration.
+   See ``INSTALL'' for more details.
+<P>
+   Mindy now comes with several files that have been compiled for you
+   (they compile into portable C).  There is no need to re-compile these
+   files, but if you should desire to do so you will need GNU flex, GNU
+   bison, and Perl.
+<P>
+   Mindy now contains a new subdirectory ``compat'', which in
+   combination with the configure script is used to smooth out the
+   differences between the different kinds of Unix machines.
+<P>
+   There is now a Mindy test suite in the ``tests'' subdirectory.  The
+   tests cover the Dylan module of the Dylan library and the
+   Regular-Expressions module of the String-Extensions library.
+<P>
+   ``mc'' has been renamed ``mindycomp''.
+<P>
+   main() now has a required parameter argv0 which contains the name
+   of the file that was executed (similar to C's argv[0]).  See
+   mindy.txt for details.
+<P>
+   Added the Print library, which contains extendable code for
+   printing arbitrary objects.  If an object has a Dylan literal
+   syntax, then it is printed with that syntax.  All other objects are
+   printed in an implementation-dependent manner.  See
+   $INSTALL/doc/print.{ps,txt} for more information.
+<P>
+   Added the Format library, which contains extendable code for
+   concisely expressing formatted output.  The format control strings
+   supported by this library are upwardly compatibile with the error
+   function's format strings.  See $INSTALL/doc/format.{ps,txt} for
+   more information.
+<P>
+   Moved all the Extensions module I/O routines to the Cheap-IO module
+   of the Dylan library.  Added fflush to the Cheap-IO module.  See
+   $INSTALL/doc/mindy.{ps,txt} for more information.
+<P>
+   The Streams library now exports stream locking functions.  The
+   generic functions used to extend the streams protocol to new
+   streams have changed slightly.  The Streams interface now returns
+   no values for functions that are called purely for side-effects;
+   these functions used to return a meaningless #f value.  See
+   $INSTALL/doc/streams.{ps,txt} for more information.
+<P>
+   Added the String-Extensions library, which contains code to deal
+   with regular expressions, substring searches, and other string and
+   character related issues.  Moved the string searching functions
+   from Collection-Extensions to the Substring-Search module of
+   String-Extensions.  Renamed the String-Search module of the
+   Collection-Extensions library to Vector-Search.  See
+   collection-extensions.txt and string-extensions.txt for details. 
+<P>
+   &lt;so-list&gt; and the Solist module of Collection-extensions have been
+   renamed &lt;self-organizing-list&gt; and Self-organizing-list,
+   respectively.
+<P>
+   There is a new abstract collection class called &lt;dictionary&gt;.
+   &lt;table&gt; from the Dylan module and &lt;self-organizing-list&gt; from the
+   Self-Organizing-List module of Collection-extensions are now
+   subclasses of &lt;dictionary&gt;.  Remove-key! is now a generic function 
+   on &lt;dictionary&gt;s.  &lt;Dictionary&gt; is exported from the Extensions
+   module; see mindy.txt for details.
+<P>
+   Mindy now gives warnings about undefined variables.
+<P>
+   Mindy now has infinite precision integer arithmetic.  Added &lt;fixed-integer&gt;,
+   &lt;extended-integer&gt;, $minimum-fixed-integer, and $maximum-fixed-integer
+   to the Extensions module.
+<P>
+   Mindy now has Unicode support.  &lt;byte-character&gt; is now exported
+   from the Extensions module, and is a subclass of &lt;character&gt;
+   (&lt;character&gt; is really a unicode character).
+<P>
+   When searching for a library, Foo, Mindy first looks for foo-lib.dbc
+   in $MINDYPATH, and failing to find that file, searches for foo.dbc.
+<P>
+   Added key-exits?(collection, key) to the Extensions module.  See
+   mindy.txt for details.
+<P>
+   Created the Introspective module in the Dylan library.  See
+   mindy.txt for deatils.
+<P>
+   An error is now signalled if the parent of a subclass has not yet
+   been initialized when the subclass is defined.
+</UL>
+<H3>The following are bug fixes since release 1.1:</H3>
+<UL>
+   Can no longer add methods to things that aren't generic functions.
+<P>
+   Logbit now takes its arguments in the correct order.
+<P>
+   Logand, logxor, and logior are now binary operators.
+<P>
+   size: on a &lt;table&gt; now does the right thing.
+<P>
+   Fixed a pair of bugs in the garbage collection.
+</UL>
+<HR>
+<P>
+<BR>
+<H3>The following are enhancements added since release 1.0:</H3>
+<UL>
+   Mindy now compiles under SunOS, Ultrix, and Linux.
+<P>
+   Inherited and keyword class slot options are now supported.
+<P>
+   Added support for \a, \e, and \0 in string and character literals.
+<P>
+   Added some additional error checking.
+<P>
+   Added a "describe" debugger command.  See debug.txt for details.
+<P>
+   The debugger "module" command now annotates the listing of modules with
+   "i"s and "x"s to indicate modules that are imported, exported, or both.
+</UL>
+<H3>The following are bug fixes since release 1.0:</H3>
+<UL>
+   Return type declarations such as "#rest foo :: &lt;integer&gt;" are interpreted
+   correctly now.
+<P>
+   "Large functions" no longer trigger an internal error in the compiler.
+<P>
+   Literal list syntax inside 'if' bodies no longer cause the compiler to
+   die.
+<P>
+   Fixed an off-by-one error that made it impossible to debug source files
+   longer than 1000 lines.
+<P>
+   Fixed 'define class' to generate correct implicit generic function
+   signatures for the slot getters and setters.  Mindy used to define the
+   generic function as returning one value, but now Mindy defines it to
+   return "#rest results :: &lt;object&gt;".  This new behavior corresponds to a
+   proposal for how implicit generic function signatures should be generated
+   in Dylan.  The basic idea is that implicit generic function signatures
+   should be as general as possible to allow methods added later by users
+   the greatest chance of matching the generic function's signature.
+<P>
+   Slot-initialized? works now.
+<P>
+   Fixed a typo bug that caused a setter to be called instead of a getter
+   for some slots of classes that had multiple direct superclasses.
+<P>
+   Mindy no longer gets a segmentation violation when it is invoked with a
+   -f switch that is not followed by a filename.
+<P>
+   Error's format control strings were previously case-sensitive with
+   respect to format directives.  Now the directives are case-insensitive.
+<P>
+   The Dylan module of the Dylan library now exports the identifiers
+   row-major-index, rank, and dimension.
+<P>
+   The arguments for adjust-stream-position on &lt;fd-file-stream&gt;s were
+   backwards, and now they agree with the stream specification.
+<P>
+   The arguments for write and write-line were backwards in the
+   documentation, and now the documentation agrees with the code.
+</UL>
+</BODY>
+</HTML>

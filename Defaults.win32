@@ -1,0 +1,35 @@
+# This version of Defaults is hand generated for win32.  If you don't
+# intend to build dylan in c:\dylan, you need to change $prefix below.
+# Though in most cases, / and \ are interchangable, there are exceptions, so
+# it's probably best to stick with the slash orientation already in use.
+
+#
+# This file is included by the gen-makefile Perl script which creates the
+# makefiles used to compile with d2c.
+
+$target_name = 'x86-win32-vc';
+$host_name = 'x86-win32-vc';
+
+$prefix = "c:/dylan"; ####
+$srcroot = "$prefix/src";
+$buildroot = "$prefix/build";
+$destdir = $prefix;
+$MC = "$srcroot/mindy/Compiler/release/mindycomp.exe";
+$MINDY = "$srcroot/mindy/Interpretter/release/interpretter.exe";
+
+$D2C = "d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
+if ($host_name ne $target_name) {
+  $D2C = "$D2C -no-binaries";
+};
+
+$stage2 = 1;
+$DYLANPATH = 'c:/ram/dylan/lib/dylan';
+$DYLANDIR = $destdir;
+
+if (!$stage2) {
+  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen.dbc";
+  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
+};
+
+$CPPFLAGS = '-DWIN32 -Ic:\ram\dylan\include';  #####
+$CFLAGS = '-O';
