@@ -3,3 +3,7 @@ ansi-c-test
 *.c
 *.mak
 c-parser-engine.dylan
+pidgin
+gmon.out
+*.cffi
+*.log
