@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.59 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.60 1995/05/12 12:37:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -197,6 +197,8 @@ define module definitions
   create
     <class-definition>,
     <function-definition>, function-defn-signature, function-defn-hairy?,
+    function-defn-transformers, function-defn-transformers-setter,
+    function-defn-movable?, function-defn-flushable?,
     <abstract-method-definition>, method-defn-leaf,
     <bindings-definition>, defn-init-value,
     <constant-definition>,
@@ -222,8 +224,11 @@ define module variables
     find-module, module-name, module-syntax-table,
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
+    variable-transformers, variable-transformers-setter,
     note-variable-definition,
     <use>, <renaming>,
+
+    define-transformer,
 
     done-initializing-module-system,
 
@@ -780,7 +785,8 @@ define module define-functions
   use names;
   use definitions;
   use variables;
-  use parse-tree;
+  use parse-tree,
+    exclude: {<mv-call>};
   use top-level-forms;
   use compile-time-values;
   use builder-interface;
@@ -792,7 +798,8 @@ define module define-functions
   use lexenv;
   use source;
   use front,
-    import: {<function-literal>, <method-literal>, <truly-the>, <set>};
+    import: {<function-literal>, <method-literal>, <truly-the>,
+	       <set>, <mv-call>};
 
   export
     compute-signature,
