@@ -561,7 +561,7 @@ define method write-declaration
     // This may still be an "incomplete type".  If so, we define the class, but
     // don't write any slot accessors.
     if (decl.members)
-      for (c-slot in decl.members)
+      for (c-slot in decl.coalesced-members)
 	if (~c-slot.excluded?)
 	  write-c-accessor-method(decl, c-slot, 0, written-names,
 				  stream);
