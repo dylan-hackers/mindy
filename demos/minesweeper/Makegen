@@ -1,0 +1,5 @@
+&makegen_include("../common-Makegen");
+
+do emit_library_rule(
+    'minesweeper', '$(BUILDROOT)/force.timestamp', '', 'no-d2c', 'compile-mindy',
+);
