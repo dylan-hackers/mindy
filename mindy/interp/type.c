@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.11 1994/04/24 21:41:28 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.12 1994/04/26 18:06:25 wlott Exp $
 *
 * This file does whatever.
 *
@@ -706,7 +706,8 @@ static obj_t merge_with_union(obj_t type, obj_t members)
 	}
     } while (members != obj_Nil);
 
-    *prev = obj_Nil;
+    *prev = list1(type);
+
     return make_union(result);
 }
 
