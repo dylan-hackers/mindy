@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.10 1995/10/05 01:13:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.11 1995/10/13 15:11:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -66,7 +66,7 @@ define class <module> (<object>)
   slot module-name :: <symbol>, required-init-keyword: name:;
   //
   // The library this module lives in.
-  slot home :: <library>, required-init-keyword: home:;
+  slot module-home :: <library>, required-init-keyword: home:;
   //
   // #t once the defn for this module has been processed, #f otherwise.
   slot defined? :: <boolean>, init-value: #f;
@@ -106,7 +106,7 @@ end;
 define method print-message (mod :: <module>, stream :: <stream>) => ();
   format(stream, "module %s, library %s",
 	 mod.module-name,
-	 mod.home.library-name);
+	 mod.module-home.library-name);
 end;
 
 define method initialize (mod :: <module>, #next next-method, #key) => ();
@@ -141,7 +141,7 @@ define class <variable> (<object>)
   // the same as where it is defined, because the create clause in
   // define module forms creates a variable, but requires it to be
   // defined elsewhere.
-  slot home :: <module>, required-init-keyword: home:;
+  slot variable-home :: <module>, required-init-keyword: home:;
   //
   // All the modules where this variable is accessable.
   slot accessing-modules :: <stretchy-vector>,
@@ -546,10 +546,10 @@ define method complete-module (mod :: <module>) => ();
   // Pull in everything from the uses.
   //
   for (u in mod.used-modules)
-    let used-mod = find-module(mod.home, u.module-name);
+    let used-mod = find-module(mod.module-home, u.module-name);
     unless (used-mod)
       error("No module %s in library %s",
-	    u.module-name, mod.home.library-name);
+	    u.module-name, mod.module-home.library-name);
     end;
 
     local
@@ -745,13 +745,13 @@ define method note-variable-definition (defn :: <definition>)
   // clause or not.
   //
   if (var.created?)
-    if (var.home == mod)
+    if (var.variable-home == mod)
       error("%s in create clause for module %s, so must be "
 	      "defined elsewhere.",
 	    name.name-symbol, mod.module-name);
     end;
   else
-    unless (var.home == mod)
+    unless (var.variable-home == mod)
       error("%s is imported into module %s, so can't be defined locally.",
 	    name.name-symbol, mod.module-name);
     end;
@@ -805,7 +805,7 @@ define method note-variable-definition (defn :: <implicit-definition>,
 					#next next-method)
   let var = find-variable(defn.defn-name, create: #t);
   unless (var.variable-definition)
-    if (var.home == defn.defn-name.name-module | var.created?)
+    if (var.variable-home == defn.defn-name.name-module | var.created?)
       next-method();
     end;
   end;
