@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.50 1995/05/26 15:35:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.51 1995/05/29 00:32:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -429,6 +429,152 @@ define method make-info-for
 end;
 
 
+// Prologue and epilogue stuff.
+
+define method emit-prologue (output-info :: <output-info>) => ();
+  let bstream = output-info.output-info-body-stream;
+  format(bstream, "#include <stdlib.h>\n\n");
+
+  let header = output-info.output-info-header-stream;
+  format(header, "typedef struct heapptr *heapptr_t;\n");
+  format(header, "typedef struct {\n");
+  format(header, "    heapptr_t heapptr;\n");
+  format(header, "    union {\n");
+  format(header, "        long l;\n");
+  format(header, "        float f;\n");
+  if (instance?(*double-rep*, <data-word-representation>))
+    format(header, "        double d;\n");
+  end;
+  if (instance?(*long-double-rep*, <data-word-representation>))
+    format(header, "        long double x;\n");
+  end;
+  format(header, "        void *ptr;\n");
+  format(header, "    } dataword;\n");
+  format(header, "} descriptor_t;\n\n");
+  format(header, "typedef int boolean;\n");
+  format(header, "#define TRUE 1;\n");
+  format(header, "#define FALSE 0;\n\n");
+  format(header, "#define SLOTADDR(ptr, type, offset) "
+	   "((type *)((char *)ptr + offset))\n");
+  format(header, "#define SLOT(ptr, type, offset) "
+	   "(*SLOTADDR(ptr, type, offset))\n\n");
+  format(header, "typedef descriptor_t *(*entry_t)();\n");
+  format(header, "#define GENERAL_ENTRY(func) \\\n");
+  format(header, "    ((entry_t)SLOT(func, void *, /* ### */ 0))\n");
+  format(header, "#define GENERIC_ENTRY(func) \\\n");
+  format(header, "    ((entry_t)SLOT(func, void *, /* ### */ 0))\n\n");
+  format(header, "extern heapptr_t allocate(int bytes);\n");
+  format(header,
+	 "extern descriptor_t *values_sequence"
+	   "(descriptor_t *sp, heapptr_t vector);\n");
+  format(header,
+	 "extern heapptr_t make_rest_arg(descriptor_t *start, long count);\n");
+  unless (instance?(*double-rep*, <data-word-representation>))
+    format(header, "extern heapptr_t make_double_float(double value);\n");
+    format(header, "extern double double_float_value(heapptr_t df);\n");
+  end;
+  unless (instance?(*long-double-rep*, <data-word-representation>))
+    format(header,
+	   "extern heapptr_t make_extended_float(long double value);\n");
+    format(header, "extern long double extended_float_value(heapptr_t xf);\n");
+  end;
+  format(header, "\nextern descriptor_t roots[];\n\n");
+  format(header, "#define obj_True %s.heapptr\n",
+	 new-root(as(<ct-value>, #t), output-info));
+  format(header, "#define obj_False %s.heapptr\n\n",
+	 new-root(as(<ct-value>, #f), output-info));
+end;
+
+define method emit-epilogue
+    (init-function :: <function-region>, output-info :: <output-info>) => ();
+  let bstream = output-info.output-info-body-stream;
+  let gstream = output-info.output-info-guts-stream;
+
+  format(bstream, "heapptr_t allocate(int bytes)\n{\n");
+  format(gstream, "return malloc(bytes);\n");
+  write(gstream.string-output-stream-string, bstream);
+  write("}\n\n", bstream);
+  
+  format(bstream,
+	 "descriptor_t *values_sequence"
+	   "(descriptor_t *sp, heapptr_t vector)\n{\n");
+  format(gstream, "long elements = SLOT(vector, long, /* ### */ 0);\n");
+  format(gstream, "memcpy(sp, SLOTADDR(vector, descriptor_t, /* ### */ 0),\n");
+  format(gstream, "       elements * sizeof(descriptor_t));\n");
+  format(gstream, "return sp + elements;\n");
+  write(gstream.string-output-stream-string, bstream);
+  write("}\n\n", bstream);
+
+  format(bstream,
+	 "heapptr_t make_rest_arg(descriptor_t *start, long count)\n{\n");
+  format(gstream, "return NULL; /* ### */\n");
+  write(gstream.string-output-stream-string, bstream);
+  write("}\n\n", bstream);
+
+  unless (instance?(*double-rep*, <data-word-representation>))
+    let cclass = specifier-type(#"<double-float>");
+    format(bstream, "heapptr_t make_double_float(double value)\n{\n");
+    format(gstream, "heapptr_t res = allocate(%d);\n",
+	   cclass.instance-slots-layout.layout-length);
+    let (expr, rep) = c-expr-and-rep(cclass, $heap-rep, output-info);
+    format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
+	   dylan-slot-offset(cclass, #"%object-class"),
+	   conversion-expr($heap-rep, expr, rep, output-info));
+    let value-offset = dylan-slot-offset(cclass, #"value");
+    format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
+    format(gstream, "return res;\n");
+    write(gstream.string-output-stream-string, bstream);
+    write("}\n\n", bstream);
+
+    format(bstream, "double double_float_value(heapptr_t df)\n{\n");
+    format(gstream, "return SLOT(df, double, %d);\n", value-offset);
+    write(gstream.string-output-stream-string, bstream);
+    write("}\n\n", bstream);
+  end;
+
+  unless (instance?(*long-double-rep*, <data-word-representation>))
+    let cclass = specifier-type(#"<extended-float>");
+    format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
+    format(gstream, "heapptr_t res = allocate(%d);\n",
+	   cclass.instance-slots-layout.layout-length);
+    let (expr, rep) = c-expr-and-rep(cclass, $heap-rep, output-info);
+    format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
+	   dylan-slot-offset(cclass, #"%object-class"),
+	   conversion-expr($heap-rep, expr, rep, output-info));
+    let value-offset = dylan-slot-offset(cclass, #"value");
+    format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
+    format(gstream, "return res;\n");
+    write(gstream.string-output-stream-string, bstream);
+    write("}\n\n", bstream);
+
+    format(bstream, "long double extended_float_value(heapptr_t xf)\n{\n");
+    format(gstream, "return SLOT(xf, long double, %d);\n", value-offset);
+    write(gstream.string-output-stream-string, bstream);
+    write("}\n\n", bstream);
+  end;
+
+  format(bstream, "void main(int argc, char *argv[])\n{\n");
+  format(gstream, "descriptor_t *sp = malloc(64*1024);\n\n");
+  let func-info = get-info-for(init-function, output-info);
+  format(gstream, "%s(sp);\n", func-info.function-info-name);
+  write(gstream.string-output-stream-string, bstream);
+  write("}\n", bstream);
+end;
+
+define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
+  block (return)
+    for (slot in cclass.all-slot-infos)
+      if (slot.slot-getter & slot.slot-getter.variable-name == slot-name)
+	return(find-slot-offset(slot, cclass)
+		 | error("%s isn't at a constant offset in %=",
+			 slot-name, cclass));
+      end;
+    end;
+    error("%= doesn't have a slot named %s", cclass, slot-name);
+  end;
+end;
+
+
 // Top level form processors.
 
 define generic emit-tlf-gunk (tlf :: <top-level-form>,
@@ -523,12 +669,12 @@ define method emit-function
   let function-info = get-info-for(function, output-info);
   let prototype = function-info.function-info-prototype;
   format(output-info.output-info-header-stream,
-	 "/* %s */\nstatic %s;\n\n",
+	 "/* %s */\n%s;\n\n",
 	 function.name, prototype);
 
   let stream = output-info.output-info-body-stream;
   format(stream, "/* %s */\n", function.name);
-  format(stream, "static %s\n{\n", prototype);
+  format(stream, "%s\n{\n", prototype);
 
   let max-depth = analize-stack-usage(function);
   for (i from 0 below max-depth)
@@ -624,7 +770,7 @@ define method emit-region (region :: <block-region>,
   spew-pending-defines(output-info);
   let half-step = ash($indentation-step, -1);
   indent(stream, - half-step);
-  format(stream, "block%d:\n", get-info-for(region, output-info));
+  format(stream, "block%d:;\n", get-info-for(region, output-info));
   indent(stream, half-step);
 end;
 
@@ -1321,6 +1467,7 @@ define method deliver-single-result
      source-rep :: <representation>, now-dammit? :: <boolean>,
      output-info :: <output-info>)
     => ();
+  spew-pending-defines(output-info);
   deliver-single-result(var.definition-of, source, source-rep, now-dammit?,
 			output-info);
 end;
@@ -1360,8 +1507,9 @@ define-primitive-emitter
      let (args, nfixed, nargs)
        = extract-operands(operation, output-info,
 			  *ptr-rep*, *long-rep*, *long-rep*);
-     let expr = format-to-string("make_rest_arg(%s + %s, %s - %s)",
-				 args, nfixed, nargs, nfixed);
+     let expr
+       = format-to-string("make_rest_arg((descriptor_t *)%s + %s, %s - %s)",
+			  args, nfixed, nargs, nfixed);
      deliver-result(defines, expr, $heap-rep, #t, output-info);
    end);
 
@@ -1441,7 +1589,7 @@ define-primitive-emitter
      let (cur-sp, new-sp)
        = cluster-names(output-info.output-info-cur-stack-depth);
      format(output-info.output-info-guts-stream,
-	    "%s = values_sequence(%s);\n", new-sp, vec);
+	    "%s = values_sequence(%s, %s);\n", new-sp, cur-sp, vec);
      deliver-cluster(defines, cur-sp, new-sp, wild-ctype(), output-info);
    end);
 
@@ -2128,12 +2276,6 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 pick-representation(dylan-value(#"<character>"), #"speed"));
 end;
 
-define method c-expr-and-rep (lit :: <literal-empty-list>,
-			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
-  values("obj_Nil", $heap-rep);
-end;
 
 
 
