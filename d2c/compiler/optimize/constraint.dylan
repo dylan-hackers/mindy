@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.3 2001/02/25 19:44:25 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.4 2001/08/03 18:34:25 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -199,7 +199,8 @@ define method propagate-constraints-region
     let def = assign.defines;
     if (def & def.needs-type-check? & instance?(def, <ssa-variable>))
       let src = assign.depends-on.source-exp;
-      if (instance?(src, <ssa-variable>))
+      if (instance?(src, <ssa-variable>)
+	    & csubtype?(def.derived-type, src.derived-type))
 	add-renaming(renamings, src, def);
       end if;
     end if;
