@@ -1,9 +1,14 @@
 module: errors
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.2 1996/02/09 18:05:24 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.3 1996/02/09 20:02:37 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 // pretty format
+//
+// User for error message printing.  Turns each space in the control string
+// into a conditional newline, and turns literal newlines into a mandatory
+// newline and 2 space indent.
+//
 
 define method pretty-format (stream :: <stream>,
 			     string :: <byte-string>,
@@ -27,6 +32,11 @@ define method pretty-format (stream :: <stream>,
 		   args[arg-index]);
 	    scan-for-space(stream, posn + 2, posn + 2, arg-index + 1);
 	  end;
+	elseif (char == '\n')
+	  maybe-spew(stream, start, posn);
+	  pprint-newline(#"mandatory", stream);
+	  pprint-indent(#"block", 2, stream);
+	  scan-for-end-of-spaces(stream, posn + 1, posn + 1, arg-index);
 	else
 	  scan-for-space(stream, start, posn + 1, arg-index);
 	end;
@@ -49,6 +59,8 @@ define method pretty-format (stream :: <stream>,
   pprint-logical-block(stream,
 		       body: method (stream)
 			       scan-for-space(stream, 0, 0, 0);
+			       pprint-indent(#"block", 0, stream);
+			       pprint-newline(#"mandatory", stream);
 			     end);
 end;
 
@@ -63,6 +75,28 @@ end;
 
 
 // Error message output:
+
+
+// ### will flame out if the file can't be found, which is likely if the
+// location is in another library.
+// 
+define method print-message
+    (wot :: <source-location-mixin>, stream :: <stream>) => ();
+  let loc = wot.source-location;
+  if (instance?(loc, <file-source-location>))
+    print(extract-string(loc), stream);
+  else
+    print(wot, stream);
+  end;
+end;
+
+
+// Covers most cases, and will always work.
+//
+define method print-message
+    (wot :: <symbol-token>, stream :: <stream>) => ();
+  print(as(<string>, wot.token-symbol), stream);
+end;
 
 
 define variable *warnings* = 0;
