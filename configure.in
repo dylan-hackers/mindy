@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.84 2002/01/01 00:53:19 dauclair Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.85 2002/01/03 16:25:23 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -532,7 +532,10 @@ if test $CC = gcc; then
     else
  	CCOPTS="-O4"
     fi
-    EXTRA_INCLUDE_DIR=`gcc --print-file-name=include`
+    EXTRA_INCLUDE_DIR="`gcc --print-file-name=include`"
+    if test "X$EXTRA_INCLUDE_DIR" = Xinclude; then
+	EXTRA_INCLUDE_DIR=
+    fi
 else CCOPTS="-g -O"
 fi
 AC_SUBST(CCOPTS)
