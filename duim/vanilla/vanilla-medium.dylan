@@ -63,7 +63,7 @@ end method invalidate-cached-drawing-state;
 
 
 define method medium-foreground-setter
-    (fg :: <ink>, medium :: <vanilla-medium>) => (foreground :: <ink>)
+    (fg :: <ink>, medium :: <vanilla-medium>, #next next-method) => (foreground :: <ink>)
   next-method();
   //--- Change any GC associated with foreground, and repaint as necesary
   ignoring("medium-foreground-setter");
@@ -71,13 +71,12 @@ define method medium-foreground-setter
 end method medium-foreground-setter;
 
 define method medium-background-setter
-    (bg :: <ink>, medium :: <vanilla-medium>) => (background :: <ink>)
+    (bg :: <ink>, medium :: <vanilla-medium>, #next next-method) => (background :: <ink>)
   next-method();
   //--- Change any GC associated with background, and repaint as necesary
   ignoring("medium-background-setter");
   bg
 end method medium-background-setter;
-
 
 /// Pen and brush support
 
@@ -227,30 +226,30 @@ end method convert-ink-to-drawable-components;
 
 define method convert-ink-to-drawable-components
     (medium :: <vanilla-medium>, drawable, brush :: <contrasting-color>)
-  convert-ink-to-drawable-components(medium, contrasting-color->color(brush))
+  convert-ink-to-drawable-components(medium, drawable, contrasting-color->color(brush)) //* , brush
 end method convert-ink-to-drawable-components;
 
 //--- You might want to handle general <image> objects, too
 define method convert-ink-to-drawable-components
     (medium :: <vanilla-medium>, drawable, brush :: <stencil>)
-  let cache = drawable.mirror.%ink-cache;    // mirror.%ink-cache;
+  let cache = medium-drawable(medium).%ink-cache;    // mirror.%ink-cache;
   let pattern
     = gethash(cache, brush)
       | begin
 	  let (array, colors) = decode-pattern(brush);
-	  let width  = image-width(pattern);
-	  let height = image-height(pattern);
+	  let width  = image-width(drawable);   //* pattern
+	  let height = image-height(drawable);  //* pattern
 	  let ncolors :: <integer> = size(colors);
 	  let pixels :: <simple-object-vector> = make(<simple-vector>, size: ncolors);
 	  let image = make-native-pixarray(drawable, width, height);
 	  without-bounds-checks
 	    for (n :: <integer> from 0 below ncolors)
 	      let pixel = convert-ink-to-drawable-components(medium, drawable, colors[n]);
-	      design-pixels[n] := pixel
+	      pixels[n] := pixel;    //* design-pixels[n]
 	    end;
 	    for (y :: <integer> from 0 below height)
 	      for (x :: <integer> from 0 below width)
-		image[y,x] := pixels[array[y,x]]
+		  image[y,x] := pixels[array[y,x]]
 	      end
 	    end
 	  end;
@@ -258,13 +257,13 @@ define method convert-ink-to-drawable-components
 	  gethash(cache, brush) := value;
 	  value
 	end;
-  values(convert-color(rep, #"white"), #"solid", $boole-1, pattern)
+  values(convert-color(medium, #"white"), #"solid", $boole-1, pattern) //* convert-color( rep
 end method convert-ink-to-drawable-components;
 
 define method convert-ink-to-drawable-components
     (medium :: <vanilla-medium>, drawable, brush :: <pixmap>)
   //--- You might be able to draw directly with a pixmap...
-  values(convert-color(rep, #"white"), #"solid", $boole-1, brush)
+  values(convert-color(medium, #"white"), #"solid", $boole-1, brush) //* convert-color( rep
 end method convert-ink-to-drawable-components;
 
 define method convert-ink-to-drawable-components
@@ -338,7 +337,7 @@ define method draw-rectangle
      #key filled? = #t) => (record)
   let transform = sheet-device-transform(medium-sheet(medium));
   if (~rectilinear-transform?(transform))
-    with-stack-vector (coords = x1, y1, x2, y1, x2, y2, x1, y2)
+    with-stack-vector (coords = left, top, right, top, right, bottom, left, bottom) //* x1, y1, x2, y1, x2, y2, x1, y2
       draw-polygon(medium, coords, filled?: filled?, closed?: #t)
     end
   else
@@ -461,7 +460,7 @@ define method set-pixel
   let transform = sheet-device-transform(medium-sheet(medium));
   let drawable  = medium-drawable(medium);
   let (r, g, b) = color-rgb(color);
-  let pixel     = convert-color-to-native(mirror, r, g, b);
+  let pixel     = convert-color-to-native(medium-drawable(medium), r, g, b); //* to-native(mirror
   with-device-coordinates (transform, x, y)
     //--- Draw the pixel without perturbing the drawing state
   end;
@@ -474,7 +473,7 @@ define method set-pixels
   let transform = sheet-device-transform(medium-sheet(medium));
   let drawable  = medium-drawable(medium);
   let (r, g, b) = color-rgb(color);
-  let pixel     = convert-color-to-native(mirror, r, g, b);
+  let pixel     = convert-color-to-native(medium-drawable(medium), r, g, b); //* -native(mirror
   do-coordinates
     (method (x, y)
        with-device-coordinates (transform, x, y)
@@ -579,7 +578,7 @@ define method draw-pixmap
     (medium :: <vanilla-medium>, pixmap :: <pixmap>, x, y,
      #key function = $boole-1) => (record)
   // Coordinates will get transformed in 'copy-area'
-  copy-area(pixmap, 0, 0, image-width(pixmap), image-height(pixmap),
+  copy-from-pixmap(pixmap, 0, 0, image-width(pixmap), image-height(pixmap), //* copy-area
 	    medium, x, y, function: function);
   #f
 end method draw-pixmap;
@@ -722,3 +721,14 @@ define method fixed-width-font?
   let font = text-style-mapping(_port, text-style);
   //--- Do this
 end method fixed-width-font?;
+
+
+//*******************************************************
+
+
+define method establish-clipping-region( medium :: <vanilla-medium> )
+=> ()
+
+    values;
+
+end method establish-clipping-region;
