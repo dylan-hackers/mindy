@@ -301,6 +301,20 @@ define function expand-cpp-tokens
   end for;
 end function expand-cpp-tokens;
 
+// Check to see if a macro has parameters. Used when creating <c-define>
+// objects.
+//
+define function parameterized-macro?
+    (name :: <byte-string>, tokenizer :: <tokenizer>)
+ => (parameterized? :: <boolean>)
+  let entry = element(tokenizer.cpp-table, name, default: #f);
+  case
+    ~entry => #f;
+    entry.empty? => #f;
+    instance?(entry.first, <list>) => #t;
+    otherwise => #f;
+  end case;
+end function parameterized-macro?;
 
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
@@ -416,6 +430,7 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
 	  end method grab-params;
     let params = grab-params(state, #());
     state.cpp-table[name.string-value] := pair(params, grab-tokens(#()));
+    if (state.cpp-decls) push-last(state.cpp-decls, name.string-value) end if;
   else
     state.cpp-table[name.string-value] := grab-tokens(#());
     if (state.cpp-decls) push-last(state.cpp-decls, name.string-value) end if;

@@ -52,7 +52,7 @@ define module c-lexer
     <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
     value, unget-token, add-typedef, get-token,
     check-cpp-expansion, <c-include-path>, <gcc-include-path>,
-    find-in-include-path;
+    find-in-include-path, parameterized-macro?;
 end module c-lexer;
 
 define module c-parser-engine

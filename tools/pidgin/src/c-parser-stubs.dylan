@@ -129,23 +129,27 @@ end;
 define function add-cpp-declaration
     (state :: <parse-state>, macro-name :: <byte-string>)
  => ()
-  let macro-value = 
-    block ()
-      parse-macro(macro-name, state);
-    exception (<error>)
-      #f;
-    end block;
   let decl = 
-    case
-      instance?(macro-value, <integer>) =>
-	make(<c-integer-define>, name: macro-name, value: macro-value);
-      instance?(macro-value, <string>) =>
-	make(<c-string-define>, name: macro-name, value: macro-value);	
-      macro-value == #"empty-macro" =>
-	make(<c-empty-define>, name: macro-name);
-      otherwise =>
-	make(<c-unknown-define>, name: macro-name);
-    end case;
+    if (parameterized-macro?(macro-name, state.tokenizer))
+      make(<c-unknown-define>, name: macro-name);
+    else
+      let macro-value = 
+	block ()
+	  parse-macro(macro-name, state);
+	exception (<error>)
+	  #f;
+	end block;
+      case
+	instance?(macro-value, <integer>) =>
+	  make(<c-integer-define>, name: macro-name, value: macro-value);
+	instance?(macro-value, <string>) =>
+	  make(<c-string-define>, name: macro-name, value: macro-value);
+	macro-value == #"empty-macro" =>
+	  make(<c-empty-define>, name: macro-name);
+	otherwise =>
+	  make(<c-unknown-define>, name: macro-name);
+      end case;
+    end if;
   state.objects[macro-name] := add-declaration(state, decl);
 end function add-cpp-declaration;
 
