@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.10 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.11 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -244,6 +244,20 @@ define inline method forward-iteration-protocol (array :: <byte-string>)
 	     => state-copy :: <integer>;
 	   state;
 	 end);
+end;
+
+define method \= (str1 :: <byte-string>, str2 :: <byte-string>)
+ => (res :: <boolean>);
+  block (return)
+    if (str1.size ~== str2.size) return(#f) end if;
+    for (char1 in str1, char2 in str2)
+      if (char1 ~== char2)
+	return(#f);
+      end if;
+    finally
+      #t;
+    end for;
+  end;
 end;
 
 define method copy-sequence
