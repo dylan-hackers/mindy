@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.8 2003/04/10 20:26:45 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.9 2003/04/29 00:29:27 prom Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -138,10 +138,15 @@ define inline method object-address (object :: <object>)
   %%primitive(object-address, object);
 end method object-address;
 
-define inline method object-at (pointer :: <raw-pointer>)
+define inline method heap-object-at (pointer :: <raw-pointer>)
  => (object :: <object>);
-  %%primitive(object-at, pointer);
-end method object-at;
+  %%primitive(heap-object-at, pointer);
+end method heap-object-at;
+
+define inline method general-object-at (pointer :: <raw-pointer>)
+ => (object :: <object>);
+  %%primitive(general-object-at, pointer);
+end method general-object-at;
 
 define inline method ignore (#rest noise) => ();
 end method ignore;

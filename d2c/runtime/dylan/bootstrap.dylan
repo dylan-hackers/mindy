@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.31 2003/04/10 20:26:45 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.32 2003/04/29 00:29:26 prom Exp $
 copyright: see below
 module: bootstrap
 
@@ -220,7 +220,7 @@ define module dylan-viscera
     c-expr, c-literal, c-struct-field, c-struct-field-setter,
     callback-method, callback-entry,
     <raw-pointer>, pointer-deref, pointer-deref-setter,
-    object-address, object-at,
+    object-address, heap-object-at, general-object-at,
     <buffer>, <buffer-index>, $maximum-buffer-size,
     buffer-next, buffer-next-setter, buffer-end, buffer-end-setter,
     copy-bytes, buffer-address,
