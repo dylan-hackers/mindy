@@ -3,7 +3,7 @@ author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.4 1995/12/07 03:19:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.5 1995/12/09 01:22:51 ram Exp $
 
 
 %%primitive c-include ("string.h");
@@ -53,54 +53,55 @@ define constant <byte-like> = type-union(<byte-string>, <byte-vector>);
 // Copy bytes from src to dest (which may overlap.)  
 define /* exported */ generic copy-bytes 
   (dest :: <byte-like>, dest-start :: <fixed-integer>, 
-   src :: <byte-like>, src-start :: <fixed-integer>, src-end :: <fixed-integer>)
+   src :: <byte-like>, src-start :: <fixed-integer>, count :: <fixed-integer>)
  => ();
 
 // These methods are all the same modulo specializers, but are replicated so
-// that the vector-elements works.
+// that the vector-elements works.  Also, the mixed type operations can use
+// memcpy, since the source and destination can't overlap.
 
 define method copy-bytes 
     (dest :: <byte-vector>, dstart :: <fixed-integer>,
-     src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+     src :: <byte-vector>, sstart :: <fixed-integer>, count :: <fixed-integer>)
  => ();
   %%primitive call-out
     ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
-     int: send - sstart);
+     int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-string>, dstart :: <fixed-integer>,
-     src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+     src :: <byte-vector>, sstart :: <fixed-integer>, count :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("memmove", void:,
+    ("memcpy", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
-     int: send - sstart);
+     int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-vector>, dstart :: <fixed-integer>,
-     src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+     src :: <byte-string>, sstart :: <fixed-integer>, count :: <fixed-integer>)
  => ();
   %%primitive call-out
-    ("memmove", void:,
+    ("memcpy", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
-     int: send - sstart);
+     int: count);
 end method;
 
 define method copy-bytes 
     (dest :: <byte-string>, dstart :: <fixed-integer>,
-     src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+     src :: <byte-string>, sstart :: <fixed-integer>, count :: <fixed-integer>)
  => ();
   %%primitive call-out
     ("memmove", void:,
      ptr: %%primitive vector-elements(dest) + dstart,
      ptr: %%primitive vector-elements(src) + sstart,
-     int: send - sstart);
+     int: count);
 end method;
 
 define /* exported */ method buffer-address (x :: <buffer>)
