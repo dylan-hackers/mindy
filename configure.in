@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.122 2003/04/04 19:00:46 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.123 2003/04/05 09:55:08 bruce Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -482,15 +482,27 @@ fi
 AC_SUBST(with_site_dylan_prefix)
 
 #--------------------------------------------------------------------
+#	Check for HP shared library emulation on ELF systems
+# testing for /usr/include/dlfcn.h might be a good automatic test?
+#--------------------------------------------------------------------
+
+AC_CHECK_LIB(dld, shl_load, [AC_DEFINE(HAVE_LIBDLD)
+			     LIBS="$LIBS -ldld"])
+AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
+			 AC_DEFINE(HAVE_LIBDLD)
+                         AC_LIBOBJ([shl])
+			 LIBS="-ldl" GC_LIBS="-ldl"])
+
+#--------------------------------------------------------------------
 #	Look for gc, set GC_CFLAGS and GC_LIBS
 #--------------------------------------------------------------------
 AC_ARG_WITH(gc-prefix, [  --with-gc-prefix=PFX    Prefix where Boehm gc is installed],
             gc_prefix="$withval", gc_prefix="")
 if test "x$gc_prefix" != x; then
   GC_CFLAGS="-I$gc_prefix/include"
-  GC_LIBS="-L$gc_prefix/lib -lgc"
+  GC_LIBS="-L$gc_prefix/lib -lgc $GC_LIBS"
 else
-  GC_LIBS="-lgc"
+  GC_LIBS="-lgc $GC_LIBS"
 fi
 save_CPPFLAGS="$CPPFLAGS"
 save_LIBS="$LIBS"
@@ -909,18 +921,6 @@ AC_REPLACE_FUNCS(rint)
 AC_CHECK_LIB(readline, readline, [AC_DEFINE(HAVE_LIBREADLINE)
 				  LIBS="$LIBS -lreadline"])
 AC_CHECK_HEADERS(readline.h readline/readline.h)
-
-#--------------------------------------------------------------------
-#	Check for HP shared library emulation on ELF systems
-# testing for /usr/include/dlfcn.h might be a good automatic test?
-#--------------------------------------------------------------------
-
-AC_CHECK_LIB(dld, shl_load, [AC_DEFINE(HAVE_LIBDLD)
-			     LIBS="$LIBS -ldld"])
-AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
-			 AC_DEFINE(HAVE_LIBDLD)
-                         AC_LIBOBJ([shl])
-			 LIBS="$LIBS -ldl" GC_LIBS="$GC_LIBS -ldl"])
 
 #--------------------------------------------------------------------
 #	Check to see whether we know how to read the number of bytes
