@@ -17,7 +17,7 @@ define module test
   use eager-stream;
   use format;
   use tk;
-  use tk-extensions;
+  use tk-extension;
 end module test;
 
 // Test routine
