@@ -315,9 +315,12 @@ end function process-type-list;
 // #(#"vector", length . name)
 // #(#"bitfield", bits . name)
 //
+define generic process-declarator
+    (type :: <c-type>, declarator :: <object>, state :: <parse-state>);
+
 define method process-declarator
     (tp :: <c-type>, declarator :: <pair>, state :: <parse-state>)
- => (new-type :: <c-type>, name :: <object>);
+ => (new-type :: <c-type>, name :: <object>)
   case 
 
     // Process pointer types.
@@ -426,47 +429,49 @@ end method process-declarator;
 // Walks through the "parse tree" for a c declaration and adds the
 // declared names and their types into the state's typedef or object table. 
 //
-define method declare-objects (#rest foo)/* XXX - needs updating
-    (state :: <parse-state>, new-type :: <type-declaration>, names :: <list>,
+define function declare-objects
+    (state :: <parse-state>, new-type :: <c-type>, names :: <list>,
      is-typedef? :: <boolean>)
  => ();
   for (name in names)
+    // At a minimum 'name' can be a <token> or a <c-typedef-declaration>.
+    // XXX - It might also be other things--find out if & what.
     let (new-type, name) = process-declarator(new-type, name, state);
-    let (nameloc) = if (instance?(name, <token>))
-			    name;
-			  else
-			    state;
-			  end if;
-    if (instance?(name, <typedef-declaration>))
-      unless (is-typedef? & new-type == name.type)
+    let (nameloc) = if (instance?(name, <token>)) name else state end;
+    if (instance?(name, <c-typedef-declaration>))
+      // MSVC apparently allows typedefs to appear more than once.
+      unless (is-typedef? & new-type ==
+		name.c-typedef-declaration-type.c-typedef-type)
 	parse-error(state, "illegal redefinition of typedef.");
       end unless;
     elseif (is-typedef?)
+      // This is a new typedef.
       state.objects[name.value] 
-	:= add-declaration(state, make(<typedef-declaration>, name: name.value,
-				       type: new-type));
+	:= add-declaration(state,
+			   make(<c-typedef-declaration>,
+				type: make(<c-typedef-type>,
+					   name: name.value,
+					   type: new-type)));
       parse-progress-report(nameloc, "Processed typedef %s", name.value);
       add-typedef(state.tokenizer, name);
     else
-      let decl-type = if (instance?(new-type, <function-type-declaration>))
-			<function-declaration>;
-		      else
-			<variable-declaration>;
-		      end if;
+      // This is a new object (i.e., variable or function) declaration.
+      // XXX - rename <c-variable-declaration> to <c-object-declaration>.
       // If there multiple copies of the same declaration, we simply
       // use the first.  They are most likely identical anyway.
       // rgs: We should probably (eventually) check that they are identical
       //      rather than assuming it.
       if (element(state.objects, name.value, default: #f) == #f)
 	state.objects[name.value]
-	  := add-declaration(state, make(decl-type, name: name.value,
-					 type: new-type));
+	  := add-declaration(state,
+			     make(<c-variable-declaration>,
+				  name: name.value,
+				  type: new-type));
 	parse-progress-report(nameloc, "Processed declaration %s", name.value);
       end if;
     end if;
   end for;
-*/
-end method declare-objects;
+end function declare-objects;
 
 //----------------------------------------------------------------------
 // "High level" functions for manipulating the parse state.
@@ -475,12 +480,11 @@ end method declare-objects;
 // This adds a new declaration to the "declarations" slot, and label it with
 // the appropriate source file name (taken from the state).
 //
-define method add-declaration (#rest foo)/* XXX - needs updating
-    (state :: <parse-file-state>, declaration :: <declaration>)
- => (declaration :: <declaration>);
+define method add-declaration
+    (state :: <parse-file-state>, declaration :: <c-declaration>)
+ => (declaration :: <c-declaration>);
   push-last(state.declarations, declaration);
   declaration;
-*/
 end method add-declaration;
 
 define constant null-table = make(<table>);
