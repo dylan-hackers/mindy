@@ -4,6 +4,8 @@
 
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
+$testflags = '-profiling';
+
 sub emit_run_tests_rule {
     local (@tests) = @_;
     local ($test);
@@ -15,7 +17,7 @@ sub emit_run_tests_rule {
 
     foreach $test (@tests) {
 	local ($test) = &convert_path_separator("./$test");
-	print "\t$test\n" if ($enable_d2c);
+	print "\t$test $testflags\n" if ($enable_d2c);
     }
     push(@compile_dependencies, "run_tests");
 }
