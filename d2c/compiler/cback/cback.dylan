@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.103 1996/02/12 20:14:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.104 1996/02/13 05:38:24 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -69,7 +69,8 @@ define constant $indentation-step = 4;
 
 define class <indenting-stream> (<stream>)
   slot is-target :: <stream>, required-init-keyword: target:;
-  slot is-buffer :: <buffer>, init-function: curry(make, <buffer>);
+  slot is-buffer :: <buffer>,
+    init-function: curry(make, <buffer>, size: 1024);
   slot is-after-newline? :: <boolean>, init-value: #t;
   slot is-column :: <integer>, init-value: 0;
   slot is-indentation :: <integer>,
