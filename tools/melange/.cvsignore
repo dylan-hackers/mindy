@@ -25,4 +25,5 @@ ffi-heap.s
 inits.c
 cc-ffi-files.mak
 melange
-.cvsignore
+source-location.c
+parse-conditions.c

@@ -1,0 +1,7 @@
+GNUmakefile
+cc-getopt-files.mak
+getopt-exports.c
+getopt.c
+parsers.c
+getopt-init.c
+getopt-heap.s
