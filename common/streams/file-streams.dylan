@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.3 1999/05/25 01:21:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.4 1999/09/15 10:51:18 bruce Exp $
 
 //======================================================================
 //
@@ -35,6 +35,13 @@ rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.3 1999/0
 method () => ();
   c-include("fcntl.h");
   c-include("errno.h");
+end();
+#endif
+
+// BeOS required unistd.h at this point
+#if (~mindy)
+method () => ();
+  c-include("unistd.h");
 end();
 #endif
 

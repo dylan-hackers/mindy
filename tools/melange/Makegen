@@ -8,6 +8,8 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "solaris-c-decl";
 } elsif ($features{'compiled_for_linux'}) {
     $c_decl_lid = "linux-c-decl";
+} elsif ($features{'compiled_for_beos'}) {
+    $c_decl_lid = "linux-c-decl";
 } elsif ($features{'compiled_for_freebsd'}) {
     $c_decl_lid = "freebsd-c-decl";
 } elsif ($features{'compiled_for_openbsd'}) {

@@ -25,7 +25,13 @@ int delegate_gdb_signals(void)
     struct sigaction act;
 
     act.sa_handler  = &delegate_signal;
+#if !defined(__BEOS__)
     act.sa_flags    = SA_RESTART;
+#else
+    // Can't find an SA_RESTART flag in the BeOS posix headers so
+    // I guess dig support will be broken for now...
+    act.sa_flags    = 0;
+#endif
     sigemptyset(&act.sa_mask);
 
     //return sigaction(SIGINT, &act, NULL);

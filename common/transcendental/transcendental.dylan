@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.2 1998/07/21 17:27:50 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.3 1999/09/15 10:53:49 bruce Exp $
 copyright: See below.
 
 //======================================================================
@@ -380,7 +380,7 @@ end method tanh;
 // 
 // Linux math lib has them, so include them.
 
-#if (compiled-for-hpux | compiled-for-linux)
+#if (compiled-for-hpux | compiled-for-linux | compiled-for-beos)
 
 define sealed method asinh (x :: <integer>) => y :: <single-float>;
   as(<single-float>,

@@ -17,6 +17,13 @@
 #endif
 #include <sys/wait.h>
 
+#if defined(__BEOS__)
+// For select, etc.
+#include <be/net/socket.h>
+#include <unistd.h>
+#endif
+
+
 int fd_open (const char *filename, int flags, int mode)
 {
     return open(filename, flags, mode);

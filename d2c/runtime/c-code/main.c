@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.6 1999/04/12 05:19:42 emk Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.7 1999/09/15 10:57:24 bruce Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -239,7 +239,7 @@ double log2 (double x)
 
 #endif
 
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(__BEOS__)
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -252,5 +252,11 @@ void no_core_dumps(void)
   lim.rlim_cur = 0;
   setrlimit(RLIMIT_CORE, &lim);
 }
+#endif
 
+#if defined(__BEOS__)
+void no_core_dumps(void)
+{
+	// What should go here?
+}
 #endif
