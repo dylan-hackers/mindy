@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.17 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.18 1995/05/08 17:04:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -333,7 +333,9 @@ define method convert-top-level-form
       build-assignment
 	(builder, policy, source, concatenate(vars, list(rest-temp)),
 	 make-operation
-	   (builder, <primitive>, list(cluster),
+	   (builder, <primitive>,
+	    list(cluster,
+		 make-literal-constant(builder, as(<ct-value>, vars.size))),
 	    name: #"canonicalize-results"));
       build-assignment(init-builder, policy, source, #(),
 		       make-operation(init-builder, <set>, list(rest-temp),

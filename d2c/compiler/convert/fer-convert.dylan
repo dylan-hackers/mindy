@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.26 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.27 1995/05/08 17:04:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,7 +193,10 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
     build-assignment
       (builder, lexenv.lexenv-policy, source,
        concatenate(temps, list(rest-temp)),
-       make-operation(builder, <fer-primitive>, list(cluster),
+       make-operation(builder, <fer-primitive>,
+		      list(cluster,
+			   make-literal-constant(builder,
+						 as(<ct-value>, temps.size))),
 		      name: #"canonicalize-results"));
   else
     fer-convert(builder, bindings.bindings-expression,
@@ -749,7 +752,11 @@ define method fer-convert-method
       build-assignment
 	(builder, lexenv.lexenv-policy, source,
 	 concatenate(as(<list>, fixed-results), list(rest-result)),
-	 make-operation(builder, <fer-primitive>, list(cluster),
+	 make-operation(builder, <fer-primitive>,
+			list(cluster,
+			     make-literal-constant
+			       (builder,
+				as(<ct-value>, fixed-results.size))),
 			name: #"canonicalize-results"));
 
       build-region(builder, builder-result(result-check-builder));

@@ -118,7 +118,8 @@ define-primitive
    pure: #t);
 
 define-primitive
-  (#"canonicalize-results", #(#"cluster"), #(values:, rest:, #"<object>"),
+  (#"canonicalize-results", #(#"cluster", #"<fixed-integer>"),
+   #(values:, rest:, #"<object>"),
    pure: #t);
 
 define-primitive

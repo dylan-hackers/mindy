@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.54 1995/05/08 15:18:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.55 1995/05/08 17:04:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1096,7 +1096,8 @@ define-primitive-transformer
 	    types = #() then pair(dep.source-exp.derived-type, types),
 	    while: dep)
        finally
-	 make-values-ctype(reverse!(types), #f);
+	 maybe-restrict-type(component, primitive,
+			     make-values-ctype(reverse!(types), #f));
        end;
      else
        // Assigning to a bunch of discreet variables.  Replace the assignment
@@ -1128,6 +1129,77 @@ define-primitive-transformer
 define-primitive-transformer
   (#"canonicalize-results",
    method (component :: <component>, primitive :: <primitive>) => ();
+     let nfixed-leaf = primitive.depends-on.dependent-next.source-exp;
+     if (instance?(nfixed-leaf, <literal-constant>))
+       let nfixed = nfixed-leaf.value.literal-value;
+       let cluster = primitive.depends-on.source-exp;
+       let type = cluster.derived-type;
+       if (fixed-number-of-values?(type))
+	 let orig-assign = primitive.dependents.dependent;
+	 let builder = make-builder(component);
+	 let temps = map(method (type)
+			   make-local-var(builder, #"temp", type);
+			 end,
+			 type.positional-types);
+	 build-assignment(builder, orig-assign.policy,
+			  orig-assign.source-location, temps, cluster);
+	 let op
+	   = if (nfixed < type.min-values)
+	       let fixed = copy-sequence(temps, end: nfixed);
+	       let rest = copy-sequence(temps, start: nfixed);
+	       let op = make-unknown-call
+		 (builder,
+		  pair(dylan-defn-leaf(builder, #"vector"), rest));
+	       let rest-temp
+		 = make-local-var(builder, #"temp", object-ctype());
+	       build-assignment(builder, orig-assign.policy,
+				orig-assign.source-location, rest-temp, op);
+	       make-operation(builder, <primitive>,
+			      concatenate(fixed, list(rest-temp)),
+			      name: #"values");
+	     else
+	       let false = make-literal-constant(builder, as(<ct-value>, #f));
+	       let falses = make(<list>, size: nfixed - type.min-values,
+				 fill: false);
+	       let empty-vect
+		 = make-literal-constant(builder, as(<ct-value>, #[]));
+	       make-operation(builder, <primitive>,
+			      concatenate(temps, falses, list(empty-vect)),
+			      name: #"values");
+	     end;
+	 let dep = orig-assign.depends-on;
+	 remove-dependency-from-source(component, dep);
+	 dep.source-exp := op;
+	 dep.source-next := op.dependents;
+	 op.dependents := dep;
+	 insert-before(component, orig-assign, builder-result(builder));
+	 reoptimize(component, orig-assign);
+       else
+	 let types = make(<stretchy-vector>);
+	 for (remaining = type.positional-types then remaining.tail,
+	      index from 0 below min(type.min-values, nfixed),
+	      until: remaining == #())
+	   add!(types, remaining.head);
+	 finally
+	   unless (index == nfixed)
+	     let rest = ctype-union(type.rest-value-type,
+				    specifier-type(#"<false>"));
+	     for (remaining = remaining then remaining.tail,
+		  index from index below nfixed,
+		  until: remaining == #())
+	       add!(types, ctype-union(remaining.head, rest));
+	     finally
+	       for (index from index below nfixed)
+		 add!(types, rest);
+	       end;
+	     end;
+	   end;
+	 end;
+	 add!(types, specifier-type(#"<simple-object-vector>"));
+	 maybe-restrict-type(component, primitive,
+			     make-values-ctype(as(<list>, types), #f));
+       end;
+     end;
    end);
 
 

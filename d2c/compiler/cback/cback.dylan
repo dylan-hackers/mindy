@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.37 1995/05/08 15:18:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.38 1995/05/08 17:04:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -806,7 +806,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
       let (bottom-name, top-name) = consume-cluster(var, output-info);
-      deliver-cluster(defines, #f, bottom-name, top-name, var.derived-type,
+      deliver-cluster(defines, bottom-name, top-name, var.derived-type,
 		      output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
@@ -909,7 +909,7 @@ define method emit-assignment
       format(stream, "%s = ", sp);
     end;
     format(stream, "%s(%s + %d, %s, %d);\n", entry, args, count, func, count);
-    deliver-cluster(results, #f, args, sp, call.derived-type, output-info);
+    deliver-cluster(results, args, sp, call.derived-type, output-info);
   end;
 end;
 
@@ -996,8 +996,7 @@ define method emit-assignment
 	    "doesn't return?");
   elseif (result-rep == #"cluster")
     format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
-    deliver-cluster(results, #f, sp, new-sp, function.result-type,
-		    output-info);
+    deliver-cluster(results, sp, new-sp, main-entry.result-type, output-info);
   elseif (instance?(result-rep, <list>))
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
@@ -1051,7 +1050,7 @@ define method emit-assignment
   end;
   format(stream, "%s(%s, %s, %s - %s);\n",
 	 entry, top-name, func, top-name, bottom-name);
-  deliver-cluster(results, #f, bottom-name, top-name, call.derived-type,
+  deliver-cluster(results, bottom-name, top-name, call.derived-type,
 		  output-info);
 end;
 
@@ -1085,7 +1084,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <catcher>,
 			       output-info :: <output-info>)
     => ();
-  deliver-cluster(defines, #f, "caught_args", "caught_sp",
+  deliver-cluster(defines, "caught_args", "caught_sp",
 		  region.catcher.derived-type, output-info);
 end;
 
@@ -1199,7 +1198,7 @@ end;
 
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
-     last-gets-rest? :: <boolean>, src-start :: <string>, src-end :: <string>,
+     src-start :: <string>, src-end :: <string>,
      type :: <values-ctype>, output-info :: <output-info>)
     => ();
   if (defines)
@@ -1216,26 +1215,16 @@ define method deliver-cluster
 		       index from 0,
 		       while: var)
 		  finally
-		    if (last-gets-rest?)
-		      index - 1;
-		    else
-		      index;
-		    end;
+		    index;
 		  end;
       unless (count <= type.min-values)
-	format(stream, "pad_cluster(%s, %s, %d);\n",
-	       src-start, src-end, count);
+	format(stream, "%s = pad_cluster(%s, %s, %d);\n",
+	       src-end, src-start, src-end, count);
       end;
       for (var = defines then var.definer-next,
 	   index from 0,
 	   while: var)
-	let source
-	  = if (index == count)
-	      format-to-string("make_rest_arg(%s + %d, %s)",
-			       src-start, index, src-end);
-	    else
-	      format-to-string("%s[%d]", src-start, index);
-	    end;
+	let source = format-to-string("%s[%d]", src-start, index);
 	deliver-single-result(var, source, $general-rep, #t, output-info);
       end;
     end;
@@ -1344,10 +1333,27 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     let stream = output-info.output-info-guts-stream;
      let cluster = operation.depends-on.source-exp;
+     let nfixed-leaf = operation.depends-on.dependent-next.source-exp;
+     let nfixed = if (instance?(nfixed-leaf, <literal-constant>))
+		    nfixed-leaf.value.literal-value;
+		  else
+		    error("nfixed arg to %%%%primitive canonicalize-results "
+			    "isn't constant?");
+		  end;
      let (bottom-name, top-name) = consume-cluster(cluster, output-info);
-     deliver-cluster(defines, #t, bottom-name, top-name, cluster.derived-type,
-		     output-info);
+     format(stream, "%s = pad_cluster(%s, %s, %d);\n",
+	    top-name, bottom-name, top-name, nfixed);
+     let results = make(<vector>, size: nfixed + 1);
+     for (index from 0 below nfixed)
+       results[index] := pair(format-to-string("%s[%d]", bottom-name, index),
+			      $general-rep);
+     end;
+     results[nfixed] := pair(format-to-string("make_rest_arg(%s + %d, %s)",
+					      bottom-name, nfixed, top-name),
+			     $heap-rep);
+     deliver-results(defines, results, #t, output-info);
    end);
 
 define-primitive-emitter
