@@ -2,7 +2,7 @@ module: eager-stream
 
 define library stream-extensions
   use dylan;
-  use streams;
+  use new-streams;
 
   export eager-stream;
 end library stream-extensions;
@@ -10,62 +10,74 @@ end library stream-extensions;
 define module eager-stream
   use dylan;
   use extensions;
-  use streams;
+  use new-streams;
 
   export <eager-stream>;
 end module eager-stream;
 
-define class <eager-stream> (<stream>)
-  slot sub-stream :: <stream>, required-init-keyword: #"stream";
+define class <eager-stream> (<buffered-stream>)
+  slot sub-stream :: <buffered-stream>, required-init-keyword: #"stream";
   slot buffer :: false-or(<buffer>), init-value: #f;
 end class <eager-stream>;
 
-define method close (stream :: <eager-stream>) => ();
+define method initialize (obj :: <eager-stream>, #next next, #key, #all-keys)
+  next();
+  select (obj.stream-element-type)
+    <byte> => #t;
+    <byte-character> => #t;
+    otherwise =>
+      error("<eager-stream>s can only wrap streams that store bytes.");
+  end select;
+end method initialize;
+
+define method stream-element-type
+    (stream :: <eager-stream>) => (result :: <type>);
+  stream.sub-stream.stream-element-type;
+end method stream-element-type;
+
+define method close (stream :: <eager-stream>, #key, #all-keys) => ();
   close(stream.sub-stream);
 end method close;
 
-define method stream-extension-get-input-buffer
+define method do-get-input-buffer
+    (stream :: <eager-stream>, #key wait?, bytes)
+ => (buffer :: false-or(<buffer>));
+  error("do-get-input-buffer not meaningful for <eager-stream>s.");
+end method do-get-input-buffer;
+
+define method do-release-input-buffer
     (stream :: <eager-stream>)
- => (buffer :: <buffer>, next :: <buffer-index>, last :: <buffer-index>);
-  error("stream-extension-get-input-buffer not meaningful "
-	  "for <eager-stream>s.");
-end method stream-extension-get-input-buffer;
-
-define method stream-extension-release-input-buffer
-    (stream :: <eager-stream>, next :: <buffer-index>, last :: <buffer-index>)
  => ();
-  error("stream-extension-release-input-buffer not meaningful "
+  error("do-release-input-buffer not meaningful "
 	  "for <eager-stream>s.");
-end method stream-extension-release-input-buffer;
+end method do-release-input-buffer;
 
-define method stream-extension-fill-input-buffer
-    (stream :: <eager-stream>, start :: <buffer-index>)
- => (last :: <buffer-index>);
-  error("stream-extension-fill-input-buffer not meaningful "
+define method do-next-input-buffer
+    (stream :: <eager-stream>, #key wait?, bytes)
+ => (new :: false-or(<buffer>));
+  error("do-next-input-buffer not meaningful "
 	  "for <eager-stream>s.");
-end method stream-extension-fill-input-buffer;
+end method do-next-input-buffer;
 
-define method stream-extension-input-available-at-source?
+define method do-input-available-at-source?
     (stream :: <eager-stream>) => (input-available? :: <boolean>);
   #f;
-end method stream-extension-input-available-at-source?;
+end method do-input-available-at-source?;
 
-define method stream-extension-get-output-buffer
-    (stream :: <eager-stream>)
- => (buffer :: <buffer>, next :: <buffer-index>, last :: <buffer-index>);
-  let (buffer, next, last) = 
-    stream-extension-get-output-buffer(stream.sub-stream);
-  stream.buffer := buffer;
-  values(buffer, next, last);
-end method stream-extension-get-output-buffer;
+define method do-get-output-buffer
+    (stream :: <eager-stream>, #key bytes)
+ => (buffer :: <buffer>);
+  stream.buffer := get-output-buffer(stream.sub-stream, bytes: bytes);
+end method do-get-output-buffer;
 
 define constant newline-value = as(<integer>, '\n');
-define method stream-extension-release-output-buffer
-    (stream :: <eager-stream>, next :: <buffer-index>)
+define method do-release-output-buffer
+    (stream :: <eager-stream>)
  => ();
   let buff = stream.buffer;
+  let next = buff.buffer-next;
   if (~buff)
-    error("Attempt to realease a buffer which isn't held: %=.", stream);
+    error("Attempt to release a buffer which isn't held: %=.", stream);
   end if;
   stream.buffer := #f;
 
@@ -74,24 +86,29 @@ define method stream-extension-release-output-buffer
     if (i >= 0)
       // ERROR: fails if result-class is anything other than <byte-string>
       let extra = buffer-subsequence(buff, <byte-string>, i + 1, next);
-      stream-extension-empty-output-buffer(stream.sub-stream, i + 1);
-      stream-extension-synchronize(stream.sub-stream);
-      copy-into-buffer!(extra, buff, 0);
-      stream-extension-release-output-buffer(stream.sub-stream, extra.size);
+      buff.buffer-next := i + 1;
+      let new-buff = next-output-buffer(stream.sub-stream, bytes: extra.size);
+      force-output-buffers(stream.sub-stream);
+      synchronize(stream.sub-stream);
+      copy-into-buffer!(new-buff, buff.buffer-next, extra);
+      new-buff.buffer-next := extra.size;
+      release-output-buffer(stream.sub-stream);
     else
-      stream-extension-release-output-buffer(stream.sub-stream, next);
+      release-output-buffer(stream.sub-stream);
     end if;
   end for;
-end method stream-extension-release-output-buffer;
+end method do-release-output-buffer;
 
-define method stream-extension-empty-output-buffer
-    (stream :: <eager-stream>, last :: <buffer-index>)
- => ();
-  stream-extension-empty-output-buffer(stream.sub-stream, last);
-end method stream-extension-empty-output-buffer;
+define method do-next-output-buffer (stream :: <eager-stream>, #key bytes)
+ => (result :: <buffer>);
+  next-output-buffer(stream.sub-stream, bytes: bytes);
+end method do-next-output-buffer;
 
-// Error: documentation claims there are 2 arguments
-define method stream-extension-synchronize
+define method do-force-output-buffers (stream :: <eager-stream>) => ();
+  force-output-buffers(stream.sub-stream);
+end method do-force-output-buffers;
+
+define method do-synchronize
     (stream :: <eager-stream>) => ();
-  stream-extension-synchronize(stream.sub-stream);
-end method stream-extension-synchronize;
+  synchronize(stream.sub-stream);
+end method do-synchronize;
