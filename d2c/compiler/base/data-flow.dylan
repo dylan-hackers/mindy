@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.17 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.18 1995/10/30 13:08:36 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,7 +64,7 @@ end class;
 // <queueable-mixin> is inherited by everything that can be queued for
 // reoptimization.
 //
-define class <queueable-mixin> (<object>)
+define abstract class <queueable-mixin> (<object>)
   //
   // Thread running through queueables in the component reoptimize-queue,
   // #"absent" if this queueable is not currently in the queue (hence is up to
@@ -78,7 +78,7 @@ end;
 // <dependent-mixin> is inherited by all things that can be the direct target
 // of a dependency: assignments, operations, IF-regions, returns and pitchers.
 //
-define class <dependent-mixin> (<queueable-mixin>)
+define abstract class <dependent-mixin> (<queueable-mixin>)
   //
   // Head of list of dependencies for the expressions that we depend on,
   // threaded by dependent-next.
@@ -133,7 +133,7 @@ end class;
 // expressions.  Only leaf expressions can be used as the arguments to
 // operations.
 //
-define abstract class <leaf> (<expression>)
+define abstract class <leaf> (<expression>, <identity-preserving-mixin>)
   //
   // Pseudo-random hash code used to associate operands with operations.
   // slot leaf-hash :: <fixed-integer>, required-init-keyword: leaf-hash:;
@@ -150,7 +150,7 @@ define abstract class <abstract-variable> (<leaf>, <annotatable>)
   slot var-info :: <variable-info>, required-init-keyword: var-info:;
 end class;
 
-define abstract class <variable-info> (<object>)
+define abstract class <variable-info> (<identity-preserving-mixin>)
   slot asserted-type :: <values-ctype>, required-init-keyword: asserted-type:;
 end class;
 
