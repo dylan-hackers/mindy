@@ -42,11 +42,33 @@ define method analize
      state :: <state>)
     => want :: <list>;
   //
-  // Dink the depth because the arguments and results really act like clusters
-  // even though they arn't.
-  let new-depth = size(want) + 1;
-  if (new-depth > state.max-depth)
-    state.max-depth := new-depth;
+  // If the result is used,
+  if (op.dependents.dependent.defines)
+    //
+    // Dink the depth because the results really act like clusters
+    // even if they arn't.
+    let new-depth = size(want) + 1;
+    if (new-depth > state.max-depth)
+      state.max-depth := new-depth;
+    end;
+  end;
+  // 
+  // Don't need to scan the depends-on, because we can't depend-on any
+  // clusters.
+  want;
+end;
+
+define method analize
+    (op :: <primitive>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  if (op.name == #"catch" & op.dependents.dependent.defines)
+    //
+    // Dink the depth because the results really act like clusters
+    // even if they arn't.
+    let new-depth = size(want) + 1;
+    if (new-depth > state.max-depth)
+      state.max-depth := new-depth;
+    end;
   end;
   // 
   // Don't need to scan the depends-on, because we can't depend-on any
