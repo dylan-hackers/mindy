@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.72 1996/06/26 15:23:24 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.73 1996/06/26 18:11:34 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -843,6 +843,8 @@ define method incorrect-usage () => ();
   format(*standard-error*, 
 	 "\t-tfilename\tGet target environment information from \n"
 	   "\tfilename instead of the default targets.ini\n");
+  force-output(*standard-error*);
+  error("Incorrect usage");
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
