@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.2 1996/04/07 17:20:27 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.3 1996/04/07 18:36:41 nkramer Exp $
 
 //======================================================================
 //
@@ -52,7 +52,7 @@ define module inspector-base
   use substring-search;
   use regular-expressions, import: {join};
   export
-    <body-component>, description, related-objects, 
+    <body-component>, description, related-objects, stripped-description,
     <object-attribute>, attrib-header, attrib-body,
     object-info, *show-elements*, short-string;
 end module inspector-base;
@@ -64,6 +64,14 @@ define class <body-component> (<object>)
   constant slot related-objects :: <sequence>, 
     required-init-keyword: #"related-objects";
 end class <body-component>;
+
+// Returns a description without #! and !#
+//
+define function stripped-description (component :: <body-component>)
+ => stripped-descr :: <string>;
+  let s1 = substring-replace(component.description, "#!", "");
+  substring-replace(s1, "!#", "");
+end function stripped-description;
 
 // attrib-bodys are sequences of <body-component>s
 //
@@ -103,7 +111,7 @@ end function make-one-liner-body;
 // annoying text that comes with it.
 //
 define method short-string (obj :: <object>)
-  print-to-string(obj);
+  concatenate("Instance of ", obj.object-class.short-string);
 end method short-string;
 
 define method short-string (cls :: <class>)
@@ -404,3 +412,4 @@ define method object-info (obj :: <object>) => info :: <sequence>;
 		  body: make-one-liner-body(obj.object-class)));
   info;
 end method object-info;
+
