@@ -14,6 +14,7 @@ $D2CFLAGS = '-L$(D2CDIR)/lib';
 $CFLAGS = '-g';
 $CPPFLAGS = '-I$(D2CDIR)/include';
 $MELANGE = 'melange';
+$PARSERGEN = 'parsergen';
 
 # Find the defaults
 $subdir = '';
@@ -179,6 +180,7 @@ D2CFLAGS=$D2CFLAGS
 CFLAGS=$CFLAGS
 CPPFLAGS=$CPPFLAGS
 MELANGE=$MELANGE
+PARSERGEN=$PARSERGEN
 
 EOF
         if (! $nmake) {
@@ -318,7 +320,7 @@ sub emit_cc_file_rule {
 }
 
 sub emit_melange_rule {
-    local ($basefile) = @_;
+    local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
 
     print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
@@ -327,6 +329,17 @@ sub emit_melange_rule {
     }
     print "\n\t\$(MELANGE) -d2c -I\$(SRCDIR) ";
     print "\$(SRCDIR)/$basefile.intr > $basefile.dylan\n\n";
+    push(@compile_dependencies, "$basefile.dylan");
+    push(@files_to_clean, "$basefile.dylan");
+}
+
+sub emit_parsergen_rule {
+    local ($basefile) = @_;
+    do maybe_emit_d2c_defines();
+
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.input";
+    print "\n\t\$(PARSERGEN) ";
+    print "\$(SRCDIR)/$basefile.input $basefile.dylan\n\n";
     push(@compile_dependencies, "$basefile.dylan");
     push(@files_to_clean, "$basefile.dylan");
 }
