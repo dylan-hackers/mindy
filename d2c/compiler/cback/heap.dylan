@@ -311,6 +311,9 @@ define method spew-object
 		%element: contents);
 end;
 
+define constant *spewed-string* = as(<stretchy-vector>, "\t.string\t\"");
+define constant *spewed-string-size* = *spewed-string*.size;
+
 define method spew-object
     (object :: <literal-string>, state :: <state>) => ();
   let str = object.literal-value;
@@ -331,32 +334,50 @@ define method spew-object
 			   "size", state);
 	  #"%element" =>
 	    let stream = state.stream;
-	    write("\t.string\t\"", stream);
-	    for (char in str)
-	      if (char == '\\')
-		write("\\\\", stream);
-	      elseif (char == '"')
-		write("\\\"", stream);
-	      elseif (char >= ' ' & char <= '~')
-		write(char, stream);
-	      elseif (char == '\0')
-		write("\\0", stream);
-	      elseif (char == '\n')
-		write("\\n", stream);
-	      elseif (char == '\t')
-		write("\\t", stream);
-	      elseif (char == '\b')
-		write("\\b", stream);
-	      elseif (char == '\r')
-		write("\\r", stream);
-	      elseif (char == '\f')
-		write("\\f", stream);
-	      else
-		let code = as(<integer>, char);
-		format("\\x%x%x", ash(code, -16), logand(code, 15));
-	      end if;
+	    // The following ugly code should be immensely faster than
+	    // writing a character at a time to a stream.
+	    for (i from 0 below str.size)
+	      let char = str[i];
+	      select (char)
+		'\\' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, '\\');
+		'"' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, '"');
+		'\0' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, '0');
+		'\n' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, 'n');
+		'\t' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, 't');
+		'\b' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, 'b');
+		'\r' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, 'r');
+		'\f' =>
+		  add!(*spewed-string*, '\\');
+		  add!(*spewed-string*, 'f');
+		otherwise =>
+		  if (char >= ' ' & char <= '~')
+		    add!(*spewed-string*, char);
+		  else
+		    let code = as(<integer>, char);
+		    let substr = format-to-string("\\x%x%x", ash(code, -16),
+						  logand(code, 15));
+		    map(method (c) add!(*spewed-string*, c) end, substr);
+		  end if;
+	      end select;
 	    end for;
-	    write("\"\n", stream);
+	    add!(*spewed-string*, '"');
+	    add!(*spewed-string*, '\n');
+	    write(as(<byte-string>, *spewed-string*), stream);
+	    *spewed-string*.size := *spewed-string-size*;
 	end select;
     end select;
   end for;
@@ -656,6 +677,17 @@ define method find-init-value
      slots :: <simple-object-vector>)
     => res :: type-union(<ct-value>, <sequence>, <false>);
   block (return)
+    let object-type = object-ctype();
+
+    // This is very magical.  If the slot was introduced by <object>,
+    // it must be %object-class, and its value must be the class.  We
+    // should double-check the validity of this assumption, but this
+    // is an extremely expensive special case, so the potential
+    // savings are large.
+    if (slot.slot-introduced-by == object-type)
+      return(class);
+    end if;
+
     let getter = slot.slot-getter;
     let slot-name = getter & getter.variable-name;
     if (getter)
@@ -668,7 +700,6 @@ define method find-init-value
 	end;
       end;
     end;
-    let object-type = object-ctype();
     for (override in slot.slot-overrides)
       let intro = override.override-introduced-by;
       if (intro == object-type | csubtype?(class, intro))
@@ -688,4 +719,3 @@ define method find-init-value
     slot.slot-init-value;
   end;
 end;
-
