@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.39 2000/10/21 01:36:02 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.40 2000/11/30 04:40:38 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -1416,7 +1416,7 @@ define method show-copyright(stream :: <stream>) => ()
   format(stream, "d2c (Gwydion Dylan) %s\n", $version);
   format(stream, "Compiles Dylan source into C, then compiles that.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
-  format(stream, "Copyright 1998,1999 Gwydion Dylan Maintainers\n");
+  format(stream, "Copyright 1998-2000 Gwydion Dylan Maintainers\n");
 end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
