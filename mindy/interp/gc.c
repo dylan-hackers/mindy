@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.4 1994/03/31 22:44:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.5 1994/04/05 21:58:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -257,7 +257,6 @@ void collect_garbage(void)
     scavenge_load_roots();
     scavenge_nlx_roots();
     scavenge_driver_roots();
-    scavenge_table_roots();
     scavenge_buffer_roots();
 
     scavenge_newspace();
@@ -295,4 +294,6 @@ void collect_garbage(void)
     printf("reclaimed %d leaving %d]\n",
 	   bytes_at_start - bytes_at_end,
 	   bytes_at_end);
+
+    table_gc_hook();
 }
