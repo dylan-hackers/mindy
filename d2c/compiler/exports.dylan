@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.13 1994/12/17 14:50:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.14 1995/01/06 21:20:15 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -31,7 +31,7 @@ define module utils
   // Stuff defined in utils
   export
     write-class-name, write-address, pprint-fields, dformat, assert,
-    key-of, list?, pair?;
+    compiler-warning, key-of, list?, pair?;
 end;
 
 define module forwards
@@ -122,10 +122,10 @@ define module tokens
 
 end;
 
-define module signature
+define module signature-interface
   create
     <signature>, specializers, next?, rest-type, key-infos, all-keys?,
-    returns, returns-rest-type,
+    returns,
 
     <key-info>, key-name, key-type, required?;
 end;
@@ -134,7 +134,7 @@ define module names
   use common;
   use forwards, import: {<module>};
   use utils;
-  use signature;
+  use signature-interface;
 
   export
     <name>,
@@ -392,7 +392,11 @@ define module ctype
     <primitive-cclass>, <defined-cclass>,
     precedence-list, subclasses, sealed?, abstract?, primary?, slot-infos,
     wild-ctype, empty-ctype, object-ctype, function-ctype,
-    find-direct-classes;
+    find-direct-classes,
+
+    values-subtype?, values-types-intersect?, values-type-intersection,
+    values-type-union, min-values, positional-types, rest-value-type,
+    first-value, <multi-value-ctype>, make-values-ctype;
 end;
 
 define module compile-time-eval
@@ -521,6 +525,15 @@ define module flow
 
 end;
 
+define module signature
+  use signature-interface;
+  use compile-time-values;
+  use common;
+  use utils;
+  use ctype;
+  use definitions;
+end;
+
 define module front
   use common;
   use utils;
@@ -529,7 +542,7 @@ define module front
   use definitions;
   use flow;
   use ctype;
-  use signature;
+  use signature-interface;
   use source;
   use builder-interface;
   use policy;
@@ -545,7 +558,7 @@ define module fer-convert
   use tokens;
   use compile-time-values;
   use compile-time-eval;
-  use signature;
+  use signature-interface;
   use definitions;
   use variables;
   use parse-tree;
@@ -577,7 +590,7 @@ define module define-functions
   use compile-time-values;
   use builder-interface;
   use fer-convert;
-  use signature;
+  use signature-interface;
   use ctype;
   use compile-time-eval;
   use lexenv;
@@ -626,7 +639,7 @@ define module define-classes
   use define-functions;
   use builder-interface;
   use fer-convert;
-  use signature;
+  use signature-interface;
   use source;
 end;
 
