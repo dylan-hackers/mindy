@@ -1,0 +1,95 @@
+Boostrapping Notes for Gwydion
+==============================
+
+NOTE: This file contains forward-looking statements. Not everything in here
+will be true until we finish cleaning up the bootstrap code!
+
+The d2c compiler is written in Dylan. Unfortunately, this makes it hard to
+compile d2c if you don't already have a Dylan compiler. To work around this
+problem, the Gwydion Group at CMU wrote Mindy, a Dylan-like interpreter
+implemented in C.
+
+So here are several possible scenarios, and what to do in each case.
+
+ 1) You already have an up-to-date version of d2c installed, and wish to
+    build the same version of d2c from the source.
+
+    This is the best scenario. You can find d2c binaries on our FTP site;
+    see the README and INSTALL files for details.
+
+ 2) You have d2c version 2.2.0 or later installed, and you wish to build
+    a more recent version of d2c from the source.
+
+    If you can find an up-to-date d2c binary, see (1) above. If not, you'll
+    need to bootstrap d2c using d2c. This is a two-stage process: first
+    you'll build a temporary version of d2c and then you'll re-run
+    the build-process from scratch.
+
+ 3) You can't find a binary for d2c, but d2c already supports your
+    platform.
+
+    In this case, look really hard for a binary and see (1) or (2) as
+    appropriate. If you can't find a working d2c binary, you'll need
+    to bootstrap d2c using Mindy. This involves compiling Mindy, building a
+    copy of d2c that runs (very slowly) under Mindy, and using that copy
+    of d2c to compile a new version, as per step (2) above.
+
+    If this process fails, subscribe to gd-hackers and tell us what
+    happened, or send a bug report to gd-bugs.
+
+ 4) You want to run d2c on your platform, but d2c doesn't support your
+    platform.
+
+    This is the fun part. You'll need to port Mindy and d2c to your
+    platform, which will require some work. Start by subscribing to the
+    gd-hackers mailing list. Next, make sure that the Boehm GC runs on your
+    platform. Then, look at platforms.descr and add a system description.
+    All that remains is to try (3) over and over again, making changes
+    until you get a working d2c. When you get things working, please tell
+    gd-hackers and we'll arrange to integrate your patches into the next
+    release.
+
+    Alternatively, you may be able to cross-compile using d2c. If you make
+    this work, please describe your experience to gd-hackers.
+
+ 5) You don't want d2c at all, but Mindy looks tempting.
+
+    Try running './configure --disable-d2c'. If this doesn't work, send a
+    bug report to gd-bugs and we'll look into it.
+
+Philosophy of Bootstrapping
+---------------------------
+
+To bootstrap d2c, you need several things:
+
+ 1) A Dylan implementation. This may be an older version of d2c or a recently
+    compiled copy of Mindy.
+
+ 2) A Dylan runtime for use with (1). Generally speaking, this should be
+    the runtime that originally shipped with (1). To bootsrap d2c, this
+    runtime must currently include a Dylan library with a Dylan module and
+    a CMU-compatible Extensions module. (There may be other requirements
+    as well.)
+
+    This runtime does not currently include common-dylan. At some future
+    date, we may change Gwydion Dylan to require common-dylan during the
+    bootstrapping phase. This will take work and will cause a whole new
+    set of bootstrapping problems.
+
+ 3) Some (but not all) of the Dylan libraries from the common/
+    directory. These libraries are needed by parsergen and d2c's
+    compiler-base library. These libraries *cannot* depend on anything other
+    than the runtime.
+
+ 4) Parsergen. This is a parser generator for Dylan programs. For now,
+    parsergen must compile with (1), (2) and (3). In particular, it may not
+    depend on common-dylan and Melange.
+
+ 5) d2c. This is compiled using (1) through (4) and installed somewhere in
+    the build tree (the build root, perhaps?).
+
+Once this process has been completed, everything is built from scratch and
+installed normally, using the d2c from step (5).
+
+Eric Kidd
+20 March 1999
