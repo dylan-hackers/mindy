@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.13 2003/01/21 07:38:21 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.14 2003/03/01 15:06:13 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -618,13 +618,14 @@ end method;
 
 define method build-da-global-heap (state :: <lid-mode-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
-  let c-name = concatenate(state.unit-lid-file.filename-prefix, "heap.c");
-  let o-name = concatenate(state.unit-lid-file.filename-prefix, "heap",
+  let c-name = concatenate(state.unit-mprefix, "-global-heap.c");
+  let o-name = concatenate(state.unit-mprefix, "-global-heap",
                            if (state.unit-shared?)
 			     state.unit-target.shared-object-filename-suffix;
 			   else
 			     state.unit-target.object-filename-suffix
 			   end);
+
   let heap-stream 
   	= make(<file-stream>, locator: c-name, direction: #"output");
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
@@ -640,8 +641,8 @@ end method;
 
 define method build-inits-dot-c (state :: <lid-mode-state>) => ();
   format(*debug-output*, "Building inits.c.\n");
-  let c-name = concatenate(state.unit-lid-file.filename-prefix, "inits.c");
-  let o-name = concatenate(state.unit-lid-file.filename-prefix, "inits",
+  let c-name = concatenate(state.unit-mprefix, "-global-inits.c");
+  let o-name = concatenate(state.unit-mprefix, "-global-inits",
                            if (state.unit-shared?)
 			     state.unit-target.shared-object-filename-suffix;
 			   else

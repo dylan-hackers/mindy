@@ -1,10 +1,10 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/evaluate.dylan,v 1.3 2003/02/16 14:09:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/evaluate.dylan,v 1.4 2003/03/01 15:06:12 andreas Exp $
 copyright: see below
 
 //======================================================================
 //
-// Copyright (c) 2002  Gwydion Dylan Maintainers
+// Copyright (c) 2002, 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
