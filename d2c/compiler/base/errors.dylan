@@ -1,5 +1,5 @@
 module: errors
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.6 1996/04/06 07:04:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.7 1996/04/10 16:51:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -77,10 +77,10 @@ end method report-condition;
 define method default-handler (condition :: <compiler-condition>) => ();
   fresh-line(*debug-output*);
   if (*print-context*)
-    format(*debug-output*, "In %s:\n\n", *current-context*);
+    format(*debug-output*, "In %s:\n", *current-context*);
     *print-context* := #f;
   end if;
-  format(*debug-output*, "%s\n\n", condition);
+  format(*debug-output*, "%s\n", condition);
 end method default-handler;
 
 
