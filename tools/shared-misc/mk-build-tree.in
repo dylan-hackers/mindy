@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Author: William Lott
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/mk-build-tree.in,v 1.1 1998/05/12 03:11:13 emk Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/mk-build-tree.in,v 1.2 1998/07/09 20:04:57 andreas Exp $
 
 # Usage:
 #
@@ -57,7 +57,7 @@ sub mk_build_tree {
     $has_makegen = 0;
 
     while ($entry = readdir(SRCDIR)) {
-	if ($entry eq '.' || $entry eq '..') {
+	if ($entry eq '.' || $entry eq '..' || $entry eq 'CVS') {
 	}
 	elsif ($entry eq "Makegen") {
 	    $has_makegen = 1;
@@ -76,8 +76,8 @@ sub mk_build_tree {
     if ($has_makegen) {
 	print "Generating makefile for $builddir\n";
 	($platforms_dot_descr 
-	       ? system('gen-makefile', $platforms_dot_descr, $builddir) 
-               : system('gen-makefile', $builddir))
+	       ? system($buildroot.'/gen-makefile', $platforms_dot_descr, $builddir) 
+               : system($buildroot.'/gen-makefile', $builddir))
 	    && die("gen-makefile $builddir failed.\n");
     }
 
