@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.66 1995/06/14 10:25:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.67 1995/06/14 10:57:37 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -832,6 +832,7 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
   let cond = ref-leaf($boolean-rep, region.depends-on.source-exp, output-info);
+  spew-pending-defines(output-info);
   let initial-depth = output-info.output-info-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
