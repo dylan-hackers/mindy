@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.65 1996/04/13 21:23:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.66 1996/04/18 12:57:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,20 @@ define method exit (#key exit-code :: <integer> = 0)
   call-out("exit", void:, int:, exit-code);
 end method exit;
 
+
+// no-core-dumps -- internal.
+//
+// Sets the current limit for core dumps to 0.  Keeps us from dumping 32+ meg
+// core files when we hit an error.
+//
+define method no-core-dumps () => ();
+  let buf = make(<buffer>, size: 8);
+  call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+  pointer-deref(#"int", buf.buffer-address, 0) := 0;
+  call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+end method no-core-dumps;
+
+
 #end
 
 define constant $cc-utility = "gcc";   // I don't know if cc would also work
@@ -74,6 +88,9 @@ define class <unit-info> (<object>)
   slot unit-linker-options :: false-or(<byte-string>),
     init-value: #f, init-keyword: #"linker-options";
 end class <unit-info>;
+
+define sealed domain make (singleton(<unit-info>));
+define sealed domain initialize (<unit-info>);
 
 define variable *units* :: <stretchy-vector> = make(<stretchy-vector>);
 
@@ -308,6 +325,30 @@ define method find-source-file
     compiler-fatal-error("Can't find source file %=.", file);
   end block;
 end method find-source-file;
+
+
+define method find-library-archive
+    (unit-name :: <byte-string>) => path :: <byte-string>;
+  block (return)
+    local
+      method try (dir :: <byte-string>)
+	let path = stringify(dir, "/lib", unit-name, ".a");
+	block ()
+	  close(make(<file-stream>, name: path));
+	  return(path);
+	exception (<file-not-found>)
+	  #f;
+	end block;
+      end method try;
+    
+    for (dir in *data-unit-search-path*)
+      try(dir);
+    end for;
+    error("Can't find lib%s.a.", unit-name);
+  end block;
+end method find-library-archive;
+
+
 
 define method output-c-file-rule
     (makefile :: <stream>, c-name :: <string>, o-name :: <string>) => ();
@@ -602,21 +643,38 @@ define method compile-library
       end;
 
       begin
-	let flags = concatenate($cc-flags, " -L.");
+	let flags
+	  = if ($cc-flags.empty?)
+	      "";
+	    else
+	      stringify(' ', $cc-flags);
+	    end if;
 	for (dir in *data-unit-search-path*)
-	  flags := concatenate(flags, " -L", dir);
-	end;
+	  flags := stringify(flags, " -L", dir);
+	end for;
 	let unit-libs = "";
+	let linker-args = "";
 	for (unit in *units*)
 	  if (unit.unit-linker-options)
-	    unit-libs := concatenate(" ", unit.unit-linker-options, unit-libs);
+	    linker-args
+	      := stringify(' ', unit.unit-linker-options, linker-args);
 	  end if;
-	  unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
+	  unless (unit == unit-info)
+	    let archive = find-library-archive(unit.unit-name);
+	    linker-args := stringify(' ', archive, linker-args);
+	    unit-libs := stringify(' ', archive, unit-libs);
+	  end unless;
 	end;
-	format(makefile, "\n%s : %s %s\n", executable, objects, ar-name);
+	if (unit-info.unit-linker-options)
+	  linker-args
+	    := stringify(' ', unit-info.unit-linker-options, linker-args);
+	end if;
+
+	format(makefile, "\n%s : %s %s%s\n",
+	       executable, objects, ar-name, unit-libs);
 	format(makefile,
-	       "\t$(CC) -z %s -L/lib/pa1.1 -o %s inits.c heap.s %s\n", 
-	       flags, executable, unit-libs);
+	       "\t$(CC) -z%s -L/lib/pa1.1 -o %s inits.c heap.s %s%s\n",
+	       flags, executable, ar-name, linker-args);
 	format(makefile, "\nall-at-end-of-file : %s\n", executable);
       end;
 
@@ -800,6 +858,9 @@ define method incorrect-usage () => ();
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
+  #if (~mindy)
+  no-core-dumps();
+  #end
   *random-state* := make(<random-state>, seed: 0);
   define-bootstrap-module();
   let library-dirs = make(<stretchy-vector>);
@@ -877,9 +938,3 @@ end method %main;
 #if (mindy)
 collect-garbage(purify: #t);
 #end
-
-// Seals for file compiler/main/main.dylan
-
-// <unit-info> -- subclass of <object>
-define sealed domain make(singleton(<unit-info>));
-define sealed domain initialize(<unit-info>);
