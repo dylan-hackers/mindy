@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.6 1995/03/04 21:58:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.7 1995/03/23 22:10:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -141,7 +141,8 @@ define constant ctype-neq? = method (type1 :: <ctype>, type2 :: <ctype>)
   
   if (type1 == type2)
     values(#f, #t);
-  elseif (instance?(type1, <unknown-ctype>) | instance?(type2, <unknown-ctype>))
+  elseif (instance?(type1, <unknown-ctype>)
+	    | instance?(type2, <unknown-ctype>))
     values(#f, #f);
   else
     values(#t, #t);
@@ -176,7 +177,8 @@ define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
 /// limited integer:
 ///   singleton -- #f, 'cause singleton integers don't exist due to
 ///     canonicalization.
-///   limited integer -- the base classes are subtype? and the ranges are in order
+///   limited integer -- the base classes are subtype? and the ranges are in
+///     order
 ///   class -- subtype?(base-class, class)
 ///   direct -- subtype?(limint.base-class, direct)
 ///   byte-char -- #f
@@ -275,9 +277,9 @@ end method;
 
 //// Intersection:
 
-/// Ignoring unknowns and unions (which are handled specially), we have the following
-/// possible combinations.  Note: we only list half of them, because intersection
-/// is commutative.
+/// Ignoring unknowns and unions (which are handled specially), we have the
+/// following possible combinations.  Note: we only list half of them, because
+/// intersection is commutative.
 ///
 /// Singleton with:
 ///   singleton -- empty, 'cause == singletons are picked off.
@@ -289,7 +291,8 @@ end method;
 ///   heap-instance -- the singletion if subtype?, otherwise empty
 /// Limited integer with:
 ///   limited-int -- the intersection of the base classes and range.
-///   class -- the intersection of the base class and the other class, same range
+///   class -- the intersection of the base class and the other class, same
+///     range
 ///   direct -- empty, 'cause the direct integer classes are canonicalized into
 ///     themselves.
 ///   byte-char -- empty
@@ -298,26 +301,29 @@ end method;
 ///   class -- the subtype class if one is a subtype of the other, the
 ///     intersection of their subtypes if both are sealed, or one at random
 ///     otherwise.
-///   direct -- the direct type if it is a subtype of the class, empty otherwise
+///   direct -- the direct type if it is a subtype of the class, empty
+///     otherwise
 ///   byte-char -- the byte-char type if it is a subtype of the class
-///   heap-instance -- the class,#t if subtype, empty if the class is immediate,
-///     otherwise class,#f
+///   heap-instance -- the class,#t if subtype, empty if the class is
+///     immediate, otherwise class,#f
 /// Direct:
 ///   direct -- the type when they are the same, otherwise empty
 ///   byte-char -- the byte-char type if it is a subtype of the class
-///   heap-instance -- the direct if the class is heap allocated, empty otherwise
+///   heap-instance -- the direct if the class is heap allocated, empty
+///     otherwise
 /// Byte-char:
 ///   byte-char -- won't be called, 'cause the == case is picked off
 ///   heap-instance -- empty
 /// heap-instance
 ///   heap-instance -- won't be called, 'cause the == case is picked off
 ///
-/// So if we pick off the case where one type is a subtype of the other first, we
-/// have the following cases left:
+/// So if we pick off the case where one type is a subtype of the other first,
+/// we have the following cases left:
 ///
 /// Limited integer with:
 ///   limited-int -- the intersection of the base classes and range.
-///   class -- the intersection of the base class and the other class, same range
+///   class -- the intersection of the base class and the other class, same
+///     range
 /// Class:
 ///   class -- the subtype class if one is a subtype of the other, the
 ///     intersection of their subtypes if both are sealed, or one at random
@@ -370,7 +376,7 @@ define constant ctype-intersection = method (type1 :: <ctype>, type2 :: <ctype>)
 	    for (mem2 in type2.members)
 	      // If either is a subtype of the other, include the subtype.
 	      if (csubtype?(mem1, mem2))
-		res-union 
+		res-union := ctype-union(res-union, mem1);
 	      elseif (csubtype?(mem2, mem1))
 		res-union := ctype-union(res-union, mem2);
 	      else
@@ -471,6 +477,7 @@ define constant canonicalize-union = method (types :: <list>) => res :: <list>;
   let ints = #();
   for (elt in types)
     if (instance?(elt, <limited-integer-ctype>))
+      // ### This isn't quite correct.  Limited-int-union might return a cclass.
       ints := limited-int-union(elt, ints);
     else
       other := pair(elt, other);
@@ -572,7 +579,7 @@ define class <unknown-ctype> (<ctype>)
 
   // The expression which was of unknown type.  In general, this is only for
   // human context. 
-  slot type-exp;
+  slot type-exp, init-value: #f, init-keyword: type-exp:;
 end class;
 
 define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
@@ -608,6 +615,27 @@ end;
 
 /// Limited integer types:
 
+// A limited-integer-table is used to keep track of all the limited integers we
+// have already allocated, so we can reuse them.
+
+define class <limited-integer-table> (<table>)
+end;
+
+define method table-protocol (table :: <limited-integer-table>)
+  values(\=,
+	 method (key :: <vector>)
+	   let (min-id, min-state) = equal-hash(key.second);
+	   let (base&min-id, base&min-state)
+	     = merge-hash-codes(key.first.type-hash, $permanent-hash-state,
+				min-id, min-state, ordered: #t);
+	   let (max-id, max-state) = equal-hash(key.third);
+	   merge-hash-codes(base&min-id, base&min-state,
+			    max-id, max-state, ordered: #t);
+	 end);
+end;
+
+define constant $limited-integer-table = make(<limited-integer-table>);
+
 define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
   slot low-bound :: union(<integer>, <false>), 
        required-init-keyword: low-bound:;
@@ -616,6 +644,13 @@ define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
        required-init-keyword:  high-bound:;
 end class;
 
+define method make (class == <limited-integer-ctype>, #next next-method,
+		    #key base-class, low-bound, high-bound)
+  let key = vector(base-class, low-bound, high-bound);
+  element($limited-integer-table, key, default: #f)
+    | (element($limited-integer-table, key) := next-method());
+end;
+
 define method print-object (limint :: <limited-integer-ctype>,
 			    stream :: <stream>)
     => ();
@@ -623,6 +658,39 @@ define method print-object (limint :: <limited-integer-ctype>,
 		base-class: limint.base-class,
 		if (limint.low-bound) low-bound: end, limint.low-bound,
 		if (limint.high-bound) high-bound: end, limint.high-bound);
+end;
+
+define method make-canonical-limited-integer
+    (base-class :: <cclass>,
+     low-bound :: union(<integer>, <false>),
+     high-bound :: union(<integer>, <false>))
+    => res :: <ctype>;
+  if (base-class == dylan-value(#"<fixed-integer>"))
+    if (~low-bound | low-bound < runtime-$minimum-fixed-integer)
+      low-bound := runtime-$minimum-fixed-integer;
+    end;
+    if (~high-bound | high-bound > runtime-$maximum-fixed-integer)
+      high-bound := runtime-$maximum-fixed-integer;
+    end;
+    if (high-bound < low-bound)
+      empty-ctype();
+    elseif (low-bound == runtime-$minimum-fixed-integer
+	      & high-bound == runtime-$maximum-fixed-integer)
+      base-class;
+    else
+      make(<limited-integer-ctype>, base-class: base-class,
+	   low-bound: low-bound, high-bound: high-bound);
+    end;
+  else
+    if (~high-bound & ~low-bound)
+      base-class;
+    elseif (high-bound & low-bound & high-bound < low-bound)
+      empty-ctype();
+    else
+      make(<limited-integer-ctype>, base-class: base-class,
+	   low-bound: low-bound, high-bound: high-bound);
+    end;
+  end;
 end;
 
 /// A limited integer type is a subtype of another if the bounds of type1 are
@@ -649,11 +717,11 @@ define method ctype-intersection-dispatch
   if (base == empty-ctype())
     values(empty-ctype(), #t);
   elseif (instance?(base, <cclass>))
-    values(make(<limited-integer-ctype>, base-class: base,
-		low-bound: type1.low-bound, high-bound: type1.high-bound),
+    values(make-canonical-limited-integer(base, type1.low-bound, type1.high-bound),
 	   #t);
   else
     error("Shouldn't happen.");
+    #f;
   end;
 end;
 
@@ -683,9 +751,7 @@ define method ctype-intersection-dispatch
     let nlow = innerize(L1, L2, max);
     let nhigh = innerize(H1, H2, min);
     if (~nlow | ~nhigh | nlow <= nhigh)
-      values(make(<limited-integer-ctype>, base-class: rbase,
-                  low-bound: nlow, high-bound: nhigh),
-	     #t)
+      values(make-canonical-limited-integer(rbase, nlow, nhigh), #t);
     else
       values(empty-ctype(), #t);
     end if;
@@ -734,29 +800,7 @@ define constant limited-int-union = method
     end;
   end for;
 
-  add-new!(others, make(<limited-integer-ctype>, base-class: base,
-	    	        low-bound: LI, high-bound: HI));
-end method;
-
-
-// Table used to hash-cons limited integer types.  Key is a vector of the
-// base-class, low and high bounds.
-define variable limited-int-table = make(<equal-table>);
-
-// Return a <limited-integer-ctype> corresponding to the args, making a new one
-// if necessary.
-define method make(wot == <limited-integer-ctype>,
-		   #next next-method,
-		   #key base-class, low-bound, high-bound)
-    => res :: <limited-integer-ctype>;
-
-  let key = vector(base-class, low-bound, high-bound);
-  let found = element(limited-int-table, key, default: #f);
-  if (found)
-    found;
-  else
-    limited-int-table[key] := next-method();
-  end;
+  add-new!(others, make-canonical-limited-integer(base, LI, HI));
 end method;
 
 
@@ -816,224 +860,6 @@ define method csubtype-dispatch (type1 :: <singleton-ctype>,
   instance?(val, <literal-character>)
     & instance?(val.literal-value, <byte-character>);
 end;
-
-
-//// Class Precedence List computation
-
-// This class is a temporary data structure used during CPL computation.
-define class <class-precedence-description> (<object>)
-  //
-  // The class this cpd describes the precedence of.
-  slot cpd-class :: <cclass>, required-init-keyword: class:;
-  //
-  // List of cpd's for the direct superclasses.
-  slot cpd-supers :: <list>, init-value: #();
-  //
-  // List of cpd's for classes that have to follow this class.
-  slot cpd-after :: <list>, init-value: #();
-  //
-  // Count of times this cpd appeards in some other cpd's after list.
-  slot cpd-count :: <fixed-integer>, init-value: 0;
-end class;
-
-define constant compute-cpl = method (cl, superclasses)
-  case
-    superclasses == #() =>
-      list(cl);
-
-    superclasses.tail == #() =>
-      pair(cl, superclasses.head.precedence-list);
-
-    otherwise =>
-      slow-compute-cpl(cl, superclasses);
-  end;
-end method;
-
-// Find CPL when there are multiple direct superclasses
-define constant slow-compute-cpl = method (cl, superclasses)
-  let cpds = #();
-  let class-count = 0;
-  local
-    // find CPD for a class, making a new one if necessary.
-    method find-cpd (cl)
-      block (return)
-	for (x in cpds)
-	  if (x.cpd-class == cl)
-	    return(x);
-	  end;
-	end;
-	compute-cpd(cl, cl.direct-superclasses);
-      end;
-    end method,
-
-    method compute-cpd (cl, supers)
-      let cpd = make(<class-precedence-description>, class: cl);
-      cpds := pair(cpd, cpds);
-      class-count := class-count + 1;
-      unless (supers == #())
-        let prev-super-cpd = find-cpd(supers.head);
-	cpd.cpd-supers := pair(prev-super-cpd, cpd.cpd-supers);
-	cpd.cpd-after := pair(prev-super-cpd, cpd.cpd-after);
-	prev-super-cpd.cpd-count := prev-super-cpd.cpd-count + 1;
-	for (super in supers.tail)
-	  let super-cpd = find-cpd(super);
-	  cpd.cpd-supers := pair(super-cpd, cpd.cpd-supers);
-	  cpd.cpd-after := pair(super-cpd, cpd.cpd-after);
-	  prev-super-cpd.cpd-after := pair(super-cpd, prev-super-cpd.cpd-after);
-	  super-cpd.cpd-count := super-cpd.cpd-count + 2;
-	  prev-super-cpd := super-cpd;
-	end;
-      end unless;
-      cpd;
-    end method;
-      
-  let candidates = list(compute-cpd(cl, superclasses));
-  let rcpl = #();
-
-  for (index from 0 below class-count)
-    if (candidates == #())
-      error("Inconsistent CPL");
-    end;
-
-    local
-      handle (cpd)
-        candidates := remove!(candidates, cpd);
-	rcpl := pair(cpd.cpd-class, rcpl);
-	for (after in cpd.cpd-after)
-	  if (zero?(after.cpd-count := after.cpd-count - 1))
-	    candidates := pair(after, candidates);
-	  end;
-	end;
-      end method;
-
-    if (candidates.tail == #())
-      handle(candidates.head);
-    else
-      // There is more than one candidate, so pick one.
-      block (tie-breaker)
-	for (c in rcpl)
-	  let supers = c.direct-superclasses;
-	  for (candidate in candidates)
-	    if (member?(candidate.cpd-class, supers))
-	      handle(candidate);
-	      tie-breaker();
-	    end if;
-	  end for;
-	end for;
-	error("Can't happen.");
-      end block;
-    end if;
-  end for;
-
-  reverse!(rcpl);
-end method;
-
-
-//// Classes:
-
-define abstract class <cclass> (<ctype>, <eql-ct-value>)
-  //
-  // The name, for printing purposes.
-  slot cclass-name :: <name>, required-init-keyword: name:;
-
-  // List of the direct superclasses of this class.
-  slot direct-superclasses :: <list>,
-       required-init-keyword: direct-superclasses:;
-
-  // Closest primary superclass.
-  slot closest-primary-superclass :: <cclass>;
-
-  // True when the class can't be functional.  Not the same thing as ~functional?
-  // because abstract classes can be neither functional? nor not-functional?.
-  slot not-functional? :: <boolean>, init-keyword: not-functional:, init-value: #f;
-
-  // True when class is functional, sealed, abstract, and/or primary.
-  slot functional? :: <boolean>, init-keyword: functional:, init-value: #f;
-  slot sealed? :: <boolean>, init-keyword: sealed:, init-value: #f;
-  slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
-  slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
-
-  // Type describing direct instances of this class.
-  slot direct-type :: <direct-instance-ctype>;
-
-  // class precedence list of all classes inherited, including this class and
-  // indirectly inherited classes.  Unbound if not yet computed.
-  slot precedence-list :: <list>;
-
-  // List of all known subclasses (including this class and indirect
-  // subclasses).  If sealed, then this is all of 'em.
-  slot subclasses :: <list>, init-value: #();
-end class;
-
-define method initialize (obj :: <cclass>, #all-keys)
-  obj.direct-type := make(<direct-instance-ctype>, base-class: obj);
-  let cpl = compute-cpl(obj, obj.direct-superclasses);
-  obj.precedence-list := cpl;
-  for (super in cpl)
-    super.subclasses := pair(obj, super.subclasses);
-  end;
-  // Find the closest primary superclass.  Note: we don't have to do any
-  // error checking, because that is done for us in defclass.dylan.
-  if (obj.primary?)
-    obj.closest-primary-superclass := obj;
-  else
-    let closest = #f;
-    for (super in obj.direct-superclasses)
-      let primary-super = super.closest-primary-superclass;
-      if (~closest | csubtype?(primary-super, closest))
-	closest := primary-super;
-      end;
-    end;
-    obj.closest-primary-superclass := closest;
-  end;
-end;
-
-define method print-object (cclass :: <cclass>, stream :: <stream>) => ();
-  pprint-fields(cclass, stream, name: cclass.cclass-name);
-end;
-
-define class <primitive-cclass> (<cclass>)
-end class;
-
-define class <defined-cclass> (<cclass>)
-end class;
-
-define method csubtype-dispatch(type1 :: <cclass>, type2 :: <cclass>)
-    => result :: <boolean>;
-  member?(type2, type1.precedence-list);
-end method;
-
-define method csubtype-dispatch(type1 :: <cclass>, type2 :: <direct-instance-ctype>)
-    => result :: <boolean>;
-  type1 == type1.base-class & type1.sealed? & empty?(type1.subclasses);
-end;
-
-define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
-    => (result :: <ctype>, precise :: <boolean>);
-  if (type1.sealed? & type2.sealed?)
-    values(reduce(ctype-union, empty-ctype(),
-		  intersection(type1.subclasses, type2.subclasses)),
-	   #t);
-  else
-    let primary1 = type1.closest-primary-superclass;
-    let primary2 = type2.closest-primary-superclass;
-    if (csubtype?(primary1, primary2) | csubtype?(primary2, primary1))
-      // The closest primary superclasses are not inconsistent.  Therefore, someone
-      // could make a new subclass that inherits from both.
-      values(type1, #f);
-    else
-      values(empty-ctype(), #t);
-    end;
-  end;
-end method;
-
-define method find-direct-classes(type :: <cclass>) => res :: false-or(<list>);
-  if (type.sealed?)
-    choose(complement(abstract?), type.subclasses);
-  else
-    #f;
-  end;
-end method;
 
 
 //// make-canonical-singleton:
@@ -1191,6 +1017,13 @@ define class <multi-value-ctype> (<values-ctype>)
   slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
 end class;
 
+define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
+    => ();
+  pprint-fields(type, stream,
+		positional-types: type.positional-types,
+		min-values: type.min-values,
+		rest-value-type: type.rest-value-type);
+end;
 
 // make-values-ctype  --  Exported
 //
@@ -1316,13 +1149,13 @@ end method;
 ///
 define constant values-type-union = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
-    => res :: <values-ctype>;
+    => (res :: <values-ctype>, win :: <boolean>);
   args-type-op(type1, type2, ctype-union, min);
 end method;
 ///
 define constant values-type-intersection = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
-    => res :: <values-ctype>;
+    => (res :: <values-ctype>, win :: <boolean>);
   args-type-op(type1, type2, ctype-intersection, max);
 end method;
 
@@ -1370,11 +1203,15 @@ define constant values-subtype? = method
       let rest1 = type1.rest-value-type;
       let types2 = type2.positional-types;
       let rest2 = type2.rest-value-type;
-      case
-        type1.min-values < type2.min-values => values(#f, #t);
-	types1.size < types2.size => values(#f, #f);
+      if (type1.min-values < type2.min-values)
+	values(#f, #t);
+      else
 	block (done)
-	  for (t1 in types1, t2 in types2)
+	  for (rem1 = types1 then rem1.tail,
+	       rem2 = types2 then rem2.tail,
+	       until rem1 == #() & rem2 == #())
+	    let t1 = if (rem1 == #()) rest1 else rem1.head end;
+	    let t2 = if (rem2 == #()) rest2 else rem2.head end;
 	    let (res, win-p) = csubtype?(t1, t2);
 	    unless (win-p) done(#f, #f) end;
 	    unless (res) done(#f, #t) end;
