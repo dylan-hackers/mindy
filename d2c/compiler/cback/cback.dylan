@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.110 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.111 1996/03/02 19:59:23 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -416,7 +416,6 @@ define method maybe-emit-entries
     if (disc)
       maybe-emit-general-entry(disc, file);
     else
-      format(*debug-output*, "*** processing methods on %s\n", ctv);
       map(method (m) maybe-emit-entries(m.ct-value, file) end,
 	  defn.generic-defn-methods);
     end if;
@@ -425,7 +424,6 @@ end method maybe-emit-entries;
 
 define method maybe-emit-entries
     (ctv :: <ct-method>, file :: <file-state>) => ();
-  format(*debug-output*, "*** maybe need entries on %s\n", ctv);
   maybe-emit-generic-entry(ctv, file);
   // There is special "trampoline" code which renders general methods
   // unnecessary for some methods.  Only generate it if needed.
@@ -1317,7 +1315,6 @@ define method emit-tlf-gunk
       eagerly-reference(ctv, file);
       if (defn.generic-defn-discriminator
 	    & defn.defn-name.name-inherited-or-exported?)
-	format(*debug-output*, "*** Eagerly emitting general entry for %s\n", ctv);
 	maybe-emit-general-entry(defn.generic-defn-discriminator, file);
       end if;
     end if;
@@ -1331,7 +1328,6 @@ define method check-generic-method-xep
   case
     (~gf | ~ctv) => #t;
     (~gf.generic-defn-sealed?) =>
-      format(*debug-output*, "*** Eagerly emitting generic entry for %s\n", ctv);
       maybe-emit-generic-entry(ctv, file);
       // By adding generic function methods to the heap now, we save
       // effort during the global dump phase.  There is, of course, the
@@ -1340,7 +1336,6 @@ define method check-generic-method-xep
       eagerly-reference(ctv, file);
     (gf.defn-name.name-inherited-or-exported?
        & ~gf.generic-defn-discriminator) =>
-      format(*debug-output*, "*** Eagerly emitting generic entry for %s\n", ctv);
       maybe-emit-generic-entry(ctv, file);
   end case;
 end method check-generic-method-xep;
@@ -2705,7 +2700,6 @@ define method c-expr-and-rep
     (lit :: <ct-function>, rep-hint :: <representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <representation>);
-  format(*debug-output*, "*** Need entries for %s\n", lit);
   maybe-emit-entries(lit, file);
   aux-c-expr-and-rep(lit, file, lit.ct-function-name.c-prefix, lit);
 end;
