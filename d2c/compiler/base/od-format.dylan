@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.52 1996/07/23 17:25:08 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.53 1996/07/25 12:58:22 ram Exp $
 
 /*
 
@@ -1199,6 +1199,9 @@ define variable *data-units* :: <object-table> = make(<table>);
 // faster and more space-efficient to use for the local-index &
 // local-map vectors.
 //
+#if (mindy)
+define constant <int-vector> = <simple-object-vector>;
+#else
 define class <int-vector> (<vector>)
   sealed slot %element :: <integer>,
     init-value: 0, init-keyword: fill:,
@@ -1230,6 +1233,7 @@ define sealed inline method element-setter
     error("Vector %= does not contain element %d.", vec, index);
   end;
 end;
+#endif
 
 //------------------------------------------------------------------------
 
