@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.15 1994/06/27 16:49:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.16 1994/07/19 17:18:39 wlott Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -79,6 +79,7 @@ static void grow_component(struct component *component)
     block->next = NULL;
 
     if (cur) {
+	cur->next = block;
 	cur->end = component->fill;
 	component->bytes += cur->end - cur->bytes;
     }
