@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.16 2001/02/25 18:01:02 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.17 2001/03/12 18:40:08 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -278,6 +278,7 @@ define module magic
 	     \for-aux,
 	     \for-aux2,
 	     \for-clause,
+	     fast-class-instance?,
 	     general-call,
 	     general-rep-getter,
 	     general-rep-setter,

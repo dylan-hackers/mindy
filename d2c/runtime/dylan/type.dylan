@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.4 2000/02/11 00:30:41 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.5 2001/03/12 18:40:08 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -931,6 +931,21 @@ define method %instance? (object :: <object>, type :: <none-of>)
   end block;
 end;
 
+// fast-class-instance?(object :: <object>, type :: <class>) -- exported
+//
+// for internal use by the compiler. Makes heavy assumptions on the
+// structure of classes.
+//
+define sealed movable flushable inline method fast-class-instance? (object :: <object>, class :: <class>)
+    => res :: <boolean>;
+  let bucket = class.class-bucket;
+//  class1 == class2 |
+   %%primitive(fixnum-=, 
+	       %element(object.object-class.class-row, bucket), 
+	       %element(class.class-row, bucket));
+end method fast-class-instance?;
+
+
 
 // subtype? -- exported from Dylan.
 //
@@ -943,7 +958,7 @@ define movable generic subtype? (type1 :: <type>, type2 :: <type>)
 //
 // Neither type is a union type, so defer to %subtype?.
 //
-define method subtype? (type1 :: <type>, type2 :: <type>)
+define inline method subtype? (type1 :: <type>, type2 :: <type>)
     => res :: <boolean>;
   %subtype?(type1, type2);
 end method subtype?;
@@ -1047,33 +1062,13 @@ end method %subtype?;
 
 // %subtype(<class>,<class>) -- internal gf method.
 //
-// Class1 is a subtype of class2 when class2 is listed in class1's
-// all-superclasses.  For effeciency, pick off the case where the two
-// classes are == and we cache the result of the last lookup.
+// The generic case is treated using the type inclusion
+// matrix.
 //
-define method %subtype? (class1 :: <class>, class2 :: <class>)
+define inline method %subtype? (class1 :: <class>, class2 :: <class>)
     => res :: <boolean>;
-/* This is the old implementation.
-  // This could be recoded simply as member(class2, class1.superclasses), but
-  // that would marginally slower, and this is in the critical path.
-  if (class1 == class2)
-    #t;
-  else
-    let superclasses = class1.all-superclasses;
-    block (return)
-      for (index :: <integer> from 1 below superclasses.size)
-	// We skip element 0 because it's the same as class1.
-	if (%element(superclasses, index) == class2)
-	  return(#t);
-	end if;
-      finally
-	#f;
-      end for;
-    end block;
-  end if; */
-  // the new code 
-  class1 == class2 |
-    class1.class-row[class2.class-bucket] == class2.class-row[class2.class-bucket]; 
+//  class1 == class2 |
+  class1.class-row[class2.class-bucket] == class2.class-row[class2.class-bucket]; 
 end method %subtype?;
 
 // %subtype?(<direct-instance>,<type>) -- internal gf method.

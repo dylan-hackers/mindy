@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.3 2001/02/25 19:45:24 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.4 2001/03/12 18:40:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -962,7 +962,14 @@ define method build-instance?
     end;
     res;
   else
-    next-method();
+    let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    let class-literal = make-literal-constant(builder, class);
+    build-assignment
+      (builder, policy, source, res,
+       make-unknown-call
+	 (builder, ref-dylan-defn(builder, policy, source, #"fast-class-instance?"), #f,
+	  list(value, class-literal)));
+    res;
   end;
 end;  
 

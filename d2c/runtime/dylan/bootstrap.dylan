@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.15 2001/02/25 18:00:56 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.16 2001/03/12 18:40:08 andreas Exp $
 copyright: see below
 module: bootstrap
 
@@ -263,6 +263,7 @@ define module dylan-viscera
     \for-aux,
     \for-aux2,
     \for-clause,
+    fast-class-instance?,
     general-call,
     general-rep-getter,
     general-rep-setter,
