@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.79 2001/09/02 08:11:32 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.80 2001/09/07 15:43:07 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -856,6 +856,7 @@ AC_CHECK_LIB(dld, shl_load, [AC_DEFINE(HAVE_LIBDLD)
 			     LIBS="$LIBS -ldld"])
 AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
 			 AC_DEFINE(HAVE_LIBDLD)
+                         LIBOBJS="${LIBOBJS-} shl.o"
 			 LIBS="$LIBS -ldl"])
 
 #--------------------------------------------------------------------
