@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.28 1995/12/16 03:42:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.29 1995/12/18 05:02:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -344,7 +344,7 @@ end method;
 define method csubtype-dispatch
     (type1 :: <cclass>, type2 :: <direct-instance-ctype>)
     => result :: <boolean>;
-  type1 == type2.base-class & type1.sealed? & empty?(type1.subclasses);
+  type1 == type2.base-class & type1.sealed? & type1.subclasses.tail == #();
 end;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
