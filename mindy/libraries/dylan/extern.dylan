@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.4 1995/07/05 23:12:04 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.5 1995/08/02 18:43:35 rgs Exp $
 
 //======================================================================
 //
@@ -159,7 +159,8 @@ define class <machine-pointer> (<statically-typed-pointer>) end class;
 // <C-string> corresponds to C's native "char *" type.  We provide basic
 // functions to that it obeys the protocol of <string>.
 //
-define class <c-string> (<string>, <statically-typed-pointer>) 
+define class <c-string>
+    (<stretchy-collection>, <string>, <statically-typed-pointer>) 
 end class <c-string>;
 
 // We come up with an ambiguity in this special case, so define a method which
@@ -210,6 +211,72 @@ define method forward-iteration-protocol(str :: <c-string>)
 	 method (str, state) state end method);
 end method forward-iteration-protocol;
 
+define method pointer-value (ptr :: <c-string>, #key index = 0)
+  as(<character>, unsigned-byte-at(ptr, offset: index));
+end method pointer-value;
+
+define method pointer-value-setter
+    (char :: <character>, ptr :: <c-string>, #key index = 0);
+  unsigned-byte-at(ptr, offset: index) := as(<integer>, char);
+end method pointer-value-setter;
+
+define method content-size
+    (value :: limited(<class>, subclass-of: <c-string>))
+ => (result :: <integer>);
+  1;
+end method content-size;
+
+define constant *cstr-no-default* = pair(#f, #f);
+
+define method size (string :: <c-string>)
+ => result :: <integer>;
+  strlen(string);
+end method size;
+
+define constant space-byte = as(<integer>, ' ');
+define method size-setter (value :: <integer>, string :: <c-string>)
+  let sz = strlen(string);
+  case
+    value == sz =>
+      #f;
+    value > sz =>
+      for (i from sz below value)
+	unsigned-byte-at(string, offset: i) := space-byte;
+      end for;
+      unsigned-byte-at(string, offset: value) := 0;
+    value < 0 =>
+      error("Cannot set size below zero.");
+    value < sz =>
+      unsigned-byte-at(string, offset: value) := 0;
+  end case;
+end method size-setter;
+
+// These methods actually attempt to avoid writing past the end of a string.
+// This makes them somewhat slow.  If faster (unsafe) access is required, you
+// should use pointer-value instead.
+//
+define method element
+    (vec :: <c-string>, index :: <integer>, #key default = *cstr-no-default*)
+ => (result :: <character>);
+  let sz = vec.size;
+  case
+    index >= 0 & index < sz =>
+      pointer-value(vec, index: index);
+    default == *cstr-no-default* =>
+      error("No such element in %=: %=", vec, index);
+    otherwise =>
+      default;
+  end case;
+end method element;
+    
+define method element-setter
+    (char :: <byte-character>, vec :: <c-string>, index :: <integer>)
+  let sz = vec.size;
+  if (index < 0) error("Negative keys not allowed in strings.") end if;
+  if (index >= sz) vec.size := index + 1 end if;
+  pointer-value(vec, index: index) := char;
+end method element-setter;
+
 define method \<
     (str1 :: <c-string>, str2 :: <c-string>)
  => result :: <object>;
@@ -221,11 +288,6 @@ define method \=
  => result :: <object>;
   strcmp(str1, str2) == 0;
 end method \=;
-
-define method size (string :: <c-string>)
- => result :: <integer>;
-  strlen(string);
-end method size;
 
 // This is a very common operation, so let's make it fast.
 //
@@ -249,6 +311,8 @@ define method as (cls == <byte-string>, str :: <c-string>)
   end for;
   result;
 end method as;
+
+//------------------------------------------------------------------------
 
 define method export-value (cls == <integer>, value :: <boolean>)
  => (result :: <integer>);
@@ -282,6 +346,15 @@ define method element
  => (result :: <object>);
   pointer-value(vec, index: index);
 end method element;
+
+// C does not do bounds checking on vectors, and many of the interface files
+// make use of this weakngess.  Therefore, we do no bounds checking either.
+// Caveat emptor.
+//
+define method element-setter
+    (value :: <object>, vec :: <c-vector>, index :: <integer>)
+  pointer-value(vec, index: index) := value;
+end method element-setter;
 
 // For "normal" ponters, the size is "#f", indicating that the size is unknown
 // and potentially infinite.  However, subtypes can redefine this to higher
