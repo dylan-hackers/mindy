@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.1 1994/03/24 21:49:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.2 1994/04/17 17:43:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -47,4 +47,22 @@ typedef int boolean;
 
 #ifndef NULL
 #define NULL ((void*)0)
+#endif
+
+
+#ifdef sparc
+#define SLOW_LONGJMP 1
+#endif
+
+#ifdef hppa
+#define SLOW_FUNCTION_POINTERS 1
+#endif
+
+
+#ifndef SLOW_LONGJMP
+#define SLOW_LONGJMP 0
+#endif
+
+#ifndef SLOW_FUNCTION_POINTERS
+#define SLOW_FUNCTION_POINTERS 0
 #endif
