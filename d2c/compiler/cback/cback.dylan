@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.75 1995/11/08 16:43:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.76 1995/11/09 17:35:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,6 +299,10 @@ define class <backend-var-info> (<object>)
     required-init-keyword: name:;
 end;
 
+add-make-dumper(#"backend-var-info", *compiler-dispatcher*, <backend-var-info>,
+		list(backend-var-info-rep, representation:, #f,
+		     backend-var-info-name, name:, #f));
+
 define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
 			     // ### Should really only be ssa-variable.
 			     output-info :: <output-info>)
@@ -315,7 +319,7 @@ define method make-info-for (defn :: <definition>,
   let rep = if (type)
 	      pick-representation(type, #"speed");
 	    else
-	      $general-rep;
+	      *general-rep*;
 	    end;
   if (instance?(rep, <immediate-representation>))
     let name = new-global(output-info);
@@ -327,7 +331,7 @@ define method make-info-for (defn :: <definition>,
 			  defn.ct-value;
 			end,
 			output-info);
-    make(<backend-var-info>, representation: $general-rep, name: name);
+    make(<backend-var-info>, representation: *general-rep*, name: name);
   end;
 end;
 
@@ -376,7 +380,7 @@ define class <function-info> (<object>)
   //
   // The C name of the function corresponding to this function-region.
   slot function-info-main-entry-name :: false-or(<byte-string>),
-    init-value: #f;
+    init-value: #f, init-keyword: main-entry-name:;
   //
   // List of the representations for the arguments.
   slot function-info-argument-representations :: <list>,
@@ -395,6 +399,13 @@ define class <function-info> (<object>)
   slot function-info-result-type :: <values-ctype>,
     required-init-keyword: result-type:;
 end;
+
+define constant $function-info-slots
+  = list(function-info-name, name:, #f,
+	 function-info-main-entry-name, main-entry-name:, #f,
+	 function-info-argument-representations, argument-reps:, #f,
+	 function-info-result-representation, result-rep:, #f,
+	 function-info-result-type, result-type:, #f);
 
 define method main-entry-name
     (info :: <function-info>, output-info :: <output-info>)
@@ -496,8 +507,15 @@ end method;
 // Constant stuff.
 
 define class <constant-info> (<object>)
-  slot const-info-expr :: false-or(<byte-string>), init-value: #f;
+  slot const-info-expr :: false-or(<byte-string>),
+    init-value: #f, init-keyword: expr:;
 end;
+
+define constant $constant-info-slots
+  = list(const-info-expr, expr:, #f);
+
+add-make-dumper(#"constant-info", *compiler-dispatcher*, <constant-info>,
+		$constant-info-slots);
 
 define method make-info-for (ctv :: <ct-value>, output-info :: <output-info>)
     => res :: <constant-info>;
@@ -506,8 +524,17 @@ end;
 
 define class <constant-function-info> (<constant-info>, <function-info>)
   slot function-info-general-entry-name :: false-or(<byte-string>),
-    init-value: #f;
+    init-value: #f, init-keyword: general-entry-name:;
 end;
+
+define constant $constant-function-info-slots
+  = concatenate($constant-info-slots,
+		$function-info-slots,
+		list(function-info-general-entry-name, general-entry-name:,
+		       #f));
+
+add-make-dumper(#"constant-function-info", *compiler-dispatcher*,
+		<constant-function-info>, $constant-function-info-slots);
 
 define method general-entry-name
     (info :: <constant-function-info>, output-info :: <output-info>)
@@ -526,8 +553,16 @@ end;
 
 define class <constant-method-info> (<constant-function-info>)
   slot function-info-generic-entry-name :: false-or(<byte-string>),
-    init-value: #f;
+    init-value: #f, init-keyword: generic-entry-name:;
 end;
+
+define constant $constant-method-info-slots
+  = concatenate($constant-function-info-slots,
+		list(function-info-generic-entry-name, generic-entry-name:,
+		       #f));
+
+add-make-dumper(#"constant-method-info", *compiler-dispatcher*,
+		<constant-method-info>, $constant-method-info-slots);
 
 define method generic-entry-name
     (info :: <constant-method-info>, output-info :: <output-info>)
@@ -556,9 +591,9 @@ define method emit-prologue (output-info :: <output-info>) => ();
   format(stream, "extern descriptor_t %s_roots[];\n\n",
 	 output-info.output-info-unit-info.unit-info-prefix);
   format(stream, "#define obj_True %s.heapptr\n",
-	 c-expr-and-rep(as(<ct-value>, #t), $general-rep, output-info));
+	 c-expr-and-rep(as(<ct-value>, #t), *general-rep*, output-info));
   format(stream, "#define obj_False %s.heapptr\n\n",
-	 c-expr-and-rep(as(<ct-value>, #f), $general-rep, output-info));
+	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, output-info));
   format(stream, "#define GENERAL_ENTRY(func) \\\n");
   format(stream, "    ((entry_t)SLOT(func, void *, %d))\n",
 	 dylan-slot-offset(function-ctype(), #"general-entry"));
@@ -624,7 +659,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   format(gstream, "descriptor_t *ptr = start + min_values;\n\n");
   format(gstream, "while (end < ptr)\n");
   format(gstream, "    *end++ = %s;\n",
-	 c-expr-and-rep(as(<ct-value>, #f), $general-rep, output-info));
+	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, output-info));
   format(gstream, "return end;\n");
   write(gstream.string-output-stream-string, bstream);
   write("}\n\n", bstream);
@@ -647,10 +682,10 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_double_float(double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
-    let (expr, rep) = c-expr-and-rep(cclass, $heap-rep, output-info);
+    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, output-info);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr($heap-rep, expr, rep, output-info));
+	   conversion-expr(*heap-rep*, expr, rep, output-info));
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -668,10 +703,10 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
     format(gstream, "heapptr_t res = allocate(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
-    let (expr, rep) = c-expr-and-rep(cclass, $heap-rep, output-info);
+    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, output-info);
     format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
 	   dylan-slot-offset(cclass, #"%object-class"),
-	   conversion-expr($heap-rep, expr, rep, output-info));
+	   conversion-expr(*heap-rep*, expr, rep, output-info));
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
@@ -957,7 +992,7 @@ end;
 define method emit-region (region :: <if-region>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
-  let cond = ref-leaf($boolean-rep, region.depends-on.source-exp, output-info);
+  let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, output-info);
   spew-pending-defines(output-info);
   let initial-depth = output-info.output-info-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
@@ -1081,7 +1116,7 @@ define method emit-return
 	 count from 0,
 	 while: dep)
       format(stream, "orig_sp[%d] = %s;\n", count,
-	     ref-leaf($general-rep, dep.source-exp, output-info));
+	     ref-leaf(*general-rep*, dep.source-exp, output-info));
     finally
       spew-pending-defines(output-info);
       format(stream, "return orig_sp + %d;\n", count);
@@ -1162,7 +1197,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		      var.derived-type.min-values, output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
-		  $general-rep;
+		  *general-rep*;
 		else
 		  variable-representation(defines, output-info)
 		end;
@@ -1179,7 +1214,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     => ();
   if (defines)
     let rep-hint = if (instance?(defines.var-info, <values-cluster-info>))
-		     $general-rep;
+		     *general-rep*;
 		   else
 		     variable-representation(defines, output-info)
 		   end;
@@ -1192,8 +1227,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <function-literal>,
 			       output-info :: <output-info>)
     => ();
-  deliver-result(defines, ref-leaf($heap-rep, leaf, output-info),
-		 $heap-rep, #f, output-info);
+  deliver-result(defines, ref-leaf(*heap-rep*, leaf, output-info),
+		 *heap-rep*, #f, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -1211,8 +1246,8 @@ define method emit-assignment (results :: false-or(<definition-site-variable>),
     => ();
   if (results)
     let rep = variable-representation(results, output-info);
-    if (rep == $general-rep)
-      deliver-result(results, "0", $heap-rep, #f, output-info);
+    if (rep == *general-rep*)
+      deliver-result(results, "0", *heap-rep*, #f, output-info);
     else
       deliver-result(results, "0", rep, #f, output-info);
     end;
@@ -1231,7 +1266,7 @@ define method emit-assignment
   let (next-info, arguments)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
-	values(ref-leaf($heap-rep, dep.source-exp, output-info),
+	values(ref-leaf(*heap-rep*, dep.source-exp, output-info),
 	       dep.dependent-next);
       else
 	values(#f, call.depends-on.dependent-next);
@@ -1241,11 +1276,11 @@ define method emit-assignment
        count from 0,
        while: arg-dep)
     format(setup-stream, "%s[%d] = %s;\n", args, count,
-	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
+	   ref-leaf(*general-rep*, arg-dep.source-exp, output-info));
   finally
     let (entry, name)
       = xep-expr-and-name(function, use-generic-entry?, output-info);
-    let func = ref-leaf($heap-rep, function, output-info);
+    let func = ref-leaf(*heap-rep*, function, output-info);
     spew-pending-defines(output-info);
     let stream = output-info.output-info-guts-stream;
     write(setup-stream.string-output-stream-string, stream);
@@ -1275,7 +1310,7 @@ define method xep-expr-and-name
 			  else
 			    "GENERAL_ENTRY(%s)";
 			  end,
-			  ref-leaf($heap-rep, func, output-info)),
+			  ref-leaf(*heap-rep*, func, output-info)),
 	 #f);
 end;
 
@@ -1500,14 +1535,14 @@ define method emit-assignment
   let (next-info, cluster)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
-	values(ref-leaf($heap-rep, dep.source-exp, output-info),
+	values(ref-leaf(*heap-rep*, dep.source-exp, output-info),
 	       dep.dependent-next.source-exp);
       else
 	values(#f, call.depends-on.dependent-next.source-exp);
       end;
   let (entry, name)
     = xep-expr-and-name(function, use-generic-entry?, output-info);
-  let func = ref-leaf($heap-rep, function, output-info);
+  let func = ref-leaf(*heap-rep*, function, output-info);
   spew-pending-defines(output-info);
   let (bottom-name, top-name) = consume-cluster(cluster, output-info);
   if (name)
@@ -1539,7 +1574,7 @@ define method emit-assignment
     (defines :: false-or(<definition-site-variable>), expr :: <catch>,
      output-info :: <output-info>)
     => ();
-  let func = extract-operands(expr, output-info, $heap-rep);
+  let func = extract-operands(expr, output-info, *heap-rep*);
   let (values, sp) = cluster-names(output-info.output-info-cur-stack-depth);
   let stream = output-info.output-info-guts-stream;
   if (defines)
@@ -1663,7 +1698,7 @@ define method emit-assignment
 	end;
 	values(ref-leaf(instance-rep, instance-leaf, output-info), #f);
       else
-	let instance-expr = ref-leaf($heap-rep, instance-leaf, output-info);
+	let instance-expr = ref-leaf(*heap-rep*, instance-leaf, output-info);
 	let offset-expr
 	  = if (op.depends-on.dependent-next)
 	      let index = ref-leaf(*long-rep*,
@@ -1693,14 +1728,14 @@ define method emit-assignment
   let slot-rep = slot.slot-representation;
   if (instance?(slot, <vector-slot-info>))
     let (new, instance, index)
-      = extract-operands(op, output-info, slot-rep, $heap-rep, *long-rep*);
+      = extract-operands(op, output-info, slot-rep, *heap-rep*, *long-rep*);
     let c-type = slot-rep.representation-c-type;
     format(output-info.output-info-guts-stream,
 	   "SLOT(%s, %s, %d + %s * sizeof(%s)) = %s;\n",
 	   instance, c-type, offset, index, c-type, new);
   else
     let (new, instance)
-      = extract-operands(op, output-info, slot-rep, $heap-rep);
+      = extract-operands(op, output-info, slot-rep, *heap-rep*);
     format(output-info.output-info-guts-stream,
 	   "SLOT(%s, %s, %d) = %s;\n",
 	   instance, slot-rep.representation-c-type, offset, new);
@@ -1753,7 +1788,7 @@ define method deliver-cluster
 	   index from 0,
 	   while: var)
 	let source = format-to-string("%s[%d]", src-start, index);
-	deliver-single-result(var, source, $general-rep, #t, output-info);
+	deliver-single-result(var, source, *general-rep*, #t, output-info);
       end;
     end;
   end;
@@ -1768,7 +1803,7 @@ define method deliver-results
     let (bottom-name, top-name) = produce-cluster(defines, output-info);
     format(stream, "%s = %s + %d;\n", top-name, bottom-name, values.size);
     for (val in values, index from 0)
-      emit-copy(format-to-string("%s[%d]", bottom-name, index), $general-rep,
+      emit-copy(format-to-string("%s[%d]", bottom-name, index), *general-rep*,
 		val.head, val.tail, output-info);
     end;
   else
@@ -1801,7 +1836,7 @@ define method deliver-result
       let stream = output-info.output-info-guts-stream;
       let (bottom-name, top-name) = produce-cluster(defines, output-info);
       format(stream, "%s = %s + 1;\n", top-name, bottom-name);
-      emit-copy(format-to-string("%s[0]", bottom-name), $general-rep,
+      emit-copy(format-to-string("%s[0]", bottom-name), *general-rep*,
 		value, rep, output-info);
     else
       deliver-single-result(defines, value, rep, now-dammit?, output-info);
@@ -1927,8 +1962,8 @@ define method ref-leaf (target-rep :: <representation>,
 			leaf :: <uninitialized-value>,
 			output-info :: <output-info>)
     => res :: <string>;
-  if (target-rep == $general-rep)
-    conversion-expr(target-rep, "0", $heap-rep, output-info);
+  if (target-rep == *general-rep*)
+    conversion-expr(target-rep, "0", *heap-rep*, output-info);
   else
     "0";
   end;
@@ -1941,21 +1976,21 @@ define method c-expr-and-rep (lit :: <ct-value>,
   let info = get-info-for(lit, output-info);
   values(info.const-info-expr
 	   | (info.const-info-expr := new-root(lit, output-info)),
-	 $general-rep);
+	 *general-rep*);
 end;
 
 define method c-expr-and-rep (lit :: <literal-true>,
-			      rep-hint == $boolean-rep,
+			      rep-hint == *boolean-rep*,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values("TRUE", $boolean-rep);
+  values("TRUE", *boolean-rep*);
 end;
 
 define method c-expr-and-rep (lit :: <literal-false>,
-			      rep-hint == $boolean-rep,
+			      rep-hint == *boolean-rep*,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values("FALSE", $boolean-rep);
+  values("FALSE", *boolean-rep*);
 end;
 
 define method c-expr-and-rep (lit :: <literal-fixed-integer>,
@@ -2112,9 +2147,9 @@ define method emit-copy
   let stream = output-info.output-info-guts-stream;
   let (proxy, proxy-rep)
     = c-expr-and-rep(make(<proxy>, for: source-rep.representation-class),
-		     $heap-rep, output-info);
+		     *heap-rep*, output-info);
   format(stream, "%s.heapptr = %s;\n",
-	 target, conversion-expr($heap-rep, proxy, proxy-rep, output-info));
+	 target, conversion-expr(*heap-rep*, proxy, proxy-rep, output-info));
   format(stream, "%s.dataword.%s = %s;\n",
 	 target, source-rep.representation-data-word-member, source);
 end;
@@ -2125,7 +2160,7 @@ define method emit-copy
      output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
-  let heapptr = conversion-expr($heap-rep, source, source-rep, output-info);
+  let heapptr = conversion-expr(*heap-rep*, source, source-rep, output-info);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
   format(stream, "%s.dataword.l = 0;\n", target);
 end;
