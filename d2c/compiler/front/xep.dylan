@@ -1,5 +1,5 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.5 2003/02/05 10:32:08 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.6 2003/04/04 19:01:36 gabor Exp $
 copyright: see below
 
 
@@ -138,7 +138,7 @@ define method build-xep
   let defn = function.ct-function-definition;
   let loc = if (defn) defn.source-location
 	    else
-	      compiler-warning("has no defn: %=", function); //### FIXME
+// GGR: for later debugging	      compiler-warning("has no defn: %=", function); //### FIXME
 	      make(<source-location>)
 	    end;
   
