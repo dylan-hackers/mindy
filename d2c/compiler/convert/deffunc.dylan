@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.4 2000/01/24 04:56:12 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.5 2000/01/27 22:55:34 andreas Exp $
 copyright: see below
 
 
@@ -126,7 +126,7 @@ end class <define-method-parse>;
 // This switch is available for those who don't want to pay the cost of
 // implicitly defined next methods in every method definition.
 //
-define variable *implicitly-define-next-method* :: <boolean> = #f;
+define variable *implicitly-define-next-method* :: <boolean> = #t;
 
 define-procedural-expander
   (#"make-define-method",
