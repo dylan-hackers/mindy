@@ -1,5 +1,6 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.1 1996/01/03 21:30:42 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.2 1996/01/04 15:22:10 ram Exp $
 library: compiler-base
+unit-prefix: base
 unique-id-base: 10000
 
 base-exports.dylan
