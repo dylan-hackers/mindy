@@ -2,6 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.6 1996/08/07 10:15:46 nkramer Exp $
 
 //======================================================================
 //
@@ -138,6 +139,10 @@ define module streams
     export: {<byte-vector>, <buffer>, <byte>, <buffer-index>,
 	     $maximum-buffer-size, buffer-end, buffer-end-setter,
 	     buffer-next, buffer-next-setter };
+
+  // This next line is a kludge for file-streams.dylan under Windows/NT
+  use system, import: { c-include };
+
   export
     // Classes and types.
     //
