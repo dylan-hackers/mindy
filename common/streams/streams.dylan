@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.5 2000/01/24 04:55:25 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.6 2000/02/11 00:31:30 andreas Exp $
 
 //======================================================================
 //
@@ -51,7 +51,7 @@ define constant <locator> = <byte-string>;
 // $not-supplied -- Internal.
 // Used with on-end-of-stream keyword.
 //
-define constant $not-supplied = #"not-supplied-no-siree";
+define constant $not-supplied = "not-supplied-no-siree";
 
 // In mindy and d2c <character> is equivalent to unicode character.
 //
