@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.8 1999/02/25 06:44:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.9 1999/06/09 20:32:43 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1203,7 +1203,7 @@ define method emit-prologue
 
   let stream = file.file-body-stream;
   for (unit in other-units)
-    format(stream, "extern descriptor_t %s_roots[];\n", unit);
+    format(stream, "extern descriptor_t %s_roots[];\n", string-to-c-name(unit));
   end;
   format(stream, "extern descriptor_t %s_roots[];\n\n",
 	 file.file-unit.unit-prefix);
