@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.4 1994/04/09 00:09:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.5 1994/04/18 03:26:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -18,9 +18,10 @@
 
 
 enum literal_kind {
-    literal_SYMBOL, literal_INTEGER, literal_FLOAT,
-    literal_CHARACTER, literal_STRING, literal_LIST, literal_VECTOR,
-    literal_TRUE, literal_FALSE, literal_UNBOUND, literal_Kinds
+    literal_SYMBOL, literal_INTEGER, literal_SINGLE_FLOAT,
+    literal_DOUBLE_FLOAT, literal_EXTENDED_FLOAT, literal_CHARACTER,
+    literal_STRING, literal_LIST, literal_VECTOR, literal_TRUE, literal_FALSE,
+    literal_UNBOUND, literal_Kinds
 };
 
 struct literal {
@@ -43,11 +44,25 @@ struct integer_literal {
     long value;
 };
 
-struct float_literal {
+struct single_float_literal {
+    enum literal_kind kind;
+    struct literal *next;
+    int line;
+    float value;
+};
+
+struct double_float_literal {
     enum literal_kind kind;
     struct literal *next;
     int line;
     double value;
+};
+
+struct extended_float_literal {
+    enum literal_kind kind;
+    struct literal *next;
+    int line;
+    long double value;
 };
 
 struct character_literal {
@@ -88,7 +103,6 @@ extern struct literal *make_false_literal(void);
 extern struct literal *make_string_literal(char *str);
 extern struct literal *make_character_literal(int c);
 extern struct literal *make_integer_literal(long value);
-extern struct literal *make_float_literal(double value);
 extern struct literal *make_symbol_literal(struct symbol *sym);
 extern struct literal *make_list_literal(struct literal_list *guts);
 extern struct literal *make_vector_literal(struct literal_list *guts);

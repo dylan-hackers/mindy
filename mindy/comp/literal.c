@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.6 1994/04/10 15:46:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.7 1994/04/18 03:27:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -99,18 +99,6 @@ struct literal *make_integer_literal(long value)
     return (struct literal *)res;
 }
 
-struct literal *make_float_literal(double value)
-{
-    struct float_literal *res = malloc(sizeof(struct float_literal));
-
-    res->kind = literal_FLOAT;
-    res->next = NULL;
-    res->line = 0;
-    res->value = value;
-
-    return (struct literal *)res;
-}
-
 struct literal *make_symbol_literal(struct symbol *sym)
 {
     struct symbol_literal *res = malloc(sizeof(struct symbol_literal));
@@ -190,7 +178,9 @@ void free_literal(struct literal *literal)
     switch (literal->kind) {
       case literal_SYMBOL:
       case literal_INTEGER:
-      case literal_FLOAT:
+      case literal_SINGLE_FLOAT:
+      case literal_DOUBLE_FLOAT:
+      case literal_EXTENDED_FLOAT:
       case literal_CHARACTER:
       case literal_STRING:
       case literal_TRUE:
@@ -228,8 +218,14 @@ struct literal *dup_literal(struct literal *literal)
       case literal_INTEGER:
 	size = sizeof(struct integer_literal);
 	break;
-      case literal_FLOAT:
-	size = sizeof(struct float_literal);
+      case literal_SINGLE_FLOAT:
+	size = sizeof(struct single_float_literal);
+	break;
+      case literal_DOUBLE_FLOAT:
+	size = sizeof(struct double_float_literal);
+	break;
+      case literal_EXTENDED_FLOAT:
+	size = sizeof(struct extended_float_literal);
 	break;
       case literal_CHARACTER:
 	size = sizeof(struct character_literal);
