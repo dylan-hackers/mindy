@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.11 2003/07/02 16:21:42 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.12 2003/07/11 03:13:08 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -953,9 +953,13 @@ define method annotate-variables-pattern
 end method annotate-variables-pattern;
 
 
-// Identifying variables referenced in expansion templates
+// Identify variables referenced in expansion templates.
 
 // identify-variable-references -- exported.
+//
+// Scans all of the expansion templates in a macro definition to insure
+// that all of the variables referenced in the template are exported
+// into the dumped library.
 //
 define method identify-variable-references
     (defn :: <macro-definition>) => ();
@@ -976,7 +980,6 @@ end method identify-variable-references;
 define generic identify-variable-references-template
     (template :: <template>, macro-name :: <name>) => ();
 
-// <procedural-template>
 define method identify-variable-references-template
     (template :: <procedural-template>, macro-name :: <name>) => ();
   for(argument in template.template-arguments)
@@ -984,14 +987,14 @@ define method identify-variable-references-template
   end for;
 end method;
 
-// <literal-template>
-
 define method identify-variable-references-template
     (template :: <literal-template>, macro-name :: <name>) => ();
   identify-variable-references-sequence(template.template-elements,
                                         macro-name);
 end method;
 
+// identify-variable-references-sequence -- internal
+//
 define method identify-variable-references-sequence
     (seq :: <sequence>, macro-name :: <name>) => ();
   local
@@ -1000,8 +1003,6 @@ define method identify-variable-references-sequence
       let name = make(<basic-name>, symbol: sym, module: module);
       let var = find-variable(name);
       if (var)
-        format(*debug-output*, "macro %s references variable %s\n",
-               macro-name, name);
         note-variable-referencing-macro(var, macro-name);
       end if;
       var;
@@ -1066,6 +1067,8 @@ define method identify-variable-references-sequence
   end for;
 end;
 
+// define-word? -- internal
+//
 define function define-word?
     (token :: <identifier-token>) => (res :: <boolean>);
   let kind = token.token-kind;
@@ -1073,6 +1076,8 @@ define function define-word?
     & kind <= $function-and-define-list-word-token
 end function;
 
+// bracketed? -- internal
+//
 define method bracketed?
     (template-element :: <object>, token-number :: <integer>)
  => (res :: <boolean>);
@@ -1085,6 +1090,8 @@ define method bracketed?
   template-element.bracketed-element-left-token.token-kind == token-number;
 end method;
 
+// assignment-operator? -- internal
+//
 define method assignment-operator?
     (token :: <object>) => (result :: <boolean>);
   #f;
@@ -1092,6 +1099,7 @@ end method;
 
 define method assignment-operator?
     (token :: <operator-token>) => (result :: <boolean>);
+  // ### could handle cases where another operator is bound to :=
   token.token-kind = $other-binary-operator-token
     & token.token-symbol == #":=";
 end method;

@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.9 2003/07/06 03:49:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.10 2003/07/11 03:13:06 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -924,7 +924,6 @@ define method name-inherited-or-exported? (name :: <basic-name>)
     if (var.variable-referencing-macro-names
           & any?(name-inherited-or-exported?,
                  var.variable-referencing-macro-names))
-      format(*debug-output*, "variable %s exported due to macro\n", name);
       return(#t);
     end if;
 
