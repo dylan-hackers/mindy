@@ -37,6 +37,4 @@ EOF
 
 push(@compile_dependencies, 'frontlib.dbc');
 
-do install ('bin', 'front');
-
 push(@files_to_clean, '*.dbc');
