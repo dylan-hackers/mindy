@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.6 1995/11/06 16:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.7 1995/11/08 16:49:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,6 +47,10 @@ define method convert-top-level-form
   fer-convert(builder, tlf.tlf-expression, make(<lexenv>), #"nothing", #f);
 end;
 
+define method dump-od (tlf :: <expression-tlf>, state :: <dump-state>)
+    => ();
+  // Do nothing.
+end;
 
 
 // Magic internal primitives placeholder.
@@ -79,4 +83,10 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <magic-interal-primitives-placeholder>)
     => ();
   // Nothing to do.
+end;
+
+define method dump-od
+    (tlf :: <magic-interal-primitives-placeholder>, state :: <dump-state>)
+    => ();
+  // Do nothing.
 end;
