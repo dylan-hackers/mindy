@@ -1,6 +1,5 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/Cback.lid,v 1.2 1999/07/16 16:30:46 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/Cback.lid,v 1.3 1999/07/30 17:25:17 andreas Exp $
 library: compiler-cback
-unit-prefix: cback
 unique-id-base: 10750
 shared-library: no
 

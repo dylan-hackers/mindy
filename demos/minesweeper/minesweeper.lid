@@ -1,6 +1,5 @@
-rcs-header: $Header: /scm/cvs/src/demos/minesweeper/minesweeper.lid,v 1.1 1998/05/03 19:56:00 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/demos/minesweeper/minesweeper.lid,v 1.2 1999/07/30 17:25:22 andreas Exp $
 library: mine-sweeper
-unit-prefix: minesweeper
 executable: minesweeper
 
 minesweeper-exports.dylan

@@ -1,6 +1,5 @@
 Library: Streams
 unique-id-base: 1600
-unit-prefix: streams
 
 library.dylan
 fake-threads.dylan

@@ -49,7 +49,8 @@ N: Peter Housel
 E: housel@acm.org
 D: FreeBSD port, major portability work, callbacks, callbacks to
 D: closures, fancy new SGML manuals. Lots of Melange work, and many,
-D: many bug fixes.
+D: many bug fixes. C heap file generation, making shared libraries
+D: work.
 
 N: Eric Kidd
 E: eric.kidd@pobox.com

@@ -1,6 +1,5 @@
 Library: Streams
 unique-id-base: 1600
-unit-prefix: streams
 linker-options: /defaultlib:wsock32
 
 library.dylan

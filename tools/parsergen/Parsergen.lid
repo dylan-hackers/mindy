@@ -1,6 +1,5 @@
-rcs-header: $Header: /scm/cvs/src/tools/parsergen/Parsergen.lid,v 1.1 1998/05/03 19:55:56 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/parsergen/Parsergen.lid,v 1.2 1999/07/30 17:25:25 andreas Exp $
 library: parsergen
-unit-prefix: parsergen
 unique-id-base: 5000
 executable: parsergen
 entry-point: parsergen:%main
