@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.8 1997/02/04 14:39:53 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.9 1997/02/13 12:52:34 nkramer Exp $
 
 //======================================================================
 //
@@ -31,7 +31,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1
 //
 
 method () => ();
-#if (compiled-for-win32)
+#if (compiled-for-win32 | compiled-for-solaris)
   c-include("errno.h");
 #else
   c-include("unistd.h");
@@ -40,6 +40,11 @@ method () => ();
   c-include("string.h");
 end();
   
+// Top-level init code, done in C
+begin
+  call-out("streams_fd_init", void:);
+end;
+
 define /* exported */ constant fd-seek-set :: <integer>
   = c-expr(int:, "SEEK_SET");
 
