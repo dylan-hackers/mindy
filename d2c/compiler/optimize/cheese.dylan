@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.55 1995/05/08 17:04:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.56 1995/05/09 14:05:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -296,11 +296,7 @@ define method optimize
 	let builder = make-builder(component);
 	let op = make-operation(builder, <primitive>, list(source),
 				name: #"values");
-	remove-dependency-from-source(component, dependency);
-	dependency.source-exp := op;
-	dependency.source-next := op.dependents;
-	op.dependents := dependency;
-	reoptimize(component, assignment);
+	replace-expression(component, dependency, op);
 	expand-cluster(component, source, nvals);
       end;
     end;
@@ -582,11 +578,7 @@ define method optimize-unknown-call
       insert-before(component, call.dependents.dependent,
 		    builder-result(builder));
       let func-dep = call.depends-on;
-      remove-dependency-from-source(component, func-dep);
-      func-dep.source-exp := new-func;
-      func-dep.source-next := new-func.dependents;
-      new-func.dependents := func-dep;
-      reoptimize(component, call);
+      replace-expression(component, func-dep, new-func);
     else
       let new-ops = make(<stretchy-vector>);
       add!(new-ops, call.depends-on.source-exp);
@@ -742,11 +734,7 @@ define method optimize-unknown-call
       // is valid.
       let new-func = make-definition-leaf(make-builder(component),meths.first);
       let func-dep = call.depends-on;
-      remove-dependency-from-source(component, func-dep);
-      func-dep.source-exp := new-func;
-      func-dep.source-next := new-func.dependents;
-      new-func.dependents := func-dep;
-      reoptimize(component, call);
+      replace-expression(component, func-dep, new-func);
     end;
   end;
 end;    
@@ -934,10 +922,7 @@ define method optimize-slot-ref
     insert-before(component, call-assign, builder-result(builder));
 
     let dep = call-assign.depends-on;
-    remove-dependency-from-source(component, dep);
-    dep.source-exp := value;
-    dep.source-next := value.dependents;
-    value.dependents := dep;
+    replace-expression(component, dep, value);
   end;
 end;
 
@@ -975,10 +960,7 @@ define method optimize-slot-set
     insert-before(component, call-assign, builder-result(builder));
 
     let dep = call-assign.depends-on;
-    remove-dependency-from-source(component, dep);
-    dep.source-exp := new;
-    dep.source-next := new.dependents;
-    new.dependents := dep;
+    replace-expression(component, dep, new);
   end;
 end;
 
@@ -1167,13 +1149,8 @@ define-primitive-transformer
 			      concatenate(temps, falses, list(empty-vect)),
 			      name: #"values");
 	     end;
-	 let dep = orig-assign.depends-on;
-	 remove-dependency-from-source(component, dep);
-	 dep.source-exp := op;
-	 dep.source-next := op.dependents;
-	 op.dependents := dep;
+	 replace-expression(component, orig-assign.depends-on, op);
 	 insert-before(component, orig-assign, builder-result(builder));
-	 reoptimize(component, orig-assign);
        else
 	 let types = make(<stretchy-vector>);
 	 for (remaining = type.positional-types then remaining.tail,
@@ -1201,6 +1178,18 @@ define-primitive-transformer
        end;
      end;
    end);
+
+
+define method optimize (component :: <component>, op :: <truly-the>) => ();
+  let (intersection, win) = ctype-intersection(op.depends-on.source-exp,
+					       op.guaranteed-type);
+  maybe-restrict-type(component, op,
+		      if (win)
+			intersection;
+		      else
+			op.guaranteed-type;
+		      end);
+end;
 
 
 
@@ -1631,12 +1620,7 @@ define method let-convert
     insert-before(component, call-assign, builder-result(builder));
 
     // Replace the call with a reference to the result cluster.
-    let call-dep = call-assign.depends-on;
-    remove-dependency-from-source(component, call-dep);
-    call-dep.source-exp := results-temp;
-    call-dep.source-next := results-temp.dependents;
-    results-temp.dependents := call-dep;
-    reoptimize(component, call-assign);
+    replace-expression(component, call-assign.depends-on, results-temp);
   else
     // Insert the function body before the call assignment.
     insert-before(component, call-assign, function.body);
@@ -2497,6 +2481,7 @@ define method find-in-environment
 			     dependent-next: ref-dep.dependent-next);
 	  var-at-ref.dependents := new-dep;
 	  ref-dep.dependent-next := new-dep;
+	  reoptimize(component, ref);
 	else
 	  let builder = make-builder(component);
 	  let op = make-operation(builder, <primitive>,
@@ -2506,12 +2491,8 @@ define method find-in-environment
 	  build-assignment(builder, $Default-policy, make(<source-location>),
 			   temp, op);
 	  insert-before(component, ref-dep.dependent, builder-result(builder));
-	  remove-dependency-from-source(component, ref-dep);
-	  ref-dep.source-exp := temp;
-	  ref-dep.source-next := temp.dependents;
-	  temp.dependents := ref-dep;
+	  replace-expression(component, ref-dep, temp);
 	end;
-	reoptimize(component, ref);
       end;
       reoptimize(component, prologue);
       copy;
@@ -2692,7 +2673,7 @@ define method build-xep
 				     copy.derived-type);
       build-assignment(builder, policy, source, post-type,
 		       make-operation(builder, <truly-the>, list(pre-type),
-				      derived-type: copy.derived-type));
+				      guaranteed-type: copy.derived-type));
       add!(new-args, post-type);
     end;
   end;
@@ -2793,7 +2774,7 @@ define method build-xep
       let post-type = make-local-var(builder, #"arg", type);
       build-assignment(builder, policy, source, post-type,
 		       make-operation(builder, <truly-the>, list(temp),
-				      derived-type: type));
+				      guaranteed-type: type));
       add!(new-args, post-type);
     else
       add!(new-args, temp);
@@ -2916,7 +2897,7 @@ define method build-xep
 				  object-ctype());
 	build-assignment(key-dispatch-builder, policy, source, temp, op);
 	op := make-operation(key-dispatch-builder, <truly-the>, list(temp),
-			     derived-type: dylan-value(#"<symbol>"));
+			     guaranteed-type: dylan-value(#"<symbol>"));
       end;
       build-assignment(key-dispatch-builder, policy, source, key-var, op);
     end;
@@ -3396,6 +3377,23 @@ end;
 
 
 // FER editing utilities.
+
+// replace-expression
+//
+// Replace dep's source-exp with new-exp.  We remove dep from the old exp's
+// dependents, set the source-exp, and add dep to the new-exp's dependents.
+// We also queue dep's dependent for reoptimization because it probably
+// wants to know that one of its operands has changed.
+//
+define method replace-expression
+    (component :: <component>, dep :: <dependency>, new-exp :: <expression>)
+    => ();
+  remove-dependency-from-source(component, dep);
+  dep.source-exp := new-exp;
+  dep.source-next := new-exp.dependents;
+  new-exp.dependents := dep;
+  reoptimize(component, dep.dependent);
+end;
 
 // combine-regions -- internal.
 //
