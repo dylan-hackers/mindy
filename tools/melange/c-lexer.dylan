@@ -258,6 +258,7 @@ define token <rcurly-token> :: <punctuation-token> = 77;
 define /* exported */ token <alien-name-token> :: <token> = 78;
 define /* exported */ token <macro-parse-token> :: <token> = 79;
 define /* exported */ token <cpp-parse-token> :: <token> = 80;
+define /* exported */ token <machine-token> :: <token> = 81;
 #else
 // The mindy declarations have to be a lot clumsier since we don't have macros.
 
@@ -514,6 +515,10 @@ define class <macro-parse-token> (<token>)
 end class;
 define class <cpp-parse-token> (<token>) 
   inherited slot token-id = 80;
+end class;
+// An extra token to handle Solaris's "#machine(foo)" construct
+define class <machine-token> (<token>) 
+  inherited slot token-id = 81;
 end class;
 
 #endif
@@ -1009,6 +1014,7 @@ define constant reserved-words
 	   "...", <elipsis-token>,
 	   "sizeof", <sizeof-token>,
 	   "constant", <constant-token>,
+	   "#machine", <machine-token>,
 	   "--", <dec-op-token>,
 	   "++", <inc-op-token>,
 	   "->", <ptr-op-token>,

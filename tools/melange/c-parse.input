@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.16 1997/02/03 04:36:11 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/c-parse.input,v 1.17 1997/02/25 16:52:26 rgs Exp $
 
 //======================================================================
 //
@@ -247,6 +247,8 @@ define constant <source-location> = false-or(<parse-state>);
 :token <alien-name-token> <token>
 :token <macro-parse-token> <token>
 :token <cpp-parse-token> <token>
+;; #machine -- hack to suport solaris
+:token <machine-token> <token>
 
 :union NON-CURLY <token>
     (<identifier-token> <type-name-token>  <integer-token>
@@ -375,6 +377,12 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   else
     0;
   end if;
+%
+
+postfix-expr (<machine-token> <lparen-token> <identifier-token> <rparen-token>)
+  // Handle the solaris "#machine(foo)" construct.  Simply return 0 -- machine
+  // types should also be checked via the standard mechanism.
+  0;
 %
 
 ;postfix-expr (postfix-expr <dot-token> identifier)
