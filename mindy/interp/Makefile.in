@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.16 1996/07/23 16:19:32 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.17 1997/05/09 22:47:42 ram Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -39,8 +39,8 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-BINDIR	=		${exec_prefix}/bin
-LIBDIR	=		${exec_prefix}/lib/mindy
+BINDIR	=		@bindir@
+LIBDIR	=		@libdir@/dylan
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
@@ -76,7 +76,7 @@ SRCS = parser-tab.c lexer.c \
 	char.c handler.c instance.c input.c driver.c \
 	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
 
-EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${SRCDIR}/../libraries/time/time.inc
+EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${SRCDIR}/../../common/time/time.inc
 
 mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy

@@ -39,8 +39,8 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-BINDIR	=		${exec_prefix}/bin
-LIBDIR	=		${exec_prefix}/lib/mindy
+BINDIR	=		@bindir@
+LIBDIR	=		@libdir@/dylan
 
 AR      =               ar
 CC	=		@CC@

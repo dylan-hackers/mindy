@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/html2txt/Attic/Makefile.in,v 1.2 1994/10/26 19:45:08 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/html2txt/Attic/Makefile.in,v 1.3 1997/05/09 22:47:47 ram Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -39,8 +39,8 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-BINDIR	=		${exec_prefix}/bin
-LIBDIR	=		${exec_prefix}/lib/mindy
+BINDIR	=		@bindir@
+LIBDIR	=		@libdir@/dylan
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
@@ -50,18 +50,19 @@ YFLAGS	=		-d
 LEX	=		@LEX@
 LFLAGS	=		@LFLAGS@
 RANLIB	=		@RANLIB@
-INSTALL	=		@top_srcdir@/install.sh
+INSTALL	=		@INSTALL@
 INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
 
 LIBOBJS =		@LIBOBJS@
 LIBS	=		@LIBS@
 
+MC	=		@MC@
+
 ##
 ## end of configure written portion
 ##
 
-MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -lhtml
 

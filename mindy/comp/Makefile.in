@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.8 1995/12/10 02:25:36 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.9 1997/05/09 22:47:40 ram Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -39,8 +39,8 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-BINDIR	=		${exec_prefix}/bin
-LIBDIR	=		${exec_prefix}/lib/mindy
+BINDIR	=		@bindir@
+LIBDIR	=		@libdir@/dylan
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
