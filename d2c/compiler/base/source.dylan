@@ -1,11 +1,11 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.11 2003/04/08 06:44:27 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.12 2003/09/15 18:45:21 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -354,6 +354,11 @@ define sealed method describe-source-location
     (stream,
      body:
        method (stream :: <stream>)
+	 local method corrupted-file() => ();
+		 format(stream, "<<< file \"%s\" seems to be corrupted >>>", srcloc.source.source-name);
+		 pprint-newline(#"mandatory", stream);
+	       end;
+		 
 	 if (srcloc.end-line <= srcloc.start-line)
 	   if (srcloc.end-column <= srcloc.start-column)
 	     format(stream, "\"%s\", line %d, before character %d:",
@@ -379,6 +384,9 @@ define sealed method describe-source-location
 		 end;
 	     highlight-line(line, srcloc.start-column, srcloc.end-column,
 			    stream);
+	   
+	   exception (<error>)
+	     corrupted-file();
 	   end block;
 	 else
 	   format(stream,
@@ -407,6 +415,9 @@ define sealed method describe-source-location
 	     end unless;
 	     pprint-newline(#"mandatory", stream);
 	     highlight-line(last-line, 0, srcloc.end-column, stream);
+	   
+	   exception (<error>)
+	     corrupted-file();
 	   end block;
 	 end if;
        end method);
