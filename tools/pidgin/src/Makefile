@@ -30,11 +30,11 @@ ansi-c.lib.du: ansi-c.lid parser-utilities.lib.du
 
 # c-parser library
 
-c-parser.dylan: c-parser.input	
+c-parser-engine.dylan: c-parser-engine.input	
 	parsergen $< $@
 
 c-parser.lib.du: c-parser.lid c-parser-exports.dylan \
-	         c-parser-interface.dylan c-parser.dylan c-lexer.dylan \
+	         c-parser-engine.dylan c-parser.dylan c-lexer.dylan \
 	         c-lexer-cpp.dylan \
 	         ansi-c.lib.du parser-utilities.lib.du
 	d2c $<

@@ -192,7 +192,7 @@ end method;
 // <parse-state> and tries to use it to figure out the error location.
 //
 define method source-location (state :: <parse-state>)
- => (srcloc :: <real-source-location>)
+ => (srcloc :: <source-location>)
   source-location(state.tokenizer);
 end method;
 
@@ -528,7 +528,7 @@ define method declaration-closure (#rest foo) /*
 end method declaration-closure;
 
 // Main parser routine:
-define function parse-header
+define function parse-c-file
     (rep :: <c-type-repository>, header-filename :: <byte-string>)
  => ()
   // use lookup-object to find header

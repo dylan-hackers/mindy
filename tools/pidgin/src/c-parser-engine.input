@@ -1,11 +1,10 @@
-module: c-parser
+module: c-parser-engine
 author:  Robert Stockton (rgs@cs.cmu.edu)
 copyright: Copyright (C) 1994, Carnegie Mellon University
 	   All rights reserved.
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-
 
 //======================================================================
 //
