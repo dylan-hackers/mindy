@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.9 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.10 1995/10/05 01:13:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -349,7 +349,7 @@ define method find-module (lib :: <library>, name :: <symbol>,
   elseif (lib.defined?)
     find-in-library-uses(lib, name, #f);
   else
-    error("Undefined library: %s", name);
+    error("Library %s has not been defined yet", lib.library-name);
   end;
 end method;
 
@@ -548,7 +548,8 @@ define method complete-module (mod :: <module>) => ();
   for (u in mod.used-modules)
     let used-mod = find-module(mod.home, u.module-name);
     unless (used-mod)
-      error("Module %s undefined", u.module-name);
+      error("No module %s in library %s",
+	    u.module-name, mod.home.library-name);
     end;
 
     local
