@@ -6,6 +6,10 @@ if($enable_duim eq 'gtk') {
     &compile_subdirs('panes');
 } 
 
+if($enable_duim eq 'carbon') {
+    &compile_subdirs('panes');
+} 
+
 if($enable_duim eq 'vanilla') {
     &compile_subdirs('vanilla');
 }
