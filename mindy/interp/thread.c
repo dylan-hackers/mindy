@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.5 1994/03/27 04:50:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.6 1994/03/28 11:08:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -140,7 +140,7 @@ static void stop_thread(struct thread *thread, obj_t *vals)
 
     thread_kill(thread);
 
-    go_on();
+    pause(pause_PickNewThread);
 }
 
 static void start_thread(struct thread *thread)
