@@ -1,0 +1,59 @@
+// A description of all target platforms we support.
+// Remember, blank links separate the platforms.
+
+// Microsoft Windows '95 or NT on Intel 80386 or higher
+//
+target-name:                    x86-win32
+default-features:               compiled-for-x86-win32 newlines-are-CRLF
+heap-preamble:                  \t.data\n\t.balign 8\t
+align-directive:                .balign
+export-directive:               \t.globl\t%s\n
+word-directive:                 .long
+half-word-directive:            .hword
+byte-directive:                 .byte
+comment-token:                  #
+mangled-name-prefix:            _
+object-filename-suffix:         .obj
+library-filename-prefix:                
+library-filename-suffix:        .lib
+executable-filename-suffix:     .exe
+compile-c-command:              cl $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:       /nologo /O2
+assembler-command:              as %s -o %s
+// The next three are partially hardwired into d2c
+link-library-command:           lib /nologo
+link-executable-command:        link /nologo
+link-executable-flags:          /subsystem:console
+make-command:                   nmake /nologo
+delete-file-command:            del
+compare-file-command:           cmp -s %s %s
+move-file-command:              mv -f %s %s
+
+
+// HP/UX on HP PA-RISC processors
+//
+target-name:                    hppa-hpux
+default-features:               compiled-for-hppa-hpux
+heap-preamble:                  \t.data\n\t.align 8\t
+align-directive:                .align
+export-directive:               \t.export\t%s, DATA\n
+// Code for .import is hardwired in
+word-directive:                 .word
+half-word-directive:            .half
+byte-directive:                 .byte
+comment-token:                  ;
+mangled-name-prefix:            
+object-filename-suffix:         .o
+library-filename-prefix:        lib
+library-filename-suffix:        .a
+executable-filename-suffix:     
+compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:       -g -O4 -finline-functions
+assembler-command:              gcc $(CCFLAGS) -c %s -o %s
+link-library-command:           /bin/ar qc
+link-executable-command:        gcc -z
+link-executable-flags:          -L/lib/pa1.1
+make-command:                   gmake
+delete-file-command:            rm -f
+compare-file-command:           cmp -s %s %s
+move-file-command:              mv -f %s %s
