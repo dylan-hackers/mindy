@@ -11,6 +11,9 @@ define interface
   function "gethostbyname",
     equate-argument: {1 => <c-string>},
     map-argument: {1 => <byte-string>};
+  function "sendto",
+    equate-argument: {2 => <c-string>}, // should rather be <c-char-vector>
+    map-argument: {2 => <byte-string>};
   function "getprotobyname",
     equate-argument: {1 => <c-string>},
     map-argument: {1 => <byte-string>};

@@ -2,6 +2,121 @@ module: network-internal
 
 c-include(".//sockets-helper.h");
 
+define constant <nfds-t> = <integer>;
+
+define functional class <pollfd> (<statically-typed-pointer>) end;
+
+define sealed domain make (singleton(<pollfd>));
+
+define sealed method get-fd
+    (ptr :: <pollfd>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0);
+end method get-fd;
+
+define sealed method get-fd-setter
+    (value :: <integer>, ptr :: <pollfd>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0) := value;
+  value;
+end method get-fd-setter;
+
+define sealed method get-events
+    (ptr :: <pollfd>) => (result :: <integer>);
+  signed-short-at(ptr, offset: 4);
+end method get-events;
+
+define sealed method get-events-setter
+    (value :: <integer>, ptr :: <pollfd>) => (result :: <integer>);
+  signed-short-at(ptr, offset: 4) := value;
+  value;
+end method get-events-setter;
+
+define sealed method get-revents
+    (ptr :: <pollfd>) => (result :: <integer>);
+  signed-short-at(ptr, offset: 6);
+end method get-revents;
+
+define sealed method get-revents-setter
+    (value :: <integer>, ptr :: <pollfd>) => (result :: <integer>);
+  signed-short-at(ptr, offset: 6) := value;
+  value;
+end method get-revents-setter;
+
+define method pointer-value (value :: <pollfd>, #key index = 0) => (result :: <pollfd>);
+  value + index * 8;
+end method pointer-value;
+
+define method content-size (value :: subclass(<pollfd>)) => (result :: <integer>);
+  8;
+end method content-size;
+
+define method poll
+    (arg1 :: <pollfd>, arg2 :: <nfds-t>, arg3 :: <integer>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("poll", int:, ptr: (arg1).raw-value, long: arg2, int: arg3);
+  values(result-value);
+end method poll;
+
+define constant $_SYS-POLL-H = 1;
+
+define constant $POLLIN = 1;
+
+define constant $POLLPRI = 2;
+
+define constant $POLLOUT = 4;
+
+define constant $POLLERR = 8;
+
+define constant $POLLHUP = 16;
+
+define constant $POLLNVAL = 32;
+
+define constant $_FEATURES-H = 1;
+
+define constant $__USE-ANSI = 1;
+
+define constant $_BSD-SOURCE = 1;
+
+define constant $_SVID-SOURCE = 1;
+
+define constant $_POSIX-SOURCE = 1;
+
+define constant $_POSIX-C-SOURCE = 199506;
+
+define constant $__USE-POSIX = 1;
+
+define constant $__USE-POSIX2 = 1;
+
+define constant $__USE-POSIX199309 = 1;
+
+define constant $__USE-POSIX199506 = 1;
+
+define constant $__USE-MISC = 1;
+
+define constant $__USE-BSD = 1;
+
+define constant $__USE-SVID = 1;
+
+define constant $__STDC-IEC-559-- = 1;
+
+define constant $__STDC-IEC-559-COMPLEX-- = 1;
+
+define constant $__STDC-ISO-10646-- = 200009;
+
+define constant $__GNU-LIBRARY-- = 6;
+
+define constant $__GLIBC-- = 2;
+
+define constant $__GLIBC-MINOR-- = 2;
+
+define constant $_SYS-CDEFS-H = 1;
+
+define constant <__signed> = <integer>;
+
+define constant <__ptr-t> = <machine-pointer>;
+
+define constant <__long-double-t> = <extended-float>;
+
 define functional class <anonymous-36> (<statically-typed-pointer>) end;
 
 define sealed domain make (singleton(<anonymous-36>));
@@ -248,10 +363,10 @@ define method recv
 end method recv;
 
 define method sendto
-    (arg1 :: <integer>, arg2 :: <machine-pointer>, arg3 :: <size-t>, arg4 :: <integer>, arg5 :: <sockaddr>, arg6 :: <socklen-t>)
+    (arg1 :: <integer>, arg2 :: <byte-string>, arg3 :: <size-t>, arg4 :: <integer>, arg5 :: <sockaddr>, arg6 :: <socklen-t>)
  => (result :: <ssize-t>);
   let result-value
-    = call-out("sendto", int:, int: arg1, ptr: (arg2).raw-value, long: arg3, int: arg4, ptr: (arg5).raw-value, unsigned-int: arg6);
+    = call-out("sendto", int:, int: arg1, ptr: (export-value(<c-string>, arg2)).raw-value, long: arg3, int: arg4, ptr: (arg5).raw-value, unsigned-int: arg6);
   values(result-value);
 end method sendto;
 
@@ -1131,52 +1246,6 @@ define constant $PDP-ENDIAN = 3412;
 define constant $BYTE-ORDER = 1234;
 
 define constant $__BYTE-ORDER = 1234;
-
-define constant $_FEATURES-H = 1;
-
-define constant $__USE-ANSI = 1;
-
-define constant $_BSD-SOURCE = 1;
-
-define constant $_SVID-SOURCE = 1;
-
-define constant $_POSIX-SOURCE = 1;
-
-define constant $_POSIX-C-SOURCE = 199506;
-
-define constant $__USE-POSIX = 1;
-
-define constant $__USE-POSIX2 = 1;
-
-define constant $__USE-POSIX199309 = 1;
-
-define constant $__USE-POSIX199506 = 1;
-
-define constant $__USE-MISC = 1;
-
-define constant $__USE-BSD = 1;
-
-define constant $__USE-SVID = 1;
-
-define constant $__STDC-IEC-559-- = 1;
-
-define constant $__STDC-IEC-559-COMPLEX-- = 1;
-
-define constant $__STDC-ISO-10646-- = 200009;
-
-define constant $__GNU-LIBRARY-- = 6;
-
-define constant $__GLIBC-- = 2;
-
-define constant $__GLIBC-MINOR-- = 2;
-
-define constant $_SYS-CDEFS-H = 1;
-
-define constant <__signed> = <integer>;
-
-define constant <__ptr-t> = <machine-pointer>;
-
-define constant <__long-double-t> = <extended-float>;
 
 define functional class <anonymous-24> (<statically-typed-pointer>) end;
 
