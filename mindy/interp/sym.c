@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.8 1994/11/28 15:01:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.9 1996/01/07 22:58:15 rgs Exp $
 *
 * This file implements symbols.
 *
@@ -45,6 +45,7 @@
 #include "type.h"
 #include "print.h"
 #include "sym.h"
+#include "num.h"
 
 obj_t obj_SymbolClass = NULL;
 
@@ -191,6 +192,11 @@ static obj_t symbol_as_string(obj_t class, obj_t symbol)
     return obj_ptr(struct symbol *, symbol)->name;
 }
 
+static obj_t symbol_object_hash(obj_t sym)
+{
+    return make_fixnum(sym_hash(sym));
+}    
+
 
 /* Printing. */
 
@@ -279,4 +285,6 @@ void init_sym_functions(void)
     define_method("as", list2(singleton(obj_ByteStringClass), obj_SymbolClass),
 		  FALSE, obj_False, FALSE, obj_ByteStringClass,
 		  symbol_as_string);
+    define_method("symbol-hash", list1(obj_SymbolClass), FALSE, obj_False,
+		  FALSE, obj_FixnumClass, symbol_object_hash);
 }
