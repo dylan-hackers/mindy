@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.3 1994/03/31 10:18:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.4 1994/04/06 13:50:54 rgs Exp $
 *
 * This file does whatever.
 *
@@ -127,8 +127,13 @@ void invoke(struct thread *thread, int nargs)
 {
     obj_t function = thread->sp[-nargs-1];
     int required = FUNC(function)->required_args;
+    obj_t func_type = object_class(function);
 
-    if (!instancep(function, obj_FunctionClass))
+    if (func_type != obj_BuiltinMethodClass
+	&& func_type != obj_ByteMethodClass
+	&& func_type != obj_BuiltinMethodClass
+	&& func_type != obj_GFClass
+	&& !subtypep(func_type, obj_FunctionClass))
 	lose("invoke called on a non-function.");
 
     if (Tracing)
@@ -322,6 +327,45 @@ boolean applicable_method_p(obj_t method, obj_t *args)
     }
 
     return TRUE;
+}
+
+/* Version of applicable_method_p which does extra work to allow SAM caching 
+   for generic function dispatch.  The "can_cache" argument is carried across
+   several calls to gfd_applicable_method_p and will be set to false if the 
+   method depends upon anything other than the types of the args. */
+boolean gfd_applicable_method_p(obj_t method, obj_t *args, boolean *can_cache)
+{
+    obj_t specializers = METHOD(method)->specializers;
+    boolean l_can_cache = *can_cache;
+    boolean all_class_only = l_can_cache;
+    boolean any_class_only = FALSE;
+    boolean applicable = TRUE;
+
+    while (specializers != obj_Nil) {
+	obj_t arg = *args++;
+	obj_t arg_class = object_class(arg);
+	obj_t specializer = HEAD(specializers);
+
+	if (!subtypep(arg_class, specializer))
+	    if (instancep(arg, specializer))
+		all_class_only = FALSE;
+	    else {
+		if (!any_class_only && l_can_cache)
+		    any_class_only = !overlapp(arg_class, specializer);
+		if (!l_can_cache || any_class_only) {
+		    /* no further info can be gained, so return */
+		    *can_cache = l_can_cache && any_class_only;
+		    return FALSE;
+		}
+		applicable = FALSE;
+	    }
+	specializers = TAIL(specializers);
+    }
+    if (applicable)
+	*can_cache = all_class_only;
+    else
+	*can_cache = l_can_cache && any_class_only;
+    return applicable;
 }
 
 static boolean method_accepts_keyword(obj_t method, obj_t keyword)
@@ -878,20 +922,24 @@ struct gf {
     obj_t result_types;
     obj_t more_results_type;
     obj_t methods;
+    obj_t cached_result;
+    obj_t cached_classes[0];
 };
 
 #define GF(o) obj_ptr(struct gf *, o)
 
-static obj_t slow_sorted_applicable_methods(obj_t methods, obj_t *args)
+static obj_t
+    slow_sorted_applicable_methods(struct gf *gf, obj_t methods, obj_t *args)
 {
     obj_t ordered = obj_Nil;
     obj_t ambiguous = obj_Nil;
     obj_t scan, *prev;
+    boolean can_cache = TRUE;
 
     while (methods != obj_Nil) {
 	obj_t method = HEAD(methods);
 
-	if (applicable_method_p(method, args)) {
+	if (gfd_applicable_method_p(method, args, &can_cache)) {
 	    for (prev=&ordered; (scan=*prev) != obj_Nil; prev=&TAIL(scan)) {
 		switch (compare_methods(method, HEAD(scan), args)) {
 		  case method_MoreSpecific:
@@ -937,25 +985,55 @@ static obj_t slow_sorted_applicable_methods(obj_t methods, obj_t *args)
 	*prev = pair(obj_False, ambiguous);
     }
 
+    if (can_cache) {
+	obj_t *arg = args, *cache = gf->cached_classes;
+	int i, max = gf->required_args;
+
+	for (i = 0; i < max; i++, arg++, cache++)
+	    *cache = object_class(*arg);
+	gf->cached_result = ordered;
+    }
     return ordered;
 }
 
 static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 {
-    obj_t methods = GF(gf)->methods;
+    struct gf *true_gf = GF(gf);
+    boolean use_cache = TRUE;
 
-    /* If there are no methods, then nothing is applicable. */
-    if (methods == obj_Nil)
-	return obj_Nil;
+    if (true_gf->cached_result == obj_False)
+	use_cache = FALSE;
+    else {
+	obj_t *arg = args, *cache = true_gf->cached_classes;
+	int i, max = true_gf->required_args;
 
-    /* If there is only one method, then sorted it is going to be easy. */
-    if (TAIL(methods) == obj_Nil)
-	if (applicable_method_p(HEAD(methods), args))
-	    return methods;
-	else
+	for (i = 0; i < max; i++, arg++, cache++)
+	    if (*cache != object_class(*arg)) {
+		use_cache = FALSE;
+		break;
+	    }
+    }
+
+    if (use_cache)
+	return true_gf->cached_result;
+    else {
+	/* We have to do it the slow way */
+	obj_t methods = true_gf->methods;
+	
+	/* If there are no methods, then nothing is applicable. */
+	if (methods == obj_Nil)
 	    return obj_Nil;
-
-    return slow_sorted_applicable_methods(methods, args);
+	
+	/* If there is only one method, then sorted it is going to */
+	/* be easy. */
+	if (TAIL(methods) == obj_Nil)
+	    if (applicable_method_p(HEAD(methods), args))
+		return methods;
+	    else
+		return obj_Nil;
+	
+	return slow_sorted_applicable_methods(true_gf, methods, args);
+    }
 }
 
 static boolean methods_accept_keyword(obj_t methods, obj_t keyword)
@@ -1008,7 +1086,9 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
 			    boolean restp, obj_t keywords,
 			    obj_t result_types, obj_t more_results_type)
 {
-    obj_t res = alloc(obj_GFClass, sizeof(struct gf));
+    obj_t res = alloc(obj_GFClass,
+		      sizeof(struct gf) + sizeof(obj_t) * req_args);
+    int i;
 
     GF(res)->xep = gf_xep;
     GF(res)->debug_name = debug_name;
@@ -1018,6 +1098,9 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     GF(res)->result_types = result_types;
     GF(res)->more_results_type = more_results_type;
     GF(res)->methods = obj_Nil;
+    GF(res)->cached_result = obj_False;
+    for (i = 0; i < req_args; i++)
+	GF(res)->cached_classes[i] = obj_Nil;
 
     return res;
 }
@@ -1061,6 +1144,8 @@ static obj_t really_add_method(obj_t gf, obj_t method)
     obj_t methods = GF(gf)->methods;
     obj_t specializers = METHOD(method)->specializers;
     obj_t scan;
+
+    GF(gf)->cached_result = obj_False;
 
     for (scan = methods; scan != obj_Nil; scan = TAIL(scan)) {
 	obj_t old = HEAD(scan);
@@ -1223,6 +1308,8 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
 {
     obj_t scan, *prev;
 
+    GF(gf)->cached_result = obj_False;
+
     prev = &GF(gf)->methods;
     while ((scan = *prev) != obj_Nil) {
 	if (method == HEAD(scan)) {
@@ -1378,16 +1465,21 @@ static obj_t trans_accessor_method(obj_t method)
 static int scav_gf(struct object *ptr)
 {
     struct gf *gf = (struct gf *)ptr;
+    int i, max = gf->required_args;
 
     scav_func((struct function *)gf);
     scavenge(&gf->methods);
+    scavenge(&gf->cached_result);
+    for (i = 0; i < max; i++)
+	scavenge(&gf->cached_classes[i]);
 
-    return sizeof(struct gf);
+    return sizeof(struct gf) + sizeof(obj_t) * max;
 }
 
 static obj_t trans_gf(obj_t gf)
 {
-    return transport(gf, sizeof(struct gf));
+    return transport(gf, (sizeof(struct gf)
+			  + sizeof(obj_t) * GF(gf)->required_args));
 }
 
 void scavenge_func_roots(void)
