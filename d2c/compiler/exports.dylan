@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.121 1995/12/14 00:02:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.122 1995/12/15 05:56:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -156,7 +156,7 @@ define module compile-time-values
   use od-format;
 
   export
-    <ct-value>,
+    <ct-value>, ct-value-heap-label, ct-value-heap-label-setter,
     <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <literal>, literal-value, <eql-literal>,
     <ct-not-supplied-marker>,
@@ -622,6 +622,7 @@ define module classes
     direct-type, space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     instance-slots-layout, vector-slot, vector-slot-setter,
+    class-heap-fields, class-heap-fields-setter,
     <defined-cclass>, class-defn, class-defn-setter,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
