@@ -61,7 +61,6 @@ define constant $default-defines
       // we fix a bug in MINDY.
 //    "__GNUC__", "2",
 //    "__GNUC_MINPR__", "7",
-//    "__signed__", "",
 //    "__const", "",
 //    "__CONSTVALUE", "",
 //    "__CONSTVALUE2", "",
@@ -71,16 +70,18 @@ define constant $default-defines
       // the define; all the items preceding it are named parameters.
       "__attribute__", #(#("x"), ""), 
       "__signed__", "", 
+      "__signed", "", 
       "__inline__", "",
+      "__inline", "",
 
-
-      "unix", "",
-      "i386", "",
-      "__FreeBSD__", "2",
-      "__unix__", "",
-      "__i386__", "",
-      "__unix", "",
-      "__i386", ""];
+      "__FreeBSD__", "4",
+      "__i386__", "1",
+      "__i386", "1",
+      "i386", "1",
+      "__unix", "1",
+      "__unix__", "1",
+      "__ELF__", "1",
+      "unix", "1"];
   
 define constant FreeBSD-include-directories
   = #["/usr/local/include", "/usr/include"];
