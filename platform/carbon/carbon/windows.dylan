@@ -129,6 +129,18 @@ define constant $kWindowUpdateRgn :: <integer>              = 34;   /* Carbon fo
 define constant $kWindowOpaqueRgn :: <integer>              = 35;   /* Mac OS X: Area of window considered to be opaque. Only valid for windows with alpha channels.*/
 define constant $kWindowGlobalPortRgn :: <integer>          = 40;
 
+// Repositioning windows
+
+define constant $kWindowCenterOnMainScreen :: <integer>      = 1;
+define constant $kWindowCenterOnParentWindow :: <integer>    = 2;
+define constant $kWindowCenterOnParentWindowScreen :: <integer>  = 3;
+define constant $kWindowCascadeOnMainScreen :: <integer>     = 4;
+define constant $kWindowCascadeOnParentWindow :: <integer>   = 5;
+define constant $kWindowCascadeOnParentWindowScreen :: <integer>  = 6;
+define constant $kWindowAlertPositionOnMainScreen :: <integer>  = 7;
+define constant $kWindowAlertPositionOnParentWindow :: <integer>  = 8;
+define constant $kWindowAlertPositionOnParentWindowScreen :: <integer>  = 9;
+
 
 /*
 	FrontWindow
@@ -543,7 +555,7 @@ end method SetWindowBounds;
 */
 
 define method IsWindowVisible( window :: <WindowRef> )
-=> ( result :: <OSStatus> )
+=> ( result :: <boolean> )
 	let result = call-out( "IsWindowVisible", int:, ptr: window.raw-value, );
 	if(result = 1)
     #t;
@@ -551,3 +563,16 @@ define method IsWindowVisible( window :: <WindowRef> )
     #f;
   end if;
 end method IsWindowVisible;
+
+
+/*
+		RepositionWindow
+*/
+
+define method RepositionWindow(inWindow :: <WindowRef>,
+                               inParent :: <WindowRef>,
+                               positionMethod :: <integer>)
+=> ( result :: <OSStatus> )
+	as(<OSErr>, call-out("RepositionWindow", int:, ptr: inWindow.raw-value,
+                        ptr: inParent.raw-value, int: positionMethod));
+end method RepositionWindow;

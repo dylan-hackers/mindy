@@ -194,7 +194,7 @@ define module carbon
 		DragControl, FindControl, HandleControlClick, HandleControlKey, IdleControls, 
                 TrackControl, TestControl,
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
-		DrawControls,
+		DrawControls, EmbedControl,
     IsControlVisible, CreateRootControl, SetControlData, NewControlUserPaneDrawUPP,
     
 // Dialog Manager.
@@ -424,6 +424,13 @@ define module carbon
 		$kWindowZoomBoxRgn, $kWindowDragRgn, $kWindowGrowRgn, $kWindowCollapseBoxRgn,
 		$kWindowTitleProxyIconRgn, $kWindowStructureRgn, $kWindowContentRgn,
 		$kWindowUpdateRgn, $kWindowOpaqueRgn,$kWindowGlobalPortRgn,
+    // Repositioning
+    $kWindowCenterOnMainScreen, $kWindowCenterOnParentWindow,
+    $kWindowCenterOnParentWindowScreen, $kWindowCascadeOnMainScreen,
+    $kWindowCascadeOnParentWindow, $kWindowCascadeOnParentWindowScreen,
+    $kWindowAlertPositionOnMainScreen, $kWindowAlertPositionOnParentWindow,
+    $kWindowAlertPositionOnParentWindowScreen,
+    RepositionWindow,
     // Carbon methods
 		CreateNewWindow, CreateWindowFromResource, GetWindowPort, SetPortWindowPort,
     GetWindowPortBounds, GetWindowFromPort,

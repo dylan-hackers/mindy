@@ -535,3 +535,15 @@ define method NewControlUserPaneDrawUPP( userRoutine :: <function-pointer> )	// 
 	let result = call-out( "NewControlUserPaneDrawUPP", ptr:, ptr: userRoutine.raw-value );
 	make( <UniversalProcPtr>, pointer: result );
 end method NewControlUserPaneDrawUPP;
+
+
+/*
+  EmbedControl
+*/
+
+define method EmbedControl( inControl :: <ControlHandle>, inContainer :: <ControlHandle>)
+=> (result :: <OSErr>)
+  as(<OSErr>, call-out("EmbedControl", int:, ptr: inControl.raw-value, 
+                        ptr: inContainer.raw-value));
+end method EmbedControl;
+
