@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.34 1995/12/16 02:35:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.35 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -324,7 +324,7 @@ define method kind (op :: <self-tail-call>) => res :: <string>;
 end;
 
 define method dump (op :: <primitive>, stream :: <stream>) => ();
-  format(stream, "primitive %s[%d]", op.name, op.id);
+  format(stream, "primitive %s[%d]", op.primitive-name, op.id);
   dump-operands(op.depends-on, stream);
 end;
 

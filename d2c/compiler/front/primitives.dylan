@@ -4,56 +4,56 @@ module: primitives
 define class <primitive-info> (<identity-preserving-mixin>)
   //
   // The name of this primitive.
-  slot primitive-name :: <symbol>,
+  slot priminfo-name :: <symbol>,
     required-init-keyword: name:;
   //
   // List of type specifiers for the arguments.  The second to last element
   // can also be #"rest" which means the last element is repeated.  Elements
   // can also be #"cluster" to indicate a values-cluster argument.
-  slot primitive-arg-type-specifiers :: <list>,
+  slot priminfo-arg-type-specifiers :: <list>,
     required-init-keyword: arg-types:;
   //
   // The arg-types as ctypes.  Lazily created from arg-type-specifiers.
   // #"rest" and #"cluster" preserved.
-  slot %primitive-arg-types :: false-or(<list>),
+  slot %priminfo-arg-types :: false-or(<list>),
     init-value: #f;
   //
   // The result-type of the primitive.
-  slot primitive-result-type-specifier :: <type-specifier>,
+  slot priminfo-result-type-specifier :: <type-specifier>,
     required-init-keyword: result-type:;
   //
   // The result-type as a ctype.  Lazily created from result-type-specifier.
-  slot %primitive-result-type :: false-or(<values-ctype>),
+  slot %priminfo-result-type :: false-or(<values-ctype>),
     init-value: #f;
   //
   // A primitive is side-effect-free if it has no effects other than the
   // computation of the result.  In other words, if we can freely delete
   // the primitive if the results arn't used.
   //
-  slot primitive-side-effect-free? :: <boolean>,
+  slot priminfo-side-effect-free? :: <boolean>,
     required-init-keyword: side-effect-free:;
   //
   // A primitive is pure if it depends on nothing but the arguments.  In other
   // words, can be freely moved around without changing the program execution
   // at all.  Pure implies side-effect-free.
-  slot primitive-pure? :: <boolean>,
+  slot priminfo-pure? :: <boolean>,
     required-init-keyword: pure:;
   //
   // Function to ``optimize'' uses of this primitive.  Gets passed
   // the component and the primitive operation.  Any return values are
   // ignored.
-  slot primitive-transformer :: false-or(<function>),
+  slot priminfo-transformer :: false-or(<function>),
     init-value: #f;
   //
   // Function to spew the C code corresponding to the primitive.  Gets
   // passed the primitive and the file-state.
-  slot primitive-emitter :: false-or(<function>),
+  slot priminfo-emitter :: false-or(<function>),
     init-value: #f;
 end;
 
 define method print-object
     (info :: <primitive-info>, stream :: <stream>) => ();
-  pprint-fields(info, stream, name: info.primitive-name);
+  pprint-fields(info, stream, name: info.priminfo-name);
 end;
 
 
@@ -61,15 +61,15 @@ end;
 // that we can eagerly initialize them.
 // 
 define method dump-od (obj :: <primitive-info>, buf :: <dump-buffer>) => ();
-  dump-simple-object(#"primitive-info", buf, obj.primitive-name,
-		     obj.primitive-arg-types, obj.primitive-result-type);
+  dump-simple-object(#"primitive-info", buf, obj.priminfo-name,
+		     obj.priminfo-arg-types, obj.priminfo-result-type);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"primitive-info",
   method (state :: <load-state>) => res :: <primitive-info>;
     let res = primitive-info-or-lose(load-object-dispatch(state));
-    res.%primitive-arg-types := load-object-dispatch(state);
-    res.%primitive-result-type := load-object-dispatch(state);
+    res.%priminfo-arg-types := load-object-dispatch(state);
+    res.%priminfo-result-type := load-object-dispatch(state);
     assert-end-object(state);
     res;
   end method
@@ -97,9 +97,9 @@ define method primitive-info-or-lose
 end;
 
 
-define method primitive-arg-types (info :: <primitive-info>) => res :: <list>;
-  info.%primitive-arg-types
-    | (info.%primitive-arg-types
+define method priminfo-arg-types (info :: <primitive-info>) => res :: <list>;
+  info.%priminfo-arg-types
+    | (info.%priminfo-arg-types
 	 := map(method (spec-or-sym)
 		  if (spec-or-sym == #"rest" | spec-or-sym == #"cluster")
 		    spec-or-sym;
@@ -107,25 +107,25 @@ define method primitive-arg-types (info :: <primitive-info>) => res :: <list>;
 		    specifier-type(spec-or-sym);
 		  end;
 		end,
-		info.primitive-arg-type-specifiers));
+		info.priminfo-arg-type-specifiers));
 end;
 
-define method primitive-result-type (info :: <primitive-info>)
+define method priminfo-result-type (info :: <primitive-info>)
     => res :: <values-ctype>;
-  info.%primitive-result-type
-    | (info.%primitive-result-type
-	 := specifier-type(info.primitive-result-type-specifier));
+  info.%priminfo-result-type
+    | (info.%priminfo-result-type
+	 := specifier-type(info.priminfo-result-type-specifier));
 end;
 
 
 define method define-primitive-transformer
     (name :: <symbol>, func :: <function>) => ();
-  primitive-info-or-lose(name).primitive-transformer := func;
+  primitive-info-or-lose(name).priminfo-transformer := func;
 end;
 
 define method define-primitive-emitter
     (name :: <symbol>, func :: <function>) => ();
-  primitive-info-or-lose(name).primitive-emitter := func;
+  primitive-info-or-lose(name).priminfo-emitter := func;
 end;
 
 

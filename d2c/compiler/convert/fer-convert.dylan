@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.49 1996/01/12 00:58:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.50 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -642,7 +642,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
 	repeat(op-ptr.tail, index + 1, remaining-types);
       end;
     end;
-  repeat(ops, 0, info.primitive-arg-types);
+  repeat(ops, 0, info.priminfo-arg-types);
   deliver-result
     (builder, lexenv.lexenv-policy, source, want, datum,
      make-operation(builder, <fer-primitive>, ops, name: name));

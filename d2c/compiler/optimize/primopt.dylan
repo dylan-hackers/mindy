@@ -1,14 +1,14 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.16 1996/01/12 00:58:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.17 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
-  let info = primitive.info;
-  maybe-restrict-type(component, primitive, info.primitive-result-type);
-  let transformer = info.primitive-transformer;
+  let info = primitive.primitive-info;
+  maybe-restrict-type(component, primitive, info.priminfo-result-type);
+  let transformer = info.priminfo-transformer;
   if (transformer)
     transformer(component, primitive);
   end;
@@ -169,7 +169,7 @@ define-primitive-transformer
 	  while: instance?(vec, <ssa-variable>))
      finally
        if (instance?(vec, <primitive>))
-	 if (vec.name == #"vector")	 
+	 if (vec.primitive-name == #"vector")	 
 	   let builder = make-builder(component);
 	   let policy = assign.policy;
 	   let source = assign.source-location;
@@ -225,7 +225,7 @@ define-primitive-transformer
 			       reverse!(values), name: #"values"));
 	   end;
 	   insert-before(component, assign, builder-result(builder));
-	 elseif (vec.name == #"canonicalize-results")
+	 elseif (vec.primitive-name == #"canonicalize-results")
 	   let vec-assign = vec.dependents.dependent;
 	   let prim-assign = primitive.dependents.dependent;
 	   if (vec-assign.region == prim-assign.region
@@ -422,7 +422,8 @@ define-primitive-transformer
 						as(<ct-value>, #f)));
      elseif (instance?(arg, <ssa-variable>))
        let arg-source = arg.definer.depends-on.source-exp;
-       if (instance?(arg-source, <primitive>) & arg-source.name == #"not")
+       if (instance?(arg-source, <primitive>)
+	     & arg-source.primitive-name == #"not")
 	 let source-source = arg-source.depends-on.source-exp;
 	 let op = make-operation(make-builder(component), <primitive>,
 				 list(source-source), name: #"as-boolean");

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.21 1996/01/14 02:05:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.22 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -97,7 +97,7 @@ end;
 
 define method extract-rest-arg (expr :: <primitive>)
     => res :: false-or(<list>);
-  if (expr.name == #"vector")
+  if (expr.primitive-name == #"vector")
     for (arg = expr.depends-on then arg.dependent-next,
 	 results = #() then pair(arg.source-exp, results),
 	 while: arg)

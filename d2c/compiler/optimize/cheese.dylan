@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.116 1996/01/12 00:58:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.117 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -198,7 +198,7 @@ define method expression-flushable? (expr :: <expression>) => res :: <boolean>;
 end;
 
 define method expression-flushable? (expr :: <primitive>) => res :: <boolean>;
-  expr.info.primitive-side-effect-free?;
+  expr.primitive-info.priminfo-side-effect-free?;
 end;
 
 define method expression-flushable? (expr :: <known-call>) => res :: <boolean>;
@@ -231,7 +231,7 @@ end;
 
 define method expression-movable? (expr :: <primitive>)
     => res :: <boolean>;
-  expr.info.primitive-pure?;
+  expr.primitive-info.priminfo-pure?;
 end;
 
 define method expression-movable? (expr :: <known-call>)
@@ -1406,7 +1406,8 @@ define method optimize-known-call
 		"function");
       end;
       let rest-op = rest-var.definer.depends-on.source-exp;
-      unless (instance?(rest-op, <primitive>) & rest-op.name == #"vector")
+      unless (instance?(rest-op, <primitive>)
+		& rest-op.primitive-name == #"vector")
 	error("Strange value for rest-var in known call to a generic "
 		"function");
       end;
@@ -1881,7 +1882,7 @@ define method expand-cluster
   reoptimize(component, assign);
   let assign-source = assign.depends-on.source-exp;
   if (instance?(assign-source, <primitive>)
-	& assign-source.name == #"values")
+	& assign-source.primitive-name == #"values")
     reoptimize(component, assign-source);
   end;
 end;
@@ -1937,7 +1938,7 @@ define method expand-cluster
     reoptimize(component, assign);
     let assign-source = assign.depends-on.source-exp;
     if (instance?(assign-source, <primitive>)
-	  & assign-source.name == #"values")
+	  & assign-source.primitive-name == #"values")
       reoptimize(component, assign-source);
     end;
   end;
@@ -2153,7 +2154,8 @@ define method optimize (component :: <component>, if-region :: <if-region>)
     replace-if-with(component, if-region, make(<empty-region>));
   elseif (instance?(condition, <ssa-variable>))
     let cond-source = condition.definer.depends-on.source-exp;
-    if (instance?(cond-source, <primitive>) & cond-source.name == #"not")
+    if (instance?(cond-source, <primitive>)
+	  & cond-source.primitive-name == #"not")
       replace-expression(component, if-region.depends-on,
 			 cond-source.depends-on.source-exp);
       let then-region = if-region.then-region;
@@ -2416,7 +2418,8 @@ define method identify-tail-calls-in
 	  else
 	    return();
 	  end;
-	elseif (instance?(expr, <primitive>) & expr.name == #"values")
+	elseif (instance?(expr, <primitive>)
+		  & expr.primitive-name == #"values")
 	  for (defn = assign.defines then defn.definer-next,
 	       dep = expr.depends-on then dep.dependent-next,
 	       while: defn & dep)
@@ -2824,7 +2827,7 @@ define method replace-placeholder
        while: dep)
     replace-placeholder(component, dep, dep.source-exp);
   end;
-  select (op.name)
+  select (op.primitive-name)
     #"vector" => 
       let builder = make-builder(component);
       let assign = dep.dependent;
@@ -3042,7 +3045,8 @@ define method find-in-environment
 	  = find-in-environment(component, home-function-region(ref),
 				var, home);
 	if ((instance?(ref, <known-call>)
-	       | (instance?(ref, <primitive>) & ref.name == #"make-closure"))
+	       | (instance?(ref, <primitive>)
+		    & ref.primitive-name == #"make-closure"))
 	      & ref.depends-on == ref-dep)
 	  let new-dep = make(<dependency>, source-exp: var-at-ref,
 			     source-next: var-at-ref.dependents,

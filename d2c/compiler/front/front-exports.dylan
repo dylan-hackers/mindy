@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.2 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.3 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -94,9 +94,9 @@ define module primitives
 
   export
     <primitive-info>, define-primitive, primitive-info-or-lose,
-    primitive-name, primitive-arg-types, primitive-result-type,
-    primitive-side-effect-free?, primitive-pure?,
-    primitive-transformer, primitive-emitter,
+    priminfo-name, priminfo-arg-types, priminfo-result-type,
+    priminfo-side-effect-free?, priminfo-pure?,
+    priminfo-transformer, priminfo-emitter,
 
 
     define-primitive-transformer, define-primitive-emitter;
@@ -130,7 +130,7 @@ define module front
 
     <abstract-call>, <known-call>, <error-call>,
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
-    <primitive>, name,
+    <primitive>, primitive-name, primitive-info,
     <prologue>, function, function-setter,
     <module-var-set>, <module-var-ref>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
@@ -207,7 +207,7 @@ define module fer-convert
   use representation;
   use compile-time-functions;
   use primitives,
-    import: {primitive-info-or-lose, primitive-arg-types};
+    import: {primitive-info-or-lose, priminfo-arg-types};
 
   export
     fer-convert-method, fer-convert, fer-convert-body,

@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.3 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.4 1996/01/14 18:05:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -85,7 +85,7 @@ define method clone-expr
   make-operation(state.clone-builder, <primitive>,
 		 clone-arguments(expr.depends-on, state),
 		 derived-type: expr.derived-type,
-		 name: expr.name);
+		 name: expr.primitive-name);
 end;
 
 define method clone-expr
