@@ -1312,17 +1312,16 @@ define /* exported */ method get-token
     let sub-tokenizer = state.include-tokenizer;
     if (sub-tokenizer)
       let token = get-token(sub-tokenizer, expand: expand,
-//    if (state.include-tokenizer)
-//      let token = get-token(state.include-tokenizer, expand: expand,
 			    cpp-line: cpp-line, position: init-position);
       if (instance?(token, <eof-token>))
-//	let macros = state.include-tokenizer.cpp-decls;
 	let macros = sub-tokenizer.cpp-decls;
-//	let old-file = state.include-tokenizer.file-name;
 	let old-file = sub-tokenizer.file-name;
 	state.include-tokenizer := #f;
-	return(make(<end-include-token>, position: pos, generator: state,
-		    string: old-file, value: macros));
+	let ei-token = make(<end-include-token>, position: pos,
+			    generator: state, string: old-file,
+			    value: macros);
+	parse-progress-report(ei-token, "<<< exiting header <<<");
+        return(ei-token);
       else
 	return(token);
       end if;

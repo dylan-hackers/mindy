@@ -311,6 +311,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
                     angle-start, angle-end,
                     quote-start, quote-end);
       end if;
+  parse-progress-report(generator, ">>> entered header >>>");
   unget-token(generator, make(<begin-include-token>, position: pos,
 			      generator: generator,
 			      string: generator.file-name));
@@ -328,6 +329,7 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
   if (~name)
     parse-error(state, "Ill formed #define directive.");
   end if;
+  parse-progress-report(name, "Processing define %=", name.value);
 
   // Simply read the rest of the line and build a reversed list of tokens.
   local method grab-tokens (list :: <list>)

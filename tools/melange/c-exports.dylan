@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.3 1998/09/25 00:11:00 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.4 1998/09/27 06:39:01 emk Exp $
 
 //======================================================================
 //
@@ -66,6 +66,7 @@ define module source-locations
   use extensions;
   use streams;
   use format;
+  use standard-io;
   export
     source-location,
     <source-location>,
@@ -82,6 +83,7 @@ define module parse-conditions
   use source-locations;
   use streams;
   use format;
+  use standard-io;
   export
     *show-parse-progress?*,
     <parse-condition>,
@@ -169,7 +171,7 @@ define module c-parse
     process-declarator, declare-objects, make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
     <varargs-declaration>, <enum-slot-declaration>, constant-value,
-    <integer-type-declaration>, true-type, make-enum-slot;
+    <integer-type-declaration>, canonical-name, true-type, make-enum-slot;
   export
     parse, parse-type, parse-macro;
 end module c-parse;
@@ -187,7 +189,7 @@ define module c-declarations
   // classes are actually defined within this module but are exported
   // from c-parse.
   use c-parse, export: {<declaration>, <parse-state>, parse, parse-type,
-			constant-value, true-type};
+			constant-value, true-type, canonical-name};
 
   use c-lexer;			// Tokens are used in process-type-list and
 				// make-struct-type
@@ -222,6 +224,6 @@ define module c-declarations
 
     // Miscellaneous
     getter, setter, sealed-string, excluded?,
-    canonical-name,declarations,
+    declarations,
     melange-target;
 end module c-declarations;

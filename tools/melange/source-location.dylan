@@ -1,5 +1,5 @@
 module: source-locations
-rcs-header: $Header: /scm/cvs/src/tools/melange/source-location.dylan,v 1.1 1998/09/25 00:11:06 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/source-location.dylan,v 1.2 1998/09/27 06:39:05 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -67,11 +67,8 @@ define method make (wot == <source-location>, #key)
   make(<unknown-source-location>);
 end;
 
-// XXX - type left unspecified on stream because it might be
-//       #"Cheap-IO". Also, this is why we use condition-format
-//       instead of format.
 define open generic describe-source-location
-    (srcloc :: <source-location>, stream :: <stream>) => ();
+    (srcloc :: <source-location>, stream) => ();
 
 
 //======================================================================
@@ -94,9 +91,9 @@ define method make
 end method make;
   
 define sealed method describe-source-location
-    (srcloc :: <unknown-source-location>, stream :: <stream>)
+    (srcloc :: <unknown-source-location>, stream)
     => ();
-  format(stream, "(unknown source location): ");
+  condition-format(stream, "(unknown source location): ");
 end method describe-source-location;
 
 
@@ -122,16 +119,16 @@ define sealed domain make (singleton(<file-source-location>));
 define sealed domain initialize (<file-source-location>);
 
 define sealed method describe-source-location
-    (srcloc :: <file-source-location>, stream :: <stream>)
+    (srcloc :: <file-source-location>, stream)
     => ();
-  if (srcloc.source-line-position)
-    format(stream, "%s:%d:%d: ",
-	   srcloc.source-file,
-	   srcloc.source-line,
-	   srcloc.source-line-position);
-  else
-    format(stream, "%s:%d: ",
-	   srcloc.source-file,
-	   srcloc.source-line);
-  end if;
+//  if (srcloc.source-line-position)
+//      condition-format(stream, "%s:%d:%d: ",
+//		     srcloc.source-file,
+//		     srcloc.source-line,
+//		     srcloc.source-line-position);
+//  else
+  condition-format(stream, "%s:%d: ",
+		   srcloc.source-file,
+		   srcloc.source-line);
+//  end if;
 end method describe-source-location;

@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.2 1998/09/25 00:11:04 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.3 1998/09/27 06:39:04 emk Exp $
 
 //======================================================================
 //
@@ -522,6 +522,28 @@ define method process-define-interface
 end method process-define-interface;
 
 //----------------------------------------------------------------------
+// XXX - Debugging output is broken, unfortunately. This code makes
+// error and warning output go to standard error instead of standard
+// output. We need to overhaul this in the Dylan library itself.
+//----------------------------------------------------------------------
+
+define class <better-debugger> (<debugger>)
+end class <better-debugger>;
+
+define method invoke-debugger
+    (debugger :: <better-debugger>, condition :: <condition>)
+ => res :: <never-returns>;
+  //fresh-line(*warning-output*);
+  condition-format(*warning-output*, "%s\n", condition);
+  force-output(*warning-output*);
+  exit(exit-code: 1);
+end method invoke-debugger;
+
+*warning-output* := *standard-error*;
+*debugger* := make(<better-debugger>);
+
+
+//----------------------------------------------------------------------
 // The main program
 //----------------------------------------------------------------------
 
@@ -537,8 +559,6 @@ define method main (program, #rest args)
   let in-file = #f;
   let out-file = #f;
   let verbose = #f;
-
-  *warning-output* := *standard-error*;
 
   for (arg in args)
     if (arg = "-v")

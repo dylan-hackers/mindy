@@ -136,17 +136,32 @@ end function;
 //  <stream> and not #"Cheap-IO". To make these work, use the Dylan
 //  extensions and standard-io library and write:
 //    *warning-output* := *standard-output*;
+//
+//  Note: I've added back in Cheap-IO support, but now print warnings
+//  when I catch someone using it. There's too many codepaths in the
+//  Dylan libraries which might use it, and I want to find them all.
 
 define method report-condition
     (parse-condition :: <format-string-parse-condition>,
-     stream :: <stream>,
+     stream,
      #next next-method)
  => ();
+
+  // Temporary debugging code. Warn me when someone pulls this
+  // stupid stunt.
+  if (stream == #"Cheap-IO")
+    format(*standard-error*, "Somebody's using #\"Cheap-IO\"!\n");
+    force-output(*standard-error*);
+  end if;
+
   describe-source-location(parse-condition.parse-condition-source-location,
 			   stream);
-  apply(format, stream, parse-condition.condition-format-string,
+  apply(condition-format, stream, parse-condition.condition-format-string,
 	parse-condition.condition-format-arguments);
-  format(stream, "\n");
+  condition-format(stream, "\n");
+  unless (stream == #"Cheap-IO")
+    force-output(stream);
+  end unless;
 end method report-condition;
 
 define method default-handler(condition :: <parse-progress-report>)

@@ -122,8 +122,6 @@ define method push-include-level
        | make(<deque>));
   push(state.recursive-files-stack, old-file);
   state.current-file := file;
-  push-default-parse-context(state);
-  parse-progress-report(#f, ">>> entered header");
   state;
 end method push-include-level;
 
@@ -135,11 +133,9 @@ define method pop-include-level
   if (state.recursive-files-stack.empty?)
     parse-error(state, "Bad pop-include-level");
   end if;
-  parse-progress-report(#f, "<<< exiting header");
   state.recursive-declaration-table[state.current-file] := state.declarations;
   state.current-file := pop(state.recursive-files-stack);
   state.declarations := state.recursive-declaration-table[state.current-file];
-  pop-default-parse-context();
   state;
 end method pop-include-level;
 
@@ -377,6 +373,11 @@ define method declare-objects
  => ();
   for (name in names)
     let (new-type, name) = process-declarator(new-type, name, state);
+    let (nameloc) = if (instance?(name, <token>))
+			    name;
+			  else
+			    state;
+			  end if;
     if (instance?(name, <typedef-declaration>))
       unless (is-typedef? & new-type == name.type)
 	parse-error(state, "illegal redefinition of typedef.");
@@ -385,6 +386,7 @@ define method declare-objects
       state.objects[name.value] 
 	:= add-declaration(state, make(<typedef-declaration>, name: name.value,
 				       type: new-type));
+      parse-progress-report(nameloc, "Processed typedef %s", name.value);
       add-typedef(state.tokenizer, name);
     else
       let decl-type = if (instance?(new-type, <function-type-declaration>))
@@ -400,6 +402,7 @@ define method declare-objects
 	state.objects[name.value]
 	  := add-declaration(state, make(decl-type, name: name.value,
 					 type: new-type));
+	parse-progress-report(nameloc, "Processed declaration %s", name.value);
       end if;
     end if;
   end for;
