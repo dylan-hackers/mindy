@@ -330,12 +330,10 @@ define method write-declaration
     // This may still be an "incomplete type".  If so, we just define the class
     // as a synonym for <integer>
     if (decl.members)
-      // Portability note: as soon as we have maximum and minimum integers,
-      // install them here.
       let min-enum = reduce(method (a, b) min(a, b.constant-value) end method,
-			    32767, decl.members);
+			    $maximum-fixed-integer, decl.members);
       let max-enum = reduce(method (a, b) max(a, b.constant-value) end method,
-			    -32768, decl.members);
+			    $minimum-fixed-integer, decl.members);
       format(stream,
 	     "define constant %s = limited(<integer>, min: %d, max: %d);\n",
 	     type-name, min-enum, max-enum);
