@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.40 1995/11/09 16:55:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.41 1995/11/13 11:08:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -490,7 +490,8 @@ define method make-initial-var
     => var :: <initial-variable>;
   let comp = builder.component;
   let var = make(<initial-variable>, derived-type: of-type, var-info: var-info,
-		 next-initial-variable: comp.initial-variables);
+		 next-initial-variable: comp.initial-variables,
+		 component: comp);
   comp.initial-variables := var;
   var;
 end;

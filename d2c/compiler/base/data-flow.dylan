@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.19 1995/11/09 16:54:13 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.20 1995/11/13 11:08:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -214,6 +214,11 @@ end;
 // converted.
 //
 define class <initial-variable> (<multi-definition-variable>)
+  //
+  // The component that this variable is on.
+  slot component-of :: <component>, required-init-keyword: component:;
+  //
+  // Thread through all initial vars in the component.
   slot next-initial-variable :: false-or(<initial-variable>),
     required-init-keyword: next-initial-variable:;
 end class;

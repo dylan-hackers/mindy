@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.106 1995/10/12 13:35:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.107 1995/11/13 11:08:17 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1739,7 +1739,8 @@ define method expand-cluster
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
     let var = make(<initial-variable>, var-info: var-info,
-		   next-initial-variable: component.initial-variables);
+		   next-initial-variable: component.initial-variables,
+		   component: component);
     component.initial-variables := var;
     let defns = map(method (assign, next-define)
 		      make(<initial-definition>, var-info: var-info,

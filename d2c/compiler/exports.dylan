@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.105 1995/11/12 21:08:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.106 1995/11/13 11:08:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -823,7 +823,7 @@ define module flow
     dependent-next, var-info, asserted-type, definer, definer-next,
     needs-type-check?, queue-next, definition-of, definitions,
     next-initial-variable, next-initial-variable-setter,
-    defines, region, next-op, prev-op, depends-on,
+    defines, region, next-op, prev-op, depends-on, component-of,
 
     dependents-setter, derived-type-setter, source-exp-setter,
     source-next-setter, dependent-setter, dependent-next-setter,
@@ -850,6 +850,8 @@ define module primitives
   use common;
   use utils;
   use ctype;
+  use od-format;
+  use compile-time-values;
 
   export
     <primitive-info>, define-primitive, primitive-info-or-lose,
@@ -890,7 +892,7 @@ define module front
     <abstract-call>, <known-call>, <error-call>,
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, name,
-    <prologue>, function,
+    <prologue>, function, function-setter,
     <module-var-set>, <module-var-ref>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
