@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.63 1995/03/13 15:39:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.64 1995/03/16 19:05:01 nkramer Exp $
 
 //======================================================================
 //
@@ -233,7 +233,8 @@ define module Extensions
     export: all;
   create
     <equal-table>, equal-hash, collection-hash, 
-    <value-table>, value-hash, sequence-hash, string-hash;
+    <value-table>, value-hash, sequence-hash, string-hash,
+    <string-table>;
   export
     one-of, type-or, false-or, ignore, key-exists?, <dictionary>;
 end Extensions;

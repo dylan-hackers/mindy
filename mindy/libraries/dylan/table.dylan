@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.15 1995/03/12 22:06:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.16 1995/03/16 19:05:14 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -214,7 +214,6 @@ define method initialize (ht :: <table>,
 			  expand-to:   expand-to   = default-expand-to,
 			  shrink-when: shrink-when = default-shrink-when,
 			  shrink-to:   shrink-to   = default-shrink-to);
-
   let size = if (size = 0) 1 else size end if;
   ht.bucket-array-slot    := make(<simple-object-vector>, 
 				  size: size,
@@ -935,3 +934,12 @@ define method forward-iteration-protocol (ht :: <table>)
 	  current-table-element-setter,
 	  copy-table-state);
 end method forward-iteration-protocol;
+
+// A value table whose keys are strings.
+//
+define class <string-table> (<value-table>)
+end class <string-table>;
+
+define method table-protocol (ht :: <string-table>);
+  values(\=, string-hash);
+end method table-protocol;
