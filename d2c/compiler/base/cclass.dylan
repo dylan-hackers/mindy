@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.19 1995/06/14 10:56:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.20 1995/10/13 15:03:40 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,7 +13,8 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define constant $All-Classes = make(<stretchy-vector>);
 
 
-define abstract class <cclass> (<ctype>, <eql-ct-value>)
+define abstract class <cclass> 
+    (<ctype>, <eql-ct-value>, <identity-preserving-mixin>)
   //
   // The name, for printing purposes.
   slot cclass-name :: <name>, required-init-keyword: name:;
@@ -54,21 +55,24 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
 
   // The unique id number associated with this class (only if concrete,
   // though.)
-  slot unique-id :: false-or(<fixed-integer>), init-value: #f;
+  slot unique-id :: false-or(<fixed-integer>), init-value: #f,
+    init-keyword: unique-id:;
 
   // The range of ids that cover all the subclasses of this class and
   // only the subclasses of this class, if such a range exists.  That
   // range will exist if this class is never mixed in with any other
   // class.  And if this class is sealed.
-  slot subclass-id-range-min :: false-or(<fixed-integer>), init-value: #f;
-  slot subclass-id-range-max :: false-or(<fixed-integer>), init-value: #f;
+  slot subclass-id-range-min :: false-or(<fixed-integer>), init-value: #f,
+    init-keyword: subclass-id-range-min:;
+  slot subclass-id-range-max :: false-or(<fixed-integer>), init-value: #f,
+    init-keyword: subclass-id-range-max:;
 
   // The representation of instances of this class or #f if we haven't
   // picked them yet.
   slot speed-representation :: union(<false>, <representation>),
-    init-value: #f;
+    init-value: #f, init-keyword: speed-representation:;
   slot space-representation :: union(<false>, <representation>),
-    init-value: #f;
+    init-value: #f, init-keyword: space-representation:;
   //
   // Vector of <slot-info>s for the slots introduced by this class.
   slot new-slot-infos :: <simple-object-vector>,
@@ -76,7 +80,7 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   //
   // Vector of all the slots in instances of this class, in no particular
   // order. Filled in when the slot layouts are computed.
-  slot all-slot-infos :: <vector>;
+  slot all-slot-infos :: <vector>, init-keyword: all-slot-infos:;
   //
   // Vector of <override-info>s for the overrides introduced by this class.
   slot override-infos :: <simple-object-vector>,
@@ -84,14 +88,17 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   //
   // Layout of the instance slots.  Filled in when the slot layouts are
   // computed.
-  slot instance-slots-layout :: <layout-table>;
+  slot instance-slots-layout :: <layout-table>,
+    init-keyword: instance-slots-layout:;
   //
   // The trailing vector slot, if any.  Filled in when the slot layouts are
   // computed.
-  slot vector-slot :: false-or(<vector-slot-info>);
+  slot vector-slot :: false-or(<vector-slot-info>),
+    init-keyword: vector-slot:;
   //
   // Count of the number of each-subclass slots.
-  slot each-subclass-slots-count :: <fixed-integer>;
+  slot each-subclass-slots-count :: <fixed-integer>,
+    init-keyword: each-subclass-slots-count:;
 end class;
 
 define method initialize
@@ -160,7 +167,7 @@ end;
 define constant <slot-allocation>
   = one-of(#"instance", #"class", #"each-subclass", #"constant", #"virtual");
 
-define abstract class <slot-info> (<object>)
+define abstract class <slot-info> (<identity-preserving-mixin>)
   //
   // The cclass that introduces this slot.  Not required, because we have to
   // make the regular slots before we can make the cclass that defines them.
@@ -232,11 +239,11 @@ end;
 
 define class <instance-slot-info> (<slot-info>)
   slot slot-representation :: union(<representation>, <false>),
-    init-value: #f;
+    init-value: #f, init-keyword: slot-representation:;
   slot slot-positions :: <list>,
-    init-value: #();
+    init-value: #(), init-keyword: slot-positions:;
   slot slot-initialized?-slot :: union(<false>, <instance-slot-info>),
-    init-value: #f;
+    init-value: #f, init-keyword: slot-initialized?-slot:;
 end;
 
 define class <vector-slot-info> (<instance-slot-info>)
@@ -249,7 +256,7 @@ end;
 
 define class <each-subclass-slot-info> (<slot-info>)
   slot slot-positions :: <list>,
-    init-value: #();
+    init-value: #(), init-keyword: slot-positions;
 end;
 
 define class <constant-slot-info> (<slot-info>)
@@ -260,7 +267,7 @@ end;
 
 
 
-define class <override-info> (<object>)
+define class <override-info> (<identity-preserving-mixin>)
   //
   // The cclass that introduces this override.  Filled in when the cclass that
   // introduces this override is initialized.
@@ -958,7 +965,7 @@ end;
 
 // Proxies
 
-define class <proxy> (<ct-value>)
+define class <proxy> (<ct-value>, <identity-preserving-mixin>)
   slot proxy-for :: <cclass>, required-init-keyword: for:;
 end;
 
