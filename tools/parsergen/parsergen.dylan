@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.3 1996/09/29 13:07:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.4 1997/01/23 16:16:51 rgs Exp $
 
 // **********************************************************************
 // Copyright (c) 1994, 1996 Carnegie Mellon University, all rights reserved.
@@ -697,6 +697,7 @@ define function add-action (state :: <state>, action :: <list>) => ();
 	      format(*standard-output*, "and");
 	      describe-action(action, #t);
 	      *conflicts* := 1 + *conflicts*;
+	      force-output(*standard-output*);
 	  end case;
 	end method add-token-action;
   let terminal = action.head;
@@ -992,17 +993,21 @@ define function emit-parser
     format(ofile, "define constant $accept-action = 1;\n");
     format(ofile, "define constant $reduce-action = 2;\n");
     format(ofile, "define constant $shift-action = 3;\n\n");
-    format(ofile, 
-	   "define constant $tokens-table :: <simple-object-vector>\n"
-	     "  = vector(");
-    for (i from 0 below num-tokens)
-      unless (zero?(i))
-	format(ofile, ",\n           ");
-      end unless;
-      format(ofile, "$%S-token", 
-	     as-uppercase(as(<string>, grammar-symbol-name(tokens[i]))));
-    end for;
-    format(ofile, ");\n\n");
+// This table is completely useless, and places unnecessary constraints on the
+// user, so I'm flushing it.  If this is a problem, complain to me at
+// "rgs@cs.cmu.edu".
+//
+//    format(ofile, 
+//	   "define constant $tokens-table :: <simple-object-vector>\n"
+//	     "  = vector(");
+//    for (i from 0 below num-tokens)
+//      unless (zero?(i))
+//	format(ofile, ",\n           ");
+//      end unless;
+//      format(ofile, "$%S-token", 
+//	     as-uppercase(as(<string>, grammar-symbol-name(tokens[i]))));
+//    end for;
+//    format(ofile, ");\n\n");
   end;
   format(ofile, "define constant $action-table\n"
 	   "  = #[");
