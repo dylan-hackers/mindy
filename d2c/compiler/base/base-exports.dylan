@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.26 2001/04/01 22:41:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.27 2001/05/26 16:49:15 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -361,7 +361,6 @@ define module tokens
     <token>, token-kind, 
     <symbol-token>, token-symbol, 
     <identifier-token>, token-module, token-uniquifier,
-    <left-bracket-token>,
     <uniquifier>, same-id?,
     <operator-token>, operator-precedence, operator-associativity,
     <constrained-name-token>, token-constraint,
@@ -381,7 +380,7 @@ define module header
   use source;
 
   export
-    <header>, parse-header;
+    <header>, parse-header, find-newline;
 end;
 
 
