@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.10 1994/10/05 20:54:52 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.11 1994/11/28 07:16:08 wlott Exp $
 *
 * This file defines the various file opcodes.
 *
@@ -31,7 +31,6 @@
 
 
 #define dbc_MagicNumber 0x6e789abe
-#define parse_MagicNumber 0x20e97ff6
 
 #define file_MajorVersion 2
 #define file_MinorVersion 0

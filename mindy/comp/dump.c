@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.19 1994/10/05 20:54:22 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.20 1994/11/28 07:15:36 wlott Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -571,7 +571,7 @@ void dump_setup_output(char *source, FILE *file)
 #if ! NO_SHARP_BANG
     fprintf(File, "#!%s/mindy -x\n", BINDIR);
 #endif
-    fprintf(File, "# %s (%d.%d) of %s\n", ParseOnly ? "parse" : "compilation",
+    fprintf(File, "# %s (%d.%d) of %s\n", "compilation",
 	    file_MajorVersion, file_MinorVersion, source);
     statres = stat(source, &buf);
     if (statres >= 0)
@@ -590,20 +590,12 @@ void dump_setup_output(char *source, FILE *file)
     dump_byte(sizeof(double));
     dump_byte(sizeof(long double));
     dump_short(1);
-    if (ParseOnly)
-	dump_int(parse_MagicNumber);
-    else
-	dump_int(dbc_MagicNumber);
+    dump_int(dbc_MagicNumber);
     dump_op(fop_IN_LIBRARY);
     if (LibraryName)
 	dump_symbol(LibraryName);
     else
 	dump_symbol(sym_DylanUser);
-    if (ParseOnly) {
-	dump_op(fop_IN_MODULE);
-	dump_symbol(ModuleName);
-	ModuleDumped = TRUE;
-    }
     if (source != NULL) {
 	dump_op(fop_SOURCE_FILE);
 	if (statres >= 0)

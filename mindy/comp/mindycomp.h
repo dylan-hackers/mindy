@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.6 1994/10/05 20:55:33 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.7 1994/11/28 07:16:10 wlott Exp $
 *
 \**********************************************************************/
 
@@ -32,7 +32,6 @@ typedef int boolean;
 #define FALSE 0
 
 extern char *current_file;
-extern boolean ParseOnly;
 extern boolean GiveWarnings;
 
 extern void error _ANSI_ARGS_((int line, char *msg, ...));
