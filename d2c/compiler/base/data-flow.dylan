@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.18 1995/10/30 13:08:36 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.19 1995/11/09 16:54:13 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,7 +46,7 @@ abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
 // since the initial expressions are almost certain to change during the first
 // optimize iteration.
 //
-define abstract class <expression> (<object>)
+define abstract class <expression> (<identity-preserving-mixin>)
   //
   // Threaded list of the dependencies connecting this expression to the
   // dependent that use this expression.
@@ -133,7 +133,7 @@ end class;
 // expressions.  Only leaf expressions can be used as the arguments to
 // operations.
 //
-define abstract class <leaf> (<expression>, <identity-preserving-mixin>)
+define abstract class <leaf> (<expression>)
   //
   // Pseudo-random hash code used to associate operands with operations.
   // slot leaf-hash :: <fixed-integer>, required-init-keyword: leaf-hash:;
