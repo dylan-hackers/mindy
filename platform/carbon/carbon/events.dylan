@@ -52,6 +52,11 @@ define constant $cmdKeyBit = 8;
 define functional class <EventRecord> ( <Ptr> ) 
 end class <EventRecord>;
 
+/*
+    <EventModifiers>
+*/
+
+define constant <EventModifiers> = <integer>;
 
 /*
 	Make sure we allocate the correct size for <EventRecord>

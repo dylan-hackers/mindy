@@ -25,6 +25,7 @@ define module events
 		<EventRecord>, event-what, event-message, event-when, event-where, event-modifiers,
 		//GetNextEvent, SystemTask, 
 		WaitNextEvent, FlushEvents,
+                <EventModifiers>,
 		//DIBadMount,
 		
 		// AppleEvents.
