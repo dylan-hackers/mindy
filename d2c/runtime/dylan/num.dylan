@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.7 1996/01/12 02:10:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.8 1996/02/23 00:00:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -60,8 +60,6 @@ define open generic abs (num :: <object>) => res :: <object>;
 
 seal generic \= (<complex>, <complex>);
 
-seal generic \~= (<complex>, <complex>);
-
 define sealed inline method zero? (num :: <complex>) => res :: <boolean>;
   num = 0;
 end;
@@ -83,8 +81,6 @@ seal generic abs (<complex>);
 // Real methods.
 
 seal generic \< (<real>, <real>);
-
-seal generic \<= (<real>, <real>);
 
 define sealed inline method positive? (num :: <real>) => res :: <boolean>;
   num > 0;
@@ -296,25 +292,6 @@ define inline method \== (a :: <integer>, b :: <object>)
     => res :: <boolean>;
   #f;
 end;
-
-/* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <integer>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
-
-// The fact that we are a functional class should automatically define this,
-// but it doesn't yet.
-//
-define sealed inline method functional-==
-    (a :: <integer>, b :: <integer>)
-    => res :: <boolean>;
-  a.value == b.value;
-end;
-
-seal generic functional-== (<integer>, <object>);
-seal generic functional-== (<object>, <integer>);
 
 define inline method \< (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
@@ -633,25 +610,6 @@ define inline method \== (a :: <single-float>, b :: <object>)
   #f;
 end;
 
-/* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <single-float>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
-
-// The fact that we are a functional class should automatically define this,
-// but it doesn't yet.
-//
-define sealed inline method functional-==
-    (a :: <single-float>, b :: <single-float>)
-    => res :: <boolean>;
-  a.value == b.value;
-end;
-
-seal generic functional-== (<single-float>, <object>);
-seal generic functional-== (<object>, <single-float>);
-
 define inline method \= (a :: <single-float>, b :: <single-float>)
     => res :: <boolean>;
   %%primitive single-= (a, b);
@@ -854,25 +812,6 @@ define inline method \== (a :: <double-float>, b :: <object>)
     => res :: <boolean>;
   #f;
 end;
-
-/* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <double-float>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
-
-// The fact that we are a functional class should automatically define this,
-// but it doesn't yet.
-//
-define sealed inline method functional-==
-    (a :: <double-float>, b :: <double-float>)
-    => res :: <boolean>;
-  a.value == b.value;
-end;
-
-seal generic functional-== (<double-float>, <object>);
-seal generic functional-== (<object>, <double-float>);
 
 define inline method \= (a :: <double-float>, b :: <double-float>)
     => res :: <boolean>;
@@ -1155,25 +1094,6 @@ define inline method \== (a :: <extended-float>, b :: <object>)
     => res :: <boolean>;
   #f;
 end;
-
-/* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <extended-float>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
-
-// The fact that we are a functional class should automatically define this,
-// but it doesn't yet.
-//
-define sealed inline method functional-==
-    (a :: <extended-float>, b :: <extended-float>)
-    => res :: <boolean>;
-  a.value == b.value;
-end;
-
-seal generic functional-== (<extended-float>, <object>);
-seal generic functional-== (<object>, <extended-float>);
 
 define inline method \= (a :: <extended-float>, b :: <extended-float>)
     => res :: <boolean>;

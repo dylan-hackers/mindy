@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.5 1996/01/12 02:10:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.6 1996/02/23 00:01:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -11,18 +11,6 @@ define sealed method make (class == <raw-pointer>, #key)
     => res :: <never-returns>;
   error("Can't make instances of <raw-poniter>, they just are.");
 end;
-
-// The fact that we are a functional class should automatically define this,
-// but it doesn't yet.
-//
-define sealed inline method functional-==
-    (a :: <raw-pointer>, b :: <raw-pointer>)
-    => res :: <boolean>;
-  a.value == b.value;
-end;
-
-seal generic functional-== (<raw-pointer>, <object>);
-seal generic functional-== (<object>, <raw-pointer>);
 
 define sealed inline method as
     (class == <raw-pointer>, address :: <integer>)
@@ -45,22 +33,16 @@ define inline method \== (a :: <raw-pointer>, b :: <object>)
   #f;
 end;
 
-/* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <raw-pointer>)
-    => res :: <boolean>;
-  #f;
-end;
-*/
+seal generic \= (<raw-pointer>, <object>);
+seal generic \= (<object>, <raw-pointer>);
 
-seal generic \= (<raw-pointer>, <raw-pointer>);
-
-define sealed inline method \< (ptr1 :: <raw-pointer>, ptr2 :: <raw-pointer>)
+define inline method \< (ptr1 :: <raw-pointer>, ptr2 :: <raw-pointer>)
     => res :: <boolean>;
   %%primitive pointer-< (ptr1, ptr2);
 end;
 
-seal generic \~= (<raw-pointer>, <raw-pointer>);
-seal generic \<= (<raw-pointer>, <raw-pointer>);
+seal generic \< (<raw-pointer>, <object>);
+seal generic \< (<object>, <raw-pointer>);
 
 define sealed inline method \+ (ptr :: <raw-pointer>, bytes :: <integer>)
     => res :: <raw-pointer>;
