@@ -594,6 +594,10 @@
   none
   ((GtkWidget widget)))
 
+(define-func gtk_widget_queue_draw
+  none
+  ((GtkWidget widget)))
+
 (define-func gtk_widget_draw
   none
   ((GtkWidget widget)
@@ -1888,9 +1892,8 @@
 
 (define-object GtkButton (GtkBin)
   (fields
-;  (bool in_button)
-;  (bool button_down)
-   ))
+   (bool in_button)
+   (bool button_down)))
 
 (define-func gtk_button_new
   GtkWidget
@@ -1924,7 +1927,7 @@
 
 (define-object GtkToggleButton (GtkButton)
   (fields
-;  (bool active)
+   (bool active)
    (bool draw_indicator)))
 
 (define-func gtk_toggle_button_new
@@ -1950,6 +1953,10 @@
   ((GtkToggleButton toggle_button)
    (bool is_active)))
 
+(define-func gtk_toggle_button_get_active
+  bool
+  ((GtkToggleButton toggle_button)))
+
 (define-func gtk_toggle_button_toggled
   none
   ((GtkToggleButton toggle_button)))
@@ -1970,6 +1977,10 @@
 
 (define-object GtkRadioButton (GtkCheckButton))
 
+(define-func gtk_radio_button_new
+  GtkWidget
+  (((slist GtkWidget) group)))
+
 (define-func gtk_radio_button_new_from_widget
   GtkWidget
   ((GtkRadioButton group (null-ok))))
@@ -1988,10 +1999,10 @@
   ((slist GtkWidget))
   ((GtkRadioButton button)))
 
-;; XXX - only for testing
-					;(define-func gtk_radio_button_new
-					;  GtkWidget
-					;  (((slist GtkWidget) group)))
+(define-func gtk_radio_button_set_group
+  none
+  ((GtkRadioButton button)
+   ((slist GtkWidget) group)))
 
 ;;; Misc
 

@@ -70,5 +70,6 @@ define module gtk
          \GTK-VSCROLLBAR,
          \GTK-MENU,
          \GTK-MENU-BAR,
-         \GTK-MENU-ITEM;
+         \GTK-MENU-ITEM,
+         \GTK-FILE-SELECTION;
 end module;

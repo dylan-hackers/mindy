@@ -294,6 +294,7 @@ define gtk-type-cast-function GTK-VSCROLLBAR => <GtkVScrollbar*>;
 define gtk-type-cast-function GTK-MENU => <GtkMenu*>;
 define gtk-type-cast-function GTK-MENU-BAR => <GtkMenuBar*>;
 define gtk-type-cast-function GTK-MENU-ITEM => <GtkMenuItem*>;
+define gtk-type-cast-function GTK-FILE-SELECTION => <GtkFileSelection*>;
 
 // Initialize
 
