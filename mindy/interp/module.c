@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.26 1996/04/10 20:44:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.27 1996/08/27 08:46:14 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -1121,12 +1121,12 @@ static obj_t all_exported_bindings (struct module *module)
     }
     return result;
 }
-#endif
 
 static obj_t dylan_all_exported_bindings(obj_t dylan_module)
 {
     return all_exported_bindings(MODULE(dylan_module)->module);
 }
+#endif
 
 
 
