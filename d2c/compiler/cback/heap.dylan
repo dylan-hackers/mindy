@@ -1,4 +1,7 @@
 module: heap
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.33 1996/02/09 00:09:28 wlott Exp $
+copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
+	   All rights reserved.
 
 // A catch-all object to quantify the state of the "heap output" process.
 // Almost every routine in this module accepts a "state" argument and
@@ -735,24 +738,41 @@ define method spew-object
 		       sharable: #f));
 end;
 
+define method method-general-entry (meth :: <ct-method>)
+    => entry :: false-or(<ct-entry-point>);
+  if (meth.ct-method-hidden?)
+    let tramp = dylan-defn(#"general-call");
+    if (tramp)
+      make(<ct-entry-point>, for: tramp.ct-value, kind: #"main");
+    else
+      #f;
+    end;
+  else
+    make(<ct-entry-point>, for: meth, kind: #"general");
+  end if;
+end method method-general-entry;
+
 define method spew-object (object :: <ct-method>, state :: <state>) => ();
   spew-labels(object, state);
   spew-function(object, state,
-		general-entry:
-		  if (object.ct-method-hidden?)
-		    let tramp = dylan-defn(#"general-call");
-		    if (tramp)
-		      make(<ct-entry-point>,
-			   for: tramp.ct-value,
-			   kind: #"main");
-		    else
-		      #f;
-		    end;
-		  else
-		    make(<ct-entry-point>, for: object, kind: #"general");
-		  end,
+		general-entry: method-general-entry(object),
 		generic-entry:
 		  make(<ct-entry-point>, for: object, kind: #"generic"));
+end;
+
+define method spew-object (object :: <ct-accessor-method>, state :: <state>)
+    => ();
+  spew-labels(object, state);
+  let standin = object.ct-accessor-standin;
+  spew-function(object, state,
+		general-entry: method-general-entry(object),
+		generic-entry:
+		  if (standin)
+		    make(<ct-entry-point>, for: standin, kind: #"main");
+		  else
+		    make(<ct-entry-point>, for: object, kind: #"generic");
+		  end,
+		accessor-slot: object.ct-accessor-method-slot-info);
 end;
 
 // Spew-function is a slightly lower-level front-end to "spew-instance".  It
