@@ -1,5 +1,6 @@
-etc/gwydion-dylan
 usr/bin
 usr/lib/dylan
 usr/share/doc/gwydion-dylan-extras
 usr/share/man/man1
+usr/share/gwydion-dylan
+

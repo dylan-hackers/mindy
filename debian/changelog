@@ -1,3 +1,18 @@
+gwydion-dylan (2.3.6pre2cvs09272001-1) unstable; urgency=low
+
+  * Correct build rules for multiple architectures in BOOTSTRAP path.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 28 Sep 2001 19:55:25 -0700
+
+gwydion-dylan (2.3.6pre2cvs09222001-1) unstable; urgency=low
+
+  * Correct problem with mindy bootstrap.  (Closes:Bug#112286)
+  * Clean up some 32-bit-isms.  Many thanks to Christopher Chimelis
+    for his many patches.
+  * More DUIM/GTK enhancements and bug fixes.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 21 Sep 2001 20:12:44 -0700
+
 gwydion-dylan (2.3.6pre1cvs09102001-2) unstable; urgency=low
 
   * Add build dependency for libgtk1.2-dev.  (Closes:Bug#107775)

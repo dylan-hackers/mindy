@@ -18,6 +18,16 @@ at: http://www.gwydiondylan.org.
 Note: These files contain rpath's, which are set to Debian's standard
 library locations.  This will be changed in a future release.
 
+NOTE on the DUIM Example
+-------------------------
+A file is located in /usr/share/doc/gwydion-dylan-dev called
+"duim-test.dylan".  To try out DUIM, do the following:
+
+1.  make-dylan-app duim-test
+2.  Copy the duim-test.dylan from the documentation directory
+    to the duim-test directory created in step 1.
+3.  cd into the duim-test directory and type 'make'.
+
 Enjoy Dylan! :-)
 
-Brent A. Fulgham <bfulgham@debian.org>, Sat, 10 Mar 2001 22:07:09 -0800
+Brent A. Fulgham <bfulgham@debian.org>, Fri, 21 Sep 2001 22:07:09 -0800

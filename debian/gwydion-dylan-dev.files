@@ -1,4 +1,4 @@
-etc/gwydion-dylan/platforms.descr
+usr/share/dylan/platforms.descr
 usr/bin/d2c
 usr/bin/dybug
 usr/bin/line-count
