@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.87 1996/03/07 18:00:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.88 1996/03/15 22:59:02 bfw Exp $
 
 //======================================================================
 //
@@ -76,13 +76,14 @@ define module Builtin-Stuff
     fflush, find-method, float-hash, floor, floor/, format, function-arguments,
     function-name,
     generic-function-mandatory-keywords, generic-function-methods,
-    get-time-of-day, getc, getenv, grab-lock,
+    get-local-timezone, get-time-of-day, getc, getenv, grab-lock,
     handler-function, handler-init-args, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     kill-thread,
     limited, limited-integer-class, limited-integer-min, limited-integer-max,
-    list, load, locked?, logand, logbit?, logior, lognot, logxor,
+    list, load, local-daylight-savings-time?,
+    locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, make-ratio, merge-hash-codes,
     function-specializers, function-return-values,
     negative, numerator,
@@ -256,7 +257,8 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-time-of-day,
+    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-local-timezone,
+	     get-time-of-day, local-daylight-savings-time?,
 	     system, getenv, collect-garbage},
     export: all;
 end System;
