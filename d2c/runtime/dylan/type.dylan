@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.16 1996/05/29 23:03:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.17 1997/01/13 03:26:21 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -289,6 +289,15 @@ define method one-of (#rest things) => res :: <type>;
 end;
 
 
+// <limited-type> -- internal
+//
+// The superclass of all limited types (i.e. integer and collection)
+//
+define class <limited-type> (<type>)
+  constant slot limited-integer-base-class :: <class>, 
+    required-init-keyword: #"base-class";
+end class <limited-type>;
+
 // <limited-integer> -- internal
 //
 // <Limited-integer> types are used to represent some subrange of one
@@ -297,9 +306,7 @@ end;
 // Like unions, limited integers are sorta exported because the constructor
 // for them is exported.
 //
-define class <limited-integer> (<type>)
-  slot limited-integer-base-class :: <class>, setter: #f,
-    required-init-keyword: base-class:;
+define class <limited-integer> (<limited-type>)
   slot limited-integer-minimum :: false-or(<general-integer>), setter: #f,
     required-init-keyword: min:;
   slot limited-integer-maximum :: false-or(<general-integer>), setter: #f,
@@ -441,6 +448,159 @@ define method restrict-limited-ints
   make(<limited-integer>, base-class: lim2.limited-integer-base-class,
        min: min, max: max);
 end method restrict-limited-ints;
+
+// <limited-collection> -- internal
+//
+// <limited-collection> types are used to represent a collection with
+// restricted size and/or element type.
+//
+define class <limited-collection> (<limited-type>)
+  constant slot limited-element-type :: false-or(<type>) = #f,
+    init-keyword: #"of";
+  constant slot limited-size-restriction :: false-or(<integer>) = #f,
+    init-keyword: #"size";
+  constant slot limited-dimensions :: false-or(<sequence>) = #f,
+    init-keyword: #"dimensions";
+end;
+
+define sealed domain make (singleton(<limited-collection>));
+
+define open generic element-type
+    (object :: <object>) => (type :: <type>, indefinite? :: <boolean>);
+
+define sealed inline method element-type
+    (class :: one-of(<collection>, <explicit-key-collection>,
+		     <mutable-collection>, <stretchy-collection>,
+		     <mutable-explicit-key-collection>, <sequence>,
+		     <mutable-sequence>, <table>, <object-table>, <array>,
+		     <vector>, <simple-vector>, <stretchy-vector>, <deque>,
+		     <stretchy-vector>))
+ => (type :: <type>, indefinite? :: <boolean>);
+  values(<object>, #f);
+end method element-type;
+
+define method element-type
+    (class :: <class>) => (type :: <type>, indefinite? :: <boolean>);
+  values(<object>, #f);
+end method element-type;
+
+define method element-type
+    (class :: subclass(<range>)) => (type :: <type>, indefinite? :: <boolean>);
+  values(<real>, #t);
+end method element-type;
+
+define method element-type
+    (class :: subclass(<string>))
+ => (type :: <type>, indefinite? :: <boolean>);
+  values(<character>, #t);
+end method element-type;
+
+define sealed inline method element-type
+    (class == <byte-string>) => (type :: <type>, indefinite? :: <boolean>);
+  values(<byte-character>, #f);
+end method element-type;
+
+define sealed inline method element-type
+    (class == <unicode-string>) => (type :: <type>, indefinite? :: <boolean>);
+  values(<character>, #f);
+end method element-type;
+
+define sealed inline method element-type
+    (object :: <limited-collection>)
+ => (type :: <type>, indefinite? :: <boolean>);
+  values(object.limited-element-type, #f);
+end method element-type;
+
+define method element-type (type :: <collection>)
+ => (type :: <type>, indefinite? :: <boolean>);
+  element-type(type.object-class);
+end method element-type;
+
+define sealed inline method limited
+    (class == <collection>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <explicit-key-collection>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <mutable-collection>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <stretchy-collection>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <mutable-explicit-key-collection>, #key of, size)
+ => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <sequence>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <mutable-sequence>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <table>, #key of) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of);
+end method limited;
+
+define sealed inline method limited
+    (class == <object-table>, #key of) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of);
+end method limited;
+
+define sealed inline method limited
+    (class == <array>, #key of, size, dimensions) => (result :: <type>);
+  if (size & dimensions)
+    error("limited(<array>, ...) can't specify both size and dimensions");
+  end if;
+  make(<limited-collection>, base-class: class, of: of, size: size,
+       dimensions: dimensions);
+end method limited;
+
+define sealed inline method limited
+    (class == <vector>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <simple-vector>, #key of, size) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <stretchy-vector>, #key of) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of);
+end method limited;
+
+define sealed inline method limited
+    (class == <deque>, #key of) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of);
+end method limited;
+
+define sealed inline method limited
+    (class == <string>, #key of :: subclass(<character>), size)
+ => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of, size: size);
+end method limited;
+
+define sealed inline method limited
+    (class == <range>, #key of) => (result :: <type>);
+  make(<limited-collection>, base-class: class, of: of);
+end method limited;
 
 
 // <byte-character-type> -- internal.
@@ -466,6 +626,25 @@ define constant <byte-character> = make(<byte-character-type>);
 define constant <non-byte-character>
   = restrict-type(<character>, <byte-character>);
 
+
+//----------------------------------------------------------------------
+// Auxiliary support for limited collections
+//----------------------------------------------------------------------
+define macro limited-collection-definer
+  { define limited-collection ?:name (<vector>) of ?element-type:expression 
+      = ?fill:expression }
+    => { limited-vector-class(?name, ?element-type, ?fill) }
+  { define limited-collection ?:name (<vector>) of ?element-type:expression }
+    => { limited-vector-class(?name, ?element-type, #f) }
+  { define limited-collection ?:name (<stretchy-vector>) of ?element-type:expression 
+      = ?fill:expression }
+    => { limited-sv-class(?name, ?element-type, ?fill,
+			  "***" ## ?name ## "-internal***") }
+  { define limited-collection ?:name (<stretchy-vector>)
+      of ?element-type:expression }
+    => { limited-sv-class(?name, ?element-type, #f,
+			  "***" ## ?name ## "-internal***") }
+end macro;
 
 // <none-of> -- internal
 //
@@ -666,6 +845,28 @@ define method %instance?
   end;
 end;
 
+// %instance?(<collection>, <limited-collection>) -- internal gf method.
+//
+define method %instance?
+    (object :: <object>, type :: <limited-collection>)
+ => (res :: <boolean>);
+  block (return)
+    unless (instance?(object, type.limited-integer-base-class)) return(#f) end unless;
+    unless ((type.limited-element-type == #f)
+	      | object.element-type = type.limited-element-type)
+      return(#f);
+    end unless;
+    if (type.limited-size-restriction)
+      if (instance?(object, <stretchy-collection>))	return(#f) end if;
+      if (type.limited-size-restriction ~== object.size) return(#f) end if;
+    elseif (type.limited-dimensions)
+      if (instance?(object, <stretchy-collection>))	return(#f) end if;
+      if (type.limited-size-restriction ~== object.size) return(#f) end if;
+    end if;
+    #t;
+  end block;
+end method %instance?;
+
 // %instance?(<object>,<byte-character-type>) -- internal gf method.
 //
 // The only instances of <byte-character> are characters that have a character
@@ -688,8 +889,8 @@ end;
 
 // %instance?(<object>,<none-of>) -- internal.
 //
-// Something is an instance of a union if it is an instance of any of the
-// member types or one of the singletons.
+// Something is an instance of a <none-of> if it is an instance of the base
+// type but not an isntance of any of the excluded types.
 //
 define method %instance? (object :: <object>, type :: <none-of>)
     => res :: <boolean>;
@@ -898,13 +1099,12 @@ define method %subtype? (type1 :: <subclass>, type2 :: <subclass>)
   %subtype?(type1.subclass-of, type2.subclass-of);
 end;
 
-// %subtype?(<limited-integer>,<type>) -- internal.
+// %subtype?(<limited-type>,<type>) -- internal.
 //
-// Unless one of the other methods steps in, a limited integer is only
-// a subtype of some other type if the integers base class is a subtype
-// of it.
+// Unless one of the other methods steps in, a limited type is only a subtype
+// of some other type its base class is a subtype of it.
 //
-define method %subtype? (type1 :: <limited-integer>, type2 :: <type>)
+define method %subtype? (type1 :: <limited-type>, type2 :: <type>)
     => res :: <boolean>;
   %subtype?(type1.limited-integer-base-class, type2);
 end;
@@ -933,6 +1133,29 @@ define method %subtype?
     #f;
   end;
 end;
+
+// %subtype?(<limited-collection>, <limited-collection>) -- internal.
+//
+// One limited collection is a subtype of another if their element types are
+// equal, the first collection's base type is a subtype of the second's, and
+// their sizes are "compatible".
+//
+define method %subtype?
+    (type1 :: <limited-collection>, type2 :: <limited-collection>)
+    => res :: <boolean>;
+  if (%subtype?(type1.limited-integer-base-class, type2.limited-integer-base-class)
+	& type1.limited-element-type = type2.limited-element-type)
+    if (type2.limited-dimensions)
+      type1.limited-dimensions = type2.limited-dimensions;
+    elseif (~type2.limited-size-restriction)
+      #t;
+    elseif (type1.limited-dimensions)
+      reduce1(\*, type1.limited-dimensions) == type2.limited-size-restriction;
+    else
+      type2.limited-size-restriction == type1.limited-size-restriction;
+    end if;
+  end if;
+end method %subtype?;
 
 // %subtype?(<byte-character-type>,<type>) -- internal gf method.
 //
@@ -1024,12 +1247,30 @@ define method overlap?
   end case;
 end method overlap?;
 
-define method overlap? (type1 :: <limited-integer>, type2 :: <class>)
+// We ignore size and dimensions specifiers -- they are unlikely to appear
+// much in practice, and the omission will not affect correctness.
+//
+define method overlap?
+    (type1 :: <limited-collection>, type2 :: <limited-collection>)
+ => (result :: <boolean>);
+  type1.limited-element-type = type2.limited-element-type
+    & overlap?(type1.limited-integer-base-class, type2.limited-integer-base-class);
+end method overlap?;
+	       
+// Catch comparisions between limited integers and limited collections.
+//
+define method overlap?
+    (type1 :: <limited-type>, type2 :: <limited-type>)
+ => (result :: <boolean>);
+  #f;
+end method overlap?;
+
+define method overlap? (type1 :: <limited-type>, type2 :: <class>)
     => res :: <boolean>;
   overlap?(type1.limited-integer-base-class, type2);
 end method overlap?;
 
-define method overlap? (type1 :: <limited-integer>, type2 :: <type>)
+define method overlap? (type1 :: <limited-type>, type2 :: <type>)
     => res :: <boolean>;
   overlap?(type2, type1);
 end method overlap?;
