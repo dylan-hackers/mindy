@@ -133,9 +133,9 @@ define function fill-table!
   // we want to compile under Mindy some day.
   local
     method next-pair (state)
-      unless (finished-state?(keys-and-elements, state))
+      unless (finished-state?(keys-and-elements, state, limit))
 	let key = current-element(keys-and-elements, state);
-	if (finished-state?(keys-and-elements, state))
+	if (finished-state?(keys-and-elements, state, limit))
 	  error("Incomplete key/value pair in call of fill-table!: %=", key);
 	end;
 	let new-state = next-state(keys-and-elements, state);
