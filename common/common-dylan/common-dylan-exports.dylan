@@ -21,7 +21,7 @@ define library common-dylan
     finalization,
     simple-random,
     simple-profiling,
-    simple-debugging,
+    // simple-debugging,
     simple-io,
     byte-vector,
     functional-extensions;
@@ -84,18 +84,23 @@ define module byte-vector
   use extensions,
     export: {<byte>,
 	     <byte-vector>};
+  // byte-vector-fill
+  // byte-vector-ref
+  // byte-vector-ref-setter
+  // copy-bytes
 end module;
 
 define module common-extensions
   use dylan;
-  use system, import: { copy-bytes }, export: { copy-bytes };
   use extensions,
     rename: {$not-supplied => $unsupplied,
+             <never-returns> => <bottom>,
              on-exit => register-application-exit-function},
     export: {$unsupplied,
              \assert,
              \debug-assert,
              debug-message,
+             <bottom>,
              integer-length,
              decode-float,
              scale-float,
@@ -116,7 +121,6 @@ define module common-extensions
 	     subclass,
 	     <format-string-condition>, <simple-condition>,
 	     ignore,
-	     key-exists?,
 	     difference,
              concatenate!,
 	     register-application-exit-function,
@@ -124,7 +128,7 @@ define module common-extensions
 	     <object-deque>,
 	     <stretchy-object-vector>,
              <byte-character>,
-             element-range-error};
+             <byte-vector>};
   use %Hash-Tables,
     export: {remove-all-keys!};
   use table-extensions,
@@ -138,6 +142,8 @@ define module common-extensions
 	      profiling-type-result };
 
   create
+    true?,
+    false?,
     position,
     split,
     fill-table!,
@@ -208,9 +214,9 @@ define module common-extensions
     \when;
 
   export
-    \%iterate-aux,
-    \%iterate-param-helper,
-    \%iterate-value-helper;
+    \%iterate-aux,              // ###
+    \%iterate-param-helper,     // ###
+    \%iterate-value-helper;     // ###
 #endif
 end module;
 
@@ -276,6 +282,7 @@ end module streams-protocol;
 define module common-dylan-internals
   use common-dylan;
   use extensions;
+  use system, import: { copy-bytes };
   use cheap-io, import: { puts => write-console };
   use introspection, rename: { subclass-of => subclass-class };
   use melange-support;
