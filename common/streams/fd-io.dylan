@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.3 1996/07/11 16:09:04 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.4 1996/07/28 23:30:13 bfw Exp $
 
 //======================================================================
 //
@@ -73,6 +73,9 @@ define /* exported */ constant fd-enoent :: <integer>
 
 define /* exported */ constant fd-eexist :: <integer>
  = c-expr(int:, "EEXIST");
+
+define /* exported */ constant fd-eacces :: <integer>
+ = c-expr(int:, "EACCES");
 
 
 define /* exported */ generic fd-open

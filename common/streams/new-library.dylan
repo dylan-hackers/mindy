@@ -50,6 +50,7 @@ end library;
       fd-O_EXCL,
       fd-ENOENT,
       fd-EEXIST,
+      fd-EACCES,
       fd-open,
       fd-close,
       fd-read,
@@ -111,7 +112,7 @@ define module new-internals
 	     o_rdonly, o_wronly, o_rdwr, o_creat, o_trunc, o_excl,
 
 	     // Open errors.
-	     enoent, eexist},
+	     enoent, eexist, eacces},
     prefix: "fd-",
     export: all;
   use file-descriptors,
