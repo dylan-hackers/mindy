@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.62 1996/12/05 14:00:50 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.63 1997/01/16 17:13:08 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1010,6 +1010,21 @@ define method spew-object
 		limited-integer-minimum: make-lit(object.low-bound),
 		limited-integer-maximum: make-lit(object.high-bound));
 end;
+
+define method spew-object
+    (object :: <limited-collection-ctype>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<limited-collection>"), state,
+                limited-integer-base-class: object.base-class,
+		limited-element-type: object.element-type,
+                limited-size-restriction: if (object.size-or-dimension)
+                        make(<literal-integer>, 
+                             value: as(<extended-integer>,
+                             object.size-or-dimension));
+                      else
+                        as(<ct-value>, #f);
+                      end if,
+                limited-dimensions: #f);
+end method spew-object;
 
 define method spew-object
     (object :: <singleton-ctype>, state :: <state>) => ();
