@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/lisp2dylan/lisp2dylan.dylan,v 1.2 1997/01/16 15:32:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/lisp2dylan/lisp2dylan.dylan,v 1.3 1997/05/09 23:11:14 ram Exp $
 
 //======================================================================
 //
@@ -881,15 +881,3 @@ define method main (ignored, #rest args)
   end block;
   exit(exit-code: 0);
 end method main;
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif

@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.4 1997/01/23 16:16:51 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.5 1997/05/09 23:11:14 ram Exp $
 
 // **********************************************************************
 // Copyright (c) 1994, 1996 Carnegie Mellon University, all rights reserved.
@@ -1383,18 +1383,6 @@ define method main (ignored, #rest args)
   grovel-file(input, output, log);
   exit(exit-code: 0);
 end method main;
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif
 
 
 // Seals

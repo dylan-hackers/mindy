@@ -1,5 +1,5 @@
 module: d2c-gnu
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.9 1997/02/04 14:39:47 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/dig.dylan,v 1.10 1997/05/09 23:05:04 ram Exp $
 
 //========================================================================
 //
@@ -1147,15 +1147,3 @@ define method main (prog-name :: <string>, #rest args);
   do-gdb-command("break abort");
   command-loop();
 end method main;
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif

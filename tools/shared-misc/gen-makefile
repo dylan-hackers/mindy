@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.19 1997/02/05 12:21:21 nkramer Exp $
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.20 1997/05/09 23:11:14 ram Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -85,7 +85,17 @@
 #         "$buildroot/$subdir".
 #     $destdir
 #         The root directory that files will be copied to when "make
-#         install" is run.
+#         install" is run.  a.k.a. the "exec prefix"
+#     $bindir
+#     $libdir
+#     $includedir
+#     $sysconfdir
+#	  Directories in which we install dylan executables, libraries,
+#         include files and platforms.descr.
+#	  Defaults to $destdir/bin, $destdir/lib/dylan, $destdir/include,
+#         $destdir/etc.
+#     $gen_makefile
+#	  Where to run gen-makefile from for calls from makefiles.
 #
 # In addition, the d2c Makegens use the following variables:
 #
@@ -164,16 +174,19 @@ exit(0);
 #
 sub set_default_defaults {
     # Set the default defaults.
-    $D2CDIR = '/afs/cs/project/gwydion/compiler';
-    $D2C = '$(D2CDIR)/bin/d2c';
-    $D2CFLAGS = '-L$(D2CDIR)/lib';
+    $DYLANDIR = '/usr/local';
+    $D2C = '$(DYLANDIR)/bin/d2c';
+    $D2CFLAGS = '-L$(DYLANDIR)/lib/dylan';
     $CFLAGS = '-g';
-    $CPPFLAGS = '-I$(D2CDIR)/include';
+    $CPPFLAGS = '-I$(DYLANDIR)/include';
     $MELANGE = 'melange';
     $PARSERGEN = 'parsergen';
     $MC = 'mindycomp';
     # There is no MINDYFLAGS, because that depends on the library name
     $MINDY = 'mindy';
+    $gen_makefile = 'gen-makefile';
+    $install_data = "cp";
+    $install_program = "install";
 }
 
 # find_Defaults_file() -- internal
@@ -266,6 +279,38 @@ sub read_Defaults_file {
 
     # Likewise for builddir
     chop($builddir = $buildroot.'/'.$subdir);
+
+    if ($destdir) {
+      unless ($libdir) {
+        $libdir = $destdir.'/lib/dylan';
+      }
+      unless ($bindir) {
+        $bindir = $destdir.'/bin';
+      }
+      unless ($includedir) {
+        $includedir = $destdir.'/include';
+      }
+      unless ($sysconfdir) {
+        $sysconfdir = $destdir.'/etc';
+      }
+    }
+    
+    $srcroot = &convert_path_separator($srcroot);
+    $srcdir = &convert_path_separator($srcdir);
+    $buildroot = &convert_path_separator($buildroot);
+    $builddir = &convert_path_separator($builddir);
+    $destdir = &convert_path_separator($destdir);
+    $libdir = &convert_path_separator($libdir);
+    $bindir = &convert_path_separator($bindir);
+    $includedir = &convert_path_separator($includedir);
+    $sysconfdir = &convert_path_separator($sysconfdir);
+
+    $MC = &convert_path_separator($MC);
+    $MINDY = &convert_path_separator($MINDY);
+    $D2C = &convert_path_separator($D2C);
+    $MELANGE = &convert_path_separator($MELANGE);
+    $PARSERGEN = &convert_path_separator($PARSERGEN);
+            
 }
 
 # do_Makegen_file() -- internal
@@ -284,17 +329,12 @@ sub do_Makegen_file {
     print "### This makefile is machine generated.  Don't expect any edits to survive.\n";
     print "### Generated for target $target_name hosted by $host_name\n\n";
 
-    $srcroot = &convert_path_separator($srcroot);
-    $srcdir = &convert_path_separator($srcdir);
-    $buildroot = &convert_path_separator($buildroot);
-    $builddir = &convert_path_separator($builddir);
-
     print "SRCROOT=$srcroot\n";
     print "SRCDIR=$srcdir\n";
     print 'VPATH=$(SRCDIR)' . "\n";
     print "BUILDROOT=$buildroot\n";
     print "BUILDDIR=$builddir\n";
-    $destdir && print "DESTDIR=$destdir\n";
+#    $destdir && print "DESTDIR=$destdir\n";
     if ($host_platform{'make_supports_phony_targets?'}) {
 	print "\n.PHONY: default compile install clean\n\n";
     }
@@ -308,18 +348,26 @@ sub do_Makegen_file {
 	push(@clean_commands, "-rm -f @files_to_clean");
     }
 
-    push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
-    push(@GNUmakefile_commands, "$0 -p$platforms_dot_descr .");
+    
+    push(@GNUmakefile_dependencies, $gen_makefile,
+	 $defaults, $makegen);
+    push(@GNUmakefile_commands,
+	"$gen_makefile -p$platforms_dot_descr .");
 
     &emit_rule('compile');
     $destdir && do emit_rule ('install');
     &emit_rule('clean');
     if ($host_platform{'makefiles_can_rebuild_themselves?'}) {
-	&emit_rule($makefile);
+	print $makefile, ': ', join(' ', eval('@GNUmakefile_dependencies'));
+	print "\n";
+	foreach $rule (eval('@GNUmakefile_commands')) {
+	    print "\t", $rule, "\n";
+	}
+    print "\n";
     }
 
     &emit_rule('cc_files');
-
+    &emit_rule('dbc_only');
     close(MAKEFILE);
     rename(",$makefile", $makefile);
 }
@@ -336,7 +384,7 @@ sub do_Makegen_file {
 #
 sub assert_path_is_absolute {
     local($path, $variable) = @_;
-    local($win32_absolute) = ($path =~ /^\w:\//);
+    local($win32_absolute) = ($path =~ /^w:\//);
     local($unix_absolute) = ($path =~ /^\//);
     local($ok, $explanation);
 
@@ -359,6 +407,7 @@ sub assert_path_is_absolute {
 	$explanation = "";
     }	
 
+ $ok = 1;
     if (! $ok) {
 	if ($explanation) {
 	    die "$variable is not absolute:\n  $path\n$explanation\n";
@@ -388,7 +437,7 @@ sub emit_rule {
 # Generates the makefile rule to visit a single subdirectory.
 #
 sub compile_subdir {
-    local($subdir) = @_;
+    local($subdir) = &convert_path_separator(@_);
     push(@compile_commands, 
 	 sprintf($host_platform{'recursive_make_command'}, 
 		 $subdir, ""));
@@ -401,6 +450,9 @@ sub compile_subdir {
     push(@cc_files_commands,
 	 sprintf($host_platform{'recursive_make_command'}, 
 		 $subdir, "cc_files"));
+    push(@dbc_only_commands,
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, "dbc_only"));
 }
 
 # maybe_emit_d2c_defines() -- internal
@@ -414,7 +466,7 @@ sub maybe_emit_d2c_defines {
 	    print("CC=$CC\n");
 	}
 	print <<EOF;
-D2CDIR = $D2CDIR
+DYLANDIR = $DYLANDIR
 D2C = $D2C
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
@@ -427,6 +479,9 @@ MINDY = $MINDY
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
 	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
+	    if ($DYLANPATH) {
+		print "export DYLANPATH = $DYLANPATH\n\n";
+	    }
 	}
 	$d2c_defines = 1;
     }
@@ -500,9 +555,13 @@ sub parse_lid_file {
     %contents = &parse_dylan_header();
 
     # Read the filenames
+    # a .o in the Lid file is a hack to get a foreign .o put in the archive.
+    # Just ignore em, since there should be a seperate C rule to clean, etc.
     while (<LIDFILE>) {
-	chop; # kill newline
-	$contents{'files'} .= " $_";
+        if ($_ !~ m/.*$dot_obj$/) {
+  	    chop; # kill newline
+	    $contents{'files'} .= " $_";
+	}
     }
 
     # replace multiple spaces with single spaces
@@ -602,22 +661,21 @@ sub compile_subdirs {
 # Keywords recognized:
 #
 #    'compile'
-#         Adds this library to the list of libraries compiled by the
-#         'compile' makefile target.
+#         Compile this with d2c and add it to the list of libraries compiled by
+#         the 'compile' makefile target.
 #    'install' 
 #         Adds this library/executable to the list of files installed
 #         by the 'install' makefile target.
 #    'no-mindy'
-#         By default, a target is created for libname.dbc; although
-#         this file is not added to any makefile targets, it can be
-#         manually created by running "make libname.dbc".  This makes
-#         for easy debugging.  'no-mindy' suppresses the creation of
-#         this file; this is useful if the Mindy version of the
-#         library does not use the same source files as the d2c
-#         version.
+#         By default, a target is created for dbc_only; this target 
+#         is not added to any makefile targets, but it can be manually
+#         created by running "make dbc_only".  This makes for easy debugging.
+#         'no-mindy' suppresses the creation of this target, which is useful
+#         when the Mindy version of the library does not use the same source
+#         files as the d2c version.
 #    'compile-mindy'
-#         Add libname.dbc to the 'compile' makefile target, instead of
-#         the d2c version of the library.  This flag does not make
+#         Add libname.dbc to the 'compile' makefile target (possibly in
+#         addition to the d2c version of the library.)  This flag does not make 
 #         much sense with 'no-mindy'.
 #
 # The return value is a two element array.  The first element is the
@@ -654,11 +712,11 @@ sub emit_library_rule {
     if ($executable) {
 	push(@files_to_clean, $executable_filename, 'heap.s', 'inits.c');
 
-	grep(/^compile$/, @keywords)
-	    && push(@compile_dependencies, $executable_filename);
-
-	grep(/^install$/, @keywords)
-	    && do install('bin', $executable_filename);
+	if (grep(/^compile$/, @keywords)) {
+	    push(@compile_dependencies, $executable_filename);
+	    grep(/^install$/, @keywords)
+	        && do install_executable($bindir, $executable_filename);
+        }
 
 	$d2c_target = $executable_filename;
     }
@@ -670,19 +728,11 @@ sub emit_library_rule {
 
 	push(@files_to_clean, $foo_lib_du, $libfoo_a);
 
-	grep(/^compile$/, @keywords)
-	    && push(@compile_dependencies, $foo_lib_du);
-#	    && ($win32
-#		? push(@compile_dependencies, $foo_lib_du)
-#		: push(@compile_dependencies, $foo_lib_du, $libfoo_a));
-
-	# Under win32, we don't name libname.lib as a dependency
-	# because nmake can't figure out how to build it (after all,
-	# there's nothing that explicitly says that it is produced at
-	# the same time as libname.lib.du)
-
-	grep(/^install$/, @keywords)
-	    && do install('lib', $foo_lib_du, $libfoo_a);
+	if (grep(/^compile$/, @keywords)) {
+	    push(@compile_dependencies, $foo_lib_du);
+	    grep(/^install$/, @keywords)
+	        && do install($libdir, $foo_lib_du, $libfoo_a);
+        }
 
 	$d2c_target = $foo_lib_du;
     }
@@ -692,16 +742,6 @@ sub emit_library_rule {
     local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix . "-files.mak";
     push(@cc_files_commands, $cc_files_cmd);
 
-    # delayed_binaries doesn't use the makefile target cc_files,
-    # because cc_files will break when there are multiple executables
-    # built in the same directory.  (heap.s and inits.c from one
-    # program will overwrite those of another, and we'll never be able
-    # to build what we want) Instead, we just put the rule to compile
-    # generated C code right after the command to generate the C code
-    # (ie, the d2c call).
-    if ($delayed_binaries) {
-	print "\t$cc_files_cmd\n";
-    }
     print "\ninclude $unit_prefix.dep\n\n";
 
     unless (-e "$unit_prefix.dep") {
@@ -715,6 +755,8 @@ sub emit_library_rule {
     }
     if (grep(/^compile-mindy$/, @keywords)) {
 	push(@compile_dependencies, "$library-lib.dbc");
+	grep(/^install$/, @keywords)
+	    && do install($libdir, "$library-lib.dbc");
     }
     local(@return_val);
     $return_val[0] = $d2c_target;
@@ -739,7 +781,12 @@ sub emit_c_file_rule {
     }
     print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR) ";
     print "-c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
-    push(@compile_dependencies, $objfile);
+    if ($target_name eq $host_name) {
+      push(@compile_dependencies, $objfile);
+    } else {
+      push(@cc_files_dependencies, $objfile);
+    };
+
     push(@files_to_clean, $objfile);
 }
 
@@ -761,7 +808,11 @@ sub emit_cc_file_rule {
     }
     print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
     print "-c \$(SRCDIR)/$basefile.cc -o $objfile\n\n";
-    push(@compile_dependencies, $objfile);
+    if ($target_name eq $host_name) {
+      push(@compile_dependencies, $objfile);
+    } else {
+      push(@cc_files_dependencies, $objfile);
+    };
     push(@files_to_clean, $objfile);
 }
 
@@ -774,14 +825,14 @@ sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
     print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
-    print "\$(SRCDIR)/$basefile.intr $basefile.dylan\n\n";
-    push(@compile_dependencies, "$basefile.dylan");
-    push(@files_to_clean, "$basefile.dylan");
+    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
+    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
+    push(@files_to_clean, "\$SRCDIR/$basefile.dylan");
 }
 
 # emit_parsergen_rule($base_file_name) -- exported
@@ -792,11 +843,11 @@ sub emit_parsergen_rule {
     local ($basefile) = @_;
     do maybe_emit_d2c_defines();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.input";
+    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.input";
     print "\n\t\$(PARSERGEN) ";
-    print "\$(SRCDIR)/$basefile.input $basefile.dylan\n\n";
-    push(@compile_dependencies, "$basefile.dylan");
-    push(@files_to_clean, "$basefile.dylan");
+    print "\$(SRCDIR)/$basefile.input \$(SRCDIR)/$basefile.dylan\n\n";
+    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
+    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
 }
 
 # install_one_file($from_file, $to_file, $executable_permissions) -- internal
@@ -812,18 +863,18 @@ sub emit_parsergen_rule {
 sub install_one_file {
     local ($from_file, $to_file, $executable_permissions) = @_;
 
-    print "$to_file: $from_file\n";
+    print "\n$to_file: $from_file\n";
     if ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
 	# Host is a win32 platform
 	local ($rule) = "\tcopy $from_file $to_file\n\n";
 	$rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
 	print $rule;
     } elsif ($host_platform{'default_features'} =~ /compiled-for-unix/i) {
-	print "\t", '@-mv $@ $@.old', "\n";
-	print "\t", 'cp -p $< $@', "\n";
-	print "\t", '@rm -f $@.old', "\n";
-	if ($executable_permissions) { print "\t", 'chmod a+x $@', "\n"; }
-	print "\n";
+	if ($executable_permissions) {
+	    print "\t$install_program $from_file $to_file\n\n";
+	} else {
+	    print "\t$install_data $from_file $to_file\n\n";
+	};
     } else {
 	die("The host is neither Unix nor win32, so I don't know how\n"
 	    . "to install your files.");
@@ -831,57 +882,73 @@ sub install_one_file {
     push(@install_dependencies, $to_file);
 }
 
-# install($dest_subdir, @files) -- exported
+# install($dest_dir, @files) -- exported
 #
-# Installs a bunch of files from the build dir into a subdirectory of
-# $destdir.
+# Installs a bunch of files from the build dir into $dest_dir, normally a
+# subdirectory of $destdir.
 #
 sub install {
-    local ($subdir, @files) = @_;
+    local ($dest_dir, @files) = @_;
     local ($file, $dst);
 
     # Don't generate any install rules unless destdir is set.
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "\$(DESTDIR)/$subdir/$file";
+	$dst = "$dest_dir/$file";
 	&install_one_file($file, $dst, 0);
     }
 }
 
-# install_from_src($dest_subdir, @files) -- exported
+# install_executable($dest_dir, @files) -- exported
 #
-# Installs a bunch of files from the source dir into a subdirectory of
-# $destdir.  Useful when you just want to copy Perl scripts into the 
-# dest dir.
+# Installs a bunch of files from the build dir into $dest_dir, normally a
+# subdirectory of $destdir.  Makes them executable.
+#
+sub install_executable {
+    local ($dest_dir, @files) = @_;
+    local ($file, $dst);
+    # Don't generate any install rules unless destdir is set.
+    $destdir || return;
+
+    foreach $file (@files) {
+	$dst = "$dest_dir/$file";
+	&install_one_file($file, $dst, 1);
+    }
+}
+
+# install_from_src($dest_dir, @files) -- exported
+#
+# Installs a bunch of files from the source dir into dest_dir.  Useful when you
+# just want to copy Perl scripts into the dest dir.
 #
 sub install_from_src {
-    local ($subdir, @files) = @_;
+    local ($dest_dir, @files) = @_;
     local ($file, $dst);
 
     # Don't generate any install rules unless destdir is set.
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "\$(DESTDIR)/$subdir/$file";
+	$dst = "$dest_dir/$file";
 	&install_one_file("$srcdir/$file", $dst, 0);
     }
 }
 
-# install_executable_from_src($dest_subdir, @files) -- exported
+# install_executable_from_src($dest_dir, @files) -- exported
 #
 # Like install_from_src, except makes sure the file has executable 
 # permissions for everyone (this is not relevant on win32, only unix).
 #
 sub install_executable_from_src {
-    local ($subdir, @files) = @_;
+    local ($dest_dir, @files) = @_;
     local ($file, $dst);
 
     # Don't generate any install rules unless destdir is set.
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "\$(DESTDIR)/$subdir/$file";
+	$dst = "$dest_dir/$file";
 	&install_one_file("$srcdir/$file", $dst, 1);
     }
 }
@@ -889,16 +956,22 @@ sub install_executable_from_src {
 # emit_mindycomp_rule($dylan_source) -- exported
 #
 # Emits a rule to run mindycomp on the file.  $dylan_source shouldn't
-# have an extension.
+# have an extension.  If the file doesn't exist in the source, hopefully
+# someone will create it in the build area.
 #
 # emit_mindycomp_library_rule is the primary, perhaps even the only,
 # user of this function.
 #
 sub emit_mindycomp_rule {
     local($source, $flags) = @_;
-    print "$source.dbc: \$(SRCDIR)/$source.dylan\n";
+    if (-e "$srcdir/$source.dylan") {
+      $da_source = "\$(SRCDIR)/$source.dylan";
+    } else {
+      $da_source = "$source.dylan";
+    }
+    print "$source.dbc: $da_source\n";
     print "\t\$(MC) $flags ";
-    print "-o $source.dbc \$(SRCDIR)/$source.dylan\n";
+    print "-o $source.dbc $da_source\n";
 }
 
 # emit_dbc_link_rule($libname, $dbc_files) -- exported
@@ -939,7 +1012,9 @@ sub emit_mindycomp_library_rule {
 	push(@files_to_clean, "$file.dbc");
     }
     print "DASH_$uppercase_libname = -l$libname\n\n";
-    print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n";
+    print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n\n";
+    push(@dbc_only_dependencies, "$libname-lib.dbc");
+
     local($source);
     foreach $source (@sources) {
 	&emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
@@ -951,7 +1026,7 @@ sub emit_mindycomp_library_rule {
 #
 # makegen_include is like C's #include.  The main reason to use
 # makegen_include is that it correctly handles the case where the
-# srcdir is not the same as the destdir (ie, it looks for the include
+# srcdir is not the same as the build dir (ie, it looks for the include
 # file in the srcdir).
 #
 # There's a certain danger of variable capture with the variable
@@ -961,7 +1036,7 @@ sub makegen_include {
     local($include_file) =  @_;
     $include_file = $srcdir . '/' . $include_file;
     (-e $include_file) || die("No $include_file\n");
-    push(@GNUmakefile_dependencies, $0, $include_file);
+    push(@GNUmakefile_dependencies, $include_file);
     # Convert \ back to /, because that's how "do" likes its filenames
     $include_file =~ tr|\\|/|;
     do $include_file;

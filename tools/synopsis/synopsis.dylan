@@ -1,6 +1,6 @@
 module: synopsis
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.3 1997/02/13 13:06:35 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.4 1997/05/09 23:11:14 ram Exp $
 
 //======================================================================
 //
@@ -420,15 +420,3 @@ define method main (ignored, #rest cmd-line-args) => ();
   end for;
   force-output(out-stream);
 end method main;
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif

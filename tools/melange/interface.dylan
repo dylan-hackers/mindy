@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.16 1997/02/04 14:41:07 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.17 1997/05/09 23:06:25 ram Exp $
 
 //======================================================================
 //
@@ -569,15 +569,3 @@ define method main (program, #rest args)
     force-output(*standard-error*);
   end if;
 end method main;
-
-#if (~mindy)
-define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
-  let args = make(<vector>, size: argc);
-  for (index :: <integer> from 0 below argc)
-    let argptr = pointer-deref(#"ptr", argv,
-			       index * c-expr(#"int", "sizeof(void *)"));
-    args[index] := import-string(argptr);
-  end for;
-  apply(main, args);
-end method %main;
-#endif
