@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.18 1995/12/04 21:06:39 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.19 1995/12/07 15:52:55 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -205,6 +205,49 @@ define method key-test (ht :: <table>) => test :: <function>;
   let test = table-protocol(ht);    // drop the second return value
   test;
 end method key-test;
+
+
+define method object-hash (key :: <object>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  pointer-hash(key);
+end method object-hash;
+
+// The largest <fixed-integer> prime.
+//
+define constant $really-big-prime = 1073741789;
+
+define method object-hash (key :: <fixed-integer>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  values(modulo(key, $really-big-prime), $permanent-hash-state);
+end;
+
+define method object-hash (key :: <extended-integer>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  values(as(<fixed-integer>, modulo(key, $really-big-prime)),
+	 $permanent-hash-state);
+end method object-hash;
+
+define method object-hash (key :: <ratio>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  values(logxor(as(<fixed-integer>, modulo(key.numerator, $really-big-prime)),
+		as(<fixed-integer>,
+		   modulo(key.denominator, $really-big-prime))),
+	 $permanent-hash-state);
+end method object-hash;
+
+define method object-hash (key :: <float>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  float-hash(key);
+end method object-hash;
+
+define method object-hash (key :: <character>)
+ => (id :: <fixed-integer>, state :: <hash-state>);
+  // We could get away with using pointer-hash for <character>s in Mindy,
+  // but we don't because there is a trivial hash function that lets us
+  // use $permanent-hash-state.
+  values(as(<fixed-integer>, key), $permanent-hash-state);
+end method object-hash;
+
 
 // equal-hash is used in the table-protocol as the hash-function 
 // for equal tables. Calling convention is similar to object-hash.
