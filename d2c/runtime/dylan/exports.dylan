@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.20 1996/02/23 00:00:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.21 1996/03/17 00:10:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -105,15 +105,16 @@ define module Dylan
 	     $permanent-hash-state,
 
 	     // Definitions
-	     variable-definer, constant-definer, /* generic-definer, */
-	     method-definer, class-definer, module-definer, library-definer,
+	     variable-definer, constant-definer, domain-definer,
+	     generic-definer, method-definer, class-definer, module-definer,
+	     library-definer,
 
 	     // Statements
 	     \if, \unless, \case, \select, \while, \until, \for, \begin,
 	     \block, \method,
 
-	     // Special Operators
-	     \&, \|, \:=
+	     // Function-macro operators.
+	     \:=, \&, \|
     },
     export: all;
 end;
@@ -168,8 +169,10 @@ end;
 
 define module System
   use Dylan-Viscera,
-    import: {// Foreign interface stuff.
-	     call-out, c-include, c-decl, c-expr,
+    import: {\%%primitive,
+	     
+	     // Foreign interface stuff.
+	     \call-out, \c-include, \c-decl, \c-expr,
 
 	     // Raw pointer stuff.
 	     <raw-pointer>, pointer-deref, pointer-deref-setter,
@@ -199,62 +202,66 @@ end;
 
 define module magic
   use Dylan-Viscera,
-    import: {
-    %check-type,
-    %element-setter,
-    %instance?,
-    %make-gf,
-    %make-method,
-    %make-next-method-cookie,
-    %object-class,
-    ambiguous-method-error,
-    catch,
-    class-all-slot-descriptors,
-    class-maker-setter,
-    class-new-slot-descriptors,
-    closure-var,
-    closure-var-setter,
-    disable-catcher,
-    find-slot-offset,
-    general-call,
-    general-rep-getter,
-    general-rep-setter,
-    gf-call,
-    heap-rep-getter,
-    heap-rep-setter,
-    make-catcher,
-    make-closure,
-    make-exit-function,
-    make-rest-arg,
-    maybe-do-defered-evaluations,
-    missing-required-init-keyword-error,
-    no-applicable-methods-error,
-    odd-number-of-keyword/value-arguments-error,
-    override-init-function,
-    override-init-function-setter,
-    override-init-value,
-    override-init-value-setter,
-    pop-handler,
-    pop-unwind-protect,
-    push-handler,
-    push-unwind-protect,
-    slot-init-function,
-    slot-init-function-setter,
-    slot-init-value,
-    slot-init-value-setter,
-    slot-type,
-    slot-type-setter,
-    slow-functional-==,
-    throw,
-    type-error,
-    uninitialized-slot-error,
-    unique-id,
-    unrecognized-keyword-error,
-    value,
-    value-setter,
-    values-sequence,
-    verify-keywords,
-    wrong-number-of-arguments-error},
+    import: {%check-type,
+	     %element-setter,
+	     %instance?,
+	     %make-gf,
+	     %make-method,
+	     %make-next-method-cookie,
+	     %object-class,
+	     ambiguous-method-error,
+	     catch,
+	     class-all-slot-descriptors,
+	     class-maker-setter,
+	     class-new-slot-descriptors,
+	     closure-var,
+	     closure-var-setter,
+	     \define-generic,
+	     disable-catcher,
+	     find-slot-offset,
+	     \for-aux,
+	     \for-aux2,
+	     \for-clause,
+	     general-call,
+	     general-rep-getter,
+	     general-rep-setter,
+	     gf-call,
+	     heap-rep-getter,
+	     heap-rep-setter,
+	     make-catcher,
+	     make-closure,
+	     make-exit-function,
+	     make-rest-arg,
+	     maybe-do-defered-evaluations,
+	     missing-required-init-keyword-error,
+	     \mv-call,
+	     no-applicable-methods-error,
+	     odd-number-of-keyword/value-arguments-error,
+	     override-init-function,
+	     override-init-function-setter,
+	     override-init-value,
+	     override-init-value-setter,
+	     pop-handler,
+	     pop-unwind-protect,
+	     push-handler,
+	     push-unwind-protect,
+	     slot-init-function,
+	     slot-init-function-setter,
+	     slot-init-value,
+	     slot-init-value-setter,
+	     slot-type,
+	     slot-type-setter,
+	     slow-functional-==,
+	     throw,
+	     type-error,
+	     uninitialized-slot-error,
+	     unique-id,
+	     unrecognized-keyword-error,
+	     value,
+	     value-setter,
+	     values-sequence,
+	     verify-keywords,
+	     wrong-number-of-arguments-error},
     export: all;
 end;
 
