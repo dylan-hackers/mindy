@@ -121,6 +121,10 @@ define-primitive
 // Define-primitives for the standard primitives.
 
 define-primitive
+  (#"invoke-generic-entry", #(#"<method>", #"<list>", #"cluster"),
+   #(values:, rest:, #"<object>"));
+
+define-primitive
   (#"values", #(rest:, #"<object>"), #(values:, rest:, #"<object>"),
    pure: #t);
 

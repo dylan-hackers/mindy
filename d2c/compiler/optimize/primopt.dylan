@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.6 1995/06/09 19:09:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.7 1995/06/10 12:35:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,6 +24,20 @@ define-primitive-transformer
      replace-expression(component, primitive.dependents,
 			make-literal-constant(make-builder(component),
 					      as(<ct-value>, #f)));
+   end);
+
+
+// Call related primitives.
+
+define-primitive-transformer
+  (#"invoke-generic-entry",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     replace-expression
+       (component, primitive.dependents,
+	make-operation(make-builder(component), <mv-call>,
+		       listify-dependencies(primitive.depends-on),
+		       use-generic-entry: #t));
+			 
    end);
 
 
