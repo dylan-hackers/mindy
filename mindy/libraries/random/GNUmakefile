@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/GNUmakefile,v 1.1 1994/06/08 11:33:12 dpierce Exp $
+##   $Header: /home/housel/work/rcs/gd/src/mindy/libraries/random/Attic/GNUmakefile,v 1.2 1994/06/15 19:30:12 dpierce Exp $
 ##
 ## This is the makefile for the Mindy random library, random.dbc.
 ##
@@ -22,7 +22,7 @@ MINDYFLAGS = -lRandom
 %.dbc: %.dylan
 	$(MC) ${MINDYFLAGS} -o $@ $<
 
-OBJS = library.dbc distributions.dbc utilities.dbc
+OBJS = library.dbc distributions.dbc
 
 random.dbc: ${OBJS}
 	cat ${OBJS} > $@
