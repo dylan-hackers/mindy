@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.7 2000/10/31 14:17:25 dauclair Exp $
+##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.8 2000/11/01 05:25:19 housel Exp $
 ##
 ##  This is the makefile for the Mindy compatability library.
 ##
@@ -94,8 +94,9 @@ install: libcompat.a
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
 
-cygwin.o: cygwin.c
-	${CC} -c ${CFLAGS} cygwin.c
+cygwin.o: ${SRCDIR}/cygwin.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h \
+	  ${SRCDIR}/cygwin.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/cygwin.c
 
 getcwd.o:  ${SRCDIR}/getcwd.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/getcwd.c
