@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.68 2002/08/24 15:50:25 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.69 2002/08/26 01:36:01 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -203,13 +203,18 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   #endif
 
   // alter the GC params, if the user wants
+  // This supports three levels:
+  //   - small  : small initial heap, frequent GC
+  //   - default: initial heap 25 MB
+  //   - big    : initial heap 25 M, infrequent G
   c-decl("extern unsigned long GC_free_space_divisor;");
   c-decl("extern int GC_expand_hp(size_t number_of_bytes);");
   if (getenv("D2C_SMALL_MACHINE"))
     c-expr(void: "GC_free_space_divisor = 5");
+  else
+    c-expr(void: "GC_expand_hp(25*1024*1024)");
   end;
   if (getenv("D2C_BIG_MACHINE"))
-    c-expr(void: "GC_expand_hp(25*1024*1024)");
     c-expr(void: "GC_free_space_divisor = 2");
   end;
 
