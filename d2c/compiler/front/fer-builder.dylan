@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.15 1995/04/23 21:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.16 1995/04/24 03:15:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -376,10 +376,12 @@ end method;
   
 
 define method make-mv-operation
-    (builder :: <fer-builder>, operands :: <list>)
+    (builder :: <fer-builder>, function :: <leaf>,
+     cluster :: <abstract-variable>)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(builder, make(<mv-call>), operands);
+  make-operand-dependencies(builder, make(<mv-call>),
+			    list(function, cluster));
 end method;
 
 
@@ -518,10 +520,10 @@ end method;
 define method make-exit-function
     (builder :: <fer-builder>, target :: <fer-exit-block-region>)
  => res :: <leaf>;
-  target.exit-function
-    | (target.exit-function
+  target.catcher.exit-function
+    | (target.catcher.exit-function
          := make(<exit-function>, source-location: target.source-location,
-		 derived-type: function-ctype(), target-region: target));
+		 target-region: target));
 end;
 
 
@@ -535,9 +537,7 @@ define method build-method-body
  => res :: <leaf>;
   ignore(policy);
   let prologue = make-operand-dependencies(builder, make(<prologue>), #());
-  let leaf = make(<lambda>, source-location: source,
-		  derived-type: function-ctype(),
-		  prologue: prologue);
+  let leaf = make(<lambda>, source-location: source, prologue: prologue);
   make-operand-dependencies(builder, leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
@@ -552,12 +552,11 @@ define method make-hairy-method-literal
      signature :: <signature>, main-entry :: <leaf>)
  => res :: <leaf>;
   ignore(policy);
-  let res
-    = make(<hairy-method-literal>,
-	   derived-type: function-ctype(),
-	   signature: signature,
-	   source-location: source,
-	   main-entry: main-entry);
+  let res = make(<hairy-method-literal>,
+		 signature: signature,
+		 source-location: source,
+		 main-entry: main-entry);
   let comp = builder.component;
   comp.reanalyze-functions := pair(res, comp.reanalyze-functions);
+  res;
 end;
