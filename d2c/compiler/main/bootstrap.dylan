@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.8 1995/04/26 03:26:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.9 1995/04/27 00:59:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -386,7 +386,7 @@ define generic %make-gf () => res :: <generic-function>;
 define generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
 define generic check-type (value, type :: <type>) => value;
-define generic error (msg, #rest args) => (); // ### doesn't actually return
+define generic error (msg, #rest args) => res :: type-or();
 define generic make (class :: <class>, #key) => thing;
 
 
