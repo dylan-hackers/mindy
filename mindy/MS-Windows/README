@@ -1,0 +1,50 @@
+This file contains instructions for building Mindy under Windows/NT
+using Visual C++ version 2.0.
+
+Build a copy of Mindy for the HP.
+
+Create a tar file:
+ (cd /afs/cs/project/gwydion/mindy/src; tar -cvf ~/mindy.tar `find . -print`)
+
+Pack up the makefiles from the HP:
+ (cd /afs/cs/project/gwydion/mindy/build/hp700_ux90;
+  tar -cvf ~/makefiles.tar `find . -name Makefile -print`)
+
+On the PC, create a directory for Mindy and change dir to it. Unpack
+mindy.tar and makefiles.tar.
+
+Create two directories under the top level Mindy directory, Debug and
+Released.  Create Debug/objects and Released/objects.
+
+Place Mindy.mak in the top-level of said directory hierarchy.  Open
+with Visual C++.
+
+Due to a bug in Visual C++ 2.0, you'll have to edit some preprocessor
+definitions.  Go into the C/C++ pane of the Project/Settings dialog box
+and fix the preprocessor definitions for each of the four targets.  In
+the little window at the bottom, manually remove
+
+  /D /D /D VERSION=... BINDIR=... LIBDIR=...
+
+from the compiler options.  (You'll have to do this four times, once
+for each of the targets)  Then, in the preprocessor definitions
+area, add VERSION=..., BINDIR=..., and LIBDIR=... to the definitions.
+The values you should use for debugging is
+
+  , VERSION="\"1.3\"", BINDIR="\"d:/mindy-13/bin\"", LIBDIR="\"d:/mindy-13/lib\""
+
+For the release version, use
+
+  , VERSION="\"1.3\"", BINDIR="\"c:/mindy-13/bin\"", LIBDIR="\"c:/mindy-13/lib\""
+                              ^                            ^
+(It is important to delete the junk in the window before adding the
+new definitions)
+
+Now, hit Rebuild All (again, you'll have to do it once for each
+target).
+
+Type finish-build to build the libraries.
+
+If you have to modify any of the source files, you'll likely have to
+set the write permissions on them:  Go to the file manager, select the
+source files, hit Alt-Enter, and clear the Read Only bit.
