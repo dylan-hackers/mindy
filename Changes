@@ -2,6 +2,10 @@ Mindy 1.5 Change Log
 
 The following are enhancements added since release 1.4:
 
+   Added the TK library, which is a Dylan binding for TK 4.0 (of
+   TCL/TK fame).  See dylan-tk.txt for details.  Also added a
+   graphical version of html2txt and a game of Minesweeper.
+
    Added $not-supplied to the Extensions module.  See mindy.txt for
    details.
 
