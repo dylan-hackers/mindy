@@ -1,10 +1,10 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.17 2001/09/17 11:47:30 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.18 2002/03/12 21:59:34 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -1889,7 +1889,8 @@ end method;
 // Call after reading fixed number of subobjects to eat the end header.
 //
 define /* exported */ method assert-end-object (state :: <load-state>) => ();
-  assert(load-object-dispatch(state) == $end-object);
+  let last-object = load-object-dispatch(state);
+  assert(last-object == $end-object);
 end method;
 
 
