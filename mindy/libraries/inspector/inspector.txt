@@ -1,0 +1,367 @@
+			The Mindy Object Inspector
+
+Sections:
+
+1. Inspector functions
+
+2. Using the inspector
+
+------------
+This document describes the use of the inspector module for the Mindy Dylan
+compiler.  The inspector is used to supplement the current Mindy debugger,
+and provide programmers with a tool for interactively inspecting their data
+structures.  As a supplement to the debugger, the interface is as similar to
+that of Mindy's as possible, and, whenever possible, Inspector commands have
+the same name that the equivalent commands have in Mindy. The current version
+of the inspector is functional, but is not necessarily comprehensive.
+
+The inspector library exports the inspector module, which contains all of the
+exported functions.  Use of the inspector library requires the following
+libraries from the Gwydion Project:
+	Streams
+	Print
+	String-extensions
+
+
+
+1. Inspector Functions:
+-----------------------
+
+display-object-info						     [Function]
+
+    Arguments
+	the-object :: <object>
+	#key display-elements? :: <boolean> = #t
+	display-slots? :: <boolean> = #t
+	display-superclasses? :: <boolean> = #t
+	display-subclasses? :: <boolean> = #t
+	display-stream :: <stream> = *standard-output*
+	display-print-length = 5
+	display-print-level = 1
+    Values
+	none
+    Description
+	Prints all requested object information to the stream specified by
+	display-stream.  What the function actually displays is controlled by
+	the settings of display-elements?, display-slots?, display-subclasses?,
+	and display-superclasses?.  If any of these are set to #f then the
+	corresponding information will not be printed.  The
+	display-print-length and display-print-level keywords control how
+	instances are displayed via the print function.  display-print-length
+	works exactly like the length keyword in the print function, and
+	display-print-level works like the level keyword in the print function.
+
+	The output of the display-object-info function is very similar to the
+	output of the inspector function described later.  There are five major 
+	kinds of display, depending on what type the object is.  If the-object 
+	is a class, the output will look like this:
+
+		Class <my-class>
+		 Slots:
+		  SLOT-ONE: <list>
+		  SLOT-TWO: <object>
+		  SLOT-THREE: <sequence>
+		 Direct Superclasses:
+		  <my-superclass>
+		 Direct Subclasses:
+		  <my-subclass>
+	
+	If the object is an instance of a class, the output will look like this:
+
+		An instance of class <my-class>
+		 Slots:
+		  SLOT-ONE: <list>
+		  SLOT-TWO: <object> = "Hello"
+		  SLOT-THREE: <sequence> = #['W', 'o', 'r', 'l', 'd']
+		 Direct Superclasses:
+		  <my-superclass>
+		 Direct Subclasses:
+		  <my-subclass>
+		  
+	If the object is a singleton, the output will look like this:
+
+		Singleton of class <fixed-integer>
+		  Value: 1
+		  
+	If the object is a union of types, each type in the union will be listed
+	
+		Union of types
+		  singleton (#[2,3,4])
+		  <limited-integer> (-100 <= x <= 100)
+		  <false>
+	
+	Finally, if the object is a function, it will output
+
+		Generic Function "my-func"
+		or
+		Method "my-method"
+		or
+		Unnamed Function #e0247653867
+		
+	Comments on the output format:
+
+	The slot name is printed in all capital letters, regardless of how it
+	was typed when it was created.
+
+	If the-object has no slots, then display-object-info will print its
+	current value on a line directly below the "An instance of..." line.
+
+	If a slot is not currently initialized, no value will be shown.
+	This is the case for SLOT-ONE in the example above.
+
+	If the-object is an instance of a <collection> subclass, all of the
+	elements will be printed in an "Elements:" section, regardless of the
+	display-print-length setting.
+
+	If the-object is a union of types, each type will print.  To display 
+	information about these types, display-object-info must be called 
+	explicitly on each of these.
+
+	If any of the types that display-object-info prints is a <limited-integer> 
+	subtype, it will describe the type in as much detail as possible.  For 
+	example, all of these are possible outputs
+		<limited-integer> (-1 <= x <= 1)
+		<limited-integer> (-1 <= x)
+		<limited-integer> (x <= 1)
+		<limited-integer>
+		
+	The display-object-info method on function will become more useful once 
+	Mindy becomes DRM compliant.
+	
+inspect								     [Function]
+
+    Arguments:
+	the-object :: <object>
+	#key inspect-elements? :: <boolean> = #t
+	inspect-slots? :: <boolean> = #t
+	inspect-superclasses? :: <boolean> = #t
+	inspect-subclasses? :: <boolean> = #t
+	inspect-stream :: <stream> = *standard-output*
+	inspect-print-length = 5
+	inspect-print-level = 1
+    
+    Return Values:
+	none
+	
+    Description:
+	Enters the interactive object browser/inspector, first inspecting
+	the-object.  All of the output will be sent to inspect-stream, and
+	currently all of the input is taken from *standard-input*.  The
+	keyword switches function exactly like their counterparts in
+	display-object-info.
+	The commands used once in the inspector will be described in the next
+	section 2: Using the inspector.
+
+	There are a few differences between what inspect prints out and what
+	display-object-info prints.  The main difference is that when printing
+	an instance of a class, the super/subclasses will not be listed.  The
+	user may still view these within the inspector, by viewing the class of
+	the object.  This was done to simplify and categorize the information
+	the user is looking for, and because it was felt that super/subclasses
+	were part of the class description and not part of the instance
+	description.  To accomodate viewing of the class from the instance, the
+	class is printed on a seperate line, with its selection number, e.g.
+
+		An instance of class
+		  1] <my-class>
+		 Slots:
+		   .
+		   .
+		   .
+		   
+	Also, when viewing a slot whose specializer is <union>, inspecting the slot 
+	will inspect the current value, rather than the union.  To inspect the union, 
+	inspect that slot in the type of the class which contains the slot. (This will 
+	be shown in an example)
+
+	Apart from these changes, the output format of inspect follows as
+	closely as possible that of display-object-info.
+
+-----------
+
+
+2. Using the Inspector:
+-----------------------
+
+When the inspector starts, it will display the object you have passed to it,
+along with all of the information you requested using the keyword flags.  Each
+item will be numbered, and to inspect a sub-object you simply type the number
+corresponding to the desired choice (in this case, even a superclass is
+considered a sub-object, because it was inspected via the main object).  This
+lets you move around the object heterarchy, but it is not very convienent.
+There are additional commands that are designed to allow easier use of the
+inspector, and these are documented here.
+
+The commands, simply, are as follows:
+1, 2, 3, ...	Inspect the subobject corresponding to that number in the
+		current object.
+history		Shows the stack of inspected objects
+up		Moves up the inspected object stack (i.e. inspects the previous
+		object)
+print		Prints the current object using the print function, and the
+		length and level that were passed to inspect.
+view		Redisplays the current object (useful if it has gone offscreen)
+?, help		Displays a help page much like this
+quit, exit	Leaves the inspector and continues program execution
+
+All commands may be abbreviated by their first letter.
+Note: 'h' is the history command, '?' is the help command
+
+-----------
+
+History:
+
+The history command lists all of the previously visited objects in the current
+session.  A sample output may look like this:
+
+Instance of <my-class>	     <--- Initial object, the one given in the argument
+Instance of <sequence>
+Instance of <fixed-integer>
+Class <fixed-integer>
+Class <integer>		     <--- Last object seen, the one that "up" goes to
+Class <rational>	     <--- The current object
+
+-----------
+
+Up:
+
+The up command moves you "up" the history, and lets you see the previously
+visited object.  In the above example, if you moved up twice, the history would
+look like this:
+
+Instance of <my-class>
+Instance of <sequence>
+Instance of <fixed-integer>
+Class <fixed-integer>
+
+And you would be inspecting the class <fixed-integer>.
+
+-----------
+
+Print:
+
+The print command pretty-prints the current object, but does not number the
+sub-objects.  It is useful only for displaying the objects in a different,
+possible more informative manner.
+
+-----------
+
+View:
+
+The view command will allow you to redisplay the object that you are currently
+inspecting.  This is mainly useful if previous commands such as history or view
+have moved the object off of the screen.
+
+-----------
+
+Help:
+
+The help command will display a short help page listing all of the commands and
+a brief one line description of how they work.
+
+-----------
+
+Quit, Exit:
+
+This command will allow you to leave the inspector and continue with the
+execution of your program.  The next time inspect is called, it will not have
+any memory of the past session.  This means that the history will initially
+show only the object that you called inspector with.
+
+-----------
+
+A sample transcript of an inspector session follows:
+(Comments are preceded with "//", these do not show up in a regular session)
+
+let my-test = make(<my-class>,...)
+...
+inspect(my-test);
+
+// Once the inspector is started, the initial output will look something like 
+// this.
+
+An instance of class
+  1] <my-class>
+ Slots:
+  2] SLOT-ONE: union of types = #("Hello", "World", '!')
+  3] SLOT-TWO: <my-other-class> = {<my-other-class> instance, first-slot: 43,
+second-slot: #[#, #, #, #, #, ...]}
+  4] SLOT-THREE: <sequence>
+  
+// to inspect one of these items, type the corresponding line number
+inspect>2
+
+An instance of class
+  1] <pair>
+     current value: #("Hello", "World", '!')
+ Elements:
+  2] "Hello"
+  3] "World"
+  4] '!'
+  
+// to go to the last inspected object, type 'u' or 'up'
+inspect>up
+
+An instance of class
+  1] <my-class>
+ Slots:
+  2] SLOT-ONE: union of types = #("Hello", "World", '!')
+  3] SLOT-TWO: <my-other-class> = {<my-other-class> instance, first-slot: 43,
+second-slot: #[#, #, #, #, #, ...]}
+  4] SLOT-THREE: <sequence>
+
+// 'print' displays the object with standard print methods
+inspect>print
+
+{<my-class> instance,
+    slot-one: #(#, #, #),
+    slot-two: {<my-other-class> instance, first-slot: #, second-slot: #},
+    slot-three: {UNINITIALIZED}}
+
+inspect>3
+
+Class <my-class>
+ Slots:
+  1] SLOT-ONE: union of types
+  2] SLOT-TWO: <my-other-class>
+  3] SLOT-THREE: <sequence>
+ Direct Superclasses:
+  4] <object>
+ Direct Subclasses:
+  none
+
+inspect>1
+
+Union of types
+  1] <list>
+  2] <integer>
+
+inspect>history
+
+ Instance of <my-class>
+ Class <my-class>
+ Class <my-other-class>
+
+inspect>up
+
+Class <my-class>
+ Slots:
+  1] SLOT-ONE: <list>
+  2] SLOT-TWO: <my-other-class>
+  3] SLOT-THREE: <sequence>
+ Direct Superclasses:
+  4] <object>
+ Direct Subclasses:
+  none
+
+inspect>quit
+
+
+
+
+
+
+
+
+
+
