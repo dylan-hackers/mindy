@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.2 1996/01/12 02:10:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.3 1996/03/02 19:21:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -54,6 +54,9 @@ end method map-into;
 
 // <stretchy-object-vector>
 
+// Invariant:  elements [ssv-fill..ssv-data.size] are always set to
+// #f.  Elements [0..ssv-fill] contain user supplied data.
+//
 define class <stretchy-object-vector> (<stretchy-vector>)
   //
   // A <simple-object-vector> holding the vector elements.  Obviously
@@ -109,12 +112,11 @@ define method size-setter
 		      ceiling/(new + 1024, 1024) * 1024;
 		    end if;
       let new-data = make(<simple-object-vector>, size: new-len);
-      for (index from 0 below fill)
+      for (index :: <integer> from 0 below fill)
 	new-data[index] := data[index];
       end for;
-      ssv-data(ssv) := new-data;
+      ssv.ssv-data := fill!(new-data, #f, start: fill);
     end if;
-    fill!(data, #f, start: fill);
   else
     fill!(data, #f, start: new, end: fill);
   end if;
