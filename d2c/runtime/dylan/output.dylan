@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.9 2003/06/13 23:04:07 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.10 2003/10/22 20:47:22 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -133,9 +133,11 @@ define generic cheap-print
 define method cheap-print (thing :: <object>, fake-stream :: <symbol>) => ();
   let name = thing.object-class.class-name;
   if (name)
-    cheap-format(fake-stream, "{an instance of %s}", name);
+    cheap-format(fake-stream, "{%s instance at #x%x}",
+                 name, as(<integer>, thing.object-address));
   else
-    fputs("{an instance of something}", fake-stream);
+    cheap-format(fake-stream, "{? instance at #x%x}",
+                 as(<integer>, thing.object-address));
   end if;
 end;
 
