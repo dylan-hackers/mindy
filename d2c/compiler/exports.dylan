@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.104 1995/11/12 21:03:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.105 1995/11/12 21:08:03 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1239,6 +1239,50 @@ define module fer-od
   
 end;
 
+// Part of the compiler library
+//
+define module autodump
+  use common;
+  use utils;
+  use define-classes;
+  use variables;
+  use parser;
+  use format;
+  use lexer;
+  use header;
+  use source;
+  use top-level-forms;
+  use flow, import: { };
+  use builder-interface;
+  use fer-convert;
+  use front, import: { };
+  use dump;
+  use classes, import: { };
+  use c-representation;
+  use cback;
+  use heap;
+  use compile-time-functions;
+  use signature-interface;
+  use ctype;
+  use cheese;
+  use od-format;
+  use parse-tree;
+  use introspection;
+  use regular-expressions;
+  use streams;
+  use tokens;
+  use macros;
+  use fragments;
+  use definitions;
+  use define-functions;
+  use define-constants-and-variables;
+  use top-level-expressions;
+  use string-conversions;
+  use standard-io;
+  export 
+    autodump-main;
+end module autodump;
+
 define module main
   use common;
   use System;
@@ -1267,4 +1311,6 @@ define module main
   use ctype;
   use cheese;
   use od-format;
+  use string-conversions;
+  use autodump;
 end;
