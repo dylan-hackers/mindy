@@ -81,7 +81,8 @@ define module c-parser-engine
   create
     make-tagged-type, c-type-size,
     add-cpp-declaration,
-    <integer-type-declaration>, true-type, make-enum-slot;
+    <integer-type-declaration>, true-type, make-enum-slot,
+    make-struct-or-union-slot;
 
   export
     parse, parse-type, parse-macro;
@@ -100,7 +101,9 @@ define module c-parser
   use c-parser-engine;
 
   export
-    parse-c-file;
+    parse-c-file,
+    <c-platform>,
+    $i386-linux-platform;
 end module c-parser;
 
 
