@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.7 1994/04/18 21:24:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.8 1994/04/18 21:43:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -751,10 +751,10 @@ static void print_limint(obj_t limint)
 {
     printf("{limited integer ");
     if (obj_ptr(struct lim_int *, limint)->min != obj_False)
-	printf("%d<=", fixnum_value(obj_ptr(struct lim_int *, limint)->min));
+	printf("%ld<=", fixnum_value(obj_ptr(struct lim_int *, limint)->min));
     putchar('x');
     if (obj_ptr(struct lim_int *, limint)->max != obj_False)
-	printf("<=%d", fixnum_value(obj_ptr(struct lim_int *, limint)->max));
+	printf("<=%ld", fixnum_value(obj_ptr(struct lim_int *, limint)->max));
     putchar('}');
 }
 
