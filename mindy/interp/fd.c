@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.37 1996/10/06 12:57:13 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.38 1997/02/13 13:05:52 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -85,9 +85,10 @@ static DWORD input_checker (LPDWORD param)
 {
     int fd = (int) param;  /* so what if we cast a pointer to an int? */
     HANDLE handle = (HANDLE) _get_osfhandle(fd);
-    char small_buffer;  /* Ignore the contents of the next two vars */
-    int bytes_read;
+    int read_from = 0;
     for (;;) {
+	char small_buffer;  /* Ignore the contents of the next two vars */
+	int bytes_read;
 	DWORD the_error = 0;
 	boolean read_result;
 	/* Wait until someone invalidates our last answer */
@@ -100,8 +101,9 @@ static DWORD input_checker (LPDWORD param)
 	if (!read_result) {
 	    the_error = GetLastError();
 	    if (the_error != ERROR_BROKEN_PIPE) { 
-	      /* handle broken pipes later */
-		lose("Read error type %d on fd %d", the_error, fd);
+		/* handle broken pipes later */
+		lose("Read error type %d on fd %d (aka handle #x%x)", 
+		     the_error, fd, handle);
 	    }
 	}
 	input_available_array[fd] = TRUE;
@@ -111,6 +113,7 @@ static DWORD input_checker (LPDWORD param)
 	       Go to sleep; we'll soon be killed off by mindy_close */
 	    SuspendThread(fd_threads[fd]);
 	}
+	read_from = 1;
     }
     lose("This is not supposed to be reached!");
     return 0;
@@ -152,11 +155,11 @@ static int mindy_open (const char *filename, int flags, int mode)
 {
     int fd = open(filename, flags | O_BINARY, mode);
     if (fd != -1) {
+	/* You can't directly test O_RDONLY, because
+	   it is defined as 0 usually, and you'd have
+	   if (flags & 0) ...
+	   */
 	if (!(flags & O_WRONLY)) {
-	    /* You can't directly test O_RDONLY, because
-	       it is defined as 0 usually, and you'd have
-	       if (flags & 0) ...
-	    */
 	    setup_input_checker(fd);
 	} else {
 	    fd_threads[fd] = NULL;
@@ -168,8 +171,9 @@ static int mindy_open (const char *filename, int flags, int mode)
 static int mindy_close (int fd)
 {
     int res = close(fd);
-    if (!res && fd_threads[fd] != NULL)
+    if (!res && fd_threads[fd] != NULL) {
 	stop_input_checker(fd);
+    }
     return res;
 }
 
@@ -208,6 +212,9 @@ int mindy_read (int fd, char *buffer, int max_chars)
 
 static void win32_inits (void)
 {
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
     setup_input_checker(0);  /* standard input */
 }
 
