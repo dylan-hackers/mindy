@@ -1,13 +1,26 @@
 #include <stdio.h>
+#include <stddef.h>
+#include <limits.h>
+
+#define TYPE(name, type) \
+	{ \
+	  struct z { char c; type x; } z; \
+	  printf(name "-size: %u\n", (unsigned) sizeof(type)); \
+	  printf(name "-alignment: %u\n", (unsigned) offsetof(struct z, x)); \
+	}
 
 int main() {
-  printf("pointer-size: %d\n", sizeof(void *));
-  printf("integer-size: %d\n", sizeof(int));
-  printf("short-size: %d\n", sizeof(short));
-  printf("long-size: %d\n", sizeof(long));
-  printf("single-size: %d\n", sizeof(float));
-  printf("double-size: %d\n", sizeof(double));
-  printf("long-double-size: %d\n", sizeof(long double));
+  printf("integer-length: %u\n", (unsigned) (CHAR_BIT * sizeof(int)));
+  TYPE("pointer", void *);
+  TYPE("integer", int);
+  TYPE("short", short);
+  TYPE("long", long);
+#ifndef WITHOUT_LONG_LONG
+  TYPE("long-long", long long);
+#endif
+  TYPE("single", float);
+  TYPE("double", double);
+  TYPE("long-double", long double);
 
   return 0;
 }
