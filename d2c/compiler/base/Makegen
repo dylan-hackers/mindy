@@ -16,6 +16,7 @@ OBJS = \
 	dylan-dump.dbc \
 	ctv.dbc \
 	source.dbc \
+	errors.dbc \
 	header.dbc \
 	tokens.dbc \
 	names.dbc \
