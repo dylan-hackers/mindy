@@ -17,4 +17,5 @@ define module ansi-c-test
   use standard-io;
 
   use c-types;
+  use c-declarations;
 end;

@@ -5,6 +5,11 @@ define method print-c-type (type :: <c-type>) => ()
   force-output(*standard-output*);
 end;
 
+define method print-c-declaration (decl :: <c-declaration>) => ()
+  format(*standard-output*, "%s\n", format-c-declaration(decl));
+  force-output(*standard-output*);
+end;
+
 define method main(appname, #rest args)
 
   format(*standard-output*, "----- C Types -----\n");
@@ -44,10 +49,10 @@ define method main(appname, #rest args)
   print-c-type(make(<c-enum-type>, tag: "baz"));
   print-c-type(make(<c-enum-type>));
 
-  print-c-type(make(<c-typedef-type>,
+  let typedef = make(<c-typedef-type>,
 		    name: "typedefed_type",
-		    type: $c-int-type));
-
+		    type: $c-int-type);
+  print-c-type(typedef);
 
   print-c-type(make(<c-function-type>,
 		    return-type: $c-void-type,
@@ -108,5 +113,35 @@ define method main(appname, #rest args)
   force-output(*standard-output*);
 
   // Now print some complete declarations
-  // format(*standard-output*, "----- C Type Declarations -----\n");
+  format(*standard-output*, "----- C Declarations -----\n");
+
+  // Tagged type declarations
+  print-c-declaration(make(<c-tagged-type-declaration>, type: struct));
+  print-c-declaration(make(<c-tagged-type-declaration>, type: union));
+  print-c-declaration(make(<c-tagged-type-declaration>, type: enum));
+
+  // Typedef declarations
+  print-c-declaration(make(<c-typedef-declaration>, type: typedef));
+
+  // Variable declarations
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "v1", type: $c-int-type, extern?: #t));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "v2", type: typedef, extern?: #f));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "v3", type: enum));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "f2", type: func2));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "f3", type: func3));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "f", type: func));
+  print-c-declaration(make(<c-variable-declaration>,
+			   name: "fp", type: func-ptr));
+
+  // Defines
+  print-c-declaration(make(<c-integer-define>, name: "d1", value: 3));
+  print-c-declaration(make(<c-string-define>, name: "d2", value: "Hi!"));
+  print-c-declaration(make(<c-type-alias-define>, name: "d3", type: struct));
+  print-c-declaration(make(<c-unknown-define>, name: "d4"));
 end;
