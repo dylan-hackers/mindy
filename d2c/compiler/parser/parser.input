@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.29 1996/03/17 00:48:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.30 1996/03/21 00:36:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -238,11 +238,11 @@ top-level-body-aux-semi (top-level-body-aux SEMICOLON)
 :type body-opt <expression-parse>
 
 body-opt ()
-  make(<body-parse>, parts: #[]);
+  make(<body-parse>, source-location: @0, parts: #[]);
 %
 
 body-opt (body)
-  make-body(%1);
+  make-body(%1, @1);
 %
 
 :type body <stretchy-vector>
@@ -456,7 +456,7 @@ simple-fragment (SHARP-PAREN constants DOT constant RIGHT-PAREN)
   // make-parsed-fragment.
   make(<token-fragment>,
        token: make(<pre-parsed-token>,
-		   source-location: extract-source(%1),
+		   source-location: @0,
 		   kind: $parsed-constant-token,
 		   parse-tree: make(<literal-list>, sharable: #t,
 				    contents: as(<simple-object-vector>, %2),
@@ -470,7 +470,7 @@ simple-fragment (SHARP-PAREN constants-opt RIGHT-PAREN)
   // make-parsed-fragment.
   make(<token-fragment>,
        token: make(<pre-parsed-token>,
-		   source-location: extract-source(%1),
+		   source-location: @0,
 		   kind: $parsed-constant-token,
 		   parse-tree:
 		     make(<literal-list>, sharable: #t,
@@ -484,7 +484,7 @@ simple-fragment (SHARP-BRACKET constants-opt RIGHT-BRACKET)
   // make-parsed-fragment.
   make(<token-fragment>,
        token: make(<pre-parsed-token>,
-		   source-location: extract-source(%1),
+		   source-location: @0,
 		   kind: $parsed-constant-token,
 		   parse-tree:
 		     make(<literal-simple-object-vector>, sharable: #t,
@@ -610,8 +610,14 @@ definition (definition-macro-call)
   %1;
 %
 
-definition (DEFINE MACRO macro-definition)
-  %3;
+definition (DEFINE MACRO MACRO-NAME main-rule-set auxiliary-rule-sets-opt
+	    END macro-and-name-opt)
+  unless (%7 == #f | same-id?(%3, %7))
+    compiler-error("Macro name mismatch: %s isn't %s", %7, %3);
+  end;
+  make(<define-macro-parse>, source-location: @0,
+       name: %3, main-rule-set: %4,
+       auxiliary-rule-sets: as(<simple-object-vector>, %5));
 %
 
 :type definition-macro-call <definition-macro-call-parse>
@@ -634,8 +640,8 @@ definition-macro-call
   else
     compiler-error("Name mismatch: no name to match %s", %7);
   end;
-  make(<body-style-definition-macro-call-parse>, modifiers: %2,
-       word: %3, fragment: %4, source-location: extract-source(%3));
+  make(<body-style-definition-macro-call-parse>, source-location: @0,
+       modifiers: %2, word: %3, fragment: %4);
 %
 
 definition-macro-call
@@ -653,7 +659,7 @@ definition-macro-call
     end;
   end;
   make(<body-style-definition-macro-call-parse>, modifiers: %2,
-       word: %3, fragment: %4, source-location: extract-source(%3));
+       word: %3, fragment: %4, source-location: @0);
 %
 
 definition-macro-call
@@ -669,18 +675,18 @@ definition-macro-call
     compiler-error("Define-word mismatch: %s isn't %s", %6, %3);
   end;
   make(<body-style-definition-macro-call-parse>, modifiers: %2,
-       word: %3, fragment: %4, source-location: extract-source(%3));
+       word: %3, fragment: %4, source-location: @0);
 %
 
 definition-macro-call
     (DEFINE modifiers-opt DEFINE-BODY-WORD body-fragment-opt END)
   make(<body-style-definition-macro-call-parse>, modifiers: %2,
-       word: %3, fragment: %4, source-location: extract-source(%3));
+       word: %3, fragment: %4, source-location: @0);
 %
 
 definition-macro-call (DEFINE modifiers-opt DEFINE-LIST-WORD list-fragment-opt)
   make(<list-style-definition-macro-call-parse>, modifiers: %2,
-       word: %3, fragment: %4, source-location: extract-source(%3));
+       word: %3, fragment: %4, source-location: @0);
 %
 
 :type modifiers-opt <simple-object-vector>
@@ -713,24 +719,24 @@ local-declaration (PARSED-LOCAL-DECLARATION)
 %
 
 local-declaration (LET bindings)
-  make(<let-parse>, source-location: extract-source(%1),
+  make(<let-parse>, source-location: @0,
        variables: %2.bindings-variables,
        expression: %2.bindings-expression);
 %
 
 local-declaration (LET HANDLER operand EQUAL expression)
-  make(<handler-parse>, source-location: extract-source(%1),
+  make(<handler-parse>, source-location: @0,
        type: %3, handler: %5);
 %
 
 local-declaration (LET HANDLER LEFT-PAREN expression COMMA arguments
 		   RIGHT-PAREN EQUAL expression)
-  make(<handler-parse>, source-location: extract-source(%1),
+  make(<handler-parse>, source-location: @0,
        type: %4, options: as(<simple-object-vector>, %6), handler: %9);
 %
 
 local-declaration (LOCAL local-methods)
-  make(<local-parse>, source-location: extract-source(%1),
+  make(<local-parse>, source-location: @0,
        methods: as(<simple-object-vector>, %2));
 %
 
@@ -823,11 +829,11 @@ expression (expression-aux)
 :type expression-aux <binop-series>
 
 expression-aux (binary-operand)
-  make(<binop-series>, initial-operand: %1);
+  make(<binop-series>, operand: %1, operand-srcloc: @1);
 %
 
 expression-aux (expression-aux BINARY-OPERATOR binary-operand)
-  add-binop(%1, %2, %3);
+  add-binop(%1, %2, %3, @3);
 %
 
 :type expression-no-symbol <expression-parse>
@@ -839,18 +845,18 @@ expression-no-symbol (expression-no-symbol-aux)
 :type expression-no-symbol-aux <binop-series>
 
 expression-no-symbol-aux (binary-operand-no-symbol)
-  make(<binop-series>, initial-operand: %1);
+  make(<binop-series>, operand: %1, operand-srcloc: @1);
 %
 
 expression-no-symbol-aux
     (expression-no-symbol-aux BINARY-OPERATOR binary-operand)
-  add-binop(%1, %2, %3);
+  add-binop(%1, %2, %3, @3);
 %
 
 :type binary-operand <expression-parse>
 
 binary-operand (SYMBOL)
-  make(<literal-ref-parse>, source-location: extract-source(%1),
+  make(<literal-ref-parse>, source-location: %1.source-location,
        literal: %1.token-literal);
 %
 
@@ -865,12 +871,12 @@ binary-operand-no-symbol (operand)
 %
 
 binary-operand-no-symbol (MINUS operand)
-  let sloc = extract-source(%1);
   make(<funcall-parse>,
-       source-location: sloc,
+       source-location: @0,
        function: make(<varref-parse>,
-       		      source-location: sloc,
+       		      source-location: %1.source-location,
 		      id: make(<identifier-token>,
+			       source-location: %1.source-location,
 			       kind: $raw-ordinary-word-token,
 			       symbol: #"negative",
 			       module: %1.token-module,
@@ -879,28 +885,27 @@ binary-operand-no-symbol (MINUS operand)
 %
 
 binary-operand-no-symbol (TILDE operand)
-  let sloc = extract-source(%1);
   make(<funcall-parse>,
-       source-location: sloc,
-       function: make(<varref-parse>, source-location: sloc, id: %1),
+       source-location: @0,
+       function: make(<varref-parse>, source-location: %1.source-location,
+		      id: %1),
        arguments: vector(%2));
 %
 
 :type operand <expression-parse>
 
 operand (operand LEFT-PAREN arguments-opt RIGHT-PAREN)
-  make(<funcall-parse>, source-location: extract-source(%2),
+  make(<funcall-parse>, source-location: @0,
        function: %1, arguments: %3);
 %
 
 operand (operand LEFT-BRACKET arguments-opt RIGHT-BRACKET)
-  let sloc = extract-source(%2);
   make(<funcall-parse>,
-       source-location: sloc,
+       source-location: @0,
        function: make(<varref-parse>,
-       		      source-location: sloc,
+       		      source-location: %1.source-location,
 		      id: make(<identifier-token>,
-			       source-location: sloc,
+			       source-location: %1.source-location,
 			       kind: $raw-ordinary-word-token,
 			       symbol: if (%3.size == 1)
 					 #"element";
@@ -913,8 +918,7 @@ operand (operand LEFT-BRACKET arguments-opt RIGHT-BRACKET)
 %
 
 operand (operand DOT variable-name)
-  make(<dot-parse>, source-location: extract-source(%2),
-       operand: %1, name: %3);
+  make(<dot-parse>, source-location: @0, operand: %1, name: %3);
 %
 
 operand (PARSED-EXPRESSION)
@@ -957,7 +961,7 @@ arguments (arguments COMMA argument)
 
 argument (SYMBOL expression)
   pair(make(<literal-ref-parse>,
-	    source-location: extract-source(%1),
+	    source-location: %1.source-location,
   	    literal: %1.token-literal),
        %2);
 %
@@ -967,7 +971,8 @@ argument (expression-no-symbol)
 %
 
 argument (SYMBOL)
-  make(<literal-ref-parse>, source-location: extract-source(%1),
+  make(<literal-ref-parse>,
+       source-location: %1.source-location,
        literal: %1.token-literal);
 %
 
@@ -978,7 +983,7 @@ leaf (literal-ref)
 %
 
 leaf (variable-name)
-  make(<varref-parse>, source-location: extract-source(%1), id: %1);
+  make(<varref-parse>, source-location: %1.source-location, id: %1);
 %
 
 leaf (LEFT-PAREN expression RIGHT-PAREN)
@@ -1001,37 +1006,37 @@ leaf (PARSED-MACRO-CALL)
 
 literal-ref (LITERAL)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: %1.source-location,
        literal: %1.token-literal);
 %
 
 literal-ref (STRING)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: %1.source-location,
        literal: %1.token-literal);
 %
 
 literal-ref (STRING strings)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: @0,
        literal: apply(concat-strings, %1.token-literal, %2));
 %
 
 literal-ref (TRUE)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: %1.source-location,
        literal: make(<literal-true>));
 %
 
 literal-ref (FALSE)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: %1.source-location,
        literal: make(<literal-false>));
 %
 
 literal-ref (SHARP-PAREN constants DOT constant RIGHT-PAREN)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: @0,
        literal: make(<literal-list>, sharable: #t,
 		     contents: as(<simple-object-vector>, %2),
 		     tail: %4));
@@ -1039,20 +1044,20 @@ literal-ref (SHARP-PAREN constants DOT constant RIGHT-PAREN)
 
 literal-ref (SHARP-PAREN constants-opt RIGHT-PAREN)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: @0,
        literal: make(<literal-list>, sharable: #t, contents: %2));
 %
 
 literal-ref (SHARP-BRACKET constants-opt RIGHT-BRACKET)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: @0,
        literal: make(<literal-simple-object-vector>,
 		     sharable: #t, contents: %2));
 %
 
 literal-ref (PARSED-CONSTANT)
   make(<literal-ref-parse>,
-       source-location: extract-source(%1),
+       source-location: %1.source-location,
        literal: %1.token-parse-tree);
 %
 
@@ -1140,7 +1145,7 @@ raw-literal (PARSED-CONSTANT)
 
 function-macro-call (FUNCTION-WORD LEFT-PAREN body-fragment-opt RIGHT-PAREN)
   make(<function-macro-call-parse>,
-       source-location: extract-source(%2),
+       source-location: @0,
        word: %1,
        fragment: %3);
 %
@@ -1154,8 +1159,7 @@ statement (BEGIN-WORD body-fragment-opt end-clause)
   if (%3 & ~same-id?(%1, %3))
     compiler-error("Begin-word mismatch: %s isn't %s", %3, %1);
   end;
-  make(<statement-parse>, source-location: extract-source(%1),
-       word: %1, fragment: %2);
+  make(<statement-parse>, source-location: @0, word: %1, fragment: %2);
 %
 
 :type end-clause |false-or(<token>)|
@@ -1508,17 +1512,17 @@ parameter (variable)
 :type parameter <parameter>
 
 parameter (variable-name DOUBLE-EQUAL expression)
-  let sloc = extract-source(%2);
   let singleton-name = make(<identifier-token>,
-			    source-location: sloc,
+			    source-location: %2.source-location,
 			    kind: $raw-ordinary-word-token,
 			    symbol: #"singleton",
 			    module: $Dylan-Module,
 			    uniquifier: make(<uniquifier>));
   let singleton-varref
-    = make(<varref-parse>, source-location: sloc, id: singleton-name);
+    = make(<varref-parse>, source-location: %2.source-location,
+	   id: singleton-name);
   let funcall = make(<funcall-parse>,
-  		     source-location: sloc,
+  		     source-location: source-location-spanning(@2, @3),
 		     function: singleton-varref,
 		     arguments: vector(%3));
   make(<parameter>, name: %1, type: funcall);
@@ -1587,14 +1591,6 @@ default-opt (EQUAL expression)
 
 ;;;; Macros, patterns, and templates
 
-:type macro-definition <define-macro-parse>
-
-macro-definition (MACRO-NAME main-rule-set auxiliary-rule-sets-opt
-		  END macro-and-name-opt)
-  make(<define-macro-parse>, name: %1, main-rule-set: %2,
-       auxiliary-rule-sets: as(<simple-object-vector>, %3));
-%
-
 :type macro-and-name-opt |false-or(<symbol-token>)|
 
 macro-and-name-opt ()
@@ -1602,7 +1598,7 @@ macro-and-name-opt ()
 %
 
 macro-and-name-opt (MACRO)
-  %1;
+  #f;
 %
 
 macro-and-name-opt (MACRO-NAME)
