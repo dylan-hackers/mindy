@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.93 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.94 1995/06/15 01:29:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,15 +187,15 @@ end;
 
 // Assignment optimization.
 
-define method side-effect-free? (expr :: <expression>) => res :: <boolean>;
+define method expression-flushable? (expr :: <expression>) => res :: <boolean>;
   #f;
 end;
 
-define method side-effect-free? (expr :: <primitive>) => res :: <boolean>;
+define method expression-flushable? (expr :: <primitive>) => res :: <boolean>;
   expr.info.primitive-side-effect-free?;
 end;
 
-define method side-effect-free? (expr :: <known-call>) => res :: <boolean>;
+define method expression-flushable? (expr :: <known-call>) => res :: <boolean>;
   let func = expr.depends-on.source-exp;
   if (instance?(func, <definition-constant-leaf>))
     let defn = func.const-defn;
@@ -204,54 +204,73 @@ define method side-effect-free? (expr :: <known-call>) => res :: <boolean>;
   end;
 end;
 
-define method side-effect-free? (expr :: <slot-ref>) => res :: <boolean>;
+define method expression-flushable? (expr :: <slot-ref>) => res :: <boolean>;
   #t;
 end;
 
-define method side-effect-free? (expr :: <truly-the>) => res :: <boolean>;
+define method expression-flushable? (expr :: <truly-the>) => res :: <boolean>;
   #t;
 end;
 
-define method side-effect-free? (var :: <leaf>) => res :: <boolean>;
+define method expression-flushable? (var :: <leaf>) => res :: <boolean>;
   #t;
 end;
 
 
 
-define method pure-single-value-expression? (expr :: <expression>)
+define method expression-movable? (expr :: <expression>)
     => res :: <boolean>;
   #f;
 end;
 
-define method pure-single-value-expression? (expr :: <primitive>)
+define method expression-movable? (expr :: <primitive>)
     => res :: <boolean>;
-  if (expr.info.primitive-pure?)
-    let type = expr.derived-type;
-    type.min-values == 1 & type.fixed-number-of-values?;
-  end;
+  expr.info.primitive-pure?;
 end;
 
-define method pure-single-value-expression? (expr :: <known-call>)
+define method expression-movable? (expr :: <known-call>)
     => res :: <boolean>;
-  let type = expr.derived-type;
-  if (type.min-values == 1 & type.fixed-number-of-values?)
-    let func = expr.depends-on.source-exp;
-    if (instance?(func, <definition-constant-leaf>))
-      let defn = func.const-defn;
-      instance?(defn, <function-definition>)
-	& defn.function-defn-movable?;
-    end;
-  end;
+  function-movable?(expr.depends-on.source-exp);
 end;
 
-define method pure-single-value-expression? (var :: <leaf>)
+define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
+  #f;
+end;
+
+define method function-movable?
+    (leaf :: <definition-constant-leaf>) => res :: <boolean>;
+  function-movable?(leaf.const-defn);
+end;
+
+define method function-movable?
+    (leaf :: <literal-constant>) => res :: <boolean>;
+  let defn = leaf.value.ct-function-definition;
+  defn & function-movable?(defn);
+end;
+
+define method function-movable?
+    (defn :: <definition>) => res :: <boolean>;
+  #f;
+end;
+
+define method function-movable?
+    (defn :: <function-definition>) => res :: <boolean>;
+  defn.function-defn-movable?;
+end;
+
+define method expression-movable? (var :: <leaf>)
     => res :: <boolean>;
   #t;
 end;
 
-define method pure-single-value-expression? (var :: <abstract-variable>)
+define method expression-movable? (var :: <abstract-variable>)
     => res :: <boolean>;
   ~instance?(var.var-info, <values-cluster-info>);
+end;
+
+define method expression-movable? (var :: <initial-variable>)
+    => res :: <boolean>;
+  #f;
 end;
 
 
@@ -309,7 +328,7 @@ define method optimize
     end;
     assignment.defines := #f;
 
-  elseif (defines == #f & side-effect-free?(source))
+  elseif (defines == #f & expression-flushable?(source))
     //
     // there is no point to this assignment, so nuke it.
     delete-and-unlink-assignment(component, assignment);
@@ -353,7 +372,7 @@ define method optimize
   else
 
     // We are defining some fixed number of variables.
-    if (pure-single-value-expression?(source))
+    if (defines & defines.definer-next == #f & expression-movable?(source))
       // But we don't have to do it right here, so propagate the value to
       // dependents of whatever we define.
       maybe-propagate-copy(component, defines, source);
