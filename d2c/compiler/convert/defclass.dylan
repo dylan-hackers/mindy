@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.39 1995/11/15 15:56:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.40 1995/11/17 02:36:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -465,6 +465,19 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 		  overrides: overrides);
   for (slot in slots)
     slot.slot-defn-class := defn;
+    //
+    // Implicity define the accessor generics.
+    if (slot.slot-defn-sizer-defn)
+      implicitly-define-generic(slot.slot-defn-getter-name, 2, #f, #f);
+      if (slot.slot-defn-setter-name)
+	implicitly-define-generic(slot.slot-defn-setter-name, 3, #f, #f);
+      end;
+    else
+      implicitly-define-generic(slot.slot-defn-getter-name, 1, #f, #f);
+      if (slot.slot-defn-setter-name)
+	implicitly-define-generic(slot.slot-defn-setter-name, 2, #f, #f);
+      end;
+    end;
   end;
   for (override in overrides)
     override.override-defn-class := defn;
@@ -700,19 +713,6 @@ end;
 
 define method finalize-slot
     (slot :: <slot-defn>, cclass :: <cclass>, class-type :: <ctype>) => ();
-  //
-  // Implicity define the accessor generics.
-  if (slot.slot-defn-sizer-defn)
-    implicitly-define-generic(slot.slot-defn-getter-name, 2, #f, #f);
-    if (slot.slot-defn-setter-name)
-      implicitly-define-generic(slot.slot-defn-setter-name, 3, #f, #f);
-    end;
-  else
-    implicitly-define-generic(slot.slot-defn-getter-name, 1, #f, #f);
-    if (slot.slot-defn-setter-name)
-      implicitly-define-generic(slot.slot-defn-setter-name, 2, #f, #f);
-    end;
-  end;
   //
   // Compute the type of the slot.
   let slot-type
