@@ -2,7 +2,7 @@ module: format
 author: Robert Stockton (rgs@cs.cmu.edu).
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.2 2000/01/24 04:54:17 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.3 2000/10/20 06:10:26 housel Exp $
 
 ///======================================================================
 ///
@@ -148,7 +148,8 @@ define method format (stream :: <buffered-stream>,
 	   // because the buffer can change depending on the stream.
 	   buff :: <buffer> = bd.buffer then buff,
 	   buff-index :: <buffer-index> from bd.next-ele below bd.limit,
-	   until: (control-string[i] == $dispatch-char))
+	   until: (control-string[i] == $dispatch-char)
+	            | (control-string[i] == '\n'))
 	buff[buff-index] := as(<integer> /***/, control-string[i]);
       finally
 	bd.next-ele := buff-index;
@@ -161,6 +162,10 @@ define method format (stream :: <buffered-stream>,
 
       if (bd.next-ele == buff-size)
 	get-next-output-buffer(bd, buff-size);
+	buff-size := bd.limit;
+      elseif (control-string[start] == '\n')
+	with-buffer-released(bd, curry(new-line, stream));
+	start := start + 1;  // Skip % and dispatch char.
 	buff-size := bd.limit;
       else
 	// Parse for field within which to pad output.
