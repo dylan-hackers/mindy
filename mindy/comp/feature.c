@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.6 1996/06/11 12:39:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.7 1996/07/11 16:03:18 nkramer Exp $
 *
 * This file handles conditional compilation
 *
@@ -45,7 +45,17 @@ static struct feature {
 } *Features = NULL;
 
 #ifndef INITIAL_FEATURES
-#define INITIAL_FEATURES "mindy"
+#   ifdef WIN32
+#      define INITIAL_FEATURES "mindy newlines-are-crlf i386-win32"
+#   else
+       /* This next line assumes that any machine that isn't a Windows
+	  box is an HP.  We should probably do something different,
+	  but as long as the only thing that uses these definitions is
+	  the compiler (which only runs on Windows and HPUX), we don't
+	  care.  
+        */
+#      define INITIAL_FEATURES "mindy hppa-hpux"
+#   endif
 #endif
 
 static char *InitialFeatures[] = {INITIAL_FEATURES, NULL};
