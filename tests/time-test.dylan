@@ -2,7 +2,7 @@ module: time-test
 author: David Watson, Nick Kramer
 synopsis: Test for the time library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.3 1996/08/14 15:56:29 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.4 1996/10/06 14:09:49 nkramer Exp $
 
 //======================================================================
 //
@@ -85,9 +85,18 @@ end method time-test;
 
 define method time-io-test () => ();
   let decoded-time
-    = string-parse-time("19 June 1996, 12:34 pm", "%d %B %Y, %I:%M %p");
+    = parse-time(make(<string-stream>, contents: "19 June 1996, 12:34 pm"),
+		 "%d %B %Y, %I:%M %p");
 
-  let string = string-format-time("%A %d %B %Y, %I:%M %p", decoded-time);
+  // Now, we make up a value for seconds.  We never print it, but
+  // format-time demands that it be specified because it wants to
+  // convert the whole <decoded-time> into a C struct tm.
+  let decoded-time = make(<decoded-time>, default-from: decoded-time, 
+			  seconds: 0);
+
+  let string-stream = make(<buffered-byte-string-output-stream>);
+  format-time(string-stream, "%A %d %B %Y, %I:%M %p", decoded-time);
+  let string = string-stream.stream-contents;
 
   run-test(string, "Wednesday 19 June 1996, 12:34 PM", "time-io");
 end method time-io-test;
