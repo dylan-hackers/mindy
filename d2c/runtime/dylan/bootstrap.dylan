@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.3 1998/09/22 15:40:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.4 1998/11/11 15:54:21 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -148,7 +148,7 @@ define module dylan-viscera
     do, map, map-as, map-into, any?, every?, reduce, reduce1, choose,
     choose-by, member?, find-key, remove-key!, replace-elements!, fill!,
     forward-iteration-protocol, backward-iteration-protocol, table-protocol,
-    merge-hash-codes, object-hash,
+    merge-hash-ids, object-hash,
 
     // Reflective Operations on Types
     instance?, subtype?, object-class, all-superclasses, direct-superclasses,
@@ -170,9 +170,6 @@ define module dylan-viscera
     restart-query, return-query, do-handlers, return-allowed?,
     return-description, condition-format-string, condition-format-arguments,
     type-error-value, type-error-expected-type,
-
-    // Other Built-In Objects
-    $permanent-hash-state,
 
     // Definitions
     variable-definer, constant-definer, domain-definer, function-definer,

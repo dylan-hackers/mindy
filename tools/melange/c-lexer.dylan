@@ -690,9 +690,9 @@ define class <string-table> (<value-table>) end class;
 
 // fst-string-hash -- private function.
 //
-define function fst-string-hash (string :: <byte-string>)
-  values(string.size * 256 + as(<integer>, string.first),
-	 $permanent-hash-state);
+define function fst-string-hash
+    (string :: <byte-string>, initial-state :: <object>)
+  values(string.size * 256 + as(<integer>, string.first), initial-state);
 end function fst-string-hash;
 
 // table-protocol -- method on imported generic.

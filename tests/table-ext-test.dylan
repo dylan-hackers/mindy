@@ -2,7 +2,7 @@ module: table-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the table-extensions library.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/tests/table-ext-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tests/table-ext-test.dylan,v 1.2 1998/11/11 15:54:29 housel Exp $
 
 //======================================================================
 //
@@ -63,33 +63,10 @@ define method string-table-test () => ();
   run-test(string-table["Fred"], 42, "string-table-test");
 end method string-table-test;
 
-define method hash-function-test () => ();
-  // Test for collection-hash
-  let collection = #[5, 3, 2, 6];
-  let (hash-id :: <integer>, hash-state :: <hash-state>)
-    = collection-hash(object-hash, object-hash, collection);
-
-  // Test for sequence-hash
-  let (hash-id :: <integer>, hash-state :: <hash-state>)
-    = sequence-hash(object-hash, collection);
-
-  // Test for values-hash
-  let (hash-id :: <integer>, hash-state :: <hash-state>)
-    = values-hash(object-hash, 4, 5, 6, 7);
-
-  // Test for string-hash
-  let (hash-id :: <integer>, hash-state :: <hash-state>)
-    = string-hash("Bob");
-end method hash-function-test;
-
 define method case-ins-test () => ();
-  // Test for case-insensitive-string-hash
-  let (id1 :: <integer>, hs1 :: <hash-state>)
-    = case-insensitive-string-hash("HelLo WORld");
-  let (id2 :: <integer>, hs2 :: <hash-state>)
-    = case-insensitive-string-hash("helLO wOrLd");
-  run-test(pair(id1, hs1), pair(id2, hs2),
-	   "case-insensitive-string-hash test");
+  let case-ins-string-table = make(<case-insensitive-string-table>);
+  case-ins-string-table["DeRf"] := 42;
+  run-test(case-ins-string-table["dErF"], 42, "case-ins-string-table-test");
 
   // Test for case-insensitive-equal
   run-test(case-insensitive-equal("boB", "BoB"), #t,
@@ -108,7 +85,6 @@ define method main (argv0, #rest ignored)
   format("\nRegression test for the table-extensions library.\n\n");
   run-several-tests("string tables", string-table-test);
   run-several-tests("case-insensitive functions", case-ins-test);
-  run-several-tests("hash functions", hash-function-test);
   run-several-tests("remove-all-keys!", remove-all-keys-test);
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/exports.dylan,v 1.1 1998/05/03 19:55:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/exports.dylan,v 1.2 1998/11/11 15:54:26 housel Exp $
 
 //======================================================================
 //
@@ -87,7 +87,8 @@ define module Builtin-Stuff
     limited-integer-maximum,
     list, load, load-library,
     locked?, logand, logbit?, logior, lognot, logxor,
-    main, make, make-generic-function, make-ratio, merge-hash-codes,
+    main, make, make-generic-function, make-ratio, merge-hash-ids,
+    merge-hash-states,
     function-specializers, function-return-values,
     negative, numerator,
     object-address, object-class,
@@ -176,7 +177,6 @@ define module Dylan
 	     <type>,
 	     <unicode-string>,
 	     <vector>,
-	     $permanent-hash-state,
 	     add-method, all-superclasses, applicable-method?, apply,
 	     aref, aref-setter, as, ash,
 	     backward-iteration-protocol,
@@ -190,7 +190,7 @@ define module Dylan
 	     head, head-setter,
 	     initialize, instance?,
 	     limited, list, logand, logbit?, logior, lognot, logxor,
-	     make, merge-hash-codes, function-specializers, 
+	     make, merge-hash-ids, function-specializers, 
 	     function-return-values,
 	     negative, negative?,
 	     object-class,
@@ -341,7 +341,8 @@ end;
 define module %Hash-Tables
   use Dylan;
   use Builtin-Stuff,
-    import: {state-valid?, pointer-hash, float-hash, symbol-hash};
+    import: {$permanent-hash-state, state-valid?, merge-hash-states,
+	     pointer-hash, float-hash, symbol-hash};
   use Extensions;
   export
     remove-all-keys!, uppercase?,

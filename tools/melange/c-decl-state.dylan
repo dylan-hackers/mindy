@@ -175,9 +175,8 @@ end method initialize;
 //
 define class <string-table> (<value-table>) end class;
 
-define method fast-string-hash (string :: <string>)
-  values(string.size * 256 + as(<integer>, string.first),
-	 $permanent-hash-state);
+define method fast-string-hash (string :: <string>, initial-state :: <object>)
+  values(string.size * 256 + as(<integer>, string.first), initial-state);
 end method fast-string-hash;
 
 define method table-protocol (table :: <string-table>)

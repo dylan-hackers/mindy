@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/table.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/table.c,v 1.2 1998/11/11 15:54:24 housel Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -129,29 +129,24 @@ static obj_t dylan_state_valid_p(obj_t state)
 	return obj_False;
 }
 
-static void dylan_merge_hash_codes(obj_t self, struct thread *thread,
-				   obj_t *args)
+static obj_t dylan_merge_hash_ids(obj_t id1_arg, obj_t id2_arg, obj_t ordered)
 {
-    unsigned long id1 = fixnum_value(args[0]);
-    obj_t state1 = args[1];
-    unsigned long id2 = fixnum_value(args[2]);
-    obj_t state2 = args[3];
-    obj_t ordered = args[4];
-    obj_t *old_sp = args-1;
+    unsigned long id1 = fixnum_value(id1_arg);
+    unsigned long id2 = fixnum_value(id2_arg);
 
     if (ordered != obj_False) {
 	id2 = (id2 << 5) | (id2 >> (sizeof(long)*CHAR_BIT-5));
 	id1 = (id1 >> 2) | (id1 << (sizeof(long)*CHAR_BIT-2));
     }
-    old_sp[0] = make_fixnum(id1 ^ id2);
+    return make_fixnum(id1 ^ id2);
+}
 
+static obj_t dylan_merge_hash_states(obj_t state1, obj_t state2)
+{
     if (STATE(state1)->volatility > STATE(state2)->volatility)
-	old_sp[1] = state1;
+        return state1;
     else
-	old_sp[1] = state2;
-
-    thread->sp = old_sp + 2;
-    do_return(thread, old_sp, old_sp);
+        return state2;
 }
 
 
@@ -214,19 +209,14 @@ void init_table_functions(void)
 				      obj_False, dylan_float_hash));
     define_function("state-valid?", list1(obj_HashStateClass), FALSE,
 		    obj_False, FALSE, obj_BooleanClass, dylan_state_valid_p);
-    define_constant("merge-hash-codes",
-		    make_raw_method("merge-hash-codes",
-				    listn(4, obj_FixnumClass,
-					  obj_HashStateClass,
-					  obj_FixnumClass,
-					  obj_HashStateClass),
-				    FALSE,
-				    list1(pair(symbol("ordered"), obj_False)),
-				    FALSE, 
-				    list2(obj_FixnumClass,
-					  obj_HashStateClass),
-				    obj_False, dylan_merge_hash_codes));
-
+    define_function("merge-hash-ids",
+		    listn(2, obj_FixnumClass, obj_FixnumClass), FALSE,
+		    list1(pair(symbol("ordered"), obj_False)), FALSE, 
+		    obj_FixnumClass, dylan_merge_hash_ids);
+    define_function("merge-hash-states",
+		    listn(2, obj_HashStateClass, obj_HashStateClass), FALSE,
+		    obj_False, FALSE, 
+		    obj_HashStateClass, dylan_merge_hash_states);
     permanent_state = make_hash_state(0);
     define_constant("$permanent-hash-state", permanent_state);
     add_constant_root(&permanent_state);
