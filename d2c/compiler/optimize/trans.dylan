@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.15 1995/12/05 22:17:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.16 1995/12/11 00:09:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -437,6 +437,11 @@ define method build-instance?
 		     build-instance?(builder, policy, source,
 				     value, char-ctype));
     build-if-body(builder, policy, source, temp);
+    let new-value = make-local-var(builder, #"char", char-ctype);
+    build-assignment(builder, policy, source, new-value,
+		     make-operation(builder, <truly-the>, list(value),
+				    guaranteed-type: char-ctype));
+    value := new-value;
   end;
   let char-code-temp = make-local-var(builder, #"code", object-ctype());
   build-assignment
