@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.50 1996/02/19 20:36:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.51 1996/02/22 17:50:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -465,7 +465,8 @@ define open generic error (msg, #rest args) => res :: type-union();
 define open generic make (class :: <class>, #all-keys) => thing;
 define open generic initialize (instance, #all-keys);
 define open generic \== (x, y) => res :: <boolean>;
-define open generic functional-== (x, y) => res :: <boolean>;
+define open generic slow-functional-== (x, y) => res :: <boolean>;
+define open generic functional-== (class :: <class>, x, y) => res :: <boolean>;
 define open generic \= (x, y) => res :: <boolean>;
 define open generic \< (x, y) => res :: <boolean>;
 define open generic \+ (x :: <number>, y :: <number>) => res :: <number>;
