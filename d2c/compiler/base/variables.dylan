@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.4 2002/03/10 15:31:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.5 2002/03/10 16:03:53 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -318,12 +318,10 @@ define method note-namespace-definition
 	
 	if (used-namespace.exported-names.empty?)
 	  // this is a good indication to retry later...
-	  compiler-warning("deferring import of all bindings from %= into %=\n", used-namespace, namespace);
 	  let importers-so-far = namespace.deferred-importers;
 	  namespace.deferred-importers
 	    := method(ns :: <namespace>) => ();
 		   importers-so-far(ns);
-		   compiler-warning("re-trying import of all bindings from %= into %=\n", used-namespace, namespace);
 		   import-all();
 	       end method;
 	else
@@ -378,11 +376,9 @@ define method do-import
       // we try to defer the import first...
       let importers-so-far = into.deferred-importers;
       if (importers-so-far)
-	compiler-warning("deferring import of %= from %= into %=\n", orig-name, from, into);
 	into.deferred-importers
 	  := method(ns :: <namespace>) => ();
 		 importers-so-far(ns);
-		 compiler-warning("re-trying import of %= from %= into %=\n", orig-name, from, into);
 		 do-import(into, from, orig-name, srcloc, use);
 	     end method;
       else
