@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.139 2003/07/17 03:07:57 bruce Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.140 2003/07/19 15:32:08 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -275,9 +275,6 @@ d2c_path=`echo $ac_cv_path_D2C|sed -e 's|/bin/d2c||'`
 # Did the user try to disable d2c?
 AC_ARG_ENABLE(d2c,   [  --disable-d2c           Do not build d2c])
 enable_d2c=${enable_d2c:-yes}
-if test "$D2C" = no; then
-    enable_d2c=no
-fi
 
 # Does the user explicitly want a bootstrap?
 AC_ARG_ENABLE(d2c-bootstrap,
@@ -295,11 +292,13 @@ enable_mindy=${enable_mindy:-yes}
 # Did the user try to enable bootstrapping with Mindy?
 AC_ARG_ENABLE(mindy-bootstrap,
 [  --enable-mindy-bootstrap
-                          Bootstrap d2c with Mindy. This can easily take one
-                          or more days, and is normally done only when porting
-                          d2c to a new architecture for the first time. Trust
-                          us; you want to get precompiled d2c binaries if any
-                          are available for your system. See the README.])
+                          Force bootstrap with Mindy. This can easily
+                          take a few hours, or a day, and is normally
+                          done only when porting d2c to a new
+                          architecture for the first time.  You
+                          usually want to get precompiled d2c binaries
+                          if any are available for your system. See
+                          the README.])
 enable_mindy_bootstrap=${enable_mindy_bootstrap:-no}
 
 # If d2c is present, try to ask it some questions.
@@ -328,6 +327,10 @@ AC_SUBST(lid_format_version)
 
 enable_bootstrap=no
 bootstrap_compiler=none
+
+if test "$D2C" = no -a "$enable_d2c=yes"; then
+    enable_mindy_bootstrap=yes
+fi
 
 AC_MSG_CHECKING("which build scenario to use")
 if test "$enable_mindy_bootstrap" = yes; then
@@ -1111,15 +1114,19 @@ case $SCENARIO in
         echo "details."
 	;;
     BOOTSTRAPPING_WITH_MINDY)
-	echo "You have asked to bootstrap the d2c compiler using the Mindy"
-	echo "interpreter. This is a slow, error-prone process. You may want"
-	echo "to try one of the following options instead:"
+	echo "configure didn't find a pre-installed Dylan-to-C compiler."
+	echo "This means we have to bootstrap using a Dylan interpreter"
+	echo "written in C. The interpreter is called mindy."
 	echo
-	echo "  1) Download precompiled d2c binaries. See the README for"
-	echo "     instructions and mirror sites."
-	echo "  2) Re-run configure without the --enable-mindy-bootstrap"
-        echo "     option. This will build the Mindy interpreter using your"
-	echo "     local C compiler and will not try to build d2c."
+	echo "Bootstrapping is a lengty process. You're definitely"
+	echo "encouraged to check whether there's a pre-built"
+	echo "Gwydion for your system, install that, and then re-run"
+	echo "configure here. If you have trouble with the pre-built"
+	echo "compiler, or if there's no pre-built compiler at all,"
+	echo "go on with the bootstrapping."
+	echo
+	echo "Of course, if you're too lazy to install the binary, and"
+	echo "don't mind waiting for up to a day, you can go on too."
 	echo
 	echo "If your platform isn't officially supported yet, you will want"
 	echo "to consult the porting and maintenance guide available at"
