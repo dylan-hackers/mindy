@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.65 1996/03/28 00:07:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.66 1996/04/06 07:13:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -128,9 +128,6 @@ define-procedural-expander
 //
 define class <explicitly-define-generic-tlf> (<define-generic-tlf>)
   //
-  // Make the definition required.
-  required keyword defn:;
-  //
   // The original parse.
   constant slot generic-tlf-parse :: <define-generic-parse>,
     required-init-keyword: parse:;
@@ -142,9 +139,6 @@ define method print-message
 end;
 
 define class <implicitly-define-generic-tlf> (<define-generic-tlf>)
-  //
-  // Make the definition required.
-  required keyword defn:;
 end;
 
 define method print-message
@@ -295,7 +289,8 @@ define method compute-define-generic-signature
   let defn = tlf.tlf-defn;
   if (anything-non-constant?)
     defn.function-defn-hairy? := #t;
-    if (defn.function-defn-ct-value)
+    let ctv = defn.function-defn-ct-value;
+    if (ctv ~== #f & ctv ~== #"not-computed-yet")
       error("noticed that a function was hairy after creating a ct-value.");
     end;
   elseif (defn.generic-defn-sealed?)
@@ -406,7 +401,7 @@ define method finalize-top-level-form
   let var = find-variable(tlf.sealed-domain-name);
   let defn = var & var.variable-definition;
   unless (instance?(defn, <generic-definition>))
-    compiler-error-location
+    compiler-fatal-error-location
       (tlf, "%s doesn't name a define generic, so can't be sealed.",
        tlf.sealed-domain-name);
   end;
@@ -415,7 +410,7 @@ define method finalize-top-level-form
 	    => type :: <ctype>;
 	  let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
 	  unless (instance?(type, <ctype>))
-	    compiler-error-location
+	    compiler-fatal-error-location
 	      (tlf,
 	       "Parameter in define sealed domain of %s isn't a type:\n  %s",
 	       tlf.sealed-domain-name,
@@ -455,7 +450,8 @@ define method finalize-top-level-form (tlf :: <real-define-method-tlf>)
     if (gf)
       add-seal(gf, tlf.method-tlf-library, signature.specializers, tlf);
     else
-      compiler-error-location(tlf, "%s doesn't name a generic function", name);
+      compiler-fatal-error-location
+	(tlf, "%s doesn't name a generic function", name);
     end;
   end;
 end;
@@ -593,7 +589,7 @@ end method expand-inline-function;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <explicitly-define-generic-tlf>) => ();
-  convert-generic-definition(builder, tlf.tlf-defn);
+  convert-generic-definition(builder, tlf);
 end;
 
 define method convert-top-level-form
@@ -602,22 +598,71 @@ define method convert-top-level-form
   let name = defn.defn-name;
   let var = find-variable(name);
   if (var & var.variable-definition == defn)
-    convert-generic-definition(builder, tlf.tlf-defn);
+    convert-generic-definition(builder, tlf);
   end;
 end;
 
 define method convert-generic-definition
-    (builder :: <fer-builder>, defn :: <generic-definition>) => ();
+    (builder :: <fer-builder>, tlf :: <define-generic-tlf>) => ();
+  let defn :: <generic-definition> = tlf.tlf-defn;
   if (defn.function-defn-hairy?)
+    if (defn.generic-defn-discriminator)
+      error("a hairy generic function definition has a static discriminator?");
+    end if;
+    unless (instance?(tlf, <explicitly-define-generic-tlf>))
+      error("an implicitly defined generic function is hairy?");
+    end unless;
+    let parse = tlf.generic-tlf-parse;
+    let parameters = parse.defgeneric-parameters;
+    let results = parse.defgeneric-results;
     let policy = $Default-Policy;
     let source = make(<source-location>);
     let args = make(<stretchy-vector>);
-    // ### compute the args.
+    
+    add!(args, ref-dylan-defn(builder, policy, source, #"<generic-function>"));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"name")));
+    add!(args,
+	 make-literal-constant
+	   (builder, as(<ct-value>, format-to-string("%s", defn.defn-name))));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"required")));
+    add!(args,
+	 build-type-vector(builder, policy, source,
+			   map(param-type, parameters.varlist-fixed)));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"rest?")));
+    add!(args,
+	 make-literal-constant
+	   (builder, as(<ct-value>, ~(~parameters.varlist-rest))));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"key")));
+    add!(args,
+	 make-literal-constant
+	   (builder,
+	    if (parameters.paramlist-keys)
+	      make(<literal-simple-object-vector>,
+		   contents: map(param-keyword, parameters.paramlist-keys));
+	    else
+	      as(<ct-value>, #f);
+	    end if));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"all-keys?")));
+    add!(args,
+	 make-literal-constant
+	   (builder, as(<ct-value>, parameters.paramlist-all-keys?)));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"values")));
+    add!(args,
+	 build-type-vector(builder, policy, source,
+			   map(param-type, results.varlist-fixed)));
+    add!(args, make-literal-constant(builder, as(<ct-value>, #"rest-value")));
+    add!(args,
+	 if (results.varlist-rest)
+	   build-type(builder, policy, source,
+		      results.varlist-rest.param-type);
+	 else
+	   make-literal-constant(builder, as(<ct-value>, #f));
+	 end if);
     let temp = make-local-var(builder, #"gf", object-ctype());
     build-assignment
       (builder, policy, source, temp,
        make-unknown-call
-	 (builder, ref-dylan-defn(builder, policy, source, #"%make-gf"), #f,
+	 (builder, ref-dylan-defn(builder, policy, source, #"make"), #f,
 	  as(<list>, args)));
     build-defn-set(builder, policy, source, defn, temp);
   elseif (defn.generic-defn-discriminator)
@@ -646,7 +691,7 @@ define method convert-top-level-form
     let gf-defn = gf-var & gf-var.variable-definition;
     if (gf-defn)
       let policy = $Default-Policy;
-      let source = make(<source-location>);
+      let source = tlf.source-location;
       let gf-leaf = build-defn-ref(builder, policy, source, gf-defn);
       build-assignment
 	(builder, policy, source, #(),
@@ -654,15 +699,62 @@ define method convert-top-level-form
 	   (builder,
 	    ref-dylan-defn(builder, policy, source, #"add-method"), #f,
 	    list(gf-leaf, leaf)));
+      build-defn-set(builder, policy, source, defn, leaf);
     else
-      compiler-error-location
-        (tlf,
-	 "In %s:\n  no definition for %=, and can't implicitly define it.",
-	 tlf, gf-name);
+      let name = tlf.method-tlf-parse.method-name;
+      compiler-fatal-error-location
+        (name, "No definition for %s, and can't implicitly define it.",
+	 name.token-symbol);
     end;
   end;
 end;
 
+define method build-type
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     expr :: false-or(<expression-parse>))
+    => result :: <leaf>;
+  if (expr)
+    let ctv = ct-eval(expr, #f);
+    if (ctv & instance?(ctv, <ctype>))
+      make-literal-constant(builder, ctv);
+    else
+      let var = make-local-var(builder, #"temp", specifier-type(#"<type>"));
+      fer-convert(builder, expr, make(<lexenv>), #"assignment", var);
+      var;
+    end if;
+  else
+    make-literal-constant(builder, object-ctype());
+  end if;
+end method build-type;
+
+define method build-type-vector
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     exprs :: <simple-object-vector>)
+    => result :: <leaf>;
+  let leaves = map(method (expr :: <expression-parse>)
+		       => res :: <leaf>;
+		     build-type(builder, policy, source, expr);
+		   end method,
+		   exprs);
+  if (every?(method (leaf :: <leaf>) => res :: <boolean>;
+	       instance?(leaf, <literal-constant>);
+	     end method,
+	     leaves))
+    make-literal-constant
+      (builder,
+       make(<literal-simple-object-vector>,
+	    contents: map(value, leaves), sharable: #t));
+  else
+    let temp = make-local-var(builder, #"temp",
+			      specifier-type(#"<simple-object-vector>"));
+    build-assignment
+      (builder, policy, source, temp,
+       make-unknown-call
+	 (builder, ref-dylan-defn(builder, policy, source, #"vector"), #f,
+	  as(<list>, leaves)));
+    temp;
+  end if;
+end method build-type-vector;
 
 
 // Generic function discriminator functions.
