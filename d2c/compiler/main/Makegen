@@ -1,5 +1,7 @@
 
 &makegen_include("../common-Makegen");
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
+
 @potential_targets
     = &d2c_library('Main', 
 		   '-L../base -L../front -L../fer-transform -L../optimize '

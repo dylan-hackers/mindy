@@ -11,7 +11,7 @@ $target_name = 'x86-win32-vc';
 $host_name = 'x86-win32-vc';
 $version = "2.3.9pre3";
 $bootstrap_counter = 20;
-$lid_format_version = 0;
+$lid_format_version = "2";
 $prefix="c:/fulgham/projects/gd";
 
 $srcroot = "${prefix}/src";
@@ -32,7 +32,7 @@ $enable_mindy = "no" eq "yes";
 $enable_d2c = "yes" eq "yes";
 $build_tools_with_d2c = "yes" eq "yes";
 $cross_compiling = "no" eq "yes";
-$enable_bootstrap = "yes" eq "yes";
+$enable_bootstrap = "no" eq "yes";
 $bootstrap_compiler = "d2c";
 $enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
 $recheck = "./configure ";
@@ -45,7 +45,7 @@ $MC = "$srcroot/mindy/Compiler/release/mindycomp.exe";
 $MINDY = "$srcroot/mindy/Interpretter/release/interpretter.exe";
 $DYLANPATH = ":${srcroot}/common/collection-extensions:${srcroot}/common/format:${srcroot}/common/format-out:${srcroot}/common/internal-time:${srcroot}/common/matrix:${srcroot}/common/print:${srcroot}/common/regular-expressions:${srcroot}/common/standard-io:${srcroot}/common/stream-ext:${srcroot}/common/streams:${srcroot}/common/string-ext:${srcroot}/common/table-ext:${srcroot}/common/time:${srcroot}/common/transcendental:${srcroot}/common/getopt:${srcroot}/mindy/libraries/random:${srcroot}/mindy/libraries/dylan:${srcroot}/mindy/libraries/inspector:${srcroot}/mindy/libraries/tk";
 $CC = 'cl';
-$D2C = "d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
+$D2C = "$srcroot/bootstrap_compiler/d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
 if ($host_name ne $target_name) {
   $D2C = "$D2C -no-binaries";
 };

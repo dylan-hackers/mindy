@@ -1,5 +1,6 @@
 
 &makegen_include('../common-Makegen');
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
 if ($enable_bootstrap) {
   $D2CFLAGS = $D2CFLAGS . ' -Dbootstrap_hack ';
 }

@@ -1,3 +1,5 @@
 
 &makegen_include("../common-Makegen");
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
+
 &d2c_library('Front', '-L../base');

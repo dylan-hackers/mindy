@@ -1,36 +1,20 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../common-dylan -L../file-system -L../base-file-system -L../date';
+$D2CFLAGS = $D2CFLAGS . ' -L../common-dylan -L../file-system -L../base-file-system -L../date -L../streams -L../time -L../format -L../standard-io -L../table-ext -L../format-out -L../print -L../string-ext -L../base-file-system -L../collection-extensions -L../transcendental -L../regular-expressions ';
+
+$plat = "posix";
 
 if ($features{'compiled_for_unix'}) {
-    &emit_c_file_rule('posix-system') if ($enable_d2c);
-    $system_lid_file = 'posix-system';
+	# Default
 } elsif ($features{'compiled_for_win32'}) {
-	# Windows is supposedly POSIX compliant.  we'll see...
-    &emit_c_file_rule('posix-system') if ($enable_d2c);
-    $system_lid_file = 'posix-system';
-
-	# This is really just a 'sed' script, but saves us from having to
-	# install it to build on win32.
-	open(OLDLID, "<posix-system.lid") || die("Can't open posix-system.lid: $!\n");
-	open(NEWLID, ">,posix-system.lid") || die("Can't open ,posix-system.lid: $!\n");
-
-	while(<OLDLID>) {
-		if (/\.o[\s]*/)
-		{
-			$_ =~ s/\.o[\s]*/\.obj/;	# Only one per line
-		}
-		print NEWLID $_;
-	}
-
-	close(OLDLID);
-	close(NEWLID);
-		
-	`del /F posix-system.lid` && die ("Can't delete old file: $!\n");
-	`rename ",posix-system.lid" posix-system.lid` && die ("Can't rename temp file: $!\n");
+	$plat = "win32";
 } else {
     &unknown_platform_error();
 }
+
+$system_lid_file = "$plat-system";
+$c_file_name = "posix-system";
+&emit_c_file_rule($c_file_name) if ($enable_d2c);
 
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');

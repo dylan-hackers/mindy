@@ -1,4 +1,5 @@
 
 &makegen_include("../common-Makegen");
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
 &emit_parsergen_rule('parser');
 &d2c_library('Parser', '-L../base');
