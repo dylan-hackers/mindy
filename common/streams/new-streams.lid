@@ -1,5 +1,6 @@
 Library: New-Streams
 unique-id-base: 34500
+unit-prefix: newstreams
 
 new-library.dylan
 fake-threads.dylan
@@ -12,3 +13,4 @@ stream-lines.dylan
 stream-buffers.dylan
 wrapper-streams.dylan
 file-streams.dylan
+bbso-stream.dylan

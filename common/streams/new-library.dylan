@@ -264,7 +264,8 @@ define module new-streams
     outer-stream,
     outer-stream-setter,
  
-    // This is an extension to the Streams library.
+    // The following are extensions to the Streams library.
     //
-    <fd-stream>;
+    <fd-stream>,
+    <buffered-byte-string-output-stream>;
 end module;
