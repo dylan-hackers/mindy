@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.4 1996/01/27 20:24:12 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.5 1996/01/31 23:56:21 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -255,6 +255,7 @@ define module define-functions
     <define-generic-tlf>, <define-implicit-generic-tlf>,
     <define-method-tlf>,
     implicitly-define-generic,
+    dump-queued-methods,
 
     $abstract-method-definition-slots;
 end;
