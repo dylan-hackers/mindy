@@ -1,5 +1,5 @@
 module: expanders
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.4 2000/01/24 04:56:14 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.5 2001/06/29 05:10:53 bruce Exp $
 copyright: see below
 
 
@@ -260,22 +260,25 @@ define-procedural-expander
 define-procedural-expander
   (#"make-anonymous-method",
    method (generator :: <expansion-generator>, parameters-frag :: <fragment>,
-	   results-frag :: <fragment>, body-frag :: <fragment>)
-       => ();
+           results-frag :: <fragment>, body-frag :: <fragment>,
+           options-frag :: <fragment>)
+    => ();
      generate-fragment
        (generator,
-	make-parsed-fragment
-	  (make(<method-ref-parse>,
-		method:
-		  make(<method-parse>,
-		       parameters:
-			 parse-parameter-list(make(<fragment-tokenizer>,
-						   fragment: parameters-frag)),
-		       returns:
-			 parse-variable-list(make(<fragment-tokenizer>,
-						  fragment: results-frag)),
-		       body: expression-from-fragment(body-frag))),
-	   source-location: generate-token-source-location(generator)));
+        make-parsed-fragment
+          (make(<method-ref-parse>,
+                method:
+                  make(<method-parse>,
+                       parameters:
+                         parse-parameter-list(make(<fragment-tokenizer>,
+                                                   fragment: parameters-frag)),
+                       returns:
+                         parse-variable-list(make(<fragment-tokenizer>,
+                                                  fragment: results-frag)),
+                       body: expression-from-fragment(body-frag)),
+                options: parse-property-list(make(<fragment-tokenizer>,
+                                                  fragment: options-frag))),
+           source-location: generate-token-source-location(generator)));
    end method);
 
 define-procedural-expander

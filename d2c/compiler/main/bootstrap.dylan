@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.dylan,v 1.3 2000/01/24 04:56:23 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.dylan,v 1.4 2001/06/29 05:12:39 bruce Exp $
 copyright: see below
 
 
@@ -149,16 +149,20 @@ define macro if
 end;
 
 define macro method
-    { method ( ?:parameter-list ) => (?results:variable-list) ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+  { method ( ?:parameter-list ) => (?results:variable-list) ; ?:body end }
+ => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body }, {})
+
     { method ( ?:parameter-list ) => (?results:variable-list) ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body }, {})
+
     { method ( ?:parameter-list ) => ?result:variable ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { ?result }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { ?result }, { ?body }, {})
+
     { method ( ?:parameter-list ) ; ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body }, {})
+
     { method ( ?:parameter-list ) ?:body end }
-      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
+ => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body }, {})
 end;
 
 define macro select
