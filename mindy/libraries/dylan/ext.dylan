@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.9 1996/03/19 23:50:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.10 1996/09/15 15:57:15 nkramer Exp $
 
 //======================================================================
 //
@@ -76,3 +76,14 @@ define constant <byte> = limited(<integer>, min: 0, max: 255);
 define method as (cls == <byte>, char :: <character>) => c :: <character>;
   as(<integer>, char);
 end method as;
+
+// assert -- exported from Extensions.  Users of assert() should not
+// have side-effects in the expression that is passed to assert(),
+// because if we ever turn assertions off, that would mean the program
+// runs differently in debug mode than it does in release mode.
+//
+define function assert (value :: <object>) => ();
+  unless (value)
+    error("Assertion failed.");
+  end;
+end function assert;
