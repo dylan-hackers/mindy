@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.40 1994/08/18 18:41:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.41 1994/08/30 21:44:45 nkramer Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ define module Builtin-Stuff
   export
     \*, \+, \-, \/, \<, \<=, \=, \==, \~=,
     <array>,
-    <boolean>, <buffer>, <byte-string>, <byte-vector>,
+    <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
     <double-float>,
     <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
@@ -198,6 +198,7 @@ define module Extensions
   use Builtin-Stuff,
     import: {main, exit, on-exit,
 	     format, prin1, print, putc, puts, getc, <byte-vector>,
+	     <byte-character>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
