@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.18 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.19 1995/10/05 01:10:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -77,7 +77,7 @@ define generic build-block-body
 //
 define generic build-exit
     (builder :: <flow-builder>, policy :: <policy>,
-     source :: <source-location>, target :: <block-region>)
+     source :: <source-location>, target :: <block-region-mixin>)
  => ();
 
 
