@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.2 1996/02/23 15:09:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.3 1996/04/18 21:49:34 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -165,10 +165,11 @@ end;
 
 define method dropped-dependent
     (component :: <component>, op :: <operation>) => ();
-  if (op.dependents)
-    error("%= had more than one dependent?", op);
-  end;
-  delete-dependent(component, op);
+  //
+  // If we dropped the last dependent, delete this operation.
+  unless (op.dependents)
+    delete-dependent(component, op);
+  end unless;
 end;
 
 define method dropped-dependent
