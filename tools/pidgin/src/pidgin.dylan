@@ -6,6 +6,7 @@ copyright:
 define method help () => ()
   format(*standard-error*,"Usage: pidgin [OPTION]... FILE\n");
   format(*standard-error*, "Translate C headers into Dylan definitions.\n\n");
+format(*standard-error*, "-d, --debug: Print constructs as they are translated\n");
   format(*standard-error*, "-I, --includedir <directory>: Scan specified directory for includes\n");
   format(*standard-error*, "-m, --module <module>: Set module name for resulting interface\n");
   format(*standard-error*, "-l, --library <library>: Set library name for resulting interface\n");
@@ -33,6 +34,10 @@ define function pidgin(name, arguments)
     let argp = make(<argument-list-parser>);
     add-option-parser-by-type(argp,
 			      <simple-option-parser>,
+			      short-options: #("d"),
+			      long-options: #("debug"));
+    add-option-parser-by-type(argp,
+			      <simple-option-parser>,
 			      short-options: #("h"),
 			      long-options: #("help"));
     add-option-parser-by-type(argp,
@@ -51,6 +56,10 @@ define function pidgin(name, arguments)
       help();
       exit-application(1);
     end unless;
+    if (option-present?-by-long-name(argp, "debug"))
+      format(*standard-output*, "Debugging activated.\n");
+      debug := #t;
+    end if;
     let extra-includes = option-value-by-long-name(argp, "includedir");
     let include-path = construct-include-path(extra-includes);
     let module = option-value-by-long-name(argp, "module");
@@ -72,11 +81,14 @@ define function pidgin(name, arguments)
     write-line(out, concatenate("\ndefine module ", module, "\n  use c-ffi;\nend module\n\n"));
     c-file := c-file.c-file-contents[0];
     for (i :: <integer> from 0 to size(c-file.c-file-contents) - 1 )
-      if (instance?(c-file.c-file-contents[i], <c-file>))
-        write-line(out, concatenate("c-include(\"", c-file.c-file-contents[i].c-file-name, "\");\n"));
-      elseif (instance?(c-file.c-file-contents[i], <c-declaration>))
-        write-line(out, c-output(c-file.c-file-contents[i]));
+      if (debug == #t)
+        debug-print(c-file.c-file-contents[i]);
       end if;
+//      if (instance?(c-file.c-file-contents[i], <c-file>))
+//        write-line(out, concatenate("c-include(\"", c-file.c-file-contents[i].c-file-name, "\");\n"));
+//      elseif (instance?(c-file.c-file-contents[i], <c-declaration>))
+        write-line(out, c-output(c-file.c-file-contents[i]));
+//      end if;
     end for;
     close(out);
   end;

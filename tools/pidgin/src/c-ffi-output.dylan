@@ -94,7 +94,13 @@ define method c-output
     if (object-class(type.c-type-members[counter]) = <c-bit-field>)
       def := concatenate(def, "  // <bit-field> not yet supported.\n");
     else
-      def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", c-output(type.c-type-members[counter].c-member-variable-type), ";\n");
+      let t = type.c-type-members[counter].c-member-variable-type;
+      if (object-class(t) = <c-typedef-type>)
+        t := concatenate("<", t.c-typedef-name, ">");
+      else
+        t := c-output(t);
+      end if;
+      def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", t, ";\n");
     end if;
   end for;
   concatenate(def, "end C-struct;\n");
@@ -228,4 +234,12 @@ define method c-output
     (decl :: <c-declaration>)
  => (result :: <string>)
   "// Unknown declaration.";
+end method;
+
+// Handle <c-file> objects.
+
+define method c-output
+    (file :: <c-file>)
+ => (result :: <string>)
+  concatenate("c-include(\"", file.c-file-name, "\");");
 end method;

@@ -14,6 +14,7 @@ define module c-ffi-output
   use substring-search;
   use c-types;
   use c-declarations;
+  use ansi-c;
 
   export c-output;
 end module;
