@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.15 2000/11/02 16:10:32 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.16 2001/03/23 21:59:39 housel Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -40,12 +40,15 @@ prefix	=		@prefix@
 exec_prefix	=	@exec_prefix@
 exe_ext = @exe_ext@
 srcdir	=		@srcdir@
+top_srcdir =		@top_srcdir@
 
 SRCDIR	=		${srcdir}
 CONFIGDIR =		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan/@version@/@d2c_target@
 DESTDIR =
+
+TIME	=		${top_srcdir}/common/time
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
@@ -64,8 +67,6 @@ INSTALL_DATA	=	@INSTALL_DATA@
 LIBOBJS =		@LIBOBJS@
 LIBS	=		../compat/libcompat.a @LIBS@
 
-TIME_INC=		@TIME_INC@
-
 ##
 ## end of configure written portion
 ##
@@ -75,16 +76,18 @@ OBJS = parser-tab.o lexer.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
 	obj.o print.o str.o sym.o thread.o type.o load.o value.o vec.o \
 	char.o handler.o instance.o input.o driver.o \
-	table.o fd.o buf.o weak.o brkpt.o extern.o ext-init.o
+	table.o fd.o buf.o weak.o brkpt.o extern.o ext-init.o \
+	time-portability.o
 
 SRCS = parser-tab.c lexer.c \
 	bool.c class.c coll.c debug.c def.c error.c func.c gc.c init.c \
 	interp.c list.c lose.c mindy.c misc.c module.c nlx.c num.c \
 	obj.c print.c str.c sym.c thread.c type.c load.c value.c vec.c \
 	char.c handler.c instance.c input.c driver.c \
-	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
+	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c \
+	${TIME}/time-portability.c
 
-EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIME_INC}
+EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIME}/time.inc
 
 mindy$(exe_ext): ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,$@
@@ -404,3 +407,6 @@ weak.o:  ${SRCDIR}/weak.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/error.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
            ${SRCDIR}/weak.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/weak.c
+
+time-portability.o:	${TIME}/time-portability.c ${TIME}/time-portability.h
+	${CC} -c ${CFLAGS} ${TIME}/time-portability.c
