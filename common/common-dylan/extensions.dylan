@@ -416,27 +416,32 @@ define method string-to-float
          class :: subclass(<float>))
      => (result :: <float>, next-key :: <integer>);
       let exponent = if(eneg?) -exponent else exponent end;
-      values(if(neg?)
-               -algorithm-M(mantissa, exponent - scale, class);
-             else
-               algorithm-M(mantissa, exponent - scale, class);
-             end, index);
-    end,
-/*
-    method bellerophon
-        (f :: <extended-integer>,
-         e :: <integer>,
-         class :: subclass(<float>))
-     => (result :: <float>);
       let bits
         = select(class)
             <single-float> => float-digits(1.0s0);
             <double-float> => float-digits(1.0d0);
             <extended-float> => float-digits(1.0x0);
           end;
-      0.0;
+      values(if(neg?)
+               -bellerophon(mantissa, exponent - scale, class, bits);
+             else
+               bellerophon(mantissa, exponent - scale, class, bits);
+             end, index);
     end,
-*/
+
+    method bellerophon
+        (f :: <extended-integer>,
+         e :: <integer>,
+         class :: subclass(<float>),
+         bits :: <integer>)
+     => (result :: <float>);
+      if (zero?(f))
+        make-float(class, #e0, 0);
+      else
+        algorithm-M(f, e, class, bits);
+      end;
+    end,
+
     // Implements Algorithm M from William Clinger's "How to Read Floating-
     // Point Numbers Accurately" (PLDI 1990)
     //
@@ -445,14 +450,9 @@ define method string-to-float
     method algorithm-M
         (f :: <extended-integer>,
          e :: <integer>,
-         class :: subclass(<float>))
+         class :: subclass(<float>),
+         bits :: <integer>)
      => (result :: <float>);
-      let bits
-        = select(class)
-            <single-float> => float-digits(1.0s0);
-            <double-float> => float-digits(1.0d0);
-            <extended-float> => float-digits(1.0x0);
-          end;
       let low = ash(#e1, bits - 1) - 1;
       let high = ash(#e1, bits) - 1;
       local
