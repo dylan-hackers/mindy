@@ -447,3 +447,30 @@ define method SetKeyboardFocus( inWindow :: <WindowRef>, inControl :: <ControlHa
 
 end method SetKeyboardFocus;
 
+/*
+    IsControlVisible
+*/
+
+define method IsControlVisible( inControl :: <ControlHandle> )
+=> ( result :: <OSErr> )
+
+	if( call-out( "IsControlVisible", int:, ptr: inControl.raw-value ))
+    #t;
+  else
+    #f;
+  end;
+
+end method IsControlVisible;
+
+/*
+    CreateRootControl
+*/
+
+define method CreateRootControl( for-window :: <WindowRef> )
+=> ( result :: <OSErr>, root-control :: <ControlHandle> )
+
+  let temp :: <Handle> = make(<Handle>);
+	let err = call-out( "CreateRootControl", int:, ptr: for-window.raw-value, ptr: temp.raw-value );
+  values(as(<OSErr>, err), pointer-at(temp, class: <ControlHandle>, offset: 0));
+
+end method CreateRootControl;

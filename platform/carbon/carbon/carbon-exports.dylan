@@ -176,6 +176,7 @@ define module carbon
                 TrackControl, TestControl,
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls,
+    IsControlVisible, CreateRootControl,
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,
