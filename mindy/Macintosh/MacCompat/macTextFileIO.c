@@ -172,6 +172,18 @@ int MacCreat(const char *path, mode_t mode)
 	return fd;
 }
 
+static int RedirectedFileDescriptor(int fd)
+{
+	switch (fd)
+	{
+		case 0:	return stdin->handle;
+		case 1:	return stdout->handle;
+		case 2:	return stderr->handle;
+		default: return fd;
+	}
+	
+}
+
 
 // read
 // Translates newlines if file is text
@@ -185,7 +197,7 @@ int MacRead(int fd, char *buf, int count)
 	assert( buf != NULL );
 	assert(  count > 0 );
 	
-	result = read( fd, buf, count );
+	result = read( RedirectedFileDescriptor(fd), buf, count );
 	FileError( result );
 	isText = FileIsText(fd);
 	
@@ -218,13 +230,13 @@ int MacWrite(int fd, const char *buf, int count)
 	
 	if( isText )
 	{
-		n2r( buf, count );
-		result = write( fd, buf, count );
-		r2n( buf, count );	// Must be a better way
+		n2r( (char*)buf, count );
+		result = write( RedirectedFileDescriptor(fd), buf, count );
+		r2n( (char*)buf, count );	// Must be a better way
 	}
 	else
 	{
-		result = write( fd, buf, count );
+		result = write( RedirectedFileDescriptor(fd), buf, count );
 	}
 
 	FileError( result );
