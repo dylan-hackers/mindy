@@ -19,8 +19,12 @@ if ($win32) {
     ('melange',
      '$(BUILDROOT)/force.timestamp melange-c.lib.du',
      '-L.',
-     'compile', 'install'
+     'compile',
      );
+
+$melange_binary = ($win32 ? "melange.exe" : "melange");
+push(@compile_dependencies, $melange_binary);
+do install ('bin', $melange_binary);
 
 print <<'EOF';
 MC = mindycomp
