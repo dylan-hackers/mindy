@@ -1,4 +1,110 @@
-Mindy 1.5 Change Log
+Mindy 1.6 Change Log
+
+The following are enhancements added since release 1.5:
+
+   The Streams library has been converted to a spec that both CMU and
+   Harlequin agree on.  See streams.txt for details on the new
+   streams.  ### Want "stream-diffs"
+
+   The Standard-io module of the Streams library has been moved into
+   its own library, called Standard-io.  See standard-io.txt for
+   details.
+
+   The Streams library now contains the piped-exec module, which
+   exports the piped-exec function.  Similar functionality used to be
+   provided by the fd-exec function; see mindy.txt for details.  ###
+   also bbso-stream
+
+   The Stream-extensions library has been effectively gutted and
+   started over.  Most of the functions that used to be part of
+   Stream-extensions are now part of the Streams library; the
+   Stream-extensions library now contains the Indenting-streams and
+   Concatenated-streams modules.  See stream-ext.txt for details.
+
+   The Regular-expressions module of the String-extensions library has
+   been spun off into its own library.
+
+   Added the time and internal-time libraries.  See time.txt and
+   itime.txt, respectively, for details.
+
+   The Table-Extensions library has been added.  Most of the
+   functionality used to be in the Extensions module of the Dylan
+   library; however, see table-ext.txt for details.
+
+   Added the "store" command to the text Inspector.  This command
+   allows you to store the object currently under inspection into a
+   debugger variable; see inspector.txt for details.
+
+   The Inspector no longer tells you about slot getters and setters or
+   type constaints on a slot when you inspect an instance of an
+   object.  If you want to see those things, inspect that object's
+   class.
+
+   The assert() function has been added to the Extensions module of
+   the Dylan library.  See mindy.txt for details.
+
+   The conditional compilation features compiled-for-x86-win32 and
+   compiled-for-hppa-hpux are now defined, if appropriate.  See
+   mindy.txt for details about conditional compilation.
+
+   The conditional compilation feature newlines-are-CRLF has been
+   added.  Consequently, the constant $newlines-are-CRLF, exported
+   from the Extensions module of the Dylan library, no longer exists.
+   See mindy.txt for details about conditional compilation.
+
+   Added print-object methods for <sequence>, <array>, <table>, and
+   <range>.  See print.txt for details about print-object.
+
+   Added the format-out library.  See format-out.txt for details.
+
+   Added a whole bunch of new tests to the tests directory.
+
+
+The following are bug fixes since release 1.5:
+
+   TK now works on Windows/NT.
+
+   Piped-exec (formerly fd-exec) now works on Windows/NT.
+
+   WinMindy now uses a special linker (dbclink) to link .dbc files.
+   Previously, the Unixish "cat" command was used, which sometimes
+   corrupted the .dbc files.  See mindy.txt for details.
+
+   fd-exec and piped-exec now collect finished child processes.
+   Previously, on Unix if you fd-exec'ed enough processes, you could
+   overflow the process table, even if those processes had terminated.
+
+   In interp/module.c, an unreferenced function referenced a
+   non-existent function.  This has been fixed.
+
+   Fixed a bug where if a size: keyword was given to make(<deque>),
+   the deque would think it was twice as big as it really was.
+
+   Fixed ``for (x from 0 below 10) x := x + 1 end'' to work correctly.
+   ### huh?
+
+   Slot init-args are now processed first to last (ie, the second
+   occurence of a init-keyword is ignored when initializing
+   instances).
+
+   Fixed obscure bug in the SAM cache code which caused incorrect
+   handling of non-leaf concrete classes.  ### huh?
+
+   When using the Transcendental module, not all documented methods
+   for \^ were present.  This has been fixed.
+
+   Fixed a bug in the Inspector where strings beginning with # (like
+   "#f") would not display correctly.
+
+   The random-float function in the Random library would sometimes
+   produce numbers outside the range asked for.  This has been fixed.
+
+   Fixed print-object when printing single digit negative integers.
+
+   <table> and <self-organizing-list> are once again subclasses of
+   <stretchy-collection>.  See collext.txt for details on
+   <self-organizing-list>.
+
 
 The following are enhancements added since release 1.4:
 
