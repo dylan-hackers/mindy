@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.2 1995/04/12 17:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.3 1995/10/30 13:13:20 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,6 +15,10 @@ end;
 
 define class <unknown-source-location> (<source-location>)
 end;
+
+add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,
+		<unknown-source-location>, #());
+
 
 define generic source-location-span (start-loc :: <source-location>,
 				     end-loc :: <source-location>)
@@ -41,7 +45,8 @@ define generic source-location (thing :: <source-location-mixin>)
 
 // Source files.
 
-define class <source-file> (<object>)
+// preserve identity for space sharing...
+define class <source-file> (<identity-preserving-mixin>)
   slot name :: <string>, required-init-keyword: name:;
   slot %contents :: union(<buffer>, <false>), init-value: #f;
 end;
@@ -49,6 +54,10 @@ end;
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
   pprint-fields(sf, stream, name: sf.name);
 end;
+
+add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
+		list(name, name:, #f));
+
 
 define class <file-source-location> (<source-location>)
   slot source-file :: <source-file>, required-init-keyword: source:;
@@ -125,3 +134,51 @@ define method extract-string (source-location :: <file-source-location>,
   copy-bytes(result, 0, source-location.source-file.contents, start, len);
   result;
 end;
+
+define constant $source-file-location-words = 6;
+
+// We represent most slots in file source locations as raw data to save
+// space/time.  The only subobject is the source-file.
+//
+define method dump-od (obj :: <file-source-location>, buf :: <dump-state>)
+ => ();
+  let start-pos = buf.current-pos;
+  dump-definition-header(#"file-source-location", buf, subobjects: #t,
+  			 raw-data: $odf-word-raw-data-format);
+  dump-word($source-file-location-words, buf);
+  dump-word(obj.start-posn, buf);
+  dump-word(obj.start-line, buf);
+  dump-word(obj.start-column, buf);
+  dump-word(obj.end-posn, buf);
+  dump-word(obj.end-line, buf);
+  dump-word(obj.end-column, buf);
+  dump-od(obj.source-file, buf);
+  dump-end-entry(start-pos, buf);
+end method;
+
+add-od-loader(*compiler-dispatcher*, #"file-source-location",
+  method (state :: <load-state>) => res :: <file-source-location>;
+    state.od-next := state.od-next + $word-bytes; // skip count
+    let nbytes = $source-file-location-words * $word-bytes;
+    let next = fill-at-least(nbytes, state);
+    let buf = state.od-buffer;
+    let s-posn = buffer-word(buf, next + (0 * $word-bytes));
+    let s-line = buffer-word(buf, next + (1 * $word-bytes));
+    let s-column = buffer-word(buf, next + (2 * $word-bytes));
+    let e-posn = buffer-word(buf, next + (3 * $word-bytes));
+    let e-line = buffer-word(buf, next + (4 * $word-bytes));
+    let e-column = buffer-word(buf, next + (5 * $word-bytes));
+    state.od-next := next + nbytes;
+    let file = load-object-dispatch(state);
+    assert-end-object(state);
+    make(<file-source-location>,
+         source-file: file,
+         start-posn: s-posn,
+	 start-line: s-line,
+	 start-column: s-column,
+	 end-posn: e-posn,
+	 end-line: e-line,
+	 end-column: e-column);
+    end method
+);
+
