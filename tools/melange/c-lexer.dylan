@@ -1121,7 +1121,7 @@ end for;
 //
 define method lex-identifier
     (tokenizer :: <tokenizer>, position :: <integer>, string :: <byte-string>,
-     #key expand = #t)
+     #key expand = #t, cpp-line = #f)
  => (token :: <token>);
   case
     expand & check-cpp-expansion(string, tokenizer) =>
@@ -1132,7 +1132,11 @@ define method lex-identifier
     otherwise =>
       let default
 	= if (string.first == '#') <cpp-token> else <identifier-token> end if;
-      let cls = element(reserved-word-table, string, default: default);
+      let cls = if(~cpp-line)
+		  element(reserved-word-table, string, default: default);
+		else
+		  default;
+		end if;
       make(cls, position: position, string: string, generator: tokenizer);
   end case;
 end method lex-identifier;
@@ -1141,7 +1145,7 @@ end method lex-identifier;
 // token if the match is succesful and #f otherwise.
 //
 define method try-identifier
-    (state :: <tokenizer>, position :: <integer>, #key expand = #t)
+    (state :: <tokenizer>, position :: <integer>, #key expand = #t, cpp-line = #f)
  => (result :: type-union(<token>, <false>));
   let contents :: <long-byte-string> = state.contents;
 
@@ -1153,7 +1157,7 @@ define method try-identifier
       state.position := index;
       let string-value = copy-sequence(contents,
 				       start: position, end: index);
-      lex-identifier(state, position, string-value, expand: expand);
+      lex-identifier(state, position, string-value, expand: expand, cpp-line: cpp-line);
     end for;
   end if;
 end method try-identifier;
@@ -1391,7 +1395,7 @@ define /* exported */ method get-token
     // Do the appropriate matching, and return an <error-token> if we don't
     // find a match.
     let token? =
-      try-identifier(state, pos, expand: expand) | try-punctuation(state, pos);
+      try-identifier(state, pos, expand: expand, cpp-line: cpp-line) | try-punctuation(state, pos);
     if (token?) return(token?) end if;
 
     let (start-index, end-index, dummy1, dummy2, char-start, char-end,

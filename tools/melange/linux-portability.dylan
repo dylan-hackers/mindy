@@ -70,6 +70,8 @@ define constant $default-defines
       "__attribute__", #(#("x"), ""), 
       "__signed__", "", 
       "__inline__", "",
+      "inline", "",
+      "__inline", "",
 
       "__ELF__", "",
       "unix", "",
