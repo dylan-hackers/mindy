@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.19 2001/03/17 03:43:36 bruce Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.20 2001/03/21 04:30:40 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -959,7 +959,7 @@ sub emit_cppasm_file_rule {
 
     do maybe_emit_d2c_defines();
 
-    print "$objfile: \$(SRCDIR)/$srcfile.S";
+    print "$objfile: \$(SRCDIR)/$srcfile.s";
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
@@ -968,7 +968,7 @@ sub emit_cppasm_file_rule {
     } else {
 	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
-    print " -c \$(SRCDIR)/$srcfile.S -o $objfile\n\n";
+    print " -c \$(SRCDIR)/$srcfile.s -o $objfile\n\n";
     if ($target_name eq $host_name) {
       push(@compile_dependencies, $objfile);
     } else {
