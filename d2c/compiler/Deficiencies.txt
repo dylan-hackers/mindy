@@ -1,7 +1,7 @@
 
 		Known Deficiencies in the D2C Compiler.
 
-$Header: /home/housel/work/rcs/gd/src/d2c/compiler/Deficiencies.txt,v 1.2 1996/04/06 07:32:10 wlott Exp $
+$Header: /home/housel/work/rcs/gd/src/d2c/compiler/Deficiencies.txt,v 1.3 1996/06/18 14:25:35 ram Exp $
 
 
 The special syntax for aref, element, and singleton is supposed to
@@ -10,7 +10,7 @@ look it up in the Dylan library.
 
 
 In macro templates, name prefixing and suffixing (e.g. "prefix-" ##
-?name ## "-suffix") is not implemented.
+?name ## "-suffix") have been implemented but not tested.
 
 
 In macro templates, unhygienic name references (e.g. ?=name) is not
