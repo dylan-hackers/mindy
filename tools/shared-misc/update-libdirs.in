@@ -293,16 +293,18 @@ sub update_directory_makegen {
     my @libdirs;
     my %libdirs;
 
+    my $makegen = File::Spec->catfile($makegendir, 'Makegen');
+    my $makegen_tmp = File::Spec->catfile($makegendir, 'Makegen-tmp');
+
     foreach my $lib (&library_closure(split / /,$used_from_dir{$makegendir})) {
 	my $dir = $library_dir{$lib};
-	if(defined $dir && !defined $libdirs{$dir}) {
+	if(!defined $dir) {
+	    print STDERR "$makegen: Warning: Cannot locate library $lib\n";
+	} elsif(!defined $libdirs{$dir}) {
 	    push @libdirs, $dir;
 	    $libdirs{$dir} = 1;
 	}
     }
-
-    my $makegen = File::Spec->catfile($makegendir, 'Makegen');
-    my $makegen_tmp = File::Spec->catfile($makegendir, 'Makegen-tmp');
 
     open(MAKEGEN, "<$makegen") || die "Can't open $makegen: $!";
     open(MAKEGEN_TMP, ">$makegen_tmp") || die "Can't open $makegen_tmp: $!";
