@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.29 1994/05/25 21:58:01 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.30 1994/06/01 20:09:39 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -31,7 +31,6 @@ define module Builtin-Stuff
     <false>, <float>, <function>,
     <generic-function>,
     <integer>,
-    <keyword>,
     <list>, <lock>,
     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
     <mutable-sequence>,
@@ -101,7 +100,6 @@ define module Dylan
 	     <float>, <function>,
 	     <generic-function>,
 	     <integer>,
-	     <keyword>,
 	     <list>,
 	     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
 	     <mutable-sequence>,
