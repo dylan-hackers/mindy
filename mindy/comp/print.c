@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.3 1994/03/31 10:16:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.4 1994/04/08 14:25:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -626,11 +626,14 @@ static void print_local_constituent(struct local_constituent *c, int depth)
 
 static void print_handler_constituent(struct handler_constituent *c, int depth)
 {
-    printf("%shandler\n%stype:\n", indent(depth), indent(depth+1));
-    print_expr(c->type, depth+2);
-    printf("%sfunction:\n", indent(depth+1));
-    print_expr(c->func, depth+2);
-    print_plist(c->plist, depth+1);
+    printf("%shandler\n", indent(depth));
+    if (c->type) {
+	printf("%stype:\n", indent(depth+1));
+	print_expr(c->type, depth+2);
+	printf("%sfunction:\n", indent(depth+1));
+	print_expr(c->func, depth+2);
+	print_plist(c->plist, depth+1);
+    }
     printf("%sbody\n", indent(depth));
     print_body(c->body, depth+1);
     printf("%send handler\n", indent(depth));
