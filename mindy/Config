@@ -9,13 +9,13 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/Attic/Config,v 1.1 1994/03/24 21:48:53 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/Attic/Config,v 1.2 1994/04/09 14:11:36 wlott Exp $
 ##
 ##  This is the top-level source Config file for Mindy.  It is included by
 ## all the makefiles in the various subdirectories.  Hence, it is useful
 ## for setting system-wide variables, like CFLAGS and CC.
 ##
 
-CFLAGS = -g
+CFLAGS = -g -Wall
 CC = gcc
 LEX = flex
