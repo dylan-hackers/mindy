@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.12 1995/05/03 07:55:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.13 1995/05/04 09:26:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -213,7 +213,7 @@ define macro class-definer
     { ?slot-modifiers slot ?name, #rest ?options; ... }
       => { slot ?name, ?slot-modifiers, ?options; ... }
     { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
-      => { slot ?name, type: ?type, ?slot-modifiers, ?options }
+      => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
   slot-modifiers:
     { } => { }
     { instance } => { allocation: #"instance" }
@@ -282,7 +282,7 @@ define primary abstract open %%class <object> ()
   //
   // The class of the instance.  Non-abstract classes automatically override
   // the init-value to be the correct class.
-  slot %object-class, type: <class>, setter: #f
+  slot %object-class, type: <class>, setter: #f, init-value: <object>
 end;
 
 define abstract open class <functional-object> (<object>)
@@ -305,7 +305,7 @@ define class <union> (<type>) end;
 define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
 define class <class> (<type>)
-  slot unique-id :: <fixed-integer>;
+  slot unique-id :: <fixed-integer>, required-init-keyword: unique-id:;
 end;
 
 define abstract open class <number> (<object>) end;
