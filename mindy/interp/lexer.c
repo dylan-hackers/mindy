@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.1 1994/10/05 21:02:33 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.2 1995/04/19 13:11:07 wlott Exp $
 *
 * This file is the lexer for the debugger.
 *
@@ -143,46 +143,82 @@ static int yyissymbolic(int c)
 
 static int yysymbol(int c)
 {
-  char buff[1024], *p = buff;
-  int keywordp = 0;
+    char buff[1024], *p = buff;
+    
+    do {
+	if (p == buff+sizeof(buff))
+	    return tok_ERROR;
+	*p++ = c;
+	c = yygetc();
+	if (c == EOF) return tok_ERROR;
+    } while (yyissymbolic(c));
+    *p = 0;
 
-  do {
-    if (p == buff+sizeof(buff))
-      return tok_ERROR;
-    *p++ = c;
-    c = yygetc();
-    if (c == EOF)
-      return tok_ERROR;
-  } while (yyissymbolic(c));
-  if (c == ':')
-    keywordp = 1;
-  else
-    yyungetc(c);
-  *p = 0;
-  /* Uh, wouldn't it be better if these used # instead of $
-     so we couldn't be shadowing user variables? Or \ so we
-     couldn't shadow syntax, either? */
-  if (buff[0] == '$') {
-    if (buff[1] == 0) {
-      yylval = make_fixnum(-1);
-      return tok_DEBUGVAR;
+    if (c == ':') {
+	c = yygetc();
+	if (c == EOF) return tok_ERROR;
+	if (yyissymbolic(c)) {
+	    obj_t result = list1(symbol(buff));
+	    while (1) {
+		p = buff;
+		do {
+		    if (p == buff+sizeof(buff))
+			return tok_ERROR;
+		    *p++ = c;
+		    c = yygetc();
+		    if (c == EOF) return tok_ERROR;
+		} while (yyissymbolic(c));
+		*p = 0;
+		result = pair(symbol(buff), result);
+		if (c != ':')
+		    break;
+		c = yygetc();
+		if (c == EOF) return tok_ERROR;
+		if (!yyissymbolic(c)) {
+		    yyungetc(c);
+		    return tok_ERROR;
+		}
+	    }
+	    yyungetc(c);
+	    if (length(result) > 3)
+		return tok_ERROR;
+	    yylval = result;
+	    return tok_EXTERN_NAME;
+	}
+	else {
+	    yyungetc(c);
+	    yylval = symbol(buff);
+	    return tok_KEYWORD;
+	}
     }
-    if (buff[1] == '$' && buff[2] == 0) {
-      yylval = make_fixnum(-2);
-      return tok_DEBUGVAR;
+    else {
+	yyungetc(c);
+
+	/* Uh, wouldn't it be better if these used # instead of $
+	   so we couldn't be shadowing user variables? Or \ so we
+	   couldn't shadow syntax, either? */
+	if (buff[0] == '$') {
+	    if (buff[1] == 0) {
+		yylval = make_fixnum(-1);
+		return tok_DEBUGVAR;
+	    }
+	    if (buff[1] == '$' && buff[2] == 0) {
+		yylval = make_fixnum(-2);
+		return tok_DEBUGVAR;
+	    }
+	    if (buff[1] == '-' || yyisnumeric(buff[1], 10)) {
+		yylval = make_fixnum(strtol(buff+1, NULL, 10));
+		return tok_DEBUGVAR;
+	    }
+	    if ((buff[1] == 'a' || buff[1] == 'A')
+		&& yyisnumeric(buff[2], 10)) {
+		yylval = make_fixnum(strtol(buff+2, NULL, 10));
+		return tok_ARG;
+	    }
+	}
+	yylval = symbol(buff);
+	return tok_SYMBOL;
     }
-    if (buff[1] == '-' || yyisnumeric(buff[1], 10)) {
-      yylval = make_fixnum(strtol(buff+1, NULL, 10));
-      return tok_DEBUGVAR;
-    }
-    if ((buff[1] == 'a' || buff[1] == 'A')
-	&& yyisnumeric(buff[2], 10)) {
-      yylval = make_fixnum(strtol(buff+2, NULL, 10));
-      return tok_ARG;
-    }
-  }
-  yylval = symbol(buff);
-  return keywordp ? tok_KEYWORD : tok_SYMBOL;
 }
 
 static int yynumber(int c, int radix, int addressp)
