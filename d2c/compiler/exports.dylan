@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.17 1995/02/23 20:04:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.18 1995/03/04 22:00:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,6 +13,13 @@ define library compiler
   use Debugger-Format;
 end;
 
+define module params
+  use Dylan;
+  use Extensions, import: {<extended-integer>};
+
+  export $minimum-fixed-integer, $maximum-fixed-integer;
+end;
+
 define module common
   use Dylan, export: all;
   use Extensions, export: all;
@@ -20,6 +27,7 @@ define module common
   use Print, export: all;
   use PPrint, export: all;
   use Format, export: all;
+  use Params, prefix: "runtime-", export: all;
 end;
 
 define module utils
@@ -72,12 +80,34 @@ define module header
     <header>, parse-header;
 end;
 
+define module compile-time-values
+  use common;
+
+  use utils;
+  use forwards, import: {<ctype>};
+
+  export
+    <ct-value>,
+    <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
+    <literal>, literal-value, <eql-literal>,
+    <literal-number>, <literal-real>, <literal-rational>, <literal-integer>,
+    <literal-fixed-integer>, <literal-extended-integer>, <literal-ratio>,
+    <literal-float>, <literal-single-float>, <literal-double-float>,
+    <literal-extended-float>, <literal-symbol>, <literal-character>,
+    <literal-boolean>, <literal-true>, <literal-false>,
+    <literal-sequence>, literal-contents,
+    <literal-list>, literal-tail, <literal-empty-list>,
+    <literal-vector>, <literal-string>;
+end;
+
+
 define module tokens
   use common;
   use self-organizing-list;
 
   use utils;
   use source;
+  use compile-time-values;
   use forwards, import: {<module>};
 
   export
@@ -148,11 +178,12 @@ define module definitions
 
   use utils;
   use tokens;
+  use compile-time-values;
   use names;
   use forwards, import: {<ctype>};
 
   export
-    <definition>, defn-name, defn-type,
+    <definition>, defn-name, defn-type, ct-value,
     check-syntax-table-additions, make-syntax-table-additions,
     <abstract-constant-definition>,
     <implicit-definition>;
@@ -169,6 +200,7 @@ define module variables
   use common;
 
   use utils;
+  use compile-time-values;
   use tokens;
   use names;
   use definitions;
@@ -186,7 +218,7 @@ define module variables
 
     done-initializing-module-system,
 
-    dylan-var, dylan-defn;
+    dylan-var, dylan-defn, dylan-value;
 end;
 
 define module lexer
@@ -195,6 +227,7 @@ define module lexer
 
   use utils;
   use source;
+  use compile-time-values;
   use tokens;
   use variables;
 
@@ -270,7 +303,7 @@ define module parse-tree
     <let-handler>, handler-type, handler-plist, handler-expression,
     <local>, local-methods,
     <expression>,
-    <literal>, lit-value,
+    <literal-ref>, litref-literal,
     <binop-series>, binop-series-operands, binop-series-operators,
     <funcall>, funcall-function, funcall-arguments,
     <dot>, dot-operand, dot-name,
@@ -354,24 +387,6 @@ define module lexenv
     add-binding, find-binding;
 end;
 
-define module compile-time-values
-  use common;
-
-  use utils;
-  use forwards, import: {<ctype>};
-  use variables;
-  use definitions;
-
-  export
-    <ct-value>,
-    <ct-unbound-marker>, $Unbound-Marker-CT-Value,
-    <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
-    <ct-literal>, ct-literal-value,
-    <eql-ct-literal>,
-
-    ct-value, dylan-value;
-end;
-
 define module ctype
   use common;
   use Introspection, import: {class-name};
@@ -380,19 +395,21 @@ define module ctype
   use utils;
   use compile-time-values;
   use names;
+  use variables;
 
   use forwards, import: {<ctype>}, export: all;
   export
     <values-ctype>, csubtype?, ctype-union, ctype-intersection,
     ctype-difference, ctypes-intersect?, ctype-eq?, ctype-neq?, <union-ctype>,
     <singleton-ctype>, <unknown-ctype>, <limited-ctype>,
-    <limited-integer-ctype>, <limited-collection-ctype>,
-    <direct-instance-ctype>, 
+    <limited-integer-ctype>,
+    <direct-instance-ctype>, <byte-character-ctype>, 
     make-canonical-singleton, singleton-value, type-exp, base-class,
-    low-bound, high-bound, element-limit, size-limit, <cclass>, cclass-name,
+    low-bound, high-bound, <cclass>, cclass-name,
     closest-primary-superclass,
     <primitive-cclass>, <defined-cclass>,
-    precedence-list, subclasses, sealed?, abstract?, primary?,
+    precedence-list, subclasses, sealed?, abstract?, primary?, functional?,
+    not-functional?,
     wild-ctype, empty-ctype, object-ctype, function-ctype,
     find-direct-classes,
 
@@ -421,6 +438,7 @@ end;
 define module expand
   use common;
   use utils;
+  use compile-time-values;
   use tokens;
   use lexenv;
   use parse-tree;
@@ -438,6 +456,7 @@ define module parser
   use common;
   use self-organizing-list;
   use utils;
+  use compile-time-values;
   use tokens;
   use variables;
   use fragments;
@@ -453,6 +472,7 @@ define module macros
   use common;
   use utils;
   use source;
+  use compile-time-values;
   use tokens;
   use names;
   use definitions;
@@ -472,6 +492,7 @@ end;
 define module define-libraries-and-modules
   use common;
   use utils;
+  use compile-time-values;
   use tokens;
   use parse-tree;
   use variables;
@@ -546,6 +567,7 @@ define module front
   use compile-time-values;
   use names;
   use definitions;
+  use variables;
   use flow;
   use ctype;
   use signature-interface;
@@ -632,6 +654,7 @@ end;
 define module define-classes
   use common;
   use utils;
+  use compile-time-values;
   use tokens;
   use names;
   use definitions;
@@ -639,7 +662,6 @@ define module define-classes
   use lexenv;
   use parse-tree;
   use top-level-forms;
-  use compile-time-values;
   use ctype;
   use compile-time-eval;
   use define-functions;
