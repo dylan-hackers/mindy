@@ -45,11 +45,10 @@ define module duim-utilities
     <thread>, atomic-increment!,
     <notification>, wait-for, release-all,
     get-property, remove-property!,
-    integer-to-string, float-to-string, string-to-integer;
+    integer-to-string, float-to-string, string-to-integer,
+    true?;
   // format, for format-to-string
   use format, export: all;
-  // Table-Extensions, for sequence-hash
-  //use Table-Extensions, export: all;
 
   // Debug support
   export *debug-duim-function*,
