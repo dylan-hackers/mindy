@@ -18,7 +18,8 @@ define constant $default-window-title = "DUIM Window";
 /// Top level mirrors
 
 define sealed class <top-level-mirror> (<widget-mirror>)
-  sealed slot %dialog-mirrors :: <stretchy-object-vector> = make(<stretchy-vector>);
+  sealed slot %dialog-mirrors :: <stretchy-object-vector>
+    = make(<stretchy-vector>);
 end class <top-level-mirror>;
 
 define sealed method top-level-mirror
@@ -52,7 +53,7 @@ define method move-mirror
      x :: <integer>, y :: <integer>)
  => ()
   unless (x == 0 & y == 0)
-    error("Attempting to move top level layout!")
+    ignoring("move-mirror for <top-level-mirror>")
   end
 end method move-mirror;
 
@@ -424,15 +425,17 @@ define sealed method handle-gtk-delete-event
     exit-frame(frame, destroy?: #t)
   end;
   debug-message("Handled delete event");
-  #f
+  #t
 end method handle-gtk-delete-event;
 
 define sealed method destroy-mirror 
     (_port :: <gtk-port>,
      sheet :: <gtk-top-level-sheet-mixin>, mirror :: <top-level-mirror>)
  => ()
+  debug-message("destroy-mirror of %=", mirror);
+  let widget = mirror-widget(mirror);
+  gtk-widget-destroy(widget);
   next-method();
-  ignoring("destroy-mirror")
 end method destroy-mirror;
 
 
@@ -454,7 +457,7 @@ define method frame-wrapper
   end
 end method frame-wrapper;
 
-define function top-level-layout-child
+define method top-level-layout-child
     (framem :: <gtk-frame-manager>, 
      frame :: <simple-frame>,
      layout :: false-or(<sheet>))
@@ -477,7 +480,7 @@ define function top-level-layout-child
 	 children: make-children(menu-bar, indented-children-layout, status-bar),
 	 y-spacing: $top-level-y-spacing)
   end
-end function top-level-layout-child;
+end method top-level-layout-child;
 
 define function make-children
     (#rest maybe-children)
