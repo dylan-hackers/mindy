@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.16 1994/11/07 00:47:06 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.17 1994/11/28 15:37:39 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -1993,15 +1993,15 @@ void init_num_functions(void)
 		  obj_BooleanClass, dylan_fi_fi_equal);
     define_method("ash", two_fis, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_ash);
-    define_method("logand", two_fis, FALSE, obj_False, FALSE,
+    define_method("binary-logand", two_fis, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_fi_logand);
     define_method("logbit?", two_fis, FALSE, obj_False, FALSE,
 		  obj_BooleanClass, dylan_fi_logbitp);
-    define_method("logior", two_fis, FALSE, obj_False, FALSE,
+    define_method("binary-logior", two_fis, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_fi_logior);
     define_method("lognot", fi, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_lognot);
-    define_method("logxor", two_fis, FALSE, obj_False, FALSE,
+    define_method("binary-logxor", two_fis, FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_fi_fi_logxor);
 
     define_method("=", two_eis, FALSE, obj_False, FALSE,
@@ -2028,11 +2028,11 @@ void init_num_functions(void)
 			     FALSE, FALSE)->value,
 	       make_raw_method("truncate/", two_eis, FALSE, obj_False, FALSE,
 			       two_eis, obj_False, dylan_ei_ei_trunc));
-    define_method("logior", two_eis, FALSE, obj_False, FALSE,
+    define_method("binary-logior", two_eis, FALSE, obj_False, FALSE,
 		  obj_BignumClass, dylan_ei_ei_logior);
-    define_method("logand", two_eis, FALSE, obj_False, FALSE,
+    define_method("binary-logand", two_eis, FALSE, obj_False, FALSE,
 		  obj_BignumClass, dylan_ei_ei_logand);
-    define_method("logxor", two_eis, FALSE, obj_False, FALSE,
+    define_method("binary-logxor", two_eis, FALSE, obj_False, FALSE,
 		  obj_BignumClass, dylan_ei_ei_logxor);
     define_method("lognot", ei, FALSE, obj_False, FALSE,
 		  obj_BignumClass, dylan_ei_lognot);
