@@ -2,12 +2,12 @@ Source: gwydion-dylan
 Section: devel
 Priority: optional
 Maintainer: Brent A. Fulgham <bfulgham@debian.org>
-Standards-Version: 3.5.4.0
+Standards-Version: 3.5.8.0
 Build-Depends: sharutils, perl-base, perl5, debhelper, libtool, autoconf, automake, flex, libgtk1.2-dev, libreadline4-dev, byacc | bison, libgc6-dev
 
 Package: gwydion-dylan
 Architecture: any
-Depends: gcc, libgc6, ${shlibs:Depends}
+Depends: gcc, ${shlibs:Depends}
 Recommends: gwydion-dylan-dev
 Suggests: mindy
 Description: The Gwydion Dylan Runtime Environment
@@ -50,3 +50,4 @@ Description: A Dylan interpreter.
  .
  Documentation for Mindy can be found in the main gwydion-dylan package, or
  on the web at <http://www.gwydiondylan.org/>.
+

@@ -1,0 +1,26 @@
+&makegen_include("../common-Makegen");
+
+$plat = "unix";
+
+$D2CFLAGS = '-L../common-dylan -L../threads -L../io '. $D2CFLAGS;
+
+# N.B.: The order of tests is important!  The cygnus
+# test MUST preceed the unix test.
+
+if ($features{'compiled_for_cygnus'}) {
+    $plat = "cygnus";
+} elsif ($features{'compiled_for_unix'}) {
+    # default
+} elsif ($features{'compiled_for_win32'}) {
+    $plat = "win32";
+} else {
+    &unknown_platform_error();
+}
+
+&emit_melange_rule('sockets-api');
+&emit_melange_rule('gettimeofday');
+
+do emit_library_rule(
+    'network', '$(BUILDROOT)/force.timestamp', '', 'compile',
+	'no-mindy', 'install');
+

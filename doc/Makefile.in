@@ -25,6 +25,8 @@ install: compile
 		${DESTDIR}${MANDIR}/man1/make-dylan-app.1
 	${INSTALL_DATA} platforms.descr.4 \
 		${DESTDIR}${MANDIR}/man4/platforms.descr.4
+	${INSTALL_DATA} gobject-tool.1 \
+		${DESTDIR}${MANDIR}/man1/gobject-tool.1
 
 uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man7/dylan.7
@@ -38,6 +40,7 @@ uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man1/parsergen.1
 	rm -f ${DESTDIR}${MANDIR}/man1/make-dylan-app.1
 	rm -f ${DESTDIR}${MANDIR}/man4/platforms.descr.4
+	rm -f ${DESTDIR}${MANDIR}/man1/gobject-tool.4
 
 clean:
 	-echo 'Nothing to do.'

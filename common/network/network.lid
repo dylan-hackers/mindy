@@ -1,4 +1,4 @@
 library: network
-files:
-	library
-	sockets-api
+
+library.dylan
+sockets-api.dylan

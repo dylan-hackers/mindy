@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.112 2003/01/29 21:41:03 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.113 2003/02/02 03:50:39 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -237,7 +237,7 @@ MC=$buildroot/mindy/comp/mindycomp
 DYLANPATH=""
 for dir in collection-extensions format format-out internal-time matrix print \
     regular-expressions standard-io stream-ext streams string-ext table-ext time \
-    transcendental getopt
+    transcendental getopt network
 do DYLANPATH=${DYLANPATH}":"$buildroot/common/$dir
 done
 for dir in random dylan inspector tk;
@@ -1042,6 +1042,7 @@ AC_OUTPUT(Defaults \
 	  doc/melange.1 \
 	  doc/parsergen.1 \
 	  doc/make-dylan-app.1 \
+	  doc/gobject-tool.1 \
 	  doc/platforms.descr.4, [
 	  ${INSTALL} -m uog+rx $buildroot/tools/shared-misc/mk-build-tree ./
 	  ${INSTALL} -m uog+rx $buildroot/tools/shared-misc/gen-makefile ./

@@ -2,9 +2,16 @@ gwydion-dylan (2.3.10pre1-2) unstable; urgency=low
 
   * Use system-provided GC, rather than build-in version.
   * Correct build dependencies for autobuilders.
-  * Some corrections to better-process header files.
+  * Some corrections to better-process header files
+        - Don't generate get/set routines for C void methods
+        - Understand C macros
+        - Properly escape characters in string constants
+  * Correct some lintian errors.
+  * Add dependency on bison (Closes:#175038)
+  * Correct test-suite install (Closes:#170577)
+  * Now uses debian-supplied Boehm garbage collector.
 
- -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 27 Jan 2003 23:57:02 -0800
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 31 Jan 2003 22:31:00 -0800
 
 gwydion-dylan (2.3.10pre1-1) unstable; urgency=low
 

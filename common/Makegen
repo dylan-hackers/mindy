@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.16 2002/10/31 10:17:07 andreas Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.17 2003/02/02 03:50:42 brent Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -22,7 +22,7 @@
 # libraries.
 @newer_libraries =
     ('threads', 'common-dylan', 'io', 'file-system', 'date', 'system', 
-     'locators');
+     'locators', 'network');
 
 if ($enable_bootstrap) {
     &compile_subdirs(@libraries_needed_to_bootstrap);

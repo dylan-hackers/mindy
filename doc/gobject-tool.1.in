@@ -1,0 +1,62 @@
+.\" @(#)d2c.1		-*- nroff -*-
+.TH D2C 1 "@DATE@" "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+gobject-tool \- Dylan binding generator
+.SH SYNOPSIS
+.B gobject-tool
+.RI "[ " option " ].\|.\|. " file.defs
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.B gobject-tool
+is a binding generator for
+.IR melange (1)\c
+, which we are using to help build
+Dylan libraries to interface with common C API's (most notably GTK.)
+The program prints to standard output, so you probably want to redirect
+the output to a file.
+.PP
+.SH OPTIONS
+.TP
+.BR "\-h, \-\-usage"
+Print out a message describing the available options.
+.TP
+.BI "\-m, \-\-module" " module"
+Specify the module in which the exported declarations will live.
+.TP
+.BI "\-d, \-\-debug" " debug"
+Output debugging information
+.TP
+.BI "\-u, \-\-use" " use"
+Direct the module to Use a particular Dylan library.
+.TP
+.BR "\-e, \-\-exports" " exports"
+Generate an exports file.
+.TP
+.BR "\-\-flat" " flat"
+Generate a flat file.
+.TP
+.BR "\-I, \-\-includedir" " includedir"
+Additional search directories
+.TP
+.BI "\-\-platform" " platform"
+The platform assumed for code generation
+.SH EXAMPLE
+.B gobject-tool 
+$gtk_cflags \-\-exports \-\-module gdk-internal \-\-use Dylan
+\-\-use Melange-support \-\-use glib \-\-use gdk-extra
+gdk-1.2.defs > gdk-internal-module.dylan
+.SH SEE ALSO
+d2c(1), melange(1)
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The current Gwydion Dylan maintainers. See the CREDITS file in the
+Gwydion Dylan distribution for more information.
