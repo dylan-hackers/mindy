@@ -1,9 +1,90 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.23 1996/02/08 01:35:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.24 1996/02/22 17:48:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
+//
+// Fer-to-fer magic transformations.
+//
+// Callopt arranges to call maybe-transform-call when it thinks it would be
+// useful.  Maybe-transform-call looks to see if there are any transformers
+// for the called function, and if so, gives them each a change at transforming
+// the call.
+//
+// Maybe-transform-call can be called on either <unknown-call>s or
+// <known-call>s (<abstract-call> is close enough), it will only be called
+// when the call is valid.  We don't restrict it to <known-call> because
+// generic functions are never <known-call>ed.
+//
 
+
+// maybe-transform-call
+//
+// The main entry point to transforming calls.
+// 
+define method maybe-transform-call
+    (component :: <component>, call :: <abstract-call>)
+    => did-anything? :: <boolean>;
+  block (return)
+    for (transformer in call.depends-on.source-exp.find-transformers-leaf)
+      if (transformer.transformer-function(component, call))
+	return(#t);
+      end;
+    end;
+    #f;
+  end;
+end method maybe-transform-call;
+
+
+define generic find-transformers-leaf (func :: <leaf>) => res :: <list>;
+
+define method find-transformers-leaf (func :: <leaf>) => res :: <list>;
+  #();
+end;
+
+define method find-transformers-leaf (func :: <definition-constant-leaf>)
+    => res :: <list>;
+  find-transformers-defn(func.const-defn);
+end;
+
+define method find-transformers-leaf (func :: <literal-constant>)
+    => res :: <list>;
+  let defn = func.value.ct-function-definition;
+  if (defn)
+    find-transformers-defn(defn);
+  else
+    #();
+  end;
+end;
+
+
+define generic find-transformers-defn (func :: <definition>)
+    => res :: <list>;
+
+define method find-transformers-defn (func :: <definition>)
+    => res :: <list>;
+  #();
+end;
+
+define method find-transformers-defn (defn :: <function-definition>)
+    => res :: <list>;
+  defn.function-defn-transformers;
+end;
+  
+define method find-transformers-defn (defn :: <generic-definition>)
+    => res :: <list>;
+  choose(method (transformer)
+	   let specializers = transformer.transformer-specializers;
+	   specializers == #f | specializers == #"gf";
+	 end,
+	 defn.function-defn-transformers);
+end;
+
+
+// extract-args
+//
+// Extracts the arguments from a call.
+// 
 define method extract-args
     (call :: <known-call>, nfixed :: <integer>, want-next? :: <boolean>,
      rest? :: <boolean>, keys :: false-or(<list>))
@@ -19,51 +100,82 @@ define method extract-args
     if (keys)
       error("Can't extract keyword arguments yet.");
     end;
+    let results = make(<simple-object-vector>,
+		       size: nfixed
+			 + if (want-next?) 1 else 0 end
+			 + if (rest?) 1 else 0 end);
     local
       method decode-fixed-and-on
-	  (remaining :: <integer>, results :: <list>,
-	   args :: false-or(<dependency>))
-	  => result :: <list>;
-	if (zero?(remaining))
-	  decode-next-and-on(results, args);
+	  (index :: <integer>, args :: false-or(<dependency>))
+	  => ();
+	if (index == nfixed)
+	  decode-next-and-rest(index, args);
 	else
-	  decode-fixed-and-on(remaining - 1,
-			      pair(args.source-exp, results),
-			      args.dependent-next);
+	  results[index] := args.source-exp;
+	  decode-fixed-and-on(index + 1, args.dependent-next);
 	end;
       end,
-      method decode-next-and-on
-	  (results :: <list>, args :: false-or(<dependency>))
-	  => result :: <list>;
+      method decode-next-and-rest
+	  (index :: <integer>, args :: false-or(<dependency>))
+	  => ();
 	if (sig.next?)
-	  decode-rest-and-on(if (want-next?)
-			       pair(args.source-exp, results);
-			     else
-			       results;
-			     end,
-			     args.dependent-next);
+	  if (want-next?)
+	    results[index] := args.source-exp;
+	    index := index + 1;
+	  end;
+	  args := args.dependent-next;
 	elseif (want-next?)
 	  error("Transformer inconsistent w/ function signature.");
-	else
-	  decode-rest-and-on(results, args);
-	end;
-      end,
-      method decode-rest-and-on
-	  (results :: <list>, args :: false-or(<dependency>))
+	end if;
 	if (rest?)
-	  pair(extract-rest-arg(args.source-exp)
-		 | return(#f),
-	       results);
-	else
-	  results;
-	end;
-      end;
-    apply(values,
-	  #t,
-	  reverse!(decode-fixed-and-on(nfixed, #(),
-				       call.depends-on.dependent-next)));
+	  let rest = extract-rest-arg(args.source-exp);
+	  unless (rest)
+	    return(#f);
+	  end unless;
+	  results[index] := rest;
+	end if;
+      end method decode-next-and-rest;
+    decode-fixed-and-on(0, call.depends-on.dependent-next);
+    apply(values, #t, results);
+  end block;
+end method extract-args;
+
+
+define method extract-args
+    (call :: <unknown-call>, nfixed :: <integer>, want-next? :: <boolean>,
+     rest? :: <boolean>, keys :: false-or(<list>))
+    => (okay? :: <boolean>, #rest arg :: type-union(<leaf>, <list>));
+  let sig = find-signature(call.depends-on.source-exp);
+  unless (sig.specializers.size == nfixed)
+    error("Transformer inconsistent w/ function signature.");
   end;
-end;
+  if (want-next?)
+    error("GF transformer wants the next info?");
+  end if;
+  unless (if (rest?) sig.rest-type else ~sig.rest-type end)
+    error("Transformer inconsistent w/ function signature.");
+  end;
+  if (keys)
+    error("Can't extract keyword arguments yet.");
+  end;
+  let results = make(<simple-object-vector>,
+		     size: if (rest?) nfixed + 1 else nfixed end);
+  for (dep = call.depends-on.dependent-next then dep.dependent-next,
+       i from 0 below nfixed)
+    results[i] := dep.source-exp;
+  finally
+    if (rest?)
+      for (dep = dep then dep.dependent-next,
+	   rest-args = #() then pair(dep.source-exp, rest-args),
+	   while: dep)
+      finally
+	results[nfixed] := reverse!(rest-args);
+      end for;
+    end if;
+  end for;
+  apply(values, #t, results);
+end method extract-args;
+
 
 define method find-signature (func :: <leaf>)
     => res :: <signature>;
@@ -121,49 +233,220 @@ end;
 
 // == stuff.
 
-define method da-==-transformer
-    (component :: <component>, call :: <known-call>)
+define method generic-==-transformer
+    (component :: <component>, call :: <unknown-call>)
     => did-anything? :: <boolean>;
-  let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
-  okay? & trivial-==-optimization(component, call, x, y);
-end;
-
-define-transformer(#"==", #f, da-==-transformer);
-
-define method object-==-transformer
-    (component :: <component>, call :: <known-call>)
-    => did-anything? :: <boolean>;
-  let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
-  if (okay?)
+  block (return)
+    let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
+    unless (okay?)
+      return(#f);
+    end unless;
     if (trivial-==-optimization(component, call, x, y))
+      return(#t);
+    end if;
+    let x-disjoint? = #t;
+    let y-disjoint? = #t;
+    for (specifier
+	   in #[#"<integer>", #"<extended-integer>", #"<single-float>",
+		#"<double-float>", #"<extended-float>", #"<raw-pointer>"])
+      let type = specifier-type(specifier);
+      if (csubtype?(x.derived-type, type))
+	if (csubtype?(y.derived-type, type))
+	  // They are both the special type.  That means that method selection
+	  // can pick the correct method, so blow out of here.
+	  return(#f);
+	else
+	  // X is one of the special types, but Y isn't.  So we replace
+	  // the check with:
+	  //   instance?(y, type) & x == truly-the(y, type);
+	  replace-==-with-instance?-then-==(component, call, x, y, type);
+	  return(#t);
+	end if;
+      else
+	if (csubtype?(y.derived-type, type))
+	  // Y is the special type, but X isn't (tested above).
+	  replace-==-with-instance?-then-==(component, call, y, x, type);
+	  return(#t);
+	else
+	  if (ctypes-intersect?(x.derived-type, type))
+	    x-disjoint? := #f;
+	  end if;
+	  if (ctypes-intersect?(y.derived-type, type))
+	    y-disjoint? := #f;
+	  end if;
+	end if;
+      end if;
+    end for;
+    if (~x-disjoint? & y-disjoint?)
+      // If only one of the two arguments is disjoint from all the special
+      // types we know about, we want to put that arugment first.  Doing so
+      // will allow method selection to pick the <object>,<object> method.
+      // We don't just switch to that method ourselves, in case this code
+      // becomes inconsistent with the set of methods on \==.
+      replace-expression
+	(component, call.dependents,
+	 make-unknown-call
+	   (make-builder(component), call.depends-on.source-exp, #f,
+	    list(y, x)));
       #t;
     else
-      let x-functional = is-it-functional?(x.derived-type);
-      let y-functional = is-it-functional?(y.derived-type);
-      if (x-functional == #f | y-functional == #f)
-	let builder = make-builder(component);
-	replace-expression
-	  (component, call.dependents,
-	   make-operation(builder, <primitive>, list(x, y),
-			  name: #"=="));
-	#t;
-      elseif (x-functional == #t | y-functional == #t)
-	let builder = make-builder(component);
-	let assign = call.dependents.dependent;
-	let leaf
-	  = ref-dylan-defn(builder, assign.policy, assign.source-location,
-			    #"functional-==");
-	insert-before(component, assign, builder-result(builder));
-	replace-expression
-	  (component, call.dependents,
-	   make-unknown-call(builder, leaf, #f, list(x, y)));
-	#t;
-      else
-	#f;
-      end;
+      #f;
+    end if;
+  end block;
+end method generic-==-transformer;
+
+define-transformer(#"==", #"gf", generic-==-transformer);
+
+
+define method trivial-==-optimization
+    (component :: <component>, operation :: <operation>,
+     x :: <leaf>, y :: <leaf>)
+    => did-anything? :: <boolean>;
+  if (always-the-same?(x.origin, y.origin))
+    // Same variable or same literal constant.
+    replace-expression(component, operation.dependents,
+		       make-literal-constant(make-builder(component),
+					     as(<ct-value>, #t)));
+    #t;
+  else
+    let x-type = x.derived-type;
+    let y-type = y.derived-type;
+    if (~ctypes-intersect?(x-type, y-type))
+      replace-expression(component, operation.dependents,
+			 make-literal-constant(make-builder(component),
+					       as(<ct-value>, #f)));
+      #t;
+    elseif (instance?(x-type, <singleton-ctype>) & x-type == y-type)
+      replace-expression(component, operation.dependents,
+			 make-literal-constant(make-builder(component),
+					       as(<ct-value>, #t)));
+      #t;
+    else
+      #f;
     end;
   end;
 end;
+
+define method origin (thing :: <expression>) => origin :: <expression>;
+  thing;
+end method origin;
+
+define method origin (thing :: <ssa-variable>) => origin :: <expression>;
+  let assign = thing.definer;
+  if (thing == assign.defines)
+    let source = assign.depends-on.source-exp;
+    if (source.expression-movable?)
+      origin(source);
+    else
+      thing;
+    end if;
+  else
+    thing;
+  end;
+end;
+
+
+define method always-the-same?
+    (x :: <expression>, y :: <expression>) => res :: <boolean>;
+  x == y;
+end;
+
+define method always-the-same?
+    (x :: <literal-constant>, y :: <literal-constant>)
+    => res :: <boolean>;
+  x.value == y.value;
+end;
+
+define method always-the-same?
+    (x :: <definition-constant-leaf>, y :: <definition-constant-leaf>)
+    => res :: <boolean>;
+  x.const-defn.ct-value == y.const-defn.ct-value;
+end;
+
+define method always-the-same?
+    (x :: <module-var-ref>, y :: <module-var-ref>)
+    => res :: <boolean>;
+  let defn = x.variable;
+  instance?(defn, <abstract-constant-definition>) & defn == y.variable;
+end;
+
+
+define method replace-==-with-instance?-then-==
+    (component :: <component>, call :: <abstract-call>,
+     x :: <leaf>, y :: <leaf>, type :: <ctype>)
+    => ();
+  let builder = make-builder(component);
+  let assign = call.dependents.dependent;
+  let source = assign.source-location;
+  let policy = assign.policy;
+
+  let boolean-ctype = specifier-type(#"<boolean>");
+  let result-temp = make-local-var(builder, #"result", boolean-ctype);
+  let instance?-temp = make-local-var(builder, #"temp", boolean-ctype);
+  build-assignment
+    (builder, policy, source, instance?-temp,
+     make-operation(builder, <instance?>, list(y), type: type));
+  build-if-body(builder, policy, source, instance?-temp);
+  let typed-temp = make-local-var(builder, #"typed", type);
+  build-assignment
+    (builder, policy, source, typed-temp,
+     make-operation(builder, <truly-the>, list(y), guaranteed-type: type));
+  build-assignment
+    (builder, policy, source, result-temp,
+     make-unknown-call
+       (builder, call.depends-on.source-exp, #f, list(x, typed-temp)));
+  build-else(builder, policy, source);
+  build-assignment
+    (builder, policy, source, result-temp,
+     make-literal-constant(builder, as(<ct-value>, #f)));
+  end-body(builder);
+
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, call.dependents, result-temp);
+end method replace-==-with-instance?-then-==;
+
+
+define method object-==-transformer
+    (component :: <component>, call :: <abstract-call>)
+    => did-anything? :: <boolean>;
+  block (return)
+    let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
+    unless (okay?)
+      return(#f);
+    end unless;
+    if (trivial-==-optimization(component, call, x, y))
+      return(#t);
+    end if;
+
+    let x-functional = is-it-functional?(x.derived-type);
+    let y-functional = is-it-functional?(y.derived-type);
+    if (x-functional == #f | y-functional == #f)
+      let builder = make-builder(component);
+      replace-expression
+	(component, call.dependents,
+	 make-operation(builder, <primitive>, list(x, y),
+			name: #"=="));
+      return(#t);
+    end if;
+    if (x-functional == #t | y-functional == #t)
+      let builder = make-builder(component);
+      let assign = call.dependents.dependent;
+      let leaf
+	= ref-dylan-defn(builder, assign.policy, assign.source-location,
+			 #"slow-functional-==");
+      insert-before(component, assign, builder-result(builder));
+      replace-expression
+	(component, call.dependents,
+	 make-unknown-call(builder, leaf, #f, list(x, y)));
+      return(#t);
+    end if;
+
+    #f;
+  end block;
+end method object-==-transformer;
+
+define-transformer(#"==", #(#"<object>", #"<object>"), object-==-transformer);
+
 
 define generic is-it-functional? (type :: <ctype>)
     => res :: one-of(#t, #f, #"maybe");
@@ -207,72 +490,87 @@ define method is-it-functional? (type :: <union-ctype>)
   end;
 end;
 
-define-transformer(#"==", #(#"<object>", #"<object>"), object-==-transformer);
 
-define method trivial-==-optimization
-    (component :: <component>, operation :: <operation>,
-     x :: <leaf>, y :: <leaf>)
+define method slow-functional-==-transformer
+    (component :: <component>, call :: <abstract-call>)
     => did-anything? :: <boolean>;
-  local method origin (thing :: <expression>)
-	  if (instance?(thing, <ssa-variable>))
-	    let assign = thing.definer;
-	    if (thing == assign.defines)
-	      origin(assign.depends-on.source-exp);
-	    else
-	      thing;
-	    end;
-	  else
-	    thing;
-	  end;
-	end;
-  if (always-the-same?(x.origin, y.origin))
-    // Same variable or same literal constant.
-    replace-expression(component, operation.dependents,
-		       make-literal-constant(make-builder(component),
-					     as(<ct-value>, #t)));
-    #t;
-  else
-    let x-type = x.derived-type;
-    let y-type = y.derived-type;
-    if (~ctypes-intersect?(x-type, y-type))
-      replace-expression(component, operation.dependents,
-			 make-literal-constant(make-builder(component),
-					       as(<ct-value>, #f)));
-      #t;
-    elseif (instance?(x-type, <singleton-ctype>) & x-type == y-type)
-      replace-expression(component, operation.dependents,
-			 make-literal-constant(make-builder(component),
-					       as(<ct-value>, #t)));
+  let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
+  if (okay?)
+    if (trivial-==-optimization(component, call, x, y))
       #t;
     else
-      #f;
-    end;
-  end;
-end;
+      let x-classes = find-direct-classes(x.derived-type);
+      if (x-classes & x-classes.size == 1)
+	replace-with-functional-==(component, call, x-classes.first, x, y);
+	#t;
+      else
+	let y-classes = find-direct-classes(y.derived-type);
+	if (y-classes & y-classes.size == 1)
+	  replace-with-functional-==(component, call, y-classes.first, y, x);
+	  #t;
+	else
+	  #f;
+	end if;
+      end if;
+    end if;
+  else
+    #f;
+  end if;
+end method slow-functional-==-transformer;
+    
+define-transformer(#"slow-functional-==", #f, slow-functional-==-transformer);
 
-define method always-the-same?
-    (x :: <expression>, y :: <expression>) => res :: <boolean>;
-  x == y;
-end;
 
-define method always-the-same?
-    (x :: <literal-constant>, y :: <literal-constant>)
-    => res :: <boolean>;
-  x.value == y.value;
-end;
+define method replace-with-functional-==
+    (component :: <component>, call :: <abstract-call>,
+     class :: <cclass>, x :: <leaf>, y :: <leaf>)
+    => ();
+  let builder = make-builder(component);
+  let assign = call.dependents.dependent;
+  let source = assign.source-location;
+  let policy = assign.policy;
 
-define method always-the-same?
-    (x :: <definition-constant-leaf>, y :: <definition-constant-leaf>)
-    => res :: <boolean>;
-  x.const-defn.ct-value == y.const-defn.ct-value;
-end;
+  let type = class.direct-type;
+  let need-instance? = ~csubtype?(y.derived-type, type);
 
-define method always-the-same?
-    (x :: <module-var-ref>, y :: <module-var-ref>)
-    => res :: <boolean>;
-  let defn = x.variable;
-  instance?(defn, <abstract-constant-definition>) & defn == y.variable;
-end;
+  let boolean-ctype = specifier-type(#"<boolean>");
+  let result-temp = make-local-var(builder, #"result", boolean-ctype);
+
+  let typed
+    = if (need-instance?)
+	let instance?-temp = make-local-var(builder, #"temp", boolean-ctype);
+	build-assignment
+	  (builder, policy, source, instance?-temp,
+	   make-operation(builder, <instance?>, list(y), type: type));
+	build-if-body(builder, policy, source, instance?-temp);
+	let typed-temp = make-local-var(builder, #"typed", type);
+	build-assignment
+	  (builder, policy, source, typed-temp,
+	   make-operation(builder, <truly-the>, list(y),
+			  guaranteed-type: type));
+	typed-temp;
+      else
+	y;
+      end if;
+
+  let func-leaf = ref-dylan-defn(builder, policy, source, #"functional-==");
+  let class-leaf = make-literal-constant(builder, class);
+  build-assignment
+    (builder, policy, source, result-temp,
+     make-unknown-call(builder, func-leaf, #f, list(class-leaf, x, typed)));
+
+  if (need-instance?)
+    build-else(builder, policy, source);
+    build-assignment
+      (builder, policy, source, result-temp,
+       make-literal-constant(builder, as(<ct-value>, #f)));
+    end-body(builder);
+  end if;
+
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, call.dependents, result-temp);
+end method replace-with-functional-==;
+
 
 
 // Type transforms.
@@ -284,7 +582,7 @@ end;
 // can more easily identify the type restriction.
 // 
 define method check-type-transformer
-    (component :: <component>, call :: <known-call>)
+    (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
   let (okay?, object, type) = extract-args(call, 2, #f, #f, #f);
   if (okay?)
@@ -325,7 +623,7 @@ define method extract-constant-type (leaf :: <definition-constant-leaf>)
 end;
 
 define method instance?-transformer
-    (component :: <component>, call :: <known-call>)
+    (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
   let (okay?, value-leaf, type-leaf) = extract-args(call, 2, #f, #f, #f);
   if (okay?)
@@ -617,7 +915,7 @@ end;
 // slot initialized and address functions.
 
 define method slot-initialized?-transformer
-    (component :: <component>, call :: <known-call>)
+    (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
   let (okay?, instance, getter) = extract-args(call, 2, #f, #f, #f);
   if (okay?)
@@ -726,7 +1024,7 @@ end method slot-from-getter;
 
 
 define method apply-transformer
-    (component :: <component>, call :: <known-call>)
+    (component :: <component>, call :: <abstract-call>)
     => (did-anything? :: <boolean>);
   let (okay?, function, args) = extract-args(call, 1, #f, #t, #f);
   if (~okay?)
@@ -788,7 +1086,7 @@ define-transformer(#"apply", #f, apply-transformer);
 
 
 define method list-transformer
-    (component :: <component>, call :: <known-call>)
+    (component :: <component>, call :: <unknown-call>)
     => (did-anything? :: <boolean>);
   let (okay?, args) = extract-args(call, 0, #f, #t, #f);
   if (okay?)
