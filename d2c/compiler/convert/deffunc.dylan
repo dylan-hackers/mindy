@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.20 1995/05/12 15:40:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.21 1995/05/26 10:48:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -292,6 +292,12 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
     end;
     generic-defn.generic-defn-methods
       := pair(defn, generic-defn.generic-defn-methods);
+    defn.function-defn-transformers
+      := choose(method (transformer)
+		  let specs = transformer.transformer-specializers;
+		  specs == #f | specs = signature.specializers;
+		end,
+		generic-defn.function-defn-transformers);
   end;
   defn;
 end;
