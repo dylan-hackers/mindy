@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.74 2001/07/07 17:30:55 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.75 2001/07/10 01:22:58 bruce Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -258,6 +258,15 @@ if test "$D2C" = no; then
     enable_d2c=no
 fi
 
+# Does the user explicitly want a bootstrap?
+AC_ARG_ENABLE(d2c-bootstrap,[\
+  --enable-d2c-bootstrap  Force a two-stage d2c bootstrap even if the
+                          bootstrap counts match.  This saves hacking
+                          with main.dylan and configure.in every time
+                          you want to test some little change in the
+                          runtime system])
+enable_d2c_bootstrap=${enable_d2c_bootstrap:-no}
+
 # Did the user try to disable mindy?
 AC_ARG_ENABLE(mindy, [  --disable-mindy         Do not build Mindy])
 enable_mindy=${enable_mindy:-yes}
@@ -319,7 +328,8 @@ elif test -x "$builddir/bootstrap_compiler/d2c"; then
     bootstrap_d2c="$builddir/bootstrap_compiler/d2c"
     D2C="$bootstrap_d2c -p$srcdir/d2c/compiler/platforms.descr"
 elif test "$D2C" != no; then
-    if test $CURRENT_BOOTSTRAP_COUNTER -ne $_DCI_D2C_BOOTSTRAP_COUNTER
+    if test $CURRENT_BOOTSTRAP_COUNTER -ne $_DCI_D2C_BOOTSTRAP_COUNTER \
+	-o "$enable_d2c_bootstrap" = yes
     then
 	SCENARIO=BOOTSTRAPPING_WITH_D2C
 	enable_mindy=no
@@ -378,6 +388,7 @@ AC_SUBST(build_tools_with_d2c)
 AC_SUBST(d2c_cross_compiling)
 AC_SUBST(enable_bootstrap)
 AC_SUBST(bootstrap_compiler)
+AC_SUBST(enable_d2c_bootstrap)
 
 #--------------------------------------------------------------------
 # If we're bootstrapping with d2c, look for the installed runtime.
