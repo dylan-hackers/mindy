@@ -200,7 +200,8 @@ end method find-items;
 
 define method get-canvas-tags (tag :: <tag-or-item>)
  => tags :: <sequence>;
-  parse-tk-list(call-tk-function(tag.window, " gettags ", tag.name));
+  map(method (x) make(<canvas-tag>, in: tag.window, name: x) end, 
+      parse-tk-list(call-tk-function(tag.window, " gettags ", tag.name)));
 end method get-canvas-tags;
 
 define method bounding-box (item :: <tag-or-item>, #rest items)
@@ -223,8 +224,8 @@ define method canvas-y (canvas :: <canvas>, screen-y :: <number>,
 end method canvas-y;
 
 define method delete-canvas-tag (item :: <tag-or-item>,
-			  tag-to-delete :: <string>)
-  put-tk-line(item.window, " dtag ", item.name, " ", tag-to-delete);
+			  tag-to-delete :: <canvas-tag>)
+  put-tk-line(item.window, " dtag ", item.name, " ", tag-to-delete.name);
 end method delete-canvas-tag;
 
 define method create-arc
