@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.10 1996/02/26 23:02:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.11 1996/03/07 17:59:19 nkramer Exp $
 
 //======================================================================
 //
@@ -51,6 +51,7 @@ define constant type-union =
   end;
 
 define method as (c :: <class>, thing)
+ => result :: <object>;
   if (instance?(thing, c))
     thing;
   else
@@ -60,6 +61,7 @@ end;
 
 // The built-in "as(<symbol>...)" method only handles byte-strings.
 define method as(cls == <symbol>, str :: <string>)
+ => sym :: <symbol>;
   as(<symbol>, as(<byte-string>, str));
 end method as;
 
@@ -79,8 +81,10 @@ define constant \:= =
     error(":= is syntax only and can't be used as a function.");
   end;
 
-define method make (c == <generic-function>,
-		    #key debug-name, required: req, rest?, key, all-keys?)
+define method make 
+    (c == <generic-function>,
+     #key debug-name, required: req, rest?, key, all-keys?)
+ => gf :: <generic-function>;
   let req = select (req by instance?)
 	      <integer> =>
 		if (req < 0)

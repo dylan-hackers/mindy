@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.15 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.16 1996/03/07 17:56:49 nkramer Exp $
 
 //======================================================================
 //
@@ -37,7 +37,9 @@ define class <stretchy-vector> (<stretchy-collection>, <vector>)
   // No slots in the abstract class <stretchy-vector>
 end class <stretchy-vector>;
 
-define method make(cls == <stretchy-vector>, #rest keys, #all-keys)
+define method make
+    (cls == <stretchy-vector>, #rest keys, #all-keys)
+ => vec :: <simple-stretchy-vector>;
   apply(make, <simple-stretchy-vector>, keys);
 end method;
 
@@ -54,6 +56,7 @@ end class <simple-stretchy-vector>;
 define method make(cls == <simple-stretchy-vector>,
 		   #next next-method,
 		   #key size: sz = #f, fill, dimensions)
+ => vec :: <simple-stretchy-vector>;
   if (sz & dimensions)
     error("Can't supply both a size: and dimensions:");
   else
@@ -82,11 +85,12 @@ define method make(cls == <simple-stretchy-vector>,
   end if;
 end method make;
 
-define method size(ssv :: <simple-stretchy-vector>) => <integer>;
+define method size(ssv :: <simple-stretchy-vector>) => size :: <integer>;
   ssv-fill(ssv);
 end method size;
 
 define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
+ => new :: <integer>;
   let fill = ssv-fill(ssv);
   let data = ssv-data(ssv);
   if (new > fill)
@@ -112,7 +116,8 @@ define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
   ssv-fill(ssv) := new;
 end method size-setter;
 
-define method dimensions(ssv :: <simple-stretchy-vector>) => <list>;
+define method dimensions(ssv :: <simple-stretchy-vector>) 
+ => dimensions :: <list>;
   list(size(ssv));
 end method dimensions;
 
@@ -121,6 +126,7 @@ define constant ssv_no_default = pair(#f, #f);
 
 define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
 		      #key default = ssv_no_default)
+ => elt :: <object>;
   case
     key >= 0 & key < size(ssv) =>
       ssv-data(ssv)[key];
@@ -133,6 +139,7 @@ end method element;
 
 define method element-setter(value, ssv :: <simple-stretchy-vector>,
 			     key :: <integer>)
+ => value :: <object>;
   if (key < 0)
     error("Element %d not in %=", key, ssv);
   else
@@ -144,6 +151,7 @@ define method element-setter(value, ssv :: <simple-stretchy-vector>,
 end method element-setter;
 
 define method add!(ssv :: <simple-stretchy-vector>, new-element)
+ => ssv :: <simple-stretchy-vector>;
   let data = ssv-data(ssv);
   let fill = size(ssv);
   if (fill = size(data))
@@ -165,6 +173,7 @@ end method add!;
 
 define method remove!(ssv :: <simple-stretchy-vector>, elem,
 		      #key test = \==, count)
+ => ssv :: <simple-stretchy-vector>;
   unless (count & (count = 0))
     let data = ssv-data(ssv);
     let sz = size(ssv);

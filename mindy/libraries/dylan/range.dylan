@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.9 1996/02/17 15:12:29 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.10 1996/03/07 17:58:03 nkramer Exp $
 
 //======================================================================
 //
@@ -502,7 +502,7 @@ define method forward-iteration-protocol (range :: <unbounded-range>)
 	 end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
 	   current-element, current-element-setter, copy-state);
-end method;
+end method forward-iteration-protocol;
 
 
 
@@ -533,18 +533,18 @@ end method;
 // 
 // SIZE for unbounded ranges returns #f.
 //
-define method sizes (range :: <bounded-range>)
+define method size (range :: <bounded-range>) => size :: <integer>;
    range.range-size
 end method;
 //
-define method size (range :: <unbounded-range>)
+define method size (range :: <unbounded-range>) => size :: singleton(#f);
    #f
 end method;
 
 
 // type-for-copy -- public
 // 
-define method type-for-copy (range :: <range>)
+define method type-for-copy (range :: <range>) => type :: <type>;
    <list>
 end method;
 
@@ -554,11 +554,11 @@ end method;
 // A bounded range is empty if the size is zero.  An unbounded range
 // can never be empty.
 //
-define method empty? (range :: <bounded-range>)
+define method empty? (range :: <bounded-range>) => answer :: <boolean>;
    range.range-size = 0
 end method;
 //
-define method empty? (range :: <unbounded-range>)
+define method empty? (range :: <unbounded-range>) => answer :: <boolean>;
    #f
 end method;
 
@@ -569,10 +569,12 @@ end method;
 //
 define method reduce (procedure :: <function>, initial-value,
 		      range :: <unbounded-range>)
+ => answer :: <object>;
    error ("REDUCE not applicable for unbounded <range>");
 end method;
 //
 define method reduce1 (procedure :: <function>, range :: <unbounded-range>)
+ => answer :: <object>;
    error ("REDUCE1 not applicable for unbounded <range>");
 end method;
 
@@ -586,7 +588,7 @@ end method;
 // tests with the element at the key, MEMBER? returns #t.
 //
 define method member? (value :: <real>, range :: <bounded-range>,
-		       #key test = \==)
+		       #key test = \==) => answer :: <boolean>;
    let approximate-position =
       if (range.range-by = 0)
 	 0
@@ -602,7 +604,7 @@ define method member? (value :: <real>, range :: <bounded-range>,
 end method;
 //
 define method member? (value :: <real>, range :: <unbounded-range>,
-		       #key test = \==)
+		       #key test = \==) => answer :: <boolean>;
    let approximate-position =
       if (range.range-by = 0)
 	 0
@@ -647,6 +649,7 @@ end method;
 // add
 //
 define method add (range :: <unbounded-range>, new)
+ => new-range :: <range>;
    error ("ADD not applicable for unbounded <range>");
 end method;
 
@@ -654,6 +657,7 @@ end method;
 // add-new
 //
 define method add-new (range :: <unbounded-range>, new, #key test)
+ => new-range :: <range>;
    error ("ADD-NEW not applicable for unbounded <range>");
 end method;
 
@@ -661,6 +665,7 @@ end method;
 // choose
 //
 define method choose (predicate :: <function>, range :: <unbounded-range>)
+ => answer :: <sequence>;
    error ("CHOOSE not applicable for unbounded <range>");
 end method;
 
@@ -674,6 +679,7 @@ end method;
 // remove-duplicates
 //
 define method remove-duplicates (range :: <unbounded-range>, #key test)
+ => new-range :: <range>;
    error ("REMOVE-DUPLICATES not applicable for unbounded <range>");
 end method;
 
@@ -693,6 +699,7 @@ end method;
 //
 define method copy-sequence (source :: <bounded-range>,
 			     #key start: copy-start = 0, end: copy-end)
+ => new-range :: <range>;
    let r-size = source.range-size;
    let r-from = source.range-from;
    let r-by = source.range-by;
@@ -724,6 +731,7 @@ end method;
 //
 define method copy-sequence (source :: <unbounded-range>,
 			     #key start: copy-start = 0, end: copy-end)
+ => new-range :: <range>;
    let r-from = source.range-from;
    let r-by = source.range-by;
    let copy-start = if (copy-start >= 0)
@@ -749,12 +757,14 @@ end method;
 // Unbounded ranges cannot be reversed.p
 //
 define method reverse (range-to-reverse :: <bounded-range>)
+ => new-range :: <range>;
    range (from: last (range-to-reverse, default: range-to-reverse.range-from),
 	  by: negative (range-to-reverse.range-by),
 	  size: range-to-reverse.range-size);
 end method;
 //
 define method reverse (range :: <unbounded-range>)
+ => new-range :: <range>;
    error ("REVERSE not applicable for unbounded <range>");
 end method;
 
@@ -768,12 +778,14 @@ end method;
 // Unbounded ranges cannot be REVERSED!.
 //
 define method reverse! (range :: <bounded-range>)
+ => new-range :: <range>;
    range.range-from := last (range, default: range.range-from);
    range.range-by := negative (range.range-by);
    range
 end method;
 //
 define method reverse! (range :: <unbounded-range>)
+ => new-range :: <range>;
    error ("REVERSE! not applicable for unbounded <range>");
 end method;
 
@@ -781,6 +793,7 @@ end method;
 // sort
 //
 define method sort (range :: <unbounded-range>, #key test, stable)
+ => whatever :: <sequence>;
    error ("SORT not applicable for unbounded <range>");
 end method;
 
@@ -791,10 +804,12 @@ end method;
 // unbounded ranges.
 //
 define method last (range :: <bounded-range>, #key default = no-default)
+ => last-elt :: <object>;
    element (range, range.range-size - 1, default: default)
 end method;
 //
 define method last (range :: <unbounded-range>, #key default)
+ => last-elt :: <object>;
    error ("LAST not applicable for unbounded <range>");
 end method;
 
@@ -836,7 +851,7 @@ end method;
 //
 define method intersection (range1 :: <range>, range2 :: <range>,
 			    #next next-method, #key test = \==)
-      => sequence :: <sequence>;
+ => sequence :: <sequence>;
    if (test == \== | test == \=)
       range-intersection (range1, range2, test: test);
    else
@@ -855,7 +870,7 @@ end method;
 //
 define method range-intersection (range1 :: <range>, range2 :: <range>,
 				  #key test)
-      => range :: <range>;
+ => range :: <range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    case
       ~ x-from =>
@@ -880,7 +895,7 @@ end method;
 //
 define method finite-intersection (range1 :: <range>, range2 :: <range>,
 				   #key test)
-      => range :: <bounded-range>;
+ => range :: <bounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let from-key = approximate-range-key (range1, x-from);
    let to-key = approximate-range-key (range1, x-to);
@@ -922,7 +937,7 @@ end method;
 define method increasing-intersection (range1 :: <unbounded-range>,
 				       range2 :: <unbounded-range>,
 				       #key test)
-      => range :: <unbounded-range>;
+ => range :: <unbounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let x-by = lcm (range1.range-by, range2.range-by);
    let from-key = approximate-range-key (range1, x-from);
@@ -956,7 +971,7 @@ end method;
 define method decreasing-intersection (range1 :: <unbounded-range>,
 				       range2 :: <unbounded-range>,
 				       #key test)
-      => range :: <unbounded-range>;
+ => range :: <unbounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let x-by = -lcm (-range1.range-by, -range2.range-by);
    let from-key = approximate-range-key (range1, x-to + 2 * x-by);

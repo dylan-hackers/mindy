@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.17 1996/02/17 15:12:29 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.18 1996/03/07 18:01:28 nkramer Exp $
 
 //======================================================================
 //
@@ -55,7 +55,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dy
 // NEXT-DEQUE-ELEMENT, the marker #f should be used in these slots.
 //
 define class <deque-element> (<object>)
-    slot deque-element-data, init-keyword: data: ;
+  slot deque-element-data, init-keyword: data: ;
   slot prev-deque-element, init-value: #f;
   slot next-deque-element, init-value: #f;
 end class <deque-element>;
@@ -146,22 +146,22 @@ end method initialize;
 // deque-element.
 
 define constant deque_fip_next_state =
-  method (deque :: <deque>, state :: <deque-element>) => <object>;
+  method (deque :: <deque>, state :: <deque-element>) => next :: <object>;
     next-deque-element(state);
   end method;
 
 define constant deque_fip_prev_state =
-  method (deque :: <deque>, state :: <deque-element>) => <object>;
+  method (deque :: <deque>, state :: <deque-element>) => previous :: <object>;
     prev-deque-element(state);
   end method;
 
 define constant deque_fip_finished_state? =
-  method (deque :: <deque>, state, limit) => <object>;
+  method (deque :: <deque>, state, limit) => finished? :: <object>;
     ~state;
   end method;
 
 define constant deque_fip_current_key =
-  method (deque :: <deque>, state :: <deque-element>) => <integer>;
+  method (deque :: <deque>, state :: <deque-element>) => cur-key :: <integer>;
     for (count from -1,
 	 deque_elem = state then prev-deque-element(deque_elem),
 	 while: deque_elem)
@@ -171,21 +171,31 @@ define constant deque_fip_current_key =
   end method;
 
 define constant deque_fip_current_element =
-  method (deque :: <deque>, state :: <deque-element>) => <object>;
+  method (deque :: <deque>, state :: <deque-element>) => cur-elt :: <object>;
     deque-element-data(state);
   end method;
   
 define constant deque_fip_current_element-setter =
-  method (value, deque :: <deque>, state :: <deque-element>) => <object>;
+  method (value, deque :: <deque>, state :: <deque-element>) 
+   => value :: <object>;
     deque-element-data(state) := value;
   end method;
   
 define constant deque_fip_copy_state =
-  method (deque :: <deque>, state :: <deque-element>) => <deque-element>;
+  method (deque :: <deque>, state :: <deque-element>) 
+   => new-state :: <deque-element>;
     state;
   end method;
   
 define method forward-iteration-protocol (deque :: <deque>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(deque-head(deque), #f, deque_fip_next_state,
 	 deque_fip_finished_state?, deque_fip_current_key,
 	 deque_fip_current_element, deque_fip_current_element-setter,
@@ -193,6 +203,14 @@ define method forward-iteration-protocol (deque :: <deque>)
 end method forward-iteration-protocol;
 
 define method backward-iteration-protocol (deque :: <deque>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(deque-tail(deque), #f, deque_fip_prev_state,
 	 deque_fip_finished_state?, deque_fip_current_key,
 	 deque_fip_current_element, deque_fip_current_element-setter,
@@ -340,7 +358,7 @@ end method pop-last;
 //
 // Return the class for copy of deques (<deque>).
 //
-define method type-for-copy (deque :: <deque>)
+define method type-for-copy (deque :: <deque>) => type :: <type>;
   <deque>;
 end method type-for-copy;
 
@@ -352,7 +370,7 @@ end method type-for-copy;
 // until the size is N.
 //
 define method size-setter (n :: <integer>, deque :: <deque>)
-    => <integer>;
+    => n :: <integer>;
   let s = size(deque);
   if (n < s)
     for (i from 0 below s - n) pop-last(deque) end for;
@@ -366,7 +384,7 @@ end method size-setter;
 // to the desired element and take that as our starting point.
 //
 define method element (deque :: <deque>, key :: <integer>,
-		       #key default = no_default) => <object>;
+		       #key default = no_default) => elt :: <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
     if (default == no_default) error("No such element in %=: %d", deque, key)
@@ -386,6 +404,7 @@ define method element (deque :: <deque>, key :: <integer>,
 end method element;
 
 define method element-setter (value, deque :: <deque>, key :: <integer>)
+ => value :: <object>;
   let sz = deque.size;
   if (key < 0)
     error("No such element in %=: %d", deque, key)
@@ -438,7 +457,7 @@ end method element-setter;
 //
 define method map-as (cls == <deque>, proc :: <function>,
 		      sequence :: <sequence>,
-		      #next next-method, #rest more-sequences) => <deque>;
+		      #next next-method, #rest more-sequences) => q :: <deque>;
   if (empty?(more-sequences))
     let result = make(<deque>);
     for (element in sequence)
@@ -459,6 +478,7 @@ end method map-as;
 //
 define method map-as (cls == <deque>, proc :: <function>,
 		     deque :: <deque>, #next next-method, #rest more-deques)
+ => result :: <deque>;
   case
     empty?(more-deques) =>
       let result = make(<deque>);
@@ -486,6 +506,7 @@ end map-as;
 define method map-into (destination :: <deque>,
 			proc :: <function>, sequence :: <sequence>,
 			#next next_method, #rest more_sequences)
+ => destination :: <deque>;
   if (empty?(more_sequences))
     for (elem in sequence,
 	 state = destination.deque-head then state & state.next-deque-element)
@@ -540,7 +561,7 @@ end method add;
 // Add a NEW element to a deque destructively.  This is another name
 // for push (so it adds to the front of the deque).
 //
-define method add! (deque :: <deque>, new) => <deque>;
+define method add! (deque :: <deque>, new) => q :: <deque>;
   push(deque, new);
   deque;
 end method add!;
@@ -555,10 +576,10 @@ end method add!;
 // skipping the element VALUE as long as COUNT does not run out.
 //
 define method remove (deque :: <deque>, value,
-		      #key test = \==, count) => <deque>;
+		      #key test = \==, count) => q :: <deque>;
   let count = count | size(deque);
   local method copy(state :: false-or(<deque-element>),
-		    count :: <integer>) => <deque>;
+		    count :: <integer>) => deque :: <deque>;
 	  case
 	    ~state =>
 	      make(<deque>);
@@ -582,7 +603,7 @@ end method remove;
 // which match VALUE.  When COUNT runs out it quits.
 //
 define method remove! (deque :: <deque>, value,
-		       #key test = \==, count: count) => <deque>;
+		       #key test = \==, count: count) => q :: <deque>;
   let count = count | size(deque);
   local method scan!(state :: false-or(<deque-element>),
 		     count :: <integer>)
@@ -606,7 +627,8 @@ end method remove!;
 // PREDICATE.  Uses FOR-EACH to check every element of DEQUE and appends
 // those which satisfy to the new RESULT deque.
 //
-define method choose (predicate :: <function>, deque :: <deque>) => <deque>;
+define method choose (predicate :: <function>, deque :: <deque>) 
+ => q :: <deque>;
   let result = make(<deque>);
   for (element in deque)
     if (predicate(element)) push-last(result, element) end if;
@@ -621,7 +643,7 @@ end method choose;
 // FOR-EACH to check each element of DEQUE and append good ones to RESULT.
 //
 define method choose-by (predicate :: <function>, test-sequence :: <sequence>,
-			 value-deque :: <deque>) => <deque>;
+			 value-deque :: <deque>) => Q :: <deque>;
   let result = make(<deque>);
   for (test-element in test-sequence,
        value-element in value-deque)
@@ -641,7 +663,7 @@ end method choose-by;
 // it is skipped.
 //
 define method remove-duplicates (deque :: <deque>,
-				 #key test = \==) => <deque>;
+				 #key test = \==) => Q :: <deque>;
   local method member?(value, state)
 	  for (state = state then next-deque-element(state),
 	       while: state & ~test(value, deque-element-data(state)))
@@ -674,7 +696,7 @@ end method remove-duplicates;
 // drops the element.
 //
 define method remove-duplicates! (deque :: <deque>,
-				  #key test = \==) => <deque>;
+				  #key test = \==) => Q :: <deque>;
   local method member?(value, state)
 	  for (state = state then next-deque-element(state),
 	       while: state & ~test(value, deque-element-data(state)))
@@ -708,7 +730,7 @@ end method remove-duplicates!;
 // element and stops before the ENDth element or at the end of the deque.
 //
 define method copy-sequence (source :: <deque>,
-			     #key start: first = 0, end: last) => <deque>;
+			     #key start: first = 0, end: last) => Q :: <deque>;
   let last = last | size(source);
   if (first > last) 
     error("End: (%=) is smaller than start: (%=)", last, first);
@@ -738,6 +760,7 @@ end method copy-sequence;
 //
 define method concatenate-as (cls == <deque>, sequence :: <sequence>,
 			      #rest more-sequences)
+ => result :: <deque>;
   let result = make(<deque>);
   for (element in sequence) push-last(result, element) end for;
   for (sequence in more-sequences)
@@ -756,7 +779,7 @@ end method concatenate-as;
 // push each element onto the RESULT deque.  Since PUSH is used, the
 // resulting deque is backwards.
 //
-define method reverse (deque :: <deque>) => <deque>;
+define method reverse (deque :: <deque>) => q :: <deque>;
   let result = make(<deque>);
   for (element in deque) push(result, element) end for;
   result;
@@ -769,7 +792,7 @@ end method reverse;
 // swapped.  Finally, the DEQUE-HEAD and DEQUE-TAIL of the deque are
 // swapped.  This reverses the deque using the original deque elements.
 //
-define method reverse! (deque :: <deque>) => <deque>;
+define method reverse! (deque :: <deque>) => q :: <deque>;
   for (state = deque-head(deque) then prev-deque-element(state),
        while: state)
     let (prev, next) = values(prev-deque-element(state),
@@ -789,6 +812,7 @@ end method reverse!;
 // the last element of a deque can be accessed directly.
 //
 define method last (deque :: <deque>, #key default = no_default)
+ => last-elt :: <object>;
   let deque-tail = deque-tail(deque);
   case
     deque-tail =>
@@ -805,6 +829,7 @@ end method last;
 // Corresponding efficient implementation for the setter of LAST.
 //
 define method last-setter(new, deque :: <deque>)
+ => new :: <object>;
   let deque-tail = deque-tail(deque);
   if (deque-tail)
     deque-element-data(deque-tail) := new;

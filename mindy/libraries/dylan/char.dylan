@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/char.dylan,v 1.4 1994/11/06 20:09:16 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/char.dylan,v 1.5 1996/03/07 18:04:09 nkramer Exp $
 
 //======================================================================
 //
@@ -29,7 +29,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/char.dyl
 // This file contains the support for characters that isn't built in.
 //
 
-define method as-uppercase (c :: <character>)
+define method as-uppercase (c :: <character>) => char :: <character>;
   if ('a' <= c & c <= 'z')
     as(<character>, as(<integer>, c) - 32);
   else
@@ -37,7 +37,7 @@ define method as-uppercase (c :: <character>)
   end;
 end;
 
-define method as-lowercase (c :: <character>)
+define method as-lowercase (c :: <character>) => char :: <character>;
   if ('A' <= c & c <= 'Z')
     as(<character>, as(<integer>, c) + 32);
   else

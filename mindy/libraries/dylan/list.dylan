@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.9 1996/02/13 21:04:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.10 1996/03/07 17:59:55 nkramer Exp $
 
 //======================================================================
 //
@@ -33,8 +33,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dyl
 
 //// Construction.
 
-define method make(cls == <list>, #rest keys,
-		   #key size = 0, fill = #f) => <list>;
+define method make
+    (cls == <list>, #rest keys, #key size = 0, fill = #f) 
+ => l :: <list>;
   let result = for (i from 0 below size,
 		    list = #() then pair(fill, list))
 	       finally
@@ -52,7 +53,7 @@ end method make;
 //// Iteration protocol.
 
 define constant list_fip_next_state =
-  method (list :: <list>, state :: <list>) => <list>;
+  method (list :: <list>, state :: <list>) => next :: <list>;
     tail(state);
   end method;
 
@@ -62,7 +63,7 @@ define constant list_fip_finished-state? =
   end method;
 
 define constant list_fip_current_key =
-  method (list :: <list>, state :: <list>) => <integer>;
+  method (list :: <list>, state :: <list>) => cur-key :: <integer>;
     for (key from 0,
 	 scan = list then tail(scan),
 	 until: scan == state)
@@ -76,21 +77,30 @@ define constant list_fip_current_key =
 
 
 define constant list_fip_current_element =
-  method (list :: <list>, state :: <list>) => <object>;
+  method (list :: <list>, state :: <list>) => cur-elt :: <object>;
     head(state);
   end method;
 
 define constant list_fip_current_element-setter =
-  method (value :: <object>, list :: <list>, state :: <list>) => <object>;
+  method (value :: <object>, list :: <list>, state :: <list>)
+   => value :: <object>;
     head(state) := value;
   end method;
 
 define constant list_fip_copy_state =
-  method (list :: <list>, state :: <list>) => <list>;
+  method (list :: <list>, state :: <list>) => state :: <list>;
     state;
   end method;
 
 define method forward-iteration-protocol (list :: <list>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(list, #f, list_fip_next_state, list_fip_finished-state?,
 	 list_fip_current_key, list_fip_current_element,
 	 list_fip_current_element-setter, list_fip_copy_state);
@@ -101,24 +111,20 @@ end method forward-iteration-protocol;
 
 // Note: size(<list>) is built into Mindy.
 
-define method empty?(list :: <empty-list>)
+define method empty?(list :: <empty-list>) => answer :: <boolean>;
   #t;
 end method empty?;
 
-define method empty?(list :: <pair>)
+define method empty?(list :: <pair>) => answer :: <boolean>;
   #f;
 end method empty?;
 
-/* ---------------- */
-
-define method type-for-copy(list :: <list>) => <class>;
+define method type-for-copy(list :: <list>) => type :: <class>;
   <list>;
 end method type-for-copy;
 
-/* ---------------- */
-
 define method member? (value, l :: <list>, #key test: test = \==)
-                 => true-or-false;
+ => answer :: <boolean>;
   let done        = #f;
   let lapped-slow = #f;                // Has fast lapped slow?
 
@@ -143,19 +149,15 @@ define method member? (value, l :: <list>, #key test: test = \==)
   end block;
 end method member?;
 
-/* ---------------- */
-
 define method map (proc :: <function>, 
 		   collection :: <empty-list>, 
-		   #rest more)
+		   #rest more) => l :: <list>;
   #();
 end method map;
 
-/* ---------------- */
-
 define method map-as (a_class :: singleton (<list>), proc :: <function>,
 		      l :: <list>, #next next-method, #rest more-lists)
-
+ => result :: <list>;
   if (every? (rcurry ( instance?, <list> ), more-lists))
     for (l          = l          then tail (l),
 	 more-lists = more-lists then map (tail, more-lists),
@@ -172,35 +174,29 @@ define method map-as (a_class :: singleton (<list>), proc :: <function>,
   end if;
 end method map-as;
 
-/* ---------------- */
-
 define method any?   (proc :: <function>, l :: <empty-list>, #rest more)
+ => answer :: <boolean>;
   #f;
 end method any?;
 
-/* ---------------- */
-
 define method every? (proc :: <function>, l :: <empty-list>, #rest more)
+ => answer :: <boolean>;
   #t;
 end method every?;
 
 
 //// Sequence routines.
 
-define method add  (l :: <list>, new)
+define method add  (l :: <list>, new) => new-list :: <list>;
   pair(new, l);
 end method add;
 
-/* ---------------- */
-
-define method add! (l :: <list>, new)
+define method add! (l :: <list>, new) => new-list :: <list>;
   pair (new, l);
 end method add!;
 
-/* ---------------- */
-
 define method remove  (l :: <list>, value, #key test: test = \==,
-		       count: count)
+		       count: count) => new-l :: <list>;
   let result    = #();
   let remaining = l;
 
@@ -218,10 +214,8 @@ define method remove  (l :: <list>, value, #key test: test = \==,
   reverse! (result);
 end method remove;
       
-/* ---------------- */
-
 define method remove! (l :: <list>, value, #key test: test = \==,
-		       count: count)
+		       count: count) => new-l :: <list>;
   let result    = l;
   let prev      = #f;
   let remaining = l;
@@ -245,12 +239,11 @@ define method remove! (l :: <list>, value, #key test: test = \==,
   result;
 end method remove!;
 
-/* ---------------- */
-
 // If there are duplicates, this returns the LAST identical element,
 // and not the first like the example on page 107 would indicate.
 
-define method remove-duplicates  ( l :: <list>, #key test: test = \== )
+define method remove-duplicates (l :: <list>, #key test: test = \== )
+ => new-l :: <list>;
   let result    = #();
   let prev      = #f;
   let remaining = l;
@@ -274,9 +267,8 @@ define method remove-duplicates  ( l :: <list>, #key test: test = \== )
   result;
 end method remove-duplicates;
 
-/* ---------------- */
-
 define method remove-duplicates! ( l :: <list>, #key test: test = \== )
+ => new-l :: <list>;
   let result    = l;
   let prev      = #f;
   let remaining = l;
@@ -298,10 +290,9 @@ define method remove-duplicates! ( l :: <list>, #key test: test = \== )
   result;
 end method remove-duplicates!;
 
-/* ---------------- */
-
 define method replace-subsequence! (l :: <list>, seq :: <sequence>,
 				    #key start: start = 0, end: stop)
+ => new-l :: <list>;
   let result = pair (#f, l);
   let prev   = result;
 
@@ -329,9 +320,7 @@ define method replace-subsequence! (l :: <list>, seq :: <sequence>,
   tail (result);
 end method replace-subsequence!;
 
-/* ---------------- */
-
-define method reverse  (l :: <list>)
+define method reverse  (l :: <list>) => l :: <list>;
   let result = #();
   let remaining = l;
 
@@ -343,9 +332,7 @@ define method reverse  (l :: <list>)
   result;
 end method reverse;
 
-/* ---------------- */
-
-define method reverse! (l :: <list>)
+define method reverse! (l :: <list>) => l :: <list>;
   let result    = #();
   let remaining = l;
 
@@ -368,16 +355,16 @@ end method reverse!;
 
 // Will be called when you compare an <empty-list> to a <pair>
 // or vice versa.
-define method \= (a :: <list>, b :: <list>)
+define method \= (a :: <list>, b :: <list>) => answer :: <boolean>;
   #f;
 end method \=;
 
 
-define method \= (a :: <empty-list>, b :: <empty-list>)
+define method \= (a :: <empty-list>, b :: <empty-list>) => answer :: <boolean>;
   #t;
 end method \=;
 
 
-define method \= (a :: <pair>, b :: <pair>)
+define method \= (a :: <pair>, b :: <pair>) => answer :: <boolean>;
   ( head (a) = head (b) )  &  ( tail (a) = tail (b) );
 end method \=;

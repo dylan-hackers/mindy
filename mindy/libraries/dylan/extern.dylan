@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.7 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.8 1996/03/07 18:00:31 nkramer Exp $
 
 //======================================================================
 //
@@ -180,12 +180,14 @@ define constant strcmp
 define constant strlen
   = get-c-function("strlen", args: list(<c-string>), result: <integer>);
 
-define method type-for-copy (string :: <c-string>)
+define method type-for-copy (string :: <c-string>) => type :: <type>;
   <byte-string>;
 end method type-for-copy;
 
-define method make (cls :: limited(<class>, subclass-of: <c-string>),
-		    #next next, #key size: sz = 0, fill = ' ')
+define method make
+    (cls :: limited(<class>, subclass-of: <c-string>),
+     #next next, #key size: sz = 0, fill = ' ')
+ => cls :: <class>;
   let result = next(cls, element-count: sz + 1);
   let fill-byte = as(<integer>, fill);
   for (i from 0 below sz)
@@ -196,6 +198,14 @@ define method make (cls :: limited(<class>, subclass-of: <c-string>),
 end method make;
 
 define method forward-iteration-protocol (str :: <c-string>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(0, #f,
 	 method (str, state) state + 1 end method,
 	 method (str, state, limit)
@@ -242,6 +252,7 @@ end method empty?;
 
 define constant space-byte = as(<integer>, ' ');
 define method size-setter (value :: <integer>, string :: <c-string>)
+ => value :: <integer>;
   let sz = string.size;
   case
     value = null-pointer =>
@@ -280,6 +291,7 @@ end method element;
     
 define method element-setter
     (char :: <byte-character>, vec :: <c-string>, index :: <integer>)
+ => char :: <byte-character>;
   let sz = vec.size;
   if (index < 0) error("Negative keys not allowed in strings.") end if;
   if (index >= sz) vec.size := index + 1 end if;
@@ -288,7 +300,7 @@ end method element-setter;
 
 define method \<
     (str1 :: <c-string>, str2 :: <c-string>)
- => result :: <object>;
+ => result :: <boolean>;
   case
     (str1.empty?) => ~str2.empty?;
     (str2.empty?) => #f;
@@ -298,7 +310,7 @@ end method \<;
 
 define method \=
     (str1 :: <c-string>, str2 :: <c-string>)
- => result :: <object>;
+ => result :: <boolean>;
   let empty1 = str1.empty?;
   let empty2 = str2.empty?;
   case
@@ -311,6 +323,7 @@ end method \=;
 // This is a very common operation, so let's make it fast.
 //
 define method as (cls == <c-string>, str :: <byte-string>)
+ => string :: <c-string>;
   let sz = str.size;
   let result = as(<c-string>, malloc(sz + 1));
   for (i from 0 below sz)
@@ -323,6 +336,7 @@ end method as;
 // This is a very common operation, so let's make it fast.
 //
 define method as (cls == <byte-string>, str :: <c-string>)
+ => string :: <byte-string>;
   let sz = str.size;
   let result = make(<string>, size: sz);
   for (i from 0 below sz)
@@ -372,6 +386,7 @@ end method element;
 //
 define method element-setter
     (value :: <object>, vec :: <c-vector>, index :: <integer>)
+ => value :: <object>;
   pointer-value(vec, index: index) := value;
 end method element-setter;
 
@@ -386,7 +401,15 @@ end method size;
 // Straightforward vector FIP.  We duplicate it here to avoid problems with
 // possible recursive definitions of element.
 //
-define method forward-iteration-protocol (vec :: <c-vector>);
+define method forward-iteration-protocol (vec :: <c-vector>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values(0, vec.size,
 	 method (c, s) s + 1 end,	// next-state
 	 method (c, s, l) s == l end, // finished-state?
