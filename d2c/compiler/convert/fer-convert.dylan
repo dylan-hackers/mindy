@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.6 2001/10/06 17:08:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.7 2003/02/06 16:23:30 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -111,8 +111,6 @@ end;
 
 
 // fer-convert
-
-define constant source = make(<source-location>);
 
 define generic fer-convert
     (builder :: <fer-builder>, form :: <constituent-parse>, lexenv :: <lexenv>,
@@ -701,6 +699,7 @@ define method fer-convert-method
      #key next-method-info :: false-or(<list>))
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
+  let source = meth.source-location;
   let policy = lexenv.lexenv-policy;
   let specializer-policy = specializer-lexenv.lexenv-policy;
 
@@ -1081,6 +1080,7 @@ define method fer-convert-callback-method
      #key next-method-info :: false-or(<list>))
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
+  let source = meth.source-location;
   let policy = lexenv.lexenv-policy;
   let specializer-policy = specializer-lexenv.lexenv-policy;
 
