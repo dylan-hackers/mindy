@@ -1,9 +1,13 @@
-gwydion-dylan (2.3.6pre2cvs10142001-1) unstable; urgency=low
+gwydion-dylan (2.3.6pre2cvs10182001-1) unstable; urgency=low
 
   * Upstream optimizations to compiler.
   * Implementation of DUIM/GTK+ file-select and directory-select browsers.
+  * You can create DUIM apps using 'make-dylan-app -d' syntax.
+  * Merging fer-transforms into optimizer.
+  * Cleanups to the compiler
+  * More Alpha fixes (Thanks to Christopher Chimelis <chris@debian.org>)
 
- -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 14 Oct 2001 19:03:53 -0700
+ -- Brent A. Fulgham <bfulgham@debian.org>  Thu, 18 Oct 2001 19:51:45 -0700
 
 gwydion-dylan (2.3.6pre2cvs09272001-1) unstable; urgency=low
 
