@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.1 1998/05/03 19:55:38 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.2 1999/01/12 18:56:40 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -199,6 +199,11 @@ define inline method empty? (list :: <list>) => res :: <boolean>;
 end;
 
 define inline method add (list :: <list>, element)
+    => res :: <pair>;
+  pair(element, list);
+end;
+
+define inline method add! (list :: <list>, element)
     => res :: <pair>;
   pair(element, list);
 end;

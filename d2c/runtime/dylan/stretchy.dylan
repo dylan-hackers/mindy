@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.1 1998/05/03 19:55:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.2 1999/01/12 18:56:41 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -207,16 +207,17 @@ define inline method forward-iteration-protocol
 	 end);
 end;
 
+define inline method empty? (ssv :: <stretchy-object-vector>)
+ => res :: <boolean>;
+  ssv.size == 0;
+end method;
+
 define method add! (ssv :: <stretchy-object-vector>, new-element)
     => ssv :: <stretchy-object-vector>;
   let data = ssv.ssv-data;
   let current = ssv.size;
   if (current == data.size)
-    let data-size = if (current < 1024)
-		      current * 2;
-		    else 
-		      current + 1024;
-		    end if;
+    let data-size = current * 2;
     let new-data = replace-subsequence!(make(<simple-object-vector>,
 					     size: data-size),
 					data, end: current);
