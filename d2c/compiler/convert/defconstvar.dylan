@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.7 1994/12/17 02:18:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.8 1995/03/04 22:01:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,22 +8,26 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 define abstract class <bindings-definition> (<definition>)
   //
-  // The particular top-level form this defn came from.
-  slot defn-tlf :: union(<false>, <define-bindings-tlf>),
-    init-value: #f, init-keyword: tlf:;
-  //
   // The <ctype> for this definition if it is a compile-time constant.  Filled
   // in by finalize-top-level-form.
   slot defn-type :: union(<false>, <ctype>), init-keyword: type:;
   //
   // The initial value (or only value for constants) if it is a compile-time
-  // value, or #f otherwise.  Filled in either by defn-value on a constant
-  // or by finalize-top-level-form.
-  slot defn-init-value :: union(<false>, <ct-value>), init-keyword: value:;
+  // value, #f if it isn't compile-time computable, and #"not-computed-yet"
+  // if we haven't figured it out yet.  Filled in either by ct-value on a
+  // constant or by finalize-top-level-form.
+  slot defn-init-value :: union(<ct-value>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet", init-keyword: value:;
 end;
 
 define class <constant-definition>
     (<bindings-definition>, <abstract-constant-definition>)
+  //
+  // The top level form that makes this definition, or #f if it wasn't defined
+  // by a define constant in this library.  If this is #f, then the init-value
+  // must be supplied.
+  slot defconst-tlf :: union(<false>, <define-constant-tlf>),
+    init-value: #f;
 end;
 
 define class <variable-definition> (<bindings-definition>)
@@ -41,10 +45,10 @@ define abstract class <define-bindings-tlf> (<define-tlf>)
   slot tlf-bindings :: <bindings>,
     required-init-keyword: bindings:;
   slot tlf-required-defns :: <simple-object-vector>,
-    init-keyword: required-defns:;
+    required-init-keyword: required-defns:;
   slot tlf-rest-defn :: union(<false>, <bindings-definition>),
-    init-keyword: rest-defn:;
-  slot tlf-finalized? :: one-of(#t, #f, #"computing"),
+    required-init-keyword: rest-defn:;
+  slot tlf-finalized? :: one-of(#t, #f, #"finalizing"),
     init-value: #f;
   slot tlf-anything-non-constant? :: <boolean>,
     init-value: #f;
@@ -66,6 +70,15 @@ end;
 define class <define-constant-tlf> (<define-bindings-tlf>)
 end;
 
+define method initialize (tlf :: <define-constant-tlf>, #key)
+  for (defn in tlf.tlf-required-defns)
+    defn.defconst-tlf := tlf;
+  end;
+  if (tlf.tlf-rest-defn)
+    tlf.tlf-rest-defn.defconst-tlf := tlf;
+  end;
+end;
+
 define class <define-variable-tlf> (<define-bindings-tlf>)
 end;
 
@@ -85,22 +98,23 @@ end;
 
 define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
 			   defn-class :: <class>)
-  let tlf = make(tlf-class, bindings: bindings);
+    => ();
   local method make-and-note-defn (name :: <name-token>)
 	  let defn = make(defn-class,
 			  name: make(<basic-name>,
 				     symbol: name.token-symbol,
-				     module: *Current-Module*),
-			  tlf: tlf);
+				     module: *Current-Module*));
 	  note-variable-definition(defn);
 	  defn;
 	end;
-  let params = bindings.bindings-parameter-list;
-  tlf.tlf-required-defns := map(compose(make-and-note-defn, param-name),
-				params.paramlist-required-vars);
-  tlf.tlf-rest-defn
-    := params.paramlist-rest & make-and-note-defn(params.paramlist-rest);
-  add!($Top-Level-Forms, tlf);
+  let paramlist = bindings.bindings-parameter-list;
+  let rest-param = paramlist.paramlist-rest;
+  add!($Top-Level-Forms,
+       make(tlf-class,
+	    bindings: bindings,
+	    required-defns: map(compose(make-and-note-defn, param-name),
+				paramlist.paramlist-required-vars),
+	    rest-defn: rest-param & make-and-note-defn(rest-param)));
 end;
 
 
@@ -108,26 +122,35 @@ end;
 
 define method ct-value (defn :: <constant-definition>)
     => res :: union(<false>, <ct-value>);
-  let tlf = defn.defn-tlf;
-  select (tlf.tlf-finalized?)
-    #t =>
-      defn.defn-init-value;
-    #f =>
-      tlf.tlf-finalized? := #"computing";
-      finalize-top-level-form(tlf);
-      defn.defn-init-value;
-    #"computing" =>
-      error("constant %s circularly defined.", defn.defn-name.name-symbol);
+  if (defn.defn-init-value == #"not-computed-yet")
+    let tlf = defn.defconst-tlf;
+    if (tlf)
+      if (tlf.tlf-finalized?)
+	compiler-warning("%= is circularly defined.", defn);
+	defn.defn-init-value = #f;
+      else
+	finalize-top-level-form(tlf);
+      end;
+    else
+      error("%= doesn't have a value and we don't know how to compute it?",
+	    defn);
+    end;
   end;
+  defn.defn-init-value;
 end;
 
 
 // finalize-top-level-form
 
 define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
-  unless (tlf.tlf-finalized? == #t)
+  unless (tlf.tlf-finalized?)
+    // We set it to #t before doing anything so that we can detect
+    // circularities.
+    tlf.tlf-finalized? := #t;
+    // Eval the expression
     let (#rest res) = ct-mv-eval(tlf.tlf-bindings.bindings-expression, #f);
     let constant? = res.empty? | ~(res[0] == #f);
+    // Fill in all the required definitions.
     for (defn in tlf.tlf-required-defns,
 	 param in tlf.tlf-bindings.bindings-parameter-list
 	   .paramlist-required-vars,
@@ -144,7 +167,7 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	  let value = if (index < res.size)
 			res[index];
 		      else
-			make(<ct-literal>, value: #f);
+			make(<literal-false>);
 		      end;
 	  if (csubtype?(make-canonical-singleton(value), type))
 	    defn.defn-init-value := value;
@@ -164,31 +187,29 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	  defn.var-defn-type-defn
 	    := make(<constant-definition>,
 		    name: make(<type-cell-name>, base: defn.defn-name),
-		    tlf: tlf,
 		    type: dylan-value(#"<type>"),
 		    value: #f);
 	end;
       end;
     end;
-
+    // Fill in the rest definition, if there is one.
     if (tlf.tlf-rest-defn)
       if (~constant?)
 	tlf.tlf-anything-non-constant? := #t;
 	tlf.tlf-rest-defn.defn-init-value := #f;
       elseif (tlf.tlf-required-defns.size < res.size)
 	let tail = copy-sequence(res, start: tlf.tlf-required-defns.size);
-	if (every?(rcurry(instance?, <ct-literal>), res))
+	if (every?(rcurry(instance?, <literal>), tail))
 	  tlf.tlf-rest-defn.defn-init-value
-	    := make(<ct-literal>, value: map(ct-literal-value, tail));
+	    := make(<literal-vector>, contents: tail);
 	else
 	  tlf.tlf-anything-non-constant? := #t;
 	  tlf.tlf-rest-defn.defn-init-value := #f;
 	end;
       else
-	tlf.tlf-rest-defn.defn-init-value := make(<ct-literal>, value: #[]);
+	tlf.tlf-rest-defn.defn-init-value := make(<literal-vector>, contents: #[]);
       end;
     end;
-    tlf.tlf-finalized? := #t;
   end;
 end;
 
