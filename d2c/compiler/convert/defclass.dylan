@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.26 2001/11/09 23:52:02 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.27 2001/11/10 02:13:58 gabor Exp $
 copyright: see below
 
 
@@ -1772,6 +1772,7 @@ define method convert-top-level-form
 	    // assign to the class slot.
 	    // cannot simply use the slot-setter because slot might be constant.
 	    // ### SHOULD REALLY MAKE A SPECIAL BUILDER FOR THIS. SEE ALSO OPTIMIZE.
+	    assert(~slot-info.associated-meta-slot.slot-initialized?-slot);
 	    let slot-home
 	      = build-slot-home
 		  (slot-info.slot-getter.variable-name,
@@ -1790,32 +1791,50 @@ define method convert-top-level-form
 	    //
 	    // Invoke the init function and store the result
 	    // into the class instance.
-	  // еее TODO
+	    
+	    // ### could reuse function computed above (if init-function == #t)
+	    let fun = make-local-var(evals-builder,
+				     symcat(slot-name, "-init-function"),
+				     object-ctype());
+	    build-assignment
+	      (evals-builder, policy, source, fun,
+	       make-unknown-call
+		 (evals-builder,
+		  ref-dylan-defn(evals-builder, policy, source, #"slot-init-function"),
+		  #f,
+		  list(make-literal-constant(evals-builder, slot-info))));
+	    let var = make-local-var(evals-builder, // use local method? ее
+				     symcat(slot-name, "-init-value"),
+				     object-ctype());
+	    
+	    // ### better call call-init-function (below)
+	    // because that better handles errors and return types...
+	    build-assignment
+	      (evals-builder, policy, source, var,
+	       make-unknown-call
+		 (evals-builder, fun, #f, #()));
+
+	    // assign to the class slot.
+	    // cannot simply use the slot-setter because slot might be constant.
+	    // ### SHOULD REALLY MAKE A SPECIAL BUILDER FOR THIS. SEE ALSO OPTIMIZE.
+	    assert(~slot-info.associated-meta-slot.slot-initialized?-slot);
+	    let slot-home
+	      = build-slot-home
+		  (slot-info.slot-getter.variable-name,
+		   make-literal-constant(evals-builder, slot-info.slot-introduced-by),
+		   evals-builder, policy, source);
+	    let meta-slot = slot-info.associated-meta-slot;
+	    let meta-instance = meta-slot.slot-introduced-by;
+	    let offset = find-slot-offset(meta-slot, meta-instance);
+	    build-assignment
+	      (evals-builder, policy, source, #(),
+	       make-operation
+		 (evals-builder, <heap-slot-set>,
+		  list(var, slot-home, make-literal-constant(evals-builder, offset)),
+		  slot-info: meta-slot));
 	  end if;
 	end if;
 
-
-
-/* this is bull-... but may be needed somewere else...	
-	if (value-goes-into ~== #())
-	  // assign to the class slot, possibly setting init?-slot (can this be?##).
-	  // cannot simply use the slot-setter because slot might be constant.
-	  let slot-home
-	    = build-slot-home
-	        (slot-info.slot-getter.variable-name,
-		 make-literal-constant(evals-builder, slot-info.slot-introduced-by),
-		 evals-builder, policy, source);
-	  let meta-slot = slot-info.associated-meta-slot;
-	  let meta-instance = meta-slot.slot-introduced-by;
-	  let offset = find-slot-offset(meta-slot, meta-instance);
-	  build-assignment
-	    (evals-builder, policy, source, #(),
-	     make-operation
-	       (evals-builder, <heap-slot-set>,
-		list(value-goes-into, slot-home, make-literal-constant(evals-builder, offset)),
-		slot-info: meta-slot));
-	end if; */
-	
 	unless (allocation == #"virtual")
 	  if (type-var)
 	    local
