@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.2 1998/07/09 22:41:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.3 1998/08/27 19:56:15 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1210,6 +1210,7 @@ define method layout-slots-for (class :: <cclass>) => ();
 	if (class.data-word-slot)
 	  //
 	  // Yes, check to see if we have added any other instance slots.
+          // andreas: somewhere here the functional class bug hides out
 	  block (return)
 	    for (slot in class.all-slot-infos)
 	      if (slot ~== class.data-word-slot

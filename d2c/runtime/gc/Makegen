@@ -164,7 +164,7 @@ AS=as
 #  Under Irix 6, you will have to specify the ABI for as if you specify
 #  it for the C compiler.
 
-CFLAGS= -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION -DSILENT
+CFLAGS= -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG
 
 # Setjmp_test may yield overly optimistic results when compiled
 # without optimization.

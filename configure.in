@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.10 1998/08/10 15:01:36 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.11 1998/08/27 19:56:10 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -70,6 +70,7 @@ case $build in
     i*86-*-freebsd*) d2c_build=x86-freebsd ;;
     i*86-pc-cygwin32) d2c_build=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_build=x86-win32-vc ;;
+    powerpc-*-linux-gnu) d2c_build=ppc-linux ;;
     *) d2c_build=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_build)
@@ -83,6 +84,7 @@ case $host in
     i*86-*-freebsd*) d2c_host=x86-freebsd ;;
     i*86-pc-cygwin32) d2c_host=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_host=x86-win32-vc ;;
+    powerpc-*-linux-gnu) d2c_host=ppc-linux ;;
     *) d2c_host=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_host)
@@ -96,6 +98,7 @@ case $target in
     i*86-*-freebsd*) d2c_target=x86-freebsd ;;
     i*86-pc-cygwin32) d2c_target=x86-win32-gcc ;;
     i*86-pc-none) echo d2c_target=x86-win32-vc ;;
+    powerpc-*-linux-gnu) d2c_target=ppc-linux ;;
     *) d2c_target=unknown-unix ;;
 esac
 AC_MSG_RESULT($d2c_target)
