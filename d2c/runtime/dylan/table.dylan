@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.5 1996/02/06 15:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.6 1996/02/19 20:23:04 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -231,7 +231,7 @@ end method make;
 define method initialize
     (ht :: <table>, #next next-method, #key size: sz = $starting-table-size);
   next-method();
-  let sz = if (sz = 0) 1 else sz end if;
+  let sz = if (sz == 0) 1 else sz end if;
   ht.buckets := make(<simple-object-vector>, size: sz, fill: #() );
   ht.bucket-states := make(<simple-object-vector>, 
 			   size: sz, fill: $permanent-hash-state);
@@ -484,7 +484,7 @@ define method \= (ht1 :: <table>, ht2 :: <table>) => answer :: <boolean>;
   let test1 = ht1.key-test;
   let test2 = ht2.key-test;
   (test1 == test2) 
-    & ht1.size = ht2.size
+    & ht1.size == ht2.size
     & block (return)
 	let (state, limit, next, done?, cur-key, cur-elem)
 	  = forward-iteration-protocol(ht1);
@@ -616,7 +616,7 @@ define method element-setter
     // this method, it invalidates the states we're about to write,
     // but we can just re-compute them on the next lookup)
   else
-    if (bucket-entry = #f)             // If item didn't exist, add it
+    if (bucket-entry == #f)             // If item didn't exist, add it
       bucket-entry := make(<bucket-entry>, key: key, hash-id: key-id,
 			   hash-state: key-state, item: value);
       ht.buckets[bucket-index] := pair(bucket-entry, 
@@ -653,7 +653,7 @@ define method element-setter (value :: <object>, ht :: <value-table>,
   let bucket-entry = find-elt(ht.buckets [bucket-index],
 				     key, key-id, key=);
 
-  if (bucket-entry = #f)             // If item didn't exist, add it
+  if (bucket-entry == #f)             // If item didn't exist, add it
     bucket-entry := make(<bucket-entry>, key: key, hash-id: key-id, 
 			 hash-state: $permanent-hash-state, item: value);
     
@@ -690,7 +690,7 @@ define method remove-key! (ht :: <table>, key) => (found :: <boolean>);
   if (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
     remove-key!(ht, key); // If state not valid, goto beginning for a rehash
   else
-    if (the-item ~= #f)       // An item with that key was found
+    if (the-item ~== #f)       // An item with that key was found
       ht.table-size := ht.table-size - 1;
 
       // Between find-elt and remove!, this traverses the bucket
@@ -718,7 +718,7 @@ define method remove-key! (ht :: <value-table>, key) => (found? :: <boolean>);
 
   let the-item = find-elt(bucket, key, key-id, key=);
 
-  if (the-item ~= #f)       // An item with that key was found
+  if (the-item ~== #f)       // An item with that key was found
     ht.table-size := ht.table-size - 1;
 
            // Between find-elt and remove!, this traverses the bucket
@@ -885,7 +885,7 @@ define constant next-table-state
 	let new-cell = state.bucket-cell.tail;
 	if (new-cell == #())
 	  for (i from state.bucket-index + 1,
-	       until: ht.buckets[i] ~= #())
+	       while: ht.buckets[i] == #())
 	  finally
 	    state.bucket-index := i;
 	    state.bucket-cell := ht.buckets[i];
