@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.11 1995/04/21 02:38:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.12 1995/04/21 20:45:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,6 +17,7 @@ operation
         known-call
         unknown-call
 	mv-call
+    prologue
 
 variable-info
     module-var-info
@@ -117,6 +118,12 @@ end class;
 //
 define class <mv-call> (<abstract-call>)
 end class;
+
+// A prologue is used to represent the incomming arguments to a function.
+// 
+define class <prologue> (<operation>)
+end;
+
 
 
 // Constants and variables:
@@ -233,7 +240,7 @@ define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
 		       <annotatable>)
 
   // List of lexical varibles for args.
-  slot vars :: <list>, required-init-keyword: vars:;
+  slot prologue :: <prologue>, required-init-keyword: prologue:;
 
   // The results this lambda produces.
   inherited slot depends-on;
