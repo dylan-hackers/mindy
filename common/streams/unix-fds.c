@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+#ifdef __linux__
+  #include <sys/time.h> /* We need this to get struct timeval... */
+#endif /* ifdef linux */
 #include <sys/wait.h>
 
 int fd_open (const char *filename, int flags, int mode)
