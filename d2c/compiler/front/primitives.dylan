@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.32 1996/04/06 07:07:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.33 1996/04/14 13:24:06 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -206,11 +206,16 @@ define-primitive
    pure: #t);
 
 define-primitive
-  (#"allocate", #(#"<integer>"), #"<object>",
+  (#"make-immediate", #(#"<class>", rest:, #"<object>"), #"<object>",
    pure: #t);
 
 define-primitive
-  (#"make-data-word-instance", #(#"<object>"), #"<object>",
+  (#"allocate", #(#"<class>", #"<integer>"), #"<object>",
+   pure: #t);
+
+define-primitive
+  (#"allocate-with-data-word", #(#"<class>", #"<integer>", #"<object>"),
+   #"<object>",
    pure: #t);
 
 define-primitive
