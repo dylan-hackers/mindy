@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.21 1997/05/13 02:28:13 ram Exp $
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.22 1997/05/19 14:06:55 ram Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -174,7 +174,7 @@ exit(0);
 #
 sub set_default_defaults {
     # Set the default defaults.
-    $DYLANDIR = '/usr/local';
+    $DYLANDIR = 0;
     $D2C = '$(DYLANDIR)/bin/d2c';
     $D2CFLAGS = '-L$(DYLANDIR)/lib/dylan';
     $CFLAGS = '-g';
@@ -182,7 +182,7 @@ sub set_default_defaults {
     $MELANGE = 'melange';
     $PARSERGEN = 'parsergen';
     $MC = 'mindycomp';
-    # There is no MINDYFLAGS, because that depends on the library name
+    # There is no MINDYFLAGS, because that depends on the library name.
     $MINDY = 'mindy';
     $gen_makefile = 'gen-makefile';
     $install_data = "cp";
@@ -466,7 +466,6 @@ sub maybe_emit_d2c_defines {
 	    print("CC=$CC\n");
 	}
 	print <<EOF;
-DYLANDIR = $DYLANDIR
 D2C = $D2C
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
@@ -481,7 +480,11 @@ EOF
 	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
 	    if ($DYLANPATH) {
 		print "export DYLANPATH = $DYLANPATH\n\n";
+	    };
+	    if ($DYLANDIR) {
+		print "export DYLANDIR = $DYLANDIR\n\n";
 	    }
+
 	}
 	$d2c_defines = 1;
     }
