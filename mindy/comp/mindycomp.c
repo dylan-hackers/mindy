@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.12 1995/03/12 16:31:05 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.13 1995/09/12 00:10:49 nkramer Exp $
 *
 * This file is the main driver.
 *
@@ -140,14 +140,14 @@ static void set_module(char *value)
 
 static void set_library(char *value)
 {
-    if (LibraryName && strcasecmp(LibraryName->name, value)) {
+    if (LibraryName != NULL && strcasecmp(LibraryName->name, value)) {
 	fprintf(stderr,
 		"Library name specified on the command line differs from\n"
 		"the library name specified in the file.\n");
 	exit(1);
     }
-    free(LibraryName);
-    LibraryName = symbol(value);
+    if (LibraryName == NULL)
+	LibraryName = symbol(value);
 }
 
 static void end_of_headers(char *value)
