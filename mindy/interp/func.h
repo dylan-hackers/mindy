@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.11 1994/11/06 20:00:10 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.12 1995/05/11 14:32:04 wlott Exp $
 *
 \**********************************************************************/
 
@@ -87,6 +87,7 @@ extern void set_gf_signature(obj_t gf, int req_args, boolean restp,
 			     obj_t more_results_type);
 
 extern obj_t generic_function_methods(obj_t gf);
+extern obj_t generic_function_methods_clock(obj_t gf);
 extern obj_t add_method(obj_t gf, obj_t method);
 
 extern void invoke(struct thread *thread, int nargs);
@@ -103,3 +104,7 @@ extern void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals);
 
 extern obj_t function_debug_name(obj_t func);
 extern obj_t function_debug_name_or_self(obj_t func);
+extern obj_t function_keywords(obj_t func);
+extern boolean function_all_keywords_p(obj_t func);
+
+extern obj_t method_specializers(obj_t method);

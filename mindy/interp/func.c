@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.36 1995/04/21 01:43:06 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.37 1995/05/11 14:32:33 wlott Exp $
 *
 * This file implements functions.
 *
@@ -176,6 +176,16 @@ obj_t function_debug_name_or_self(obj_t function)
 	return function;
 }
 
+obj_t function_keywords(obj_t func)
+{
+    return FUNC(func)->keywords;
+}
+
+boolean function_all_keywords_p(obj_t func)
+{
+    return FUNC(func)->all_keys;
+}
+
 void invoke(struct thread *thread, int nargs)
 {
     obj_t function = thread->sp[-nargs-1];
@@ -314,6 +324,11 @@ struct method {
 };
 
 #define METHOD(o) obj_ptr(struct method *, o)
+
+obj_t method_specializers(obj_t method)
+{
+    return METHOD(method)->specializers;
+}
 
 static obj_t *push_keywords(obj_t *sp, obj_t keywords, obj_t *args, int nargs)
 {
@@ -1200,6 +1215,7 @@ struct gf {
     obj_t result_types;
     obj_t more_results_type;
     obj_t methods;
+    obj_t methods_clock;
     obj_t cache;
 };
 
@@ -1384,6 +1400,7 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     else
 	GF(res)->more_results_type = more_results_type;
     GF(res)->methods = obj_Nil;
+    GF(res)->methods_clock = obj_False;
     GF(res)->cache = obj_Nil;
 
     return res;
@@ -1431,9 +1448,16 @@ obj_t generic_function_methods(obj_t gf)
     return GF(gf)->methods;
 }
 
-obj_t generic_function_keywords(obj_t gf)
+obj_t generic_function_methods_clock(obj_t gf)
 {
-    return GF(gf)->keywords;
+    obj_t clock = GF(gf)->methods_clock;
+
+    if (clock == obj_False) {
+	clock = list1(obj_False);
+	GF(gf)->methods_clock = clock;
+    }
+
+    return clock;
 }
 
 static obj_t really_add_method(obj_t gf, obj_t method)
@@ -1443,6 +1467,7 @@ static obj_t really_add_method(obj_t gf, obj_t method)
     obj_t scan;
 
     GF(gf)->cache = obj_Nil;
+    GF(gf)->methods_clock = obj_False;
 
     for (scan = methods; scan != obj_Nil; scan = TAIL(scan)) {
 	obj_t old = HEAD(scan);
@@ -1606,11 +1631,6 @@ static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, vals, vals);
 }
 
-static obj_t method_specializers(obj_t method)
-{
-    return METHOD(method)->specializers;
-}
-
 static void dylan_function_arguments(obj_t self, struct thread *thread,
 				     obj_t *args)
 {
@@ -1701,6 +1721,7 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
     obj_t scan, *prev;
 
     GF(gf)->cache = obj_Nil;
+    GF(gf)->methods_clock = obj_False;
 
     prev = &GF(gf)->methods;
     while ((scan = *prev) != obj_Nil) {
@@ -1905,6 +1926,7 @@ static int scav_gf(struct object *ptr)
 
     scav_func((struct function *)gf);
     scavenge(&gf->methods);
+    scavenge(&gf->methods_clock);
     scavenge(&gf->cache);
 
     return sizeof(struct gf);
@@ -2024,7 +2046,7 @@ void init_func_functions(void)
 		  obj_False, FALSE, obj_ObjectClass, generic_function_methods);
     define_method("generic-function-mandatory-keywords", list1(obj_GFClass),
 		  FALSE, obj_False, FALSE, obj_ObjectClass,
-		  generic_function_keywords);
+		  function_keywords);
     define_method("method-specializers", list1(obj_MethodClass), FALSE,
 		  obj_False, FALSE, obj_ObjectClass, method_specializers);
     define_generic_function("function-arguments", 1, FALSE, obj_False, FALSE,
