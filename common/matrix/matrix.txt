@@ -1,0 +1,92 @@
+                     Matrix Arithmetic Library for Dylan
+				
+This library implements some basic matrix operations.  These functions are not 
+guarenteed to be stable or numerically sound, neither are they very optimized, 
+but for smaller applications they should be suitable.
+
+
+The <matrix> library is a subclass of <array>, so all operations on <array>s
+and collections in general should work as expected.  One important limitation
+of matrices is that they are limited to two dimensions, and trying to use any
+other size results in an error.
+
+INITIALIZATION
+
+The generic function make will create matrices, with two keywords:
+
+dimensions: a sequence of two elements which represent the rows and columns
+	of the matrix respectively
+fill: the objects that each element of matrix should be initialized to.  This
+	defaults to 0
+
+FUNCTIONS
+
++ (x :: <matrix>, y :: <matrix>) => <matrix>                         [Method]
+- (x :: <matrix>, y :: <matrix>) => <matrix>                         [Method]
+* (x :: <matrix>, y :: <matrix>) => <matrix>                         [Method]
+* (x :: <number>, y :: <matrix>) => <matrix>                         [Method]
+* (x :: <matrix>, y :: <number>) => <matrix>                         [Method]
+   Basic arithmetic operations.  The \* method on two matrices uses the
+   algorithm from Sedgewick [1].
+
+identity-matrix (#key dimensions :: <sequence>) => <matrix>        [Function]
+
+   This returns a matrix filled with zeros, and having ones down the major
+   diagonal. The following is an example:
+      | 1 0 0 | 
+      | 0 1 0 |
+      | 0 0 1 |
+
+augment-matrix (x :: <matrix>, y :: <matrix>) => <matrix>          [Function]
+
+   This takes two matrices and returns a matrix that places the two
+   arguments side by side in a single matrix.  The following is an example:
+      | 1 2 |           | 3 4 |    | 1 2 3 4 |
+      | 5 6 | aug. with | 7 8 | => | 5 6 7 8 |
+      | 9 8 |           | 7 6 |    | 9 8 7 6 |
+
+gauss-jordan (x :: <matrix>) => <matrix>                           [Function]
+
+   This will take a matrix of dimension N by N+1, and return an N by 1
+   matrix.  The result matrix is the solution to the system of equations
+   represented by the argument matrix.  For example, if your equations were
+      3x + 4y = 10
+      2x - 3y = 1
+   then the argument matrix would be
+      | 3  4 10 |
+      | 2 -3  1 |
+   and gauss-jordan would return 
+      | 2 |
+      | 1 |
+   representing x = 2 and y = 1.  The algorithm for gauss-jordan was taken
+   Sedgewick [1].
+
+inverse (x :: <matrix>) => <matrix>                                [Function]
+
+   Returns the inverse of the given matrix.  For inverse to work, the matrix
+   must be square, and this function signals an error if the argument matrix
+   is not square.  This function uses a modified gauss-jordon algorithm from
+   Sedgewick [1] with quick error checking from Strang [2].
+
+det (x :: <matrix>) => <matrix>                                    [Function]
+   Returns the determinant of the given matrix.  This function uses an
+   algorithm from Slang [2].
+
+transpose (x :: <matrix>) => <matrix>                              [Function]
+   Transposes the given matrix.  Transpose takes each element, [i,j], and
+   effectively stores it in location [j,i].
+
+
+FUTURE REVISIONS
+
+Write functions for row-operations, eigen-value, and eigen-vector.  Define a
+<matrix> subclass of <array>.  Add the appropriate "as" methods for <matrix>
+to <array> and back, and <matrix> to <vector> and back.
+ 
+
+REFERENCES
+
+[1]: Sedgwick, Robert. Algorithms. 1993. Addison-Wesley Publishing Co.
+
+[2]: Strang, Gilbert. Introduction to Linear Algebra. 1993.  
+        Wellesley-Cambridge Press.  

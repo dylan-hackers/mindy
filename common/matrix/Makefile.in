@@ -1,0 +1,88 @@
+# Generated automatically from Makefile.in by configure.
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/common/matrix/Attic/Makefile.in,v 1.1 1995/12/05 15:48:48 rsbe Exp $
+##
+##  This is the makefile for the Mindy matrix library, 
+##  matrix.dbc.
+##
+
+SHELL	=	/bin/sh
+
+##
+## begin autoconf'ed source
+##
+
+prefix	=		/afs/cs/project/gwydion/mindy
+exec_prefix	=	${prefix}
+srcdir	=		.
+
+SRCDIR	=		${srcdir}
+BINDIR	=		${exec_prefix}/bin
+LIBDIR	=		${exec_prefix}/lib/mindy
+
+CC	=		gcc
+CCOPTS	=		-g
+CFLAGS	=		$(CCOPTS) -I${SRCDIR}  -DNO_GETWD=1 -DNO_BSTRING_H=1 -DSELECT_IN_TIME_H=1 -DNO_UNION_WAIT=1 -DNEED_MATHERR=1 -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+YACC	=		yacc
+YFLAGS	=		-d
+LEX	=		flex
+LFLAGS	=		-i
+RANLIB	=		ranlib
+INSTALL	=		/afs/cs/project/gwydion/mindy/src/install.sh -c
+INSTALL_PROGRAM	=	${INSTALL}
+INSTALL_DATA	=	${INSTALL} -m 644
+
+LIBOBJS =		 matherr.o rint.o
+LIBS	=		 -lm
+
+##
+## end of configure written portion
+##
+
+MC	= mindycomp
+
+MINDYFLAGS = -lMatrix
+
+OBJS = library.dbc matrix.dbc
+
+matrix-lib.dbc: ${OBJS}
+	cat ${OBJS} > $@
+
+matrix.dbc: ${SRCDIR}/matrix.dylan
+	${MC} ${MINDYFLAGS} -o matrix.dbc ${SRCDIR}/matrix.dylan
+	
+library.dbc: ${SRCDIR}/library.dylan
+	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
+
+clean:
+	rm -f ${OBJS} matrix-lib.dbc *~ \#* core
+
+realclean:
+	rm -f ${OBJS} matrix-lib.dbc Makefile *~ \#* core
+
+install: matrix-lib.dbc
+	${INSTALL_DATA} matrix-lib.dbc ${LIBDIR}
