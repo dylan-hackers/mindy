@@ -10,5 +10,5 @@ if ($features{'compiled_for_win32'}) {
              "../d2c/runtime/dylan/tests", ""));
 }   
 
-&compile_subdirs("test-apps");
+&compile_subdirs("test-suites", "test-apps");
 												 
