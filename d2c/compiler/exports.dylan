@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.10 1994/12/16 14:27:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.11 1994/12/16 16:35:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -124,7 +124,7 @@ end;
 
 define module signature
   create
-    <signature>, specializers, rest-type, key-infos, all-keys?,
+    <signature>, specializers, next?, rest-type, key-infos, all-keys?,
     returns, returns-rest-type,
 
     <key-info>, key-name, key-type, required?;
@@ -475,7 +475,7 @@ define module builder-interface
     build-assignment, build-join, make-operation, <fer-builder>, build-let,
     make-mv-operation, make-literal-constant, make-definition-leaf,
     make-lexical-var, make-local-var, make-values-cluster, copy-variable,
-    make-exit-function, build-method-body,
+    make-exit-function, build-method-body, make-hairy-method-literal,
 
     <fer-component>;
 end;
@@ -544,6 +544,7 @@ define module fer-convert
   use tokens;
   use compile-time-values;
   use compile-time-eval;
+  use signature;
   use definitions;
   use variables;
   use parse-tree;
