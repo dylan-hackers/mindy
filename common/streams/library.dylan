@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.3 1996/05/08 15:57:51 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.4 1996/07/11 16:07:53 nkramer Exp $
 
 //======================================================================
 //
@@ -100,8 +100,7 @@ define module internals
              <never-returns>, ignore},
     export: all;
   use system,
-    import: {<buffer>, <buffer-index>, $maximum-buffer-size, copy-bytes,
-	     $Newlines-are-CRLF},
+    import: {<buffer>, <buffer-index>, $maximum-buffer-size, copy-bytes},
     export: all;
   use threads,
     import: {<multilock>, <semaphore>, grab-lock, release-lock, locked?},

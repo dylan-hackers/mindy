@@ -2,7 +2,7 @@ module: Streams
 author: chiles@cs.cmu.edu
 synopsis: This file implements streams for the Gwydion implementation of Dylan.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.3 1996/05/08 15:57:51 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.4 1996/07/11 16:07:53 nkramer Exp $
 
 //======================================================================
 //
@@ -396,14 +396,9 @@ define generic read-line (stream :: <stream>,
 
 define constant $newline-byte :: <integer> = as(<integer>, '\n');
 
-// There should be a #if here to conditionally compile the definition of
-// $return-byte, but Mindy does not support the conditional compilation
-// scheme yet.  Because defines must be at top level, I can't used the
-// kludged conditional based on $newlines-are-CRLF.
-//
-// #if (newlines-are-CRLF)
+#if (newlines-are-CRLF)
   define constant $return-byte :: <integer> = as(<integer>, '\r');
-//end;
+#endif
 
 /// read-line -- Method for Exported Interface.
 ///
@@ -462,12 +457,10 @@ define method read-line-aux (stream :: <stream>, buf :: <buffer>,
       for (i :: <integer> from next below stop,
 	   until: (buf[i] = $newline-byte))
       finally
-	// This 'if' should be a #if (conditional compilation), but
-	// Mindy does not support that yet.
-	if ($newlines-are-CRLF)
+	#if (newlines-are-CRLF)
 	  res := read-line-aux-CRLF(stream, buf, next, stop, i, res,
 				    collect, exit-loop);
-	else
+	#else
 	  // This else branch would be conditionally compiled in when
 	  // we were on a platform that used linefeeds for newlines.
 	  if (i = stop)
@@ -478,7 +471,7 @@ define method read-line-aux (stream :: <stream>, buf :: <buffer>,
 	    release-input-buffer(stream, (i + 1), stop);
 	    exit-loop(res, #f);
 	  end;
-	end if; // ($newlines-are-CRLF)
+	#endif
       end for; 
       next := 0;
       stop := fill-input-buffer(stream, 0);
@@ -499,6 +492,7 @@ end method;
 /// The collect and exit functions are local functions defined in
 /// read-line-aux.
 ///
+#if (newlines-are-CRLF)
 define method read-line-aux-CRLF
     (stream :: <stream>, buf :: <buffer>, next :: <buffer-index>,
      stop :: <buffer-index>, linefeed-pos :: <buffer-index>,
@@ -530,7 +524,7 @@ define method read-line-aux-CRLF
     exit-loop(result, #f);
   end if;
 end method;
-
+#endif
 
 define generic input-available? (stream :: <stream>) => result :: <boolean>;
 
@@ -1539,7 +1533,9 @@ define method write-line (object :: <object>, stream :: <stream>,
     => stream :: <stream>;
   lock-stream(stream);
   apply(write, object, stream, key-args);
-  if ($newlines-are-CRLF) write('\r', stream) end;
+  #if (newlines-are-CRLF) 
+     write('\r', stream);
+  #endif
   write('\n', stream);
   unlock-stream(stream);
   stream;
