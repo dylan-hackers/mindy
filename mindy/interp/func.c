@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.25 1994/05/31 18:09:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.26 1994/06/03 00:17:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1271,11 +1271,11 @@ obj_t add_method(obj_t gf, obj_t method)
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
 	error("The method %= has %d required arguments, but the generic "
-	      "function %= has %=",
+	      "function %= has %d",
 	      function_debug_name_or_self(method),
 	      make_fixnum(METHOD(method)->required_args),
 	      function_debug_name_or_self(gf),
-	      GF(gf)->required_args);
+	      make_fixnum(GF(gf)->required_args));
 
     gfkeys = GF(gf)->keywords;
     if (gfkeys != obj_False) {
