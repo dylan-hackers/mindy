@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.4 1996/07/15 15:56:36 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.5 1996/07/21 16:42:20 wlott Exp $
 ##
 ##  This is the makefile for the Mindy streams library, streams.dbc.
 ##
@@ -126,4 +126,5 @@ realclean:
 	rm -f ${OBJS} ${NEWOBJS} new-streams-lib.dbc streams-lib.dbc Makefile *~ \#* core
 
 install: streams-lib.dbc new-streams-lib.dbc
-	${INSTALL_DATA} streams-lib.dbc new-streams-lib.dbc ${LIBDIR}
+	${INSTALL_DATA} streams-lib.dbc ${LIBDIR}
+	${INSTALL_DATA} new-streams-lib.dbc ${LIBDIR}
