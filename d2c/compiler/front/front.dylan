@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.25 1995/05/03 09:42:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.26 1995/05/04 04:37:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,6 +187,7 @@ end;
 
 define abstract class <slot-access> (<operation>)
   slot slot-info :: <slot-info>, required-init-keyword: slot-info:;
+  slot slot-offset :: <fixed-integer>, required-init-keyword: slot-offset:;
 end;
 
 define class <slot-ref> (<slot-access>)
