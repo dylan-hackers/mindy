@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.12 1994/06/27 16:31:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.13 1994/07/07 07:02:54 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -344,12 +344,23 @@ static void init_waiters(struct waiters *waiters)
 
 void init_driver()
 {
+#ifdef linux
+    struct sigaction sa;
+#else
     struct sigvec sv;
+#endif
 
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
 
+#ifdef linux
+    sa.sa_handler = sigint_handler;
+    sa.sa_mask = 0;
+    sa.sa_flags = 0;
+    sa.sa_restorer = NULL;
+    sigaction(SIGINT, &sa, NULL);
+#else
     sv.sv_handler = sigint_handler;
     sv.sv_mask = 0;
     sv.sv_flags = 0;
@@ -357,5 +368,6 @@ void init_driver()
     sigvector(SIGINT, &sv, NULL);
 #else
     sigvec(SIGINT, &sv, NULL);
+#endif
 #endif
 }

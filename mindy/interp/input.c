@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.11 1994/06/27 16:31:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.12 1994/07/07 07:02:56 wlott Exp $
 *
 * This file implements getc.
 *
@@ -66,7 +66,13 @@ extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 
 static void getc_or_wait(struct thread *thread)
 {
-    if (stdin->_cnt == 0 && !feof(stdin)) {
+    if (
+#ifdef linux
+        stdin->_IO_read_ptr >= stdin->_IO_read_end
+#else
+        stdin->_cnt == 0
+#endif
+        && !feof(stdin)) {
 	int fd = fileno(stdin);
 	fd_set fds;
 	struct timeval tv;

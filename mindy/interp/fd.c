@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.15 1994/06/27 16:31:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.16 1994/07/07 07:02:55 wlott Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -75,6 +75,11 @@ extern int fsync(int filedes);
 #include <bstring.h>
 #include <stdlib.h>
 #endif sgi
+#ifdef linux
+#define pause buttplug
+#include <unistd.h>
+#undef pause
+#endif
 
 #include "mindy.h"
 #include "list.h"
@@ -386,11 +391,27 @@ void init_fd_functions(void)
     define_constant("L_XTND", make_fixnum(L_XTND));
 
     define_constant("FNDELAY", make_fixnum(FNDELAY));
+#ifdef FAPPEND
     define_constant("FAPPEND", make_fixnum(FAPPEND));
+#else
+    define_constant("FAPPEND", make_fixnum(O_APPEND));
+#endif
 
+#ifdef FCREAT
     define_constant("FCREAT", make_fixnum(FCREAT));
+#else
+    define_constant("FCREAT", make_fixnum(O_CREAT));
+#endif
+#ifdef FTRUNC
     define_constant("FTRUNC", make_fixnum(FTRUNC));
+#else
+    define_constant("FTRUNC", make_fixnum(O_TRUNC));
+#endif
+#ifdef FEXCL
     define_constant("FEXCL", make_fixnum(FEXCL));
+#else
+    define_constant("FEXCL", make_fixnum(O_EXCL));
+#endif
 
     define_constant("O_RDONLY", make_fixnum(O_RDONLY));
     define_constant("O_WRONLY", make_fixnum(O_WRONLY));
