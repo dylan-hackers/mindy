@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.4 1995/11/14 21:58:02 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.5 1995/11/15 16:33:06 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -549,12 +549,14 @@ add-od-loader(*compiler-dispatcher*, #"fer-component",
 );
 
 
-// lambda: component, source, name, arg-vars, result-type,
+// lambda: component, source, name, arg-vars, arg-types, result-type,
 // hidden-references, "self", body.
 //
 define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
   if (maybe-dump-reference(obj, buf))
+    let odc = *dump-component*;
     *dump-component* := obj.parent;
+    assert(~odc | odc == obj.parent);
     let start-pos = buf.current-pos;
     dump-definition-header(#"fer-lambda", buf, subobjects: #t);
     dump-od(obj.parent, buf);
@@ -571,15 +573,19 @@ define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
 		     end,
 		     res),
 	 until: def == #f)
-    finally dump-od(reverse!(res), buf);
+
+    finally 
+      dump-od(reverse!(res), buf);
     end for;
 
+    dump-od(obj.argument-types, buf);
     dump-od(obj.result-type, buf);
     dump-od(obj.hidden-references?, buf);
     dump-od(obj, buf);
 
     fer-dump-od(obj.body, obj.parent, buf);
     dump-end-entry(start-pos, buf);
+    *dump-component* := odc;
   end if;
 end method;
 
@@ -593,14 +599,16 @@ add-od-loader(*compiler-dispatcher*, #"fer-lambda",
     let source = load-object-dispatch(state);
     let name = load-object-dispatch(state);
     let arg-vars = load-object-dispatch(state);
+    let arg-types = load-object-dispatch(state);
     let result-type = load-object-dispatch(state);
     let hidden = load-object-dispatch(state);
     let self = load-object-dispatch(state);
     let res = build-function-body(builder, $default-policy, source, #t,
     				  name, arg-vars, result-type, hidden);
     resolve-forward-ref(self, res);
+    res.argument-types := arg-types;
     load-object-dispatch(state);
-    end-body(builder);
+    assert(end-body(builder) == res);
     assert-end-object(state);
     res;
   end method
