@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.88 1996/08/23 14:01:24 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.89 1996/09/03 16:46:55 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -352,8 +352,8 @@ define function boolean-header-element
   let found = element(state.unit-header, #"dynamic", default: #f);
   if (found)
     select (as-uppercase(found) by \=)
-      "yes" => #t;
-      "no" => #f;
+      "YES" => #t;
+      "NO" => #f;
       otherwise => 
           compiler-error("Dynamic: header option is %s, not \"yes\" or \"no\".",
 	  		 found);
