@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.6 1996/05/08 16:00:32 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.7 1996/05/11 15:59:01 wlott Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -14,17 +14,6 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 define constant $random-const-a = 8373;
 define constant $random-const-c = 101010101;
 define constant $random-max = 54;
-
-define method integer-length
-    (int :: <integer>) => n-bits :: <integer>;
-  let num = if (int < 0) -int else int + 1 end;
-  for (count :: <integer> from 1,
-       n :: <integer> = num then ash(n, -1),
-       while: n > 0)
-  finally
-    count;
-  end for;
-end method integer-length;
 
 // Inclusive upper bound on the size of fixnum kept in the state (and returned
 // by random-chunk.)  Must be even.
