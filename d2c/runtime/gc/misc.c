@@ -864,7 +864,7 @@ void GC_abort(msg)
 GC_CONST char * msg;
 {
 #   if defined(MSWIN32)
-      (void) MessageBoxA(NULL, msg, "Fatal error in gc", MB_ICONERROR|MB_OK);
+      /*(void) MessageBoxA(NULL, msg, "Fatal error in gc", MB_ICONERROR|MB_OK);*/
       DebugBreak();
 #   else
       GC_err_printf1("%s\n", msg);
