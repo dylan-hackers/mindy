@@ -132,9 +132,19 @@ define constant empty-table = make(<self-organizing-list>);
 // cpp-table.  Thus they will have appropriate location information for error
 // reporting. 
 //
+// XXX - added forbidden-expansions to prevent recursive macro
+// expansion. This is insufficient by itself; we're also supposed to tag
+// tokens which we weren't allow to expand to ensure that they never get
+// expanded in any other place. But this should handle the most common
+// problems.
+
+define constant $maximum-cpp-expansion-depth = 32;
+
 define /* exported */ method check-cpp-expansion
     (string :: <string>, tokenizer :: <tokenizer>,
-     #key parameters: parameter-table = empty-table)
+     #key parameters: parameter-table = empty-table,
+     forbidden-expansions = #(),
+     current-depth = 0)
  => (result :: <boolean>);
   let headless-string 
     = if (string.first == '#') copy-sequence(string, start: 1) else string end;
@@ -142,6 +152,11 @@ define /* exported */ method check-cpp-expansion
     = (element(parameter-table, headless-string, default: #f)
 	 | element(tokenizer.cpp-table, string, default: #f));
   case
+    current-depth >= $maximum-cpp-expansion-depth =>
+      parse-error(tokenizer, "Preprocessor macro expansion of ~s too deep",
+		  string);
+    member?(string, forbidden-expansions, test: \=) =>
+      #f;
     string.first == '#' =>
       if (string = "##")
 	// Special case for <pound-pound-token>
@@ -186,9 +201,12 @@ define /* exported */ method check-cpp-expansion
 	for (key in formal-params, value in params)
 	  params-table[key] := value;
 	end for;
+	let forbidden = pair(string, forbidden-expansions);
 	for (token in token-list.tail)
 	  if (~check-cpp-expansion(token.string-value, tokenizer,
-				   parameters: params-table))
+				   parameters: params-table,
+				   current-depth: current-depth + 1,
+				   forbidden-expansions: forbidden))
 	    // Successful call will have already pushed the expanded tokens
 	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
 	  end if;
@@ -199,8 +217,12 @@ define /* exported */ method check-cpp-expansion
     otherwise =>
       // Depends upon the fact that tokens are stored in reverse order in the
       // stored macro expansion.
+      
+      let forbidden = pair(string, forbidden-expansions);
       for (token in token-list)
-	unless (check-cpp-expansion(token.string-value, tokenizer))
+	unless (check-cpp-expansion(token.string-value, tokenizer,
+				    current-depth: current-depth + 1,
+				    forbidden-expansions: forbidden))
 	  // Successful call will have already pushed the expanded tokens
 	  push(tokenizer.unget-stack, copy-token(token, tokenizer));
 	end unless;
