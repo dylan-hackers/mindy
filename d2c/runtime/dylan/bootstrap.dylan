@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.10 2000/10/21 01:30:48 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.11 2000/10/28 23:37:26 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -194,7 +194,7 @@ define module dylan-viscera
     <debugger>, invoke-debugger, *debugger*,
     <byte>, <byte-vector>,
     $not-supplied, ignore,
-    <format-string-condition>,
+    <simple-condition>, <format-string-condition>,
     functional-==, key-exists?, assert, 
     limited-collection-definer, limited-vector-class, element-type, 
     %elem, %elem-setter, limited-sv-class, ssv-data, ssv-data-setter,
