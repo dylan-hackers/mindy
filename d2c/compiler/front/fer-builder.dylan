@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.16 1995/04/24 03:15:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.17 1995/04/25 20:58:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -520,10 +520,15 @@ end method;
 define method make-exit-function
     (builder :: <fer-builder>, target :: <fer-exit-block-region>)
  => res :: <leaf>;
-  target.catcher.exit-function
-    | (target.catcher.exit-function
+  let catcher
+    = target.catcher
+        | (target.catcher
+	     := make(<catcher>, source-location: target.source-location,
+		     target-region: target));
+  catcher.exit-function
+    | (catcher.exit-function
          := make(<exit-function>, source-location: target.source-location,
-		 target-region: target));
+		 catcher: catcher));
 end;
 
 
