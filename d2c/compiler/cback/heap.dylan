@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.24 2001/07/07 17:17:40 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.25 2001/08/02 07:09:56 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -763,7 +763,7 @@ define method defer-for-global-heap?
     (object :: <slot-info>, state :: <local-heap-file-state>)
     => defer? :: <boolean>;
   let class = object.slot-introduced-by;
-  ~(class.sealed? | class.primary?) | object.defined-externally?;
+  ~(class.all-subclasses-known? | class.primary?) | object.defined-externally?;
 end method defer-for-global-heap?;
 
 

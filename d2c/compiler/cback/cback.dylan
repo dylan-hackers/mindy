@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.26 2001/07/07 17:17:39 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.27 2001/08/02 07:09:56 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1435,7 +1435,7 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   new-line(file.file-body-stream);
   let ctv = defn.ct-value;
   if (ctv)
-    if (ctv.sealed?)
+    if (ctv.all-subclasses-known?)
       //
       // By adding sealed classes to the heap now, we save effort doing the
       // global dump phase.  And this costs us nothing, because all classes

@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.23 2001/07/24 06:32:08 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.24 2001/08/02 07:04:26 housel Exp $
 copyright: see below
 
 
@@ -3252,7 +3252,7 @@ define method build-slot-posn-dispatch
      instance-leaf :: <leaf>, thunk :: <function>)
     => ();
   let cclass = slot.slot-introduced-by;
-  if (cclass.sealed? | cclass.primary?)
+  if (cclass.all-subclasses-known? | cclass.primary?)
     // We don't have to do a runtime slot-position lookup, so make us a static
     // slot accessor method.
     let new-thunk

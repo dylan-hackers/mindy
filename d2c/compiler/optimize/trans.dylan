@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.9 2001/07/27 20:55:37 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.10 2001/08/02 07:05:51 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -481,7 +481,7 @@ end;
 
 define method is-it-functional? (class :: <cclass>)
     => res :: one-of(#t, #f, #"maybe");
-  if (~class.sealed?)
+  if (~class.all-subclasses-known?)
     if (class.functional?)
       #t;
     elseif (class.not-functional?)
@@ -819,7 +819,7 @@ define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      value :: <leaf>, class :: <cclass>, #next next-method)
     => res :: <expression>;
-  if (class.sealed?)
+  if (class.all-subclasses-known?)
     let res = make-local-var(builder, #"temp", boolean-ctype());
     if (class == specifier-type(#"<false>"))
       build-assignment
