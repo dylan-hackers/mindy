@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.29 1996/06/12 16:39:57 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.30 1996/06/24 20:02:12 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -902,16 +902,18 @@ define method internal-sorted-applicable-methods
   let old-cache = gf.method-cache;
   gf.method-cache := cache;
   cache.next := old-cache;
-  for (prev :: false-or(<pair>) = #f then remaining,
-       remaining :: <list> = ordered then remaining.tail,
-       until: remaining == #())
-  finally
-    if (prev)
-      prev.tail := list(ambiguous);
-    else
-      ordered := list(ambiguous);
-    end;
-  end;
+  unless (ambiguous.empty?)
+    for (prev :: false-or(<pair>) = #f then remaining,
+	 remaining :: <list> = ordered then remaining.tail,
+	 until: remaining == #())
+    finally
+      if (prev)
+	prev.tail := list(ambiguous);
+      else
+	ordered := list(ambiguous);
+      end;
+    end for;
+  end unless;
   cache.cached-sam := ordered;
   let valid-keywords
     = if (instance?(valid-keywords, <list>))
