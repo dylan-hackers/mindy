@@ -2,7 +2,6 @@ module: heap
 
 define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
-  slot output-info :: <output-info>, required-init-keyword: output-info:;
   slot next-id :: <fixed-integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
   slot object-names :: <table>, init-function: curry(make, <table>);
@@ -10,14 +9,13 @@ define class <state> (<object>)
     init-function: curry(make, <literal-false>);
 end;
 
-define method build-initial-heap
-    (units :: <vector>, stream :: <stream>, output-info :: <output-info>)
+define method build-initial-heap (roots :: <vector>, stream :: <stream>)
     => ();
-  let state = make(<state>, stream: stream, output-info: output-info);
+  let state = make(<state>, stream: stream);
   format(stream, "\t.data\n\t.align\t8\n");
-  for (unit in units)
-    let prefix = unit[0];
-    let roots = unit[1];
+  for (unit in roots)
+    let prefix :: <byte-string> = unit[0];
+    let roots :: <simple-object-vector> = unit[1];
     format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots", prefix, prefix);
     for (ctv in roots, index from 0)
       spew-reference(ctv, $general-rep, format-to-string("roots[%d]", index),
@@ -130,7 +128,7 @@ define method object-name (object :: <ct-entry-point>, state :: <state>)
     => name :: <string>;
   element(state.object-names, object, default: #f)
     | begin
-	let name = entry-point-c-name(object, state.output-info);
+	let name = object.entry-point-c-name;
 	format(state.stream, "\t.import\t%s, code\n", name);
 	element(state.object-names, object) := name;
 	name;
