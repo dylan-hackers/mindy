@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.16 1996/04/18 20:50:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.17 1996/05/01 12:17:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -189,6 +189,7 @@ define module function-definitions
     add-seal, <seal-info>, seal-types, 
 
     ct-add-method, ct-applicable-methods, sort-methods,
+    static-next-method-info,
 
     $abstract-method-definition-slots, dump-queued-methods;
     
