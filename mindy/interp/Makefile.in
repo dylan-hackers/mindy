@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.4 1998/08/31 14:29:24 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.5 1998/12/17 09:28:13 igor Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -45,6 +45,7 @@ LIBDIR	=		@libdir@/dylan
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
 CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+CFLAGS_NO_WERROR =      `echo $(CFLAGS) | sed 's/-Werror//g'`
 YACC	=		@YACC@
 YFLAGS	=		-d
 LEX	=		@LEX@
@@ -326,11 +327,12 @@ obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
 
+
 parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
                  ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser-tab.h \
                  ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
                  ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
-	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
+	${CC} -c ${CFLAGS_NO_WERROR} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
             ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
