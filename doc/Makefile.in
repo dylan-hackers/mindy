@@ -23,5 +23,15 @@ install: compile
 	${INSTALL_DATA} platforms.descr.4 \
 		${DESTDIR}${MANDIR}/man4/platforms.descr.4
 
+uninstall:
+	rm -f ${DESTDIR}${MANDIR}/man7/dylan.7
+	rm -f ${DESTDIR}${MANDIR}/man7/gwydion.7
+	rm -f ${DESTDIR}${MANDIR}/man1/d2c.1
+	rm -f ${DESTDIR}${MANDIR}/man1/mindy.1
+	rm -f ${DESTDIR}${MANDIR}/man1/mindycomp.1
+	rm -f ${DESTDIR}${MANDIR}/man1/melange.1
+	rm -f ${DESTDIR}${MANDIR}/man1/make-dylan-app.1
+	rm -f ${DESTDIR}${MANDIR}/man4/platforms.descr.4
+
 clean:
 	-echo 'Nothing to do.'
