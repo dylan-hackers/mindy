@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.12 1998/12/29 20:54:50 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.13 1999/07/07 18:40:52 andreas Exp $
 
 //======================================================================
 //
@@ -58,7 +58,7 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.12 1998/12/29 2
 //  <argument-list-parser>
 //======================================================================
 
-define class <argument-list-parser> (<object>)
+define open class <argument-list-parser> (<object>)
   // Retained across calls to parse-arguments.
   slot option-parsers :: <stretchy-vector> /* of <option-parser> */ =
     make(<stretchy-vector> /* of <option-parser> */);

@@ -2,7 +2,7 @@ library: parse-arguments
 module: dylan-user
 author:  Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.8 1998/12/29 20:54:50 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.9 1999/07/07 18:40:52 andreas Exp $
 
 //======================================================================
 //
@@ -29,7 +29,13 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.8 1998/
 define library parse-arguments
   use dylan;
   use table-extensions;
-  
+
+#if (~mindy)
+  // for argument-parser-definer
+  use streams;
+  use format;
+#endif
+
   export
     parse-arguments,
     option-parser-protocol;
@@ -93,4 +99,18 @@ define module parse-arguments
     <repeated-parameter-option-parser>,
     <optional-parameter-option-parser>,
     <keyed-option-parser>;
+
+#if (~mindy)
+  use streams;
+  use format;
+
+  export
+    argument-parser-definer,
+    \defargparser-rec,
+    \defargparser-aux,
+    \defargparser-class,
+    \defargparser-init,
+    \defargparser-accessors,
+    \defargparser-synopsis;
+#endif
 end module parse-arguments;
