@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.6 1994/10/03 14:00:35 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.7 1995/01/30 14:02:57 wlott Exp $
 
 //======================================================================
 //
@@ -45,7 +45,7 @@ end method;
 
 define constant \>= 
   = method (x :: <object>, y :: <object>)  => answer :: <boolean>;
-      ~(x < y);
+      y <= x;
     end method;
 
 define constant \> 
