@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.8 1994/06/11 02:23:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.9 1994/06/11 17:28:52 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -24,6 +24,11 @@
 extern void bzero(void *ptr, size_t bytes);
 extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 		  fd_set *except_fds, struct timeval *timeout);
+#endif
+#ifdef __osf__
+extern void bzero(char *string, int length);
+extern int select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
 #endif
 
 #include "mindy.h"
