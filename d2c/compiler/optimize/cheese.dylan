@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.64 1995/05/21 03:07:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.65 1995/05/26 10:52:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -848,7 +848,7 @@ define method optimize
   let func = func-dep.source-exp;
   block (return)
     for (transformer in find-transformers(func))
-      if (transformer(component, call))
+      if (transformer.transformer-function(component, call))
 	return();
       end;
     end;
@@ -872,15 +872,9 @@ define method find-transformers (defn :: <function-definition>)
   defn.function-defn-transformers;
 end;
   
-define method find-transformers (defn :: <method-definition>)
+define method find-transformers (defn :: <generic-definition>)
     => res :: <list>;
-  let gf = defn.method-defn-of;
-  if (gf)
-    concatenate(defn.function-defn-transformers,
-		gf.function-defn-transformers);
-  else
-    defn.function-defn-transformers;
-  end;
+  #();
 end;
 
 
