@@ -96,6 +96,7 @@ define method fast-string-hash (string :: <string>)
 end method fast-string-hash;
 
 define method table-protocol (table :: <string-table>)
+	=> (equal :: <function>, hash :: <function>);
   values(\=, fast-string-hash);
 end method;
 
@@ -113,7 +114,7 @@ end method initialize;
 
 define method initialize
     (value :: <parse-value-state>,
-     #key parent :: union(<parse-file-state>, <false>))
+     #key parent :: type-union(<parse-file-state>, <false>))
   if (parent)
     value.objects := parent.objects;
     value.structs := parent.structs;
