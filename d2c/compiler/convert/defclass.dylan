@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.26 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.27 1995/06/06 00:29:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1466,9 +1466,10 @@ define method convert-top-level-form
 		  build-assignment
 		    (maker-builder, policy, source, #(),
 		     make-error-operation
-		       (maker-builder, "Missing required-init-keyword %=",
+		       (maker-builder, #"missing-required-init-keyword-error",
 			make-literal-constant
-			  (maker-builder, as(<ct-value>, key))));
+			  (maker-builder, as(<ct-value>, key)),
+			make-literal-constant(maker-builder, cclass)));
 		else
 		  build-assignment(maker-builder, policy, source,
 				   init-value-var,
@@ -1806,7 +1807,7 @@ define method build-getter
 	build-else(builder, policy, source);
 	build-assignment
 	  (builder, policy, source, #(),
-	   make-error-operation(builder, "Slot is not initialized"));
+	   make-error-operation(builder, #"uninitialized-slot-error"));
 	end-body(builder);
       end;
       build-assignment(builder, policy, source, result,
@@ -1822,7 +1823,7 @@ define method build-getter
 	build-else(builder, policy, source);
 	build-assignment
 	  (builder, policy, source, #(),
-	   make-error-operation(builder, "Slot is not initialized"));
+	   make-error-operation(builder, #"uninitialized-slot-error"));
 	end-body(builder);
       end;
     end;

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.35 1995/06/04 22:55:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.36 1995/06/06 00:29:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -914,5 +914,12 @@ define method make-error-operation
   make-unknown-call(builder, dylan-defn-leaf(builder, #"error"), #f,
 		    pair(make-literal-constant(builder, as(<ct-value>, msg)),
 			 as(<list>, args)));
+end method;
+
+define method make-error-operation
+    (builder :: <fer-builder>, symbol :: <symbol>, #rest args)
+    => res :: <operation>;
+  make-unknown-call(builder, dylan-defn-leaf(builder, symbol), #f,
+		    as(<list>, args));
 end method;
 

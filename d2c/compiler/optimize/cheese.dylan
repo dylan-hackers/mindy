@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.76 1995/06/05 21:14:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.77 1995/06/06 00:29:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1242,7 +1242,7 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, "Slot is not initialized"));
+	 make-error-operation(builder, #"uninitialized-slot-error"));
       end-body(builder);
     end;
     let value = make-local-var(builder, slot.slot-getter.variable-name,
@@ -1260,7 +1260,7 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, "Slot is not initialized"));
+	 make-error-operation(builder, #"uninitialized-slot-error"));
       end-body(builder);
     end;
     insert-before(component, call-assign, builder-result(builder));
@@ -3011,8 +3011,8 @@ define method build-xep
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder,
-	    "Wrong number of arguments.  Wanted exactly %d but got %d",
+	   (builder, #"wrong-number-of-arguments-error",
+	    make-literal-constant(builder, as(<ct-value>, #t)),
 	    wanted-leaf, nargs-leaf));
       end-body(builder);
       build-assignment(builder, policy, source, args-leaf,
@@ -3029,9 +3029,9 @@ define method build-xep
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	     (builder,
-	      "Wrong number of arguments.  Wanted at least %d but only got %d",
-	      wanted-leaf, nargs-leaf));
+	   (builder, #"wrong-number-of-arguments-error",
+	    make-literal-constant(builder, as(<ct-value>, #f)),
+	    wanted-leaf, nargs-leaf));
 	build-else(builder, policy, source);
 	end-body(builder);
       end;
@@ -3049,7 +3049,7 @@ define method build-xep
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	     (builder, "Odd number of keyword/value arguments."));
+	     (builder, #"odd-number-of-keyword/value-arguments-error"));
 	build-else(builder, policy, source);
 	end-body(builder);
       end;
@@ -3109,10 +3109,11 @@ define method build-xep
       method build-next-key (remaining)
 	if (empty?(remaining))
 	  unless (generic-entry? | signature.all-keys?)
-	    build-assignment(key-dispatch-builder, policy, source, #(),
-			     make-error-operation(key-dispatch-builder,
-						  "Bogus keyword: %=",
-						  key-var));
+	    build-assignment
+	      (key-dispatch-builder, policy, source, #(),
+	       make-error-operation(key-dispatch-builder,
+				    #"unrecognized-keyword-error",
+				    key-var));
 	  end;
 	else
 	  let key-info = remaining.head;

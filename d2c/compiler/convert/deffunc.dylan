@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.27 1995/06/05 23:20:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.28 1995/06/06 00:29:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -619,8 +619,10 @@ define method build-discriminator-tree
      method-set :: <method-set>, gf :: <generic-definition>)
     => ();
   if (empty?(method-set.all-methods))
-    build-assignment(builder, policy, source, results,
-		     make-error-operation(builder, "No applicable methods."));
+    build-assignment
+      (builder, policy, source, results,
+       make-error-operation
+	 (builder, #"no-applicable-methods-error"));
   elseif (empty?(remaining-discriminations))
     let ordered = method-set.ordered-methods;
     let ordered-ctvs = map(ct-value, ordered.tail);
@@ -665,7 +667,7 @@ define method build-discriminator-tree
       build-assignment
 	(builder, policy, source, results,
 	 make-error-operation
-	   (builder, "Ambiguous method: %s",
+	   (builder, #"ambiguous-method-error",
 	    make-literal-constant(builder,
 				  make(<literal-list>,
 				       contents: ambig-ctvs,

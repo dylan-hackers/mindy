@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.28 1995/06/05 20:58:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.29 1995/06/06 00:29:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -449,6 +449,44 @@ define open generic pop-unwind-protect () => ();
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;
+
+
+// Internal errors.
+
+define method uninitialized-slot-error () => res :: type-or();
+  error("Slot is not initialized.");
+end;
+
+define method missing-required-init-keyword-error
+    (keyword :: <symbol>, class :: <class>) => res :: type-or();
+  error("Missing required-init-keyword %= in make of %=", keyword, class);
+end;
+
+define method wrong-number-of-arguments-error
+    (fixed? :: <boolean>, wanted :: <fixed-integer>, got :: <fixed-integer>)
+    => res :: type-or();
+  error("Wrong number of arguments.  Wanted %s %d but got %d.",
+	if (fixed?) "exactly" else "at least" end,
+	wanted, got);
+end;
+
+define method odd-number-of-keyword/value-arguments-error ()
+    => res :: type-or();
+  error("Odd number of keyword/value arguments.");
+end;
+
+define method unrecognized-keyword-error (key :: <symbol>) => res :: type-or();
+  error("Unrecognized keyword: %=.", key);
+end;
+
+define method no-applicable-methods-error () => res :: type-or();
+  error("No applicable methods.");
+end;
+
+define method ambiguous-method-error (methods :: <list>) => res :: type-or();
+  error("It is ambiguous which of these methods is most specific:\n  %s",
+	methods);
+end;
 
 
 // Methods that are nice to have by default.
