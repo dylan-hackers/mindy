@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.8 1994/12/16 16:37:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.9 1994/12/17 02:17:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -405,8 +405,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   add-binding(lexenv, name, exit);
   build-let(builder, lexenv.lexenv-policy, source, exit,
 	    make-exit-function(builder, blk));
-  fer-convert-body(builder, form.exit-body, lexenv, want, datum);
+  let res = fer-convert-body(builder, form.exit-body, lexenv, want, datum);
   end-body(builder);
+  res;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <if>,
@@ -464,7 +465,18 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
 		 make-mv-operation(builder, list(function, argument)));
 end;
 
-// ### <uwp>?
+define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  let res = fer-convert-body(builder, form.uwp-body,
+			     make(<lexenv>, inside: lexenv),
+			     want, datum);
+  fer-convert-body(builder, form.uwp-cleanup,
+		   make(<lexenv>, inside: lexenv),
+		   #"nothing", #f);
+  res;
+end;
 
 
 // Method conversion.
