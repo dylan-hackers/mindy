@@ -456,6 +456,7 @@ unary-expr (unary-operator cast-expr)
 ;  Error("Unary-Expr Not Yet Handled.");
 ;%
 
+;; Process a sizeof expression.
 Unary-Expr (<SIZEOF-Token> <Lparen-Token> Type-Name <Rparen-Token>)
   c-type-size(%3);
 %
@@ -1395,7 +1396,7 @@ internal-include-boundary (<end-include-token>)
 
 external-definition (declaration)
   if (%1)
-    parse-progress-report(@0, "Declaration %s.", %1.canonical-name);
+    parse-progress-report(@0, "Declaration: %s", format-c-declaration(%1));
   end if;
   %1;
 %
@@ -1610,7 +1611,7 @@ end;
 //
 define method parse-type
     (type :: <string>, old-state :: <parse-file-state>)
- => (result :: <declaration>);
+ => (result :: <c-declaration>);
   let tokenizer = make(<tokenizer>, name: concatenate("Type name: ", type),
 		       typedefs-from: old-state.tokenizer, contents: type);
   unget-token(tokenizer, make(<alien-name-token>,
