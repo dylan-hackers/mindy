@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/expand.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/expand.c,v 1.2 1998/08/10 15:05:47 housel Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -1342,6 +1342,7 @@ static boolean expand_let_constituent(struct constituent **ptr,
 		struct body *let_body = let->body;
 		let->body = make_body();
 		add_constituent(body, (struct constituent *)let);
+		let->next = NULL;
 		for (; p != NULL; p = p->next) {
 		    if (p->type_temp) {
 			struct symbol *temp = gensym();
@@ -1369,6 +1370,7 @@ static boolean expand_let_constituent(struct constituent **ptr,
 		expr = make_function_call(make_varref(id(check_type)), args);
 		bindings->expr = expr;
 		add_constituent(body, (struct constituent *)let);
+		let->next = NULL;
 	    }
 	    *ptr = make_expr_constituent(make_body_expr(body));
 	    return TRUE;
