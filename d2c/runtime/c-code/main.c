@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.15 2001/05/31 20:04:24 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.16 2002/03/17 03:29:51 gabor Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -152,7 +152,7 @@ int gdb_invoke_function (descriptor_t fun, int count)
   return result_count;
 }
 
-gdb_print_heapobj (struct heapobj *obj)
+void gdb_print_heapobj (struct heapobj *obj)
 {
   descriptor_t tmp;
   tmp.heapptr = obj;
@@ -160,7 +160,7 @@ gdb_print_heapobj (struct heapobj *obj)
   dylanZdylan_visceraZgdb_print_object_METH((descriptor_t *)GC_malloc(10000), tmp);
 }
 
-gdb_print_genobj (descriptor_t obj)
+void gdb_print_genobj (descriptor_t obj)
 {
   dylanZdylan_visceraZgdb_print_object_METH((descriptor_t *)GC_malloc(10000), obj);
 }
