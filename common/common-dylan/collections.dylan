@@ -16,30 +16,6 @@ keys-and-values:
 end macro;
 
 //=========================================================================
-//  concatenate!
-//=========================================================================
-//  Concatenate two sequences destructively. This works like concatenate,
-//  but is allowed to destructively modify it's arguments.
-//
-//  For now, we just alias this to 'concatenate', which is correct but
-//  inefficient behavior.
-//
-//  XXX - Add methods for specific built-in collection types.
-//  XXX - Why no 'concatenate-as!'?
-
-define open generic concatenate!
-    (sequence :: <sequence>, #rest more-sequences)
- => (result :: <sequence>);
-
-define method concatenate!
-    (sequence :: <sequence>, #rest more-sequences)
- => (result :: <sequence>)
-  apply(concatenate, sequence, more-sequences);
-end method concatenate!;
-
-
-
-//=========================================================================
 //  position
 //=========================================================================
 //  Find the key corresponding to a particular value in a sequence.
