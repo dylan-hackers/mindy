@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.9 2003/06/25 21:57:34 brent Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.10 2003/07/01 17:58:52 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -113,9 +113,6 @@ define sealed inline method \^ (b :: <double-float>, x :: <real>)
 end method;
 */
 
-// Some platforms don't have a dedicated logl for extended float values
-// (Namely Cygwin)
-#if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
 define sealed inline method log
     (x :: <extended-float>, #key base :: <real> = $extended-e)
  => (y :: <extended-float>);
@@ -135,7 +132,6 @@ define sealed inline method log
                    long-double: as(<extended-float>, base));
   end select;
 end method log;
-#endif
 
 define sealed inline method log
     (x :: <double-float>, #key base :: <real> = $double-e)
@@ -193,15 +189,11 @@ define sealed inline method log
   end select;
 end method log;
 
-// Some platforms don't have a dedicated logl for extended float values
-// (Namely Cygwin)
-#if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
 define sealed inline method logn
     (x :: <extended-float>, b :: <real>)
  => (y :: <extended-float>);
   log(x, base: b);
 end method logn;
-#endif
 
 define sealed inline method logn
     (x :: <double-float>, b :: <real>)
