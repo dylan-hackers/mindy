@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.121 1996/05/09 04:40:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.122 1996/06/20 21:09:40 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -68,6 +68,12 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //      entirely dependent upon the type of "thing".
 //
 //========================================================================
+
+// This variable may be set to #t to cause function objects to be
+// emitted in the roots vector for *all* functions.  This is useful
+// for debugging purposes.
+//
+define variable *emit-all-function-objects?* = #f;
 
 
 //========================================================================
@@ -1304,6 +1310,13 @@ define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
   write('\n', file.file-body-stream);
   let ctv = defn.ct-value;
   if (ctv)
+    if (*emit-all-function-objects?*)
+      // It's a bit convoluted, but this seems to be the best way to
+      // insure that a function object is emitted and added to the
+      // roots vector.
+      get-info-for(defn, file);
+      maybe-emit-entries(ctv, file);
+    end if;
     if (defn.generic-defn-sealed?)
       //
       // We dump sealed generic in the local heap instead of the letting them

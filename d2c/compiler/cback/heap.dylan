@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.48 1996/04/15 18:30:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.49 1996/06/20 21:09:40 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -179,6 +179,19 @@ define method build-global-heap
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
+// This string specifies the "descriptor_t" type in enough detail to
+// allow gdb to work with the objects we define.
+//
+define constant $descriptor-type-string
+  = "\t.stabs \"<unknown>\",100,0,0,L$text0000\n"
+    "L$text0000\n"
+    "\t.stabs \"heapptr_t:t32=*33=xsheapobj:\",128,0,6,0\n"
+    "\t.stabs \"descriptor:T34=s8heapptr:32,0,32;dataword:"
+       "35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;\",128,0,0,0\n"
+    "\t.stabs \"descriptor_t:t34\",128,0,14,0\n"
+    "\t.SPACE $PRIVATE$\n"
+    "\t.SUBSPA $DATA$\n\n";
+
 // build-local-heap -- exported.
 //
 // Build a library specific local heap and return the set of objects skipped
@@ -194,6 +207,7 @@ define method build-local-heap
   let prefix = unit.unit-prefix;
   let state = make(<local-state>, stream: stream, 
 		   id-prefix: concatenate(prefix, "_L"));
+  format(stream, "%s", $descriptor-type-string);
   format(stream, "\t.data\n\t.align\t8\n");
 
   format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
@@ -206,6 +220,7 @@ define method build-local-heap
     end if;
     if (name)
       format(stream, "\t.export\t%s, DATA\n%s\n", name, name);
+      format(stream, "\t.stabs\t\"%s:G34\",32,0,1,0\n", name);
     end if;
     spew-reference(root.root-init-value, *general-rep*,
 		   stringify(prefix, "_roots[", index, ']'),

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.68 1996/05/08 15:57:06 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.69 1996/06/20 21:09:40 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -894,6 +894,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	    log-dependencies := #t;
 	  'd' =>
 	    *break-on-compiler-errors* := #t;
+	  'g' =>
+	    *emit-all-function-objects?* := #t;
 	  otherwise =>
 	    error("Bogus switch: %s", arg);
 	end select;
