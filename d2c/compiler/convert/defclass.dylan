@@ -1,9 +1,9 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.45 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.46 1996/01/03 21:37:02 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-define class <class-definition> (<abstract-constant-definition>)
+define class <real-class-definition> (<class-definition>)
   //
   // The <cclass> for this class definition, #f if unknown (e.g. non-constant
   // superclasses), #"not-computed-yet" if we haven't computed it yet, or
@@ -23,11 +23,11 @@ define class <class-definition> (<abstract-constant-definition>)
     init-value: #"not-computed-yet";
 end;
 
-define method defn-type (defn :: <class-definition>) => res :: <cclass>;
+define method defn-type (defn :: <real-class-definition>) => res :: <cclass>;
   dylan-value(#"<class>");
 end;
 
-define class <local-class-definition> (<class-definition>)
+define class <local-class-definition> (<real-class-definition>)
   // 
   // Vector of <expression>s for the superclasses.
   slot class-defn-supers :: <simple-object-vector>,
@@ -55,7 +55,7 @@ end;
 define class <slot-defn> (<object>)
   //
   // The class that introduces this slot.
-  slot slot-defn-class :: <class-definition>;
+  slot slot-defn-class :: <real-class-definition>;
   //
   // #t if this slot is sealed, #f if not.  This really means that the getter
   // generic function is sealed on this class and the setter (if any) is sealed
@@ -114,7 +114,7 @@ end;
 define class <override-defn> (<object>)
   //
   // The class that introduces this override.
-  slot override-defn-class :: <class-definition>;
+  slot override-defn-class :: <real-class-definition>;
   //
   // The name of the getter.
   slot override-defn-getter-name :: <name>,
@@ -412,9 +412,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 		  init-function: init-function));
 
       #"keyword" =>
-	unless (instance?(option.classopt-name, <literal-ref>)
-		  & instance?(option.classopt-name.litref-literal,
-			      <literal-symbol>))
+	unless (instance?(option.classopt-name, <keyword-token>))
 	  compiler-error("Bogus keyword: %=", option.classopt-name);
 	end;
 	let (required?, type, init-value, init-function)
@@ -493,7 +491,7 @@ end;
 // <cclass> object.  If we can't compute that for some reason, return #f
 // to indicate that this class doesn't have a compile-time value.
 
-define method ct-value (defn :: <class-definition>)
+define method ct-value (defn :: <real-class-definition>)
     => res :: false-or(<cclass>);
   select (defn.class-defn-cclass)
     #"not-computed-yet" =>
@@ -507,7 +505,7 @@ define method ct-value (defn :: <class-definition>)
   end;
 end;
 
-define method compute-cclass (defn :: <class-definition>)
+define method compute-cclass (defn :: <real-class-definition>)
     => res :: false-or(<cclass>);
   block (return)
     //
@@ -828,7 +826,7 @@ end;
 
 
 define method class-defn-defered-evaluations-function
-    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+    (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
   if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
     defn.%class-defn-defered-evaluations-function
       := if (block (return)
@@ -879,7 +877,7 @@ define method class-defn-defered-evaluations-function
 end;
 
 define method class-defn-maker-function
-    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+    (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
   if (defn.%class-defn-maker-function == #"not-computed-yet")
     defn.%class-defn-maker-function
       := block (return)
@@ -2135,7 +2133,7 @@ end;
 // dump-od{<define-class-tlf>}
 //
 // We dump the a define-binding-tlf to establish the name of the
-// <class-definition>.  Then we dump all the accessor method definitions
+// <real-class-definition>.  Then we dump all the accessor method definitions
 // to make sure they get re-instantiated.
 //
 define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
@@ -2153,18 +2151,18 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
   end;
 end;
 
-// These methods act like getters/setters on the <class-definition>, but
+// These methods act like getters/setters on the <real-class-definition>, but
 // really get/set slots in the cclass.  They are used so that we can dump
 // cclass objects without having to reference non-type things.
 
 define method class-defn-new-slot-infos
-    (defn :: <class-definition>) => res :: <simple-object-vector>;
+    (defn :: <real-class-definition>) => res :: <simple-object-vector>;
   let class = defn.class-defn-cclass;
   class & class.new-slot-infos;
 end;
 
 define method class-defn-new-slot-infos-setter
-    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    (vec :: false-or(<simple-object-vector>), defn :: <real-class-definition>)
     => ();
   if (vec)
     defn.class-defn-cclass.new-slot-infos := vec;
@@ -2172,13 +2170,13 @@ define method class-defn-new-slot-infos-setter
 end;
 
 define method class-defn-all-slot-infos
-    (defn :: <class-definition>) => res :: <simple-object-vector>;
+    (defn :: <real-class-definition>) => res :: <simple-object-vector>;
   let class = defn.class-defn-cclass;
   class & class.all-slot-infos;
 end;
 
 define method class-defn-all-slot-infos-setter
-    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    (vec :: false-or(<simple-object-vector>), defn :: <real-class-definition>)
     => ();
   if (vec)
     defn.class-defn-cclass.all-slot-infos := vec;
@@ -2186,13 +2184,13 @@ define method class-defn-all-slot-infos-setter
 end;
 
 define method class-defn-override-infos
-    (defn :: <class-definition>) => res :: <simple-object-vector>;
+    (defn :: <real-class-definition>) => res :: <simple-object-vector>;
   let class = defn.class-defn-cclass;
   class & class.override-infos;
 end;
 
 define method class-defn-override-infos-setter
-    (vec :: false-or(<simple-object-vector>), defn :: <class-definition>)
+    (vec :: false-or(<simple-object-vector>), defn :: <real-class-definition>)
     => ();
   if (vec)
     defn.class-defn-cclass.override-infos := vec;
@@ -2200,13 +2198,13 @@ define method class-defn-override-infos-setter
 end;
 
 define method class-defn-vector-slot
-    (defn :: <class-definition>) => res :: false-or(<vector-slot-info>);
+    (defn :: <real-class-definition>) => res :: false-or(<vector-slot-info>);
   let class = defn.class-defn-cclass;
   class & class.vector-slot;
 end;
 
 define method class-defn-vector-slot-setter
-    (info :: false-or(<vector-slot-info>), defn :: <class-definition>)
+    (info :: false-or(<vector-slot-info>), defn :: <real-class-definition>)
     => ();
   let class = defn.class-defn-cclass;
   if (class)
@@ -2230,10 +2228,10 @@ define constant $class-definition-slots
 		     class-defn-vector-slot, #f,
 		       class-defn-vector-slot-setter));
 
-add-make-dumper(#"class-definition", *compiler-dispatcher*, <class-definition>,
+add-make-dumper(#"class-definition", *compiler-dispatcher*, <real-class-definition>,
 		$class-definition-slots, load-external: #t,
 		load-side-effect:
-		  method (defn :: <class-definition>) => ();
+		  method (defn :: <real-class-definition>) => ();
 		    let class = defn.class-defn-cclass;
 		    if (class)
 		      class.class-defn := defn;
