@@ -2,7 +2,7 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.3 2000/10/22 21:09:56 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.4 2000/11/29 04:28:32 dauclair Exp $
 
 //======================================================================
 //
@@ -93,6 +93,7 @@ define module time-internal
     // Functions
     get-universal-time,
     get-decoded-time,
+    get-local-timezone,
     decode-time,
     encode-time,
     encodable-time?,
@@ -109,8 +110,8 @@ define module Time
 	     <month>, <year>, <timezone>,
 	     <decoded-time>, seconds, minutes, hours, day-of-week,
 	     day-of-month, month, year, timezone, daylight-savings-time?,
-	     get-universal-time, get-decoded-time, decode-time,
-	     encode-time, encodable-time?},
+	     get-universal-time, get-decoded-time, get-local-timezone,
+	     decode-time, encode-time, encodable-time?},
     export: all;
 end module Time;
 

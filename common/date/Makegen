@@ -1,0 +1,6 @@
+&makegen_include("../common-Makegen");
+
+$D2CFLAGS = "$D2CFLAGS -L../time -L../streams";
+
+&emit_library_rule("date", '$(BUILDROOT)/force.timestamp', '',
+                   'compile', 'no-mindy', 'install');

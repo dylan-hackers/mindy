@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.6 2000/01/24 04:55:36 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.7 2000/11/29 04:28:32 dauclair Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright: see below
@@ -32,6 +32,8 @@ define library system
 
   use common-dylan;
   use file-system, export: all;
+  use date, export: all;
+
   export
     operating-system;
 end library;
