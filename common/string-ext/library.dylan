@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.3 1996/07/12 16:43:29 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.4 1996/08/10 20:25:42 nkramer Exp $
 
 //======================================================================
 //
@@ -35,11 +35,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dyla
 define library string-extensions
   use dylan;
   use collection-extensions;
-  // We've moved case-insensitive-equal to table-extensions
   use table-extensions;
   export
     string-conversions, character-type, string-hacking,
-    substring-search, regular-expressions;
+    substring-search, %parse-string, %do-replacement;
 end library string-extensions;
 
 
@@ -57,11 +56,11 @@ define module character-type
 end module character-type;
 
 
-define module parse-string
+define module %parse-string
   use dylan;
   use extensions;
   export <parse-string>, consume, lookahead, parse-string-done?;
-end module parse-string;
+end module %parse-string;
 
 
 // Contains various useful string and character functions
@@ -70,7 +69,7 @@ define module string-hacking
   use dylan;
   use extensions;
   use character-type;
-  use parse-string;
+  use %parse-string;
   // Re-export case-insensitive-equal from table-extensions
   use table-extensions,
     import: {case-insensitive-equal},
@@ -100,13 +99,13 @@ define module string-conversions
 end module string-conversions;
 
 
-define module do-replacement
+define module %do-replacement
   use dylan;
   use extensions;
   use character-type;
   use string-conversions;
   export do-replacement;
-end module do-replacement;
+end module %do-replacement;
 
 
 // Robert's Boyer-Moore implementation
@@ -116,29 +115,8 @@ define module substring-search
   use extensions;
   use subseq;
   use string-hacking;
-  use do-replacement;
+  use %do-replacement;
   export
     substring-position, make-substring-positioner, 
     substring-replace, make-substring-replacer;
 end module substring-search;
-
-
-define module regular-expressions
-  use dylan;
-  use extensions;
-  use string-conversions;
-  use character-type;
-  use string-hacking;
-  use subseq;
-  use do-replacement;
-  use parse-string;
-  use substring-search;
-  export
-    regexp-position, make-regexp-positioner,
-    regexp-replace, make-regexp-replacer,
-    translate, make-translator,
-    split, make-splitter,
-    join,
-    <illegal-regexp>;
-end module regular-expressions;
-
