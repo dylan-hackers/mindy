@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.1 1994/03/24 21:48:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.2 1994/03/30 05:57:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -228,10 +228,12 @@ static void print_return_type_list(struct return_type_list *l, int depth)
     for (i = 0, r = l->req_types; r != NULL; i++, r = r->next)
 	if (r->temp)
 	    printf("%sresult %d: %s\n", indent(depth+1), i, r->temp->name);
-	else {
+	else if (r->type) {
 	    printf("%sresult %d:\n", indent(depth+1), i);
 	    print_expr(r->type, depth+2);
 	}
+	else
+	    printf("%sresult %d.\n", indent(depth+1), i);
     if (l->rest_temp)
 	printf("%s#rest %s\n", indent(depth+1), l->rest_temp->name);
     else if (l->rest_type) {
@@ -415,7 +417,7 @@ static void print_for_expr(struct for_expr *e, int depth)
 
     printf("%sfor\n", indent(depth));
     for (clause=e->clauses, i=0; clause != NULL; clause=clause->next, i++) {
-	print_param(clause->var, depth+1, "clause", i);
+	print_param_list(clause->vars, depth+1);
 	switch (clause->kind) {
 	  case for_EQUAL_THEN:
 	    {
