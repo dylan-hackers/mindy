@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.10 1996/09/15 16:49:15 nkramer Exp $
 
 //======================================================================
 //
@@ -122,7 +122,8 @@ define module define-interface
   use extensions;		// required for "main" (as well as key-exists?)
 #if (~mindy)
   use System,
-     import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
+     import: {import-string, exit,
+	      copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
 	      pointer-deref};
 #endif
 

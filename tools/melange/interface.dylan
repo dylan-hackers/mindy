@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.11 1996/09/15 16:49:15 nkramer Exp $
 
 //======================================================================
 //
@@ -461,7 +461,6 @@ end method process-define-interface;
 // to print out a "help" line instead.
 //
 define method main (program, #rest args)
-//define method main (program-name :: <string>, #rest args)
   let in-file = #f;
   let out-file = #f;
   let verbose = #f;
@@ -498,6 +497,10 @@ define method main (program, #rest args)
   if (in-file)
     process-interface-file(in-file, out-file | *standard-output*,
 			   verbose: verbose);
+    exit(exit-code: 0);  // ### seems to be necessary, even though I'd
+                         // think all Dylan programs would exit with
+                         // exit code 0 if they never called exit() at
+                         // all
   else
     write(*standard-error*,
 	  "usage: melange [options....] input-file [output-file]\n"
@@ -512,19 +515,6 @@ define method main (program, #rest args)
 end method main;
 
 #if (~mindy)
-define method import-string (ptr :: <raw-pointer>)
-    => string :: <byte-string>;
-  for (len :: <integer> from 0,
-       until: zero?(pointer-deref(#"char", ptr, len)))
-  finally
-    let res = make(<byte-string>, size: len);
-    for (index :: <integer> from 0 below len)
-      res[index] := as(<character>, pointer-deref(#"char", ptr, index));
-    end for;
-    res;
-  end for;
-end method import-string;
-
 define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
   let args = make(<vector>, size: argc);
   for (index :: <integer> from 0 below argc)
