@@ -1,16 +1,10 @@
-$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
-    . '-L../../runtime/dylan -L../../runtime/streams '
-    . '-L../../runtime/standard-io '
-    . '-L../../runtime/print -L../../runtime/format '
-    . '-L../../runtime/random -L../../runtime/coll-ext '
-    . '-L../../runtime/string-ext -L../../runtime/table-ext';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+do "../common-Makegen";
 
 do d2c_library("compiler-base", "base", 
-               "base-exports params utils od-format dylan-dump ctv"
-               . " source tokens errors header names defns variables"
+               "base-exports params utils file-system od-format dylan-dump"
+               . " ctv source tokens errors header names defns variables"
                . " policy ctype rep cclass type-dump c-rep transdef"
-               . " ctfunc data-flow control-flow signature ini-files"
+               . " ctfunc data-flow control-flow signature"
                . " target");
 
 do emit_library_rule(
