@@ -35,4 +35,4 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <frame> (<window>) end class;
 
 define-widget(<frame>, "frame",
-	      #"geometry", #"height", #"width");
+	      #"height", #"width", #"colormap", #"visual");
