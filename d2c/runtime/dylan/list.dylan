@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.4 1995/12/09 02:49:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.5 1996/01/08 22:15:59 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -77,6 +77,46 @@ define inline method forward-iteration-protocol (list :: <list>)
 	   state;
 	 end);
 end;
+
+define sealed method element
+    (list :: <list>, index :: <fixed-integer>, #key default = $not-supplied)
+ => (element :: <object>);
+  // This method should work on unbounded lists.
+  local method find-element (l :: <list>, index :: <fixed-integer>)
+	 => (found? :: <boolean>, value);
+	  if (l == #())
+	    values(#f, #f);
+	  elseif (index == 0)
+	    values(#t, l.head);
+	  else
+	    find-element(l.tail, index - 1);
+	  end if;
+	end method find-element;
+  let (found?, value)
+    = if (index < 0) values(#f, #f) else find-element(list, index) end if;
+  if (found?)
+    value;
+  elseif (default == $not-supplied)
+    element-error(list, index);
+  else
+    default;
+  end if;
+end method element;
+
+define sealed method element-setter
+    (element :: <object>, list :: <list>, index :: <fixed-integer>)
+ => (element :: <object>);
+  if (index < 0 | list == #())
+    element-error(list, index);
+  else
+    for (l :: <list> = list then l.tail,
+	 i :: <fixed-integer> from 0 below index)
+      if (l == #()) element-error(list, index) end if;
+    finally
+      l.head := element;
+    end for;
+  end if;
+end method element-setter;
 
 define flushable inline method pair (head, tail)
     => res :: <pair>;
