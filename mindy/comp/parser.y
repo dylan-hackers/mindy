@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.9 1994/06/11 02:20:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.10 1994/06/11 16:32:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1020,7 +1020,7 @@ prefix_option:
 import_option:
 	IMPORT_OPTION ALL
 	{ $$ = make_use_option(useopt_IMPORT_ALL); free($1); free($2); }
-    |	IMPORT_OPTION LPAREN imports_opt RPAREN	
+    |	IMPORT_OPTION LBRACE imports_opt RBRACE
 	{ $$ = (struct use_option *) $3; free($1); free($2); free($4); }
 ;
 
@@ -1053,10 +1053,10 @@ export_option:
 ;
 
 rename_option:
-	RENAME_OPTION LPAREN RPAREN
+	RENAME_OPTION LBRACE RBRACE
 	{ $$ = make_rename_option(make_renamings());
 	  free($1); free($2); free($3); }
-    |	RENAME_OPTION LPAREN rename_specs RPAREN
+    |	RENAME_OPTION LBRACE rename_specs RBRACE
 	{ $$ = make_rename_option($3); free($1); free($2); free($4); }
 ;
 
@@ -1068,8 +1068,8 @@ rename_specs:
 ;
 
 variable_name_set:
-	LPAREN RPAREN	{ $$ = make_variable_names(); free($1); free($2); }
-    |	LPAREN variable_names RPAREN
+	LBRACE RBRACE	{ $$ = make_variable_names(); free($1); free($2); }
+    |	LBRACE variable_names RBRACE
 	{ $$ = $2; free($1); free($3); }
 ;
 

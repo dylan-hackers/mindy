@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.32 1994/06/11 15:59:07 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.33 1994/06/11 16:33:19 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -92,7 +92,7 @@ end Builtin-Stuff;
 define module Dylan
   use Builtin-Stuff,
     import: all,
-    export: (\*, \+, \-, \/, \<, \<=, \=, \==, \~=,
+    export: {\*, \+, \-, \/, \<, \<=, \=, \==, \~=,
 	     <array>,
 	     <byte-string>,
 	     <character>, <class>, <collection>, <complex>,
@@ -136,7 +136,7 @@ define module Dylan
 	     subtype?,
 	     tail, tail-setter, truncate, truncate/,
 	     union,
-	     values, vector);
+	     values, vector};
   export
     \>=, \>, \:=, \|, \&,
     <abort>,
@@ -181,11 +181,11 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: (main, exit, on-exit,
+    import: {main, exit, on-exit,
 	     format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object, 
-	     <equal-table>, <value-table>, sequence-hash, string-hash),
+	     <equal-table>, <value-table>, sequence-hash, string-hash},
     export: all;
   export
     one-of, type-or, ignore;
@@ -194,14 +194,14 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: (<buffer>, copy-bytes),
+    import: {<buffer>, copy-bytes},
     export: all;
 end System;
 
 define module File-Descriptors
   use Dylan;
   use Builtin-Stuff,
-    import: (fd-close, fd-error-string, fd-input-available?,
+    import: {fd-close, fd-error-string, fd-input-available?,
 	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
 
 	     // Lseek call.
@@ -239,7 +239,7 @@ define module File-Descriptors
 	     // Write errors (that are not also open, close, or read errors).
 	     //
 	     EPIPE,
-	     EFBIG),
+	     EFBIG},
     export: all;
 end File-Descriptors;
 
@@ -247,10 +247,10 @@ define module Threads
   use Dylan;
   use Extensions;
   use Builtin-Stuff,
-    import: (<thread>, spawn-thread, current-thread, kill-thread,
+    import: {<thread>, spawn-thread, current-thread, kill-thread,
 	     <lock>, <spin-lock>,
 	     locked?, grab-lock, release-lock,
-	     <event>, wait-for-event, signal-event, broadcast-event),
+	     <event>, wait-for-event, signal-event, broadcast-event},
     export: all;
   export
     <multi-lock>, <semaphore>;
