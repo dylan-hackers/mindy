@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.2 2000/01/24 04:56:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.3 2001/01/09 22:08:43 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -258,7 +258,8 @@ define method extract-line
     (source :: <source-file>, line-start :: <integer>) => res :: <byte-string>;
   let contents = source.contents;
   for (index from line-start below contents.size,
-       until: contents[index] == as(<integer>, '\n'))
+       until: contents[index] == as(<integer>, '\n')
+	      | contents[index] == as(<integer>, '\r'))
   finally
     let len = index - line-start;
     let result = make(<byte-string>, size: len);
