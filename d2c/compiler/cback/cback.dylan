@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.15 2000/10/20 14:59:04 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.16 2000/10/30 09:07:13 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -2490,7 +2490,7 @@ define method emit-assignment
       format(stream, "if (!%s_initialized) abort();\n", name);
     end;
   end;
-  deliver-result(defines, name, rep, #f, file);
+  deliver-result(defines, name, rep, #t, file);
 end;
 
 define method emit-assignment
