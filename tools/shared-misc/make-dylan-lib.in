@@ -17,24 +17,23 @@ chdir $libname or die "Can't chdir to directory $libname: $!";
 
 &write_file("$libname.lid", <<"EOD");
 library: $libname
-
-$libname-exports.dylan
-$libname.dylan
+files:
+  $libname-exports
+  $libname
 EOD
 
 &write_file("$libname-exports.dylan", <<"EOD");
 module: dylan-user
 
 define library $libname
-  use dylan;
-  use format-out;
+  use common-dylan;
+  use io;
 
   export $libname;
 end library;
 
 define module $libname
-  use dylan;
-  use extensions;
+  use common-dylan;
   use format-out;
 
   export foo;

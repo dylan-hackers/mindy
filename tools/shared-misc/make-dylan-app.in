@@ -18,30 +18,22 @@ chdir $appname or die "Can't chdir to directory $appname: $!";
 &write_file("$appname.lid", <<"EOD");
 library: $appname
 executable: $appname
-entry-point: $appname:%main
-
-$appname-exports.dylan
-$appname.dylan
+files:
+  $appname-exports
+  $appname
 EOD
 
 &write_file("$appname-exports.dylan", <<"EOD");
 module: dylan-user
 
 define library $appname
-  use dylan;
-  use format-out;
-  //use streams;
-  //use standard-io;
-  //use format;
+  use common-dylan;
+  use io;
 end library;
 
 define module $appname
-  use dylan;
-  use extensions;
+  use common-dylan;
   use format-out;
-  //use streams;
-  //use standard-io;
-  //use format;
 end module;
 EOD
 
@@ -51,10 +43,13 @@ synopsis:
 author: 
 copyright: 
 
-define method main(appname, #rest arguments)
-  format-out("Hello, world from $appname!\\n");
-  exit(exit-code: 0);
-end method main;
+define function main(name, arguments)
+  format-out("Hello, world!\\n");
+  exit-application(0);
+end function main;
+
+// Invoke our main() function.
+main(application-name(), application-arguments());
 EOD
 
 &write_file("Makefile", <<"EOD");
