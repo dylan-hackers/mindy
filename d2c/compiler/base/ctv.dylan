@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.26 1996/02/16 03:45:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.27 1996/02/16 13:29:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -657,7 +657,7 @@ define /* exported */ variable *compiler-dispatcher*
   = make(<dispatcher>);
 
 
-define /* exported */ generic merge-ctv-infos (old-info, new-info) => ();
+define /* exported */ open generic merge-ctv-infos (old-info, new-info) => ();
 
 
 
