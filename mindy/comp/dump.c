@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.10 1994/04/28 04:05:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.11 1994/04/28 19:23:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+#include <limits.h>
 
 #include "mindycomp.h"
 #include "src.h"
@@ -48,7 +49,6 @@ inline static void dump_byte(unsigned byte)
 }
 
 #define dump_op dump_byte
-#define dump_int1 dump_byte
 
 inline static void dump_bytes(void *ptr, int bytes)
 {
@@ -61,14 +61,19 @@ inline static void dump_bytes(void *ptr, int bytes)
     }
 }
 
-inline static void dump_int2(short value)
+inline static void dump_short(short value)
 {
-    dump_bytes(&value, 2);
+    dump_bytes(&value, sizeof(value));
 }
 
-inline static void dump_int4(int value)
+inline static void dump_int(int value)
 {
-    dump_bytes(&value, 4);
+    dump_bytes(&value, sizeof(value));
+}
+
+inline static void dump_long(long value)
+{
+    dump_bytes(&value, sizeof(value));
 }
 
 
@@ -87,13 +92,13 @@ static int dump_store(void)
 
 static void dump_ref(int handle)
 {
-    if (handle < (1<<16)) {
+    if (handle <= USHRT_MAX) {
 	dump_op(fop_SHORT_REF);
-	dump_int2(handle);
+	dump_short(handle);
     }
     else {
 	dump_op(fop_REF);
-	dump_int4(handle);
+	dump_int(handle);
     }
 }
 
@@ -108,24 +113,28 @@ static void dump_string_guts(int short_op, int long_op, char *str, int length)
     }
     else {
 	dump_op(long_op);
-	dump_int4(length);
+	dump_int(length);
     }
     dump_bytes(str, length);
 }
 
 static void dump_integer(long value)
 {
-    if ((-1<<7) <= value && value < (1<<7)) {
-	dump_op(fop_SIGNED_8);
-	dump_int1(value);
+    if (SCHAR_MIN <= value && value <= SCHAR_MAX) {
+	dump_op(fop_SIGNED_BYTE);
+	dump_byte(value);
     }
-    else if ((-1<<15) <= value && value < (1<<15)) {
-	dump_op(fop_SIGNED_16);
-	dump_int2(value);
+    else if (SHRT_MIN <= value && value <= SHRT_MAX) {
+	dump_op(fop_SIGNED_SHORT);
+	dump_short(value);
+    }
+    else if (INT_MIN <= value && value <= INT_MAX) {
+	dump_op(fop_SIGNED_INT);
+	dump_int(value);
     }
     else {
-	dump_op(fop_SIGNED_32);
-	dump_int4(value);
+	dump_op(fop_SIGNED_LONG);
+	dump_long(value);
     }
 }
 
@@ -260,13 +269,13 @@ static void dump_vector_header(int length)
 	dump_op(fop_VECTORN);
 	if (length-9 < 254)
 	    dump_byte(length-9);
-	else if (length-9-254 < (1<<16)) {
+	else if (length-9-254 <= USHRT_MAX) {
 	    dump_byte(254);
-	    dump_int2(length-9-254);
+	    dump_short(length-9-254);
 	}
 	else {
 	    dump_byte(255);
-	    dump_int4(length-9-254-(1<<16));
+	    dump_int(length-9-254-USHRT_MAX-1);
 	}
 	break;
     }
@@ -379,12 +388,12 @@ static void dump_component(struct component *c)
     if (c->nconstants < 256 && c->bytes < (1<<16)) {
 	dump_op(fop_SHORT_COMPONENT);
 	dump_byte(c->nconstants);
-	dump_int2(c->bytes);
+	dump_short(c->bytes);
     }
     else {
 	dump_op(fop_COMPONENT);
-	dump_int4(c->nconstants);
-	dump_int4(c->bytes);
+	dump_int(c->nconstants);
+	dump_int(c->bytes);
     }
 
     if (c->debug_name)
@@ -433,15 +442,15 @@ static void dump_method(struct method *method)
     for (over = method->closes_over; over != NULL; over = over->next)
 	nclosure_vars++;
     
-    if (param_info < 256 && nclosure_vars) {
+    if (param_info < 256 && nclosure_vars < 256) {
 	dump_op(fop_SHORT_METHOD);
 	dump_byte(param_info);
 	dump_byte(nclosure_vars);
     }
     else {
 	dump_op(fop_METHOD);
-	dump_int4(param_info);
-	dump_int4(nclosure_vars);
+	dump_int(param_info);
+	dump_int(nclosure_vars);
     }
 
     for (k = params->keyword_params; k != NULL; k = k->next) {
@@ -542,25 +551,33 @@ void dump_setup_output(char *source, FILE *file)
 {
     struct stat buf;
     struct timeval tv;
+    int statres;
 
     File = file;
 
     fprintf(File, "# %s (%d.%d) of %s\n", ParseOnly ? "parse" : "compilation",
 	    file_MajorVersion, file_MinorVersion, source);
-    if (stat(source, &buf) >= 0)
+    statres = stat(source, &buf);
+    if (statres >= 0)
 	fprintf(File, "# last modified on %s", ctime(&buf.st_mtime));
     fprintf(File, "# produced with the %s version of mindycomp\n", Version);
     gettimeofday(&tv, NULL);
     fprintf(File, "# at %s", ctime(&tv.tv_sec));
 
     dump_op(fop_HEADER);
-    dump_int2(1);
-    if (ParseOnly)
-	dump_int4(parse_MagicNumber);
-    else
-	dump_int4(dbc_MagicNumber);
     dump_byte(file_MajorVersion);
     dump_byte(file_MinorVersion);
+    dump_byte(sizeof(short));
+    dump_byte(sizeof(int));
+    dump_byte(sizeof(long));
+    dump_byte(sizeof(float));
+    dump_byte(sizeof(double));
+    dump_byte(sizeof(long double));
+    dump_short(1);
+    if (ParseOnly)
+	dump_int(parse_MagicNumber);
+    else
+	dump_int(dbc_MagicNumber);
     dump_op(fop_IN_LIBRARY);
     if (LibraryName)
 	dump_symbol(LibraryName);
@@ -571,8 +588,14 @@ void dump_setup_output(char *source, FILE *file)
 	dump_symbol(ModuleName);
 	ModuleDumped = TRUE;
     }
-    dump_op(fop_SOURCE_FILE);
-    dump_string_guts(fop_SHORT_STRING, fop_STRING, source, strlen(source));
+    if (source != NULL) {
+	dump_op(fop_SOURCE_FILE);
+	if (statres >= 0)
+	    dump_integer(buf.st_mtime);
+	else
+	    dump_integer(0);
+	dump_string_guts(fop_SHORT_STRING, fop_STRING, source, strlen(source));
+    }
 }
 
 void dump_top_level_form(struct component *c)

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.10 1994/04/28 04:01:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.11 1994/04/28 19:24:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -87,6 +87,7 @@ struct load_info {
     boolean done;
     struct library *library;
     struct module *module;
+    obj_t mtime;
     obj_t source_file;
 };
 
@@ -139,7 +140,7 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
     }
 }
 
-void read_ordered_bytes(struct load_info *info, void *ptr, int bytes)
+static void read_ordered_bytes(struct load_info *info, void *ptr, int bytes)
 {
     if (info->swap_bytes) {
 	unsigned char *dst = (unsigned char *)ptr + bytes;
@@ -161,7 +162,7 @@ void read_ordered_bytes(struct load_info *info, void *ptr, int bytes)
 	read_bytes(info, ptr, bytes);
 }
 
-int read_byte(struct load_info *info)
+static int read_byte(struct load_info *info)
 {
     unsigned char *ptr = info->ptr;
 
@@ -174,7 +175,7 @@ int read_byte(struct load_info *info)
     return *ptr;
 }
 
-void unread_byte(struct load_info *info)
+static void unread_byte(struct load_info *info)
 {
     if (info->ptr == info->buffer)
 	lose("unread_byte used while buffer empty.");
@@ -182,24 +183,38 @@ void unread_byte(struct load_info *info)
     info->ptr--;
 }
 
-unsigned short read_uint2(struct load_info *info)
+static unsigned short read_ushort(struct load_info *info)
 {
     unsigned short res;
 
-    assert(sizeof(res) == 2);
-
-    read_ordered_bytes(info, &res, 2);
+    read_ordered_bytes(info, &res, sizeof(res));
 
     return res;
 }
 
-int read_int4(struct load_info *info)
+static short read_short(struct load_info *info)
+{
+    short res;
+
+    read_ordered_bytes(info, &res, sizeof(res));
+
+    return res;
+}
+
+static int read_int(struct load_info *info)
 {
     int res;
 
-    assert(sizeof(int)==4);
+    read_ordered_bytes(info, &res, sizeof(res));
 
-    read_ordered_bytes(info, &res, 4);
+    return res;
+}
+
+static long read_long(struct load_info *info)
+{
+    long res;
+
+    read_ordered_bytes(info, &res, sizeof(res));
 
     return res;
 }
@@ -220,28 +235,22 @@ static obj_t fop_flame(struct load_info *info)
     return NULL;
 }
 
+static void check_size(struct load_info *info, int desired, char *what)
+{
+    int bytes = read_byte(info);
+
+    if (bytes != desired)
+	error("Wrong sized ~A in ~A: should be ~S but is ~S",
+	      make_string(what), make_string(info->name),
+	      make_fixnum(desired), make_fixnum(bytes));
+}
+
 static obj_t fop_header(struct load_info *info)
 {
     short x;
     long magic;
     int major_version, minor_version;
 
-    assert(sizeof(x)==2);
-
-    read_bytes(info, &x, 2);
-
-    if (x == 1)
-	info->swap_bytes = FALSE;
-    else if (x == 256)
-	info->swap_bytes = TRUE;
-    else
-	error("Invalid .dbc file: ~A", make_string(info->name));
-
-    magic = read_int4(info);
-
-    if (magic != dbc_MagicNumber)
-	error("Invalid .dbc file: ~A", make_string(info->name));
-	
     major_version = read_byte(info);
     minor_version = read_byte(info);
 
@@ -252,6 +261,21 @@ static obj_t fop_header(struct load_info *info)
     if (minor_version < file_MinorVersion)
 	error("Obsolete .dbc file: ~A", make_string(info->name));
 
+    check_size(info, sizeof(short), "short");
+    check_size(info, sizeof(int), "int");
+    check_size(info, sizeof(long), "long");
+    check_size(info, sizeof(float), "float");
+    check_size(info, sizeof(double), "double");
+    check_size(info, sizeof(long double), "long double");
+
+    read_bytes(info, &x, sizeof(short));
+    info->swap_bytes = (x != 1);
+
+    magic = read_int(info);
+
+    if (magic != dbc_MagicNumber)
+	error("Invalid .dbc file: ~A", make_string(info->name));
+	
     return obj_False;
 }
 
@@ -305,12 +329,12 @@ static obj_t ref(struct load_info *info, int index)
 
 static obj_t fop_short_ref(struct load_info *info)
 {
-    return ref(info, read_uint2(info));
+    return ref(info, read_ushort(info));
 }
 
 static obj_t fop_ref(struct load_info *info)
 {
-    return ref(info, read_int4(info));
+    return ref(info, read_int(info));
 }
 
 static obj_t fop_false(struct load_info *info)
@@ -328,27 +352,24 @@ static obj_t fop_unbound(struct load_info *info)
     return obj_Unbound;
 }
 
-static obj_t fop_signed_8(struct load_info *info)
+static obj_t fop_signed_byte(struct load_info *info)
 {
     return make_fixnum((signed char)read_byte(info));
 }
 
-static obj_t fop_signed_16(struct load_info *info)
+static obj_t fop_signed_short(struct load_info *info)
 {
-    short value;
-
-    read_ordered_bytes(info, &value, 2);
-
-    return make_fixnum(value);
+    return make_fixnum(read_short(info));
 }
 
-static obj_t fop_signed_32(struct load_info *info)
+static obj_t fop_signed_int(struct load_info *info)
 {
-    int value;
+    return make_fixnum(read_int(info));
+}
 
-    read_ordered_bytes(info, &value, 4);
-
-    return make_fixnum(value);
+static obj_t fop_signed_long(struct load_info *info)
+{
+    return make_fixnum(read_long(info));
 }
 
 static obj_t fop_char(struct load_info *info)
@@ -395,7 +416,7 @@ static obj_t fop_short_string(struct load_info *info)
 
 static obj_t fop_string(struct load_info *info)
 {
-    int len = read_int4(info);
+    int len = read_int(info);
     obj_t res = alloc_string(len);
 
     read_bytes(info, string_chars(res), len);
@@ -591,9 +612,9 @@ static obj_t fop_vectorn(struct load_info *info)
     int len = read_byte(info);
 
     if (len == 255)
-	len = read_int4(info)+9+254+(1<<16);
+	len = read_int(info)+9+254+(1<<16);
     else if (len == 254)
-	len = read_uint2(info)+9+254;
+	len = read_ushort(info)+9+254;
     else
 	len += 9;
 
@@ -627,8 +648,8 @@ static obj_t read_component(struct load_info *info, int nconst, int nbytes)
     obj_t debug_name = read_thing(info);
     int frame_size = fixnum_value(read_thing(info));
     obj_t debug_info = read_thing(info);
-    obj_t res = make_component(debug_name, frame_size, info->source_file,
-			       debug_info, nconst, nbytes);
+    obj_t res = make_component(debug_name, frame_size, info->mtime,
+			       info->source_file, debug_info, nconst, nbytes);
     int i;
 
     for (i = 0; i < nconst; i++)
@@ -642,15 +663,15 @@ static obj_t read_component(struct load_info *info, int nconst, int nbytes)
 static obj_t fop_short_component(struct load_info *info)
 {
     int nconst = read_byte(info);
-    int nbytes = read_uint2(info);
+    int nbytes = read_ushort(info);
 
     return read_component(info, nconst, nbytes);
 }
 
 static obj_t fop_component(struct load_info *info)
 {
-    int nconst = read_int4(info);
-    int nbytes = read_int4(info);
+    int nconst = read_int(info);
+    int nbytes = read_int(info);
 
     return read_component(info, nconst, nbytes);
 }
@@ -690,8 +711,8 @@ static obj_t fop_short_method(struct load_info *info)
 
 static obj_t fop_method(struct load_info *info)
 {
-    int param_info = read_int4(info);
-    int nclosure_vars = read_int4(info);
+    int param_info = read_int(info);
+    int nclosure_vars = read_int(info);
 
     return read_method(info, param_info, nclosure_vars);
 }
@@ -716,6 +737,7 @@ static obj_t fop_in_module(struct load_info *info)
 
 static obj_t fop_source_file(struct load_info *info)
 {
+    info->mtime = read_thing(info);
     info->source_file = read_thing(info);
     return info->source_file;
 }
@@ -904,6 +926,7 @@ struct load_info *make_load_info(char *name, int fd)
     info->done = FALSE;
     info->library = NULL;
     info->module = NULL;
+    info->mtime = make_fixnum(0);
     info->source_file = obj_False;
 
     return info;
@@ -1072,9 +1095,10 @@ void init_loader(void)
     opcodes[fop_FALSE] = fop_false;
     opcodes[fop_TRUE] = fop_true;
     opcodes[fop_UNBOUND] = fop_unbound;
-    opcodes[fop_SIGNED_8] = fop_signed_8;
-    opcodes[fop_SIGNED_16] = fop_signed_16;
-    opcodes[fop_SIGNED_32] = fop_signed_32;
+    opcodes[fop_SIGNED_BYTE] = fop_signed_byte;
+    opcodes[fop_SIGNED_SHORT] = fop_signed_short;
+    opcodes[fop_SIGNED_INT] = fop_signed_int;
+    opcodes[fop_SIGNED_LONG] = fop_signed_long;
     opcodes[fop_CHAR] = fop_char;
     opcodes[fop_SINGLE_FLOAT] = fop_single_float;
     opcodes[fop_DOUBLE_FLOAT] = fop_double_float;
