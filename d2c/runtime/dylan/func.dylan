@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.20 1996/02/18 18:34:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.21 1996/03/02 19:21:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -669,6 +669,14 @@ define method internal-applicable-method?
 		   restrict-limited-ints(arg, arg-type, specializer);
 		 elseif (specializer == <byte-character>)
 		   <non-byte-character>;
+		 elseif (arg-type = <class>)
+		   // This special case is designed to catch "make".
+		   // We don't want to create a <none-of> type with
+		   // hundreds of exceptions, and are fairly confident
+		   // that <class> has a finite number of instances.
+		   // Since the latter will *not* be true in general, we
+		   // can't generalize further.
+		   singleton(arg);
 		 else
 		   restrict-type(arg-type, specializer);
 		 end if;
