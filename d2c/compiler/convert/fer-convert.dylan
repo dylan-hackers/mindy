@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.15 1995/04/23 03:27:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.16 1995/04/24 03:20:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -400,9 +400,13 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   add-binding(lexenv, name, exit);
   build-let(builder, lexenv.lexenv-policy, source, exit,
 	    make-exit-function(builder, blk));
-  let res = fer-convert-body(builder, form.exit-body, lexenv, want, datum);
+  let cluster = make-values-cluster(builder, #"results", wild-ctype());
+  fer-convert-body(builder, form.exit-body, lexenv, #"assignment", cluster);
+  build-assignment(builder, lexenv.lexenv-policy, source, #(),
+		   make-mv-operation(builder, exit, cluster));
   end-body(builder);
-  res;
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 blk.catcher);
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <if>,
@@ -457,7 +461,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
   fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
 	      #"assignment", cluster);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-mv-operation(builder, list(function, cluster)));
+		 make-mv-operation(builder, function, cluster));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
@@ -1028,7 +1032,7 @@ define method canonicalize-results (builder :: <fer-builder>,
   if (empty?(fixed-results))
     build-assignment(builder, policy, source,
 		     concatenate(fixed-results, list(rest-result)),
-		     make-mv-operation(builder, list(method-leaf, results)));
+		     make-mv-operation(builder, method-leaf, results));
   else
     let cluster = make-values-cluster(builder, #"results", wild-ctype());
     build-assignment
@@ -1041,7 +1045,7 @@ define method canonicalize-results (builder :: <fer-builder>,
 		  make(<literal-fixed-integer>, value: fixed-results.size)))));
     build-assignment(builder, policy, source,
 		     concatenate(fixed-results, list(rest-result)),
-		     make-mv-operation(builder, list(method-leaf, cluster)));
+		     make-mv-operation(builder, method-leaf, cluster));
   end;
 end;
 
