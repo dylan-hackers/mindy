@@ -69,6 +69,7 @@ define constant $default-defines
       // the define; all the items preceding it are named parameters.
       "__attribute__", #(#("x"), ""), 
       "__signed__", "", 
+      "__inline__", "",
 
       "__ELF__", "",
       "unix", "",
