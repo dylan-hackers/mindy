@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.15 1995/07/11 12:17:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.16 1995/07/11 12:40:53 wlott Exp $
 *
 * This file is the lexical analizer.
 *
@@ -189,6 +189,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>{N}			is(SYMBOL);
 <etc>\\{O}			is(SYMBOL);
 <etc>\\{N}			is(SYMBOL);
+<etc>\\~			is(SYMBOL);
 <etc>{N}:			is(KEYWORD);
 <etc>#{STR}			is(SYMBOL_LITERAL);
 
