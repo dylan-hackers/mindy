@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.4 1998/10/18 20:16:40 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.5 1998/12/21 00:03:18 emk Exp $
 
 //======================================================================
 //
@@ -86,6 +86,7 @@ define library melange
   use streams;
   use standard-io;
   use format;
+  use parse-arguments;
   use melange-c;
   export
     name-mappers;
@@ -171,9 +172,15 @@ define module define-interface
 
   // From streams
   use streams;
-   
+  
+  // From format
+  use format;
+
   // From standard-io
   use standard-io;
+
+  // From parse-arguments
+  use parse-arguments;
   
   // local packages
   use int-lexer;

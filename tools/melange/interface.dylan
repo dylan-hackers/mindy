@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.6 1998/12/17 08:05:05 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.7 1998/12/21 00:03:18 emk Exp $
 
 //======================================================================
 //
@@ -570,6 +570,8 @@ end method process-define-interface;
 // XXX - Debugging output is broken, unfortunately. This code makes
 // error and warning output go to standard error instead of standard
 // output. We need to overhaul this in the Dylan library itself.
+// XXX - Overhaul completed. This is now obsolete, but we're leaving it
+// until we start work on 2.3.
 //----------------------------------------------------------------------
 
 define class <better-debugger> (<debugger>)
@@ -589,6 +591,38 @@ end method invoke-debugger;
 
 
 //----------------------------------------------------------------------
+// Built-in help.
+//----------------------------------------------------------------------
+
+define method show-copyright(stream :: <stream>) => ()
+  format(stream, "Melange (turns C headers into Dylan libraries)\n");
+  format(stream, "Copyright 1995-1997 Carnegie Mellon University\n");
+  format(stream, "Copyright 1998 Gwydion Dylan Maintainers\n");
+end method show-copyright;
+
+define method show-usage(stream :: <stream>) => ()
+  format(stream,
+"Usage: melange [-v] [--mindy|--d2c] -Iincludedir... infile [outfile]\n");
+end method show-usage;
+
+define method show-usage-and-exit() => ()
+  show-usage(*standard-error*);
+  exit(exit-code: 1);
+end method show-usage-and-exit;
+
+define method show-help(stream :: <stream>) => ()
+  show-copyright(stream);
+  format(stream, "\n");
+  show-usage(stream);
+  format(stream,
+"       -v, --verbose:    Print progress messages while parsing.\n"
+"       --mindy:          Generate output for use only with Mindy.\n"
+"       --d2c:            Generate output for use only with d2c.\n"
+"       -I, --includedir: Extra directories to search for C headers.\n");
+end method show-help;
+
+
+//----------------------------------------------------------------------
 // The main program
 //----------------------------------------------------------------------
 
@@ -600,65 +634,108 @@ end method invoke-debugger;
 // useful for testing purposes, but when we hit the final release we will want
 // to print out a "help" line instead.
 //
+
 define method main (program, #rest args)
+  // Describe our arguments and create appropriate parser objects.
+  let *argp* = make(<argument-list-parser>);
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("help"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("version"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("verbose"),
+			    short-options: #("v"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("d2c"));
+  add-option-parser-by-type(*argp*,
+			    <simple-option-parser>,
+			    long-options: #("mindy"));
+  add-option-parser-by-type(*argp*,
+			    <parameter-option-parser>,
+			    long-options: #("target"),
+			    short-options: #("T"));
+  add-option-parser-by-type(*argp*,
+			    <repeated-parameter-option-parser>,
+			    long-options: #("includedir"),
+			    short-options: #("I"));
+  
+  // Parse our command-line arguments.
+  unless (parse-arguments(*argp*, args))
+    show-usage-and-exit();
+  end unless;
+  
+  // Handle our informational options.
+  if (option-value-by-long-name(*argp*, "help"))
+    show-help(*standard-output*);
+    exit(exit-code: 1);
+  end if;
+  if (option-value-by-long-name(*argp*, "version"))
+    show-copyright(*standard-output*);
+    exit(exit-code: 1);
+  end if;
+  
+  // Retrieve our regular options.
+  let verbose? = option-value-by-long-name(*argp*, "verbose");
+  let d2c? = option-value-by-long-name(*argp*, "d2c");
+  let mindy? = option-value-by-long-name(*argp*, "mindy");
+  let target = option-value-by-long-name(*argp*, "target");
+  let include-dirs = option-value-by-long-name(*argp*, "includedir");
+  let regular-args = regular-arguments(*argp*);
+  
+  // Handle --verbose.
+  if (verbose?)
+    *show-parse-progress?* := #t;
+  end if;
+  
+  // Handle --mindy, --d2c, -T.
+  if (size(choose(identity, list(d2c?, mindy?, target))) > 1)
+    format(*standard-error*,
+	   "melange: only one of --d2c, --mindy or -T may be specified.\n");
+    show-usage-and-exit();
+  end if;
+  target-switch :=
+    case
+      d2c? => #"d2c";
+      mindy? => #"mindy";
+      target => as(<symbol>, target);
+      otherwise => target-switch;
+    end case;
+
+  // Handle -I.
+  #if (compiled-for-win32)
+     // translate \ to /, because \ does bad things when inside a
+     // string literal, like c-include("d:\foo\bar.h")
+     include-dirs := map(rcurry(translate, "\\\\", "/"), include-dirs);
+  #endif
+  for (dir in include-dirs)
+    push(include-path, dir);
+  end for;
+  push(include-path, "./");
+
+  // Handle regular arguments.
   let in-file = #f;
   let out-file = #f;
-  let verbose = #f;
+  select (regular-args.size)
+    1 =>
+      in-file := regular-args[0];
+    2 =>
+      in-file := regular-args[0];
+      out-file := make(<file-stream>,
+		       locator: regular-args[1],
+		       direction: #"output");
+    otherwise =>
+      show-usage-and-exit();
+  end select;
 
-  for (arg in args)
-    if (arg = "-v")
-      verbose := #t;
-      *show-parse-progress?* := #t;
-    elseif (is-prefix?("-I", arg))
-      let include-string = copy-sequence(arg, start: 2);
-      #if (compiled-for-win32)
-	 // translate \ to /, because \ does bad things when inside a
-	 // string literal, like c-include("d:\foo\bar.h")
-	 let include-string = translate(include-string, "\\\\", "/");
-      #endif
-      push(include-path, include-string);
-    elseif (is-prefix?("-T", arg))
-      // This should allow specification of arbitrary targets, just in case
-      //    I get lazy, and forget to add explicit switches for them.  It's
-      //    certainly not the preferred way to do this.
-      target-switch := as(<symbol>, copy-sequence(arg, start:2));
-    elseif (arg.first == '-')
-      select (arg by \=)
-	// default is #"all"
-	"-mindy"   => target-switch := #"mindy";
-	"-d2c"     => target-switch := #"d2c";
-	otherwise => error("Undefined switch -- \"%s\"", arg);
-      end select;
-    else
-      case
-	in-file & out-file =>
-	  error("Too many args.");
-	in-file =>
-	  out-file := make(<file-stream>, locator: arg, direction: #"output");
-	otherwise =>
-	  in-file := arg;
-      end case;
-    end if;
-  end for;
-
-  if (in-file)
-    process-interface-file(in-file, out-file | *standard-output*,
-			   verbose: verbose);
-    exit(exit-code: 0);  // ### seems to be necessary, even though I'd
-                         // think all Dylan programs would exit with
-                         // exit code 0 if they never called exit() at
-                         // all
-  else
-    write(*standard-error*,
-	  "usage: melange [options....] input-file [output-file]\n"
-	    "options include:\n"
-	    "  -v\t\tShow progress using '.'s for each declaration and\n"
-	    "\t\t'[]' for recursive includes.\n"
-	    "  -I[directory]\tLook for #included files in this directory\n"
-	    "  -Tall\t\tGenerate code for both Mindy and D2C [DEFAULT]\n"
-	    "  -mindy\tOnly generate code for Mindy\n"
-	    "  -d2c\t\tOnly generate code for D2C\n");
-    
-    force-output(*standard-error*);
-  end if;
+  // Do our real work.
+  process-interface-file(in-file, out-file | *standard-output*,
+			 verbose: verbose?);
+  exit(exit-code: 0);  // ### seems to be necessary, even though I'd
+                       // think all Dylan programs would exit with
+                       // exit code 0 if they never called exit() at
+                       // all
 end method main;

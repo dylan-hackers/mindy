@@ -65,12 +65,13 @@ define constant default-cpp-table = make(<string-table>);
 // include-path -- exported constant.
 //
 // This sequence should contain a complete list of "standard include
-// directories".  We initialize it with "./" here, but expect the appropriate
-// portability module to add more entries.
+// directories". It gets initialized by the appropriate portability
+// module at load time. Any command-line include directories are
+// added (preserving order) to the front of the list by main(). The
+// directory "./" is to the front after adding any specified on
+// the command line.
 //
 define /* exported */ constant include-path :: <deque> = make(<deque>);
-// add!(include-path, "./");
-push(include-path, "./");
 
 // This routine grabs tokens from within the "parameter list" of a
 // parameterized macro use.  The calling routine should have already consumed
