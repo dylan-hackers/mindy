@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.10 1996/02/23 15:08:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.11 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -291,7 +291,8 @@ define module define-constants-and-variables
   use od-format;
 
   export
-    <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn,
+    <define-bindings-tlf>, <define-constant-method-tlf>,
+    tlf-required-defns, tlf-rest-defn,
     expand-until-method-ref;
 end;
 
@@ -328,7 +329,10 @@ define module define-classes
 
   export
     <define-class-tlf>,
-    class-defn-defered-evaluations-function, class-defn-maker-function;
+    class-defn-defered-evaluations-function, class-defn-maker-function,
+    class-defn-slots, class-defn-overrides,
+    slot-defn-setter, slot-defn-getter, slot-defn-info,
+    override-defn-info;
 end;
 
 define module top-level-expressions
@@ -420,6 +424,6 @@ define module cheese
   use compile-time-functions;
 
   export
-    optimize-component, *optimize-ncalls*;
+    optimize-component, *optimize-ncalls*, build-xep, build-xep-component;
 end;
 
