@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.49 1996/02/09 03:34:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.50 1996/02/19 20:36:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -83,7 +83,14 @@ define macro for
     { ?body } => { ?body %%finally }
     { ?body:b1 finally ?body:b2 } => { ?b1 %%finally ?b2 }
   header:
-    { ?var in ?expr, ... } => { %%in ?var, ?expr; ... }
+    { ?var in ?expr, ... } 
+      => { %%in ?var, ?expr, #f, forward-iteration-protocol; ... }
+    { ?var in ?expr keyed-by ?var:keyed-by, ... }
+       => { %%in ?var, ?expr, ?keyed-by, forward-iteration-protocol; ... }
+    { ?var in ?expr using ?expr:using, ... }
+       => { %%in ?var, ?expr, #f, ?using; ... }
+    { ?var in ?expr keyed-by ?var:keyed-by using ?expr:using, ... }
+       => { %%in ?var, ?expr, ?keyed-by, ?using; ... }
     { ?var = ?expr:e1 then ?expr:e2, ... } => { = ?var, ?e1, ?e2; ... }
     { ?var from ?expr ?to, ... } => { %%from ?var, ?expr, ?to; ... }
     { #key ?while } => { %%while ?while }
@@ -206,10 +213,20 @@ define macro class-definer
       => { keyword ?key, required: #t, ?options; ... }
     { keyword ?key, #rest ?options; ... }
       => { keyword ?key, ?options; ... }
-    { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
-      => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
     { ?slot-modifiers slot ?name, #rest ?options; ... }
       => { slot ?name, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name = ?expr, #rest ?options; ... }
+      => { slot ?name, ?slot-modifiers,
+             init-function: method () ?expr end,
+             ?options;
+           ... }
+    { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
+      => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name :: ?type = ?expr, #rest ?options; ... }
+      => { slot ?name, type: ?type, ?slot-modifiers,
+	     init-function: method () ?expr end,
+	     ?options;
+	   ... }
   slot-modifiers:
     { } => { }
     { instance } => { allocation: #"instance" }
