@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.6 1995/04/21 02:32:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.7 1995/04/27 00:54:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -179,6 +179,7 @@ end;
 // 
 define constant $singleton-var = dylan-var(#"singleton", create: #t);
 define constant $union-var = dylan-var(#"union", create: #t);
+define constant $type-or-var = dylan-var(#"type-or", create: #t);
 define constant $limited-var = dylan-var(#"limited", create: #t);
 define constant $make-var = dylan-var(#"make", create: #t);
 define constant $negative-var = dylan-var(#"negative", create: #t);
@@ -218,6 +219,10 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	  ctype-union(args[0], args[1]);
 	else
 	  #f;
+	end;
+      $type-or-var =>
+	if (every?(rcurry(instance?, <ctype>), args))
+	  reduce(ctype-union, empty-ctype(), args);
 	end;
       $limited-var =>
 	if (~empty?(args) & instance?(args[0], <cclass>))
