@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.22 2001/03/27 04:47:58 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.23 2001/03/31 04:55:01 bruce Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -836,8 +836,9 @@ sub emit_library_rule {
 
     if (! grep(/^no-d2c$/, @keywords) && $enable_d2c) {
 	print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
+	my $profile_flag = $enable_profiling ? "--profile" : "";
 	if ($shared_library) {
-	    print "\t\$(D2C) -M \$(D2CFLAGS) --rpath=$libdir $extraflags ",
+	    print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --rpath=$libdir $extraflags ",
 	    	"$srcdir/$lidfilename.lid\n";
 	    if ($static && !$executable) {
 		local ($dot_lib)
@@ -849,7 +850,7 @@ sub emit_library_rule {
 		push(@files_to_clean, " $lib_prefix$unit_prefix$dot_lib");
 	    }
 	} else {
-	    print "\t\$(D2C) -M \$(D2CFLAGS) --static $extraflags ",
+	    print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --static $extraflags ",
 	    	"$srcdir/$lidfilename.lid\n";
 	}
 	local ($make_name) = $host_platform{'make_command'};
