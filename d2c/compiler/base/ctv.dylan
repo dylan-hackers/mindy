@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.4 2001/03/17 03:43:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.5 2003/06/10 06:16:22 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -80,6 +80,17 @@ end;
 
 define abstract class <eql-literal> (<literal>, <eql-ct-value>)
 end;
+
+
+// Compile-time slot access
+
+define generic ct-value-slot(ctv :: <ct-value>, slot-name :: <symbol>)
+ => res :: false-or(<ct-value>);
+
+define method ct-value-slot(ctv :: <ct-value>, slot-name :: <symbol>)
+ => res :: false-or(<ct-value>);
+  #f;
+end method;
 
 
 // not-supplied marker.
@@ -209,6 +220,16 @@ end;
 define class <literal-ratio> (<literal-rational>)
   slot literal-value :: <ratio>, required-init-keyword: value:;
 end;
+
+define method ct-value-slot(ctv :: <literal-ratio>, slot == #"numerator")
+ => res :: <literal-extended-integer>;
+  make(<literal-extended-integer>, value: ctv.literal-value.numerator);
+end method;
+
+define method ct-value-slot(ctv :: <literal-ratio>, slot == #"denominator")
+ => res :: <literal-extended-integer>;
+  make(<literal-extended-integer>, value: ctv.literal-value.denominator);
+end method;
 
 define abstract class <literal-float> (<literal-real>)
   slot literal-value :: <ratio>, required-init-keyword: value:;
@@ -606,6 +627,12 @@ define class <literal-simple-object-vector> (<literal-vector>)
     required-init-keyword: contents:;
 end;
 
+define method ct-value-slot
+    (ctv :: <literal-simple-object-vector>, slot == #"size")
+ => (res :: <literal-integer>);
+  as(<ct-value>, ctv.literal-value.size);
+end method;
+
 // <Shallow-equal-table>s hash vectors which are considered equivalent
 // if each element is identical even if the vectors themselves are not.
 //
@@ -679,6 +706,12 @@ end class;
 define class <literal-byte-string> (<literal-string>)
   slot literal-value :: <byte-string>, required-init-keyword: value:;
 end;
+
+define method ct-value-slot
+    (ctv :: <literal-string>, slot == #"size")
+ => (res :: <literal-integer>);
+  as(<ct-value>, ctv.literal-value.size);
+end method;
 
 define constant $literal-string-memo :: <string-table> = make(<string-table>);
 

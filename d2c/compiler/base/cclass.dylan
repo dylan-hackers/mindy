@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.23 2003/03/27 17:36:20 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.24 2003/06/10 06:16:22 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -360,6 +360,16 @@ end;
 
 define sealed domain make (singleton(<slot-info>));
 define sealed domain initialize (<slot-info>);
+
+define method ct-value-slot(ctv :: <slot-info>, slot == #"slot-init-value")
+ => res :: false-or(<ct-value>);
+  instance?(ctv.slot-init-value, <ct-value>) & ctv.slot-init-value;
+end method;
+
+define method ct-value-slot(ctv :: <slot-info>, slot == #"slot-init-function")
+ => res :: false-or(<ct-value>);
+  instance?(ctv.slot-init-function, <ct-value>) & ctv.slot-init-function;
+end method;
 
 define method print-message
     (lit :: <slot-info>, stream :: <stream>) => ();

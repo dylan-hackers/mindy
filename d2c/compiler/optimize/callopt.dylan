@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.10 2003/03/03 00:12:35 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.11 2003/06/10 06:16:22 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1388,7 +1388,15 @@ define method optimize-slot-ref
     => ();
   let instance = args.first;
   let offset = find-slot-offset(slot, instance.derived-type);
-  if (offset)
+
+  if (instance?(instance, <literal-constant>)
+        & slot.slot-getter
+        & ct-value-slot(instance.value, slot.slot-getter.variable-name))
+    let builder = make-builder(component);
+    let result = ct-value-slot(instance.value, slot.slot-getter.variable-name);
+    replace-expression(component, call.dependents,
+                       make-literal-constant(builder, result));
+  elseif (offset)
     let builder = make-builder(component);
     let call-assign = call.dependents.dependent;
     let policy = call-assign.policy;
