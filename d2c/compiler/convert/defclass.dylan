@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.30 1995/06/10 12:38:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.31 1995/06/12 17:36:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -759,8 +759,6 @@ define method finalize-slot
     // Are the accessor methods hairy?
     let hairy? = ~cclass | instance?(slot-type, <unknown-ctype>);
     //
-    // Note: the act of making these method definitions associates them with
-    // the appropriate generic function.
     slot.slot-defn-getter
       := make(<getter-method-definition>,
 	      base-name: slot.slot-defn-getter-name,
@@ -769,10 +767,17 @@ define method finalize-slot
 			      returns: slot-type),
 	      hairy: hairy?,
 	      slot: info);
+    let gf = slot.slot-defn-getter.method-defn-of;
+    if (gf)
+      ct-add-method(gf, slot.slot-defn-getter);
+    end;
     if (slot.slot-defn-sealed?)
-      let gf = slot.slot-defn-getter.method-defn-of;
       if (gf)
 	add-seal(gf, specializers);
+      else
+	compiler-error
+	  ("%s doesn't name a generic function, so can't be sealed.",
+	   slot.slot-defn-getter-name);
       end;
     end;
     slot.slot-defn-setter
@@ -785,10 +790,17 @@ define method finalize-slot
 					   returns: slot-type),
 			   hairy: hairy?,
 			   slot: info);
+	   let gf = defn.method-defn-of;
+	   if (gf)
+	     ct-add-method(gf, defn);
+	   end;
 	   if (slot.slot-defn-sealed?)
-	     let gf = defn.method-defn-of;
 	     if (gf)
 	       add-seal(gf, pair(object-ctype(), specializers));
+	     else
+	       compiler-error
+		 ("%s doesn't name a generic function, so can't be sealed.",
+		  slot.slot-defn-setter-name);
 	     end;
 	   end;
 	   defn;
