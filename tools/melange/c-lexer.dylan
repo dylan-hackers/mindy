@@ -613,16 +613,39 @@ define method escaped-character (char :: <character>) => (esc :: <character>);
   end select;
 end method escaped-character;
 
-// Character tokens evaluate to characters.  We must handle two character
-// "escape sequences" as well as simple literals.
+// Single-character character literals evaluate to characters.  We
+// must handle two character "escape sequences" as well as simple
+// literals.
+// Multi-character character literals are a non-standard extension.
+// They evaluate to integers.
 //
-define method value (token :: <character-token>) => (result :: <character>);
+define method value
+    (token :: <character-token>)
+ => (result :: type-union(<character>, <integer>));
   let string = token.string-value;
-  if (string[1] == '\\')
-    escaped-character(string[2]);
-  else
-    string[1];
-  end if;
+
+  let result :: <integer> = 0;
+  let multi? :: <boolean> = #f;
+
+  local method process-char (position :: <integer>) => ()
+          let char = string[position];
+          if (char == '\\')
+            result := ash(result, 8)
+              + as(<integer>, escaped-character(string[position + 1]));
+            if(string[position + 2] ~== '\'')
+              multi? := #t;
+              process-char(position + 2);
+            end if;
+          else
+            result := ash(result, 8) + as(<integer>, char);
+            if(string[position + 1] ~== '\'')
+              multi? := #t;
+              process-char(position + 1);
+            end if;
+          end if;
+        end method;
+  process-char(1);
+  if(multi?) result else as(<character>, result) end;
 end method value;
   
 // String literals evaluate to strings (without the bracketing quotation
@@ -1298,7 +1321,7 @@ end method skip-cpp-whitespace;
 //   [10, 11] -- start and end of integer literal
 //
 define constant match-literal
-  = make-regexp-positioner("^('(\\\\?.)'|"
+  = make-regexp-positioner("^('(\\\\?.)+'|"
 			     "\"(([^\\\\\"]|\\\\.)*)\"|"
 			     "((([1-9][0-9]*)|(0[xX][0-9a-fA-F]+)|(0[0-7]*))[lLuU]*))",
 			   byte-characters-only: #t, case-sensitive: #t);
