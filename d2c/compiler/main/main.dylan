@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.13 1995/05/12 15:41:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.14 1995/05/18 13:28:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -25,8 +25,10 @@ define method compile (#rest files) => res :: <component>;
   end;
   format(*debug-output*, "Finalizing definitions\n");
   do(finalize-top-level-form, $Top-Level-Forms);
-  format(*debug-output*, "inhereting slots, assigning unique ids\n");
+  format(*debug-output*,
+	 "inheriting slots, inheriting overrides, assigning unique ids\n");
   inherit-slots();
+  inherit-overrides();
   assign-unique-ids();
   format(*debug-output*, "seeding representations\n");
   seed-representations();
@@ -48,10 +50,12 @@ define method compile (#rest files) => res :: <component>;
   optimize-component(component);
   format(*debug-output*, "Emitting C code.\n");
   let header-stream
-    = make(<file-stream>, name: "header.h", direction: #"output");
+    = make(<file-stream>, name: "output.h", direction: #"output");
+  let body-stream
+    = make(<file-stream>, name: "output.c", direction: #"output");
   let output-info
     = make(<output-info>, header-stream: header-stream,
-	   body-stream: *debug-output*);
+	   body-stream: body-stream);
   do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
   do(rcurry(emit-function, output-info), component.all-function-regions);
   close(header-stream);
