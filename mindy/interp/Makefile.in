@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.4 1994/10/08 17:11:50 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.5 1994/11/06 19:57:53 rgs Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -66,14 +66,16 @@ OBJS = parser.tab.o lexer.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
 	obj.o print.o str.o sym.o thread.o type.o load.o value.o vec.o \
 	char.o handler.o instance.o input.o driver.o \
-	table.o fd.o buf.o weak.o brkpt.o
+	table.o fd.o buf.o weak.o brkpt.o extern.o ext-init.o
 
 SRCS = parser.tab.c lexer.c \
 	bool.c class.c coll.c debug.c def.c error.c func.c gc.c init.c \
 	interp.c list.c lose.c mindy.c misc.c module.c nlx.c num.c \
 	obj.c print.c str.c sym.c thread.c type.c load.c value.c vec.c \
 	char.c handler.c instance.c input.c driver.c \
-	table.c fd.c buf.c weak.c brkpt.c
+	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
+
+EXTERN-INCLUDES = 
 
 mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy
@@ -89,7 +91,7 @@ clean:
 	rm -f ${OBJS} mindy *~ \#* core
 
 realclean:
-	rm -f ${OBJS} mindy parser.tab.c parser.tab.h lexer.tab.c Makefile *~ \#* core
+	rm -f ${OBJS} mindy parser.tab.c parser.tab.h lexer.tab.c Makefile *~ \#* core extern[12].def
 
 install: mindy
 	${INSTALL_PROGRAM} mindy ${BINDIR}/mindy
@@ -164,6 +166,27 @@ error.o :  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/obj.h ${SRCDIR}/print.h ${SRCDIR}/func.h \
            ${SRCDIR}/driver.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/error.c
+
+extern.o :  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
+           ${SRCDIR}/char.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
+           ${SRCDIR}/class.h ${SRCDIR}/def.h ${SRCDIR}/sym.h \
+           ${SRCDIR}/module.h ${SRCDIR}/error.h ${SRCDIR}/thread.h \
+           ${SRCDIR}/func.h ${SRCDIR}/extern.h ${SRCDIR}/num.h \
+           ${SRCDIR}/str.h ${SRCDIR}/func.h ${SRCDIR}/func.h 
+	${CC} -c ${CFLAGS} ${SRCDIR}/extern.c
+
+extern1.def: $(EXTERN-INCLUDES) make-init.pl
+	make-init.pl $(EXTERN-INCLUDES)
+
+extern2.def: $(EXTERN-INCLUDES) make-init.pl
+	make-init.pl $(EXTERN-INCLUDES)
+
+ext-init.o :  ${SRCDIR}/extern.c extern1.def extern2.def \
+           ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
+           ${SRCDIR}/extern.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/ext-init.c
 
 fd.o :  ${SRCDIR}/fd.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
         ${SRCDIR}/mindy.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
