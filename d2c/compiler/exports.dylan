@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.45 1995/05/01 11:49:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.46 1995/05/03 05:04:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -465,7 +465,8 @@ define module classes
   export
     cclass-name, closest-primary-superclass, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, space-representation, space-representation-setter,
+    all-slot-infos, unique-id,
+    space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     <defined-cclass>,
 
@@ -474,7 +475,7 @@ define module classes
     slot-init-function, slot-init-function-setter, slot-init-keyword,
     slot-init-keyword-required?,
 
-    inherit-slots, layout-instance-slots;
+    inherit-slots, assign-unique-ids, layout-instance-slots;
 end;
 
 define module c-representation
