@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.3 1996/04/07 18:36:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.4 1996/04/07 22:23:46 nkramer Exp $
 
 //======================================================================
 //
@@ -57,7 +57,20 @@ define module inspector-base
     object-info, *show-elements*, short-string;
 end module inspector-base;
 
+
 define variable *show-elements* = #t;
+
+// The basic data structure for describing an object is a sequence of
+// <object-attribute>s.  Each attribute has a body, which is a
+// sequence of body components.  Each body component has a description
+// and a sequence of related objects.  Within the description, the
+// magic characters #! and !# designate a substring as being
+// selectable (in much the same way that <a href=..> and </a> work in
+// HTML).  The object that the substring refers to is taken to be the
+// corresponding element of related-objects: The first occurence of
+// #!..!# is the first element of related-objects, the second
+// occurence of #!..!# maps to the second element of related-objects,
+// and so on.
 
 define class <body-component> (<object>)
   constant slot description :: <string>, required-init-keyword: #"description";
@@ -80,13 +93,14 @@ define class <object-attribute> (<object>)
   constant slot attrib-body :: <sequence>, required-init-keyword: #"body";
 end class <object-attribute>;
 
-// And an object can be described by a sequence of <object-attribute>s.
-
 define constant $component-none
   = make(<body-component>, description: "none", related-objects: #());
 
+// Make a body where the description for each component is simply the
+// short-string of the object.
+//
 define function make-simple-body (objs :: <sequence>)
- => body :: <sequence>;
+ => body :: <deque>;
   let obj-body = make(<deque>);
   for (obj in objs)
     push-last(obj-body, 
@@ -100,43 +114,48 @@ define function make-simple-body (objs :: <sequence>)
   obj-body;
 end function make-simple-body;
 
+// Like make-simple-body except there's only one component
+//
 define function make-one-liner-body (obj :: <object>)
- => body :: <sequence>;
+ => body :: <deque>;
   deque(make(<body-component>, 
 	     description: concatenate("#!", short-string(obj), "!#"),
 	     related-objects: list(obj)));
 end function make-one-liner-body;
 
+
 // short-string is basically print-to-string without some of the
 // annoying text that comes with it.
 //
-define method short-string (obj :: <object>)
+define open generic short-string (obj :: <object>) => string :: <string>;
+
+define method short-string (obj :: <object>) => string :: <string>;
   concatenate("Instance of ", obj.object-class.short-string);
 end method short-string;
 
-define method short-string (cls :: <class>)
+define method short-string (cls :: <class>) => string :: <string>;
   as(<string>, cls.class-name);
 end method short-string;
 
-define method short-string (u :: <union>)
+define method short-string (u :: <union>) => string :: <string>;
   concatenate("type-union(", 
 	      apply(join, ", ", map(short-string, u.union-members)), 
 	      ")");
 end method short-string;
 
-define method short-string (s :: <singleton>)
+define method short-string (s :: <singleton>) => string :: <string>;
   concatenate("singleton(", short-string(s.singleton-object), ")");
 end method short-string;
 
-define method short-string (s :: <subclass>)
+define method short-string (s :: <subclass>) => string :: <string>;
   concatenate("subclass(", short-string(s.subclass-of), ")");
 end method short-string;
 
-define method short-string (kwd :: <symbol>)
+define method short-string (kwd :: <symbol>) => string :: <string>;
   concatenate("#\"", as(<string>, kwd), "\"");
 end method short-string;
 
-define method short-string (fun :: <function>)
+define method short-string (fun :: <function>) => string :: <string>;
   concatenate
     (as(<string>, fun.function-name | "Anonymous function"),
      "(",
@@ -144,11 +163,82 @@ define method short-string (fun :: <function>)
      ")");
 end method short-string;
 
+
+// Assorted helper functions
+
+// Convenient way to make deques, much like list(), vector(), and range()
+//
 define function deque (#rest objs) => d :: <deque>;
   as(<deque>, objs);
 end function deque;
 
-define method function-info (fun :: <function>) => info :: <deque>;
+// #t if list is a proper list, #f if it is a circular list or if
+// somewhere along the line the tail of a <pair> isn't a <list>.
+//
+define function proper-list? (l :: <list>) => answer :: <boolean>;
+  let cells-seen = make(<object-table>);
+  block (return)
+    for (ptr = l then ptr.tail, until: ptr == #())
+      if (~ instance?(ptr, <list>))
+	return(#f);  // dotted pair
+      elseif (key-exists?(cells-seen, ptr))
+	return(#f);  // circular list
+      end if;
+      cells-seen[ptr] := ptr;
+    end for;
+    #t;
+  end block;
+end function proper-list?;
+
+
+// Takes an object and returns a sequence of <object-attribute>s to
+// describe the object.
+//
+define open generic object-info (obj :: <object>) => info :: <sequence>;
+
+define method object-info (gf :: <generic-function>) => info :: <sequence>;
+  let info = function-info(gf);
+  let header-string
+    = if (gf.function-name)
+	concatenate("Generic Function ", as(<string>, gf.function-name));
+      else
+	concatenate("Anonymous Generic Function");
+      end if;
+  push(info, make(<object-attribute>, 
+		  header: header-string, body: #[]));
+  push-last(info, make(<object-attribute>,
+		       header: "Methods:", 
+		       body: make-simple-body(gf.generic-function-methods)));
+  info;
+end method object-info;
+
+define method object-info (fun :: <function>) => info :: <sequence>;
+  let info = function-info(fun);
+  let header-string
+    = if (fun.function-name)
+	concatenate("Function ", as(<string>, fun.function-name));
+      else
+	concatenate("Anonymous Function");
+      end if;
+  push(info, make(<object-attribute>, 
+		  header: header-string, body: #[]));
+  info;
+end method object-info;
+
+define method object-info (meth :: <method>) => info :: <sequence>;
+  let info = function-info(meth);
+  let header-string
+    = if (meth.function-name)
+	concatenate("Function ", as(<string>, meth.function-name));
+      else
+	concatenate("Anonymous Function");
+      end if;
+  push(info, make(<object-attribute>, 
+		  header: header-string, body: #[]));
+  info;
+end method object-info;
+
+define function function-info (fun :: <function>) => info :: <deque>;
   let info = make(<deque>);
   let (nargs, rest?, keywords) = fun.function-arguments;
   let args-body
@@ -201,49 +291,7 @@ define method function-info (fun :: <function>) => info :: <deque>;
 		       header: "Returns:", body: returns-body));
 
   info;
-end method function-info;
-
-define method object-info (gf :: <generic-function>) => info :: <sequence>;
-  let info = function-info(gf);
-  let header-string
-    = if (gf.function-name)
-	concatenate("Generic Function ", as(<string>, gf.function-name));
-      else
-	concatenate("Anonymous Generic Function");
-      end if;
-  push(info, make(<object-attribute>, 
-		  header: header-string, body: #[]));
-  push-last(info, make(<object-attribute>,
-		       header: "Methods:", 
-		       body: make-simple-body(gf.generic-function-methods)));
-  info;
-end method object-info;
-
-define method object-info (fun :: <function>) => info :: <sequence>;
-  let info = function-info(fun);
-  let header-string
-    = if (fun.function-name)
-	concatenate("Function ", as(<string>, fun.function-name));
-      else
-	concatenate("Anonymous Function");
-      end if;
-  push(info, make(<object-attribute>, 
-		  header: header-string, body: #[]));
-  info;
-end method object-info;
-
-define method object-info (meth :: <method>) => info :: <sequence>;
-  let info = function-info(meth);
-  let header-string
-    = if (meth.function-name)
-	concatenate("Function ", as(<string>, meth.function-name));
-      else
-	concatenate("Anonymous Function");
-      end if;
-  push(info, make(<object-attribute>, 
-		  header: header-string, body: #[]));
-  info;
-end method object-info;
+end function function-info;
 
 define method object-info (u :: <union>) => info :: <sequence>;
   let info = make(<deque>);
@@ -347,21 +395,6 @@ define method object-info (seq :: <sequence>) => info :: <sequence>;
   info;
 end method object-info;
 
-define function proper-list? (l :: <list>) => answer :: <boolean>;
-  let cells-seen = make(<object-table>);
-  block (return)
-    for (ptr = l then ptr.tail, until: ptr == #())
-      if (~ instance?(ptr, <list>))
-	return(#f);  // dotted pair
-      elseif (key-exists?(cells-seen, ptr))
-	return(#f);  // circular list
-      end if;
-      cells-seen[ptr] := ptr;
-    end for;
-    #t;
-  end block;
-end function proper-list?;
-
 // Pairs are strange.  Sometimes they're sequences, sometimes
 // they're not.
 //
@@ -412,4 +445,3 @@ define method object-info (obj :: <object>) => info :: <sequence>;
 		  body: make-one-liner-body(obj.object-class)));
   info;
 end method object-info;
-

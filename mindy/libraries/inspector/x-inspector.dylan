@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.2 1996/04/07 18:37:59 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.3 1996/04/07 22:23:46 nkramer Exp $
 
 //======================================================================
 //
@@ -50,7 +50,11 @@ define module X-inspector
     xinspect;
 end module X-inspector;
 
-define method do-component 
+
+// Create the widgets for a single <body-component>, and put these
+// widgets inside window.
+//
+define function do-component 
     (component :: <body-component>, window :: <window>) => ();
   let (#rest strings) = split("#!|!#", component.description);
   let frame = make(<frame>, in: window, side: "top", anchor: "w");
@@ -71,9 +75,11 @@ define method do-component
 		    end method);
     end if;
   end for;
-end method do-component;
+end function do-component;
 
-define method xinspect (obj :: <object>) => ();
+// Graphically display obj.object-info.  The display is interactive.
+//
+define function xinspect (obj :: <object>) => ();
   let window = make(<toplevel>);
   call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
   let window-title = tk-quote(concatenate("Inspect ", short-string(obj)));
@@ -120,7 +126,7 @@ define method xinspect (obj :: <object>) => ();
        relief: "raised", side: "left", anchor: "w", in: button-frame);
   make(<button>, text: "Quit", command: exit,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
-end method xinspect;
+end function xinspect;
 
 /*
 define method main (prog-name :: <byte-string>, #rest args)

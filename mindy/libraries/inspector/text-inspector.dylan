@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.3 1996/04/07 18:36:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.4 1996/04/07 22:23:46 nkramer Exp $
 
 //======================================================================
 //
@@ -53,7 +53,10 @@ define module text-inspector
     display-object-info, inspect;
 end module text-inspector;
 
-define method display-object-info (object :: <object>) => ();
+
+// Writes object.object-info to *debug-output* in a readable fashion.
+//
+define function display-object-info (object :: <object>) => ();
   let info = object.object-info;
   for (attribute in info)
     condition-format(*debug-output*, "%s\n", attribute.attrib-header);
@@ -61,11 +64,12 @@ define method display-object-info (object :: <object>) => ();
       condition-format(*debug-output*, "    %s\n", body.stripped-description);
     end for;
   end for;
-end method display-object-info;
+end function display-object-info;
 
-// Just like display-object-info except it sticks numbers into 
+// Just like display-object-info except it sticks numbers into the
+// display, so the user knows what to type to get a certain sub-object
 //
-define method show-object (object :: <object>) => ();
+define function show-object (object :: <object>) => ();
   let count = 0;
   let info = object.object-info;
   for (attribute in info)
@@ -90,10 +94,13 @@ define method show-object (object :: <object>) => ();
       condition-format(*debug-output*, "    %s\n", descr);
     end for;
   end for;
-end method show-object;
+end function show-object;
 
 // The only use of this (hopefully) is to be caught when
-// get-nth-object can't find the object in question
+// get-nth-object can't find the object in question.  We need this
+// because we need some way of passing out of bandwidth information,
+// and the old unique chunk of memory trick just doesn't seem
+// appropriate here.
 //
 define class <no-such-object> (<error>)
 end class <no-such-object>;
@@ -119,7 +126,7 @@ end function get-nth-subobject;
 // Routine for printing the help page.  This should (possibly in a future
 // revision) be taken from a file rather than hard coded.
 //
-define method show-help () => ();
+define function show-help () => ();
   condition-format
     (*debug-output*,
      "\n"
@@ -133,22 +140,22 @@ define method show-help () => ();
        "view           Redisplays the current object\n"
        "?, help        Displays this page\n"
        "quit, exit     Quits the object inspector\n");
-end method show-help;
+end function show-help;
 
 // Prints the "inspect>" line and reads in the input.  The input string
 // is returned to inspect.  This also flushes the inspect-stream buffer.
 //
-define method command-prompt () => command :: <string>;
+define function command-prompt () => command :: <string>;
   condition-format(*debug-output*, "inspect> ");
   condition-force-output(*debug-output*);
   read-line(*standard-input*, signal-eof?: #f);
-end method command-prompt;
+end function command-prompt;
 
 // This is the main loop of the inspector.  This method processes commands, and
 // responds appropriately. All keywords have defaults, and all of the keywords
 // get passed on to object-info whenever it is called.
 //
-define method inspect (object :: <object>) => ();
+define function inspect (object :: <object>) => ();
   // Create a deque to hold the previously created objects.  object
   // contains the current object, which is *not* in the history deque.
   let history = make(<deque>);
@@ -212,4 +219,4 @@ define method inspect (object :: <object>) => ();
       end select;
     end while;
   end block;
-end method inspect;
+end function inspect;
