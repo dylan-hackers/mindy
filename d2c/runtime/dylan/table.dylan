@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.2 1995/12/12 01:06:05 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.3 1996/01/08 22:15:59 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -76,17 +76,22 @@ end method state-valid?;
 
 define constant $permanent-hash-state :: <hash-state> = #f;
 
-define constant shift-dist          = 16;
-        // This should be one half the size of an integer (in bits)
-        // for reason that xor'ing the right shifted with the left
-        // left shifted hash value is less sensical if shift-dist
-        // is not 1/2 int size
+// We use this for implementing a bit rotate.  If we have the wrong
+// number of bits, then our hash functions may be less useful, but
+// nothing should break
+//
+define constant *word-bits* = 32;
 
 define inline method merge-hash-ids
     (id1 :: <fixed-integer>, id2 :: <fixed-integer>, #key ordered = #f )
  => (hash-id :: <fixed-integer>);
   if (ordered)
-    logxor(ash(id1, shift-dist), ash(id1, -shift-dist), id2);
+    // We go through a lot of work here to make sure that the ordered
+    // merge produces good results regardless of the argument order.
+    // Failure to do this caused significant inefficiencies in earlier
+    // versions. 
+    logxor(ash(id1, 5), ash(id1, 5 - *word-bits*),
+	   ash(id2, -2), ash(id2, *word-bits* - 2));
   else
     logxor(id1, id2);
   end if;
@@ -422,6 +427,21 @@ end method sequence-hash;
 define method string-hash (s :: <string>)
     => (id :: <fixed-integer>, state :: <hash-state>);
   sequence-hash(s, value-hash);
+end method string-hash;
+
+// This string-hash method should have the same semantics as the standard
+// one, but should be much faster.
+//
+define method string-hash (s :: <byte-string>)
+ => (id :: <fixed-integer>, state :: <object>);
+  for (id = 0 then merge-hash-codes(id, $permanent-hash-state,
+				    as(<fixed-integer>, s[i]),
+				    $permanent-hash-state,
+				    ordered: #t),
+       i from 0 below s.size)
+  finally
+    values(id, $permanent-hash-state);
+  end for;
 end method string-hash;
 
 define method table-protocol (ht :: <object-table>) 
