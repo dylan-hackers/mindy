@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.10 1994/06/27 16:49:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.11 1994/07/12 20:45:41 wlott Exp $
 *
 * This file is the lexical analizer.
 *
@@ -61,7 +61,7 @@ N	((({G}{DGS}*)?{A}{ADGS}*)|({D}{DGS}*({A}{DGS}+)*{A}{A}{ADGS}*))
 
 O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"&"|"|"|"^"
 
-STR	\"(([ !#-\[\]-~])|(\\["\\bfnrt]))*\"
+STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 
 %%
 
@@ -165,8 +165,8 @@ all		is(ALL);
 [-+]?{D}+\.{D}*{E}?	is(FLOAT);
 [-+]?{D}+{E}		is(FLOAT);
 
-'[ -&(-\[\]-~]'	is(CHARACTER);
-'\\['\\bfnrt]'	is(CHARACTER);
+'[ -&(-\[\]-~]'		is(CHARACTER);
+'\\['\\abefnrt0]'	is(CHARACTER);
 
 {STR}		is(STRING);
 

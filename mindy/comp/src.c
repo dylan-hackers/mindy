@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.20 1994/07/11 20:04:23 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.21 1994/07/12 20:45:57 wlott Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -763,11 +763,14 @@ struct literal *parse_unbound_token(struct token *token)
 static int escape_char(int c)
 {
     switch (c) {
+      case 'a': return '\007';
       case 'b': return '\b';
+      case 'e': return '\033';
       case 'f': return '\f';
       case 'n': return '\n';
       case 'r': return '\r';
       case 't': return '\t';
+      case '0': return '\0';
       default: return c;
     }
 }
@@ -928,7 +931,7 @@ struct literal *parse_float_token(struct token *token)
 {
     unsigned char c, *ptr;
     enum literal_kind kind = literal_SINGLE_FLOAT;
-    struct literal *res;
+    struct literal *res = NULL;
 
     for (ptr = token->chars; (c = *ptr) != '\0'; ptr++) {
 	if (c == 'e' || c == 'E')
