@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.13 2002/01/24 23:42:10 housel Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.14 2002/08/21 18:11:37 andreas Exp $
 
 //======================================================================
 //
@@ -93,7 +93,7 @@ define variable *create-virtual-structs?* :: <boolean> = #f;
 //
 define generic int-value (value :: <object>, state :: <parse-state>);
 
-define method int-value (value :: <integer>, state :: <parse-state>)
+define method int-value (value :: <general-integer>, state :: <parse-state>)
   value;
 end method;
 
@@ -407,16 +407,17 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
       else
 	// XXX: We don't actually substitute here like we should, but
 	// it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
-	for (token in definition.tail)
+//	for (token in definition.tail)
 /*	  for (count from 0, param in definition.head)
 	    if (token.string-value = param.string-value)
 	      token := %3[count];
 	    end if;
 	  end for;
 */
-	  unget-token(%1.generator, token);
-	end for;
-	cpp-parse(%1.generator);
+//	  unget-token(%1.generator, token);
+//	end for;
+//	cpp-parse(%1.generator);
+        0; // yeah, chickening out.
       end if;
     else
       parse-error(@0,"Function calls not allowed in constant expressions.");
@@ -517,7 +518,7 @@ cast-expr (unary-expr)
 
 cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
   let result = int-value(%4, @0);
-  if (instance?(result, <integer>)
+  if (instance?(result, <general-integer>)
        & instance?(%2.true-type, <integer-type-declaration>))
     result;
   else

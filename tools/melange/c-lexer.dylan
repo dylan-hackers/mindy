@@ -579,7 +579,7 @@ end method value;
 // Integer tokens can be in one of three different radices.  Figure out which
 // and then compute an integer value.
 //
-define method value (token :: <integer-token>) => (result :: <integer>);
+define method value (token :: <integer-token>) => (result :: <general-integer>);
   let string = token.string-value;
   // Strip trailing markers from string.
   while (member?(string.last, "uUlL"))
