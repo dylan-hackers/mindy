@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.9 2000/01/24 04:58:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.10 2000/10/30 08:51:33 bruce Exp $
 
 //======================================================================
 //
@@ -176,7 +176,7 @@ define module c-parse
     <integer-type-declaration>, canonical-name, true-type, make-enum-slot,
     referent;
   export
-    parse, parse-type, parse-macro;
+    parse, parse-type, parse-macro, *create-virtual-structs?*;
 end module c-parse;
 
 define module c-declarations
