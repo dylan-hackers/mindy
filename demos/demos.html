@@ -1,4 +1,4 @@
-<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.1 1994/06/29 00:03:11 wlott Exp $>
+<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.2 1995/05/13 14:48:11 nkramer Exp $>
 <TITLE>Mindy Demo Programs</TITLE>
 <H1>Mindy Demo Programs</H1>
 <HR>
@@ -39,6 +39,30 @@ that it points to directories containing all of the relevant libraries.  (This
 demo uses only "dylan" and "streams", but the "html2txt" demo also uses 
 "collection-extensions".)
 <P>
+-----------------------------------------------------------------------
+<HR>
+<H2>diff</H2>
+
+This program demonstrates the diff module of the Collection-extensions
+library.  It mimics the UNIX (tm) "diff" utility.
+
+<P>
+Usage:
+<PRE>
+  mindy -f diff.dbc file1 file2
+</PRE>
+<P>
+Limitations: Diff the stand-alone utility is meant purely as a demo.
+It doesn't support any of the options that a real diff utility does.
+It accepts input only as files; it won't read from standard input.
+The output format of our demo is slightly different from the
+standard Unix diff.
+<P>
+You must, of course, remember to specify the MINDYPATH environment variable so
+that it points to directories containing all of the relevant libraries.  (This
+demo uses "dylan", "streams", "format", and "collection-extensions")
+<P>
+-----------------------------------------------------------
 <HR>
 <H2>html2txt</H2>
 
