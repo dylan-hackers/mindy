@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.52 1996/03/17 00:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.53 1996/04/06 07:23:08 wlott Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -684,10 +684,10 @@ define open generic find-slot-offset
     (class :: <class>, slot :: <slot-descriptor>) => res :: <integer>;
 
 define open generic %make-method
-    (specializers :: <list>, result-types :: <list>,
+    (specializers :: <simple-object-vector>,
+     result-types :: <simple-object-vector>,
      rest-result-type :: <type>, entry :: <method>)
     => res :: <method>;
-define open generic %make-gf () => res :: <generic-function>;
 define open generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: type-union(<method>, <false>));
 define open generic %instance? (value, type :: <type>) => res :: <boolean>;
