@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.2 1994/12/13 13:26:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.3 1994/12/15 17:46:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,6 +12,7 @@ define constant stretchy-vector =
 
 define class <action> (<object>)
   slot on :: <class>, required-init-keyword: on:, setter: #f;
+  slot next :: union(<action>, <false>), init-value: #f;
 end;
 
 define class <shift> (<action>)
@@ -38,25 +39,16 @@ define method \= (action1 :: <accept>, action2 :: <accept>)
 end;
 
 define method make-action-table(#rest actions)
-  let result = make(<table>);
-  for (action in actions)
-    local
-      method process (clas, result)
-	let old = element(result, clas, default: action);
-	if (action == old | subtype?(action.on, old.on))
-	  result[clas] := action;
-	  for (sub in clas.direct-subclasses)
-	    process(sub, result);
-	  end;
-	elseif (~subtype?(old.on, action.on))
-	  cerror("Pick one at random.",
-		 "Not sure what to do on %=: %= or %=",
-		 clas, action, old);
-	end;
-      end;
-    process(action.on, result);
+  let length = actions.size;
+  unless (length == 0)
+    let prev = actions[0];
+    for (index from 1 below length)
+      let action = actions[index];
+      prev.next := action;
+      prev := action;
+    end;
+    actions[0];
   end;
-  result;
 end;
 
 
@@ -267,7 +259,7 @@ defining-form (<define-token> <variable-token> bindings)
 %
 
 defining-form (<define-token> modifiers-opt <define-word-token> <name-token>
-	       fragment-opt <end-token> <identifier-token> <name-token>)
+	       fragment-opt <end-token> name-or-begin-token <name-token>)
   unless (same-id?(%3, %7))
     error("Define-word mismatch: ~= isn't ~=",
 	  %7.token-symbol, %3.token-symbol);
@@ -281,7 +273,7 @@ defining-form (<define-token> modifiers-opt <define-word-token> <name-token>
 %
 
 defining-form (<define-token> modifiers-opt <define-word-token> 
-	       <name-token> fragment-opt <end-token> <identifier-token>)
+	       <name-token> fragment-opt <end-token> name-or-begin-token)
   unless (same-id?(%3, %7) | same-id?(%4, %7))
     error("Name mismatch: ~= isn't ~=",
 	  %7.token-symbol, %4.token-symbol);
@@ -634,7 +626,7 @@ expression-aux (binary-operand-sans-keyword)
   vector(stretchy-vector(%1), stretchy-vector());
 %
 
-expression-aux (expression-aux <binary-operator-token> binary-operand)
+expression-aux (expression-aux binary-operator-token binary-operand)
   add!(%1[1], %2);
   add!(%1[0], %3);
   %1;
@@ -790,10 +782,6 @@ literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
   make(<literal>, value: as(<simple-object-vector>, %2));
 %
 
-literal (<literal>)
-  %1;
-%
-
 :type strings <stretchy-vector>
 
 strings (<string-token>)
@@ -827,7 +815,7 @@ constants (constants <comma-token> constant)
 :type constant <object>
 
 constant (literal)
-  %1.token-literal;
+  %1.lit-value;
 %
 
 constant (<keyword-token>)
@@ -990,7 +978,7 @@ simple-fragment (modified-constant)
   make(<fragment>, head: piece, tail: piece);
 %
 
-simple-fragment (<operator-token>)
+simple-fragment (operator-token)
   let piece = make(<piece>, token: %1);
   make(<fragment>, head: piece, tail: piece);
 %
@@ -1443,7 +1431,7 @@ default (<equal-token> expression)
 
 :type macro-definition <define-macro-parse>
 
-macro-definition (<define-token> <macro-token> <identifier-token>
+macro-definition (<define-token> <macro-token> name-or-begin-token
 		  define-rule-set auxiliary-rule-sets-opt <end-token>
 		  macro-opt)
   make(<define-define-macro-parse>, name: %3,
@@ -1451,7 +1439,7 @@ macro-definition (<define-token> <macro-token> <identifier-token>
        auxiliary-rule-sets: as(<simple-object-vector>, %5));
 %
 
-macro-definition (<define-token> <macro-token> <identifier-token>
+macro-definition (<define-token> <macro-token> name-or-begin-token
 		  define-bindings-rule-set auxiliary-rule-sets-opt <end-token>
 		  macro-opt)
   make(<define-define-bindings-macro-parse>, name: %3,
@@ -1459,7 +1447,7 @@ macro-definition (<define-token> <macro-token> <identifier-token>
        auxiliary-rule-sets: as(<simple-object-vector>, %5));
 %
 
-macro-definition (<define-token> <macro-token> <identifier-token>
+macro-definition (<define-token> <macro-token> name-or-begin-token
 		  statement-rule-set auxiliary-rule-sets-opt <end-token>
 		  macro-opt)
   make(<define-statement-macro-parse>, name: %3,
@@ -1467,7 +1455,7 @@ macro-definition (<define-token> <macro-token> <identifier-token>
        auxiliary-rule-sets: as(<simple-object-vector>, %5));
 %
 
-macro-definition (<define-token> <macro-token> <identifier-token>
+macro-definition (<define-token> <macro-token> name-or-begin-token
 		  function-rule-set auxiliary-rule-sets-opt <end-token>
 		  macro-opt)
   make(<define-function-macro-parse>, name: %3,
@@ -1689,7 +1677,7 @@ simple-pattern (<left-paren-token> pattern-opt <right-paren-token>)
   make(<details-pattern>, sub-pattern: %2);
 %
 
-simple-pattern (<identifier-token>)
+simple-pattern (name-or-begin-token)
   make(<identifier-pattern>, identifier: %1);
 %
 
@@ -1844,8 +1832,8 @@ replacement-element (<question-token> <word-token>)
   make(<pattern-variable-reference>, name: %2.token-symbol);
 %
 
-replacement-element (<double-question-token> <word-token>
-		       <binary-operator-token> <ellipsis-token>)
+replacement-element (<double-question-token> <word-token> binary-operator-token
+		     <ellipsis-token>)
   make(<pattern-variable-reference>, name: %2.token-symbol, separator: %3);
 %
 
@@ -1887,7 +1875,15 @@ replacement-element (<string-token>)
   %1;
 %
 
-replacement-element (<operator-token>)
+replacement-element (<name-token>)
+  %1;
+%
+
+replacement-element (<begin-word-token>)
+  %1;
+%
+
+replacement-element (core-word-token)
   %1;
 %
 
@@ -1915,7 +1911,7 @@ replacement-element (<all-keys-token>)
   %1;
 %
 
-replacement-element (<word-token>)
+replacement-element (operator-token)
   %1;
 %
 
@@ -1924,6 +1920,173 @@ replacement-element (<semicolon-token>)
 %
 
 replacement-element (<comma-token>)
+  %1;
+%
+
+
+;;;; Various unions
+
+:type binary-operator-token <binary-operator-token>
+
+binary-operator-token (<simple-binary-operator-token>)
+  %1;
+%
+
+binary-operator-token (<equal-token>)
+  %1;
+%
+
+binary-operator-token (<minus-token>)
+  %1;
+%
+
+:type operator-token <operator-token>
+
+operator-token (<simple-binary-operator-token>)
+  %1;
+%
+
+operator-token (<equal-token>)
+  %1;
+%
+
+operator-token (<minus-token>)
+  %1;
+%
+
+operator-token (<tilde-token>)
+  %1;
+%
+
+:type name-or-begin-token <identifier-token>
+
+name-or-begin-token (<name-token>)
+  %1;
+%
+
+name-or-begin-token (<begin-word-token>)
+  %1;
+%
+
+:type core-word-token <core-word-token>
+
+core-word-token (<while-token>)
+  %1;
+%
+
+core-word-token (<variable-token>)
+  %1;
+%
+
+core-word-token (<uwp-token>)
+  %1;
+%
+
+core-word-token (<use-token>)
+  %1;
+%
+
+core-word-token (<set-token>)
+  %1;
+%
+
+core-word-token (<otherwise-token>)
+  %1;
+%
+
+core-word-token (<mv-call-token>)
+  %1;
+%
+
+core-word-token (<module-token>)
+  %1;
+%
+
+core-word-token (<method-token>)
+  %1;
+%
+
+core-word-token (<macro-token>)
+  %1;
+%
+
+core-word-token (<local-token>)
+  %1;
+%
+
+core-word-token (<library-token>)
+  %1;
+%
+
+core-word-token (<let-token>)
+  %1;
+%
+
+core-word-token (<in-token>)
+  %1;
+%
+
+core-word-token (<if-token>)
+  %1;
+%
+
+core-word-token (<handler-token>)
+  %1;
+%
+
+core-word-token (<generic-token>)
+  %1;
+%
+
+core-word-token (<from-token>)
+  %1;
+%
+
+core-word-token (<for-token>)
+  %1;
+%
+
+core-word-token (<finally-token>)
+  %1;
+%
+
+core-word-token (<export-token>)
+  %1;
+%
+
+core-word-token (<end-token>)
+  %1;
+%
+
+core-word-token (<else-token>)
+  %1;
+%
+
+core-word-token (<define-token>)
+  %1;
+%
+
+core-word-token (<create-token>)
+  %1;
+%
+
+core-word-token (<constant-token>)
+  %1;
+%
+
+core-word-token (<cleanup-token>)
+  %1;
+%
+
+core-word-token (<class-token>)
+  %1;
+%
+
+core-word-token (<bind-exit-token>)
+  %1;
+%
+
+core-word-token (<begin-token>)
   %1;
 %
 
@@ -1996,12 +2159,31 @@ end;
 
 define method parse-loop (state-stack :: <list>, symbol-stack :: <list>,
 			  token :: <token>, tokenizer :: <tokenizer>)
-  let state = state-stack.head;
-  let action = element(*action-table*[state], token.object-class, default: #f);
-  unless (action)
+  parse-loop-aux(state-stack, symbol-stack, token, tokenizer,
+		 *action-table*[state-stack.head], #f);
+end;
+
+define method parse-loop-aux (state-stack :: <list>, symbol-stack :: <list>,
+			      token :: <token>, tokenizer :: <tokenizer>,
+			      action :: union(<action>, <false>),
+			      prev :: union(<action>, <false>))
+  if (action)
+    if (instance?(token, action.on))
+      if (prev)
+	prev.next := action.next;
+	let state = state-stack.head;
+	action.next := *action-table*[state];
+	*action-table*[state] := action;
+      end;
+      do-action(action, state-stack, symbol-stack, token, tokenizer);
+    else
+      parse-loop-aux(state-stack, symbol-stack, token, tokenizer,
+		     action.next, action);
+    end;
+  else
     error("Parse error at or before %=", token);
+    #f;
   end;
-  do-action(action, state-stack, symbol-stack, token, tokenizer);
 end;
 
 define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
