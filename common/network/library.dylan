@@ -27,6 +27,18 @@ define module network-internal
     $IPPROTO-TCP,
     $SOCK-DGRAM,
     $IPPROTO-UDP,
+
+    <pollfd>,
+    get-fd,
+    get-fd-setter,
+    get-events,
+    get-events-setter,
+    get-revents,
+    get-revents-setter,
+    $POLLIN,
+    $POLLOUT,
+    poll,
+
     get-p-proto,
     get-sa-data,
     get-sin-family,

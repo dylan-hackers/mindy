@@ -39,11 +39,30 @@ define method tcp-client-test()
 
   let input-stream = make(<fd-stream>, fd: foo, direction: #"input");
   let output-stream = make(<fd-stream>, fd: foo, direction: #"output");
+
+  let poll-list = make(<pollfd>, element-count: 4);
+  map(get-fd-setter, list(foo, foo,
+                       *standard-input*.file-descriptor,
+                       *standard-output*.file-descriptor),
+      poll-list);
+  
+  map(get-events-setter, 
+      list($POLLIN, $POLLOUT, $POLLIN, $POLLOUT), 
+      poll-list);
+  
   format(output-stream, "%s\n", request);
   force-output(output-stream);
-  while(stream-open?(input-stream))
-    format(*standard-output*, "%s\n", read-line(input-stream));
-    force-output(*standard-output*);
+  let running = #t;
+  while(running)
+    let rc = poll(poll-list, 4, 1000);
+    for(i from 0 below 4)
+      format(*standard-error*, "revents[%=] = %=  ", i, poll-list[i].get-revents);
+    end for;
+    format(*standard-error*, "\n");
+    if(logand(poll-list[0].get-revents, $POLLIN) > 0)
+      format(*standard-output*, "%s\n", read-line(input-stream));
+      force-output(*standard-output*);
+    end if;
   end while;
 end;
 
@@ -86,4 +105,9 @@ define method udp-client-test()
   end if;
 end;
 
-udp-client-test();
+begin
+  tcp-client-test();
+  let tv = make(<timeval>);
+  let foo = gettimeofday(tv, as(<timezone>, 0));
+  format-out("%=.%=\n", tv.get-tv-sec, tv.get-tv-usec);
+end;

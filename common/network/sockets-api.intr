@@ -8,6 +8,8 @@ define interface
     name-mapper: c-to-dylan;
   struct "struct sockaddr_in" => <sockaddr-in>,
     superclasses: {<sockaddr>};
+  struct "struct pollfd" => <pollfd>,
+    superclasses: {<c-vector>};
   function "gethostbyname",
     equate-argument: {1 => <c-string>},
     map-argument: {1 => <byte-string>};
