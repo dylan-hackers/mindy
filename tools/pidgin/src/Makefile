@@ -35,7 +35,7 @@ c-parser-engine.dylan: c-parser-engine.input
 
 c-parser.lib.du: c-parser.lid c-parser-exports.dylan \
 	         c-parser-engine.dylan c-parser.dylan c-lexer.dylan \
-	         c-lexer-cpp.dylan \
+	         c-lexer-cpp.dylan c-parser-stubs.dylan \
 	         ansi-c.lib.du parser-utilities.lib.du
 	d2c $<
 
