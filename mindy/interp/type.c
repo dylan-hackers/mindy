@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.2 1994/03/31 10:19:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.3 1994/04/06 13:52:52 rgs Exp $
 *
 * This file does whatever.
 *
@@ -71,23 +71,34 @@ struct union_type {
 
 /* instancep */
 
-static boolean singleton_instancep(obj_t thing, obj_t type)
+static inline boolean singleton_instancep(obj_t thing, obj_t type)
 {
     return idp(thing, obj_ptr(struct singleton *, type)->object);
 }
 
-static boolean class_instancep(obj_t thing, obj_t class)
+static inline boolean class_instancep(obj_t thing, obj_t class)
 {
-    return subtypep(object_class(thing), class);
+    obj_t thing_class = object_class(thing);
+
+    static obj_t c1_cache[32], c2_cache[32];
+    static boolean result_cache[32];
+    register int cacheloc = (((int)thing_class ^ (int)class) >> 4) & 31;
+
+    if (c1_cache[cacheloc] == thing_class && c2_cache[cacheloc] == class)
+	return result_cache[cacheloc];
+
+    c1_cache[cacheloc] = thing_class;
+    c2_cache[cacheloc] = class;
+    return result_cache[cacheloc] = subtypep(thing_class, class);
 }
 
-static boolean subclass_instancep(obj_t thing, obj_t subclass)
+static inline boolean subclass_instancep(obj_t thing, obj_t subclass)
 {
     return instancep(thing, obj_ClassClass)
 	&& subtypep(thing, obj_ptr(struct subclass *, subclass)->of);
 }
 
-static boolean lim_int_instancep(obj_t thing, obj_t lim_int)
+static inline boolean lim_int_instancep(obj_t thing, obj_t lim_int)
 {
     obj_t min, max;
 
@@ -105,7 +116,7 @@ static boolean lim_int_instancep(obj_t thing, obj_t lim_int)
     return TRUE;
 }
 
-static boolean union_instancep(obj_t thing, obj_t u)
+static inline boolean union_instancep(obj_t thing, obj_t u)
 {
     obj_t remaining;
 
@@ -117,6 +128,7 @@ static boolean union_instancep(obj_t thing, obj_t u)
     return FALSE;
 }
 
+#if 0
 static boolean (*instancep_table[n_types])(obj_t thing, obj_t type) = {
     singleton_instancep,
     class_instancep,
@@ -124,29 +136,47 @@ static boolean (*instancep_table[n_types])(obj_t thing, obj_t type) = {
     lim_int_instancep,
     union_instancep
 };
+#endif
 
 boolean instancep(obj_t thing, obj_t type)
 {
     int type_id = obj_ptr(struct type *, type)->type_id;
 
-    return (*instancep_table[type_id])(thing, type);
+    switch (type_id) {
+    case id_Singleton:
+	return singleton_instancep(thing, type);
+	break;
+    case id_Class:
+	return class_instancep(thing, type);
+	break;
+    case id_SubClass:
+	return subclass_instancep(thing, type);
+	break;
+    case id_LimInt:
+	return lim_int_instancep(thing, type);
+	break;
+    case id_Union:
+	return union_instancep(thing, type);
+	break;
+    }
+/*    return (*instancep_table[type_id])(thing, type);*/
 }
 
 
 /* subtypep */
 
-static boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
+static inline boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
 {
     return idp(obj_ptr(struct singleton *, sing1)->object,
 	       obj_ptr(struct singleton *, sing2)->object);
 }
 
-static boolean sing_type_subtypep(obj_t sing, obj_t type)
+static inline boolean sing_type_subtypep(obj_t sing, obj_t type)
 {
     return instancep(obj_ptr(struct singleton *, sing)->object, type);
 }
 
-static boolean class_sing_subtypep(obj_t class, obj_t sing)
+static inline boolean class_sing_subtypep(obj_t class, obj_t sing)
 {
     obj_t o = obj_ptr(struct singleton *, sing)->object;
 
@@ -157,7 +187,7 @@ static boolean class_sing_subtypep(obj_t class, obj_t sing)
 	return FALSE;
 }
 
-static boolean class_class_subtypep(obj_t class1, obj_t class2)
+static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
 {
     obj_t cpl = obj_ptr(struct class *, class1)->cpl;
     obj_t remaining;
@@ -166,23 +196,24 @@ static boolean class_class_subtypep(obj_t class1, obj_t class2)
 	error("Attempt to use ~S before it was initialized.");
 
     for (remaining = cpl; remaining != obj_Nil; remaining = TAIL(remaining))
-	if (HEAD(remaining) == class2)
+	if (HEAD(remaining) == class2) {
 	    return TRUE;
+	}
     return FALSE;
 }
 
-static boolean class_subclass_subtypep(obj_t class, obj_t subclass)
+static inline boolean class_subclass_subtypep(obj_t class, obj_t subclass)
 {
     return class == obj_ClassClass
 	    && obj_ptr(struct subclass *, subclass)->of == obj_ClassClass;
 }
 
-static boolean never_subtypep(obj_t type1, obj_t type2)
+static inline boolean never_subtypep(obj_t type1, obj_t type2)
 {
     return FALSE;
 }
 
-static boolean subclass_type_subtypep(obj_t sub, obj_t type)
+static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
 {
     obj_t class = obj_ptr(struct subclass *, subclass)->of;
 
@@ -192,13 +223,13 @@ static boolean subclass_type_subtypep(obj_t sub, obj_t type)
 	return subtypep(obj_ClassClass, type);
 }
 
-static boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
+static inline boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
     return subtypep(obj_ptr(struct subclass *, sub1)->of,
 		    obj_ptr(struct subclass *, sub2)->of);
 }
 
-static boolean lim_sing_subtypep(obj_t lim, obj_t sing)
+static inline boolean lim_sing_subtypep(obj_t lim, obj_t sing)
 {
     obj_t min;
 
@@ -211,7 +242,7 @@ static boolean lim_sing_subtypep(obj_t lim, obj_t sing)
 	return TRUE;
 }
 
-static boolean lim_lim_subtypep(obj_t lim1, obj_t lim2)
+static inline boolean lim_lim_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -227,12 +258,12 @@ static boolean lim_lim_subtypep(obj_t lim1, obj_t lim2)
     return TRUE;
 }
 
-static boolean lim_type_subtypep(obj_t lim, obj_t type)
+static inline boolean lim_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_IntegerClass, type);
 }
 
-static boolean union_type_subtypep(obj_t u, obj_t type)
+static inline boolean union_type_subtypep(obj_t u, obj_t type)
 {
     obj_t remaining;
 
@@ -244,7 +275,7 @@ static boolean union_type_subtypep(obj_t u, obj_t type)
     return TRUE;
 }
 
-static boolean type_union_subtypep(obj_t type, obj_t u)
+static inline boolean type_union_subtypep(obj_t type, obj_t u)
 {
     obj_t remaining;
 
@@ -256,6 +287,7 @@ static boolean type_union_subtypep(obj_t type, obj_t u)
     return FALSE;
 }
 
+#if 0
 static boolean (*subtypep_table[n_types][n_types])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
@@ -283,6 +315,7 @@ static boolean (*subtypep_table[n_types][n_types])(obj_t t1, obj_t t2) = {
 	union_type_subtypep, type_union_subtypep
     }
 };
+#endif
 
 boolean subtypep(obj_t type1, obj_t type2)
 {
@@ -294,7 +327,95 @@ boolean subtypep(obj_t type1, obj_t type2)
     type1_id = obj_ptr(struct type *, type1)->type_id;
     type2_id = obj_ptr(struct type *, type2)->type_id;
 
-    return (subtypep_table[type1_id][type2_id])(type1, type2);
+    switch (type1_id) {
+    case id_Singleton:
+	switch (type2_id) {
+	    /* singleton x mumble methods */
+	case id_Singleton:
+	    return sing_sing_subtypep(type1, type2);
+	    break;
+	case id_Class:
+	case id_SubClass:
+	case id_LimInt:
+	    return sing_type_subtypep(type1, type2);
+	    break;
+	case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	};
+	break;
+    case id_Class:
+	switch (type2_id) {
+	    /* class x mumble methods */
+	case id_Singleton:
+	    return class_sing_subtypep(type1, type2);
+	    break;
+	case id_Class:
+	    return class_class_subtypep(type1, type2);
+	    break;
+	case id_SubClass:
+	    return class_subclass_subtypep(type1, type2);
+	    break;
+	case id_LimInt:
+	    return never_subtypep(type1, type2);
+	    break;
+	case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	};
+	break;
+    case id_SubClass:
+	switch (type2_id) {
+	    /* subclass x mumble methods */
+	case id_Singleton:
+	case id_Class:
+	    return subclass_type_subtypep(type1, type2);
+	    break;
+	case id_SubClass:
+	    return subclass_subclass_subtypep(type1, type2);
+	    break;
+	case id_LimInt:
+	    return never_subtypep(type1, type2);
+	    break;
+	case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	}
+	break;
+    case id_LimInt:
+	switch (type2_id) {
+	    /* limint x mumble methods */
+	case id_Singleton:
+	    return lim_sing_subtypep(type1, type2);
+	    break;
+	case id_Class:
+	case id_SubClass:
+	    return lim_type_subtypep(type1, type2);
+	    break;
+	case id_LimInt:
+	    return lim_lim_subtypep(type1, type2);
+	    break;
+	case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	}
+	break;
+    case id_Union:
+	switch (type2_id) {
+	    /* union x mumble methods */
+	case id_Singleton:
+	case id_Class:
+	case id_SubClass:
+	case id_LimInt:
+	    return union_type_subtypep(type1, type2);
+	    break;
+	case id_Union:
+	    return type_union_subtypep(type1, type2);
+	    break;
+	}
+	break;
+    }
+/*    return (subtypep_table[type1_id][type2_id])(type1, type2);*/
 }
 
 
