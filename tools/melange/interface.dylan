@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.19 2003/01/29 20:34:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.20 2003/01/30 12:16:57 andreas Exp $
 
 //======================================================================
 //
@@ -211,7 +211,7 @@ define method process-imports
               let decl = import.head.find-decl;
               decl & (import-table[decl] := as(<string>, import.tail));
             else
-              let decl = import.head.find-decl;
+              let decl = import.find-decl;
               decl & (import-table[decl] := #t);
             end if;
           end for;
