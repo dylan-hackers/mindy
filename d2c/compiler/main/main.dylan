@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.48 1996/02/09 01:37:43 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.49 1996/02/09 03:35:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,21 +49,30 @@ define constant $cc-flags = getenv("CCFLAGS") | "";
 
 // Roots registry.
 
+// Information which needs to go into the library dump file.
+//
+define class <unit-info> (<object>)
+
+  slot unit-name :: <byte-string>, required-init-keyword: #"unit-name";
+
+  slot undumped-objects :: <vector>,
+    init-function: method () make(<stretchy-vector>) end method,
+    init-keyword: #"undumped-objects";
+
+  slot linker-options :: false-or(<byte-string>),
+    init-value: #f, init-keyword: #"linker-options";
+end class <unit-info>;
+
 define variable *units* :: <stretchy-vector> = make(<stretchy-vector>);
 
-define method add-unit (info :: <unit-info>) => ();
+define method initialize (info :: <unit-info>, #next next-method, #key) => ();
+  next-method();
   add!(*units*, info);
 end;
   
-add-od-loader(*compiler-dispatcher*, #"unit-info",
-  method (state :: <load-state>) => res :: <byte-string>;
-    let prefix = load-object-dispatch(state);
-    let undumped = load-object-dispatch(state);
-    assert-end-object(state);
-    add-unit(make(<unit-info>, unit-name: prefix, undumped-objects: undumped));
-    prefix;
-  end method
-);
+add-make-dumper(#"unit-info", *compiler-dispatcher*, <unit-info>,
+		list(unit-name, unit-name:, #f,
+		     undumped-objects, undumped-objects:, #f));
 
 
 // Compilation driver.
@@ -388,14 +397,19 @@ define method compile-library
     end;
   end;
 
+  let linker-options = element(header, #"linker-options", default: #f);
+  let unit-info = make(<unit-info>,
+		       unit-name: unit-prefix,
+		       undumped-objects: as(<simple-object-vector>, undumped),
+		       linker-options: linker-options);
+
   if (executable)
     begin
-      format(*debug-output*, "Emitting Initial Heap.\n");
+      format(*debug-output*, "Emitting Global Heap.\n");
       let heap-stream 
 	= make(<file-stream>, name: "heap.s", direction: #"output");
-      add-unit(make(<unit-info>, unit-name: unit-prefix,
-		    undumped-objects: as(<simple-object-vector>, undumped)));
-      build-initial-heap(*units*, heap-stream);
+      build-initial-heap(apply(concatenate, map(undumped-objects, *units*)),
+			 heap-stream);
       close(heap-stream);
     end;
 
@@ -432,11 +446,14 @@ define method compile-library
       end;
       let unit-libs = "";
       for (unit in *units*)
+	if (unit.linker-options)
+	  unit-libs := concatenate(" ", unit.linker-options, unit-libs);
+	end if;
 	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
       let command
 	= concatenate("gcc ", flags, " -L/lib/pa1.1 -o ", executable,
-		      " inits.c heap.s", unit-libs, " -lruntime -lm");
+		      " inits.c heap.s", unit-libs);
       format(*debug-output*, "%s\n", command);
       unless (zero?(system(command)))
 	cerror("so what", "cc failed?");
@@ -454,10 +471,8 @@ define method compile-library
 	dump-od(tlf, dump-buf);
       end;
     end;
+    dump-od(unit-info, dump-buf);
     dump-queued-methods(dump-buf);
-
-    dump-simple-object(#"unit-info", dump-buf, unit-prefix,
-		       as(<simple-object-vector>, undumped));
 
     end-dumping(dump-buf);
   end;
