@@ -9,7 +9,7 @@ module: dialogs
 	Includes
 */
 
-c-include( "Carbon/Carbon.h" );
+c-include( "Carbon.h" );
 
 /*
 	Constants

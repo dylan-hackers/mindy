@@ -10,7 +10,7 @@ module: os-utils
 */
 
 
-c-include("Carbon/Carbon.h");
+c-include("Carbon.h");
 
 
 /*

@@ -14,8 +14,12 @@ carbon-quickdraw.dylan
 gworlds.dylan
 windows-exports.dylan
 windows.dylan
+menus-exports.dylan
+menus.dylan
 events-exports.dylan
 events.dylan
+carbon-events-exports.dylan
+carbon-events.dylan
 controls-exports.dylan
 controls.dylan
 dialogs-exports.dylan
@@ -26,8 +30,6 @@ navigation-exports.dylan
 navigation.dylan
 gestalt-exports.dylan
 gestalt.dylan
-menus-exports.dylan
-menus.dylan
 os-utils-exports.dylan
 os-utils.dylan
 resources-exports.dylan

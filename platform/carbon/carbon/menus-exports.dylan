@@ -14,7 +14,7 @@ define module menus
 	use quickdraw;
 	
 	export	// Menu Manager.
-		<MenuBarHandle>, <MenuHandle>,
+		<MenuBarHandle>, <MenuHandle>, <MenuRef>,
 		GetNewMBar, SetMenuBar, DrawMenuBar, HiliteMenu,
 		MenuSelect, MenuKey,
 		GetMenuHandle, GetMenuItemText, EnableMenuItem, DisableMenuItem, CountMenuItems,

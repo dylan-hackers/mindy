@@ -8,7 +8,8 @@ define library carbon
 
 	use Dylan;
 	use melange-support;
-	export	mac-types, dialogs, events, gestalt, memory, files, menus, os-utils, 
+	export	carbon, mac-types, dialogs, events, gestalt, 
+                        memory, files, menus, os-utils, 
 			quickdraw, resources, sound, windows, controls,
                         appearance, carbon-events;
 

@@ -8,7 +8,7 @@ module: gestalt
 	Includes
 */
 
-c-include( "Carbon/Carbon.h" );
+c-include( "Carbon.h" );
 
 
 /*

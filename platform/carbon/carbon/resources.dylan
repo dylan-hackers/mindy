@@ -1,6 +1,6 @@
 module: resources
 
-c-include("Carbon/Carbon.h");
+c-include("Carbon.h");
 
 // Resource Manager.
 

@@ -12,8 +12,19 @@ define module carbon-events
 	use memory;
 	use quickdraw;
 	use windows;
+  use events;
+  use menus;
 
-	export // carbon-events
+	export 		// carbon-events
+  
+            // UPPs
+            
+            <EventHandlerUPP>, <EventComparatorUPP>, <EventLoopTimerUPP>,
+  
+            // Various Classes
+            
+            <EventLoopRef>, <EventRef>, <EventQueueRef>, <EventTargetRef>, 
+            <EventLoopTimerRef>, <EventHandlerRef>, <EventHandlerCallRef>,
         
             // Mouse Buttons
         
@@ -34,12 +45,12 @@ define module carbon-events
             $kEventAppActivated, $kEventAppDeactivated, $kEventAppQuit, 
             $kEventAppLaunchNotification,
             
-/*            // kEventClassMouse
+            // kEventClassMouse
             
             $kEventClassMouse, $kEventClassKeyboard, $kEventClassTextInput, 
             $kEventClassApplication, $kEventClassEPPC, $kEventClassMenu, $kEventClassWindow, 
             $kEventClassControl, $kEventClassCommand, $kEventClassTablet,
-*/            
+                        
             // kEventMenuBeginTracking
             
             $kEventMenuBeginTracking, $kEventMenuEndTracking, $kEventMenuChangeTrackingMode, 
@@ -66,7 +77,19 @@ define module carbon-events
         
             <EventTypeSpec>,
             event-type-spec-eventClass,event-type-spec-eventClass-setter,
-            event-type-spec-eventKind, event-type-spec-eventKind-setter;
+            event-type-spec-eventKind, event-type-spec-eventKind-setter,
+            
+            // methods
+            InstallWindowEventHandler, AddEventTypesToHandler, CallNextEventHandler,
+            ConvertEventRefToEventRecord, FlushEventQueue, 
+            GetEventClass, GetEventKind, // GetEventParameter,
+            GetMainEventQueue, GetMenuEventTarget,
+            GetMainEventLoop, GetUserFocusEventTarget, GetWindowEventTarget,
+            InstallEventHandler,
+            //InstallEventLoopTimer, 
+            QuitEventLoop, RemoveEventHandler, RemoveEventLoopTimer
+            ;
+            
 end module carbon-events
 
 

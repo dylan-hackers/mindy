@@ -24,6 +24,6 @@ define module mac-types
                         $noErr,
                         
                 // pascal string	
-			<Pascal-string>;
+			<pascal-string>;
 			
 end module mac-types;

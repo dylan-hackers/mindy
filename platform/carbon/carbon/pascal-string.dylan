@@ -4,7 +4,7 @@ module: mac-types
 	Include the Macintosh Type Declaration Header so we know what a Str255 is.
 */
 
-c-include("Carbon/Carbon.h");
+c-include("Carbon.h");
 
 
 /*

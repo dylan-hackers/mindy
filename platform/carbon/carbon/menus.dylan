@@ -9,7 +9,7 @@ module: menus
 	Includes
 */
 
-c-include("Carbon/Carbon.h");
+c-include("Carbon.h");
 
 
 /*
@@ -22,6 +22,9 @@ end class <MenuBarHandle>;
 
 define functional class <MenuHandle> ( <Handle> )
 end class <MenuHandle>;
+
+
+define constant <MenuRef> :: <type> = <MenuHandle>;
 
 
 /*
