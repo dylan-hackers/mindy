@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.8 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.9 1996/01/03 21:30:42 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,8 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // definitions exist for things like the type of a variable (when it isn't a
 // compile-time constant).
 // 
-define abstract class <definition> (<annotatable>, <identity-preserving-mixin>)
+define open abstract class <definition>
+    (<annotatable>, <identity-preserving-mixin>)
   //
   // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
@@ -43,12 +44,61 @@ define method ct-value (defn :: <definition>)
 end;
 
 
-define abstract class <implicit-definition> (<definition>)
+define open abstract class <implicit-definition> (<definition>)
 end;
 
-define abstract class <abstract-constant-definition> (<definition>)
+define open abstract class <abstract-constant-definition> (<definition>)
 end;
 
+
+define open primary abstract class <function-definition>
+    (<abstract-constant-definition>)
+  //
+  // The signature.
+  slot %function-defn-signature :: type-union(<signature>, <function>),
+    setter: function-defn-signature-setter, init-keyword: signature:;
+  //
+  // #t if this definition requires special handling at loadtime.  Can be
+  // because of something non-constant in the signature or in the case of
+  // methods, can be because the generic is hairy.  Fill in during
+  // finalization.
+  slot function-defn-hairy? :: <boolean>,
+    init-value: #f, init-keyword: hairy:;
+  //
+  // The ctv for this function.  #f if we can't represent it (because the
+  // function is hairy) and #"not-computed-yet" if we haven't computed it yet.
+  slot function-defn-ct-value
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
+  //
+  // The FER transformers for this function.  Gets initialized from the
+  // variable.
+  slot function-defn-transformers :: <list>, init-value: #();
+  //
+  // True if we can drop calls to this function when the results isn't used
+  // because there are no side effects.
+  slot function-defn-flushable? :: <boolean>,
+    init-value: #f, init-keyword: flushable:;
+  //
+  // True if we can move calls to this function around with impunity because
+  // the result depends on nothing but the value of the arguments.
+  slot function-defn-movable? :: <boolean>,
+    init-value: #f, init-keyword: movable:;
+end;
+
+define method function-defn-signature
+    (defn :: <function-definition>) => res :: <signature>;
+  let sig-or-func = defn.%function-defn-signature;
+  if (instance?(sig-or-func, <function>))
+    defn.function-defn-signature := sig-or-func();
+  else
+    sig-or-func;
+  end;
+end;
+
+define open primary abstract class <class-definition> 
+    (<abstract-constant-definition>)
+end class;
 
 
 // {check,make}-syntax-table-additions -- exported.
@@ -83,5 +133,3 @@ define method make-syntax-table-additions
     => ();
   table[name] := merge-category(table, name, <name-token>);
 end;
-
-
