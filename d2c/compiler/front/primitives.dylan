@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.34 1996/04/18 17:04:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.35 1996/04/18 20:50:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,13 +7,13 @@ copyright: Copyright (c) 1996  Carnegie Mellon University
 define class <primitive-info> (<identity-preserving-mixin>)
   //
   // The name of this primitive.
-  slot priminfo-name :: <symbol>,
+  constant slot priminfo-name :: <symbol>,
     required-init-keyword: name:;
   //
   // List of type specifiers for the arguments.  The second to last element
   // can also be #"rest" which means the last element is repeated.  Elements
   // can also be #"cluster" to indicate a values-cluster argument.
-  slot priminfo-arg-type-specifiers :: <list>,
+  constant slot priminfo-arg-type-specifiers :: <list>,
     required-init-keyword: arg-types:;
   //
   // The arg-types as ctypes.  Lazily created from arg-type-specifiers.
@@ -22,7 +22,7 @@ define class <primitive-info> (<identity-preserving-mixin>)
     init-value: #f;
   //
   // The result-type of the primitive.
-  slot priminfo-result-type-specifier :: <type-specifier>,
+  constant slot priminfo-result-type-specifier :: <type-specifier>,
     required-init-keyword: result-type:;
   //
   // The result-type as a ctype.  Lazily created from result-type-specifier.
@@ -33,14 +33,19 @@ define class <primitive-info> (<identity-preserving-mixin>)
   // computation of the result.  In other words, if we can freely delete
   // the primitive if the results arn't used.
   //
-  slot priminfo-side-effect-free? :: <boolean>,
+  constant slot priminfo-side-effect-free? :: <boolean>,
     required-init-keyword: side-effect-free:;
   //
   // A primitive is pure if it depends on nothing but the arguments.  In other
   // words, can be freely moved around without changing the program execution
   // at all.  Pure implies side-effect-free.
-  slot priminfo-pure? :: <boolean>,
+  constant slot priminfo-pure? :: <boolean>,
     required-init-keyword: pure:;
+  //
+  // A primitive is cseable if multiple calls to it with the same arguments
+  // are guaranteed to return the same result.  Cseable implies pure.
+  constant slot priminfo-cseable? :: <boolean>,
+    required-init-keyword: cseable:;
   //
   // Function to dynamically compute the return type of this primitive.
   // Gets passed the primitive operation and a list of the ctypes for each
@@ -90,11 +95,19 @@ define constant $primitives = make(<object-table>);
 
 define method define-primitive
     (name :: <symbol>, arg-types :: <list>, result-type :: <type-specifier>,
-     #key pure: pure?, side-effect-free: side-effect-free? = pure?)
+     #key cseable: cseable? :: <boolean>,
+          pure: pure? :: <boolean> = cseable?,
+          side-effect-free: side-effect-free? :: <boolean> = pure?)
     => ();
+  if (cseable? & ~pure?)
+    error("Primitive %s can't be cseable but not pure.", name);
+  end if;
+  if (pure? & ~side-effect-free?)
+    error("Primitive %s can't be pure but not side-effect-free.", name);
+  end if;
   let info = make(<primitive-info>, name: name, arg-types: arg-types,
 		  result-type: result-type, pure: pure?,
-		  side-effect-free: side-effect-free?);
+		  side-effect-free: side-effect-free?, cseable: cseable?);
   $primitives[name] := info;
 end;
 
@@ -163,10 +176,14 @@ define-primitive
 
 define-primitive
   (#"main-entry", #(#"<method>"), #"<raw-pointer>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"values", #(rest:, #"<object>"), #(values:, rest:, #"<object>"),
+   // This is not cseable, because it isn't really a computation.
+   // Besides, cse replaces common subexpressions with uses of values,
+   // so if we replaces values with values, we would spend a long time
+   // compiling.
    pure: #t);
 
 define-primitive
@@ -211,11 +228,11 @@ define-primitive
 
 define-primitive
   (#"initialized?", #(#"<object>"), #"<boolean>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"make-immediate", #(#"<class>", rest:, #"<object>"), #"<object>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"allocate", #(#"<class>", #"<integer>"), #"<object>",
@@ -228,7 +245,7 @@ define-primitive
 
 define-primitive
   (#"c-string", #(#"<string>"), #"<raw-pointer>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"call-out",
@@ -253,17 +270,17 @@ define-primitive
 
 define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"not", #(#"<object>"), #"<boolean>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
-  (#"==", #(#"<object>", #"<object>"), #"<boolean>", pure: #t);
+  (#"==", #(#"<object>", #"<object>"), #"<boolean>", cseable: #t);
 
 define-primitive
-  (#"initial-symbols", #(), #(union:, #"<symbol>", #"<false>"), pure: #t);
+  (#"initial-symbols", #(), #(union:, #"<symbol>", #"<false>"), cseable: #t);
 
 define-primitive
   (#"ref-slot", #(#"<object>", #"<symbol>", #"<integer>"),
@@ -279,7 +296,7 @@ define-primitive
 // NLX operations.
 
 define-primitive
-  (#"current-sp", #(), #"<raw-pointer>", pure: #t);
+  (#"current-sp", #(), #"<raw-pointer>", cseable: #t);
 
 define-primitive
   (#"unwind-stack", #(#"<raw-pointer>"), #(values:));
@@ -293,7 +310,7 @@ define-primitive
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
     (name, #(#"<integer>", #"<integer>"), #"<boolean>",
-     pure: #t);
+     cseable: #t);
 end;
 
 for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-logior",
@@ -301,43 +318,44 @@ for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-logior",
 		 #"fixnum-shift-right"])
   define-primitive
     (name, #(#"<integer>", #"<integer>"), #"<integer>",
-     pure: #t);
+     cseable: #t);
 end;
 
 for (name in #[#"fixnum-negative", #"fixnum-lognot"])
   define-primitive
     (name, #(#"<integer>"), #"<integer>",
-     pure: #t);
+     cseable: #t);
 end;
   
 define-primitive
   (#"fixnum-divide", #(#"<integer>", #"<integer>"),
    #(values:, #"<integer>", #"<integer>"),
-   pure: #t);
+   cseable: #t);
 
 
 // Single float operations.
 
 define-primitive
-  (#"fixed-as-single", #(#"<integer>"), #"<single-float>", pure: #t);
+  (#"fixed-as-single", #(#"<integer>"), #"<single-float>", cseable: #t);
    
 define-primitive
-  (#"double-as-single", #(#"<double-float>"), #"<single-float>", pure: #t);
+  (#"double-as-single", #(#"<double-float>"), #"<single-float>", cseable: #t);
    
 define-primitive
-  (#"extended-as-single", #(#"<extended-float>"), #"<single-float>", pure: #t);
+  (#"extended-as-single", #(#"<extended-float>"), #"<single-float>",
+   cseable: #t);
 
 for (name in #[#"single-<", #"single-<=", #"single-=",
 		 #"single-==", #"single-~="])
   define-primitive
     (name, #(#"<single-float>", #"<single-float>"), #"<boolean>",
-     pure: #t);
+     cseable: #t);
 end;
 
 for (name in #[#"single-+", #"single-*", #"single--"])
   define-primitive
     (name, #(#"<single-float>", #"<single-float>"), #"<single-float>",
-     pure: #t);
+     cseable: #t);
 end;
 
 define-primitive
@@ -345,39 +363,40 @@ define-primitive
 
 for (name in #[#"single-abs", #"single-negative"])
   define-primitive
-    (name, #(#"<single-float>"), #"<single-float>", pure: #t);
+    (name, #(#"<single-float>"), #"<single-float>", cseable: #t);
 end;
 
 for (name in #[#"single-floor", #"single-ceiling", #"single-round"])
   define-primitive
     (name, #(#"<single-float>"),
      #(values:, #"<integer>", #"<single-float>"),
-     pure: #t);
+     cseable: #t);
 end;
 
 
 // Double float operations.
 
 define-primitive
-  (#"fixed-as-double", #(#"<integer>"), #"<double-float>", pure: #t);
+  (#"fixed-as-double", #(#"<integer>"), #"<double-float>", cseable: #t);
    
 define-primitive
-  (#"single-as-double", #(#"<single-float>"), #"<double-float>", pure: #t);
+  (#"single-as-double", #(#"<single-float>"), #"<double-float>", cseable: #t);
    
 define-primitive
-  (#"extended-as-double", #(#"<extended-float>"), #"<double-float>", pure: #t);
+  (#"extended-as-double", #(#"<extended-float>"), #"<double-float>",
+   cseable: #t);
 
 for (name in #[#"double-<", #"double-<=", #"double-=",
 		 #"double-==", #"double-~="])
   define-primitive
     (name, #(#"<double-float>", #"<double-float>"), #"<boolean>",
-     pure: #t);
+     cseable: #t);
 end;
 
 for (name in #[#"double-+", #"double-*", #"double--"])
   define-primitive
     (name, #(#"<double-float>", #"<double-float>"), #"<double-float>",
-     pure: #t);
+     cseable: #t);
 end;
 
 define-primitive
@@ -385,39 +404,41 @@ define-primitive
 
 for (name in #[#"double-abs", #"double-negative"])
   define-primitive
-    (name, #(#"<double-float>"), #"<double-float>", pure: #t);
+    (name, #(#"<double-float>"), #"<double-float>", cseable: #t);
 end;
 
 for (name in #[#"double-floor", #"double-ceiling", #"double-round"])
   define-primitive
     (name, #(#"<double-float>"),
      #(values:, #"<integer>", #"<double-float>"),
-     pure: #t);
+     cseable: #t);
 end;
 
 
 // Extended float operations.
 
 define-primitive
-  (#"fixed-as-extended", #(#"<integer>"), #"<extended-float>", pure: #t);
+  (#"fixed-as-extended", #(#"<integer>"), #"<extended-float>", cseable: #t);
    
 define-primitive
-  (#"single-as-extended", #(#"<single-float>"), #"<extended-float>", pure: #t);
+  (#"single-as-extended", #(#"<single-float>"), #"<extended-float>",
+   cseable: #t);
    
 define-primitive
-  (#"double-as-extended", #(#"<double-float>"), #"<extended-float>", pure: #t);
+  (#"double-as-extended", #(#"<double-float>"), #"<extended-float>",
+   cseable: #t);
 
 for (name in #[#"extended-<", #"extended-<=", #"extended-=",
 		 #"extended-==", #"extended-~="])
   define-primitive
     (name, #(#"<extended-float>", #"<extended-float>"), #"<boolean>",
-     pure: #t);
+     cseable: #t);
 end;
 
 for (name in #[#"extended-+", #"extended-*", #"extended--"])
   define-primitive
     (name, #(#"<extended-float>", #"<extended-float>"), #"<extended-float>",
-     pure: #t);
+     cseable: #t);
 end;
 
 define-primitive
@@ -426,40 +447,40 @@ define-primitive
 
 for (name in #[#"extended-abs", #"extended-negative"])
   define-primitive
-    (name, #(#"<extended-float>"), #"<extended-float>", pure: #t);
+    (name, #(#"<extended-float>"), #"<extended-float>", cseable: #t);
 end;
 
 for (name in #[#"extended-floor", #"extended-ceiling", #"extended-round"])
   define-primitive
     (name, #(#"<extended-float>"),
      #(values:, #"<integer>", #"<extended-float>"),
-     pure: #t);
+     cseable: #t);
 end;
 
 
 // raw pointer operations.
 
 define-primitive
-  (#"make-raw-pointer", #(#"<integer>"), #"<raw-pointer>", pure: #t);
+  (#"make-raw-pointer", #(#"<integer>"), #"<raw-pointer>", cseable: #t);
 
 define-primitive
-  (#"raw-pointer-address", #(#"<raw-pointer>"), #"<integer>", pure: #t);
+  (#"raw-pointer-address", #(#"<raw-pointer>"), #"<integer>", cseable: #t);
 
 define-primitive
   (#"pointer-+", #(#"<raw-pointer>", #"<integer>"), #"<raw-pointer>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"pointer--", #(#"<raw-pointer>", #"<raw-pointer>"), #"<integer>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"pointer-<", #(#"<raw-pointer>", #"<raw-pointer>"), #"<boolean>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"pointer-=", #(#"<raw-pointer>", #"<raw-pointer>"), #"<boolean>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"pointer-deref",
@@ -479,9 +500,9 @@ define-primitive
   (#"vector-elements",
    #(#(union:, #"<byte-vector>", #"<byte-string>", #"<unicode-string>")),
    #"<raw-pointer>",
-   pure: #t);
+   cseable: #t);
 
 define-primitive
   (#"object-address", #(#"<object>"), #"<raw-pointer>",
-   pure: #t);
+   cseable: #t);
 
