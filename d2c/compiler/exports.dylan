@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.117 1995/12/05 03:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.118 1995/12/06 23:29:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -543,7 +543,7 @@ define module ctype
 
     // Operations on types.
     values-subtype?, values-types-intersect?, values-type-intersection,
-    values-type-union, csubtype?, ctype-union, ctype-intersection,
+    values-type-union, cinstance?, csubtype?, ctype-union, ctype-intersection,
     ctype-difference, ctypes-intersect?, ctype-eq?, ctype-neq?, 
     find-direct-classes,
 
