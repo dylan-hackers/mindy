@@ -2,7 +2,7 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.4 1996/04/22 15:52:12 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.5 1997/01/16 14:59:00 nkramer Exp $
 
 //======================================================================
 //
@@ -126,14 +126,17 @@ define sealed method report-condition (cond :: <illegal-regexp>, stream) => ();
 		   cond.regular-expression);
 end method report-condition;
 
-define method parse (s :: <string>, character-set-type :: <class>);
+define method parse (regexp :: <string>, character-set-type :: <class>)
+ => (parsed-regexp :: <parsed-regexp>, last-group :: <integer>,
+     backrefs? :: <boolean>, alternatives? :: <boolean>, 
+     quantifiers? :: <boolean>);
   let parse-info = make(<parse-info>, set-type: character-set-type);
-  let parse-string = make(<parse-string>, string: s);
+  let parse-string = make(<parse-string>, string: regexp);
   let parse-tree = make(<mark>, group: 0, 
 			child: parse-regexp(parse-string, parse-info));
   let optimized-regexp = optimize(parse-tree);
   if (optimized-regexp.pathological?)
-    signal(make(<illegal-regexp>, regexp: s));
+    signal(make(<illegal-regexp>, regexp: regexp));
   else
     values(optimized-regexp,
 	   parse-info.current-group-number,
