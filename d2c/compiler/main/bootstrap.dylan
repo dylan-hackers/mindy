@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.32 1995/06/09 16:44:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.33 1995/06/09 19:01:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -322,6 +322,7 @@ define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
 define class <class> (<type>)
   slot unique-id :: <fixed-integer>, required-init-keyword: unique-id:;
+  slot class-functional? :: <boolean>, init-value: #f;
 end;
 
 define abstract open class <number> (<object>) end;
@@ -421,6 +422,7 @@ define open generic error (msg, #rest args) => res :: type-or();
 define open generic make (class :: <class>, #all-keys) => thing;
 define open generic initialize (instance, #all-keys);
 define open generic \== (x, y) => res :: <boolean>;
+define open generic functional-== (x, y) => res :: <boolean>;
 define open generic \= (x, y) => res :: <boolean>;
 define open generic \< (x, y) => res :: <boolean>;
 define open generic \+ (x :: <number>, y :: <number>) => res :: <number>;
