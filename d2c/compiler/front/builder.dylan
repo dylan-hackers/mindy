@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.5 1995/04/24 03:10:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.6 1995/04/25 23:00:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -149,12 +149,21 @@ define generic make-primitive-operation
  => res :: <operation>;
 
 
-// Like MAKE-OPERATION, but creates an mv-operation.
+// Like MAKE-OPERATION, but creates an mv-call operation.
 //
 define generic make-mv-operation
     (builder :: <fer-builder>, function :: <leaf>,
      cluster :: <abstract-variable>)
  => res :: <operation>;
+
+
+// Like MAKE-OPERATION, but creates an set operation.
+//
+define generic make-set-operation
+    (builder :: <fer-builder>, var-info :: <module-var-info>,
+     value :: <leaf>)
+ => res :: <operation>;
+
 
 
 // Return a literal constant leaf.
