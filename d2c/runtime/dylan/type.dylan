@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.6 1995/11/16 03:39:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.7 1995/12/08 22:15:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -454,9 +454,9 @@ define method %instance?
     (object :: <fixed-integer>, type :: <limited-integer>)
  => res :: <boolean>;
   if (type.limited-integer-base-class == <fixed-integer>)
-    let min :: <fixed-integer> = type.limited-integer-minimum;
+    let min :: false-or(<fixed-integer>) = type.limited-integer-minimum;
     if (~min | object >= min)
-      let max :: <fixed-integer> = type.limited-integer-maximum;
+      let max :: false-or(<fixed-integer>) = type.limited-integer-maximum;
       ~max | object <= max;
     else
       #f;
