@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.8 1996/02/16 03:49:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.9 1996/03/02 19:12:12 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,6 +53,7 @@ define module cback
   use top-level-forms;
   use utils;
   use variables;
+  use cheese;
 
   export
     <unit-state>, unit-prefix, unit-init-roots, unit-eagerly-reference,
