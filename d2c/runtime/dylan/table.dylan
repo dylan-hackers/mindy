@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.10 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.11 1996/05/09 04:00:39 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -198,7 +198,7 @@ end class <entry-vector>;
 define sealed domain make(singleton(<entry-vector>));
 define sealed domain initialize(<entry-vector>);
 
-#end
+#endif
 
 define sealed inline method element
     (vec :: <entry-vector>, index :: <integer>,
