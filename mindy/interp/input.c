@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.3 1994/03/31 22:43:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.4 1994/04/08 17:59:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -76,6 +76,7 @@ static obj_t dylan_getc(void)
     int c;
 
     getc_or_wait(thread_current());
+    go_on();
 }
 
 void init_input_functions(void)
