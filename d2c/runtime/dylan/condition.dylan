@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.11 1996/03/21 03:25:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.12 1996/04/13 21:39:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -551,9 +551,57 @@ end;
 // with a fixed number of arguments is much more concise than a call to
 // error, which takes a variable number of arguments.
 
-define method uninitialized-slot-error () => res :: <never-returns>;
-  error("Slot is not initialized.");
+
+// uninitialized-slot-error -- magic
+//
+// This called whenever we try to access an uninitialized slot, both directly
+// by the acccessor standins in func.dylan and by compiler generated code.
+// It just signals an <uninitialized-slot-error>.
+// 
+define method uninitialized-slot-error
+    (slot :: <slot-descriptor>, instance :: <object>)
+    => res :: <never-returns>;
+  error(make(<uninitialized-slot-error>, slot: slot, instance: instance));
 end;
+
+// <uninitialized-slot-error> -- internal.
+//
+// The error condition that is signaled whenever we try to access an
+// uninitialized slot.
+//
+define class <uninitialized-slot-error> (<error>)
+  //
+  // The slot that was uninitialized.
+  constant slot uninitialized-slot-error-slot :: <slot-descriptor>,
+    required-init-keyword: slot:;
+  //
+  // The instance whos slot was uninitialized.
+  constant slot uninitialized-slot-error-instance :: <object>,
+    required-init-keyword: instance:;
+end class <uninitialized-slot-error>;
+
+define sealed domain make (singleton(<uninitialized-slot-error>));
+define sealed domain initialize (<uninitialized-slot-error>);
+
+// report-condition -- method on exported GF.
+//
+// If the slot has a name, include it in the report.  If not, just print
+// the instance.
+// 
+define sealed method report-condition
+    (condition :: <uninitialized-slot-error>, stream)
+    => ();
+  let name = condition.uninitialized-slot-error-slot.slot-name;
+  let instance = condition.uninitialized-slot-error-instance;
+  if (name)
+    condition-format(stream, "Accessing uninitialized slot %s in %=",
+		     name, instance);
+  else
+    condition-format(stream, "Accessing uninitialized slot in %=", instance);
+  end if;
+end method report-condition;
+
+
 
 define method missing-required-init-keyword-error
     (keyword :: <symbol>, class :: <class>) => res :: <never-returns>;

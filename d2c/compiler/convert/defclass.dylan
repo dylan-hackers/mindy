@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.65 1996/04/13 21:17:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.66 1996/04/13 21:36:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2155,7 +2155,8 @@ define method build-getter
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	     (builder, policy, source, #"uninitialized-slot-error"));
+	     (builder, policy, source, #"uninitialized-slot-error",
+	      make-literal-constant(builder, slot), instance));
 	end-body(builder);
       end;
       let maybe-data-word? = slot.might-be-in-data-word?;
@@ -2200,7 +2201,8 @@ define method build-getter
 	build-assignment
 	  (builder, policy, source, #(),
 	   make-error-operation
-	     (builder, policy, source, #"uninitialized-slot-error"));
+	     (builder, policy, source, #"uninitialized-slot-error",
+	      make-literal-constant(builder, slot), instance));
 	end-body(builder);
       end;
     end;

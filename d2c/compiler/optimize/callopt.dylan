@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.9 1996/04/13 21:16:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.10 1996/04/13 21:35:53 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -963,8 +963,9 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, policy, source,
-			      #"uninitialized-slot-error"));
+	 make-error-operation
+	   (builder, policy, source, #"uninitialized-slot-error",
+	    make-literal-constant(builder, slot), instance));
       end-body(builder);
     end;
     let value = make-local-var(builder, slot.slot-getter.variable-name,
@@ -993,8 +994,9 @@ define method optimize-slot-ref
       build-else(builder, policy, source);
       build-assignment
 	(builder, policy, source, #(),
-	 make-error-operation(builder, policy, source,
-			      #"uninitialized-slot-error"));
+	 make-error-operation
+	   (builder, policy, source, #"uninitialized-slot-error",
+	    make-literal-constant(builder, slot), instance));
       end-body(builder);
     end;
     insert-before(component, call-assign, builder-result(builder));

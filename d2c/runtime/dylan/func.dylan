@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.25 1996/04/06 06:44:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.26 1996/04/13 21:39:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1138,10 +1138,11 @@ define constant general-rep-getter
       let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 1);
       let instance = %%primitive(extract-arg, arg-ptr, 0);
       %%primitive(pop-args, arg-ptr);
-      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      let slot = self.accessor-slot;
+      let posn = find-slot-offset(instance.object-class, slot);
       let result = %%primitive(ref-slot, instance, #"general", posn);
       unless (%%primitive(initialized?, result))
-	uninitialized-slot-error();
+	uninitialized-slot-error(slot, instance);
       end unless;
       result;
     end;
@@ -1167,10 +1168,11 @@ define constant heap-rep-getter
       let arg-ptr :: <raw-pointer> = %%primitive(extract-args, 1);
       let instance = %%primitive(extract-arg, arg-ptr, 0);
       %%primitive(pop-args, arg-ptr);
-      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      let slot = self.accessor-slot;
+      let posn = find-slot-offset(instance.object-class, slot);
       let result = %%primitive(ref-slot, instance, #"heap", posn);
       unless (%%primitive(initialized?, result))
-	uninitialized-slot-error();
+	uninitialized-slot-error(slot, instance);
       end unless;
       result;
     end;
