@@ -1,11 +1,11 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.5 2000/09/09 20:47:59 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.6 2003/02/17 21:37:00 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -47,7 +47,7 @@ define method analyze-stack-usage (func :: <fer-function-region>)
   let state = make(<state>);
   let want = analyze(func.body, #(), state);
   unless (want == #())
-    error("We start the function wanting stuff?");
+    error("We start the function wanting stuff? %=", want);
   end;
   state.max-depth;
 end;
@@ -75,6 +75,19 @@ end;
 define sealed domain make (singleton(<state>));
 define sealed domain initialize (<state>);
 
+// Theory of operation
+//
+// This is a backward analysis, i.e. it creates a
+// consumer list starting out with the exits of
+// a function, and going backwards in the FER
+// to find a matching producer. The analysis only
+// cares of clusters.
+// The producers are abstract assignments that are
+// known to receive clusters from function call etc.
+//
+define generic analyze
+    (entity, want :: <list>, state :: <state>)
+ => want :: <list>;
 
 define method analyze
     (dependency :: <dependency>, want :: <list>, state :: <state>)
@@ -242,6 +255,15 @@ define method analyze
   end;
 end;
 
+
+// produce -- internal
+//
+// produce a cluster, that is wanted later on
+// in the control-flow.
+//
+define generic produce (producer, want :: <list>)
+    => want :: <list>;
+
 define method produce (defn :: <false>, want :: <list>)
     => want :: <list>;
   want;
@@ -258,6 +280,11 @@ define method produce (var :: <abstract-variable>, want :: <list>)
     unless (want.head == var)
       error("The cluster we are producing isn't wanted?");
     end;
+
+    if (member?(var, want.tail))
+      error("The cluster we are producing is wanted twice? -- this may be legal!!!");
+    end;
+
     want.tail;
   else
     want;
@@ -330,8 +357,9 @@ define method analyze
 end;
 
 define method analyze
-    (region :: <return>, want :: <list>, state :: <state>, #next next-method)
+    (region :: <return>, want :: <list>, state :: <state>)
     => want :: <list>;
+  want == #() | error("want something from a <return>?");
   analyze(region.depends-on, #(), state);
 end;
 
