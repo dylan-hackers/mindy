@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.14 1995/11/20 16:16:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.15 1995/11/20 16:40:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,6 +363,21 @@ define-primitive-emitter
 	      string-output-stream-string(stream));
        deliver-results(defines, #[], #f, file);
      end;
+   end);
+
+define-primitive-emitter
+  (#"c-include",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let include = operation.depends-on.source-exp;
+     unless (instance?(include, <literal-constant>)
+	       & instance?(include.value, <literal-string>))
+       error("file name in c-include isn't a constant string?");
+     end;
+     maybe-emit-include(include.value.literal-value, file);
+     deliver-results(defines, #[], #f, file);
    end);
 
 define-primitive-emitter

@@ -212,6 +212,9 @@ define-primitive
      #"<single-float>", #"<double-float>", #"<extended-float>"));
 
 define-primitive
+  (#"c-include", #(#"<string>"), #(values:));
+
+define-primitive
   (#"c-decl", #(#"<string>"), #(values:));
 
 define-primitive
