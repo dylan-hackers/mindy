@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.16 2003/04/02 07:39:10 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.17 2003/04/24 05:46:00 housel Exp $
 copyright: see below
 
 
@@ -575,19 +575,23 @@ define method atof (string :: <byte-string>,
 	   * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
 end method atof;
 
+define variable *float-precision*
+  :: one-of(#"single", #"double", #"extended") = #"double";
+
 // parse-fp-literal -- internal.
 // 
 define method parse-fp-literal
     (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   let (class, value) = atof(extract-string(source-location));
+  let class = class | *float-precision*;
 
   make(<literal-token>,
        source-location: source-location,
        kind: $literal-token,
        literal: make(select (class)
 		       #"single" => <literal-single-float>;
-		       #f, #"double" => <literal-double-float>;
+		       #"double" => <literal-double-float>;
 		       #"extended" => <literal-extended-float>;
 		     end select,
 		     value: value));

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.7 2003/02/19 21:10:00 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.8 2003/04/24 05:46:00 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -93,7 +93,9 @@ define module lexer
   export
     <lexer>,
 
-    add-feature, remove-feature;
+    add-feature, remove-feature,
+
+    *float-precision*;
 end;
 
 define module fragments

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.19 2003/04/08 06:44:28 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.20 2003/04/24 05:46:02 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -227,6 +227,20 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
   *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
   *implicitly-define-next-method*
     := boolean-header-element(#"implicitly-define-next-method", #t, state);
+
+  let float-precision
+    = element(state.unit-header, #"float-precision", default: #f);
+  if (float-precision)
+    select (as-uppercase(float-precision) by \=)
+      "SINGLE" => *float-precision* := #"single";
+      "DOUBLE" => *float-precision* := #"double";
+      "EXTENDED" => *float-precision* := #"extended";
+      otherwise =>
+	compiler-error("float-precision: header option is %s, "
+                         "not \"single\", \"double\" or \"extended\".",
+                       float-precision);
+    end select;
+  end if;
 
   for (file in state.unit-files)
     let extension = file.filename-extension;
