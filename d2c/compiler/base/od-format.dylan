@@ -180,6 +180,25 @@ Note that:
     length.
 
 */
+
+// Object ID registry:
+//
+// To avoid creating zillions of variables and to allow introspective
+// back-mapping, we maintain a registry of object IDs named by symbols.  This
+// does incurr some lookup overhead at dump time, but not at load time, which
+// is probably more important.
+//
+// Note that it is intended that all IDs be registered in this file so that
+// we are sure that IDs are globally unique.
+
+define variable *object-id-registry* = make(<self-organizing-list>);
+
+define method register-object-id (name :: <symbol>, id :: <fixed-integer>)
+ => ();
+  assert(~element(*object-id-registry*, name, default: #f));
+  assert(~find-key(*object-id-registry*, method (x) x = id end));
+  *object-id-registry*[name] := id;
+end method;
 
 
 ////  Pseudo-object format definitions:
@@ -212,7 +231,8 @@ Note that:
 // out-of-sequence ID so that every byte is different, e.g. #x96000DF4.
 // 
 
-define /* exported */ constant $32bit-data-unit-odf-id = #x0DF4;
+define constant $32bit-data-unit-odf-id = #x0DF4;
+register-object-id(#"32bit-data-unit", $32bit-data-unit-odf-id);
 
 // Major version must be the same between dumper and loader, thus it is
 // incremented on a format change that breaks existing data units.
@@ -241,9 +261,8 @@ define constant <location-hint> = <byte-string>;
 
 
 // Local-index object:
-//     0: <Header? = #b1, Etype = #b00, Subobjects? = #b0, Raw-Format = #x6,
-//         Class-ID = local-index-odf-id>
-//     1: index-size * word-bytes
+//     0: <Header? = #b1, Etype = #b00, Subobjects? = #b0, Raw-Format = #x6>
+//     1: index-size * word-byte;
 //     2[index-size]: word offset of object defn from data unit header
 //
 // The local-index object maps object local IDs to the object start offset.
@@ -251,7 +270,7 @@ define constant <location-hint> = <byte-string>;
 // particular data unit.  It is actually used by external references
 // references (across data units) as well as local references.
 
-define /* exported */ constant $local-index-odf-id = #x0001;
+register-object-id(#"local-index", #x0001);
 
 // + num local IDs
 define constant $local-index-size = 2;
@@ -276,7 +295,7 @@ define constant $local-index-size = 2;
 // until after the reference is dumped.
 //
 
-define /* exported */ constant $local-object-map-odf-id = #x0002;
+register-object-id(#"local-object-map", #x0002);
 
 // + num local IDs
 define constant $local-object-map-size = 2;
@@ -288,7 +307,7 @@ define constant $local-object-map-size = 2;
 // the extern-handle objects describing the reference targets are subobjects of
 // the extern-index object.  It has no raw data.
 
-define /* exported */ constant $extern-index-odf-id = #x0003;
+register-object-id(#"extern-index", #x0003);
 
 // Extern-Handle object:
 //     0: <Header? = #b1, Etype = #b00, Subobjects? = #b1, Raw-Format = #x6,
@@ -308,55 +327,46 @@ define /* exported */ constant $extern-index-odf-id = #x0003;
 // already been loaded from some other data unit.  That is, this provides the
 // mechanism by which one data unit builds on another.
 
-define /* exported */ constant $extern-handle-odf-id = #x0004;
+register-object-id(#"extern-handle", #x0004);
 
 
 // Dylan object IDs:
 
 // A byte character, string or symbol.  Data is raw in byte format.
-define /* exported */ constant $byte-character-odf-id = #x0010;
-define /* exported */ constant $byte-string-odf-id = #x0011;
-define /* exported */ constant $byte-symbol-odf-id = #x0012;
+register-object-id(#"byte-character", #x0010);
+register-object-id(#"byte-string", #x0011);
+register-object-id(#"byte-symbol", #x0012);
 
 // A unicode character, string or symbol.  Each character is two bytes, byte
 // format.(???)
-define /* exported */ constant $unicode-character-odf-id = #x0013;
-define /* exported */ constant $unicode-string-odf-id = #x0014;
-define /* exported */ constant $unicode-symbol-odf-id = #x0015;
+register-object-id(#"unicode-character", #x0013);
+register-object-id(#"unicode-string", #x0014);
+register-object-id(#"unicode-symbol", #x0015);
 
 // A list or simple-object-vector of the subobjects.
-define /* exported */ constant $list-odf-id = #x0016;
-define /* exported */ constant $simple-object-vector-odf-id = #x0017;
+register-object-id(#"list", #x0016);
+register-object-id(#"simple-object-vector", #x0017);
 
 // Improper list, with tail last subobject.  Must have at least two subobjects.
 //
-define /* exported */ constant $list*-odf-id = #x0018;
+register-object-id(#"list*", #x0018);
 
 // Magic values, no data:
-define /* exported */ constant $true-odf-id = #x0019;
-define /* exported */ constant $false-odf-id = #x001A;
+register-object-id(#"true", #x0019);
+register-object-id(#"false", #x001A);
 
 // Numbers, data is raw, 32 or 64bit.
-define /* exported */ constant $fixed-integer-odf-id = #x0030;
-define /* exported */ constant $extended-integer-odf-id = #x0031;
-define /* exported */ constant $single-float-odf-id = #x0032;
-define /* exported */ constant $double-float-odf-id = #x0033;
-define /* exported */ constant $extended-float-odf-id = #x0034;
+register-object-id(#"fixed-integer", #x0030);
+register-object-id(#"extended-integer", #x0031);
+register-object-id(#"single-float", #x0032);
+register-object-id(#"double-float", #x0033);
+register-object-id(#"extended-float", #x0034);
 
 // Numbers with components as subobjects:
-define /* exported */ constant $ratio-odf-id = #x0035;
+register-object-id(#"ratio", #x0035);
 
 
 // Compiler object IDs:
-
-// Types, slots are subobjects.
-define /* exported */ constant $union-type-odf-id = #x0040;
-define /* exported */ constant $singleton-type-odf-id = #x0041;
-define /* exported */ constant $limited-integer-type-odf-id = #x0042;
-define /* exported */ constant $limited-collection-type-odf-id = #x0043;
-define /* exported */ constant $multi-value-type-odf-id = #x0044;
-define /* exported */ constant $unknown-type-odf-id = #x0045;
-define /* exported */ constant $direct-instance-type-odf-id = #x0046;
 
 // Literals:
 
@@ -364,24 +374,59 @@ define /* exported */ constant $direct-instance-type-odf-id = #x0046;
 // how to dump and that can be unambiguously coerced (via AS) to a ct-value.
 // The single subobject is the dylan value.
 //
-define /* exported */ constant $eql-literal-odf-id = #x0050;
+register-object-id(#"eql-literal", #x0050);
 
 // Two subobject: head and tail.
-define /* exported */ constant $literal-pair-odf-id = #x0051;
+register-object-id(#"literal-pair", #x0051);
 
 // Subobject is an extended-integer or ratio.
-define /* exported */ constant $literal-fixed-integer-odf-id = #x0052;
-define /* exported */ constant $literal-single-float-odf-id = #x0053;
-define /* exported */ constant $literal-double-float-odf-id = #x0054;
-define /* exported */ constant $literal-extended-float-odf-id = #x0055;
+register-object-id(#"literal-fixed-integer", #x0052);
+register-object-id(#"literal-single-float", #x0053);
+register-object-id(#"literal-double-float", #x0054);
+register-object-id(#"literal-extended-float", #x0055);
 
 // One subobject, the vector dylan value.
-define /* exported */ constant $literal-vector-odf-id = #x0056;
+register-object-id(#"literal-vector", #x0056);
 
+
+// Types:
+//
+// All simple objects w/ subobjects, except for byte-charater, which
+// has no subobjects.
+//
+register-object-id(#"union-type", #x0060);
+register-object-id(#"unknown-type", #x0061);
+register-object-id(#"limited-integer-type", #x0062);
+register-object-id(#"direct-instance-type", #x0063);
+register-object-id(#"singleton-type", #x0064);
+register-object-id(#"byte-character-type", #x0065);
+register-object-id(#"multi-value-type", #x0066);
+register-object-id(#"instance-slot-info", #x0067);
+register-object-id(#"vector-slot-info", #x0068);
+register-object-id(#"class-slot-info", #x0069);
+register-object-id(#"each-subclass-slot-info", #x006A);
+register-object-id(#"constant-slot-info", #x006B);
+register-object-id(#"virtual-slot-info", #x006C);
+register-object-id(#"override-info", #x006D);
+register-object-id(#"layout-table", #x006E);
+register-object-id(#"defined-class", #x006F);
+register-object-id(#"limited-class", #x0070);
+register-object-id(#"class-proxy", #x0071);
+
+
+// Compile-time functions:
+register-object-id(#"ct-function", #x0080);
+register-object-id(#"ct-generic-function", #x0081);
+register-object-id(#"ct-method", #x0082);
+register-object-id(#"ct-entry-point", #x0083);
+register-object-id(#"function-signature", #x0084);
+register-object-id(#"function-key-info", #x0085);
+register-object-id(#"basic-name", #x0086);
+register-object-id(#"type-cell-name", #x0087);
+register-object-id(#"method-name", #x0088);
+register-object-id(#"module-variable", #x0089);
 
 /*
-class
-slot-description
 generic-function
 gf-method
 
@@ -538,12 +583,12 @@ define /* exported */ method begin-dumping
  => res :: <dump-state>;
   let res = make(<dump-state>, dump-name: name, dump-type: type,
                  dump-where: where);
-  dump-definition-header($extern-index-odf-id, res.extern-buf, subobjects: #t);
+  dump-definition-header(#"extern-index", res.extern-buf, subobjects: #t);
   res;
 end method;
 
 
-// A big prime scaled by $word-bytes.
+// A big prime scaled by word-bytes.
 define constant $hash-inc = 134217689 * $word-bytes;
 
 define constant $rot-mask 
@@ -579,7 +624,7 @@ end method;
 define method dump-unit-header
     (state :: <dump-state>, buf :: <dump-buffer>, oa-len :: <fixed-integer>)
  => ();
-  dump-definition-header($32bit-data-unit-odf-id, buf, subobjects: #t,
+  dump-definition-header(#"32bit-data-unit", buf, subobjects: #t,
   		         raw-data: $odf-word-raw-data-format);
 
   // subtract header words to get raw data words.			 
@@ -598,9 +643,9 @@ end method;
 // Data is dumped as words, with no subobjects.
 //
 define method dump-word-vector
-    (vec :: <vector>, buf :: <dump-buffer>, id :: <fixed-integer>)
+    (vec :: <vector>, buf :: <dump-buffer>, name :: <symbol>)
  => ();
-  dump-definition-header(id, buf, raw-data: $odf-word-raw-data-format);
+  dump-definition-header(name, buf, raw-data: $odf-word-raw-data-format);
   dump-word(vec.size, buf);
   for (word in vec)
     dump-word(word, buf);
@@ -671,9 +716,9 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
   let header-buffer = make(<dump-buffer>);
   dump-unit-header(state, header-buffer, oa-len);
   dump-word-vector(state.dump-local-index, header-buffer,
-  		   $local-index-odf-id);
+  		   #"local-index");
   dump-word-vector(build-local-map(state), header-buffer,
-  		   $local-object-map-odf-id);
+  		   #"local-object-map");
 
 		   
   let fname = state.dump-where
@@ -739,13 +784,13 @@ end method;
 // ID.
 //
 define /* exported */ method dump-definition-header
-  (id :: <fixed-integer>, buf :: <dump-buffer>,
+  (name :: <symbol>, buf :: <dump-buffer>,
    #key subobjects = #f, raw-data = $odf-no-raw-data-format)
  => ();
   dump-header-word(logior($odf-header-flag, $odf-object-definition-etype,
   		          if (subobjects) $odf-subobjects-flag else 0 end,
 			  raw-data),
-		   id, buf);
+		   *object-id-registry*[name], buf);
 end method;
 
 
@@ -764,16 +809,15 @@ end method;
 // The subobjects are in the #rest args.
 //
 define /* exported */ method dump-simple-object
-  (id :: <fixed-integer>, buf :: <dump-buffer>, #rest slots)
+  (name :: <symbol>, buf :: <dump-buffer>, #rest slots)
  => ();
   let start-pos = buf.current-pos;
-  dump-definition-header(id, buf, subobjects: #t);
+  dump-definition-header(name, buf, subobjects: #t);
   for (thing in slots)
     dump-od(thing, buf);
   end;
   dump-end-entry(start-pos, buf);
 end method;
-
 
 
 // Dumper local reference support:
@@ -957,7 +1001,7 @@ define method initialize
  => ();
   next-method();
   if (initialize-from)
-    replace-subsequence!(disp.table, initialize-from.table);
+    disp.table := shallow-copy(initialize-from.table);
   end;
 end method;
 
@@ -975,8 +1019,9 @@ define /* exported */ variable *default-dispatcher*
 // (e.g. the raw size.)
 //
 define /* exported */ method add-od-loader
-    (dispatcher :: <dispatcher>, etype :: <fixed-integer>, meth :: <method>)
+    (dispatcher :: <dispatcher>, name :: <symbol>, meth :: <method>)
  => ();
+  let etype = *object-id-registry*[name];
   unless (dispatcher.table[etype] == undefined-entry-type)
     signal("Already an OD loader for etype %=\n", etype);
   end;
@@ -1217,6 +1262,8 @@ let res =
     select (logand(flags, $odf-etype-mask))
      $odf-object-definition-etype =>
        assert(code < $dispatcher-table-size);
+dformat("Calling loader for %=\n", 
+	find-key(*object-id-registry*, method (x) code = x end));
        state.dispatcher.table[code](state);
 
      $odf-end-entry-etype =>
@@ -1345,6 +1392,13 @@ define /* exported */ method load-sole-subobject (state :: <load-state>)
   let res = load-object-dispatch(state);
   assert(load-object-dispatch(state) = $end-object);
   res;
+end method;
+
+
+// Call after reading fixed number of subobjects to eat the end header.
+//
+define /* exported */ method assert-end-object (state :: <load-state>) => ();
+  assert(load-object-dispatch(state) == $end-object);
 end method;
 
 
@@ -1545,7 +1599,7 @@ define method maybe-dump-reference-dispatch
     let xbuf = buf.extern-buf;
     let unit = handle.defining-unit;
     let cpos = xbuf.current-pos;
-    dump-definition-header($extern-handle-odf-id, xbuf, subobjects: #t,
+    dump-definition-header(#"extern-handle", xbuf, subobjects: #t,
     			   raw-data: $odf-word-raw-data-format);
     dump-word(3, xbuf);
     dump-word(unit.check-hash, xbuf);
@@ -1625,12 +1679,12 @@ end method;
 
 // Pseudo-object loaders:
 
-add-od-loader(*default-dispatcher*, $local-index-odf-id, load-word-vector);
+add-od-loader(*default-dispatcher*, #"local-index", load-word-vector);
 
-add-od-loader(*default-dispatcher*, $local-object-map-odf-id,
+add-od-loader(*default-dispatcher*, #"local-object-map",
 	      load-word-vector);
 
-add-od-loader(*default-dispatcher*, $extern-index-odf-id,
+add-od-loader(*default-dispatcher*, #"extern-index",
   method (state :: <load-state>)
     as(<simple-object-vector>, load-subobjects-vector(state));
   end method
@@ -1641,7 +1695,7 @@ add-od-loader(*default-dispatcher*, $extern-index-odf-id,
 // referenced data unit and try to find the object.  If it isn't there yet, we
 // make a forward reference.
 //
-add-od-loader(*default-dispatcher*, $extern-handle-odf-id, 
+add-od-loader(*default-dispatcher*, #"extern-handle", 
   method (state :: <load-state>) => res :: <object>;
     state.od-next := state.od-next + $word-bytes;
     let buffer = state.od-buffer;
@@ -1663,4 +1717,158 @@ add-od-loader(*default-dispatcher*, $extern-handle-odf-id,
   end method
 );
 
+
+
+// "make dumper" support:
+
+// A "make dumper" may be used when an object can be reconstructed
+// from some accessor values by reinstantiating the object with Make and
+// backpatching some slots.  This is pretty general, since the accessor and
+// setter function don't really have to be slot accessors and setters.
+//
+// This function and add-od-make-loader take a list describing the slots which
+// is in this format:
+//    #(slot-accessor-function-1, init-keyword-1, setter-function-1,
+//      slot-accessor-function-2, init-keyword-2, setter-function-2,
+//      ...)
+//
+// Note that the stuff is implicitly grouped in clumps of 3.  Either of the
+// init-keyword or the setter may be #f, but not both.
+// The "make dumper" requests backpatching when an unresolved forward reference
+// is encountered (due to circularities.)  Any slot which might have a forward
+// reference must have a setter function (it can also have an init keyword,
+// which will be used if possible.)
+// 
+
+// Info about some class we have a make dumper for.  Slots are represented as
+// parallel vectors for iteration convenience.
+//
+define class <make-info> (<object>)
+  slot accessor-funs :: <simple-object-vector>,
+    required-init-keyword: accessor-funs:;
+  slot init-keys :: <simple-object-vector>,
+    required-init-keyword: init-keys:;
+  slot setter-funs :: <simple-object-vector>,
+    required-init-keyword: setter-funs:;
+  slot load-external? :: <boolean>,
+    required-init-keyword: load-external:;
+  slot obj-class :: <class>,
+    required-init-keyword: obj-class:;
+  slot obj-name :: <symbol>,
+    required-init-keyword: obj-name:;
+end class;
+
+
+// Table mapping classes to <make-info> objects.
+//
+define variable *make-dumpers* = make(<object-table>);
+
+
+// In order to avoid using add-method (so dump-od can be sealed), we have a
+// default method for dump-od which does its own dispatching based on the
+// class.
+//
+// Specialized on dump-buffer so that it's clear this method is least specific.
+//
+define method dump-od (obj :: <object>, buf :: <dump-buffer>) => ();
+  check-type(buf, <dump-state>);
+  let oclass = object-class(obj);
+  let found = element(*make-dumpers*, oclass, default: #f);
+  if (~found)
+    signal("Don't know how to dump instances of %=\n", oclass);
+  elseif (~instance?(obj, <identity-preserving-mixin>)
+            | maybe-dump-reference(obj, buf))
+    apply(dump-simple-object, found.obj-name, buf,
+          map(method (fun) obj.fun end, found.accessor-funs));
+  end if;
+end method;
+
+
+// Actual body of make-loader loading.  Iterate across the slots and handle
+// ones w/o init-keywords or that need to be backpatched.
+//
+define method make-loader-guts 
+    (state :: <load-state>, info :: <make-info>)
+ => res :: <object>;
+  let vec = load-subobjects-vector(state);
+  let keys = #();
+  let losers = #();
+  for (val in vec, key in info.init-keys, i from 0)
+    if (key & obj-resolved?(val))
+      keys := pair(key, pair(val.actual-obj, keys));
+    else
+      losers := pair(i, losers);
+    end;
+  end;
+  let obj = apply(make, info.obj-class, keys);
+
+  for (i in losers)
+    let setter = info.setter-funs[i];
+    let val = vec[i];
+    assert(setter);
+    if (obj-resolved?(val))
+      setter(val.actual-obj, obj);
+    else
+      request-backpatch(val, method (actual) setter(actual, obj) end);
+    end;
+  end;
+
+  obj;
+end method;
+
+
+// This function adds dumping information for objects of the specified
+// obj-class.  Note that obj-class must be the direct class of the instances we
+// are to dump (and of course, must also be instantiable via make.)
+//
+// We parse the slots into a <make-info>, stick it in *make-dumpers* and add
+// and od-loader with a closure as the function.
+//
+define /* exported */ method add-make-dumper
+  (name :: <symbol>, dispatcher :: <dispatcher>,
+   obj-class :: <class>, slots :: <list>,
+   #key load-external :: <boolean>)
+ => ();
+  let acc = make(<stretchy-vector>);
+  let key = make(<stretchy-vector>);
+  let set = make(<stretchy-vector>);
+  for (current = slots then current.tail.tail.tail,
+       until: current = #())
+    let a = current.first;
+    let k = current.second;
+    let s = current.third;
+    check-type(a, <function>);
+    check-type(k, false-or(<symbol>));
+    check-type(s, false-or(<function>));
+    assert(key | set);
+    add!(acc, a);
+    add!(key, k);
+    add!(set, s);
+  end for;
+
+  let info =
+    make(<make-info>,
+         accessor-funs: as(<simple-object-vector>, acc),
+	 init-keys: as(<simple-object-vector>, key),
+         setter-funs: as(<simple-object-vector>, set),
+	 load-external: load-external,
+	 obj-class: obj-class,
+	 obj-name: name);
+
+  *make-dumpers*[obj-class] := info;
+
+  add-od-loader(dispatcher, name,
+  		method (state :: <load-state>) => res :: <object>;
+		  if (info.load-external?)
+		    load-external-definition(
+		      state,
+		      method (state) make-loader-guts(state, info) end
+		    );
+		  else
+		    make-loader-guts(state, info);
+		  end;
+		end method
+  );
+
+end method;
 
