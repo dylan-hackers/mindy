@@ -11,14 +11,14 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.1 1994/04/30 15:03:52 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.2 1994/04/30 15:19:12 wlott Exp $
 //
 //  This file does whatever.
 //
 
 define constant *on-exit* = make(<deque>);
 
-define method exit (exit-code :: <integer>)
+define method exit (#key exit-code :: <integer> = 0)
   while (~empty?(*on-exit*))
     pop(*on-exit*)();
   end;
