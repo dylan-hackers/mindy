@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.24 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.25 1996/04/06 06:44:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -82,10 +82,20 @@ define class <method> (<function>)
   //
   // The generic-function entry point for this method.
   slot generic-entry :: <raw-pointer>,
-    required-init-keyword: general-entry:;
+    required-init-keyword: generic-entry:;
 end;
 
 define sealed domain make(singleton(<method>));
+
+
+
+define class <dynamic-method> (<method>)
+  //
+  // The static method to call to do the actual work.
+  slot real-method :: <function>, required-init-keyword: real-method:;
+end class <dynamic-method>;
+
+define sealed domain make (singleton(<dynamic-method>));
 
 
 
@@ -120,7 +130,6 @@ define method make-closure
        generic-entry: func.generic-entry,
        closure-size: closure-size);
 end;
-
 
 
 define class <type-vector> (<simple-vector>)
@@ -173,12 +182,112 @@ define sealed domain initialize (<gf-cache>);
 
 define class <generic-function> (<function>)
   //
-  slot generic-function-methods :: <list>,
-    required-init-keyword: methods:;
-  slot method-cache :: type-union(<false>, <gf-cache>), init-value: #f;
+  slot generic-function-methods :: <list> = #(),
+    init-keyword: methods:;
+  //
+  slot method-cache :: type-union(<false>, <gf-cache>) = #f;
 end;
 
 define sealed domain make(singleton(<generic-function>));
+
+// make{singleton(<generic-function>)} -- exported GF method.
+//
+// Make a generic function after massaging the arguments.
+// 
+define method make (class == <generic-function>, #next next-method,
+		    #key name :: <byte-string> = "Anonymous Generic Function",
+		         required :: type-union(<integer>, <sequence>),
+		         rest? :: <boolean>, key :: false-or(<collection>),
+		         all-keys? :: <boolean>, values :: <sequence> = #[],
+		         rest-value :: type-union(<type>, <false>)
+		           = <object>)
+    => res :: <generic-function>;
+  let specializers
+    = select (required by instance?)
+	<integer> =>
+	  make(<simple-object-vector>, size: required, fill: <object>);
+	<simple-object-vector> =>
+	  required;
+	<sequence> =>
+	  as(<simple-object-vector>, required);
+      end select;
+  for (specializer in specializers)
+    check-type(specializer, <type>);
+  end for;
+  let keywords
+    = select (key by instance?)
+	<false> => #f;
+	<simple-object-vector> => key;
+	<sequence> => as(<simple-object-vector>, key);
+	<collection> =>
+	  let keywords = make(<simple-object-vector>, size: key.size);
+	  for (keyword in key, index from 0)
+	    keywords[index] := keyword;
+	  end for;
+	  keywords;
+      end select;
+  if (keywords)
+    for (keyword in keywords)
+      check-type(keyword, <symbol>);
+    end for;
+  end if;
+  if (rest? & keywords)
+    error("Generic functions cannot have both #rest and #key parameters.");
+  end if;
+  if (all-keys? & ~keywords)
+    error("Cannot specify #all-keys without #key.");
+  end if;
+  let values :: <simple-object-vector> = as(<simple-object-vector>, values);
+  for (value in values)
+    check-type(value, <type>);
+  end for;
+  next-method(<generic-function>,
+	      function-name: name,
+	      general-entry: %%primitive(main-entry, gf-call),
+	      specializers: specializers,
+	      rest?: rest?,
+	      keywords: keywords,
+	      all-keys?: all-keys?,
+	      values: values,
+	      rest-value: rest-value);
+end method make;
+
+
+// Runtime method construction and handling.
+
+define method %make-method
+    (specializers :: <simple-object-vector>,
+     fixed-values :: <simple-object-vector>,
+     rest-value :: <type>,
+     function :: <method>)
+    => result :: <method>;
+  local method assert (condition :: <boolean>) => ();
+	  condition | lose("internal assertion inside %make-method failed.");
+	end method assert;
+  assert(specializers.size == function.function-specializers.size);
+  do(compose(assert, subtype?), specializers, function.function-specializers);
+  assert(fixed-values.size == function.function-values.size);
+  do(compose(assert, subtype?), fixed-values, function.function-values);
+  assert(subtype?(rest-value, function.function-rest-value));
+  make(<dynamic-method>,
+       function-name: function.function-name,
+       general-entry: %%primitive(main-entry, general-call),
+       specializers: specializers,
+       rest?: function.function-rest?,
+       keywords: function.function-keywords,
+       all-keys?: function.function-all-keys?,
+       values: fixed-values,
+       rest-value: rest-value,
+       generic-entry: %%primitive(main-entry, generic-call),
+       real-method: function);
+end method %make-method;
+
+define constant generic-call
+  = method (self :: <dynamic-method>, nargs :: <integer>, next-info :: <list>)
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
+      %%primitive(invoke-generic-entry, self.real-method, next-info,
+		  %%primitive(pop-args, arg-ptr));
+    end method;
 
 
 // Function information routines.
@@ -216,22 +325,268 @@ end method function-return-values;
 
 // Method adding, finding, and removing.
 
+// add-method -- exported from Dylan.
+//
+// Add the method to the generic function, and return the new method and
+// any method we happened to displace.  Flames out if the method is not
+// congruent with the generic function.
+// 
 define method add-method
     (gf :: <generic-function>, new :: <method>)
     => (new :: <method>, old :: false-or(<method>));
-  error("### runtime add-method not yet implemented.");
+  //
+  // First, check that the method is congruent.
+  //
+  // The number of specialiers must be the same.
+  unless (new.function-specializers.size == gf.function-specializers.size)
+    error("%= isn't congruent with %= because %= takes %d required "
+	    "argument%s but %= takes %d",
+	  new, gf,
+	  new, new.function-specializers.size,
+	  if (new.function-specializers.size == 1) "" else "s" end,
+	  gf, gf.function-specializers.size);
+  end unless;
+  //
+  // Each method specializer must be a subtype of the corresponding
+  // gf specialier.
+  for (index from 0 below new.function-specializers.size)
+    let meth-spec = new.function-specializers[index];
+    let gf-spec = gf.function-specializers[index];
+    unless (subtype?(meth-spec, gf-spec))
+      error("%= isn't congruent with %= because specializer %= isn't a "
+	      "subtype of %=",
+	    new, gf, meth-spec, gf-spec);
+    end unless;
+  end for;
+  //
+  // If the gf takes keywords,
+  if (gf.function-keywords)
+    //
+    // The method must take keywords.
+    unless (new.function-keywords)
+      error("%= isn't congruent with %= because %= accepts keyword arguments "
+	      "but %= does not.",
+	    new, gf, gf, new);
+    end unless;
+    //
+    // And must recognize all the mandatory keywords.
+    for (keyword in gf.function-keywords)
+      unless (member?(keyword, new.function-keywords))
+	error("%= isn't congruent with %= because %= does not recognize the "
+		"mandatory keyword %=",
+	      new, gf, new, keyword);
+      end unless;
+    end for;
+  //
+  // The gf does not accept keywords, so the method can't either.
+  elseif (new.function-keywords)
+    error("%= isn't congruent with %= because %= accepts keyword arguments "
+	    "but %= does not.",
+	  new, gf, new, gf);
+  //
+  // If the gf accepts a variable number of arguments,
+  elseif (gf.function-rest?)
+    //
+    // The method must also.
+    unless (new.function-rest?)
+      error("%= isn't congruent with %= because %= accepts a variable number "
+	      "of arguments but %= does not.",
+	    new, gf, gf, new);
+    end unless;
+  //
+  // The gf does not accept a variable number of arguments, so the method
+  // can't either.
+  elseif (new.function-rest?)
+    error("%= isn't congruent with %= because %= accepts a variable number "
+	    "of arguments but %= does not.",
+	  new, gf, new, gf);
+  end if;
+  //
+  // If the gf not not contain a rest-value declaration,
+  if (subtype?(gf.function-rest-value, <never-returns>))
+    //
+    // The method must not either.
+    unless (subtype?(new.function-rest-value, <never-returns>))
+      error("%= isn't congruent with %= because %= contains a rest value "
+	      "declaration but %= does not.",
+	    new, gf, new, gf);
+    end unless;
+    //
+    // There must be the same number of fixed values.
+    unless (new.function-values.size == gf.function-values.size)
+      error("%= isn't congruent with %= because %= returns %d exactly value%s "
+	      "but %= returns exactly %d.",
+	    new, gf,
+	    new,
+	    if (new.function-values.size == 1) "" else "s" end,
+	    new.function-values.size,
+	    gf, gf.function-values.size);
+    end unless;
+    //
+    // And each value returned by the method must be a subtype of the value
+    // returned by the generic function.
+    for (index from 0 below new.function-values.size)
+      let meth-spec = new.function-values[index];
+      let gf-spec = gf.function-values[index];
+      unless (subtype?(meth-spec, gf-spec))
+	error("%= isn't congruent with %= because result value %= isn't a "
+		"subtype of %=",
+	      new, gf, meth-spec, gf-spec);
+      end unless;
+    end for;
+  else
+    //
+    // The generic contains a rest-value declaration.  The method must return
+    // at least as many fixed values as the generic function.
+    unless (new.function-values.size >= gf.function-values.size)
+      error("%= isn't congruent with %= because %= can return %d value%s but "
+	      "%= returns at least %d.",
+	    new, gf,
+	    new,
+	    if (new.function-values.size == 1) "" else "s" end,
+	    new.function-values.size,
+	    gf, gf.function-values.size);
+    end unless;
+    //
+    // And the fixed values returned by the method must be subtypes of the
+    // corresponding value returned by the generic function.
+    for (index from 0 below gf.function-values.size)
+      let meth-spec = new.function-values[index];
+      let gf-spec = gf.function-values[index];
+      unless (subtype?(meth-spec, gf-spec))
+	error("%= isn't congruent with %= because result value %= isn't a "
+		"subtype of %=",
+	      new, gf, meth-spec, gf-spec);
+      end unless;
+    end for;
+    for (index from gf.function-values.size below new.function-values.size)
+      let meth-spec = new.function-values[index];
+      unless (subtype?(meth-spec, gf.function-rest-value))
+	error("%= isn't congruent with %= because result value %= isn't a "
+		"subtype of %=",
+	      new, gf, meth-spec, gf.function-rest-value);
+      end unless;
+    end for;
+    //
+    // And the rest value returned by the method must be a subtype of the
+    // rest value returned by the generic function.
+    unless (subtype?(new.function-rest-value, gf.function-rest-value))
+      error("%= isn't congruent with %= because result value %= isn't a "
+	      "subtype of %=",
+	    new, gf, new.function-rest-value, gf.function-rest-value);
+    end unless;
+  end if;
+  //
+  // Find the old method.
+  let (old, prev) = internal-find-method(gf, new.function-specializers);
+  //
+  // Remove the old method.
+  if (old)
+    if (prev)
+      prev.tail := prev.tail.tail;
+    else
+      gf.generic-function-methods := gf.generic-function-methods.tail;
+    end if;
+  end if;
+  //
+  // Add the new method.
+  gf.generic-function-methods := pair(new, gf.generic-function-methods);
+  //
+  // Clear the cache.
+  gf.method-cache := #f;
+  //
+  // Return the new and old methods.
+  values(new, old);
 end method add-method;
 
+// find-method -- exported from Dylan.
+//
+// Find the method matching the given signature and return it.
+// 
 define method find-method
     (gf :: <generic-function>, specializers :: <sequence>)
     => meth :: false-or(<method>);
-  error("### runtime find-method not yet implemented.");
+  //
+  // Convert the specialiers into a simple object vector so we can more
+  // effeciently access it.
+  let specializers :: <simple-object-vector>
+    = as(<simple-object-vector>, specializers);
+  //
+  // Verify that the correct number of specialiers was supplied.
+  unless (gf.function-specializers.size == specializers.size)
+    error("Wrong number of specializers in find-method.  %= has %d required "
+	    "argument%s, but %d specializers were supplied.",
+	  gf, gf.function-specializers.size, specializers.size);
+  end unless;
+  //
+  // Find and return the method.
+  internal-find-method(gf, specializers);
 end method find-method;
 
+// internal-find-method -- internal
+//
+// Used by add-method and find-method to find a method that matches the
+// given specialiers.  Returns that method and the previous pair so that
+// add-method can remove it.
+// 
+define method internal-find-method
+    (gf :: <generic-function>, specializers :: <simple-object-vector>)
+    => (result :: false-or(<method>), prev :: false-or(<pair>));
+  block (return)
+    for (prev = #f then remaining,
+	 remaining = gf.generic-function-methods then remaining.tail,
+	 until: remaining == #())
+      let old :: <method> = remaining.head;
+      block (no-match)
+	for (old-spec in old.function-specializers,
+	     new-spec in specializers)
+	  unless (old-spec == new-spec
+		    | (subtype?(old-spec, new-spec)
+			 & subtype?(new-spec, old-spec)))
+	    no-match();
+	  end unless;
+	end for;
+	return(old, prev);
+      end block;
+    end for;
+    values(#f, #f);
+  end block;  
+end method internal-find-method;
+
+// remove-method -- exported from Dylan.
+//
+// Remove the method from the generic function.  Flame out if it isn't there.
+// 
 define method remove-method
     (gf :: <generic-function>, meth :: <method>)
     => meth :: <method>;
-  error("### runtime remove-method not yet implemented.");
+  //
+  // Find the method.
+  block (return)
+    for (prev = #f then remaining,
+	 remaining = gf.generic-function-methods then remaining.tail,
+	 until: remaining == #())
+      let old :: <method> = remaining.head;
+      //
+      // Remove it.
+      if (old == meth)
+	if (prev)
+	  prev.tail := remaining.tail;
+	else
+	  gf.generic-function-methods := remaining.tail;
+	end if;
+      end if;
+      //
+      // Clear the cache.
+      gf.method-cache := #f;
+      //
+      // Return the removed method.
+      return(meth);
+    end for;
+    //
+    // It wasn't found, so flame out.
+    error("%= does not contain %=", gf, meth);
+  end block;
 end method remove-method;
 
 
