@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.11 1996/05/09 23:36:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.12 1996/05/11 14:49:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -318,67 +318,89 @@ define inline method negative (a :: <integer>)
   %%primitive(fixnum-negative, a);
 end;
 
+// floor/{<integer>,<integer>}
+//
+// Divide a by b, rounding towards negative infinity.
+//
 define method floor/ (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
-  if (zero?(b))
-    error("Division by zero.");
+  //
+  // Start with whatever truncate gives us.
+  let (q, r) = truncate/(a, b);
+  //
+  if (zero?(r)) 
+    // If we didn't have to round, then we are sitting pretty.
+    values(q, r);
+    
+  elseif (negative?(logxor(r, b)))
+    // If the sign of the remainder and the sign of b are not the same,
+    // then we rounded up instead of down.  We compare the signs by
+    // looking at the sign bit of their exclusive-or.  If it is set (i.e.
+    // negative) then the signs (i.e. sign bits) of r and b were different.
+    values(q - 1, r + b);
+
   else
-    let (q, r) = %%primitive(fixnum-divide, a, b);
+    // Otherwise we rounded in the correct direction.
+    values(q, r);
+  end if;
+end method floor/;
 
-    if (zero?(r) | negative?(r) == negative?(b))
-      values(q, r);
-    else
-      values(q - 1, r + b);
-    end;
-  end;
-end;
-
+// ceiling/{<integer>,<integer>}
+// 
 define method ceiling/ (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
-  if (zero?(b))
-    error("Division by zero.");
+  //
+  // Start with whatever truncate gives us.
+  let (q, r) = truncate/(a, b);
+
+  if (zero?(r))
+    // If we didn't have to round, then we are sitting pretty.
+    values(q, r);
+
+  elseif (negative?(logxor(r, b)))
+    // If the signs of the remainder and b are the same, then we rounded
+    // correctly.
+    values(q, r);
+
   else
-    let (q, r) = %%primitive(fixnum-divide, a, b);
+    // Otherwise, we rounded down instead of up.
+    values(q + 1, r - b);
+  end if;
+end method ceiling/;
 
-    if (zero?(r) | negative?(r) ~== negative?(b))
-      values(q, r);
-    else
-      values(q + 1, r - b);
-    end;
-  end;
-end;
-
+// round/{<integer>,<integer>}
+// 
 define method round/ (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
-  if (zero?(b))
-    error("Division by zero.");
-  else
-    let (q, r) = %%primitive(fixnum-divide, a, b);
+  let (q, r) = truncate/(a, b);
 
-    if (zero?(r))
-      values(q, r);
-    elseif (positive?(b))
-      let limit = ash(b, -1);
-      if (r > limit | (r == limit & odd?(q)))
-	values(q + 1, r - b);
-      elseif (r < -limit | (r == -limit & odd?(q)))
-	values(q - 1, r + b);
-      else
-	values(q, r);
-      end;
+  if (zero?(r))
+    values(q, r);
+  elseif (positive?(b))
+    let limit = ash(b, -1);
+    if (r > limit | (r == limit & odd?(q)))
+      values(q + 1, r - b);
+    elseif (r < -limit | (r == -limit & odd?(q)))
+      values(q - 1, r + b);
     else
-      let limit = ash(-b, -1);
-      if (r > limit | (r == limit & odd?(q)))
-	values(q - 1, r + b);
-      elseif (r < -limit | (r == -limit & odd?(q)))
-	values(q + 1, r - b);
-      else
-	values(q, r);
-      end;
+      values(q, r);
+    end;
+  else
+    let limit = ash(-b, -1);
+    if (r > limit | (r == limit & odd?(q)))
+      values(q - 1, r + b);
+    elseif (r < -limit | (r == -limit & odd?(q)))
+      values(q + 1, r - b);
+    else
+      values(q, r);
     end;
   end;
-end;
+end method round/;
 
+// truncate/{<integer>,<integer>}
+//
+// Divide a by b, rounding towards zero.
+//
 define inline method truncate/
     (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
