@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.145 2003/08/13 05:59:34 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.146 2003/09/15 00:32:56 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -28,14 +28,11 @@ AC_PREREQ(2.50)
 AC_CONFIG_HEADER(config.h)
 
 #--------------------------------------------------------------------
-# Version/package information, eventually to be used by automake, but
-# used by gwydion-dylan.spec.in for now.
+# Version/package information.
 #--------------------------------------------------------------------
 
 PACKAGE="gwydion-dylan"
 
-# VERSION="SNAP_`date +%y-%m-%d`"
-# Use this line instead before packaging up a release:
 VERSION="`cat $srcdir/version`"
 
 AC_SUBST(PACKAGE)
@@ -44,8 +41,9 @@ AC_SUBST(VERSION)
 #--------------------------------------------------------------------
 # This is used in conjunction with the output of 'd2c --compiler-info'
 # to decide when d2c needs a full bootstrap.  Increment the value here
-# whenever the dump format or the
-# interaction between the runtime and the compiler changes.
+# whenever the dump format or the interaction between the runtime and
+# the compiler changes.  (Please also increment the "preX" part of
+# $srcdir/version when incrementing this value.)
 #--------------------------------------------------------------------
 
 CURRENT_BOOTSTRAP_COUNTER=34
