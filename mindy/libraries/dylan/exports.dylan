@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.15 1994/04/09 15:42:53 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.16 1994/04/12 21:49:49 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -112,7 +112,7 @@ define module Dylan
     <error>,
     <range>, <restart>,
     <serious-condition>, <simple-error>, <simple-restart>,
-    <simple-warning>, <stretchy-vector>,
+    <simple-warning>, <stretchy-collection>, <stretchy-vector>,
     <table>, <type-error>,
     <warning>,
     abort, abs, add, add!, add-new, add-new!, always, any?, as-lowercase,
