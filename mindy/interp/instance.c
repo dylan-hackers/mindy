@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.33 1994/11/30 16:18:29 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.34 1994/12/10 00:21:55 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1659,7 +1659,7 @@ void describe(obj_t thing)
 
 	for (slots=DC(class)->all_slots; slots != obj_Nil; slots=TAIL(slots)) {
 	    obj_t slot = HEAD(slots);
-	    int index;
+	    int index, dummy;
 	    obj_t value;
 
 	    fputs(sym_name(SD(slot)->name), stdout);
@@ -1696,6 +1696,7 @@ void describe(obj_t thing)
 		print(value);
 	    }
 	  after_value_printing:
+	    dummy = 0;    /* Without this line, a few compilers will choke */
 	}
     }
 }
