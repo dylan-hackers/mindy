@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.3 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.4 1995/12/09 21:03:06 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -16,10 +16,9 @@ define functional class <ratio> (<rational>)
     required-init-keyword: denominator:;
 end;
 
-/* ### not absolutly needed
-
-define sealed inline method make (class == <ratio>, #next next-method,
-				  #key numerator, denominator)
+define sealed inline method make
+    (class == <ratio>, #next next-method,
+     #key numerator :: <integer>, denominator :: <integer>)
     => res :: <ratio>;
   //
   // Convert them to extended integers.
@@ -54,7 +53,7 @@ define inline method ratio (num :: <integer>, denom :: <integer>)
   make(<ratio>, numerator: num, denominator: denom);
 end;
 
-seal generic as (singleton(<ratio>), <integer>);
+seal generic as (singleton(<ratio>), <complex>);
 
 define inline method as (class == <ratio>, num :: <integer>)
     => res :: <ratio>;
@@ -484,5 +483,3 @@ define inline method \/ (a :: <extended-float>, b :: <ratio>)
     => res :: <extended-float>;
   a / as(<extended-float>, b);
 end;
-
-*/
