@@ -1,0 +1,12 @@
+&makegen_include("../common-Makegen");
+
+$D2CFLAGS = "$D2CFLAGS -L../common-dylan";
+
+if ($features{'compiled_for_win32'}) {
+    $lid_file = 'win32-locators';
+} else {
+    $lid_file = 'posix-locators';
+}
+
+do emit_library_rule ($lid_file, '$(BUILDROOT)/force.timestamp', '',
+		      'compile', 'no-mindy', 'install');
