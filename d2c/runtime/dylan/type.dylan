@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.9 1995/12/11 21:03:14 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.10 1995/12/16 04:25:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -23,13 +23,21 @@ define generic limited (type :: <type>, #key) => res :: <type>;
 
 // instance? -- exported from Dylan.
 //
+// The compiler automatically converts visible calls to instance? to calls
+// to %instance? (or something better, if possible).  But we still need
+// a definition for instance? for uses in non-visible calls.
+//
 define movable method instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
   %instance?(object, type);
 end;
 
 // %instance? -- internal.
-// 
+//
+// DO NOT CALL THIS.  Call instance? instead.  Otherwise you will just succeed
+// in hiding the check from the compiler and keeping it from being able to
+// optimize it at all.
+//
 define movable generic %instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
 
@@ -534,23 +542,38 @@ end;
 define method intersect-limited-ints
     (lim1 :: <limited-integer>, lim2 :: <limited-integer>)
  => (res :: type-union(<false>, <limited-integer>));
-  if (lim1.limited-integer-base-class ~= lim2.limited-integer-base-class)
-    error("interesect-limited-ints only works on homogenous types");
-  end if;
-  
-  let min1 = lim1.limited-integer-minimum;
-  let min2 = lim2.limited-integer-minimum;
-  let max1 = lim1.limited-integer-maximum;
-  let max2 = lim2.limited-integer-maximum;
+  block (return)
+    let base1 = lim1.limited-integer-base-class;
+    let base2 = lim2.limited-integer-base-class;
+    let base = case
+		 (base1 == base2) => base1;
+		 (base1 == <integer>) => base2;
+		 (base2 == <integer>) => base1;
+		 otherwise => return(#f);
+	       end case;
 
-  if (max1 < min2 | max2 < min1)
-    #f;
-  else
-    let min = if (min1 < min2) min2 else min1 end if;
-    let max = if (max1 > max2) max2 else max1 end if;
-    make(<limited-integer>, base-class: lim1.limited-integer-base-class,
-	 min: min, max: max);
-  end if;
+    let min1 = lim1.limited-integer-minimum;
+    let min2 = lim2.limited-integer-minimum;
+    let max1 = lim1.limited-integer-maximum;
+    let max2 = lim2.limited-integer-maximum;
+
+    let new-min = case
+		    ~min1 => min2;
+		    ~min2 => min1;
+		    otherwise => max(min1, min2);
+		  end case;
+    let new-max = case
+		    ~max1 => max2;
+		    ~max2 => max1;
+		    otherwise => min(max1, max2);
+		  end case;
+
+    if (new-min & new-max & new-max < new-min)
+      #f;
+    else
+      make(<limited-integer>, base-class: base, min: new-min, max: new-max);
+    end if;
+  end block;
 end method intersect-limited-ints;
 
 // restrict-limited-ints(<limited-integer>,<limited-integer>) -- internal.
