@@ -37,19 +37,19 @@ define class <entry> (<window>, <editable>) end class;
 define-widget(<entry>, "entry",
 	      #"exportselection", #"font", #"insertbackground",
 	      #"insertborderwidth", #"insertofftime", #"insertontime",
-	      #"insertwidth", #"scrollcommand", #"selectbackground",
+	      #"insertwidth", #"xscrollcommand", #"selectbackground",
 	      #"selectborderwidth", #"selectforeground", #"state",
-	      #"textvariable", #"width");
+	      #"textvariable", #"width", #"show", #"justify");
 
 define method icursor (entry :: <entry>, index) => (entry :: <entry>);
   put-tk-line(entry, " icursor ", index);
   entry;
 end method icursor;
 
-define method view (entry :: <entry>, index) => (entry :: <entry>);
-  put-tk-line(entry, " view ", index);
+define method xview (entry :: <entry>, index) => (entry :: <entry>);
+  put-tk-line(entry, " xview ", index);
   entry;
-end method view;
+end method xview;
   
 define method get-all (entry :: <entry>) => (result :: <string>);
   tk-unquote(call-tk-function(entry, " get"));
