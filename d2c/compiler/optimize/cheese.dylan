@@ -15,7 +15,10 @@ define method optimize-component (component :: <component>) => ();
       dependent.queue-next := #"absent";
       optimize(component, dependent);
     else
-      done := #t;
+      add-type-checks(component);
+      unless (component.initial-definitions | component.reoptimize-queue)
+	done := #t;
+      end;
     end;
   end;
 end;
@@ -259,14 +262,26 @@ define method add-type-checks-aux
 	else
 	  assign.defines := temp;
 	end;
-	// Assign the type checked value to the real var.
+	// Make the check type operation.
 	let builder = make-builder(component);
-	build-assignment
-	  (builder, assign.policy, assign.source-location, defn,
-	   make-check-type-operation
-	     (builder, temp,
-	      make-literal-constant(builder, defn.var-info.asserted-type)));
+	let asserted-type = defn.var-info.asserted-type;
+	let check = make-check-type-operation(builder, temp,
+					      make-literal-constant
+						(builder, asserted-type));
+	// Assign the type checked value to the real var.
+	build-assignment(builder, assign.policy, assign.source-location,
+			 defn, check);
 	insert-after(assign, builder-result(builder));
+	// Seed the derived type of the check-type call.
+	let (checked-type, precise?)
+	  = ctype-intersection(asserted-type,
+			       assign.depends-on.source-exp.derived-type);
+	maybe-restrict-type(component, check,
+			    if (precise?)
+			      checked-type;
+			    else
+			      asserted-type;
+			    end);
 	// Queue the assignment for reoptimization.
 	queue-dependent(component, assign);
       end;
