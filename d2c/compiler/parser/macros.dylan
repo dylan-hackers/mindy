@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.15 1996/03/17 00:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.16 1996/03/21 00:10:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -416,8 +416,9 @@ define method macro-expand-aux (form :: <macro-call-parse>)
 			      intermediate-words, make(<uniquifier>)));
       end unless;
     end for;
-    compiler-error("Syntax error in %=.  None of the main rules matched.",
-		   form);
+    compiler-error-location
+      (form, "Syntax error in %s macro.  None of the main rules matched.",
+       form.macro-call-word.token-symbol);
   end block;
 end method macro-expand-aux;
 
@@ -1456,7 +1457,7 @@ define method trim-until-parsable
       block ()
 	let result = parser(tokenizer);
 	return(result, before, remaining);
-      exception (<error>)
+      exception (<compiler-error>)
 	if (before.more?)
 	  end-point := (tokenizer.tokenizer-potential-end-point
 			  | last-elementary-fragment(before));
@@ -2105,7 +2106,7 @@ define method match
     let plist
       = block ()
 	  parse-property-list(make(<fragment-tokenizer>, fragment: fragment));
-	exception (<error>)
+	exception (<compiler-error>)
 	  return(fail());
 	end block;
     //
@@ -2271,8 +2272,9 @@ define method do-replacement
 		return();
 	      end unless;
 	    end for;
-	    compiler-error
-	      ("None of the rules for auxiliary rule set %s matched", name);
+	    compiler-error-location
+	      (binding.pattern-binding-variable,
+	       "None of the rules for auxiliary rule set %s matched", name);
 	  end block;
 	end for;
       else
