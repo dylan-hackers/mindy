@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.17 1996/04/06 07:07:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.18 1996/04/10 16:50:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,6 +64,32 @@ define method install-transformers
     (defn :: <definition>, transformers :: <list>)
     => ();
 end method install-transformers;
+
+
+
+// definition-syntax-info -- exported.
+//
+// Return the word and category for that word that this definition imposes
+// syntax on.
+// 
+define open generic definition-syntax-info
+    (defn :: <definition>, name :: <symbol>)
+    => (word :: false-or(<symbol>), category :: false-or(<symbol>));
+//
+define method definition-syntax-info
+    (defn :: <definition>, name :: <symbol>)
+    => (word :: false-or(<symbol>), category :: false-or(<symbol>));
+  values(name, #"ordinary");
+end method definition-syntax-info;
+
+
+// definition-kind -- exported.
+//
+// Return some string that can be used in error messages to talk about the
+// kind of definition this is.
+// 
+define open generic definition-kind
+    (defn :: <definition>) => kind :: <byte-string>;
 
 
 
@@ -134,56 +160,16 @@ define open primary abstract class <class-definition>
     (<abstract-constant-definition>)
 end class;
 
+// definition-kind{<class-definition>} -- method on exported GF
+//
+define method definition-kind
+    (defn :: <class-definition>) => kind :: <byte-string>;
+  "class";
+end method definition-kind;
+
 define open generic class-defn-defered-evaluations-function
     (defn :: <class-definition>) => res :: false-or(<ct-function>);
 
 define open generic class-defn-maker-function
     (defn :: <class-definition>) => res :: false-or(<ct-function>);
 
-
-
-
-
-// {check,make}-syntax-table-additions -- exported.
-//
-// These functions are called to check and make changes to a modules syntax
-// table when some definition becomes accessable.
-//
-define open generic check-syntax-table-additions
-    (table :: <syntax-table>, defn :: false-or(<definition>), name :: <symbol>)
-    => ();
-define open generic make-syntax-table-additions
-    (table :: <syntax-table>, defn :: false-or(<definition>), name :: <symbol>)
-    => ();
-
-
-define method check-syntax-table-additions
-    (table :: <syntax-table>, defn :: <false>, name :: <symbol>) => ();
-  //
-  // If there is no definition, then there is nothing to check.
-end;
-
-define method check-syntax-table-additions
-    (table :: <syntax-table>, defn :: <definition>, name :: <symbol>)
-    => ();
-  //
-  // For almost all definitions name must be ordinary.
-  unless (category-merge-okay?(table, name, #"ordinary"))
-    compiler-fatal-error("Inconsistent syntax for %=", name);
-  end;
-end;
-
-
-define method make-syntax-table-additions
-    (table :: <syntax-table>, defn :: <false>, name :: <symbol>) => ();
-  //
-  // If there is no definition, then there is nothing to change.
-end;
-
-define method make-syntax-table-additions
-    (table :: <syntax-table>, defn :: <definition>, name :: <symbol>)
-    => ();
-  //
-  // Change the word to be guaranteed ordinary.
-  merge-category(table, name, #"ordinary");
-end;
