@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.15 1994/11/06 20:01:06 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.16 1994/11/07 00:47:06 rgs Exp $
 *
 * This file implements numbers.
 *
@@ -1794,12 +1794,15 @@ static obj_t dylan_xf_as_df(obj_t class, obj_t x)
 
 static int scav_bignum(struct object *ptr)
 {
-    return sizeof(struct bignum);
+    int length = ((struct bignum *)ptr)->length;
+    return (sizeof(struct bignum) + (length - 1) * sizeof(digit_t));
 }
 
 static obj_t trans_bignum(obj_t sf)
 {
-    return transport(sf, sizeof(struct bignum));
+    int length = BIGNUM(sf)->length;
+    return transport(sf, (sizeof(struct bignum)
+			  + (length - 1) * sizeof(digit_t)));
 }
 
 static int scav_ratio(struct object *ptr)
