@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.63 2002/02/25 06:31:35 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.64 2002/02/26 21:32:21 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -319,8 +319,6 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			  $dylan-user-dir,
 			  $version, target-machine-name);
 
-  format(*debug-output*, "rpath: %s\n", link-rpath);
-     
   *break-on-compiler-errors* = option-value-by-long-name(argp, "break");
   let debug? = option-value-by-long-name(argp, "debug");
   let profile? = option-value-by-long-name(argp, "profile");
