@@ -1,9 +1,9 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.4 1995/01/06 21:24:24 ram Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.5 1995/03/04 21:57:59 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
 
-MC = /afs/cs/project/gwydion/mindy/bin/mindycomp
+MC = mindycomp
 MINDYFLAGS = -lcompiler
 
 %.dbc: %.dylan
@@ -11,8 +11,10 @@ MINDYFLAGS = -lcompiler
 
 OBJS = exports.dbc \
 	set-module.dbc \
+	params.dbc \
 	utils.dbc \
 	source.dbc \
+	ctv.dbc \
 	header.dbc \
 	tokens.dbc \
 	names.dbc \
@@ -24,7 +26,6 @@ OBJS = exports.dbc \
 	tlf.dbc \
 	policy.dbc \
 	lexenv.dbc \
-	ctv.dbc \
 	ctype.dbc \
 	cteval.dbc \
 	expand.dbc \
