@@ -201,7 +201,7 @@ SOURCE="..\..\..\interp\make-init.pl"
 !IF  "$(CFG)" == "interp - Win32 Release"
 
 # Begin Custom Build
-InputDir=\dylan\gd\src\mindy\interp
+InputDir=\Fulgham\gd\src\mindy\interp
 ProjDir=.
 InputPath="..\..\..\interp\make-init.pl"
 
@@ -215,12 +215,12 @@ InputPath="..\..\..\interp\make-init.pl"
 !ELSEIF  "$(CFG)" == "interp - Win32 Debug"
 
 # Begin Custom Build
-InputDir=\dylan\gd\src\mindy\interp
+InputDir=\Fulgham\gd\src\mindy\interp
 ProjDir=.
 InputPath="..\..\..\interp\make-init.pl"
 
 "extern1.def, extern2.def" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	perl $(InputPath) $(InputDir)\malloc.inc $(InputDir)\..\..\common\time\time.inc 
+	c:\Perl\bin\perl.exe $(InputPath) $(InputDir)\malloc.inc $(InputDir)\..\..\common\time\time.inc 
 	copy $(ProjDir)\"?extern1.def" $(InputDir)\extern1.def 
 	copy $(ProjDir)\"?extern2.def" $(InputDir)\extern2.def 
 	
