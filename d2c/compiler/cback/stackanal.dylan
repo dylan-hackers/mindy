@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.6 2003/02/17 21:37:00 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.7 2003/02/18 10:19:49 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -84,6 +84,16 @@ define sealed domain initialize (<state>);
 // cares of clusters.
 // The producers are abstract assignments that are
 // known to receive clusters from function call etc.
+//
+// In the implementation the "want" list gets prepended
+// by the consumer with a variable it depends on, and
+// this list travels backward along the control-flow
+// edges until it reaches the defining site of the
+// variable (the assignment). Here is where the cluster
+// is produced, so we can strip that variable from the
+// (head of the) list. In case more than one subsequent
+// cluster belongs to the same assignment, we strip the
+// whole prefix off the list.
 //
 define generic analyze
     (entity, want :: <list>, state :: <state>)
@@ -282,10 +292,17 @@ define method produce (var :: <abstract-variable>, want :: <list>)
     end;
 
     if (member?(var, want.tail))
-      error("The cluster we are producing is wanted twice? -- this may be legal!!!");
+      // since the cluster seems duplicated
+      // with a smaller number
+      var.info := var.info - 1;
+      // redo the production
+      // this ensures var.info to be minimal
+      produce(var, want.tail);
+      // FIXME: state.max-depth may be left unupdated,
+      //  but that is a minor annoyance.
+    else
+      want.tail;
     end;
-
-    want.tail;
   else
     want;
   end;
