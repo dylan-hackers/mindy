@@ -1,11 +1,11 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.6 2002/02/27 20:33:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.7 2002/05/13 19:43:34 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -89,7 +89,7 @@ define open abstract class <abstract-method-definition> (<function-definition>)
     init-keyword: inline-function:;
   
   // Categorization of how strongly the user wanted this method inlined
-  slot method-defn-inline-type :: <inline-type> = #"default-inline",
+  constant slot method-defn-inline-type :: <inline-type> = #"default-inline",
     init-keyword: inline-type:;
 end;
 
@@ -909,8 +909,7 @@ define constant $abstract-method-definition-slots
   = concatenate($function-definition-slots,
 		list(method-defn-inline-function-dump, inline-function:,
 		     %method-defn-inline-function-setter,
-		     method-defn-inline-type, inline-type:,
-		     method-defn-inline-type-setter));
+		     method-defn-inline-type, inline-type:, #f));
 
 define method set-method-defn-of
     (gf :: false-or(<generic-definition>), meth :: <method-definition>) => ();
