@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.8 1994/10/03 14:00:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.9 1994/10/26 15:08:04 wlott Exp $
 
 //======================================================================
 //
@@ -32,7 +32,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dy
 
 define method report-problem (problem)
   block ()
-    report-condition(problem);
+    report-condition(problem, *format-hook-default-stream*);
   exception <error>
     puts("\nproblem reporting problem... giving up");
   end block;
@@ -95,10 +95,13 @@ define method eval-and-print (expr, num-debug-vars)
   else
     for (first = #t then #f,
 	 result in results)
-      unless (first)
-	puts(", ");
-      end unless;
-      format("$%==%=", debug-variables.size, result);
+      if (first)
+	*format-hook*(*format-hook-default-stream*, "$%==%=",
+		       debug-variables.size, result);
+      else
+	*format-hook*(*format-hook-default-stream*, ", $%==%=",
+		       debug-variables.size, result);
+      end;
       add!(debug-variables, result);
     end for;
   end if;
@@ -140,7 +143,7 @@ define method debugger-report-condition (cond)
   block ()
     putc('\n');
     block ()
-      report-condition(cond);
+      report-condition(cond, *format-hook-default-stream*);
     exception (problem :: <error>)
       puts("problem reporting condition:\n  ");
       report-problem(problem);
@@ -175,8 +178,10 @@ define method debugger-describe-restarts (cond)
 	let type = h.handler-type;
 	if (instance?(type, <class>) & subtype?(type, <restart>))
 	  block ()
-	    format("%= [%=]: ", index, type);
-	    report-condition(apply(make, type, h.handler-init-args));
+	    *format-hook*(*format-hook-default-stream*, "%= [%=]: ",
+			  index, type);
+	    report-condition(apply(make, type, h.handler-init-args),
+			     *format-hook-default-stream*);
 	  exception (problem :: <error>)
 	    puts("\nproblem describing restart:\n  ");
 	    report-problem(problem);
@@ -206,7 +211,7 @@ define method debugger-describe-restarts (cond)
 	      puts(description);
 	    <restart> =>
 	      puts(":\n  ");
-	      report-condition(description);
+	      report-condition(description, *format-hook-default-stream*);
 	  end select;
 	exception (problem :: <error>)
 	  puts("\nproblem describing return convention:\n  ");
