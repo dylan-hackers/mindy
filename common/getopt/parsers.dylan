@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
-rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.2 1998/12/20 23:54:38 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.3 1998/12/23 20:35:04 emk Exp $
 
 //======================================================================
 //
@@ -145,6 +145,45 @@ define method parse-option
     get-argument-token(arg-parser);
   end if;
   push-last(parser.option-value, get-argument-token(arg-parser).token-value);
+end method parse-option;
+
+
+//======================================================================
+//  <optional-parameter-option-parser>
+//======================================================================
+//  Similar to <parameter-option-parser>, but the parameter is optional.
+//  It must directly follow the option with no intervening whitespace,
+//  or follow an "=" token. The value is #f if the option never appears,
+//  #t if the option appears but the parameter does not, and the value
+//  of the parameter otherwise.
+//  
+//  Examples:
+//    -z, -z3, -z=3, -z = 3, --zip, --zip=3, --zip = 3
+//  Counter-examples:
+//    -z 3, --zip 3, --zip3
+
+define class <optional-parameter-option-parser> (<option-parser>)
+end class <optional-parameter-option-parser>;
+
+define method parse-option
+    (parser :: <optional-parameter-option-parser>,
+     arg-parser :: <argument-list-parser>)
+ => ()
+  let option = get-argument-token(arg-parser);
+  let next = argument-tokens-remaining?(arg-parser) &
+    peek-argument-token(arg-parser);
+
+  parser.option-value :=
+    case
+      instance?(next, <equals-token>) =>
+	get-argument-token(arg-parser);
+	get-argument-token(arg-parser).token-value;
+      (instance?(option, <short-option-token>)
+	 & option.tightly-bound-to-next-token?) =>
+	get-argument-token(arg-parser).token-value;
+      otherwise =>
+	#t;
+    end case;
 end method parse-option;
 
 

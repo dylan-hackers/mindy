@@ -2,7 +2,7 @@ library: parse-arguments
 module: dylan-user
 author:  Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.6 1998/12/20 23:54:37 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.7 1998/12/23 20:35:02 emk Exp $
 
 //======================================================================
 //
@@ -39,6 +39,7 @@ end library;
 define module option-parser-protocol
   create
     // <argument-list-parser>
+      argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
 
@@ -86,5 +87,6 @@ define module parse-arguments
     <simple-option-parser>,
     <parameter-option-parser>,
     <repeated-parameter-option-parser>,
+    <optional-parameter-option-parser>,
     <keyed-option-parser>;
 end module parse-arguments;

@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.10 1998/12/22 08:43:01 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.11 1998/12/23 20:35:03 emk Exp $
 
 //======================================================================
 //
@@ -119,9 +119,10 @@ end;
 define function add-argument-token
     (parser :: <argument-list-parser>,
      class :: <class>,
-     value :: <string>)
+     value :: <string>,
+     #rest keys, #key, #all-keys)
  => ()
-  push-last(parser.tokens, make(class, value: value));
+  push-last(parser.tokens, apply(make, class, value: value, keys));
 end;
 
 define function argument-tokens-remaining?
@@ -295,8 +296,9 @@ define function tokenize-args
       end method,
       
       // Add a token to our deque
-      method token(class :: <class>, value :: <string>) => ()
-	add-argument-token(parser, class, value);
+      method token(class :: <class>, value :: <string>,
+		   #rest keys, #key, #all-keys) => ()
+	apply(add-argument-token, parser, class, value, keys);
       end method;
     
     // Process an individual argument
@@ -316,14 +318,18 @@ define function tokenize-args
 	  block (done)
 	    for (i from 1 below arg.size)
 	      let opt = make(<string>, size: 1, fill: arg[i]);
-	      token(<short-option-token>, opt);
 	      let opt-parser = element(parser.option-short-name-map,
 				       opt, default: #f);
 	      if (opt-parser & opt-parser.option-might-have-parameters?
 		    & i + 1 < arg.size)
+		// Take rest of argument, and use it as a parameter.
+		token(<short-option-token>, opt, tightly-bound?: #t);
 		token(<regular-argument-token>,
 		      copy-sequence(arg, start: i + 1));
 		done();
+	      else
+		// A regular, solitary option with no parameter.
+		token(<short-option-token>, opt);
 	      end if;
 	    end for;
 	  end block;
