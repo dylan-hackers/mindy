@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/feature.c,v 1.3 2000/01/24 04:57:56 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/feature.c,v 1.4 2001/07/17 03:50:12 brent Exp $
 *
 * This file handles conditional compilation
 *
@@ -275,7 +275,7 @@ int yylex(void)
 	    new_token();
 	    break;
 
-	  case NULL:
+	  case (int)NULL:
 	    while (State != NULL) {
 		error(State->line,
 		      "#if with no matching #endif, assuming #endif at EOF.");
