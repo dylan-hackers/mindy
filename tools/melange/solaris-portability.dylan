@@ -66,7 +66,8 @@ define constant $default-defines
       "__sun", "",
       "__sparc", "",
       "__unix", "",
-      "_NO_LONGLONG", "",
+// Both gcc and Solaris cc support 64-bits long long int
+//      "_NO_LONGLONG", "",
       "__STDC__", ""
 ];
 
@@ -91,6 +92,7 @@ end for;
 define constant $integer-size :: <integer> = 4;
 define constant $short-int-size :: <integer> = 2;
 define constant $long-int-size :: <integer> = 4;
+define constant $longlong-int-size :: <integer> = 8;
 define constant $char-size :: <integer> = 1;
 define constant $float-size :: <integer> = 4;
 define constant $double-float-size :: <integer> = 8;
