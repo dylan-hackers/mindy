@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.h,v 1.1 1994/03/24 21:49:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.h,v 1.2 1994/06/11 16:00:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -22,7 +22,7 @@ struct handler {
     obj_t type;
     obj_t function;
     obj_t test;
-    obj_t description;
+    obj_t init_args;
     obj_t next;
 };
 

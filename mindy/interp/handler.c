@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.4 1994/06/11 02:23:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.5 1994/06/11 15:59:53 wlott Exp $
 *
 * This file does whatever.
 *
@@ -37,13 +37,13 @@ static void push_handler(obj_t method, struct thread *thread, obj_t *args)
     obj_t type = args[0];
     obj_t func = args[1];
     obj_t test = args[2];
-    obj_t descr = args[3];
+    obj_t init_args = args[3];
     obj_t handler = alloc(obj_HandlerClass, sizeof(struct handler));
 
     HANDLER(handler)->type = type;
     HANDLER(handler)->function = func;
     HANDLER(handler)->test = test;
-    HANDLER(handler)->description = descr;
+    HANDLER(handler)->init_args = init_args;
     HANDLER(handler)->next = thread->handlers;
     thread->handlers = handler;
 
@@ -76,9 +76,9 @@ static obj_t handler_test(obj_t handler)
     return HANDLER(handler)->test;
 }
 
-static obj_t handler_descr(obj_t handler)
+static obj_t handler_init_args(obj_t handler)
 {
-    return HANDLER(handler)->description;
+    return HANDLER(handler)->init_args;
 }
 
 static obj_t handler_next(obj_t handler)
@@ -109,7 +109,7 @@ static int scav_handler(struct object *obj)
     scavenge(&handler->type);
     scavenge(&handler->function);
     scavenge(&handler->test);
-    scavenge(&handler->description);
+    scavenge(&handler->init_args);
     scavenge(&handler->next);
 
     return sizeof(struct handler);
@@ -145,8 +145,8 @@ void init_handler_functions(void)
 				    list2(obj_TypeClass, obj_FunctionClass),
 				    FALSE,
 				    list2(pair(symbol("test"), obj_False),
-					  pair(symbol("description"),
-					       obj_False)),
+					  pair(symbol("init-arguments"),
+					       obj_Nil)),
 				    FALSE, obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
 		    make_raw_function("current-handler", 0, FALSE, obj_False,
@@ -158,8 +158,8 @@ void init_handler_functions(void)
 		    obj_False, FALSE, obj_ObjectClass, handler_function);
     define_function("handler-test", list1(obj_HandlerClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, handler_test);
-    define_function("handler-description", list1(obj_HandlerClass), FALSE,
-		    obj_False, FALSE, obj_ObjectClass, handler_descr);
+    define_function("handler-init-args", list1(obj_HandlerClass), FALSE,
+		    obj_False, FALSE, obj_ObjectClass, handler_init_args);
     define_function("handler-next", list1(obj_HandlerClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, handler_next);
     define_constant("pop-handler",
