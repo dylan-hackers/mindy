@@ -169,14 +169,25 @@ define function start-of-extension (filename :: <filename>)
 		   end block;
 
     let prefix-end = filename.end-of-prefix;
+    format-out("Last dot: %=\n", last-dot);
     // last-dot ~= filename.size, or else it would have returned by now
     if (last-dot == prefix-end)  
       // special case 1: pathless-filename is of the form ".*"
+      format-out("Case 1\n");
       filename.size;
     elseif (last-dot == prefix-end + 1 & filename[prefix-end] == '.')
       // special case 2: pathless-filename is ".."
+      format-out("Case 2\n");
+      filename.size;
+    elseif (last-dot == prefix-end - 2)
+      // special case 3: filename is "./foo" (no extension)
+      // prefix-end will be the 'f', last-dot will be the '.',
+      // therefore there will be a difference of 2 (due to the
+      // path separator.)
+      format-out("Case 3\n");
       filename.size;
     else
+      format-out("Else Case\n");
       last-dot;
     end if;
   end block;
@@ -189,6 +200,9 @@ end function filename-extension;
 
 define function base-filename (filename :: <filename>)
  => basename :: <filename>;
+  format-out("Filename: %s\n", filename);
+  format-out("End-Of-Prefix: %=\n", filename.end-of-prefix);
+  format-out("Start-Of-Extension: %=\n", filename.end-of-prefix);
   copy-sequence(filename, start: filename.end-of-prefix,
 		end: filename.start-of-extension);
 end function base-filename;
