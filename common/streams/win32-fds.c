@@ -187,119 +187,122 @@ int fd_read (int fd, char *buffer, int max_chars)
    - Close the std handles passed to the child.
    - Reset the parent's standard handles to the saved handles.
      (see reset_standard_handles)
-   We assume that the caller closes in, out, and err after calling us.  */
+   We assume that the caller closes in, out, and err after calling us.
+*/
 
-static void prepare_standard_handles (int in, int out, HANDLE handles[2])
+/* This function does file handle black magic.  Here, we create pipes,
+   duplicate the ones we're going to pass on to the child process, and
+   set the current process's stdin and stdout to be those pipes.  (###
+   I'm not sure duplicating them is necessary, but it doesn't hurt...)
+
+   inpipes, outpipes, and old_handles are 2 element arrays.  */
+static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[], 
+			int outpipes[], HANDLE old_handles[])
 {
-  HANDLE parent;
-  HANDLE newstdin, newstdout;
+  const int pipe_size = 2000;
+  HANDLE new_stdin, new_stdout;
+  HANDLE parent = GetCurrentProcess();
 
-  parent = GetCurrentProcess ();
+  /* Create new file handles--in binary mode.
+     _pipe sticks the read then the write handle in {in,out}pipes, and
+     returns 0 on success and -1 on failure */
+  if (_pipe(inpipes, pipe_size, O_BINARY) != 0
+      || _pipe(outpipes, pipe_size, O_BINARY) != 0
 
-  handles[0] = GetStdHandle (STD_INPUT_HANDLE);
-  handles[1] = GetStdHandle (STD_OUTPUT_HANDLE);
-
-  /* make inheritable copies of the new handles */
-  if (!DuplicateHandle (parent, 
-		       (HANDLE) _get_osfhandle (in),
-		       parent,
-		       &newstdin, 
-		       0, 
-		       TRUE, 
-			DUPLICATE_SAME_ACCESS)) {
-    fprintf(stderr, "Duplicating input handle for child");
+      /* Duplicate the stdin and stdout handles.  False on failure. */
+      || !DuplicateHandle(parent, /* source process */
+			  /* next, handle to dup */
+			  (HANDLE) _get_osfhandle(inpipes[0]),
+			  parent,  /* Proc to give new handles to */
+			  &new_stdin, /* Where new handle is stored */
+			  0,  /* Parameter ignored */
+			  TRUE, /* Make new handle inheritable */
+			  DUPLICATE_SAME_ACCESS)
+      || !DuplicateHandle(parent,  /* source process */
+			  /* next, handle to dup */
+			  (HANDLE)_get_osfhandle(outpipes[1]),
+			  parent,   /* Proc to give new handles to */
+			  &new_stdout,  /* Where new handle is stored */
+			  0,  /* Parameter ignored */
+			  TRUE, /* Make new handle inheritable */
+			  DUPLICATE_SAME_ACCESS)) {
+    fprintf(stderr, "Failed while doing pipe stuff for fd_exec");
     exit(1);
   }
-  
-  if (!DuplicateHandle (parent,
-		       (HANDLE) _get_osfhandle (out),
-		       parent,
-		       &newstdout,
-		       0,
-		       TRUE,
-		       DUPLICATE_SAME_ACCESS)) {
-    fprintf(stderr, "Duplicating output handle for child");
+
+  /* Save the old stdin and stdout handles to some place we can remember */
+  old_handles[0] = GetStdHandle(STD_INPUT_HANDLE);
+  old_handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  /* Set stdin and stdout to the new handles */
+  if (!SetStdHandle(STD_INPUT_HANDLE, new_stdin)
+      || !SetStdHandle(STD_OUTPUT_HANDLE, new_stdout)) {
+    fprintf(stderr, "Failed while doing pipe stuff for fd_exec");
     exit(1);
   }
 
-  /* and store them as our std handles */
-  if (!SetStdHandle (STD_INPUT_HANDLE, newstdin)) {
-    fprintf(stderr, "Changing stdin handle");
-    exit(1);
-  }
- 
-  if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout)) {
-    fprintf(stderr, "Changing stdout handle");
-    exit(1);
-  }
+  /* Now tell the StartInfo to use the handles we just created.  By
+     default, child processes don't inherit the stdin and stdout of
+     their parents. */
+  siStartInfo->dwFlags = STARTF_USESTDHANDLES;
+  siStartInfo->hStdInput = new_stdin;
+  siStartInfo->hStdOutput = new_stdout;
+
+  /* nothing funny with stderr, but we still have to initialize 
+     the field anyway */
+  siStartInfo->hStdError = GetStdHandle(STD_ERROR_HANDLE);
 }
 
-static void reset_standard_handles (HANDLE handles[2])
+/* Here we undo the hackery in the setup, and close any handles we
+   know fd_exec doesn't use.
+   */
+static void pipe_cleanup (int inpipes[], int outpipes[], HANDLE old_handles[])
 {
-  /* close the duplicated handles passed to the child */
-  CloseHandle(GetStdHandle(STD_INPUT_HANDLE));
-  CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+  /* Close unnecessary fd's--the ones the child uses */
+  if (close(inpipes[0]) != 0
+      || close(outpipes[1]) != 0
 
-  /* now restore parent's saved std handles */
-  SetStdHandle(STD_INPUT_HANDLE, handles[0]);
-  SetStdHandle(STD_OUTPUT_HANDLE, handles[1]);
+  /* close the handles we're pretending are our stdin and stdout */
+      || !CloseHandle(GetStdHandle(STD_INPUT_HANDLE))
+      || !CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE))
+
+  /* now restore the real stdin and stdout */
+      || !SetStdHandle(STD_INPUT_HANDLE, old_handles[0])
+      || !SetStdHandle(STD_OUTPUT_HANDLE, old_handles[1])) {
+    fprintf(stderr, "Failed while doing pipe cleanup for fd_exec");
+    exit(1);
+  }
 }
 
 void fd_exec(char *command_line, int *toprog, int *fromprog)
 {
-    int inpipes[2], outpipes[2];
-    /* This code is a combination of the Unix version of this code
-     * and code in the Win32 Programmer's Reference volume 2, 
-     * pages 40-45, and code in Emacs.
-     */
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
     SECURITY_ATTRIBUTES saAttr;
+    int inpipes[2], outpipes[2];
     HANDLE old_handles[2];
-    const int pipe_size = 2000;
-    
-    /* printf("Starting fd_exec\n"); */
+
     siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.lpReserved = NULL;
     siStartInfo.lpReserved2 = NULL;
     siStartInfo.cbReserved2 = 0;
     siStartInfo.lpDesktop = NULL;
-    /* more siStartInfo in a bit */
-    
+    /* pipe_setup initializes the rest of siStartInfo */
+
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = NULL;
-    
-    /* And now, file handle black magic */
-    
-    /* Create new file handles--in binary mode.
-       _pipe returns the read then the write handle. */
-    _pipe(inpipes, pipe_size, O_BINARY);
-    _pipe(outpipes, pipe_size, O_BINARY);
 
-    /* Set up things so the new process will use the file handles we 
-       just made */
-    prepare_standard_handles(inpipes[0], outpipes[1], old_handles);
-    siStartInfo.dwFlags = STARTF_USESTDHANDLES;
-    siStartInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-    siStartInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    /* nothing funny with stderr, but we still have to initialize 
-       the field */
-    siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-    
+    pipe_setup(&siStartInfo, inpipes, outpipes, old_handles);
+
     if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
                         NULL, NULL, &siStartInfo, &piProcInfo)) {
-        *toprog = -1;
-        *fromprog = -1;
+        DWORD debug_info = GetLastError();
+        *toprog = *fromprog = -1;
     } else {
         *toprog = inpipes[1];    /* fd we can write to */
         *fromprog = outpipes[0]; /* fd we can read from */
     }
-    
-    /* Restore the original stdin and stdout */
-    reset_standard_handles(old_handles);
-    /* Close unnecessary fd's--the ones the child uses */
-    close(inpipes[0]);
-    close(outpipes[1]);
+
+    pipe_cleanup(inpipes, outpipes, old_handles);
 }
