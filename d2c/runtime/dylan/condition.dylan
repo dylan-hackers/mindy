@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.10 1996/03/20 14:16:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -26,7 +26,7 @@ end class <error>;
 // This class mixes in the format string and arguments used by the various
 // simple-mumble conditions.
 // 
-define abstract class <format-string-condition> (<condition>)
+define abstract open class <format-string-condition> (<condition>)
 
   // The format string.  Exported from Dylan.
   constant slot condition-format-string :: <string>,
@@ -108,7 +108,7 @@ define sealed domain initialize(<abort>);
 
 // IO abstraction.
 
-// condition-format -- exported from ???
+// condition-format -- exported from Extensions
 //
 // Serves as a firewall between the condition system and streams.
 // Report-condition methods should call this routine to do their formatting
@@ -127,7 +127,22 @@ define sealed method condition-format
   apply(format, control-string, arguments);
 end;
 
-// *warning-output* -- exported from ???
+// condition-force-output
+//
+// Just like condition-format, except performs a general force-output function.
+// 
+define open generic condition-force-output (stream :: <object>) => ();
+
+// condition-force-output(#"cheap-IO") -- internal.
+//
+// Bootstrap method for condition-format that just calls the cheap-IO fflush.
+//
+define sealed method condition-force-output (stream == #"cheap-IO") => ();
+  c-expr(void: "fflush(stdout)");
+end;
+
+
+// *warning-output* -- exported from Extensions
 //
 // The ``stream'' to which warnings report when signaled (and not handled).
 //
