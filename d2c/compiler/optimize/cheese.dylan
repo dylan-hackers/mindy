@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.59 1995/05/12 15:38:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.60 1995/05/18 13:37:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -948,7 +948,9 @@ define method optimize-slot-ref
     let policy = call-assign.policy;
     let source = call-assign.source-location;
     let init?-slot = slot.slot-initialized?-slot;
-    if (init?-slot)
+    let guaranteed-initialized?
+      = slot-guaranteed-initialized?(slot, instance.derived-type);
+    if (init?-slot & ~guaranteed-initialized?)
       let init?-offset = find-slot-offset(init?-slot, instance.derived-type);
       unless (init?-offset)
 	error("The slot is at a fixed offset, but the initialized flag "
@@ -973,7 +975,7 @@ define method optimize-slot-ref
 		     make-operation(builder, <slot-ref>, list(instance),
 				    derived-type: slot.slot-type,
 				    slot-info: slot, slot-offset: offset));
-    unless (init?-slot | slot.slot-guaranteed-initialized?)
+    unless (init?-slot | guaranteed-initialized?)
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
       build-assignment(builder, policy, source, temp,
 		       make-operation(builder, <primitive>, list(value),
