@@ -22,13 +22,15 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 //
 
 // without-bounds-checks
-// Do-nothing version
-// We can't tell the collections library to ignore bounds checks 
-// so we ignore this
+// Note: intentional violation of hygiene required
 
 define macro without-bounds-checks
-  { without-bounds-checks ?:body end }
-    => {let (element, element-setter) = values(%element, %element-setter);
+  {without-bounds-checks () ?:body end}
+    => {without-bounds-checks ?body end}
+
+  {without-bounds-checks ?:body end}
+    => {let ?=element = %element;
+        let ?=element-setter = %element-setter;
         ?body}
 end;
 
