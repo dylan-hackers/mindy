@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.3 1996/01/12 00:58:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.4 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,10 +65,14 @@ define module common
 	     $minimum-integer, <byte-character>,
 #if (mindy)
              <boolean>, *debug-output*, main, <dictionary>, key-exists?,
+#else
+             <ratio>, numerator, denominator,
 #end
 	     <equal-table>, <string-table>, equal-hash},
 #if (mindy)
     rename: {type-or => type-union},
+#else
+    rename: {*warning-output* => *debug-output*},
 #end
     export: all;
   use Streams, export: all;
@@ -103,6 +107,8 @@ define module od-format
   use common;
 #if (mindy)
   use system, import: {get-time-of-day};
+#else
+  use system, import: {call-out};
 #end
   use standard-io;
   use introspection, import: {function-name};

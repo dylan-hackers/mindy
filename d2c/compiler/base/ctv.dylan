@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.23 1996/01/12 00:58:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.24 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -638,7 +638,7 @@ define method as (class == <ct-value>, string :: <byte-string>)
   make(<literal-string>, value: string);
 end;
 
-define method concatenate (str1 :: <literal-string>, #rest more)
+define method concat-strings (str1 :: <literal-string>, #rest more)
     => res :: <literal-string>;
   make(<literal-string>,
        value: apply(concatenate,

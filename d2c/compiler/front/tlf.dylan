@@ -1,17 +1,17 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.6 1995/11/09 13:22:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.7 1996/01/15 12:51:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define variable *Top-Level-Forms* = make(<stretchy-vector>);
 
-define abstract class <top-level-form> (<object>)
+define open primary abstract class <top-level-form> (<object>)
 end;
 
-define abstract class <define-tlf> (<top-level-form>)
+define open primary abstract class <define-tlf> (<top-level-form>)
 end;
 
-define abstract class <simple-define-tlf> (<define-tlf>)
+define open primary abstract class <simple-define-tlf> (<define-tlf>)
   slot tlf-defn :: <definition>, init-keyword: defn:;
 end;
 

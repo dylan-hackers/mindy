@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.9 1996/01/03 21:30:42 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.10 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // definitions exist for things like the type of a variable (when it isn't a
 // compile-time constant).
 // 
-define open abstract class <definition>
+define open primary abstract class <definition>
     (<annotatable>, <identity-preserving-mixin>)
   //
   // The name this is the definition for.

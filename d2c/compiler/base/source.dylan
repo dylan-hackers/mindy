@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.8 1996/01/12 00:58:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.9 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -28,7 +28,7 @@ define generic source-location-span (start-loc :: <source-location>,
 
 // The <source-location-mixin> class.
 
-define abstract class <source-location-mixin> (<object>)
+define open abstract class <source-location-mixin> (<object>)
   slot source-location :: <source-location>,
     setter: #f,
     init-keyword: source-location:,

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.27 1996/01/12 00:58:17 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.28 1996/01/15 12:51:16 wlott Exp $
 
 /*
 
@@ -343,359 +343,376 @@ register-object-id(#"extern-handle", #x0004);
 
 // Dylan object IDs:
 
-// A byte character, string or symbol.  Data is raw in byte format.
-register-object-id(#"byte-character", #x0010);
-register-object-id(#"byte-string", #x0011);
-register-object-id(#"byte-symbol", #x0012);
-
-// A unicode character, string or symbol.  Each character is two bytes, byte
-// format.(???)
-register-object-id(#"unicode-character", #x0013);
-register-object-id(#"unicode-string", #x0014);
-register-object-id(#"unicode-symbol", #x0015);
-
-// A list or simple-object-vector of the subobjects.
-register-object-id(#"list", #x0016);
-register-object-id(#"simple-object-vector", #x0017);
-
-// Improper list, with tail last subobject.  Must have at least two subobjects.
+// We wrap these in a begin with an initial local declaration so that the
+// compiler doesn't treat each one as a seperate top level form.
 //
-register-object-id(#"list*", #x0018);
+begin
+  let ignore = 5;
 
-// Magic values, no data:
-register-object-id(#"true", #x0019);
-register-object-id(#"false", #x001A);
+  // A byte character, string or symbol.  Data is raw in byte format.
+  register-object-id(#"byte-character", #x0010);
+  register-object-id(#"byte-string", #x0011);
+  register-object-id(#"byte-symbol", #x0012);
 
-// Numbers, data is raw, 32 or 64bit.
-register-object-id(#"fixed-integer", #x0030);
-register-object-id(#"extended-integer", #x0031);
-register-object-id(#"single-float", #x0032);
-register-object-id(#"double-float", #x0033);
-register-object-id(#"extended-float", #x0034);
+  // A unicode character, string or symbol.  Each character is two bytes, byte
+  // format.(???)
+  register-object-id(#"unicode-character", #x0013);
+  register-object-id(#"unicode-string", #x0014);
+  register-object-id(#"unicode-symbol", #x0015);
 
-// Numbers with components as subobjects:
-register-object-id(#"ratio", #x0035);
+  // A list or simple-object-vector of the subobjects.
+  register-object-id(#"list", #x0016);
+  register-object-id(#"simple-object-vector", #x0017);
+
+  // Improper list, with tail last subobject.  Must have at least two
+  // subobjects.
+  //
+  register-object-id(#"list*", #x0018);
+
+  // Magic values, no data:
+  register-object-id(#"true", #x0019);
+  register-object-id(#"false", #x001A);
+
+  // Numbers, data is raw, 32 or 64bit.
+  register-object-id(#"fixed-integer", #x0030);
+  register-object-id(#"extended-integer", #x0031);
+  register-object-id(#"single-float", #x0032);
+  register-object-id(#"double-float", #x0033);
+  register-object-id(#"extended-float", #x0034);
+
+  // Numbers with components as subobjects:
+  register-object-id(#"ratio", #x0035);
+
+end;
 
 
 // Compiler object IDs:
 
-// Literals:
-
-// A literal where the literal-value slot holds some other object that we know
-// how to dump and that can be unambiguously coerced (via AS) to a ct-value.
-// The single subobject is the dylan value.
+// We wrap these in a begin with an initial local declaration so that the
+// compiler doesn't treat each one as a seperate top level form.
 //
-register-object-id(#"eql-literal", #x0050);
+begin
+  let ignore = 5;
 
-// Two subobject: head and tail.
-register-object-id(#"literal-pair", #x0051);
+  // Literals:
 
-// Subobject is an extended-integer or ratio.
-register-object-id(#"literal-fixed-integer", #x0052);
-register-object-id(#"literal-single-float", #x0053);
-register-object-id(#"literal-double-float", #x0054);
-register-object-id(#"literal-extended-float", #x0055);
+  // A literal where the literal-value slot holds some other object that we
+  // know how to dump and that can be unambiguously coerced (via AS) to a
+  // ct-value.  The single subobject is the dylan value.
+  //
+  register-object-id(#"eql-literal", #x0050);
 
-// One subobject, the vector dylan value.
-register-object-id(#"literal-vector", #x0056);
+  // Two subobject: head and tail.
+  register-object-id(#"literal-pair", #x0051);
 
-// Similar in concept to literals, but not quite one because there is no
-// literal syntax for it.
-register-object-id(#"not-supplied-marker", #x0057);
+  // Subobject is an extended-integer or ratio.
+  register-object-id(#"literal-fixed-integer", #x0052);
+  register-object-id(#"literal-single-float", #x0053);
+  register-object-id(#"literal-double-float", #x0054);
+  register-object-id(#"literal-extended-float", #x0055);
 
-// Types:
-//
-// All simple objects w/ subobjects, except for byte-charater, which
-// has no subobjects.
-//
-register-object-id(#"union-type", #x0060);
-register-object-id(#"unknown-type", #x0061);
-register-object-id(#"limited-integer-type", #x0062);
-register-object-id(#"direct-instance-type", #x0063);
-register-object-id(#"singleton-type", #x0064);
-register-object-id(#"byte-character-type", #x0065);
-register-object-id(#"multi-value-type", #x0066);
-register-object-id(#"instance-slot-info", #x0067);
-register-object-id(#"vector-slot-info", #x0068);
-register-object-id(#"class-slot-info", #x0069);
-register-object-id(#"each-subclass-slot-info", #x006A);
-// #x006B unused (was constant-slot-info).
-register-object-id(#"virtual-slot-info", #x006C);
-register-object-id(#"override-info", #x006D);
-register-object-id(#"layout-table", #x006E);
-register-object-id(#"defined-class", #x006F);
-register-object-id(#"limited-class", #x0070);
-register-object-id(#"class-proxy", #x0071);
+  // One subobject, the vector dylan value.
+  register-object-id(#"literal-vector", #x0056);
 
+  // Similar in concept to literals, but not quite one because there is no
+  // literal syntax for it.
+  register-object-id(#"not-supplied-marker", #x0057);
 
-// Compile-time functions:
-register-object-id(#"ct-function", #x0080);
-register-object-id(#"ct-generic-function", #x0081);
-register-object-id(#"ct-method", #x0082);
-register-object-id(#"ct-entry-point", #x0083);
-register-object-id(#"function-signature", #x0084);
-register-object-id(#"function-key-info", #x0085);
-
-// Names, modules, & the like
-register-object-id(#"basic-name", #x0086);
-register-object-id(#"type-cell-name", #x0087);
-register-object-id(#"method-name", #x0088);
-register-object-id(#"module-variable", #x0089);
-register-object-id(#"module", #x008A);
-
-// FER:
-register-object-id(#"compiler-policy", #x0090);
-register-object-id(#"unknown-source-location", #x0091);
-register-object-id(#"source-file", #x0092);
-register-object-id(#"file-source-location", #x0093);
-
-register-object-id(#"linear-region", #x0094);
-register-object-id(#"if-region", #x0095);
-register-object-id(#"block-region", #x0096);
-register-object-id(#"loop-region", #x0097);
-register-object-id(#"exit-region", #x0098);
-register-object-id(#"return-region", #x0099);
-
-register-object-id(#"ssa-variable", #x009A);
-register-object-id(#"initial-variable", #x009B);
-register-object-id(#"values-cluster-info", #x009C);
-register-object-id(#"local-var-info", #x009D);
-register-object-id(#"lexical-var-info", #x009E);
-
-register-object-id(#"let-assignment", #x00A0);
-register-object-id(#"set-assignment", #x00A1);
-register-object-id(#"join-operation", #x00A2);
-register-object-id(#"primitive-operation", #x00A3);
-register-object-id(#"known-call-operation", #x00A4);
-register-object-id(#"unknown-call-operation", #x00A5);
-register-object-id(#"mv-call-operation", #x00A6);
-register-object-id(#"error-call-operation", #x00A7);
-register-object-id(#"module-var-ref-operation", #x00A8);
-register-object-id(#"module-var-set-operation", #x00A9);
-register-object-id(#"self-tail-call-operation", #x00AA);
-register-object-id(#"slot-ref-operation", #x00AB);
-register-object-id(#"slot-set-operation", #x00AC);
-register-object-id(#"literal-constant", #x00AD);
-register-object-id(#"definition-constant-leaf", #x00AE);
-register-object-id(#"uninitialized-value-leaf", #x00AF);
-register-object-id(#"method-literal", #x00B0);
-register-object-id(#"exit-function-literal", #x00B1);
-register-object-id(#"fer-lambda", #x00B2);
-register-object-id(#"fer-component", #x00B3);
-register-object-id(#"prologue-operation", #x00B4);
-register-object-id(#"primitive-info", #x00B5);
-register-object-id(#"truly-the-operation", #x00B6);
-register-object-id(#"instance?-operation", #x00B7);
-register-object-id(#"catch-operation", #x00B8);
-register-object-id(#"throw-operation", #x00B9);
-register-object-id(#"disable-catcher-operation", #x00BA);
-register-object-id(#"unwind-protect-region", #x00BB);
-register-object-id(#"function-literal", #x00BC);
-register-object-id(#"nlx-info", #x00BD);
-register-object-id(#"make-catcher-operation", #x00BE);
-
-register-object-id(#"generic-definition", #x00C0);
-register-object-id(#"implicit-generic-definition", #x00C1);
-register-object-id(#"method-definition", #x00C2);
-register-object-id(#"getter-method-definition", #x00C3);
-register-object-id(#"setter-method-definition", #x00C4);
-register-object-id(#"constant-definition", #x00C5);
-register-object-id(#"constant-method-definition", #x00C6);
-register-object-id(#"variable-definition", #x00C7);
-register-object-id(#"class-definition", #x00C8);
-register-object-id(#"define-bindings-macro-definition", #x00C9);
-register-object-id(#"define-macro-definition", #x00CA);
-register-object-id(#"function-macro-definition", #x00CB);
-register-object-id(#"statement-macro-definition", #x00CC);
-register-object-id(#"seal-info", #x00CD);
-
-register-object-id(#"backend-var-info", #x00D0);
-// register-object-id(#"function-info", #x00D1);  ### Needed?
-register-object-id(#"constant-info", #x00D2);
-register-object-id(#"constant-function-info", #x00D3);
-register-object-id(#"constant-method-info", #x00D4);
-
-register-object-id(#"general-representation", #x00D8);
-register-object-id(#"heap-representation", #x00D9);
-register-object-id(#"immediate-representation", #x00DA);
-register-object-id(#"data-word-representation", #x00DB);
-
-register-object-id(#"define-library-tlf", #x00E0);
-register-object-id(#"define-module-tlf", #x00E1);
-register-object-id(#"define-binding-tlf", #x00E2);
-register-object-id(#"here-be-roots", #x00E3);
-
-register-object-id(#"use", #x00E8);
-register-object-id(#"renaming", #x00E9);
+  // Types:
+  //
+  // All simple objects w/ subobjects, except for byte-charater, which
+  // has no subobjects.
+  //
+  register-object-id(#"union-type", #x0060);
+  register-object-id(#"unknown-type", #x0061);
+  register-object-id(#"limited-integer-type", #x0062);
+  register-object-id(#"direct-instance-type", #x0063);
+  register-object-id(#"singleton-type", #x0064);
+  register-object-id(#"byte-character-type", #x0065);
+  register-object-id(#"multi-value-type", #x0066);
+  register-object-id(#"instance-slot-info", #x0067);
+  register-object-id(#"vector-slot-info", #x0068);
+  register-object-id(#"class-slot-info", #x0069);
+  register-object-id(#"each-subclass-slot-info", #x006A);
+  // #x006B unused (was constant-slot-info).
+  register-object-id(#"virtual-slot-info", #x006C);
+  register-object-id(#"override-info", #x006D);
+  register-object-id(#"layout-table", #x006E);
+  register-object-id(#"defined-class", #x006F);
+  register-object-id(#"limited-class", #x0070);
+  register-object-id(#"class-proxy", #x0071);
 
 
-// Tokens
-//
-register-object-id(#"token", #x100);
-register-object-id(#"eof-token", #x101);
-register-object-id(#"error-token", #x102);
-register-object-id(#"symbol-token", #x103);
-register-object-id(#"identifier-token", #x104);
-register-object-id(#"word-token", #x105);
-register-object-id(#"name-token", #x106);
-register-object-id(#"simple-name-token", #x107);
-register-object-id(#"quoted-name-token", #x108);
-register-object-id(#"begin-word-token", #x109);
-register-object-id(#"define-word-token", #x10A);
-register-object-id(#"define-bindings-word-token", #x10B);
-register-object-id(#"constrained-name-token", #x10C);
-register-object-id(#"core-word-token", #x10D);
-register-object-id(#"begin-token", #x10E);
-register-object-id(#"bind-exit-token", #x10F);
-register-object-id(#"class-token", #x110);
-register-object-id(#"cleanup-token", #x111);
-register-object-id(#"constant-token", #x112);
-register-object-id(#"create-token", #x113);
-register-object-id(#"define-token", #x114);
-register-object-id(#"else-token", #x115);
-register-object-id(#"end-token", #x116);
-register-object-id(#"export-token", #x117);
-register-object-id(#"finally-token", #x118);
-register-object-id(#"for-token", #x119);
-register-object-id(#"from-token", #x11A);
-register-object-id(#"generic-token", #x11B);
-register-object-id(#"handler-token", #x11C);
-register-object-id(#"if-token", #x11D);
-register-object-id(#"in-token", #x11E);
-register-object-id(#"let-token", #x11F);
-register-object-id(#"library-token", #x120);
-register-object-id(#"local-token", #x121);
-register-object-id(#"macro-token", #x122);
-register-object-id(#"module-token", #x123);
-register-object-id(#"method-token", #x124);
-register-object-id(#"mv-call-token", #x125);
-register-object-id(#"otherwise-token", #x126);
-register-object-id(#"primitive-token", #x127);
-register-object-id(#"seal-token", #x128);
-register-object-id(#"set-token", #x129);
-register-object-id(#"use-token", #x12A);
-register-object-id(#"uwp-token", #x12B);
-register-object-id(#"variable-token", #x12C);
-register-object-id(#"while-token", #x12D);
-register-object-id(#"keyword-token", #x12E);
-register-object-id(#"abstract-literal-token", #x12F);
-register-object-id(#"literal-token", #x130);
-register-object-id(#"string-token", #x131);
-register-object-id(#"operator-token", #x132);
-register-object-id(#"binary-operator-token", #x133);
-register-object-id(#"simple-binary-operator-token", #x134);
-register-object-id(#"unary-operator-token", #x135);
-register-object-id(#"punctuation-token", #x136);
-register-object-id(#"left-paren-token", #x137);
-register-object-id(#"right-paren-token", #x138);
-register-object-id(#"comma-token", #x139);
-register-object-id(#"dot-token", #x13A);
-register-object-id(#"semicolon-token", #x13B);
-register-object-id(#"left-bracket-token", #x13C);
-register-object-id(#"right-bracket-token", #x13D);
-register-object-id(#"left-brace-token", #x13E);
-register-object-id(#"right-brace-token", #x13F);
-register-object-id(#"double-colon-token", #x140);
-register-object-id(#"minus-token", #x141);
-register-object-id(#"tilde-token", #x142);
-register-object-id(#"equal-token", #x143);
-register-object-id(#"double-equal-token", #x144);
-register-object-id(#"arrow-token", #x145);
-register-object-id(#"sharp-paren-token", #x146);
-register-object-id(#"sharp-bracket-token", #x147);
-register-object-id(#"question-token", #x148);
-register-object-id(#"double-question-token", #x149);
-register-object-id(#"ellipsis-token", #x14A);
-register-object-id(#"sharp-word-token", #x14B);
-register-object-id(#"true-token", #x14C);
-register-object-id(#"false-token", #x14D);
-register-object-id(#"next-token", #x14E);
-register-object-id(#"rest-token", #x14F);
-register-object-id(#"key-token", #x150);
-register-object-id(#"all-keys-token", #x151);
+  // Compile-time functions:
+  register-object-id(#"ct-function", #x0080);
+  register-object-id(#"ct-generic-function", #x0081);
+  register-object-id(#"ct-method", #x0082);
+  register-object-id(#"ct-entry-point", #x0083);
+  register-object-id(#"function-signature", #x0084);
+  register-object-id(#"function-key-info", #x0085);
 
-// Parse-tree components
-//
-register-object-id(#"property", #x180);
-register-object-id(#"bindings", #x181);
-register-object-id(#"parameter-list", #x182);
-register-object-id(#"parameter", #x183);
-register-object-id(#"keyword-parameter", #x184);
-register-object-id(#"method-parse", #x185);
-register-object-id(#"case-clause", #x186);
-register-object-id(#"property-set", #x187);
-register-object-id(#"use-clause", #x188);
-register-object-id(#"export-clause", #x189);
-register-object-id(#"create-clause", #x18A);
-register-object-id(#"for-clause", #x18B);
-register-object-id(#"for-while-clause", #x18C);
-register-object-id(#"for-var-clause", #x18D);
-register-object-id(#"for-in-clause", #x18E);
-register-object-id(#"for-step-clause", #x18F);
-register-object-id(#"for-from-clause", #x190);
-register-object-id(#"classopt", #x191);
-register-object-id(#"constituent", #x192);
-register-object-id(#"defining-form", #x193);
-register-object-id(#"define-class-parse", #x194);
-register-object-id(#"define-constant-parse", #x195);
-register-object-id(#"define-generic-parse", #x196);
-register-object-id(#"seal-generic-parse", #x197);
-register-object-id(#"define-library-parse", #x198);
-register-object-id(#"define-method-parse", #x199);
-register-object-id(#"define-module-parse", #x19A);
-register-object-id(#"define-variable-parse", #x19B);
-register-object-id(#"define-parse", #x19C);
-register-object-id(#"define-bindings-parse", #x19D);
-register-object-id(#"define-macro-parse", #x19E);
-register-object-id(#"define-define-macro-parse", #x19F);
-register-object-id(#"define-define-bindings-macro-parse", #x1A0);
-register-object-id(#"define-statement-macro-parse", #x1A1);
-register-object-id(#"define-function-macro-parse", #x1A2);
-register-object-id(#"local-declaration", #x1A3);
-register-object-id(#"let", #x1A4);
-register-object-id(#"let-handler", #x1A5);
-register-object-id(#"local", #x1A6);
-register-object-id(#"expression", #x1A7);
-register-object-id(#"literal-ref", #x1A8);
-register-object-id(#"binop-series", #x1A9);
-register-object-id(#"funcall", #x1AA);
-register-object-id(#"dot", #x1AB);
-register-object-id(#"varref", #x1AC);
-register-object-id(#"macro-statement", #x1AD);
-register-object-id(#"assignment", #x1AE);
-register-object-id(#"begin", #x1AF);
-register-object-id(#"bind-exit", #x1B0);
-register-object-id(#"for", #x1B1);
-register-object-id(#"if", #x1B2);
-register-object-id(#"method-ref", #x1B3);
-register-object-id(#"mv-call", #x1B4);
-register-object-id(#"primitive", #x1B5);
-register-object-id(#"uwp", #x1B6);
-register-object-id(#"rule", #x1B7);
-register-object-id(#"abstract-define-rule", #x1B8);
-register-object-id(#"define-rule", #x1B9);
-register-object-id(#"define-bindings-rule", #x1BA);
-register-object-id(#"statement-rule", #x1BB);
-register-object-id(#"function-rule", #x1BC);
-register-object-id(#"pattern", #x1BD);
-register-object-id(#"pattern-list", #x1BE);
-register-object-id(#"pattern-sequence", #x1BF);
-register-object-id(#"simple-pattern", #x1C0);
-register-object-id(#"variable-pattern", #x1C1);
-register-object-id(#"bound-variable-pattern", #x1C2);
-register-object-id(#"identifier-pattern", #x1C3);
-register-object-id(#"literal-pattern", #x1C4);
-register-object-id(#"otherwise-pattern", #x1C5);
-register-object-id(#"arrow-pattern", #x1C6);
-register-object-id(#"details-pattern", #x1C7);
-register-object-id(#"pattern-variable", #x1C8);
-register-object-id(#"property-list-pattern", #x1C9);
-register-object-id(#"pattern-keyword", #x1CA);
-register-object-id(#"auxiliary-rule-set", #x1CB);
-register-object-id(#"auxiliary-rule", #x1CC);
-register-object-id(#"template", #x1CD);
-register-object-id(#"paren-template", #x1CE);
-register-object-id(#"pattern-variable-reference", #x1CF);
+  // Names, modules, & the like
+  register-object-id(#"basic-name", #x0086);
+  register-object-id(#"type-cell-name", #x0087);
+  register-object-id(#"method-name", #x0088);
+  register-object-id(#"module-variable", #x0089);
+  register-object-id(#"module", #x008A);
+
+  // FER:
+  register-object-id(#"compiler-policy", #x0090);
+  register-object-id(#"unknown-source-location", #x0091);
+  register-object-id(#"source-file", #x0092);
+  register-object-id(#"file-source-location", #x0093);
+
+  register-object-id(#"linear-region", #x0094);
+  register-object-id(#"if-region", #x0095);
+  register-object-id(#"block-region", #x0096);
+  register-object-id(#"loop-region", #x0097);
+  register-object-id(#"exit-region", #x0098);
+  register-object-id(#"return-region", #x0099);
+
+  register-object-id(#"ssa-variable", #x009A);
+  register-object-id(#"initial-variable", #x009B);
+  register-object-id(#"values-cluster-info", #x009C);
+  register-object-id(#"local-var-info", #x009D);
+  register-object-id(#"lexical-var-info", #x009E);
+
+  register-object-id(#"let-assignment", #x00A0);
+  register-object-id(#"set-assignment", #x00A1);
+  register-object-id(#"join-operation", #x00A2);
+  register-object-id(#"primitive-operation", #x00A3);
+  register-object-id(#"known-call-operation", #x00A4);
+  register-object-id(#"unknown-call-operation", #x00A5);
+  register-object-id(#"mv-call-operation", #x00A6);
+  register-object-id(#"error-call-operation", #x00A7);
+  register-object-id(#"module-var-ref-operation", #x00A8);
+  register-object-id(#"module-var-set-operation", #x00A9);
+  register-object-id(#"self-tail-call-operation", #x00AA);
+  register-object-id(#"slot-ref-operation", #x00AB);
+  register-object-id(#"slot-set-operation", #x00AC);
+  register-object-id(#"literal-constant", #x00AD);
+  register-object-id(#"definition-constant-leaf", #x00AE);
+  register-object-id(#"uninitialized-value-leaf", #x00AF);
+  register-object-id(#"method-literal", #x00B0);
+  register-object-id(#"exit-function-literal", #x00B1);
+  register-object-id(#"fer-lambda", #x00B2);
+  register-object-id(#"fer-component", #x00B3);
+  register-object-id(#"prologue-operation", #x00B4);
+  register-object-id(#"primitive-info", #x00B5);
+  register-object-id(#"truly-the-operation", #x00B6);
+  register-object-id(#"instance?-operation", #x00B7);
+  register-object-id(#"catch-operation", #x00B8);
+  register-object-id(#"throw-operation", #x00B9);
+  register-object-id(#"disable-catcher-operation", #x00BA);
+  register-object-id(#"unwind-protect-region", #x00BB);
+  register-object-id(#"function-literal", #x00BC);
+  register-object-id(#"nlx-info", #x00BD);
+  register-object-id(#"make-catcher-operation", #x00BE);
+
+  register-object-id(#"generic-definition", #x00C0);
+  register-object-id(#"implicit-generic-definition", #x00C1);
+  register-object-id(#"method-definition", #x00C2);
+  register-object-id(#"getter-method-definition", #x00C3);
+  register-object-id(#"setter-method-definition", #x00C4);
+  register-object-id(#"constant-definition", #x00C5);
+  register-object-id(#"constant-method-definition", #x00C6);
+  register-object-id(#"variable-definition", #x00C7);
+  register-object-id(#"class-definition", #x00C8);
+  register-object-id(#"define-bindings-macro-definition", #x00C9);
+  register-object-id(#"define-macro-definition", #x00CA);
+  register-object-id(#"function-macro-definition", #x00CB);
+  register-object-id(#"statement-macro-definition", #x00CC);
+  register-object-id(#"seal-info", #x00CD);
+
+  register-object-id(#"backend-var-info", #x00D0);
+  // register-object-id(#"function-info", #x00D1);  ### Needed?
+  register-object-id(#"constant-info", #x00D2);
+  register-object-id(#"constant-function-info", #x00D3);
+  register-object-id(#"constant-method-info", #x00D4);
+
+  register-object-id(#"general-representation", #x00D8);
+  register-object-id(#"heap-representation", #x00D9);
+  register-object-id(#"immediate-representation", #x00DA);
+  register-object-id(#"data-word-representation", #x00DB);
+
+  register-object-id(#"define-library-tlf", #x00E0);
+  register-object-id(#"define-module-tlf", #x00E1);
+  register-object-id(#"define-binding-tlf", #x00E2);
+  register-object-id(#"here-be-roots", #x00E3);
+
+  register-object-id(#"use", #x00E8);
+  register-object-id(#"renaming", #x00E9);
+
+
+  // Tokens
+  //
+  register-object-id(#"token", #x100);
+  register-object-id(#"eof-token", #x101);
+  register-object-id(#"error-token", #x102);
+  register-object-id(#"symbol-token", #x103);
+  register-object-id(#"identifier-token", #x104);
+  register-object-id(#"word-token", #x105);
+  register-object-id(#"name-token", #x106);
+  register-object-id(#"simple-name-token", #x107);
+  register-object-id(#"quoted-name-token", #x108);
+  register-object-id(#"begin-word-token", #x109);
+  register-object-id(#"define-word-token", #x10A);
+  register-object-id(#"define-bindings-word-token", #x10B);
+  register-object-id(#"constrained-name-token", #x10C);
+  register-object-id(#"core-word-token", #x10D);
+  register-object-id(#"begin-token", #x10E);
+  register-object-id(#"bind-exit-token", #x10F);
+  register-object-id(#"class-token", #x110);
+  register-object-id(#"cleanup-token", #x111);
+  register-object-id(#"constant-token", #x112);
+  register-object-id(#"create-token", #x113);
+  register-object-id(#"define-token", #x114);
+  register-object-id(#"else-token", #x115);
+  register-object-id(#"end-token", #x116);
+  register-object-id(#"export-token", #x117);
+  register-object-id(#"finally-token", #x118);
+  register-object-id(#"for-token", #x119);
+  register-object-id(#"from-token", #x11A);
+  register-object-id(#"generic-token", #x11B);
+  register-object-id(#"handler-token", #x11C);
+  register-object-id(#"if-token", #x11D);
+  register-object-id(#"in-token", #x11E);
+  register-object-id(#"let-token", #x11F);
+  register-object-id(#"library-token", #x120);
+  register-object-id(#"local-token", #x121);
+  register-object-id(#"macro-token", #x122);
+  register-object-id(#"module-token", #x123);
+  register-object-id(#"method-token", #x124);
+  register-object-id(#"mv-call-token", #x125);
+  register-object-id(#"otherwise-token", #x126);
+  register-object-id(#"primitive-token", #x127);
+  register-object-id(#"seal-token", #x128);
+  register-object-id(#"set-token", #x129);
+  register-object-id(#"use-token", #x12A);
+  register-object-id(#"uwp-token", #x12B);
+  register-object-id(#"variable-token", #x12C);
+  register-object-id(#"while-token", #x12D);
+  register-object-id(#"keyword-token", #x12E);
+  register-object-id(#"abstract-literal-token", #x12F);
+  register-object-id(#"literal-token", #x130);
+  register-object-id(#"string-token", #x131);
+  register-object-id(#"operator-token", #x132);
+  register-object-id(#"binary-operator-token", #x133);
+  register-object-id(#"simple-binary-operator-token", #x134);
+  register-object-id(#"unary-operator-token", #x135);
+  register-object-id(#"punctuation-token", #x136);
+  register-object-id(#"left-paren-token", #x137);
+  register-object-id(#"right-paren-token", #x138);
+  register-object-id(#"comma-token", #x139);
+  register-object-id(#"dot-token", #x13A);
+  register-object-id(#"semicolon-token", #x13B);
+  register-object-id(#"left-bracket-token", #x13C);
+  register-object-id(#"right-bracket-token", #x13D);
+  register-object-id(#"left-brace-token", #x13E);
+  register-object-id(#"right-brace-token", #x13F);
+  register-object-id(#"double-colon-token", #x140);
+  register-object-id(#"minus-token", #x141);
+  register-object-id(#"tilde-token", #x142);
+  register-object-id(#"equal-token", #x143);
+  register-object-id(#"double-equal-token", #x144);
+  register-object-id(#"arrow-token", #x145);
+  register-object-id(#"sharp-paren-token", #x146);
+  register-object-id(#"sharp-bracket-token", #x147);
+  register-object-id(#"question-token", #x148);
+  register-object-id(#"double-question-token", #x149);
+  register-object-id(#"ellipsis-token", #x14A);
+  register-object-id(#"sharp-word-token", #x14B);
+  register-object-id(#"true-token", #x14C);
+  register-object-id(#"false-token", #x14D);
+  register-object-id(#"next-token", #x14E);
+  register-object-id(#"rest-token", #x14F);
+  register-object-id(#"key-token", #x150);
+  register-object-id(#"all-keys-token", #x151);
+
+  // Parse-tree components
+  //
+  register-object-id(#"property", #x180);
+  register-object-id(#"bindings", #x181);
+  register-object-id(#"parameter-list", #x182);
+  register-object-id(#"parameter", #x183);
+  register-object-id(#"keyword-parameter", #x184);
+  register-object-id(#"method-parse", #x185);
+  register-object-id(#"case-clause", #x186);
+  register-object-id(#"property-set", #x187);
+  register-object-id(#"use-clause", #x188);
+  register-object-id(#"export-clause", #x189);
+  register-object-id(#"create-clause", #x18A);
+  register-object-id(#"for-clause", #x18B);
+  register-object-id(#"for-while-clause", #x18C);
+  register-object-id(#"for-var-clause", #x18D);
+  register-object-id(#"for-in-clause", #x18E);
+  register-object-id(#"for-step-clause", #x18F);
+  register-object-id(#"for-from-clause", #x190);
+  register-object-id(#"classopt", #x191);
+  register-object-id(#"constituent", #x192);
+  register-object-id(#"defining-form", #x193);
+  register-object-id(#"define-class-parse", #x194);
+  register-object-id(#"define-constant-parse", #x195);
+  register-object-id(#"define-generic-parse", #x196);
+  register-object-id(#"seal-generic-parse", #x197);
+  register-object-id(#"define-library-parse", #x198);
+  register-object-id(#"define-method-parse", #x199);
+  register-object-id(#"define-module-parse", #x19A);
+  register-object-id(#"define-variable-parse", #x19B);
+  register-object-id(#"define-parse", #x19C);
+  register-object-id(#"define-bindings-parse", #x19D);
+  register-object-id(#"define-macro-parse", #x19E);
+  register-object-id(#"define-define-macro-parse", #x19F);
+  register-object-id(#"define-define-bindings-macro-parse", #x1A0);
+  register-object-id(#"define-statement-macro-parse", #x1A1);
+  register-object-id(#"define-function-macro-parse", #x1A2);
+  register-object-id(#"local-declaration", #x1A3);
+  register-object-id(#"let", #x1A4);
+  register-object-id(#"let-handler", #x1A5);
+  register-object-id(#"local", #x1A6);
+  register-object-id(#"expression", #x1A7);
+  register-object-id(#"literal-ref", #x1A8);
+  register-object-id(#"binop-series", #x1A9);
+  register-object-id(#"funcall", #x1AA);
+  register-object-id(#"dot", #x1AB);
+  register-object-id(#"varref", #x1AC);
+  register-object-id(#"macro-statement", #x1AD);
+  register-object-id(#"assignment", #x1AE);
+  register-object-id(#"begin", #x1AF);
+  register-object-id(#"bind-exit", #x1B0);
+  register-object-id(#"for", #x1B1);
+  register-object-id(#"if", #x1B2);
+  register-object-id(#"method-ref", #x1B3);
+  register-object-id(#"mv-call", #x1B4);
+  register-object-id(#"primitive", #x1B5);
+  register-object-id(#"uwp", #x1B6);
+  register-object-id(#"rule", #x1B7);
+  register-object-id(#"abstract-define-rule", #x1B8);
+  register-object-id(#"define-rule", #x1B9);
+  register-object-id(#"define-bindings-rule", #x1BA);
+  register-object-id(#"statement-rule", #x1BB);
+  register-object-id(#"function-rule", #x1BC);
+  register-object-id(#"pattern", #x1BD);
+  register-object-id(#"pattern-list", #x1BE);
+  register-object-id(#"pattern-sequence", #x1BF);
+  register-object-id(#"simple-pattern", #x1C0);
+  register-object-id(#"variable-pattern", #x1C1);
+  register-object-id(#"bound-variable-pattern", #x1C2);
+  register-object-id(#"identifier-pattern", #x1C3);
+  register-object-id(#"literal-pattern", #x1C4);
+  register-object-id(#"otherwise-pattern", #x1C5);
+  register-object-id(#"arrow-pattern", #x1C6);
+  register-object-id(#"details-pattern", #x1C7);
+  register-object-id(#"pattern-variable", #x1C8);
+  register-object-id(#"property-list-pattern", #x1C9);
+  register-object-id(#"pattern-keyword", #x1CA);
+  register-object-id(#"auxiliary-rule-set", #x1CB);
+  register-object-id(#"auxiliary-rule", #x1CC);
+  register-object-id(#"template", #x1CD);
+  register-object-id(#"paren-template", #x1CE);
+  register-object-id(#"pattern-variable-reference", #x1CF);
+
+end;
 
 
 // Buffer interface:
@@ -706,46 +723,66 @@ register-object-id(#"pattern-variable-reference", #x1CF);
 define /* exported */ constant $word-bytes = 4;
 define /* exported */ constant $word-bits = 32;
 
+#if (mindy)
+define constant <word> = <general-integer>;
+#else
+define constant <word> = <integer>;
+#end
 
 // Read a word from a buffer at a word-aligned byte offset.
 // 
 define method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
- => word :: <general-integer>;
+ => word :: <word>;
   
   let high-end = bbuf[i];
 
   // ### big-endian 32 assumption.  Should be a primitive.
-  // ### for mindy, return extended if too big to be fixed...
   bbuf[i + 3] + ash(bbuf[i + 2], 8) + ash(bbuf[i + 1], 16)
-    + if (high-end.zero?)
+    + 
+#if (mindy)
+    // for mindy, return extended if too big to be fixed...
+      if (high-end.zero?)
 	0;
       elseif (high-end < 64)
+#end
 	ash(high-end, 24);
+#if (mindy)
       else
 	ash(as(<extended-integer>, high-end), 24);
       end if;
+#end
+    
 end method;
 
 
 // Write a word to a buffer at a word-aligned byte offset.
 // 
 define method buffer-word-setter
-    (new-val :: <general-integer>, bbuf :: <buffer>, i :: <buffer-index>)
- => res :: <general-integer>;
+    (new-val :: <word>, bbuf :: <buffer>, i :: <buffer-index>)
+ => res :: <word>;
   // ### big-endian 32 assumption.  Should be a primitive.
+#if (mindy)
   let (rest, byte4) = floor/(new-val, 256);
   let (rest, byte3) = floor/(as(<integer>, rest), 256);
   // This assumes that the word is unsigned (i.e. new-val is a positive int)
   let (byte1, byte2) = floor/(rest, 256);
+#else
+  let byte1 = logand(ash(new-val, -24), 255);
+  let byte2 = logand(ash(new-val, -16), 255);
+  let byte3 = logand(ash(new-val, -8), 255);
+  let byte4 = logand(new-val, 255);
+#end
+
   bbuf[i + 0] := byte1;
   bbuf[i + 1] := byte2;
   bbuf[i + 2] := byte3;
   bbuf[i + 3] := as(<integer>, byte4);
 end method;
 
+#if (mindy)
 define method buffer-word-setter
     (new-val :: <integer>, bbuf :: <buffer>, i :: <buffer-index>)
- => res :: <general-integer>;
+ => res :: <word>;
   // ### big-endian 32 assumption.  Should be a primitive.
   let (rest, byte4) = floor/(new-val, 256);
   let (rest, byte3) = floor/(rest, 256);
@@ -756,6 +793,7 @@ define method buffer-word-setter
   bbuf[i + 2] := byte3;
   bbuf[i + 3] := byte4;
 end method;
+#end
 
 // #### HACK to allow us to dump headers w/o creating bignums in mindy.  This
 // is particularly incorrect for e.g. end entries and references, since they
@@ -769,10 +807,17 @@ define method dump-header-word
 
   let bbuf = buf.dump-buffer;
   // ### big-endian 32 assumption.  Should be a primitive.
+#if (mindy)
   let (rest, byte4) = floor/(obj, 256);
   let (rest, byte3) = floor/(rest, 256);
   // This assumes that the word is unsigned (i.e. new-val is a positive int)
   let (byte1, byte2) = floor/(rest, 256);
+#else
+  let byte2 = logand(ash(obj, -16), 255);
+  let byte3 = logand(ash(obj, -8), 255);
+  let byte4 = logand(obj, 255);
+#end
+
   bbuf[i + 0] := hi;
   bbuf[i + 1] := byte2;
   bbuf[i + 2] := byte3;
@@ -905,7 +950,11 @@ end method;
 define constant $hash-inc = 134217689 * $word-bytes;
 
 define constant $rot-mask 
+#if (mindy)
   = lognot(ash(as(<extended-integer>, -1), $word-bits - 3));
+#else
+  = lognot(ash(-1, $word-bits - 3));
+#end
 
 // Note that this hash is completely arbitrary.  Nobody expects to able to
 // regenerate this hash.  We could use a random number if we had a handy one.
@@ -916,8 +965,12 @@ define constant $rot-mask
 // scattered about the data.
 //
 define method compute-unit-hash (state :: <dump-state>)
-    => hash :: <general-integer>;
+    => hash :: <word>;
+#if (mindy)
   let res = as(<extended-integer>, get-time-of-day());
+#else
+  let res = call-out("time", int:, int: 0);
+#end
   let hash-idx = object-hash(state) * $word-bytes;
   for (wot in state.all-dump-buffers)
     let buf = wot.head;
@@ -1100,7 +1153,7 @@ end method;
 // Dump an integer into the buffer as one word.
 //
 define /* exported */ method dump-word
-    (obj :: <general-integer>, buf :: <dump-buffer>)
+    (obj :: <word>, buf :: <dump-buffer>)
  => ();
   if (buf.buffer-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
   let start = buf.buffer-pos;
@@ -1219,7 +1272,7 @@ define class <data-unit> (<object>)
   slot platform-characteristics :: <integer>,
     required-init-keyword: platform-characteristics:;
   slot unit-type :: <integer>, required-init-keyword: unit-type:;
-  slot check-hash :: <general-integer>, required-init-keyword: check-hash:;
+  slot check-hash :: <word>, required-init-keyword: check-hash:;
   slot location-hint :: false-or(<location-hint>),
     required-init-keyword: location-hint:;
   //
@@ -1417,7 +1470,7 @@ end;
 define method check-unit-header 
     (state :: <load-state>, name :: <data-unit-name>,
      expected-type :: <integer>,
-     expected-hash :: false-or(<general-integer>),
+     expected-hash :: false-or(<word>),
      location-hint :: false-or(<location-hint>))
  => (res :: <data-unit>, oa-len :: <integer>);
   let buffer = state.od-buffer;
@@ -1491,7 +1544,7 @@ define constant $empty-object = make(<empty-object>);
 //
 define method load-data-unit
  (name :: <data-unit-name>, type :: <integer>,
-  loc :: false-or(<location-hint>), hash :: false-or(<general-integer>),
+  loc :: false-or(<location-hint>), hash :: false-or(<word>),
   dispatcher :: <dispatcher>)
  => res :: <data-unit>;
 
@@ -1559,7 +1612,7 @@ end;
 define /* exported */ method find-data-unit
   (name :: <data-unit-name>, type :: <integer>,
    #key location-hint :: false-or(<location-hint>),
-        check-hash: expected-hash :: false-or(<general-integer>),
+        check-hash: expected-hash :: false-or(<word>),
 	dispatcher :: <dispatcher> = *default-dispatcher*)
  => res :: <data-unit>;
   let types = element(*data-units*, name, default: #());
@@ -2173,7 +2226,7 @@ define method dump-od (obj :: <object>, buf :: <dump-buffer>) => ();
   let found = element(*make-dumpers*, oclass, default: #f);
   if (~found)
     // Now check to see if we've complained once before about this class
-    if (~key-exists?(*classes-I-cant-dump*, oclass))
+    if (element(*classes-I-cant-dump*, oclass, default: #f))
       *classes-I-cant-dump*[oclass] := #t;
       signal("Don't know how to dump instances of %=.  Dump stack: %=\n",
 	     oclass, buf.dump-stack);

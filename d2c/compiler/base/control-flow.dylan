@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.19 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.20 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,7 +26,7 @@ region [source-location-mixin] {abstract}
 
 */
 
-define abstract class <region> (<source-location-mixin>)
+define open abstract primary class <region> (<source-location-mixin>)
   //
   // The region that directly encloses this one.  #f in components (which form
   // the root of the tree.)
@@ -88,7 +88,7 @@ end method make;
 // Subclasses of <join-region> describe control flow that have branches
 // or joins.
 //
-define abstract class <join-region> (<region>)
+define open abstract primary class <join-region> (<region>)
   //
   // Region containing join-assignments for this region.
   slot join-region :: <simple-region>;
@@ -115,13 +115,13 @@ end class;
 // A join-region that contains only one "body" region (no branching, only
 // joins.)
 //
-define abstract class <body-region> (<join-region>)
+define open abstract primary class <body-region> (<join-region>)
   slot body :: <region>, init-keyword: body:;
 end;
 
 // Inherited by things that can have exits to them (blocks and components.)
 //
-define abstract class <block-region-mixin> 
+define open abstract class <block-region-mixin> 
     (<region>, <identity-preserving-mixin>)
   //
   // Chain of all the exits to this block, threaded though exit-next.
@@ -131,7 +131,7 @@ end;
 // A <block-region> wraps code which can exit to its endpoint.  The phi
 // function joins the values arriving at the endpoint.
 //
-define class <block-region>
+define open primary class <block-region>
     (<body-region>, <block-region-mixin>, <queueable-mixin>, <annotatable>)
 end;
 
@@ -141,7 +141,10 @@ end;
 // The exits to a <function-region> must all be <return>s, and in fact
 // indicate the return values.
 //
-define abstract class <function-region> (<block-region>)
+// ### This wants to be abstract, but can't because <block-region> isn't
+// abstract.
+// 
+define open primary class <function-region> (<block-region>)
 end;
 
 // A <loop-region> repeats execution of the body indefinitely (terminate by
@@ -172,7 +175,7 @@ end;
 // pseudo-block, in that it can have exits to it (representing expressions that
 // unwind.)
 //
-define class <component> (<block-region-mixin>)
+define open abstract primary class <component> (<block-region-mixin>)
   //
   // Queue of all the <initial-variable> variables that need to be ssa
   // converted (threaded through next-initial-variable).

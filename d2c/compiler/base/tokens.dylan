@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.9 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.10 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,7 +15,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // example, -, which is punctuation, a unary operator, and a binary
 // operator) are implemented by using multiple inheritance.
 //
-define primary abstract class <token> (<source-location-mixin>)
+define primary abstract open class <token> (<source-location-mixin>)
 end;
 
 
@@ -456,7 +456,7 @@ end;
 
 // Tokenizer interface.
 
-define primary abstract class <tokenizer> (<object>)
+define primary abstract open class <tokenizer> (<object>)
 end;
 
 define generic get-token (tokenizer :: <tokenizer>) => token :: <token>;

@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.17 1996/01/12 00:58:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.18 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -37,7 +37,7 @@ define constant $digit-mask = as(<extended-integer>, #xf);
 
 define method write-address (thing, stream) => ();
   write("0x", stream);
-  let address = thing.object-address;
+  let address = as(<integer>, thing.object-address);
   for (shift from -28 below 1 by 4)
     let digit = as(<integer>, logand(ash(address, shift), $digit-mask));
     if (digit < 10)
@@ -318,8 +318,9 @@ define method key-of
     (value, coll :: <collection>,
      #key test :: <function> = \==, default = #f)
  => res;
-  find-key(method (x) test(value, x) end,
-           coll, failure: default)
+  find-key(coll,
+	   method (x) test(value, x) end,
+	   failure: default)
 end method;
 
 define method key-of

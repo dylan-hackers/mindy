@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.23 1996/01/14 18:01:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.24 1996/01/15 12:51:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,7 +46,7 @@ abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
 // since the initial expressions are almost certain to change during the first
 // optimize iteration.
 //
-define abstract class <expression> (<identity-preserving-mixin>)
+define open abstract primary class <expression> (<identity-preserving-mixin>)
   //
   // Threaded list of the dependencies connecting this expression to the
   // dependent that use this expression.
@@ -64,7 +64,7 @@ end class;
 // <queueable-mixin> is inherited by everything that can be queued for
 // reoptimization.
 //
-define abstract class <queueable-mixin> (<object>)
+define open abstract class <queueable-mixin> (<object>)
   //
   // Thread running through queueables in the component reoptimize-queue,
   // #"absent" if this queueable is not currently in the queue (hence is up to
@@ -78,7 +78,7 @@ end;
 // <dependent-mixin> is inherited by all things that can be the direct target
 // of a dependency: assignments, operations, IF-regions, returns and pitchers.
 //
-define abstract class <dependent-mixin> (<queueable-mixin>)
+define open abstract class <dependent-mixin> (<queueable-mixin>)
   //
   // Head of list of dependencies for the expressions that we depend on,
   // threaded by dependent-next.
@@ -133,7 +133,7 @@ end class;
 // expressions.  Only leaf expressions can be used as the arguments to
 // operations.
 //
-define abstract class <leaf> (<expression>)
+define open abstract primary class <leaf> (<expression>)
   //
   // Pseudo-random hash code used to associate operands with operations.
   // slot leaf-hash :: <integer>, required-init-keyword: leaf-hash:;
@@ -150,7 +150,8 @@ define abstract class <abstract-variable> (<leaf>, <annotatable>)
   slot var-info :: <variable-info>, required-init-keyword: var-info:;
 end class;
 
-define abstract class <variable-info> (<identity-preserving-mixin>)
+define open abstract primary class <variable-info>
+    (<identity-preserving-mixin>)
   slot asserted-type :: <values-ctype>, required-init-keyword: asserted-type:;
 end class;
 
@@ -230,7 +231,7 @@ end class;
 // calls.  An <operation> bundles an operator with a particular set of <leaf>
 // operands.
 //
-define abstract class <operation>
+define open abstract primary class <operation>
     (<expression>, <dependent-mixin>, <annotatable>)
   inherited slot derived-type, init-function: wild-ctype;
   //
@@ -250,7 +251,7 @@ end class;
 //    An assignment represents a concrete step in program executation.
 // Assignments appear in sequence and pair expressions with target variables.
 //
-define abstract class <abstract-assignment> 
+define open abstract primary class <abstract-assignment> 
     (<source-location-mixin>, <dependent-mixin>)
 
   //
@@ -275,7 +276,7 @@ end;
 // The <assignment> object represents a normal assignment to variables based on
 // evaluation of an expression.
 //
-define class <assignment> (<abstract-assignment>)
+define open abstract primary class <assignment> (<abstract-assignment>)
 end;
 
 // <join-assignment> represents the assignment of a new joined definition at a
