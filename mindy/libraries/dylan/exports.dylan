@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.35 1994/06/13 13:05:11 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.36 1994/06/17 15:55:37 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -39,7 +39,7 @@ define module Builtin-Stuff
     <pair>,
     <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
-    <spin-lock>, <string>, <symbol>,
+    <spinlock>, <string>, <symbol>,
     <thread>, <true>, <type>,
     <unicode-string>,
     <vector>,
@@ -251,10 +251,10 @@ define module Threads
   use Extensions;
   use Builtin-Stuff,
     import: {<thread>, spawn-thread, current-thread, kill-thread,
-	     <lock>, <spin-lock>,
+	     <lock>, <spinlock>,
 	     locked?, grab-lock, release-lock,
 	     <event>, wait-for-event, signal-event, broadcast-event},
     export: all;
   export
-    <multi-lock>, <semaphore>;
+    <multilock>, <semaphore>;
 end;

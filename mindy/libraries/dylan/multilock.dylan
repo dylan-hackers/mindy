@@ -11,39 +11,39 @@ module: threads
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.1 1994/06/11 03:12:13 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.2 1994/06/17 15:56:34 wlott Exp $
 //
-// This file contains multi-locks, locks that the same thread can lock
+// This file contains multilocks, locks that the same thread can lock
 // multiple times without blocking.
 //
 
-define class <multi-lock> (<lock>)
+define class <multilock> (<lock>)
 
-  // The spin lock we use to make sure operations on the multi-lock are
+  // The spin lock we use to make sure operations on the multilock are
   // atomic.
-  slot lock :: <spin-lock>, setter: #f,
-    init-function: curry(make, <spin-lock>);
+  slot lock :: <spinlock>, setter: #f,
+    init-function: curry(make, <spinlock>);
 
   // The thread currently holding this lock, or #f if currently unlocked.
   slot locker :: union(<false>, <thread>), init-value: #f;
 
-  // The number of times the multi-lock has been locked by the locking
+  // The number of times the multilock has been locked by the locking
   // thread.
   slot count :: limited(<integer>, min: 0), init-value: 0;
 
-  // The event we signal whenever the multi-lock becomes available.
+  // The event we signal whenever the multilock becomes available.
   slot available :: <event>, setter: #f,
     init-function: curry(make, <event>);
 end;
 
-define method locked? (multilock :: <multi-lock>) => locked? :: <boolean>;
+define method locked? (multilock :: <multilock>) => locked? :: <boolean>;
   grab-lock(multilock.lock);
   let res = if (multilock.locker) #t else #f end;
   release-lock(multilock.lock);
   res;
 end;
 
-define method grab-lock (multilock :: <multi-lock>) => res :: <false>;
+define method grab-lock (multilock :: <multilock>) => res :: <false>;
   let me = current-thread();
 
   grab-lock(multilock.lock);
@@ -61,7 +61,7 @@ define method grab-lock (multilock :: <multi-lock>) => res :: <false>;
   #f;
 end;
 
-define method release-lock (multilock :: <multi-lock>) => res :: <false>;
+define method release-lock (multilock :: <multilock>) => res :: <false>;
   grab-lock(multilock.lock);
   let locker = multilock.locker;
   unless (locker)
