@@ -28,6 +28,7 @@ MINDY = mindy
 
 OBJS = \
 	optimize-exports.dbc \
+	optutil.dbc \
 	cheese.dbc \
 	fer-edit.dbc \
 	callopt.dbc \
