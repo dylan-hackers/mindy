@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.6 2000/04/04 15:26:55 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.7 2000/08/27 04:00:04 bruce Exp $
 copyright: see below
 
 
@@ -530,16 +530,16 @@ define method atof (string :: <byte-string>,
 	  end if;
 	  scale := 0;
 	elseif (char == 'e' | char == 'E')
-	  return();
+	  parse-exponent();
 	elseif (char == 'd' | char == 'D')
 	  class := #"double";
-	  return();
+	  parse-exponent();
 	elseif (char == 's' | char == 'S')
 	  class := #"single";
-	  return();
+	  parse-exponent();
 	elseif (char == 'x' | char == 'X')
 	  class := #"extended";
-	  return();
+	  parse-exponent();
 	else
 	  error("bogus float.");
 	end if;
@@ -559,6 +559,7 @@ define method atof (string :: <byte-string>,
 
       while (posn < finish)
 	let char = string[posn];
+	posn := posn + 1;
 	if (char >= '0' & char <= '9')
 	  let digit = as(<integer>, char) - as(<integer>, '0');
 	  exponent := exponent * 10 + digit;
