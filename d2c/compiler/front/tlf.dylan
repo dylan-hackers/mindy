@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.5 1995/11/08 19:55:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.6 1995/11/09 13:22:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -99,7 +99,7 @@ end;
 
 add-od-loader(*compiler-dispatcher*, #"define-binding-tlf",
 	      method (state :: <load-state>) => res :: <definition>;
-		let defn = load-object-dispatch(state);
+		let defn = load-sole-subobject(state);
 		note-variable-definition(defn);
 		defn;
 	      end);
