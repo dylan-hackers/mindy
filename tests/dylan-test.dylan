@@ -129,12 +129,17 @@ define method tautology(arg == #"numbers")
   //truncate/
   //modulo
   //remainder
+
   (abs(1) = 1)				| signal("abs(1) is not 1!: it's %=\n", abs(1));
   (abs(-1) = 1)				| signal("abs(-1) is not 1!: it's %=\n", abs(-1));
   (logior(1,2) = 3)			| signal("logior(1,2) is not 3!: it's %=\n", logior(1,2));
   (logxor(1,3) = 2)			| signal("logxor(1,3) is not 2!: it's %=\n", logxor(1,3));
   (logand(1,3) = 1)			| signal("logand(1,3) is not 1!: it's %=\n", logand(1,3));
+#if (mindy)
   (lognot(#x1234) = #xffffedcb)		| signal("lognot(#x1234) is not #xffffedcb!: it's %x\n", lognot(#x1234));
+#else
+  (lognot(#x1234) = -#x1235)		| signal("lognot(#x1234) is not #x-1235!: it's %x\n", lognot(#x1234));
+#endif
   logbit?(15,#x8000) 			| signal("logbit?(15,#x8000) is not true!\n");
   (ash(1,3) = 8)			| signal("ash(1,3) is not 8!: it's %=\n", ash(1,3));
   (lcm(6,8) = 24)			| signal("lcm(6,8) is not 24!: it's %=\n", lcm(6,8));
@@ -518,18 +523,20 @@ define method tautology(arg :: <sequence>) => <integer>;
 end method;
 
 define method main(argv0, #rest args)
-  if (empty?(args))
 #if (mindy)
+  if (empty?(args))
     exit(exit-code: tautology(tautologies));
-#else
-    tautology(tautologies);
-#endif
   else
     let args = map(curry(as, <symbol>), args);
     if (every?(rcurry(member?, tautologies), args))
-#if (mindy)
       exit(exit-code: tautology(args));
 #else
+  if (argv0 <= 1)
+    tautology(tautologies);
+  else
+    // Need to figure out how to convert a raw pointer...
+    let args = #[];
+    if (every?(rcurry(member?, tautologies), args))
       tautology(args);
 #endif
     else
@@ -542,4 +549,5 @@ define method main(argv0, #rest args)
 #endif
     end if;
   end if;
+  force-output(*standard-output*);
 end method;
