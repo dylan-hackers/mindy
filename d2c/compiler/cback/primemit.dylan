@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.14 2002/10/31 20:59:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.15 2003/03/28 00:42:57 housel Exp $
 copyright: see below
 
 
@@ -1123,6 +1123,19 @@ define-primitive-emitter
      contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " >> ", y, ')'),
 		    *long-rep*, #f, file);
+   end);
+
+define-primitive-emitter
+  (#"fixnum-logical-shift-right",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
+     deliver-result(defines, stringify("((unsigned long)", x, " >> ", y, ')'),
+                    *long-rep*, #f, file);
    end);
 
 
@@ -2266,6 +2279,7 @@ define constant $sequence-of-moveable-primitives
       #"fixnum-lognot",
       #"fixnum-shift-left",
       #"fixnum-shift-right",
+      #"fixnum-logical-shift-right",
       #"fixed-as-single",            // Single float primitives.
       #"double-as-single",
       #"extended-as-single",

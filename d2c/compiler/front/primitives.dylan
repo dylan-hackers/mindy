@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.8 2002/10/31 20:59:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.9 2003/03/28 00:42:56 housel Exp $
 copyright: see below
 
 
@@ -362,7 +362,7 @@ end;
 
 for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-logior",
 		 #"fixnum-logxor", #"fixnum-logand", #"fixnum-shift-left",
-		 #"fixnum-shift-right"])
+		 #"fixnum-shift-right", #"fixnum-logical-shift-right"])
   define-primitive
     (name, #(#"<integer>", #"<integer>"), #"<integer>",
      cseable: #t);
