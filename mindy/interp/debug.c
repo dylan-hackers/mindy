@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.27 1994/06/26 22:40:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.28 1994/06/27 15:54:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1558,7 +1558,7 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 	else {
 	    int pc = find_pc_for_line(thing, line);
 
-	    if (pc < -1) {
+	    if (pc == -1) {
 		prin1(func);
 		printf(" does not span line number %d\n", line);
 	    }
@@ -1574,9 +1574,11 @@ static void install_breakpoint(obj_t func, obj_t thing, int line)
 	    }
 	}
     }
+    else if (instancep(thing, obj_MethodInfoClass))
+	install_breakpoint(thing, METHOD_INFO(thing)->component, line);
     else if (!instancep(thing, obj_FunctionClass)) {
 	prin1(thing);
-	printf(" isn't a function or component\n");
+	printf(" isn't a function, method-info, or component\n");
     }
     else if (line == -1) {
 	printf("Can't install function start breakpoints.\n"); /* ### */
