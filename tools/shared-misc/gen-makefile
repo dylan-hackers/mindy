@@ -30,11 +30,12 @@ $orig_buildroot = $buildroot;
 
 # Slurp in the defaults.
 # This is also where the user will define $win32, if applicable, so
-# make sure no win32-specific stuff comes before this line.
+# make sure no win32-specific stuff comes before this line.  
+# Ditto for $nmake. 
 do $defaults;
 die("Problem loading $defaults:\n  $@\n") if $@;
 
-if ($win32) {
+if ($nmake) {
     $makefile = "Makefile";
 } else {
     $makefile = "GNUmakefile"; 
@@ -82,13 +83,19 @@ open(MAKEFILE, ">,$makefile") || die("Can't open ,$makefile: $!\n");
 select(MAKEFILE);
 
 print "### This makefile is machine generated.  Don't expect any edits to survive.\n\n";
+if ($nmake) {
+    $srcroot =~ tr|/|\\|;  # translate / to \ for MS-Windows
+    $srcdir =~ tr|/|\\|;
+    $buildroot =~ tr|/|\\|;
+    $builddir =~ tr|/|\\|;
+}
 print "SRCROOT=$srcroot\n";
 print "SRCDIR=$srcdir\n";
 print 'VPATH=$(SRCDIR)' . "\n";
 print "BUILDROOT=$buildroot\n";
 print "BUILDDIR=$builddir\n";
 $destdir && print "DESTDIR=$destdir\n";
-if (! $win32) {
+if (! $nmake) {
     print "\n.PHONY: default compile install clean\n\n";
     # Microsoft nmake doesn't do .phony targets
 }
@@ -108,7 +115,7 @@ push(@GNUmakefile_commands, $0);
 do emit_rule ('compile');
 $destdir && do emit_rule ('install');
 do emit_rule ('clean');
-if (! $win32) {
+if (! $nmake) {
     do emit_rule($makefile);
     # Microsoft nmake doesn't like Makefile as a target...
 }
@@ -121,7 +128,7 @@ sub emit_rule {
 
     print $rule, ': ', join(' ', eval('@'.$rule.'_dependencies')), "\n";
     foreach $rule (eval('@'.$rule.'_commands')) {
-	if ($win32) {
+	if ($newlines_are_crlf) {
 	    $rule =~ s|cat\s+(.*)>(.*)|dbclink \2 \1|;
 	    # This kluge replaces the "cat *.dbc > lib.dbc" idiom with
 	    # dbclink.
@@ -145,7 +152,7 @@ sub compile_subdir {
     # Recursive makes with Microsoft nmake are rather painful.  (If
     # GNU make for NT is used, this is actually wrong, but gmake/NT
     # has other problems and shouldn't be used)
-    if ($win32) {
+    if ($nmake) {
 	push(@compile_commands, 
 	     'cmd /c "cd ' . $subdir . ' && $(MAKE) /nologo"');
 	push(@install_commands,
@@ -173,9 +180,9 @@ CFLAGS=$CFLAGS
 CPPFLAGS=$CPPFLAGS
 
 EOF
-        if (! $win32) {
-	    # This has no real equivalent in win32, so don't expect to
-	    # be able to change the CCFLAGS.
+        if (! $nmake) {
+	    # This has no real equivalent in nmake (and maybe in win32), 
+	    # so don't expect to be able to change the CCFLAGS.
 	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
 	}
 	$d2c_defines = 1;
@@ -288,6 +295,32 @@ sub install {
     }
 }
 
+sub install_from_src {
+    local ($subdir, @files) = @_;
+    local ($file, $dst);
+
+    # Don't generate any install rules unless destdir is set.
+    $destdir || return;
+
+    foreach $file (@files) {
+	$dst = "\$(DESTDIR)/$subdir/$file";
+
+	print "$dst: $srcdir/$file\n";
+	if ($win32) {
+	    local ($rule) = "\tcopy $srcdir/$file $dst\n\n";
+	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
+	    print $rule;
+	} else {
+	    print "\t", '@-mv $@ $@.old', "\n";
+	    print "\t", 'cp -p $< $@', "\n";
+	    print "\t", '@rm -f $@.old', "\n";
+	    print "\n";
+	}
+
+	push(@install_dependencies, $dst);
+    }
+}
+
 # Your normal compiler Makegen file should simply set $D2CFLAGS and
 # $CPPFLAGS, then call this subroutine, and finally a emit_library_rule
 sub d2c_library {
@@ -305,7 +338,7 @@ sub d2c_library {
 	push(@compile_dependencies, $unit_prefix . 'lib.dbc');
 	push(@files_to_clean, '*.dbc');
 	$D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
-	if (! $win32) {
+	if (! $nmake) {
 	    print "\n.PHONY: d2c-compile\n\n";
 	}
 	print "d2c-compile: $du_name $ar_name\n\n";
@@ -338,7 +371,7 @@ sub spew_dbc_rules {
 
 sub dbc_link_rule {
     local($libname, $objects) = @_;
-    if ($win32) {
+    if ($newlines_are_crlf) {
 	return "dbclink $libname $objects";
     } else {
 	return "cat $objects > $libname";
@@ -365,5 +398,7 @@ sub makegen_include {
     $include_file = $srcdir . '/' . $include_file;
     (-e $include_file) || die("No $include_file\n");
     push(@GNUmakefile_dependencies, $0, $include_file);
+    # Convert \ back to /, because that's how "do" likes its filenames
+    $include_file =~ tr|\\|/|;
     do $include_file;
 }
