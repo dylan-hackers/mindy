@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.45 1995/11/14 14:18:23 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.46 1996/01/03 21:35:19 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -239,8 +239,8 @@ define method initialize
 end;
 
 define class <throw> (<nlx-operation>)
-  slot throw-next :: false-or(<throw>);
   inherited slot derived-type, init-function: empty-ctype;
+  slot throw-next :: false-or(<throw>);
 end;
 
 define method initialize
@@ -262,9 +262,9 @@ define method initialize
 end;
 
 define class <disable-catcher> (<nlx-operation>)
-  slot disable-catcher-next :: false-or(<disable-catcher>);
   inherited slot derived-type,
     init-function: curry(make-values-ctype, #(), #f);
+  slot disable-catcher-next :: false-or(<disable-catcher>);
 end;
 
 define method initialize
