@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.2 1998/09/09 13:40:16 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.3 1998/10/29 10:01:44 igor Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -237,6 +237,10 @@ define class <file-state> (<object>)
   // and dump them after the referencing component has compiled, since we are
   // in the middle of generating code when we discover that we need them.
   slot file-deferred-xeps :: <sequence> = make(<deque>);
+  //
+  // we save the last <source-location> emitted to the file to avoid multiple
+  // identical #line tokens.  Used by maybe-emit-source-location.
+  slot file-source-location :: <source-location> = make(<unknown-source-location>);
 end;
 
 
@@ -436,6 +440,29 @@ define method c-name (name :: <anonymous-name>) => res :: <byte-string>;
     "UNKNOWN";
   end;
 end method;
+
+// Emit a description of the <source-location> in C.  For 
+// <file-source-location>s, this will be a #line directive.  For
+// <unknown-source-location>s, thus will be a comment.
+
+define method maybe-emit-source-location(source-loc :: <file-source-location>,
+				   file :: <file-state>) => ();
+  if (file.file-source-location ~= source-loc)
+    format(file.file-guts-stream, "#line %d \"%s\"\n", 
+	   source-loc.end-line, source-loc.source-file.full-file-name);
+    file.file-source-location := source-loc;
+  end if;
+end method;
+
+define method maybe-emit-source-location(source-loc :: <unknown-source-location>,
+				   file :: <file-state>) => ();
+  if (file.file-source-location ~= source-loc)
+    format(file.file-guts-stream, "/* #line <unknown-source-location> */\n");
+    file.file-source-location := source-loc;
+  end if;
+
+end method;
+
 
 
 // New-{scope}
@@ -1583,6 +1610,7 @@ define method emit-function
 
   let stream = file.file-body-stream;
   format(stream, "/* %s */\n", function.name.clean-for-comment);
+
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
   if(function.calling-convention == #"callback")
@@ -1592,6 +1620,7 @@ define method emit-function
   write(stream, get-string(file.file-vars-stream));
   write(stream, "\n");
 
+  // Actually write out the (already generated) code:
   let overflow = file.file-guts-overflow;
   unless (overflow.empty?)
     for (string in overflow)
@@ -1712,11 +1741,15 @@ define method emit-region
     = file.file-guts-stream.inner-stream;
   for (assign = region.first-assign then assign.next-op,
        while: assign)
-    emit-assignment(assign.defines, assign.depends-on.source-exp, file);
+
+    maybe-emit-source-location(assign.source-location, file);
+
+    emit-assignment(assign.defines, assign.depends-on.source-exp, 
+		    assign.source-location, file);
     if (byte-string.stream-size >= 65536)
       add!(file.file-guts-overflow, byte-string.stream-contents);
     end if;
-  end;
+  end for;
 end;
 
 define method emit-region (region :: <compound-region>,
@@ -1962,7 +1995,8 @@ end;
 // Assignments.
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       var :: <abstract-variable>,
+			       var :: <abstract-variable>, 
+			       source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   if (defines)
@@ -1985,6 +2019,7 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <literal-constant>,
+			       source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   if (defines)
@@ -2000,6 +2035,7 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <function-literal>,
+			       source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   deliver-result(defines, ref-leaf(*heap-rep*, leaf, file),
@@ -2008,6 +2044,7 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <definition-constant-leaf>,
+			       source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   let defn = leaf.const-defn;
@@ -2022,6 +2059,7 @@ end;
 
 define method emit-assignment (results :: false-or(<definition-site-variable>),
 			       leaf :: <uninitialized-value>,
+                               source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   if (results)
@@ -2039,6 +2077,7 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
+     source-location :: <source-location>,
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
@@ -2250,6 +2289,7 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <known-call>,
+     source-location :: <source-location>,
      file :: <file-state>)
     => ();
   let function = call.depends-on.source-exp;
@@ -2368,6 +2408,7 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
+                               source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   let emitter
@@ -2377,6 +2418,7 @@ end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>), expr :: <catch>,
+     source-location :: <source-location>,
      file :: <file-state>)
     => ();
   let func = extract-operands(expr, file, *heap-rep*);
@@ -2397,6 +2439,7 @@ end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <prologue>,
+                               source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
   let function-info = get-info-for(expr.function, file);
@@ -2411,7 +2454,9 @@ end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>),
-     ref :: <module-var-ref>, file :: <file-state>)
+     ref :: <module-var-ref>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   let defn = ref.variable;
   let info = get-info-for(defn, file);
@@ -2435,7 +2480,9 @@ end;
 
 define method emit-assignment
     (defines :: false-or(<definition-site-variable>),
-     set :: <module-var-set>, file :: <file-state>)
+     set :: <module-var-set>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   let defn = set.variable;
   let info = get-info-for(defn, file);
@@ -2455,7 +2502,9 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     call :: <self-tail-call>, file :: <file-state>)
+     call :: <self-tail-call>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   spew-pending-defines(file);
   let function = call.self-tail-call-of;
@@ -2486,7 +2535,9 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <heap-slot-ref>, file :: <file-state>)
+     op :: <heap-slot-ref>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
@@ -2524,7 +2575,9 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <data-word-ref>, file :: <file-state>)
+     op :: <data-word-ref>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
@@ -2557,7 +2610,9 @@ end method emit-assignment;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <heap-slot-set>, file :: <file-state>)
+     op :: <heap-slot-set>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
@@ -2582,7 +2637,9 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     op :: <truly-the>, file :: <file-state>)
+     op :: <truly-the>, 
+     source-location :: <source-location>,
+     file :: <file-state>)
     => ();
   if (results)
     let rep = variable-representation(results, file);
