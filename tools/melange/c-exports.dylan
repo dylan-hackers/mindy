@@ -22,8 +22,18 @@ define library melange-c
   use streams;
   use standard-io;
   use format;
-  export c-lexer, c-declarations, portability;
+  export multistring-match, c-lexer, c-declarations, portability;
 end library melange-c;
+
+define module multistring-match
+  use dylan;
+  use extensions;
+  export
+#if (~mindy)
+    multistring-checker-definer, multistring-positioner-definer,
+#endif
+    make-multistring-positioner, make-multistring-checker
+end module multistring-match;
 
 define module c-lexer
   use dylan;
@@ -35,35 +45,20 @@ define module c-lexer
   use substring-search;
   use character-type;
   use streams;
+  use multistring-match;
   create cpp-parse;
   export
-    include-path, open-in-include-path, check-cpp-expansion, <tokenizer>,
-    get-token, unget-token, add-typedef, cpp-table, cpp-decls, <token>, value,
-    string-value, generator, parse-error, token-id,
-    <error-token>, <identifier-token>,
-    <integer-token>, <eof-token>, <begin-include-token>, <end-include-token>,
-    <reserved-word-token>, <struct-token>, <typedef-token>, <name-token>,
-    <int-token>, <short-token>, <long-token>, <signed-token>,
-    <unsigned-token>, <char-token>, <float-token>, <double-token>,
-    // <const-token>, <volatile-token>,
-    <void-token>, <inline-token>, <punctuation-token>, <simple-token>,
-    <ei-token>, <alien-name-token>, <macro-parse-token>, <cpp-parse-token>,
-    <extern-token>, <static-token>, <auto-token>, <register-token>,
-    <type-name-token>, <union-token>, <enum-token>, <elipsis-token>,
-    <sizeof-token>, <dec-op-token>, <inc-op-token>, <ptr-op-token>,
-    <literal-token>, <string-literal-token>, <constant-token>,
-    <mul-assign-token>, <div-assign-token>, <mod-assign-token>,
-    <add-assign-token>, <sub-assign-token>, <left-assign-token>,
-    <right-assign-token>, <and-assign-token>, <xor-assign-token>,
-    <or-assign-token>, <semicolon-token>, <comma-token>, <lparen-token>,
-    <rparen-token>, <lbracket-token>, <rbracket-token>, <dot-token>,
-    <ampersand-token>, <star-token>, <slash-token>, <plus-token>,
-    <minus-token>, <tilde-token>, <bang-token>, <percent-token>, <lt-token>,
-    <gt-token>, <carat-token>, <bar-token>, <question-token>, <colon-token>,
-    <eq-op-token>, <assign-token>, <ge-op-token>, <le-op-token>,
-    <ne-op-token>, <and-op-token>, <or-op-token>, <left-op-token>,
-    <right-op-token>, <lcurly-token>, <rcurly-token>, <type-specifier-token>,
-    *handle-//-comments*;
+    *handle-//-comments*,
+    <tokenizer>, cpp-table, cpp-decls, <token>, token-id, generator,
+    <simple-token>, <reserved-word-token>, <punctuation-token>,
+    <literal-token>, <ei-token>, <name-token>, <type-specifier-token>,
+    <identifier-token>, <integer-token>, <struct-token>, <short-token>,
+    <long-token>, <int-token>, <char-token>, <signed-token>, <unsigned-token>,
+    <float-token>, <double-token>, <void-token>, <union-token>, <enum-token>,
+    <minus-token>, <tilde-token>, <bang-token>, <alien-name-token>,
+    <macro-parse-token>, <cpp-parse-token>, string-value, value, parse-error,
+    unget-token, add-typedef, get-token, include-path, check-cpp-expansion,
+    open-in-include-path
 end module c-lexer;
 
 define module portability
