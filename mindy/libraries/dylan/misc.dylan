@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.9 1996/02/17 15:10:57 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.10 1996/02/26 23:02:28 nkramer Exp $
 
 //======================================================================
 //
@@ -106,3 +106,9 @@ define method make (c == <generic-function>,
   make-generic-function(debug-name, req, rest?, key, all-keys?,
 			#(), <object>);
 end;
+
+define method find-method
+    (gf :: <generic-function>, specializers :: <sequence>) 
+ => found-method :: false-or(<method>);
+  find-method(gf, as(<list>, specializers));
+end method find-method;
