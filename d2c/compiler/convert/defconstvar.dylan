@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.2 1994/12/12 21:24:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.3 1994/12/13 13:20:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,7 +30,8 @@ define class <variable-definition> (<bindings-definition>)
   //
   // The <constant-definition> for the type if the type isn't a compile-time
   // constant.  Filled in by finalize-top-level-form.
-  slot var-defn-type-defn :: union(<false>, <constant-definition>);
+  slot var-defn-type-defn :: union(<false>, <constant-definition>),
+    init-value: #f;
 end;
 
 
