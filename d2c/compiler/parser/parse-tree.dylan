@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.12 1996/02/08 02:24:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.13 1996/02/16 16:20:23 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -132,7 +132,7 @@ end;
 
 // <method-parse> -- exported.
 //
-define class <method-parse> (<object>)
+define class <method-parse> (<source-location-mixin>)
   //
   // The name of this method, if there is one.
   slot method-name :: false-or(<name-token>),
