@@ -4,71 +4,82 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
+	else echo "bootstrap";					\
+	fi)
+
 bootstrap-stage1:  bootstrap-stage1-stamp
 bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
-	libtoolize --force
-	./configure --with-readline \
-			--prefix=/usr \
-			--enable-mindy-bootstrap \
-			--with-gnu-ld \
-			--with-site-dylan-prefix=/usr
-	$(MAKE)
-	$(MAKE) DESTDIR=`pwd`/debian/bootstrap install
-	mkdir `pwd`/bootstrap_compiler
-	ln -sf `pwd`/debian/bootstrap/usr/bin/d2c `pwd`/bootstrap_compiler
+ifeq ("$(STYLE)", "bootstrap")
+		libtoolize --force
+		autoconf
+		./configure --with-readline \
+				--prefix=/usr \
+				--enable-mindy-bootstrap \
+				--with-gnu-ld \
+				--with-site-dylan-prefix=/usr
+		$(MAKE)
+		$(MAKE) DESTDIR=`pwd`/debian/bootstrap install
+		mkdir `pwd`/bootstrap_compiler
+		ln -sf `pwd`/debian/bootstrap/usr/bin/d2c `pwd`/bootstrap_compiler
 
-	rm config.cache
+		rm -f config.cache
+endif
 
 	touch bootstrap-stage1-stamp
 
-bootstrap-stage2:  bootstrap-stage1-stamp bootstrap-stage2-stamp
+bootstrap-stage2:	bootstrap-stage2-stamp
 bootstrap-stage2-stamp:  bootstrap-stage1-stamp
-	PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
-	    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib:$(LD_LIBRARY_PATH); \
-	    ./configure --with-readline \
-			--prefix=/usr \
-			--with-site-dylan-prefix=/usr \
-			--with-gnu-ld \
-			--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan
-	# End Bootstrapping portion
+ifeq ("$(STYLE)", "bootstrap")
+		PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
+		    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib:$(LD_LIBRARY_PATH); \
+		    ./configure --with-readline \
+				--prefix=/usr \
+				--with-site-dylan-prefix=/usr \
+				--with-gnu-ld \
+				--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan
+		# End Bootstrapping portion
+
+		touch bootstrap-stage2-stamp
+	
+		# Add here commands to compile the package.
+
+		export PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
+		    export LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan:$(LD_LIBRARY_PATH); \
+		    $(MAKE)
+endif
 
 	touch bootstrap-stage2-stamp
-
-	# Add here commands to compile the package.
-
-	export PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
-	    export LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan:$(LD_LIBRARY_PATH); \
-	    $(MAKE)
-
-	touch build-stamp
 	
 
-# Uncomment me to bootstrap
-#build: bootstrap-stage1-stamp bootstrap-stage2-stamp
-
-# Uncomment me to build normally
 build: config build-stamp
-build-stamp:
-	dh_testdir
+build-stamp: bootstrap-stage1-stamp bootstrap-stage2-stamp
+ifeq ("$(STYLE)", "normal")
 
-	# Add here commands to compile the package.
+		dh_testdir
+		autoconf
 
-	$(MAKE)
+		# Add here commands to compile the package.
+
+		$(MAKE)
+endif
 
 	touch build-stamp
 
 
 config: config-stamp
 config-stamp:
-	libtoolize --force
-	./configure --with-readline \
+ifeq ("$(STYLE)", "normal")
+		libtoolize --force
+		./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
 			--with-existing-runtime=/usr/lib/dylan \
 			--with-gnu-ld
-	touch config-stamp
+endif
 	
+	touch config-stamp
 
 clean:
 	dh_testdir
@@ -76,7 +87,7 @@ clean:
 	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp
 	rm -rf `pwd`/bootstrap_compiler
 	rm -rf `pwd`/debian/bootstrap
-	rm config.cache
+	rm -f config.cache
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) bootstrap_clean
@@ -85,6 +96,7 @@ clean:
 	chmod 0755 `pwd`/debian/delStatics
 	`pwd`/debian/delMakefiles `pwd`
 	`pwd`/debian/delStatics `pwd`
+	rm -f `pwd`/d2c/compiler/main/d2c.dbc
 	rm -f `pwd`/ltconfig
 	rm -f `pwd`/ltmain.sh
 	rm -f `pwd`/config.guess
