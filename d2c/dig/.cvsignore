@@ -1,10 +1,11 @@
-dig
-posix-dig-c.c
+dybug
+*-dig-c.dylan
+*-dig-c.c
 dig-exports.c
 dig-init.c
 dig.c
-heap.s
-dig-heap.s
+heap.c
+dig-heap.c
 inits.c
 cc-dig-files.mak
 GNUmakefile
