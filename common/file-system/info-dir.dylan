@@ -5,6 +5,8 @@ author: Douglas M. Auclair, dauclair@hotmail.com
 // It uses Section 8.5 from "System and I/O" of the
 // Common-Dylan spec available at www.functionalobjects.com
 
+// Most of this module doesn't work for cygnus, as well!
+
 define function home-directory() => (ans :: <pathname>)
   let str* = #f;
 
@@ -17,6 +19,9 @@ define function home-directory() => (ans :: <pathname>)
 end function home-directory;
 
 define function root-directories() => (roots :: <sequence>)
+#if(compiled-for-cygnus)
+  error("root-directories does not work on cygnus platforms!");
+#else
   let roots = #();
 
   local method add-if-dir(root, name, type)
@@ -27,6 +32,7 @@ define function root-directories() => (roots :: <sequence>)
 
   do-directory(add-if-dir, $path-separator);
   roots;
+#endif
 end function root-directories;
 
 // I ask the os to provide the temp directory by creating a temp file
@@ -37,7 +43,7 @@ define function temp-directory() => tmp :: <pathname>;
     file-signal("tmpnam", "no arguments");
   end if;
 
-  filename-prefix(convert-to-string(file-name*));
+  filename-prefix(as(<byte-string>,file-name*));
 end function temp-directory;
 
 define function working-directory() => pwd :: <pathname>;
@@ -56,11 +62,9 @@ define method getenv
   values(result-value);
 end method getenv;
 
-define method tmpnam
-    ()
- => (result :: <anonymous-9>);
-  let result-value
-    = call-out("tmpnam", ptr:, ptr: null-pointer);
-  let result-value = make(<anonymous-9>, pointer: result-value);
-  values(result-value);
+define method tmpnam() => (result :: <c-string>);
+  let tempy = as(<c-string>, make(<string>, size: 256));
+  call-out("tmpnam", ptr:, ptr: tempy.raw-value);
+  tempy;
 end method tmpnam;
+

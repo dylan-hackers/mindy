@@ -6,6 +6,10 @@ copyright:   2000, LGPL
 // there's the neat fn:  do-directory that is an interator over each
 // element in the directory (except . and ..)
 
+// Most of this module does not work on cygnus platforms, ah, well!
+// Dylan will throw conditions when a cygnus user attempts to 
+// create or to remove directories
+
 define function create-directory(parent :: <pathname>, name :: <string>)
  => (directory :: <pathname>)
   let directory = build-dir(parent, name);
@@ -31,6 +35,9 @@ end function ensure-directories-exist;
 // fn(dir, name, type :: <file-type>) => ()
 // (This'd be a good place for Neel's limited(<function>) type)
 define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
+#if(compiled-for-cygnus)
+  error("do-directory does not work on cygnus");
+#else
   // ooOOoOOoh!  This gets weird quickly! -- melange to the rescue!
   let dir* = open-dir(dir-name);
   if(as(<integer>, dir*) = 0) file-signal(opendir, dir-name); end if;
@@ -43,8 +50,10 @@ define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
     // nada
   end;
   closedir(dir*);
+#endif
 end function do-directory;
 
+// Working-directory-setter works fine on all platforms, so far
 define function working-directory-setter(dir :: <pathname>) 
  => ans :: <pathname>;
   with-pointer(dir* = dir)
