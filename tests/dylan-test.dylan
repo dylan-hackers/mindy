@@ -1,4 +1,6 @@
 Module: dylan-user
+author: Roger Critchlow (rec@elf.org)
+synopsis: A regression test for core Dylan.
 
 //======================================================================
 //
