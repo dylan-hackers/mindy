@@ -20,3 +20,8 @@ sequence-utils.lo
 collext-init.lo
 collext-heap.lo
 libcollext.la
+fd-collection-extensions.hdp
+release
+lib
+fd-collection-extensions-build
+bin
