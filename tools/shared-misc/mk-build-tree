@@ -1,14 +1,21 @@
 #!/usr/local/bin/perl
 
+# Author: William Lott
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/mk-build-tree,v 1.2 1997/02/04 14:41:11 nkramer Exp $
+
 # Usage:
 #
-#     mk-build-tree 
+#     mk-build-tree [-pplatforms.descr]
 #
 # This program looks at your Defaults file, creates any directories
 # that need to go in a build dir, and runs gen-makefile on every
 # subdir.
 
-if (@ARGV) { die("usage: $0\n") }
+$platforms_dot_descr = 0;
+if ($#ARGV == 0 && $ARGV[0] =~ /-p.*/) {
+    $platforms_dot_descr = shift(@ARGV);
+}
+if (@ARGV) { die("usage: $0 [-pplatforms.descr]\n") }
 
 (-e 'Defaults') || die("No Defaults file.\n");
 
@@ -25,6 +32,7 @@ if ($buildroot) {
 
 # Drive letters are considered optional, in no small part because we
 # don't know whether we're running on a win32 or a Unix box.
+# gen-makefile may have an opinion on the issue, though.
 ($srcroot =~ /^(\w:)?\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
 
 do mk_build_tree($srcroot, '.');
@@ -67,7 +75,9 @@ sub mk_build_tree {
     
     if ($has_makegen) {
 	print "Generating makefile for $builddir\n";
-	system('gen-makefile', $builddir)
+	($platforms_dot_descr 
+	       ? system('gen-makefile', $platforms_dot_descr, $builddir) 
+               : system('gen-makefile', $builddir))
 	    && die("gen-makefile $builddir failed.\n");
     }
 
