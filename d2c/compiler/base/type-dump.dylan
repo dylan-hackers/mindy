@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.11 1996/01/27 20:10:36 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.12 1996/02/08 12:30:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -132,6 +132,7 @@ define constant $class-dump-slots =
 
 define constant $slot-info-dump-slots =
   list(info, #f, info-setter,
+       ct-value-heap-labels, heap-labels:, #f,
        slot-introduced-by, introduced-by:, #f,
        slot-type, type:, slot-type-setter,
        slot-getter, getter:, #f,
