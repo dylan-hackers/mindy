@@ -8,6 +8,9 @@ Gwydion Dylan 2.3.10
   Support for the HP/UX PA-RISC platform has been revived, and an alpha
   version of support for the MacOS X Cocoa framework is now included.
 
+  There's a technology demonstration of a Dylan interactor (also known
+  as a REPL to the Lisp folks). Try 'd2c -i'.
+
 Gwydion Dylan 2.3.9
 
   Besides the obvious ton of bugfixes, we have now working class and

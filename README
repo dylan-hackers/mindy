@@ -22,12 +22,13 @@ If you'd like a tutorial or a more thorough reference, see the maintainers'
 web site (below). The following online resources are available:
 
   Maintainers' website:    http://www.gwydiondylan.org/
-  Gwydion group:           http://legend.gwydion.cs.cmu.edu/
+  Gwydion group:           
+  	http://www-2.cs.cmu.edu/afs/cs/project/gwydion/docs/htdocs/gwydion/
   FTP Site:                ftp://ftp.gwydiondylan.org/pub/gd/
   FTP Site (mirror):       ftp://ftp.fu-berlin.de/pub/unix/languages/dylan/
   Bug reports:             gd-bugs@gwydiondylan.org
   Mail to the maintainers: gd-hackers@gwydiondylan.org
-  Newsgroup:               comp.lang.dylan
+  Newsgroup:               news:comp.lang.dylan
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
@@ -36,6 +37,6 @@ to contribute code or documentation, we enthusiastically encourage you to
 do so.
 
 Be warned: Gwydion is not primarily intended for production work. Some of
-the omissions and shortcomings are fairly noticable, but it *has* been used
-in real-world projects before. Use Gwydion only if you're feeling daring
-and wish to experiment with a compiler currently under development.
+the omissions and shortcomings are sometimes noticable, but it *has* been
+used in real-world projects before. Use Gwydion only if you're feeling
+daring and wish to experiment with a compiler currently under development.
