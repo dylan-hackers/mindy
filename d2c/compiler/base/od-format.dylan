@@ -451,6 +451,7 @@ register-object-id(#"set-assignment", #x00A1);
 register-object-id(#"define-library-tlf", #x00B0);
 register-object-id(#"define-module-tlf", #x00B1);
 register-object-id(#"define-library/module-use-clause", #x00B2);
+register-object-id(#"define-binding-tlf", #x00B3);
 
 register-object-id(#"here-be-roots", #x00BF);
 
