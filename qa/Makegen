@@ -1,1 +1,1 @@
-&compile_subdirs("testworks", "test-apps");
+&compile_subdirs("testworks", "testworks-specs", "test-apps");
