@@ -73,7 +73,7 @@ define method c-output
   else
     tname := c-output(type.c-typedef-type);
   end if;
-  concatenate(header, "define C-mapped-subtype <", type.c-typedef-name, "> (", tname, ")\n  pointer-type-name: ", concatenate("<", type.c-typedef-name, "*>"), ";\nend C-subtype;\n");
+  concatenate(header, "define C-subtype <", type.c-typedef-name, "> (", tname, ")\n  pointer-type-name: ", concatenate("<", type.c-typedef-name, "*>"), ";\nend C-subtype;\n");
 end method;
 
 // Handle unknown types gracelessly.

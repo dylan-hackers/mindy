@@ -27,5 +27,6 @@ define module ansi-c-test
   use parse-conditions;
   use ansi-c;
   use c-parser;
+
 use c-ffi-output;
 end;

@@ -52,9 +52,7 @@ define function pidgin(name, arguments)
       exit-application(1);
     end unless;
     let extra-includes = option-value-by-long-name(argp, "includedir");
-    format(*standard-output*, "Constructing include path.\n");
     let include-path = construct-include-path(extra-includes);
-    force-output(*standard-output*);
     let module = option-value-by-long-name(argp, "module");
     let library = option-value-by-long-name(argp, "library");
     if (~module)
