@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.4 1994/12/17 02:12:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -386,8 +386,8 @@ define method process-for-clause (clause :: <for-from-clause>,
       end;
   let by-expr
     = if (~clause.for-clause-by)
-	make(<literal>, literal: 1);
-      elseif (instance?(clause.for-clause-by, <literal>))
+	make(<literal-ref>, literal: make(<literal-fixed-integer>, value: 1));
+      elseif (instance?(clause.for-clause-by, <literal-ref>))
 	clause.for-clause-by;
       else
 	let (by-temp, by-bind)
@@ -405,15 +405,18 @@ define method process-for-clause (clause :: <for-from-clause>,
 	  #"above" => make-dylan-name(#"<=");
 	  #"below" => make-dylan-name(#">=");
 	  #"to" =>
-	    if (instance?(by-expr, <literal>)
-		  & instance?(by-expr.lit-value, <number>))
-	      make-dylan-name(if (by-expr.lit-value < 0) #"<" else #">" end);
+	    if (instance?(by-expr, <literal-ref>)
+		  & instance?(by-expr.litref-literal, <literal-number>))
+	      make-dylan-name(if (by-expr.litref-literal < 0) #"<" else #">" end);
 	    else
 	      let cmp = make(<funcall>,
 			     function: make(<varref>,
 					    name: make-dylan-name(#"<")),
 			     arguments: vector(by-expr,
-					       make(<literal>, value: 0)));
+					       make(<literal-ref>,
+						    literal:
+						      make(<literal-fixed-integer>,
+							   value: 0))));
 	      let test
 		= make(<if>,
 		       condition: cmp,

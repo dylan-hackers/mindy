@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.4 1994/12/17 14:51:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -304,12 +304,12 @@ define method expand (form :: <funcall>,
 			     make(<piece>, token: make(<comma-token>)));
 	    end;
 	    if (possible-keyword?
-		  & instance?(arg, <literal>)
-		  & instance?(arg.lit-value, <symbol>))
+		  & instance?(arg, <literal-ref>)
+		  & instance?(arg.litref-literal, <literal-symbol>))
 	      postpend-piece(fragment,
 			     make(<piece>,
 				  token: make(<keyword-token>,
-					      literal: arg.lit-value)));
+					      literal: arg.litref-literal)));
 	      need-comma? := #f;
 	    else
 	      postpend-piece(fragment, make(<piece>, token: arg));
@@ -704,7 +704,7 @@ end;
 define constant <type-part-type>
   = type-or(<left-paren-token>, <left-bracket-token>, <dot-token>,
 	    <literal-token>, <string-token>, <true-token>, <false-token>,
-	    <literal>, <expression>, <name-token>);
+	    <literal-ref>, <expression>, <name-token>);
 define constant <var-part-type>
   = type-or(<type-part-type>, <double-colon-token>);
 define constant <expr-part-type>

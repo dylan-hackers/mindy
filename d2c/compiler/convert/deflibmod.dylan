@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.2 1994/12/17 02:24:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.3 1995/03/04 21:57:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -77,11 +77,14 @@ define method extract-names-or-all (expr :: <varref>, where :: <string>)
   end;
 end;
 
-define method extract-prefix (expr :: <literal>)
-  unless (instance?(expr.lit-value, union(<false>, <string>)))
-    error("Bogus thing in prefix clause: %=", expr);
+define method extract-prefix (expr :: <literal-ref>)
+  let literal = expr.litref-literal;
+  select (literal by instance?)
+    <literal-false> => #f;
+    <literal-string> => literal.literal-value;
+    otherwise =>
+      error("Bogus thing in prefix clause: %=", expr);
   end;
-  expr.lit-value;
 end;
 
 define method extract-prefix (whatever :: union(<property-set>, <expression>))

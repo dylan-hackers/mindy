@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.3 1995/01/10 16:26:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.4 1995/03/04 21:55:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -584,14 +584,14 @@ end;
 define abstract class <expression> (<constituent>)
 end;
 
-// <literal> -- exported.
+// <literal-ref> -- exported.
 //
-define class <literal> (<expression>)
-  slot lit-value, required-init-keyword: value:;
+define class <literal-ref> (<expression>)
+  slot litref-literal, required-init-keyword: literal:;
 end;
 
-define method print-object (lit :: <literal>, stream :: <stream>) => ();
-  pprint-fields(lit, stream, value: lit.lit-value);
+define method print-object (lit :: <literal-ref>, stream :: <stream>) => ();
+  pprint-fields(lit, stream, value: lit.litref-literal);
 end;
 
 // <binop-series> -- exported.

@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.4 1995/03/02 21:19:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -179,9 +179,11 @@ define method make-quoted-keyword (lexer :: <lexer>,
 				   source-location :: <file-source-location>)
   make(<keyword-token>,
        source-location: source-location,
-       literal: as(<symbol>,
-		   decode-string(source-location,
-				 start: source-location.start-posn + 2)));
+       literal:
+	 make(<literal-symbol>,
+	      value: as(<symbol>,
+			decode-string(source-location,
+				      start: source-location.start-posn + 2))));
 end;
 
 // make-colon-keyword -- internal.
@@ -192,9 +194,11 @@ define method make-colon-keyword (lexer :: <lexer>,
 				  source-location :: <file-source-location>)
   make(<keyword-token>,
        source-location: source-location,
-       literal: as(<symbol>,
-		   extract-string(source-location,
-				  end: source-location.end-posn - 1)));
+       literal:
+	 make(<literal-symbol>,
+	      value: as(<symbol>,
+			extract-string(source-location,
+				       end: source-location.end-posn - 1))));
 end;
 		    
 // parse-integer -- internal.
@@ -267,17 +271,23 @@ define method parse-integer-literal (lexer :: <lexer>,
   
   let int = parse-integer(source-location, radix: radix, start: posn);
 
-  if (~extended)
-    if (int < $minimum-fixed-integer | int > $maximum-fixed-integer)
-      compiler-warning("%d doesn't fit as a <fixed-integer>, "
-			 "using <extended-integer> instead",
-		       int);
-    else
-      int := as(<fixed-integer>, int);
-    end;
+  if (~extended &
+	(int < runtime-$minimum-fixed-integer
+	   | int > runtime-$maximum-fixed-integer))
+    compiler-warning("%d doesn't fit as a <fixed-integer>, "
+		       "using <extended-integer> instead",
+		     int);
+    extended := #t;
   end;
 
-  make(<literal-token>, source-location: source-location, literal: int);
+  make(<literal-token>,
+       source-location: source-location,
+       literal: make(if (extended)
+		       <literal-extended-integer>;
+		     else
+		       <literal-fixed-integer>;
+		     end,
+		     value: int));
 end;
 
 // make-character-literal -- internal.
@@ -291,11 +301,13 @@ define method make-character-literal (lexer :: <lexer>,
   let char = as(<character>, contents[posn]);
   make(<literal-token>,
        source-location: source-location,
-       literal: if (char == '\\')
-		  escape-character(as(<character>, contents[posn + 1]));
-		else
-		  char;
-		end);
+       literal:
+	 make(<literal-character>,
+	      value: if (char == '\\')
+		       escape-character(as(<character>, contents[posn + 1]));
+		     else
+		       char;
+		     end));
 end;
 
 // make-string-literal -- internal.
@@ -306,7 +318,8 @@ define method make-string-literal (lexer :: <lexer>,
 				   source-location :: <file-source-location>)
   make(<string-token>,
        source-location: source-location,
-       literal: decode-string(source-location));
+       literal: make(<literal-string>,
+		     contents: decode-string(source-location)));
 end;
 
 // parse-ratio-literal -- internal.
@@ -329,18 +342,18 @@ define method parse-ratio-literal (lexer :: <lexer>,
   let denominator = parse-integer(source-location, start: slash + 1);
   make(<literal-token>,
        source-location: source-location,
-       literal: ratio(numerator, denominator));
+       literal:
+	 make(<literal-ratio>, value: ratio(numerator, denominator)));
 end;
 
 define method atof (string :: <byte-string>,
-		    #key class :: <class> = <double-float>,
-		    start :: <integer> = 0,
+		    #key start :: <integer> = 0,
 		    end: finish :: <integer> = string.size)
-    => res :: <float>;
+    => (class :: one-of(#f, #"single", #"double", #"extended"), value :: <ratio>);
+  let class = #f;
   let posn = start;
   let sign = 1;
   let mantissa = as(<extended-integer>, 0);
-  let base = as(class, 10);
   let scale = #f;
   let exponent-sign = 1;
   let exponent = 0;
@@ -376,13 +389,13 @@ define method atof (string :: <byte-string>,
 	elseif (char == 'e' | char == 'E')
 	  return();
 	elseif (char == 'd' | char == 'D')
-	  base := as(<double-float>, 10);
+	  class := #"double";
 	  return();
 	elseif (char == 's' | char == 'S')
-	  base := as(<single-float>, 10);
+	  class := #"single";
 	  return();
 	elseif (char == 'x' | char == 'X')
-	  base := as(<extended-float>, 10);
+	  class := #"extended";
 	  return();
 	else
 	  error("bogus float.");
@@ -413,16 +426,24 @@ define method atof (string :: <byte-string>,
     end if;
   end block;
 
-  sign * mantissa * base ^ (exponent-sign * exponent - (scale | 0));
+  values(class,
+	 sign * mantissa * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
 end;
 
 // parse-fp-literal -- internal.
 // 
 define method parse-fp-literal (lexer :: <lexer>,
 				source-location :: <file-source-location>)
+  let (class, value) = atof(extract-string(source-location));
+  
   make(<literal-token>,
        source-location: source-location,
-       literal: atof(extract-string(source-location)));
+       literal: make(select (class)
+		       #"single" => <literal-single-float>;
+		       #f, #"double" => <literal-double-float>;
+		       #"extended" => <literal-extended-float>;
+		     end,
+		     value: value));
 end;
 
 

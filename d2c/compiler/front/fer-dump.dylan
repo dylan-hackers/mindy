@@ -266,10 +266,6 @@ define method dump (ct-value :: <cclass>, stream :: <stream>) => ();
   write(as(<string>, ct-value.cclass-name.name-symbol), stream);
 end;
 
-define method dump (ct-value :: <ct-literal>, stream :: <stream>) => ();
-  print(ct-value.ct-literal-value, stream, level: 1, length: 3);
-end;
-
 define method dump (leaf :: <definition-constant-leaf>, stream :: <stream>)
     => ();
   dump(leaf.const-defn.defn-name, stream);
