@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.23 1999/11/12 21:09:30 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.24 1999/12/08 08:37:08 igor Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -342,8 +342,8 @@ platform-name:			gcc
 default-features:		C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
-default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
+default-c-compiler-flags:	-I. -I%s -g -O3 -fomit-frame-pointer
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-executable-command:        $(LIBTOOL) gcc -o %s %s %s
@@ -355,8 +355,8 @@ platform-name:			beos-gcc
 default-features:		C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
-default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
+default-c-compiler-flags:	-I. -I%s -g -O3
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-executable-command:        $(LIBTOOL) gcc -o %s %s %s
