@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.10 1995/12/09 20:16:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.11 1995/12/11 00:38:58 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -188,13 +188,13 @@ define inline method map
 end;
 
 define method map-as
-    (class :: <class>, proc :: <function>, collection :: <collection>,
+    (type :: <type>, proc :: <function>, collection :: <collection>,
      #rest more-collections)
     => res :: <mutable-collection>;
   if (empty?(more-collections))
     let (init, limit, next-state, finished?, current-key, current-element)
       = forward-iteration-protocol(collection);
-    let result = make(class, size: collection.size);
+    let result = make(type, size: collection.size);
     for (state = init then next-state(collection, state),
 	 until: finished?(collection, state, limit))
       result[current-key(collection, state)]
@@ -203,7 +203,7 @@ define method map-as
     result;
   else
     let keys = key-intersection(collection, more-collections);
-    let result = make(class, size: keys.size);
+    let result = make(type, size: keys.size);
     for (key in keys)
       result[key]
 	:= apply(proc, collection[key],
@@ -760,19 +760,19 @@ define method do
 end;
 
 define method map-as
-    (class :: <class>, proc :: <function>, collection :: <sequence>,
+    (type :: <type>, proc :: <function>, collection :: <sequence>,
      #next next-method, #rest more-collections)
     => res :: <mutable-collection>;
-  if (subtype?(class, <sequence>)
+  if (subtype?(type, <sequence>)
 	& every?(rcurry(instance?, <sequence>), more-collections))
-    apply(sequence-map-as, class, proc, collection, more-collections);
+    apply(sequence-map-as, type, proc, collection, more-collections);
   else
     next-method();
   end;
 end;
 
 define method sequence-map-as
-    (class :: <class>, proc :: <function>, sequence :: <sequence>,
+    (type :: <type>, proc :: <function>, sequence :: <sequence>,
      #rest more-sequences)
     => res :: <mutable-collection>;
   let len = sequence.size;
@@ -789,7 +789,7 @@ define method sequence-map-as
   unless (len)
     error("At least one argument to map-as must be bounded");
   end;
-  apply(sequence-map-into, make(class, size: len), proc, sequence,
+  apply(sequence-map-into, make(type, size: len), proc, sequence,
 	more-sequences);
 end;
 
@@ -949,7 +949,7 @@ define inline method concatenate (sequence :: <sequence>, #rest more-sequences)
   apply(concatenate-as, sequence.type-for-copy, sequence, more-sequences);
 end;
 
-define method concatenate-as(cls :: <class>, sequence :: <sequence>,
+define method concatenate-as(type :: <type>, sequence :: <sequence>,
 			     #rest more-sequences) => result :: <sequence>;
   if (size (sequence) == #f
 	| any? (method (s) size (s) == #f end, more-sequences))
@@ -960,7 +960,7 @@ define method concatenate-as(cls :: <class>, sequence :: <sequence>,
 	       finally total + sequence.size;
 	       end for;
 		 
-  let result = make(cls, size: length);
+  let result = make(type, size: length);
   let (init-state, limit, next-state, done?, current-key, current-element,
        current-element-setter) = forward-iteration-protocol(result);
 
