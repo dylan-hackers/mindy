@@ -22,6 +22,7 @@ define library common-extensions
     simple-profiling,
     simple-debugging,
     byte-vectors,
+    functional-extensions;
 end library;
 
 define module c-support
@@ -156,6 +157,19 @@ define module byte-vectors
     export: {<byte>,
 	     <byte-vector>};
 end module;
+
+define module functional-extensions
+  use dylan;
+  use extensions, exclude: { position, assert };
+  use common-extensions, import: { find-element };
+  export without-bounds-checks, find-value, assert, 
+    with-keywords-removed, dynamic-bind,
+    <lock>, <simple-lock>, with-lock,
+    <thread>, atomic-increment!, current-thread,
+    <notification>, wait-for, release-all,
+    put-property!, get-property, \remove-property!;
+end module;
+
 
 /*
   Stream protocol.

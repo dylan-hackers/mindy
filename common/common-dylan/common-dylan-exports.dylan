@@ -9,14 +9,15 @@ define library common-dylan
 	      simple-random,
 	      simple-profiling,
 	      simple-debugging,
-	      byte-vectors };
+	      byte-vectors,
+              functional-extensions };
 
   use transcendental,
      import: { transcendental => transcendentals },
      export: all;
 
   export
-    common-dylan;
+    common-dylan,
 end library;
 
 define module common-dylan
@@ -25,3 +26,4 @@ define module common-dylan
   use common-extensions,
     export: all;
 end module;
+  

@@ -6,3 +6,4 @@ common-extensions-exports.dylan
 c-support.dylan
 extensions.dylan
 collections.dylan
+fun-dev-compat.dylan

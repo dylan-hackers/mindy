@@ -1,5 +1,5 @@
-Module:       duim-utilities
-Synopsis:     DUIM utilities
+Module:       functional-extensions
+Synopsis:     Functional Developer compatibility functions
 Author:       Rob Myers
 Copyright:    Gwydion Dylan Maintainers 2000
 License:      GNU Library General Public License
