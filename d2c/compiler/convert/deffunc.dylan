@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.54 1996/01/31 23:52:21 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.55 1996/02/06 15:47:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -128,9 +128,21 @@ define class <seal-generic-tlf> (<top-level-form>)
   slot seal-generic-name :: <name>,
     required-init-keyword: name:;
   //
+  // The generic defn for this seal generic.  Filled in at finalization time.
+  slot seal-generic-defn :: false-or(<generic-definition>),
+    init-value: #f;
+  //
+  // The library doing the seal.
+  slot seal-generic-library :: <library>,
+    required-init-keyword: library:;
+  //
   // The type expressions.
   slot seal-generic-type-exprs :: <simple-object-vector>,
     required-init-keyword: type-exprs:;
+  //
+  // The types, once we have evaluated them.  #f until then.
+  slot seal-generic-types :: false-or(<simple-object-vector>),
+    init-value: #f;
 end;
 
 define method print-message
@@ -150,6 +162,9 @@ define class <define-method-tlf> (<simple-define-tlf>)
   // The name being defined.  Note: this isn't the name of the method, it is
   // the name of the generic function.
   slot method-tlf-base-name :: <name>, required-init-keyword: base-name:;
+  //
+  // The library doing the defining.
+  slot method-tlf-library :: <library>, required-init-keyword: library:;
   //
   // True if the define method is sealed, false if open.
   slot method-tlf-sealed? :: <boolean>, required-init-keyword: sealed:;
@@ -192,6 +207,7 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
+		  library: *Current-Library*,
 		  sealed: ~open?,
 		  movable: movable?,
 		  flushable: flushable? | movable?);
@@ -215,10 +231,10 @@ define method compute-define-generic-signature
       error("noticed that a function was hairy after creating a ct-value.");
     end;
   elseif (defn.generic-defn-sealed?)
-    // Fill in the slot so we add-seal's call to function-defn-signature
+    // Fill in the slot so that add-seal's call to function-defn-signature
     // doesn't cause us to recurse forever.
     defn.function-defn-signature := signature;
-    add-seal(defn, signature.specializers, tlf);
+    add-seal(defn, defn.defn-library, signature.specializers, tlf);
   end;
   signature;
 end;
@@ -229,6 +245,7 @@ define method process-top-level-form (form :: <seal-generic-parse>) => ();
 	    name: make(<basic-name>,
 		       symbol: form.sealgen-name.token-symbol,
 		       module: *Current-Module*),
+	    library: *Current-Library*,
 	    type-exprs: form.sealgen-type-exprs));
 end;
 
@@ -240,23 +257,26 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
   let base-name = make(<basic-name>, symbol: name, module: *Current-Module*);
   let parse = form.defmethod-method;
   let params = parse.method-param-list;
-  implicitly-define-generic(base-name, params.paramlist-required-vars.size,
+  implicitly-define-generic(*Current-Library*, base-name,
+			    params.paramlist-required-vars.size,
 			    params.paramlist-rest & ~params.paramlist-keys,
 			    params.paramlist-keys & #t);
-  let tlf = make(<define-method-tlf>, base-name: base-name, sealed: sealed?,
-		 inline: inline?, movable: movable?,
+  let tlf = make(<define-method-tlf>,
+		 base-name: base-name, library: *Current-Library*,
+		 sealed: sealed?, inline: inline?, movable: movable?,
 		 flushable: flushable? | movable?,
 		 parse: parse);
   add!(*Top-Level-Forms*, tlf);
 end;
 
 define method implicitly-define-generic
-    (name :: <basic-name>, num-required :: <integer>,
+    (library :: <library>, name :: <basic-name>, num-required :: <integer>,
      variable-args? :: <boolean>, keyword-args? :: <boolean>)
     => ();
   let var = find-variable(name);
   unless (var & var.variable-definition)
-    let defn = make(<implicit-generic-definition>, name: name);
+    let defn = make(<implicit-generic-definition>,
+		    name: name, library: library);
     defn.function-defn-signature
       := method ()
 	   let specs = make(<list>, size: num-required,
@@ -268,7 +288,7 @@ define method implicitly-define-generic
 			  all-keys: #f,
 			  returns: wild-ctype());
 	   defn.function-defn-signature := sig;
-	   add-seal(defn, specs, #f);
+	   add-seal(defn, library, specs, #f);
 	   sig;
 	 end;
     note-variable-definition(defn);
@@ -291,19 +311,20 @@ define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
     compiler-error("%s doesn't name a generic function, so can't be sealed.",
 		   tlf.seal-generic-name);
   end;
-  let type-exprs = tlf.seal-generic-type-exprs;
-  add-seal(defn,
-	   map(method (type-expr)
-		 let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
-		 unless (instance?(type, <ctype>))
-		   compiler-error
-		     ("Parameter in seal generic of %s isn't a type:\n  %s",
-		      tlf.seal-generic-name, type);
-		 end;
-		 type;
-	       end,
-	       type-exprs),
-	   tlf);
+  tlf.seal-generic-defn := defn;
+  local method eval-type (type-expr :: <expression>)
+	    => type :: <ctype>;
+	  let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
+	  unless (instance?(type, <ctype>))
+	    compiler-error
+	      ("Parameter in seal generic of %s isn't a type:\n  %s",
+	       tlf.seal-generic-name, type);
+	  end;
+	  type;
+	end method eval-type;
+  let types = map(eval-type, tlf.seal-generic-type-exprs);
+  tlf.seal-generic-types := types;
+  add-seal(defn, tlf.seal-generic-library, types, tlf);
 end;
 
 define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
@@ -328,6 +349,7 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
 			tlf.method-tlf-parse.method-returns);
   let defn = make(<method-definition>,
 		  base-name: name,
+		  library: tlf.method-tlf-library,
 		  signature: signature,
 		  hairy: anything-non-constant?,
 		  movable: tlf.method-tlf-movable?,
@@ -338,11 +360,11 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
   tlf.tlf-defn := defn;
   let gf = defn.method-defn-of;
   if (gf)
-    ct-add-method(gf, defn);
+    ct-add-method(tlf, gf, defn);
   end;
   if (tlf.method-tlf-sealed?)
     if (gf)
-      add-seal(gf, signature.specializers, tlf);
+      add-seal(gf, tlf.method-tlf-library, signature.specializers, tlf);
     else
       error("%s doesn't name a generic function", name);
     end;
@@ -548,14 +570,23 @@ end method;
 
 
 define method ct-add-method
-    (gf :: <generic-definition>, meth :: <method-definition>) => ();
+    (tlf :: false-or(<top-level-form>), gf :: <generic-definition>,
+     meth :: <method-definition>)
+    => ();
+  if (gf.generic-defn-sealed?
+	& gf.defn-library ~== meth.defn-library)
+    compiler-error
+      ("In %s: library %s can't define methods on sealed generic %s.",
+       tlf | "something", meth.defn-library.library-name, gf.defn-name);
+  end if;
   let old-methods = gf.generic-defn-methods;
   let meth-specs = meth.function-defn-signature.specializers;
   block (return)
     for (old-meth in old-methods)
       if (meth-specs = old-meth.function-defn-signature.specializers)
-	compiler-warning("%s is multiply defined -- ignoring extra definition.",
-		       meth.defn-name);
+	compiler-warning
+	  ("%s is multiply defined -- ignoring extra definition.",
+	   meth.defn-name);
 	return();
       end;
     end;
@@ -572,7 +603,7 @@ define method ct-add-method
   else
     meth.function-defn-hairy? := #t;
   end;
-end;
+end method ct-add-method;
 
 
 // CT-value
@@ -1177,7 +1208,7 @@ end class <seal-info>;
 
 
 define method add-seal
-    (defn :: <generic-definition>, types :: <list>,
+    (defn :: <generic-definition>, library :: <library>, types :: <list>,
      tlf :: false-or(<top-level-form>))
     => ();
   block (return)
@@ -1227,10 +1258,10 @@ define method add-seal
 end;
 
 define method add-seal
-    (defn :: <generic-definition>, types :: <sequence>,
+    (defn :: <generic-definition>, library :: <library>, types :: <sequence>,
      tlf :: false-or(<top-level-form>))
     => ();
-  add-seal(defn, as(<list>, types), tlf);
+  add-seal(defn, library, as(<list>, types), tlf);
 end;
 
 
@@ -1513,16 +1544,37 @@ end;
 define method dump-od
     (tlf :: <define-method-tlf>, state :: <dump-state>) => ();
   let defn = tlf.tlf-defn;
-  if (defn.method-defn-of
-      & name-inherited-or-exported?(defn.defn-name))
+  let gf = defn.method-defn-of;
+  if (gf & name-inherited-or-exported?(defn.defn-name))
     dump-od(defn, state);
-  end;
-end;
+    if (tlf.method-tlf-sealed? & defn.defn-library ~== gf.defn-library)
+      dump-simple-object(#"seal-generic", state,
+			 gf,
+			 defn.defn-library,
+			 defn.function-defn-signature.specializers);
+    end if;
+  end if;
+end method dump-od;
 
 define method dump-od
     (tlf :: <seal-generic-tlf>, state :: <dump-state>) => ();
-  // Do nothing because all the seals are dumped as part of the generic.
-end;
+  if (tlf.seal-generic-defn.defn-library ~== tlf.seal-generic-library)
+    assert(name-inherited-or-exported?(tlf.seal-generic-name));
+    dump-simple-object(#"seal-generic", state,
+		       tlf.seal-generic-defn,
+		       tlf.seal-generic-library,
+		       tlf.seal-generic-types);
+  end if;
+end method dump-od;
+
+add-od-loader(*compiler-dispatcher*, #"seal-generic",
+	      method (state :: <load-state>) => res :: <false>;
+		let gf = load-object-dispatch(state);
+		let library = load-object-dispatch(state);
+		let types = load-object-dispatch(state);
+		assert-end-object(state);
+		add-seal(gf, library, types, #f);
+	      end method);
 
 
 define constant $function-definition-slots
@@ -1561,11 +1613,22 @@ define constant dump-them-methods = method
 end method;
 
 define /* exported */ method dump-queued-methods (buf :: <dump-buffer>)
-  for (meth in *queued-methods*)
+  // We clear the queue before dumping the methods in case dumping some
+  // method triggers the addition of other methods to the queue.  But we
+  // flame out if that happened, because I'm not sure that should be supported.
+  // Basically, I noticed that the way this code was written before it would
+  // quietly ignore any additional methods, so I figured it would be an
+  // improvement to at least puke if that happens.  If it doens't puke, well,
+  // then there isn't any need for anything fancier.  If it does puke, then
+  // we can easily change it again.  -William
+  let methods = *queued-methods*;
+  *queued-methods* := #();
+  for (meth in methods)
     dump-od(meth, buf);
   end;
-  *queued-methods* := #();
+  assert(*queued-methods* == #());
 end;
+
 
 add-make-dumper(#"generic-definition", *compiler-dispatcher*,
 		<generic-definition>, $generic-definition-slots,
@@ -1576,7 +1639,6 @@ add-make-dumper(#"implicit-generic-definition", *compiler-dispatcher*,
 		<implicit-generic-definition>, $generic-definition-slots,
 		load-external: #t,
 		dump-side-effect: dump-them-methods);
-
 
 add-make-dumper(#"seal-info", *compiler-dispatcher*, <seal-info>,
 		list(seal-types, types:, #f));
@@ -1590,7 +1652,7 @@ define method set-method-defn-of
     (gf :: false-or(<generic-definition>), meth :: <method-definition>) => ();
   meth.method-defn-of := gf;
   if (gf)
-    ct-add-method(gf, meth);
+    ct-add-method(#f, gf, meth);
   end;
 end;
 /*
