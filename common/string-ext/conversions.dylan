@@ -3,7 +3,7 @@ author:     Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Convert strings to numbers and numbers to strings.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/conversions.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/conversions.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 
 //======================================================================
 //

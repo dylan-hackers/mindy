@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.10 1996/07/03 15:17:54 rgs Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/extern.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

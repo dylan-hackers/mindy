@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.5 1996/06/11 14:38:35 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/lexer.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file is the lexer for the debugger.
 *

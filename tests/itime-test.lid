@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/itime-test.lid,v 1.1 1996/08/07 14:51:57 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/itime-test.lid,v 1.1 1998/05/03 19:54:58 andreas Exp $
 library: itime-test
 executable: itime-test
 unique-id-base: 732

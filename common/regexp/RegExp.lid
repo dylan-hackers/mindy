@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/RegExp.lid,v 1.3 1997/05/09 22:19:43 ram Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/RegExp.lid,v 1.1 1998/05/03 19:55:02 andreas Exp $
 library: Regular-expressions
 unique-id-base: 1400
 unit-prefix: regexp

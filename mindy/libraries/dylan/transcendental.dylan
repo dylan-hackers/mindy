@@ -1,6 +1,6 @@
 module: %Transcendental
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/transcendental.dylan,v 1.3 1996/10/06 13:01:52 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/transcendental.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

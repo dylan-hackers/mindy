@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.lid,v 1.1 1997/05/31 01:20:15 ram Exp $
+rcs-header: $Header: /scm/cvs/src/demos/hello-world/hello-world.lid,v 1.1 1998/05/03 19:55:59 andreas Exp $
 library: hello-world
 executable: hello-world
 unit-prefix: hw

@@ -2,7 +2,7 @@ module: itime-test
 author: David Watson, Nick Kramer
 synopsis: Test for the internal-time library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/itime-test.dylan,v 1.2 1996/08/07 14:50:59 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/itime-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

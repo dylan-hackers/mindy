@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/version.c,v 1.4 1996/05/26 22:20:02 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/version.c,v 1.1 1998/05/03 19:55:09 andreas Exp $
 *
 * This file contains the version.
 *

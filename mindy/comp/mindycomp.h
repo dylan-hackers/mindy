@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.12 1996/05/11 21:32:06 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.h,v 1.1 1998/05/03 19:55:11 andreas Exp $
 *
 \**********************************************************************/
 

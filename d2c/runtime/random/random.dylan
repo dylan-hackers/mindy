@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.9 1997/05/12 22:19:35 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.1 1998/05/03 19:55:41 andreas Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 

@@ -1,5 +1,5 @@
 module: 	heap
-rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/heap.dylan,v 1.1 1996/02/17 16:51:59 nkramer Exp $
+rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/heap.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
 author: 	Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:	Provides <heap>, a popular data structure for priority queues.
 		The semantics are basically those of a sorted sequence, with

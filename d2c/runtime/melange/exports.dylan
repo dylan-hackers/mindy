@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/exports.dylan,v 1.6 1997/05/12 22:19:36 ram Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.1 1998/05/03 19:55:51 andreas Exp $
 
 //======================================================================
 //

@@ -1,5 +1,5 @@
 module: threads
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/semaphore.dylan,v 1.3 1994/06/27 17:10:32 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/semaphore.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

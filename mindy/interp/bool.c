@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
+* $Header: /scm/cvs/src/mindy/interp/bool.c,v 1.1 1998/05/03 19:55:11 andreas Exp $
 *
 * This file implements the booleans, #t and #f.
 *

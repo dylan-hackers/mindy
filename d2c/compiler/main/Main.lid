@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Main.lid,v 1.7 1996/08/22 11:47:34 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Main.lid,v 1.1 1998/05/03 19:55:33 andreas Exp $
 library: compiler-main
 unit-prefix: main
 unique-id-base: 12000

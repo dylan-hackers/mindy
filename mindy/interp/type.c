@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.28 1996/06/20 17:27:12 rgs Exp $
+* $Header: /scm/cvs/src/mindy/interp/type.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file implements the type system.
 *

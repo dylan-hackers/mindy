@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.18 1996/09/25 04:53:35 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/stretchy.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

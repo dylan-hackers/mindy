@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.7 1996/04/10 20:44:01 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/module.h,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 \**********************************************************************/
 

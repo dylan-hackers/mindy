@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.12 1996/02/23 21:54:33 wlott Exp $
+* $Header: /scm/cvs/src/mindy/comp/envanal.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file performs environment analysis.
 *

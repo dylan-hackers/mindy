@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.38 1997/02/13 13:05:52 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 * This file implements an interface to file descriptors.
 *

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.27 1996/10/23 14:38:47 wlott Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 * This file is the garbage collector.
 *

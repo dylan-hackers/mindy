@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.18 1997/05/12 22:19:48 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.1 1998/05/03 19:55:54 andreas Exp $
 
 //======================================================================
 //

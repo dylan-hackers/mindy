@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/coll-ext/CollExt.lid,v 1.2 1996/10/18 14:58:44 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/coll-ext/Attic/CollExt.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
 library: collection-extensions
 unique-id-base: 400
 unit-prefix: collext

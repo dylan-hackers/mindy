@@ -5,7 +5,7 @@ synopsis:   Contains the library and module definitions for the X-inspector
             library.
 copyright:  Copyright (C) 1996 Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.4 1996/08/10 21:30:25 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/inspector/x-library.dylan,v 1.1 1998/05/03 19:55:23 andreas Exp $
 
 //======================================================================
 //

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.31 1996/03/26 22:33:55 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/src.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
 *
 * This file implements the various nodes in the parse tree.
 *

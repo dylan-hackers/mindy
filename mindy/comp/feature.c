@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.10 1997/02/13 18:00:31 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/feature.c,v 1.1 1998/05/03 19:55:10 andreas Exp $
 *
 * This file handles conditional compilation
 *

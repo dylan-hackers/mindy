@@ -1,5 +1,5 @@
 module: threads
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.6 1996/02/17 15:12:29 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/multilock.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

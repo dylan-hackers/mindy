@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.11 1994/10/05 20:55:21 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/literal.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file implements the various kinds of literal constants.
 *

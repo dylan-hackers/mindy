@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.24 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.1 1998/05/03 19:55:06 andreas Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *

@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.10 1997/05/12 22:19:49 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tools/versioner/versioner.dylan,v 1.1 1998/05/03 19:55:55 andreas Exp $
 
 //======================================================================
 //

@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.21 1997/05/12 22:18:35 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 

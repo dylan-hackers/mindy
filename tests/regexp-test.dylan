@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the regexp library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.14 1996/08/10 21:42:02 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/tests/regexp-test.dylan,v 1.1 1998/05/03 19:54:59 andreas Exp $
 
 //======================================================================
 //

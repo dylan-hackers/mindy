@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.7 1997/02/13 12:52:30 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/interface.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
 
 //======================================================================
 //

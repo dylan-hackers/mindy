@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/craps/craps-exports.dylan,v 1.2 1997/05/12 22:19:39 ram Exp $
+rcs-header: $Header: /scm/cvs/src/demos/craps/craps-exports.dylan,v 1.1 1998/05/03 19:56:01 andreas Exp $
 module: dylan-user
 
 //======================================================================

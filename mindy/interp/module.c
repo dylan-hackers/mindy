@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.28 1997/01/16 15:15:28 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/module.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file implements the module system.
 *

@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.7 1996/12/05 11:23:24 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
 
 
 ///======================================================================

@@ -2,7 +2,7 @@ module: matrix-test
 author: David Watson, Nick Kramer
 synopsis: Test for the matrix library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/matrix-test.dylan,v 1.2 1996/08/07 14:52:25 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/matrix-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

@@ -1,0 +1,154 @@
+typedef union {
+    struct _nothing *nothing;
+    struct token *token;
+    struct body *body;
+    struct constituent *constituent;
+    struct expr *expr;
+    struct bindings *bindings;
+    struct param_list *param_list;
+    struct param *param;
+    struct keyword_param *keyword_param;
+    struct id *id;
+    struct local_methods *local_methods;
+    struct method *method;
+    struct binop_series *binop_series;
+    struct binop *binop;
+    struct literal *literal;
+    struct arglist *arglist;
+    struct argument *argument;
+    struct plist *plist;
+    struct return_type_list *return_type_list;
+    struct literal_list *literal_list;
+    struct block_epilog *block_epilog;
+    struct condition_body *condition_body;
+    struct incomplete_condition_body *incomplete_condition_body;
+    struct condition_clause *condition_clause;
+    struct for_header *for_header;
+    struct exception_clauses *exception_clauses;
+    struct exception_clause *exception_clause;
+    struct for_clause *for_clause;
+    struct to_part *to_part;
+    struct superclass_list *superclass_list;
+    struct class_guts *class_guts;
+    struct slot_spec *slot_spec;
+    struct initarg_spec *initarg_spec;
+    boolean bool;
+    struct inherited_spec *inherited_spec;
+    enum slot_allocation slot_allocation;
+    struct gf_suffix *gf_suffix;
+    flags_t flags;
+    struct else_part *else_part;
+
+    struct defnamespace_constituent *defnamespace_constituent;
+    struct variable_names *variable_names;
+    struct use_clause *use_clause;
+    struct use_options *use_options;
+    struct use_option *use_option;
+    struct import_option *import_option;
+    struct renamings *renamings;
+} YYSTYPE;
+#define	HEADER_KEY	258
+#define	HEADER_VAL	259
+#define	HEADER_END	260
+#define	BOGUS	261
+#define	SYMBOL	262
+#define	KEYWORD	263
+#define	SYMBOL_LITERAL	264
+#define	SHARP_T	265
+#define	SHARP_F	266
+#define	STRING	267
+#define	CHARACTER	268
+#define	INTEGER	269
+#define	FLOAT	270
+#define	BINARY_OPERATOR	271
+#define	LPAREN	272
+#define	RPAREN	273
+#define	COMMA	274
+#define	DOT	275
+#define	SEMI	276
+#define	LBRACKET	277
+#define	RBRACKET	278
+#define	LBRACE	279
+#define	RBRACE	280
+#define	COLON_COLON	281
+#define	MINUS	282
+#define	TILDE	283
+#define	EQUAL	284
+#define	EQUAL_EQUAL	285
+#define	ARROW	286
+#define	SHARP_PAREN	287
+#define	SHARP_BRACKET	288
+#define	NEXT	289
+#define	REST	290
+#define	KEY	291
+#define	ALL_KEYS	292
+#define	ABOVE	293
+#define	ABSTRACT	294
+#define	DBEGIN	295
+#define	BELOW	296
+#define	BLOCK	297
+#define	BY	298
+#define	CASE	299
+#define	CLASS	300
+#define	CLEANUP	301
+#define	CONCRETE	302
+#define	CONSTANT	303
+#define	DEFINE	304
+#define	DOMAIN	305
+#define	EACH_SUBCLASS	306
+#define	ELSE	307
+#define	ELSEIF	308
+#define	END	309
+#define	EXCEPTION	310
+#define	FINALLY	311
+#define	FOR	312
+#define	FREE	313
+#define	FROM	314
+#define	FUNCTION	315
+#define	GENERIC	316
+#define	HANDLER	317
+#define	IF	318
+#define	IN	319
+#define	INHERITED	320
+#define	INLINE	321
+#define	INSTANCE	322
+#define	KEYED_BY	323
+#define	KEYWORD_RESERVED_WORD	324
+#define	LET	325
+#define	LOCAL	326
+#define	METHOD	327
+#define	OPEN	328
+#define	OTHERWISE	329
+#define	PRIMARY	330
+#define	REQUIRED	331
+#define	SEALED	332
+#define	SELECT	333
+#define	SLOT	334
+#define	THEN	335
+#define	TO	336
+#define	UNLESS	337
+#define	UNTIL	338
+#define	USING	339
+#define	VARIABLE	340
+#define	VIRTUAL	341
+#define	WHILE	342
+#define	MODULE	343
+#define	LIBRARY	344
+#define	EXPORT	345
+#define	CREATE	346
+#define	USE	347
+#define	ALL	348
+#define	PREFIX_KEYWORD	349
+#define	IMPORT_KEYWORD	350
+#define	EXCLUDE_KEYWORD	351
+#define	EXPORT_KEYWORD	352
+#define	RENAME_KEYWORD	353
+#define	UNTIL_KEYWORD	354
+#define	WHILE_KEYWORD	355
+#define	FEATURE_IF	356
+#define	FEATURE_ELSE_IF	357
+#define	FEATURE_ELSE	358
+#define	FEATURE_ENDIF	359
+
+
+extern YYSTYPE yylval;

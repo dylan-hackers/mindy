@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dup.c,v 1.6 1994/10/05 20:54:30 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/dup.c,v 1.1 1998/05/03 19:55:06 andreas Exp $
 *
 * This file duplicates parts of the parse tree.
 *

@@ -4,7 +4,7 @@ synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.5 1996/10/14 18:14:55 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/match.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
 
 //======================================================================
 //

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.10 1994/11/29 06:41:29 wlott Exp $
+* $Header: /scm/cvs/src/mindy/interp/error.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 * This file implements the stuff to signal errors from C code.
 *

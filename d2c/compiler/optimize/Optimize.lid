@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/Optimize.lid,v 1.4 1996/05/01 12:24:33 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Optimize.lid,v 1.1 1998/05/03 19:55:34 andreas Exp $
 library: compiler-optimize
 unit-prefix: optimize
 unique-id-base: 11250

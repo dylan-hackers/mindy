@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams
 synopsis: Efficient buffered versions of the reading conveience functions.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/stream-reading-buf.dylan,v 1.3 1996/09/15 15:51:19 nkramer Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading-buf.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 copyright: See below.
 
 //======================================================================

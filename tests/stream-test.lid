@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/stream-test.lid,v 1.1 1996/08/07 15:10:41 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/stream-test.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
 library: stream-test
 executable: stream-test
 unique-id-base: 732

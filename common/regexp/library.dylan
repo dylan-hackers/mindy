@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the Regular
             Expressions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/library.dylan,v 1.1 1996/08/10 21:26:38 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/library.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
 
 //======================================================================
 //

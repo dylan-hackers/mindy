@@ -1,5 +1,5 @@
 module: representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/rep.dylan,v 1.5 1997/05/12 22:18:47 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/rep.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 

@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.7 1997/02/25 17:02:43 rgs Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.1 1998/05/03 19:55:51 andreas Exp $
 
 //======================================================================
 //

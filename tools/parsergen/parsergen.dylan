@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.6 1997/05/12 22:19:49 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.1 1998/05/03 19:55:56 andreas Exp $
 
 //======================================================================
 //

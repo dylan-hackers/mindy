@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.17 1996/03/07 17:44:01 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/vec.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file implements vectors.
 *

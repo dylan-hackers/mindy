@@ -28,7 +28,7 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-stdlib.h,v 1.1 1994/10/05 20:49:21 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-stdlib.h,v 1.1 1998/05/03 19:55:19 andreas Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STDLIB

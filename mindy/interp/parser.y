@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.11 1997/04/29 17:01:59 ram Exp $
+* $Header: /scm/cvs/src/mindy/interp/parser.y,v 1.1 1998/05/03 19:55:18 andreas Exp $
 *
 * This file is the parser for the debugger.
 *

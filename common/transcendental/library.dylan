@@ -1,7 +1,7 @@
 module: Dylan-User
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Definition of the Transcendental library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/library.dylan,v 1.4 1997/02/04 14:39:55 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/transcendental/library.dylan,v 1.1 1998/05/03 19:55:06 andreas Exp $
 
 //======================================================================
 //

@@ -2,7 +2,7 @@ module: table-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the table-extensions library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1.3 1996/08/07 15:13:13 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/table-ext-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

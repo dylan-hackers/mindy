@@ -1,6 +1,6 @@
 module:	    %Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.29 1996/07/16 18:00:08 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/table.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 

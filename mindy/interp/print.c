@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.15 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/print.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file implements the printer framework.
 *

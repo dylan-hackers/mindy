@@ -2,7 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.8 1996/09/04 16:47:34 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
 
 //======================================================================
 //

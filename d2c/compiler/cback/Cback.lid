@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/Cback.lid,v 1.2 1996/02/02 11:19:35 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/Cback.lid,v 1.1 1998/05/03 19:55:32 andreas Exp $
 library: compiler-cback
 unit-prefix: cback
 unique-id-base: 10750

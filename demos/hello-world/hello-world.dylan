@@ -1,5 +1,5 @@
 module: Hello-World
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.6 1997/05/31 01:20:15 ram Exp $
+rcs-header: $Header: /scm/cvs/src/demos/hello-world/hello-world.dylan,v 1.1 1998/05/03 19:55:59 andreas Exp $
 
 // This is the canonical ``hello, world'' demo.
 //

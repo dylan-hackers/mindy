@@ -1,6 +1,6 @@
 module: System
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/system.dylan,v 1.1 1996/03/19 23:51:35 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/system.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/Makegen,v 1.2 1997/06/01 22:41:17 ram Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.1 1998/05/03 19:54:57 andreas Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##

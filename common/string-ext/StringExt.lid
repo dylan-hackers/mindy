@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/StringExt.lid,v 1.2 1996/08/10 20:22:50 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/StringExt.lid,v 1.1 1998/05/03 19:55:04 andreas Exp $
 library: String-extensions
 unique-id-base: 654
 unit-prefix: stringext

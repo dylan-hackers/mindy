@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.56 1997/05/12 22:18:49 ram Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
 
 //======================================================================
 //

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/solaris-c-decl.lid,v 1.1 1997/02/26 13:47:22 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/solaris-c-decl.lid,v 1.1 1998/05/03 19:55:54 andreas Exp $
 library: melange-c
 unit-prefix: cdecl
 unique-id-base: 10000

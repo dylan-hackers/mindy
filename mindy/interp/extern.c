@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.11 1996/10/06 12:57:22 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/extern.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file provides support for manipulating native C pointers.
 *

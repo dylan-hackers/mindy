@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.16 1996/02/23 21:54:33 wlott Exp $
+* $Header: /scm/cvs/src/mindy/comp/print.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.7 1996/03/08 21:31:45 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/free.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file frees parts of the parse tree.
 *

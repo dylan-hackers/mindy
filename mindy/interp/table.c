@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.18 1997/01/16 15:15:33 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/table.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining

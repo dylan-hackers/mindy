@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.17 1997/05/09 22:47:42 ram Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.1 1998/05/03 19:55:18 andreas Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##

@@ -5,7 +5,7 @@ synopsis: This implements search and replace facilities, which is
           and substring-search.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replacement.dylan,v 1.3 1997/02/13 12:52:39 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/do-replacement.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 
 //======================================================================
 //

@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.24 1997/05/12 22:18:29 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 

@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.23 1996/05/08 15:58:34 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file is the lexical analizer.
 *

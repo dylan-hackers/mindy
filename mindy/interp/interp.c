@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.22 1996/11/11 13:26:17 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.1 1998/05/03 19:55:14 andreas Exp $
 *
 * This file implements the actual byte interpreter.
 *

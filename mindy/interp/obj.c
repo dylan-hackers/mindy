@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.12 1996/02/02 01:52:32 wlott Exp $
+* $Header: /scm/cvs/src/mindy/interp/obj.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file contains <object>.
 *

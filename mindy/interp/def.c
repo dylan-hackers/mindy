@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.16 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/def.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
 *
 * This file implements the stuff to install definitions.
 *

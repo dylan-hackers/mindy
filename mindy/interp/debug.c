@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.51 1996/08/21 10:03:21 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
 *
 * This file implements the debugger.
 *

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.lid,v 1.2 1995/11/14 15:45:03 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.lid,v 1.1 1998/05/03 19:55:33 andreas Exp $
 library: dylan
 unique-id-base: 0
 

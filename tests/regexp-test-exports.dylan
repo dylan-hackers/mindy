@@ -1,5 +1,5 @@
 module: Dylan-User
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test-exports.dylan,v 1.3 1997/05/12 22:18:25 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tests/regexp-test-exports.dylan,v 1.1 1998/05/03 19:54:59 andreas Exp $
 
 //======================================================================
 //

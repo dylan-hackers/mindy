@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/dig/hp-dig.lid,v 1.2 1996/09/13 10:02:07 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/dig/hp-dig.lid,v 1.1 1998/05/03 19:55:51 andreas Exp $
 library: d2c-gnu
 unit-prefix: dig
 unique-id-base: 5000

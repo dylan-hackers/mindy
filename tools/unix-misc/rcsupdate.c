@@ -1,6 +1,6 @@
 /* rcsupdate: utility to update a tree of RCS files.
 
-$Header: /home/housel/work/rcs/gd/src/tools/unix-misc/rcsupdate.c,v 1.1 1996/09/15 16:33:05 nkramer Exp $
+$Header: /scm/cvs/src/tools/unix-misc/rcsupdate.c,v 1.1 1998/05/03 19:55:58 andreas Exp $
 
 */
 #include <stdlib.h>

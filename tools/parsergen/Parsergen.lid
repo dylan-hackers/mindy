@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/Parsergen.lid,v 1.1 1996/09/19 09:48:03 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/tools/parsergen/Parsergen.lid,v 1.1 1998/05/03 19:55:56 andreas Exp $
 library: parsergen
 unit-prefix: parsergen
 unique-id-base: 5000

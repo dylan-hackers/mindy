@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.7 1996/04/25 18:24:12 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/inspector/x-inspector.dylan,v 1.1 1998/05/03 19:55:23 andreas Exp $
 
 //======================================================================
 //

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.27 1996/07/16 18:00:39 wlott Exp $
+* $Header: /scm/cvs/src/mindy/comp/expand.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file does source-to-source expansions.
 *

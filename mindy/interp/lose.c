@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lose.c,v 1.4 1994/10/05 21:03:54 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/lose.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file contains lose, the interal flame-out routine.
 *

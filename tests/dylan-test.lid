@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/dylan-test.lid,v 1.1 1996/08/07 14:48:51 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/dylan-test.lid,v 1.1 1998/05/03 19:54:58 andreas Exp $
 library: dylan-test
 executable: dylan-test
 unique-id-base: 732

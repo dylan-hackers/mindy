@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.14 1996/09/15 15:57:16 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/misc.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.11 1997/05/31 01:14:42 ram Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/ext.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

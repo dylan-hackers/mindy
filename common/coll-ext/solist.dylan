@@ -1,5 +1,5 @@
 module: 	self-organizing-list
-rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/solist.dylan,v 1.4 1996/07/12 13:36:27 dwatson Exp $
+rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/solist.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
 author: 	Robert Stockton (rgs@cs.cmu.edu)
 synopsis:	Provides "self-organizing lists".  These explicit key
 		collections provide roughly the semantics of hash tables, but

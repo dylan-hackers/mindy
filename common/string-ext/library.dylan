@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.6 1996/10/18 14:59:13 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/library.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 
 //======================================================================
 //

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.23 1997/06/02 12:11:32 ram Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/Attic/gen-makefile,v 1.1 1998/05/03 19:55:56 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #

@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.46 1996/08/22 09:58:31 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.1 1998/05/03 19:55:14 andreas Exp $
 *
 * This file implements instances and user defined classes.
 *

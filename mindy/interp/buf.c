@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.19 1996/11/13 02:47:33 wlott Exp $
+* $Header: /scm/cvs/src/mindy/interp/buf.c,v 1.1 1998/05/03 19:55:11 andreas Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *

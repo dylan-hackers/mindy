@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/library-demo/fact.dylan,v 1.2 1997/05/12 22:19:37 ram Exp $
+rcs-header: $Header: /scm/cvs/src/demos/library-demo/fact.dylan,v 1.1 1998/05/03 19:56:01 andreas Exp $
 module: fact
 
 //======================================================================

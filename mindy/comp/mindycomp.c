@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.15 1996/10/06 12:58:23 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
 *
 * This file is the main driver.
 *

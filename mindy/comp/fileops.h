@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.14 1997/05/20 11:29:58 ram Exp $
+* $Header: /scm/cvs/src/mindy/comp/fileops.h,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file defines the various file opcodes.
 *

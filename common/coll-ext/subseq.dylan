@@ -1,5 +1,5 @@
 module:       subseq
-rcs-header:   $Header: /home/housel/work/rcs/gd/src/common/coll-ext/subseq.dylan,v 1.1 1996/02/17 16:52:45 nkramer Exp $
+rcs-header:   $Header: /scm/cvs/src/common/coll-ext/Attic/subseq.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
 Author:       Robert Stockton (rgs@cs.cmu.edu)
 synopsis:     Provides "subsequences", which represent an aliased reference to
               some part of an existing sequence.  These are analogous to

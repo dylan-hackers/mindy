@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.7 1995/09/14 19:24:49 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/brkpt.c,v 1.1 1998/05/03 19:55:11 andreas Exp $
 *
 * This file implements breakpoints.
 *

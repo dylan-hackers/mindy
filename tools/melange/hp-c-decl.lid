@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/hp-c-decl.lid,v 1.2 1997/01/27 01:42:10 rgs Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/hp-c-decl.lid,v 1.1 1998/05/03 19:55:53 andreas Exp $
 library: melange-c
 unit-prefix: cdecl
 unique-id-base: 10000

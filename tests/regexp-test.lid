@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.lid,v 1.2 1996/08/10 21:42:02 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/tests/regexp-test.lid,v 1.1 1998/05/03 19:54:57 andreas Exp $
 library: regexp-test
 executable: regexp-test
 unique-id-base: 732

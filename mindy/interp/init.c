@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.16 1996/04/10 20:43:16 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/init.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 * This file initializes everything else.
 *

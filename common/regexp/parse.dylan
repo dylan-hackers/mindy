@@ -2,7 +2,7 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.5 1997/01/16 14:59:00 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/regexp/Attic/parse.dylan,v 1.1 1998/05/03 19:55:02 andreas Exp $
 
 //======================================================================
 //

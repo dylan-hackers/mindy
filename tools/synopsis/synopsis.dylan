@@ -1,6 +1,6 @@
 module: synopsis
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.5 1997/05/12 22:19:52 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tools/synopsis/synopsis.dylan,v 1.1 1998/05/03 19:55:57 andreas Exp $
 
 //======================================================================
 //

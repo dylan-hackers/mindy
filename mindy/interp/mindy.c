@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.17 1996/10/06 12:57:16 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file starts everything going.
 *

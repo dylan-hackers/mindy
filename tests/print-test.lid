@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.lid,v 1.1 1996/08/07 14:54:45 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/print-test.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
 library: print-test
 executable: print-test
 unique-id-base: 732

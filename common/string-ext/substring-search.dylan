@@ -9,7 +9,7 @@ synopsis:	Provides a small assortment of specialized operations for
 		collection-extensions)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.4 1996/11/16 15:07:31 rgs Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/substring-search.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 
 //======================================================================
 //

@@ -2,7 +2,7 @@ module: Test
 author: David Watson, dwatson@cmu.edu
 synopsis: Code to generate the day-of-week table in time.dylan
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/dow-table.dylan,v 1.1 1996/07/23 16:02:41 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/common/time/dow-table.dylan,v 1.1 1998/05/03 19:55:05 andreas Exp $
  
 //======================================================================
 //

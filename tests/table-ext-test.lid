@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.lid,v 1.1 1996/08/07 15:14:01 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/table-ext-test.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
 library: table-ext-test
 executable: table-ext-test
 unique-id-base: 732

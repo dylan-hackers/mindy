@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.20 1996/07/23 09:58:21 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/deque.dylan,v 1.1 1998/05/03 19:55:20 andreas Exp $
 
 //======================================================================
 //

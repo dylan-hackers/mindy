@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/Parser.lid,v 1.5 1996/03/27 23:55:45 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/Parser.lid,v 1.1 1998/05/03 19:55:28 andreas Exp $
 library: compiler-parser
 unit-prefix: parser
 unique-id-base: 10500

@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.14 1996/12/05 14:01:57 nkramer Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.1 1998/05/03 19:55:41 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>

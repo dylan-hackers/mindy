@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/Convert.lid,v 1.1 1996/03/17 00:57:25 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/Convert.lid,v 1.1 1998/05/03 19:55:36 andreas Exp $
 library: compiler-convert
 unit-prefix: convert
 unique-id-base: 11000

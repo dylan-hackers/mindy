@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.6 1995/07/11 12:18:11 wlott Exp $
+* $Header: /scm/cvs/src/mindy/comp/info.c,v 1.1 1998/05/03 19:55:07 andreas Exp $
 *
 * This file maintains info about builtin/magic functions/names.
 *

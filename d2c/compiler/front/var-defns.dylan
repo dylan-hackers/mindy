@@ -1,5 +1,5 @@
 module: variable-definitions
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/var-defns.dylan,v 1.5 1997/05/12 22:18:34 ram Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/front/var-defns.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
 
 
 //======================================================================

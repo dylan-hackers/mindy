@@ -1,7 +1,7 @@
 module: Dylan-User
 author: David Watson (dwatson@cmu.edu)
 synopsis: Definition of the Format-Out library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format-out/library.dylan,v 1.2 1996/07/15 18:05:50 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/common/format-out/library.dylan,v 1.1 1998/05/03 19:55:01 andreas Exp $
 
 //======================================================================
 //

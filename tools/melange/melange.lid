@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/melange.lid,v 1.1 1996/06/15 15:42:13 rgs Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/melange.lid,v 1.1 1998/05/03 19:55:54 andreas Exp $
 library: melange
 unit-prefix: ffi
 unique-id-base: 12000

@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.7 1995/01/30 14:02:57 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/cmp.dylan,v 1.1 1998/05/03 19:55:20 andreas Exp $
 
 //======================================================================
 //

@@ -2,7 +2,7 @@ module:   character-type
 author:   Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.5 1997/01/16 15:15:56 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/character-type.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
 
 //======================================================================
 //

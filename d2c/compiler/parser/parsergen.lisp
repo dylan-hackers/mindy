@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.6 1996/03/21 00:17:27 wlott Exp $")
+  "$Header: /scm/cvs/src/d2c/compiler/parser/parsergen.lisp,v 1.1 1998/05/03 19:55:28 andreas Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;

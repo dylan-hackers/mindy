@@ -2,7 +2,7 @@ module: format-out-test
 author: David Watson, Nick Kramer
 synopsis: Test for the format-out library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-out-test.dylan,v 1.3 1996/08/07 14:49:31 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/format-out-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

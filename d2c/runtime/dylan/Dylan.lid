@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.16 1997/05/09 23:04:08 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.1 1998/05/03 19:55:38 andreas Exp $
 library: Dylan
 unique-id-base: 0
 

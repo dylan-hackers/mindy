@@ -1,7 +1,7 @@
 
 		Known Deficiencies in the D2C Compiler.
 
-$Header: /home/housel/work/rcs/gd/src/d2c/compiler/Deficiencies.txt,v 1.3 1996/06/18 14:25:35 ram Exp $
+$Header: /scm/cvs/src/d2c/compiler/Deficiencies.txt,v 1.1 1998/05/03 19:55:27 andreas Exp $
 
 
 The special syntax for aref, element, and singleton is supposed to

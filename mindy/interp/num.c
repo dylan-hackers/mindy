@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.31 1996/10/06 12:57:18 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/num.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file implements numbers.
 *

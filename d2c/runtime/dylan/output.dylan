@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.13 1997/05/31 01:16:11 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.1 1998/05/03 19:55:38 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera

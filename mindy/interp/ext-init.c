@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.9 1995/09/13 23:35:38 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/ext-init.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file does whatever.
 *

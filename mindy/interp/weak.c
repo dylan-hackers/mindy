@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.9 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/weak.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file implements weak pointers.
 *

@@ -1,7 +1,7 @@
 /* rcs-wrapper.c */
 
 /* Author: Nick Kramer
-   RCS-header: $Header: /home/housel/work/rcs/gd/src/tools/win32-misc/rcs-wrapper.c,v 1.3 1997/03/04 18:46:35 nkramer Exp $
+   RCS-header: $Header: /scm/cvs/src/tools/win32-misc/rcs-wrapper.c,v 1.1 1998/05/03 19:55:55 andreas Exp $
 
    This is a replacement for rcs-wrapper.perl.  I've had to rewrite it
    in C in order to avoid having to play quoting games with the shell

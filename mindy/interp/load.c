@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.38 1997/05/31 01:13:34 ram Exp $
+* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.1 1998/05/03 19:55:18 andreas Exp $
 *
 * This file implements the loader.
 *

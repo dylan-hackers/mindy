@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/random-test.lid,v 1.1 1996/08/07 14:56:39 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/random-test.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
 library: random-test
 executable: random-test
 unique-id-base: 732

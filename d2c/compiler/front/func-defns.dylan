@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.10 1997/05/12 22:18:34 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 

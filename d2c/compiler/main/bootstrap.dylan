@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.59 1997/05/12 22:19:01 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Attic/bootstrap.dylan,v 1.1 1998/05/03 19:55:33 andreas Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 

@@ -1,5 +1,5 @@
 module:		dylan-user
-rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/library.dylan,v 1.1 1996/02/17 16:52:17 nkramer Exp $
+rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/library.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
 
 //======================================================================
 //

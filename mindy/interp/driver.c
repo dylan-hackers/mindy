@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.24 1996/08/21 10:04:06 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
 *
 * Main driver routines for mindy.
 *

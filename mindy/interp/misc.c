@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.23 1996/07/29 18:27:40 dwatson Exp $
+* $Header: /scm/cvs/src/mindy/interp/misc.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.

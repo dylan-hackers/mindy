@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.5 1995/09/14 19:24:49 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/driver.h,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 \**********************************************************************/
 

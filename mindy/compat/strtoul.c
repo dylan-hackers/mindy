@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Header: /home/housel/work/rcs/gd/src/mindy/compat/strtoul.c,v 1.1 1994/10/05 20:51:38 nkramer Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /scm/cvs/src/mindy/compat/strtoul.c,v 1.1 1998/05/03 19:55:19 andreas Exp $ SPRITE (Berkeley)";
 #endif /* not lint */
 
 #include <ctype.h>

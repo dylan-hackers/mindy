@@ -12,7 +12,7 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-unistd.h,v 1.2 1995/04/04 16:46:51 nkramer Exp $
+ * $Header: /scm/cvs/src/mindy/compat/std-unistd.h,v 1.1 1998/05/03 19:55:19 andreas Exp $
  */
 
 #ifndef _UNISTD

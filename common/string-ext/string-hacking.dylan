@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Random functionality for working with strings
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/string-hacking.dylan,v 1.4 1996/07/12 16:46:28 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/string-hacking.dylan,v 1.1 1998/05/03 19:55:05 andreas Exp $
 
 //======================================================================
 //

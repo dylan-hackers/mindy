@@ -1,0 +1,6 @@
+&makegen_include("../common-Makegen");
+
+do emit_library_rule(
+    'CollExt', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
+    'install'
+);

@@ -1,4 +1,4 @@
- # $Id: alpha_mach_dep.s,v 1.1 1996/02/09 16:03:19 wlott Exp $
+ # $Id: alpha_mach_dep.s,v 1.1 1998/05/03 19:55:49 andreas Exp $
 
 # define call_push(x)    lda   $16, 0(x);    jsr   $26, GC_push_one
 

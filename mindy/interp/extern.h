@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.h,v 1.4 1995/06/12 01:06:17 rgs Exp $
+* $Header: /scm/cvs/src/mindy/interp/extern.h,v 1.1 1998/05/03 19:55:17 andreas Exp $
 *
 * This file exports definitions for support of raw C pointers.
 *

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.44 1996/03/07 17:42:57 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/func.c,v 1.1 1998/05/03 19:55:13 andreas Exp $
 *
 * This file implements functions.
 *

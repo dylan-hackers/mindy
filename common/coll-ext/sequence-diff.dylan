@@ -1,6 +1,6 @@
 module: Sequence-diff
 author: Nick Kramer (nkramer@cs.cmu.edu)
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/coll-ext/sequence-diff.dylan,v 1.3 1997/05/12 22:18:26 ram Exp $
+RCS-header: $Header: /scm/cvs/src/common/coll-ext/Attic/sequence-diff.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
 
 //======================================================================
 //

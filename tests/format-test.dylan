@@ -2,7 +2,7 @@ module: format-test
 author: David Watson, Nick Kramer
 synopsis: Test for the format library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-test.dylan,v 1.2 1996/08/07 15:18:22 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/format-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

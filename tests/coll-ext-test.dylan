@@ -2,7 +2,7 @@ module: coll-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the collection-extensions library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/coll-ext-test.dylan,v 1.2 1996/08/07 14:44:01 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/coll-ext-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

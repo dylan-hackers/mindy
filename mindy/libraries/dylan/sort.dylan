@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.11 1996/03/07 18:21:35 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/sort.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
 
 //======================================================================
 //

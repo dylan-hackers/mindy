@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.8 1996/03/07 17:41:03 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/coll.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
 *
 * This file implements the collection framework.
 *

@@ -2,7 +2,7 @@ module:     Dylan-User
 author:     Russell Schaaf (rsbe@andrew.cmu.edu)
 synopsis:   This file defines the Gwydion matrix operations library.
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/library.dylan,v 1.2 1996/05/05 21:04:10 rsbe Exp $
+rcs-header: $Header: /scm/cvs/src/common/matrix/library.dylan,v 1.1 1998/05/03 19:55:01 andreas Exp $
 
 //======================================================================
 //

@@ -33,8 +33,8 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.4 1995/04/04 16:46:19 nkramer Exp $ SPRITE (Berkeley)
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.4 1995/04/04 16:46:19 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.1 1998/05/03 19:55:18 andreas Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.1 1998/05/03 19:55:18 andreas Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_

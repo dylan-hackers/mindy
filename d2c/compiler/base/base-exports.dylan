@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.61 1997/05/12 22:18:51 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.1 1998/05/03 19:55:31 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 

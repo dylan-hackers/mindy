@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.23 1997/05/31 01:23:23 ram Exp $
+dnl     $Header: /scm/cvs/src/configure.in,v 1.1 1998/05/03 19:54:57 andreas Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy

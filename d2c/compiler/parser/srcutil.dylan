@@ -1,5 +1,5 @@
 Module: source-utilities
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/srcutil.dylan,v 1.2 1997/05/12 22:18:38 ram Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.1 1998/05/03 19:55:29 andreas Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/StreamExt.lid,v 1.2 1996/09/19 14:16:39 nkramer Exp $
+rcs-header: $Header: /scm/cvs/src/common/stream-ext/StreamExt.lid,v 1.1 1998/05/03 19:55:03 andreas Exp $
 library: Stream-extensions
 unique-id-base: 1030
 unit-prefix: streamext

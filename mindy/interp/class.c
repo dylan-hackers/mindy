@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.15 1996/02/14 00:21:26 nkramer Exp $
+* $Header: /scm/cvs/src/mindy/interp/class.c,v 1.1 1998/05/03 19:55:12 andreas Exp $
 *
 * This file implements classes.
 *

@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.9 1996/09/15 15:51:12 nkramer Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
 
 //======================================================================
 //

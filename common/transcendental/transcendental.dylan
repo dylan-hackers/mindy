@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/transcendental/transcendental.dylan,v 1.2 1997/02/04 14:39:56 nkramer Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.1 1998/05/03 19:55:06 andreas Exp $
 copyright: See below.
 
 //======================================================================

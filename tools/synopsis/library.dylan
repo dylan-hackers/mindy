@@ -1,6 +1,6 @@
 module: dylan-user
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/library.dylan,v 1.3 1997/05/12 22:19:51 ram Exp $
+rcs-header: $Header: /scm/cvs/src/tools/synopsis/library.dylan,v 1.1 1998/05/03 19:55:57 andreas Exp $
 
 //======================================================================
 //

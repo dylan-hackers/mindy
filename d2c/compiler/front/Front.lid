@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/Front.lid,v 1.5 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/Front.lid,v 1.1 1998/05/03 19:55:28 andreas Exp $
 library: compiler-front
 unit-prefix: front
 unique-id-base: 10250

@@ -2,7 +2,7 @@ module: print-test
 author: David Watson, Nick Kramer
 synopsis: Test for the print library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.3 1997/02/02 13:49:57 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/tests/print-test.dylan,v 1.1 1998/05/03 19:54:58 andreas Exp $
 
 //======================================================================
 //

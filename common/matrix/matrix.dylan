@@ -2,7 +2,7 @@ module: Matrix
 author: Russ Schaaf (rsbe@cs.cmu.edu)
 synopsis: Matrix and other linear algebra functions
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/matrix.dylan,v 1.3 1996/07/18 12:49:29 dwatson Exp $
+rcs-header: $Header: /scm/cvs/src/common/matrix/matrix.dylan,v 1.1 1998/05/03 19:55:01 andreas Exp $
  
 //======================================================================
 //

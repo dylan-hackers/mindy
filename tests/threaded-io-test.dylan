@@ -4,7 +4,7 @@ synopsis:   Test out the thread features of Mindy by getting I/O on
             multiple streams.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.7 1996/07/30 19:37:50 bfw Exp $
+rcs-header: $Header: /scm/cvs/src/tests/threaded-io-test.dylan,v 1.1 1998/05/03 19:54:57 andreas Exp $
 
 //======================================================================
 //
