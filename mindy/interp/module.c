@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.8 1994/06/02 18:01:48 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.9 1994/06/16 22:10:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -209,7 +209,12 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     int len;
     char *origin;
     struct entry *old_entry = table_lookup(table, name);
-    struct entry *entry = (struct entry *)malloc(sizeof(struct entry));
+    struct entry *entry;
+
+    if (old_entry && old_entry->datum == datum)
+	return;
+
+    entry = (struct entry *)malloc(sizeof(struct entry));
 
     entry->name = name;
     entry->datum = datum;
@@ -775,35 +780,21 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 
     switch (var->variable.kind) {
       case var_Assumed:
-	var->variable.kind = kind;
+	if (kind != var_Method)
+	    var->variable.kind = kind;
 	break;
       case var_AssumedWriteable:
 	if (kind == var_Variable)
 	    var->variable.kind = var_Variable;
-	else
+	else if (kind != var_Method)
 	    error("attempt to change constant %= from module %=.",
 		  name, module->name);
 	break;
-      case var_GenericFunction:
+      default:
 	if (kind != var_Method)
 	    error("variable %= in module %= multiply defined.",
 		  name, module->name);
 	break;
-      case var_Method:
-	switch (kind) {
-	  case var_Method:
-	    break;
-	  case var_GenericFunction:
-	    var->variable.kind = var_GenericFunction;
-	    break;
-	  default:
-	    error("variable %= in module %= multiply defined.",
-		  name, module->name);
-	}
-	break;
-      default:
-	error("variable %= in module %= multiply defined.",
-	      name, module->name);
     }
 
     if (var->created) {
