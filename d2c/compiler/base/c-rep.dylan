@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.8 2001/12/24 13:34:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.9 2002/01/29 00:51:03 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -321,6 +321,8 @@ define method c-rep (c-type :: <symbol>) => rep :: false-or(<representation>);
     #"long-double" => *long-double-rep*;
     #"ptr" => *ptr-rep*;
     #"void" => #f;
+    otherwise =>
+      error("unknown c-rep %=", c-type);
   end;
 end method;
 
