@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.19 2003/02/04 21:50:55 andreas Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.20 2003/03/14 07:34:52 brent Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -32,8 +32,14 @@
 push(@compile_commands, 
    	sprintf($host_platform{'recursive_make_command'},
        	"../tools/parsergen", ""));
+push(@dbc_only_commands, 
+   	sprintf($host_platform{'recursive_make_command'},
+       	"../tools/parsergen", ""));
 # Melange is needed to compile the common libraries
 push(@compile_commands,
+    sprintf($host_platform{'recursive_make_command'},
+        "../tools/melange", ""));
+push(@dbc_only_commands,
     sprintf($host_platform{'recursive_make_command'},
         "../tools/melange", ""));
 &compile_subdirs(@post_melange_libraries_needed_to_bootstrap);
