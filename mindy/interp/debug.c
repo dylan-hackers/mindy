@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.43 1995/07/11 13:09:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.44 1995/09/14 19:25:25 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -294,7 +294,7 @@ static void kill_me(struct thread *thread, obj_t *vals)
     thread_kill(thread);
     restart_other_threads(NULL);
     set_thread(NULL);
-    pause(pause_DebuggerCommandFinished);
+    mindy_pause(pause_DebuggerCommandFinished);
 }
 
 static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
@@ -302,7 +302,7 @@ static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
     thread->sp = vals;
     thread_pop_escape(thread);
     restart_other_threads(thread);
-    pause(pause_DebuggerCommandFinished);
+    mindy_pause(pause_DebuggerCommandFinished);
 }
 
 static void validate_thread_and_frame()
@@ -1462,7 +1462,7 @@ static void maybe_return(struct thread *thread, obj_t *vals)
 	thread->sp = vals;
 	thread_pop_escape(thread);
 	thread->sp--;
-	pause(pause_DebuggerCommandFinished);
+	mindy_pause(pause_DebuggerCommandFinished);
     }
     else {
 	obj_t value_vec = vals[1];
@@ -1491,7 +1491,7 @@ static void maybe_return(struct thread *thread, obj_t *vals)
 	    do_return(thread, old_sp, old_sp);
 	else {
 	    do_return_setup(thread, old_sp, old_sp);
-	    pause(pause_DebuggerCommandFinished);
+	    mindy_pause(pause_DebuggerCommandFinished);
 	}
     }
 }
@@ -2499,13 +2499,22 @@ void invoke_debugger(enum pause_reason reason)
 	    } else
 	        set_interrupt_handler(blow_off_cmd);
 
+#ifndef HAVE_LIBREADLINE
 	    printf("mindy> ");
 	    fflush(stdout);
+#endif
 
 	    do_cmd(parse_command(stdin));
 
+#ifdef HAVE_LIBREADLINE
+	    if (yyeof()) {
+		printf("\n");
+	        quit_cmd(obj_Nil);
+	    }
+#else		
 	    if (feof(stdin))
 	        quit_cmd(obj_Nil);
+#endif
 	}
 
 	Continue = FALSE;
