@@ -1,0 +1,12 @@
+$CPPFLAGS = '-I$(SRCDIR)';
+
+if ($win32) {
+    $binary_name = 'lisp2dylan.exe';
+} else {
+    $binary_name = 'lisp2dylan';
+} 
+   
+push(@compile_dependencies, $binary_name);
+push(@files_to_clean, $binary_name);
+
+do emit_library_rule('lisp2dylan', '$(BUILDROOT)/force.timestamp', '');
