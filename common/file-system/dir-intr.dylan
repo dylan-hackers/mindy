@@ -450,6 +450,112 @@ define method lstat
   values(result-value);
 end method lstat;
 
+define functional class <DIR> (<statically-typed-pointer>) end;
+
+define sealed domain make (singleton(<DIR>));
+
+define sealed method DIR$dd-fd
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0);
+end method DIR$dd-fd;
+
+define sealed method DIR$dd-fd-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 0) := value;
+  value;
+end method DIR$dd-fd-setter;
+
+define sealed method DIR$dd-loc
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 4);
+end method DIR$dd-loc;
+
+define sealed method DIR$dd-loc-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 4) := value;
+  value;
+end method DIR$dd-loc-setter;
+
+define sealed method DIR$dd-size
+    (ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 8);
+end method DIR$dd-size;
+
+define sealed method DIR$dd-size-setter
+    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
+  signed-long-at(ptr, offset: 8) := value;
+  value;
+end method DIR$dd-size-setter;
+
+define sealed method DIR$dd-buf
+    (ptr :: <DIR>) => (result :: <anonymous-9>);
+  pointer-at(ptr, offset: 12, class: <anonymous-9>);
+end method DIR$dd-buf;
+
+define sealed method DIR$dd-buf-setter
+    (value :: <anonymous-9>, ptr :: <DIR>) => (result :: <anonymous-9>);
+  pointer-at(ptr, offset: 12, class: <anonymous-9>) := value;
+  value;
+end method DIR$dd-buf-setter;
+
+define method pointer-value (value :: <DIR>, #key index = 0) => (result :: <DIR>);
+  value + index * 16;
+end method pointer-value;
+
+define method content-size (value :: subclass(<DIR>)) => (result :: <integer>);
+  16;
+end method content-size;
+
+define class <virtual-DIR> (<object>)
+  slot c-type :: <DIR>, required-init-keyword: c-type:;
+  constant virtual slot dd-fd :: <integer>;
+  constant virtual slot dd-loc :: <integer>;
+  constant virtual slot dd-size :: <integer>;
+  constant virtual slot dd-buf :: <anonymous-9>;
+end class <virtual-DIR>;
+
+define method c-struct-size(of == <virtual-DIR>)
+ => (ans :: <integer>);
+  content-size(<DIR>)
+end method c-struct-size;
+
+define method dd-fd (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-fd(struct.c-type)
+end method dd-fd;
+
+define method dd-loc (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-loc(struct.c-type)
+end method dd-loc;
+
+define method dd-size (struct :: <virtual-DIR>)
+ => (ans :: <integer>);
+  DIR$dd-size(struct.c-type)
+end method dd-size;
+
+define method dd-buf (struct :: <virtual-DIR>)
+ => (ans :: <anonymous-9>);
+  DIR$dd-buf(struct.c-type)
+end method dd-buf;
+
+define method opendir
+    (arg1 :: <anonymous-9>)
+ => (result :: <DIR>);
+  let result-value
+    = call-out("opendir", ptr:, ptr: (arg1).raw-value);
+  let result-value = make(<DIR>, pointer: result-value);
+  values(result-value);
+end method opendir;
+
+define method closedir
+    (arg1 :: <DIR>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("closedir", int:, ptr: (arg1).raw-value);
+  values(result-value);
+end method closedir;
+
 define functional class <anonymous-63> (<anonymous-9>, <c-vector>) end class;
 
 define sealed domain make (singleton(<anonymous-63>));
@@ -541,95 +647,6 @@ define method d-name (struct :: <virtual-dirent>)
   dirent$d-name(struct.c-type)
 end method d-name;
 
-define functional class <DIR> (<statically-typed-pointer>) end;
-
-define sealed domain make (singleton(<DIR>));
-
-define sealed method DIR$dd-fd
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 0);
-end method DIR$dd-fd;
-
-define sealed method DIR$dd-fd-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 0) := value;
-  value;
-end method DIR$dd-fd-setter;
-
-define sealed method DIR$dd-loc
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 4);
-end method DIR$dd-loc;
-
-define sealed method DIR$dd-loc-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 4) := value;
-  value;
-end method DIR$dd-loc-setter;
-
-define sealed method DIR$dd-size
-    (ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 8);
-end method DIR$dd-size;
-
-define sealed method DIR$dd-size-setter
-    (value :: <integer>, ptr :: <DIR>) => (result :: <integer>);
-  signed-long-at(ptr, offset: 8) := value;
-  value;
-end method DIR$dd-size-setter;
-
-define sealed method DIR$dd-buf
-    (ptr :: <DIR>) => (result :: <anonymous-9>);
-  pointer-at(ptr, offset: 12, class: <anonymous-9>);
-end method DIR$dd-buf;
-
-define sealed method DIR$dd-buf-setter
-    (value :: <anonymous-9>, ptr :: <DIR>) => (result :: <anonymous-9>);
-  pointer-at(ptr, offset: 12, class: <anonymous-9>) := value;
-  value;
-end method DIR$dd-buf-setter;
-
-define method pointer-value (value :: <DIR>, #key index = 0) => (result :: <DIR>);
-  value + index * 16;
-end method pointer-value;
-
-define method content-size (value :: subclass(<DIR>)) => (result :: <integer>);
-  16;
-end method content-size;
-
-define class <virtual-DIR> (<object>)
-  slot c-type :: <DIR>, required-init-keyword: c-type:;
-  constant virtual slot dd-fd :: <integer>;
-  constant virtual slot dd-loc :: <integer>;
-  constant virtual slot dd-size :: <integer>;
-  constant virtual slot dd-buf :: <anonymous-9>;
-end class <virtual-DIR>;
-
-define method c-struct-size(of == <virtual-DIR>)
- => (ans :: <integer>);
-  content-size(<DIR>)
-end method c-struct-size;
-
-define method dd-fd (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-fd(struct.c-type)
-end method dd-fd;
-
-define method dd-loc (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-loc(struct.c-type)
-end method dd-loc;
-
-define method dd-size (struct :: <virtual-DIR>)
- => (ans :: <integer>);
-  DIR$dd-size(struct.c-type)
-end method dd-size;
-
-define method dd-buf (struct :: <virtual-DIR>)
- => (ans :: <anonymous-9>);
-  DIR$dd-buf(struct.c-type)
-end method dd-buf;
-
 define method readdir
     (arg1 :: <DIR>)
  => (result :: <dirent>);
@@ -638,21 +655,4 @@ define method readdir
   let result-value = make(<dirent>, pointer: result-value);
   values(result-value);
 end method readdir;
-
-define method opendir
-    (arg1 :: <anonymous-9>)
- => (result :: <DIR>);
-  let result-value
-    = call-out("opendir", ptr:, ptr: (arg1).raw-value);
-  let result-value = make(<DIR>, pointer: result-value);
-  values(result-value);
-end method opendir;
-
-define method closedir
-    (arg1 :: <DIR>)
- => (result :: <integer>);
-  let result-value
-    = call-out("closedir", int:, ptr: (arg1).raw-value);
-  values(result-value);
-end method closedir;
 

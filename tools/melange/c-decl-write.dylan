@@ -531,7 +531,9 @@ define method write-declaration
 		      start: find-key(big, method(char) char = '$' end) + 1);
       end;
 
-      format(stream, "define class %s (<object>)\n  slot c-type :: %s;\n",
+      format(stream, 
+	     "define class %s (<object>)\n  slot c-type :: %s,"
+             " required-init-keyword: c-type:;\n",
 	     virt-class,
 	     decl.dylan-name);
       for(x in decl.coalesced-members)
