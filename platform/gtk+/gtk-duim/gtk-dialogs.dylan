@@ -332,99 +332,99 @@ end method make-exit-buttons;
 
 
 /// Choose file
-/*---
+
+define variable *gtk-choose-file-locator* :: false-or(<string>) = #f;
+
 define sealed method do-choose-file
     (framem :: <gtk-frame-manager>, owner :: <sheet>, 
      direction :: one-of(#"input", #"output"),
-     #key title :: false-or(<string>), documentation :: false-or(<string>), exit-boxes,
-	  if-exists, if-does-not-exist = #"ask",
-	  default :: false-or(<string>), default-type = $unsupplied,
-	  filters, default-filter,
+     #key title :: false-or(<string>),
+          documentation :: false-or(<string>),
+          exit-boxes,
+	  if-exists,
+          if-does-not-exist = #"ask",
+	  default :: false-or(<string>),
+          default-type = $unsupplied,
+	  filters,
+          default-filter,
      #all-keys)
  => (locator :: false-or(<string>), filter :: false-or(<integer>))
   ignore(if-exists);
-  let _port     = port(owner);
-  let x-display = _port.%display;
   let parent-widget = mirror-widget(sheet-mirror(owner));
-  let (visual, colormap, depth) = xt/widget-visual-specs(parent-widget);
-  let (directory, pattern) = gtk-directory-and-pattern(default, default-type);
-  let shell-resources
-    = vector(visual:, visual,
-	     colormap:, colormap,
-	     depth:, depth);
-  let resources
-    = vector(directory:, directory,
-	     pattern:, pattern,
-	     dialog-title:, title, 
-	     dialog-style:, xm/$XmDIALOG-FULL-APPLICATION-MODAL,
-	     default-position:, #f);
-
-  when (file-label)
-    resources
-      := concatenate!(resources, vector(file-list-label-string:, file-label))
-  end;
-  when (directory-label)
-    resources
-      := concatenate!(resources, vector(dir-list-label-string:, directory-label))
-  end;
+  // let (directory, pattern)
+  //   = gtk-directory-and-pattern(default, default-type);
   let (x, y)
     = begin
-	let (x, y) = sheet-size(owner);
-	let (x, y) = values(floor/(x, 2), floor/(y, 2));
-	with-device-coordinates (sheet-device-transform(owner), x, y)
-	  values(x, y)
-	end
+        let (x, y) = sheet-size(owner);
+        let (x, y) = values(floor/(x, 2), floor/(y, 2));
+        with-device-coordinates (sheet-device-transform(owner), x, y)
+          values(x, y)
+        end
       end;
-  let shell  = #f;
-  let dialog = #f;
-  let result = #f;
-  let client-data  = #f;
-  block ()
-    local method waiter () result end method,
-	  method setter (value) result := value end method;
-    shell  := xt/XtCreatePopupShell("ChooseFileShell", xm/<dialog-shell>, parent-widget,
-				   resources: shell-resources);
-    dialog := xm/XmCreateFileSelectionBox(shell, "ChooseFile",
-					  resources: resources);
-    client-data := make(<callback-client-data>,
-			owner-widget: parent-widget,
-			x-display: x-display,
-			pointer-x: x,
-			pointer-y: y,
-			setter: setter);
-    xt/XtAddCallback(dialog, "okCallback",     choose-file-button-press-callback, client-data);
-    xt/XtAddCallback(dialog, "cancelCallback", choose-file-button-press-callback, client-data)
-    xt/XtUnmanageChild(xm/XmFileSelectionBoxGetChild(dialog, xm/$XmDIALOG-HELP-BUTTON))
-    xt/XtAddCallback(dialog, "mapCallback", notifier-map-callback, client-data);
-    xm/XmAddWmProtocolCallback(xt/XtParent(dialog), "wmDeleteWindow", notifier-delete-window-callback, setter);
-    xt/XtManageChild(dialog);
-    //---*** CLIM does this: '(mp:process-wait "Waiting for CLIM:SELECT-FILE" #'waiter)'
-    if (result == #"cancel")
-      values(#f, #f)
-    else
-      values(result, #f)
-    end
-  cleanup
-    when (dialog)
-      x/XSync(x-display, #f);
-      xt/XtUnmanageChild(dialog);
-      xt/XtDestroyWidget(shell)
+
+  let title = title | "Open";
+  let widget =
+    with-c-string (c-string = title)
+      GTK-FILE-SELECTION(gtk-file-selection-new(c-string));
     end;
-  end
+
+  if(default)
+    with-c-string(c-string = default)
+      gtk-file-selection-set-filename(widget, c-string);
+    end;
+  end if;
+  
+
+  gtk-signal-connect*(GTK-OBJECT(widget.ok-button-value),
+                      "clicked", file-selection-ok-clicked-callback,
+                      widget);
+  gtk-signal-connect*(GTK-OBJECT(widget.cancel-button-value),
+                      "clicked", file-selection-cancel-clicked-callback,
+                      widget);
+  gtk-signal-connect*(GTK-OBJECT(widget),
+                      "destroy", file-selection-destroy-callback, widget);
+
+  *gtk-choose-file-locator* := #f;
+  gtk-window-set-modal(GTK-WINDOW(widget), $true);
+  gtk-widget-show(widget);
+  gtk-main();
+
+  values(*gtk-choose-file-locator*, #f);
 end method do-choose-file;
 
-define xm/xm-callback-function choose-file-button-press-callback
-    (widget, client-data :: <callback-client-data>, call-data :: xm/<XmFileSelectionBoxCallbackStruct>)
-  ignore(widget);
-  select (call-data.xm/reason-value)
-    $XmCR-OK  =>
-      let filename = xm/XmStringGetLToR(call-data.xm/value-value);
-      client-data.%setter(filename);
-    otherwise =>
-      client-data.%setter(#"cancel");
-  end
-end xm/xm-callback-function choose-file-button-press-callback;
+define widget-callback file-selection-ok-clicked-callback
+  = handle-file-selection-ok-clicked;
 
+define function handle-file-selection-ok-clicked
+    (widget :: <GtkWidget*>, data :: <gpointer>)
+ => ();
+  let file-selection = GTK-FILE-SELECTION(data);
+  *gtk-choose-file-locator*
+    := as(<byte-string>, gtk-file-selection-get-filename(file-selection));
+  gtk-widget-destroy(GTK-WIDGET(file-selection));
+end function;
+
+define widget-callback file-selection-cancel-clicked-callback
+  = handle-file-selection-cancel-clicked;
+
+define function handle-file-selection-cancel-clicked
+    (widget :: <GtkWidget*>, data :: <gpointer>)
+ => ();
+  gtk-widget-destroy(GTK-WIDGET(data));
+end function;
+
+define widget-callback file-selection-destroy-callback
+  = handle-file-selection-destroy;
+
+define function handle-file-selection-destroy
+    (widget :: <GtkWidget*>, data :: <gpointer>)
+ => ();
+  ignore(widget);
+  ignore(data);
+  gtk-main-quit();
+end function;
+
+/*
 define function gtk-directory-and-pattern
     (default :: false-or(<string>), default-type)
  => (directory :: false-or(<string>), pattern :: false-or(<string>))
@@ -433,25 +433,26 @@ define function gtk-directory-and-pattern
   else
     let type
       = select (type by instance?)
-	  <string> =>
-	    type;
-	  <symbol> =>
-	    gethash($file-type-table, type) | as-lowercase(as(<string>, type));
-	  otherwise =>
-	    "";
-	end;
+          <string> =>
+            type;
+          <symbol> =>
+            gethash($file-type-table, type) | as-lowercase(as(<string>, type));
+          otherwise =>
+            "";
+        end;
     //---*** USE PROPER LOCATORS FUNCTIONS
     let default    = as(<locator>, default);
-    let directory  = DIRECTORY-NAMESTRING(DEFAULT);
-    let wild-name? = (LOCATOR-NAME(DEFAULT) = "*");
-    let wild-type? = (LOCATOR-TYPE(DEFAULT) = "*");
+    let directory  = directory-namestring(default);
+    let wild-name? = (locator-name(default) = "*");
+    let wild-type? = (locator-type(default) = "*");
     let pattern    = when (wild-name? ~== wild-type?)
-		       as(<string>, make-locator(name: LOCATOR-NAME(DEFAULT),
-						 type: LOCATOR-type(DEFAULT)))
-		     end;
+                       as(<string>, make-locator(name: locator-name(default),
+                                                 type: locator-type(default)))
+                     end;
     values(directory, pattern)
   end
 end function gtk-directory-and-pattern;
+*/
 
 //---*** This should be in Locators or File-System
 define table $file-type-table :: <table>
@@ -470,84 +471,59 @@ define table $file-type-table :: <table>
  
 /// Choose directory
 
-define variable $Shell-IMalloc :: false-or(<C-Interface>) = #f;
-
-define function get-shell-IMalloc () => (IMalloc :: false-or(<C-Interface>))
-  unless ($Shell-IMalloc)
-    let (result, IMalloc) = SHGetMalloc();
-    when (result = $NOERROR)
-      $Shell-IMalloc := IMalloc
-    end
-  end;
-  $Shell-IMalloc
-end function get-shell-IMalloc;
-
 define sealed method do-choose-directory
     (framem :: <gtk-frame-manager>, owner :: <sheet>,
-     #key title :: false-or(<string>), documentation :: false-or(<string>), exit-boxes,
+     #key title :: false-or(<string>),
+          documentation :: false-or(<string>),
+          exit-boxes,
 	  default :: false-or(<string>),
      #all-keys)
  => (locator :: false-or(<string>))
-  let locator = #f;
-  let shell-IMalloc = get-shell-IMalloc();
-  when (shell-IMalloc)
-    let handle = dialog-owner-handle(owner);
-    // "C:\" and "C:\WINDOWS" are valid paths, but "C:\WINDOWS\"
-    // is not.  If we pass in an invalid path, the dialog silently
-    // ignores us.  For simplicity, just strip off any trailing '\\'.
-    when (default)
-      let _size = size(default);
-      let _end  = if (element(default, _size - 1, default: #f) = '\\') _size - 1
-		  else _size end;
-      default := copy-sequence(default, end: _end)
+  let parent-widget = mirror-widget(sheet-mirror(owner));
+  // let (directory, pattern)
+  //   = gtk-directory-and-pattern(default, default-type);
+  let (x, y)
+    = begin
+        let (x, y) = sheet-size(owner);
+        let (x, y) = values(floor/(x, 2), floor/(y, 2));
+        with-device-coordinates (sheet-device-transform(owner), x, y)
+          values(x, y)
+        end
+      end;
+
+  let title = title | "Choose Directory";
+  let widget =
+    with-c-string (c-string = title)
+      GTK-FILE-SELECTION(gtk-file-selection-new(c-string));
     end;
-    with-stack-structure (bi :: <LPBROWSEINFO>)
-      with-stack-structure (buffer :: <C-string>, size: $MAX-PATH)
-	title   := if (title) as(<C-string>, copy-sequence(title))
-		   else $NULL-string end;
-        default := if (default) as(<C-string>, default)
-		   else $NULL-string end;
-	bi.hwndOwner-value := handle;
-	bi.pidlRoot-value  := null-pointer(<LPCITEMIDLIST>);
-	bi.pszDisplayName-value := buffer;
-	bi.lpszTitle-value := title;
-	bi.ulFlags-value   := $BIF-RETURNONLYFSDIRS;
-	bi.lpfn-value      := browse-for-folder;	// see below
-	bi.lParam-value    := pointer-address(default);
-	bi.iImage2-value   := 0;
-	let pidlBrowse = SHBrowseForFolder(bi);
-	when (SHGetPathFromIDList(pidlBrowse, buffer))
-	  locator := as(<byte-string>, buffer)
-	end;
-	IMalloc/Free(shell-IMalloc, pidlBrowse); 
-        unless (default = $NULL-string) destroy(default) end;
-        unless (title   = $NULL-string) destroy(title)   end;
-      end
-    end
-  end;
-  locator
+
+  if(default)
+    with-c-string(c-string = default)
+      gtk-file-selection-set-filename(widget, c-string);
+    end;
+  end if;
+  
+  gtk-signal-connect*(GTK-OBJECT(widget.ok-button-value),
+                      "clicked", file-selection-ok-clicked-callback,
+                      widget);
+  gtk-signal-connect*(GTK-OBJECT(widget.cancel-button-value),
+                      "clicked", file-selection-cancel-clicked-callback,
+                      widget);
+  gtk-signal-connect*(GTK-OBJECT(widget),
+                      "destroy", file-selection-destroy-callback, widget);
+  gtk-widget-hide(widget.file-list-value.parent-value);
+
+  *gtk-choose-file-locator* := #f;
+  gtk-window-set-modal(GTK-WINDOW(widget), $true);
+  gtk-widget-show(widget);
+  gtk-main();
+
+  values(*gtk-choose-file-locator*, #f);
 end method do-choose-directory;
-
-// This callback allows the dialog to open with its selection set to
-// the 'default:' passed in to 'do-choose-directory' 
-define sealed method browse-for-folder-function
-    (handle :: <HWND>,		// window handle
-     message :: <message-type>,	// type of message
-     lParam  :: <wparam-type>,	// additional information
-     lpData  :: <lparam-type>)	// additional information
- => (result :: <lresult-type>)
-  ignore(lParam);
-  when (message = $BFFM-INITIALIZED)
-    PostMessage(handle, $BFFM-SETSELECTION, 1, lpData)
-  end;
-  0
-end method browse-for-folder-function;
-
-define callback browse-for-folder :: <LPBFFCALLBACK> = browse-for-folder-function;
 
  
 /// Color chooser
-
+/*
 define variable *custom-colors* :: <LPCOLORREF>
     = make(<LPCOLORREF>, element-count: 16);
 
