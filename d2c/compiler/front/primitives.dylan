@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.2 1998/10/05 03:04:18 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -279,7 +279,8 @@ define-primitive
 
 define-primitive
   (#"call-out",
-   #(#"<string>", #"<symbol>", rest:, #"<object>"),
+   #(#(union:, #"<string>", #"<raw-pointer>"),
+     #"<symbol>", rest:, #"<object>"),
    #(values:, rest:, #"<object>"));
 
 define-primitive
