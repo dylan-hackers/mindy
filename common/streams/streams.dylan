@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Creating streams, Querying, Positionable Stream Protocol, Locking.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.7 2002/12/10 00:35:03 bruce Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/streams.dylan,v 1.8 2003/04/11 20:12:19 andreas Exp $
 
 //======================================================================
 //
@@ -573,7 +573,7 @@ end method stream-contents;
 //// with-open-file
 //// Sorry, no macros in mindy
 #if (~mindy)
-define macro with-open-file // I _must_ be overlooking this one!
+define macro with-open-file
   {
     with-open-file (?stream:variable = ?namestring:expression,
 		    #rest ?parameters:expression)
@@ -593,6 +593,16 @@ define macro with-open-file // I _must_ be overlooking this one!
       end block
     }
 end macro with-open-file;
+
+define macro with-output-to-string
+  { with-output-to-string(?s:variable) ?:body end }
+    => { block ()
+           let ?s = make(<string-stream>);
+           ?body;
+           ?s.stream-contents
+         end }
+end macro with-output-to-string;
+
 #endif
 
 

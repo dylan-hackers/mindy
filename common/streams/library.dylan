@@ -2,7 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.7 2002/01/15 20:58:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.8 2003/04/11 20:12:19 andreas Exp $
 
 //======================================================================
 //
@@ -216,6 +216,7 @@ define module streams
     //
 #if (~mindy)
     with-open-file,
+    with-output-to-string,
 #endif
 
     // Locking
