@@ -1,11 +1,11 @@
 module: source
-rcs-header: $Header: 
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-source.dylan,v 1.2 2002/04/18 23:11:38 gabor Exp $
 author: gabor@mac.com
 copyright: see below
 
 //======================================================================
 //
-// Copyright (c) 2000  Gwydion Dylan Maintainers
+// Copyright (c) 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -36,9 +36,9 @@ copyright: see below
 define class <cw-source-file> (<source-file>)
   //
   // The contents, already read in. Slot overrides GF contents.
-//  slot contents :: <file-contents>, required-init-keyword: buffer:;
-  slot contents :: <file-contents>, init-keyword: buffer:;
+  constant slot contents :: <file-contents>, required-init-keyword: buffer:;
 end;
 
+// when loading we want it to come back as a <source-file>
 add-make-dumper(#"source-file", *compiler-dispatcher*, <cw-source-file>,
-		list(full-file-name, name:, #f));
+		list(full-file-name, name:, #f), dumper-only: #t);
