@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.26 1995/04/16 23:34:03 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.27 1995/04/16 23:43:25 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -512,7 +512,9 @@ void init_fd_functions(void)
     define_constant("O_CREAT", make_fixnum(O_CREAT));
     define_constant("O_EXCL", make_fixnum(O_EXCL));
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
-    /* define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK)); */
+#ifndef WIN32
+    define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK));
+#endif
 
     /* This compendium of error numbers comes from Tcl. */
 #ifdef E2BIG
