@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.17 2002/04/06 12:45:55 gabor Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.18 2002/12/23 00:24:21 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,10 +34,6 @@ void real_main(int argc, char *argv[])
 
     /* Run all the top level initializations. */
     inits(sp, argc, argv);
-
-    /* exit(0) -- I would have thought this to be the default, but it
-       seems to be neccessary, at least on win32 */
-    exit(0);
 }
 
 descriptor_t *allocate_stack(void)

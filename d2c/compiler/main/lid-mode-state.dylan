@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.11 2002/12/20 23:24:46 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.12 2002/12/23 00:24:32 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -680,7 +680,7 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
    format(stream, "    argc = ccommand( &argv );\n");
 #endif
    format(stream, "    real_main(argc, argv);\n");
-   format(stream, "    return 0;\n");
+   format(stream, "    exit(0);\n");
    format(stream, "}\n");
  end if;
  close(stream);
