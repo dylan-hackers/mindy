@@ -1,8 +1,4 @@
 
-if (! $win32) {
-    die "Why are you running this on a computer that isn't running win32?\n";
-}
-
 # Wrapped RCS stuff
 do install_from_src('bin', 'rcs-wrapper.perl');
 do install_from_src('bin', 'ci.bat');
