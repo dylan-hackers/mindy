@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.49 2003/06/24 21:00:07 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.50 2003/10/03 22:49:26 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -600,9 +600,9 @@ define function new-local
     (file :: <file-state>,
      #key name :: <byte-string> = "L_",
      modifier :: <byte-string> = "anon",
-     wanted-rep :: false-or(<byte-string>) = #f,
-     dont-add? :: <boolean> = #f,
-     comment :: false-or(<byte-string>) = #f)
+     wanted-rep :: false-or(<byte-string>),
+     dont-add? :: <boolean>,
+     comment :: false-or(<byte-string>))
  => res :: <byte-string>;
   block (return)
     let result = stringify(name, modifier);
@@ -3028,12 +3028,21 @@ define method emit-assignment
      file :: <file-state>)
     => ();
   if (results)
-    let rep = variable-representation(results, file);
-    let (temps, source) = extract-operands(op, file, rep);
-    // bgh
-    // now-dammit was #f.  Should be passing the temps through
-    // for deliver-result for storage
-    deliver-result(results, source, rep, temps.size > 0, file);
+    if (~results.definer-next
+        & instance?(results, <ssa-variable>)
+        & instance?(op.depends-on.source-exp, <ssa-variable>))
+      // make sure the lhs gets the same backend info as the rhs
+      let assert-no-info-yet :: #f.singleton = results.info;
+      file.spew-pending-defines;
+      results.info := get-info-for(op.depends-on.source-exp, file);
+    else
+      let rep = variable-representation(results, file);
+      let (temps, source) = extract-operands(op, file, rep);
+      // bgh
+      // now-dammit was #f.  Should be passing the temps through
+      // for deliver-result for storage
+      deliver-result(results, source, rep, temps.size > 0, file);
+    end;
   end;
 end;
 
@@ -3219,7 +3228,7 @@ define method add-pending-define
   end for;
 end method add-pending-define;
 
-define method spew-pending-defines (file :: <file-state>) => ();
+define function spew-pending-defines (file :: <file-state>) => ();
   for (pending = file.file-pending-defines then pending.pending-next,
        while: pending)
     let (target, target-rep) = c-name-and-rep(pending.pending-var, file);
@@ -3227,7 +3236,7 @@ define method spew-pending-defines (file :: <file-state>) => ();
 	      file);
   end for;
   file.file-pending-defines := #f;
-end method spew-pending-defines;
+end function spew-pending-defines;
 
 
 // ref-leaf
