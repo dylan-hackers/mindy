@@ -1,4 +1,3 @@
-
 $D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
     . '-L../../runtime/dylan -L../../runtime/streams '
     . '-L../../runtime/standard-io '
@@ -7,46 +6,9 @@ $D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
     . '-L../../runtime/string-ext -L../../runtime/table-ext';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
-if ($stage2) {
-    push(@compile_dependencies, 'compiler-optimize.lib.du liboptimize.a');
-}
-else {
-    push(@compile_dependencies, 'optimizelib.dbc');
-    push(@files_to_clean, '*.dbc');
-    $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
-    print <<'EOF';
-
-.PHONY: d2c-compile
-
-d2c-compile: compiler-optimize.lib.du liboptimize.a
-
-MC = mindycomp
-MINDYFLAGS = -lcompiler-optimize
-MINDY = mindy
-
-%.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
-
-OBJS = \
-	optimize-exports.dbc \
-	optutil.dbc \
-	cheese.dbc \
-	fer-edit.dbc \
-	callopt.dbc \
-	xep.dbc \
-	tailcall.dbc \
-	funcopt.dbc \
-	primopt.dbc \
-	trans.dbc \
-	cse.dbc \
-	constraint.dbc \
-	typeinf.dbc
-
-optimizelib.dbc: ${OBJS}
-	cat $^ > $@
-
-EOF
-}
+do d2c_library("compiler-optimize", "optimize", 
+               "optimize-exports optutil cheese fer-edit callopt xep"
+               . " tailcall funcopt primopt trans cse constraint typeinf");
 
 do emit_library_rule(
     'Optimize', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
