@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.3 1996/03/17 00:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.4 1996/03/20 19:33:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,6 +34,7 @@ define module fragments
   use common;
 
   use utils;
+  use source;
   use tokens;
 
   export
