@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.4 1994/04/09 14:09:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.5 1994/04/10 21:11:41 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,6 +21,7 @@
 #include "src.h"
 #include "lexenv.h"
 #include "envanal.h"
+#include "sym.h"
 #include "lose.h"
 
 static void analize_expr(struct expr *expr, struct lexenv *lexenv);
@@ -130,6 +131,9 @@ static void analize_varref_expr(struct varref_expr *expr,
 
     expr->home = lexenv->method;
     expr->binding = binding;
+
+    if (binding == NULL && expr->var->symbol == symbol("next-method"))
+	warn(expr->var->line, "next-method not bound -- Mindy requires #next");
 }
 
 static void analize_literal_expr(struct literal_expr *expr,

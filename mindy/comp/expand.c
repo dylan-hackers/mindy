@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.6 1994/04/09 14:09:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.7 1994/04/10 21:11:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -706,8 +706,10 @@ static boolean expand_defconst_constituent(struct defconst_constituent **ptr,
 {
     if (ParseOnly)
 	expand_defconst_for_parse(*ptr);
-    else
+    else if (top_level)
 	expand_defconst_for_compile(*ptr);
+    else
+	error((*ptr)->line, "define constant not at top-level");
     return FALSE;
 }
 
@@ -727,8 +729,10 @@ static boolean expand_defvar_constituent(struct defvar_constituent **ptr,
 {
     if (ParseOnly)
 	expand_defvar_for_parse(*ptr);
-    else
+    else if (top_level)
 	expand_defvar_for_compile(*ptr);
+    else
+	error((*ptr)->line, "define variable not at top-level");
     return FALSE;
 }
 
@@ -771,8 +775,10 @@ static boolean expand_defmethod_constituent(struct defmethod_constituent **ptr,
 {
     if (ParseOnly)
 	expand_defmethod_for_parse(*ptr);
-    else
+    else if (top_level)
 	expand_defmethod_for_compile(*ptr);
+    else
+	error((*ptr)->method->line, "define method not at top-level");
     return FALSE;
 }
 
@@ -874,8 +880,10 @@ static boolean
 {
     if (ParseOnly)
 	expand_defgeneric_for_parse(*ptr);
-    else
+    else if (top_level)
 	expand_defgeneric_for_compile(*ptr);
+    else
+	error((*ptr)->name->line, "define generic not at top-level");
     return FALSE;
 }
 
@@ -939,23 +947,25 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 		prev = &slot->plist->head;
 		while ((prop = *prev) != NULL) {
 		    if (prop->keyword == getter || prop->keyword == setter) {
-			if (prop->expr->kind != expr_VARREF)
+			if (prop->expr->kind != expr_VARREF) {
 			    if (slot->name)
-				lose("Bogus %s in slot %s",
-				     prop->keyword->name,
-				     slot->name->symbol->name);
+				error(prop->line, "Bogus %s in slot %s",
+				      prop->keyword->name,
+				      slot->name->symbol->name);
 			    else
-				lose("Bogus %s in anonymous slot",
-				     prop->keyword->name);
+				error(prop->line, "Bogus %s in anonymous slot",
+				      prop->keyword->name);
+			    prev = &prop->next;
+			}
 			else {
 			    struct varref_expr *v = (void *)prop->expr;
 			    if (prop->keyword == getter)
 				slot->getter = v->var;
 			    else
 				slot->setter = v->var;
+			    *prev = prop->next;
+			    free(prop);
 			}
-			*prev = prop->next;
-			free(prop);
 		    }
 		    else
 			prev = &prop->next;
@@ -965,7 +975,8 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 	    /* Default the getter and setter. */
 	    if (slot->getter == NULL)
 		if (slot->name == NULL)
-		    lose("Must supply either the getter or the slot name");
+		    error(slot->line,
+			  "Must supply either the getter or the slot name");
 		else
 		    slot->getter = slot->name;
 	    if (slot->setter == NULL && slot->name != NULL) {
@@ -1048,8 +1059,10 @@ static boolean expand_defclass_constituent(struct defclass_constituent **ptr,
 {
     if (ParseOnly)
 	expand_defclass_for_parse(*ptr);
-    else
+    else if (top_level)
 	expand_defclass_for_compile(*ptr);
+    else
+	error((*ptr)->name->line, "define class not at top-level");
     return FALSE;
 }
 
@@ -1250,9 +1263,14 @@ static boolean expand_error_constituent(struct constituent **ptr)
 
 
 static boolean
-    expand_defnamespace_constituent(struct defnamespace_constituent **ptr)
+    expand_defnamespace_constituent(struct defnamespace_constituent **ptr,
+				    boolean top_level)
 {
-    expand_defnamespace(*ptr);
+    if (top_level)
+	expand_defnamespace(*ptr);
+    else
+	error((*ptr)->name->line, "define %s not at top-level",
+	      (*ptr)->kind == constituent_DEFMODULE ? "module" : "library");
     return FALSE;
 }
 
@@ -2075,8 +2093,13 @@ static boolean expand_call_expr(struct call_expr **ptr)
     struct call_expr *e = *ptr;
     struct argument *arg;
 
-    if (e->info && e->info->srctran)
-	return (*e->info->srctran)(ptr);
+    if (e->info && e->info->srctran) {
+	if (e->func->kind != expr_VARREF)
+	    lose("Source-transforming a call where the function "
+		 "isn't a varref?");
+	if ((*e->info->srctran)(ptr))
+	    return TRUE;
+    }
 
     expand_expr(&e->func);
     for (arg = e->args; arg != NULL; arg = arg->next)
@@ -2424,8 +2447,11 @@ static boolean srctran_assignment(struct expr **ptr)
     struct argument *lhs = e->args;
 
     /* Make sure there are only two arguments. */
-    if (lhs==NULL || lhs->next==NULL || lhs->next->next!=NULL)
+    if (lhs==NULL || lhs->next==NULL || lhs->next->next!=NULL) {
+	struct varref_expr *func = (struct varref_expr *)e->func;
+	error(func->var->line, ":= invoked with other than two arguments");
 	return FALSE;
+    }
 
     switch (lhs->expr->kind) {
       case expr_VARREF:
@@ -2438,6 +2464,10 @@ static boolean srctran_assignment(struct expr **ptr)
 	return srctran_dot_assignment(ptr);
 
       default:
+	{
+	    struct varref_expr *func = (struct varref_expr *)e->func;
+	    error(func->var->line, ":= applied to non-assignable expression.");
+	}
 	return FALSE;
     }
 }

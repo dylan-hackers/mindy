@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.8 1994/04/10 15:12:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.9 1994/04/10 21:11:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1057,8 +1057,12 @@ static void compile_binary_call(struct call_expr *call,
 	emit_op(component, op);
 	canonicalize_value(component, want);
     }
-    else
+    else {
+	struct varref_expr *func = (struct varref_expr *)call->func;
+	warn(func->var->line, "%s called with other than two arguments",
+	     func->var->symbol->name);
 	compile_call(call, component, want);
+    }
 }    
 
 static void compile_check_type_call(struct call_expr *call,
@@ -1152,8 +1156,10 @@ static void compile_values_call(struct call_expr *call,
 		compile_expr(args->expr, component, make_want(0, FALSE));
 	}
 	else {
-	    /* This is guarenteed to be an error, but we'll wait til */
-	    /* runtime to tell them about it. */
+	    struct varref_expr *func = (struct varref_expr *)call->func;
+	    warn(func->var->line, "%s called with zero arguments in a "
+		 "for-function context",
+		 func->var->symbol->name);
 	    emit_op(component, op_PUSH_FALSE);
 	    emit_op(component, op_CHECK_TYPE_FUNCTION);
 	}
