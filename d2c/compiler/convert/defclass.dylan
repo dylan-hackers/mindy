@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.58 1996/02/18 18:30:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.59 1996/02/21 02:46:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -135,10 +135,20 @@ define class <override-defn> (<object>)
 end;
 
 
+define class <init-function-definition> (<abstract-method-definition>)
+  slot init-func-defn-method-parse :: false-or(<method-parse>),
+    init-value: #f, init-keyword: method-parse:;
+end class <init-function-definition>;
+
+
 define class <define-class-tlf> (<simple-define-tlf>)
   //
   // Make the definition required.
   required keyword defn:;
+  //
+  // Stretchy vector of <init-function-definition>s.
+  slot tlf-init-function-defns :: <stretchy-vector>
+    = make(<stretchy-vector>);
 end;
 
 define method print-message
@@ -709,16 +719,23 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
     // Fill in the <override-info> with the init value.
     let info = override.override-defn-info;
     if (info)
-      if (override.override-defn-init-value)
+      if (override.override-defn-init-function)
+	let (ctv, change-to-init-value?)
+	  = maybe-define-init-function(override.override-defn-init-function, 
+				       override.override-defn-getter-name,
+				       tlf);
+	if (ctv)
+	  if (change-to-init-value?)
+	    info.override-init-function := #f;
+	    info.override-init-value := ctv;
+	  else
+	    info.override-init-function := ctv;
+	  end if;
+	end if;
+      elseif (override.override-defn-init-value)
 	let init-val = ct-eval(override.override-defn-init-value, #f);
 	if (init-val)
 	  info.override-init-value := init-val;
-	end;
-      end;
-      if (override.override-defn-init-function)
-	let init-val = ct-eval(override.override-defn-init-function, #f);
-	if (init-val)
-	  info.override-init-function := init-val;
 	end;
       end;
     end;
@@ -755,22 +772,26 @@ define method finalize-slot
   if (info)
     info.slot-type := slot-type;
 
-    if (slot.slot-defn-init-value)
+    if (slot.slot-defn-init-function)
+      let (ctv, change-to-init-value?)
+	= maybe-define-init-function(slot.slot-defn-init-function,
+				     slot.slot-defn-getter-name,
+				     tlf);
+      if (ctv)
+	if (change-to-init-value?)
+	  info.slot-init-function := #f;
+	  info.slot-init-value := ctv;
+	else
+	  info.slot-init-function := ctv;
+	end if;
+      end if;
+    elseif (slot.slot-defn-init-value)
       let init-val = ct-eval(slot.slot-defn-init-value, #f);
       if (init-val)
 	info.slot-init-value := init-val;
-      end;
-    elseif (slot.slot-defn-init-function)
-      let init-val = ct-eval(slot.slot-defn-init-function, #f);
-      if (init-val)
-	if (cinstance?(init-val, function-ctype()))
-	  info.slot-init-function := init-val;
-	else
-	  compiler-warning("Invalid init-function: %s", init-val);
-	end;
-      end;
-    end;
-  end;
+      end if;
+    end if;
+  end if;
 
   // Define the accessor methods.
   unless (slot.slot-defn-allocation == #"virtual")
@@ -833,6 +854,64 @@ define method finalize-slot
 	 end;
   end unless;
 end method finalize-slot;
+
+
+define method maybe-define-init-function
+    (expr :: <expression>, getter-name :: <basic-name>,
+     tlf :: <define-class-tlf>)
+    => (ctv :: false-or(<ct-value>), change-to-init-value? :: <boolean>);
+  let init-val = ct-eval(expr, #f);
+  if (init-val)
+    if (cinstance?(init-val, function-ctype()))
+      values(init-val, #f);
+    else
+      compiler-warning("Invalid init-function: %s", init-val);
+      values(#f, #f);
+    end if;
+  else
+    let method-ref = expand-until-method-ref(expr);
+    if (method-ref)
+      let method-parse = method-ref.method-ref-method;
+      let (signature, anything-non-constant?)
+	= compute-signature(method-parse.method-param-list,
+			    method-parse.method-returns);
+      if (anything-non-constant?)
+	values(#f, #f);
+      else
+	let body = method-parse.method-body;
+	let ctv = if (body.empty?)
+		    as(<ct-value>, #f);
+		  elseif (body.size == 1)
+		    ct-eval(body[0], #f);
+		  else
+		    #f;
+		  end if;
+	if (ctv
+	      & cinstance?(ctv,
+			   first(signature.returns.positional-types,
+				 default: signature.returns.rest-value-type)))
+	  // Change it to an init-value.
+	  values(ctv, #t);
+	else
+	  // Make a constant init-function definition.
+	  let name
+	    = make(<generated-name>,
+		   description:
+		     format-to-string("Init Function for %s", getter-name));
+	  let init-func-defn
+	    = make(<init-function-definition>, name: name,
+		   library: tlf.tlf-defn.defn-library,
+		   signature: signature,
+		   method-parse: method-parse);
+	  add!(tlf.tlf-init-function-defns, init-func-defn);
+	  values(init-func-defn.ct-value, #f);
+	end if;
+      end if;
+    else
+      values(#f, #f);
+    end if;
+  end if;
+end method maybe-define-init-function;
 
 
 // class-defn-mumble-function accessors.
@@ -982,6 +1061,13 @@ define method convert-top-level-form
     let policy = lexenv.lexenv-policy;
     let source = make(<source-location>);
     
+    for (init-func-defn in tlf.tlf-init-function-defns)
+      let meth = init-func-defn.init-func-defn-method-parse;
+      let name = init-func-defn.defn-name.generated-name-description;
+      fer-convert-method(tl-builder, meth, name, init-func-defn.ct-value,
+			 #"global", lexenv, lexenv);
+    end for;
+
     local
       method make-descriptors-leaf (builder, what, for-class)
 	let var = make-local-var(builder, symcat(what, "-descriptors"),
@@ -2428,3 +2514,7 @@ add-make-dumper(#"class-definition", *compiler-dispatcher*,
 		<local-class-definition>, $class-definition-slots,
 		dumper-only: #t);
 
+add-make-dumper(#"init-function-definition", *compiler-dispatcher*,
+		<init-function-definition>,
+		$abstract-method-definition-slots,
+		load-external: #t);
