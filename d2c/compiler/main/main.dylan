@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.59 2001/09/12 14:39:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.60 2001/09/13 19:54:47 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -391,7 +391,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
 
   let state
-      = if(lid-file.filename-extension = ".dylan"))
+      = if(lid-file.filename-extension = ".dylan")
           format(*standard-output*, "Entering single file mode.\n");
           force-output(*standard-output*);
           make(<single-file-mode-state>,
