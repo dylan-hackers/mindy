@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.38 1996/10/13 20:51:04 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.39 1997/01/13 03:12:11 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -148,7 +148,10 @@ define module Extensions
 
 	     // Misc other stuff.
 	     $not-supplied, ignore, functional-==, key-exists?, assert,
-	     exit
+	     exit, limited-collection-definer,
+	     limited-vector-class, element-type, %elem, %elem-setter,
+	     limited-sv-class, ssv-data, ssv-data-setter, lsv-data-type, 
+             lsv-fill
     },
     export: all;
 end;

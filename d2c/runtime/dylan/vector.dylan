@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.13 1996/04/18 23:35:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.14 1997/01/13 03:12:11 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -221,4 +221,95 @@ define sealed method as
   end;
   res;
 end;
+
+
+define open generic %elem (vec :: <vector>, index :: <integer>) 
+ => (result :: <object>);
+define open generic %elem-setter
+    (value :: <object>, vec :: <vector>, index :: <integer>) 
+ => (result :: <object>);
+
+define macro limited-vector-class
+  { limited-vector-class(?:name, ?element-type:expression, ?fill:expression) }
+    => { begin
+	   define sealed class ?name (<vector>)
+	     sealed slot %elem :: ?element-type,
+	       init-value: ?fill, init-keyword: fill:, sizer: size,
+	       size-init-value: 0, size-init-keyword: size:;
+	   end class;
+           define sealed domain make (singleton(?name));
+	   define sealed inline method element-type
+	       (class :: subclass(?name))
+	    => (type :: <type>, indefinite? :: <false>);
+	     values(?element-type, #f);
+	   end method element-type;
+           define sealed inline method element
+	       (vec :: ?name, index :: <integer>,
+		#key default = $not-supplied)
+	    => element :: <object>; // because of default:
+	     if (index >= 0 & index < vec.size)
+	       %elem(vec, index);
+	     elseif (default == $not-supplied)
+	       element-error(vec, index);
+	     else
+	       default;
+	     end;
+	   end;
+           define sealed inline method element-setter
+	       (new-value :: ?element-type, vec :: ?name,
+		index :: <integer>)
+	    => new-value :: ?element-type;
+	     if (index >= 0 & index < vec.size)
+	       %elem(vec, index) := new-value;
+	     else
+	       element-error(vec, index);
+	     end;
+	   end;
+           // This method is identical to the one in "array.dylan", except
+           // that it is more tightly specialized to a single sealed class.
+           // If you need to make a general change, you should probably grep
+           // for "outlined-iterator" and change all matching locations.
+           //
+           define sealed inline method forward-iteration-protocol (array :: ?name)
+	    => (initial-state :: <integer>,
+		limit :: <integer>,
+		next-state :: <function>,
+		finished-state? :: <function>,
+		current-key :: <function>,
+		current-element :: <function>,
+		current-element-setter :: <function>,
+		copy-state :: <function>);
+	     values(0,
+		    array.size,
+		    method (array :: ?name, state :: <integer>)
+		     => new-state :: <integer>;
+		      state + 1;
+		    end,
+		    method (array :: ?name, state :: <integer>,
+			    limit :: <integer>)
+		     => done? :: <boolean>;
+		      // We use >= instead of == so that the constraint propagation
+		      // stuff can tell that state is < limit if this returns #f.
+		      state >= limit;
+		    end,
+		    method (array :: ?name, state :: <integer>)
+		     => key :: <integer>;
+		      state;
+		    end,
+		    method (array :: ?name, state :: <integer>)
+		     => element :: ?element-type;
+		      element(array, state);
+		    end,
+		    method (new-value :: ?element-type, array :: ?name,
+			    state :: <integer>)
+		     => new-value :: ?element-type;
+		      element(array, state) := new-value;
+		    end,
+		    method (array :: ?name, state :: <integer>)
+		     => state-copy :: <integer>;
+		      state;
+		    end);
+	   end;
+         end; }
+end macro;
 
