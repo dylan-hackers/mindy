@@ -9,7 +9,7 @@ do compile_subdirs(
     'main'
 );
 
-do install('lib', 'targets.descr');
+do install_from_src('etc', "targets.descr");
 
 $stage2 || print <<'EOF';
 .PHONY: d2c-compile
