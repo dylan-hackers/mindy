@@ -225,9 +225,9 @@ int yylex(void)
 	    new_token();
 	    break;
 
-	  case FEATURE_END:
+	  case FEATURE_ENDIF:
 	    if (State == NULL)
-		error(line_count, "#end with no matching #if, ignoring");
+		error(line_count, "#endif with no matching #if, ignoring");
 	    else
 		pop_state();
 	    new_token();

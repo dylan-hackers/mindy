@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.22 1996/03/09 12:01:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.23 1996/05/08 15:58:34 nkramer Exp $
 *
 * This file is the lexical analizer.
 *
@@ -201,7 +201,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>"#if"			is(FEATURE_IF);
 <etc>"#elseif"			is(FEATURE_ELSE_IF);
 <etc>"#else"			is(FEATURE_ELSE);
-<etc>"#end"			is(FEATURE_END);
+<etc>"#endif"			is(FEATURE_ENDIF);
 
 <ini,key,val,etc>.		is(BOGUS);
 

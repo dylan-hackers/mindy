@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.31 1996/03/26 22:33:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.32 1996/05/08 15:58:34 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -214,7 +214,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> FEATURE_IF
 %token <token> FEATURE_ELSE_IF
 %token <token> FEATURE_ELSE
-%token <token> FEATURE_END
+%token <token> FEATURE_ENDIF
 
 %type <nothing> dylan_file dylan_headers header_list
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
