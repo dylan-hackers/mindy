@@ -69,6 +69,7 @@ end module;
 
 define module functional-extensions
   use dylan;
+  use Magic, import: {%element, %element-setter};
   use extensions, exclude: { position, assert };
   use common-extensions, import: { find-element };
   export without-bounds-checks, find-value, // assert already in common-extensions 

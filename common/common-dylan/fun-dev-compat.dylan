@@ -27,8 +27,9 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 // so we ignore this
 
 define macro without-bounds-checks
-    { without-range-checks ?:body end }
-     => { ?body }
+  { without-bounds-checks ?:body end }
+    => {let (element, element-setter) = values(%element, %element-setter);
+        ?body}
 end;
 
 
