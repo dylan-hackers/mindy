@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.19 1996/02/12 01:57:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.20 1996/02/16 03:41:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -175,6 +175,7 @@ define module od-format
     request-backpatch,
     resolve-forward-ref,
     <identity-preserving-mixin>,
+    defined-externally?,
     maybe-dump-reference,
     load-external-definition,
     add-make-dumper,
@@ -208,12 +209,13 @@ define module compile-time-values
   use od-format;
 
   export
-    <ct-value>, ct-value-heap-labels, ct-value-heap-labels-setter,
+    <ct-value>,
     <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <literal>, literal-value, <eql-literal>,
     <ct-not-supplied-marker>,
-    <literal-number>, <literal-real>, <literal-rational>, <literal-general-integer>,
-    <literal-integer>, <literal-extended-integer>, <literal-ratio>,
+    <literal-number>, <literal-real>, <literal-rational>,
+    <literal-general-integer>, <literal-integer>, <literal-extended-integer>,
+    <literal-ratio>,
     <literal-float>, <literal-single-float>, <literal-double-float>,
     <literal-extended-float>, <literal-symbol>, <literal-character>,
     <literal-boolean>, <literal-true>, <literal-false>,
@@ -224,7 +226,7 @@ define module compile-time-values
     <literal-vector>,
     <literal-simple-object-vector>,
     <literal-string>, concat-strings,
-    *compiler-dispatcher*;
+    *compiler-dispatcher*, merge-ctv-infos;
 end;
 
 define module source
