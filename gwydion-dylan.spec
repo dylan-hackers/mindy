@@ -22,7 +22,7 @@ Copyright: X-style
 Group: Development/Languages/Dylan
 Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-VERSION.tar.gz
 Source1: ftp://berlin.ccc.de/pub/gd/doc/gd20-html.tar.gz
-URL: http://www.randomhacks.com/dylan/
+URL: http://www.gwydiondylan.org/
 Packager: eric.kidd@pobox.com
 Prefix: /usr
 
@@ -36,7 +36,7 @@ Linux--and don't mind the inconveniences of d2c--these are the tools to
 use. If you prefer a mature development environment, try another language.
 
 For more infomration, see the Gwydion Dylan maintainers' web page at
-<http://www.randomhacks.com/dylan/>.
+<http://www.gwydiondylan.org/>.
 
 
 %package extras
@@ -63,10 +63,15 @@ Gwydion Dylan project. It compiles faster than d2c and includes much better
 debugging tools. Unfortunately, Mindy makes no attempt to run fast.
 
 Documentation for Mindy can be found in the main gwydion-dylan package, or
-on the web at <http://www.randomhacks.com/dylan/>.
+on the web at <http://www.gwydiondylan.org/>.
 
 
 %changelog
+
+* Thu Dec 29 1998 Eric Kidd <eric.kidd@pobox.com>
+  - Added prefix for gwydion-dylan-extras and mindy.
+  - Added mindycomp.1 to list of installed files.
+  - Updated URLs.
 
 * Thu Dec 24 1998 Eric Kidd <eric.kidd@pobox.com>
   - Added new man pages to RPMS.
