@@ -1,5 +1,5 @@
 module:      file-system
-rcs-header:  $Header: /scm/cvs/src/common/file-system/Attic/file-system.dylan,v 1.3 1999/04/22 17:08:01 tree Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/Attic/file-system.dylan,v 1.4 1999/04/24 00:08:01 andreas Exp $
 author:      Tom Emerson, tree@tiac.net
 copyright:   Copyright 1999 Thomas R. Emerson
 synopsis:    Implementation of the Harlequin Dylan 1.2 file-system library
@@ -83,7 +83,7 @@ define function rename-file(old-file :: <pathname>, new-file :: <pathname>,
 //  end if;
   let foo = native-rename-file(old-file, new-file);
   unless (foo = $success)
-    format-out("native-rename-file returned %=\n", foo);
+    // format-out("native-rename-file returned %=\n", foo);
     signal(make(<file-system-error>));
   end unless;
 end function rename-file;
