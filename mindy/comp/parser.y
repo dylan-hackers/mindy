@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.4 1994/03/31 13:04:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.5 1994/04/10 21:09:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -23,6 +23,7 @@
 #include "lexer.h"
 #include "literal.h"
 #include "src.h"
+#include "sym.h"
 
 struct token_list {
     int token;
@@ -248,8 +249,7 @@ static void pop_yacc_recoveries(int count);
 
 dylan_program:
 	{ push_yacc_recovery(SEMI); }
-	body	{ Program = $2; $$ = NULL;
-		  if (yynerrs > 0) YYABORT; }
+	body	{ Program = $2; $$ = NULL; }
 ;
 
 body:
@@ -280,13 +280,13 @@ defining_form:
 	DEFINE flags CLASS class_definition
 	{ free($1); free($3); $$ = set_class_flags($2, $4); }
     |	DEFINE CONSTANT bindings
-	{ free($1); free($2); $$ = make_define_constant($3); }
+	{ free($1); $$ = make_define_constant($2->line, $3); free($2); }
     |	DEFINE flags GENERIC generic_function_definition
 	{ free($1); free($3); $$ = set_generic_flags($2, $4); }
     |	DEFINE flags METHOD named_method
 	{ free($1); free($3); $$ = make_define_method($2, $4); }
     |	DEFINE VARIABLE bindings
-	{ free($1); free($2); $$ = make_define_variable($3); }
+	{ free($1); $$ = make_define_variable($2->line, $3); free($2); }
     |	DEFINE MODULE module_definition
 	{ free($1); free($2); $$ = $3; }
     |	DEFINE LIBRARY library_definition
@@ -660,8 +660,10 @@ class_guts:
 
 slot_spec:
 	flags allocation SLOT symbol_opt slot_type_opt property_list_opt
-	{ free($3);
-	  $$ = make_slot_spec($1, $2, $4 ? make_id($4) : NULL, $5, $6);
+	{
+	    int line = $3->line;
+	    free($3);
+	    $$ = make_slot_spec(line, $1, $2, $4 ? make_id($4) : NULL, $5, $6);
 	}
 ;
 
@@ -913,8 +915,9 @@ module_definition:
 	SYMBOL module_clauses_opt END module_opt symbol_opt
 	{ if ($5) {
 	      if (strcasecmp($1->chars, $5->chars) != 0) {
-		  yyerror("mismatched name");
-		  yynerrs++;
+		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
+			$5->chars, $1->chars);
+		  yacc_recover();
 	      }
 	      free($5);
 	  } 
@@ -1046,8 +1049,9 @@ library_definition:
 	SYMBOL library_clauses_opt END library_opt symbol_opt
 	{ if ($5) {
 	      if (strcasecmp($1->chars, $5->chars) != 0) {
-		  yyerror("mismatched name");
-		  yynerrs++;
+		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
+			$5->chars, $1->chars);
+		  yacc_recover();
 	      }
 	      free($5);
 	  } 
@@ -1100,23 +1104,27 @@ final_part_opt:	{ $$ = NULL; } | final_part { $$ = $1; } ;
 
 static void yyerror(char *msg)
 {
-  fprintf(stderr, "%s:%d: %s at or before `%s'\n", current_file,
-	  yylval.token->line, msg, yylval.token->chars);
-  yacc_recover();
+    if (yylval.token)
+	error(yylval.token->line, "%s at or before `%s'\n",
+	      msg, yylval.token->chars);
+    else
+	error(line_count, "%s at end-of-file\n", msg);
+    yacc_recover();
 }
 
 static boolean verify_symbol_aux(struct id *id, struct token *token)
 {
     if (token) {
-	struct id *other_id = make_id(token);
-	struct symbol *symbol = other_id->symbol;
+	int line = token->line;
 
-	free(other_id);
-
-	if (id->symbol != symbol) {
-	    yyerror("mismatched name");
+	if (strcasecmp(id->symbol->name, token->chars)) {
+	    error(line, "mismatched name, ``%s'' isn't ``%s''",
+		  token->chars, id->symbol->name);
+	    free(token);
 	    return TRUE;
 	}
+	else
+	    free(token);
     }
     return FALSE;
 }
