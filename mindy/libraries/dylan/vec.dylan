@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.3 1994/03/30 06:07:31 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.4 1994/04/14 16:21:07 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -109,3 +109,175 @@ define method \=(vec1 :: <vector>, vec2 :: <vector>)
 		    end for;
 end method \=;
 
+define method map-as(cls :: <class>, function :: <function>,
+		     vector :: <vector>,
+		     #next next-method,
+		     #rest more_vectors)
+  if (~subtype?(cls, <vector>))
+    next-method();
+  elseif (empty?(more_vectors))
+    let size = size(vector);
+    let result = make(cls, size: size);
+    for (key from 0 below size)
+      result[key] := function(vector[key]);
+    end for;
+    result;
+  elseif (~every?(rcurry(instance?, <vector>), more_vectors))
+    next-method();
+  else
+    let size = reduce(method (a, b) min(a, size(b)) end method, size(vector),
+		      more_vectors);
+    let result = make(cls, size: size);
+    for (key from 0 below size)
+      result[key] := apply(function, vector[key],
+			   map(rcurry(element, key), more_vectors));
+    end for;
+    result;
+  end if;
+end method map-as;
+
+define method concatenate-as(cls :: <class>, vector :: <vector>,
+			     #next next-method,
+			     #rest more_vectors)
+  if (~subtype?(cls, <vector>) |
+	~every?(rcurry(instance?, <vector>), more_vectors))
+    next-method();
+  else 
+    let length = reduce(method (int, seq) int + size(seq) end method,
+			size(vector), more_vectors);
+    let result = make(cls, size: length);
+    local method do_copy(state, vector :: <vector>) // :: state
+	    for (state from state,
+		 key from 0 below size(vector))
+	      result[state] := vector[key];
+	    finally state;
+	    end for;
+	  end method do_copy;
+    reduce(do_copy, do_copy(0, vector), more_vectors);
+    result;
+  end if;
+end method concatenate-as;
+
+define method member?(value :: <object>, vector :: <vector>,
+		      #key test = \==)
+  block (return)
+    for (key from 0 below size(vector))
+      if (test(value, vector[key])) return(#t) end if;
+    end for;
+  end block;
+end method member?;
+
+define method empty?(vector :: <vector>)
+  size(vector) = 0;
+end method empty?;
+
+define method every?(proc :: <function>, vector :: <vector>,
+		     #next next_method,
+		     #rest more_vectors) => <object>;
+  if (empty?(more_vectors))
+    block (return)
+      for (key from 0 below size(vector))
+	unless (proc(vector[key])) return(#f) end unless;
+      end for;
+    end block;
+    #t;
+  elseif (every?(rcurry(instance?, <vector>), more_vectors))
+    // since we only specify one sequence, this will not produce an infinite
+    // recursion.
+    block (return)
+      let sz = reduce(method(a,b) min(a, size(b)) end method,
+		      size(vector), more_vectors);
+      for (key from 0 below size)
+	let result = apply(proc, vector[key],
+			   map(rcurry(element, key), more_vectors));
+	unless (result) return(#f) end unless;
+      end for;
+      #t;
+    end block;
+  else
+    next_method();
+  end if;
+end method every?;
+
+define method subsequence-position(big :: <vector>, pattern :: <vector>,
+				   #key test = \==, count = 1)
+  let sz = size(big);
+  let pat-sz = size(pattern);
+
+  select (pat-sz)
+    0 =>
+      0;
+    1 =>
+      let ch = pattern[0];
+      for (key from 0 below sz,
+	   until test(big[key], ch))
+      finally
+	if (key < sz) key end if;
+      end for;
+    2 =>
+      let ch1 = pattern[0];
+      let ch2 = pattern[1];
+      for (key from 0 below sz - 1,
+	   until test(big[key], ch1) & test(big[key + 1], ch2))
+      finally
+	if (key < (sz - 1)) key end if;
+      end for;
+    otherwise =>
+      local method search(index, big-key, pat-key, count)
+	      case
+		pat-key >= pat-sz =>  // End of pattern -- We found one.
+		  if (count = 1) index
+		  else search(index + 1, index + 1, 0, count - 1);
+		  end if;
+		big-key = sz =>	      // End of big vector -- it's not here.
+		  #f;
+		test(big[big-key], pattern[pat-key]) =>
+		  // They match -- try one more.
+		  search(index, big-key + 1, pat-key + 1, count);
+		otherwise =>          // Don't match -- try one further along.
+		  search(index + 1, index + 1, 0, count);
+	      end case;
+	    end method search;
+      search(0, 0, 0, count);
+  end select;
+end method subsequence-position;
+
+define method replace-elements!(vector :: <vector>,
+				predicate :: <function>,
+				new_value_fn :: <function>,
+				#key count: count) => <vector>;
+  for (key from 0 below size(vector),
+       until count == 0)
+    let this_element = vector[key];
+    if (predicate(this_element))
+      vector[key] := new_value_fn(this_element);
+      if (count) count := count - 1 end if;
+    end if;
+  end for;
+  vector;
+end method replace-elements!;
+
+define method do(proc :: <function>, vector :: <vector>,
+		 #next next_method,
+		 #rest more_vectors)
+  if (empty?(more_vectors))
+    for (key from 0 below size(vector)) proc(vector[key]) end for;
+  elseif (every?(rcurry(instance?, <vector>), more_vectors))
+    let size = reduce(method (sz, vec) min(sz, size(vec)) end method,
+		      size(vector), more_vectors);
+    for (key from 0 below size)
+      apply(proc, vector[key],
+	    map(rcurry(element, key), more_vectors));
+    end for;
+  else
+    next_method();
+  end if;
+end method do;
+
+define method fill!(vector :: <vector>, value :: <object>,
+		    #key start: first = 0, end: last)
+  let last = if (last) min(last, size(vector)) else size(vector) end if;
+  for (i from first below last)
+    vector[i] := value;
+  end for;
+end method fill!;
