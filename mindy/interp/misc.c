@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.12 1994/12/16 12:12:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.13 1995/09/27 22:47:53 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -143,6 +143,11 @@ static void dylan_invoke_debugger(struct thread *thread, int nargs)
     thread_debuggered(thread, args[0]);
 }
 
+static obj_t dylan_get_time_of_day (void)
+{
+    return make_bignum(time(NULL));
+}
+
 
 /* Init stuff. */
 
@@ -157,6 +162,8 @@ void init_misc_functions(void)
 #endif
     define_function("raw-exit", list1(obj_FixnumClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, dylan_exit);
+    define_function("get-time-of-day", obj_Nil, FALSE, 
+		    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
