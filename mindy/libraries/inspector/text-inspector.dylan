@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.7 1996/07/13 03:23:10 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.8 1996/07/30 19:37:50 bfw Exp $
 
 //======================================================================
 //
@@ -32,7 +32,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text
 
 define library text-inspector
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
   use print;
   use string-extensions;
@@ -42,7 +42,7 @@ end library text-inspector;
 define module text-inspector
   use dylan;
   use extensions;
-  use new-streams, import: { read-line };
+  use streams, import: { read-line };
   use standard-io, import: { *standard-input* };
   use print;
   use character-type;

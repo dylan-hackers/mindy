@@ -35,7 +35,7 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define library tk
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
   use string-extensions;
   use collection-extensions;
@@ -54,7 +54,7 @@ define module tk-internal
   use system;
   use threads;
 
-  use new-streams;
+  use streams;
   use standard-io;
   
   use vector-search;
@@ -81,7 +81,7 @@ define module tk
   use system;
   use threads;
 
-  use new-streams;
+  use streams;
   use standard-io;
 
   use regular-expressions;

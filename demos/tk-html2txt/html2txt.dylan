@@ -79,7 +79,7 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 // not terribly well defined at present.
 define library html
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
   use collection-extensions;
   use string-extensions;
@@ -101,7 +101,7 @@ define module html
   use substring-search;
   
   // I/O support from the "streams" and "standard-io" libraries
-  use new-streams;
+  use streams;
   use standard-io;
 
   // And, of course, the nifty new tk/TK library

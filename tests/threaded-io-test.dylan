@@ -4,7 +4,7 @@ synopsis:   Test out the thread features of Mindy by getting I/O on
             multiple streams.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.6 1996/06/14 16:19:46 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.7 1996/07/30 19:37:50 bfw Exp $
 
 //======================================================================
 //
@@ -66,7 +66,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v
 
 define library Threaded-io-test
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
 //  use format;
 end library Threaded-io-test;
@@ -75,7 +75,7 @@ define module threaded-io-test
   use dylan;
   use extensions, import: { main };
   use threads;
-  use new-streams;
+  use streams;
   use standard-io;
 //  use format;
 end module threaded-io-test;

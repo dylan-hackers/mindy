@@ -30,12 +30,12 @@ copyright: See below.
 
 define library stream-test
   use dylan;
-  use new-streams;
+  use streams;
 end library stream-test;
 
 define module stream-test
   use dylan;
   use extensions;
-  use new-streams;
+  use streams;
   use cheap-io, import: {format};
 end module stream-test;

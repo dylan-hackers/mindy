@@ -36,7 +36,7 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define library test
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
   use stream-extensions;
   use format;
@@ -47,7 +47,7 @@ define module test
   use dylan;
   use threads;
   use extensions;
-  use new-streams;
+  use streams;
   use standard-io;
   use eager-stream;
   use format;

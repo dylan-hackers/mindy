@@ -1,5 +1,5 @@
 module: Concatenate
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.4 1996/06/14 15:39:25 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.5 1996/07/30 19:37:50 bfw Exp $
 
 //======================================================================
 //
@@ -35,14 +35,14 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/cat/cat.dylan,v 1.4 1996
 
 define library Concatenate
   use Dylan;
-  use New-Streams;
+  use streams;
   use Standard-IO;
 end;
 
 define module Concatenate
   use Dylan;
   use Extensions;
-  use New-Streams;
+  use streams;
   use Standard-IO;
 end;
 

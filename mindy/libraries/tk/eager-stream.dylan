@@ -2,7 +2,7 @@ module: eager-stream
 
 define library stream-extensions
   use dylan;
-  use new-streams;
+  use streams;
 
   export eager-stream;
 end library stream-extensions;
@@ -10,7 +10,7 @@ end library stream-extensions;
 define module eager-stream
   use dylan;
   use extensions;
-  use new-streams;
+  use streams;
 
   export <eager-stream>;
 end module eager-stream;

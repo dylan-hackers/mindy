@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: Library and module definitions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/library.dylan,v 1.1 1996/07/12 02:23:21 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/library.dylan,v 1.2 1996/07/30 19:37:50 bfw Exp $
 
 //======================================================================
 //
@@ -31,13 +31,13 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/standard-io/library.dyl
 
 define library Standard-IO
   use Dylan;
-  use New-Streams;
+  use streams;
   export Standard-IO;
 end library;
 
 define module Standard-IO
   use Dylan;
-  use New-Streams,
+  use streams,
     import: {<fd-stream>};
   export
     *standard-input*, *standard-output*, *standard-error*;
