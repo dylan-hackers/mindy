@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.18 2001/03/17 03:43:35 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.19 2001/03/30 14:00:02 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -158,7 +158,7 @@ define module Extensions
 
 	     // More types.
 	     <byte-character>, <true>, <false>, <stretchy-sequence>,
-	     <stretchy-object-vector>,
+	     <stretchy-object-vector>, <simple-object-table>,
 	     <simple-object-deque> => <object-deque>,
 
 	     // Type extensions.
