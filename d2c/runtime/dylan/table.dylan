@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.11 2002/08/30 09:18:34 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.12 2002/09/27 01:32:14 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -716,7 +716,7 @@ define inline sealed method remove-key! (ht :: <table>, key)
   let key-id :: <integer> = key-hash(key, $permanent-hash-state);
   local
     method loop(item :: <maybe-table-item>)
-      let item = find-for-element(item, ht, key-id);
+      let item = find-for-remove(item, ht, key-id);
       case
         ~item                     => #f;
         key=(item.entry-key, key) => #t;
