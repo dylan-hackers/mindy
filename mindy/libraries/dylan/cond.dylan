@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.14 1996/03/19 02:00:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.15 1996/03/19 23:53:14 nkramer Exp $
 
 //======================================================================
 //
@@ -89,40 +89,64 @@ end class <abort>;
 
 // Condition reporting.
 
-define generic report-condition (condition, stream);
 
-define variable *format-function* =
-  method (stream, string, #rest arguments)
-    apply(format, string, arguments);
-  end;
+define variable *debug-output* = #"cheap-IO";
 
-define variable *force-output-function* =
-  method (stream)
-    fflush();
-  end;
+// condition-format
+//
+// Serves as a firewall between the condition system and streams.
+// Report-condition methods should call this routine to do their formatting
+// and streams libraries should define methods on it to pick off their
+// kinds of streams and call their particular format utility.
+// 
+define open generic condition-format
+    (stream :: <object>, control-string :: <string>, #rest arguments) => ();
 
-define method report-condition (condition :: <condition>, stream)
-  *format-function*(stream, "%=", condition);
+// condition-format(#"cheap-IO") -- internal.
+//
+// Bootstrap method for condition-format that just calls the cheap-IO format.
+//
+define sealed method condition-format
+    (stream == #"cheap-IO", control-string :: <string>, #rest arguments) => ();
+  apply(format, control-string, arguments);
+end;
+
+// report-condition
+//
+// Generate a human readable report of the condition on stream.  We restrict
+// the stream to <object> because we have no idea what the underlying output
+// system is going to use for streams.
+//
+define open generic report-condition
+    (condition :: <condition>, stream :: <object>) => ();
+
+// report-condition(<condition>) -- exported gf method.
+//
+// Default method for all conditions.  Just print the condition object
+// to the stream.
+// 
+define method report-condition (condition :: <condition>, stream) => ();
+  condition-format(stream, "%=", condition);
 end method report-condition;
 
-
 define method report-condition (condition :: <simple-condition>, stream)
-  apply(*format-function*, stream,
+ => ();
+  apply(condition-format, stream,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
 end method report-condition;
 
 
-define method report-condition (condition :: <type-error>, stream)
-  *format-function*(stream,
+define method report-condition (condition :: <type-error>, stream) => ();
+  condition-format(stream,
 		    "%= is not of type %=",
 		    condition.type-error-value,
 		    condition.type-error-expected-type);
 end method report-condition;
 
 
-define method report-condition (condition :: <abort>, stream)
-  *format-function*(stream, "%s", condition.abort-description);
+define method report-condition (condition :: <abort>, stream) => ();
+  condition-format(stream, "%s", condition.abort-description);
 end method report-condition;
 
 
@@ -222,7 +246,7 @@ end method default-handler;
 
 define method default-handler (condition :: <warning>)
  => return-val :: singleton(#f);
-  *format-function*(*debug-output*, "%s\n", condition);
+  condition-format(*debug-output*, "%s\n", condition);
   #f;
 end method default-handler;
 
