@@ -38,14 +38,14 @@ $recheck = "@recheck@";
 $shared = "@shared@" eq "yes";
 $static = "@static@" eq "yes";
 $INSTALL = "@INSTALL@";
-$LIBTOOL = "\@LIBTOOL";
+$LIBTOOL = "@LIBTOOL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
 # particular, INSTALL_PROGRAM doesn't force executability.
 $install_data = "@INSTALL@";
 if ($shared) {
-    $install_program = "\@LIBTOOL @INSTALL@ -m oug+rx";
-    $install_library = "\@LIBTOOL @INSTALL@";
+    $install_program = "@LIBTOOL@ @INSTALL@ -m oug+rx";
+    $install_library = "@LIBTOOL@ @INSTALL@";
 } else {
     $install_program = "@INSTALL@ -m oug+rx";
     $install_library = "@INSTALL@";
