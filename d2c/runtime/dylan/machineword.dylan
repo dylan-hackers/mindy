@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.1 2001/12/13 22:43:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.2 2002/01/03 16:29:38 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -40,9 +40,21 @@ define sealed inline method as
 end method;
 
 define sealed inline method as
+    (class == <machine-word>, raw-pointer :: <raw-pointer>)
+ => (machine-word :: <machine-word>);
+  make(<machine-word>, %value: %%primitive(raw-pointer-address, raw-pointer));
+end method;
+
+define sealed inline method as
     (class == <integer>, machine-word :: <machine-word>)
  => (integer :: <integer>);
   machine-word.value;
+end method;
+
+define sealed inline method as
+    (class == <raw-pointer>, machine-word :: <machine-word>)
+ => (raw-pointer :: <raw-pointer>);
+  %%primitive(make-raw-pointer, machine-word.value);
 end method;
 
 define sealed inline method functional-==
