@@ -98,8 +98,8 @@ define method add-radiobutton
     error("You must specify a 'variable:' for menu radiobuttons");
   end if;
   apply(put-tk-line, menu, " add radiobutton ",
-	std-options(#[#"accelerator", #"activebackground", #"variable",
-			#"label", #"value"],
+	std-options(#[#"accelerator", #"activebackground", #"command",
+			#"variable", #"label", #"value"],
 		    #f, rest));
 end method add-radiobutton;
 
