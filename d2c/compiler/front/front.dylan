@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.8 2001/06/01 17:43:28 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.9 2001/10/06 15:30:42 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -103,7 +103,7 @@ object
 define abstract class <fer-assignment> (<assignment>)
   //
   // The policy environment this <operation> was converted in.
-  slot policy :: <policy>, required-init-keyword: policy:;
+  constant slot policy :: <policy>, required-init-keyword: policy:;
 end class;
 
 // Marks a create-point for a lexical variable.  We allow there to be more than
@@ -113,7 +113,7 @@ end class;
 define class <let-assignment> (<fer-assignment>)
   //
   // The next link in the chain of lets in this component.
-  slot let-next :: false-or(<let-assignment>), required-init-keyword: next:;
+  constant slot let-next :: false-or(<let-assignment>), required-init-keyword: next:;
 end class;
 
 // An assignment that doesn't create a new "variable" (that would side-effect
@@ -127,7 +127,7 @@ end class;
 // The <primitive> operation represents some built in primitive operation.
 //
 define class <primitive> (<operation>)
-  slot primitive-name :: <symbol>, required-init-keyword: name:;
+  constant slot primitive-name :: <symbol>, required-init-keyword: name:;
   slot primitive-info :: <primitive-info>, init-keyword: info:;
 end;
 
@@ -154,7 +154,7 @@ define class <known-call> (<abstract-call>)
 end;
 
 define abstract class <general-call> (<abstract-call>)
-  slot use-generic-entry? :: <boolean>,
+  constant slot use-generic-entry? :: <boolean>,
     required-init-keyword: use-generic-entry:;
 end;
 
@@ -198,7 +198,7 @@ end;
 define abstract class <module-var-access> (<operation>)
   //
   // The definition for the variable being set.
-  slot variable :: <definition>, required-init-keyword: var:;
+  constant slot variable :: <definition>, required-init-keyword: var:;
 end;  
 
 define class <module-var-ref> (<module-var-access>)
@@ -226,16 +226,16 @@ define class <self-tail-call> (<operation>)
   inherited slot derived-type, init-function: no-values-ctype;
   //
   // The function we are self tail calling.
-  slot self-tail-call-of :: <fer-function-region>,
+  constant slot self-tail-call-of :: <fer-function-region>,
     required-init-keyword: of:;
   //
   // The next self tail call in this method.
-  slot next-self-tail-call :: false-or(<self-tail-call>),
+  constant slot next-self-tail-call :: false-or(<self-tail-call>),
     required-init-keyword: next-self-tail-call:;
 end;
 
 define abstract class <slot-access> (<operation>)
-  slot slot-info :: <slot-info>, required-init-keyword: slot-info:;
+  constant slot slot-info :: <slot-info>, required-init-keyword: slot-info:;
 end;
 
 define sealed domain make (singleton(<slot-access>));
@@ -263,7 +263,7 @@ end;
 define sealed domain make (singleton(<heap-slot-set>));
 
 define class <truly-the> (<operation>)
-  slot guaranteed-type :: <ctype>, required-init-keyword: guaranteed-type:;
+  constant slot guaranteed-type :: <ctype>, required-init-keyword: guaranteed-type:;
 end;
 
 define method initialize
@@ -274,11 +274,11 @@ end;
 
 define class <instance?> (<operation>)
   inherited slot derived-type, init-function: boolean-ctype;
-  slot type :: <ctype>, required-init-keyword: type:;
+  constant slot type :: <ctype>, required-init-keyword: type:;
 end;
 
 define class <nlx-operation> (<operation>)
-  slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
+  constant slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
 end;
 
 define class <catch> (<nlx-operation>)
@@ -339,14 +339,14 @@ end class;
 define class <literal-constant> (<constant>)
 
   // The value of the constant.
-  slot value :: <ct-value>, required-init-keyword: value:;
+  constant slot value :: <ct-value>, required-init-keyword: value:;
 end class;
 
 // Represents a constant module var.  We point to the <module-var> for the
 // actual info, and only represent the references for the data-flow framework.
 //
 define class <definition-constant-leaf> (<constant>)
-  slot const-defn :: <definition>, required-init-keyword: const-defn:;
+  constant slot const-defn :: <definition>, required-init-keyword: const-defn:;
 end class;
 
 
@@ -372,7 +372,7 @@ end;
 //
 
 define abstract class <debug-named-info> (<variable-info>)
-  slot debug-name :: <symbol>, required-init-keyword: debug-name:;
+  constant slot debug-name :: <symbol>, required-init-keyword: debug-name:;
 end class;
 
 define class <values-cluster-info> (<debug-named-info>)
@@ -414,7 +414,7 @@ define class <function-literal>
     init-value: #"local", init-keyword: visibility:;
 
   // The signature of this function.
-  slot signature :: <signature>,
+  constant slot signature :: <signature>,
     required-init-keyword: signature:;
 
   // The <ct-function> for this literal, if global.
@@ -422,7 +422,7 @@ define class <function-literal>
     init-value: #f, init-keyword: ct-function:;
 
   // The function-region for the main body of code.
-  slot main-entry :: <fer-function-region>,
+  constant slot main-entry :: <fer-function-region>,
     required-init-keyword: main-entry:;
 
   // This is the general-case used when we can't statically analyze a call, due
@@ -466,7 +466,7 @@ end class;
 // exit function.
 //
 define class <exit-function> (<abstract-function-literal>, <dependent-mixin>)
-  slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
+  constant slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
 end class;
 
 define method initialize
@@ -544,25 +544,25 @@ define class <lambda> (<fer-function-region>)
 
   // The structure which represents the environment that this Function's
   // variables are allocated in.
-  slot environment :: <environment>,
-    init-function: curry(make, <environment>);
+  constant slot environment :: <environment> = make(<environment>);
+
 end;
 
 
 define class <fer-component> (<component>, <identity-preserving-mixin>)
 
   // All the function literals mentioned in this component.
-  slot all-function-literals :: <stretchy-vector> = make(<stretchy-vector>);
+  constant slot all-function-literals :: <stretchy-vector> = make(<stretchy-vector>);
 
-  // Chain of all the lets (though let-next) in this component.  Used by
+  // Chain of all the lets (through let-next) in this component.  Used by
   // environment analysis.  Deleted lets are left in this chain, so beware.
   slot all-lets :: false-or(<let-assignment>), init-value: #f;
 
   // String that is some sort of name for the code in this component.
-  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
+  constant slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
 
   // Table mapping <ct-value>s to <literal-constant>s.
-  slot constants :: <object-table> = make(<object-table>);
+  constant slot constants :: <object-table> = make(<object-table>);
 
 end class;
 
@@ -574,7 +574,7 @@ end class;
 define class <unwind-protect-region> (<body-region>)
   //
   // The function that does the cleanup.
-  slot uwp-region-cleanup-function :: <function-literal>,
+  constant slot uwp-region-cleanup-function :: <function-literal>,
     required-init-keyword: cleanup-function:;
 end class;
 
@@ -588,8 +588,8 @@ define class <environment> (<annotatable>)
 end class;
 
 define class <closure-var> (<object>)
-  slot original-var :: <ssa-variable>, required-init-keyword: original:;
-  slot copy-var :: <ssa-variable>, required-init-keyword: copy:;
+  constant slot original-var :: <ssa-variable>, required-init-keyword: original:;
+  constant slot copy-var :: <ssa-variable>, required-init-keyword: copy:;
   slot closure-next :: false-or(<closure-var>), required-init-keyword: next:;
 end;
 
