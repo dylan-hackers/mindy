@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.16 2001/11/08 01:14:13 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.17 2001/12/11 04:53:42 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -530,7 +530,7 @@ end method print-message;
 
 
 define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
-  dylan-value(#"<class>");
+  object.class-metaclass | dylan-value(#"<class>");
 end;
 
 define method ct-value-cclass (object :: <slot-info>) => res :: <cclass>;

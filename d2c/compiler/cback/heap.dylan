@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.28 2001/12/11 01:03:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.29 2001/12/11 04:53:42 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1542,10 +1542,10 @@ define method spew-layout
   let stream = state.file-body-stream;
   let classname = class.cclass-name.c-name-global;
   let name = if(size)
-	       stringify(classname, "_SIZE", size);
-	     else
-	       classname;
-	     end if;
+               stringify(classname, "_SIZE", size);
+             else
+               classname;
+             end if;
   if(element(state.file-layouts-exist-for, name, default: #f))
     format(stream, "struct %s", name);
   else
@@ -1554,32 +1554,32 @@ define method spew-layout
     let slots = 0;
     for (field in get-class-fields(class))
       select (field by instance?)
-	<false> => #f;
-	<integer> =>
-	  holes := holes + 1;
-	  format(stream, "    unsigned char HOLE%d[%d];\n", holes, field);
-	<instance-slot-info> =>
-	  let getter = field.slot-getter;
-	  let name = if (getter)
-		       string-to-c-name(as(<string>, getter.variable-name));
-		     else
-		       slots := slots + 1;
-		       stringify("SLOT", slots);
-		     end if;
-	  unless(instance?(field, <vector-slot-info>) & size = 0)
-	    format(stream, "    %s %s",
-		   field.slot-representation.representation-c-type,
-		   name);
-	    if(instance?(field, <vector-slot-info>))
-	      format(stream, "[%d]", size);
-	    end if;
-	    if(getter)
-	      format(stream, ";\t /* %s */\n",
-		     getter.variable-name.clean-for-comment);
-	    else
-	      format(stream, ";\n");
-	    end if;
-	  end unless;
+        <false> => #f;
+        <integer> =>
+          holes := holes + 1;
+          format(stream, "    unsigned char HOLE%d[%d];\n", holes, field);
+        <instance-slot-info> =>
+          let getter = field.slot-getter;
+          let name = if (getter)
+                       string-to-c-name(as(<string>, getter.variable-name));
+                     else
+                       slots := slots + 1;
+                       stringify("SLOT", slots);
+                     end if;
+          unless(instance?(field, <vector-slot-info>) & size = 0)
+            format(stream, "    %s %s",
+                   field.slot-representation.representation-c-type,
+                   name);
+            if(instance?(field, <vector-slot-info>))
+              format(stream, "[%d]", size);
+            end if;
+            if(getter)
+              format(stream, ";\t /* %s */\n",
+                     getter.variable-name.clean-for-comment);
+            else
+              format(stream, ";\n");
+            end if;
+          end unless;
       end select;
     end for;
     format(stream, "}");
