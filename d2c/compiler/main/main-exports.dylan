@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.9 2001/03/30 16:11:29 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.10 2001/07/30 04:52:38 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -52,7 +52,8 @@ define module main
   use System, 
      import: {system, copy-bytes, getenv, <raw-pointer>, import-string, 
 	      export-string, no-core-dumps,
-	      c-expr, pointer-deref, pointer-deref-setter, call-out};
+	      c-expr, pointer-deref, pointer-deref-setter, call-out,
+	      get-time-of-day};
 #endif
   use string-conversions, import: {string-to-integer};
   use character-type;
