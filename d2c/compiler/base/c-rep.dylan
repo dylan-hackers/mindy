@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.24 1996/04/13 21:12:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.25 1996/04/14 13:23:08 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -330,7 +330,6 @@ define method use-general-representation
     class.direct-speed-representation := *general-rep*;
     class.direct-space-representation := *general-rep*;
   end unless;
-  error("General representation for direct instances not supported yet.");
 end method use-general-representation;
 
 
