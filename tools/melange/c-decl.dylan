@@ -517,6 +517,14 @@ define class <vector-declaration> (<new-static-pointer>, <type-declaration>)
     required-init-keyword: #"length";
 end class <vector-declaration>;
 
+define method rename (decl :: <pointer-declaration>, name :: <string>) => ();
+  if (decl.simple-name = decl.referent.simple-name)
+    decl.referent.dylan-name := name;
+  else
+    decl.dylan-name := name;
+  end if;
+end method rename;
+
 define method mapped-name
     (decl :: <pointer-declaration>, #key explicit-only?)
  => (result :: type-union(<string>, <false>));

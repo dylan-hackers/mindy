@@ -757,7 +757,7 @@ define method write-declaration
     (decl :: <pointer-declaration>, load-string :: <string>,
      stream :: <stream>)
  => ();
-  if (decl.equated? | decl.dylan-name = decl.referent.dylan-name)
+  if (decl.equated? | decl.simple-name = decl.referent.simple-name)
     values();
   else 
     let target-type = decl.referent;
