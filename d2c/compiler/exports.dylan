@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.24 1995/04/21 02:52:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.25 1995/04/21 19:42:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -600,6 +600,7 @@ define module flow
     <annotatable>, info, info-setter,
 
     <region>, <linear-region>, <simple-region>, <compound-region>,
+    <empty-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
     <block-region>, <method-region>, <loop-region>, <exit>,
     <component>,
@@ -609,6 +610,7 @@ define module flow
     join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, block-of, block-of-setter,
+    initial-definitions, initial-definitions-setter,
     reoptimize-queue, reoptimize-queue-setter,
     all-methods, all-methods-setter,
 
@@ -619,13 +621,15 @@ define module flow
     <join-assignment>,
 
     dependents, derived-type, source-exp, source-next, dependent,
-    dependent-next, var-info, asserted-type, definer, definer-next, queue-next,
-    definition-of, definitions, defines, region, next-op, prev-op,
-    depends-on,
+    dependent-next, var-info, asserted-type, definer, definer-next,
+    needs-type-check?, queue-next,
+    definition-of, next-initial-definition, next-initial-definition-setter,
+    definitions, defines, region, next-op, prev-op, depends-on,
 
     dependents-setter, derived-type-setter, source-exp-setter,
     source-next-setter, dependent-setter, dependent-next-setter,
     var-info-setter, asserted-type-setter, definer-setter, definer-next-setter,
+    needs-type-check?-setter,
     queue-next-setter, definition-of-setter, definitions-setter,
     defines-setter, region-setter, next-op-setter, depends-on-setter,
     prev-op-setter;
@@ -657,8 +661,7 @@ define module front
   use policy;
 
   export
-    dump-fer, id,
-    convert-to-ssa, derive-types,
+    dump-fer, id, optimize-component, add-type-checks,
 
     <primitive>, name,
 
