@@ -1,12 +1,12 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.18 2003/05/12 15:10:19 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.19 2004/08/18 13:09:52 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -1257,6 +1257,47 @@ define method parse-conditional (lexer :: <lexer>) => res :: <boolean>;
   parse-feature-expr(lexer);
 end method parse-conditional;
 
+
+
+// <line-tokenizer> -- exported. -----FIXME, TODO
+//
+// An object knowing line-ending conventions.
+// assumes line and line-setter functions defined on subclasses.
+//
+define primary abstract class <line-tokenizer> (<tokenizer>)
+  slot line-convention :: one-of(#"unknown", #"unixy", #"mac-like", #"dosoid"),
+    init-value: #"unknown", init-keyword: convention:;
+end class <line-tokenizer>;
+
+define generic examine-ending
+  (ending :: one-of('\n', '\r'),
+   tokenizer :: <line-tokenizer>) => ();
+
+define method examine-ending
+  (ending == '\n', tokenizer :: <line-tokenizer>)
+ => ();
+  select (tokenizer.line-convention)
+  unixy:, dosoid: =>
+    tokenizer.line := tokenizer.line + 1;
+  mac-like: =>
+    error("mac-like file containing line-feed?");
+  end select;
+end;
+
+define method examine-ending
+  (ending == '\r', tokenizer :: <line-tokenizer>)
+ => ();
+  select (tokenizer.line-convention)
+  mac-like: =>
+    tokenizer.line := tokenizer.line + 1;
+  dosoid: =>
+    #f;
+  unixy: =>
+    error("unixy file containing carriage-return?");
+  end select;
+end;
+
+
 
 // lexer
 
@@ -1265,6 +1306,7 @@ end method parse-conditional;
 // An object holding the current lexer state.
 //
 define class <lexer> (<tokenizer>)
+// define class <lexer> (<line-tokenizer>) // TODO
   //
   // The source file we are currently tokenizing.
   slot lexer-source :: <source>, required-init-keyword: source:;
@@ -1354,22 +1396,23 @@ define function skip-multi-line-comment (lexer :: <lexer>,
 	  // character is another star, because if so, it might be
 	  // the start of a */.
 	  //
-	  if (char == '/')
+	  select (char)
+	  '/' =>
 	    if (depth == 1)
 	      return(posn + 1); 
 	    else
 	      depth := depth - 1;
 	      state := #"seen-nothing";
 	    end if;
-	  elseif (char == '*')
+	  '*' =>
 	    state := #"seen-star";
-	  elseif (char == '\n' | char == '\r')
+	  '\n', '\r' =>
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := posn + 1;
 	    state := #"seen-nothing";
-	  else
+	  otherwise =>
 	    state := #"seen-nothing";
-	  end if;
+	  end select;
 	#"seen-slash-slash" =>
 	  // We've seen a //, so skip until the end of the line.
 	  //
@@ -1394,20 +1437,20 @@ end function skip-multi-line-comment;
 // Extract location from lexer given token start and end position.
 //
 define function lexed-location
-  (token-start :: <integer>,
-   token-end :: <integer>,
-   lexer :: <lexer>,
-   #key start-line :: <integer> = lexer.line,
-	start-position :: <integer> = lexer.line-start)
+    (token-start :: <integer>,
+     token-end :: <integer>,
+     lexer :: <lexer>,
+     #key start-line :: <integer> = lexer.line,
+     start-position :: <integer> = lexer.line-start)
  => res :: <known-source-location>;
-make(<known-source-location>,
-     source: lexer.lexer-source,
-     start-posn: token-start,
-     start-line: start-line,
-     start-column: token-start - start-position,
-     end-posn: token-end,
-     end-line: lexer.line,
-     end-column: token-end - lexer.line-start);
+  make(<known-source-location>,
+       source: lexer.lexer-source,
+       start-posn: token-start,
+       start-line: start-line,
+       start-column: token-start - start-position,
+       end-posn: token-end,
+       end-line: lexer.line,
+       end-column: token-end - lexer.line-start);
 end function;
 
 // internal-get-token -- internal.
@@ -1542,15 +1585,8 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   //
   // Make a source location for the current token.
   // 
-  let source-location // lexed-location!!!
-    = make(<known-source-location>,
-	   source: lexer.lexer-source,
-	   start-posn: result-start,
-	   start-line: lexer.line,
-	   start-column: result-start - lexer.line-start,
-	   end-posn: known-result-end,
-	   end-line: lexer.line,
-	   end-column: known-result-end - lexer.line-start);
+  let source-location
+    = lexed-location(result-start, known-result-end, lexer);
   //
   // And finally, make and return the actual token.
   // 
