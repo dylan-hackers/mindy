@@ -81,7 +81,7 @@
 // libraries; in this case, the extensions are separated by spaces,
 // and the first extension listed will be the default extension.
 //
-// shared-library-filename-siffix: The suffix for shared libraries.
+// shared-library-filename-suffix: The suffix for shared libraries.
 // If this is set, and the user doesn't specify '-static' on the
 // d2c command line, search for shared version of library first.
 //
