@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.5 1994/04/18 03:24:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.6 1994/05/19 22:33:06 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <math.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -30,6 +31,8 @@
 #include "func.h"
 #include "error.h"
 #include "print.h"
+#include "module.h"
+#include "sym.h"
 
 obj_t obj_NumberClass = 0;
 obj_t obj_ComplexClass = 0;
@@ -183,7 +186,7 @@ static void dylan_int_int_trunc(obj_t self, struct thread *thread, obj_t *args)
 	int r = x % y;
 
 	/* The remainder is supposed to have the same sign as the dividend. */
-	if ((r ^ x) < 0) {
+	if (r != 0 && (r ^ x) < 0) {
 	    r -= y;
 	    q++;
 	}
@@ -210,7 +213,7 @@ static void dylan_int_int_floor(obj_t self, struct thread *thread, obj_t *args)
 	int r = x % y;
 
 	/* The remainder is supposed to be the same sign as the divisor. */
-	if ((r ^ y) < 0) {
+	if (r != 0 && (r ^ y) < 0) {
 	    r += y;
 	    q--;
 	}
@@ -238,7 +241,7 @@ static void dylan_int_int_ceil(obj_t self, struct thread *thread, obj_t *args)
 
 	/* The remainder is supposed to be the opposite sign from */
 	/* the divisor.  */
-	if ((r ^ y) >= 0) {
+	if (r != 0 && (r ^ y) >= 0) {
 	    r -= y;
 	    q++;
 	}
@@ -266,7 +269,7 @@ static void dylan_int_int_round(obj_t self, struct thread *thread, obj_t *args)
 
 	/* The remainder should be smaller (i.e. closer to zero) than half */
 	/* the divisor. */
-	if (y >= 0) {
+	if (y > 0) {
 	    int limit = y >> 1;
 	    if (r > limit || (r == limit && (q & 1))) {
 		/* r is too large. */
@@ -381,6 +384,62 @@ static obj_t dylan_sf_sf_divide(obj_t x, obj_t y)
     return make_single(single_value(x) / single_value(y));
 }
 
+static void dylan_sf_sf_trunc(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    float x = single_value(args[0]);
+    int res = x < 0 ? ceil(x) : floor(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_single(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_sf_sf_floor(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    float x = single_value(args[0]);
+    int res = floor(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_single(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_sf_sf_ceil(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    float x = single_value(args[0]);
+    int res = ceil(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_single(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_sf_sf_round(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    float x = single_value(args[0]);
+    int res = rint(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_single(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
 static obj_t dylan_sf_sf_less(obj_t x, obj_t y)
 {
     if (single_value(x) < single_value(y))
@@ -436,6 +495,62 @@ static obj_t dylan_df_df_times(obj_t x, obj_t y)
 static obj_t dylan_df_df_divide(obj_t x, obj_t y)
 {
     return make_double(double_value(x) / double_value(y));
+}
+
+static void dylan_df_df_trunc(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    double x = double_value(args[0]);
+    int res = x < 0 ? ceil(x) : floor(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_double(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_df_df_floor(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    double x = double_value(args[0]);
+    int res = floor(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_double(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_df_df_ceil(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    double x = double_value(args[0]);
+    int res = ceil(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_double(x - res);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_df_df_round(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    double x = double_value(args[0]);
+    int res = rint(x);
+
+    thread->sp = old_sp + 2;
+
+    old_sp[0] = make_fixnum(res);
+    old_sp[1] = make_double(x - res);
+
+    do_return(thread, old_sp, old_sp);
 }
 
 static obj_t dylan_df_df_less(obj_t x, obj_t y)
@@ -666,11 +781,16 @@ void init_num_classes(void)
 
 void init_num_functions(void)
 {
+    obj_t sf = list1(obj_SingleFloatClass);
+    obj_t df = list1(obj_DoubleFloatClass);
     obj_t two_objs = list2(obj_ObjectClass, obj_ObjectClass);
     obj_t two_ints = list2(obj_IntegerClass, obj_IntegerClass);
     obj_t two_sfs = list2(obj_SingleFloatClass, obj_SingleFloatClass);
     obj_t two_dfs = list2(obj_DoubleFloatClass, obj_DoubleFloatClass);
     obj_t two_xfs = list2(obj_ExtendedFloatClass, obj_ExtendedFloatClass);
+    obj_t int_and_real = list2(obj_IntegerClass, obj_RealClass);
+    obj_t int_and_sf = list2(obj_IntegerClass, obj_SingleFloatClass);
+    obj_t int_and_df = list2(obj_IntegerClass, obj_DoubleFloatClass);
     obj_t int_sing = singleton(obj_IntegerClass);
     obj_t sf_sing = singleton(obj_SingleFloatClass);
     obj_t df_sing = singleton(obj_DoubleFloatClass);
@@ -681,6 +801,23 @@ void init_num_functions(void)
     define_method("=", two_objs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_idp);
 
+    define_generic_function("truncate/", 2, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("truncate", 1, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("floor/", 2, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("floor", 1, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("ceiling/", 2, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("ceiling", 1, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("round/", 2, FALSE, obj_False,
+			    int_and_real, obj_False);
+    define_generic_function("round", 1, FALSE, obj_False,
+			    int_and_real, obj_False);
+
     define_method("negative", list1(obj_IntegerClass), FALSE, obj_False,
 		  obj_IntegerClass, dylan_int_negative);
     define_method("+", two_ints, FALSE, obj_False, obj_IntegerClass,
@@ -689,18 +826,22 @@ void init_num_functions(void)
 		  dylan_int_int_minus);
     define_method("*", two_ints, FALSE, obj_False, obj_IntegerClass,
 		  dylan_int_int_times);
-    define_constant("truncate/",
-		    make_raw_method("truncate/", two_ints, FALSE, obj_False,
-				    two_ints, obj_False, dylan_int_int_trunc));
-    define_constant("floor/",
-		    make_raw_method("floor/", two_ints, FALSE, obj_False,
-				    two_ints, obj_False, dylan_int_int_floor));
-    define_constant("round/",
-		    make_raw_method("round/", two_ints, FALSE, obj_False,
-				    two_ints, obj_False, dylan_int_int_round));
-    define_constant("ceiling/",
-		    make_raw_method("ceiling/", two_ints, FALSE, obj_False,
-				    two_ints, obj_False, dylan_int_int_ceil));
+    add_method(find_variable(module_BuiltinStuff, symbol("truncate/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("truncate/", two_ints, FALSE, obj_False,
+			       two_ints, obj_False, dylan_int_int_trunc));
+    add_method(find_variable(module_BuiltinStuff, symbol("floor/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("floor/", two_ints, FALSE, obj_False,
+			       two_ints, obj_False, dylan_int_int_floor));
+    add_method(find_variable(module_BuiltinStuff, symbol("round/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("round/", two_ints, FALSE, obj_False,
+			       two_ints, obj_False, dylan_int_int_round));
+    add_method(find_variable(module_BuiltinStuff, symbol("ceiling/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("ceiling/", two_ints, FALSE, obj_False,
+			       two_ints, obj_False, dylan_int_int_ceil));
     define_method("<", two_ints,
 		  FALSE, obj_False, obj_BooleanClass, dylan_int_int_less);
     define_method("=", two_ints,
@@ -718,7 +859,7 @@ void init_num_functions(void)
     define_function("logxor", two_ints,
 		    FALSE, obj_False, obj_IntegerClass, dylan_logxor);
 
-    define_method("negative", list1(obj_SingleFloatClass), FALSE, obj_False,
+    define_method("negative", sf, FALSE, obj_False,
 		  obj_SingleFloatClass, dylan_sf_negative);
     define_method("+", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
 		  dylan_sf_sf_plus);
@@ -728,6 +869,22 @@ void init_num_functions(void)
 		  dylan_sf_sf_times);
     define_method("/", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
 		  dylan_sf_sf_divide);
+    add_method(find_variable(module_BuiltinStuff, symbol("truncate"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("truncate", sf, FALSE, obj_False,
+			       int_and_sf, obj_False, dylan_sf_sf_trunc));
+    add_method(find_variable(module_BuiltinStuff, symbol("floor"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("floor", sf, FALSE, obj_False,
+			       int_and_sf, obj_False, dylan_sf_sf_floor));
+    add_method(find_variable(module_BuiltinStuff, symbol("round"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("ceiling", sf, FALSE, obj_False,
+			       int_and_sf, obj_False, dylan_sf_sf_ceil));
+    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("round", sf, FALSE, obj_False,
+			       int_and_sf, obj_False, dylan_sf_sf_round));
     define_method("<", two_sfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_sf_sf_less);
     define_method("<=", two_sfs, FALSE, obj_False, obj_BooleanClass,
@@ -737,7 +894,7 @@ void init_num_functions(void)
     define_method("~=", two_sfs,FALSE, obj_False, obj_BooleanClass,
 		  dylan_sf_sf_not_equal);
     
-    define_method("negative", list1(obj_DoubleFloatClass), FALSE, obj_False,
+    define_method("negative", df, FALSE, obj_False,
 		  obj_DoubleFloatClass, dylan_df_negative);
     define_method("+", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
 		  dylan_df_df_plus);
@@ -747,6 +904,22 @@ void init_num_functions(void)
 		  dylan_df_df_times);
     define_method("/", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
 		  dylan_df_df_divide);
+    add_method(find_variable(module_BuiltinStuff, symbol("truncate"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("truncate", df, FALSE, obj_False,
+			       int_and_df, obj_False, dylan_df_df_trunc));
+    add_method(find_variable(module_BuiltinStuff, symbol("floor"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("floor", df, FALSE, obj_False,
+			       int_and_df, obj_False, dylan_df_df_floor));
+    add_method(find_variable(module_BuiltinStuff, symbol("round"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("ceiling", df, FALSE, obj_False,
+			       int_and_df, obj_False, dylan_df_df_ceil));
+    add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("round", df, FALSE, obj_False,
+			       int_and_df, obj_False, dylan_df_df_round));
     define_method("<", two_dfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_df_df_less);
     define_method("<=", two_dfs, FALSE, obj_False, obj_BooleanClass,
