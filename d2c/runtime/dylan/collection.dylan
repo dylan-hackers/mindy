@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.11 1995/12/11 00:38:58 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.12 1995/12/11 20:58:46 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -388,6 +388,11 @@ define method fill!
   end for;
   collection;
 end method fill!;
+
+define inline method shallow-copy
+    (collection :: <collection>) => (result :: <collection>);
+  map(identity, collection);
+end method shallow-copy;
 
 define method key-sequence (collection :: <collection>)
     => keys :: <sequence>;
