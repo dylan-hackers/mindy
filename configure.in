@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.151 2004/02/17 03:12:14 cpage Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.152 2004/03/20 17:50:08 robmyers Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -575,10 +575,27 @@ esac
 AC_SUBST(HAVE_GTK)
 
 #--------------------------------------------------------------------
+#	Look for Carbon, set CARBON_CFLAGS and CARBON_LIBS
+#--------------------------------------------------------------------
+
+AC_ARG_WITH(carbon, [  --without-carbon           Disable the Carbon bindings],,with_carbon=yes)
+case $with_carbon in
+no)   HAVE_CARBON=no
+      ;;
+yes)  if test $d2c_host = ppc-darwin-gcc; then
+      	 HAVE_CARBON=yes
+      else
+	 HAVE_CARBON=no 
+      fi
+      ;;
+esac
+AC_SUBST(HAVE_CARBON)
+
+#--------------------------------------------------------------------
 #	Determine whether or not to compile DUIM
 #--------------------------------------------------------------------
 AC_MSG_CHECKING(for DUIM support)
-AC_ARG_ENABLE(duim, [  --enable-duim=[no/yes/gtk]  Enable the Dylan User Interface Manager],,enable_duim=no)
+AC_ARG_ENABLE(duim, [  --enable-duim=[no/yes/gtk/carbon]  Enable the Dylan User Interface Manager],,enable_duim=no)
 case $enable_duim in
 no)     ;;
 vanilla);;
@@ -588,8 +605,16 @@ gtk)    if test $HAVE_GTK = yes; then
 	    enable_duim=no
 	fi
 	;;
+carbon) if test $HAVE_CARBON = yes; then
+	   enable_duim=carbon
+	else
+	    enable_duim=no
+	fi
+	;;
 yes)    if test $HAVE_GTK = yes; then
 	    enable_duim=gtk
+	elif test $HAVE_CARBON = yes; then
+	    enable_duim=carbon
 	else
 	    enable_duim=no
 	fi
