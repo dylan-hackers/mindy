@@ -1,6 +1,6 @@
 module:     class-diagram
 author:     Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/class-diagram.dylan,v 1.2 1996/04/22 15:32:04 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/class-diagram.dylan,v 1.3 1996/04/25 18:27:40 wlott Exp $
 
 //======================================================================
 //
@@ -38,19 +38,12 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/clas
 
 // Directed Acyclic Graph
 //
-// All dags are instances of <real-dag>; this class is just a hack to
-// insure that you never have more than one dag that refers to the
-// same class.
-//
-define abstract class <dag> (<object>)
-end class <dag>;
-
 // Invariants:  There is at most one <dag> for any <class>.
 // dag-parents and dag-children contain no duplicate elements.
 // dag-parents and dag-children contain a subset of the parents and
 //   children they will eventually contain/should contain.
 //
-define class <real-dag> (<dag>)
+define class <dag> (<object>)
   slot dag-parents :: <sequence> = #();   // parents:
   slot dag-children :: <sequence> = #();  // children:
   slot dag-class :: <class>, required-init-keyword: #"class";
@@ -60,65 +53,41 @@ define class <real-dag> (<dag>)
   slot dag-peers :: <sequence>;      // left uninitialized
   slot dag-left-peer :: false-or(<dag>);
   slot dag-unsquished? :: <boolean> = #f;
-end class <real-dag>;
-
-// Keys are <class>es, elements are <real-dag>s.
-//
-define variable *class-to-dag-table* = make(<object-table>);
+end class <dag>;
 
 define method add-child! (parent :: <dag>, child :: <dag>) => ();
   child.dag-parents := add-new!(child.dag-parents, parent);
   parent.dag-children := add-new!(parent.dag-children, child);
 end method add-child!;
 
-define method make (arg == <dag>, // #all-keys, 
-		    #key class: cls :: <class> = #f,   // Mandatory
-		         children :: <sequence> = #(),
-		         parents :: <sequence> = #())
- => dag :: <dag>;
-  let existing = element(*class-to-dag-table*, cls, default: #f);
-  let dag = if (existing)
-	      existing;
-	    else
-	      let dag = make(<real-dag>, class: cls);
-	      *class-to-dag-table*[cls] := dag;
-	      dag;
-	    end if;
-  for (parent in parents)
-    add-child!(make(<dag>, class: parent), dag);
-  end for;
-  for (child in children)
-    add-child!(dag, make(<dag>, class: child));
-  end for;
-  dag;
-end method make;
-
-// Clears the *class-to-dag-table*
-//
-define method reset-dag-stuff () => ();
-  *class-to-dag-table* := make(<object-table>);
-end method reset-dag-stuff;
-
-// -------------------------------------------------------------------
-
 define method create-dag
-    (cls :: <class>, direction :: one-of(#"up", #"down", "both"))
+    (class :: <class>, direction :: one-of(#"up", #"down", #"both"))
  => dag :: <dag>;  // corresponds to cls
-  let parents = cls.direct-superclasses;
-  let children = cls.direct-subclasses;
-  let dag = make(<dag>, class: cls, parents: parents, children: children);
-  if (direction ~== #"down")
-    for (parent in parents)
-      create-dag(parent, #"up");
-    end for;
-  end if;
-  if (direction ~== #"up")
-    for (child in children)
-      create-dag(child, #"down");
-    end for;
-  end if;
-  dag;
+  let table = make(<object-table>);
+  local
+    method reuse-or-make-dag (class :: <class>) => res :: <dag>;
+      element(table, class, default: #f)
+	| (table[class] := make(<dag>, class: class));
+    end method reuse-or-make-dag,
+    method create-dag-for
+	(class :: <class>, direction :: one-of(#"up", #"down", #"both"))
+	=> res :: <dag>;
+      let dag = reuse-or-make-dag(class);
+      if (direction ~== #"down")
+	for (parent in class.direct-superclasses)
+	  add-child!(create-dag-for(parent, #"up"), dag);
+	end for;
+      end if;
+      if (direction ~== #"up")
+	for (child in class.direct-subclasses)
+	  add-child!(dag, create-dag-for(child, #"down"));
+	end for;
+      end if;
+      dag;
+    end method create-dag-for;
+  create-dag-for(class, direction);
 end method create-dag;
+
   
 define constant $horizontal-spacing = 25;
 define constant $vertical-spacing = 50;
@@ -212,15 +181,17 @@ end method class-width;
 
 // Compute-dag-positions! has already been called
 //
-define method draw-dag (dag :: <dag>, canvas :: <canvas>) => ();
-  draw-node(canvas, dag);
+define method draw-dag
+    (state :: <inspector-state>, dag :: <dag>, canvas :: <canvas>) => ();
+  draw-node(state, canvas, dag);
   for (child in dag.dag-children)
-    draw-dag(child, canvas);
+    draw-dag(state, child, canvas);
   end for;
 end method draw-dag;
 
-define method draw-node (canvas :: <canvas>, dag :: <dag>)
- => ();
+define method draw-node
+    (state :: <inspector-state>, canvas :: <canvas>, dag :: <dag>)
+    => ();
   if (~dag.dag-already-drawn)
     dag.dag-already-drawn := #t;
     let x-pos = dag.dag-position + 30;
@@ -228,6 +199,8 @@ define method draw-node (canvas :: <canvas>, dag :: <dag>)
     let text = create-text(canvas, x-pos, y-pos,
 			   text: as(<string>, dag.dag-class.class-name),
 			   anchor: "s");
+    bind(text, "<Button-1>",
+	 curry(xinspect-one-object, dag.dag-class, state));
     for (child in dag.dag-children)
       let line-coords = vector(x-pos, y-pos,
 			       child.dag-position + 30,
@@ -248,29 +221,70 @@ define method find-max-width (dag :: <dag>)
 	map(find-max-width, dag.dag-children));
 end method find-max-width;
 
-define variable *semaphore* = make(<semaphore>);
+define constant $max-width = 640;
+define constant $max-height = 512;
 
 define function view-class-hierarchy
-    (root :: <class>, window-title :: <string>) => ();
-  grab-lock(*semaphore*);
-  reset-dag-stuff();
-  let dag = create-dag(root, #"down");
-  release-lock(*semaphore*);
+    (state :: <inspector-state>, root :: <class>, window-title :: <string>)
+    => ();
+  grab-lock(state.state-lock);
+  if (state.state-done?)
+    release-lock(state.state-lock);
+  else
+    let window = make(<toplevel>);
+    add!(state.state-all-windows, window);
+    release-lock(state.state-lock);
+    unmap-window(window);
+    
+    call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
+    call-tk-function("wm title ", tk-as(<string>, window),
+		     " \"", tk-quote(window-title), "\"");
 
-  let window = make(<toplevel>);
-  call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
-  call-tk-function("wm title ", tk-as(<string>, window),
-		   " \"", tk-quote(window-title), "\"");
+    put-tk-line("wm protocol ", window, " \"WM_DELETE_WINDOW\" {",
+		curry(close-command, state, window), "}");
 
-  compute-dag-positions!(dag);
-  let max-level = find-max-level(dag);
-  let height = (max-level + 1) * $vertical-spacing + 10;
-  let width = find-max-width(dag) + 50;
-  let canvas = make(<canvas>, in: window, height: height, width: width,
-		    relief: #"sunken", expand: #t, fill: "both");
-  scroll(canvas, side: "right", before: canvas, fill: "y", 
-	 orient: "vertical");
-  scroll(canvas, side: "bottom", before: canvas, fill: "x", 
-	 orient: "horizontal");
-  draw-dag(dag, canvas);
+    let dag = create-dag(root, #"down");
+
+    compute-dag-positions!(dag);
+    let max-level = find-max-level(dag);
+    let height = (max-level + 1) * $vertical-spacing + 10;
+    let width = find-max-width(dag) + 50;
+    let canvas = make(<canvas>, in: window,
+		      scrollregion:
+			join-tk-args("0 0", width, height),
+		      height: min(height, $max-height),
+		      width: min(width, $max-width),
+		      relief: #"sunken", expand: #t, fill: "both");
+    if (height > $max-height)
+      scroll(canvas, side: "right", before: canvas, fill: "y", 
+	     orient: "vertical");
+    end if;
+    if (width > $max-width)
+      scroll(canvas, side: "bottom", before: canvas, fill: "x", 
+	     orient: "horizontal");
+    end if;
+    map-window(window);
+    draw-dag(state, dag, canvas);
+  end if;
 end function view-class-hierarchy;
+
+
+define method close-command
+    (state :: <inspector-state>, window :: <window>)
+    => ();
+  grab-lock(state.state-lock);
+  if (state.state-done? | ~member?(window, state.state-all-windows))
+    release-lock(state.state-lock);
+  else
+    remove!(state.state-all-windows, window);
+    let last-window? = state.state-all-windows.empty?;
+    if (last-window?)
+      state.state-done? := #t;
+    end if;
+    release-lock(state.state-lock);
+    destroy-window(window);
+    if (last-window?)
+      signal-event(state.state-done);
+    end if;
+  end if;
+end method close-command;
