@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.3 2000/10/20 14:51:59 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.4 2002/08/07 20:19:21 andreas Exp $
 
 ///======================================================================
 ///
@@ -70,6 +70,16 @@ define open generic print-message (object :: <object>, stream :: <stream>)
     => ();
 
 
+define method print-message (object :: <object>, stream :: <stream>)
+ => ();
+  let name = object.object-class.class-name;
+  if (name)
+    format(stream, "{an instance of %s}", name);
+  else
+    print-message("{an instance of something}", stream);
+  end if;
+end method print-message;
+
 define sealed method print-message (object :: <string>, stream :: <stream>)
     => ();
   // Buffer-do-dispatch hand codes the sealed semantics of this method and
@@ -98,6 +108,12 @@ define sealed method print-message (object :: <symbol>, stream :: <stream>)
   write(stream, as(<string>, object));
 end method;
 
+#if(~mindy)
+define sealed method print-message (object :: <raw-pointer>, stream :: <stream>)
+ => ();
+  format(stream, "%x", as(<integer>, <raw-pointer>));
+end method print-message;
+#end
 
 
 /// Format.

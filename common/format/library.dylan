@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/library.dylan,v 1.2 2000/01/24 04:54:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/library.dylan,v 1.3 2002/08/07 20:19:21 andreas Exp $
 
 //======================================================================
 //
@@ -53,6 +53,8 @@ define module format
 	     $minimum-integer, <byte-character>,
 	     condition-format, condition-force-output,
 	     report-condition};
+  use introspection;
+  use system;
   use streams;
   use print,
     import: {print};
