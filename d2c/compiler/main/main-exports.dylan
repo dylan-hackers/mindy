@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.13 2002/08/25 02:18:03 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.14 2003/02/15 19:33:01 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -51,9 +51,9 @@ define module main
 #else
   use System, 
      import: {system, copy-bytes, getenv, <raw-pointer>, import-string, 
-	      export-string, no-core-dumps,
-	      c-expr, c-decl, pointer-deref, pointer-deref-setter, call-out,
-	      get-time-of-day};
+              export-string, no-core-dumps,
+              c-include, c-expr, c-decl, pointer-deref, pointer-deref-setter, call-out,
+              get-time-of-day};
 #endif
   use string-conversions, import: {string-to-integer};
   use substring-search;
@@ -61,9 +61,9 @@ define module main
   use random;
   use parse-arguments;
   use option-parser-protocol;
-
+   
   use utils;
-  // use define-classes;
+// use define-classes;
   use define-functions;
   use definitions, import: {*defn-dynamic-default*};
   use function-definitions;
@@ -77,9 +77,11 @@ define module main
   use top-level-forms;
   use flow;
   use builder-interface;
-  // use fer-convert;
+// use fer-convert;
   use front;
-  // use dump;
+// use dump;
+  use fer-convert;
+  use top-level-expressions;
   use classes;
   use c-representation;
   use cback;

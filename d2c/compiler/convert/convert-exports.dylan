@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.9 2001/12/23 02:35:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.10 2003/02/15 19:32:59 andreas Exp $
 copyright: see below
 
 
@@ -38,6 +38,7 @@ define library compiler-convert
 
   export
     define-classes, define-functions,
+    fer-convert, top-level-expressions, // for great hacking
     
     // for browser support:
     define-macros, define-constants-and-variables;
@@ -345,6 +346,8 @@ define module top-level-expressions
 
   use lexenv;
   use fer-convert;
+
+  export <expression-tlf>, tlf-expression;
 end;
 
 

@@ -1,0 +1,23 @@
+block(return) let a = #f; a := 42; if (a) return() else 3 + 4 end end
+block(return) let a = #f; /* a := 42; */ if (a) return() else 3 + 4 end end
+block(return) for(i from 0 below 10) if(i > 6) return(17) end end; 23 end
+block(return) for(i from 0 below 10) if(i > 6) return(i) end end; 23 end
+block(return) let one = #f; one := 42; let two = if (~one) return() else 4 + 5 end; two := #f; if (two) "two" else 3 + 4 end end
+let a = #f; a := method() 23 end; a()
+method() 23 end
+method(x) x(x) end(method(y) y end)
+method(x) x(x) end(method(y) 23 end)
+method(x) x(x) end(identity)
+begin local fac(n :: <integer>) n == 0 & 1 | n * fac(n - 1) end; fac(5); end
+begin local fac(n) n == 0 & 1 | n * fac(n - 1) end; fac(5); end
+begin let fac = method(n, fac) n == 0 & 1 | n * fac(n - 1) end; fac(5, fac); end
+~ (3 + 8 == 11)
+- (2 + 5)
+"fun".object-class
+"fun".size
+
+// generates enormous FER
+// possibly a bug?
+block(return) let a = #f; a := method() signal("eek") end; a() exception (<error>) return("error") end block
+block(return) let a = #f; a := method() error("eek") end; a() exception (<error>) return("error") end block
+

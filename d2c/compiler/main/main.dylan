@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.71 2003/02/01 13:57:11 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.72 2003/02/15 19:33:01 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -88,6 +88,7 @@ define method show-help(stream :: <stream>) => ()
   format(stream, "\n");
   show-usage(stream);
   format(stream,
+"       -i, --interactive  Enter interactive command mode.\n"
 "       -L, --libdir:      Extra directories to search for libraries.\n"
 "       -D, --define:      Define conditional compilation features.\n"
 "       -U, --undefine:    Undefine conditional compilation features.\n"
@@ -225,6 +226,10 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
  
   // Set up our argument parser with a description of the available options.
   let argp = make(<argument-list-parser>);
+  add-option-parser-by-type(argp,
+                           <simple-option-parser>,
+                           long-options: #("interactive"),
+                           short-options: #("i"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
 			    long-options: #("help"));
@@ -365,10 +370,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 
   // Process our regular arguments, too.
   let args = regular-arguments(argp);
-  unless (args.size = 1)
+  unless (args.size = 1 | option-value-by-long-name(argp, "interactive"))
     show-usage-and-exit();
   end unless;
-  let lid-file = args[0];
 
   // Figure out which optimizer to use.
   let optimizer-class =
@@ -409,6 +413,28 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   end for;
   		       
   *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
+
+  if (option-value-by-long-name(argp, "interactive"))
+    let finished? = #f;
+    while(~ finished?)
+      format(*standard-output*, "gwydion> ");
+      force-output(*standard-output*);
+      let line = read-line(*standard-input*, on-end-of-stream: #f);
+      if(line)
+        block()
+          evaluate(line, $empty-environment);
+        exception(condition :: <condition>)
+          report-condition(condition, *standard-output*);
+          format(*standard-output*, "\n");
+        end block;
+      else
+        finished? := #t;
+        format(*standard-output*, "\n");
+      end if;
+    end while;
+    exit();
+  end if;
+  let lid-file = args[0];
 
   let state
       = if(lid-file.filename-extension = ".dylan")
