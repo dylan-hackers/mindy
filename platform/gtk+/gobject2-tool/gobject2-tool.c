@@ -155,10 +155,11 @@ main (gint   argc,
           "define interface\n"
           "  #include \"gtk/gtk.h\",\n"
           "    import: all-recursive,\n"
-	  "    name-mapper: minimal-name-mapping;\n");
+	  "    name-mapper: minimal-name-mapping-with-structure-prefix;\n");
   for (i = 0; i < G_N_ELEMENTS (get_type_funcs); i++)
     query_type (get_type_funcs[i] (), 0);
   g_print("end interface;");
+  return 0;
 }
 
 
