@@ -1,9 +1,9 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.9 1996/01/27 20:10:36 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.10 1996/02/08 23:53:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
-define class <ct-function> 
+define abstract class <ct-function> 
     (<ct-value>, <annotatable>, <identity-preserving-mixin>)
   //
   // Some string useful for describing this function.  Used only for printing
@@ -26,6 +26,11 @@ define class <ct-function>
     init-value: #(), init-keyword: closure-var-types:;
 end;
 
+define sealed method make (class == <ct-function>, #rest keys, #key)
+    => ctv :: <ct-function>;
+  apply(make, <ct-raw-function>, keys);
+end method make;
+
 define method print-object (ctv :: <ct-function>, stream :: <stream>) => ();
   pprint-fields(ctv, stream, name: ctv.ct-function-name);
 end;
@@ -33,11 +38,6 @@ end;
 define method print-message (ctv :: <ct-function>, stream :: <stream>) => ();
   write(ctv.ct-function-name, stream);
 end;
-
-define method ct-value-cclass (ctv :: <ct-function>) => res :: <cclass>;
-  specifier-type(#"<raw-function>");
-end;
-
 
 define constant $ct-function-dump-slots =
   list(info, #f, info-setter,
@@ -47,9 +47,19 @@ define constant $ct-function-dump-slots =
        ct-function-closure-var-types, closure-var-types:, #f,
        ct-value-heap-labels, heap-labels:, #f);
 
-add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-function>,
+
+
+define class <ct-raw-function> (<ct-function>)
+end;
+
+define method ct-value-cclass (ctv :: <ct-raw-function>) => res :: <cclass>;
+  specifier-type(#"<raw-function>");
+end;
+
+add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-raw-function>,
 		$ct-function-dump-slots,
 		load-external: #t);
+
 
 
 define abstract class <ct-generic-function> (<ct-function>, <eql-ct-value>)
@@ -103,13 +113,37 @@ define method ct-value-cclass (ctv :: <ct-method>) => res :: <cclass>;
   specifier-type(#"<method>");
 end;
 
-add-make-dumper(#"ct-method", *compiler-dispatcher*,
-  <ct-method>,
-  concatenate(
-    $ct-function-dump-slots,
-    list(ct-method-hidden?, hidden:, #f)),
-  load-external: #t
-);
+define constant $ct-method-dump-slots
+  = concatenate($ct-function-dump-slots,
+		list(ct-method-hidden?, hidden:, #f));
+
+add-make-dumper(#"ct-method", *compiler-dispatcher*, <ct-method>,
+		$ct-method-dump-slots, load-external: #t);
+
+
+
+define class <ct-accessor-method> (<ct-method>)
+  //
+  // The slot being accessed.
+  slot ct-accessor-method-slot-info :: <slot-info>,
+    required-init-keyword: slot-info:;
+  //
+  // The shared accessor standin, or #f if we need a custom one.
+  slot ct-accessor-standin :: false-or(<ct-function>),
+    init-keyword: standin:, init-value: #f;
+end;
+
+define method ct-value-cclass (ctv :: <ct-accessor-method>) => res :: <cclass>;
+  specifier-type(#"<accessor-method>");
+end;
+
+add-make-dumper
+  (#"ct-accessor-method", *compiler-dispatcher*, <ct-accessor-method>,
+   concatenate($ct-method-dump-slots,
+	       list(ct-accessor-method-slot-info, slot-info:, #f,
+		    ct-accessor-standin, standin:, #f)),
+   load-external: #t);
+
 
 
 define class <ct-entry-point> 
