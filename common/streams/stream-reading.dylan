@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading from streams.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/stream-reading.dylan,v 1.6 1996/09/15 15:51:18 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/common/streams/stream-reading.dylan,v 1.7 1996/11/16 12:58:07 rgs Exp $
 copyright: See below.
 
 //======================================================================
@@ -225,12 +225,12 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
 	else
 	  // We hit the end of the stream. 
 	  // Check to see if we got everything we needed, else bail.
-	  if (n == result.size)
+	  if (n == result-stop)
 	    exit-loop(result);
 	  elseif (on-end-of-stream == $not-supplied)
 	    error(make(<incomplete-read-error>,
 		       stream: stream,
-		       sequence: result,
+		       sequence: copy-sequence(result, end: result-stop),
 		       count: n));
 	  else
 	    exit-loop(on-end-of-stream);
