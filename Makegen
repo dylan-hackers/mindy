@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.6 1999/04/10 18:50:21 emk Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.7 1999/04/20 04:11:07 emk Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -38,6 +38,18 @@ push(@compile_commands, "\$(MAKE) force.timestamp");
 print <<'EOF';
 force.timestamp:
 	touch force.timestamp
+
+EOF
+
+## Always emit a post-bootstrap cleanup rule, just in case we need one.
+print <<'EOF';
+.PHONY: bootstrap_clean
+
+bootstrap_clean: clean
+	rm -rf bootstrap_compiler
+	rm -f config.cache
+	@echo
+	@echo "Now run ./configure to prepare for normal builds."
 
 EOF
 
@@ -68,10 +80,14 @@ if ($enable_bootstrap) {
 	# XXX - this directory name is confusing
 	push(@compile_commands, 'mkdir bootstrap_compiler');
 	push(@compile_commands, 'cp d2c/compiler/main/d2c bootstrap_compiler');
-	push(@compile_commands, 'rm config.cache');
+	push(@compile_commands, 'rm -f config.cache');
+	# XXX - Uck. We need to do this in the right directory. We also need
+        # to pass some of our configure options.
 	push(@compile_commands, './configure');
 	push(@compile_commands, 'make clean');
 	push(@compile_commands, 'make');
+	&message("Bootstrap complete. Type 'make bootstrap_clean' to perform");
+	&message("a regular build.");
     }
 }
 else {
