@@ -1,5 +1,5 @@
-Library: operating-system
-Unit-prefix: operatingsystem
+Library: system
+Unit-prefix: system
 
 system-exports.dylan
 os-constants.dylan

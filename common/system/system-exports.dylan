@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.4 1999/04/10 21:08:30 tree Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/system-exports.dylan,v 1.5 1999/04/20 07:32:38 emk Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -26,9 +26,12 @@ copyright:   Copyright 1999 Thomas R. Emerson
    E-mail to the Internet address "gwydion-bugs@randomhacks.com".
 */
 
-define library operating-system
+define library system
   use dylan;
   use melange-support;
+
+  use common-dylan;
+  use file-system, export: all;
   export
     operating-system;
 end library;
@@ -37,6 +40,15 @@ define module operating-system
   use dylan;
   use extensions;
   use melange-support;
+
+  use common-dylan,
+    exclude: {subclass},
+    export: {application-name,
+	     application-filename,
+	     application-arguments,
+	     exit-application,
+	     register-exit-application-function};
+
   export
     $architecture-little-endian?,
     $os-name,
@@ -55,10 +67,4 @@ define module operating-system
     environment-variable,
     environment-variable-setter,
     tokenize-environment-variable;
-
-  // once our common-dylan module is complete these should
-  // be reexported from there.
-  export
-    exit-application;
-
 end module;

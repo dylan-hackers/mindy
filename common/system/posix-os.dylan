@@ -1,5 +1,5 @@
 module:      operating-system
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.4 1999/04/10 21:08:28 tree Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.5 1999/04/20 07:32:36 emk Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -116,10 +116,6 @@ end;
 define function tokenize-environment-variable(variable :: <byte-string>)
  => (components :: <vector>)
   split(':', variable);
-end function;
-
-define function exit-application(code :: <integer>) => ()
-  exit(exit-code: code);
 end function;
 
 /*
