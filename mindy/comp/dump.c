@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.9 1994/04/20 00:23:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.10 1994/04/28 04:05:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -33,6 +33,7 @@
 
 static FILE *File = NULL;
 static int table_index = 0;
+static boolean ModuleDumped = FALSE;
 
 static void dump_literal(struct literal *literal);
 static void dump_constant(struct constant *c);
@@ -537,41 +538,63 @@ static void dump_defnamespace(struct defnamespace_constituent *c,
 
 /* Interface to the output file dumper */
 
-void dump_setup_output(char *source, FILE *file, char *what)
+void dump_setup_output(char *source, FILE *file)
 {
     struct stat buf;
     struct timeval tv;
 
     File = file;
 
-    fprintf(File, "# %s of %s\n", what, source);
+    fprintf(File, "# %s (%d.%d) of %s\n", ParseOnly ? "parse" : "compilation",
+	    file_MajorVersion, file_MinorVersion, source);
     if (stat(source, &buf) >= 0)
 	fprintf(File, "# last modified on %s", ctime(&buf.st_mtime));
     fprintf(File, "# produced with the %s version of mindycomp\n", Version);
     gettimeofday(&tv, NULL);
     fprintf(File, "# at %s", ctime(&tv.tv_sec));
 
-    dump_op(fop_BYTE_ORDER);
+    dump_op(fop_HEADER);
     dump_int2(1);
+    if (ParseOnly)
+	dump_int4(parse_MagicNumber);
+    else
+	dump_int4(dbc_MagicNumber);
+    dump_byte(file_MajorVersion);
+    dump_byte(file_MinorVersion);
     dump_op(fop_IN_LIBRARY);
     if (LibraryName)
 	dump_symbol(LibraryName);
     else
 	dump_symbol(symbol("Dylan-User"));
-    dump_op(fop_IN_MODULE);
-    dump_symbol(ModuleName);
+    if (ParseOnly) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
     dump_op(fop_SOURCE_FILE);
     dump_string_guts(fop_SHORT_STRING, fop_STRING, source, strlen(source));
 }
 
 void dump_top_level_form(struct component *c)
 {
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
+
     dump_op(fop_TOP_LEVEL_FORM);
     dump_component(c);
 }
 
 void dump_defmethod(struct id *name, struct component *c)
 {
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
+
     dump_op(fop_DEFINE_METHOD);
     dump_symbol(name->symbol);
     dump_component(c);
@@ -579,6 +602,12 @@ void dump_defmethod(struct id *name, struct component *c)
 
 void dump_defgeneric(struct id *name, struct component *tlf)
 {
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
+
     dump_op(fop_DEFINE_GENERIC);
     dump_symbol(name->symbol);
     dump_component(tlf);
@@ -588,6 +617,12 @@ void dump_defclass(struct id *name, struct slot_spec *slots,
 		   struct component *tlf1, struct component *tlf2)
 {
     struct slot_spec *slot;
+
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
 
     dump_op(fop_DEFINE_CLASS);
     dump_symbol(name->symbol);
@@ -603,6 +638,12 @@ void dump_defclass(struct id *name, struct slot_spec *slots,
 
 void dump_defconst(struct param_list *params, struct component *initializer)
 {
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
+
     dump_op(fop_DEFINE_CONSTANT);
     dump_defconst_or_var(params);
     dump_component(initializer);
@@ -610,6 +651,12 @@ void dump_defconst(struct param_list *params, struct component *initializer)
 
 void dump_defvar(struct param_list *params, struct component *initializer)
 {
+    if (!ModuleDumped) {
+	dump_op(fop_IN_MODULE);
+	dump_symbol(ModuleName);
+	ModuleDumped = TRUE;
+    }
+
     dump_op(fop_DEFINE_VARIABLE);
     dump_defconst_or_var(params);
     dump_component(initializer);
