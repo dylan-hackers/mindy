@@ -1,2 +1,2 @@
-&compile_subdirs("testworks-test-suite");
+&compile_subdirs("testworks-test-suite", "libraries-test-suite");
 

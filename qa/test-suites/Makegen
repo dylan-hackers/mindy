@@ -1,0 +1,2 @@
+&compile_subdirs("libraries-test-suite");
+
