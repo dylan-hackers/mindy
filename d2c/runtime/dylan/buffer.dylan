@@ -3,7 +3,7 @@ author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.5 1995/12/09 01:22:51 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.6 1995/12/09 02:52:20 wlott Exp $
 
 
 %%primitive c-include ("string.h");
@@ -11,14 +11,13 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan
 define /* exported */ constant <byte> =
   limited(<fixed-integer>, min: 0, max: 255);
 
-define /* exported */ class <byte-vector> (<builtin-vector>)
+define /* exported */ class <byte-vector> (<simple-vector>)
   sealed slot %element :: <byte>,
     init-value: 0, init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<byte-vector>));
-seal generic initialize (<byte-vector>);
 
 define /* exported */ constant <buffer> = <byte-vector>;
 define /* exported */ constant <buffer-index> = <fixed-integer>;
@@ -40,7 +39,7 @@ end;
 
 define sealed inline method element-setter
     (new-value :: <byte>, vec :: <byte-vector>, index :: <fixed-integer>)
-    => new-value :: <object>;
+    => new-value :: <byte>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
   else
