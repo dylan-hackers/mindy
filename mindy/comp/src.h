@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.7 1994/04/10 21:07:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.8 1994/04/14 19:15:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -205,6 +205,7 @@ struct body_expr {
 struct block_expr {
     enum expr_kind kind;
     boolean analized;
+    int line;
     struct id *exit_fun;
     struct body *body;
     struct exception_clause *inner;
@@ -223,6 +224,7 @@ struct if_expr {
     boolean analized;
     struct expr *cond;
     struct body *consequent;
+    int else_line;
     struct body *alternate;
 };
 
@@ -558,6 +560,7 @@ struct for_header;
 struct gf_suffix;
 struct to_part;
 struct class_guts;
+struct else_part;
 
 extern struct body *make_body(void);
 extern struct body
@@ -636,11 +639,12 @@ extern struct literal *parse_float_token(struct token *token);
 extern struct literal *parse_symbol_token(struct token *token);
 extern struct literal *parse_keyword_token(struct token *token);
 extern struct expr *make_body_expr(struct body *body);
-extern struct expr *make_block(struct id *exit, struct body *body,
+extern struct expr *make_block(int line, struct id *exit, struct body *body,
 			       struct block_epilog *epilog);
 extern struct expr *make_case(struct condition_body *body);
 extern struct expr *make_if(struct expr *cond, struct body *consequent,
-			    struct body *alternate);
+			    struct else_part *else_part);
+extern struct else_part *make_else(int else_line, struct body *alternate);
 extern struct expr *make_for(struct for_header *header, struct body *body,
 			     struct body *finally);
 extern struct expr *make_select(struct expr *expr, struct expr *by,

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.6 1994/04/10 21:58:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.7 1994/04/14 19:15:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -79,6 +79,7 @@ static void pop_yacc_recoveries(int count);
     enum slot_allocation slot_allocation;
     struct gf_suffix *gf_suffix;
     flags_t flags;
+    struct else_part *else_part;
 
     struct defnamespace_constituent *defnamespace_constituent;
     struct variable_names *variable_names;
@@ -188,7 +189,7 @@ static void pop_yacc_recoveries(int count);
 %type <nothing> arrow_opt
 %type <token> symbol_opt
 %type <body> body body_opt constituents cleanup_part
-%type <body> else_part else_part_opt final_part final_part_opt
+%type <body> final_part final_part_opt
 %type <constituent> constituent defining_form local_declaration
 %type <constituent> class_definition generic_function_definition
 %type <bindings> bindings
@@ -231,6 +232,7 @@ static void pop_yacc_recoveries(int count);
 %type <slot_allocation> allocation
 %type <gf_suffix> gf_suffix
 %type <flags> flags 
+%type <else_part> else_part else_part_opt
 
 %type <constituent> module_definition library_definition 
 %type <defnamespace_constituent> module_clauses_opt module_clauses
@@ -467,8 +469,9 @@ statement:
 					 push_yacc_recovery(CLEANUP);
 					 push_yacc_recovery(EXCEPTION); }
 	body block_epilog_opt END block_opt
-	{ free($1); free($2); free($4); free($8); pop_yacc_recoveries(3); 
-	  $$ = make_block($3 ? make_id($3) : NULL, $6, $7);
+	{ free($2); free($4); free($8); pop_yacc_recoveries(3); 
+	  $$ = make_block($1->line, $3 ? make_id($3) : NULL, $6, $7);
+	  free($1);
 	}
     |	CASE { push_yacc_recovery(END); }
 	condition_body END case_opt
@@ -490,7 +493,8 @@ statement:
           pop_yacc_recoveries(1); }
     |	UNLESS LPAREN expression RPAREN { push_yacc_recovery(END); }
 	body END unless_opt
-	{ free($1);free($2);free($4);free($7); $$ = make_if($3, NULL, $6);
+	{ free($1);free($2);free($4);free($7);
+	  $$ = make_if($3, NULL, make_else(0, $6));
           pop_yacc_recoveries(1); }
     |	UNTIL LPAREN expression RPAREN { push_yacc_recovery(END); }
         body_opt END until_opt
@@ -608,10 +612,11 @@ cleanup_part:	CLEANUP body { free($1); $$ = $2; } ;
 final_part:	FINALLY body { free($1); $$ = $2; } ;
 
 else_part:
-	ELSE body { free($1); $$ = $2; }
+	ELSE body { $$ = make_else($1->line, $2); free($1); }
     |	ELSEIF LPAREN expression RPAREN body else_part_opt
-	{ free($1); free($2); free($4);
-	  $$ = make_expr_body(make_if($3, $5, $6));
+	{ free($2); free($4);
+	  $$ = make_else($1->line, make_expr_body(make_if($3, $5, $6)));
+	  free($1); 
 	}
 ;
 

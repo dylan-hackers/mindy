@@ -222,7 +222,10 @@ static struct expr *dup_block_expr(struct block_expr *e)
     return NULL;
 #if 0
     struct block_expr *res
-	= (struct block_expr *)make_block(NULL, dup_body(e->body), NULL);
+	= (struct block_expr *)make_block(e->line,
+					  NULL,
+					  dup_body(e->body),
+					  NULL);
 
     if (e->exit_fun)
 	res->exit_fun = dup_id(e->exit_fun);
@@ -260,7 +263,7 @@ static struct expr *dup_if_expr(struct if_expr *e)
 	free_body(consequent);
 	return NULL;
     }
-    return make_if(cond, consequent, alternate);
+    return make_if(cond, consequent, make_else(e->else_line, alternate));
 }
 
 static struct expr *dup_for_expr(struct for_expr *e)

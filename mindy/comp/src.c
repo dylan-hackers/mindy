@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.11 1994/04/10 21:08:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.12 1994/04/14 19:15:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -84,6 +84,11 @@ struct class_guts {
     struct keyword_spec **keywords_tail;
     struct inherited_spec *inherits;
     struct inherited_spec **inherits_tail;
+};
+
+struct else_part {
+    int else_line;
+    struct body *alternate;
 };
 
 struct body *make_body(void)
@@ -534,7 +539,8 @@ static struct body *make_literal_body(struct literal *literal)
 
 struct expr *make_not(struct expr *expr)
 {
-    return make_if(expr, NULL, make_literal_body(make_true_literal()));
+    return make_if(expr, NULL,
+		   make_else(0, make_literal_body(make_true_literal())));
 }
 
 struct expr *make_singleton(struct expr *expr)
@@ -968,13 +974,14 @@ struct expr *make_body_expr(struct body *body)
     }
 }
 
-struct expr *make_block(struct id *exit, struct body *body,
-			       struct block_epilog *epilog)
+struct expr *make_block(int line, struct id *exit, struct body *body,
+			struct block_epilog *epilog)
 {
     struct block_expr *res = malloc(sizeof(struct block_expr));
 
     res->kind = expr_BLOCK;
     res->analized = FALSE;
+    res->line = line;
     res->exit_fun = exit;
     res->body = body;
     if (epilog) {
@@ -1004,7 +1011,7 @@ struct expr *make_case(struct condition_body *body)
 }
 
 struct expr *make_if(struct expr *cond, struct body *consequent,
-			    struct body *alternate)
+		     struct else_part *else_part)
 {
     struct if_expr *res = malloc(sizeof(struct if_expr));
 
@@ -1015,12 +1022,27 @@ struct expr *make_if(struct expr *cond, struct body *consequent,
 	res->consequent = consequent;
     else
 	res->consequent = make_literal_body(make_false_literal());
-    if (alternate)
-	res->alternate = alternate;
-    else
+    if (else_part) {
+	res->else_line = else_part->else_line;
+	res->alternate = else_part->alternate;
+	free(else_part);
+    }
+    else {
+	res->else_line = 0;
 	res->alternate = make_literal_body(make_false_literal());
+    }
 
     return (struct expr *)res;
+}
+
+struct else_part *make_else(int else_line, struct body *alternate)
+{
+    struct else_part *res = malloc(sizeof(*res));
+
+    res->else_line = else_line;
+    res->alternate = alternate;
+
+    return res;
 }
 
 struct expr *make_for(struct for_header *header, struct body *body,
@@ -1078,8 +1100,8 @@ struct expr *make_repeat(void)
 }
 
 struct block_epilog *make_block_epilog(struct exception_clauses *inner,
-					      struct body *cleanup,
-					      struct exception_clauses *outer)
+				       struct body *cleanup,
+				       struct exception_clauses *outer)
 {
     struct block_epilog *res = malloc(sizeof(struct block_epilog));
 
