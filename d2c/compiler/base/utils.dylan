@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.2 1994/12/16 12:12:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.3 1994/12/17 01:41:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -231,6 +231,14 @@ define method pretty-format (stream :: <stream>,
 			     end);
 end;
 
+define method report-condition (condition :: type-or(<simple-error>,
+						     <simple-warning>,
+						     <simple-restart>),
+				stream :: <stream>)
+  apply(pretty-format, stream,
+	condition.condition-format-string,
+	condition.condition-format-arguments);
+end;
 
 
 // Simple utility functions.
