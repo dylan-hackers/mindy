@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.63 1996/04/06 07:28:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.64 1996/04/10 17:01:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -100,26 +100,28 @@ define method file-tokenizer
 	      source: source,
 	      start-posn: start-posn,
 	      start-line: start-line),
-	 find-module(lib,
-		     as(<symbol>, header[#"module"]),
-		     create: #t));
+	 find-module(lib, as(<symbol>, header[#"module"])));
 end;
 
 
 define method test-lexer (file :: <byte-string>) => ();
-  let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
-  block (return)
-    *Current-Module* := module;
-    while (#t)
-      let token = get-token(tokenizer);
-      if (token.token-kind == $eof-token)
-	return();
-      else
-	format(*debug-output*, "%=\n", token);
-      end if;
-    end while;
-  cleanup
-    *Current-Module* := #f;
+  block ()
+    let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
+    block (return)
+      *Current-Module* := module;
+      while (#t)
+	let token = get-token(tokenizer);
+	if (token.token-kind == $eof-token)
+	  return();
+	else
+	  format(*debug-output*, "%=\n", token);
+	end if;
+      end while;
+    cleanup
+      *Current-Module* := #f;
+    end block;
+  exception (<fatal-error-recovery-restart>)
+    #f;
   end block;
 end method test-lexer;
 
@@ -129,7 +131,12 @@ define method set-module (module :: type-union(<false>, <module>)) => ();
 end method set-module;
 
 define method set-module (module :: <symbol>) => ();
-  *current-module* := find-module(*Current-Library* | $Dylan-library, module);
+  block ()
+    *current-module*
+      := find-module(*Current-Library* | $Dylan-library, module);
+  exception (<fatal-error-recovery-restart>)
+    #f;
+  end block;
 end method set-module;
 
 define method set-library (library :: type-union(<false>, <library>)) => ();
@@ -137,7 +144,11 @@ define method set-library (library :: type-union(<false>, <library>)) => ();
 end method set-library;
 
 define method set-library (library :: <symbol>) => ();
-  *current-library* := find-library(library);
+  block ()
+    *current-library* := find-library(library);
+  exception (<fatal-error-recovery-restart>)
+    #f;
+  end block;
 end method set-library;
 
 
@@ -146,16 +157,20 @@ define method test-parse
     (parser :: <function>, file :: <byte-string>,
      #key debug: debug? :: <boolean>)
     => result :: <object>;
-  let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
-  let orig-library = *current-library*;
-  let orig-module = *current-module*;
   block ()
-    *current-library* := $dylan-library;
-    *current-module* := module;
-    parser(tokenizer, debug: debug?);
-  cleanup
-    *current-library* := orig-library;
-    *current-module* := orig-module;
+    let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
+    let orig-library = *current-library*;
+    let orig-module = *current-module*;
+    block ()
+      *current-library* := $dylan-library;
+      *current-module* := module;
+      parser(tokenizer, debug: debug?);
+    cleanup
+      *current-library* := orig-library;
+      *current-module* := orig-module;
+    end block;
+  exception (<fatal-error-recovery-restart>)
+    #f;
   end block;
 end method test-parse;
 
@@ -290,7 +305,7 @@ define method find-source-file
       end method try;
     try(file, #f);
     try(concatenate(source-path, file), source-path);
-    error("Can't find source file %=.", file);
+    compiler-fatal-error("Can't find source file %=.", file);
   end block;
 end method find-source-file;
 
@@ -346,28 +361,31 @@ define method compile-library
 
     let lib-name = header[#"library"];
     format(*debug-output*, "Compiling library %s\n", lib-name);
-    let lib = find-library(as(<symbol>, lib-name));
+    let lib = find-library(as(<symbol>, lib-name), create: #t);
     let unit-prefix
       = element(header, #"unit-prefix", default: #f) | as-lowercase(lib-name);
     let tlf-vectors = make(<stretchy-vector>);
     let source-path = extract-directory(lid-file);
     for (file in files)
-      format(*debug-output*, "Parsing %s\n", file);
-      let (name, dir) = find-source-file(file, source-path);
-      log-dependency(name);
-      let (tokenizer, mod) = file-tokenizer(lib, file, dir);
-      use-module(mod);
       block ()
-	*Current-Library* := lib;
-	*Current-Module* := mod;
-	let tlfs = make(<stretchy-vector>);
-	*Top-Level-Forms* := tlfs;
-	add!(tlf-vectors, tlfs);
-	parse-source-record(tokenizer);
-      cleanup
-	*Current-Library* := #f;
-	*Current-Module* := #f;
-      end;
+	format(*debug-output*, "Parsing %s\n", file);
+	let (name, dir) = find-source-file(file, source-path);
+	log-dependency(name);
+	let (tokenizer, mod) = file-tokenizer(lib, file, dir);
+	block ()
+	  *Current-Library* := lib;
+	  *Current-Module* := mod;
+	  let tlfs = make(<stretchy-vector>);
+	  *Top-Level-Forms* := tlfs;
+	  add!(tlf-vectors, tlfs);
+	  parse-source-record(tokenizer);
+	cleanup
+	  *Current-Library* := #f;
+	  *Current-Module* := #f;
+	end;
+      exception (<fatal-error-recovery-restart>)
+	format(*debug-output*, "skipping rest of %s\n", file);
+      end block;
     end;
 #if (mindy)
     collect-garbage(purify: #t);
@@ -535,6 +553,7 @@ define method compile-library
     
     let ar-name = format-to-string("lib%s.a", unit-prefix);
     format(makefile, "\n%s : %s\n", ar-name, objects);
+    format(makefile, "\trm -f %s\n", ar-name);
     format(makefile, "\t$(AR) qc %s%s\n", ar-name, objects);
 
     let linker-options = element(header, #"linker-options", default: #f);
@@ -604,8 +623,6 @@ define method compile-library
       end;
 
     else
-      log-target(ar-name);
-
       format(*debug-output*, "Dumping library summary.\n");
       let dump-buf
 	= begin-dumping(as(<symbol>, lib-name), $library-summary-unit-type);
@@ -632,13 +649,16 @@ define method compile-library
       // to recompile all .c and .s files, regardless of whether they
       // were changed.  So touch them to make them look newer than the
       // object files.
-      for (filename in all-generated-files)
-	let touch-command = format-to-string("touch %s", filename);
+      unless (empty?(all-generated-files))
+	let touch-command = "touch";
+	for (filename in all-generated-files)
+	  touch-command := stringify(touch-command, ' ', filename);
+	end for;
 	format(*debug-output*, "%s\n", touch-command);
 	if (system(touch-command) ~== 0)
 	  cerror("so what", "touch failed?");
 	end if;
-      end for;
+      end unless;
     end if;
 
     let make-command = format-to-string("%s -f %s", $make-utility, 
@@ -648,7 +668,7 @@ define method compile-library
       cerror("so what", "gmake failed?");
     end;
   exception (<fatal-error-recovery-restart>)
-    #f;
+    format(*debug-output*, "giving up.\n");
   end block;
   
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
@@ -776,16 +796,6 @@ define method build-command-line-entry
   emit-component(component, file);
   ctv;
 end method build-command-line-entry;
-
-define method load-library (name :: <symbol>) => ();
-  block ()
-    *Current-Library* := find-library(name);
-    find-data-unit(name, $library-summary-unit-type,
-		   dispatcher: *compiler-dispatcher*);
-  cleanup
-    *Current-Library* := #f;
-  end;
-end;
 
 define method incorrect-usage () => ();
   error("Usage: compile [-Ldir ...] lid-file");
