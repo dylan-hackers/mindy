@@ -18,11 +18,15 @@ end method put-char;
 
 define method repaint-line()
   format-out("\r%s ", *command-line*);
-  force-output(*standard-output*);
   for(i from 0 below *command-line*.size - *buffer-pointer* + 1)
-    put-char('\b');
+    write-element(*standard-output*, '\b');
   end for;
+  force-output(*standard-output*);
 end method repaint-line;
+
+define method ring-bell()
+  put-char(as(<character>, 7));
+end method ring-bell;
 
 define constant *command-table* = make(<stretchy-vector>);
 
@@ -57,7 +61,7 @@ define method self-insert-command(c)
 end method self-insert-command;
 
 define method run-command(c)
-  format-out("\r\nThe command entered was: %s\r\n", *command-line*);
+  format-out("\r\nThe command entered was: '%s'\r\n", *command-line*);
   force-output(*standard-output*);
 
   for(i in *command-table*)
@@ -74,6 +78,8 @@ define method forward-char-command(c)
   if(*buffer-pointer* < *command-line*.size)
     put-char(*command-line*[*buffer-pointer*]);
     *buffer-pointer* := *buffer-pointer* + 1;
+  else
+    ring-bell();
   end if;
 end method forward-char-command;
 
@@ -81,6 +87,8 @@ define method backward-char-command(c)
   if(*buffer-pointer* > 0)
     put-char('\b');
     *buffer-pointer* := *buffer-pointer* - 1;
+  else
+    ring-bell();
   end if;
 end method backward-char-command;
 
@@ -90,9 +98,41 @@ define method delete-char-backwards(c)
       concatenate(subsequence(*command-line*, end: *buffer-pointer* - 1),
                   subsequence(*command-line*, start: *buffer-pointer*));
     *buffer-pointer* := *buffer-pointer* - 1;
+    repaint-line();
+  else
+    ring-bell();
   end if;
-  repaint-line();
 end method delete-char-backwards;
+
+define method complete-command(c)
+  for(i in *command-table*)
+    if(case-insensitive-equal(*command-line*, 
+                              subsequence(i.name, end: *command-line*.size)))
+      *command-line* := copy-sequence(i.name);
+      *buffer-pointer* := i.name.size;
+    end if;
+  end for;
+  repaint-line();
+end method complete-command;
+
+define method beginning-of-line(c)
+  *buffer-pointer* := 0;
+  repaint-line();
+end method beginning-of-line;
+
+define method end-of-line(c)
+  *buffer-pointer* := *command-line*.size;
+  repaint-line();
+end method end-of-line;
+
+define method kill-to-end-of-line(c)
+  for(i from 0 below *command-line*.size - *buffer-pointer*)
+    put-char(' ');
+  end for;
+  *command-line* := copy-sequence(subsequence(*command-line*, 
+                                              end: *buffer-pointer*));
+  repaint-line();
+end method kill-to-end-of-line;
 
 define variable *key-bindings* = make(<simple-vector>, 
                                       size: 256,
@@ -103,6 +143,10 @@ define variable *key-bindings* = make(<simple-vector>,
 *key-bindings*[6] := forward-char-command;
 *key-bindings*[8] := delete-char-backwards;
 *key-bindings*[127] := delete-char-backwards;
+*key-bindings*[9] := complete-command;
+*key-bindings*[1] := beginning-of-line;
+*key-bindings*[5] := end-of-line;
+*key-bindings*[11] := kill-to-end-of-line;
 
 begin
   let running = #t;
@@ -121,8 +165,6 @@ begin
 
   while(running)
     let c = read-element(*standard-input*);
-//    format-out("%x ", as(<integer>, c));
-//    put-char(c);
     force-output(*standard-output*);
     *key-bindings*[as(<integer>,c)](c);
   end while;
