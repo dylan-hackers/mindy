@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.51 2002/07/19 13:58:38 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.52 2002/07/31 20:29:19 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -187,7 +187,8 @@ link-doesnt-search-for-libs?:   	#t
 delete-file-command:            	rm -f %s
 compare-file-command:           	cmp -s %s %s
 move-file-command:              	mv -f %s %s
-recursive-make-command:         	cmd /c "cd %s && $(MAKE) %s"
+recursive-make-command:         	$(MAKE) -C %s %s
+//recursive-make-command:         	cmd /c "cd %s && $(MAKE) %s"
 use-dbclink?:				#t
 uses-drive-letters?:            	#t
 environment-variables-can-be-exported?: #t
@@ -383,8 +384,8 @@ assembler-command:		cl $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -nologo -Ox -DWIN32 -I. -I%s
 default-c-compiler-debug-flags: -nologo -Ox -DWIN32 -I. -I%s
 default-c-compiler-profile-flags: -nologo -Ox -DWIN32 -I. -I%s
-link-library-command:           lib /nologo /out:%s %s
-link-executable-command:        link /nologo /out:%s %s %s
+link-library-command:           lib -nologo -out:%s %s
+link-executable-command:        link -nologo -out:%s %s %s
 link-executable-flags:          /subsystem:console
 link-doesnt-search-for-libs?:   #t
 path-separator:        		/

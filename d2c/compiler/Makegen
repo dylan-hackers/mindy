@@ -1,12 +1,12 @@
-if ($features{'compiled_for_win32'}) {
-	push(@compile_commands, 
-    	sprintf($host_platform{'recursive_make_command'},
-             "..\..\tools\parsergen", ""));
-} else {
+#if ($features{'compiled_for_win32'}) {
+#	push(@compile_commands, 
+#    	sprintf($host_platform{'recursive_make_command'},
+#             "..\..\tools\parsergen", ""));
+#} else {
 	push(@compile_commands, 
     	sprintf($host_platform{'recursive_make_command'},
         	"../../tools/parsergen", ""));
-}
+#}
 
 &compile_subdirs(
     'base',

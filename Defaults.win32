@@ -43,7 +43,7 @@ $LIBTOOL = '/bin/bash ${srcroot}/libtool';
 
 $MC = "$srcroot/mindy/Compiler/release/mindycomp.exe";
 $MINDY = "$srcroot/mindy/Interpretter/release/interpretter.exe";
-$DYLANPATH = ":/home/gd/src/common/collection-extensions:/home/gd/src/common/format:/home/gd/src/common/format-out:/home/gd/src/common/internal-time:/home/gd/src/common/matrix:/home/gd/src/common/print:/home/gd/src/common/regular-expressions:/home/gd/src/common/standard-io:/home/gd/src/common/stream-ext:/home/gd/src/common/streams:/home/gd/src/common/string-ext:/home/gd/src/common/table-ext:/home/gd/src/common/time:/home/gd/src/common/transcendental:/home/gd/src/common/getopt:/home/gd/src/mindy/libraries/random:/home/gd/src/mindy/libraries/dylan:/home/gd/src/mindy/libraries/inspector:/home/gd/src/mindy/libraries/tk";
+$DYLANPATH = ":${srcroot}/common/collection-extensions:${srcroot}/common/format:${srcroot}/common/format-out:${srcroot}/common/internal-time:${srcroot}/common/matrix:${srcroot}/common/print:${srcroot}/common/regular-expressions:${srcroot}/common/standard-io:${srcroot}/common/stream-ext:${srcroot}/common/streams:${srcroot}/common/string-ext:${srcroot}/common/table-ext:${srcroot}/common/time:${srcroot}/common/transcendental:${srcroot}/common/getopt:${srcroot}/mindy/libraries/random:${srcroot}/mindy/libraries/dylan:${srcroot}/mindy/libraries/inspector:${srcroot}/mindy/libraries/tk";
 $CC = 'cl';
 $D2C = "d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
 if ($host_name ne $target_name) {
@@ -59,8 +59,8 @@ unless ($build_tools_with_d2c) {
 };
 
 if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
-    $CPPFLAGS = '-I/home/gd/src/previous_runtime';
-    $d2c_runtime = '-L/home/gd/src/previous_runtime ';
+    $CPPFLAGS = '-I'.$srcroot.'/previous_runtime';
+    $d2c_runtime = '-L'.$buildroot.'/previous_runtime ';
 } else {
     $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
     @runtime_directories = ('c-code', 'gc', 'dylan', 'melange');

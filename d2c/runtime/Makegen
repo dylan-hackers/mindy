@@ -1,6 +1,7 @@
 local($common);
 if ($features{'compiled_for_win32'}) {
-	$common = '..\..\common';
+	#$common = '..\..\common';
+	$common = '../../common';
 } else {
 	$common = '../../common';
 }
