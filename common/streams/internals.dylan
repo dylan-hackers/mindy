@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/internals.dylan,v 1.1 1998/05/03 19:55:03 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/internals.dylan,v 1.2 1998/09/22 15:43:04 housel Exp $
 
 //======================================================================
 //
@@ -30,18 +30,6 @@ rcs-header: $Header: /scm/cvs/src/common/streams/internals.dylan,v 1.1 1998/05/0
 //
 //======================================================================
 //
-
-
-#if (~mindy)
-  // on-exit -- placeholder.
-  //
-  // The current dylan->c system doesn't support on-exit.  So we include a
-  // placeholder that does nothing.
-  // 
-  define inline method on-exit (x) => ();
-    ignore(x);
-  end;
-#endif
 
 
 ///
