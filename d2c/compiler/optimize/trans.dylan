@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.11 1995/08/07 12:26:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.12 1995/11/14 15:24:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -508,9 +508,10 @@ define method build-instance?
 	let possible-classes = find-direct-classes(value.derived-type);
 	if (possible-classes)
 	  for (possible-class in possible-classes)
-	    if (possible-class.unique-id < class.subclass-id-range-min)
+	    let possible-id = possible-class.unique-id;
+	    if (~possible-id | possible-id < class.subclass-id-range-min)
 	      test-min? := #t;
-	    elseif (possible-class.unique-id > class.subclass-id-range-max)
+	    elseif (possible-id > class.subclass-id-range-max)
 	      test-max? := #t;
 	    end;
 	  end;
