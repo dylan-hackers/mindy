@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.24 1994/12/14 20:18:44 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.25 1995/04/21 01:45:12 rgs Exp $
 
 //======================================================================
 //
@@ -653,9 +653,9 @@ define generic size-setter(length, collection);
 
 define method shrink!(sequence :: <sequence>, length) => <sequence>;
   if (applicable-method?(size-setter, length, sequence))
-    copy-sequence(sequence, end: length);
-  else
     size(sequence) := length;
+  else
+    copy-sequence(sequence, end: length);
   end if;
 end method;
 
