@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.10 1994/05/03 02:08:56 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.11 1994/05/11 02:13:43 nkramer Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -370,6 +370,10 @@ define method \=(a :: <sequence>, b :: <sequence>) => <object>;
     #t;
   end block;
 end method \=;
+
+define method key-test (sequence :: <sequence>) => test :: <function>;
+  \==;            // Return the function ==
+end method key-test;
 
 //# This will be a good and a useful thing once we have written ranges.  Till
 //# then, it doesn't do much good.
