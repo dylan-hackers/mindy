@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.2 1998/12/02 10:12:59 tc Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1144,102 +1144,89 @@ end method print-object;
 // skip-multi-line-comment -- internal.
 //
 // Skip a multi-line comment, taking into account nested comments.
-//
-// Basically, we just implement a state machine via tail recursive local
-// methods.
+// This is just a simple state machine implemented via a loop and
+// a select statement.
 //
 define method skip-multi-line-comment (lexer :: <lexer>,
 				       start :: <integer>)
     => result :: false-or(<integer>);
-  let contents = lexer.source.contents;
-  let length = contents.size;
-  local
-    //
-    // Utility function that checks to make sure we haven't run off the
-    // end before calling the supplied function.
-    //
-    method next (func :: <function>, posn :: <integer>, depth :: <integer>)
-      if (posn < length)
-	func(as(<character>, contents[posn]), posn + 1, depth);
-      else
-	#f;
-      end if;
-    end next,
-    //
-    // Seen nothing of interest.  Look for the start of any of /*, //, or */
-    //
-    method seen-nothing (char :: <character>, posn :: <integer>,
-			 depth :: <integer>)
-      if (char == '/')
-	next(seen-slash, posn, depth);
-      elseif (char == '*')
-	next(seen-star, posn, depth);
-      elseif (char == '\n')
-	lexer.line := lexer.line + 1;
-	lexer.line-start := posn;
-	next(seen-nothing, posn, depth)
-      else
-	next(seen-nothing, posn, depth);
-      end if;
-    end seen-nothing,
-    //
-    // Okay, we've seen a slash.  Look to see if it was /*, //, or just a
-    // random slash in the source code.
-    //
-    method seen-slash (char :: <character>, posn :: <integer>,
-		       depth :: <integer>)
-      if (char == '/')
-	next(seen-slash-slash, posn, depth);
-      elseif (char == '*')
-	next(seen-nothing, posn, depth + 1);
-      elseif (char == '\n')
-	lexer.line := lexer.line + 1;
-	lexer.line-start := posn;
-	next(seen-nothing, posn, depth)
-      else
-	next(seen-nothing, posn, depth);
-      end if;
-    end seen-slash,
-    //
-    // Okay, we've seen a star.  Look to see if it was */ or a random star.
-    // We also have to check to see if this next character is another star,
-    // because if so, it might be the start of a */.
-    //
-    method seen-star (char :: <character>, posn :: <integer>,
-		      depth :: <integer>)
-      if (char == '/')
-	if (depth == 1)
-	  posn;
-	else
-	  next(seen-nothing, posn, depth - 1);
-	end if;
-      elseif (char == '*')
-	next(seen-star, posn, depth);
-      elseif (char == '\n')
-	lexer.line := lexer.line + 1;
-	lexer.line-start := posn;
-	next(seen-nothing, posn, depth)
-      else
-	next(seen-nothing, posn, depth);
-      end if;
-    end seen-star,
-    //
-    // We've seen a //, so skip until the end of the line.
-    //
-    method seen-slash-slash (char :: <character>, posn :: <integer>,
-			     depth :: <integer>)
-      if (char == '\n')
-	lexer.line := lexer.line + 1;
-	lexer.line-start := posn;
-	next(seen-nothing, posn, depth);
-      else
-	next(seen-slash-slash, posn, depth);
-      end if;
-    end seen-slash-slash;
-  //
-  // Start out not having seen anything.
-  //
-  next(seen-nothing, start, 1);
+  block (return)
+    let contents = lexer.source.contents;
+    let length = contents.size;
+    let depth = 1;
+    let state = #"seen-nothing";
+    for (posn from start below length)
+      let char = as(<character>, contents[posn]);
+      select (state)
+	#"seen-nothing" =>
+	  // Seen nothing of interest.  Look for the start of any of
+	  // /*, //, or */.
+	  //
+	  if (char == '/')
+	    state := #"seen-slash";
+	  elseif (char == '*')
+	    state := #"seen-star";
+	  elseif (char == '\n')
+	    lexer.line := lexer.line + 1;
+	    lexer.line-start := posn;
+	    state := #"seen-nothing";
+	  else
+	    state := #"seen-nothing";
+	  end if;
+	#"seen-slash" =>
+	  // Okay, we've seen a slash.  Look to see if it was
+	  // one of /*, //, or just a random slash in the source code.
+	  //
+	  if (char == '/')
+	    state := #"seen-slash-slash";
+	  elseif (char == '*')
+	    depth := depth + 1;
+	    state := #"seen-nothing";
+	  elseif (char == '\n')
+	    lexer.line := lexer.line + 1;
+	    lexer.line-start := posn;
+	    state := #"seen-nothing";
+	  else
+	    state := #"seen-nothing";
+	  end if;
+	#"seen-star" =>
+	  // Okay, we've seen a star.  Look to see if it was */ or a
+	  // random star. We also have to check to see if this next
+	  // character is another star, because if so, it might be
+	  // the start of a */.
+	  //
+	  if (char == '/')
+	    if (depth == 1)
+	      return(posn + 1); 
+	    else
+	      depth := depth - 1;
+	      state := #"seen-nothing";
+	    end if;
+	  elseif (char == '*')
+	    state := #"seen-star";
+	  elseif (char == '\n')
+	    lexer.line := lexer.line + 1;
+	    lexer.line-start := posn;
+	    state := #"seen-nothing";
+	  else
+	    state := #"seen-nothing";
+	  end if;
+	#"seen-slash-slash" =>
+	  // We've seen a //, so skip until the end of the line.
+	  //
+	  if (char == '\n')
+	    lexer.line := lexer.line + 1;
+	    lexer.line-start := posn;
+	    state := #"seen-nothing";
+	  else
+	    state := #"seen-slash-slash";
+	  end if;
+	otherwise =>
+	  error("Unknown lexer state while reading comment.");
+      end select;
+    end for;
+    #f;
+  end block;
 end method;
 
 // internal-get-token -- internal.
