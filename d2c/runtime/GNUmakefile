@@ -42,4 +42,4 @@ foo: foo.lid ${DYLAN_FILES} ../compiler/foo.dbc ${LIBS}
 	time mindy -f ../compiler/foo.dbc foo.lid
 
 clean:
-	rm -f ${C_FILES} ${S_FILES} ${O_FILES} libfoo.a foo core
+	rm -f ${C_FILES} ${S_FILES} ${O_FILES} dylan.lib.du libfoo.a foo core
