@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.12 1995/02/09 18:26:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.13 1995/02/14 02:32:28 rgs Exp $
 *
 * This file initializes everything else.
 *
@@ -109,6 +109,7 @@ extern void init_buffer_functions(void);
 extern void init_weak_functions(void);
 extern void init_c_functions(void);
 extern void init_load_functions(void);
+extern void init_gc_functions(void);
 
 extern void done_initializing_vars(void);
 
@@ -197,6 +198,7 @@ void init(void)
     init_weak_functions();
     init_c_functions();
     init_load_functions();
+    init_gc_functions();
 
     done_initializing_vars();
 
