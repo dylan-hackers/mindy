@@ -1,4 +1,34 @@
 module: tk
+author: Robert Stockton (rgs@cs.cmu.edu)
+
+//======================================================================
+//
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+//
+//======================================================================
+//
+// This file contains support for <text>s, <text-tag>s, and <text-index>s.
+//
+//======================================================================
 
 define class <text> (<window>, <editable>) end class;
 
@@ -147,18 +177,18 @@ define method initialize
 		    #t, options));
 end method initialize;
 
-define method configure-tag
-    (tag :: <text-tag>, #rest options) => (tag :: <text-tag>);
+define method configure
+    (tag :: <text-tag>, #rest options, #all-keys) => (tag :: <text-tag>);
   apply(put-tk-line, tag.widget, " tag configure ", tag.name,
 	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline"],
 		    #t, options));
-end method configure-tag;
+end method configure;
 
-define method tag-configuration
-    (tag :: <text-tag>, index :: <object>) => (result :: <sequence>);
+define method configuration
+    (tag :: <text-tag>) => (result :: <sequence>);
   let string = call-tk-function(tag.widget, " tag configure ", tag.name);
   parse-tk-list(string, depth: 2);
-end method tag-configuration;
+end method configuration;
 
 define method as
     (cls == <string>, object :: <text-tag>) => (result :: <string>);
@@ -170,15 +200,12 @@ define method tags (text :: <text>) => (result :: <sequence>);
       call-tk-function(text, " tag name"));
 end method tags;
 
-define method bind-tag
-    (tag :: <text-tag>, event :: <string>, command, #key append = #f)
- => (tag :: <text-tag>);
+define method bind
+    (tag :: <text-tag>, event :: <string>, command) => (tag :: <text-tag>);
   put-tk-line(tag.widget, " tag bind ", tag.name, " ", event,
-	       if (append) " +{" else " {" end if,
-	       command,
-	       "}");
+	       " {" , command, "}");
   tag;
-end method bind-tag;
+end method bind;
 
 define method delete-tag (tag :: <text-tag>) => ();
   put-tk-line(tag.widget, " tag delete ", tag.name);
