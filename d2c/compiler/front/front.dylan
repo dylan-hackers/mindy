@@ -1,12 +1,12 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.23 1995/05/02 16:34:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.24 1995/05/03 07:15:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 /*
 
 assignment
-    fer-assignment [abstract]
+    fer-assignment {abstract}
         set-assignment
 	let-assignment
 
@@ -22,6 +22,10 @@ operation
     catcher
     set
     self-tail-call
+    slot-access {abstract}
+	slot-ref
+	slot-set
+    truly-the
 
 
 variable-info
@@ -189,6 +193,23 @@ define class <self-tail-call> (<operation>)
   slot next-self-tail-call :: false-or(<self-tail-call>),
     required-init-keyword: next-self-tail-call:;
 end;
+
+define abstract class <slot-access> (<operation>)
+  slot slot-info :: <slot-info>, required-init-keyword: slot-info:;
+end;
+
+define class <slot-ref> (<slot-access>)
+end;
+
+define class <slot-set> (<slot-access>)
+  inherited slot derived-type,
+    init-function: curry(make-values-ctype, #(), #f);
+end;
+
+define class <truly-the> (<operation>)
+  slot guaranteed-type :: <ctype>, required-init-keyword: derived-type:;
+end;
+
 
 
 // Constants and variables:
