@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.11 1995/12/05 03:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.12 1995/12/07 14:32:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -175,125 +175,99 @@ define method ct-mv-eval-funcall (function :: <varref>,
   ct-mv-eval-funcall(function.varref-id, args, lexenv);
 end;
 
-// The <variable> objects for the various functions we know how to deal with.
-// 
-define constant $singleton-var = dylan-var(#"singleton", create: #t);
-define constant $type-union-var = dylan-var(#"type-union", create: #t);
-define constant $false-or-var = dylan-var(#"false-or", create: #t);
-define constant $one-of-var = dylan-var(#"one-of", create: #t);
-define constant $limited-var = dylan-var(#"limited", create: #t);
-define constant $make-var = dylan-var(#"make", create: #t);
-define constant $negative-var = dylan-var(#"negative", create: #t);
-define constant $plus-var = dylan-var(#"+", create: #t);
-define constant $minus-var = dylan-var(#"-", create: #t);
-define constant $times-var = dylan-var(#"*", create: #t);
-define constant $ash-var = dylan-var(#"ash", create: #t);
-define constant $expt-var = dylan-var(#"^", create: #t);
-
 // ct-mv-eval-funcall -- internal
 //
 // If the name has been shadowed, give up.  Otherwise, look it up and see
 // if it is any of the functions we magically know about.  If so, compute
 // the result and return it.
 // 
-define method ct-mv-eval-funcall (function :: <identifier-token>,
-				  args :: <simple-object-vector>,
-				  lexenv :: union(<false>, <lexenv>))
-  block (return)
-    if (lexenv & find-binding(lexenv, function))
-      return(#f);
-    end;
-    let args = map(method (arg) ct-eval(arg, lexenv) | return(#f) end, args);
+define method ct-mv-eval-funcall
+    (function :: <identifier-token>, args :: <simple-object-vector>,
+     lexenv :: union(<false>, <lexenv>))
+  if (lexenv & find-binding(lexenv, function))
+    #f;
+  else
     let var = find-variable(id-name(function));
-    select (var)
-      #f =>
+    if (var)
+      let evaluator = var.variable-ct-evaluator;
+      if (evaluator)
+	block (return)
+	  let args = map(method (arg :: <expression>)
+			     => res :: <ct-value>;
+			   ct-eval(arg, lexenv) | return(#f)
+			 end,
+			 args);
+	  apply(evaluator, args);
+	end block;
+      else
 	#f;
-      $singleton-var =>
-	if (args.size == 1)
-	  let thing = args[0];
-	  instance?(thing, <eql-ct-value>) & make-canonical-singleton(args[0]);
-	end;
-      $false-or-var =>
-	if (args.size == 1 & instance?(args[0], <ctype>))
-	  ctype-union(args[0], specifier-type(#"<false>"));
-	else
-	  #f;
-	end;
-      $type-union-var =>
-	if (every?(rcurry(instance?, <ctype>), args))
-	  reduce(ctype-union, empty-ctype(), args);
-	end;
-      $one-of-var =>
-	if (every?(rcurry(instance?, <eql-ct-value>), args))
-	  reduce(ctype-union, empty-ctype(),
-		 map(make-canonical-singleton, args));
-	end;
-      $limited-var =>
-	if (~empty?(args) & instance?(args[0], <cclass>))
-	  select (args[0] by csubtype?)
-	    dylan-value(#"<integer>") =>
-	      let (okay, min, max) = ct-keywords(args, 1, #"min", #"max");
-	      if (okay)
-		if ((min == #f | instance?(min, <literal-integer>))
-		      & (max == #f | instance?(max, <literal-integer>)))
-		  let min = min & min.literal-value;
-		  let max = max & max.literal-value;
-		  make-canonical-limited-integer(args[0], min, max);
-		end;
-	      end;
-	    otherwise =>
-	      #f;
-	  end;
-	end;
-      $make-var =>
-	if (~empty?(args))
-	  select (args[0])
-	    dylan-value(#"<singleton>") =>
-	      let (okay, object) = ct-keywords(args, 1, #"object");
-	      if (okay & instance?(object, <eql-ct-value>))
-		make-canonical-singleton(object);
-	      end;
-	    dylan-value(#"<byte-character-type>") =>
-	      if (ct-keywords(args, 1))
-		make(<byte-character-ctype>);
-	      end;
-	    dylan-value(#"<not-supplied-marker>") =>
-	      if (ct-keywords(args, 1))
-		make(<ct-not-supplied-marker>);
-	      end;
-	    otherwise =>
-	      #f;
-	  end;
-	end;
-/*
-      $negative-var =>
-	ct-eval-integer-func(negative, 1, args);
-      $plus-var =>
-	ct-eval-integer-func(\+, 2, args);
-      $minus-var =>
-	ct-eval-integer-func(\-, 2, args);
-      $times-var =>
-	ct-eval-integer-func(\*, 2, args);
-      $ash-var =>
-	ct-eval-integer-func(ash, 2, args);
-      $expt-var =>
-	ct-eval-integer-func(\^, 2, args);
-*/
-      otherwise =>
-	#f;
-    end;
-  end;
+      end if;
+    else
+      #f;
+    end if;
+  end if;
+end method ct-mv-eval-funcall;
+
+
+// compile-time evaluation methods for various functions.
+
+
+define method define-ct-evaluator
+    (name :: <symbol>, specializers :: <list>, body :: <function>) => ();
+  let var = dylan-var(name, create: #t);
+  var.variable-ct-evaluator
+    := method (#rest args)
+	 let specializers
+	   = map(method (specifier :: type-or(<type-specifier>,
+					      singleton(#"rest")))
+		     => res :: type-or(<ctype>, singleton(#"rest"));
+		   if (specifier == #"rest")
+		     #"rest";
+		   else
+		     specifier-type(specifier);
+		   end;
+		 end,
+		 specializers);
+	 let new-evaluator
+	   = method (#rest args)
+	       block (return)
+		 let remaining = specializers;
+		 for (arg :: <ct-value> in args)
+		   if (remaining == #())
+		     return(#f);
+		   else
+		     let specializer = remaining.head;
+		     if (specializer == #"rest")
+		       unless (cinstance?(arg, remaining.tail.head))
+			 return(#f);
+		       end;
+		     else
+		       unless (cinstance?(arg, specializer))
+			 return(#f);
+		       end;
+		       remaining := remaining.tail;
+		     end if;
+		   end if;
+		 end for;
+		 if (remaining == #() | remaining.head == #"rest")
+		   apply(body, args);
+		 else
+		   #f;
+		 end;
+	       end block;
+	     end method;
+	 var.variable-ct-evaluator := new-evaluator;
+	 apply(new-evaluator, args);
+       end;
 end;
 
-
-define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
-			   #rest keys)
+define method ct-keywords (args :: <simple-object-vector>, #rest keys)
     => (okay :: <boolean>, #rest values);
   block (return)
-    unless (even?(args.size - start))
+    unless (even?(args.size))
       return(#f);
     end;
-    for (index from start below args.size by 2)
+    for (index from 0 below args.size by 2)
       let ct-key = args[index];
       unless (instance?(ct-key, <literal-symbol>)
 		& member?(ct-key.literal-value, keys))
@@ -304,7 +278,7 @@ define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
 	  #t,
 	  map(method (key)
 		block (found)
-		  for (index from start below args.size by 2)
+		  for (index from 0 below args.size by 2)
 		    if (args[index] = key)
 		      found(args[index + 1]);
 		    end;
@@ -316,14 +290,138 @@ define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
   end;
 end;
 
-
-/*
-
-define method ct-eval-integer-func (function :: <function>, nargs :: <integer>,
-				    args :: <simple-object-vector>)
-  if (nargs == args.size & every?(rcurry(instance?, <literal-integer>), args))
-    make(<ct-literal>, value: apply(function, map(literal-value, args)));
-  end;
+define method ct-eval-rational-function (function :: <function>, #rest args)
+    => res :: false-or(<literal-rational>);
+  let any-ratios? = #f;
+  let any-bignums? = #f;
+  for (arg in args)
+    select (arg by instance?)
+      <literal-ratio> => any-ratios? := #t;
+      <literal-extended-integer> => any-bignums? := #t;
+      <literal-fixed-integer> => #f;
+      otherwise =>
+	error("ct-eval-ration-function call on non-rational?");
+    end select;
+  end for;
+  make(if (any-ratios?)
+	 <literal-ratio>;
+       elseif (any-bignums?)
+	 <literal-extended-integer>;
+       else
+	 <literal-fixed-integer>;
+       end,
+       value: apply(function, map(literal-value, args)));
 end;
 
-*/
+
+
+define-ct-evaluator(#"singleton", #(#"<object>"),
+		    method (object :: <ct-value>)
+			=> res :: false-or(<ct-value>);
+		      if (instance?(object, <eql-ct-value>))
+			make-canonical-singleton(object);
+		      else
+			#f;
+		      end;
+		    end);
+
+define-ct-evaluator(#"type-union", #(rest:, #"<type>"),
+		    method (#rest types) => res :: <ctype>;
+		      reduce(ctype-union, empty-ctype(), types);
+		    end);
+		      
+define-ct-evaluator(#"false-or", #(#"<type>"),
+		    method (type :: <ctype>) => res :: <ctype>;
+		      ctype-union(type, specifier-type(#"<false>"));
+		    end);
+
+define-ct-evaluator(#"one-of", #(rest:, #"<object>"),
+		    method (#rest objects) => res :: false-or(<ctype>);
+		      if (every?(rcurry(instance?, <eql-ct-value>), objects))
+			reduce(ctype-union, empty-ctype(),
+			       map(make-canonical-singleton, objects));
+		      else
+			#f;
+		      end;
+		    end method);
+
+define-ct-evaluator
+  (#"limited", #(#"<class>", rest:, #"<object>"),
+   method (class :: <cclass>, #rest keys)
+       => res :: false-or(<ctype>);
+     select (class by csubtype?)
+       dylan-value(#"<integer>") =>
+	 let (okay, min, max) = ct-keywords(keys, #"min", #"max");
+	 if (okay)
+	   if ((min == #f | instance?(min, <literal-integer>))
+		 & (max == #f | instance?(max, <literal-integer>)))
+	     let min = min & min.literal-value;
+	     let max = max & max.literal-value;
+	     make-canonical-limited-integer(class, min, max);
+	   end;
+	 end;
+       otherwise =>
+	 #f;
+     end;
+   end method);
+
+define-ct-evaluator
+  (#"make", #(#"<class>", rest:, #"<object>"),
+   method (class :: <cclass>, #rest keys)
+       => res :: false-or(<ct-value>);
+     select (class)
+       dylan-value(#"<singleton>") =>
+	 let (okay, object) = ct-keywords(keys, #"object");
+	 if (okay & instance?(object, <eql-ct-value>))
+	   make-canonical-singleton(object);
+	 end;
+       dylan-value(#"<byte-character-type>") =>
+	 if (ct-keywords(keys))
+	   make(<byte-character-ctype>);
+	 end;
+       dylan-value(#"<not-supplied-marker>") =>
+	 if (ct-keywords(keys))
+	   make(<ct-not-supplied-marker>);
+	 end;
+       otherwise =>
+	 #f;
+     end;
+   end method);
+
+define-ct-evaluator(#"negative", #(#"<rational>"),
+		    curry(ct-eval-rational-function, negative));
+
+define-ct-evaluator(#"abs", #(#"<rational>"),
+		    curry(ct-eval-rational-function, abs));
+
+define-ct-evaluator(#"+", #(#"<rational>", #"<rational>"),
+		    curry(ct-eval-rational-function, \+));
+
+define-ct-evaluator(#"-", #(#"<rational>", #"<rational>"),
+		    curry(ct-eval-rational-function, \-));
+
+define-ct-evaluator(#"*", #(#"<rational>", #"<rational>"),
+		    curry(ct-eval-rational-function, \*));
+
+define-ct-evaluator
+  (#"ash", #(#"<integer>", #"<fixed-integer>"),
+   curry(ct-eval-rational-function,
+	 method (x :: <extended-integer>, y :: <extended-integer>)
+	     => res :: <extended-integer>;
+	   ash(x, as(<fixed-integer>, y));
+	 end));
+
+define-ct-evaluator(#"^", #(#"<integer>", #"<integer>"),
+		    curry(ct-eval-rational-function, \^));
+
+define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+		    curry(ct-eval-rational-function, logior));
+
+define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+		    curry(ct-eval-rational-function, logxor));
+
+define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+		    curry(ct-eval-rational-function, logand));
+
+define-ct-evaluator(#"lognot", #(#"<integer>"),
+		    curry(ct-eval-rational-function, lognot));
