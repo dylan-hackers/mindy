@@ -96,10 +96,8 @@ define inline function do-handle-gtk-signal
   debug-assert(mirror, "Unknown widget");
   let gadget = mirror-sheet(mirror);
   debug-message("Handling %s for %=", name, gadget);
-  process-pending-events(gadget);
   let value = apply(handler_, gadget, args);
   debug-message("  handled?: %=", value);
-  process-pending-events(gadget);
   if (instance?(value, <integer>))
     value
   elseif (value)
@@ -163,29 +161,6 @@ register-signal-handler("value_changed",
 			_gtk-adjustment-value-changed-signal-handler,
 			key: #"adjustment/value_changed");
 
-
-//---*** Should be in DUIM
-define function process-pending-events
-    (sheet :: <sheet>) => ()
-  let top-sheet = top-level-sheet(sheet);
-  block (return)
-    if (sheet-event-queue(top-sheet))
-      while (#t)
-	let event = read-event-no-hang(top-sheet);
-	unless (event) return() end;
-	let client = event-client(event);
-	unless (instance?(event, <pointer-motion-event>))
-	  debug-message("  Handling event %= for %=", event, client)
-	end;
-	// Note that if a <frame-exited-event> comes in, the
-	// event handler for it will exit this loop by calling the
-	// frame.%exit-function thunk
-	handle-event(client, event)
-      end
-    end
-  end
-end function process-pending-events;
-
 define function install-named-handlers
     (mirror :: <gtk-mirror>, handlers :: <sequence>, #key adjustment) => ()
   let widget = mirror-widget(mirror);
@@ -236,9 +211,8 @@ define sealed method process-next-event
  => (timed-out? :: <boolean>)
   //--- We should do something with the timeout
   ignore(timeout);
-  debug-message("Fake event handler!");
-  gtk-main();
-  #f
+  gtk-main-iteration();
+  #f;
 end method process-next-event;
 
 
