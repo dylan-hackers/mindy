@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.17 1996/03/19 23:49:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.18 1996/09/25 04:53:35 wlott Exp $
 
 //======================================================================
 //
@@ -48,8 +48,8 @@ end method;
 //// <simple-stretchy-vector>
 
 define class <simple-stretchy-vector> (<stretchy-vector>)
-  slot ssv-data :: <simple-object-vector>, init-keyword: data:;
-  slot ssv-fill :: <integer>, init-keyword: fill:;
+  slot ssv-data :: <simple-object-vector>, required-init-keyword: data:;
+  slot ssv-fill :: <integer>, required-init-keyword: fill:;
 end class <simple-stretchy-vector>;
   
 
@@ -80,7 +80,8 @@ define method make(cls == <simple-stretchy-vector>,
 		      otherwise =>
 			ceiling/(size + 1024, 1024) * 1024;
 		    end case;
-    let data = make(<simple-object-vector>, size: data-size, fill: fill);
+    let data = make(<simple-object-vector>, size: data-size);
+    fill!(data, fill, start: 0, end: size);
     next-method(cls, fill: size, data: data);
   end if;
 end method make;
@@ -180,6 +181,7 @@ define method remove!(ssv :: <simple-stretchy-vector>, elem,
 	case
 	  src = sz =>
 	    ssv-fill(ssv) := sz - deleted;
+	    fill!(data, #f, start: dst, end: sz);
 	  otherwise =>
 	    data[dst] := data[src];
 	    copy(src + 1, dst + 1, deleted);
@@ -187,7 +189,8 @@ define method remove!(ssv :: <simple-stretchy-vector>, elem,
       end method copy,
       method search-and-copy(src, dst, deleted)
 	if (src = sz)
-	  ssv-fill(ssv) := sz - deleted;
+	  ssv-fill(ssv) := dst;
+	  fill!(data, #f, start: dst, end: sz);
 	else 
 	  let this-element = data[src];
 	  case
