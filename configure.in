@@ -1,6 +1,6 @@
 
 
-dnl	$Header: /scm/cvs/src/configure.in,v 1.98 2002/08/01 00:58:16 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.99 2002/08/01 17:17:26 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -540,7 +540,7 @@ if test $CC = gcc; then
     if test "X$EXTRA_INCLUDE_DIR" = Xinclude; then
 	EXTRA_INCLUDE_DIR=
     fi
-elif $CC = "cl.exe" -o $CC = "cl"; then
+elif test $CC = "cl.exe" -o $CC = "cl"; then
 	if test $enable_debug = yes; then
 		CCOPTS="-nologo /W3 /ZI/Ge"
 	else
