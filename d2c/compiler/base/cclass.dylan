@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.21 2002/03/24 19:59:53 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.22 2002/04/28 20:44:07 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -982,8 +982,8 @@ define method reset-slot (slot :: <slot-info>) => ();
   slot.slot-overrides := #();
 end;
 
-define method reset-slot (slot :: <instance-slot-info>) => ();
-  slot.slot-overrides := #();
+define method reset-slot (slot :: <instance-slot-info>, #next next-method) => ();
+  next-method();
   slot.slot-representation := #f;
   clear-positions(slot.slot-positions);
   slot.slot-initialized?-slot := #f;
@@ -1540,7 +1540,7 @@ define method layout-slots-for (class :: <cclass>) => ();
     //
     // Pick representation for each instance slot.  If the representation
     // doesn't have a bottom value and slot isn't guaranteed to be initialized,
-    // then also add a bound? slot for it.
+    // then also add an init? slot for it.
     for (slot in class.new-slot-infos)
       if (instance?(slot, <instance-slot-info>))
 	let rep = pick-representation(slot.slot-type, #"space");
@@ -1548,7 +1548,7 @@ define method layout-slots-for (class :: <cclass>) => ();
 	unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
 		  | rep.representation-has-bottom-value?)
 	  let class = slot.slot-introduced-by;
-	  let boolean-ctype = specifier-type(#"<boolean>");
+	  let boolean-ctype = boolean-ctype();
 	  let init?-slot
 	    = make(<instance-slot-info>,
 		   introduced-by: class,
