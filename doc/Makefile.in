@@ -18,7 +18,7 @@ install: compile
 	${INSTALL_DATA} dybug.1 ${DESTDIR}${MANDIR}/man1/dybug.1
 	${INSTALL_DATA} mindy.1 ${DESTDIR}${MANDIR}/man1/mindy.1
 	${INSTALL_DATA} mindycomp.1 ${DESTDIR}${MANDIR}/man1/mindycomp.1
-	${INSTALL_DATA} mindyexec.1 ${DESTDIR}${MANDIR}/man1/mindyexex.1
+	${INSTALL_DATA} mindyexec.1 ${DESTDIR}${MANDIR}/man1/mindyexec.1
 	${INSTALL_DATA} melange.1 ${DESTDIR}${MANDIR}/man1/melange.1
 	${INSTALL_DATA} parsergen.1 ${DESTDIR}${MANDIR}/man1/parsergen.1
 	${INSTALL_DATA} make-dylan-app.1 \
