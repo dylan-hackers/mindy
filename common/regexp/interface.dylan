@@ -5,7 +5,7 @@ synopsis: This provides a useable interface for users. Functions
           to be of use to people.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.2 1996/03/07 18:53:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/interface.dylan,v 1.3 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -44,13 +44,27 @@ define open generic regexp-position
      end: the-end, case-sensitive)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
 
+// This will be faster than the default == method because it has more
+// type information.
+//
+define constant char-==
+    = method (ch1 :: <character>, ch2 :: <character>) => (result :: <boolean>);
+	ch1 == ch2;
+      end method;
+
+// Type-specific version of case-insensitive-equal.
+define constant letter-==
+    = method (ch1 :: <character>, ch2 :: <character>) => (result :: <boolean>);
+	case-insensitive-equal(ch1, ch2);
+      end method;
+
 define method regexp-position
     (big :: <string>, regexp :: <string>, #key start: big-start = 0,
      end: big-end = #f, case-sensitive = #f)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
   let substring = make(<substring>, string: big, start: big-start,
 		       end: big-end | big.size);
-  let comparison = if (case-sensitive) \= else case-insensitive-equal end;
+  let comparison = if (case-sensitive) char-== else letter-== end;
   let char-set-class = if (case-sensitive) 
 			 <case-sensitive-character-set>;
 		       else
@@ -92,7 +106,7 @@ define method make-regexp-positioner
      #key byte-characters-only = #f, need-marks = #t, maximum-compile = #f,
      case-sensitive = #f)
  => regexp-positioner :: <function>;
-  let comparison = if (case-sensitive) \= else case-insensitive-equal end;
+  let comparison = if (case-sensitive) char-== else letter-== end;
   let char-set-class = if (case-sensitive) 
 			 <case-sensitive-character-set>;
 		       else
@@ -135,10 +149,8 @@ define method make-regexp-positioner
     method (big :: <string>, #key start: big-start = 0,
 	    end: big-end = #f)
         => answer :: <boolean>;
-      let substring
-	= subsequence(big, start: big-start,
-		      end: if (big-end) big-end else size(big) end);
-      sim-dfa(dfa, substring);
+      sim-dfa(dfa, make(<substring>, string: big, start: big-start,
+			end: big-end | big.size));
     end method;
   end if;
 end method make-regexp-positioner;
@@ -303,7 +315,7 @@ define method run-translator
   let dest-index = start-index;
   for (source-index from start-index below end-index)
     let char = source[source-index];
-    if (table[char] ~= #f)
+    if (table[char] ~== #f)
       dest-string[dest-index] := table[char];
       dest-index := dest-index + 1;
     end if;
@@ -376,7 +388,7 @@ define method split-string
       else
 	let new-string = copy-sequence(input, start: end-of-last-match, 
 				       end: substring-start);
-	if (new-string ~= "" | ~remove-empty-items)
+	if (~new-string.empty? | ~remove-empty-items)
 	  push-last(strings, new-string);
 	  string-number := string-number + 1;
 	  end-of-last-match := substring-end;
@@ -386,7 +398,7 @@ define method split-string
     end while;
   end block;
   if (remove-empty-items)
-    apply(values, remove!(strings, "", test: \=));
+    apply(values, remove!(strings, "", test: char-==));
   else
     apply(values, strings);
   end if;

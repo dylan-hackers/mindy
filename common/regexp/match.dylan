@@ -4,7 +4,7 @@ synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/match.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -150,12 +150,18 @@ define method anchored-match-root?
   values(answer, marks);
 end method anchored-match-root?;
 
+define generic descend-re
+    (re :: false-or(<parsed-regexp>), target :: <substring>,
+     equal? :: <function>, start-index :: <integer>,
+     marks :: <mutable-sequence>, backtrack-past-me :: <non-local-exit>,
+     up-list :: <list> /* of <non-local-exit> */) => ();
+
 // Marks
 //
 define method descend-re
     (re :: <mark>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
 
      // The up-proc makes a mark of where it is and calls the next up
   local method up-proc (current-index :: <integer>, 
@@ -189,7 +195,7 @@ end method descend-re;
 define method descend-re
     (re :: <union>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
 
   block (backtrack-to-me)
     descend-re(re.left, target, equal?, start-index,
@@ -209,9 +215,9 @@ end method descend-re;
 // paths)  So, just backtrack.
 //
 define method descend-re
-    (re :: singleton(#f), target :: <substring>, equal? :: <function>,
+    (re == #f, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   backtrack-past-me();
 end method descend-re;
 
@@ -220,7 +226,7 @@ end method descend-re;
 define method descend-re
     (re :: <alternative>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
     // up-proc is "Ok, we've matched on the left, now match on the
     // right".  If it matches, we don't ever hear about it because we
     // put nothing on the up-list.
@@ -240,8 +246,8 @@ end method descend-re;
 define method descend-re
     (re :: <parsed-assertion>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
-  if (assertion-true?(re.asserts, target, start-index, equal?))
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
+  if (assertion-true?(re.asserts, target, start-index))
     head(up-list)(start-index, backtrack-past-me, tail(up-list));
   else
     backtrack-past-me();
@@ -253,7 +259,7 @@ end method descend-re;
 define method descend-re
     (re :: <quantified-atom>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   local method descend-and-quantify (min :: <integer>, max, 
 				     re :: <parsed-regexp>, index :: <integer>,
 				     backtrack-past-me :: <non-local-exit>,
@@ -307,7 +313,7 @@ end method descend-re;
 define method descend-re
     (re :: <parsed-character>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   if (start-index < target.end-index
 	& equal?(re.character, target.entire-string[start-index]))
     head(up-list)(start-index + 1, backtrack-past-me, tail(up-list));
@@ -321,7 +327,7 @@ end method descend-re;
 define method descend-re
     (re :: <parsed-string>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   let string = re.string;
   let final-index = start-index + string.size;
   if (final-index > target.end-index)
@@ -342,7 +348,7 @@ end method descend-re;
 define method descend-re
     (re :: <parsed-set>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   if (start-index < target.end-index
 	& member?(target.entire-string[start-index], re.char-set))
     head(up-list)(start-index + 1, backtrack-past-me, tail(up-list));
@@ -356,7 +362,7 @@ end method descend-re;
 define method descend-re
     (re :: <parsed-backreference>, target :: <substring>, equal? :: <function>,
      start-index :: <integer>, marks :: <mutable-sequence>,
-     backtrack-past-me :: <non-local-exit>, up-list :: <list>);
+     backtrack-past-me :: <non-local-exit>, up-list :: <list>) => ();
   let backref-start = marks[2 * re.group-number];
   let backref-end = marks[1 + 2 * re.group-number];
   let substring-2-end-pos = start-index + (backref-end - backref-start);
@@ -384,7 +390,7 @@ define method substrings-equal?
      end1 :: <integer>, string2 :: <string>, start2 :: <integer>, 
      end2 :: <integer>)
  => answer :: <boolean>;
-  if (end1 - start1 ~= end2 - start2)
+  if (end1 - start1 ~== end2 - start2)
     #f;
   else
     block (return)
@@ -400,23 +406,29 @@ end method substrings-equal?;
 
 
 define method assertion-true? (assertion :: <symbol>, target :: <substring>, 
-			       index :: <integer>, equal? :: <function>)
+			       index :: <integer>)
  => answer :: <boolean>;
   select (assertion)
     #"final-state"         => #t;
-    #"beginning-of-string" => index = target.start-index;
+    #"beginning-of-string" => index == target.start-index;
     #"end-of-string"       => index >= target.end-index;
     #"word-boundary"       =>
       index = 0 | index >= target.end-index
 	| (member?(target.entire-string[index], whitespace-chars) 
-	     ~= member?(target.entire-string[index - 1], whitespace-chars));
+	     ~== member?(target.entire-string[index - 1], whitespace-chars));
 
     #"not-word-boundary"   =>
-      index ~= 0 & index < target.end-index
+      index ~== 0 & index < target.end-index
 	& (member?(target.entire-string[index], whitespace-chars)
-	     = member?(target.entire-string[index - 1], whitespace-chars));
+	     == member?(target.entire-string[index - 1], whitespace-chars));
 
     otherwise              => 
       error("Unknown assertion %=", assertion);
   end select;
 end method assertion-true?;
+
+// Seals for file match.dylan
+
+// <substring> -- subclass of <object>
+define sealed domain make(singleton(<substring>));
+define sealed domain initialize(<substring>);

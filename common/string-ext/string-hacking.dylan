@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Random functionality for working with strings
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/string-hacking.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/string-hacking.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -77,7 +77,7 @@ end method case-insensitive-equal;
 
 define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
  => answer :: <boolean>;
-  if (size(s1) ~= size(s2))
+  if (s1.size ~== s2.size)
     #f;
   else
     block (return)
@@ -159,10 +159,10 @@ end method type-for-copy;
 // to vectors and strings, respectively.  negated: is handled by
 // an init-keyword.
 //
-define method initialize (set :: <character-set>,
-			  #next next-method, 
-			  #key description = "",
-			  #all-keys)
+define sealed method initialize (set :: <character-set>,
+				 #next next-method, 
+				 #key description = "",
+				 #all-keys)
  => false :: singleton(#f);
   next-method();
   let (ranges, chars, negated) = parse-description(description);
@@ -245,7 +245,7 @@ end method member?;
 define method member? (c :: <character>, set :: <character-set>,
 		       #key test: ignored)
  => answer :: <boolean>;
-  xor(in-single-chars?(c, set) | in-ranges?(c, set), set.negated-set?);
+  xor(in-single-chars?(set, c) | in-ranges?(c, set), set.negated-set?);
 end method member?;
 
 define method handle-single-chars! (set :: <character-set>, 
@@ -309,7 +309,7 @@ define method parse-description (string :: <sequence>);
     elseif (char = '\\')
       let escaped-char = lookahead(s);
       consume(s);
-      select (escaped-char by \=)
+      select (escaped-char by \==)
 	'n' => char-list  := add!(char-list, '\n');    // newline
 	't' => char-list  := add!(char-list, '\t');    // tab
 	'f' => char-list  := add!(char-list, '\f');    // formfeed
@@ -513,3 +513,13 @@ define method forward-iteration-protocol (jt :: <byte-character-table>)
 	                // Current-elt-setter
 	 method (coll, state) state end);                  // copy-state
 end method forward-iteration-protocol;
+
+// Seals for file string-hacking.dylan
+
+// <case-sensitive-character-set> -- subclass of <character-set>
+define sealed domain make(singleton(<case-sensitive-character-set>));
+// <case-insensitive-character-set> -- subclass of <character-set>
+define sealed domain make(singleton(<case-insensitive-character-set>));
+// <byte-character-table> -- subclass of <mutable-explicit-key-collection>
+define sealed domain make(singleton(<byte-character-table>));
+define sealed domain initialize(<byte-character-table>);

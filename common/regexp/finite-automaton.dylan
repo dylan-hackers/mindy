@@ -4,7 +4,7 @@ synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -422,17 +422,19 @@ end method atom-accepts?;
 // Input must be a string that consists only of byte-characters.
 // (That's not the same thing as saying input has to be a byte-string)
 //
-define method sim-dfa
-    (dfa-start :: <DFA-state>, input :: <string>, start :: <integer>)
+define method sim-dfa (dfa-start :: <DFA-state>, target :: <substring>)
+ => (result :: <boolean>);
   let dfa-state = dfa-start;
+  let input = target.entire-string;
+  let end-index = target.end-index;
 
   block (return)
-    for (index from start below input.size)
+    for (index from target.start-index below end-index)
       let char = input[index];
       if (dfa-state.final-state?)  return(#t) end if;
       while (instance?(dfa-state, <DFA-assertion>))
 	dfa-state := 
-	  if (assertion-true?(dfa-state.asserts, input, index))
+	  if (assertion-true?(dfa-state.asserts, target, index))
 	    dfa-state.true-state;
 	  else
 	    dfa-state.false-state;
@@ -446,7 +448,7 @@ define method sim-dfa
     while (instance?(dfa-state, <DFA-assertion>))
       if (dfa-state.final-state?)	  return(#t);   	end if;
       dfa-state := 
-	if (assertion-true?(dfa-state.asserts, input, size(input)))
+	if (assertion-true?(dfa-state.asserts, target, end-index))
 	  dfa-state.true-state;
 	else
 	  dfa-state.false-state;
@@ -455,3 +457,29 @@ define method sim-dfa
     dfa-state.final-state?;            // return value
   end block;
 end method sim-dfa;
+
+// Seals for file finite-automaton.dylan
+
+// <NFA-state> -- subclass of <object>
+define sealed domain make(singleton(<NFA-state>));
+define sealed domain initialize(<NFA-state>);
+// <e-state> -- subclass of <NFA-state>
+define sealed domain make(singleton(<e-state>));
+// <atom> -- subclass of <NFA-state>
+define sealed domain make(singleton(<atom>));
+// <character-atom> -- subclass of <atom>
+define sealed domain make(singleton(<character-atom>));
+// <set-atom> -- subclass of <atom>
+define sealed domain make(singleton(<set-atom>));
+// <assertion> -- subclass of <NFA-state>
+define sealed domain make(singleton(<assertion>));
+// <DFA-state> -- subclass of <object>
+define sealed domain make(singleton(<DFA-state>));
+define sealed domain initialize(<DFA-state>);
+// <DFA-character> -- subclass of <DFA-state>
+define sealed domain make(singleton(<DFA-character>));
+// <DFA-assertion> -- subclass of <DFA-state>
+define sealed domain make(singleton(<DFA-assertion>));
+// <dfa-state-table> -- subclass of <object-table>
+define sealed domain make(singleton(<dfa-state-table>));
+define sealed domain initialize(<dfa-state-table>);

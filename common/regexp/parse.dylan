@@ -2,7 +2,7 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -399,3 +399,27 @@ define method optimize (regexp :: <parsed-regexp>)
       regexp;
   end select;
 end method optimize;
+
+// Seals for file parse.dylan
+
+// <mark> -- subclass of <parsed-regexp>
+define sealed domain make(singleton(<mark>));
+// <union> -- subclass of <parsed-regexp>
+define sealed domain make(singleton(<union>));
+// <alternative> -- subclass of <parsed-regexp>
+define sealed domain make(singleton(<alternative>));
+// <parsed-assertion> -- subclass of <parsed-regexp>
+define sealed domain make(singleton(<parsed-assertion>));
+// <quantified-atom> -- subclass of <parsed-regexp>
+define sealed domain make(singleton(<quantified-atom>));
+// <parsed-character> -- subclass of <parsed-atom>
+define sealed domain make(singleton(<parsed-character>));
+// <parsed-string> -- subclass of <parsed-atom>
+define sealed domain make(singleton(<parsed-string>));
+// <parsed-set> -- subclass of <parsed-atom>
+define sealed domain make(singleton(<parsed-set>));
+// <parsed-backreference> -- subclass of <parsed-atom>
+define sealed domain make(singleton(<parsed-backreference>));
+// <parse-info> -- subclass of <object>
+define sealed domain make(singleton(<parse-info>));
+define sealed domain initialize(<parse-info>);

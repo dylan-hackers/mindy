@@ -4,7 +4,7 @@ synopsis: A useful little data structure that's not useful enough to
           export outside the library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/parse-string.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/parse-string.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -64,3 +64,9 @@ define method parse-string-done? (s :: <parse-string>) => answer :: <boolean>;
   s.index >= s.string.size;
 end method parse-string-done?;
 
+
+// Seals for file parse-string.dylan
+
+// <parse-string> -- subclass of <object>
+define sealed domain make(singleton(<parse-string>));
+define sealed domain initialize(<parse-string>);
