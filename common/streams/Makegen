@@ -12,5 +12,7 @@ if ($features{'compiled_for_unix'}) {
 
 &emit_library_rule(
     $streams_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile',
-    'compile-mindy', 'install'
-);
+	'no-mindy', 'install');
+
+&emit_library_rule(
+    'Mindy-streams', '', '', 'compile-mindy', 'no-d2c', 'install');
