@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.130 1996/05/01 12:33:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.131 1996/05/09 02:16:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -746,20 +746,6 @@ define method optimize (component :: <component>, catch :: <catch>) => ();
 	      derived-type: disable-catcher-op.derived-type));
     end;
   end;
-end;
-
-define method expand-exit-function
-    (component :: <component>, call :: <general-call>,
-     func :: <exit-function>, cluster :: <abstract-variable>)
-    => ();
-  if (call.use-generic-entry?)
-    error("Trying to call the generic entry for an exit function?");
-  end;
-
-  replace-expression(component, call.dependents,
-		     make-operation(make-builder(component), <throw>,
-				    list(func.depends-on.source-exp, cluster),
-				    nlx-info: func.nlx-info));
 end;
 
 define method optimize (component :: <component>, op :: <throw>) => ();
