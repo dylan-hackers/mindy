@@ -27,6 +27,11 @@ define constant $kPictureDialogItem	:: <integer>		= 64;
 define constant $kUserDialogItem	:: <integer>		= 0;
 define constant $kItemDisableBit	:: <integer>		= 128;
 
+define constant $kAlertStopAlert	:: <integer> = 0;
+define constant $kAlertNoteAlert	:: <integer> = 1;
+define constant $kAlertCautionAlert	:: <integer> = 2;
+define constant $kAlertPlainAlert	:: <integer> = 3;
+
 
 /*
 	Dialog Types
@@ -38,6 +43,11 @@ end class <DialogRef>;
 define constant <ModalFilterUPP> = <UniversalProcPtr>;
 
 define constant $uppModalFilterProcInfo	:: <integer> = 4048;
+
+define constant <AlertType> = <integer>;
+
+define functional Class <AlertStdAlertParam> ( <Ptr> )
+end class <AlertStdAlertParam>;
 
 
 /*
@@ -217,3 +227,22 @@ define method GetDialogPort( dialog :: <DialogRef> )
     let ptr = call-out( "GetDialogPort", ptr:, ptr: dialog.raw-value );
     make( <CGrafPtr>, pointer: ptr );
 end method GetDialogPort;
+
+
+/*
+    APPEARANCE
+*/
+
+/*
+    StandardAlert
+*/
+
+define method StandardAlert(	inAlertType :: <AlertType>, inError :: <string>,
+                                inExplanation :: <string>, inAlertParam :: <AlertStdAlertParam> )
+=>( result :: <integer>, error :: <OSErr> )
+    let temp = make( <Handle> ); // 4 bytes of scratch space
+    let result = call-out( "StandardAlert", int:, int: inAlertType, ptr: as( <pascal-string>, inError ).raw-value,
+                ptr: as( <pascal-string>, inExplanation ).raw-value, ptr: inAlertParam.raw-value, ptr: temp.raw-value);
+
+    values( unsigned-short-at( temp, offset: 0 ), as( <OSErr>, result ) );
+end method StandardAlert

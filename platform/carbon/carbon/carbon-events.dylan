@@ -184,8 +184,8 @@ define method InstallWindowEventHandler( inTarget :: <WindowRef>, inHandler :: <
                                         inUserData :: <statically-typed-pointer>, outRef :: <EventHandlerRef> ) 
 => ( result :: <OSStatus> )
 
-    let status = call-out( integer:, "InstallWindowEventHandler", ptr: inTarget,raw-value, ptr: inHandler.raw.value,
-                            integer: inNumTypes, ptr: inUserData.raw-value, ptr: outRef.raw-value );
+    let status = call-out( "InstallWindowEventHandler", int:, ptr: inTarget,raw-value, ptr: inHandler.raw.value,
+                            int: inNumTypes, ptr: inUserData.raw-value. ptr: outRef.raw-value );
                             
     as( <OSStatus>, status );
  

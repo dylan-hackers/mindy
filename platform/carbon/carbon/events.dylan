@@ -193,6 +193,18 @@ define method content-size( cls == <AEDescList> )
 	c-expr( int: "sizeof(AEDescList)" );
 end method content-size;
 
+/*
+    NewAEEventHandlerUPP
+    Should take a <callback-function> and get the callback from that, but the class
+    isn't exported.
+*/
+
+define method NewAEEventHandlerUPP(procPtr :: <raw-pointer>)	
+ => (result :: <AEEventHandlerUPP>);
+	let result-value = call-out("NewAEEventHandlerUPP", ptr:, ptr: procPtr);
+	make(<AEEventHandlerUPP>, pointer: result-value);
+end method NewAEEventHandlerUPP;
+
 
 /*
 	AEInstallEventHandler

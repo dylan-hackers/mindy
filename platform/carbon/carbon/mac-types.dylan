@@ -2,24 +2,36 @@ module: mac-types
 
 
 /*
-	OSErr.
+	Basic types
 */
 
-define constant <OSErr> = <integer>;
+define constant <UInt8> = <integer>;
 
+define constant <SInt8> = <integer>;
+
+define constant <UInt16> = <integer>;
+
+define constant <SInt16> = <integer>;
+
+define constant <UInt32> = <integer>;
+
+define constant <SInt32> = <integer>;
+
+define constant <OSErr> = <SInt16>;
+
+define constant <OSStatus> = <SInt32>;
+
+define constant <FourCharCode> = <integer>;
+
+define constant <OSType> = <FourCharCode>;
+
+define constant <ResType> = <FourCharCode>;
 
 /*
-    OSStatus
+        noErr
 */
 
-define constant <OSStatus> = <integer>;
-
-
-/*
-	OSType.
-*/
-
-define constant <OSType> = <integer>;
+define constant $noErr :: <OSErr> = 0;
 
 
 /*

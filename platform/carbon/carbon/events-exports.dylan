@@ -8,6 +8,7 @@ define module events
 
 	use Dylan;
 	//use Extensions;						// <extended-integer>
+        use System; 							// <raw-pointer>
 	use melange-support;
 	use mac-types;
 	use memory;
@@ -34,7 +35,7 @@ define module events
 		<AEEventClass>, <AEEventID>, <AppleEvent>,
 		<AEDesc>, <AEDescList>,
 		<AEEventHandlerUPP>, $uppAEEventHandlerProcInfo,
-
+                NewAEEventHandlerUPP,
 		AEInstallEventHandler, AERemoveEventHandler, AEProcessAppleEvent,
 		
 		// Misc Event Stuff

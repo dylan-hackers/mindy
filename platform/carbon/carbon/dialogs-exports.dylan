@@ -28,7 +28,13 @@ define module dialogs
 		IsDialogEvent, DialogSelect,
 		GetDialogItem, GetDialogItemText, SetDialogItemText,
 		CountDITL,
-                GetDialogWindow, GetDialogPort;
+                GetDialogWindow, GetDialogPort,
+                
+                // Appearance
+                
+                <AlertStdAlertParam>, <AlertType>,
+                $kAlertStopAlert, $kAlertNoteAlert, $kAlertCautionAlert, $kAlertPlainAlert,
+                StandardAlert;
 		
 end module dialogs;
 

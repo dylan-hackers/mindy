@@ -13,7 +13,7 @@ define module quickdraw
 	use memory;
 	
 	export	// QuickDraw.
-		<Point>, point-v, point-v-setter, point-h, point-h-setter,
+                <Point>, point-v, point-v-setter, point-h, point-h-setter,
 		point,
 		
 		<Rect>, top, top-setter, left, left-setter,

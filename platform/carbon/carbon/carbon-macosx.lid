@@ -20,6 +20,8 @@ controls-exports.dylan
 controls.dylan
 dialogs-exports.dylan
 dialogs.dylan
+appearance-exports.dylan
+appearance.dylan
 navigation-exports.dylan
 navigation.dylan
 gestalt-exports.dylan

@@ -25,7 +25,6 @@ c-include("Carbon/Carbon.h");
 //    release-lock($qd-lock);
 //end method release-quickdraw;
 
-
 /*
 	<Points>
 	A QuickDraw Point.

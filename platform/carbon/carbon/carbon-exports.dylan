@@ -10,6 +10,6 @@ define library carbon
 	use melange-support;
 	export	mac-types, dialogs, events, gestalt, memory, files, menus, os-utils, 
 			quickdraw, resources, sound, windows, controls,
-                        carbon-events;
+                        appearance, carbon-events;
 
 end library carbon;

@@ -10,11 +10,20 @@ define module mac-types
 	//use Extensions;						// <extended-integer>
 	use melange-support;
 	
-	export	// utilities
-			<OSErr>, <OSStatus>, <OSType>, os-type,
+	export	
+                // Basic Types
+                        <UInt8>, <SInt8>, <UInt16>, <SInt16>, <UInt32>,
+                        <SInt32>,  <OSErr>, <OSStatus>, <FourCharCode>, 
+                        <OSType>, <ResType>,
+        
+                // Utilities
+			os-type,
 			Debugger, DebugStr,
-			
-			// pascal string	
+                        
+                // Error Codes        
+                        $noErr,
+                        
+                // pascal string	
 			<Pascal-string>;
 			
 end module mac-types;
