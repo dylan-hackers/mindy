@@ -1,8 +1,23 @@
 #!perl
 
-# tree-diff.  Finds all writeable files, and all files that have no
-# counterpart in the RCS tree.  Only for Windows/NT.
+# Usage:
+#        tree-diff [-w]
+#
 
+# Tree-diff looks at the RCS'ed version of this directory, then gives
+# a list of all files that are writable, that are missing from the
+# current directory, or are new to the current directory (has no RCS
+# equivalent).  Next to each file, it tells you which of those three
+# ways the file is different -- "writeable", "deleted", or "new".
+
+# If -w is specified, it only lists writeable files, and it doesn't
+# use the word "writeable" next to them.  The -w option is
+# particularly useful for constructing complex commands, like
+# "tree-diff -w | mass-diff"
+
+
+# found_writeable(filename) -- Generate output declaring that filename
+# is writeable.
 sub found_writeable {
     local($filename) = @_;
     if ($writeable_files_only) {
@@ -12,6 +27,9 @@ sub found_writeable {
     }
 }
 
+# found_deleted(filename) -- Check to see if the -w switch was
+# specified, and if not, generate output saying that filename was
+# deleted.
 sub found_deleted {
     local($filename) = @_;
     if (!$writeable_files_only) {
@@ -19,6 +37,8 @@ sub found_deleted {
     }
 }
 
+# found_new(filename) -- Check to see if the -w switch was specified,
+# and if not, generate output saying that filename is new.
 sub found_new {
     local($filename) = @_;
     if (!$writeable_files_only) {
@@ -26,6 +46,9 @@ sub found_new {
     }
 }
 
+# examine(localfile, rcsfile) -- Compare localfile to its rcsfile, and
+# output the appropriate message if not.  (rcsfile must exist, but
+# localfile might not, in which case the file was deleted)
 sub examine {
     local($localfile, $rcsfile) = @_;
     if (-w $localfile) {
@@ -35,6 +58,7 @@ sub examine {
     }
 }
 
+# expand_fake_link(link_name) -- Expand our fake RCS sym-link.
 sub expand_fake_link {
     local($link_name) = @_;
     open(LINKFILE, $link_name) || die("Can't find file $link_name");
@@ -44,6 +68,9 @@ sub expand_fake_link {
     return $expanded_link;
 }
 
+# examine_rcs_files(localdir) -- Examine all files in localdir,
+# generating appropriate output.  Recursively visiting subdirs is left
+# up to examine_directory.
 sub examine_rcs_files {
     local($localdir) = @_;
     if (! -e "$localdir/RCS") {
@@ -79,8 +106,8 @@ sub examine_rcs_files {
     }
 }
 
-# Takes a directory name, and examines all files in and below that dir.
-#
+# examine_directory(local) -- Examines all files in and below that
+# dir, generating appropriate output.
 sub examine_directory {
     local($dirname) = @_;
     &examine_rcs_files($dirname);

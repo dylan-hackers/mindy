@@ -1,7 +1,18 @@
 #!perl
 
-# Checks in a whole slew of files.  What it reads from stdin looks like:
-
+# Usage:
+#     mass-ci logs.txt
+# or  mass-ci < logs.txt
+#
+# mass-ci is used for doing an RCS ci on a whole bunch of files at
+# once, with many of those files residing in subdirectories of the
+# current dir.  mass-ci uses standard Perl techniques to get its
+# input, so you can either give it a file name with log info, or pass
+# this info in via stdin.
+#
+# The actual log info (ie, the contents of logs.txt or stdin) looks
+# like this:
+#
 # file1
 # blah blah blah
 # blah blah
@@ -10,8 +21,8 @@
 # blah blah
 # blah blah blah
 # .
-
-# where blah is what is entered into the RCS log
+#
+# where "blah" is what is entered into the RCS log
 
 require "pwd.pl";
 &initpwd;
@@ -26,7 +37,6 @@ while (<>) {
     $dir = join('\\', @new_components); # all but last
     # splice destroys @components array...
     &chdir($dir);
-#    print("ci $file\n");
     open(OUT, "| ci $file") || die "Can't spawn ci $file\n";
   loop:
     while (<>) {
