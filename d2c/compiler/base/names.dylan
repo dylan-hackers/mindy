@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.6 2001/07/07 17:14:09 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.7 2001/11/08 01:10:57 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -51,9 +51,9 @@ end method;
 
 
 define class <basic-name> (<name>)
-  slot name-symbol :: <symbol>,
+  constant slot name-symbol :: <symbol>,
     required-init-keyword: symbol:;
-  slot name-module :: <module>,
+  constant slot name-module :: <module>,
     required-init-keyword: module:;
 end;
 
@@ -98,7 +98,7 @@ add-od-loader(*compiler-dispatcher*, #"basic-name", load-basic-name);
 // describing the use of the derived name.
 
 define class <derived-name> (<name>)
-  slot derived-name-how
+  constant slot derived-name-how
     :: one-of(#"type-cell", #"general-entry", #"generic-entry",
 	      #"callback-entry",
     	      #"discriminator",
@@ -106,7 +106,7 @@ define class <derived-name> (<name>)
 	      #"maker", #"key-defaulter",
 	      #"class-meta", #"each-subclass-meta"),
     required-init-keyword: how:;
-  slot derived-name-base :: <name>, required-init-keyword: base:;
+  constant slot derived-name-base :: <name>, required-init-keyword: base:;
 end;
 
 define sealed domain make (singleton(<derived-name>));
@@ -139,8 +139,8 @@ add-make-dumper(#"derived-name", *compiler-dispatcher*, <derived-name>,
 // some other named thing.  The symbol is the local name.
 //
 define class <internal-name> (<name>)
-  slot internal-name-symbol :: <symbol>, required-init-keyword: symbol:;
-  slot internal-name-base :: <name>, required-init-keyword: base:;
+  constant slot internal-name-symbol :: <symbol>, required-init-keyword: symbol:;
+  constant slot internal-name-base :: <name>, required-init-keyword: base:;
 end class;
 
 define sealed domain make (singleton(<internal-name>));
@@ -167,7 +167,7 @@ add-make-dumper(#"internal-name", *compiler-dispatcher*, <internal-name>,
 // useful name yet.
 
 define class <anonymous-name> (<name>)
-  slot anonymous-name-location :: <source-location>,
+  constant slot anonymous-name-location :: <source-location>,
     required-init-keyword: location:;
 end class;
 
@@ -189,9 +189,9 @@ add-make-dumper(#"anonymous-name", *compiler-dispatcher*, <anonymous-name>,
 
 
 define class <method-name> (<name>)
-  slot method-name-generic-function :: <basic-name>,
+  constant slot method-name-generic-function :: <basic-name>,
     required-init-keyword: generic-function:;
-  slot method-name-specializers :: <sequence>,
+  constant slot method-name-specializers :: <sequence>,
     required-init-keyword: specializers:;
 end;
 
