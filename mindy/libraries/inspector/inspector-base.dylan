@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.7 1996/04/25 18:26:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.8 1996/05/26 15:08:00 nkramer Exp $
 
 //======================================================================
 //
@@ -549,6 +549,11 @@ define function owned-names (namespace :: <namespace>)
 	       end method);
 end function owned-names;
 
+define function symbol-less-than (sym1 :: <symbol>, sym2 :: <symbol>) 
+ => answer :: <boolean>;
+  as(<string>, sym1).as-uppercase < as(<string>, sym2).as-uppercase;
+end function symbol-less-than;
+
 define function namespace-info (namespace :: <namespace>)
  => info :: <deque>;
   let make-name = method (symbol)
@@ -559,10 +564,12 @@ define function namespace-info (namespace :: <namespace>)
 		    end method;
   let exported-components
     = map-into-body-components(make-name, make-relobj,
-			       sort(namespace.exported-names));
+			       sort(namespace.exported-names,
+				    test: symbol-less-than));
   let owned-components
     = map-into-body-components(make-name, make-relobj,
-			       sort(namespace.owned-names));
+			       sort(namespace.owned-names,
+				    test: symbol-less-than));
   deque(make(<object-attribute>, 
 	     header: "Exported names",
 	     body: exported-components),
