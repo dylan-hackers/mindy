@@ -1,9 +1,9 @@
 
 if ($stage2) {
-    do compile_subdirs('runtime', 'compiler', 'demos', 'dig');
+    do compile_subdirs('runtime', 'compiler', 'dig');
 }
 else {
-    do compile_subdirs('compiler', 'runtime', 'demos', 'dig');
+    do compile_subdirs('compiler', 'runtime', 'dig');
     print <<'EOF';
 .PHONY: d2c-compile d2c-install
 
