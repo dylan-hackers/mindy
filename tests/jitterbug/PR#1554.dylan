@@ -8,7 +8,7 @@ begin
   if (cond)
     a := 0;
   else
-    a := 1;
+    a := #"yeah";
   end if;
 
   use(a);
