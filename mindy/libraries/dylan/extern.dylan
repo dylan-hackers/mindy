@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.1 1994/11/06 20:11:59 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.2 1995/02/14 02:43:25 rgs Exp $
 
 //======================================================================
 //
@@ -133,7 +133,7 @@ define method make
       error("Bad element-count: in make: %=", element-count);
     end if;
 
-    let ptr = malloc((content-size(cls) + extra-bytes) * size);
+    let ptr = malloc((content-size(cls) + extra-bytes) * element-count);
     if (ptr == null-pointer) error("Make failed to allocate memory.") end if;
 
     as(cls, ptr);
