@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.5 2002/03/10 16:03:53 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.6 2002/04/28 20:45:06 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -858,8 +858,6 @@ define method find-variable (name :: <basic-name>, #key create: create?)
 			as(<byte-string>, mod.module-name)),
 	      new);
     new;
-  else
-    #f;
   end if;
 end method find-variable;
 
