@@ -45,7 +45,9 @@ EOD
 module: $libname
 synopsis: 
 author: 
-copyright: see below
+copyright: 
+
+define method foo(libname)
   format-out("Hello, world from $libname!\\n");
 end method foo;
 EOD
