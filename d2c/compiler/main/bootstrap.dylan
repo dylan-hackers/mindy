@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.25 1995/05/29 02:07:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.26 1995/05/29 20:55:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -295,7 +295,9 @@ define class <function> (<object>) end;
 define class <method> (<function>) end;
 define class <generic-function> (<function>) end;
 
-define class <symbol> (<object>) end;
+define class <symbol> (<object>)
+  slot symbol-string :: <string>, setter: #f, required-init-keyword: string:;
+end;
 
 define class <type> (<object>) end;
 define class <singleton> (<type>) end;
@@ -345,11 +347,26 @@ define abstract open class <mutable-sequence>
 end;
 define abstract open class <array> (<mutable-sequence>) end;
 define abstract open class <vector> (<array>) end;
+define class <builtin-vector> (<vector>) end;
 define abstract open class <string> (<mutable-sequence>) end;
-define class <simple-object-vector> (<vector>) end;
-define class <unicode-string> (<vector>, <string>) end;
-define class <byte-string> (<vector>, <string>) end;
-define abstract class <list> (<mutable-sequence>) end;
+define class <simple-object-vector> (<builtin-vector>)
+  sealed slot %element, init-value: #f, init-keyword: fill:,
+    sizer: size, required-size-init-keyword: size:;
+end;
+define class <unicode-string> (<builtin-vector>, <string>)
+  sealed slot %element :: <character>,
+    init-value: ' ', init-keyword: fill:,
+    sizer: size, required-size-init-keyword: size:;
+end;
+define class <byte-string> (<builtin-vector>, <string>)
+  sealed slot %element :: <byte-character>,
+    init-value: ' ', init-keyword: fill:,
+    sizer: size, required-size-init-keyword: size:;
+end;
+define abstract class <list> (<mutable-sequence>)
+  sealed slot head, required-init-keyword: head:;
+  sealed slot tail, required-init-keyword: tail:;
+end;
 define class <empty-list> (<list>) end;
 define class <pair> (<list>) end;
 
