@@ -1,6 +1,6 @@
 module: Table-Extensions
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
-rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.3 2000/01/24 04:55:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.4 2002/08/30 09:14:41 bruce Exp $
 
 //======================================================================
 //
@@ -32,10 +32,13 @@ rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.3 2000/01
 
 // A value table whose keys are strings.
 //
-define class <string-table> (<value-table>)
+define sealed class <string-table> (<value-table>)
 end class <string-table>;
 
-define method table-protocol (ht :: <string-table>)
+define sealed domain make(singleton(<string-table>));
+define sealed domain initialize(<string-table>);
+
+define sealed inline method table-protocol (ht :: <string-table>)
  => (key-test :: <function>, key-hash :: <function>);
   values(\=, string-hash);
 end method table-protocol;
@@ -43,10 +46,13 @@ end method table-protocol;
 
 // A value table whose keys are strings, compared without regard to case.
 //
-define class <case-insensitive-string-table> (<value-table>)
+define sealed class <case-insensitive-string-table> (<value-table>)
 end class <case-insensitive-string-table>;
 
-define method table-protocol (ht :: <case-insensitive-string-table>)
+define sealed domain make(singleton(<case-insensitive-string-table>));
+define sealed domain initialize(<case-insensitive-string-table>);
+
+define sealed inline method table-protocol (ht :: <case-insensitive-string-table>)
  => (key-test :: <function>, key-hash :: <function>);
   values(case-insensitive-equal, case-insensitive-string-hash);
 end method table-protocol;
