@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.34 2002/04/08 22:50:09 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.35 2002/04/10 23:42:47 gabor Exp $
 copyright: see below
 
 
@@ -1509,13 +1509,13 @@ define method class-defn-deferred-evaluations-function
 	       end;
 	       // ### inherited each-subclass slots w/ non obvious init
 	       // values impose the existence of the deferred-evaluations
-	       // function.
+	       // function. TODO
 	       
 	       // also indirect slots with non-ctv init-values/functions
 	       // imply a deferred-evaluations function.
 	       for (slot-defn in defn.class-defn-slots)
 		 let info = slot-defn.slot-defn-info;
-		 if (instance?(info, <class-slot-info>))
+		 if (instance?(info, <indirect-slot-info>))
 		   if (info.slot-init-value /* == #t е TODO */
 			| info.slot-init-function)
 		     return(#t);
@@ -1820,6 +1820,29 @@ define method build-home-store
 	slot-info: meta-slot));
 end method;
 
+define method build-home-store
+  (builder :: <fer-builder>,
+   new :: <leaf>,
+   slot-info :: <each-subclass-slot-info>,
+   policy :: <policy>,
+   source :: <source-location>)
+ => ()
+  let slot-home
+    = build-slot-home
+        (slot-info.slot-getter.variable-name,
+	 make-literal-constant(builder, slot-info.slot-introduced-by),
+	 builder, policy, source);
+  let meta-slot = slot-info.associated-meta-slot;
+  assert(~meta-slot.slot-initialized?-slot);
+  let meta-instance = meta-slot.slot-introduced-by;
+  let offset = find-slot-offset(meta-slot, meta-instance); // there may be more!!еее
+  build-assignment
+    (builder, policy, source, #(),
+     make-operation
+       (builder, <heap-slot-set>,
+	list(new, slot-home, make-literal-constant(builder, offset)),
+	slot-info: meta-slot));
+end method;
 
 
 // Top level form conversion.
@@ -1941,7 +1964,7 @@ define method convert-top-level-form
 	// indirect slots (if they are not already).
 	// еее SAME HAS TO HAPPEN FOR OVERRIDES TOO (SEE BELOW)
 
-	if (instance?(slot-info, <class-slot-info>))
+	if (instance?(slot-info, <indirect-slot-info>))
 	  if (init-value) // later: init-value == #t TODO
 	    //
 	    // Copy over the value into the class instance.
@@ -1957,7 +1980,7 @@ define method convert-top-level-form
 		    list(make-literal-constant(evals-builder, slot-info))));
 	    end unless;
 	    //
-	    // assign to the class slot.
+	    // assign to the indirect slot.
 	    // cannot simply use the slot-setter because slot might be constant.
 	    build-home-store(evals-builder, var, slot-info, policy, source);
 	  elseif (init-function)
@@ -1970,7 +1993,7 @@ define method convert-top-level-form
 			       slot-name, evals-builder, policy, source,
 			       var, init-function-leaf, type-var);
 
-	    // assign to the class slot.
+	    // assign to the indirect slot.
 	    // cannot simply use the slot-setter because slot might be constant.
 	    build-home-store(evals-builder, var, slot-info, policy, source);
 	  end if;
