@@ -1,5 +1,5 @@
 module: 	self-organizing-list
-rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/solist.dylan,v 1.2 1996/02/17 17:55:30 nkramer Exp $
+rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/solist.dylan,v 1.3 1996/03/17 00:16:06 wlott Exp $
 author: 	Robert Stockton (rgs@cs.cmu.edu)
 synopsis:	Provides "self-organizing lists".  These explicit key
 		collections provide roughly the semantics of hash tables, but
@@ -60,6 +60,9 @@ define class <self-organizing-list> (<mutable-explicit-key-collection>)
   // slot accessor provides method for standard collection op "key-test"
   sealed slot key-test :: <function>, init-value: \==, init-keyword: test:;
 end class;
+
+define sealed domain make (singleton(<self-organizing-list>));
+define sealed domain initialize (<self-organizing-list>);
 
 define inline method sol-fip-next-state
     (list :: <self-organizing-list>, state :: <list>) 
