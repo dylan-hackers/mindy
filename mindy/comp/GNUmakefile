@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.1 1994/03/24 22:45:59 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.2 1994/03/28 11:40:15 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -43,7 +43,7 @@ parser.tab.h: parser.tab.c
 lexer.c: lexer.l
 
 clean:
-	rm -f ${OBJS} parser.tab.c parser.tab.h lexer.c mc Depends
+	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.c mc Depends
 
 depend: ${SRCS}
 	$(CC) -MM -E ${CFLAGS} ${CPPFLAGS} $^ > ,depends
