@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/Attic/GNUmakefile,v 1.2 1994/05/25 12:30:53 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/Attic/GNUmakefile,v 1.3 1994/06/11 16:14:41 wlott Exp $
 ##
 ##  This is the top-level source makefile for Mindy.  It lives at the top
 ## of the Mindy source tree, and recursivly runs make on each of the
@@ -17,7 +17,7 @@
 ##
 
 CSUBDIRS = interp comp
-DYLANSUBDIRS = runtime streams
+DYLANSUBDIRS = runtime streams random
 SUBDIRS = ${CSUBDIRS} ${DYLANSUBDIRS}
 
 all: ${SUBDIRS}
