@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.43 1996/03/27 23:52:31 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.44 1996/04/08 08:26:02 wlott Exp $
 
 /*
 
@@ -604,9 +604,6 @@ begin
   register-object-id(#"concatenating-pattern-variable-reference", #x145);
   register-object-id(#"sequence-pattern-variable-reference", #x146);
   register-object-id(#"unhygienic-pattern-variable-reference", #x147);
-
-  register-object-id(#"literal-ref-parse", #x150);
-  register-object-id(#"varref-parse", #x151);
 end;
 
 
