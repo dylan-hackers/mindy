@@ -1,5 +1,5 @@
 module: misc-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.4 1995/11/14 13:38:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.5 1996/02/06 15:49:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -37,6 +37,18 @@ add-od-loader(*compiler-dispatcher*, #"module",
     find-module(find-library(lib-name), mod-name, create: #t);
   end method
 );
+
+
+define method dump-od (obj :: <library>, buf :: <dump-state>) => ();
+  dump-simple-object(#"library", buf, obj.library-name);
+end;
+
+add-od-loader(*compiler-dispatcher*, #"library",
+  method (state :: <load-state>) => res :: <library>;
+    find-library(load-sole-subobject(state));
+  end method
+);
+
 
 define method dump-od (obj :: <basic-name>, buf :: <dump-state>) => ();
   dump-simple-object(#"basic-name", buf,
