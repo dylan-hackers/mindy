@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.3 1995/09/14 19:26:14 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.4 1996/05/11 21:49:53 nkramer Exp $
 *
 * This file is the lexer for the debugger.
 *
@@ -50,7 +50,11 @@ FILE *yyin;
 
 static char line[1024];
 static char *next_char = line;
-static int eof;
+
+#ifdef HAVE_LIBREADLINE
+    static int eof = 0;
+#endif
+
 
 void yyinput_setter(FILE *input)
 {
