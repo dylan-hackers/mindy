@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.8 1995/02/28 22:35:55 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.9 1995/03/13 19:57:35 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -216,10 +216,13 @@ end class;
 
 define abstract class <method-literal> (<function-literal>)
 
-  // The generic entry is similar 
-  // An entry point which takes Required fixed arguments followed by
+  // The generic entry is somewhat similar to the general-entry, but doesn't
+  // have to deal with error cases that have been picked off by the generic
+  // dispatch mechanism.  It takes the required arguments followed by
   // next-method info, followed by an argument context pointer and an argument
-  // count.  The required arguments are guaranteed to be of the correct type,
+  // count.
+  //
+  // The required arguments are guaranteed to be of the correct type,
   // and more args will only be supplied if they are syntactically legal.
   // Keyword arg legality has already been done; unrecognized keywords are
   // quietly ignored.  This can also be false when not needed.
@@ -266,7 +269,7 @@ end class;
 // 
 // Local call analysis parses the arguments to calls with only fixed
 // arguments or recognizable keyword arguments, and turns it into a call to
-// the more entry or main entry.
+// the main entry.
 //
 define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
 
@@ -276,7 +279,7 @@ define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
   // The main entry-point into the function, which takes all arguments
   // including keywords as fixed arguments.  The format of the arguments must
   // be determined by examining the signature.  This may be used by callers
-  // that supply at least Required arguments and know what they are doing.
+  // that supply the required arguments and know how to default any others.
   slot main-entry :: <lambda>, required-init-keyword: main-entry:;
 end class;
 
@@ -304,10 +307,6 @@ define class <fer-component> (<component>)
   // are variables which we should attempt to SSA-convert.  If successful, the
   // <initial-variable> is no longer used, and is deleted from this list.
   slot initial-variables :: <list>, init-value: #();
-
-  // If true, then there is stuff in this component that could benefit from
-  // further FE optimization.
-  slot reoptimize :: <boolean>, init-value: #t;
 
   // String that is some sort of name for the code in this component.
   slot name :: <byte-string>, init-value: "<unknown>";

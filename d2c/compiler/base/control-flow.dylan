@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.1 1994/12/12 13:01:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.2 1995/03/13 19:57:35 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,7 @@ region [source-location-mixin] {abstract}
         compound-region
 
     join-region {abstract}
-        if-region
+        if-region [dependent-mixin]
 	body-region {abstract}
 	    block-region [block-region-mixin]
 	    method-region
@@ -72,7 +72,7 @@ end class;
 // An <if-region> represents a conditional test.  The join function joins the
 // values of the two branches.
 //
-define class <if-region> (<join-region>)
+define class <if-region> (<join-region>, <dependent-mixin>)
   //
   // Variable holding test value.
   slot if-test :: <leaf>, required-init-keyword: if-test:;
@@ -152,6 +152,9 @@ end;
 //
 define class <component> (<block-region-mixin>)
   keyword source-location:, init-value: make(<source-location>);
+  //
+  // Queue of dependencies that need to be updated (threaded by queue-next.)
+  slot reoptimize-queue :: false-or(<dependency>), init-value: #f;
   //
   // List of all methods.
   slot all-methods :: <list>, init-value: #();

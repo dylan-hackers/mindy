@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.2 1994/12/16 12:14:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.3 1995/03/13 19:57:35 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,6 +7,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // single-assignment (SSA) form.
 
 /*
+
 expression
     leaf {abstract}
         abstract-variable {abstract}
@@ -16,15 +17,16 @@ expression
 	    multi-definition-variable {abstract}
 	        initial-variable
 		global-variable
-    operation {abstract}
+    operation [dependent-mixin] {abstract}
         join-operation
 
 variable-info {abstract}
 
 dependency
+dependent-mixin
 
-abstract-assignment {abstract}
-    assignment [source-location-mixin]
+abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
+    assignment
     join-assignment
 
 */
@@ -59,13 +61,26 @@ define abstract class <expression> (<object>)
 end class;
 
 
-// <dependency> represents a use site of an expression (i.e. stuff that is
-// data-dependent on the value of the expression.)
+// <dependent-mixin> is inherited by all things that can be the direct target
+// of a dependency: assignments, operations and IF-regions.
+//
+define class <dependent-mixin> (<object>)
+  //
+  // Thread running through dependents in the component reoptimize-queue, or
+  // #"absent" if this dependent is not currently in the queue (hence is up to
+  // date.)
+  slot queue-next :: union(<dependent-mixin>, one-of(#f, #"absent")),
+    init-value: #"absent";
+end class;
+
+
+// <dependency> represents a use site of an expression (i.e. a link between an
+// expression and a single thing that is data-dependent on the value of the
+// expression.)
 //
 // Expressions are used by:
-// -- Normal assignments,
+// -- assignments,
 // -- In the case of leaves, also by
-//     - join assignments,
 //     - <operation> expression operands, and
 //     - IF condition test values.
 //
@@ -87,8 +102,7 @@ define class <dependency> (<object>)
   // The thing that depends on the value of this expression.  Since the type is
   // so weak, it will generally be necessary to dynamically dispatch off of the
   // dependent object in order to interpret the edge.
-  slot dependent :: type-or(<operation>, <abstract-assignment>, <if-region>),
-    required-init-keyword: dependent:;
+  slot dependent :: <dependent-mixin>, required-init-keyword: dependent:;
   //
   // Thread running through all incoming edges at a given Dependent object.
   // This list is ordered according to the needs of the dependent (e.g. the
@@ -103,7 +117,7 @@ end class;
 //    Variables, constants and functions are all represented by <Leaf>
 // expressions.  Only leaf expressions can be used as the arguments to
 // operations.
-
+//
 define abstract class <leaf> (<expression>)
   //
   // Pseudo-random hash code used to associate operands with operations.
@@ -134,10 +148,6 @@ define abstract class <definition-site-variable> (<abstract-variable>)
 
   // Thread through all the variables defined at our defining operation.
   slot definer-next :: false-or(<definition-site-variable>), init-value: #f;
-
-  // Thread running through variables in some queue, e.g. to reoptimize.  When
-  // initially allocated, variables are threaded together this way.
-  slot queue-next :: false-or(<definition-site-variable>), init-value: #f;
 end;
 
 
@@ -195,7 +205,7 @@ end class;
 // calls.  An <operation> bundles an operator with a particular set of <leaf>
 // operands.
 //
-define abstract class <operation> (<expression>)
+define abstract class <operation> (<expression>, <dependent-mixin>)
   inherited slot derived-type, init-function: wild-ctype;
   //
   // Head of operand list, threaded by Dependent-Next.
@@ -214,7 +224,8 @@ end class;
 //    An assignment represents a concrete step in program executation.
 // Assignments appear in sequence and pair expressions with target variables.
 //
-define abstract class <abstract-assignment> (<source-location-mixin>)
+define abstract class <abstract-assignment> 
+    (<source-location-mixin>, <dependent-mixin>)
 
   // Linked list of variables defined by this operation (results), threaded by
   // DEFINER-NEXT.  If #F, then there are no results, hence any computed result
