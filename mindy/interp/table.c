@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.3 1994/04/05 21:58:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.4 1994/04/06 17:25:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -47,7 +47,7 @@ static void dylan_object_hash(struct thread *thread, int nargs)
 
 static obj_t dylan_state_valid_p(obj_t state)
 {
-    if (state == valid_state)
+    if (state == obj_False || state == valid_state)
 	return obj_True;
     else
 	return obj_False;
