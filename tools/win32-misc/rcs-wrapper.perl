@@ -1,5 +1,7 @@
 #!perl
 
+#### Warning! This file is obsolete.  Use rcs-wrapper.c instead.
+
 # rcs-wrapper usage:
 #    perl rcs-wrapper.perl rcs-command [arg1 arg2 arg3...]
 #
@@ -34,5 +36,6 @@ while ($arg = shift(@ARGV)) {
     }
 }
 
+### Perhaps a "-V4" should be added here...
 system($exe, " ", join(' ', @NEWARGV));
 
