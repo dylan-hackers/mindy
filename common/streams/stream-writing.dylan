@@ -109,8 +109,8 @@ define method write (stream :: <buffered-stream>, sequence :: <sequence>,
 	copy-sequence!(buf, buf-start, sequence, start, buf-capacity);
 	buf.buffer-next := buf.buffer-end;
 	buf := next-output-buffer(stream);
-	buf-capacity := buf.buffer-end - buf.buffer-next;
 	buf-start := buf.buffer-next;
+	buf-capacity := buf.buffer-end - buf-start;
 	start := partial-stop;
 	partial-stop := partial-stop + buf-capacity;
       end if;
