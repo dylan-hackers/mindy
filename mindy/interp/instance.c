@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.38 1995/05/11 14:33:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.39 1995/11/10 01:01:44 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1769,6 +1769,16 @@ static obj_t dylan_slot_value_setter(obj_t value, obj_t slot, obj_t instance)
     return value;
 }
 
+static obj_t dylan_slot_keyword_required_p(obj_t slot)
+{
+    return (SD(slot)->keyword_required) ? obj_True : obj_False;
+}
+
+static obj_t dylan_slot_init_keyword(obj_t slot)
+{
+    return SD(slot)->init_keyword;
+}
+
 
 /* Describe. */
 
@@ -2086,4 +2096,10 @@ void init_instance_functions(void)
 		  list3(obj_ObjectClass, obj_SlotDescrClass,obj_ObjectClass),
 		  FALSE, obj_False, FALSE, obj_ObjectClass,
 		  dylan_slot_value_setter);
+    define_method("keyword-required?", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_BooleanClass, 
+		  dylan_slot_keyword_required_p);
+    define_method("init-keyword", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, 
+		  dylan_slot_init_keyword);
 }
