@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.2 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.3 1995/12/16 01:56:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -110,7 +110,7 @@ define method element (header :: <header>, keywrd, #key default = no-default)
     => value;
   block (return)
     for (entry = header.entries then entry.next,
-	 while entry)
+	 while: entry)
       if (entry.key == keywrd)
 	return(entry.value);
       end;
