@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.11 1995/09/05 18:53:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.12 1995/11/09 17:33:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -141,7 +141,7 @@ define-primitive-emitter
      let (args, index) = extract-operands(operation, output-info,
 					  *ptr-rep*, *long-rep*);
      let expr = format-to-string("(((descriptor_t *)%s)[%s])", args, index);
-     deliver-result(results, expr, $general-rep, #t, output-info);
+     deliver-result(results, expr, *general-rep*, #t, output-info);
    end);
 
 define-primitive-emitter
@@ -160,7 +160,7 @@ define-primitive-emitter
        = format-to-string("%s(%s, (descriptor_t *)%s + %s, %s - %s)",
 			  main-entry-name(mra-info, output-info), cur-top,
 			  args, nfixed, nargs, nfixed);
-     deliver-result(defines, expr, $heap-rep, #t, output-info);
+     deliver-result(defines, expr, *heap-rep*, #t, output-info);
    end);
 
 define-primitive-emitter
@@ -204,7 +204,7 @@ define-primitive-emitter
      let results = make(<vector>, size: nfixed + 1);
      for (index from 0 below nfixed)
        results[index] := pair(format-to-string("%s[%d]", bottom-name, index),
-			      $general-rep);
+			      *general-rep*);
      end;
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, output-info);
@@ -214,7 +214,7 @@ define-primitive-emitter
 				top-name,
 				bottom-name, nfixed,
 				top-name, bottom-name, nfixed),
-	       $heap-rep);
+	       *heap-rep*);
      deliver-results(defines, results, #t, output-info);
    end);
 
@@ -257,7 +257,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
-     let vec = extract-operands(operation, output-info, $heap-rep);
+     let vec = extract-operands(operation, output-info, *heap-rep*);
      let (cur-sp, new-sp)
        = cluster-names(output-info.output-info-cur-stack-depth);
      format(output-info.output-info-guts-stream,
@@ -274,8 +274,8 @@ define-primitive-emitter
      let results = make(<stretchy-vector>);
      for (dep = operation.depends-on then dep.dependent-next,
 	  while: dep)
-       let expr = ref-leaf($general-rep, dep.source-exp, output-info);
-       add!(results, pair(expr, $general-rep));
+       let expr = ref-leaf(*general-rep*, dep.source-exp, output-info);
+       add!(results, pair(expr, *general-rep*));
      end;
      deliver-results(defines, results, #f, output-info);
    end);
@@ -291,7 +291,7 @@ define-primitive-emitter
        => ();
      let bytes = extract-operands(operation, output-info, *long-rep*);
      deliver-result(defines, format-to-string("allocate(%s)", bytes),
-		    $heap-rep, #f, output-info);
+		    *heap-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -448,8 +448,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
-     let expr = extract-operands(operation, output-info, $boolean-rep);
-     deliver-result(defines, expr, $boolean-rep, #f, output-info);
+     let expr = extract-operands(operation, output-info, *boolean-rep*);
+     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -461,12 +461,12 @@ define-primitive-emitter
      let arg = operation.depends-on.source-exp;
      let expr
        = if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
-	   format-to-string("!%s", ref-leaf($boolean-rep, arg, output-info));
+	   format-to-string("!%s", ref-leaf(*boolean-rep*, arg, output-info));
 	 else
 	   format-to-string("(%s == obj_False)",
-			    ref-leaf($heap-rep, arg, output-info));
+			    ref-leaf(*heap-rep*, arg, output-info));
 	 end;
-     deliver-result(defines, expr, $boolean-rep, #f, output-info);
+     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -476,9 +476,9 @@ define-primitive-emitter
 	   output-info :: <output-info>)
        => ();
      let (x, y) = extract-operands(operation, output-info,
-				   $heap-rep, $heap-rep);
+				   *heap-rep*, *heap-rep*);
      deliver-result(defines, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -489,8 +489,8 @@ define-primitive-emitter
        => ();
      let expr = format-to-string("(%s != NULL)",
 				 extract-operands(operation, output-info,
-						  $heap-rep));
-     deliver-result(defines, expr, $boolean-rep, #f, output-info);
+						  *heap-rep*));
+     deliver-result(defines, expr, *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -500,7 +500,7 @@ define-primitive-emitter
 	   output-info :: <output-info>)
        => ();
      extract-operands(operation, output-info);
-     deliver-result(defines, "initial_symbols", $heap-rep, #f, output-info);
+     deliver-result(defines, "initial_symbols", *heap-rep*, #f, output-info);
    end);
    
 
@@ -556,7 +556,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
      deliver-result(defines, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -567,7 +567,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("(%s < %s)", x, y), $boolean-rep,
+     deliver-result(defines, format-to-string("(%s < %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -750,7 +750,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *float-rep*, *float-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), $boolean-rep,
+     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -763,7 +763,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *float-rep*, *float-rep*);
      deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), $boolean-rep,
+		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -776,7 +776,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *float-rep*, *float-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -789,7 +789,7 @@ define-primitive-emitter
 				   *float-rep*, *float-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -801,7 +801,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *float-rep*, *float-rep*);
      deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), $boolean-rep,
+		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -952,7 +952,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *double-rep*, *double-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), $boolean-rep,
+     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -965,7 +965,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), $boolean-rep,
+		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -978,7 +978,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *double-rep*, *double-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -991,7 +991,7 @@ define-primitive-emitter
 				   *double-rep*, *double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1003,7 +1003,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *double-rep*, *double-rep*);
      deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), $boolean-rep,
+		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -1154,7 +1154,7 @@ define-primitive-emitter
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-double-rep*, *long-double-rep*);
-     deliver-result(results, format-to-string("(%s < %s)", x, y), $boolean-rep,
+     deliver-result(results, format-to-string("(%s < %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -1167,7 +1167,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
-		    format-to-string("(%s <= %s)", x, y), $boolean-rep,
+		    format-to-string("(%s <= %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -1180,7 +1180,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1193,7 +1193,7 @@ define-primitive-emitter
 				   *long-double-rep*, *long-double-rep*);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1205,7 +1205,7 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *long-double-rep*, *long-double-rep*);
      deliver-result(results,
-		    format-to-string("(%s != %s)", x, y), $boolean-rep,
+		    format-to-string("(%s != %s)", x, y), *boolean-rep*,
 		    #f, output-info);
    end);
 
@@ -1373,7 +1373,7 @@ define-primitive-emitter
 				   *ptr-rep*, *ptr-rep*);
      deliver-result(results,
 		    format-to-string("((char *)%s < (char *)%s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);
 
 define-primitive-emitter
@@ -1385,5 +1385,5 @@ define-primitive-emitter
      let (x, y) = extract-operands(operation, output-info,
 				   *ptr-rep*, *ptr-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
-		    $boolean-rep, #f, output-info);
+		    *boolean-rep*, #f, output-info);
    end);

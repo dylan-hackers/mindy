@@ -18,7 +18,7 @@ define method build-initial-heap (roots :: <vector>, stream :: <stream>)
     let roots :: <simple-object-vector> = unit[1];
     format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots", prefix, prefix);
     for (ctv in roots, index from 0)
-      spew-reference(ctv, $general-rep, format-to-string("roots[%d]", index),
+      spew-reference(ctv, *general-rep*, format-to-string("roots[%d]", index),
 		     state);
     end;
   end;
@@ -31,7 +31,7 @@ define method build-initial-heap (roots :: <vector>, stream :: <stream>)
   format(stream,
 	 "\n\n\t.align\t8\n\t.export\tinitial_symbols, DATA\n"
 	   "initial_symbols\n");
-  spew-reference(state.symbols, $heap-rep, "Initial Symbols", state);
+  spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
 
@@ -90,7 +90,7 @@ define method spew-reference
 end;
 
 define method spew-reference
-    (object :: <ct-value>, rep == $heap-rep,
+    (object :: <ct-value>, rep == *heap-rep*,
      tag :: <byte-string>, state :: <state>) => ();
   format(state.stream, "\t.word\t%s\t; %s\n", object-name(object, state), tag);
 end;
@@ -393,7 +393,7 @@ define method spew-object
 end;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
-  spew-reference(object.proxy-for, $heap-rep, "%object-class", state);
+  spew-reference(object.proxy-for, *heap-rep*, "%object-class", state);
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
