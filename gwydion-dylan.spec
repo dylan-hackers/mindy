@@ -67,6 +67,9 @@ on the web at <http://www.randomhacks.com/dylan/>.
 
 %changelog
 
+* Wed Nov 24 1998 Eric Kidd <eric.kidd@pobox.com>
+  - Commented out LD_LIBRARY_PATH warning for relocated packages.
+
 * Sat Nov 21 1998 Eric Kidd <eric.kidd@pobox.com>
   - Added primitive relocation support for Gwydion and Mindy.
   - Commented out code to check for parsergen, because Andreas says
@@ -135,8 +138,8 @@ if test "x$RPM_INSTALL_PREFIX" != "x/usr"; then
     echo "setup will be required:"
     echo "  * Set DYLANDIR to $RPM_INSTALL_PREFIX"
     echo "  * Make sure your PATH contains $RPM_INSTALL_PREFIX/bin"
-    echo "  * Either add $RPM_INSTALL_PREFIX/lib/dylan to LD_LIBRARY_PATH, or"
-    echo "    add it to /etc/ld.so.conf and rerun /sbin/ldconfig"
+#    echo "  * Either add $RPM_INSTALL_PREFIX/lib/dylan to LD_LIBRARY_PATH, or"
+#    echo "    add it to /etc/ld.so.conf and rerun /sbin/ldconfig"
 fi
 
 
