@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.23 2003/02/18 15:15:07 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.24 2003/03/01 19:13:34 robmyers Exp $
 
 //======================================================================
 //
@@ -813,6 +813,7 @@ define method main (program, #rest args)
   for (dir in framework-dirs)
     *framework-paths* := add(*framework-paths*, dir);
   end for;
+	find-frameworks( *framework-paths* );
 
   // Handle regular arguments.
   let in-file = #f;

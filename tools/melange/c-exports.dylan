@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.13 2003/02/13 15:29:13 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.14 2003/03/01 19:13:34 robmyers Exp $
 
 //======================================================================
 //
@@ -130,7 +130,7 @@ define module c-lexer
   create cpp-parse;
   export
     *handle-c++-comments*,
-    *framework-paths*,
+    *framework-paths*, find-frameworks,
     <tokenizer>, cpp-table, cpp-decls, <token>, token-id, generator,
     <simple-token>, <reserved-word-token>, <punctuation-token>,
     <literal-token>, <ei-token>, <name-token>, <type-specifier-token>,

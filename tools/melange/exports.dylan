@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.7 2003/02/13 15:29:13 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.8 2003/03/01 19:13:34 robmyers Exp $
 
 //======================================================================
 //
@@ -131,7 +131,7 @@ define module int-parse
   use extensions;
   use table-extensions;
   use self-organizing-list;
-  use c-lexer, import: {include-path, open-in-include-path, *framework-paths*};
+  use c-lexer, import: {include-path, open-in-include-path};
   use streams;
   use standard-io;
   use format;
@@ -187,7 +187,7 @@ define module define-interface
   // local packages
   use int-lexer;
   use int-parse, rename: {rename => renames};
-  use c-lexer, import: {include-path, open-in-include-path, *framework-paths*};
+  use c-lexer, import: {include-path, open-in-include-path, *framework-paths*, find-frameworks};
   use c-declarations,
     rename: {parse => c-parse, <parse-state> => <c-parse-state>};
   use name-mappers;
