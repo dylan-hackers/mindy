@@ -1,11 +1,9 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.9 1995/03/13 19:57:35 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.10 1995/04/12 17:06:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 /*
-object
-    annotatable {mixin}
 
 assignment
     fer-assignment [abstract]
@@ -50,12 +48,6 @@ object
     tail-set [annotatable]
 
 */
-
-// Defines the Info slot used for back-end annotation.
-//
-define class <annotatable> (<object>)
-  slot info, init-value: #f;
-end class;
 
 
 // Basic front end (FE) SSA classes:
