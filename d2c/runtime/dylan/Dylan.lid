@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.11 1996/02/09 04:12:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Dylan.lid,v 1.12 1996/06/26 14:39:16 nkramer Exp $
 library: Dylan
 unique-id-base: 0
 linker-options: -lruntime -lgc -lm
@@ -39,3 +39,4 @@ output.dylan
 condition.dylan
 debug.dylan
 thread.dylan
+system.dylan
