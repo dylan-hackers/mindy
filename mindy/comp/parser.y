@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.8 1994/04/25 21:56:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.9 1994/06/11 02:20:34 wlott Exp $
 *
 * This file does whatever.
 *
@@ -140,6 +140,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> EXCEPTION
 %token <token> FINALLY
 %token <token> FOR
+%token <token> FREE
 %token <token> FROM
 %token <token> GENERIC
 %token <token> HANDLER
@@ -196,8 +197,9 @@ static void pop_yacc_recoveries(int count);
 %type <bindings> bindings
 %type <param_list> variables gf_parameters
 %type <param_list> more_gf_parameters gf_rest_parameters
-%type <param_list> gf_keyword_parameters_opt gf_keyword_parameters parameters
-%type <param_list> more_parameters next_parameters rest_parameters
+%type <param_list> gf_keyword_parameters_list gf_keyword_parameters_opt
+%type <param_list> gf_keyword_parameters parameters more_parameters
+%type <param_list> next_parameters rest_parameters keyword_parameters_list
 %type <param_list> keyword_parameters_opt keyword_parameters
 %type <param> variable positional_parameter
 %type <keyword_param> keyword_parameter gf_keyword_parameter
@@ -303,6 +305,7 @@ flags:
     |	flags ABSTRACT { free($2); $$ = $1 | flag_ABSTRACT; }
     |	flags CONCRETE { free($2); $$ = $1 | flag_CONCRETE; }
     |	flags PRIMARY { free($2); $$ = $1 | flag_PRIMARY; }
+    |	flags FREE { free($2); $$ = $1 | flag_FREE; }
 ;	
 
 local_declaration:
@@ -756,10 +759,15 @@ more_gf_parameters:
 gf_rest_parameters:
 	rest_parameter
 	{ $$ = set_rest_param(make_param_list(), $1); }
-    |	rest_parameter COMMA KEY gf_keyword_parameters_opt
-	{ free($2); free($3); $$ = set_rest_param($4, $1); }
-    |	KEY gf_keyword_parameters_opt
-	{ free($1); $$ = $2; }
+    |	rest_parameter COMMA gf_keyword_parameters_list
+	{ free($2); $$ = set_rest_param($3, $1); }
+    |	gf_keyword_parameters_list
+	{ $$ = $1; }
+;
+
+gf_keyword_parameters_list:
+	KEY gf_keyword_parameters_opt { free($1); $$ = $2; }
+    |	ALL_KEYS { free($1); $$ = allow_all_keywords(make_param_list()); }
 ;
 
 gf_keyword_parameters_opt:
@@ -769,9 +777,12 @@ gf_keyword_parameters_opt:
 
 gf_keyword_parameters:
 	gf_keyword_parameter
-	{ $$ = add_keyword_param(allow_keywords(make_param_list()), $1); }
-    |	gf_keyword_parameters COMMA gf_keyword_parameter
-	{ free($2); $$ = add_keyword_param($1, $3); }
+	{ $$ = push_keyword_param($1, allow_keywords(make_param_list())); }
+    |	gf_keyword_parameter COMMA ALL_KEYS
+	{ free($2); free($3);
+	  $$ = push_keyword_param($1, allow_all_keywords(make_param_list())); }
+    |	gf_keyword_parameter COMMA gf_keyword_parameters
+	{ free($2); $$ = push_keyword_param($1, $3); }
 ;
 
 gf_keyword_parameter:
@@ -877,31 +888,46 @@ next_parameter:
 rest_parameters:
 	rest_parameter
 	{ $$ = set_rest_param(make_param_list(), $1); }
-    |	rest_parameter COMMA KEY keyword_parameters_opt
-	{ free($2); free($3); $$ = set_rest_param($4, $1); }
-    |	KEY keyword_parameters_opt
-	{ free($1); $$ = $2; }
+    |	rest_parameter COMMA keyword_parameters_list
+	{ free($2); $$ = set_rest_param($3, $1); }
+    |	keyword_parameters_list
+	{ $$ = $1; }
 ;
 
 rest_parameter:
 	REST SYMBOL { free($1); $$ = make_id($2); }
 ;
 
+keyword_parameters_list:
+	KEY keyword_parameters_opt
+	{ free($1); $$ = $2; }
+    |	ALL_KEYS
+	{ free($1); $$ = allow_all_keywords(make_param_list()); }
+;
+
 keyword_parameters_opt:
 	/* epsilon */ { $$ = allow_keywords(make_param_list()); }
+    |	COMMA ALL_KEYS
+	{ free($1); free($2); $$ = allow_all_keywords(make_param_list()); }
     |	keyword_parameters { $$ = $1; }
 ;
 
 keyword_parameters:
 	keyword_parameter
-	{ $$ = add_keyword_param(allow_keywords(make_param_list()), $1); }
-    |	keyword_parameters COMMA keyword_parameter
-	{ free($2); $$ = add_keyword_param($1, $3); }
+	{ $$ = push_keyword_param($1, allow_keywords(make_param_list())); }
+    |	keyword_parameter COMMA ALL_KEYS
+	{ free($2); free($3);
+	  $$ = push_keyword_param($1, allow_all_keywords(make_param_list())); }
+    |	keyword_parameter COMMA keyword_parameters
+	{ free($2); $$ = push_keyword_param($1, $3); }
 ;
 
 keyword_parameter:
 	keyword_opt SYMBOL keyword_parameter_type keyword_parameter_default
 	{ $$ = make_keyword_param($1, make_id($2), $3, $4); }
+    |	keyword_opt SYMBOL LPAREN expression RPAREN
+	{ free($3); free($5);
+	  $$ = make_keyword_param($1, make_id($2), NULL, $4); }
 ;
 
 keyword_opt:
