@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.20 1995/09/14 19:24:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.21 1995/10/23 23:11:35 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -33,7 +33,10 @@
 #include "../compat/std-os.h"
 
 #include <setjmp.h>
-#ifdef WIN32
+#ifndef HAVE__SETJMP
+#   define _setjmp      setjmp
+#endif
+#ifndef HAVE__LONGJMP
 #   define _longjmp	longjmp
 #endif
 
