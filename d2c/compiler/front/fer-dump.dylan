@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.2 2000/01/24 04:56:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.3 2000/10/20 15:04:06 housel Exp $
 copyright: see below
 
 
@@ -57,7 +57,7 @@ end;
 
 define method id (id :: <integer>) => res :: <id-able>;
   unless (id < $id-vector.size)
-    error("Nothing with id %d\n", id);
+    error("Nothing with id %d", id);
   end;
   $id-vector[id];
 end;
