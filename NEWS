@@ -10,10 +10,10 @@ Gwydion Dylan 2.1.1 (1998-10-18)
   code.
 
   This release includes many bug fixes by Jeff Dubrule, Andreas Bogk, and
-  Peter Housel; a tricky and impressive CSE fix by Matthias Hoeltzl; more
+  Peter Housel; a tricky and impressive CSE fix by Matthias Hoelzl; more
   documentation work by Peter Housel and Eric Kidd; major Melange
   improvements by Eric Kidd; a 30% performance improvement to Mindy by
-  Pierre Pascale; more low-level C interface work by Peter Housel; and the
+  Pierre de Pascale; more low-level C interface work by Peter Housel; and the
   beginnings of GDB support by Jeff Dubrule.
 
 Gwydion Dylan 2.1 1998-09-16
