@@ -23,14 +23,14 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.10 1994/06/27 17:10:13 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.11 1994/06/28 23:08:10 wlott Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
 
-include ../Config
+include ../../Config
 
-MC = ../comp/mc
+MC = ../../comp/mc
 MINDYFLAGS = -lDylan
 
 %.dbc: %.dylan
