@@ -2,7 +2,7 @@ module: Time-Internal
 author: Nick Kramer
 synopsis: Parses a time (like the C function strptime)
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/parse-time.dylan,v 1.1 1996/10/06 14:15:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/parse-time.dylan,v 1.2 1996/10/06 14:20:29 nkramer Exp $
 
 //======================================================================
 //
@@ -275,7 +275,9 @@ end function process-format-directive;
 define function do-post-processing (state :: <parse-state>) => ();
   if (state.parsed-hour ~== #f)
     let hour = state.parsed-hour + if (state.pm?) 12 else 0 end;
-    let hour = if (hour == 24) 0 else hour end;  // 12am is hour 0
+    // Now, we convert 12am to 0, and 12pm (noon) to 12 (reversing the
+    // +12 for pm before)
+    let hour = if (hour == 12 | hour == 24) hour - 12 else hour end;
     add-init-arg(state, hours: hour);
   end if;
   if (state.parsed-day-of-year ~== #f)
