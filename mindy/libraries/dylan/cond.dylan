@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.10 1995/01/10 16:12:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.11 1996/01/14 02:00:53 wlott Exp $
 
 //======================================================================
 //
@@ -219,7 +219,7 @@ end method default-handler;
 
 
 define method default-handler (condition :: <warning>)
-  report-condition(condition, *debug-output*);
+  *format-function*(*debug-output*, "%s\n", condition);
   #f;
 end method default-handler;
 
