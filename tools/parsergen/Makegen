@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-if (!$enable_mindy_bootstrap) {
+if ($build_tools_with_d2c) {
   &emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
 		     'compile', 'install');
 } else {
