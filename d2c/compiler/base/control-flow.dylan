@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.20 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.21 1996/03/18 01:44:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -169,6 +169,7 @@ end;
 // 
 define class <return> (<exit>, <dependent-mixin>)
   slot returned-type :: <values-ctype>, init-function: wild-ctype;
+  slot guessed-returned-type :: <values-ctype>, init-function: empty-ctype;
 end;
 
 // Represents all the stuff we're currently compiling.  This is also a
