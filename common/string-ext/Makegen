@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../coll-ext -L../table-ext';
+$D2CFLAGS = $D2CFLAGS . ' -L../collection-extensions -L../table-ext';
 
 do emit_library_rule(
     'StringExt', '$(BUILDROOT)/force.timestamp', '', 'compile', 

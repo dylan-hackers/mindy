@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = "$D2CFLAGS -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext";
+$D2CFLAGS = "$D2CFLAGS -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../collection-extensions";
 $CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR) -I$(top_builddir)';
 
 &emit_melange_rule('time-intr');
