@@ -370,6 +370,12 @@
   int
   ())
 
+(define-func gtk_timeout_add
+  int
+  ((int interval)
+   (callback func)
+   (pointer data)))
+
 (define-func gtk_timeout_add_full
   int
   ((int interval)
