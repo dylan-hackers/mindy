@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.40 2002/04/16 22:54:33 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.41 2002/09/04 21:26:49 housel Exp $
 copyright: see below
 
 
@@ -138,11 +138,20 @@ define-procedural-expander
    method (generator :: <expansion-generator>, keyword-frag :: <fragment>,
 	   options-frag :: <fragment>)
        => ();
+     let keyword
+       = if (instance?(keyword-frag, <token-fragment>)
+               & keyword-frag.fragment-token.token-kind == $symbol-token)
+           keyword-frag.fragment-token.token-literal.literal-value;
+         else
+           compiler-fatal-error-location
+             (keyword-frag,
+              "Argument to keyword (%=) must be a keyword", keyword-frag);
+         end;
      generate-fragment
        (generator,
 	make-magic-fragment
 	  (make(<init-arg-parse>,
-		keyword: extract-keyword(keyword-frag),
+		keyword: keyword,
 		options: parse-property-list(make(<fragment-tokenizer>,
 						  fragment: options-frag))),
 	   source-location: generate-token-source-location(generator)))
