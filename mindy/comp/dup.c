@@ -180,7 +180,7 @@ static struct expr *dup_dot_expr(struct dot_expr *e)
 
     if ((arg = dup_expr(e->arg)) == NULL)
 	return NULL;
-    if ((func == dup_expr(e->func)) == NULL) {
+    if ((func = dup_expr(e->func)) == NULL) {
 	free_expr(arg);
 	return NULL;
     }
