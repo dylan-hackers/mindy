@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.23 2001/03/30 14:05:29 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.24 2001/03/30 16:46:15 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -138,7 +138,7 @@ define module od-format
   use self-organizing-list;
   use file-system, import: {find-and-open-file};
 #if (~mindy)
-  use Extensions, import: {<stretchy-object-vector>, <simple-object-table>};
+  use Extensions;
 #endif
   export
     $odf-header-flag,
