@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.1 1994/03/27 02:13:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.2 1994/03/27 03:15:06 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <setjmp.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/errno.h>
@@ -31,6 +32,30 @@ static jmp_buf Catcher;
 static enum pause_reason PauseReason;
 
 #define OPS_PER_TIME_SLICE 100
+
+
+/* SIGINT handling. */
+
+static void (*InterruptHandler)(void) = NULL;
+
+static void sigint_handler()
+{
+    InterruptHandler();
+}
+
+void set_interrupt_handler(void (*handler)(void))
+{
+    unsigned oldmask = sigblock(0);
+
+    InterruptHandler = handler;
+    sigsetmask(oldmask & ~sigmask(SIGINT));
+}
+
+void clear_interrupt_handler(void)
+{
+    sigblock(sigmask(SIGINT));
+    InterruptHandler = NULL;
+}
 
 
 /* Waiting on file descriptors. */
@@ -142,6 +167,11 @@ void wait_for_output(struct thread *thread, int fd,
 
 /* Driver loop entry points. */
 
+static void set_pause_interrupted(void)
+{
+    PauseReason = pause_Interrupted;
+}
+
 enum pause_reason do_stuff(void)
 {
     struct thread *thread;
@@ -160,11 +190,13 @@ enum pause_reason do_stuff(void)
 	if (thread) {
 	    timer = OPS_PER_TIME_SLICE;
 	    InInterpreter = TRUE;
+	    set_interrupt_handler(set_pause_interrupted);
 	    setjmp(Catcher);
 	    if (PauseReason == pause_NoReason)
 		while (timer-- > 0)
 		    thread->advance(thread);
 	    InInterpreter = FALSE;
+	    clear_interrupt_handler();
 
 	    if (TimeToGC)
 		collect_garbage();
@@ -172,8 +204,10 @@ enum pause_reason do_stuff(void)
 	else if (all_threads() == NULL)
 	    PauseReason = pause_NothingToRun;
 	else {
+	    set_interrupt_handler(set_pause_interrupted);
 	    check_fds(TRUE);
 	    do_select = FALSE;
+	    clear_interrupt_handler();
 	}
     } while (PauseReason == pause_NoReason
 	     || PauseReason == pause_PickNewThread);
@@ -242,7 +276,16 @@ static void init_waiters(struct waiters *waiters)
 
 void init_driver()
 {
+    struct sigvec sv;
+
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
+
+    sigblock(sigmask(SIGINT));
+
+    sv.sv_handler = sigint_handler;
+    sv.sv_mask = 0;
+    sv.sv_flags = 0;
+    sigvec(SIGINT, &sv, NULL);
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.1 1994/03/27 02:13:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.2 1994/03/27 03:15:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,3 +29,6 @@ extern void wait_for_input(struct thread *thread, int fd,
 			   void (*advance)(struct thread *thread));
 extern void wait_for_output(struct thread *thread, int fd,
 			    void (*advance)(struct thread *thread));
+
+extern void set_interrupt_handler(void (*handler)(void));
+extern void clear_interrupt_handler(void);

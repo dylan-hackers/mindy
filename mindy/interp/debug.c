@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.2 1994/03/27 02:10:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.3 1994/03/27 03:15:00 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <setjmp.h>
 
 #include "mindy.h"
 #include "thread.h"
@@ -37,6 +38,7 @@
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
 
+static jmp_buf BlowOffCmd;
 static struct thread *CurThread = NULL;
 static obj_t *CurFP = NULL;
 static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
@@ -51,6 +53,15 @@ static struct variable *debugger_abort_var;
 static struct variable *debugger_restarts_var;
 static struct variable *debugger_restart_var;
 static struct variable *debugger_return_var;
+
+
+/* Random utilities. */
+
+static void blow_off_cmd(void)
+{
+    longjmp(BlowOffCmd, TRUE);
+}
+
 
 
 /* Frame printing. */
@@ -306,6 +317,13 @@ static void frame_cmd(void)
     }
 }
 
+static boolean backtrace_punted;
+
+static void punt_backtrace(void)
+{
+    backtrace_punted = TRUE;
+}
+
 static void backtrace_cmd(void)
 {
     if (CurThread == NULL)
@@ -313,8 +331,17 @@ static void backtrace_cmd(void)
     else {
 	obj_t *fp;
     
-	for (fp = CurThread->fp; fp != NULL; fp = obj_rawptr(fp[-4]))
+	backtrace_punted = FALSE;
+	set_interrupt_handler(punt_backtrace);
+
+	for (fp = CurThread->fp; fp != NULL; fp = obj_rawptr(fp[-4])) {
+	    if (backtrace_punted) {
+		printf("interrupted\n");
+		break;
+	    }
 	    print_frame(fp);
+	}
+	clear_interrupt_handler();
     }
 }
 
@@ -1142,7 +1169,13 @@ void invoke_debugger(enum pause_reason reason)
 	thread_set_current(NULL);
 
 	while (!Continue) {
+
 	    maybe_print_frame();
+
+	    if (setjmp(BlowOffCmd))
+		printf("\ninterrupted\n");
+	    else
+		set_interrupt_handler(blow_off_cmd);
 
 	    printf("mindy> ");
 	    fflush(stdout);
@@ -1153,6 +1186,8 @@ void invoke_debugger(enum pause_reason reason)
 	    }
 	    else
 		lex_setup(line, strlen(line));
+
+	    clear_interrupt_handler();
 
 	    switch (yylex()) {
 	      case tok_EOF:
