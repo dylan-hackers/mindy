@@ -36,7 +36,8 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define library test
   use dylan;
-  use streams;
+  use new-streams;
+  use standard-io;
   use stream-extensions;
   use format;
   use tk;
@@ -46,7 +47,7 @@ define module test
   use dylan;
   use threads;
   use extensions;
-  use streams;
+  use new-streams;
   use standard-io;
   use eager-stream;
   use format;
@@ -163,7 +164,7 @@ define method main(program-name :: <string>, #rest args)
 		expand: #f, side: "right");
 
   widgets := vector(pair("menu frame", f1), pair("list frame", f2),
-		    pair("list }box", l1), pair("scroll bar", s1),
+		    pair("list box", l1), pair("scroll bar", s1),
 		    pair("file menu", b1), pair("print menu", b2),
 		    pair("variable menu", b3), pair("word entry", b4));
   apply(insert, l1, 0, map(head, widgets));
@@ -200,8 +201,8 @@ define method main(program-name :: <string>, #rest args)
 		    command: curry(format, *tty*, "Key code: %s\n"));
   bind(t1, "<Any-KeyPress>", join-tk-args("set", keyvar, "%k"));
   
-  let string = read-as(<byte-string>, make(<file-stream>, name: "makefile"),
-		       to-eof?: #t);
+  let string = read-to-end(make(<file-stream>, locator: "Makefile",
+				element-type: <byte-character>));
   insert(t1, t1-insert, string);
 
   map-window(*root-window*);
@@ -215,8 +216,8 @@ define method main(program-name :: <string>, #rest args)
 	break();
       elseif (input = "ps")
 	let psfile
-	  = make(<file-stream>, direction: #"output", name: "test.ps");
-	write(postscript(c1), psfile);
+	  = make(<file-stream>, direction: #"output", locator: "test.ps");
+	write(psfile, postscript(c1));
 	close(psfile);
       elseif (input = "test")
 	format(*tty*, "|%s|\n", get-elements(b4, 2, end: 5));

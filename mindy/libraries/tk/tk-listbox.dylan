@@ -69,13 +69,13 @@ define method get-elements
   let real-end
     = if (last) tk-as(<integer>, last) else real-index + 1 end if;
 
-  let buffer :: <stream> = make(<byte-string-output-stream>);
+  let buffer :: <stream> = make(<byte-string-stream>);
   for (i from real-index below real-end,
        newline = #f then #t)
-    if (newline) write("\n", buffer) end if;
-    write(tk-unquote(call-tk-function(widget, " get ", i)), buffer);
+    if (newline) write(buffer, "\n") end if;
+    write(buffer, tk-unquote(call-tk-function(widget, " get ", i)));
   end for;
-  string-output-stream-string(buffer);
+  stream-contents(buffer);
 end method get-elements;
   
 define method get-all (listbox :: <listbox>) => (result :: <string>);

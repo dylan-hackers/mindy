@@ -91,12 +91,12 @@ end method make-option;
 // See description of the generic above.
 //
 define method join-tk-args (#rest objects) => (result :: <string>);
-  let stream = make(<byte-string-output-stream>);
+  let stream = make(<byte-string-stream>, direction: #"output");
   for (elem in objects,
-       dummy = #f then write(' ', stream))
-    write(tk-as(<string>, elem), stream);
+       dummy = #f then write-element(stream, ' '))
+    write(stream, tk-as(<string>, elem));
   end for;
-  string-output-stream-string(stream);
+  stream-contents(stream);
 end method join-tk-args;
 
 //==========================================================================
@@ -182,7 +182,7 @@ define method tk-input-loop () => ();
     for (line = read-tk-line() then read-tk-line(),
 	 while: line)
       if (empty?(line))
-	write-line(line, *standard-output*);
+	write-line(*standard-output*, line);
 	force-output(*standard-output*);
       elseif (first(line) == '!')
 	// !E! is a magic line that the process sends to confim we are still
@@ -192,7 +192,7 @@ define method tk-input-loop () => ();
 	  do-callback(line);
 	end if;
       else
-	write-line(line, *standard-output*);
+	write-line(*standard-output*, line);
 	force-output(*standard-output*);
       end if;
     end for;

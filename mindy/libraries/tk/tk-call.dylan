@@ -198,7 +198,7 @@ end method exec-thread-loop;
 // wait for value returns and therefore must run in a separate thread.
 //
 define method do-callback (line :: <string>) => ();
-//write-line(line, *standard-output*);
+//write-line(*standard, line-output*);
 //force-output(*standard-output*);
   // R for return value, V for variable setter, or N for normal call
   let callback-type = line[1];

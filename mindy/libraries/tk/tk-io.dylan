@@ -215,63 +215,70 @@ define constant newline = as(<integer>, '\n');
 // count. 
 //
 define method read-tk-line () => (result :: false-or(<string>));
-  let (buffer, buff-first, buff-last) = get-input-buffer(tk-out);
+  let buffer :: false-or(<buffer>) = get-input-buffer(tk-out);
   
-  // This routine is, obviously, somewhat hairy.  However, it lies in the
-  // critical path for data communication, so some clarity must be traded for
-  // efficiency.  
-  local method read-stuff (buff-pos, brackets, pieces, quoted?)
-	  if (buff-pos >= buff-last)
-	    // We've run out of data -- save what we got thus far and then
-	    // refill the buffer before recursing.  If we've hit EOF, simply
-	    // return #f.
-	    let new-pieces
-	      = if (buff-first == buff-last)
-		  pieces;
-		else
-		  pair(buffer-subsequence(buffer, <byte-string>,
-					  buff-first, buff-last), pieces);
-		end if;
-	    buff-first := 0;
-	    buff-last := fill-input-buffer(tk-out, 0);
-	    if (buff-last == 0)
-	      #f;
-	    else
-	      read-stuff(0, brackets, new-pieces, quoted?);
-	    end if;
-	  else
-	    // Input is available -- see if it is a special character.  We
-	    // keep a count of nested brackets and only exit on a newline
-	    // which is outside of the brackets.  Any of special characters
-	    // may be quoted by a backslas, in which case it is treated
-	    // normally. 
-	    let ch = buffer[buff-pos];
-	    case
-	      ch == lbrace & ~quoted? =>
-		read-stuff(buff-pos + 1, brackets + 1, pieces, #f);
-	      ch == rbrace & ~quoted? =>
-		read-stuff(buff-pos + 1, brackets - 1, pieces, #f);
-	      ch == slash & ~quoted? =>
-		read-stuff(buff-pos + 1, brackets, pieces, #t);
-	      ch == newline & ~quoted? & brackets <= 0 =>
-		// We've finally reached the end.  We therefore grab the
-		// useful text in the buffer and concatenate it with saved
-		// data from before the last "fill-buffer" (if any).
-		let contents = buffer-subsequence(buffer, <byte-string>,
-						  buff-first, buff-pos);
-		release-input-buffer(tk-out, buff-pos + 1, buff-last);
-		if (empty?(pieces))
-		  contents;
-		else
-		  apply(concatenate, reverse!(pair(contents, pieces)));
-		end if;
-	      otherwise =>
-		read-stuff(buff-pos + 1, brackets, pieces, #f);
-	    end case;
-	  end if;
-	end method read-stuff;
 
-  read-stuff(buff-first, 0, #(), #f);
+  if (~buffer)
+    #f;
+  else
+    // This routine is, obviously, somewhat hairy.  However, it lies
+    // in the critical path for data communication, so some clarity
+    // must be traded for efficiency.
+    local method read-stuff (buff-pos, brackets, pieces, quoted?)
+	    if (buff-pos >= buffer.buffer-end)
+	      // We've run out of data -- save what we got thus far and then
+	      // refill the buffer before recursing.  If we've hit EOF, simply
+	      // return #f.
+	      let new-pieces
+		= if (buffer.buffer-next == buffer.buffer-end)
+		    pieces;
+		  else
+		    pair(buffer-subsequence(buffer, <byte-string>,
+					    buffer.buffer-next,
+					    buffer.buffer-end), pieces);
+		  end if;
+	      buffer.buffer-next := buff-pos;
+	      buffer := next-input-buffer(tk-out);
+	      if (buffer.buffer-next == buffer.buffer-end)
+		#f;
+	      else
+		read-stuff(buffer.buffer-next, brackets, new-pieces, quoted?);
+	      end if;
+	    else
+	      // Input is available -- see if it is a special character.  We
+	      // keep a count of nested brackets and only exit on a newline
+	      // which is outside of the brackets.  Any of special characters
+	      // may be quoted by a backslas, in which case it is treated
+	      // normally. 
+	      let ch = buffer[buff-pos];
+	      case
+		ch == lbrace & ~quoted? =>
+		  read-stuff(buff-pos + 1, brackets + 1, pieces, #f);
+		ch == rbrace & ~quoted? =>
+		  read-stuff(buff-pos + 1, brackets - 1, pieces, #f);
+		ch == slash & ~quoted? =>
+		  read-stuff(buff-pos + 1, brackets, pieces, #t);
+		ch == newline & ~quoted? & brackets <= 0 =>
+		  // We've finally reached the end.  We therefore grab the
+		  // useful text in the buffer and concatenate it with saved
+		  // data from before the last "fill-buffer" (if any).
+		  let contents = buffer-subsequence(buffer, <byte-string>,
+						    buffer.buffer-next,
+						    buff-pos);
+		  buffer.buffer-next := buff-pos + 1;
+		  release-input-buffer(tk-out);
+		  if (empty?(pieces))
+		    contents;
+		  else
+		    apply(concatenate, reverse!(pair(contents, pieces)));
+		  end if;
+		otherwise =>
+		  read-stuff(buff-pos + 1, brackets, pieces, #f);
+	      end case;
+	    end if;
+	  end method read-stuff;
+    read-stuff(buffer.buffer-next, 0, #(), #f);
+  end if;
 end method read-tk-line;
 
 // Interprets each string argument as part of a line of tk input, and sends
@@ -281,40 +288,35 @@ end method read-tk-line;
 //
 define method put-tk-line (#rest strings) => ();
   // This is on the critical path, so do use the fastest known method.
-  let (buff, next, buff-size) = get-output-buffer(tk-in);
+  let buff = get-output-buffer(tk-in);
 
   for (object in strings)
     let str = tk-as(<string>, object);
-//write(str, *standard-output*);
+//write(*standard-output*, str);
     let sz = str.size;
-    if (sz > buff-size)
+    if (sz > buff.buffer-end)
       // Hopefully not very common -- let existing code do the work.
-      release-output-buffer(tk-in, next);
-      write(str, tk-in);
-      let (b, n, s) = get-output-buffer(tk-in);
-      buff := b;
-      next := n;
-      buff-size := s;
+      release-output-buffer(tk-in);
+      write(tk-in, str);
+      buff := get-output-buffer(tk-in);
     else
-      if (buff-size - next < sz)
-	empty-output-buffer(tk-in, next);
-	next := 0;
+      if (buff.buffer-end - buff.buffer-next < sz)
+	buff := next-output-buffer(tk-in, bytes: sz);
       end if;
-      copy-into-buffer!(str, buff, next);
-      next := next + sz;
+      copy-into-buffer!(buff, buff.buffer-next, str);
+      buff.buffer-next := buff.buffer-next + sz;
     end if;
   end for;
-  if (next == buff-size)
-    empty-output-buffer(tk-in, next);
-    next := 0;
+  if (buff.buffer-next == buff.buffer-end)
+    buff := next-output-buffer(tk-in, bytes: 1);
   end if;
-  buff[next] := newline;
-//write('\n', *standard-output*);
+  buff[buff.buffer-next] := newline;
+  buff.buffer-next := buff.buffer-next + 1;
+//write(*standard-output*, '\n');
 //force-output(*standard-output*);
 
-  empty-output-buffer(tk-in, next + 1);
-  force-secondary-buffers(tk-in);
+  force-output-buffers(tk-in);
   synchronize(tk-in);
-  release-output-buffer(tk-in, 0);
+  release-output-buffer(tk-in);
 end method put-tk-line;
 
