@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.9 1995/11/10 12:41:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.10 1995/11/16 00:48:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -378,13 +378,13 @@ define method find-intermediate-words (defn :: <macro-definition>)
   find-body-variable-rule-sets(aux-rule-sets);
   let results = #();
   for (rule in defn.macro-main-rule-set)
-    results := find-intermediate-words-in(rule.rule-pattern, aux-rule-sets,
+    results := find-intermediate-words-in(rule.rule-pattern, #f, aux-rule-sets,
 					  results);
   end;
   for (aux-rule-set in aux-rule-sets)
     for (rule in aux-rule-set.rule-set-rules)
-      results := find-intermediate-words-in(rule.rule-pattern, aux-rule-sets,
-					    results);
+      results := find-intermediate-words-in(rule.rule-pattern, aux-rule-set,
+					    aux-rule-sets, results);
     end;
   end;
   defn.macro-intermediate-words := as(<simple-object-vector>, results);
@@ -405,7 +405,7 @@ define method find-body-variable-rule-sets
 	  let list-tail = pattern-list.pattern-list-pieces.last;
 	  if (instance?(list-tail, <pattern-sequence>)
 		& body-variable?(list-tail.pattern-sequence-pieces.last,
-				 aux-rule-sets))
+				 rule-set, aux-rule-sets))
 	    rule-set.rule-set-body-variable? := #t;
 	    again? := #t;
 	  end;
@@ -415,27 +415,33 @@ define method find-body-variable-rule-sets
   end;
 end;
 
-define method body-variable? (thing, aux-rule-sets :: <simple-object-vector>)
+define method body-variable?
+    (thing, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>)
     => res :: <boolean>;
   #f;
 end;
 
-define method body-variable? (patvar :: <pattern-variable>,
-			      aux-rule-sets :: <simple-object-vector>)
+define method body-variable?
+    (patvar :: <pattern-variable>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>)
     => res :: <boolean>;
   let constraint = patvar.patvar-constraint;
   if (constraint == #"body" | constraint == #"case-body")
     #t;
-  elseif (patvar.patvar-name)
-    let aux-rule-set = find-aux-rule-set(patvar.patvar-name, aux-rule-sets);
-    aux-rule-set & aux-rule-set.rule-set-body-variable?;
   else
-    #f;
+    let aux-rule-set
+      = if (patvar.patvar-name)
+	  find-aux-rule-set(patvar.patvar-name, aux-rule-sets);
+	else
+	  cur-set;
+	end;
+    aux-rule-set & aux-rule-set.rule-set-body-variable?;
   end;
 end;
 
-define method find-aux-rule-set (name :: <symbol>,
-				 aux-rule-sets :: <simple-object-vector>)
+define method find-aux-rule-set
+    (name :: <symbol>, aux-rule-sets :: <simple-object-vector>)
     => res :: union(<auxiliary-rule-set>, <false>);
   block (return)
     for (aux-rule-set in aux-rule-sets)
@@ -447,54 +453,52 @@ define method find-aux-rule-set (name :: <symbol>,
   end;
 end;
 
-define method find-intermediate-words-in (pattern :: <pattern>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   for (piece in pattern.pattern-pieces)
-    results := find-intermediate-words-in(piece, aux-rule-sets, results);
+    results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
+					  results);
   end;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <pattern-list>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <pattern-list>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   for (piece in pattern.pattern-list-pieces)
-    results := find-intermediate-words-in(piece, aux-rule-sets, results);
+    results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
+					  results);
   end;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <pattern-sequence>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <pattern-sequence>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   for (piece in pattern.pattern-sequence-pieces,
        prev = #f then piece)
-    if (body-variable?(prev, aux-rule-sets))
-      results := find-intermediate-words-in(piece, aux-rule-sets, results);
+    if (body-variable?(prev, cur-set, aux-rule-sets))
+      results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
+					    results);
     end;
   end;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <simple-pattern>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <simple-pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <identifier-pattern>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <identifier-pattern>,cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   let sym = pattern.pattern-identifier.token-symbol;
   if (member?(sym, results))
@@ -504,78 +508,72 @@ define method find-intermediate-words-in (pattern :: <identifier-pattern>,
   end;
 end;
 
-define method find-intermediate-words-in (pattern :: <pattern-variable>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <pattern-variable>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   if (pattern.patvar-name)
     let aux-rule-set = find-aux-rule-set(pattern.patvar-name, aux-rule-sets);
     if (aux-rule-set & ~aux-rule-set.rule-set-processed-intermediate-words?)
       aux-rule-set.rule-set-processed-intermediate-words? := #t;
       for (rule in aux-rule-set.rule-set-rules)
-	results := find-intermediate-words-at-start(rule.rule-pattern,
-						    aux-rule-sets,
-						    results);
+	results := find-intermediate-words-at-start
+	             (rule.rule-pattern, cur-set, aux-rule-sets, results);
       end;
     end;
   end;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <property-list-pattern>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <property-list-pattern>,
+     cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   results;
 end;
 
-define method find-intermediate-words-in (pattern :: <details-pattern>,
-					  aux-rule-sets
-					    :: <simple-object-vector>,
-					  results :: <list>)
+define method find-intermediate-words-in
+    (pattern :: <details-pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  find-intermediate-words-in(pattern.pattern-sub-pattern, aux-rule-sets,
-			     results);
+  find-intermediate-words-in(pattern.pattern-sub-pattern, cur-set,
+			     aux-rule-sets, results);
 end;
 
-define method find-intermediate-words-at-start (pattern :: <pattern>,
-						aux-rule-sets
-						  :: <simple-object-vector>,
-						results :: <list>)
+define method find-intermediate-words-at-start
+    (pattern :: <pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   if (empty?(pattern.pattern-pieces))
     results;
   else
     find-intermediate-words-at-start(pattern.pattern-pieces.first,
-				     aux-rule-sets, results);
+				     cur-set, aux-rule-sets, results);
   end;
 end;
 
-define method find-intermediate-words-at-start (pattern :: <pattern-list>,
-						aux-rule-sets
-						  :: <simple-object-vector>,
-						results :: <list>)
+define method find-intermediate-words-at-start
+    (pattern :: <pattern-list>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   if (empty?(pattern.pattern-list-pieces))
     results;
   else
     find-intermediate-words-at-start(pattern.pattern-list-pieces.first,
-				     aux-rule-sets, results);
+				     cur-set, aux-rule-sets, results);
   end;
 end;
 
-define method find-intermediate-words-at-start (pattern :: <pattern-sequence>,
-						aux-rule-sets
-						  :: <simple-object-vector>,
-						results :: <list>)
+define method find-intermediate-words-at-start
+    (pattern :: <pattern-sequence>, cur-set :: false-or(<auxiliary-rule-set>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   if (empty?(pattern.pattern-sequence-pieces))
     results;
   else
     find-intermediate-words-in(pattern.pattern-sequence-pieces.first,
-			       aux-rule-sets, results);
+			       cur-set, aux-rule-sets, results);
   end;
 end;
 
