@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.55 1996/02/06 15:47:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.56 1996/02/07 01:32:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -575,34 +575,36 @@ define method ct-add-method
     => ();
   if (gf.generic-defn-sealed?
 	& gf.defn-library ~== meth.defn-library)
-    compiler-error
+    compiler-warning
       ("In %s: library %s can't define methods on sealed generic %s.",
        tlf | "something", meth.defn-library.library-name, gf.defn-name);
-  end if;
-  let old-methods = gf.generic-defn-methods;
-  let meth-specs = meth.function-defn-signature.specializers;
-  block (return)
-    for (old-meth in old-methods)
-      if (meth-specs = old-meth.function-defn-signature.specializers)
-	compiler-warning
-	  ("%s is multiply defined -- ignoring extra definition.",
-	   meth.defn-name);
-	return();
-      end;
-    end;
-    gf.generic-defn-methods := pair(meth, old-methods);
-  end;
-  if (check-congruence(meth, gf))
-    meth.method-defn-congruent? := #t;
-    meth.function-defn-transformers
-      := choose(method (transformer)
-		  let specs = transformer.transformer-specializers;
-		  specs == #f | specs = meth-specs;
-		end,
-		gf.function-defn-transformers);
-  else
     meth.function-defn-hairy? := #t;
-  end;
+  else
+    let old-methods = gf.generic-defn-methods;
+    let meth-specs = meth.function-defn-signature.specializers;
+    block (return)
+      for (old-meth in old-methods)
+	if (meth-specs = old-meth.function-defn-signature.specializers)
+	  compiler-warning
+	    ("%s is multiply defined -- ignoring extra definition.",
+	     meth.defn-name);
+	  return();
+	end;
+      end;
+      gf.generic-defn-methods := pair(meth, old-methods);
+    end;
+    if (check-congruence(meth, gf))
+      meth.method-defn-congruent? := #t;
+      meth.function-defn-transformers
+	:= choose(method (transformer)
+		    let specs = transformer.transformer-specializers;
+		    specs == #f | specs = meth-specs;
+		  end,
+		  gf.function-defn-transformers);
+    else
+      meth.function-defn-hairy? := #t;
+    end;
+  end if;
 end method ct-add-method;
 
 
