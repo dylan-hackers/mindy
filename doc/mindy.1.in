@@ -1,0 +1,120 @@
+.\" @(#)mindy.1		-*- nroff -*-
+.TH MINDY 1 @DATE@ "Gwydion Dylan" "Gwydion Dylan"
+.UC
+.SH NAME
+mindycomp, mindy \- A Dylan bytecode interpreter
+.SH SYNOPSIS
+.B mindycomp
+.RI "["
+.BI \-l library
+.RI "] ["
+.BI \-D feature
+.RI "|"
+.BI \-U feature
+.RI  "].\|.\|. ["
+.BI "-o " dbcfile
+.RI "] " srcfile
+.br
+.B mindy
+.RI "["
+.BI \-l library
+.RI "] ["
+.BI "-f " dbcfile
+.RI  "].\|.\|. ["
+.BI "-x " dbcfile
+.RI "] " arguments ".\|.\|."
+.SH WARNING
+This man page is intended to supplement the main Gwydion Dylan
+documentation at
+.IR http://www.gwydiondylan.org/ .
+It provides an incomplete reference of the available options. For a full
+reference or a tutorial, please see the web site.
+.SH DESCRIPTION
+.BR mindycomp " and " mindy
+are a bytecode compiler and interpreter, respectively. Dylan sources are
+compiled with mindycomp and then run using mindy.
+.PP
+.B mindy
+supports much of the Dylan language. (The most notable exclusion is the
+macro system.) It provides debugging facilities and a listener. Mindy can
+interface with C using
+.IR melange (1)\c
+, and can be used to develop programs which will later be compiled under
+.IR d2c (1).
+.SH PROGRAM STRUCTURE
+A Dylan program is made up out of one or more libraries. Each library
+contains one or more modules, each of which can be defined in one or more
+source files.
+.B mindycomp
+compiles one file into bytecodes at a time (and doesn't particularly
+understand what's it's seeing, so many errors will go unnoticed).
+.PP
+All the bytecode files from a library are then passed to
+.BR mindy ,
+which automatically supplements them with any necessary system libraries and
+calls the generic function
+.BR main .
+You can use the
+.IR make-dylan-app (1)
+script to create a sample Dylan program. (It will also create a sample
+.B lid
+file for use with
+.IR d2c (1),
+but this can be ignored.)
+.SH OPTIONS
+The following options are shared by both mindycomp and mindy:
+.TP
+.BR "\-\-help"
+Print out a message describing the available options.
+.TP
+.BR "\-\-version"
+Print out the version and copyright.
+.TP
+.BI \-l library
+Assume source or bytecode file belongs to
+.IR library .
+(Can this also be specified with the "library:" keyword in a source file?)
+.PP
+The following options are specific to mindycomp:
+.TP
+.BI \-D feature
+Define a conditional-compilation feature which can be tested with #if.
+.TP
+.BI \-U feature
+Undefine a conditional-compilation feature which can be tested with #if.
+.TP
+.BI "\-o " dbcfile
+Output bytecodes to
+.IR dbcfile .
+Defaults to the input filename with the extension changed to ".dbc".
+.PP
+The following options are specific to mindy:
+.TP
+.BI "\-f " dbcfile
+Load bytecodes from
+.I dbcfile
+into Mindy's heap before running.
+.TP
+.BI "\-x " dbcfile
+The same as above, but do not look for any other options after this
+point. This option allows mindy to pass
+.B \-f
+options to the program being run.
+.TP
+.I arguments
+All remaining arguments are passed to the program being run.
+.SH BUGS
+.B mindy
+does not support several major features of the Dylan language, most notably
+macros. It also cannot create C-callable function pointers.
+.PP
+Other bugs can be found on the website.
+.SH SEE ALSO
+dylan(7), gwydion(7), melange(1), d2c(1), make-dylan-app(1).
+.PP
+Much more extensive documentation in various formats is available through
+the Gwydion Dylan web site at
+.IR http://www.gwydiondylan.org/ .
+.SH AUTHORS
+The Gwydion Group at CMU, many contributors around the world, and the
+current Gwydion Dylan maintainers.
