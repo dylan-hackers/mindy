@@ -1,5 +1,5 @@
 module: Dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.1 1995/12/09 20:16:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.2 1996/01/08 22:15:59 rgs Exp $
 
 //======================================================================
 //
@@ -170,14 +170,14 @@ define method compute-range-size
    let below-size = r-below & compute-below-size (r-from, r-by, r-below);
    let size-size = r-size;
 
-   let valid-sizes =
-      choose (identity, list (to-size, above-size, below-size, size-size));
-
-   if (empty? (valid-sizes))
-      #f
-   else
-      max (0, apply (min, valid-sizes))
-   end if;
+  if (to-size | above-size | below-size | size-size)
+    let min = $maximum-fixed-integer;
+    let min = if (to-size & (to-size < min)) to-size else min end if;
+    let min = if (above-size & (above-size < min)) above-size else min end if;
+    let min = if (below-size & (below-size < min)) below-size else min end if;
+    let min = if (size-size & (size-size < min)) size-size else min end if;
+    if (min > 0) min else 0 end if;
+  end if;
 end method;
 
 
