@@ -1,7 +1,7 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/Attic/gen-makefile,v 1.1 1998/05/03 19:55:56 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/Attic/gen-makefile,v 1.2 1998/05/04 22:57:24 emk Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #

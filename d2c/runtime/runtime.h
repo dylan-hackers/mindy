@@ -38,3 +38,5 @@ extern void not_reached(void);
 #ifdef WIN32
    double rint(double x);
 #endif
+
+#include <errno.h>

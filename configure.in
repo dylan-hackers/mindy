@@ -1,4 +1,4 @@
-dnl     $Header: /scm/cvs/src/configure.in,v 1.1 1998/05/03 19:54:57 andreas Exp $
+dnl     $Header: /scm/cvs/src/configure.in,v 1.2 1998/05/04 22:57:19 emk Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -44,8 +44,8 @@ AC_PATH_PROG(PERL, perl, no)
 if test "$PERL" = no; then 
     AC_MSG_WARN([Cannot build without perl to run gen-makefile])
     PERL=perl
-elif test "$PERL" != "/usr/local/bin/perl"; then
-    AC_MSG_WARN([Perl is not in /usr/local/bin, so you need to fix the script \
+elif test "$PERL" != "/usr/bin/perl"; then
+    AC_MSG_WARN([Perl is not in /usr/bin, so you need to fix the script \
 sharp-bang interpreter comments by hand.])
 fi
 
