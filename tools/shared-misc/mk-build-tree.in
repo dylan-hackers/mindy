@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Author: William Lott
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/mk-build-tree.in,v 1.3 2000/10/31 13:35:15 dauclair Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/mk-build-tree.in,v 1.4 2000/10/31 22:49:47 bruce Exp $
 
 # Usage:
 #
@@ -74,11 +74,10 @@ sub mk_build_tree {
     closedir(SRCDIR);
     
     if ($has_makegen) {
-        $doug = "perl $buildroot/gen-makefile";
 	print "Generating makefile for $builddir\n";
 	($platforms_dot_descr 
-	          ? system($doug, $platforms_dot_descr, $builddir) 
-                    : system($doug, $builddir))
+	       ? system("perl", $buildroot.'/gen-makefile', $platforms_dot_descr, $builddir) 
+               : system("perl", $buildroot.'/gen-makefile', $builddir))
 	    && die("gen-makefile $builddir failed.\n");
     }
 
