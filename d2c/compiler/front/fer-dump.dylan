@@ -294,20 +294,22 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 4, stream);
 	     pprint-newline(#"fill", stream);
 	     write("=> ", stream);
-	     let res = lambda.result;
-	     if (res.size == 1)
-	       dump(res[0], stream);
+	     let res = lambda.depends-on;
+	     if (res & res.dependent-next == #f)
+	       dump(res.source-exp, stream);
 	     else
 	       pprint-logical-block
 		 (stream,
 		  prefix: "(",
 		  body: method (stream)
-			  for (var in res, first? = #t then #f)
+			  for (dep = res then dep.dependent-next,
+			       first? = #t then #f,
+			       while: dep)
 			    unless (first?)
 			      write(", ", stream);
 			      pprint-newline(#"fill", stream);
 			    end;
-			    dump(var, stream);
+			    dump(dep.source-exp, stream);
 			  end;
 			end,
 		  suffix: ")");
