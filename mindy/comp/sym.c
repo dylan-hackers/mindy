@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.12 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.13 1996/02/23 21:54:33 wlott Exp $
 *
 * This file implements symbols.
 *
@@ -38,6 +38,7 @@
 
 struct symbol *sym_DefineClass1 = NULL;
 struct symbol *sym_DefineClass2 = NULL;
+struct symbol *sym_DefineDomain = NULL;
 struct symbol *sym_DefineGeneric = NULL;
 struct symbol *sym_DefineMethod = NULL;
 struct symbol *sym_DefineSlot = NULL;
@@ -227,6 +228,7 @@ void init_sym_table(void)
 
     sym_DefineClass1 = symbol("%define-class-1");
     sym_DefineClass2 = symbol("%define-class-2");
+    sym_DefineDomain = symbol("%define-sealed-domain");
     sym_DefineGeneric = symbol("%define-generic");
     sym_DefineMethod = symbol("%define-method");
     sym_DefineSlot = symbol("%define-slot");

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.26 1996/02/13 23:21:20 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.27 1996/02/23 21:54:33 wlott Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -281,7 +281,7 @@ struct expr *make_varref(struct id *var)
     struct varref_expr *res = malloc(sizeof(struct varref_expr));
 
     res->kind = expr_VARREF;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->var = var;
     res->home = NULL;
     res->binding = NULL;
@@ -295,7 +295,7 @@ struct expr *make_varset(struct id *var, struct expr *expr)
     struct varset_expr *res = malloc(sizeof(struct varset_expr));
 
     res->kind = expr_VARSET;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->var = var;
     res->home = NULL;
     res->binding = NULL;
@@ -474,7 +474,7 @@ struct expr *make_literal_ref(struct literal *lit)
     struct literal_expr *res = malloc(sizeof(struct literal_expr));
 
     res->kind = expr_LITERAL;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->lit = lit;
 
     return (struct expr *)res;
@@ -488,7 +488,7 @@ struct expr *make_binop_series_expr(struct expr *operand,
 	    = malloc(sizeof(struct binop_series_expr));
 
 	res->kind = expr_BINOP_SERIES;
-	res->analized = FALSE;
+	res->analyzed = FALSE;
 	res->first_operand = operand;
 	res->first_binop = series->head;
 
@@ -592,7 +592,7 @@ struct expr *make_function_call(struct expr *expr, struct arglist *args)
     struct call_expr *res = malloc(sizeof(struct call_expr));
 
     res->kind = expr_CALL;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->func = expr;
     if (expr->kind == expr_VARREF)
 	res->info = lookup_function_info(((struct varref_expr *)expr)->var,
@@ -611,7 +611,7 @@ struct expr *make_method_ref(struct method *method)
     struct method_expr *res = malloc(sizeof(struct method_expr));
 
     res->kind = expr_METHOD;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->method = method;
 
     return (struct expr *)res;
@@ -622,7 +622,7 @@ struct expr *make_dot_operation(struct expr *arg, struct expr *func)
     struct dot_expr *res = malloc(sizeof(struct dot_expr));
 
     res->kind = expr_DOT;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->arg = arg;
     res->func = func;
 
@@ -1058,7 +1058,7 @@ struct expr *make_body_expr(struct body *body)
 	struct body_expr *res = malloc(sizeof(struct body_expr));
 
 	res->kind = expr_BODY;
-	res->analized = FALSE;
+	res->analyzed = FALSE;
 	res->body = body;
 
 	return (struct expr *)res;
@@ -1071,7 +1071,7 @@ struct expr *make_block(int line, struct id *exit, struct body *body,
     struct block_expr *res = malloc(sizeof(struct block_expr));
 
     res->kind = expr_BLOCK;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->line = line;
     res->exit_fun = exit;
     res->body = body;
@@ -1095,7 +1095,7 @@ struct expr *make_case(struct condition_body *body)
     struct case_expr *res = malloc(sizeof(struct case_expr));
 
     res->kind = expr_CASE;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->body = body;
 
     return (struct expr *)res;
@@ -1114,7 +1114,7 @@ struct expr *make_if(struct expr *cond, struct body *consequent,
     struct if_expr *res = malloc(sizeof(struct if_expr));
 
     res->kind = expr_IF;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->cond = cond;
     if (consequent)
 	res->consequent = consequent;
@@ -1149,7 +1149,7 @@ struct expr *make_for(struct for_header *header, struct body *body,
     struct for_expr *res = malloc(sizeof(struct for_expr));
 
     res->kind = expr_FOR;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->clauses = header->clauses;
     res->until = header->until;
     res->body = body;
@@ -1166,7 +1166,7 @@ struct expr *make_select(struct expr *expr, struct expr *by,
     struct select_expr *res = malloc(sizeof(struct select_expr));
 
     res->kind = expr_SELECT;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->expr = expr;
     res->by = by;
     res->body = body;
@@ -1179,7 +1179,7 @@ struct expr *make_loop(struct body *body)
     struct loop_expr *res = malloc(sizeof(struct loop_expr));
 
     res->kind = expr_LOOP;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->body = body;
     res->position = 0;
 
@@ -1191,7 +1191,7 @@ struct expr *make_repeat(void)
     struct repeat_expr *res = malloc(sizeof(struct repeat_expr));
 
     res->kind = expr_REPEAT;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
     res->loop = NULL;
 
     return (struct expr *)res;
@@ -1623,6 +1623,37 @@ struct class_guts *add_inherited_spec(struct class_guts *guts,
 }
 
 struct constituent
+    *make_sealed_domain(struct id *name, struct arglist *types)
+{
+    struct defdomain_constituent *res
+	= malloc(sizeof(struct defdomain_constituent));
+
+    res->kind = constituent_DEFDOMAIN;
+    res->next = NULL;
+    res->name = name;
+    res->types = types->head;
+    res->tlf = NULL;
+
+    free(types);
+
+    return (struct constituent *)res;
+}
+
+struct constituent
+    *set_sealed_domain_flags(flags_t flags, struct constituent *constituent)
+{
+    if (flags != flag_SEALED) {
+	struct defdomain_constituent *defdomain
+	    = (struct defdomain_constituent *)constituent;
+	warn(defdomain->name->line,
+	     "Bogus adjectives for define sealed domain of %s",
+	     defdomain->name->symbol->name);
+    }
+
+    return constituent;
+}
+
+struct constituent
     *make_define_generic(struct id *name, struct param_list *params,
 			 struct gf_suffix *suffix)
 {
@@ -1733,7 +1764,7 @@ struct expr *make_error_expression(void)
     struct expr *res = malloc(sizeof(struct expr));
 
     res->kind = expr_ERROR;
-    res->analized = FALSE;
+    res->analyzed = FALSE;
 
     return res;
 }

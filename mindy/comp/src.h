@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.20 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.21 1996/02/23 21:54:33 wlott Exp $
 *
 \**********************************************************************/
 
@@ -45,8 +45,8 @@ struct body {
 
 enum constituent_kind {
     constituent_DEFCONST, constituent_DEFVAR, constituent_DEFMETHOD,
-    constituent_DEFGENERIC, constituent_DEFCLASS, constituent_EXPR,
-    constituent_LOCAL, constituent_HANDLER, constituent_LET,
+    constituent_DEFDOMAIN, constituent_DEFGENERIC, constituent_DEFCLASS,
+    constituent_EXPR, constituent_LOCAL, constituent_HANDLER, constituent_LET,
     constituent_TOPLEVELFORM, constituent_ERROR, constituent_DEFMODULE,
     constituent_DEFLIBRARY, constituent_Kinds
 };
@@ -77,6 +77,14 @@ struct defmethod_constituent {
     struct constituent *next;
     flags_t flags;
     struct method *method;
+    struct method *tlf;
+};
+
+struct defdomain_constituent {
+    enum constituent_kind kind;
+    struct constituent *next;
+    struct id *name;
+    struct argument *types;
     struct method *tlf;
 };
 
@@ -172,12 +180,12 @@ enum expr_kind {
 
 struct expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
 };
 
 struct varref_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct id *var;
     struct method *home;
     struct binding *binding;
@@ -186,13 +194,13 @@ struct varref_expr {
 
 struct literal_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct literal *lit;
 };
 
 struct call_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct expr *func;
     struct function_info *info;
     struct argument *args;
@@ -200,26 +208,26 @@ struct call_expr {
 
 struct method_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct method *method;
 };
 
 struct dot_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct expr *arg;
     struct expr *func;
 };
 
 struct body_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct body *body;
 };
 
 struct block_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     int line;
     struct id *exit_fun;
     struct body *body;
@@ -230,13 +238,13 @@ struct block_expr {
 
 struct case_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct condition_body *body;
 };
 
 struct if_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct expr *cond;
     struct body *consequent;
     int else_line;
@@ -245,7 +253,7 @@ struct if_expr {
 
 struct for_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct for_clause *clauses;
     struct expr *until;
     struct body *body;
@@ -254,7 +262,7 @@ struct for_expr {
 
 struct select_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct expr *expr;
     struct expr *by;
     struct condition_body *body;
@@ -262,7 +270,7 @@ struct select_expr {
 
 struct varset_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct id *var;
     struct method *home;
     struct binding *binding;
@@ -273,21 +281,21 @@ struct varset_expr {
 
 struct binop_series_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct expr *first_operand;
     struct binop *first_binop;
 };
 
 struct loop_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct body *body;
     int position;
 };
 
 struct repeat_expr {
     enum expr_kind kind;
-    boolean analized;
+    boolean analyzed;
     struct loop_expr *loop;
 };
 
@@ -736,6 +744,10 @@ extern struct inherited_spec
     *make_inherited_spec(struct id *name, struct plist *plist);
 extern struct class_guts
     *add_inherited_spec(struct class_guts *guts, struct inherited_spec *spec);
+extern struct constituent
+    *make_sealed_domain(struct id *name, struct arglist *types);
+extern struct constituent
+    *set_sealed_domain_flags(flags_t flags, struct constituent *sealed_domain);
 extern struct constituent
     *make_define_generic(struct id *name, struct param_list *params,
 			 struct gf_suffix *suffix);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.19 1995/01/13 17:59:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.20 1996/02/23 21:54:33 wlott Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -708,7 +708,7 @@ static void (*ExpressionCompilers[])() = {
 static void compile_expr(struct expr *expr, struct component *component,
 			 int want)
 {
-    if (expr->analized)
+    if (expr->analyzed)
 	(*ExpressionCompilers[(int)expr->kind])(expr, component, want);
     else
 	lose("Compiling an expression that was never analized?");
@@ -743,6 +743,13 @@ static void compile_defgeneric_constituent(struct defgeneric_constituent *c,
 					   int want)
 {
     lose("define generic not at top-level?");
+}
+
+static void compile_defdomain_constituent(struct defdomain_constituent *c,
+					  struct component *component,
+					  int want)
+{
+    lose("define sealed domain not at top-level?");
 }
 
 static void compile_defclass_constituent(struct defclass_constituent *c,
@@ -878,11 +885,11 @@ static void compile_deflibrary_constituent(struct defnamespace_constituent *c,
 static void (*ConstituentCompilers[])() = {
     compile_defconst_constituent, compile_defvar_constituent,
     compile_defmethod_constituent, compile_defgeneric_constituent,
-    compile_defclass_constituent, compile_expr_constituent,
-    compile_local_constituent, compile_handler_constituent,
-    compile_let_constituent, compile_tlf_constituent,
-    compile_error_constituent, compile_defmodule_constituent,
-    compile_deflibrary_constituent
+    compile_defgeneric_constituent, compile_defclass_constituent,
+    compile_expr_constituent, compile_local_constituent,
+    compile_handler_constituent, compile_let_constituent,
+    compile_tlf_constituent, compile_error_constituent,
+    compile_defmodule_constituent, compile_deflibrary_constituent
 };
 
 static void compile_constituent(struct constituent *c,
@@ -989,6 +996,11 @@ static void compile_tl_defmethod_constituent(struct defmethod_constituent *c)
     dump_defmethod(c->method->name, compile_method(c->tlf));
 }
 
+static void compile_tl_defdomain_constituent(struct defdomain_constituent *c)
+{
+    dump_top_level_form(compile_method(c->tlf));
+}
+
 static void compile_tl_defgeneric_constituent(struct defgeneric_constituent *c)
 {
     dump_defgeneric(c->name, compile_method(c->tlf));
@@ -1052,12 +1064,12 @@ static void
 
 static void (*TLConstituentCompilers[])() = {
     compile_tl_defconst_constituent, compile_tl_defvar_constituent,
-    compile_tl_defmethod_constituent, compile_tl_defgeneric_constituent,
-    compile_tl_defclass_constituent, compile_tl_expr_constituent,
-    compile_tl_local_constituent, compile_tl_handler_constituent,
-    compile_tl_let_constituent, compile_tl_tlf_constituent,
-    compile_tl_error_constituent, compile_tl_defmodule_constituent,
-    compile_tl_deflibrary_constituent
+    compile_tl_defmethod_constituent, compile_tl_defdomain_constituent,
+    compile_tl_defgeneric_constituent, compile_tl_defclass_constituent,
+    compile_tl_expr_constituent, compile_tl_local_constituent,
+    compile_tl_handler_constituent, compile_tl_let_constituent,
+    compile_tl_tlf_constituent, compile_tl_error_constituent,
+    compile_tl_defmodule_constituent, compile_tl_deflibrary_constituent
 };
 
 static void compile_tl_constituent(struct constituent *c)

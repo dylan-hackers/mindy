@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.15 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.16 1996/02/23 21:54:33 wlott Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
@@ -609,6 +609,30 @@ static void
 }
 
 static void
+    print_defdomain_constituent(struct defdomain_constituent *c, int depth)
+{
+    int i;
+    struct argument *arg;
+
+    printf("%sdefine sealed domain\n", indent(depth));
+    printf("%sname: %s\n", indent(depth+1), c->name->symbol->name);
+
+    if (c->types) {
+	for (i = 0, arg = c->types; arg != NULL; i++, arg = arg->next) {
+	    printf("%stype %d\n", indent(depth+1), i);
+	    print_expr(arg->expr, depth+2);
+	}
+    }
+
+    if (c->tlf) {
+	printf("%stl method\n", indent(depth));
+	print_method(c->tlf, depth+1);
+    }
+
+    printf("%send define generic\n", indent(depth));
+}
+
+static void
     print_defgeneric_constituent(struct defgeneric_constituent *c, int depth)
 {
     printf("%sdefine generic\n", indent(depth));
@@ -739,9 +763,9 @@ static void print_deflibrary_constituent(struct constituent *c, int depth)
 
 static void (*ConstituentPrinters[(int)constituent_Kinds])() = {
     print_defconst_constituent, print_defvar_constituent,
-    print_defmethod_constituent, print_defgeneric_constituent,
-    print_defclass_constituent, print_expr_constituent,
-    print_local_constituent, print_handler_constituent,
+    print_defmethod_constituent, print_defdomain_constituent,
+    print_defgeneric_constituent, print_defclass_constituent,
+    print_expr_constituent, print_local_constituent, print_handler_constituent,
     print_let_constituent, print_tlf_constituent, print_error_constituent,
     print_defmodule_constituent, print_deflibrary_constituent
 };

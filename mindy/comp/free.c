@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.5 1994/10/05 20:54:56 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.6 1996/02/23 21:54:33 wlott Exp $
 *
 * This file frees parts of the parse tree.
 *
@@ -369,6 +369,26 @@ static void free_defmethod_constituent(struct defmethod_constituent *c)
     free(c);
 }
 
+static void free_defdomain_constituent(struct defdomain_constituent *c)
+{
+    free_id(c->name);
+
+    if (c->types) {
+	struct argument *arg, *next;
+
+	for (arg = c->types; arg != NULL; arg = next) {
+	    next = arg->next;
+	    free_expr(arg->expr);
+	    free(arg);
+	}
+    }
+
+    if (c->tlf)
+	free_method(c->tlf);
+
+    free(c);
+}
+
 static void free_defgeneric_constituent(struct defgeneric_constituent *c)
 {
     free_id(c->name);
@@ -380,6 +400,7 @@ static void free_defgeneric_constituent(struct defgeneric_constituent *c)
 	free_plist(c->plist);
     if (c->tlf)
 	free_method(c->tlf);
+    free(c);
 }
 
 static void free_defclass_constituent(struct defclass_constituent *c)
@@ -526,9 +547,9 @@ static void free_defnamespace_constituent(struct defnamespace_constituent *c)
 
 static void (*ConstituentFreers[(int)constituent_Kinds])() = {
     free_defconst_constituent, free_defvar_constituent,
-    free_defmethod_constituent, free_defgeneric_constituent,
-    free_defclass_constituent, free_expr_constituent,
-    free_local_constituent, free_handler_constituent,
+    free_defmethod_constituent, free_defdomain_constituent,
+    free_defgeneric_constituent, free_defclass_constituent,
+    free_expr_constituent, free_local_constituent, free_handler_constituent,
     free_let_constituent, free_tlf_constituent, free_error_constituent,
     free_defnamespace_constituent, free_defnamespace_constituent
 };

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.24 1996/02/17 17:32:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.25 1996/02/23 21:54:33 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -154,6 +154,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> CONCRETE
 %token <token> CONSTANT
 %token <token> DEFINE
+%token <token> DOMAIN
 %token <token> EACH_SUBCLASS
 %token <token> ELSE
 %token <token> ELSEIF
@@ -179,7 +180,6 @@ static void pop_yacc_recoveries(int count);
 %token <token> OTHERWISE
 %token <token> PRIMARY
 %token <token> REQUIRED
-%token <token> SEAL
 %token <token> SEALED
 %token <token> SELECT
 %token <token> SLOT
@@ -222,7 +222,7 @@ static void pop_yacc_recoveries(int count);
 %type <body> body body_opt constituents cleanup_part
 %type <body> final_part final_part_opt
 %type <constituent> constituent defining_form local_declaration
-%type <constituent> class_definition generic_function_definition
+%type <constituent> class_definition sealed_domain generic_function_definition
 %type <bindings> bindings
 %type <token> variable_name variable_name_opt
 %type <param_list> variables gf_parameters
@@ -333,6 +333,8 @@ defining_form:
 	{ free($1); free($3); $$ = set_class_flags($2, $4); }
     |	DEFINE CONSTANT bindings
 	{ free($1); $$ = make_define_constant($2->line, $3); free($2); }
+    |   DEFINE flags DOMAIN sealed_domain
+	{ free($1); free($3); $$ = set_sealed_domain_flags($2, $4); }
     |	DEFINE flags GENERIC generic_function_definition
 	{ free($1); free($3); $$ = set_generic_flags($2, $4); }
     |	DEFINE flags METHOD named_method
@@ -401,6 +403,7 @@ variable_name:
     |	CLASS
     |	CONCRETE
     |	CONSTANT
+    |   DOMAIN
     |	EACH_SUBCLASS
     |	FREE
     |	FROM
@@ -826,6 +829,13 @@ property_list:
 	{ free($1); $$ = add_property(make_property_list(), $2, $3); }
     |	property_list COMMA keyword expression
 	{ free($2); $$ = add_property($1, $3, $4); }
+;
+
+sealed_domain:
+	variable_name LPAREN arguments_opt RPAREN
+	{ free($2); free($4);
+	  $$ = make_sealed_domain(make_id($1), $3);
+	}
 ;
 
 generic_function_definition:

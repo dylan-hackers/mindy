@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.11 1994/10/05 20:54:39 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.12 1996/02/23 21:54:33 wlott Exp $
 *
 * This file performs environment analysis.
 *
@@ -38,8 +38,8 @@
 #include "sym.h"
 #include "lose.h"
 
-static void analize_expr(struct expr *expr, struct lexenv *lexenv);
-static void analize_body(struct body *body, struct lexenv *lexenv);
+static void analyze_expr(struct expr *expr, struct lexenv *lexenv);
+static void analyze_body(struct body *body, struct lexenv *lexenv);
 
 
 /* Utilities */
@@ -93,7 +93,7 @@ static struct binding
 	return binding;
 }
 
-static void analize_method(struct method *method, struct lexenv *lexenv)
+static void analyze_method(struct method *method, struct lexenv *lexenv)
 {
     struct method *parent = lexenv->method;
     struct binding *bindings = lexenv->bindings;
@@ -108,11 +108,11 @@ static void analize_method(struct method *method, struct lexenv *lexenv)
 	parent->kids = method;
     }
 
-    analize_expr(method->specializers, lexenv);
+    analyze_expr(method->specializers, lexenv);
     if (method->rettypes) {
-	analize_expr(method->rettypes->req_types_list, lexenv);
+	analyze_expr(method->rettypes->req_types_list, lexenv);
 	if (method->rettypes->rest_temp_varref)
-	    analize_expr(method->rettypes->rest_temp_varref, lexenv);
+	    analyze_expr(method->rettypes->rest_temp_varref, lexenv);
     }
 
     for (p = params->required_params; p != NULL; p = p->next)
@@ -130,14 +130,14 @@ static void analize_method(struct method *method, struct lexenv *lexenv)
     method->nargs = offset+1;
     method->lexenv = make_lexenv(method, bindings, 0);
 
-    analize_body(method->body, method->lexenv);
+    analyze_body(method->body, method->lexenv);
 }
 
 
 /* Expression analysis */
 
 
-static void analize_varref_expr(struct varref_expr *expr,
+static void analyze_varref_expr(struct varref_expr *expr,
 				struct lexenv *lexenv)
 {
     struct binding *binding
@@ -150,74 +150,74 @@ static void analize_varref_expr(struct varref_expr *expr,
 	warn(expr->var->line, "next-method not bound -- Mindy requires #next");
 }
 
-static void analize_literal_expr(struct literal_expr *expr,
+static void analyze_literal_expr(struct literal_expr *expr,
 				 struct lexenv *lexenv)
 {
     /* Nothing to do. */
 }
 
-static void analize_call_expr(struct call_expr *expr,
+static void analyze_call_expr(struct call_expr *expr,
 			      struct lexenv *lexenv)
 {
     struct argument *arg;
 
-    analize_expr(expr->func, lexenv);
+    analyze_expr(expr->func, lexenv);
     for (arg = expr->args; arg != NULL; arg = arg->next)
-	analize_expr(arg->expr, lexenv);
+	analyze_expr(arg->expr, lexenv);
 }
 
-static void analize_method_expr(struct method_expr *expr,
+static void analyze_method_expr(struct method_expr *expr,
 				struct lexenv *lexenv)
 {
-    analize_method(expr->method, lexenv);
+    analyze_method(expr->method, lexenv);
 }
 
-static void analize_dot_expr(struct dot_expr *expr,
+static void analyze_dot_expr(struct dot_expr *expr,
 			     struct lexenv *lexenv)
 {
-    analize_expr(expr->arg, lexenv);
-    analize_expr(expr->func, lexenv);
+    analyze_expr(expr->arg, lexenv);
+    analyze_expr(expr->func, lexenv);
 }
 
-static void analize_body_expr(struct body_expr *expr,
+static void analyze_body_expr(struct body_expr *expr,
 			      struct lexenv *lexenv)
 {
-    analize_body(expr->body, lexenv);
+    analyze_body(expr->body, lexenv);
 }
 
-static void analize_block_expr(struct block_expr *expr,
+static void analyze_block_expr(struct block_expr *expr,
 			       struct lexenv *lexenv)
 {
     lose("block expression made it though expand?");
 }
 
-static void analize_case_expr(struct case_expr *expr,
+static void analyze_case_expr(struct case_expr *expr,
 			      struct lexenv *lexenv)
 {
     lose("case expression made it though expand?");
 }
 
-static void analize_if_expr(struct if_expr *expr,
+static void analyze_if_expr(struct if_expr *expr,
 			    struct lexenv *lexenv)
 {
-    analize_expr(expr->cond, lexenv);
-    analize_body(expr->consequent, lexenv);
-    analize_body(expr->alternate, lexenv);
+    analyze_expr(expr->cond, lexenv);
+    analyze_body(expr->consequent, lexenv);
+    analyze_body(expr->alternate, lexenv);
 }
 
-static void analize_for_expr(struct for_expr *expr,
+static void analyze_for_expr(struct for_expr *expr,
 			     struct lexenv *lexenv)
 {
     lose("for expression made it though expand?");
 }
 
-static void analize_select_expr(struct select_expr *expr,
+static void analyze_select_expr(struct select_expr *expr,
 				struct lexenv *lexenv)
 {
     lose("select expression made it though expand?");
 }
 
-static void analize_varset_expr(struct varset_expr *expr,
+static void analyze_varset_expr(struct varset_expr *expr,
 				struct lexenv *lexenv)
 {
     struct binding *binding
@@ -228,54 +228,54 @@ static void analize_varset_expr(struct varset_expr *expr,
 	if (binding->type) {
 	    struct expr *type = make_varref(id(binding->type));
 	    expr->type = (struct varref_expr *)type;
-	    analize_expr(type, lexenv);
+	    analyze_expr(type, lexenv);
 	}
     }
 
     expr->home = lexenv->method;
     expr->binding = binding;
 
-    analize_expr(expr->value, lexenv);
+    analyze_expr(expr->value, lexenv);
 }
 
-static void analize_binop_series_expr(struct binop_series_expr *expr,
+static void analyze_binop_series_expr(struct binop_series_expr *expr,
 				      struct lexenv *lexenv)
 {
     lose("binop_series expression made it though expand?");
 }
 
-static void analize_loop_expr(struct loop_expr *expr,
+static void analyze_loop_expr(struct loop_expr *expr,
 			      struct lexenv *lexenv)
 {
-    analize_body(expr->body, lexenv);
+    analyze_body(expr->body, lexenv);
 }
 
-static void analize_repeat_expr(struct repeat_expr *expr,
+static void analyze_repeat_expr(struct repeat_expr *expr,
 				struct lexenv *lexenv)
 {
     /* Nothing to do. */
 }
 
-static void analize_error_expr(struct expr *expr, struct lexenv *lexenv)
+static void analyze_error_expr(struct expr *expr, struct lexenv *lexenv)
 {
     lose("Called environment on a parse tree with errors?");
 }
 
-static void (*ExprAnalizers[])() = {
-    analize_varref_expr, analize_literal_expr, analize_call_expr,
-    analize_method_expr, analize_dot_expr, analize_body_expr,
-    analize_block_expr, analize_case_expr, analize_if_expr, analize_for_expr,
-    analize_select_expr, analize_varset_expr, analize_binop_series_expr,
-    analize_loop_expr, analize_repeat_expr, analize_error_expr
+static void (*ExprAnalyzers[])() = {
+    analyze_varref_expr, analyze_literal_expr, analyze_call_expr,
+    analyze_method_expr, analyze_dot_expr, analyze_body_expr,
+    analyze_block_expr, analyze_case_expr, analyze_if_expr, analyze_for_expr,
+    analyze_select_expr, analyze_varset_expr, analyze_binop_series_expr,
+    analyze_loop_expr, analyze_repeat_expr, analyze_error_expr
 };
 
-static void analize_expr(struct expr *expr, struct lexenv *lexenv)
+static void analyze_expr(struct expr *expr, struct lexenv *lexenv)
 {
-    if (expr->analized)
-	lose("Analizing an expression we have already analized?");
+    if (expr->analyzed)
+	lose("Analyzing an expression we have already analyzed?");
     else {
-	expr->analized = TRUE;
-	(*ExprAnalizers[(int)expr->kind])(expr, lexenv);
+	expr->analyzed = TRUE;
+	(*ExprAnalyzers[(int)expr->kind])(expr, lexenv);
     }
 }
 
@@ -283,44 +283,50 @@ static void analize_expr(struct expr *expr, struct lexenv *lexenv)
 
 /* Constituent analysis */
 
-static void analize_defconst_constituent(struct defconst_constituent *c,
+static void analyze_defconst_constituent(struct defconst_constituent *c,
 					 struct lexenv *lexenv)
 {
-    analize_method(c->tlf, lexenv);
+    analyze_method(c->tlf, lexenv);
 }
 
-static void analize_defvar_constituent(struct defvar_constituent *c,
+static void analyze_defvar_constituent(struct defvar_constituent *c,
 				       struct lexenv *lexenv)
 {
-    analize_method(c->tlf, lexenv);
+    analyze_method(c->tlf, lexenv);
 }
 
-static void analize_defmethod_constituent(struct defmethod_constituent *c,
+static void analyze_defmethod_constituent(struct defmethod_constituent *c,
 					  struct lexenv *lexenv)
 {
-    analize_method(c->tlf, lexenv);
+    analyze_method(c->tlf, lexenv);
 }
 
-static void analize_defgeneric_constituent(struct defgeneric_constituent *c,
+static void analyze_defdomain_constituent(struct defdomain_constituent *c,
+					  struct lexenv *lexenv)
+{
+    analyze_method(c->tlf, lexenv);
+}
+
+static void analyze_defgeneric_constituent(struct defgeneric_constituent *c,
 					   struct lexenv *lexenv)
 {
-    analize_method(c->tlf, lexenv);
+    analyze_method(c->tlf, lexenv);
 }
 
-static void analize_defclass_constituent(struct defclass_constituent *c,
+static void analyze_defclass_constituent(struct defclass_constituent *c,
 					 struct lexenv *lexenv)
 {
-    analize_method(c->tlf1, lexenv);
-    analize_method(c->tlf2, lexenv);
+    analyze_method(c->tlf1, lexenv);
+    analyze_method(c->tlf2, lexenv);
 }
 
-static void analize_expr_constituent(struct expr_constituent *c,
+static void analyze_expr_constituent(struct expr_constituent *c,
 				     struct lexenv *lexenv)
 {
-    analize_expr(c->expr, lexenv);
+    analyze_expr(c->expr, lexenv);
 }
 
-static void analize_local_constituent(struct local_constituent *c,
+static void analyze_local_constituent(struct local_constituent *c,
 				      struct lexenv *lexenv)
 {
     struct method *home = lexenv->method;
@@ -347,18 +353,18 @@ static void analize_local_constituent(struct local_constituent *c,
     c->lexenv = make_lexenv(home, bindings, offset);
 
     for (method = c->methods; method != NULL; method = method->next_local)
-	analize_method(method, c->lexenv);
+	analyze_method(method, c->lexenv);
 
-    analize_body(c->body, c->lexenv);
+    analyze_body(c->body, c->lexenv);
 }
 
-static void analize_handler_constituent(struct handler_constituent *c,
+static void analyze_handler_constituent(struct handler_constituent *c,
 					struct lexenv *lexenv)
 {
-    analize_body(c->body, lexenv);
+    analyze_body(c->body, lexenv);
 }
 
-static void analize_let_constituent(struct let_constituent *let,
+static void analyze_let_constituent(struct let_constituent *let,
 				    struct lexenv *lexenv)
 {
     struct method *home = lexenv->method;
@@ -368,7 +374,7 @@ static void analize_let_constituent(struct let_constituent *let,
     struct param_list *params = let->bindings->params;
     struct param *param;
 
-    analize_expr(let->bindings->expr, lexenv);
+    analyze_expr(let->bindings->expr, lexenv);
 
     let->inside = bindings;
     let->offset = offset;
@@ -389,56 +395,56 @@ static void analize_let_constituent(struct let_constituent *let,
     if (offset > home->frame_size)
 	home->frame_size = offset;
 
-    analize_body(let->body, let->lexenv);
+    analyze_body(let->body, let->lexenv);
 }
 
-static void analize_tlf_constituent(struct tlf_constituent *c,
+static void analyze_tlf_constituent(struct tlf_constituent *c,
 				    struct lexenv *lexenv)
 {
-    analize_method(c->form, lexenv);
+    analyze_method(c->form, lexenv);
 }
 
-static void analize_error_constituent(struct constituent *c,
+static void analyze_error_constituent(struct constituent *c,
 				      struct lexenv *lexenv)
 {
     lose("Called environment on a parse tree with errors?");
 }
 
-static void analize_defmodule_constituent(struct constituent *c,
+static void analyze_defmodule_constituent(struct constituent *c,
 					  struct lexenv *lexenv)
 {
     /* Do nothing. */
 }
 
-static void analize_deflibrary_constituent(struct constituent *c,
+static void analyze_deflibrary_constituent(struct constituent *c,
 					   struct lexenv *lexenv)
 {
     /* Do nothing. */
 }
 
-static void (*AnalizeConstituents[])() = {
-    analize_defconst_constituent, analize_defvar_constituent,
-    analize_defmethod_constituent, analize_defgeneric_constituent,
-    analize_defclass_constituent, analize_expr_constituent,
-    analize_local_constituent, analize_handler_constituent,
-    analize_let_constituent, analize_tlf_constituent,
-    analize_error_constituent, analize_defmodule_constituent,
-    analize_deflibrary_constituent
+static void (*AnalyzeConstituents[])() = {
+    analyze_defconst_constituent, analyze_defvar_constituent,
+    analyze_defmethod_constituent, analyze_defdomain_constituent,
+    analyze_defgeneric_constituent, analyze_defclass_constituent,
+    analyze_expr_constituent, analyze_local_constituent,
+    analyze_handler_constituent, analyze_let_constituent,
+    analyze_tlf_constituent, analyze_error_constituent,
+    analyze_defmodule_constituent, analyze_deflibrary_constituent
 };
 
-static void analize_body(struct body *body, struct lexenv *lexenv)
+static void analyze_body(struct body *body, struct lexenv *lexenv)
 {
     struct constituent *c;
 
     for (c = body->head; c != NULL; c = c->next)
-	(*AnalizeConstituents[(int)c->kind])(c, lexenv);
+	(*AnalyzeConstituents[(int)c->kind])(c, lexenv);
 }
 
 void environment_analysis(struct body *body)
 {
     struct lexenv *lexenv = make_lexenv(NULL, NULL, 0);
 
-    analize_body(body, lexenv);
+    analyze_body(body, lexenv);
 
     free(lexenv);
 }

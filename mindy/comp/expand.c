@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.24 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.25 1996/02/23 21:54:33 wlott Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -815,6 +815,50 @@ static boolean expand_defmethod_constituent(struct defmethod_constituent **ptr,
     return FALSE;
 }
 
+static void expand_defdomain_for_compile(struct defdomain_constituent *c)
+{
+    char *name = (char *)c->name->symbol->name;
+    char *debug_name = malloc(strlen(name) + sizeof("Define Sealed Domain "));
+    struct body *body = make_body();
+    struct arglist *init_args = make_argument_list();
+    struct expr *expr;
+    struct argument *arg, *next;
+
+    strcpy(debug_name, "Define Sealed Domain ");
+    strcat(debug_name, name);
+
+    add_argument(init_args, make_argument(make_varref(c->name)));
+
+    for (arg = c->types; arg != NULL; arg = next) {
+	next = arg->next;
+	add_argument(init_args, make_argument(arg->expr));
+	free(arg);
+    }
+    c->types = NULL;
+
+    expr = make_function_call(make_varref(id(sym_DefineDomain)), init_args);
+
+    add_expr(body, expr);
+    add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
+
+    c->tlf = make_top_level_method(debug_name, body);
+
+    free(debug_name);
+
+    expand_method_for_compile(c->tlf);
+    
+}
+
+static boolean expand_defdomain_constituent(struct defdomain_constituent **ptr,
+					    boolean top_level)
+{
+    if (top_level)
+	expand_defdomain_for_compile(*ptr);
+    else
+	error((*ptr)->name->line, "define sealed domain not at top-level");
+    return FALSE;
+}
+
 static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 {
     char *name = (char *)c->name->symbol->name;
@@ -1365,10 +1409,11 @@ static boolean
 
 static boolean (*ConstituentExpanders[])() = {
     expand_defconst_constituent, expand_defvar_constituent,
-    expand_defmethod_constituent, expand_defgeneric_constituent,
-    expand_defclass_constituent, expand_expr_constituent,
-    expand_local_constituent, expand_handler_constituent,
-    expand_let_constituent, expand_tlf_constituent, expand_error_constituent,
+    expand_defmethod_constituent, expand_defdomain_constituent,
+    expand_defgeneric_constituent, expand_defclass_constituent,
+    expand_expr_constituent, expand_local_constituent,
+    expand_handler_constituent, expand_let_constituent,
+    expand_tlf_constituent, expand_error_constituent,
     expand_defnamespace_constituent, expand_defnamespace_constituent
 };
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.10 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.11 1996/02/23 21:54:33 wlott Exp $
 *
 \**********************************************************************/
 
@@ -42,6 +42,7 @@ extern void init_sym_table(void);
 
 extern struct symbol *sym_DefineClass1;
 extern struct symbol *sym_DefineClass2;
+extern struct symbol *sym_DefineDomain;
 extern struct symbol *sym_DefineGeneric;
 extern struct symbol *sym_DefineMethod;
 extern struct symbol *sym_DefineSlot;
