@@ -207,7 +207,7 @@ signed_word * log_size_ptr;
 	UNLOCK();
     	ENABLE_SIGNALS();
 #     endif
-      new_dl == GC_oom_fn(sizeof(struct disappearing_link));
+      new_dl = GC_oom_fn(sizeof(struct disappearing_link));
       if (0 == new_dl) {
 	GC_finalization_failures++;
 	return(0);
@@ -433,7 +433,7 @@ finalization_mark_proc * mp;
 	UNLOCK();
     	ENABLE_SIGNALS();
 #     endif
-      new_fo == GC_oom_fn(sizeof(struct finalizable_object));
+      new_fo = GC_oom_fn(sizeof(struct finalizable_object));
       if (0 == new_fo) {
 	GC_finalization_failures++;
 	return;
@@ -617,7 +617,7 @@ void GC_finalize()
               GC_words_finalized +=
                  	ALIGNED_WORDS(curr_fo -> fo_object_size)
               		+ ALIGNED_WORDS(sizeof(struct finalizable_object));
-	    GC_ASSERT(GC_is_marked((ptr_t)curr_fo));
+	    GC_ASSERT(GC_is_marked(GC_base((ptr_t)curr_fo)));
             curr_fo = next_fo;
         } else {
             prev_fo = curr_fo;

@@ -16,6 +16,7 @@ $COPTS = "-DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
 &emit_c_file_rule('dyn_load', @std_deps);
 
 &emit_c_file_rule('finalize', @std_deps, "$priv/gc_pmark.h");
+&emit_c_file_rule('gcj_mlc', @std_deps, "$priv/dbg_mlc.h");
 &emit_c_file_rule('headers', @std_deps);
 &emit_c_file_rule('linux_threads', @std_deps);
 
@@ -23,9 +24,13 @@ $COPTS = "-DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
 if ($target_name =~ /^sparc.*-solaris/) {
     &emit_asm_file_rule('mach_dep', 'sparc_mach_dep');
 } elsif ($target_name =~ /^sparc.*-openbsd/) {
-    &emit_asm_file_rule('mach_dep', 'sparc_sunos4_mach_dep');
+    &emit_asm_file_rule('mach_dep', 'sparc_sunos4_mach_dep', 'ia64_save_regs_in_stack');
+} elsif ($target_name =~ /^sparc.*-netbsd/) {
+    &emit_asm_file_rule('mach_dep', 'sparc_netbsd_mach_dep', 'ia64_save_regs_in_stack');
 } elsif ($target_name =~ /^sparc.*-sunos4/) {
     &emit_asm_file_rule('mach_dep', 'sparc_sunos4_mach_dep');
+} elsif ($target_name =~ /^sparc.*-sunos5/) {
+    &emit_asm_file_rule('mach_dep', 'sparc_mach_dep');
 #} elsif ($target_name =~ /^alpha/) {
 #    &emit_cppasm_file_rule('mach_dep', 'alpha_mach_dep');
 } elsif ($target_name =~ /^mips-irix/) {
@@ -33,13 +38,22 @@ if ($target_name =~ /^sparc.*-solaris/) {
 } elsif ($target_name =~ /^mips-riscos/) {
     &emit_asm_file_rule('mach_dep', 'mips_ultrix_mach_dep');
 } elsif ($target_name =~ /^mips-ultrix/) {
+    local ($CFLAGS) = "-n32 $CFLAGS";
     &emit_asm_file_rule('mach_dep', 'mips_ultrix_mach_dep');
 } elsif ($target_name =~ /rs6000/) {
     &emit_asm_file_rule('mach_dep', 'rs6000_mach_dep');
+} elsif ($target_name =~ /darwin/) {
+    &emit_asm_file_rule('mach_dep', 'powerpc_macosx_mach_dep');
 } else {
     local ($CFLAGS) = "-g";
     &emit_c_file_rule('mach_dep', @std_deps);
 }
+# NOTE:  These need to be added to support 64-bit architectures
+# IA64 HPUX ia64_save_regs_in_stack.o ia64_save_regs_in_stack.s
+# IA64 HPUX $(CC) -c -o mach_dep1.o $(SPECIALCFLAGS) $(srcdir)/mach_dep.c
+# IA64 HPUX ld -r -o mach_dep.o mach_dep1.o ia64_save_regs_in_stack.o
+# and local($CFLAGS) = "+DD64"
+
 
 &emit_c_file_rule('malloc', @std_deps);
 &emit_c_file_rule('mallocx', @std_deps);
@@ -62,6 +76,7 @@ if ($target_name =~ /^alpha/) {
 &emit_c_file_rule('ptr_chck', @std_deps, "$priv/gc_pmark.h");
 &emit_c_file_rule('reclaim', @std_deps);
 &emit_c_file_rule('stubborn', @std_deps);
+&emit_c_file_rule('specific', @std_deps);
 &emit_c_file_rule('typd_mlc', @std_deps, "$priv/gc_pmark.h", "$inc/gc_typed.h");
 
 $lib_name = "$lib_prefix" . "gc$dot_lib";
@@ -74,6 +89,7 @@ $objs =
     . " dbg_mlc$dot_obj"
     . " dyn_load$dot_obj"
     . " finalize$dot_obj"
+    . " gcj_mlc$dot_obj"
     . " headers$dot_obj"
     . " irix_threads$dot_obj"
     . " linux_threads$dot_obj"
