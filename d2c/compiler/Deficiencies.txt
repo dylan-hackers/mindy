@@ -1,16 +1,12 @@
 
 		Known Deficiencies in the D2C Compiler.
 
-$Header: /scm/cvs/src/d2c/compiler/Deficiencies.txt,v 1.1 1998/05/03 19:55:27 andreas Exp $
+$Header: /scm/cvs/src/d2c/compiler/Deficiencies.txt,v 1.2 2000/01/23 21:29:53 andreas Exp $
 
 
 The special syntax for aref, element, and singleton is supposed to
 look up the name in the context of the operation.  Instead, we always
 look it up in the Dylan library.
-
-
-In macro templates, name prefixing and suffixing (e.g. "prefix-" ##
-?name ## "-suffix") have been implemented but not tested.
 
 
 In macro templates, unhygienic name references (e.g. ?=name) is not
