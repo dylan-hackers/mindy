@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.11 1996/07/18 10:56:43 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.12 1996/07/23 16:08:11 dwatson Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,11 +64,11 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS = 
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out:../libraries/time
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc table-ext-test.dbc random-test.dbc matrix-test.dbc coll-ext-test.dbc print-test.dbc format-test.dbc format-out-test.dbc itime-test.dbc
+OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc table-ext-test.dbc random-test.dbc matrix-test.dbc coll-ext-test.dbc print-test.dbc format-test.dbc format-out-test.dbc itime-test.dbc time-test.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
@@ -113,6 +113,10 @@ format-test.dbc: ${SRCDIR}/format-test.dylan
 
 print-test.dbc: ${SRCDIR}/print-test.dylan
 	${MC} ${MINDYFLAGS} -lprint-test -o print-test.dbc ${SRCDIR}/print-test.dylan
+
+time-test.dbc: ${SRCDIR}/time-test.dylan
+	${MC} ${MINDYFLAGS} -ltime-test -o time-test.dbc ${SRCDIR}/time-test.dylan
+
 
 # And now, two hacks to make sure "asterixes.txt" and "dashes.txt" are 
 # in the build directory and not the source directory (while still
