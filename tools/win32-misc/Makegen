@@ -31,8 +31,7 @@ sub install_perl_scripts {
     }
 }
 
-# Assumes the rcs binaries are in $(DESTDIR)/rcs-bin, and 
-# rcs-wrapper in $(DESTDIR)/bin/rcs-wrapper.perl
+# Assumes the rcs binaries are in $(DESTDIR)/rcs-bin
 sub install_rcs_wrappers {
     local (@names) = @_;
     local ($name);
@@ -67,7 +66,6 @@ EOF
 push(@compile_dependencies, 'rcs-wrapper.exe');
 
 # Wrapped RCS stuff
-do install_from_src('bin', 'rcs-wrapper.perl');
 do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
 
 # Custom utils with wrappers
