@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.11 1994/04/25 21:56:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.12 1994/06/11 02:18:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,8 +21,9 @@ typedef unsigned int flags_t;
 #define flag_OPEN 1
 #define flag_SEALED 2
 #define flag_ABSTRACT 4
-#define flag_CONCRETE 5
-#define flag_PRIMARY 6
+#define flag_CONCRETE 8
+#define flag_PRIMARY 16
+#define flag_FREE 32
 
 struct body {
     struct constituent *head;
@@ -287,8 +288,8 @@ struct param_list {
     struct id *next_param;
     struct id *rest_param;
     boolean allow_keys;
+    boolean all_keys;
     struct keyword_param *keyword_params;
-    struct keyword_param **keyword_params_tail;
 };
 
 struct param {
@@ -728,8 +729,9 @@ extern struct gf_suffix
     *make_gf_suffix(struct return_type_list *rettypes,
 		    struct plist *plist);
 extern struct param_list
-    *add_keyword_param(struct param_list *list, struct keyword_param *param);
+    *push_keyword_param(struct keyword_param *param, struct param_list *list);
 extern struct param_list *allow_keywords(struct param_list *param_list);
+extern struct param_list *allow_all_keywords(struct param_list *param_list);
 extern struct keyword_param
     *make_keyword_param(struct token *keyword, struct id *sym,
 			struct expr *type, struct expr *def);
