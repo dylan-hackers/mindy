@@ -161,7 +161,7 @@ define method random-float
   let max-value = as(<float>, arg);
   let random-num = as(<float>, random-bits(state: state));
   let random-bits-max-value
-    = as(<float>, ash(1, $random-bits-count - 1));
+    = as(<float>, ash(1, $random-bits-count) - 1);
   (random-num / random-bits-max-value) * max-value;
 end method random-float;
 
