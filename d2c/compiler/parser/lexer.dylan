@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.19 1996/06/27 18:00:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.20 1996/07/20 15:09:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -671,6 +671,7 @@ define constant $Initial-State
        state(#"sharp", #f,
 	     pair('(', #"sharp-paren"),
 	     pair('[', #"sharp-bracket"),
+	     pair('#', #"double-sharp"),
 	     pair("tT", #"true"),
 	     pair("fF", #"false"),
 	     pair("nN", #"sharp-n"),
@@ -685,6 +686,7 @@ define constant $Initial-State
 	     pair("iI", #"sharp-i")),
        state(#"sharp-paren", $sharp-paren-token),
        state(#"sharp-bracket", $sharp-bracket-token),
+       state(#"double-sharp", $double-sharp-token),
        state(#"true", $true-token),
        state(#"false", $false-token),
        state(#"sharp-n", #f, pair("eE", #"sharp-ne")),
