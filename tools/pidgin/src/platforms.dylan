@@ -20,14 +20,14 @@ define constant $generic-platform =
 define constant $i386-linux-platform =
   make(<c-platform>,
        default-defines:
-	 #["const", "",
+         #["const", "",
 	   "volatile", "",
-	   "__STDC__", "",
-	   
-	   // The following six declarations should be removed someday, as
-	   // soon as we fix a bug in MINDY.
-	   // XXX - I have no idea what the above comment refers to. Check the
-	   // Melange changelogs.
+           "__STDC__", "",
+           
+           // The following six declarations should be removed someday, as
+           // soon as we fix a bug in MINDY.
+           // XXX - I have no idea what the above comment refers to. Check the
+           // Melange changelogs.
 	   //"__GNUC__", "2",
 	   //"__GNUC_MINPR__", "7",
 	   //"__signed__", "",
@@ -38,8 +38,9 @@ define constant $i386-linux-platform =
 	   // Parameterized macros which remove various GCC extensions from our
 	   // source code. The last item in the list is the right-hand side of
 	   // the define; all the items preceding it are named parameters.
-	   "__attribute__", #(#("x"), ""), 
+	   "__attribute__", #(#("x"), ""),
 	   "__signed__", "", 
+           "__signed", "",
 	   "__inline__", "",
 	   "inline", "",
 	   "__inline", "",
@@ -71,6 +72,7 @@ define constant $ppc-linux-platform =
 	   // the define; all the items preceding it are named parameters.
 	   "__attribute__", #(#("x"), ""), 
 	   "__signed__", "", 
+	   "__signed", "", 
 	   "__inline__", "",
 	   "inline", "",
 	   "__inline", "",
@@ -101,3 +103,32 @@ define constant $ppc-linux-platform =
 	   // Find out the correct value for this path by calling
 	   // gcc -print-file-name=include
 	   " /usr/lib/gcc-lib/ppc-redhat-linux/egcs-2.91.66/include/"]);
+
+define constant $i386-freebsd-platform =
+  make(<c-platform>,
+       default-defines:
+         #["const", "",
+           "volatile", "",
+           "__STDC__", "",
+
+           // Parameterized macros which remove various GCC extensions from our
+           // source code. The last item in the list is the right-hand side of
+           // the define; all the items preceding it are named parameters.
+           "__attribute__", #(#("x"), ""), 
+           "__signed__", "", 
+           "__signed", "", 
+           "__inline__", "",
+           "__inline", "",
+           
+           "__FreeBSD__", "4",
+           "__i386__", "1",
+           "__i386", "1",
+           "i386", "1",
+           "__unix", "1",
+           "__unix__", "1",
+           "__ELF__", "1",
+           "unix", "1"],
+       default-include-path:
+	 #["/usr/include"]);
+
+       

@@ -113,5 +113,7 @@ define module c-parser
       c-platform-default-include-path,
       c-platform-default-defines,
     $generic-platform,
-    $i386-linux-platform;
+    $i386-linux-platform,
+    $ppc-linux-platform,
+    $i386-freebsd-platform;
 end module c-parser;
