@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.5 1996/02/08 19:20:57 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.6 1996/02/21 02:53:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,6 +8,7 @@ define library compiler-main
 #if (~mindy)
   use String-extensions;
 #end
+  use Random;
   use compiler-base;
   use compiler-front;
   use compiler-parser;
@@ -89,6 +90,7 @@ define module main
 	      pointer-deref};
 #end
   use string-conversions, import: {string-to-integer};
+  use random;
 
   use utils;
   use define-classes;
