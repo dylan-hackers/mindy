@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.91 1995/06/10 15:59:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.92 1995/06/12 17:40:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -623,49 +623,20 @@ define method optimize-unknown-call
     change-call-kind(component, call, <error-call>);
   else
     let arg-types = reverse!(arg-types);
-    let meths = ct-sorted-applicable-methods(defn, arg-types);
-    if (meths == #())
-      let stream = make(<byte-string-output-stream>);
-      write("    (", stream);
-      for (arg-type in arg-types, first? = #t then #f)
-	unless (first?)
-	  write(", ", stream);
-	end;
-	print-message(arg-type, stream);
-      end;
-      write(")", stream);
-      compiler-warning("In %s:\n  no applicable methods for argument types\n"
-			 "%s\n  in call of %s",
-		       call.home-function-region.name,
-		       stream.string-output-stream-string,
-		       defn.defn-name);
-		       
+    let (ordered, ambiguous) = ct-sorted-applicable-methods(defn, arg-types);
+    if (ordered == #())
+      no-applicable-methods-warning(call, defn, ambiguous, arg-types);
       change-call-kind(component, call, <error-call>);
-    elseif (meths)
+    elseif (ordered)
       // ### Need to check the keywords before the ct method selection
       // is valid.
       let builder = make-builder(component);
       let assign = call.dependents.dependent;
       let policy = assign.policy;
       let source = assign.source-location;
-      let new-func = make-definition-leaf(builder, meths.head);
-      let ctvs = map(ct-value, meths.tail);
-      let next-leaf
-	= if (every?(identity, ctvs))
-	    make-literal-constant(builder,
-				  make(<literal-list>,
-				       contents: ctvs));
-	  else
-	    let var = make-local-var(builder, #"next-method-info",
-				     object-ctype());
-	    let op
-	      = make-unknown-call(builder, dylan-defn-leaf(builder, #"list"),
-				  #f, map(curry(make-definition-leaf, builder),
-					  meths.tail));
-	    build-assignment(builder, policy, source, var, op);
-	    insert-before(component, assign, builder-result(builder));
-	    var;
-	  end;
+      let new-func = make-definition-leaf(builder, ordered.head);
+      let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
+      insert-before(component, assign, builder-result(builder));
       let new-call = make-unknown-call(builder, new-func, next-leaf,
 				       reverse!(arg-leaves));
       replace-expression(component, call.dependents, new-call);
@@ -680,6 +651,71 @@ define method optimize-unknown-call
     end;
   end;
 end;    
+
+define method no-applicable-methods-warning
+    (call :: <abstract-call>, defn :: <generic-definition>,
+     ambiguous :: <list>, arg-types :: <list>)
+    => ();
+  let stream = make(<byte-string-output-stream>);
+  write("    (", stream);
+  for (arg-type in arg-types, first? = #t then #f)
+    unless (first?)
+      write(", ", stream);
+    end;
+    print-message(arg-type, stream);
+  end;
+  write(")", stream);
+  let arg-types-string = stream.string-output-stream-string;
+  if (ambiguous == #())
+    compiler-warning("In %s:\n  no applicable methods for argument types\n"
+		       "%s\n  in call of %s",
+		     call.home-function-region.name,
+		     arg-types-string,
+		     defn.defn-name);
+  else
+    for (meth in ambiguous)
+      format(stream, "    %s\n", meth.defn-name);
+    end;
+    compiler-warning("In %s:\n  can't pick between\n%s\n  when given "
+		       "arguments of types:\n%s",
+		     call.home-function-region.name,
+		     stream.string-output-stream-string,
+		     arg-types-string);
+  end;
+end;
+
+define method make-next-method-info-leaf
+    (builder :: <fer-builder>, ordered :: <list>, ambiguous :: <list>)
+    => res :: <leaf>;
+
+  let ordered-ctvs = map(ct-value, ordered.tail);
+  let ambiguous-ctvs = map(ct-value, ambiguous);
+
+  if (every?(identity, ordered-ctvs) & every?(identity, ambiguous-ctvs))
+    make-literal-constant(builder,
+			  make(<literal-list>,
+			       sharable: #t,
+			       contents: ordered-ctvs,
+			       tail: if (ordered == #())
+				       as(<ct-value>, #());
+				     else
+				       make(<literal-list>,
+					    sharable: #t,
+					    contents: ambiguous-ctvs);
+				     end));
+  else
+    error("Can't deal with next method infos that arn't all ctvs.");
+    /*
+    let var = make-local-var(builder, #"next-method-info",
+			     object-ctype());
+    let op = make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
+			       map(curry(make-definition-leaf, builder),
+				   ordered.tail));
+    build-assignment(builder, policy, source, var, op);
+    var;
+    */
+  end;
+end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
@@ -1148,8 +1184,8 @@ define method optimize-known-call
        dep = call.depends-on.dependent-next then dep.dependent-next)
   finally
     let arg-types = reverse!(arg-types);
-    let meths = ct-sorted-applicable-methods(defn, arg-types);
-    if (meths)
+    let (ordered, ambiguous) = ct-sorted-applicable-methods(defn, arg-types);
+    if (ordered)
       // Okay, we now have enough of a better idea of the types that we can
       // actually select the methods.  We need to extract the original
       // arguments and change into a call of the first applicable method.
@@ -1180,48 +1216,18 @@ define method optimize-known-call
       // first method.
       let builder = make-builder(component);
       let new-call
-	= if (meths == #())
-	    let stream = make(<byte-string-output-stream>);
-	    write("    (", stream);
-	    for (arg-type in arg-types, first? = #t then #f)
-	      unless (first?)
-		write(", ", stream);
-	      end;
-	      print-message(arg-type, stream);
-	    end;
-	    write(")", stream);
-	    compiler-warning("In %s:\n  no applicable methods for argument "
-			       "types\n%s\n  in call of %s",
-			     call.home-function-region.name,
-			     stream.string-output-stream-string,
-			     defn.defn-name);
+	= if (ordered == #())
+	    no-applicable-methods-warning(call, defn, ambiguous, arg-types);
 	    make-operation(builder, <error-call>,
 			   pair(call.depends-on.source-exp, arg-leaves));
 	  else
 	    let assign = call.dependents.dependent;
 	    let policy = assign.policy;
 	    let source = assign.source-location;
-	    let new-func = make-definition-leaf(builder, meths.head);
-	    let ctvs = map(ct-value, meths.tail);
+	    let new-func = make-definition-leaf(builder, ordered.head);
 	    let next-leaf
-	      = if (every?(identity, ctvs))
-		  make-literal-constant(builder,
-					make(<literal-list>,
-					     contents: ctvs));
-		else
-		  let var = make-local-var(builder, #"next-method-info",
-					   object-ctype());
-		  let op
-		    = make-unknown-call(builder,
-					dylan-defn-leaf(builder, #"list"),
-					#f,
-					map(curry(make-definition-leaf,
-						  builder),
-					    meths.tail));
-		  build-assignment(builder, policy, source, var, op);
-		  insert-before(component, assign, builder-result(builder));
-		  var;
-		end;
+	      = make-next-method-info-leaf(builder, ordered, ambiguous);
+	    insert-before(component, assign, builder-result(builder));
 	    make-unknown-call(builder, new-func, next-leaf, arg-leaves);
 	  end;
       replace-expression(component, call.dependents, new-call);
