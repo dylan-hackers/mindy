@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.4 1999/04/10 22:48:23 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.5 1999/04/11 05:15:52 emk Exp $
 
 //======================================================================
 //
@@ -50,7 +50,7 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.4 1999/04/10
 // This implementation of deques uses element objects with pointers to
 // represent the deque.
 
-define open abstract class <deque> (<mutable-sequence>, <stretchy-sequence>)
+define open abstract class <deque> (<stretchy-sequence>, <mutable-sequence>)
 //  keyword size:, init-value: 0;
 //  keyword fill:, init-value: #f;
 end class <deque>;

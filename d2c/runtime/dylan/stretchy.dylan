@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.3 1999/04/10 22:48:24 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.4 1999/04/11 05:15:53 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -34,7 +34,7 @@ module: dylan-viscera
 // <stretchy-vector>
 
 define open abstract primary class <stretchy-vector>
-    (<vector>, <stretchy-sequence>)
+    (<stretchy-sequence>, <vector>)
 end class <stretchy-vector>;
 
 define open abstract class <builtin-stretchy-vector>
