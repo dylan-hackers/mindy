@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.18 1996/02/10 09:39:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.19 1996/02/12 01:57:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,7 +363,7 @@ define module definitions
 
   export
     <definition>, defn-name, defn-library, defn-type, ct-value,
-    $definition-slots,
+    install-transformers, $definition-slots,
     check-syntax-table-additions, make-syntax-table-additions,
     <abstract-constant-definition>,
     <implicit-definition>,
@@ -373,7 +373,7 @@ define module definitions
     function-defn-signature, function-defn-signature-setter,
     function-defn-hairy?, function-defn-hairy?-setter,
     function-defn-ct-value, function-defn-ct-value-setter,
-    function-defn-transformers, function-defn-transformers-setter,
+    function-defn-transformers,
     function-defn-movable?, function-defn-flushable?;
 
 end;

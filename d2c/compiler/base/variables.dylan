@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.25 1996/02/09 20:38:40 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.26 1996/02/12 01:57:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -820,12 +820,10 @@ define method note-variable-definition (defn :: <definition>)
     end;
   end;
   //
-  // And if it is a function definition and we have some function info,
-  // propagate it over.
-  if (~empty?(var.variable-transformers)
-	& instance?(defn, <function-definition>))
-    defn.function-defn-transformers := var.variable-transformers;
-  end;
+  // If we have some transformers, propagate them over.
+  if (~empty?(var.variable-transformers))
+    install-transformers(defn, var.variable-transformers);
+  end if;
 end;
 //
 // We ignore implicit definitions for variables already defined or from outside

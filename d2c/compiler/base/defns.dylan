@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.13 1996/02/07 12:55:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.14 1996/02/12 01:57:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,23 @@ define method ct-value (defn :: <definition>)
     => res :: <false>;
   #f;
 end;
+
+
+// install-transformers -- exported.
+//
+// Called by the variable system to install the transformers for a definition.
+// 
+define open generic install-transformers
+    (defn :: <definition>, transformers :: <list>)
+    => ();
+//
+// By default, we do nothing.
+// 
+define method install-transformers
+    (defn :: <definition>, transformers :: <list>)
+    => ();
+end method install-transformers;
+
 
 
 define open abstract class <implicit-definition> (<definition>)
@@ -101,6 +118,14 @@ define method function-defn-signature
     sig-or-func;
   end;
 end;
+
+define method install-transformers
+    (defn :: <function-definition>, transformers :: <list>)
+    => ();
+  defn.function-defn-transformers
+    := union(transformers, defn.function-defn-transformers);
+end method install-transformers;
+
 
 define open primary abstract class <class-definition> 
     (<abstract-constant-definition>)
