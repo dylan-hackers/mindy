@@ -40,19 +40,11 @@ AC_PROG_RANLIB
 #	Establish the default compile options for cc
 #--------------------------------------------------------------------
 
-CCOPTS=${CCOPTS--g}
-AC_SUBST(CCOPTS)dnl
-
-# Now find some optimization flags
-# (-Wall is actually "all warnings" and has nothing to do with optimization, 
-# but I put it here anyway because it is gcc specific)
-
 if test $CC = gcc
-then OPTIMIZE="-O4 -finline-functions -Wall"
-dnl ${OPTIMIZE--O4 --finline-functions --Wall}
-else OPTIMIZE=${OPTIMIZE--O}
+then CCOPTS="-g -O4 -finline-functions -Wall"
+else CCOPTS="-g -O"
 fi
-AC_SUBST(OPTIMIZE)dnl
+AC_SUBST(CCOPTS)dnl
 
 #--------------------------------------------------------------------
 #	Establish the default options for lex
