@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.15 1995/05/05 14:45:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.16 1995/05/08 15:19:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,8 +8,6 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 Todo: 
   subclass types (unknown or union of singletons if sealed)
   difference
-  type specifier list concept? (a parsed but uncanonicalized type)
-
 */
 
 ///    Return the type that describes all objects that are in Type1 but not in
@@ -1373,3 +1371,121 @@ define constant empty-ctype
 				      members: #(),
 				      type-hash: 0));
     end;
+
+
+//// Type specifiers.
+
+define constant <type-specifier> = union(<symbol>, <list>);
+
+define generic specifier-type (spec :: <type-specifier>)
+    => res :: <values-ctype>;
+
+
+define constant $cache-size = 997;  // The 168'th prime
+
+define constant $specifier-type-cache
+  = make(<vector>, size: ash($cache-size, 1));
+
+
+define method specifier-type (spec :: <type-specifier>)
+    => res :: <values-ctype>;
+  let (id, state) = object-hash(spec);
+  let index = ash(modulo(id, $cache-size), 1);
+  if ($specifier-type-cache[index] == spec)
+    $specifier-type-cache[index + 1];
+  else
+    // Fully eval the specializer before updating the cache.
+    let new = slow-specifier-type(spec);
+    // If the state is no longer valid, recompute the index.
+    // ### Except that we can't do this, because state-valid? isn't exported.
+    //unless (state-valid?(state))
+    //  index := ash(floor/(object-hash(spec), $cache-size), 1);
+    //end;
+    $specifier-type-cache[index] := spec;
+    $specifier-type-cache[index + 1] := new;
+  end;
+end;
+
+define method slow-specifier-type (symbol :: <symbol>)
+    => res :: <values-ctype>;
+  dylan-value(symbol);
+end;
+
+define method slow-specifier-type (list :: <list>)
+  slow-specifier-type-list(list.head, list.tail);
+end;
+
+define method slow-specifier-type-list (sym == #"union", args :: <list>)
+    => res :: <values-ctype>;
+  for (arg in args,
+       result = empty-ctype()
+	 then values-type-union(result, specifier-type(arg)))
+  finally
+    result;
+  end;
+end;
+
+define method slow-specifier-type-list (sym == #"intersection", args :: <list>)
+    => res :: <values-ctype>;
+  for (arg in args,
+       result = object-ctype()
+	 then values-type-intersection(result, specifier-type(arg)))
+  finally
+    result;
+  end;
+end;
+
+define method slow-specifier-type-list
+    (sym :: one-of(#"singleton", #"one-of"), args :: <list>)
+    => res :: <values-ctype>;
+  for (arg in args,
+       result = empty-ctype()
+	 then values-type-union(result,
+				make-canonical-singleton
+				  (specifier-ct-value(arg))))
+  finally
+    result;
+  end;
+end;
+
+define method specifier-ct-value (arg :: <fixed-integer>) => res :: <ct-value>;
+  make(<literal-fixed-integer>, value: arg);
+end;
+
+define method specifier-ct-value
+    (arg :: <extended-integer>) => res :: <ct-value>;
+  make(<literal-extended-integer>, value: arg);
+end;
+
+define method specifier-ct-value (arg == #f) => res :: <ct-value>;
+  make(<literal-false>);
+end;
+
+define method specifier-ct-value (arg == #t) => res :: <ct-value>;
+  make(<literal-true>);
+end;
+
+define method specifier-ct-value (arg == #()) => res :: <ct-value>;
+  make(<literal-empty-list>);
+end;
+
+define method specifier-ct-value (arg :: <symbol>) => res :: <ct-value>;
+  make(<literal-symbol>, value: arg);
+end;
+
+
+define method slow-specifier-type-list (sym == #"values", args :: <list>)
+    => res ::<values-ctype>;
+  let num-args = args.size;
+  if (num-args >= 2 & args[num-args - 2] == #"rest")
+    for (arg in args,
+	 i from 0 below num-args - 2,
+	 positionals = #() then pair(specifier-type(arg), positionals))
+    finally
+      make-values-ctype(reverse!(positionals),
+			specifier-type(args[num-args - 1]));
+    end;
+  else
+    make-values-ctype(map(specifier-type, args), #f);
+  end;
+end;
