@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.56 1996/05/01 12:52:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.57 1996/05/29 23:33:43 wlott Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -583,8 +583,10 @@ define class <symbol> (<object>)
 end;
 
 define class <type> (<object>) end;
-define class <singleton> (<type>) end;
 define class <union> (<type>) end;
+define class <direct-instance> (<type>) end;
+define class <subclass> (<type>) end;
+define class <singleton> (<type>) end;
 define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
 define class <class> (<type>)
@@ -802,6 +804,11 @@ define inline method %check-type
   else
     type-error(object, type);
   end;
+end;
+
+define method check-types
+    (vector :: <simple-object-vector>, type :: <type>)
+    => (checked :: <simple-object-vector>);
 end;
 
 define method instance?
