@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.4 1996/07/12 01:25:52 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.5 1996/08/10 20:07:44 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,73 +9,114 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 // reasonable way.
 
 define sealed class <target-environment> (<object>)
-  constant slot target-name :: <symbol>, init-keyword: #"target-name";
+  constant slot target-name :: <symbol>, required-init-keyword: #"target-name";
 
-  slot default-features :: <byte-string>;
+  constant slot default-features :: <byte-string>,
+    required-init-keyword: #"default-features";
 
-  slot heap-preamble :: <byte-string>;
-  slot align-directive :: <byte-string>; 
-  slot export-directive :: <byte-string>;
-  slot word-directive :: <byte-string>;
-  slot half-word-directive :: <byte-string>;
-  slot byte-directive :: <byte-string>; 
-  slot comment-token :: <byte-string>;
-  slot mangled-name-prefix :: <byte-string>;
+  constant slot heap-preamble :: <byte-string>,
+    required-init-keyword: #"heap-preamble";
+  constant slot align-directive :: <byte-string>, 
+    required-init-keyword: #"align-directive";
+  constant slot export-directive :: <byte-string>,
+    required-init-keyword: #"export-directive";
+  constant slot word-directive :: <byte-string>,
+    required-init-keyword: #"word-directive";
+  constant slot half-word-directive :: <byte-string>,
+    required-init-keyword: #"half-word-directive";
+  constant slot byte-directive :: <byte-string>, 
+    required-init-keyword: #"byte-directive";
+  constant slot comment-token :: <byte-string>,
+    required-init-keyword: #"comment-token";
+  constant slot mangled-name-prefix :: <byte-string>,
+    required-init-keyword: #"mangled-name-prefix";
 
-  slot object-filename-suffix :: <byte-string>;
-  slot library-filename-prefix :: <byte-string>;
-  slot library-filename-suffix :: <byte-string>;
-  slot executable-filename-suffix :: <byte-string>;
+  constant slot object-filename-suffix :: <byte-string>,
+    required-init-keyword: #"object-filename-suffix";
+  constant slot library-filename-prefix :: <byte-string>,
+    required-init-keyword: #"library-filename-prefix";
+  constant slot library-filename-suffix :: <byte-string>,
+    required-init-keyword: #"library-filename-suffix";
+  constant slot executable-filename-suffix :: <byte-string>,
+    required-init-keyword: #"executable-filename-suffix";
 
-  slot compile-c-command :: <byte-string>;
-  slot default-c-compiler-flags :: <byte-string>;
-  slot assembler-command :: <byte-string>;
-  slot link-library-command :: <byte-string>;
-  slot link-executable-command :: <byte-string>;
-  slot link-executable-flags :: <byte-string>;
-  slot make-command :: <byte-string>;
-  slot delete-file-command :: <byte-string>;
-  slot compare-file-command :: <byte-string>;
-  slot move-file-command :: <byte-string>;
+  constant slot compile-c-command :: <byte-string>,
+    required-init-keyword: #"compile-c-command";
+  constant slot default-c-compiler-flags :: <byte-string>,
+    required-init-keyword: #"default-c-compiler-flags";
+  constant slot assembler-command :: <byte-string>,
+    required-init-keyword: #"assembler-command";
+  constant slot link-library-command :: <byte-string>,
+    required-init-keyword: #"link-library-command";
+  constant slot link-executable-command :: <byte-string>,
+    required-init-keyword: #"link-executable-command";
+  constant slot link-executable-flags :: <byte-string>,
+    required-init-keyword: #"link-executable-flags";
+  constant slot make-command :: <byte-string>,
+    required-init-keyword: #"make-command";
+  constant slot delete-file-command :: <byte-string>,
+    required-init-keyword: #"delete-file-command";
+  constant slot compare-file-command :: <byte-string>,
+    required-init-keyword: #"compare-file-command";
+  constant slot move-file-command :: <byte-string>,
+    required-init-keyword: #"move-file-command";
 end class <target-environment>;
 
 define sealed domain make(singleton(<target-environment>));
 define sealed domain initialize(<target-environment>);
 
-define constant $target-attribute-description 
-    = vector(#"default-features", default-features-setter,
-	     #"heap-preamble", heap-preamble-setter,
-	     #"align-directive", align-directive-setter,
-	     #"export-directive", export-directive-setter,
-	     #"word-directive", word-directive-setter,
-	     #"half-word-directive", half-word-directive-setter,
-	     #"byte-directive", byte-directive-setter,
-	     #"comment-token", comment-token-setter,
-	     #"mangled-name-prefix", mangled-name-prefix-setter,
-
-	     #"object-filename-suffix", object-filename-suffix-setter,
-	     #"library-filename-prefix", library-filename-prefix-setter,
-	     #"library-filename-suffix", library-filename-suffix-setter,
-	     #"executable-filename-suffix", 
-	           executable-filename-suffix-setter,
-
-	     #"compile-c-command", compile-c-command-setter,
-	     #"default-c-compiler-flags", default-c-compiler-flags-setter,
-	     #"assembler-command", assembler-command-setter,
-	     #"link-library-command", link-library-command-setter,
-	     #"link-executable-command", link-executable-command-setter,
-	     #"link-executable-flags", link-executable-flags-setter,
-	     #"make-command", make-command-setter,
-	     #"delete-file-command", delete-file-command-setter,
-	     #"compare-file-command", compare-file-command-setter,
-	     #"move-file-command", move-file-command-setter);
+// Construct a sequence of keyword/values, and pass it to make().  Not
+// only will this work, it will even catch duplicate and missing
+// keywords (although the error message might not be readily
+// understood by the most casual observer)
+//
+define method as (cls == <target-environment>, header :: <header>)
+ => target :: <target-environment>;
+  // keyword-values must be some kind of sequence that add! adds
+  // elements to the end of
+  let keyword-values = make(<stretchy-vector>);
+  // ### Want keyed-by, but don't have it
+  let (state, limit, next, done?, cur-key, cur-elt)
+    = header.forward-iteration-protocol;
+  for (st = state then next(header, st), until: done?(header, st, limit))
+    let val = cur-elt(header, st);
+    let val = substring-replace(val, "\\t", "\t");
+    let val = substring-replace(val, "\\n", "\n");
+    let key = cur-key(header, st);
+    
+    add!(keyword-values, key);
+    if (key == #"target-name")  // hack--target-name: wants a symbol, 
+                                // but val is a byte-string.
+      add!(keyword-values, as(<symbol>, val));
+    else  // normal case
+      add!(keyword-values, val);
+    end if;
+  end for;
+  apply(make, <target-environment>, keyword-values);
+end method as;
 
 define method get-targets (filename :: <byte-string>)
  => targets :: <object-table>;
-  let stream = make(<file-stream>, direction: #"input", locator: filename);
-  local method make-section (section-name :: <symbol>)
-	 => section :: <target-environment>;
-	  make(<target-environment>, target-name: section-name);
-	end method make-section;
-  parse-ini-file(stream, $target-attribute-description, make-section);
+  let source = make(<source-file>, name: filename);
+  let result = make(<object-table>);
+
+  local 
+    method repeat (old-line :: <integer>, old-posn :: <integer>)
+     => targets :: <object-table>;
+      if (old-posn >= source.contents.size)
+	result;
+      else
+	let (header, line, posn) 
+	  = parse-header(source, line: old-line, position: old-posn);
+	if (~ header.empty?)
+	  // The "if" is so we can allow header blocks which are nothing
+	  // but comments
+	  let target = as(<target-environment>, header);
+	  result[target.target-name] := target;
+	end if;
+	repeat(line, posn);
+      end if;
+    end method repeat;
+
+  repeat(1, 0);
 end method get-targets;
