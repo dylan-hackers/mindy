@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.16 2000/10/21 03:39:42 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.17 2000/10/31 13:41:00 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -43,8 +43,7 @@ define library compiler-base
 #endif
   use String-extensions;
   use Table-extensions, export: all;
-  use file-system,
-    exclude: { file-system },
+  use base-file-system,
     rename: { base-file-system => file-system },
     export: all;
   
