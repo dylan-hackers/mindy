@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lose.c,v 1.1 1994/03/24 21:49:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lose.c,v 1.2 1994/06/11 17:15:57 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "mindy.h"
 
