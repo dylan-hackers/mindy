@@ -30,3 +30,5 @@ extern heapptr_t make_double_float(double value);
 extern double double_float_value(heapptr_t df);
 extern heapptr_t make_extended_float(long double value);
 extern long double extended_float_value(heapptr_t xf);
+
+extern heapptr_t initial_symbols;
