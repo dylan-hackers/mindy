@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.15 1995/06/06 01:17:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.16 1995/06/07 15:22:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -912,19 +912,21 @@ define method best-idea-of-class (type :: <union-ctype>)
   if (empty?(mems))
     #f;
   else
-    let result = base-class(mems.head);
-    for (mem in mems.tail)
-      let other-base-class = base-class(mem);
-      block (return)
-	for (super in result.precedence-list)
-	  if (csubtype?(mem, super))
-	    result := super;
-	    return();
+    block (punt)
+      let result = best-idea-of-class(mems.head) | punt(#f);
+      for (mem in mems.tail)
+	let other-base-class = best-idea-of-class(mem) | punt(#f);
+	block (return)
+	  for (super in result.precedence-list)
+	    if (csubtype?(mem, super))
+	      result := super;
+	      return();
+	    end;
 	  end;
 	end;
       end;
+      result;
     end;
-    result;
   end;
 end;
 
