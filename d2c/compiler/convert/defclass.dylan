@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.28 1995/06/09 16:13:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.29 1995/06/09 16:44:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -531,23 +531,6 @@ define method compute-cclass (defn :: <class-definition>)
 			   "functional classes and abstract classes without "
 			   "any slots");
 	return(#f);
-      end;
-      //
-      // Add <functional-object> to our direct superclasses unless it is
-      // already there.
-      let functional-object = dylan-value(#"<functional-object>");
-      unless (member?(functional-object, supers))
-	let object = dylan-value(#"<object>");
-	let object-pos = find-key(supers, curry(\==, object));
-	if (object-pos)
-	  supers
-	    := concatenate(add(copy-sequence(supers, start: 0,
-					     end: object-pos),
-			       functional-object),
-			   copy-sequence(supers, start: object-pos));
-	else
-	  supers := add(supers, functional-object);
-	end;
       end;
     else
       //
