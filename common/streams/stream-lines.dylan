@@ -2,7 +2,7 @@ module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading and writing by lines.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.2 1999/02/22 18:12:51 andreas Exp $
 
 //======================================================================
 //
@@ -53,14 +53,34 @@ define constant $newline-size :: <integer> = 1;
 
 #endif
 
-/// read-line -- Exported.
+/// read-line-safely -- Internal.
 ///
-define open generic read-line (stream :: <stream>,
-			       #key on-end-of-stream :: <object>)
+/// To avoid DOS attacks, 'read-line-into!' should not just call
+/// 'read-line' and accept arbitrarily long lines.  Instead, it calls
+/// 'read-line-safely' which behaves like 'read-line', but accepts a new
+/// keyword, 'size-limit':
+///
+/// If 'size-limit' is false, it is always ignored.
+/// Otherwise, it is an upper bound for the line's length, so that
+/// read-line-safely is free to cut off everything after it.
+///
+/// For streams other than <buffered-stream>, 'read-line-safely' can
+/// call 'read-line', because for these there is no danger of infinitely
+/// long lines.
+///
+/// 'read-line' implements methods for these streams and calls
+/// 'read-line-safely' for <buffered-stream>s.
+///
+define sealed generic read-line-safely
+    (stream :: <stream>,
+     #key on-end-of-stream :: <object>,
+          size-limit :: false-or(<integer>))
  => (string-or-eof :: <object>, newline? :: <boolean>);
 
-define method read-line (stream :: <buffered-stream>,
-			 #key on-end-of-stream :: <object> = $not-supplied)
+define inline method read-line-safely
+    (stream :: <buffered-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied,
+          size-limit :: false-or(<integer>) = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
@@ -86,6 +106,8 @@ define method read-line (stream :: <buffered-stream>,
 		      copy-sequence!(res, str-len, buf, start, buf-len);
 		      res;
 		    end;
+      let buf-length :: <buffer-index> = buf-end - buf-next;
+      let read-length :: <integer> = 0;
       while (#t)
 	for (i :: <integer> from buf-next below buf-end,
 	     until: (buf[i] == $newline-byte))
@@ -104,10 +126,15 @@ define method read-line (stream :: <buffered-stream>,
 	  #endif
 	  if (i == buf-end)
 	    buf.buffer-next := buf-end;
+	    read-length := read-length + buf-length;
+	    if (size-limit & (read-length > size-limit))
+	      exit-loop(res, #t);
+	    end if;
 	    buf := next-input-buffer(stream);
 	    if (~ buf) exit-loop(res, #f) end;
 	    buf-end := buf.buffer-end;
 	    buf-next := buf.buffer-next;
+	    buf-length := buf-end - buf-next;
 	  else
 	    // We don't return the newline, but we do consume it.
 	    buf.buffer-next := i + 1;
@@ -119,6 +146,30 @@ define method read-line (stream :: <buffered-stream>,
   cleanup
     release-input-buffer(stream);
   end block;
+end method read-line-safely;
+
+define inline method read-line-safely
+    (stream :: <stream>,
+     #key on-end-of-stream :: <object> = $not-supplied,
+          size-limit :: false-or(<integer>) = #f)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+  if (on-end-of-stream = $not-supplied)
+    read-line(stream);
+  else
+    read-line(stream, on-end-of-stream: on-end-of-stream);
+  end if;
+end method read-line-safely;
+
+/// read-line -- Exported.
+///
+define open generic read-line (stream :: <stream>,
+			       #key on-end-of-stream :: <object>)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+
+define method read-line (stream :: <buffered-stream>,
+			 #key on-end-of-stream :: <object> = $not-supplied)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+  read-line-safely(stream, on-end-of-stream: on-end-of-stream);
 end method read-line;
 
 define sealed domain read-line(<fd-stream>);
@@ -186,6 +237,9 @@ define open generic read-line-into! (stream :: <stream>, string :: <string>,
 /// though. (You need 4 versions, <buffered-stream>,<simple-sequence-stream>
 /// cross newlines-are-CRLF.) They're in RCS rev 1.3, if there's a need...
 ///
+/// This version of 'read-line-into!' is resistant against DOS attacks,
+/// because it uses 'read-line-safely'.
+///
 define method read-line-into! (stream :: <stream>, string :: <string>,
                                #key start :: <integer> = 0,
 			            on-end-of-stream :: <object> 
@@ -194,7 +248,8 @@ define method read-line-into! (stream :: <stream>, string :: <string>,
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block(exit)
     let (one-line, newline?)
-      = read-line(stream, on-end-of-stream: on-end-of-stream);
+      = read-line-safely(stream, on-end-of-stream: on-end-of-stream,
+			 size-limit: ~grow? & (string.size - start));
     if (grow?)
       exit(replace-subsequence!(string, one-line, start: start), newline?);
     else
