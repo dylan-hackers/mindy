@@ -17,7 +17,7 @@ define method put-char(c)
 end method put-char;
 
 define method repaint-line()
-  format-out("\r%s ", *command-line*);
+  format-out("\r%s%s ", *prompt*, *command-line*);
   for(i from 0 below *command-line*.size - *buffer-pointer* + 1)
     write-element(*standard-output*, '\b');
   end for;
@@ -43,13 +43,15 @@ end method make;
 
 make(<command>, 
      name: "Help", 
-     command: method()
+     command: method(parameter)
                   format-out("Help not yet available :).\r\n");
                   force-output(*standard-output*);
               end);
+make(<command>, name: "Set Prompt", command: method(x) *prompt* := x end);
 
 define variable *command-line* = "";
 define variable *buffer-pointer* = 0;
+define variable *prompt* = "gwydion> ";
 
 define method self-insert-command(c)
   *command-line* := 
@@ -61,17 +63,23 @@ define method self-insert-command(c)
 end method self-insert-command;
 
 define method run-command(c)
-  format-out("\r\nThe command entered was: '%s'\r\n", *command-line*);
-  force-output(*standard-output*);
-
-  for(i in *command-table*)
-    if(case-insensitive-equal(*command-line*, i.name))
-      i.command();
-    end if;
-  end for;
+  complete-command(c);
+  format-out("\r\n");
+  block(done)
+    for(i in *command-table*)
+      if(case-insensitive-equal(subsequence(*command-line*, 
+                                            end: i.name.size), i.name))
+        to-cooked();
+        i.command(copy-sequence(*command-line*, start: i.name.size + 1));
+        to-raw();
+        done();
+      end if;
+    end for;
+  end block;
 
   *command-line* := "";
   *buffer-pointer* := 0;
+  repaint-line();
 end method run-command;
 
 define method forward-char-command(c)
@@ -159,11 +167,15 @@ define variable *key-bindings* = make(<simple-vector>,
 *key-bindings*[5] := end-of-line;
 *key-bindings*[11] := kill-to-end-of-line;
 
+define variable to-raw    = identity;
+define variable to-cooked = identity;
+
+
 define function run-command-processor()
   let running = #t;
   make(<command>, 
        name: "Exit", 
-       command: method()
+       command: method(parameter)
                     running := #f;
                 end);
 
@@ -172,13 +184,20 @@ define function run-command-processor()
 
   let new-termios = make(<termios>);
   cfmakeraw(new-termios);
-  tcsetattr(*standard-input*.file-descriptor, $TCSANOW, new-termios);
 
+  to-raw    := curry(tcsetattr, *standard-input*.file-descriptor, 
+                     $TCSANOW, new-termios);
+  to-cooked := curry(tcsetattr, *standard-input*.file-descriptor, 
+                     $TCSANOW, old-termios);
+
+  to-raw();
+
+  repaint-line();
   while(running)
     let c = read-element(*standard-input*);
-    force-output(*standard-output*);
     *key-bindings*[as(<integer>,c)](c);
+    force-output(*standard-output*);
   end while;
 
-  tcsetattr(*standard-input*.file-descriptor, $TCSANOW, old-termios);
+  to-cooked();
 end;

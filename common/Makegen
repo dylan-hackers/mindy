@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.21 2003/03/28 08:08:33 housel Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.22 2003/04/16 21:54:57 andreas Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -45,6 +45,10 @@ push(@dbc_only_commands,
 &compile_subdirs(@post_melange_libraries_needed_to_bootstrap);
 
 unless ($enable_bootstrap) {
-    &compile_subdirs(@newer_libraries);
+  &compile_subdirs(@newer_libraries);
+  if($features{'compiled_for_unix'}) {
+    &compile_subdirs('command-processor');
+  }
 }
+
 
