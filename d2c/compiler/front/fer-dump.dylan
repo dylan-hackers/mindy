@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.12 1995/04/25 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.13 1995/04/25 20:59:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -391,5 +391,5 @@ end;
 
 define method dump
     (exit-function :: <exit-function>, stream :: <stream>) => ();
-  format(stream, "EXIT-FUN[%d]", exit-function.target-region.id);
+  format(stream, "EXIT-FUN[%d]", exit-function.id);
 end;
