@@ -37,12 +37,20 @@ define constant $default-defines
       "__STDC__", "",
       "_POSIX_", ""];
 
-define constant win32-include-directories
-  = #["/msdev/include"];
+// Set up the search path for .h files
+begin
+  let include-env-variable = getenv("include") | "";
 
-for (dir in win32-include-directories)
-  push-last(include-path, dir);
-end for;
+  // Translate backslashes to front slashes, because if we try to use
+  // backslashes in string literals (esp. inside of a "c-include"
+  // statement), it does bad things.
+  let include-env-variable = translate(include-env-variable, "\\\\", "/");
+
+  let (#rest include-dirs) = split(";", include-env-variable);
+  for (dir in include-dirs)
+    push-last(include-path, dir);
+  end for;
+end;
 
 
 *handle-//-comments* := #t;
