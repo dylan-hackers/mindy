@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.31 1994/06/11 02:15:18 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.32 1994/06/11 15:59:07 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -55,7 +55,7 @@ define module Builtin-Stuff
     find-method, floor, floor/, format, function-arguments,
     generic-function-mandatory-keywords, generic-function-methods,
     getc, grab-lock,
-    handler-description, handler-function, handler-next, handler-test,
+    handler-function, handler-init-args, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     kill-thread,
