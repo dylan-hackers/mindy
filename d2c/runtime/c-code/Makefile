@@ -1,4 +1,5 @@
 
+AS = /bin/as
 CC = gcc
 CPPFLAGS = -I..
 CFLAGS = -g
