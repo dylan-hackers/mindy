@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.39 1996/02/16 18:05:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.40 1996/02/18 18:33:17 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -827,6 +827,12 @@ define method spew-object
     (object :: <singleton-ctype>, state :: <state>) => ();
   spew-instance(specifier-type(#"<singleton>"), state,
 		singleton-object: object.singleton-value);
+end;
+
+define method spew-object
+    (object :: <direct-instance-ctype>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<direct-instance>"), state,
+		direct-instance-of: object.base-class);
 end;
 
 define method spew-object
