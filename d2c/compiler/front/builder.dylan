@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.2 1994/12/13 14:19:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.3 1994/12/16 16:34:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -217,3 +217,8 @@ define generic build-method-body
      result-vars :: type-or(<leaf>, <list>))
  => res :: <leaf>;
 
+
+define generic make-hairy-method-literal
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     signature :: <signature>, main-entry :: <leaf>)
+ => res :: <leaf>;
