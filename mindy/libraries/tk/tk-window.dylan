@@ -165,13 +165,15 @@ end method unpack;
 // These variables store information about how to make new <window>s.  They
 // are updated by "define-widget" below.
 //
-define constant options-table :: <dictionary> = make(<table>);
-define constant tk-command-table :: <dictionary> = make(<table>);
+define constant options-table :: <mutable-explicit-key-collection> 
+  = make(<table>);
+define constant tk-command-table :: <mutable-explicit-key-collection> 
+  = make(<table>);
 define variable pack-options :: <sequence>
   = #[#"pack", #"name",
 	#"after", #"anchor", #"before", #"expand", #"fill", #"in",
 	#"padx", #"pady", #"side"];
-define variable pack-options-table :: <dictionary>
+define variable pack-options-table :: <mutable-explicit-key-collection>
   = block ()
       let result = make(<object-table>);
       for (option in pack-options)
@@ -192,7 +194,8 @@ define method define-widget
   end for;
 end method define-widget;
 
-define method valid-option? (key :: <symbol>, options :: <dictionary>)
+define method valid-option? 
+    (key :: <symbol>, options :: <mutable-explicit-key-collection>)
   element(options, key, default: #f);
 end method valid-option?;
 

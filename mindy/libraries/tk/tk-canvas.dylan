@@ -31,7 +31,8 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 //======================================================================
 
 define class <canvas> (<window>)
-  slot items :: <dictionary>, init-function: curry(make, <equal-table>);
+  slot items :: <mutable-explicit-key-collection>,
+    init-function: curry(make, <equal-table>);
 end class;
 
 define-widget(<canvas>, "canvas",

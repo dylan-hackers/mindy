@@ -59,7 +59,8 @@ define method tk-as
   if (value) "1" else "0" end if;
 end method tk-as;
 
-define constant tk-symbol-table :: <dictionary> = make(<object-table>);
+define constant tk-symbol-table :: <mutable-explicit-key-collection> 
+  = make(<object-table>);
 define method tk-as
     (cls == <string>, value :: <symbol>) => (result :: <string>);
   element(tk-symbol-table, value, default: #f)
@@ -93,7 +94,7 @@ define method tk-as
     for (num = num then next,
 	 result = #() then pair(as(<character>,remainder + zero-byte), result),
 	 (next, remainder) = truncate/(num, 10) then truncate/(next, 10),
-	 while num > 0)
+	 while: num > 0)
     finally
       as(<byte-string>, if (neg) pair('-', result) else result end if)
     end for;
@@ -106,7 +107,7 @@ define method tk-as
   for (result = 0 then if (ch == '-') negative := #t; result
 		       else (result * 10) + as(<integer>, ch) - zero-byte
 		       end if,
-       ch in str, until ch < '0' | ch > '9')
+       ch in str, until: ch < '0' | ch > '9')
   finally if (negative) -result else result end if
   end for;
 end method tk-as;
