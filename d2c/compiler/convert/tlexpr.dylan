@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.7 1995/11/08 16:49:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.8 1995/12/04 16:23:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,18 +23,33 @@ define method process-top-level-form (form :: <expression>) => ();
 end;
 
 define method process-top-level-form (form :: <begin>) => ();
-  block (return)
-    for (subform in form.begin-body,
-	 index from 0)
-      if (instance?(subform, <local-declaration>))
-	let body = copy-sequence(form.begin-body, start: index);
-	let expr = make(<begin>, body: body);
-	add!(*Top-Level-Forms*, make(<expression-tlf>, expression: expr));
-	return();
-      else
-	process-top-level-form(subform);
+  local
+    method process (forms :: <simple-object-vector>)
+	=> new-body :: false-or(<simple-object-vector>);
+      block (return)
+	for (subform in forms,
+	     index from 0)
+	  let expansion = expand(subform, #f);
+	  if (expansion)
+	    let new-body = process(expansion);
+	    if (new-body)
+	      return(concatenate(new-body,
+				 copy-sequence(forms, start: index + 1)));
+	    end;
+	  elseif (instance?(subform, <local-declaration>))
+	    return(copy-sequence(forms, start: index));
+	  else
+	    process-top-level-form(subform);
+	  end;
+	finally
+	  #f;
+	end;
       end;
     end;
+  let new-body = process(form.begin-body);
+  if (new-body)
+    let expr = make(<begin>, body: new-body);
+    add!(*Top-Level-Forms*, make(<expression-tlf>, expression: expr));
   end;
 end;
 
