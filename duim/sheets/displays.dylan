@@ -82,8 +82,8 @@ define open abstract primary class <basic-display>
     init-keyword: units:;
   sealed slot display-pixel-width  = 1024;
   sealed slot display-pixel-height =  768;
-  sealed slot display-mm-width = #f  = 1024;
-  sealed slot display-mm-height = #f =  768;
+  sealed slot display-mm-width = #f;
+  sealed slot display-mm-height = #f;
   sealed slot display-pixels-per-point = 1;
 end class <basic-display>;
 
