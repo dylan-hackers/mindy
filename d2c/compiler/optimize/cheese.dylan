@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.65 1995/05/26 10:52:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.66 1995/05/26 11:22:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2627,8 +2627,39 @@ define method replace-placeholder
     replace-placeholder(component, dep, dep.source-exp);
   end;
   select (op.name)
-    #"vector" => #f;
-    #"values-sequence" => #f;
+    #"vector" => 
+      let builder = make-builder(component);
+      let assign = dep.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+      let len = for (dep = op.depends-on then dep.dependent-next,
+		     count from 0,
+		     while: dep)
+		finally
+		  count;
+		end;
+      let vec = make-local-var(builder, #"vector",
+			       specifier-type(#"<simple-object-vector>"));
+      build-assignment
+	(builder, policy, source, vec,
+	 make-unknown-call
+	   (builder, dylan-defn-leaf(builder, #"make"), #f,
+	    list(dylan-defn-leaf(builder, #"<simple-object-vector>"),
+		 make-literal-constant(builder, as(<ct-value>, size:)),
+		 make-literal-constant(builder, as(<ct-value>, len)))));
+      for (dep = op.depends-on then dep.dependent-next,
+	   index from 0,
+	   while: dep)
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-unknown-call
+	     (builder, dylan-defn-leaf(builder, #"element-setter"), #f,
+	      list(dep.source-exp, vec,
+		   make-literal-constant(builder, as(<ct-value>, index)))));
+      end;
+      insert-before(component, assign, builder-result(builder));
+      replace-expression(component, dep, vec);
+
     #"make-catcher", #"disable-catcher", #"throw" =>
       let builder = make-builder(component);
       replace-expression
