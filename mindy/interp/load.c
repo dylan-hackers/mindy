@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.6 1994/04/10 16:24:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.7 1994/04/10 19:00:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -727,7 +727,7 @@ static obj_t fop_define_class(struct load_info *info)
 
     if (var->value != obj_Unbound)
 	lose("Defining a class in an already initialized variable?");
-    var->value = make_defined_class(name);
+    var->value = make_defined_class(name, info->library);
 
     while ((slot = read_thing(info)) != obj_False)
 	define_variable(info->module, slot, var_Method);
