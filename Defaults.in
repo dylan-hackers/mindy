@@ -24,6 +24,7 @@ if("@with_site_dylan_prefix@" ne "no") {
 }
 $sitelibdir = "$sitelibdirprefix/lib/dylan/@version@/@d2c_target@/dylan-user";
 $mandir = "@mandir@";
+$datadir = "@datadir@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";

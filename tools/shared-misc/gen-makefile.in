@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.28 2001/09/02 08:11:33 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.29 2001/09/25 03:38:48 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -159,7 +159,7 @@ if ($ARGV[0] =~ /-p(.*)/) {
     shift(@ARGV);
 } else {
     $platforms_dot_descr = ($ENV{'DYLANDIR'} || '@prefix@') .
-        '/etc/platforms.descr';
+        '/share/dylan/platforms.descr';
 }
 if (@ARGV == 0) {
     push(@ARGV, '.');

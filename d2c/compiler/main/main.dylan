@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.60 2001/09/13 19:54:47 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.61 2001/09/25 03:38:48 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -182,7 +182,7 @@ define constant $dylan-user-dir = getenv("DYLANUSERDIR") | getenv("DYLANDIR") | 
 
 // Platform parameter database.
 define constant $default-targets-dot-descr
-  = concatenate($dylan-dir, "/etc/platforms.descr");
+  = concatenate($dylan-dir, "/share/dylan/platforms.descr");
 
 // Library search path.
 define constant $default-dylan-path
