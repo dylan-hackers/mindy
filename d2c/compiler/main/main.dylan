@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.29 1999/11/17 20:32:33 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.30 1999/11/21 19:15:44 robmyers Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -557,9 +557,13 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 	if (prefixed-filename)
 	  log-dependency(prefixed-filename);
 	else
+	#if (macos)
+		#t;// Do nothing
+	#else
 	  compiler-fatal-error("Can't find object file %=, and thus can't"
 				 " record dependency info.", 
 			       file);
+	#endif
 	end if;
       end if;
     else  // assumed a Dylan file, with or without a ".dylan" extension
@@ -749,7 +753,7 @@ define method compile-all-files (state :: <main-unit-state>) => ();
 	let base-name = file.base-filename;
 	let c-name = concatenate(base-name, ".c");
 	#if (macos)
-		let temp-c-name = c-name;
+		let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
 	#else
 		let temp-c-name = concatenate(c-name, "-temp");
 	#endif
@@ -818,7 +822,7 @@ define method build-library-inits (state :: <main-unit-state>) => ();
     begin
       let c-name = concatenate(state.unit-mprefix, "-init.c");
       #if (macos)
-			let temp-c-name = c-name;
+			let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
 	  #else
 			let temp-c-name = concatenate(c-name, "-temp");
 	  #endif
@@ -854,7 +858,7 @@ define method build-local-heap-file (state :: <main-unit-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
   let c-name = concatenate(state.unit-mprefix, "-heap.c");
   #if (macos)
-		let temp-c-name = c-name;
+		let temp-c-name = concatenate( state.unit-lid-file.filename-prefix, c-name );
   #else
 		let temp-c-name = concatenate(c-name, "-temp");
   #endif
