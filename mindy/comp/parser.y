@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.15 1994/10/05 20:55:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.16 1994/12/16 19:19:41 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -198,11 +198,13 @@ static void pop_yacc_recoveries(int count);
 
 /* These tokens sometimes have special significance and are sometimes just
    keywords */
-%token <token> PREFIX_OPTION
-%token <token> IMPORT_OPTION
-%token <token> EXCLUDE_OPTION
-%token <token> EXPORT_OPTION
-%token <token> RENAME_OPTION
+%token <token> PREFIX_KEYWORD
+%token <token> IMPORT_KEYWORD
+%token <token> EXCLUDE_KEYWORD
+%token <token> EXPORT_KEYWORD
+%token <token> RENAME_KEYWORD
+%token <token> UNTIL_KEYWORD
+%token <token> WHILE_KEYWORD
 %type  <token> keyword keyword_opt
 
 %type <nothing> dylan_file dylan_headers header_list
@@ -215,6 +217,7 @@ static void pop_yacc_recoveries(int count);
 %type <constituent> constituent defining_form local_declaration
 %type <constituent> class_definition generic_function_definition
 %type <bindings> bindings
+%type <token> variable_name variable_name_opt
 %type <param_list> variables gf_parameters
 %type <param_list> more_gf_parameters gf_rest_parameters
 %type <param_list> gf_keyword_parameters_list gf_keyword_parameters_opt
@@ -347,7 +350,7 @@ flags:
 local_declaration:
 	LET bindings
 	{ free($1); $$ = make_let($2); }
-    |	LET HANDLER SYMBOL EQUAL expression
+    |	LET HANDLER variable_name EQUAL expression
 	{ free($1); free($2); free($4);
 	  $$ = make_handler(make_varref(make_id($3)), $5, NULL);
 	}
@@ -376,9 +379,41 @@ variables:
 ;
 
 variable:
-	SYMBOL { $$ = make_param(make_id($1), NULL); }
-    |	SYMBOL COLON_COLON operand
+	variable_name { $$ = make_param(make_id($1), NULL); }
+    |	variable_name COLON_COLON operand
 	{ free($2); $$ = make_param(make_id($1), $3); }
+;
+
+variable_name:
+	SYMBOL
+    |	ABOVE
+    |	ABSTRACT
+    |	BY
+    |	CLASS
+    |	CONCRETE
+    |	CONSTANT
+    |	FREE
+    |	FROM
+    |	IN
+    |	INHERITED
+    |	INSTANCE
+    |	KEYED_BY
+    |	KEYWORD_RESERVED_WORD
+    |	OPEN
+    |	PRIMARY
+    |	SEALED
+    |	SLOT
+    |	SUBCLASS
+    |	THEN
+    |	TO
+    |	VARIABLE
+    |	VIRTUAL
+    |	MODULE
+    |	LIBRARY
+    |	EXPORT
+    |	CREATE
+    |	USE
+    |	ALL
 ;
 
 local_methods:
@@ -393,11 +428,13 @@ local_method:
 
 keyword:
 	KEYWORD
-    |	PREFIX_OPTION
-    |	IMPORT_OPTION
-    |	EXCLUDE_OPTION
-    |	EXPORT_OPTION
-    |	RENAME_OPTION
+    |	PREFIX_KEYWORD
+    |	IMPORT_KEYWORD
+    |	EXCLUDE_KEYWORD
+    |	EXPORT_KEYWORD
+    |	RENAME_KEYWORD
+    |	UNTIL_KEYWORD
+    |	WHILE_KEYWORD
 ;
 
 expression:
@@ -427,13 +464,13 @@ operand:
 
 leaf:
 	constant { $$ = make_literal_ref($1); }
-    |	SYMBOL { $$ = make_varref(make_id($1)); }
+    |	variable_name { $$ = make_varref(make_id($1)); }
     |	leaf LBRACKET arguments_opt RBRACKET
 	{ free($2); free($4); $$ = make_aref_or_element($1, $3); }
     |	leaf LPAREN arguments_opt RPAREN
 	{ free($2); free($4); $$ = make_function_call($1, $3); }
     |	anonymous_method { $$ = make_method_ref($1); }
-    |	leaf DOT SYMBOL
+    |	leaf DOT variable_name
 	{ free($2);
 	  $$ = make_dot_operation($1, make_varref(make_id($3)));
 	}
@@ -505,9 +542,10 @@ statement:
 	body_opt END
 	{ free($1); free($4); $$ = make_body_expr($3);
           pop_yacc_recoveries(1); }
-    |	BLOCK LPAREN symbol_opt RPAREN { push_yacc_recovery(END);
-					 push_yacc_recovery(CLEANUP);
-					 push_yacc_recovery(EXCEPTION); }
+    |	BLOCK LPAREN variable_name_opt RPAREN
+	{ push_yacc_recovery(END);
+	  push_yacc_recovery(CLEANUP);
+	  push_yacc_recovery(EXCEPTION); }
 	body block_epilog_opt END block_opt
 	{ free($2); free($4); free($8); pop_yacc_recoveries(3); 
 	  $$ = make_block($1->line, $3 ? make_id($3) : NULL, $6, $7);
@@ -567,7 +605,11 @@ condition_body:
 for_header:
 	UNTIL expression
 	{ free($1); $$ = make_for_header($2); }
+    |	UNTIL_KEYWORD expression
+	{ free($1); $$ = make_for_header($2); }
     |	WHILE expression
+	{ free($1); $$ = make_for_header(make_not($2)); }
+    |	WHILE_KEYWORD expression
 	{ free($1); $$ = make_for_header(make_not($2)); }
     |	for_clause
 	{ $$ = push_for_clause($1, make_for_header(NULL)); }
@@ -588,7 +630,7 @@ exception_clauses:
 ;
 
 exception_clause:
-	EXCEPTION SYMBOL body
+	EXCEPTION variable_name body
 	{ free($1);
 	  $$ = make_exception_clause(make_varref(make_id($2)),
 				     NULL, NULL, $3);
@@ -597,8 +639,8 @@ exception_clause:
 	{ free($1); free($2); free($5);
 	  $$ = make_exception_clause($3, NULL, $4, $6);
 	}
-    |	EXCEPTION LPAREN SYMBOL COLON_COLON expression property_list_opt RPAREN
-		body
+    |	EXCEPTION LPAREN variable_name COLON_COLON expression
+		property_list_opt RPAREN body
 	{ free($1); free($2); free($4); free($7);
 	  $$ = make_exception_clause($5, make_id($3), $6, $8);
 	}
@@ -670,7 +712,7 @@ to_part_opt:
 ;
 
 class_definition:
-	SYMBOL LPAREN superclasses RPAREN
+	variable_name LPAREN superclasses RPAREN
 		class_guts_opt END class_opt symbol_opt
 	{ struct id *id = make_id($1);
 	  verify_symbol(id, $8); free($2); free($4); free($6);
@@ -706,7 +748,7 @@ class_guts:
 ;
 
 slot_spec:
-	flags allocation SLOT SYMBOL slot_type_opt property_list_opt
+	flags allocation SLOT variable_name slot_type_opt property_list_opt
 	{
 	    int line = $3->line;
 	    free($3);
@@ -725,7 +767,7 @@ required_opt:
 ;
 
 inherited_spec:
-	INHERITED SLOT SYMBOL property_list_opt
+	INHERITED SLOT variable_name property_list_opt
 	{ free($1); free($2); $$ = make_inherited_spec(make_id($3), $4); }
 ;
 
@@ -757,7 +799,7 @@ property_list:
 ;
 
 generic_function_definition:
-	SYMBOL LPAREN gf_parameters RPAREN gf_suffix
+	variable_name LPAREN gf_parameters RPAREN gf_suffix
 	{ free($2); free($4);
 	  $$ = make_define_generic(make_id($1), $3, $5);
 	}
@@ -822,9 +864,9 @@ gf_keyword_parameters:
 ;
 
 gf_keyword_parameter:
-	keyword symbol_opt keyword_parameter_type
+	keyword variable_name_opt keyword_parameter_type
 	{ $$ = make_keyword_param($1, $2 ? make_id($2) : NULL, $3, NULL); }
-    |	SYMBOL keyword_parameter_type
+    |	variable_name keyword_parameter_type
 	{ $$ = make_keyword_param(NULL, make_id($1), $2, NULL); }
 ;
 
@@ -834,7 +876,7 @@ anonymous_method:
 ;
 
 named_method:
-	SYMBOL method_description END method_opt symbol_opt
+	variable_name method_description END method_opt variable_name_opt
 	{ struct id *id = make_id($1);
 	  free($3); verify_symbol(id, $5);
 	  $$ = set_method_name(id, $2);
@@ -882,8 +924,8 @@ return_type_list_head:
 ;
 
 return_type_element:
-	SYMBOL { free($1); $$ = NULL; }
-    |	SYMBOL COLON_COLON expression { free($1); free($2); $$ = $3; }
+	variable_name { free($1); $$ = NULL; }
+    |	variable_name COLON_COLON expression { free($1); free($2); $$ = $3; }
 ;
 
 parameters:
@@ -902,11 +944,11 @@ more_parameters:
 ;
 
 positional_parameter:
-	SYMBOL
+	variable_name
 	{ $$ = make_param(make_id($1), NULL); }
-    |	SYMBOL COLON_COLON expression
+    |	variable_name COLON_COLON expression
 	{ free($2); $$ = make_param(make_id($1), $3); }
-    |	SYMBOL EQUAL_EQUAL expression
+    |	variable_name EQUAL_EQUAL expression
 	{ free($2); $$ = make_param(make_id($1), make_singleton($3)); }
 ;
 
@@ -920,7 +962,7 @@ next_parameters:
 ;
 
 next_parameter:
-	NEXT SYMBOL { free($1); $$ = make_id($2); }
+	NEXT variable_name { free($1); $$ = make_id($2); }
 ;
 
 rest_parameters:
@@ -933,7 +975,7 @@ rest_parameters:
 ;
 
 rest_parameter:
-	REST SYMBOL { free($1); $$ = make_id($2); }
+	REST variable_name { free($1); $$ = make_id($2); }
 ;
 
 keyword_parameters_list:
@@ -961,9 +1003,10 @@ keyword_parameters:
 ;
 
 keyword_parameter:
-	keyword_opt SYMBOL keyword_parameter_type keyword_parameter_default
+	keyword_opt variable_name keyword_parameter_type
+		keyword_parameter_default
 	{ $$ = make_keyword_param($1, make_id($2), $3, $4); }
-    |	keyword_opt SYMBOL LPAREN expression RPAREN
+    |	keyword_opt variable_name LPAREN expression RPAREN
 	{ free($3); free($5);
 	  $$ = make_keyword_param($1, make_id($2), NULL, $4); }
 ;
@@ -984,7 +1027,7 @@ keyword_parameter_default:
 ;
 
 module_definition:
-	SYMBOL module_clauses_opt END module_opt symbol_opt
+	variable_name module_clauses_opt END module_opt symbol_opt
 	{ if ($5) {
 	      if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
 		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
@@ -1032,7 +1075,7 @@ create_clause:
 ;
 
 use_clause:
-	USE SYMBOL module_use_options
+	USE variable_name module_use_options
 	{ free($1); $$ = make_use_clause($2, $3); }
 ;
 
@@ -1051,14 +1094,14 @@ module_use_option:
 ;
 
 prefix_option:
-	PREFIX_OPTION STRING
+	PREFIX_KEYWORD STRING
 	{ $$ = make_prefix_option($2); free($1); }
 ;
 
 import_option:
-	IMPORT_OPTION ALL
+	IMPORT_KEYWORD ALL
 	{ $$ = make_use_option(useopt_IMPORT_ALL); free($1); free($2); }
-    |	IMPORT_OPTION LBRACE imports_opt RBRACE
+    |	IMPORT_KEYWORD LBRACE imports_opt RBRACE
 	{ $$ = (struct use_option *) $3; free($1); free($2); free($4); }
 ;
 
@@ -1068,40 +1111,40 @@ imports_opt:
 ;
 
 imports:
-	SYMBOL
+	variable_name
 	{ $$ = add_import(make_import_option(), $1, NULL); }
-    |	SYMBOL ARROW SYMBOL
+    |	variable_name ARROW variable_name
 	{ $$ = add_import(make_import_option(), $1, $3); free($2); }
-    |	imports COMMA SYMBOL
+    |	imports COMMA variable_name
 	{ $$ = add_import($1, $3, NULL); free($2); }
-    |	imports COMMA SYMBOL ARROW SYMBOL	
+    |	imports COMMA variable_name ARROW variable_name	
 	{ $$ = add_import($1, $3, $5); free($2); free($4); }
 ;
 
 exclude_option:
-	EXCLUDE_OPTION variable_name_set
+	EXCLUDE_KEYWORD variable_name_set
 	{ $$ = make_exclude_option($2); free($1); }
 ;
 
 export_option:
-	EXPORT_OPTION ALL
+	EXPORT_KEYWORD ALL
 	{ $$ = make_use_option(useopt_EXPORT_ALL); free($1); free($2); }
-    |	EXPORT_OPTION variable_name_set
+    |	EXPORT_KEYWORD variable_name_set
 	{ $$ = make_export_option($2); free($1); }
 ;
 
 rename_option:
-	RENAME_OPTION LBRACE RBRACE
+	RENAME_KEYWORD LBRACE RBRACE
 	{ $$ = make_rename_option(make_renamings());
 	  free($1); free($2); free($3); }
-    |	RENAME_OPTION LBRACE rename_specs RBRACE
+    |	RENAME_KEYWORD LBRACE rename_specs RBRACE
 	{ $$ = make_rename_option($3); free($1); free($2); free($4); }
 ;
 
 rename_specs:
-	SYMBOL ARROW SYMBOL
+	variable_name ARROW variable_name
 	{ $$ = add_renaming(make_renamings(), $1, $3); free($2); }
-    |	rename_specs COMMA SYMBOL ARROW SYMBOL
+    |	rename_specs COMMA variable_name ARROW variable_name
 	{ $$ = add_renaming($1, $3, $5); free($2); free($4); }
 ;
 
@@ -1112,13 +1155,14 @@ variable_name_set:
 ;
 
 variable_names:
-	SYMBOL		{ $$ = add_variable_name(make_variable_names(), $1); }
-    |	variable_names COMMA SYMBOL
+	variable_name
+	{ $$ = add_variable_name(make_variable_names(), $1); }
+    |	variable_names COMMA variable_name
 	{ $$ = add_variable_name($1, $3); free($2); }
 ;
 
 library_definition:
-	SYMBOL library_clauses_opt END library_opt symbol_opt
+	variable_name library_clauses_opt END library_opt symbol_opt
 	{ if ($5) {
 	      if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
 		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
@@ -1168,6 +1212,7 @@ semi_opt:	{ $$ = NULL; } | SEMI { free($1); $$ = NULL; } ;
 arrow_opt:	{ $$ = NULL; } | ARROW { free($1); $$ = NULL; } ;
 
 symbol_opt:	{ $$ = NULL; } | SYMBOL { $$ = $1; } ;
+variable_name_opt: { $$ = NULL; } | variable_name { $$ = $1; } ;
 by_part_opt:	{ $$ = NULL; } | by_part { $$ = $1; } ;
 else_part_opt:	{ $$ = NULL; } | else_part { $$ = $1; } ;
 final_part_opt:	{ $$ = NULL; } | final_part { $$ = $1; } ;
