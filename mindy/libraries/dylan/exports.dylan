@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.44 1994/10/18 00:49:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.45 1994/10/25 20:24:19 wlott Exp $
 
 //======================================================================
 //
@@ -82,7 +82,7 @@ define module Builtin-Stuff
     raw-exit, release-lock, remove-method, round, round/,
     signal-event, singleton, size, slot-allocation, slot-descriptors,
     slot-getter, slot-getter-method, slot-initialized?, slot-name, slot-setter,
-    slot-setter-method, slot-type, slot-value, spawn-thread,
+    slot-setter-method, slot-type, slot-value, slot-value-setter, spawn-thread,
     sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate, truncate/,
     union,
@@ -292,6 +292,6 @@ define module Introspection
 	     class-name, function-name,
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
-	     slot-type, slot-value},
+	     slot-type, slot-value, slot-value-setter},
     export: all;
 end;
