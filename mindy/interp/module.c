@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.9 1994/06/16 22:10:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.10 1994/06/26 22:38:26 wlott Exp $
 *
 * This file does whatever.
 *
@@ -331,12 +331,14 @@ struct library *find_library(obj_t name, boolean createp)
 	struct defn *defn = malloc(sizeof(struct defn));
 	struct use *use1 = malloc(sizeof(struct use));
 	struct use *use2 = malloc(sizeof(struct use));
-	struct module *module = make_module(symbol("Dylan-User"), NULL);
+	obj_t dylan_user = symbol("Dylan-User");
+	struct module *module = make_module(dylan_user, NULL);
 
 	library = make_library(name);
 
 	module->defn = defn;
 
+	defn->name = dylan_user;
 	defn->use = use1;
 	defn->exports = obj_Nil;
 	defn->creates = obj_Nil;
