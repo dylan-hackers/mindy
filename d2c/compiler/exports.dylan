@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.42 1995/04/30 04:30:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.43 1995/04/30 05:57:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -754,7 +754,7 @@ define module define-functions
     compute-signature,
     function-defn-signature-setter, function-defn-hairy?-setter,
     <generic-definition>, ct-sorted-applicable-methods,
-    method-defn-leaf-setter,
+    method-defn-leaf-setter, method-defn-inline-expansion,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
     <getter-method-definition>, <setter-method-definition>,
@@ -835,6 +835,9 @@ define module cheese
   use builder-interface;
   use policy;
   use define-functions;
+  use parse-tree, import: {<method-parse>};
+  use lexenv;
+  use fer-convert;
 end;
 
 define module stack-analysis
