@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.54 1996/09/15 15:33:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.55 1996/10/06 14:09:19 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -78,12 +78,10 @@ end;
 define module utils
   use common;
   use standard-io;
-#if (mindy)
   use Introspection, import: {object-address, class-name};
   use System, import: {copy-bytes};
-#else
-  use Introspection, import: {class-name};
-  use System, import: {object-address, copy-bytes, \call-out};
+#if (~mindy)
+  use System, import: {\call-out};
 #endif
 
   // Stuff defined in utils
