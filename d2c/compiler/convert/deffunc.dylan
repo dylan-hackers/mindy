@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.23 1995/06/01 14:35:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.24 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,6 +15,12 @@ define abstract class <function-definition> (<abstract-constant-definition>)
   // finalization.
   slot function-defn-hairy? :: <boolean>,
     init-value: #f, init-keyword: hairy:;
+  //
+  // The ctv for this function.  #f if we can't represent it (because the
+  // function is hairy) and #"not-computed-yet" if we haven't computed it yet.
+  slot function-defn-ct-value
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
   //
   // The FER transformers for this function.  Gets initialized from the
   // variable.
@@ -53,10 +59,10 @@ define class <generic-definition> (<function-definition>)
   // Use generic-defn-seal-info instead.  See "method-tree".
   slot %generic-defn-seal-info :: <list>;
   //
-  // The leaf for the discriminator function, or #f if the generic function
-  // isn't sufficiently static to be able to build one.
-  slot generic-defn-discriminator-leaf :: union(<function-literal>, <false>),
-    init-value: #f;
+  // The discriminator ct-value, if there is one.
+  slot %generic-defn-discriminator
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
 end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
@@ -81,12 +87,6 @@ define class <implicit-generic-definition>
 end;
 
 define abstract class <abstract-method-definition> (<function-definition>)
-  //
-  // The leaf for this method, of #f if it is sufficiently hairy that
-  // it can't me represented as a <method-literal>.  Filled in by fer
-  // conversion.
-  slot method-defn-leaf :: union(<method-literal>, <false>),
-    init-value: #f;
   //
   // The <method-parse> if we are to inline this method, #f otherwise.
   slot method-defn-inline-expansion :: false-or(<method-parse>),
@@ -131,10 +131,20 @@ define class <define-generic-tlf> (<simple-define-tlf>)
     required-init-keyword: returns:;
 end;
 
+define method print-message
+    (tlf :: <define-generic-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Generic %s", tlf.tlf-defn.defn-name);
+end;
+
 define class <define-implicit-generic-tlf> (<simple-define-tlf>)
   //
   // Make the definition required.
   required keyword defn:;
+end;
+
+define method print-message
+    (tlf :: <define-implicit-generic-tlf>, stream :: <stream>) => ();
+  format(stream, "{Implicit} Define Generic %s", tlf.tlf-defn.defn-name);
 end;
 
 define class <seal-generic-tlf> (<top-level-form>)
@@ -146,6 +156,18 @@ define class <seal-generic-tlf> (<top-level-form>)
   // The type expressions.
   slot seal-generic-type-exprs :: <simple-object-vector>,
     required-init-keyword: type-exprs:;
+end;
+
+define method print-message
+    (tlf :: <seal-generic-tlf>, stream :: <stream>) => ();
+  format(stream, "Seal Generic %s (", tlf.seal-generic-name);
+  for (type in tlf.seal-generic-type-exprs, first? = #t then #f)
+    unless (first)
+      write(", ", stream);
+    end;
+    print-message(ct-eval(type, #f) | "???", stream);
+  end;
+  write(')', stream);
 end;
 
 define class <define-method-tlf> (<simple-define-tlf>)
@@ -174,6 +196,10 @@ define class <define-method-tlf> (<simple-define-tlf>)
   slot method-tlf-parse :: <method-parse>, required-init-keyword: parse:;
 end;
 
+define method print-message
+    (tlf :: <define-method-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Method %s", tlf.tlf-defn.defn-name);
+end;
 
 
 // process-top-level-form
@@ -261,8 +287,8 @@ define method finalize-top-level-form (tlf :: <define-generic-tlf>) => ();
   defn.function-defn-signature := signature;
   if (anything-non-constant?)
     defn.function-defn-hairy? := #t;
-    for (meth in defn.generic-defn-methods)
-      meth.function-defn-hairy? := #t;
+    if (defn.function-defn-ct-value)
+      error("noticed that a function was hairy after creating a ct-value.");
     end;
   end;
 end;
@@ -288,7 +314,9 @@ end;
 
 define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
     => ();
-  // Nothing to finalize.
+  // The signature comes pre-initialized for implicit define generics,
+  // so we don't have to compute it like we do for regular define
+  // generics.
 end;
 
 define method finalize-top-level-form (tlf :: <define-method-tlf>)
@@ -329,8 +357,7 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		   name: make(<method-name>,
 			      generic-function: base-name,
 			      specializers: signature.specializers),
-		   hairy: hairy? | generic-defn == #f
-		     | generic-defn.function-defn-hairy?,
+		   hairy: hairy?,
 		   movable: movable?
 		     | (generic-defn & generic-defn.function-defn-movable?),
 		   flushable: flushable?
@@ -339,9 +366,8 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		   keys);
   if (generic-defn)
     if (slot-initialized?(generic-defn, %generic-defn-seal-info))
-      error("Adding a method to a GF which has already been sealed:\n"
-            "  %=",
-	    defn);
+      error("Adding a method to GF %s, which has already been sealed.",
+	    generic-defn.defn-name);
     end;
     generic-defn.generic-defn-methods
       := pair(defn, generic-defn.generic-defn-methods);
@@ -392,6 +418,7 @@ define method compute-signature
   values(make(<signature>,
 	      specializers: map-as(<list>, maybe-eval-type,
 				   param-list.paramlist-required-vars),
+	      next: param-list.paramlist-next & #t,
 	      rest-type: param-list.paramlist-rest & object-ctype(),
 	      keys: (param-list.paramlist-keys
 		       & map-as(<list>, make-key-info,
@@ -403,6 +430,28 @@ define method compute-signature
 			                 returns.paramlist-required-vars),
 				  returns.paramlist-rest & object-ctype())),
 	 anything-non-constant?);
+end;
+
+
+// CT-value
+
+define method ct-value (defn :: <function-definition>)
+    => res :: false-or(<ct-function>);
+  let ctv = defn.function-defn-ct-value;
+  if (ctv == #"not-computed-yet")
+    defn.function-defn-ct-value
+      := unless (defn.function-defn-hairy?)
+	   make(select (defn by instance?)
+		  <generic-definition> => <ct-generic-function>;
+		  <abstract-method-definition> => <ct-method>;
+		end,
+		name: format-to-string("%s", defn.defn-name),
+		signature: defn.function-defn-signature,
+		definition: defn);
+	 end;
+  else
+    ctv;
+  end;
 end;
 
 
@@ -441,8 +490,8 @@ define method convert-generic-definition
 			 as(<list>, args)));
     build-assignment(builder, policy, source, #(),
 		     make-operation(builder, <set>, list(temp), var: defn));
-  else
-    maybe-make-discriminator(builder, defn);
+  elseif (defn.generic-defn-discriminator)
+    make-discriminator(builder, defn);
   end;
 end;  
 
@@ -454,12 +503,12 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();
   let defn = tlf.tlf-defn;
   let lexenv = make(<lexenv>);
-  let name = format-to-string("Define Method %s", defn.defn-name);
-  let leaf = fer-convert-method(builder, tlf.method-tlf-parse, name,
-				#"global", lexenv, lexenv);
-  let literal-method? = instance?(leaf, <method-literal>);
-  defn.method-defn-leaf := literal-method? & leaf;
-  if (defn.function-defn-hairy? | ~literal-method?)
+  let leaf = fer-convert-method(builder, tlf.method-tlf-parse,
+				format-to-string("%s", defn.defn-name),
+				ct-value(defn), #"global", lexenv, lexenv);
+  if (defn.function-defn-hairy? 
+	| defn.method-defn-of == #f
+	| defn.method-defn-of.function-defn-hairy?)
     // We don't use method-defn-of, because that is #f if there is a definition
     // but it isn't a define generic.
     let gf-name = tlf.method-tlf-base-name;
@@ -474,8 +523,9 @@ define method convert-top-level-form
 	   (builder, dylan-defn-leaf(builder, #"add-method"), #f,
 	    list(make-definition-leaf(builder, gf-defn), leaf)));
     else
-      error("No definition for %=, and can't implicitly define it.",
-	    gf-name);
+      compiler-error("In %s:\n  no definition for %=, and can't implicitly "
+		       "define it.",
+		     tlf, gf-name);
     end;
   end;
 end;
@@ -484,65 +534,80 @@ end;
 
 // Generic function discriminator functions.
 
-define method maybe-make-discriminator
-    (builder :: <fer-builder>, gf :: <generic-definition>) => ();
-  if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
-	& gf.generic-defn-methods.size ~= 1
-	& every?(method (meth)
-		   ~meth.function-defn-hairy?
-		     & every?(method (method-spec, gf-spec)
-				method-spec == gf-spec
-				  | (instance?(method-spec, <cclass>)
-				       & method-spec.sealed?);
-			      end,
-			      meth.function-defn-signature.specializers,
-			      gf.function-defn-signature.specializers);
-		 end,
-		 gf.generic-defn-methods))
-    let policy = $Default-Policy;
-    let source = make(<source-location>);
-    let sig = gf.function-defn-signature;
-    let vars = make(<stretchy-vector>);
-    for (specializer in sig.specializers,
-	 index from 0)
-      let var = make-local-var(builder,
-			       as(<symbol>, format-to-string("arg%d", index)),
-			       specializer);
-      add!(vars, var);
-    end;
-    let nspecs = vars.size;
-    let rest-type = sig.rest-type | (sig.key-infos & object-ctype());
-    if (rest-type)
-      let var = make-local-var(builder, #"rest", rest-type);
-      add!(vars, var);
-    end;
-
-    let discriminator-sig
-      = make(<signature>,
-	     specializers: sig.specializers,
-	     rest-type: rest-type,
-	     keys: sig.key-infos & #(),
-	     all-keys: sig.key-infos & #t,
-	     returns: sig.returns);
-
-    let region = build-function-body(builder, policy, source,
-				     format-to-string("Discriminator for %s",
-						      gf.defn-name),
-				     as(<list>, vars), #"best");
-    let results = make-values-cluster(builder, #"results", wild-ctype());
-    build-discriminator-tree
-      (builder, policy, source, as(<list>, vars), rest-type & #t, results,
-       as(<list>, make(<range>, from: 0, below: nspecs)),
-       sort-methods(gf.generic-defn-methods,
-		    make(<vector>, size: nspecs, fill: #f),
-		    empty-ctype()),
-       gf);
-    build-return(builder, policy, source, region, results);
-    end-body(builder);
-
-    gf.generic-defn-discriminator-leaf
-      := make-function-literal(builder, #"global", discriminator-sig, region);
+define method generic-defn-discriminator (gf :: <generic-definition>)
+    => res :: false-or(<ct-function>);
+  if (gf.%generic-defn-discriminator == #"not-computed-yet")
+    gf.%generic-defn-discriminator
+      := if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
+	       & gf.generic-defn-methods.size > 1
+	       & every?(method (meth)
+			  ~meth.function-defn-hairy?
+			    & every?(method (method-spec, gf-spec)
+				       method-spec == gf-spec
+					 | (instance?(method-spec, <cclass>)
+					      & method-spec.sealed?);
+				     end,
+				     meth.function-defn-signature.specializers,
+				     gf.function-defn-signature.specializers);
+			end,
+			gf.generic-defn-methods))
+	   
+	   let sig = gf.function-defn-signature;
+	   make(<ct-function>,
+		name: format-to-string("Discriminator for %s", gf.defn-name),
+		signature: make(<signature>,
+				specializers: sig.specializers,
+				rest-type: sig.rest-type,
+				keys: sig.key-infos & #(),
+				all-keys: sig.key-infos & #t,
+				returns: sig.returns));
+	 else
+	   #f;
+	 end;
+  else
+    gf.%generic-defn-discriminator;
   end;
+end;
+
+define method make-discriminator
+    (builder :: <fer-builder>, gf :: <generic-definition>) => ();
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+  let discriminator = gf.generic-defn-discriminator;
+  let name = discriminator.ct-function-name;
+  let sig = discriminator.ct-function-signature;
+
+  let vars = make(<stretchy-vector>);
+  for (specializer in sig.specializers,
+       index from 0)
+    let var = make-local-var(builder,
+			     as(<symbol>, format-to-string("arg%d", index)),
+			     specializer);
+    add!(vars, var);
+  end;
+  let nspecs = vars.size;
+
+  assert(~sig.next?);
+  if (sig.rest-type)
+    let var = make-local-var(builder, #"rest", sig.rest-type);
+    add!(vars, var);
+  end;
+  assert(sig.key-infos == #f | sig.key-infos == #());
+
+  let region = build-function-body(builder, policy, source, #f, name,
+				   as(<list>, vars), sig.returns, #t);
+  let results = make-values-cluster(builder, #"results", sig.returns);
+  build-discriminator-tree
+    (builder, policy, source, as(<list>, vars), sig.rest-type & #t, results,
+     as(<list>, make(<range>, from: 0, below: nspecs)),
+     sort-methods(gf.generic-defn-methods,
+		  make(<vector>, size: nspecs, fill: #f),
+		  empty-ctype()),
+     gf);
+  build-return(builder, policy, source, region, results);
+  end-body(builder);
+  
+  make-function-literal(builder, discriminator, #f, #"global", sig, region);
 end;
 
 define method build-discriminator-tree

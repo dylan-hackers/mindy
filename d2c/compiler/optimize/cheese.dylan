@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.71 1995/06/01 14:29:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.72 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,25 +41,18 @@ define method optimize-component (component :: <component>) => ();
       optimize(component, dependent);
     else
       local method try (function, what)
-	      if (what)
-		if (*print-shit*)
-		  format(*debug-output*, "\n********** ");
-		end;
-		format(*debug-output*, "%s\n", what);
-		if (*print-shit*)
-		  write('\n', *debug-output*);
-		end;
+	      if (what & *print-shit*)
+		format(*debug-output*, "\n********** %s\n\n", what);
 	      end;
 	      function(component);
 	      let start-over?
 		= component.initial-definitions | component.reoptimize-queue;
-	      if (start-over?)
+	      if (start-over? & *print-shit*)
 		format(*debug-output*, "\nstarting over...\n");
 	      end;
 	      start-over?;
 	    end;
-      try(propagate-call-results, "propagating call result types")
-	| (*do-sanity-checks* & try(assure-all-done, #f))
+      (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(add-type-checks, "adding type checks")
@@ -104,10 +97,31 @@ define method maybe-convert-to-ssa
 		"to replace?");
       end;
       dep.source-exp := ssa;
-      reoptimize(component, dep.dependent);
+      reoptimize-consumers(component, dep.dependent);
     end;
     reoptimize(component, assign);
   end;
+end;
+
+define method reoptimize-consumers
+    (component :: <component>, dependent :: <dependent-mixin>)
+    => ();
+  reoptimize(component, dependent);
+end;
+
+define method reoptimize-consumers
+    (component :: <component>, assign :: <assignment>)
+    => ();
+  for (var = assign.defines then var.definer-next,
+       while: var)
+    if (instance?(var, <ssa-variable>))
+      for (dep = var.dependents then dep.source-next,
+	   while: dep)
+	reoptimize-consumers(component, dep.dependent);
+      end;
+    end;
+  end;
+  reoptimize(component, assign);
 end;
 
 
@@ -307,10 +321,16 @@ define method optimize
     if (instance?(defines.var-info, <values-cluster-info>))
       // Propagate the type on to the result.
       maybe-restrict-type(component, defines, source-type);
-      // We are making a copy of a cluster.  If the cluster we are copying
-      // is an <ssa-variable>, then copy propagate it.
-      if (instance?(source, <ssa-variable>))
-	maybe-propagate-copy(component, defines, source);
+      // We are making a copy of a cluster.  Propagate it if we can.  We can
+      // only propagate ssa variables, because we have to preserve the 
+      // location of multi-definition variable reads.
+      if (instance?(source, <ssa-variable>)
+	    & maybe-propagate-copy(component, defines, source))
+	// Nuke the assignment, because var is now unused.  We don't want
+	// to rely on the regular ununsed assignment deletion code, because
+	// we will have two references to source until that stuff runs
+	// which will confuse other things in the meantime.
+	delete-and-unlink-assignment(component, assignment);
       end;
     else
       // We are extracting some number of values out of a cluster.  Expand
@@ -395,21 +415,15 @@ end;
 
 define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <leaf>)
-    => ();
+    => did-anything? :: <boolean>;
   unless (var.needs-type-check?)
     // Change all references to this variable to be references to value
     // instead.
-    let next = #f;
-    for (dep = var.dependents then next,
-	 while: dep)
-      // Save next, 'cause it gets changed.
-      next := dep.source-next;
-      // Swing that dependent over to the new value.
-      replace-expression(component, dep, value)
+    while (var.dependents)
+      replace-expression(component, var.dependents, value)
     end;
-    
-    // Queue the vars definer assignment, because the var is now unused.
-    reoptimize(component, var.definer);
+    // Return that we did something.
+    #t;
   end;
 end;
 
@@ -417,7 +431,8 @@ end;
 define method maybe-propagate-copy
     (component :: <component>, var :: <abstract-variable>,
      value :: <expression>)
-    => ();
+    => did-anything? :: <boolean>;
+  #f;
 end;
 
 
@@ -435,13 +450,12 @@ define method optimize
     error("No function in a call?");
   end;
   // Dispatch of the thing we are calling.
-  optimize-unknown-call(component, call, func-dep.source-exp, #f);
+  optimize-unknown-call(component, call, func-dep.source-exp);
 end;
 
 
 define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>, func :: <leaf>,
-     inline-expansion :: false-or(<method-parse>))
+    (component :: <component>, call :: <unknown-call>, func :: <leaf>)
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
@@ -452,20 +466,283 @@ define method optimize-unknown-call
 	      end);
 end;
 
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <function-literal>)
+    => ();
+  maybe-restrict-type(component, call, func.main-entry.result-type);
+  maybe-change-to-known-or-error-call(component, call, func.signature,
+				      func.main-entry.name);
+end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
-     func :: <function-literal>,
-     inline-expansion :: false-or(<method-parse>))
+     func :: <definition-constant-leaf>)
     => ();
-  // First, observe the result type.
-  maybe-restrict-type(component, call, func.main-entry.result-type);
+  optimize-unknown-call(component, call, func.const-defn);
+end;
 
-  // Next, convert to a known call if possible and an error call if we must.
-  let sig = func.signature;
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <literal-constant>)
+    => ();
+  let value = func.value;
+  if (instance?(value, <ct-function>))
+    let defn = value.ct-function-definition;
+    if (defn)
+      optimize-unknown-call(component, call, defn);
+    else
+      let sig = value.ct-function-signature;
+      maybe-restrict-type(component, call, sig.returns);
+      maybe-change-to-known-or-error-call(component, call, sig,
+					  value.ct-function-name);
+    end;
+  else
+    // Assert that the function is a function.  It isn't, but this is a handy
+    // way of generating an error message.
+    assert-type(component, call.dependents.dependent, call.depends-on,
+		if (call.use-generic-entry?)
+		  specifier-type(#"<method>");
+		else
+		  function-ctype();
+		end);
+  end;
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-constant-definition>)
+    => ();
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <function-definition>)
+    => ();
+  maybe-restrict-type(component, call, defn.function-defn-signature.returns);
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <generic-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+
+  if (call.use-generic-entry?)
+    error("Trying to pass a generic function next-method information?");
+  end;
 
   let bogus? = #f;
-  let known? = #t;
+  let arg-leaves = #();
+  let arg-types = #();
+  block (return)
+    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+	 count from 0,
+	 gf-spec in sig.specializers)
+      unless (arg-dep)
+	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
+			   "Wanted %s %d, but only got %d",
+			 call.home-function-region.name,
+			 defn.defn-name,
+			 if (sig.rest-type | sig.key-infos)
+			   "at least";
+			 else
+			   "exactly";
+			 end,
+			 count);
+	bogus? := #t;
+	return();
+      end;
+      let arg-leaf = arg-dep.source-exp;
+      let arg-type = arg-leaf.derived-type;
+      unless (ctypes-intersect?(arg-type, gf-spec))
+	compiler-warning("In %s:\n  wrong type for argument %d in call of "
+			   "%s.\n  Wanted %s, but got %s",
+			 call.home-function-region.name,
+			 count,
+			 defn.defn-name,
+			 gf-spec,
+			 arg-dep.source-exp.derived-type);
+	bogus? := #t;
+      end;
+      arg-leaves := pair(arg-leaf, arg-leaves);
+      arg-types := pair(arg-type, arg-types);
+    finally
+      if (arg-dep)
+	unless (sig.key-infos | sig.rest-type)
+	  for (arg-dep = arg-dep then arg-dep.dependent-next,
+	       have from count,
+	       while: arg-dep)
+	  finally
+	    compiler-warning("In %s:\n  too many arguments in call of %s.\n"
+			       "  Wanted exactly %d, but got %d.",
+			     call.home-function-region.name,
+			     defn.defn-name,
+			     count, have);
+	    bogus? := #t;
+	  end;
+	end;
+	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     while: arg-dep)
+	  arg-leaves := pair(arg-dep.source-exp, arg-leaves);
+	end;
+      end;
+    end;
+  end;
+  if (bogus?)
+    change-call-kind(component, call, <error-call>);
+  else
+    let arg-types = reverse!(arg-types);
+    let meths = ct-sorted-applicable-methods(defn, arg-types);
+    if (meths == #())
+      let stream = make(<byte-string-output-stream>);
+      write("    (", stream);
+      for (arg-type in arg-types, first? = #t then #f)
+	unless (first?)
+	  write(", ", stream);
+	end;
+	print-message(arg-type, stream);
+      end;
+      write(")", stream);
+      compiler-warning("In %s:\n  no applicable methods for argument types\n"
+			 "%s\n  in call of %s",
+		       call.home-function-region.name,
+		       stream.string-output-stream-string,
+		       defn.defn-name);
+		       
+      change-call-kind(component, call, <error-call>);
+    elseif (meths)
+      // ### Need to check the keywords before the ct method selection
+      // is valid.
+      let builder = make-builder(component);
+      let assign = call.dependents.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+      let new-func = make-definition-leaf(builder, meths.head);
+      let ctvs = map(ct-value, meths.tail);
+      let next-leaf
+	= if (every?(identity, ctvs))
+	    make-literal-constant(builder,
+				  make(<literal-list>,
+				       contents: ctvs));
+	  else
+	    let var = make-local-var(builder, #"next-method-info",
+				     object-ctype());
+	    let op
+	      = make-unknown-call(builder, dylan-defn-leaf(builder, #"list"),
+				  #f, map(curry(make-definition-leaf, builder),
+					  meths.tail));
+	    build-assignment(builder, policy, source, var, op);
+	    insert-before(component, assign, builder-result(builder));
+	    var;
+	  end;
+      let new-call = make-unknown-call(builder, new-func, next-leaf,
+				       reverse!(arg-leaves));
+      replace-expression(component, call.dependents, new-call);
+    elseif (defn.generic-defn-discriminator)
+      // There is a static descriminator function.  We can change into a
+      // known call.  We don't reference the discriminator directly because
+      // we still want to be able to do method selection if we can derive
+      // a better idea of the argument types.
+      convert-to-known-call
+	(component, defn.generic-defn-discriminator.ct-function-signature,
+	 call);
+    end;
+  end;
+end;    
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-method-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  select (compare-unknown-call-against-signature(call, sig, defn.defn-name))
+    #"bogus" =>
+      if (call.use-generic-entry?)
+	error("bogus call w/ next?");
+      end;
+      change-call-kind(component, call, <error-call>);
+
+    #"valid" =>
+      if (defn.method-defn-inline-expansion)
+	let builder = make-builder(component);
+	let lexenv = make(<lexenv>);
+	let new-func
+	  = fer-convert-method(builder, defn.method-defn-inline-expansion,
+			       format-to-string("%s", defn.defn-name), #f,
+			       #"local", lexenv, lexenv);
+	insert-before(component, call.dependents.dependent,
+		      builder-result(builder));
+	let func-dep = call.depends-on;
+	replace-expression(component, func-dep, new-func);
+      elseif (~defn.function-defn-hairy?)
+	convert-to-known-call(component, sig, call);
+      end;
+
+    #"can't tell" =>
+      #f;
+  end;
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <exit-function>)
+    => ();
+  let builder = make-builder(component);
+  let call-dependency = call.dependents;
+  let assign = call-dependency.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+
+  let values = make(<stretchy-vector>);
+  for (dep = call.depends-on.dependent-next then dep.dependent-next,
+       while: dep)
+    add!(values, dep.source-exp);
+  end;
+  let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
+  build-assignment(builder, policy, source, cluster,
+		   make-operation(builder, <primitive>, as(<list>, values),
+				  name: #"values"));
+  insert-before(component, assign, builder-result(builder));
+  expand-exit-function(component, call, func, cluster);
+end;
+
+
+define method maybe-change-to-known-or-error-call
+    (component :: <component>, call :: <unknown-call>, sig :: <signature>,
+     func-name :: union(<name>, <string>))
+    => ();
+  select (compare-unknown-call-against-signature(call, sig, func-name))
+    #"bogus" =>
+      if (call.use-generic-entry?)
+	error("bogus call w/ next?");
+      end;
+      change-call-kind(component, call, <error-call>);
+
+    #"valid" =>
+      convert-to-known-call(component, sig, call);
+
+    #"can't tell" =>
+      #f;
+  end;
+end;
+
+
+define method compare-unknown-call-against-signature
+    (call :: <unknown-call>, sig :: <signature>,
+     func-name :: union(<name>, <string>))
+    => res :: one-of(#"bogus", #"valid", #"can't tell");
+
+  // Find the next-method-info and arguments.
   let (next-method-info, arguments)
     = if (call.use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
@@ -473,6 +750,9 @@ define method optimize-unknown-call
       else
 	values(#f, call.depends-on.dependent-next);
       end;
+
+  let bogus? = #f;
+  let valid? = #t;
 
   block (return)
     for (spec in sig.specializers,
@@ -482,7 +762,7 @@ define method optimize-unknown-call
 	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
 			   "Wanted %s %d, but only got %d",
 			 call.home-function-region.name,
-			 func.main-entry.name,
+			 func-name,
 			 if (sig.rest-type | sig.key-infos)
 			   "at least";
 			 else
@@ -497,7 +777,7 @@ define method optimize-unknown-call
 			   "%s.\n  Wanted %s, but got %s",
 			 call.home-function-region.name,
 			 count,
-			 func.main-entry.name,
+			 func-name,
 			 spec,
 			 arg-dep.source-exp.derived-type);
 	bogus? := #t;
@@ -513,7 +793,7 @@ define method optimize-unknown-call
 	    compiler-warning("In %s:\n  odd number of keyword/value arguments "
 			       "in call of %s.",
 			     call.home-function-region.name,
-			     func.main-entry.name);
+			     func-name);
 	    bogus? := #t;
 	    return();
 	  end;
@@ -521,15 +801,14 @@ define method optimize-unknown-call
 	  if (~instance?(leaf, <literal-constant>))
 	    unless (ctypes-intersect?(key-dep.source-exp.derived-type,
 				      specifier-type(#"<symbol>")))
-	      compiler-warning("In %s:\n  bogus keyword type (%s) as argument "
+	      compiler-warning("In %s:\n  bogus keyword as argument "
 				 "%d in call of %s",
 			       call.home-function-region.name,
-			       leaf.derived-type,
 			       count,
-			       func.main-entry.name);
+			       func-name);
 	      bogus? := #t;
 	    end;
-	    known? := #f;
+	    valid? := #f;
 	  elseif (instance?(leaf.value, <literal-symbol>))
 	    let key = leaf.value.literal-value;
 	    block (found-key)
@@ -542,7 +821,7 @@ define method optimize-unknown-call
 				       "%s.\n  Wanted %s, but got %s",
 				     call.home-function-region.name,
 				     key,
-				     func.main-entry.name,
+				     func-name,
 				     keyinfo.key-type,
 				     val-dep.source-exp.derived-type);
 
@@ -556,7 +835,7 @@ define method optimize-unknown-call
 		  ("In %s:\n  invalid keyword (%=) in call of %s",
 		   call.home-function-region.name,
 		   key,
-		   func.main-entry.name);
+		   func-name);
 		bogus? := #t;
 	      end;
 	    end;
@@ -566,11 +845,11 @@ define method optimize-unknown-call
 	       call.home-function-region.name,
 	       leaf.value,
 	       count,
-	       func.main-entry.name);
+	       func-name);
 	    bogus? := #t;
 	  end;
 	end;
-	if (known?)
+	if (valid?)
 	  // Now make sure all the required keywords are supplied.
 	  for (keyinfo in sig.key-infos)
 	    block (found-key)
@@ -586,7 +865,7 @@ define method optimize-unknown-call
 				   "call of %s",
 				 call.home-function-region.name,
 				 keyinfo.key-name,
-				 func.main-entry.name);
+				 func-name);
 		bogus? := #t;
 	      end;
 	    end;
@@ -602,7 +881,7 @@ define method optimize-unknown-call
 			       "%s.\n  Wanted %s, but got %s",
 			     call.home-function-region.name,
 			     count,
-			     func.main-entry.name,
+			     func-name,
 			     sig.rest-type,
 			     arg-dep.source-exp.derived-type);
 	    bogus? := #t;
@@ -616,35 +895,20 @@ define method optimize-unknown-call
 	  compiler-warning("In %s:\n  too many arguments in call of %s.\n"
 			     "  Wanted exactly %d, but got %d.",
 			   call.home-function-region.name,
-			   func.main-entry.name,
+			   func-name,
 			   count, have);
 	  bogus? := #t;
 	end;
       end;
     end;
   end;
+
   if (bogus?)
-    if (next-method-info)
-      let call-dep = call.depends-on;
-      let next-info-dep = call-dep.dependent-next;
-      remove-dependency-from-source(component, next-info-dep);
-      call-dep.dependent-next := next-info-dep.dependent-next;
-    end;
-    change-call-kind(component, call, <error-call>);
-  elseif (known?)
-    if (inline-expansion)
-      let builder = make-builder(component);
-      let lexenv = make(<lexenv>);
-      let new-func
-	= fer-convert-method(builder, inline-expansion, #f,
-			     #"local", lexenv, lexenv);
-      insert-before(component, call.dependents.dependent,
-		    builder-result(builder));
-      let func-dep = call.depends-on;
-      replace-expression(component, func-dep, new-func);
-    else
-      convert-to-known-call(component, sig, call);
-    end;
+    #"bogus";
+  elseif (valid?)
+    #"valid";
+  else
+    #"can't tell";
   end;
 end;
 
@@ -744,240 +1008,7 @@ define method convert-to-known-call
   end;
 end;
 
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <definition-constant-leaf>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  optimize-unknown-call(component, call, func.const-defn, #f);
-end;
 
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-constant-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  // Assert that the function is a function.
-  assert-type(component, call.dependents.dependent, call.depends-on,
-	      if (call.use-generic-entry?)
-		specifier-type(#"<method>");
-	      else
-		function-ctype();
-	      end);
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <function-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <generic-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-
-  if (call.use-generic-entry?)
-    error("Trying to pass a generic function next-method information?");
-  end;
-
-  let bogus? = #f;
-  let arg-leaves = #();
-  let arg-types = #();
-  block (return)
-    for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-	 count from 0,
-	 gf-spec in sig.specializers)
-      unless (arg-dep)
-	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
-			   "Wanted %s %d, but only got %d",
-			 call.home-function-region.name,
-			 defn.defn-name,
-			 if (sig.rest-type | sig.key-infos)
-			   "at least";
-			 else
-			   "exactly";
-			 end,
-			 count);
-	bogus? := #t;
-	return();
-      end;
-      let arg-leaf = arg-dep.source-exp;
-      let arg-type = arg-leaf.derived-type;
-      unless (ctypes-intersect?(arg-type, gf-spec))
-	compiler-warning("In %s:\n  wrong type for argument %d in call of "
-			   "%s.\n  Wanted %s, but got %s",
-			 call.home-function-region.name,
-			 count,
-			 defn.defn-name,
-			 gf-spec,
-			 arg-dep.source-exp.derived-type);
-	bogus? := #t;
-      end;
-      arg-leaves := pair(arg-leaf, arg-leaves);
-      arg-types := pair(arg-type, arg-types);
-    finally
-      if (arg-dep)
-	unless (sig.key-infos | sig.rest-type)
-	  for (arg-dep = arg-dep then arg-dep.dependent-next,
-	       have from count,
-	       while: arg-dep)
-	  finally
-	    compiler-warning("In %s:\n  too many arguments in call of %s.\n"
-			       "  Wanted exactly %d, but got %d.",
-			     call.home-function-region.name,
-			     defn.defn-name,
-			     count, have);
-	    bogus? := #t;
-	  end;
-	end;
-	for (arg-dep = arg-dep then arg-dep.dependent-next,
-	     while: arg-dep)
-	  arg-leaves := pair(arg-dep.source-exp, arg-leaves);
-	end;
-      end;
-    end;
-  end;
-  if (bogus?)
-    change-call-kind(component, call, <error-call>);
-  else
-    let arg-types = reverse!(arg-types);
-    let meths = ct-sorted-applicable-methods(defn, arg-types);
-    if (meths == #())
-      let stream = make(<byte-string-output-stream>);
-      write("    (", stream);
-      for (arg-type in arg-types, first? = #t then #f)
-	unless (first?)
-	  write(", ", stream);
-	end;
-	print-message(arg-type, stream);
-      end;
-      write(")", stream);
-      compiler-warning("In %s:\n  no applicable methods for argument types\n"
-			 "%s\n  in call of %s",
-		       call.home-function-region.name,
-		       stream.string-output-stream-string,
-		       defn.defn-name);
-		       
-      change-call-kind(component, call, <error-call>);
-    elseif (meths)
-      // ### Need to check the keywords before the ct method selection
-      // is valid.
-      let builder = make-builder(component);
-      let assign = call.dependents.dependent;
-      let policy = assign.policy;
-      let source = assign.source-location;
-      let new-func = make-definition-leaf(builder, meths.head);
-      let next-leaf = make-local-var(builder, #"next-method-info",
-				     object-ctype());
-      let op
-	= if (empty?(meths.tail))
-	    make-literal-constant(builder, as(<ct-value>, #()));
-	  else
-	    make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
-			      map(curry(make-definition-leaf, builder),
-				  meths.tail));
-	  end;
-      build-assignment(builder, policy, source, next-leaf, op);
-      insert-before(component, assign, builder-result(builder));
-      let new-call = make-unknown-call(builder, new-func, next-leaf,
-				       reverse!(arg-leaves));
-      replace-expression(component, call.dependents, new-call);
-    elseif (defn.generic-defn-discriminator-leaf)
-      // There is a static descriminator function.  We can change into a
-      // known call.  We don't reference the discriminator directly because
-      // we still want to be able to do method selection if we can derive
-      // a better idea of the argument types.
-      convert-to-known-call
-	(component, defn.generic-defn-discriminator-leaf.signature, call);
-    end;
-  end;
-end;    
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     defn :: <abstract-method-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  let leaf = defn.method-defn-leaf;
-  if (leaf)
-    optimize-unknown-call(component, call, leaf,
-			  defn.method-defn-inline-expansion);
-  end;
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <getter-method-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  let sig = func.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  let leaf = func.method-defn-leaf;
-  if (leaf)
-    optimize-unknown-call(component, call, leaf, #f);
-  else
-    let args = call.depends-on.dependent-next;
-    optimize-slot-ref(component, call, func.accessor-method-defn-slot-info,
-		      listify-dependencies(if (call.use-generic-entry?)
-					     args.dependent-next;
-					   else
-					     args;
-					   end));
-  end;
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <setter-method-definition>,
-     inline-expansion :: false-or(<method-parse>))
-    => ();
-  let sig = func.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  let leaf = func.method-defn-leaf;
-  if (leaf)
-    optimize-unknown-call(component, call, leaf, #f);
-  else
-    let args = call.depends-on.dependent-next;
-    optimize-slot-set(component, call, func.accessor-method-defn-slot-info,
-		      listify-dependencies(if (call.use-generic-entry?)
-					     args.dependent-next;
-					   else
-					     args;
-					   end));
-  end;
-end;
-
-define method optimize-unknown-call
-    (component :: <component>, call :: <unknown-call>,
-     func :: <exit-function>, inline-expansion :: false-or(<method-parse>))
-    => ();
-  let builder = make-builder(component);
-  let call-dependency = call.dependents;
-  let assign = call-dependency.dependent;
-  let policy = assign.policy;
-  let source = assign.source-location;
-
-  let values = make(<stretchy-vector>);
-  for (dep = call.depends-on.dependent-next then dep.dependent-next,
-       while: dep)
-    add!(values, dep.source-exp);
-  end;
-  let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
-  build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, <primitive>, as(<list>, values),
-				  name: #"values"));
-  insert-before(component, assign, builder-result(builder));
-  expand-exit-function(component, call, func, cluster);
-end;
 
 
 define method optimize
@@ -1008,6 +1039,15 @@ define method find-transformers (func :: <definition-constant-leaf>)
   find-transformers(func.const-defn);
 end;
 
+define method find-transformers (func :: <literal-constant>)
+  let defn = func.value.ct-function-definition;
+  if (defn)
+    find-transformers(defn);
+  else
+    #();
+  end;
+end;
+
 define method find-transformers (defn :: <function-definition>)
     => res :: <list>;
   defn.function-defn-transformers;
@@ -1030,6 +1070,27 @@ define method optimize-known-call
      func :: <function-literal>)
     => ();
   maybe-restrict-type(component, call, func.main-entry.result-type);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <literal-constant>)
+    => ();
+  block (return)
+    let ctv = func.value;
+    for (lit in component.all-function-literals)
+      if (lit.ct-function == ctv)
+	replace-expression(component, call.depends-on, lit);
+	return();
+      end;
+    end;
+    let defn = ctv.ct-function-definition;
+    if (defn)
+      optimize-known-call(component, call, defn);
+    else
+      maybe-restrict-type(component, call, ctv.ct-function-signature.returns);
+    end;
+  end;
 end;
 
 define method optimize-known-call
@@ -1113,35 +1174,32 @@ define method optimize-known-call
 	    let policy = assign.policy;
 	    let source = assign.source-location;
 	    let new-func = make-definition-leaf(builder, meths.head);
-	    let next-leaf = make-local-var(builder, #"next-method-info",
-					   object-ctype());
-	    let op
-	      = if (empty?(meths.tail))
-		  make-literal-constant(builder, as(<ct-value>, #()));
+	    let ctvs = map(ct-value, meths.tail);
+	    let next-leaf
+	      = if (every?(identity, ctvs))
+		  make-literal-constant(builder,
+					make(<literal-list>,
+					     contents: ctvs));
 		else
-		  make-unknown-call
-		    (builder, dylan-defn-leaf(builder, #"list"), #f,
-		     map(curry(make-definition-leaf, builder),
-			 meths.tail));
+		  let var = make-local-var(builder, #"next-method-info",
+					   object-ctype());
+		  let op
+		    = make-unknown-call(builder,
+					dylan-defn-leaf(builder, #"list"),
+					#f,
+					map(curry(make-definition-leaf,
+						  builder),
+					    meths.tail));
+		  build-assignment(builder, policy, source, var, op);
+		  insert-before(component, assign, builder-result(builder));
+		  var;
 		end;
-	    build-assignment(builder, policy, source, next-leaf, op);
-	    insert-before(component, assign, builder-result(builder));
 	    make-unknown-call(builder, new-func, next-leaf, arg-leaves);
 	  end;
       replace-expression(component, call.dependents, new-call);
+    else
+      maybe-restrict-type(component, call, sig.returns);
     end;
-  end;
-end;
-
-define method optimize-known-call
-    (component :: <component>, call :: <known-call>,
-     defn :: <abstract-method-definition>)
-    => ();
-  let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
-  let leaf = defn.method-defn-leaf;
-  if (leaf)
-    optimize-known-call(component, call, leaf);
   end;
 end;
 
@@ -1149,8 +1207,7 @@ define method optimize-known-call
     (component :: <component>, call :: <known-call>,
      func :: <getter-method-definition>)     
     => ();
-  let sig = func.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
+  maybe-restrict-type(component, call, func.function-defn-signature.returns);
   optimize-slot-ref(component, call, func.accessor-method-defn-slot-info,
 		    listify-dependencies(call.depends-on.dependent-next));
 end;
@@ -1159,8 +1216,7 @@ define method optimize-known-call
     (component :: <component>, call :: <known-call>,
      func :: <setter-method-definition>)     
     => ();
-  let sig = func.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
+  maybe-restrict-type(component, call, func.function-defn-signature.returns);
   optimize-slot-set(component, call, func.accessor-method-defn-slot-info,
 		    listify-dependencies(call.depends-on.dependent-next));
 end;
@@ -1806,18 +1862,22 @@ end;
 
 define method optimize
     (component :: <component>, function :: <fer-function-region>) => ();
-
-  // Compute the result type by unioning all the returned types.  If it is
-  // more restrictive than last time, queue all the dependents of this
-  // function.
-  for (return = function.exits then return.next-exit,
-       type = empty-ctype()
-	 then values-type-union(type, return.returned-type),
-       while: return)
-  finally
-    let old-type = function.result-type;
-    if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
-      function.result-type := type;
+  //
+  // If there are hidden references, we can't improve the result type because
+  // those hidden references have no way of observing said improvement.
+  unless (function.hidden-references?)
+    // Compute the result type by unioning all the returned types.  If it is
+    // more restrictive than last time, queue all the dependents of this
+    // function.
+    for (return = function.exits then return.next-exit,
+	 type = empty-ctype()
+	   then values-type-union(type, return.returned-type),
+	 while: return)
+    finally
+      let old-type = function.result-type;
+      if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
+	function.result-type := type;
+      end;
     end;
   end;
 end;
@@ -2009,15 +2069,9 @@ define method let-convert
       end;
 
   // Replace the prologue with the arg-temps.
-  begin
-    let op = make-operation(builder, <primitive>, arg-temps, name: #"values");
-    let prologue = function.prologue;
-    let dep = prologue.dependents;
-    dep.source-exp := op;
-    op.dependents := dep;
-    delete-dependent(component, prologue);
-    reoptimize(component, op);
-  end;
+  replace-expression(component, function.prologue.dependents,
+		     make-operation(builder, <primitive>, arg-temps,
+				    name: #"values"));
 
   // For each self-tail-call, change it into an assignment of the arg temps.
   if (function.self-tail-calls)
@@ -2304,85 +2358,6 @@ define method fixed-number-of-values?
 end;
 
 
-// Call result propagation.
-
-define method propagate-call-results (component :: <component>) => ();
-  for (function in component.all-function-regions)
-    propagate-call-results-in(component, function);
-  end;
-end;
-
-define method propagate-call-results-in
-    (component :: <component>, region :: <simple-region>) => ();
-  for (assign = region.first-assign then assign.next-op,
-       while: assign)
-    let source = assign.depends-on.source-exp;
-    if (instance?(source, <abstract-call>))
-      let func = source.depends-on.source-exp;
-      propagate-call-results-of(component, source, func);
-    end;
-  end;
-end;
-
-define method propagate-call-results-in
-    (component :: <component>, region :: <compound-region>) => ();
-  for (subregion in region.regions)
-    propagate-call-results-in(component, subregion);
-  end;
-end;
-
-define method propagate-call-results-in
-    (component :: <component>, region :: <if-region>) => ();
-  propagate-call-results-in(component, region.then-region);
-  propagate-call-results-in(component, region.else-region);
-end;
-
-define method propagate-call-results-in
-    (component :: <component>, region :: <body-region>) => ();
-  propagate-call-results-in(component, region.body);
-end;
-
-define method propagate-call-results-in
-    (component :: <component>, region :: <exit>) => ();
-end;
-
-define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>, function :: <leaf>)
-    => ();
-end;
-
-define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>,
-     function :: <function-literal>)
-    => ();
-  maybe-restrict-type(component, call, function.main-entry.result-type);
-end;
-
-define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>,
-     function :: <definition-constant-leaf>)
-    => ();
-  propagate-call-results-of(component, call, function.const-defn);
-end;
-
-define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>,
-     function :: <abstract-constant-definition>)
-    => ();
-end;
-
-define method propagate-call-results-of
-    (component :: <component>, call :: <abstract-call>,
-     function :: <abstract-method-definition>)
-    => ();
-  let leaf = function.method-defn-leaf;
-  if (leaf)
-    propagate-call-results-of(component, call, leaf);
-  end;
-end;
-
-
-
 // Tail call identification.
 
 
@@ -2471,7 +2446,8 @@ define method identify-tail-calls-in
       end;
       let expr = assign.depends-on.source-exp;
       if (instance?(expr, <known-call>))
-	if (find-main-entry(expr.depends-on.source-exp) == home)
+	let func = expr.depends-on.source-exp;
+	if (instance?(func, <function-literal>) & func.main-entry == home)
 	  // It's a self tail call.
 	  convert-self-tail-call(component, home, expr);
 	end;
@@ -2579,33 +2555,6 @@ define method definition-for?
     (defn :: <initial-definition>, var :: <abstract-variable>)
     => res :: <boolean>;
   defn.definition-of == var;
-end;
-
-
-define method find-main-entry (func :: <leaf>)
-    => res :: false-or(<function-region>);
-  #f;
-end;
-
-define method find-main-entry (func :: <function-literal>)
-    => res :: false-or(<function-region>);
-  func.main-entry;
-end;
-
-define method find-main-entry (func :: <definition-constant-leaf>)
-    => res :: false-or(<function-region>);
-  find-main-entry(func.const-defn);
-end;
-
-define method find-main-entry (defn :: <abstract-constant-definition>)
-    => res :: false-or(<function-region>);
-  #f;
-end;
-
-define method find-main-entry (defn :: <abstract-method-definition>)
-    => res :: false-or(<function-region>);
-  let leaf = defn.method-defn-leaf;
-  leaf & find-main-entry(leaf);
 end;
 
 
@@ -3274,13 +3223,13 @@ define method build-xep
   let name = format-to-string("%s entry for %s",
 			      if (generic-entry?) "Generic" else "General" end,
 			      main-entry.name);
-  let xep = build-function-body(builder, policy, source, name,
+  let xep = build-function-body(builder, policy, source, #f, name,
 				if (generic-entry?)
 				  list(self-leaf, nargs-leaf, next-info-leaf);
 				else
 				  list(self-leaf, nargs-leaf);
 				end,
-				#"cluster");
+				wild-ctype(), #t);
   let new-args = make(<stretchy-vector>);
   if (instance?(main-entry, <lambda>) & main-entry.environment.closure-vars)
     let closure-ref-leaf = dylan-defn-leaf(builder, #"%closure-ref");
@@ -3414,7 +3363,7 @@ define method build-xep
 	 end);
   end;
 
-  if (signature.rest-type)
+  if (signature.rest-type | (signature.next? & signature.key-infos))
     let op = make-operation(builder, <primitive>,
 			    list(args-leaf, wanted-leaf, nargs-leaf),
 			    name: #"make-rest-arg");
@@ -3685,6 +3634,20 @@ define method dropped-dependent
   // actually being defines.
   unless (var.dependents | var.needs-type-check? | var.definer == #f)
     reoptimize(component, var.definer);
+  end;
+end;
+
+define method dropped-dependent
+    (component :: <component>, var :: <initial-variable>) => ();
+  // If the variable ended up with no references and doesn't need a type check,
+  // queue it for reoptimization so it gets deleted.  But only if is still
+  // actually being defines.
+  unless (var.dependents)
+    for (def in var.definitions)
+      unless (def.needs-type-check? | def.definer == #f)
+	reoptimize(component, def.definer);
+      end;
+    end;
   end;
 end;
 

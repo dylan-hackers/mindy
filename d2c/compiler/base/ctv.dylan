@@ -1,9 +1,9 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.9 1995/06/01 14:30:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.10 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-define abstract class <ct-value> (<object>)
+define abstract class <ct-value> (<annotatable>)
 end;
 
 define abstract class <literal> (<ct-value>)
@@ -527,3 +527,4 @@ define method concatenate (str1 :: <literal-string>, #rest more)
 		    str1.literal-value,
 		    map(literal-value, more)));
 end;
+

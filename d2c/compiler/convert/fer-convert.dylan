@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.33 1995/06/01 14:39:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.34 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -243,7 +243,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      fer-convert-method(builder, meth, #f, #"local",
+	      fer-convert-method(builder, meth, #f, #f, #"local",
 				 specializer-lexenv, lexenv));
   end;
 
@@ -424,12 +424,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   let saved-state-var = make-local-var(builder, #"saved-state", state-type);
   let policy = lexenv.lexenv-policy;
   let body-region
-    = build-lambda-body(builder, policy, source,
-			format-to-string("Block %s", name.token-symbol),
-			list(saved-state-var), #"best");
+    = build-function-body(builder, policy, source, #t,
+			  format-to-string("Block %s", name.token-symbol),
+			  list(saved-state-var), wild-ctype(), #f);
   let body-sig = make(<signature>, specializers: list(state-type));
   let body-literal
-    = make-function-literal(builder, #"local", body-sig, body-region);
+    = make-function-literal(builder, #f, #f, #"local", body-sig, body-region);
   let catcher-var
     = make-lexical-var(builder, symcat(name.token-symbol, "-catcher"),
 		       source, object-ctype());
@@ -489,7 +489,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <method-ref>,
     => res :: <result>;
   let temp = make-local-var(builder, #"method", function-ctype());
   build-assignment(builder, lexenv.lexenv-policy, source, temp,
-		   fer-convert-method(builder, form.method-ref-method, #f,
+		   fer-convert-method(builder, form.method-ref-method, #f, #f,
 				      #"local", lexenv, lexenv));
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
 end;
@@ -542,10 +542,11 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
   let policy = lexenv.lexenv-policy;
   let cleanup-builder = make-builder(builder);
   let cleanup-region
-    = build-lambda-body(cleanup-builder, policy, source,
-			"Unwind-Protect Cleanup", #(), #"best");
+    = build-function-body(cleanup-builder, policy, source, #t,
+			  "Unwind-Protect Cleanup", #(),
+			  make-values-ctype(#(), #f), #f);
   let cleanup-literal
-    = make-function-literal(cleanup-builder, #"local",
+    = make-function-literal(cleanup-builder, #f, #f, #"local",
 			    make(<signature>, specializers: #(),
 				 returns: make-values-ctype(#(), #f)),
 			    cleanup-region);
@@ -580,8 +581,9 @@ end;
 
 define method fer-convert-method
     (builder :: <fer-builder>, meth :: <method-parse>,
-     name :: false-or(<string>), visibility :: <function-visibility>,
-     specializer-lexenv :: <lexenv>, lexenv :: <lexenv>)
+     name :: false-or(<string>), ctv :: false-or(<ct-function>),
+     visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
+     lexenv :: <lexenv>)
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
 
@@ -784,15 +786,13 @@ define method fer-convert-method
 	     else
 	       "Anonymous Method";
 	     end;
+  let vars = as(<list>, vars);
+  let result-type = make-values-ctype(as(<list>, result-types), rest-type);
+  let lambda?
+    = visibility == #"local" | non-const-arg-types? | non-const-result-types?;
   let function-region
-    = if (visibility == #"local" | non-const-arg-types?
-	    | non-const-result-types?)
-	build-lambda-body(builder, lexenv.lexenv-policy, source, name,
-			  as(<list>, vars), #"best");
-      else
-	build-function-body(builder, lexenv.lexenv-policy, source, name,
-			    as(<list>, vars), #"best");
-      end;
+    = build-function-body(builder, lexenv.lexenv-policy, source, lambda?,
+			  name, vars, result-type, ~lambda?);
 
   build-region(builder, builder-result(body-builder));
 
@@ -866,6 +866,7 @@ define method fer-convert-method
 	   			      rest-type));
 
   if (non-const-arg-types? | non-const-result-types?)
+    assert(ctv == #f);
     local
       method build-call (name, args)
 	let temp = make-local-var(builder, name, object-ctype());
@@ -880,10 +881,11 @@ define method fer-convert-method
 		    build-call(#"list", result-type-leaves),
 		    rest-type-leaf
 		      | make-literal-constant(builder, make(<literal-false>)),
-		    make-function-literal(builder, #"local", signature,
+		    make-function-literal(builder, #f, #f, #"local", signature,
 					  function-region)));
   else
-    make-method-literal(builder, visibility, signature, function-region);
+    make-function-literal(builder, ctv, #t, visibility, signature,
+			  function-region);
   end;
 end;
 

@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.32 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.33 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -482,22 +482,6 @@ define method make-definition-leaf
 end method;
 
 define method make-definition-leaf
-    (builder :: <fer-builder>, defn :: <function-definition>)
- => res :: <leaf>;
-  ignore(builder);
-  let type = defn.defn-type | function-ctype();
-  if (defn.function-defn-hairy?)
-    make(<global-variable>,
-	 derived-type: type,
-	 var-info: make(<module-almost-constant-var-info>,
-			var-defn: defn, asserted-type: type));
-  else
-    make(<definition-constant-leaf>,
-	 derived-type: type, const-defn: defn);
-  end;
-end method;
-
-define method make-definition-leaf
     (builder :: <fer-builder>, defn :: <variable-definition>)
  => res :: <global-variable>;
   ignore(builder);
@@ -590,63 +574,43 @@ end;
 
 // Make the region and add it to the component's all-function-regions.
 //
-define method build-function-body-aux
+define method build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     class :: <class>, name :: <byte-string>, arg-vars :: <list>,
-     return-convention :: one-of(#"best", #"cluster"))
+     lambda? :: <boolean>, name :: <byte-string>, arg-vars :: <list>,
+     result-type :: <values-ctype>, hidden-references? :: <boolean>)
  => res :: <fer-function-region>;
   ignore(policy);
-  let region = make(class, source-location: source, name: name,
+  let region = make(if (lambda?) <lambda> else <fer-function-region> end,
+		    source-location: source, name: name,
 		    argument-types: map(derived-type, arg-vars),
-		    return-convention: return-convention);
+		    result-type: result-type,
+		    hidden-references: hidden-references?);
   push-body(builder, region);
   build-let(builder, policy, source, arg-vars, region.prologue);
   add!(builder.component.all-function-regions, region);
   region;
 end method;
 
-define method build-function-body
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>,
-     return-convention :: one-of(#"best", #"cluster"))
- => res :: <fer-function-region>;
-  build-function-body-aux(builder, policy, source, <fer-function-region>,
-			  name, arg-vars, return-convention);
-end;
-
-define method build-lambda-body
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>,
-     return-convention :: one-of(#"best", #"cluster"))
- => res :: <lambda>;
-  build-function-body-aux(builder, policy, source, <lambda>,
-			  name, arg-vars, return-convention);
-end method;
-
-
 define method make-function-literal
-    (builder :: <fer-builder>, visibility :: <function-visibility>,
+    (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
+     method? :: <boolean>, visibility :: <function-visibility>,
      signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
-  let leaf = make(<function-literal>, visibility: visibility,
-		  signature: signature, main-entry: main-entry);
-  if (instance?(main-entry, <lambda>))
-    main-entry.literal := leaf;
-  end;
+  let leaf = make(if (method?) <method-literal> else <function-literal> end,
+		  visibility: visibility, signature: signature,
+		  ct-function: ctv, main-entry: main-entry);
   add!(builder.component.all-function-literals, leaf);
   leaf;
 end;
 
-define method make-method-literal
-    (builder :: <fer-builder>, visibility :: <function-visibility>,
-     signature :: <signature>, main-entry :: <fer-function-region>)
- => res :: <leaf>;
-  let leaf = make(<method-literal>, visibility: visibility,
-		  signature: signature, main-entry: main-entry);
-  if (instance?(main-entry, <lambda>))
-    main-entry.literal := leaf;
-  end;
-  add!(builder.component.all-function-literals, leaf);
+define method make-function-literal
+    (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
+     method? :: <boolean>, visibility :: <function-visibility>,
+     signature :: <signature>, main-entry :: <lambda>,
+     #next next-method)
+    => res :: <leaf>;
+  let leaf = next-method();
+  main-entry.literal := leaf;
   leaf;
 end;
 

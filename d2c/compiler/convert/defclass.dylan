@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.25 1995/06/01 14:32:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.26 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -35,12 +35,14 @@ define class <class-definition> (<abstract-constant-definition>)
     required-init-keyword: overrides:;
   //
   // Defered evaluations function, of #f if there isn't one.
-  slot class-defn-defered-evaluations-function :: false-or(<function-literal>),
-    init-value: #f;
+  slot %class-defn-defered-evaluations-function
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
   //
   // The maker function, of #f if there isn't one.
-  slot class-defn-maker-function :: false-or(<function-literal>),
-    init-value: #f;
+  slot %class-defn-maker-function
+    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
 end;
 
 define method defn-type (defn :: <class-definition>) => res :: <cclass>;
@@ -134,6 +136,11 @@ define class <define-class-tlf> (<simple-define-tlf>)
   //
   // Make the definition required.
   required keyword defn:;
+end;
+
+define method print-message
+    (tlf :: <define-class-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Class %s", tlf.tlf-defn.defn-name);
 end;
 
 
@@ -682,7 +689,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 	defn.class-defn-cclass;
       end;
   let class-type = cclass | make(<unknown-ctype>);
-  //
+
   // Finalize the slots.
   for (slot in defn.class-defn-slots)
     finalize-slot(slot, cclass, class-type);
@@ -809,6 +816,113 @@ define method finalize-slot
 end;
 
 
+// class-defn-mumble-function accessors.
+
+
+define method class-defn-defered-evaluations-function
+    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
+    defn.%class-defn-defered-evaluations-function
+      := if (block (return)
+	       if (ct-value(defn) == #f)
+		 return(#f);
+	       end;
+	       for (slot-defn in defn.class-defn-slots)
+		 let info = slot-defn.slot-defn-info;
+		 if (instance?(info.slot-type, <unknown-ctype>)
+		       | info.slot-init-value == #t
+		       | info.slot-init-function == #t)
+		   return(#t);
+		 end;
+	       end;
+	       for (override-defn in defn.class-defn-overrides)
+		 let info = override-defn.override-defn-info;
+		 if (info.override-init-value == #t
+		       | info.override-init-function == #t)
+		   return(#t);
+		 end;
+	       end;
+	       // ### each-subclass slots w/ non obvious init values
+	       // impose the existance of the defered-evaluations
+	       // function.
+	     end)
+	   make(<ct-function>,
+		name: format-to-string("Defered evaluations for %s",
+				       defn.defn-name),
+		signature: make(<signature>, specializers: #(),
+				returns: make-values-ctype(#(), #f)));
+	 else
+	   #f;
+	 end;
+  else
+    defn.%class-defn-defered-evaluations-function;
+  end;
+end;
+
+define method class-defn-maker-function
+    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-maker-function == #"not-computed-yet")
+    defn.%class-defn-maker-function
+      := block (return)
+	   let cclass = ct-value(defn);
+	   if (cclass == #f | cclass.abstract?)
+	     return(#f);
+	   end;
+	   let key-infos = make(<stretchy-vector>);
+	   for (slot in cclass.all-slot-infos)
+	     if (instance?(slot, <instance-slot-info>))
+	       if (instance?(slot.slot-type, <unknown-ctype>))
+		 return(#f);
+	       end;
+	       let override
+		 = block (found)
+		     for (override in slot.slot-overrides)
+		       if (csubtype?(cclass,
+				     override.override-introduced-by))
+			 found(override);
+		       end;
+		     finally
+		       #f;
+		     end;
+		   end;
+	       let init-value
+		 = if (override)
+		     if (override.override-init-function == #t)
+		       return(#f);
+		     end;
+		     override.override-init-value;
+		   else
+		     if (slot.slot-init-function == #t)
+		       return(#f);
+		     end;
+		     slot.slot-init-value;
+		   end;
+	       if (init-value == #t)
+		 return(#f);
+	       end;
+	       if (slot.slot-init-keyword)
+		 let key = slot.slot-init-keyword;
+		 let key-info
+		   = make(<key-info>, key-name: key, type: slot.slot-type,
+			  required: slot.slot-init-keyword-required?,
+			  default: init-value, supplied?-var: ~init-value);
+		 add!(key-infos, key-info);
+	       end;
+	     end;
+	   end;
+	   make(<ct-function>,
+		name: format-to-string("Maker for %s", defn.defn-name),
+		signature: make(<signature>, specializers: #(),
+				keys: as(<list>, key-infos),
+				all-keys: #t,
+				returns: cclass));
+	 end;
+  else
+    defn.%class-defn-maker-function;
+  end;
+end;
+
+
 // Top level form conversion.
 
 
@@ -828,7 +942,7 @@ define method convert-top-level-form
     // variable will be handled by the linker.  We just need to build the
     // defered-evaluations, key-defaulter, and maker functions.
 
-    let anything-non-constant? = #f;
+    let have-defered-evaluations? = #f;
 
     let %evals-slot-descriptors-leaf = #f;
     let %evals-override-descriptors-leaf = #f;
@@ -887,7 +1001,7 @@ define method convert-top-level-form
       let slot-type = slot-info.slot-type;
       let (type, type-var)
 	= if (instance?(slot-type, <unknown-ctype>))
-	    anything-non-constant? := #t;
+	    have-defered-evaluations? := #t;
 	    let type-expr = slot-defn.slot-defn-type;
 	    let var = make-local-var(builder, symcat(slot-name, "-type"),
 				     specifier-type(#"<type>"));
@@ -907,7 +1021,7 @@ define method convert-top-level-form
       let init-value = slot-info.slot-init-value;
       let init-function = slot-info.slot-init-function;
       if (init-value == #t)
-	anything-non-constant? := #t;
+	have-defered-evaluations? := #t;
 	let var = make-local-var(builder, symcat(slot-name, "-init-value"),
 				 object-ctype());
 	fer-convert(builder, slot-defn.slot-defn-init-value,
@@ -919,7 +1033,7 @@ define method convert-top-level-form
 	      dylan-defn-leaf(builder, #"init-value-or-function-setter"),
 	      list(var, evals-slot-descriptor-leaf())));
       elseif (init-function == #t)
-	anything-non-constant? := #t;
+	have-defered-evaluations? := #t;
 	let var = make-local-var(builder, symcat(slot-name, "-init-function"),
 				 function-ctype());
 	fer-convert(builder, slot-defn.slot-defn-init-function,
@@ -970,14 +1084,14 @@ define method convert-top-level-form
 	    let false-leaf
 	      = make-literal-constant(builder, as(<ct-value>, #f));
 	    begin
-	      let getter = build-getter(builder, slot-defn, slot-info);
+	      let getter = build-getter(builder, #f, slot-defn, slot-info);
 	      let getter-specializers = build-call(#"list", cclass-leaf);
 	      let meth = build-call(#"%make-method", getter-specializers,
 				    results, false-leaf, getter);
 	      build-add-method(slot-defn.slot-defn-getter-name, meth);
 	    end;
 	    if (slot-defn.slot-defn-setter)
-	      let setter = build-setter(builder, slot-defn, slot-info);
+	      let setter = build-setter(builder, #f, slot-defn, slot-info);
 	      let setter-specializers = build-call(#"list", type-var,
 						   cclass-leaf);
 	      let meth = build-call(#"%make-method", setter-specializers,
@@ -985,11 +1099,11 @@ define method convert-top-level-form
 	      build-add-method(slot-defn.slot-defn-setter-name, meth);
 	    end;
 	  else
-	    slot-defn.slot-defn-getter.method-defn-leaf
-	      := build-getter(builder, slot-defn, slot-info);
+	    build-getter(builder, slot-defn.slot-defn-getter.ct-value,
+			 slot-defn, slot-info);
 	    if (slot-defn.slot-defn-setter)
-	      slot-defn.slot-defn-setter.method-defn-leaf
-		:= build-setter(builder, slot-defn, slot-info);
+	      build-setter(builder, slot-defn.slot-defn-setter.ct-value,
+			   slot-defn, slot-info);
 	    end;
 	  end;
 	else
@@ -1006,7 +1120,7 @@ define method convert-top-level-form
       let init-function = override-info.override-init-function;
 
       if (init-value == #t | init-function == #t)
-	anything-non-constant? := #t;
+	have-defered-evaluations? := #t;
 
 	let descriptor-var
 	  = make-local-var(builder,
@@ -1075,6 +1189,8 @@ define method convert-top-level-form
     let %maker-slot-descriptors-leaf = #f;
     let %maker-override-descriptors-leaves = #();
 
+    let maker-non-constant? = #f;
+
     local
       method maker-slot-descriptors-leaf ()
 	%maker-slot-descriptors-leaf
@@ -1136,6 +1252,7 @@ define method convert-top-level-form
 	    let slot-type = slot.slot-type;
 	    let (type, type-var)
 	      = if (instance?(slot-type, <unknown-ctype>))
+		  maker-non-constant? := #t;
 		  let var = make-local-var(maker-builder,
 					   symcat(slot-name, "-type"),
 					   specifier-type(#"<type>"));
@@ -1247,7 +1364,7 @@ define method convert-top-level-form
 	      end,
 	      method extract-init-value-or-function (init-value-var) => ();
 		if (init-value == #t | init-function == #t)
-		  anything-non-constant? := #t;
+		  maker-non-constant? := #t;
 		  let descriptor-leaf
 		    = if (override)
 			let debug-name = symcat(slot-name, "-descriptor");
@@ -1408,8 +1525,8 @@ define method convert-top-level-form
       = if (instance-leaf)
 	  let name = format-to-string("Maker for %s", defn.defn-name);
 	  let maker-region
-	    = build-function-body(builder, policy, source, name,
-				  as(<list>, maker-args), #"best");
+	    = build-function-body(builder, policy, source, #f, name,
+				  as(<list>, maker-args), cclass, #t);
 	  build-region(builder, builder-result(maker-builder));
 	  let bytes = cclass.instance-slots-layout.layout-length;
 	  let base-len = make-literal-constant(builder, as(<ct-value>, bytes));
@@ -1454,24 +1571,39 @@ define method convert-top-level-form
 	  build-return(builder, policy, source, maker-region,
 		       list(instance-leaf));
 	  end-body(builder);
-	  make-function-literal(builder, #"global",
-				make(<signature>, specializers: #(),
-				     keys: as(<list>, key-infos),
-				     all-keys: #t,
-				     returns: cclass),
-				maker-region);
+	  if (maker-non-constant?)
+	    assert(defn.class-defn-maker-function == #f);
+	    make-function-literal(builder, #f, #f, #"local",
+				  make(<signature>, specializers: #(),
+				       keys: as(<list>, key-infos),
+				       all-keys: #t,
+				       returns: cclass),
+				  maker-region);
+	  else
+	    // ### fill in the key-defaulter function.
+	    // Fill in the maker function.
+	    let ctv = defn.class-defn-maker-function;
+	    assert(ctv);
+	    make-function-literal(builder, ctv, #f, #"global",
+				  ctv.ct-function-signature, maker-region);
+	  end;
+	else
+	  #f;
 	end;
     
-    if (anything-non-constant?)
+    if (have-defered-evaluations?)
+      let ctv = defn.class-defn-defered-evaluations-function;
+      assert(ctv);
       let guts = builder-result(builder);
-      let name = format-to-string("Defered evaluations for %s",
-				  defn.defn-name);
-      let func-region = build-function-body(builder, policy, source, name, #(),
-					    #"best");
+      let func-region = build-function-body(builder, policy, source, #f,
+					    ctv.ct-function-name,
+					    #(), make-values-ctype(#(), #f),
+					    #t);
       // Replace the defered-evaluations function with one that signals
       // an error.
-      let flame-region = build-function-body(builder, policy, source,
-					     "Anonymous Method", #(), #"best");
+      let flame-region = build-function-body(builder, policy, source, #f,
+					     "Anonymous Method", #(),
+					     empty-ctype(), #f);
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
@@ -1487,36 +1619,33 @@ define method convert-top-level-form
 	 make-unknown-call
 	   (builder, defered-evaluations-setter-leaf, #f,
 	    list(make-literal-constant(builder, cclass),
-		 make-function-literal(builder, #"local",
+		 make-function-literal(builder, #f, #f, #"local",
 				       make(<signature>, specializers: #()),
 				       flame-region))));
       // Splice in the guts we saved earlier.
       build-region(builder, guts);
       // ### install the key-defaulter function.
+      let false-leaf = make-literal-constant(builder, as(<ct-value>, #f));
       // Install the maker function.
       build-assignment
 	(builder, policy, source, #(),
 	 make-unknown-call
 	   (builder, dylan-defn-leaf(builder, #"class-maker-setter"), #f,
 	    list(make-literal-constant(builder, cclass),
-		 make-literal-constant(builder, as(<ct-value>, #f)))));
+		 maker-leaf | false-leaf)));
       // Clear the defered-evaluations function.
       build-assignment
 	(builder, policy, source, #(),
 	 make-unknown-call
 	   (builder, defered-evaluations-setter-leaf, #f,
-	    list(make-literal-constant(builder, cclass),
-		 make-literal-constant(builder, as(<ct-value>, #f)))));
+	    list(make-literal-constant(builder, cclass), false-leaf)));
       // Return nothing.
       build-return(builder, policy, source, func-region, #());
       end-body(builder);
-      defn.class-defn-defered-evaluations-function
-	:= make-function-literal(builder, #"global",
-				 make(<signature>, specializers: #()),
-				 func-region);
+      make-function-literal(builder, ctv, #f, #"global",
+			    ctv.ct-function-signature, func-region);
     else
-      // ### fill in the key-defaulter function.
-      defn.class-defn-maker-function := maker-leaf;
+      assert(defn.class-defn-defered-evaluations-function == #f);
     end;
   end;
 end;
@@ -1636,8 +1765,8 @@ end;
 */
 
 define method build-getter
-    (builder :: <fer-builder>, defn :: <slot-defn>,
-     slot :: <instance-slot-info>)
+    (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
+     defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
   let lexenv = make(<lexenv>);
   let policy = lexenv.lexenv-policy;
@@ -1656,15 +1785,11 @@ define method build-getter
 	       list(instance),
 	       list(cclass));
       end;
-  let region = build-function-body
-    (builder, policy, source,
-     format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
-     args, #"best");
   let type = slot.slot-type;
-  let meth = make-method-literal
-    (builder, #"global",
-     make(<signature>, specializers: specializers, returns: type),
-     region);
+  let region = build-function-body
+    (builder, policy, source, #f,
+     format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
+     args, type, #t);
   let result = make-local-var(builder, #"result", type);
   local
     method get (offset :: <fixed-integer>,
@@ -1704,12 +1829,15 @@ define method build-getter
   build-slot-posn-dispatch(builder, slot, instance, get);
   build-return(builder, policy, source, region, result);
   end-body(builder);
-  meth;
+  make-function-literal
+    (builder, ctv, #t, if (ctv) #"global" else #"local" end,
+     make(<signature>, specializers: specializers, returns: type),
+     region);
 end;
 
 define method build-setter
-    (builder :: <fer-builder>, defn :: <slot-defn>,
-     slot :: <instance-slot-info>)
+    (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
+     defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
   let init?-slot = slot.slot-initialized?-slot;
   let lexenv = make(<lexenv>);
@@ -1732,13 +1860,9 @@ define method build-setter
 	       list(type, cclass));
       end;
   let region = build-function-body
-    (builder, policy, source,
+    (builder, policy, source, #f,
      format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
-     args, #"best");
-  let meth = make-method-literal
-    (builder, #"global",
-     make(<signature>, specializers: specializers, returns: type),
-     region);
+     args, type, #t);
   let result = make-local-var(builder, #"result", type);
   local
     method set (offset :: <fixed-integer>,
@@ -1758,7 +1882,10 @@ define method build-setter
   build-slot-posn-dispatch(builder, slot, instance, set);
   build-return(builder, policy, source, region, new);
   end-body(builder);
-  meth;
+  make-function-literal
+    (builder, ctv, #t, if (ctv) #"global" else #"local" end,
+     make(<signature>, specializers: specializers, returns: type),
+     region);
 end;
 
 define method build-slot-posn-dispatch

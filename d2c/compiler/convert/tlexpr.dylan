@@ -1,11 +1,16 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.3 1994/12/16 14:30:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.4 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define class <expression-tlf> (<top-level-form>)
   slot tlf-expression :: <expression>,
     required-init-keyword: expression:;
+end;
+
+define method print-message
+    (tlf :: <expression-tlf>, stream :: <stream>) => ();
+  write("Top level form.", stream);
 end;
 
 define method process-top-level-form (form :: <expression>) => ();

@@ -70,10 +70,7 @@ define method analize
       state.max-depth := new-depth;
     end;
   end;
-  // 
-  // Don't need to scan the depends-on, because we can't depend-on any
-  // clusters.
-  want;
+  analize(op.depends-on, want, state);
 end;
 
 define method analize

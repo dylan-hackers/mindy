@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.70 1995/05/29 20:59:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.71 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -204,7 +204,7 @@ define module definitions
     <function-definition>, function-defn-signature, function-defn-hairy?,
     function-defn-transformers, function-defn-transformers-setter,
     function-defn-movable?, function-defn-flushable?,
-    <abstract-method-definition>, method-defn-leaf,
+    <abstract-method-definition>,
     <bindings-definition>, defn-init-value,
     <constant-definition>,
     <constant-method-definition>,
@@ -549,6 +549,23 @@ define module c-representation
     *float-rep*, *double-rep*, *long-double-rep*;
 end;
 
+define module compile-time-functions
+  use common;
+
+  use utils;
+  use compile-time-values;
+  use signature-interface;
+  use definitions;
+  use ctype;
+  use classes;
+
+  export
+    <ct-function>, ct-function-name, ct-function-signature,
+    ct-function-definition,
+
+    <ct-generic-function>, <ct-method>;
+end;
+
 define module compile-time-eval
   use common;
 
@@ -637,8 +654,7 @@ define module builder-interface
     <fer-builder>, build-let, make-unknown-call, make-literal-constant,
     make-definition-leaf, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
-    build-unwind-protect-body, build-function-body, build-lambda-body,
-    make-function-literal, make-method-literal,
+    build-unwind-protect-body, build-function-body, make-function-literal, 
 
     <fer-component>;
 end;
@@ -725,9 +741,10 @@ define module front
   use classes;
   use signature-interface;
   use source;
-  use builder-interface;
+  use builder-interface, export: {<fer-component>};
   use policy;
   use primitives;
+  use compile-time-functions;
 
   export
     dump-fer, id, optimize-component,
@@ -754,12 +771,13 @@ define module front
 
     <abstract-function-literal>,
     <function-literal>, visibility, visibility-setter, <function-visibility>,
-    name, signature, main-entry, general-entry, general-entry-setter,
+    name, signature, ct-function, ct-function-setter, main-entry,
+    general-entry, general-entry-setter,
     <method-literal>, generic-entry, generic-entry-setter,
     <exit-function>,
 
     <fer-function-region>, prologue, argument-types, argument-types-setter,
-    result-type, result-type-setter, return-convention,
+    result-type, result-type-setter, hidden-references?,
     self-call-block, self-call-block-setter,
     self-tail-calls, self-tail-calls-setter,
     <lambda>, literal, environment,
@@ -801,6 +819,7 @@ define module fer-convert
   use lexenv, export: all;
   use policy, export: all;
   use representation;
+  use compile-time-functions;
 
   export
     fer-convert-method, fer-convert, fer-convert-body,
@@ -830,13 +849,15 @@ define module define-functions
   use front,
     import: {<function-literal>, <method-literal>, <truly-the>,
 	       <set>, <mv-call>};
+  use compile-time-functions;
 
   export
     compute-signature,
     function-defn-signature-setter, function-defn-hairy?-setter,
-    <generic-definition>, generic-defn-discriminator-leaf,
+    function-defn-ct-value,
+    <generic-definition>, generic-defn-discriminator,
     add-seal, ct-sorted-applicable-methods,
-    method-defn-leaf-setter, method-defn-inline-expansion,
+    method-defn-inline-expansion,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
     <getter-method-definition>, <setter-method-definition>,
@@ -864,6 +885,7 @@ define module define-constants-and-variables
   use front, import: {<method-literal>, <set>};
   use define-functions;
   use expand;
+  use compile-time-functions;
 
   export
     <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn;
@@ -895,6 +917,7 @@ define module define-classes
 	       <function-literal>, <method-literal>};
   use representation;
   use c-representation;
+  use compile-time-functions;
 
   export
     class-defn-maker-function;
@@ -915,6 +938,7 @@ define module cheese
   use common;
   use utils;
   use compile-time-values;
+  use names;
   use definitions;
   use variables;
   use flow;
@@ -932,6 +956,7 @@ define module cheese
   use fer-convert;
   use primitives;
   use transformers;
+  use compile-time-functions;
 end;
 
 define module stack-analysis
@@ -963,10 +988,12 @@ define module cback
   use classes;
   use stack-analysis;
   use primitives;
+  use compile-time-functions;
+  use signature-interface;
 
   export
     <output-info>, output-info-init-roots,
-    emit-prologue, emit-tlf-gunk, emit-function, emit-epilogue;
+    emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue;
 end;
 
 define module heap
@@ -978,6 +1005,7 @@ define module heap
   use c-representation;
   use ctype;
   use classes;
+  use compile-time-functions;
 
   export
     build-initial-heap;
@@ -1028,4 +1056,7 @@ define module main
   use c-representation;
   use cback;
   use heap;
+  use compile-time-functions;
+  use signature-interface;
+  use ctype;
 end;

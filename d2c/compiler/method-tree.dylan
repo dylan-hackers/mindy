@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.7 1995/06/01 14:40:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.8 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -549,7 +549,7 @@ define method ct-sorted-applicable-methods
 	  // We are disjoint from this seal -- ignore it.
 	  #f;
 
-	#"<", "unordered" =>
+	#"<", #"unordered" =>
 	  //
 	  // Make sure we don't intersect any of the hairy methods.
 	  for (hairy in child.hairy-methods)

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.3 1995/06/01 14:41:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.4 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -181,10 +181,23 @@ define method list-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
   let (okay?, args) = extract-args(call, 0, #f, #t, #f);
-  if (okay? & empty?(args))
+  if (okay?)
     let builder = make-builder(component);
-    replace-expression(component, call.dependents,
-		       make-literal-constant(builder, as(<ct-value>, #())));
+    let assign = call.dependents.dependent;
+    let policy = assign.policy;
+    let source = assign.source-location;
+    let pair-leaf = dylan-defn-leaf(builder, #"pair");
+    let current-value = make-literal-constant(builder, as(<ct-value>, #()));
+    for (arg in reverse!(args))
+      let temp = make-local-var(builder, #"temp", object-ctype());
+      build-assignment
+	(builder, policy, source, temp,
+	 make-unknown-call(builder, pair-leaf, #f,
+			   list(current-value, arg)));
+      current-value := temp;
+    end;
+    insert-before(component, assign, builder-result(builder));
+    replace-expression(component, call.dependents, current-value);
     #t;
   else
     #f;
@@ -231,7 +244,9 @@ define method make-transformer
     build-assignment
       (builder, policy, source, instance-var,
        make-unknown-call
-	 (builder, defn.class-defn-maker-function, #f, init-keywords));
+	 (builder,
+	  make-literal-constant(builder, defn.class-defn-maker-function),
+	  #f, init-keywords));
     build-assignment
       (builder, policy, source, #(),
        make-unknown-call
@@ -244,3 +259,201 @@ define method make-transformer
 end;
 
 define-transformer(#"make", #(#"<class>"), make-transformer);
+
+
+
+// reduce & reduce1 transformers.
+
+define method reduce-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, proc, init-val, collection) = extract-args(call, 3, #f, #f, #f);
+  if (okay?)
+    let elements = extract-rest-arg(collection);
+    if (elements)
+      reduce-transformer-aux(component, call, proc, init-val, elements);
+    end;
+  end;
+end;
+
+define-transformer(#"reduce", #(#"<function>", #"<object>", #"<collection>"),
+		   reduce-transformer);
+
+define method reduce1-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, proc, collection) = extract-args(call, 3, #f, #f, #f);
+  if (okay?)
+    let elements = extract-rest-arg(collection);
+    if (elements & ~empty?(elements))
+      reduce-transformer-aux(component, call, proc,
+			     elements.head, elements.tail);
+      
+    end;
+  end;
+end;
+
+define-transformer(#"reduce1", #(#"<function>", #"<object>", #"<sequence>"),
+		   reduce1-transformer);
+
+define method reduce-transformer-aux
+    (component :: <component>, call :: <known-call>, proc :: <leaf>,
+     init-value :: <leaf>, elements :: <list>)
+    => res :: <true>;
+  let builder = make-builder(component);
+  let assign = call.dependents.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+  let current-value = init-value;
+  for (element in elements)
+    let temp = make-local-var(builder, #"temp", object-ctype());
+    build-assignment
+      (builder, policy, source, temp,
+       make-unknown-call(builder, proc, #f, list(current-value, element)));
+    current-value := temp;
+  end;
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, call.dependents, current-value);
+  #t;
+end;
+
+
+// mapping transforms.
+
+define method do-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, proc, collection, more-collections)
+    = extract-args(call, 2, #f, #t, #f);
+  if (okay?
+	& every?(method (leaf)
+		   csubtype?(leaf.derived-type, specifier-type(#"<sequence>"));
+		 end,
+		 more-collections))
+    let collections = pair(collection, more-collections);
+    let builder = make-builder(component);
+    let assign = call.dependents.dependent;
+    let policy = assign.policy;
+    let source = assign.source-location;
+
+    let iteration-vars-vectors
+      = map(curry(iteration-setup, builder, policy, source), collections);
+    let block-region = build-block-body(builder, policy, source);
+    build-loop-body(builder, policy, source);
+    for (iteration-vars in iteration-vars-vectors)
+      build-if-body(builder, policy, source,
+		    iteration-done(builder, policy, source, iteration-vars));
+      build-exit(builder, policy, source, block-region);
+      end-body(builder); // if
+    end;
+    build-assignment(builder, policy, source, #(),
+		     make-unknown-call(builder, proc, #f,
+				       map(curry(iteration-current-element,
+						 builder, policy, source),
+					   iteration-vars-vectors)));
+    do(curry(iteration-advance, builder, policy, source),
+       iteration-vars-vectors);
+    end-body(builder); // loop
+    end-body(builder); // block
+    insert-before(component, assign, builder-result(builder));
+    replace-expression(component, call.dependents,
+		       make-literal-constant(builder, as(<ct-value>, #f)));
+    #t;
+  end;
+end;
+
+
+// Utilities for building iterators.
+
+define method iteration-setup
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>)
+    => res :: <simple-object-vector>;
+  let state = make-lexical-var(builder, #"state", source, object-ctype());
+  let limit = make-lexical-var(builder, #"limit", source, object-ctype());
+  let next = make-lexical-var(builder, #"next", source, function-ctype());
+  let done = make-lexical-var(builder, #"done?", source, function-ctype());
+  let curkey = make-lexical-var(builder, #"curkey", source, function-ctype());
+  let curel = make-lexical-var(builder, #"curel", source, function-ctype());
+  let curel-setter
+    = make-lexical-var(builder, #"curel-setter", source, function-ctype());
+  let copy-state
+    = make-lexical-var(builder, #"copy-state", source, function-ctype());
+  build-let(builder, policy, source,
+	    list(state, limit, next, done, curkey, curel,
+		 curel-setter, copy-state),
+	    make-unknown-call(builder,
+			      dylan-defn-leaf(builder,
+					      #"forward-iteration-protocol"),
+			      #f,
+			      list(coll)));
+  vector(state, limit, next, done, curkey, curel, curel-setter, copy-state);
+end;
+
+define method iteration-advance
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+  build-assignment(builder, policy, source, iteration-vars[0],
+		   make-unknown-call(builder, iteration-vars[2], #f,
+				     list(coll, iteration-vars[0])));
+end;
+
+define method iteration-done
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+    => var :: <leaf>;
+  let var = make-local-var(builder, #"done?", object-ctype());
+  build-assignment(builder, policy, source, var,
+		   make-unknown-call(builder, iteration-vars[3], #f,
+				     list(coll,
+					  iteration-vars[0],
+					  iteration-vars[1])));
+  var;
+end;
+
+define method iteration-current-key
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+    => var :: <leaf>;
+  let var = make-local-var(builder, #"current-key", object-ctype());
+  build-assignment(builder, policy, source, var,
+		   make-unknown-call(builder, iteration-vars[4], #f,
+				     list(coll, iteration-vars[0])));
+  var;
+end;
+
+define method iteration-current-element
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+    => var :: <leaf>;
+  let var = make-local-var(builder, #"current-element", object-ctype());
+  build-assignment(builder, policy, source, var,
+		   make-unknown-call(builder, iteration-vars[5], #f,
+				     list(coll, iteration-vars[0])));
+  var;
+end;
+
+define method iteration-current-element-setter
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     new-value :: <leaf>, coll :: <leaf>,
+     iteration-vars :: <simple-object-vector>)
+    => ();
+  build-assignment(builder, policy, source, #(),
+		   make-unknown-call(builder, iteration-vars[6], #f,
+				     list(new-value, coll,
+					  iteration-vars[0])));
+end;
+
+define method iteration-copy-state
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     coll :: <leaf>, iteration-vars :: <simple-object-vector>)
+    => res :: <simple-object-vector>;
+  let var = make-lexical-var(builder, #"state", object-ctype());
+  build-assignment(builder, policy, source, var,
+		   make-unknown-call(builder, iteration-vars[7], #f,
+				     list(coll, iteration-vars[0])));
+  let res = shallow-copy(iteration-vars);
+  res[0] := var;
+  res;
+end;
+

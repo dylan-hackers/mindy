@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.35 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.36 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -302,6 +302,10 @@ define abstract class <function-literal>
   slot signature :: <signature>,
     required-init-keyword: signature:;
 
+  // The <ct-function> for this literal, if global.
+  slot ct-function :: false-or(<ct-function>),
+    init-value: #f, init-keyword: ct-function:;
+
   // The function-region for the main body of code.
   slot main-entry :: <fer-function-region>,
     required-init-keyword: main-entry:;
@@ -366,14 +370,11 @@ define class <fer-function-region>
   slot argument-types :: <list>, required-init-keyword: argument-types:;
 
   // The result type of this function.
-  slot result-type :: <values-ctype>, init-function: wild-ctype;
+  slot result-type :: <values-ctype>,
+    init-function: wild-ctype, init-keyword: result-type:;
 
-  // The return convention used by this function-region.  One of:
-  //   best: -- use the best convention possible, based on the result type.
-  //   cluster: -- return an unknown-values cluster irrespective of the
-  //     result type.
-  slot return-convention :: one-of(#"best", #"cluster"),
-    required-init-keyword: return-convention:;
+  slot hidden-references? :: <boolean>,
+    init-value: #f, init-keyword: hidden-references:;
 
   // The block self tail calls should exit to.  #f if we haven't inserted it
   // yet (i.e. haven't found any self tail calls yet).

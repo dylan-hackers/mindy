@@ -289,6 +289,11 @@ define method spew-object (object :: <proxy>, state :: <state>) => ();
   spew-reference(object.proxy-for, $heap-rep, state);
 end;
 
+define method spew-object (object :: <ct-function>, state :: <state>) => ();
+  spew-instance(object.ct-value-cclass, state);
+end;
+
+
 
 define method spew-instance
     (class :: <cclass>, state :: <state>, #rest slots) => ();

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.17 1995/05/29 00:42:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.18 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,7 +17,7 @@ define method file-tokenizer (lib :: <library>, name :: <byte-string>)
 end;
 
 
-define method compile (#rest files) => res :: <component>;
+define method compile (#rest files) => ();
   $Top-Level-Forms.size := 0;
   let lib = $Dylan-Library;
   for (file in files)
@@ -46,19 +46,7 @@ define method compile (#rest files) => res :: <component>;
   assign-slot-representations();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
-  format(*debug-output*, "Converting in FER\n");
-  let component = make(<fer-component>);
-  let builder = make-builder(component);
-  let init-function
-    = build-function-body(builder, $Default-Policy, make(<source-location>),
-			  "Top Level Initializations", #(), #"best");
-  do(curry(convert-top-level-form, builder), $Top-Level-Forms);
-  build-return(builder, $Default-Policy, make(<source-location>),
-	       init-function, #());
-  end-body(builder);
-  format(*debug-output*, "Optimizing\n");
-  optimize-component(component);
-  format(*debug-output*, "\nEmitting C code.\n");
+  let init-functions = make(<stretchy-vector>);
   let header-stream
     = make(<file-stream>, name: "output.h", direction: #"output");
   let body-stream
@@ -68,9 +56,35 @@ define method compile (#rest files) => res :: <component>;
 	   body-stream: body-stream);
   emit-prologue(output-info);
   format(body-stream, "#include \"output.h\"\n\n");
-  do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
-  do(rcurry(emit-function, output-info), component.all-function-regions);
-  emit-epilogue(init-function, output-info);
+  for (tlf in $Top-Level-Forms)
+    let name = format-to-string("%s", tlf);
+    format(*debug-output*, "Converting %s\n", name);
+    let component = make(<fer-component>);
+    let builder = make-builder(component);
+    convert-top-level-form(builder, tlf);
+    let inits = builder-result(builder);
+    unless (instance?(inits, <empty-region>))
+      let result-type = make-values-ctype(#(), #f);
+      let source = make(<source-location>);
+      let init-function
+	= build-function-body(builder, $Default-Policy, source, #f, name, #(),
+			      result-type, #t);
+      build-region(builder, inits);
+      build-return(builder, $Default-Policy, source, init-function, #());
+      end-body(builder);
+      let sig = make(<signature>, specializers: #(), returns: result-type);
+      let ctv = make(<ct-function>, name: name, signature: sig);
+      add!(init-functions,
+	   make-function-literal(builder, ctv, #f, #"global", sig,
+				 init-function));
+    end;
+    format(*debug-output*, "Optimizing %s\n", name);
+    optimize-component(component);
+    format(*debug-output*, "Emitting C code for %s.\n", name);
+    emit-tlf-gunk(tlf, output-info);
+    emit-component(component, output-info);
+  end;
+  emit-epilogue(init-functions, output-info);
   close(header-stream);
   close(body-stream);
   format(*debug-output*, "Emitting Initial Heap.\n");
@@ -78,7 +92,6 @@ define method compile (#rest files) => res :: <component>;
     = make(<file-stream>, name: "heap.s", direction: #"output");
   build-initial-heap(output-info.output-info-init-roots, heap-stream);
   close(heap-stream);
-  component;
 end;
 
 define method main (argv0, #rest files)

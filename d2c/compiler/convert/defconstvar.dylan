@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.19 1995/06/01 14:33:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.20 1995/06/04 01:06:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -66,6 +66,29 @@ define abstract class <define-bindings-tlf> (<define-tlf>)
     init-value: #f;
   slot tlf-anything-non-constant? :: <boolean>,
     init-value: #f;
+end;
+
+define method print-message (tlf :: <define-bindings-tlf>, stream :: <stream>)
+    => ();
+  write("Define ", stream);
+  select (tlf by instance?)
+    <define-constant-tlf> => write("Constant ", stream);
+    <define-variable-tlf> => write("Variable ", stream);
+  end;
+  for (defn in tlf.tlf-required-defns, first? = #t then #f)
+    unless (first?)
+      write(", ", stream);
+    end;
+    print-message(defn.defn-name, stream);
+  finally
+    if (tlf.tlf-rest-defn)
+      unless (first?)
+	write(", ", stream);
+      end;
+      write("#rest ", stream);
+      print-message(tlf.tlf-rest-defn.defn-name, stream);
+    end;
+  end;
 end;
 
 define method print-object (tlf :: <define-bindings-tlf>, stream :: <stream>)
@@ -277,6 +300,9 @@ define method finalize-top-level-form
   if (anything-non-constant?)
     defn.function-defn-hairy? := #t;
     tlf.tlf-anything-non-constant? := #t;
+    if (defn.function-defn-ct-value)
+      error("noticed that a function was hairy after creating a ct-value.");
+    end;
   end;
 end;
 
@@ -355,12 +381,10 @@ define method convert-top-level-form
   let defn = tlf.tlf-required-defns[0];
   let lexenv = make(<lexenv>);
   let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
-  let name = format-to-string("Define Constant %s", defn.defn-name);
-  let leaf = fer-convert-method(builder, meth, name, #"global",
+  let name = format-to-string("%s", defn.defn-name);
+  let leaf = fer-convert-method(builder, meth, name, defn.ct-value, #"global",
 				lexenv, lexenv);
-  let literal-method? = instance?(leaf, <method-literal>);
-  defn.method-defn-leaf := literal-method? & leaf;
-  if (defn.function-defn-hairy? | ~literal-method?)
+  if (defn.function-defn-hairy?)
     let source = make(<source-location>);
     build-assignment(builder, lexenv.lexenv-policy, source, #(),
 		     make-operation(builder, <set>, list(leaf), var: defn));
