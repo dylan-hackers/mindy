@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.10 1996/04/06 18:29:36 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.11 1996/04/22 15:51:37 nkramer Exp $
 
 //======================================================================
 //
@@ -298,6 +298,7 @@ define method positioner-test ();
   test-regexp("a+", "AAaAA", #[2, 3], case-sensitive: #t);
   test-regexp("[a-f]+", "SdFbIeNvI", #[1, 4]);
   test-regexp("[a-f]+", "SdFbIeNvI", #[1, 2], case-sensitive: #t);
+  test-regexp("[\\s\\]]+", "blah[   \t]", #[5, 10], case-sensitive: #t);
 end method positioner-test;
 
 
