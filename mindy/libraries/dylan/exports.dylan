@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.67 1995/04/20 12:54:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.68 1995/07/05 23:12:04 rgs Exp $
 
 //======================================================================
 //
@@ -354,6 +354,7 @@ define module Extern
     export: all;
   use Extensions;
   export
-    <machine-pointer>, <c-string>, destroy, content-size, structure-size,
-    import-value, export-value, pointer-value, pointer-value-setter;
+    <machine-pointer>, <c-string>, <c-vector>, destroy, content-size,
+    structure-size, import-value, export-value, pointer-value,
+    pointer-value-setter;
 end module Extern;
