@@ -135,16 +135,14 @@ define method dump (region :: <exit>, stream :: <stream>) => ();
   write("EXIT ???", stream);
 end;
 
-define method dump (region :: <call-site>, stream :: <stream>) => ();
-  write("CALL-SITE");
-end;
-
-
 define method dump (assignment :: <assignment>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
 	     format(stream, "[%d]: ", assignment.id);
+	     if (instance?(assignment, <let-assignment>))
+	       format(stream, "let ");
+	     end;
 	     dump-defines(assignment.defines, stream);
 	     write(' ', stream);
 	     pprint-indent(#"block", 2, stream);
@@ -201,7 +199,7 @@ define method dump (op :: <primitive>, stream :: <stream>) => ();
   dump-operands(op.operands, stream);
 end;
 
-define method dump (call :: <call>, stream :: <stream>) => ();
+define method dump (call :: <abstract-call>, stream :: <stream>) => ();
   if (~call.operands)
     write("<call w/ no operands>", stream);
   else
