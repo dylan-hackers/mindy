@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.13 2000/10/21 01:30:49 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.14 2000/10/29 00:29:14 housel Exp $
 
 //======================================================================
 //
@@ -624,7 +624,7 @@ define method show-help(stream :: <stream>) => ()
 "       --mindy:          Generate output for use only with Mindy.\n"
 "       --d2c:            Generate output for use only with d2c.\n"
 "       -I, --includedir: Extra directories to search for C headers.\n"
-"	--shadow-structs: shadow C-style structs with virtual Dylan-style types\n");
+"       --shadow-structs: shadow C-style structs with virtual Dylan-style types\n");
 end method show-help;
 
 
