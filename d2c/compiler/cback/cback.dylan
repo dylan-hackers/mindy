@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.62 1995/06/07 18:46:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.63 1995/06/07 22:32:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -590,6 +590,12 @@ define method emit-prologue (output-info :: <output-info>) => ();
   format(header,
 	 "extern descriptor_t *values_sequence"
 	   "(descriptor_t *sp, heapptr_t vector);\n");
+  format(header,
+	 "extern descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, "
+	   "void *state,\n                                               "
+	   "heapptr_t thunk),\n                           descriptor_t *sp, "
+	   "heapptr_t func);\n");
+  format(header, "extern void throw(void *state, descriptor_t *stack_top);\n");
   format(header,
 	 "extern heapptr_t make_rest_arg(descriptor_t *start, long count);\n");
   unless (instance?(*double-rep*, <data-word-representation>))
@@ -1468,7 +1474,7 @@ define method emit-assignment
   let catch-defn = dylan-defn(#"catch");
   assert(instance?(catch-defn, <abstract-method-definition>));
   let catch-info = find-main-entry-info(catch-defn, output-info);
-  format(stream, "save_state(%s, %s, %s);\n",
+  format(stream, "catch(%s, %s, %s);\n",
 	 main-entry-name(catch-info, output-info), values, func);
   if (defines)
     deliver-cluster(defines, values, sp, 0, output-info);
