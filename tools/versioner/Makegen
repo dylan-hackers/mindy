@@ -1,10 +1,11 @@
 &makegen_include("../common-Makegen");
 
-# Solaris and win32 don't support the Time library, so we can't build
+# Solaris, FreeBSD and win32 don't support the Time library, so we can't build
 # Versioner on Solaris.
 #
 if (! $features{'compiled_for_solaris'} 
-    && ! $features{'compiled_for_win32'}) {
+    && ! $features{'compiled_for_win32'}
+    && ! $features{'compiled_for_freebsd'}) {
     &emit_library_rule('Versioner', '$(BUILDROOT)/force.timestamp', '',
 	 	       'compile', 'install');
 }

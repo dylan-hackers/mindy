@@ -36,7 +36,8 @@ do emit_library_rule(
 #);
 
 if (! $features{'compiled_for_solaris'}
-    && ! $features{'compiled_for_win32'}) {
+    && ! $features{'compiled_for_win32'}
+    && ! $features{'compiled_for_freebsd'}) {
 	do emit_library_rule(
 	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 	);
