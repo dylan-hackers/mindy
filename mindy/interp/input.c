@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.2 1994/03/27 02:12:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.3 1994/03/31 22:43:52 wlott Exp $
 *
 * This file does whatever.
 *
@@ -47,13 +47,13 @@ static void getc_or_wait(struct thread *thread)
 	      case EBADF:
 		error("Tried to getc with stdin broken.");
 	      case EINTR:
-		break;
+		wait_for_input(thread, fd, getc_or_wait);
 	      case EINVAL:
 		lose("select failed with EINVAL?");
 	    }
 	}
 	else if (nfound == 0)
-	    wait_for_input(thread_current(), fd, getc_or_wait);
+	    wait_for_input(thread, fd, getc_or_wait);
     }
 
     {
