@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.20 1999/07/16 16:37:22 housel Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.21 1999/07/21 23:22:50 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -333,7 +333,6 @@ default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
 default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
-link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 link-executable-command:        $(LIBTOOL) gcc -o %s %s %s
 link-shared-executable-command: $(LIBTOOL) gcc -o %s %s %s
 link-executable-flags:          -lm
@@ -344,22 +343,23 @@ path-separator:        		/
 // Fully supported platforms (i.e., we use these):
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
 inherit-from:			gcc freebsd x86
-link-shared-library-command:	
 
 // FreeBSD 3.x
 platform-name:			x86-freebsd-elf-gcc
 inherit-from:			gcc freebsd x86
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			ppc-linux-gcc
 inherit-from:			gcc linux ppc
-link-shared-library-command:	
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 // Solaris support maintained by Tom Emerson, tree@tiac.net
 // Need to define default-features: below since all three of our
@@ -370,7 +370,6 @@ platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
 default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
-link-shared-library-command:	
 
 // This is untested. 
 platform-name:			sparc-openbsd-gcc
@@ -396,3 +395,4 @@ library-filename-suffix:        	.a .sl
 link-library-command:           	/bin/ar qc %s %s
 link-executable-command:        	gcc -z -o %s %s %s
 link-executable-flags:          	-L/lib/pa1.1 -lm /usr/lib/end.o
+link-shared-library-command:    	$(LIBTOOL) gcc -o %s %s -rpath %s
