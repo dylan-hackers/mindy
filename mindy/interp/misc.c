@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.4 1994/04/09 13:36:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.5 1994/04/30 14:57:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -25,9 +25,15 @@
 #include "module.h"
 #include "sym.h"
 #include "def.h"
+#include "num.h"
 
 static struct variable *generic_apply_var = NULL;
 
+
+static obj_t dylan_exit(obj_t exit_value)
+{
+    exit(fixnum_value(exit_value));
+}
 
 static void dylan_values(struct thread *thread, int nargs)
 {
@@ -123,6 +129,10 @@ void init_misc_functions(void)
 {
     define_generic_function("main", 0, TRUE, obj_False,
 			    obj_Nil, obj_ObjectClass);
+    define_generic_function("exit", 1, FALSE, obj_False,
+			    obj_Nil, obj_ObjectClass);
+    define_function("raw-exit", list1(obj_IntegerClass), FALSE, obj_False,
+		    obj_ObjectClass, dylan_exit);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
 				      obj_Nil, obj_ObjectClass,
