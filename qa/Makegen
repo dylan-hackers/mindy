@@ -14,7 +14,7 @@ if ($features{'compiled_for_win32'}) {
     push(@compile_commands,
          sprintf($host_platform{'recursive_make_command'},
              "../common/tests", ""));
-}   
+}
 
 &compile_subdirs("test-suites", "test-apps");
-												 
+
