@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/header.c,v 1.1 1994/03/24 21:49:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/header.c,v 1.2 1994/03/30 05:55:50 wlott Exp $
 *
 * This file does whatever.
 *
@@ -106,6 +106,8 @@ static void scan_one_header(FILE *file, int c)
 	}
 	if (c == EOF)
 	    break;
+	else
+	    line_count++;
 	c = getc(file);
 	if (c == EOF)
 	    break;
@@ -124,9 +126,8 @@ void read_header(FILE *file)
 {
     int c;
 
-    while ((c = getc(file)) != EOF && c != '\n') {
+    while ((c = getc(file)) != EOF && c != '\n')
 	scan_one_header(file, c);
+    if (c == '\n')
 	line_count++;
-    }
-    line_count++;
 }
