@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.7 1998/11/26 04:51:18 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.8 1999/02/25 06:44:58 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1373,6 +1373,7 @@ define method check-generic-method-xep
   let ctv = defn.ct-value;
   let gf = defn.method-defn-of;
   case
+    (defn.method-defn-inline-type == #"inline-only") => #t;
     (~gf | ~ctv) => #t;
     (~gf.generic-defn-sealed?) =>
       maybe-emit-generic-entry(ctv, file);
