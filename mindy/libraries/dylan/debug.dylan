@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.16 1996/04/22 15:24:11 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.17 1996/09/19 12:16:13 nkramer Exp $
 
 //======================================================================
 //
@@ -97,6 +97,14 @@ end method report-problem;
 
 define constant debug-variables = make(<stretchy-vector>);
 
+// add-debug-variables -- exported from System so the Inspector can
+// add debug variables.  Nobody in this file actually uses this
+// function...
+//
+define function add-debug-variable (obj :: <object>) => ();
+  condition-format(*debug-output*, "$%==%=\n", debug-variables.size, obj);
+  add!(debug-variables, obj);
+end function add-debug-variable;
 
 define method debugger-flush ()
   debug-variables.size := 0;

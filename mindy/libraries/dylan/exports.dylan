@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.101 1996/09/15 15:57:14 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.102 1996/09/19 12:16:13 nkramer Exp $
 
 //======================================================================
 //
@@ -145,7 +145,8 @@ define module extras
     *debug-output*, *warning-output*, *inspect-function*, *xinspect-function*,
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
-    ratio, integer-length, $not-supplied, false-or, instantiable?;
+    ratio, integer-length, $not-supplied, false-or, instantiable?,
+    add-debug-variable;
 end;
 
 
@@ -256,7 +257,7 @@ define module Extensions
 	     <ratio>, numerator, denominator,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
-  use extras, exclude: { instantiable? },
+  use extras, exclude: { add-debug-variable, instantiable? },
     export: all;
   export
     one-of, ignore, key-exists?, <byte>, assert;
@@ -272,6 +273,8 @@ define module System
 	     file-write-date},
     export: all;
   use Builtin-Stuff, import: {$maximum-integer};
+  use extras, import: { add-debug-variable },
+    export: all;
   export
     <buffer-index>, $maximum-buffer-size;
 end System;
