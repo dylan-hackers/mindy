@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.57 1996/05/01 14:26:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.58 1996/06/24 17:56:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -846,6 +846,7 @@ define method fer-convert-method
 	    build-let(body-builder, policy, source, var, temp);
 	  end;
 	  if (type-var)
+	    non-const-arg-types? := #t;
 	    let checked = make-lexical-var(body-builder, name.token-symbol,
 					   source, object-ctype());
 	    build-assignment
