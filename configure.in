@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.17 1998/10/05 17:55:25 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.18 1998/10/18 22:36:41 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -181,25 +181,26 @@ AC_SUBST(MC)
 
 AC_CHECK_TOOL(D2C, d2c, no)
 
-
-AC_MSG_CHECKING(how to call d2c)
 if test "$D2C" != no; then
-    if test x$D2C == "xd2c"; then
+    AC_MSG_CHECKING(how to call d2c)
+    if test x$D2C = "xd2c"; then
         D2C=`(cd /;which d2c)`
     fi
-    D2C_BASE=`echo "$D2C" | sed 's/\/bin\/[^\/]*$//'`
-    echo $D2C_BASE
-    if test -f $D2C_BASE/etc/platforms.descr; then
-        D2C="$D2C -p$D2C_BASE/etc/platforms.descr"
+    D2C_PREFIX=`echo "$D2C" | sed 's#/bin/.*##'`
+    PREFERED_DESCR="$D2C_PREFIX/etc/platforms.descr"
+    if test -f $PREFERED_DESCR; then
+        D2C="$D2C -p$PREFERED_DESCR"
+	AC_MSG_RESULT($D2C)
     else
         if test -f $sysconfdir/platforms.descr; then
             D2C="$D2C -p$sysconfdir/platforms.descr"
         else
             D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
         fi
+	AC_MSG_RESULT($D2C)
+	AC_MSG_WARN(cannot find $PREFERED_DESCR, which would be better)
     fi
 fi
-AC_MSG_RESULT($D2C)
 
 #--------------------------------------------------------------------
 # Check to see if the user asked us not to build Mindy or d2c.
@@ -234,7 +235,9 @@ your system is supported, or specify fewer --disable-FOO flags.])
 fi
 
 # XXX - Now we need to do something with this decision...
-
+if test "$enable_d2c" = "no" -o "$enable_mindy" = "no"; then
+    AC_MSG_ERROR(building only either d2c or mindy is not yet supported)
+fi
 
 #====================================================================
 # Start of section lifted from original configure.in.
