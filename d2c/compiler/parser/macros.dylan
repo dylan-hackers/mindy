@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.6 2001/01/06 18:41:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.7 2001/01/07 14:24:03 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1831,6 +1831,10 @@ end method match;
 // hand side because we don't want to reconsider any wildcards that
 // precede the separator if the right hand side fails.
 //
+
+define class <auxiliary-rule-name-query>(<condition>)
+end;
+
 define method match-separated-patterns
     (pattern :: <binary-pattern>, separator :: <integer>,
      fragment :: <fragment>, intermediate-words :: <simple-object-vector>,
@@ -1844,6 +1848,16 @@ define method match-separated-patterns
 	    if (remaining.more?)
 	      left-fail();
 	    else
+	      // detect infinite recursion
+	      if (~found?
+		  & pattern.pattern-last?
+		  & ~before.more?)
+		compiler-fatal-error-location
+		  (fragment,
+		   "Infinite recursion in auxiliary rules %s.",
+		   <auxiliary-rule-name-query>.make.signal);
+	      end if;
+	      // match behind separator
 	      match(pattern.pattern-right, after, intermediate-words, fail,
 		    continue, results);
 	    end if;
@@ -2558,14 +2572,20 @@ define method find-atomic-value
 end method find-atomic-value;
 
 
-define method append-element!
+// expand-rule-set-reference -- internal
+//
+//  called from append-element! for simple and
+//  ellipsis <pattern-variable-reference>s
+//
+define function expand-rule-set-reference
     (generator :: <expansion-generator>,
-     varref :: <simple-pattern-variable-reference>,
-     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
-     prev-was-separator? :: <boolean>)
-    => ends-in-separator? :: <boolean>;
+     varref :: <pattern-variable-reference>,
+     bindings :: <pattern-binding-set>,
+     this-rule-set :: false-or(<symbol>),
+     prev-was-separator? :: <boolean>,
+     name :: <symbol>)
+    => ends-in-separator? :: <false>;
   generate-new-section(generator);
-  let name = varref.patvarref-name.token-symbol;
   let value = find-atomic-value(varref, bindings, name, this-rule-set);
   let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
   let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
@@ -2576,6 +2596,18 @@ define method append-element!
   end if;
   generate-new-section(generator);
   #f;
+end;
+
+
+define method append-element!
+    (generator :: <expansion-generator>,
+     varref :: <simple-pattern-variable-reference>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     prev-was-separator? :: <boolean>)
+    => ends-in-separator? :: <false>;
+  expand-rule-set-reference
+    (generator, varref, bindings, this-rule-set,
+     prev-was-separator?, varref.patvarref-name.token-symbol);
 end method append-element!;
 
 
@@ -2584,23 +2616,14 @@ define method append-element!
      varref :: <ellipsis-pattern-variable-reference>,
      bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
      prev-was-separator? :: <boolean>)
-    => ends-in-separator? :: <boolean>;
+    => ends-in-separator? :: <false>;
   unless (this-rule-set)
     compiler-fatal-error-location
       (varref.patvarref-name, "Can't use ... in the main rule set.");
   end unless;
-  generate-new-section(generator);
-  let value
-    = find-atomic-value(varref, bindings, this-rule-set, this-rule-set);
-  let aux-rule-sets = generator.generator-macro-defn.macro-auxiliary-rule-sets;
-  let aux-rule-set = find-aux-rule-set(this-rule-set, aux-rule-sets);
-  let orig-token = generator.generator-next-token;
-  expand-value(generator, value, aux-rule-set);
-  if (prev-was-separator? & orig-token == generator.generator-next-token)
-    nuke-separator(generator);
-  end if;
-  generate-new-section(generator);
-  #f;
+  expand-rule-set-reference
+    (generator, varref, bindings, this-rule-set,
+     prev-was-separator?, this-rule-set);
 end method append-element!;
   
 
@@ -2750,6 +2773,10 @@ define method expand-value
   block (return)
     let intermediate-words
       = generator.generator-macro-defn.macro-intermediate-words;
+    let handler <auxiliary-rule-name-query>
+      = method(#rest ignore)
+          aux-rule-set.rule-set-name
+        end;
     for (rule in aux-rule-set.rule-set-rules)
       let results = match-rule(rule, #f, value, intermediate-words);
       unless (results == #"failed")
