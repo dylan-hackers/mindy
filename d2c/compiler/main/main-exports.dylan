@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.3 1999/01/06 06:51:39 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.4 1999/06/09 16:11:58 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,6 +30,9 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 define library compiler-main
   use Dylan;
+#if (~mindy)
+  use garbage-collection;
+#endif
   use String-extensions;
   use Random;
   use parse-arguments;
@@ -51,6 +54,7 @@ define module main
      import: {system, copy-bytes, getenv, <raw-pointer>, import-string, 
 	      export-string, no-core-dumps,
 	      c-expr, pointer-deref, pointer-deref-setter};
+  use garbage-collection;
 #endif
   use string-conversions, import: {string-to-integer};
   use character-type;

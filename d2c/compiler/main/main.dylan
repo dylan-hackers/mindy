@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.22 1999/05/29 21:28:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.23 1999/06/09 16:11:58 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1319,6 +1319,8 @@ define method show-help(stream :: <stream>) => ()
 "                          Used on files speficied with -f.\n"
 "       -f, --cc-overide-file:\n"
 "                          Files which need special C compiler invocation.\n"
+"       --enable-incremental:\n"
+"                          Enable incremental garbage collection.\n"
 "       --help:            Show this help text.\n"
 "       --version          Show version number.\n"
 	   );
@@ -1436,7 +1438,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("platforms"),
 			    short-options: #("p"));
   add-option-parser-by-type(argp,
-			    <parameter-option-parser>,
+			    <simple-option-parser>,
 			    long-options: #("no-binaries"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
@@ -1461,6 +1463,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
 			    long-options: #("dump-transforms"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
+			    long-options: #("enable-incremental"));
 			    
   // Parse our command-line arguments.
   unless(parse-arguments(argp, args))
@@ -1511,6 +1516,12 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   // For folks who have *way* too much time (or a d2c bug) on their hands.
   if (option-value-by-long-name(argp, "dump-transforms"))
     print-debugging-output();
+  end if;
+
+  if (option-value-by-long-name(argp, "enable-incremental"))
+#if (d2c)
+    GC-enable-incremental();
+#endif
   end if;
 
   // Process our regular arguments, too.
