@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.12 1994/04/11 00:24:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.13 1994/04/12 19:49:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -48,6 +48,8 @@ extern int isatty(int fd);
 #include "value.h"
 #include "error.h"
 #include "gc.h"
+#include "brkpt.h"
+#include "../comp/byteops.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
@@ -70,9 +72,10 @@ static int PrevLine = -1;
 static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
 static boolean Continue;
 
-static obj_t do_funcall_func;
+static obj_t do_eval_func;
 static obj_t do_print_func;
 
+static struct variable *debugger_eval_var;
 static struct variable *debugger_flush_var;
 static struct variable *debugger_call_var;
 static struct variable *debugger_print_var;
@@ -858,15 +861,15 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 	lose("Parser returned something strange.");
 }
 
-static void do_funcall(struct thread *thread, obj_t args, int nargs);
+static void do_eval(struct thread *thread, obj_t args, int nargs);
 static void do_more_prints(struct thread *thread, obj_t exprs);
 
-static void funcall_return(struct thread *thread, obj_t *vals)
+static void eval_return(struct thread *thread, obj_t *vals)
 {
     do_return(thread, pop_linkage(thread), vals);
 }
 
-static void continue_funcall(struct thread *thread, obj_t *vals)
+static void continue_eval(struct thread *thread, obj_t *vals)
 {
     obj_t args = vals[-2];
     int nargs = fixnum_value(vals[-1]);
@@ -874,10 +877,10 @@ static void continue_funcall(struct thread *thread, obj_t *vals)
     vals[-2] = vals[0];
     thread->sp = vals - 1;
 
-    do_funcall(thread, args, nargs);
+    do_eval(thread, args, nargs);
 }
 
-static void do_funcall(struct thread *thread, obj_t args, int nargs)
+static void do_eval(struct thread *thread, obj_t args, int nargs)
 {
     while (args != obj_Nil) {
 	obj_t arg = HEAD(args);
@@ -890,9 +893,9 @@ static void do_funcall(struct thread *thread, obj_t args, int nargs)
 	else if (kind == symbol("funcall")) {
 	    *thread->sp++ = TAIL(args);
 	    *thread->sp++ = make_fixnum(nargs+1);
-	    *thread->sp++ = do_funcall_func;
+	    *thread->sp++ = do_eval_func;
 	    *thread->sp++ = TAIL(arg);
-	    set_c_continuation(thread, continue_funcall);
+	    set_c_continuation(thread, continue_eval);
 	    invoke(thread, 1);
 	    return;
 	}
@@ -902,19 +905,19 @@ static void do_funcall(struct thread *thread, obj_t args, int nargs)
     }
     /* One of the ``args'' is the function. */
     check_type(thread->sp[-nargs], obj_FunctionClass);
-    set_c_continuation(thread, funcall_return);
+    set_c_continuation(thread, eval_return);
     invoke(thread, nargs-1);
 }
 
-static void do_funcall_start(struct thread *thread, int nargs)
+static void do_eval_start(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - 1;
-    obj_t funcall_args = args[0];
+    obj_t eval_args = args[0];
 
     assert(nargs == 1);
 
     push_linkage(thread, args);
-    do_funcall(thread, funcall_args, 0);
+    do_eval(thread, eval_args, 0);
 }
 
 static void do_print(struct thread *thread, obj_t *vals)
@@ -952,7 +955,7 @@ static void do_more_prints(struct thread *thread, obj_t exprs)
 	}
 	else if (kind == symbol("funcall")) {
 	    *thread->sp++ = TAIL(exprs);
-	    *thread->sp++ = do_funcall_func;
+	    *thread->sp++ = do_eval_func;
 	    *thread->sp++ = TAIL(expr);
 	    set_c_continuation(thread, do_print);
 	    invoke(thread, 1);
@@ -989,6 +992,10 @@ static void call_or_print(struct variable *var)
 
     if (exprs == obj_False) {
 	printf("Invalid expression.\n");
+	return;
+    }
+    if (exprs == obj_Nil) {
+	printf("No expression.\n");
 	return;
     }
 
@@ -1443,6 +1450,397 @@ static void step_cmd(void)
 }
 
 
+/* Breakpoint commands */
+
+static int find_pc_for_line(obj_t component, int line)
+{
+    obj_t debug_info = COMPONENT(component)->debug_info;
+    int len = SOVEC(debug_info)->length;
+    int n_const = COMPONENT(component)->n_constants;
+    int pc = (char *)(&COMPONENT(component)->constant[n_const])
+	- (char *)component;
+    boolean prev_line_before = FALSE;
+    int i;
+    
+    for (i = 0; i < len; i++) {
+	obj_t entry = SOVEC(debug_info)->contents[i];
+	int this_line = fixnum_value(SOVEC(entry)->contents[0]);
+	if (prev_line_before ? line <= this_line : line == this_line)
+	    return pc;
+	pc += fixnum_value(SOVEC(entry)->contents[1]);
+	prev_line_before = (this_line != 0 && this_line < line);
+    }
+
+    return -1;
+}
+
+static void install_breakpoint(obj_t func, obj_t line)
+{
+    if (!instancep(func, obj_FunctionClass)) {
+	prin1(func);
+	printf(" isn't a function\n");
+    }
+    else if (!instancep(func, obj_ByteMethodClass)) {
+	prin1(func);
+	printf(" isn't a byte method.\n");
+    }
+    else if (!obj_is_fixnum(line)) {
+	printf("bogus line number: ");
+	print(line);
+    }
+    else {
+	obj_t component = byte_method_component(func);
+
+	if (COMPONENT(component)->debug_info == obj_False) {
+	    prin1(func);
+	    printf(" has no debug-info.\n");
+	}
+	else {
+	    int pc = find_pc_for_line(component, fixnum_value(line));
+
+	    if (pc < -1) {
+		prin1(func);
+		printf(" does not span line number %d\n", fixnum_value(line));
+	    }
+	    else {
+		int id = install_byte_breakpoint(component, pc);
+		
+		if (id < 0)
+		    printf("couldn't install breakpoint in ");
+		else
+		    printf("breakpoint %d installed in ", id);
+		prin1(func);
+		printf(" at line %d (pc %d)\n", fixnum_value(line), pc);
+	    }
+	}
+    }
+}
+
+static void breakpoint_cmd(void)
+{
+    obj_t exprs = parse_exprs();
+    
+    if (exprs == obj_False)
+	printf("Invalid function expression.\n");
+    else if (exprs == obj_Nil)
+	printf("Can't list breakpoints yet.\n");
+    else if (TAIL(exprs) == obj_Nil)
+	printf("Can't set function-start breakpoints yet.\n");
+    else if (TAIL(TAIL(exprs)) == obj_Nil) {
+	boolean okay = TRUE;
+	boolean simple = TRUE;
+
+	eval_vars(HEAD(exprs), &okay, &simple);
+	eval_vars(HEAD(TAIL(exprs)), &okay, &simple);
+
+	if (!okay)
+	    return;
+
+	if (simple)
+	    install_breakpoint(TAIL(HEAD(exprs)),
+			       TAIL(HEAD(TAIL(exprs))));
+	else {
+	    /* ### */
+	    printf("Can't install breakpoints in functions we have to "
+		   "eval first yet.\n");
+	}
+    }
+    else
+	printf("Too many arguments to breakpoint.\n");
+}
+
+
+/* Disassemble command */
+
+static struct byteop_info {
+    int match;
+    int mask;
+    char *op;
+} ByteOpInfos[] = {
+    {op_TRAP, 0xff, "trap"},
+    {op_BREAKPOINT, 0xff, "breakpoint"},
+    {op_RETURN_SINGLE, 0xff, "return single"},
+    {op_MAKE_VALUE_CELL, 0xff, "make-value-cell"},
+    {op_VALUE_CELL_REF, 0xff, "value-cell-ref"},
+    {op_VALUE_CELL_SET, 0xff, "value-cell-set"},
+    {op_VARIABLE_VALUE, 0xff, "variable-value   %v"},
+    {op_VARIABLE_FUNCTION, 0xff, "variable-function%v"},
+    {op_SET_VARIABLE_VALUE, 0xff, "set-variable-value"},
+    {op_MAKE_METHOD, 0xff, "make-method"},
+    {op_CHECK_TYPE, 0xff, "check-type"},
+    {op_CHECK_TYPE_FUNCTION, 0xff, "check-type-function"},
+    {op_CANONICALIZE_VALUE, 0xff, "canonicalize-value %c"},
+    {op_PUSH_BYTE, 0xff, "push\t%b"},
+    {op_PUSH_INT, 0xff, "push\t%i"},
+    {op_CONDITIONAL_BRANCH, 0xff, "cbr\t%t"},
+    {op_BRANCH, 0xff, "br\t%t"},
+    {op_PUSH_NIL, 0xff, "push\t#()"},
+    {op_PUSH_UNBOUND, 0xff, "push\t#unbound"},
+    {op_PUSH_TRUE, 0xff, "push\t#t"},
+    {op_PUSH_FALSE, 0xff, "push\t#f"},
+    {op_DUP, 0xff, "dup"},
+
+    {op_PUSH_CONSTANT, 0xf0, "push\tconst(%a)"},
+    {op_PUSH_ARG, 0xf0, "push\targ(%a)"},
+    {op_POP_ARG, 0xf0, "pop\targ(%a)"},
+    {op_PUSH_LOCAL, 0xf0, "push\tlocal(%a)"},
+    {op_POP_LOCAL, 0xf0, "pop\tlocal(%a)"},
+    {op_CALL_TAIL, 0xf0, "call\tnargs = %a, tail"},
+    {op_CALL_FOR_MANY, 0xf0, "call\tnargs = %a, for %c"},
+    {op_CALL_FOR_SINGLE, 0xf0, "call\tnargs= %a, for single"},
+
+
+    {op_PLUS, 0xff, "+"},
+    {op_MINUS, 0xff, "-"},
+    {op_LT, 0xff, "<"},
+    {op_LE, 0xff, "<="},
+    {op_EQ, 0xff, "="},
+    {op_IDP, 0xff, "=="},
+    {op_NE, 0xff, "~="},
+    {op_GE, 0xff, ">="},
+    {op_GT, 0xff, ">"},
+    {0, 0, NULL}
+};
+
+static int disassem_int4(unsigned char *ptr)
+{
+    return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
+}
+
+static obj_t last_const = NULL;
+
+static unsigned char *disassemble_op(obj_t component, unsigned char *start)
+{
+    unsigned char *ptr = start;
+    unsigned char byte = *ptr++;
+    struct byteop_info *info;
+    char buf[256], *fill = buf, *msg = "";
+    int i, c;
+    obj_t this_const = NULL;
+    obj_t trailer = NULL;
+
+    for (info = ByteOpInfos; info->op != NULL; info++)
+	if ((info->mask & byte) == info->match) {
+	    msg = info->op;
+	    break;
+	}
+
+    do {
+	c = *msg++;
+	if (c == '%') {
+	    switch (*msg++) {
+	      case 'a':
+		i = byte & 0xf;
+		if (i == 0xf) {
+		    i = *ptr++;
+		    if (i == 0xff) {
+			i = disassem_int4(ptr);
+			ptr += 4;
+		    }
+		}
+		sprintf(fill, "%d", i);
+		if ((byte & 0xf0) == op_PUSH_CONSTANT)
+		    this_const = COMPONENT(component)->constant[i];
+		break;
+
+	      case 'b':
+		sprintf(fill, "%d", *(signed char *)(ptr++));
+		break;
+
+	      case 'c':
+		byte = *ptr++;
+		if (byte == 0xff) {
+		    sprintf(fill, "%d", disassem_int4(ptr));
+		    ptr += 4;
+		}
+		else
+		    sprintf(fill, "%d", byte);
+		break;
+
+	      case 'e':
+		if (ptr - start > 1)
+		    ptr++;
+		break;
+
+	      case 'i':
+		sprintf(fill, "%d", disassem_int4(ptr));
+		ptr += 4;
+		break;
+
+	      case 't':
+		ptr += 4;
+		sprintf(fill, "%d",
+			ptr - (unsigned char *)component
+			+ disassem_int4(ptr-4));
+		break;
+
+	      case 'v':
+		if (last_const != NULL && obj_is_fixnum(last_const))
+		    trailer = ((struct variable *)last_const)->name;
+		fill[0] = '\0';
+		break;
+
+	      default:
+		fill[0] = '?';
+		fill[1] = '?';
+		fill[2] = '?';
+		fill[3] = '\0';
+	    }
+	    fill = strchr(fill, '\0');
+	}
+	else
+	    *fill++ = c;
+    } while (c != '\0');
+
+    for (i = 0; i < (ptr - start); i++)
+	printf(" %02x", start[i]);
+    while (i++ < 4)
+	printf("   ");
+    printf("\t%s", buf);
+    if (trailer != NULL) {
+	putchar('\t');
+	print(trailer);
+    }
+    else
+	putchar('\n');
+
+    last_const = this_const;
+
+    return ptr;
+}
+
+static void disassemble_component(obj_t component)
+{
+    obj_t debug_info = COMPONENT(component)->debug_info;
+    obj_t source_file = COMPONENT(component)->source_file;
+    int nconst = COMPONENT(component)->n_constants;
+    unsigned char *ptr
+	= (unsigned char *)(COMPONENT(component)->constant + nconst);
+    unsigned char *end
+	= obj_ptr(unsigned char *, component) + COMPONENT(component)->length;
+    int debug_index = 0;
+    unsigned char *next_line;
+
+    if (debug_info == obj_False)
+	next_line = end;
+    else
+	next_line = ptr;
+
+    while (ptr < end) {
+	while (ptr >= next_line) {
+	    obj_t entry = SOVEC(debug_info)->contents[debug_index++];
+	    int line = fixnum_value(SOVEC(entry)->contents[0]);
+	    FILE *source = find_source_line(source_file, line);
+	    if (source) {
+		int c;
+		printf("%d\t", line);
+		while ((c = getc(source)) != EOF && c != '\n')
+		    putchar(c);
+		putchar('\n');
+	    }
+	    else
+		printf("line %d:\n", line);
+	    next_line += fixnum_value(SOVEC(entry)->contents[1]);
+	}
+	printf("%6d:", ptr - (unsigned char *)component);
+	ptr = disassemble_op(component, ptr);
+    }
+
+    last_const = NULL;
+}
+
+static void disassemble_thing(obj_t thing)
+{
+    if (instancep(thing, obj_ComponentClass))
+	disassemble_component(thing);
+    else if (instancep(thing, obj_ByteMethodClass))
+	disassemble_component(byte_method_component(thing));
+    else if (instancep(thing, obj_FunctionClass)) {
+	printf("don't know how to disassemble ");
+	print(thing);
+    }
+    else {
+	prin1(thing);
+	printf(" isn't a function or component\n");
+    }
+}
+
+static void disassemble_cont(struct thread *thread, obj_t *vals)
+{
+    obj_t *old_sp;
+    obj_t okay = vals[0];
+
+    if (okay != obj_False) {
+	obj_t results = vals[1];
+	if (SOVEC(results)->length == 0)
+	    disassemble_thing(obj_False);
+	else
+	    disassemble_thing(SOVEC(results)->contents[0]);
+    }
+    old_sp = pop_linkage(thread);
+    do_return(thread, old_sp, old_sp);
+}
+
+static void disassemble_cmd(void)
+{
+    obj_t exprs = parse_exprs();
+
+    if (exprs == obj_False)
+	printf("Invalid function expression.\n");
+    else if (exprs == obj_Nil) {
+	if (CurFrame == NULL)
+	    printf("No current frame.\n");
+	else if (obj_is_fixnum(CurFrame->component))
+	    printf("Current frame is not in a byte method\n");
+	else
+	    disassemble_component(CurFrame->component);
+    }
+    else if (TAIL(exprs) != obj_Nil)
+	printf("Too many expressions for disassemble\n");
+    else {
+	boolean okay = TRUE;
+	boolean simple = TRUE;
+
+	eval_vars(HEAD(exprs), &okay, &simple);
+
+	if (!okay)
+	    return;
+
+	if (simple)
+	    disassemble_thing(TAIL(HEAD(exprs)));
+	else if (debugger_eval_var == NULL
+		 || debugger_eval_var->value == obj_Unbound)
+	    printf("Can't eval expressions without debugger-eval "
+		   "being defined.\n");
+	else {
+	    struct thread *thread = CurThread;
+
+	    if (thread == NULL) {
+		thread = thread_create(make_string("eval for disassemble"));
+		set_c_continuation(thread, kill_me);
+	    }
+	    else {
+		thread_push_escape(thread);
+		set_c_continuation(thread, debugger_cmd_finished);
+	    }
+
+	    suspend_other_threads(thread);
+
+	    *thread->sp++ = obj_False;
+	    push_linkage(thread, thread->sp);
+	    set_c_continuation(thread, disassemble_cont);
+	    thread->datum = obj_rawptr(thread->sp);
+	    *thread->sp++ = debugger_eval_var->value;
+	    *thread->sp++ = HEAD(exprs);
+
+	    thread_restart(thread);
+
+	    Continue = TRUE;
+	}
+    }
+}
+
+
 /* Command table. */
 
 static struct cmd_entry Cmds[] = {
@@ -1451,13 +1849,17 @@ static struct cmd_entry Cmds[] = {
     {"backtrace",
 	 "backtrace\tDisplay a stack backtrace for the current thread.",
 	 backtrace_cmd},
+    {"breakpoint", "breakpoint\tInstall a breakpoint.", breakpoint_cmd},
     {"c", NULL, continue_cmd},
     {"call", "call expr...\tCall each expr in its own thread.", call_cmd},
     {"continue", "continue\tContinue execution.", continue_cmd},
     {"d", NULL, down_cmd},
     {"down", "down\t\tMove down one frame.", down_cmd},
-    {"disable", "disable thread\tRestart the given thread.", disable_cmd},
-    {"enable", "enable thread\tSuspend the given thread.", enable_cmd},
+    {"disable", "disable thread\tSuspend the given thread.", disable_cmd},
+    {"disassemble",
+	 "disassemble\tDisassemble the component for the current frame",
+	 disassemble_cmd},
+    {"enable", "enable thread\tRestart the given thread.", enable_cmd},
     {"flush", "flush\t\tFlush all debugger variables.", flush_cmd},
     {"frame", "frame num\tMove to the given frame.", frame_cmd},
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
@@ -1482,7 +1884,7 @@ static struct cmd_entry Cmds[] = {
     {"thread", "thread [name]\tSwitch to given thread or list all threads.",
 	 thread_cmd},
     {"troff", "troff\t\tTurn function/return tracing off.", troff_cmd},
-    {"tron", "troff\t\tTurn function/return tracing on.", tron_cmd},
+    {"tron", "tron\t\tTurn function/return tracing on.", tron_cmd},
     {"up", "up\t\tMove up one frame.", up_cmd},
     {"quit", "quit\t\tQuit.", quit_cmd},
     {NULL, NULL, NULL}
@@ -1634,7 +2036,7 @@ void invoke_debugger(enum pause_reason reason)
 void scavenge_debug_roots(void)
 {
     scavenge(&do_print_func);
-    scavenge(&do_funcall_func);
+    scavenge(&do_eval_func);
     scavenge(&cur_source_file);
     scav_frames(TopFrame);
 }
@@ -1648,9 +2050,12 @@ void init_debug_functions(void)
     do_print_func = make_raw_function("debug-print", 1, FALSE, obj_False,
 				      obj_Nil, obj_ObjectClass,
 				      do_print_start);
-    do_funcall_func = make_raw_function("debug-funcall", 1, FALSE, obj_False,
-					obj_Nil, obj_ObjectClass,
-					do_funcall_start);
+    do_eval_func = make_raw_function("debug-eval", 1, FALSE, obj_False,
+				     obj_Nil, obj_ObjectClass,
+				     do_eval_start);
+    debugger_eval_var = find_variable(module_BuiltinStuff,
+				      symbol("debugger-eval"),
+				      FALSE, TRUE);
     debugger_flush_var = find_variable(module_BuiltinStuff,
 				      symbol("debugger-flush"),
 				      FALSE, TRUE);
