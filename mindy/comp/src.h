@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.2 1994/03/25 05:03:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.3 1994/03/26 00:47:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -238,6 +238,7 @@ struct varset_expr {
     struct binding *binding;
     struct closes_over *over;
     struct expr *value;
+    struct varref_expr *type;
 };
 
 struct binop_series_expr {

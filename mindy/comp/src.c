@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.2 1994/03/25 05:03:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.3 1994/03/26 00:47:52 wlott Exp $
 *
 * This file does whatever.
 *
@@ -257,6 +257,7 @@ struct expr *make_varset(struct id *var, struct expr *expr)
     res->binding = NULL;
     res->over = NULL;
     res->value = expr;
+    res->type = NULL;
 
     return (struct expr *)res;
 }

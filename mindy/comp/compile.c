@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.3 1994/03/25 05:03:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.4 1994/03/26 00:46:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -497,17 +497,18 @@ static void compile_varset_expr(struct varset_expr *expr,
 {
     struct binding *binding = expr->binding;
 
-    compile_expr(expr->value, component, SINGLE);
+    if (want == FUNC)
+	compile_expr(expr->value, component, FUNC);
+    else
+	compile_expr(expr->value, component, SINGLE);
+    if (expr->type) {
+	compile_varref_expr(expr->type, component, SINGLE);
+	emit_op(component, op_CHECK_TYPE);
+    }
 
     if (binding) {
 	if (!binding->set)
 	    lose("Compiling a varset expr for a binding that isn't set?");
-	if (binding->type) {
-	    struct varref_expr *varref
-		= (struct varref_expr *)make_varref(id(binding->type));
-	    compile_varref_expr(varref, component, SINGLE);
-	    emit_op(component, op_CHECK_TYPE);
-	}
 	if (want != make_want(0, FALSE))
 	    emit_op(component, op_DUP);
 	if (binding->home != expr->home) {
@@ -537,7 +538,7 @@ static void compile_varset_expr(struct varset_expr *expr,
 			find_variable(component, expr->var, TRUE));
 	emit_op(component, op_SET_VARIABLE_VALUE);
     }
-    if (want != make_want(0, FALSE))
+    if (want != FUNC && want != make_want(0, FALSE))
 	canonicalize_value(component, want);
 }
 

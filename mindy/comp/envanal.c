@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.2 1994/03/25 05:03:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.3 1994/03/26 00:47:52 wlott Exp $
 *
 * This file does whatever.
 *
@@ -204,8 +204,14 @@ static void analize_varset_expr(struct varset_expr *expr,
     struct binding *binding
 	= find_and_maybe_close_over(expr->var, lexenv, &expr->over);
 
-    if (binding)
+    if (binding) {
 	binding->set = TRUE;
+	if (binding->type) {
+	    struct expr *type = make_varref(id(binding->type));
+	    expr->type = (struct varref_expr *)type;
+	    analize_expr(type, lexenv);
+	}
+    }
 
     expr->home = lexenv->method;
     expr->binding = binding;
