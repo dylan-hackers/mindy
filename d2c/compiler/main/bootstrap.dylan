@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.29 1995/06/06 00:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.30 1995/06/06 01:16:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -327,7 +327,7 @@ define abstract class <rational> (<real>) end;
 define abstract class <integer> (<rational>) end;
 
 define functional class <fixed-integer> (<integer>)
-  slot value :: <fixed-integer>, init-value: 0;
+  sealed slot value :: <fixed-integer>, init-value: 0;
 end;
 
 define class <extended-integer> (<integer>) end;
@@ -335,15 +335,15 @@ define class <extended-integer> (<integer>) end;
 define abstract class <float> (<real>) end;
 
 define functional class <single-float> (<float>)
-  slot value :: <single-float>, init-value: 0.0s0;
+  sealed slot value :: <single-float>, init-value: 0.0s0;
 end;
 
 define functional class <double-float> (<float>)
-  slot value :: <double-float>, init-value: 0.0d0;
+  sealed slot value :: <double-float>, init-value: 0.0d0;
 end;
 
 define functional class <extended-float> (<float>)
-  slot value :: <extended-float>, init-value: 0.0x0;
+  sealed slot value :: <extended-float>, init-value: 0.0x0;
 end;
 
 define abstract open class <collection> (<object>) end;
@@ -386,17 +386,17 @@ define constant $max-char-code = #xffff;
 define constant <char-code>
   = limited(<fixed-integer>, min: 0, max: $max-char-code);
 define functional class <character> (<object>)
-  slot value :: <char-code>, required-init-keyword: code:;
+  sealed slot value :: <char-code>, required-init-keyword: code:;
 end;
 
 define constant <byte-character> = make(<byte-character-type>);
 
 define class <value-cell> (<object>)
-  slot value, required-init-keyword: value:
+  sealed slot value, required-init-keyword: value:
 end;
 
 define functional class <raw-pointer> (<object>)
-  slot value :: <raw-pointer>, required-init-keyword: value:;
+  sealed slot value :: <raw-pointer>, required-init-keyword: value:;
 end;
 
 define class <catcher> (<object>)
