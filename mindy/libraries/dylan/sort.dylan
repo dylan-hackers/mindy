@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.10 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.11 1996/03/07 18:21:35 nkramer Exp $
 
 //======================================================================
 //
@@ -437,6 +437,7 @@ end method quick-sort!;
 //
 define method sort!(sequence :: <sequence>,
 		    #key test = \<, stable: stable)
+ => sequence :: <sequence>;
   let vector = as(<vector>, sequence);
   let result = if (stable) merge-sort!(vector, test: test);
 	       else quick-sort!(vector, test: test);
@@ -451,5 +452,6 @@ end method sort!;
 //
 define method sort (sequence :: <sequence>,
 		    #key test = \<, stable: stable)
+ => new-seq :: <sequence>;
   sort!(copy-sequence(sequence), test: test, stable: stable);
 end method sort;
