@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.2 1998/09/09 13:40:15 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.3 1998/11/03 07:41:37 igor Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,6 +34,7 @@ define library compiler-cback
   use compiler-base;
   use compiler-front;
   use compiler-convert;
+  use compiler-parser;  // for <macro-source-location>
   export cback;
   export heap;
 end library;
@@ -86,6 +87,7 @@ define module cback
   use utils;
   use variables;
   use source;
+  use source-utilities; // For <macro-source-location>, which isn't yet handled
   // use cheese;
 
   export

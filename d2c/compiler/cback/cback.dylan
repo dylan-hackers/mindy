@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.3 1998/10/29 10:01:44 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.4 1998/11/03 07:41:36 igor Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -460,8 +460,16 @@ define method maybe-emit-source-location(source-loc :: <unknown-source-location>
     format(file.file-guts-stream, "/* #line <unknown-source-location> */\n");
     file.file-source-location := source-loc;
   end if;
-
 end method;
+
+define method maybe-emit-source-location(source-loc :: <macro-source-location>,
+				   file :: <file-state>) => ();
+  if (file.file-source-location ~= source-loc)
+    format(file.file-guts-stream, "/* #line <macro-source-location> */\n");
+    file.file-source-location := source-loc;
+  end if;
+end method;  
+
 
 
 
