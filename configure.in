@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.12 1995/05/13 14:47:23 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.13 1995/06/16 02:32:02 rgs Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -326,6 +326,7 @@ AC_MSG_RESULT(don't need matherr))
 #--------------------------------------------------------------------
 
 LIBS="${LIBS-} -lm"
+AC_CHECK_LIB(dld, shl_load)
 AC_REPLACE_FUNCS(rint)
 
 #--------------------------------------------------------------------
