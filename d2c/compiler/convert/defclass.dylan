@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.38 2002/04/15 23:40:42 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.39 2002/04/16 21:37:50 gabor Exp $
 copyright: see below
 
 
@@ -1623,7 +1623,9 @@ define function find-override
   => override :: false-or(<override-info>);
   block (found)
     for (override in slot.slot-overrides)
-      if (csubtype?(cclass, override.override-introduced-by))
+      if ((override.override-init-value,
+	   | override.override-init-function)
+	  & csubtype?(cclass, override.override-introduced-by))
 	found(override);
       end;
     finally
@@ -2249,7 +2251,7 @@ define method convert-top-level-form
 	    & ~any?(compose(curry(\==, slot-info), override-slot), cclass.override-infos))
 	  
 	  // use effective-inits above!!! еее
-	  let override-info = slot-info.effective-override;
+	  let override-info = slot-info.effective-override; // еее reuse find-override !!!
 	  // since all deferred evaluations are performed at this point,
 	  // we can assume that slot and override descriptors are properly set up.
 	  let init-value = override-info & override-info.override-init-value
