@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.4 1994/12/13 18:39:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.5 1994/12/16 16:35:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -31,7 +31,7 @@ leaf
     function-literal
 	method-literal
 	    lambda [method-region]
-	    keyword-entry
+	    hairy-method-literal
         exit-function
 
 component
@@ -177,7 +177,7 @@ define constant %function-cleanup = ash(1, 2);
 //
 define constant %function-exit = ash(1, 3);
 
-// A helper function for a <keyword-entry>.
+// A helper function for a <hairy-method-literal>.
 //
 define constant %function-helper = ash(1, 4);
 
@@ -227,7 +227,7 @@ end class;
 
 
 // The Lambda only deals with required arguments.  Keyword and rest arguments
-// are represented by special helper lambdas and <keyword-entry> objects.
+// are represented by special helper lambdas and <hairy-method-literal> objects.
 //
 define class <lambda> (<method-literal>, <method-region>)
 
@@ -250,39 +250,38 @@ define class <lambda> (<method-literal>, <method-region>)
   // variables are allocated in.  This is filled in by environment analysis.
   slot environment :: <environment>;
 
-  // If this lambda was ever a helper function for a <keyword-entry> or a
-  // method of a GF literal, then this is the associated <function-literal>.
-  // This is a source-tracking breadcrumb.
-  slot subfunction-of :: false-or(<keyword-entry>), init-value: #f;
+  // If this lambda was ever a helper function for a <hairy-method-literal>
+  // or a method of a GF literal, then this is the associated
+  // <function-literal>.  This is a source-tracking breadcrumb.
+  slot subfunction-of :: false-or(<hairy-method-literal>), init-value: #f;
 end class;
 
 
-// The <Keyword-Entry> leaf is used to represent hairy methods.  The value
-// returned by the function is the value which results from calling the
-// <Keyword-Entry>.
+// The <Hairy-Method-Literal> leaf is used to represent hairy methods.  The
+// value returned by the function is the value which results from calling the
+// <Hairy-Method-Literal>.
 // 
 // Local call analysis parses the arguments to calls with only fixed
 // arguments or recognizable keyword arguments, and turns it into a call to
 // the more entry or main entry.
 //
-define class <keyword-entry> (<method-literal>)
+define class <hairy-method-literal> (<method-literal>, <source-location-mixin>)
 
-  // The original parsed argument list, for anyone who cares.
-  slot arglist :: <list>, required-init-keyword: arglist:;
-  
+  // The signature describing what arguments are actually used.
   slot signature :: <signature>, required-init-keyword: signature:;
 
-  // An entry point which takes Required fixed arguments followed by an
-  // argument context pointer and an argument count.  This entry point deals
-  // with listifying rest args and parsing keywords.  This is <false> when
-  // extra arguments aren't legal.
+  // An entry point which takes Required fixed arguments followed by
+  // next-method info, followed by an argument context pointer and an argument
+  // count.  This entry point deals with listifying rest args and
+  // parsing keywords.  This is <false> we haven't bothered computing it
+  // yet.
   slot more-entry :: false-or(<lambda>), init-value: #f;
 
   // The main entry-point into the function, which takes all arguments
   // including keywords as fixed arguments.  The format of the arguments must
-  // be determined by examining the arglist.  This may be used by callers that
-  // supply at least Required arguments and know what they are doing.
-  slot main-entry :: <lambda>;
+  // be determined by examining the signature.  This may be used by callers
+  // that supply at least Required arguments and know what they are doing.
+  slot main-entry :: <lambda>, required-init-keyword: main-entry:;
 end class;
 
 
