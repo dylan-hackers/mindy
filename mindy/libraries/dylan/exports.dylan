@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.42 1994/08/30 23:08:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.43 1994/10/18 00:30:48 wlott Exp $
 
 //======================================================================
 //
@@ -31,7 +31,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 //
 
 define library Dylan
-  export Dylan, Extensions, System, File-Descriptors, Threads;
+  export Dylan, Extensions, System, File-Descriptors, Threads, Introspection;
 end Dylan;
 
 define module Builtin-Stuff
@@ -63,10 +63,11 @@ define module Builtin-Stuff
     apply-curry, as, ash,
     broadcast-event,
     direct-subclasses, direct-superclasses,
-    ceiling, ceiling/, copy-bytes, current-handler, current-thread,
+    ceiling, ceiling/, class-name, copy-bytes, current-handler, current-thread,
     do-next-method,
     element, element-setter, enable-error-system,
     find-method, float-hash, floor, floor/, format, function-arguments,
+    function-name,
     generic-function-mandatory-keywords, generic-function-methods,
     getc, grab-lock,
     handler-function, handler-init-args, handler-next, handler-test,
@@ -79,7 +80,9 @@ define module Builtin-Stuff
     object-class, object-hash,
     pair, prin1, print, putc, puts,
     raw-exit, release-lock, remove-method, round, round/,
-    signal-event, singleton, size, slot-initialized?, spawn-thread,
+    signal-event, singleton, size, slot-allocation, slot-descriptors,
+    slot-getter, slot-getter-method, slot-initialized?, slot-name, slot-setter,
+    slot-setter-method, slot-type, slot-value, spawn-thread,
     sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate, truncate/,
     union,
@@ -280,4 +283,14 @@ define module Hash-Tables
   use Dylan;
   use Builtin-Stuff, import: {state-valid?, float-hash};
   use Extensions;
+end;
+
+
+define module Introspection
+  use Builtin-Stuff,
+    import: {class-name, function-name,
+	     slot-allocation, slot-descriptors, slot-getter,
+	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
+	     slot-type, slot-value},
+    export: all;
 end;
