@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.2 1994/12/12 21:19:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.3 1995/03/23 22:01:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -25,6 +25,8 @@ define method compile (#rest files) => res :: <region>;
   end;
   format(*debug-output*, "Finalizing definitions\n");
   do(finalize-top-level-form, $Top-Level-Forms);
+  format(*debug-output*, "laying out instances\n");
+  layout-instance-slots();
   format(*debug-output*, "Converting in FER\n");
   let component = make(<fer-component>);
   let builder = make-builder(component);
