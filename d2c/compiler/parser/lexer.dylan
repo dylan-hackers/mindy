@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.11 2001/05/22 20:02:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.12 2001/07/31 16:33:50 housel Exp $
 copyright: see below
 
 
@@ -1073,14 +1073,14 @@ define constant $Initial-State
              pair("a-fA-F0-9", #"quote-unicode-escape")),
        state(#"quote-escape", #f,
              pair('<', #"quote-unicode-escape"),
-             pair("\\abefnrt0'", #"quote-char")),
+             pair("\\abefnrt0'\"", #"quote-char")),
        state(#"double-quote", #f,
 	     pair('"', #"string"), 
 	     pair('\\', #"double-quote-escape"),
 	     pair(" !#-[]-~", #"double-quote")),
        state(#"string", make-string-literal),
        state(#"double-quote-escape", #f,
-	     pair("\\abefnrt0\"<", #"double-quote")),
+	     pair("\\abefnrt0'\"<", #"double-quote")),
        state(#"decimal", parse-integer-literal,
 	     pair("0-9", #"decimal"),
 	     pair('/', #"decimal-slash"),
