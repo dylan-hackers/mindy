@@ -410,11 +410,11 @@ end method string-to-float;
 #if (~mindy)
 
 define macro table-definer
-  { define table ?:name ?equals:token {?keys-and-values:*} }
-    => { define constant ?name :: <table> = make(<table>);
+  { define table ?:name ?eq:token { ?keys-and-values } }
+    => { define constant ?name :: <table> ?eq make(<table>);
          fill-table!(?name, list(?keys-and-values)); }
-  { define table ?:name :: ?type:* ?equals:token { } }
-    => { define constant ?name :: ?type = make(?type);
+  { define table ?:name :: ?type:expression ?eq:token { ?keys-and-values } }
+    => { define constant ?name :: ?type ?eq make(?type);
          fill-table!(?name, list(?keys-and-values)); }
 keys-and-values:
   { ?key:expression => ?value:expression, ... } => { ?key, ?value, ... }
