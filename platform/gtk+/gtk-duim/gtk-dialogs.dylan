@@ -222,6 +222,115 @@ define sealed method do-cancel-dialog
 end method do-cancel-dialog;
 
 
+/// Notify user
+
+define class <notification-dialog> (<dialog-frame>)
+  slot notification-dialog-result :: one-of(#"yes", #"no", #"ok", #"cancel"),
+    init-value: #"cancel";
+  constant slot notification-dialog-exit-style :: <notification-exit-style>,
+    required-init-keyword: exit-style:;
+  constant slot notification-dialog-yes-callback :: false-or(<function>) = #f,
+    init-keyword: yes-callback:;
+  constant slot notification-dialog-no-callback :: false-or(<function>) = #f,
+    init-keyword: no-callback:;
+end class;
+
+define sealed method do-notify-user
+    (framem :: <gtk-frame-manager>, owner :: <sheet>,
+     message :: <string>, style :: <notification-style>,
+     #key title, documentation, exit-boxes, name,
+          exit-style :: false-or(<notification-exit-style>) = #f,
+          foreground, background, text-style)
+ => (ok? :: <boolean>, exit-type)
+  ignore(exit-boxes);
+  let (x, y)
+    = begin
+	let (x, y) = sheet-size(owner);
+	let (x, y) = values(floor/(x, 2), floor/(y, 2));
+	with-device-coordinates (sheet-device-transform(owner), x, y)
+	  values(x, y)
+	end
+      end;
+  let title
+    = title | select (style)
+		#"information"   => "Note";
+		#"question"      => "Note";
+		#"warning"       => "Warning";
+		#"error"         => "Error";
+		#"serious-error" => "Error";
+		#"fatal-error"   => "Error";
+	      end;
+  let exit-style
+    = exit-style | if (style == #"question") #"yes-no" else #"ok" end;
+  local
+    method notify-callback(dialog :: <notification-dialog>,
+                           result :: one-of(#"yes", #"no", #"ok"))
+     => ();
+      dialog.notification-dialog-result := result;
+      exit-dialog(dialog);
+    end method;
+  let exit-options
+    = select(exit-style)
+        #"ok" =>
+          vector(exit-callback: rcurry(notify-callback, #"ok"),
+                 cancel-callback: #f);
+        #"ok-cancel" =>
+          vector(exit-callback: rcurry(notify-callback, #"ok"));
+        #"yes-no" =>
+          vector(yes-callback: rcurry(notify-callback, #"yes"),
+                 no-callback: rcurry(notify-callback, #"no"),
+                 exit-callback: #f,
+                 cancel-callback: #f);
+        #"yes-no-cancel" =>
+          vector(yes-callback: rcurry(notify-callback, #"yes"),
+                 no-callback: rcurry(notify-callback, #"no"),
+                 exit-callback: #f);
+      end;
+        
+  let dialog = apply(make,
+                     <notification-dialog>,
+                     x: x, y: y,
+                     title: title,
+                     foreground: foreground,
+                     background: background,
+                     exit-style: exit-style,
+                     layout: make(<label>,
+                                 label: message,
+                                 text-style: text-style),
+                     exit-options);
+  if (start-dialog(dialog))
+    select (dialog.notification-dialog-result)
+      #"yes"    => values(#t, #"yes");
+      #"no"     => values(#f, #"no");
+      #"ok"     => values(#t, #"ok");
+      #"cancel" => values(#f, #"cancel");
+    end;
+  else
+    values(#f, #"cancel");
+  end if;
+end method do-notify-user;
+
+define sealed method make-exit-buttons
+    (framem :: <gtk-frame-manager>, dialog :: <notification-dialog>)
+ => (buttons :: <sequence>)
+  select(dialog.notification-dialog-exit-style)
+    #"ok", #"ok-cancel" =>
+      next-method();
+    #"yes-no", #"yes-no-cancel" =>
+      let yes-button
+        = make-exit-button(framem, dialog,
+                           dialog.notification-dialog-yes-callback, "Yes");
+      let no-button
+        = make-exit-button(framem, dialog,
+                           dialog.notification-dialog-no-callback, "No");
+      unless (frame-default-button(dialog))
+        frame-default-button(dialog) := yes-button;
+      end;
+      concatenate(vector(yes-button, no-button), next-method());
+  end select;
+end method make-exit-buttons;
+
+
 /// Choose file
 /*---
 define sealed method do-choose-file
