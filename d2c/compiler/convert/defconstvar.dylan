@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.7 2001/06/19 16:03:25 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.8 2001/06/22 23:06:23 dauclair Exp $
 copyright: see below
 
 
@@ -290,7 +290,8 @@ define method ct-value (defn :: <constant-definition>)
   defn.defn-init-value;
 end;
 
-define method ct-value (defn :: <constant-method-definition>)
+define method ct-value (defn :: <constant-method-definition>, 
+                        #next next-method)
     => res :: false-or(<ct-value>);
   if (defn.function-defn-ct-value == #"not-computed-yet")
     let tlf = defn.const-defn-tlf;
