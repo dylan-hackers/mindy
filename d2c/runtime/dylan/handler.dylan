@@ -14,9 +14,9 @@ define class <handler> (<object>)
   slot handler-test :: false-or(<function>),
     required-init-keyword: test:;
 
-  // The init-args to pass make when interactivly invoking this handler.
-  slot handler-init-args :: <sequence>,
-    required-init-keyword: init-args:;
+  // The init-arguments to pass make when interactivly invoking this handler.
+  slot handler-init-arguments :: <sequence>,
+    required-init-keyword: init-arguments:;
 
   // The previous handler in the chain of handers.
   slot handler-prev :: union(<handler>, <false>),
@@ -28,7 +28,7 @@ seal generic initialize (<handler>);
 
 
 define method push-handler
-    (type :: <type>, func :: <function>,
+    (type :: <type>, function :: <function>,
      #key test :: false-or(<function>), init-arguments :: <sequence> = #())
     => ();
   let thread = this-thread();
@@ -36,7 +36,7 @@ define method push-handler
 			     type: type,
 			     function: function,
 			     test: test,
-			     init-args: init-args,
+			     init-arguments: init-arguments,
 			     prev: thread.cur-handler);
 end;
 
