@@ -23,29 +23,6 @@ rcs-header: $Header:
 // and "c-declarations" to do most of the work.
 //======================================================================
 
-define module define-interface
-  // From Dylan
-  use dylan;
-  use extensions;		// required for "main" (as well as key-exists?)
-
-  // From string-extensions
-  use regular-expressions;
-  use substring-search;
-  use character-type;
-
-  // From streams
-  use streams;
-  use standard-io;
-
-  // local packages
-  use int-lexer;
-  use int-parse, rename: {rename => renames};
-  use c-lexer, import: {include-path};
-  use c-declarations,
-    rename: {parse => c-parse, <parse-state> => <c-parse-state>};
-  use name-mappers;
-end module define-interface;
-
 //----------------------------------------------------------------------
 // Routines to scan the interface file for "define interface" forms.
 //----------------------------------------------------------------------
@@ -68,9 +45,8 @@ define method is-prefix?
     #f;
   else
     block (return)
-      for (short-char in short,
-	   index from start)
-	if (short-char ~= long[index]) return(#f) end if;
+      for (short-char in short, index from start)
+	if (short-char ~== long[index]) return(#f) end if;
       end for;
       #t;
     end block;
@@ -124,6 +100,7 @@ define method process-interface-file
 	  end if;
 	end method try-define;
   try-define(0);
+  force-output(out-stream);
   if (verbose) write-line("", *standard-output*) end if;
 end method process-interface-file;
 
@@ -373,7 +350,8 @@ define method process-clause
  => ();
   let decl = parse-type(clause.name, c-state);
   if (instance?(decl, <pointer-declaration>)) decl := true-type(decl) end if; 
-  if (~instance?(decl, union(<pointer-declaration>, <vector-declaration>)))
+  if (~instance?(decl,
+		 type-union(<pointer-declaration>, <vector-declaration>)))
     error("Pointer clause names a non-pointer: %s", clause.name);
   end if;
 
@@ -414,7 +392,7 @@ end method process-clause;
 define method process-parse-state
     (state :: <parse-state>, out-stream :: <stream>, #key verbose) => ();
   if (~state.include-file)
-    parse-error(state, "Missing #include in 'define interface'");
+    error("Missing #include in 'define interface'");
   end if;
   let c-state
     = c-parse(state.include-file,
@@ -509,3 +487,28 @@ define method main (program, #rest args)
     break("No arguments -- invoking debugger.");
   end if;
 end method main;
+
+#if (~mindy)
+define method import-string (ptr :: <raw-pointer>)
+    => string :: <byte-string>;
+  for (len :: <integer> from 0,
+       until: zero?(pointer-deref(#"char", ptr, len)))
+  finally
+    let res = make(<byte-string>, size: len);
+    for (index :: <integer> from 0 below len)
+      res[index] := as(<character>, pointer-deref(#"char", ptr, index));
+    end for;
+    res;
+  end for;
+end method import-string;
+
+define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
+  let args = make(<vector>, size: argc);
+  for (index :: <integer> from 0 below argc)
+    let argptr = pointer-deref(#"ptr", argv,
+			       index * c-expr(#"int", "sizeof(void *)"));
+    args[index] := import-string(argptr);
+  end for;
+  apply(main, args);
+end method %main;
+#end

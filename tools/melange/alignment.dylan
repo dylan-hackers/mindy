@@ -21,58 +21,9 @@ rcs-header: $Header:
 // corresponding to the declarations (c-decl-write.dylan).
 //
 // The operations defined in this file are designed to be called from
-// "define-interface" in a set order.  This ordering is shown in the exports
-// list below.
+// "define-interface" in a set order.  This ordering is shown in the list
+// in "exports.dylan".
 //======================================================================
-
-define module c-declarations
-  use dylan;
-  use extensions, exclude: {format, <string-table>};
-  use regular-expressions;
-  use streams;
-  use format;
-
-  // We completely encapsulate "c-parse" and only pass out the very few 
-  // objects that will be needed by "define-interface".  Note that the 
-  // classes are actually defined within this module but are exported
-  // from c-parse.
-  use c-parse, export: {<declaration>, <parse-state>, parse, parse-type,
-			constant-value, true-type};
-
-  use c-lexer;			// Tokens are used in process-type-list and
-				// make-struct-type
-  use portability;              // constants for size of C data types
-
-  export
-    // Basic type declarations
-    <function-declaration>, <structured-type-declaration>,
-    <struct-declaration>, <union-declaration>, <variable-declaration>,
-    <constant-declaration>, <typedef-declaration>, <pointer-declaration>,
-    <vector-declaration>,
-
-    // Preliminary "set declaration properties phase"
-    ignored?-setter, find-result, find-parameter, find-slot,
-    argument-direction-setter, constant-value-setter, getter-setter,
-    setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
-    exclude-slots, equate, remap, rename, superclasses-setter, pointer-equiv,
-    dylan-name,
-
-    // "Import declarations phase" 
-    declaration-closure, // also calls compute-closure
-
-    // "Name computation phase"
-    apply-options, apply-container-options, // also calls find-dylan-name,
-					    // compute-dylan-name
-
-    // "Write declaration phase"
-    write-declaration, 
-    write-file-load, write-mindy-includes,
-
-    // Miscellaneous
-    getter, setter, sealed-string, excluded?,
-    canonical-name,declarations;
-end module c-declarations;
-
 
 // Returns the number of bytes required to store instances of some C type.
 // This was written on HP, but seems valid on all *nix platforms.

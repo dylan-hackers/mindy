@@ -52,21 +52,6 @@ rcs-header: $Header:
 // that the omnipresence of <eof-token> doesn't screw up the tables.
 //======================================================================
 
-define module int-parse
-  use dylan;
-  use extensions;
-  use self-organizing-list;
-  use int-lexer;
-  export
-    parse, <parse-state>, include-file, object-files, mindy-include-file,
-    container-options, macro-defines, macro-undefines, clauses,
-    <container-options>, name-mapper, imports, prefix, exclude, rename,
-    mappings, equates, read-only, seal-string, <clause>, <function-clause>,
-    <struct-clause>, <union-clause>, <pointer-clause>,
-    <constant-clause>, <variable-clause>,
-    name, options, <undefined>, undefined;
-end module int-parse;
-
 //----------------------------------------------------------------------
 // Simple parser support 
 //----------------------------------------------------------------------
@@ -238,7 +223,7 @@ define method make-action-table(#rest actions)
   for (action in actions)
     local
       method process (clas :: <class>, is-eof)
-	unless (is-eof & key-exists?(result, clas))
+	unless (is-eof & element(result, clas, default: #f))
 	  result[clas] := action;
 	  for (sub in clas.direct-subclasses)
 	    process(sub, is-eof);
@@ -1527,7 +1512,7 @@ define constant *production-table* = make(<vector>, size: 95);
              let temp1 = tail(temp2);
              pair(begin
                       if ($state.include-file) 
-                        parse-error($state.tokenizer,
+                        parse-error($r1,
                                     "More than one #include in interface definition.")
                       end if;
                       $state.include-file := $r2.value;
@@ -1611,7 +1596,7 @@ define constant *production-table* = make(<vector>, size: 95);
              let temp1 = tail(temp2);
              pair(begin
                       if ($state.mindy-include-file) 
-                        parse-error($state.tokenizer,
+                        parse-error($r1,
                                     "More than one mindy-include-file: in interface definition.")
                       end if;
                       pair(#"mindy-file", $state.mindy-include-file := $r2.value);
@@ -3550,3 +3535,41 @@ end;
 define method parse (parse-state :: <parse-state>)
   parse-loop(#(0), #(), get-token(parse-state.tokenizer), parse-state);
 end;
+
+// Seals for file int-parse.dylan
+
+// <undefined> -- subclass of <object>
+define sealed domain make(singleton(<undefined>));
+define sealed domain initialize(<undefined>);
+// <container-options> -- subclass of <object>
+define sealed domain make(singleton(<container-options>));
+define sealed domain initialize(<container-options>);
+// <parse-state> -- subclass of <object>
+define sealed domain make(singleton(<parse-state>));
+define sealed domain initialize(<parse-state>);
+// <clause> -- subclass of <object>
+define sealed domain make(singleton(<clause>));
+define sealed domain initialize(<clause>);
+// <function-clause> -- subclass of <clause>
+define sealed domain make(singleton(<function-clause>));
+// <variable-clause> -- subclass of <clause>
+define sealed domain make(singleton(<variable-clause>));
+// <constant-clause> -- subclass of <clause>
+define sealed domain make(singleton(<constant-clause>));
+// <pointer-clause> -- subclass of <clause>
+define sealed domain make(singleton(<pointer-clause>));
+// <container-clause> -- subclass of <clause>
+define sealed domain make(singleton(<container-clause>));
+// <struct-clause> -- subclass of <container-clause>
+define sealed domain make(singleton(<struct-clause>));
+// <union-clause> -- subclass of <container-clause>
+define sealed domain make(singleton(<union-clause>));
+// <action> -- subclass of <object>
+define sealed domain make(singleton(<action>));
+define sealed domain initialize(<action>);
+// <shift> -- subclass of <action>
+define sealed domain make(singleton(<shift>));
+// <reduce> -- subclass of <action>
+define sealed domain make(singleton(<reduce>));
+// <accept> -- subclass of <action>
+define sealed domain make(singleton(<accept>));

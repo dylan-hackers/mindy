@@ -66,44 +66,6 @@ rcs-header: $Header:
 //        file and location information prepended to the format string.
 //======================================================================
 
-define module c-lexer
-  use dylan;
-  use extensions, exclude: {<string-table>};
-  use self-organizing-list;
-  use string-conversions;
-  use regular-expressions;
-  use substring-search;
-  use character-type;
-  use streams;
-  create cpp-parse;
-  export
-    default-cpp-table, include-path,
-    <tokenizer>, get-token, unget-token, add-typedef, cpp-table, cpp-decls,
-    <token>, value, string-value, generator, parse-error,
-    <error-token>, <identifier-token>, <integer-token>, <eof-token>,
-    <begin-include-token>, <end-include-token>,
-    <reserved-word-token>, <struct-token>, <typedef-token>, <name-token>,
-    <int-token>, <short-token>, <long-token>,
-    <signed-token>, <unsigned-token>, <char-token>, <float-token>,
-    <double-token>, <const-token>, <volatile-token>, <void-token>,
-    <extern-token>, <static-token>, <auto-token>, <register-token>,
-    <type-name-token>, <union-token>, <enum-token>, <elipsis-token>,
-    <sizeof-token>, <dec-op-token>, <inc-op-token>, <ptr-op-token>,
-    <string-literal-token>, <constant-token>, <mul-assign-token>,
-    <div-assign-token>, <mod-assign-token>, <add-assign-token>,
-    <sub-assign-token>, <left-assign-token>, <right-assign-token>,
-    <and-assign-token>, <xor-assign-token>, <or-assign-token>,
-    <semicolon-token>, <comma-token>, <lparen-token>, <rparen-token>,
-    <lbracket-token>, <rbracket-token>, <dot-token>,
-    <ampersand-token>, <star-token>, <slash-token>, <plus-token>,
-    <minus-token>, <tilde-token>, <bang-token>, <percent-token>,
-    <lt-token>, <gt-token>, <carat-token>, <bar-token>,
-    <question-token>, <colon-token>, <eq-op-token>, <assign-token>,
-    <ge-op-token>, <le-op-token>, <ne-op-token>, <and-op-token>, <or-op-token>,
-    <left-op-token>, <right-op-token>, <lcurly-token>, <rcurly-token>,
-    <type-specifier-token>;
-end module c-lexer;
-
 //------------------------------------------------------------------------
 // Definitions specific to <tokenizer>s
 //------------------------------------------------------------------------
@@ -878,3 +840,172 @@ define method get-token
     parse-error(state, "Major botch in get-token.");
   end block;
 end method get-token;
+
+// Seals for file c-lexer.dylan
+
+// <tokenizer> -- subclass of <object>
+define sealed domain make(singleton(<tokenizer>));
+define sealed domain initialize(<tokenizer>);
+// <eof-token> -- subclass of <simple-token>
+define sealed domain make(singleton(<eof-token>));
+// <error-token> -- subclass of <simple-token>
+define sealed domain make(singleton(<error-token>));
+// <begin-include-token> -- subclass of <simple-token>
+define sealed domain make(singleton(<begin-include-token>));
+// <end-include-token> -- subclass of <token>
+define sealed domain make(singleton(<end-include-token>));
+// <identifier-token> -- subclass of <name-token>
+define sealed domain make(singleton(<identifier-token>));
+// <type-name-token> -- subclass of <name-token>
+define sealed domain make(singleton(<type-name-token>));
+// <integer-token> -- subclass of <literal-token>
+define sealed domain make(singleton(<integer-token>));
+// <character-token> -- subclass of <literal-token>
+define sealed domain make(singleton(<character-token>));
+// <string-literal-token> -- subclass of <literal-token>
+define sealed domain make(singleton(<string-literal-token>));
+// <cpp-token> -- subclass of <literal-token>
+define sealed domain make(singleton(<cpp-token>));
+// <struct-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<struct-token>));
+// <typedef-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<typedef-token>));
+// <type-specifier-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<type-specifier-token>));
+// <short-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<short-token>));
+// <long-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<long-token>));
+// <int-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<int-token>));
+// <char-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<char-token>));
+// <signed-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<signed-token>));
+// <unsigned-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<unsigned-token>));
+// <float-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<float-token>));
+// <double-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<double-token>));
+// <const-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<const-token>));
+// <volatile-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<volatile-token>));
+// <void-token> -- subclass of <type-specifier-token>
+define sealed domain make(singleton(<void-token>));
+// <extern-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<extern-token>));
+// <static-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<static-token>));
+// <auto-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<auto-token>));
+// <register-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<register-token>));
+// <type_name-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<type_name-token>));
+// <union-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<union-token>));
+// <enum-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<enum-token>));
+// <constant-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<constant-token>));
+// <mul-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<mul-assign-token>));
+// <div-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<div-assign-token>));
+// <mod-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<mod-assign-token>));
+// <add-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<add-assign-token>));
+// <sub-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<sub-assign-token>));
+// <left-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<left-assign-token>));
+// <right-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<right-assign-token>));
+// <and-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<and-assign-token>));
+// <xor-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<xor-assign-token>));
+// <or-assign-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<or-assign-token>));
+// <elipsis-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<elipsis-token>));
+// <sizeof-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<sizeof-token>));
+// <dec-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<dec-op-token>));
+// <inc-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<inc-op-token>));
+// <ptr-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<ptr-op-token>));
+// <semicolon-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<semicolon-token>));
+// <comma-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<comma-token>));
+// <dot-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<dot-token>));
+// <lparen-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<lparen-token>));
+// <rparen-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<rparen-token>));
+// <lbracket-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<lbracket-token>));
+// <rbracket-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<rbracket-token>));
+// <ampersand-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<ampersand-token>));
+// <star-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<star-token>));
+// <carat-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<carat-token>));
+// <bar-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<bar-token>));
+// <percent-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<percent-token>));
+// <slash-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<slash-token>));
+// <plus-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<plus-token>));
+// <minus-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<minus-token>));
+// <tilde-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<tilde-token>));
+// <bang-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<bang-token>));
+// <lt-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<lt-token>));
+// <gt-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<gt-token>));
+// <question-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<question-token>));
+// <colon-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<colon-token>));
+// <eq-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<eq-op-token>));
+// <le-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<le-op-token>));
+// <ge-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<ge-op-token>));
+// <ne-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<ne-op-token>));
+// <and-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<and-op-token>));
+// <or-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<or-op-token>));
+// <pound-pound-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<pound-pound-token>));
+// <left-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<left-op-token>));
+// <right-op-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<right-op-token>));
+// <assign-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<assign-token>));
+// <lcurly-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<lcurly-token>));
+// <rcurly-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<rcurly-token>));
+// <string-table> -- subclass of <value-table>
+define sealed domain make(singleton(<string-table>));
+define sealed domain initialize(<string-table>);

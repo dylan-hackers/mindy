@@ -29,13 +29,6 @@ rcs-header: $Header:
 // "hyphenate-case-breaks" is provided for use in new mapping functions.
 //======================================================================
 
-define module name-mappers
-  use dylan;
-  use character-type;
-  export
-    map-name, hyphenate-case-breaks;
-end module name-mappers;
-
 define generic map-name
     (selector :: <symbol>,
      category :: <symbol>, prefix :: <string>, name :: <string>,

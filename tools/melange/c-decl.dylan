@@ -380,7 +380,7 @@ define method make-enum-slot
     (name :: <string>, value :: false-or(<integer>),
      prev :: false-or(<enum-slot-declaration>), state :: <parse-state>)
  => (result :: <enum-slot-declaration>);
-  if (key-exists?(state.objects, name))
+  if (element(state.objects, name, default: #f))
     parse-error(state, "Enumeration literal does not have a unique name: %s",
 		name);
   else
@@ -1027,14 +1027,14 @@ define method find-parameter
 end method find-parameter;
   
 define method find-parameter
-    (decl :: <function-declaration>, param :: <string>)
+    (decl :: <function-type-declaration>, param :: <string>)
  => (result :: <arg-declaration>);
-  any?(method (arg) arg.simple-name = param & arg end method, decl.parameters)
+  any?(method (arg) arg.simple-name = param & arg end, decl.parameters)
     | error("No such parameter: %s.", param);
 end method find-parameter;
 
 define method find-parameter
-    (decl :: <function-declaration>, param :: <symbol>)
+    (decl :: <function-type-declaration>, param :: <symbol>)
  => (result :: <arg-declaration>);
   error("Cannot currently identify parameters by symbols.");
 end method find-parameter;
@@ -1100,7 +1100,7 @@ define method add-cpp-declaration
     state.objects[macro-name] :=
       add-declaration(state, make(<macro-declaration>, name: macro-name,
 				  value: value));
-  exception <error>
+  exception (<error>)
     #f;
   end block;
 end method add-cpp-declaration;
@@ -1132,3 +1132,46 @@ define method compute-dylan-name
 		 end select;
   mapper(category, prefix, decl.simple-name, containers);
 end method compute-dylan-name;
+
+// Seals for file c-decl.dylan
+
+// <struct-declaration> -- subclass of <new-static-pointer>, <structured-type-declaration>
+define sealed domain make(singleton(<struct-declaration>));
+// <union-declaration> -- subclass of <new-static-pointer>, <structured-type-declaration>
+define sealed domain make(singleton(<union-declaration>));
+// <enum-declaration> -- subclass of <structured-type-declaration>
+define sealed domain make(singleton(<enum-declaration>));
+// <pointer-declaration> -- subclass of <new-static-pointer>, <type-declaration>
+define sealed domain make(singleton(<pointer-declaration>));
+// <vector-declaration> -- subclass of <new-static-pointer>, <type-declaration>
+define sealed domain make(singleton(<vector-declaration>));
+// <function-type-declaration> -- subclass of <type-declaration>
+define sealed domain make(singleton(<function-type-declaration>));
+// <typedef-declaration> -- subclass of <type-declaration>, <typed>
+define sealed domain make(singleton(<typedef-declaration>));
+// <incomplete-type-declaration> -- subclass of <type-declaration>
+define sealed domain make(singleton(<incomplete-type-declaration>));
+// <predefined-type-declaration> -- subclass of <type-declaration>
+define sealed domain make(singleton(<predefined-type-declaration>));
+// <integer-type-declaration> -- subclass of <predefined-type-declaration>
+define sealed domain make(singleton(<integer-type-declaration>));
+// <float-type-declaration> -- subclass of <predefined-type-declaration>
+define sealed domain make(singleton(<float-type-declaration>));
+// <function-declaration> -- subclass of <value-declaration>
+define sealed domain make(singleton(<function-declaration>));
+// <object-declaration> -- subclass of <value-declaration>
+define sealed domain make(singleton(<object-declaration>));
+// <variable-declaration> -- subclass of <object-declaration>
+define sealed domain make(singleton(<variable-declaration>));
+// <slot-declaration> -- subclass of <object-declaration>
+define sealed domain make(singleton(<slot-declaration>));
+// <result-declaration> -- subclass of <object-declaration>
+define sealed domain make(singleton(<result-declaration>));
+// <arg-declaration> -- subclass of <object-declaration>
+define sealed domain make(singleton(<arg-declaration>));
+// <varargs-declaration> -- subclass of <arg-declaration>
+define sealed domain make(singleton(<varargs-declaration>));
+// <enum-slot-declaration> -- subclass of <constant-declaration>
+define sealed domain make(singleton(<enum-slot-declaration>));
+// <macro-declaration> -- subclass of <constant-declaration>
+define sealed domain make(singleton(<macro-declaration>));

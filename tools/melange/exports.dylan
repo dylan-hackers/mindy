@@ -58,7 +58,87 @@ define library melange
   use collection-extensions;
   use streams;
   use format;
+  use melange-c;
   export
     name-mappers;
 end library melange;
+
+define module int-lexer
+  use dylan;
+  use extensions;
+  use self-organizing-list;
+  use string-conversions;
+  use regular-expressions;
+  use character-type;
+  use streams;
+  export
+    <tokenizer>, get-token, unget-token, <token>, value, string-value,
+    generator, parse-error, position, <error-token>, <identifier-token>,
+    <integer-token>, <eof-token>, <true-eof-token>, <keyword-token>,
+    <symbol-literal-token>, <string-literal-token>, <comma-token>,
+    <semicolon-token>, <lbrace-token>, <rbrace-token>, <arrow-token>,
+    <define-token>, <interface-token>, <end-token>, <include-token>,
+    <object-file-token>, <define-macro-token>, <undefine-token>,
+    <name-mapper-token>, <import-token>, <prefix-token>, <exclude-token>,
+    <rename-token>, <mapping-token>, <equate-token>, <superclass-token>,
+    <all-token>, <function-token>, <map-result-token>, <equate-result-token>,
+    <ignore-result-token>, <map-argument-token>, <equate-argument-token>,
+    <input-argument-token>, <output-argument-token>,
+    <input-output-argument-token>, <struct-token>, <union-token>,
+    <pointer-token>,
+    <constant-token>, <variable-token>, <getter-token>, <setter-token>,
+    <read-only-token>, <seal-token>, <seal-functions-token>, <boolean-token>,
+    <sealed-token>, <open-token>, <inline-token>, <value-token>,
+    <literal-token>, <mindy-inc-token>;
+end module int-lexer;
+
+define module int-parse
+  use dylan;
+  use extensions;
+  use self-organizing-list;
+  use int-lexer;
+  export
+    parse, <parse-state>, include-file, object-files, mindy-include-file,
+    container-options, macro-defines, macro-undefines, clauses,
+    <container-options>, name-mapper, imports, prefix, exclude, rename,
+    mappings, equates, read-only, seal-string, <clause>, <function-clause>,
+    <struct-clause>, <union-clause>, <pointer-clause>,
+    <constant-clause>, <variable-clause>,
+    name, options, <undefined>, undefined;
+end module int-parse;
+
+define module name-mappers
+  use dylan;
+  use character-type;
+  export
+    map-name, hyphenate-case-breaks;
+end module name-mappers;
+
+define module define-interface
+  // From Dylan
+  use dylan;
+  use extensions;		// required for "main" (as well as key-exists?)
+#if (~mindy)
+  use System,
+     import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
+	      pointer-deref};
+#end
+
+  // From string-extensions
+  use regular-expressions;
+  use substring-search;
+  use character-type;
+
+  // From streams
+  use streams;
+  use standard-io;
+
+  // local packages
+  use int-lexer;
+  use int-parse, rename: {rename => renames};
+  use c-lexer, import: {include-path};
+  use c-declarations,
+    rename: {parse => c-parse, <parse-state> => <c-parse-state>};
+  use name-mappers;
+end module define-interface;
 

@@ -73,25 +73,6 @@ rcs-header: $Header:
 // future expansion.
 //======================================================================
 
-define module c-parse
-  use dylan;
-  use extensions;
-  use self-organizing-list;
-  use c-lexer;
-  use streams;
-  use standard-io;
-  create
-    <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
-    <parse-macro-state>, tokenizer, verbose, verbose-setter,
-    push-include-level, pop-include-level, objects, process-type-list,
-    process-declarator, declare-objects, make-struct-type, c-type-size,
-    add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
-    <varargs-declaration>, <enum-slot-declaration>, constant-value,
-    <integer-type-declaration>, true-type, make-enum-slot;
-  export
-    parse, parse-type, parse-macro, constant-value;
-end module c-parse;
-
 //----------------------------------------------------------------------
 // Simple parser support 
 //----------------------------------------------------------------------
@@ -6061,43 +6042,6 @@ define constant *production-table* = make(<vector>, size: 135);
 // More parser boilerplate
 //----------------------------------------------------------------------
 
-define method do-action (action :: <accept>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  unget-token(parse-state.tokenizer, token);
-  if (symbol-stack.size ~= 1)
-    parse-error(token, "Symbol-stack didn't get reduced all the way?");
-  end;
-  symbol-stack.head;
-end;
-
-define method do-action (action :: <shift>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  parse-loop(pair(action.state, state-stack),
-	     pair(token, symbol-stack),
-	     get-token(parse-state.tokenizer),
-	     parse-state);
-end;
-
-define method do-action (action :: <shift>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-cpp-state>)
-  parse-loop(pair(action.state, state-stack),
-	     pair(token, symbol-stack),
-	     get-token(parse-state.tokenizer, cpp-line: #t, expand: #f),
-	     parse-state);
-end;
-
-define method do-action (action :: <reduce>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 parse-state :: <parse-state>)
-  let (new-state-stack, new-symbol-stack)
-    = *production-table*[action.production](state-stack, symbol-stack,
-                                            $state: parse-state);
-  parse-loop(new-state-stack, new-symbol-stack, token, parse-state);
-end;
-
 define method find-action (table, token)
   let action = element(table, token.object-class, default: #f);
   if (action)
@@ -6107,10 +6051,44 @@ define method find-action (table, token)
   end;
 end;
 
-define method parse-loop (state-stack :: <list>, symbol-stack :: <list>,
-			  token :: <token>, parse-state :: <parse-state>)
-  do-action(find-action(*action-table*[state-stack.head], token),
-	    state-stack, symbol-stack, token, parse-state);
+define method aux-get-token
+    (parse-state :: <parse-state>) => (result :: <token>);
+  get-token(parse-state.tokenizer);
+end method aux-get-token;
+
+define method aux-get-token
+    (parse-state :: <parse-cpp-state>) => (result :: <token>);
+  get-token(parse-state.tokenizer, cpp-line: #t, expand: #f);
+end method aux-get-token;
+
+define method parse-loop
+    (parse-state :: <parse-state>) => (result :: <object>);
+  local method step
+	    (state-stack :: <list>, symbol-stack :: <list>,
+	     token :: <token>, parse-state :: <parse-state>)
+#if (~mindy)
+	 => (result :: <object>);
+#end
+	  let action = find-action(*action-table*[state-stack.head], token);
+	  select (action by instance?)
+	    <shift> =>
+	      step(pair(action.state, state-stack), pair(token, symbol-stack),
+		   aux-get-token(parse-state), parse-state);
+	    <reduce> =>
+	      let (new-state-stack, new-symbol-stack)
+		= (*production-table*[action.production]
+		     (state-stack, symbol-stack, $state: parse-state));
+	      step(new-state-stack, new-symbol-stack, token, parse-state);
+	    <accept> =>
+	      unget-token(parse-state.tokenizer, token);
+	      if (symbol-stack.size ~= 1)
+		parse-error(token,
+			    "Symbol-stack didn't get reduced all the way?");
+	      end;
+	      symbol-stack.head;
+	  end select;
+	end method step;
+  step(#(0), #(), aux-get-token(parse-state), parse-state);
 end;
 
 //----------------------------------------------------------------------
@@ -6129,7 +6107,7 @@ define method parse
   let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
   parse-state.verbose := verbose;
 
-  parse-loop(#(0), #(), get-token(tokenizer), parse-state);
+  parse-loop(parse-state);
   if (tokenizer.cpp-decls)
     do(curry(add-cpp-declaration, parse-state), tokenizer.cpp-decls)
   end if;
@@ -6150,7 +6128,7 @@ define method parse-type
 			      generator: tokenizer, string: ""));
   let parse-state
     = make(<parse-type-state>, tokenizer: tokenizer, parent: old-state);
-  parse-loop(#(0), #(), get-token(tokenizer), parse-state);
+  parse-loop(parse-state);
 end;
 
 // This function tries to evaluate a preprocessor constant in hopes that
@@ -6171,7 +6149,7 @@ define method parse-macro
 			      generator: tokenizer, string: ""));
   let parse-state
     = make(<parse-macro-state>, tokenizer: tokenizer, parent: old-state);
-  parse-loop(#(0), #(), get-token(tokenizer), parse-state);
+  parse-loop(parse-state);
 end;
 
 // This function evaluates a line of CPP input according to a limited set of C
@@ -6188,11 +6166,31 @@ define method cpp-parse (tokenizer :: <tokenizer>) => result :: <integer>;
       = make(<parse-cpp-state>, tokenizer: tokenizer);
     unget-token(tokenizer, make(<cpp-parse-token>,
 				generator: tokenizer, string: ""));
-    parse-loop(#(0), #(), get-token(tokenizer, cpp-line: #t, expand: #f),
-               parse-state);
+    parse-loop(parse-state);
   cleanup 
     get-token(tokenizer); // un-unget the <eof-token>, since we may want to
                           // continue with this tokenizer using a different
                           // lexer
   end block;
 end;
+
+// Seals for file c-parse.dylan
+
+// <action> -- subclass of <object>
+define sealed domain make(singleton(<action>));
+define sealed domain initialize(<action>);
+// <shift> -- subclass of <action>
+define sealed domain make(singleton(<shift>));
+// <reduce> -- subclass of <action>
+define sealed domain make(singleton(<reduce>));
+// <accept> -- subclass of <action>
+define sealed domain make(singleton(<accept>));
+// <alien-name-token> -- subclass of <token>
+define sealed domain make(singleton(<alien-name-token>));
+define sealed domain initialize(<alien-name-token>);
+// <macro-parse-token> -- subclass of <token>
+define sealed domain make(singleton(<macro-parse-token>));
+define sealed domain initialize(<macro-parse-token>);
+// <cpp-parse-token> -- subclass of <token>
+define sealed domain make(singleton(<cpp-parse-token>));
+define sealed domain initialize(<cpp-parse-token>);

@@ -334,7 +334,7 @@ define method declare-objects
       // use the first.  They are most likely identical anyway.
       // rgs: We should probably (eventually) check that they are identical
       //      rather than assuming it.
-      if (~key-exists?(state.objects, name.value))
+      if (element(state.objects, name.value, default: #f) == #f)
 	state.objects[name.value]
 	  := add-declaration(state, make(decl-type, name: name.value,
 					 type: type));
@@ -383,3 +383,19 @@ define method declaration-closure
   end for;
   ordered-decls;
 end method declaration-closure;
+
+// Seals for file c-decl-state.dylan
+
+// <parse-file-state> -- subclass of <parse-state>
+define sealed domain make(singleton(<parse-file-state>));
+// <parse-value-state> -- subclass of <parse-state>
+define sealed domain make(singleton(<parse-value-state>));
+// <parse-type-state> -- subclass of <parse-value-state>
+define sealed domain make(singleton(<parse-type-state>));
+// <parse-macro-state> -- subclass of <parse-value-state>
+define sealed domain make(singleton(<parse-macro-state>));
+// <parse-cpp-state> -- subclass of <parse-value-state>
+define sealed domain make(singleton(<parse-cpp-state>));
+// <string-table> -- subclass of <value-table>
+define sealed domain make(singleton(<string-table>));
+define sealed domain initialize(<string-table>);

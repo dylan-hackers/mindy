@@ -43,7 +43,8 @@ define constant default-cpp-table = make(<string-table>);
 // portability module to add more entries.
 //
 define constant include-path :: <deque> = make(<deque>);
-add!(include-path, "./");
+// add!(include-path, "./");
+push(include-path, "./");
 
 // This routine grabs tokens from within the "parameter list" of a
 // parameterized macro use.  The calling routine should have already consumed
@@ -204,7 +205,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 			state.include-tokenizer
 			  := make(<tokenizer>, parent: state,
 				  source: concatenate(dir, "/", name));
-		      exception <file-not-found>
+		      exception (<file-not-found>)
 			  #f;
 		      end block,
 	       dir in include-path,

@@ -25,17 +25,6 @@ rcs-header: $Header:
 // compilation environment for an HP 735 running HPUX.
 //======================================================================
 
-define module portability
-  use dylan;
-  use c-lexer, import: {default-cpp-table, include-path};
-  export $enum-size,
-	$pointer-size, $function-pointer-size,
-	$integer-size, $short-int-size,
-	$long-int-size, $char-size,
-	$float-size, $double-float-size,
-	$long-double-size;
-end module portability;
-
 define constant reserved-words
   = #["hppa", "hp9000s800", "__hp9000s800", "hp9k8", "PWB", "hpux", "unix",
       "_HPUX_SOURCE", "__hppa__", "__hp9000s800__", "__hp9k8__", "__PWB",
