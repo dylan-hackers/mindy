@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.11 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.12 1995/05/08 17:17:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,10 +47,14 @@ define method compile (#rest files) => res :: <component>;
   format(*debug-output*, "Optimizing\n");
   optimize-component(component);
   format(*debug-output*, "Emitting C code.\n");
-  let output-info = make(<output-info>);
+  let header-stream
+    = make(<file-stream>, name: "header.h", direction: #"output");
+  let output-info
+    = make(<output-info>, header-stream: header-stream,
+	   body-stream: *debug-output*);
   do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
   do(rcurry(emit-function, output-info), component.all-function-regions);
-  output-info-results(output-info);
+  close(header-stream);
   component;
 end;
 
