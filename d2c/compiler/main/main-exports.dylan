@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.16 1996/10/06 14:09:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.17 1996/10/18 14:58:41 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,6 +27,7 @@ define module main
 	      c-expr, pointer-deref, pointer-deref-setter};
 #endif
   use string-conversions, import: {string-to-integer};
+  use character-type;
   use random;
 
   use utils;
