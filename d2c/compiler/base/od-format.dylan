@@ -448,6 +448,11 @@ register-object-id(#"lexical-var-info", #x009E);
 register-object-id(#"let-assignment", #x00A0);
 register-object-id(#"set-assignment", #x00A1);
 
+register-object-id(#"define-library-tlf", #x00B0);
+register-object-id(#"define-module-tlf", #x00B1);
+register-object-id(#"define-library/module-use-clause", #x00B2);
+
+register-object-id(#"here-be-roots", #x00BF);
 
 /*
 generic-function
@@ -559,6 +564,8 @@ define /* exported */ class <dump-buffer> (<object>)
   // Current position and end are byte offsets, but are always word-aligned.
   /* exported */ slot current-pos :: <buffer-index>, init-value: 0;
   slot dump-end :: <buffer-index>, init-value: $od-initial-buffer-size;
+
+  slot dump-stack :: <list>, init-value: #();
 end class;
 
 
@@ -814,6 +821,9 @@ define /* exported */ method dump-definition-header
   		          if (subobjects) $odf-subobjects-flag else 0 end,
 			  raw-data),
 		   *object-id-registry*[name], buf);
+  if (subobjects)
+    buf.dump-stack := pair(name, buf.dump-stack);
+  end;
 end method;
 
 
@@ -825,6 +835,7 @@ define /* exported */ method dump-end-entry
   dump-header-word(logior($odf-header-flag, $odf-end-entry-etype),
                    buf.current-pos - start-posn,
 		   buf);
+  buf.dump-stack := tail(buf.dump-stack);
 end method;
 
 
@@ -1807,7 +1818,8 @@ define method dump-od (obj :: <object>, buf :: <dump-buffer>) => ();
   let oclass = object-class(obj);
   let found = element(*make-dumpers*, oclass, default: #f);
   if (~found)
-    signal("Don't know how to dump instances of %=\n", oclass);
+    signal("Don't know how to dump instances of %=.  Dump stack: %=\n",
+	   oclass, buf.dump-stack);
   elseif (~instance?(obj, <identity-preserving-mixin>)
             | maybe-dump-reference(obj, buf))
     apply(dump-simple-object, found.obj-name, buf,
