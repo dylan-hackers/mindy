@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.4 1996/04/10 16:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.5 1996/04/15 18:17:03 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -612,63 +612,95 @@ define method compare-methods
     => res :: one-of(#"more-specific", #"less-specific", #"unordered",
 		     #"disjoint", #"ambiguous", #"unknown");
   block (return)
-    let result = #"unordered";
+    let more-specific? = #f;
+    let less-specific? = #f;
+    let ambiguous? = #f;
+    let unknown? = #f;
     for (index from 0,
 	 spec1 in specs1,
 	 spec2 in specs2)
-      let arg-class = arg-classes & arg-classes[index];
       //
-      // If this is an argument that we are actually sorting by,
-      if ((arg-classes == #f | arg-class) & spec1 ~== spec2)
-	//
-	// If the two specializers are the same, then this argument offers no
-	// ordering.
-	let this-one
-	  = if (csubtype?(spec1, spec2))
-	      #"more-specific";
-	    elseif (csubtype?(spec2, spec1))
-	      #"less-specific";
-	    elseif (~ctypes-intersect?(spec1, spec2))
-	      return(#"disjoint");
-	    elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
-	      // Neither argument is a subclass of the other.  So we have to
-	      // base it on the precedence list of the actual argument class.
-	      if (arg-classes)
-		let cpl = arg-class.precedence-list;
-		block (found)
-		  for (super in cpl)
-		    if (super == spec1)
-		      found(#"more-specific");
-		    elseif (super == spec2)
-		      found(#"less-specific");
-		    end;
-		  finally
-		    error("%= isn't applicable", arg-class);
-		  end;
+      // If this is an argument that we are actually sorting by, check to
+      // see what kind of ordering this arg imposes.
+      let arg-class = arg-classes & arg-classes[index];
+      if (arg-classes == #f | arg-class)
+	if (spec1 == spec2)
+	  // The two specializers are identical, so they impose no ordering.
+	  #f;
+	elseif (csubtype?(spec1, spec2))
+	  // Spec1 is more specific.
+	  more-specific? := #t;
+	elseif (csubtype?(spec2, spec1))
+	  // Spec2 is more specific.
+	  less-specific? := #t;
+	elseif (~ctypes-intersect?(spec1, spec2))
+	  // They are disjoint.
+	  return(#"disjoint");
+	elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
+	  // Neither argument is a subclass of the other.  So we have to
+	  // base it on the precedence list of the actual argument class.
+	  if (arg-classes)
+	    block (found)
+	      for (super in arg-class.precedence-list)
+		if (super == spec1)
+		  more-specific? := #t;
+		  found();
+		elseif (super == spec2)
+		  less-specific? := #t;
+		  found();
 		end;
-	      else
-		return(#"unknown");
-	      end if;
-	    elseif (instance?(spec1, <unknown-ctype>)
-		      | instance?(spec2, <unknown-ctype>))
-	      return(#"unknown");
-	    else
-	      // Neither argument is a subtype of the other and we have a
-	      // non-class specializers.  That's ambiguous, folks.
-	      return(#"ambiguous");
-	    end;
-	unless (result == this-one)
-	  if (result == #"unordered")
-	    result := this-one;
+	      finally
+		error("bug in compare-methods: %s and %s are not in %s's "
+			"precedence list",
+		      spec1, spec2, arg-class);
+	      end for;
+	    end block;
 	  else
-	    return(#"ambiguous");
-	  end;
-	end;
-      end;
-    end;
-    result;
-  end;
-end;
+	    // We don't know the actual argument class, so we can't know what
+	    // kind of ordering this position would impose.
+	    unknown? := #t;
+	  end if;
+	elseif (instance?(spec1, <unknown-ctype>)
+		  | instance?(spec2, <unknown-ctype>))
+	  // If either specializer is unknown, then we can't know what kind of
+	  // ordering it would impose.
+	  unknown? := #t;
+	else
+	  // Neither argument is a subtype of the other and we have a
+	  // non-class specializers.  That's ambiguous, folks.
+	  ambiguous? := #t;
+	end if;
+      end if;
+    end for;
+    //
+    if (unknown?)
+      // Some position was unknown, therefore the overall result is unknown.
+      #"unknown";
+    elseif (more-specific?)
+      if (less-specific?)
+	// Two different positions disagree, therefore the overall result
+	// is ambiguous.
+	#"ambiguous";
+      else
+	// Some position was more specific, and no position was unknown or
+	// less specific, therefore the overall result is more-specific.
+	#"more-specific";
+      end if;
+    elseif (less-specific?)
+      // Some position is less specific and no position was unknown or
+      // more specific, therefore the overall result is less-specific.
+      #"less-specific";
+    elseif (ambiguous?)
+      // Some position was ambiguous, therefore the overall result is
+      // ambiguous.
+      #"ambiguous";
+    else
+      // No position could impose any kind of ordering information, therefore
+      // the overall result is unordered.
+      #"unordered";
+    end if;
+  end block;
+end method compare-methods;
 
 
 // Dumping stuff.

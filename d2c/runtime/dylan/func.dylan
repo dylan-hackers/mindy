@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.26 1996/04/13 21:39:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.27 1996/04/15 18:15:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1063,32 +1063,60 @@ define method compare-methods
     => res :: one-of(#"more-specific", #"less-specific", #"ambiguous",
 		     #"identical");
   block (return)
-    let result = #"identical";
     let specializers1 = meth1.function-specializers;
     let specializers2 = meth2.function-specializers;
+    //
+    // Start out assuming that the they are identical.
+    let result = #"identical";
+    //
+    // Compare each specializer.
     for (index :: <integer> from 0 below specializers1.size)
       let spec1 = specializers1[index];
       let spec2 = specializers2[index];
       block (next)
 	let cmp = if (subtype?(spec1, spec2))
 		    if (subtype?(spec2, spec1))
+		      // The two specializers are identical, so they impose
+		      // no additional ordering constraints.
 		      next();
 		    else
+		      // Spec1 is more specific, so the result is more-specific
+		      // or ambiguous.
 		      #"more-specific";
 		    end if;
 		  elseif (subtype?(spec2, spec1))
+		    // Spec2 is more specific, so the result is less-specific
+		    // or ambiguous.
 		    #"less-specific";
 		  else
+		    // The specializers intersect (otherwise we wouldn't have
+		    // selected both) but neither is a subtype of the other.
+		    // Defer to compare-overlapping-specializers to figure
+		    // out their ordering.
 		    compare-overlapping-specializers
 		      (spec1, spec2, %%primitive(extract-arg, arg-ptr, index));
 		  end if;
-	unless (result == cmp)
-	  if (cmp == #"ambiguous" | result ~== #"identical")
-	    return(#"ambiguous");
-	  else
+	// Now merge the constrain imposed by this position with the constrain
+	// accumulated from the positions we have already looked at.
+	if (result == #"identical")
+	  // The order is currently unconstrained, so just use this positions
+	  // ordering.
+	  result := cmp;
+	elseif (cmp == #"more-specific" | cmp == #"less-specific")
+	  // This position imposes an ordering, so check to see if that melds
+	  // with the constrain previously accumulated.
+	  if (result == cmp)
+	    // Same as it ever was, so don't change anything now.
+	    #f;
+	  elseif (result == #"ambiguous")
+	    // So far we haven't established an ordering, so use this ordering.
 	    result := cmp;
+	  else
+	    // We've got us an inconsistent ordering from two different
+	    // positions, the overall result is ambiguous.
+	    return(#"ambiguous");
 	  end if;
-	end unless;
+	end if;
       end block;
     end for;
     result;
