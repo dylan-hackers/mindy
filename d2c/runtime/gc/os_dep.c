@@ -1219,6 +1219,7 @@ word addr;
 #endif
 #if defined(LINUX)
 #   include <asm/signal.h>
+#   include <asm/sigcontext.h>
     typedef void (* REAL_SIG_PF)(int, struct sigcontext_struct);
 # endif
 
