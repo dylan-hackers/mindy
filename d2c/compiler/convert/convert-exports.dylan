@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.3 2000/01/24 04:56:09 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.4 2000/10/17 09:06:44 gabor Exp $
 copyright: see below
 
 
@@ -37,7 +37,10 @@ define library compiler-convert
   use compiler-parser;
 
   export
-    define-classes, define-functions;
+    define-classes, define-functions,
+    
+    // for browser support:
+    define-macros, define-constants-and-variables;
 end library compiler-convert;
 
 
@@ -89,7 +92,6 @@ define module expanders
   use source;
   use errors;
   use tokens;
-  // use definitions;
   use variables;
   use compile-time-values;
 
@@ -131,9 +133,9 @@ define module fer-convert
 
   use front,
     import: {<primitive>, <function-literal>, <method-literal>,
-	       <module-var-ref>, <module-var-set>,
-	       <function-visibility>, <catch>, <disable-catcher>,
-	       <make-catcher>};
+         <module-var-ref>, <module-var-set>,
+         <function-visibility>, <catch>, <disable-catcher>,
+         <make-catcher>};
   use builder-interface, export: all;
   use primitives,
     import: {primitive-info-or-lose, priminfo-arg-types};
@@ -152,6 +154,7 @@ define module define-macros
   use utils;
   use errors;
   use tokens;
+  use source;
   use definitions;
   use variables;
 
@@ -163,6 +166,8 @@ define module define-macros
 
   use top-level-forms;
 
+  export
+    <define-macro-tlf>; // browser support
 end module define-macros;
 
 
@@ -212,7 +217,7 @@ define module define-functions
   use function-definitions;
   use front,
     import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>,
-	     <literal-constant>, value, optimize-component};
+             <literal-constant>, value, optimize-component};
   use top-level-forms;
 
   use expanders;
@@ -258,7 +263,11 @@ define module define-constants-and-variables
   use define-functions;
 
   export
-    expand-until-method-ref;
+    expand-until-method-ref,
+    
+    // for browser support:
+    <define-constant-tlf>, <define-variable-tlf>, tlf-variables,
+    <define-constant-method-tlf>, <constant-definition>;
 end;
 
 define module define-classes
@@ -282,8 +291,8 @@ define module define-classes
   use signature-interface;
   use front,
     import: {<heap-slot-ref>, <data-word-ref>, <heap-slot-set>,
-	     <uninitialized-value>, <primitive>, <fer-function-region>,
-	     <function-literal>, <method-literal>, optimize-component};
+       <uninitialized-value>, <primitive>, <fer-function-region>,
+       <function-literal>, <method-literal>, optimize-component};
   use c-representation;
   use function-definitions;
 
@@ -305,8 +314,11 @@ define module define-classes
 
     override-defn-info,
 
-    slot-defn-info, slot-defn-allocation, slot-defn-getter, slot-defn-setter;
+    slot-defn-info, slot-defn-allocation, slot-defn-getter, slot-defn-setter,
     
+    // for browser support:
+    <slot-defn>, slot-defn-getter-name,
+    <local-class-definition>;
 end;
 
 define module top-level-expressions
