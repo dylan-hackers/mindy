@@ -31,15 +31,23 @@
 int sigemptyset(sigset_t *set) { return *set = 0; }
 int sigfillset(sigset_t *set) { *set = ~(sigset_t)0; return 0; }
 
+/* We define a dummy definition of SIGBAD because we can get away
+ * with it in Mindy.
+ */
+#ifndef SIGBAD
+#   define SIGBAD(sig) 0
+#   define BROKEN_SIGBAD 1
+#endif
+
 int sigaddset(sigset_t *set, int sig) 
-{ 
+{
     if (SIGBAD(sig)) { errno = EINVAL; return -1; }
     *set |= (1<<(sig-1)); 
     return 0;
 }
 
 int sigdelset(sigset_t *set, int sig) 
-{ 
+{
     if (SIGBAD(sig)) { errno = EINVAL; return -1; }
     *set &= ~(1<<(sig-1)); 
     return 0;
@@ -50,6 +58,10 @@ int sigismember(sigset_t *set, int sig)
     if (SIGBAD(sig)) { errno = EINVAL; return -1; }
     return (*set & (1<<(sig-1))) != 0; 
 }
+
+#if BROKEN_SIGBAD
+#   undef SIGBAD
+#endif
 
 #if BSD_SIGNALS
 
