@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.14 1994/08/30 21:56:22 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.15 1994/08/30 23:21:13 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -731,6 +731,7 @@ static struct var *make_var(obj_t name, struct module *home,enum var_kind kind)
 
     var->variable.name = name;
     var->variable.home = home;
+    var->variable.defined = FALSE;
     var->variable.kind = kind;
     var->variable.value = obj_Unbound;
     var->variable.type = obj_False;
@@ -834,6 +835,8 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 	    error("variable %= must be defined in module %=, not %=\n",
 		  name, var->variable.home->name, module->name);
     }
+
+    var->variable.defined = TRUE;
 }
 
 
@@ -1038,9 +1041,8 @@ void finalize_modules(void)
 {
     struct library *library;
     struct module *module;
-#if 0
     struct var *var;
-#endif
+    boolean warning_printed = FALSE;
 
     for (library = Libraries; library != NULL; library = library->next)
 	if (!library->completed)
@@ -1048,14 +1050,34 @@ void finalize_modules(void)
     for (module = Modules; module != NULL; module = module->next)
 	if (!module->completed)
 	    complete_module(module);
-#if 0
-    for (var = Vars; var != NULL; var = var->next)
-	if (var->variable.kind == var_Assumed
-	    || var->variable.kind == var_AssumedWriteable)
-	    fprintf(stderr,
-		    "variable %s in module %s in library %s undefined\n",
-		    sym_name(var->variable.name),
-		    sym_name(var->variable.home->name),
-		    sym_name(var->variable.home->home->name));
-#endif
+
+    for (library = Libraries; library != NULL; library = library->next) {
+	boolean library_printed = FALSE;
+	for (module = Modules; module != NULL; module = module->next) {
+	    if (module->home == NULL || module->home == library) {
+		boolean module_printed = FALSE;
+		for (var = Vars; var != NULL; var = var->next) {
+		    if (var->variable.home==module && !var->variable.defined) {
+			if (!warning_printed) {
+			    fprintf(stderr, "Warning: the following variables "
+				    "are undefined:\n");
+			    warning_printed = TRUE;
+			}
+			if (!library_printed) {
+			    fprintf(stderr, "  in library %s:\n",
+				    sym_name(library->name));
+			    library_printed = TRUE;
+			}
+			if (!module_printed) {
+			    fprintf(stderr, "    in module %s:\n",
+				    sym_name(module->name));
+			    module_printed = TRUE;
+			}
+			fprintf(stderr, "      %s\n",
+				sym_name(var->variable.name));
+		    }
+		}
+	    }
+	}
+    }
 }
