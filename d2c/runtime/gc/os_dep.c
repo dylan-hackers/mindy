@@ -2241,7 +2241,11 @@ struct hblk *h;
 #     if defined (DRSNX)
 #	include <sys/sparc/frame.h>
 #     else
-#       include <sys/frame.h>
+#        if defined(OPENBSD)
+#          include <frame.h>
+#        else
+#          include <sys/frame.h>
+#        endif
 #     endif
 #   endif
 #   if NARGS > 6
@@ -2251,6 +2255,29 @@ struct hblk *h;
 #ifdef SAVE_CALL_CHAIN
 /* Fill in the pc and argument information for up to NFRAMES of my	*/
 /* callers.  Ignore my frame and my callers frame.			*/
+# if defined(OPENBSD)
+void GC_save_callers (info) 
+struct callinfo info[NFRAMES];
+{
+  struct frame *frame;
+  struct frame *fp;
+  int nframes = 0;
+  word GC_save_regs_in_stack();
+
+  frame = (struct frame *) GC_save_regs_in_stack ();
+  
+  for (fp = frame -> fr_fp; fp != 0 && nframes < NFRAMES;
+       fp = fp -> fr_fp, nframes++) {
+      register int i;
+      
+      info[nframes].ci_pc = fp->fr_pc;
+      for (i = 0; i < NARGS; i++) {
+	info[nframes].ci_arg[i] = ~(fp->fr_arg[i]);
+      }
+  }
+  if (nframes < NFRAMES) info[nframes].ci_pc = 0;
+}
+# else
 void GC_save_callers (info) 
 struct callinfo info[NFRAMES];
 {
@@ -2272,6 +2299,8 @@ struct callinfo info[NFRAMES];
   }
   if (nframes < NFRAMES) info[nframes].ci_pc = 0;
 }
+
+#endif
 
 #endif /* SAVE_CALL_CHAIN */
 #endif /* SPARC */

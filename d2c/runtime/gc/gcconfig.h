@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1988, 1989 Hans-J. Boehm, Alan J. Demers
  * Copyright (c) 1991-1994 by Xerox Corporation.  All rights reserved.
  * Copyright (c) 1996 by Silicon Graphics.  All rights reserved.
@@ -12,7 +12,7 @@
  * provided the above notices are retained, and a notice that the code was
  * modified is included with the above copyright notice.
  */
- 
+
 #ifndef CONFIG_H
 
 # define CONFIG_H
@@ -43,6 +43,16 @@
 #    define OPENBSD
 #    define mach_type_known
 # endif
+# if defined(__OpenBSD__) && defined(m68k)
+#    define M68K
+#    define OPENBSD
+#    define mach_type_known
+# endif
+# if defined(__OpenBSD__) && defined(sparc)
+#    define SPARC
+#    define OPENBSD
+#    define mach_type_known
+# endif
 # if defined(__NetBSD__) && defined(m68k)
 #    define M68K
 #    define NETBSD
@@ -62,7 +72,8 @@
 #    if defined(ultrix) || defined(__ultrix) || defined(__NetBSD__)
 #	define ULTRIX
 #    else
-#	if defined(_SYSTYPE_SVR4) || defined(SYSTYPE_SVR4) || defined(__SYSTYPE_SVR4__)
+#	if defined(_SYSTYPE_SVR4) || defined(SYSTYPE_SVR4) ||
+defined(__SYSTYPE_SVR4__)
 #	  define IRIX5   /* or IRIX 6.X */
 #	else
 #	  define RISCOS  /* or IRIX 4.X */
@@ -100,7 +111,7 @@
 #     endif
 #   define mach_type_known
 # endif
-# if defined(sparc) && defined(unix) && !defined(sun) && !defined(linux)
+# if defined(sparc) && defined(unix) && !defined(sun) && !defined(linux) && !defined(__OpenBSD__)
 #   define SPARC
 #   define DRSNX
 #   define mach_type_known
@@ -176,6 +187,11 @@
 # if defined(NeXT) && defined(i386)
 #   define I386
 #   define NEXT
+#   define mach_type_known
+# endif
+# if defined(__OpenBSD__) && defined(i386)
+#   define I386
+#   define OPENBSD
 #   define mach_type_known
 # endif
 # if defined(__OpenBSD__) && defined(i386)
@@ -337,7 +353,8 @@
  * HEURISTIC1:  Take an address inside GC_init's frame, and round it up to
  *		the next multiple of STACK_GRAN.
  * HEURISTIC2:  Take an address inside GC_init's frame, increment it repeatedly
- *		in small steps (decrement if STACK_GROWS_UP), and read the value
+ *		in small steps (decrement if STACK_GROWS_UP), and read the
+value
  *		at each location.  Remember the value when the first
  *		Segmentation violation or Bus error is signalled.  Round that
  *		to the nearest plausible page boundary, and use that instead
@@ -445,7 +462,8 @@
 				   & ~0x3fffff) \
 				  +((word)&etext & 0x1fff))
 	/* This only works for shared-text binaries with magic number 0413.
-	   The other sorts of SysV binaries put the data at the end of the text,
+	   The other sorts of SysV binaries put the data at the end of the
+text,
 	   in which case the default of &etext would work.  Unfortunately,
 	   handling both would require having the magic-number available.
 	   	   		-- Parag
@@ -565,7 +583,8 @@
 #	define OS_TYPE "SUNOS4"
 	/* [If you have a weak stomach, don't read this.]		*/
 	/* We would like to use:					*/
-/* #       define DATASTART ((ptr_t)((((word) (&etext)) + 0x1fff) & ~0x1fff)) */
+/* #       define DATASTART ((ptr_t)((((word) (&etext)) + 0x1fff) & ~0x1fff))
+*/
 	/* This fails occasionally, due to an ancient, but very 	*/
 	/* persistent ld bug.  &etext is set 32 bytes too high.		*/
 	/* We instead read the text segment size from the a.out		*/
@@ -601,7 +620,11 @@
       extern int _end;
 #     define DATAEND (&_end)
 #     define SVR4
-#     define STACKBOTTOM ((ptr_t) 0xf0000000)
+#   endif
+#   ifdef OPENBSD
+#     define OS_TYPE "OPENBSD"
+#     define STACKBOTTOM ((ptr_t) 0xf8000000)
+#     define DATASTART ((ptr_t)(&etext))
 #   endif
 # endif
 
@@ -619,7 +642,7 @@
 #	define OS_TYPE "SEQUENT"
 	extern int etext;
 #       define DATASTART ((ptr_t)((((word) (&etext)) + 0xfff) & ~0xfff))
-#       define STACKBOTTOM ((ptr_t) 0x3ffff000) 
+#       define STACKBOTTOM ((ptr_t) 0x3ffff000)
 #   endif
 #   ifdef SUNOS5
 #	define OS_TYPE "SUNOS5"
@@ -672,7 +695,8 @@
 #            define DYNAMIC_LOADING
 #	     ifdef UNDEFINED	/* includes ro data */
 	       extern int _etext;
-#              define DATASTART ((ptr_t)((((word) (&_etext)) + 0xfff) & ~0xfff))
+#              define DATASTART ((ptr_t)((((word) (&_etext)) + 0xfff) &
+~0xfff))
 #	     endif
 #	     include <features.h>
 #	     if defined(__GLIBC__) && __GLIBC__ >= 2
@@ -744,6 +768,9 @@
 #       define STACKBOTTOM ((ptr_t)((word) _stubinfo + _stubinfo->size \
                                                      + _stklen))
 		/* This may not be right.  */
+#   endif
+#   ifdef OPENBSD
+#	define OS_TYPE "OPENBSD"
 #   endif
 #   ifdef OPENBSD
 #	define OS_TYPE "OPENBSD"
@@ -897,7 +924,8 @@
 	/* the text segment immediately follows the stack.		*/
 	/* Hence we give an upper pound.				*/
     	extern __start;
-#   	define HEURISTIC2_LIMIT ((ptr_t)((word)(&__start) & ~(getpagesize()-1)))
+#   	define HEURISTIC2_LIMIT ((ptr_t)((word)(&__start) &
+~(getpagesize()-1)))
 #   	define CPP_WORDSZ 64
 #   	define MPROTECT_VDB
 #   	define DYNAMIC_LOADING
