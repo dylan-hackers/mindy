@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.5 1996/02/28 14:36:48 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.6 1996/04/12 00:53:14 rsbe Exp $
 ##
 ##  This is the makefile for the Mindy/Tk windowing library.
 ##
@@ -69,7 +69,7 @@ TKOBJS = tk-lib.dbc tk-io.dbc tk-call.dbc tk-util.dbc tk-window.dbc \
          tk-button.dbc tk-editable.dbc tk-listbox.dbc tk-scrollbar.dbc \
          tk-frame.dbc tk-toplevel.dbc tk-label.dbc tk-message.dbc \
          tk-scale.dbc tk-entry.dbc tk-menu.dbc tk-text.dbc tk-canvas.dbc \
-         tk-bind.dbc
+         tk-bind.dbc tk-winfo.dbc tk-class.dbc
 
 tk.dbc: ${TKOBJS}
 	cat ${TKOBJS} > $@
@@ -112,6 +112,10 @@ tk-canvas.dbc: ${SRCDIR}/tk-canvas.dylan
 	${MC} ${MINDYFLAGS} -o tk-canvas.dbc ${SRCDIR}/tk-canvas.dylan
 tk-bind.dbc: ${SRCDIR}/tk-bind.dylan
 	${MC} ${MINDYFLAGS} -o tk-bind.dbc ${SRCDIR}/tk-bind.dylan
+tk-winfo.dbc: ${SRCDIR}/tk-winfo.dylan
+	${MC} ${MINDYFLAGS} -o tk-winfo.dbc ${SRCDIR}/tk-winfo.dylan
+tk-class.dbc: ${SRCDIR}/tk-class.dylan
+	${MC} ${MINDYFLAGS} -o tk-class.dbc ${SRCDIR}/tk-class.dylan
 
 clean:
 	rm -f ${TKOBJS} tk.dbc dylan-tk.html
