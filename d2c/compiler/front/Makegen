@@ -44,6 +44,7 @@ OBJS = \
 	funcopt.dbc \
 	primopt.dbc \
 	trans.dbc \
+	constraint.dbc \
 	builder.dbc \
 	fer-builder.dbc \
 	fer-convert.dbc \
