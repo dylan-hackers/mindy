@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.3 1995/04/25 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.4 1995/05/03 07:24:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -37,17 +37,32 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
   slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
 
-  // Type describing direct instances of this class.
-  slot direct-type :: <direct-instance-ctype>;
+  // Type describing direct instances of this class.  Either a
+  // <direct-instance-ctype> (if concrete) or the empty type (if abstract).
+  slot direct-type :: <ctype>;
 
   // class precedence list of all classes inherited, including this class and
   // indirectly inherited classes.  Unbound if not yet computed.
   slot precedence-list :: <list>;
 
+  // List of the direct subclasses.
+  slot direct-subclasses :: <list>, init-value: #();
+
   // List of all known subclasses (including this class and indirect
   // subclasses).  If sealed, then this is all of 'em.
   slot subclasses :: <list>, init-value: #();
-  //
+
+  // The unique id number associated with this class (only if concrete,
+  // though.)
+  slot unique-id :: false-or(<fixed-integer>), init-value: #f;
+
+  // The range of ids that cover all the subclasses of this class and
+  // only the subclasses of this class, if such a range exists.  That
+  // range will exist if this class is never mixed in with any other
+  // class.  And if this class is sealed.
+  slot subclass-id-range-min :: false-or(<fixed-integer>), init-value: #f;
+  slot subclass-id-range-max :: false-or(<fixed-integer>), init-value: #f;
+
   // The representation of instances of this class or #f if we haven't
   // picked them yet.
   slot speed-representation :: union(<false>, <representation>),
@@ -76,12 +91,22 @@ define method initialize (obj :: <cclass>, #key slots)
   add!($All-Classes, obj);
 
   // Make the direct-type for this cclass.
-  obj.direct-type := make(<direct-instance-ctype>, base-class: obj);
+  obj.direct-type
+    := if (obj.abstract?)
+	 empty-ctype();
+       else
+	 make(<direct-instance-ctype>, base-class: obj);
+       end;
 
   // Compute the cpl.
   let supers = obj.direct-superclasses;
   let cpl = compute-cpl(obj, supers);
   obj.precedence-list := cpl;
+
+  // Add us to all our direct superclasses direct-subclass lists.
+  for (super in supers)
+    super.direct-subclasses := pair(obj, super.direct-subclasses);
+  end;
 
   // Add us to all our superclasses subclass lists.
   for (super in cpl)
@@ -211,7 +236,7 @@ end method;
 define method csubtype-dispatch
     (type1 :: <cclass>, type2 :: <direct-instance-ctype>)
     => result :: <boolean>;
-  type1 == type1.base-class & type1.sealed? & empty?(type1.subclasses);
+  type1 == type2.base-class & type1.sealed? & empty?(type1.subclasses);
 end;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
@@ -419,6 +444,40 @@ define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
   // Add the slot to the all-slot-infos.
   add!(class.all-slot-infos, slot);
 end;
+
+
+// Unique ID assignment.
+
+define method assign-unique-ids () => ();
+  local
+    method grovel (class :: <cclass>, this-id :: <fixed-integer>)
+      let next-id = if (class.abstract?)
+		      this-id;
+		    else
+		      class.unique-id := this-id;
+		      this-id + 1;
+		    end;
+      for (sub in class.direct-subclasses)
+	if (sub.direct-superclasses.first == class)
+	  next-id := grovel(sub, next-id);
+	end;
+      end;
+      if (class.sealed?)
+	block (return)
+	  for (sub in class.subclasses)
+	    unless (sub.abstract? | (sub.unique-id & this-id <= sub.unique-id))
+	      return();
+	    end;
+	  end;
+	  class.subclass-id-range-min := this-id;
+	  class.subclass-id-range-max := next-id - 1;
+	end;
+      end;
+      next-id;
+    end;
+  grovel(dylan-value(#"<object>"), 0);
+end;
+
 
 
 // Layout tables.
