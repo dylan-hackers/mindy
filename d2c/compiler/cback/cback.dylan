@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.17 1995/04/27 04:36:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.18 1995/04/27 09:24:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -587,9 +587,20 @@ define method emit-region (region :: <block-region>,
 			   output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
+  if (region.catcher)
+    if (region.catcher.exit-function)
+      error("An exit function still exists?");
+    end;
+    format(stream, "if (!setjmp(### jmpbuf)) {\n");
+    indent(stream, $indentation-step);
+  end;
   emit-region(region.body, output-info);
   /* ### emit-joins(region.join-region, output-info); */
   spew-pending-defines(output-info);
+  if (region.catcher)
+    indent(stream, - $indentation-step);
+    format(stream, "}\nelse {\n    ### Catcher results\n}\n");
+  end;
   if (region.exits)
     let half-step = ash($indentation-step, -1);
     indent(stream, - half-step);
@@ -603,11 +614,20 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
   /* ### emit-joins(region.join-region, output-info); */
   spew-pending-defines(output-info);
   let stream = output-info.output-info-guts-stream;
-  let id = region.block-of.block-id;
-  if (id)
-    format(stream, "goto block%d;\n", id);
-  else
-    format(stream, "abort();\n");
+  let target = region.block-of;
+  for (region = region.parent then region.parent,
+       until: region == #f | region == target)
+    finally
+    if (region)
+      let id = target.block-id;
+      if (id)
+	format(stream, "goto block%d;\n", id);
+      else
+	format(stream, "abort();\n");
+      end;
+    else
+      format(stream, "longjmp(### jmpbuf, 1)\n");
+    end;
   end;
 end;
 
