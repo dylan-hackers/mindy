@@ -169,7 +169,7 @@ end method note-command-disabled;
 /// Command events
 
 define sealed class <command-event> (<frame-event>)
-  /*sealed*/ constant slot event-command /*:: <command-oid>*/,
+  sealed constant slot event-command :: <command-oid>,
     required-init-keyword: command:;
 end class <command-event>;
 

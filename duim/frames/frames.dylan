@@ -225,7 +225,7 @@ define open abstract primary class <basic-frame> (<frame>)
   slot frame-icon :: false-or(<image>) = #f,
     init-keyword: icon:,
     setter: %icon-setter;
-  /*sealed*/ slot frame-manager :: false-or(<frame-manager>) = #f;
+  sealed slot frame-manager :: false-or(<frame-manager>) = #f;
   sealed slot frame-owner   :: false-or(<frame>) = #f,
     init-keyword: owner:;
   sealed slot frame-flags :: <integer> = $initial-frame-flags;
@@ -233,7 +233,7 @@ define open abstract primary class <basic-frame> (<frame>)
     = make(<stretchy-vector>);
   sealed constant slot frame-owned-menus  :: <stretchy-object-vector>
     = make(<stretchy-vector>);
-  /*sealed*/ slot top-level-sheet :: false-or(<sheet>) = #f,
+  sealed slot top-level-sheet :: false-or(<sheet>) = #f,
     init-keyword: top-level-sheet:;
   sealed slot frame-default-button :: false-or(<button>) = #f,
     init-keyword: default-button:,

@@ -89,7 +89,7 @@ define open abstract primary class <dialog-frame> (<simple-frame>)
   // Exit button
   sealed slot dialog-exit-callback :: false-or(<function>) = exit-dialog,
     init-keyword: exit-callback:;
-  /*sealed*/ slot dialog-exit-button :: false-or(<button>) = #f,
+  sealed slot dialog-exit-button :: false-or(<button>) = #f,
     init-keyword: exit-button:;
   sealed slot dialog-exit-enabled? :: <boolean> = #t,
     init-keyword: exit-enabled?:,
@@ -97,12 +97,12 @@ define open abstract primary class <dialog-frame> (<simple-frame>)
   // Cancel button
   sealed slot dialog-cancel-callback :: false-or(<function>) = cancel-dialog,
     init-keyword: cancel-callback:;
-  /*sealed*/ slot dialog-cancel-button :: false-or(<button>) = #f,
+  sealed slot dialog-cancel-button :: false-or(<button>) = #f,
     init-keyword: cancel-button:;
   // Help button
   sealed slot dialog-help-callback :: false-or(<function>) = #f,
     init-keyword: help-callback:;
-  /*sealed*/ slot dialog-help-button :: false-or(<button>) = #f,
+  sealed slot dialog-help-button :: false-or(<button>) = #f,
     init-keyword: help-button:;
   // Position, or #f meaning "don't lay out any exit buttons"
   sealed slot dialog-exit-buttons-position :: false-or(<symbol>) = #"bottom",
@@ -421,7 +421,7 @@ define open primary class <property-frame>
     (<multi-page-dialog-frame>)
   sealed slot dialog-apply-callback :: false-or(<callback-type>) = #f,
     init-keyword: apply-callback:;
-  /*sealed*/ slot dialog-apply-button :: false-or(<button>) = #f,
+  sealed slot dialog-apply-button :: false-or(<button>) = #f,
     init-keyword: apply-button:;
   // By default, property sheets are modeless
   keyword mode: = #"modeless";
