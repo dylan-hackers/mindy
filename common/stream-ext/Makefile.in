@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.4 1996/09/06 13:49:56 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.5 1996/09/19 14:20:30 nkramer Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -66,7 +66,7 @@ MC	=	../../comp/mindycomp
 MINDYFLAGS = -lstream-extensions
 
 OBJS =  library.dbc stream-extensions.dbc \
-	indenting-streams.dbc combination-streams.dbc
+	indenting-streams.dbc concatenated-streams.dbc
 
 
 stream-extensions-lib.dbc: ${OBJS}
@@ -81,8 +81,8 @@ stream-extensions.dbc: ${SRCDIR}/stream-extensions.dylan
 indenting-streams.dbc: ${SRCDIR}/indenting-streams.dylan
 	${MC} ${MINDYFLAGS} -o indenting-streams.dbc ${SRCDIR}/indenting-streams.dylan
 
-combination-streams.dbc: ${SRCDIR}/combination-streams.dylan
-	${MC} ${MINDYFLAGS} -o combination-streams.dbc ${SRCDIR}/combination-streams.dylan
+concatenated-streams.dbc: ${SRCDIR}/concatenated-streams.dylan
+	${MC} ${MINDYFLAGS} -o concatenated-streams.dbc ${SRCDIR}/concatenated-streams.dylan
 
 clean:
 	rm -f ${OBJS} stream-extensions-lib.dbc *~ \#* core
