@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.5 1999/02/18 20:21:22 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.6 1999/04/17 17:45:35 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -122,6 +122,10 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // Vector of <override-info>s for the overrides introduced by this class.
   slot override-infos :: <simple-object-vector> = #[],
     init-keyword: overrides:;
+  //
+  // Vector of <keyword-info>s for the overrides introduced by this class.
+  slot keyword-infos :: <simple-object-vector> = #[],
+    init-keyword: keywords:;
   //
   // #t if we've computed the layout, #"computing" if we are working on it,
   // and #f until then.
@@ -394,6 +398,36 @@ define class <override-info> (<eql-ct-value>, <identity-preserving-mixin>)
   // one but we can't tell what it is, and #f if there isn't one.
   slot override-init-function :: type-union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-function:;
+end;
+
+define class <keyword-info> (<eql-ct-value>, <identity-preserving-mixin>)
+  //
+  // The cclass that introduces this override.  Filled in when the cclass that
+  // introduces this override is initialized.
+  slot keyword-introduced-by :: <cclass>,
+    init-keyword: introduced-by:;
+  //
+  // The symbol of this keyword
+  slot keyword-symbol :: <symbol>,
+    required-init-keyword: symbol:;
+  //
+  // The initial value.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot keyword-init-value :: type-union(<ct-value>, <boolean>),
+    init-value: #f, init-keyword: init-value:;
+  //
+  // The init-function.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot keyword-init-function :: type-union(<ct-value>, <boolean>),
+    init-value: #f, init-keyword: init-function:;
+  //
+  // Is this keyword required?
+  slot keyword-required? :: <boolean>, 
+    init-value: #f, init-keyword: required?:;
+  // 
+  // The type restriction for this keyword, if any.
+  slot keyword-type :: <ctype>,
+    init-keyword: type:;
 end;
 
 define sealed domain make (singleton(<override-info>));

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.10 1999/04/11 05:21:53 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.11 1999/04/17 17:45:34 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -703,6 +703,7 @@ define module classes
     abstract?, primary?, functional?, not-functional?, all-slot-infos,
     all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
     override-infos, override-infos-setter, unique-id,
+    keyword-infos, keyword-infos-setter,
     set-and-record-unique-id, subclass-id-range-min,
     subclass-id-range-max,
     direct-space-representation, direct-space-representation-setter,
@@ -734,6 +735,8 @@ define module classes
     override-getter, override-slot,
     override-init-value, override-init-value-setter,
     override-init-function, override-init-function-setter,
+
+    <keyword-info>,
 
     <layout-table>, layout-length, layout-holes,
 
