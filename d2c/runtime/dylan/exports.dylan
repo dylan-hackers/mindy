@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.27 1996/06/24 20:20:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.28 1996/06/26 14:39:16 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -152,7 +152,7 @@ define module Extensions
 	     <byte>, <byte-vector>,
 
 	     // Misc other stuff.
-	     $not-supplied, ignore, functional-==
+	     $not-supplied, ignore, functional-==, key-exists?
     },
     export: all;
 end;
@@ -181,6 +181,8 @@ define module System
 	     object-address,
 
 	     $Newlines-are-CRLF,
+	     system, import-string, export-string, getenv, 
+	     exit, no-core-dumps,
 
 	     // Buffers
 	     <buffer>, <buffer-index>, $maximum-buffer-size,
