@@ -1,11 +1,11 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.2 2000/01/24 04:56:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.3 2001/02/08 22:00:24 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -839,7 +839,7 @@ end method find-variable;
 // Return #t if the variable named by name is inherited from another library or
 // is exported from this library.  This function is used to determine which
 // definitions might semantically be visible to other libraries, hence need to
-// be dumped in the library dummary.  A name is exposed if:
+// be dumped in the library summary.  A name is exposed if:
 //  1] The variable's home library is different from the referencing library.
 //  2] The variable is exported from some exported module.
 //
