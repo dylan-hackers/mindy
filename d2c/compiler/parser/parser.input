@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.23 1996/02/09 20:40:26 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.24 1996/02/19 20:36:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -944,8 +944,19 @@ more-for-clauses (more-for-clauses <semicolon-token> for-clause)
 
 :type for-clause <for-clause>
 
-for-clause (<in-token> variable <comma-token> expression)
-  make(<for-in-clause>, variable: %2, collection: %4);
+for-clause (<in-token> variable <comma-token> expression <comma-token>
+	    variable-or-false <comma-token> expression)
+  make(<for-in-clause>, variable: %2, collection: %4, keyed-by: %6, using: %8);
+%
+
+:type variable-or-false |false-or(<parameter>)|
+
+variable-or-false (<false>)
+  #f;
+%
+
+variable-or-false (variable)
+  %1;
 %
 
 for-clause (<equal-token> variable <comma-token> expression
