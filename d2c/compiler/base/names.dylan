@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.5 2001/05/28 20:16:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.6 2001/07/07 17:14:09 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -103,7 +103,7 @@ define class <derived-name> (<name>)
 	      #"callback-entry",
     	      #"discriminator",
     	      #"deferred-evaluation", #"init-function", #"setter", #"getter",
-	      #"maker",
+	      #"maker", #"key-defaulter",
 	      #"class-meta", #"each-subclass-meta"),
     required-init-keyword: how:;
   slot derived-name-base :: <name>, required-init-keyword: base:;
@@ -114,7 +114,8 @@ define sealed domain make (singleton(<derived-name>));
 define method name-unique? (name :: <derived-name>) => res :: <boolean>;
   member?(name.derived-name-how,
   	  #[#"type-cell", #"general-entry", #"generic-entry", #"discriminator",
-	    #"maker", #"setter", #"getter", #"class-meta", #"each-subclass-meta"])
+	    #"maker", #"key-defaulter", #"setter", #"getter",
+	    #"class-meta", #"each-subclass-meta"])
     & name-unique?(name.derived-name-base);
 end method;
 
