@@ -5959,7 +5959,7 @@ define constant *production-table* = make(<vector>, size: 135);
              let temp1 = tail(symbol-stack);
              pair(begin
                       if ($state.verbose)
-                        write('[', *standard-error*);
+                        write-element(*standard-error*, '[');
                         force-output(*standard-error*);
                       end if;
                       push-include-level($state);
@@ -5984,7 +5984,7 @@ define constant *production-table* = make(<vector>, size: 135);
              let temp1 = tail(symbol-stack);
              pair(begin
                       if ($state.verbose)
-                        write(']', *standard-error*);
+                        write-element(*standard-error*, ']');
                         force-output(*standard-error*);
                       end if;
                       do(curry(add-cpp-declaration, $state), $r1.value);
@@ -6010,7 +6010,7 @@ define constant *production-table* = make(<vector>, size: 135);
              let temp1 = tail(symbol-stack);
              pair(begin
                       if ($state.verbose)
-                        write('.', *standard-error*);
+                        write-element(*standard-error*, '.');
                         force-output(*standard-error*);
                       end if;
                       $r1;
@@ -6123,7 +6123,8 @@ define method parse-type
  => (result :: <declaration>);
   let tokenizer = make(<tokenizer>, name: type,
 		       typedefs-from: old-state.tokenizer,
-                       source: make(<byte-string-input-stream>, string: type));
+                       source: make(<byte-string-stream>, direction: #"input",
+				    contents: type));
   unget-token(tokenizer, make(<alien-name-token>,
 			      generator: tokenizer, string: ""));
   let parse-state
@@ -6141,7 +6142,8 @@ define method parse-macro
  => (result :: <object>);
   let old-tokenizer = old-state.tokenizer;
   let tokenizer = make(<tokenizer>, name: name, parent: old-tokenizer,
-                       source: make(<byte-string-input-stream>, string: " "));
+                       source: make(<byte-string-stream>, direction: #"input",
+				    contents: " "));
   for (token in old-tokenizer.cpp-table[name])
     unget-token(tokenizer, token);
   end for;

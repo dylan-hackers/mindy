@@ -429,7 +429,7 @@ define method write-declaration
 	format(stream, "define constant %s :: %s = %d;\n",
 	       name, type-name, int-value);
       finally
-	write("\n", stream);
+	write(stream, "\n");
       end for;
     else
       format(stream, "define constant %s = <integer>;\n\n",
@@ -549,7 +549,7 @@ define method write-declaration
   // ... then create a more robust method as a wrapper.
   format(stream, "define method %s\n    (", decl.dylan-name);
   for (arg in in-params, count from 1)
-    if (count > 1) write(", ", stream) end if;
+    if (count > 1) write(stream, ", ") end if;
     case
       instance?(arg, <varargs-declaration>) =>
 	format(stream, "#rest %s", arg.dylan-name);
@@ -557,12 +557,12 @@ define method write-declaration
 	format(stream, "%s :: %s", arg.dylan-name, arg.mapped-name);
     end case;
   end for;
-  write(")\n => (", stream);
+  write(stream, ")\n => (");
   for (arg in out-params, count from 1)
-    if (count > 1) write(", ", stream) end if;
+    if (count > 1) write(stream, ", ") end if;
     format(stream, "%s :: %s", arg.dylan-name, arg.mapped-name);
   end for;
-  write(");\n", stream);
+  write(stream, ");\n");
 
   for (arg in out-params)
     // Don't create a new variable if the existing variable is already the
@@ -581,9 +581,9 @@ define method write-declaration
 
   let result-type = decl.type.result.type;
   if (result-type ~= void-type)
-    write("  let result-value\n    = ", stream);
+    write(stream, "  let result-value\n    = ");
   else
-    write("  ", stream);
+    write(stream, "  ");
   end if;
 
   select(melange-target)
@@ -595,13 +595,13 @@ define method write-declaration
 	  format(stream, "%s(", raw-name);
 	end if;
 	for (count from 1, arg in params)
-	  if (count > 1) write(", ", stream) end if;
+	  if (count > 1) write(stream, ", ") end if;
 	  if (instance?(arg, <varargs-declaration>))
-	    write(arg.dylan-name, stream);
+	    write(arg.stream, dylan-name);
 	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
 	    format(stream, "%s-ptr", arg.dylan-name);
 	  else
-	    write(export-value(arg, arg.dylan-name), stream);
+	    write(stream, export-value(arg, arg.dylan-name));
 	  end if;
 	end for;
       end;
@@ -614,7 +614,7 @@ define method write-declaration
 		 decl.type.result.type.d2c-type-tag);
 	end if;
 	for (count from 1, arg in params)
-	  write(", ", stream);
+	  write(stream, ", ");
 	  if (instance?(arg, <varargs-declaration>))
 	    format(stream, "%s", d2c-arg(arg.type, arg.dylan-name));
 	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
@@ -626,7 +626,7 @@ define method write-declaration
 	end for;
       end;
   end select;
-  write(");\n", stream);
+  write(stream, ");\n");
 
   if(melange-target = #"d2c")
     if (instance?(result-type.true-type, <pointer-rep-types>))
@@ -647,13 +647,13 @@ define method write-declaration
     end if;
   end for;
 
-  write("  values(", stream);
+  write(stream, "  values(");
   for (arg in out-params, count from 1)
-    if (count > 1) write(", ", stream) end if;
+    if (count > 1) write(stream, ", ") end if;
     if (instance?(arg, <arg-declaration>))
       format(stream, "%s-value", arg.dylan-name);
     else
-      write(import-value(arg, "result-value"), stream);
+      write(stream, import-value(arg, "result-value"));
     end if;
   end for;
 
@@ -775,13 +775,13 @@ define method write-declaration
 	   "define method pointer-value\n"
 	     "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",
 	   decl.dylan-name, target-map);
-    write(import-value(target-type,
+    write(stream,
+	  import-value(target-type,
 		       c-accessor(target-type,
 				  format-to-string("index * %d",
 						   target-type.c-type-size),
-				  "ptr", target-type.type-name)),
-	  stream);
-    write(";\nend method pointer-value;\n\n", stream);
+				  "ptr", target-type.type-name)));
+    write(stream, ";\nend method pointer-value;\n\n");
 
     // Write setter method, if applicable.
     unless (instance?(true-type(target-type), <non-atomic-types>))
@@ -790,10 +790,10 @@ define method write-declaration
 	       "    (value :: %s, ptr :: %s, #key index = 0)\n"
 	       " => (result :: %s);\n  ",
 	     target-map, decl.dylan-name, target-map);
-      write(c-accessor(target-type,
+      write(stream,
+	    c-accessor(target-type,
 		       format-to-string("index * %d", target-type.c-type-size),
-		       "ptr", target-type.type-name),
-	    stream);
+		       "ptr", target-type.type-name));
       format(stream, " := %s;\n  value;\nend method pointer-value-setter;\n\n",
 	     export-value(target-type, "value"));
     end unless;
@@ -831,15 +831,15 @@ define method write-file-load
 	  format(stream, "define constant %s\n  "
 		         "= load-object-file(#(", file-name);
 	  for (comma = #f then #t, file in object-files)
-	    if (comma) write(", ", stream) end if;
+	    if (comma) write(stream, ", ") end if;
 	    format(stream, "\"%s\"", file);
 	  end for;
-	  write("), include: #(", stream);
+	  write(stream, "), include: #(");
 	  for (comma = #f then #t, name in names)
-	    if (comma) write(", ", stream) end if;
+	    if (comma) write(stream, ", ") end if;
 	    format(stream, "\"%s\"", name);
 	  end for;
-	  write("));\n\n", stream);
+	  write(stream, "));\n\n");
 	  concatenate(", file: ", file-name);
 	else
 	  ""
@@ -865,7 +865,7 @@ end method write-file-load;
 define method write-mindy-includes
     (file :: type-union(<string>, <false>), decls :: <sequence>) => ();
   if (file)
-    let stream = make(<file-stream>, name: file, direction: #"output");
+    let stream = make(<file-stream>, locator: file, direction: #"output");
     for (decl in decls)
       select (decl by instance?)
 	<function-declaration> => format(stream, "%s()\n", decl.simple-name);

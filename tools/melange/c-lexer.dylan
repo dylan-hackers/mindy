@@ -394,12 +394,12 @@ define method initialize (value :: <tokenizer>,
   let source-stream
     = if (instance?(source, <string>))
 	value.file-name := name | source;
-	make(<file-stream>, name: source, direction: #"input");
+	make(<file-stream>, locator: source, direction: #"input");
       else
 	value.file-name := name | "<unknown-file>";
 	source;
       end if;
-  value.contents := read-as(<byte-string>, source-stream, to-eof?: #t);
+  value.contents := as(<string>, read-to-end(source-stream));
   if (parent)
     value.typedefs := (typedefs-from | parent).typedefs;
     value.cpp-table := parent.cpp-table;
@@ -433,8 +433,8 @@ define method initialize (value :: <tokenizer>,
 	else
 	  let sub-tokenizer
 	    = make(<tokenizer>,
-		   source: make(<byte-string-input-stream>,
-				string: cpp-value));
+		   source: make(<byte-string-stream>, direction: #"input",
+				contents: cpp-value));
 	  for (list = #() then pair(token, list),
 	       token = get-token(sub-tokenizer, expand: #f)
 		 then get-token(sub-tokenizer, expand: #f),
@@ -773,7 +773,8 @@ define method get-token
 				     get-token(state).string-value);
 	let sub-tokenizer
 	  = make(<tokenizer>,
-		 source: make(<byte-string-input-stream>, string: new-string));
+		 source: make(<byte-string-stream>, direction: #"input",
+			      contents: new-string));
 	return(get-token(sub-tokenizer));
       elseif (instance?(token, <identifier-token>)
 		& element(state.typedefs, token.value, default: #f))

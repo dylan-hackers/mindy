@@ -56,7 +56,8 @@ define library melange
   use dylan;
   use string-extensions;
   use collection-extensions;
-  use streams;
+  use new-streams;
+  use standard-io;
   use format;
   use melange-c;
   export
@@ -70,7 +71,7 @@ define module int-lexer
   use string-conversions;
   use regular-expressions;
   use character-type;
-  use streams;
+  use new-streams;
   export
     <tokenizer>, get-token, unget-token, <token>, value, string-value,
     generator, parse-error, position, <error-token>, <identifier-token>,
@@ -130,7 +131,9 @@ define module define-interface
   use character-type;
 
   // From streams
-  use streams;
+  use new-streams;
+   
+  // From standard-io
   use standard-io;
 
   // local packages

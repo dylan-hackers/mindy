@@ -205,7 +205,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 			state.include-tokenizer
 			  := make(<tokenizer>, parent: state,
 				  source: concatenate(dir, "/", name));
-		      exception (<file-not-found>)
+		      exception (<file-does-not-exist-error>)
 			  #f;
 		      end block,
 	       dir in include-path,
