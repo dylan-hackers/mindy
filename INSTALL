@@ -1,0 +1,36 @@
+To install a precompiled binary distribution of d2c, go to one of the FTP
+sites listed in the README and download an appropriate package for your
+operating system. Tarballs are available for several common Unix-like
+systems and a variety of processors. RPMs and other "packaged" binaries are
+slowly becoming available as well.
+
+Tarballs are currently designed to untar into /usr/local on most
+platforms. If you want to put them somewhere else, you'll need to play with
+some environment variables. Please send mail to gd-hackers@randomhacks.com
+if you know exactly which ones. "Packaged" binaries such as RPMs install
+wherever convention would have them install, and need no tweaking.
+
+To install a source distribution, you'll first need to install a binary
+distribution. This is because large parts of Gwydion Dylan are written in
+Dylan. (If you only want to install Mindy. you can omit the binary
+distribution and edit the makefiles appropriately to keep d2c from
+building. Future versions of Gwydion will honor a --disable-d2c flag to
+configure, but this doesn't work yet.)
+
+Once you have binaries installed, grab a source snapshot from the FTP site
+or download one from CVS (see the website mentioned in the README for
+instructions). If you choose to use CVS, you'll need to run 'autoconf' in
+the gd/src directory to create the configure script. To build all of
+Gwydion:
+
+  $ ./configure --prefix=/usr/local
+  $ make
+  $ make install
+
+If binaries are not yet avilable for your platform, it will be necessary to
+cross-compile and port d2c to the new architecture. This takes anywhere
+from a few days to a week or two, and a working knowledge of Dylan. We're
+working on a porting guide, but for now, follow the instructions in the
+README to subscribe to gd-hackers and announce your intent. New ports and
+new binary packages are always welcome.
+

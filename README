@@ -1,0 +1,37 @@
+Gwydion Dylan 2.1 Snapshot Release
+==================================
+
+THIS IS A SNAPSHOT RELEASE OF THE IN-DEVELOPMENT VERSION OF GWYDION
+DYLAN. Expect some bugs and extremely rough edges.
+
+Gwydion Dylan provides two implementations of the Dylan programming
+language: Mindy and d2c. Mindy is bytecode compiler and interpreter, and
+d2c is a Dylan-to-C compiler. Mindy compiles programs quickly, but the
+resulting executables run slowly. On the other hand, d2c compiles programs
+slowly, but they run quickly. Future development will mostly concentrate on
+removing bugs from d2c, adding new features, and making it run faster. To
+the best of our knowledge, nobody is actively maintaining Mindy at the
+moment.
+
+Gwydion Dylan was originally written by the Gwydion Group at CMU as part of
+a research project studying advanced hypercode development environments. It
+is now maintained by a group of volunteers.
+
+To install Gwydion Dylan, take a look at the INSTALL file. For more
+information, see the following online resources:
+
+  Current maintainers' website:  http://www.randomhacks.com/dylan/
+  FTP Site:                      
+  FTP Site (mirror):             
+  Bug reports:                   gd-bugs@randomhacks.com
+  Mail to the maintainers:       gd-hackers@randomhacks.com
+  Newsgroup:                     comp.lang.dylan
+
+If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
+you can ask questions and report the inevitable bugs. Send a message to
+majordomo@randomhacks.com with the body "subscribe gd-hackers".
+
+Be warned: Gwydion is not suitable for production work. Some of the
+omissions and shortcomings are drastic. Use Gwydion only if you're feeling
+daring and wish to experiment with a compiler currently under development.
+
