@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.16 1995/06/04 01:03:55 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.17 1995/06/04 17:05:20 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -43,6 +43,7 @@ OBJS = exports.dbc \
 	primitives.dbc \
 	front.dbc \
 	cheese.dbc \
+	primopt.dbc \
 	trans.dbc \
 	builder.dbc \
 	fer-builder.dbc \
@@ -55,6 +56,7 @@ OBJS = exports.dbc \
 	tlexpr.dbc \
 	stackanal.dbc \
 	cback.dbc \
+	primemit.dbc \
 	heap.dbc \
 	dump.dbc \
 	init.dbc \
