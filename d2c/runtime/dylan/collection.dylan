@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.5 2000/01/24 04:56:44 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.6 2000/05/09 20:04:02 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -489,6 +489,10 @@ define open generic choose-by
     => new-seq :: <sequence>;
 
 define open generic intersection
+    (seq1 :: <sequence>, seq2 :: <sequence>, #key test)
+    => new-seq :: <sequence>;
+
+define open generic difference
     (seq1 :: <sequence>, seq2 :: <sequence>, #key test)
     => new-seq :: <sequence>;
 
