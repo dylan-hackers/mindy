@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.35 1996/04/18 20:50:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.36 1996/05/01 12:18:37 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -203,6 +203,11 @@ define-primitive
 define-primitive
   (#"canonicalize-results", #(#"cluster", #"<integer>"),
    #(values:, rest:, #"<object>"),
+   pure: #t);
+
+define-primitive
+  (#"make-next-method", #(#"<list>", #"<simple-object-vector>"),
+   #(union:, #"<false>", #"<function>"),
    pure: #t);
 
 define-primitive
