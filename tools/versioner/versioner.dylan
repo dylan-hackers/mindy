@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.4 1996/09/15 20:34:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.5 1996/09/16 10:06:41 nkramer Exp $
 
 // Program that slurps up a whole bunch of rlog outputs, and decides
 // which revisions go together to form a conceptual "version".  The
@@ -39,9 +39,9 @@ define constant $rlog-command
 
 define constant $find-command
   #if (compiled-for-x86-win32)
-     = "perl /tools/bin/unix-find.perl";
+     = "perl /tools/bin/unix-find.perl %s -name \"*,v\" -print";
   #else
-       = "find";
+     = "find %s -follow -name *,v -print";
   #endif
 
 define constant $rlog-entry-divider :: <byte-string>
@@ -557,15 +557,7 @@ define method main (ignored :: <byte-string>, #rest argv-sequence)
   printe("Finding rcs files\n");
   let rcs-files = #[];
   for (dir in targets)
-    let cmd-string
-      = format-to-string("%s %s %s -name \"*,v\" -print", 
-			 $find-command, dir,
-			 #if (compiled-for-x86-win32) 
-                            ""
-                         #else 
-                            "-follow" 
-                         #endif
-			);
+    let cmd-string = format-to-string($find-command, dir);
     let (to-find, from-find) = piped-exec(cmd-string);
     rcs-files := concatenate(rcs-files, slurp-stream(from-find));
     close(to-find);
