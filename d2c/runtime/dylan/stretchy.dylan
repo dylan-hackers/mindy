@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.5 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.6 2001/03/30 13:44:27 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -50,8 +50,8 @@ define open generic ssv-data (sv :: <builtin-stretchy-vector>);
 define open generic ssv-data-setter
     (value :: <object>, sv :: <builtin-stretchy-vector>);
 
-define sealed inline method make
-    (class == <stretchy-vector>, #key size = 0, fill)
+define sealed method make
+    (class == <stretchy-vector>, #key size :: <integer> = 0, fill = #f)
     => res :: <stretchy-object-vector>;
   make(<stretchy-object-vector>, size: size, fill: fill);
 end method;
@@ -78,7 +78,7 @@ end class <stretchy-object-vector>;
 define sealed domain make(singleton(<stretchy-object-vector>));
 
 define sealed method initialize
-    (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill)
+    (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill = #f)
  => ();
   let data-size = case
 		    size < 0 =>
