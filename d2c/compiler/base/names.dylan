@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.8 1996/02/09 21:04:19 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.9 1996/02/21 02:43:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,6 +9,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define abstract class <name> (<object>)
 end;
 
+
 define class <basic-name> (<name>)
   slot name-symbol :: <symbol>,
     required-init-keyword: symbol:;
@@ -32,6 +33,7 @@ end;
 
 // see misc-dump for basic-name dumping (module ordering problem.)
 
+
 define class <type-cell-name> (<name>)
   slot type-cell-name-base :: <basic-name>,
     required-init-keyword: base:;
@@ -51,7 +53,7 @@ add-make-dumper(#"type-cell-name", *compiler-dispatcher*, <type-cell-name>,
   list(type-cell-name-base, base:, #f)
 );
 
-
+
 define class <method-name> (<name>)
   slot method-name-generic-function :: <basic-name>,
     required-init-keyword: generic-function:;
@@ -82,3 +84,23 @@ add-make-dumper(#"method-name", *compiler-dispatcher*, <method-name>,
   list(method-name-generic-function, generic-function:, #f,
        method-name-specializers, specializers:, #f)
 );
+
+
+define class <generated-name> (<name>)
+  slot generated-name-description :: <string>,
+    required-init-keyword: description:;
+end class <generated-name>;
+
+define method print-object
+    (name :: <generated-name>, stream :: <stream>) => ();
+  pprint-fields(name, stream, description: name.generated-name-description);
+end;
+
+define method print-message
+    (name :: <generated-name>, stream :: <stream>) => ();
+  write(name.generated-name-description, stream);
+end method print-message;
+
+add-make-dumper
+  (#"generated-name", *compiler-dispatcher*, <generated-name>,
+   list(generated-name-description, description:, #f));
