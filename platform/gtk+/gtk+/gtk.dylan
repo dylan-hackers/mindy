@@ -35,16 +35,12 @@ define method pointer-cast
   make(pointer-designator-class, pointer: c-pointer.raw-value);
 end method;
 
-define method destroy (ptr :: <statically-typed-pointer>) => ();
-  call-out("free", void:, ptr: ptr.raw-value);
-end method destroy;
-
 define method pointer-value-address
     (pointer :: <statically-typed-pointer>, #key index)
  => (offset-pointer :: <statically-typed-pointer>);
   make(object-class(pointer),
        pointer: pointer.raw-value
-         + index * size-of-referenced-type(object-class(pointer)));
+         + index * content-size(object-class(pointer)));
 end method;
 
 define sealed method element
@@ -52,7 +48,14 @@ define sealed method element
      #key default)
  => (object :: <object>);
   pointer-value(pointer, index: index);
-end element;
+end method;
+
+define sealed method element-setter
+    (object :: <object>, pointer :: <indexable-statically-typed-pointer>,
+     index :: <integer>)
+ => (object :: <object>);
+  pointer-value(pointer, index: index) := object;
+end method;
 
 define open generic c-type-cast
     (type :: <class>, value :: <object>)
@@ -76,11 +79,9 @@ define macro with-stack-structure
                                ?extra-bytes:expression = 0)
       ?:body
     end }
-    => { let bytes
-          = size-of-referenced-type(?type) * ?element-count
-              + ?extra-bytes;
-         let ?name = make(?type,
-			  pointer: call-out("malloc", ptr:, int: bytes));
+    => { let ?name = make(?type,
+			  element-count: ?element-count,
+			  extra-bytes: ?extra-bytes);
 	 block ()
 	   ?body
 	 cleanup
@@ -104,13 +105,13 @@ define sealed method pointer-value-setter
                 index * c-expr(int:, "sizeof(int)")) := value;
 end method;
 
-define sealed method size-of-referenced-type
+define sealed method content-size
     (class == <C-int*>)
  => (size :: <integer>);
   c-expr(int:, "sizeof(int)");
 end method;
 
-define functional class <C-string*> (<statically-typed-pointer>) end;
+define functional class <C-string*> (<indexable-statically-typed-pointer>) end;
 
 define sealed method pointer-value
     (c-pointer :: <C-string*>, #key index = 0)
@@ -127,7 +128,7 @@ define sealed method pointer-value-setter
                 index * c-expr(int:, "sizeof(char *)")) := value.raw-value;
 end method;
 
-define sealed method size-of-referenced-type
+define sealed method content-size
     (class == <C-string*>)
  => (size :: <integer>);
   c-expr(int:, "sizeof(char *)");
@@ -141,7 +142,7 @@ define sealed method pointer-value
                               index * c-expr(int:, "sizeof(GdkGC *)")));
 end method;
 
-define sealed method size-of-referenced-type
+define sealed method content-size
     (class == <GdkGC**>)
  => (size :: <integer>);
   c-expr(int:, "sizeof(GdkGC *)");
