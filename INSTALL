@@ -16,11 +16,25 @@ distribution. Just pass the option '--disable-d2c' to configure.)
 
 Once you have binaries installed, grab a source snapshot from the FTP site
 or download one from CVS (see the website mentioned in the README for
-instructions). If you choose to use CVS, you'll need to run 'autoconf' in
+instructions). If you choose to use CVS, you'll need to run 'autogen.sh' in
 the gd/src directory to create the configure script. To build all of
 Gwydion:
 
   $ ./configure --prefix=/usr/local
+  $ make
+  $ make install
+
+or from CVS:
+
+  $ ./autogen.sh --prefix=/usr/local
+  $ make
+  $ make install
+
+You can also use a separate build directory:
+
+  $ mkdir build
+  $ cd build
+  $ /...path to gd.../src/configure --prefix=/usr/local
   $ make
   $ make install
 
