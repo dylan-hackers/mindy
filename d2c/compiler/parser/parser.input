@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.12 1995/08/17 23:40:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.13 1995/08/20 17:43:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -476,11 +476,11 @@ variable-list (variables)
   make(<parameter-list>, required: as(<simple-object-vector>, %1));
 %
 
-variable-list (variables <comma-token> <rest-token> <name-token>)
+variable-list (variables <comma-token> <rest-token> variable)
   make(<parameter-list>, required: as(<simple-object-vector>, %1), rest: %4);
 %
 
-variable-list (<rest-token> <name-token>)
+variable-list (<rest-token> variable)
   make(<parameter-list>, rest: %2);
 %
 
@@ -1335,11 +1335,11 @@ next-rest-key-parameter-list (rest-key-parameter-list)
 
 :type rest-key-parameter-list <parameter-list>
 
-rest-key-parameter-list (<rest-token> <name-token>)
+rest-key-parameter-list (<rest-token> variable)
   make(<parameter-list>, rest: %2);
 %
 
-rest-key-parameter-list (<rest-token> <name-token> <comma-token>
+rest-key-parameter-list (<rest-token> variable <comma-token>
 			 key-parameter-list)
   %4.paramlist-rest := %2;
   %4;

@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.8 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.9 1995/08/20 17:43:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,7 +60,7 @@ define class <parameter-list> (<object>)
     init-value: #[], init-keyword: required:;
   //
   // Either #f or the name of the #rest parameter.
-  slot paramlist-rest :: union(<false>, <name-token>),
+  slot paramlist-rest :: union(<false>, <parameter>),
     init-value: #f, init-keyword: rest:;
   //
   // Either #f or the name of the #next parameter.
@@ -145,7 +145,9 @@ define class <method-parse> (<object>)
     init-function: method ()
 		     make(<parameter-list>,
 			  required: #[],
-			  rest: make(<name-token>, symbol: #"results"));
+			  rest: make(<parameter>,
+				     name: make(<name-token>,
+						symbol: #"results")));
 		   end,
     init-keyword: returns:;
   //
@@ -364,7 +366,9 @@ define class <define-generic-parse> (<modified-defining-form>)
     init-function: method ()
 		     make(<parameter-list>,
 			  required: #[],
-			  rest: make(<name-token>, symbol: #"results"));
+			  rest: make(<parameter>,
+				     name: make(<name-token>,
+						symbol: #"results")));
 		   end,
     init-keyword: returns:;
   //

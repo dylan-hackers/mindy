@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.22 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.23 1995/08/20 17:43:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -176,7 +176,8 @@ end;
 define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
 			   defn-class :: <class>)
     => ();
-  local method make-and-note-defn (name :: <name-token>)
+  local method make-and-note-defn (param :: <parameter>)
+	  let name = param.param-name;
 	  let defn = make(defn-class,
 			  name: make(<basic-name>,
 				     symbol: name.token-symbol,
@@ -189,8 +190,8 @@ define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
   add!($Top-Level-Forms,
        make(tlf-class,
 	    bindings: bindings,
-	    required-defns: map(compose(make-and-note-defn, param-name),
-				paramlist.paramlist-required-vars),
+	    required-defns:
+	      map(make-and-note-defn, paramlist.paramlist-required-vars),
 	    rest-defn: rest-param & make-and-note-defn(rest-param)));
 end;
 
@@ -348,9 +349,10 @@ define method convert-top-level-form
 		      paramlist.paramlist-required-vars);
     let rest-defn = tlf.tlf-rest-defn;
     if (rest-defn & ~rest-defn.defn-init-value)
-      let rest-temp = make-local-var(builder,
-				     paramlist.paramlist-rest.token-symbol,
-				     rest-defn.defn-type | object-ctype());
+      let rest-temp
+	= make-local-var(builder,
+			 paramlist.paramlist-rest.param-name.token-symbol,
+			 rest-defn.defn-type | object-ctype());
       let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", cluster);

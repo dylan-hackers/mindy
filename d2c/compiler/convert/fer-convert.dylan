@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.41 1995/08/08 02:21:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.42 1995/08/20 17:43:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -150,7 +150,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   let params = paramlist.paramlist-required-vars;
   let rest = paramlist.paramlist-rest;
   let rest-temp
-    = rest & make-local-var(builder, rest.token-symbol, object-ctype());
+    = if (rest)
+	if (rest.param-type)
+	  compiler-error("let #rest variables can't have types");
+	end;
+	make-local-var(builder, rest.param-name.token-symbol, object-ctype());
+      end;
   let nfixed = params.size;
   let types = make(<vector>, size: nfixed);
   let type-temps = make(<vector>, size: nfixed);
@@ -186,7 +191,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   end;
 
   // Evaluate the expression, getting the results in the temps
-  if (paramlist.paramlist-rest)
+  if (rest)
     let cluster = make-values-cluster(builder, #"temps", wild-ctype());
     fer-convert(builder, bindings.bindings-expression,
 		make(<lexenv>, inside: lexenv), #"assignment", cluster);
@@ -218,9 +223,10 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 	      end);
   end;
   if (rest)
-    let var = make-lexical-var(builder, rest.token-symbol, source,
+    let name = rest.param-name;
+    let var = make-lexical-var(builder, name.token-symbol, source,
 			       object-ctype());
-    add-binding(lexenv, rest, var);
+    add-binding(lexenv, name, var);
     build-let(builder, lexenv.lexenv-policy, source, var, rest-temp);
   end;
 
@@ -750,9 +756,14 @@ define method fer-convert-method
   let rest = paramlist.paramlist-rest;
   let rest-var
     = if (rest)
-	let var = make-lexical-var(builder, rest.token-symbol, source,
+	if (rest.param-type)
+	  compiler-error("#rest parameters can't have a type");
+	end;
+	let name = rest.param-name;
+	let var = make-lexical-var(builder, name.token-symbol, source,
+				   // ### should this be <object>?
 				   specifier-type(#"<simple-object-vector>"));
-	add-binding(lexenv, rest, var);
+	add-binding(lexenv, name, var);
 	var;
       elseif (next & paramlist.paramlist-keys)
 	make-lexical-var(builder, #"rest", source, object-ctype());
@@ -882,9 +893,7 @@ define method fer-convert-method
 
   let (rest-type, rest-type-leaf, need-to-check-rest?)
     = if (returns.paramlist-rest)
-	// ### This is wrong, but the parser doesn't give us the correct
-	// type.  We should be calling param-type-and-var with some param.
-	let (type, type-var) = object-ctype();
+	let (type, type-var) = param-type-and-var(returns.paramlist-rest);
 
 	if (type-var)
 	  non-const-result-types? := #t;
@@ -914,10 +923,10 @@ define method fer-convert-method
   build-region(builder, builder-result(body-builder));
 
   if (rest-type)
+    let rest-symbol = returns.paramlist-rest.param-name.token-symbol;
     if (empty?(fixed-results) & ~need-to-check-rest?)
       let cluster
-	= make-values-cluster(builder, returns.paramlist-rest.token-symbol,
-			      wild-ctype());
+	= make-values-cluster(builder, rest-symbol, wild-ctype());
       fer-convert-body(builder, meth.method-body, lexenv,
 		       #"assignment", cluster);
       finalize-body(builder, lexenv);
@@ -930,8 +939,7 @@ define method fer-convert-method
       finalize-body(builder, lexenv);
 
       let rest-result
-	= make-local-var(builder, returns.paramlist-rest.token-symbol,
-			 object-ctype());
+	= make-local-var(builder, rest-symbol, object-ctype());
       build-assignment
 	(builder, lexenv.lexenv-policy, source,
 	 concatenate(as(<list>, fixed-results), list(rest-result)),
