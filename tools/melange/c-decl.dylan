@@ -820,6 +820,7 @@ define class <integer-type-declaration> (<predefined-type-declaration>)
 end class;
 
 define class <float-type-declaration> (<predefined-type-declaration>)
+  slot accessor-name :: <string>, required-init-keyword: #"accessor";
 end class;
 
 define constant unknown-type = make(<incomplete-type-declaration>,
@@ -884,16 +885,19 @@ define constant unsigned-char-type = make(<integer-type-declaration>,
 					  dylan-name: "<integer>",
 					  size: $char-size);
 define constant float-type = make(<float-type-declaration>,
+				  accessor: "float-at",
 				  name: "float",
-				  dylan-name: "<float>",
+				  dylan-name: "<single-float>",
 				  size: $float-size);
 define constant double-type = make(<float-type-declaration>,
+				   accessor: "double-at",
 				   name: "double",
-				   dylan-name: "<float>",
+				   dylan-name: "<double-float>",
 				   size: $double-float-size);
 define constant long-double-type = make(<float-type-declaration>,
-					name: "double",
-					dylan-name: "<float>",
+					accessor: "long-double-at",
+					name: "long double",
+					dylan-name: "<extended-float>",
 					size: $long-double-size);
 
 define method compute-closure 

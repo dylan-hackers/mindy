@@ -192,8 +192,8 @@ define method c-accessor
     (type :: <float-type-declaration>, offset :: <string>,
      parameter :: <string>, equated :: <string>)
  => (result :: <string>);
-  "error(\"C structure accessors for floating point fields "
-    "not yet supported.\")";
+  format-to-string("%s(%s, offset: %s)",
+		   type.accessor-name, parameter, offset);
 end method c-accessor;
 
 define method c-accessor
@@ -773,8 +773,8 @@ define method write-declaration
      stream :: <stream>)
  => ();
   if (~decl.equated?)
-    format(stream, "define functional class %s (<function-pointer>) end;\n\n",
-	   decl.dylan-name)
+    format(stream, "define %s class %s (<function-pointer>) end;\n\n",
+	   class-sealing(), decl.dylan-name)
   end if;
 
   // XXX - Hack alert. Because we haven't integrated the local name mapper
