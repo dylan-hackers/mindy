@@ -7,4 +7,5 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../d2c/runtime/random -L../../common/coll-ext '
     . '-L../../common/string-ext -L../../common/table-ext '
     . '-L../../common/regexp -L../../d2c/runtime/melange '
-    . '-L../../common/time -L../../common/getopt';
+    . '-L../../common/time -L../../common/getopt '
+    . '-L../../common/file-system-base ';
