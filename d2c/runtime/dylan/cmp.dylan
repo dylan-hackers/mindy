@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.3 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/cmp.dylan,v 1.4 1995/12/09 20:59:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -75,3 +75,33 @@ define sealed inline method \> (x :: <object>, y :: <object>)
     => answer :: <boolean>;
   y < x;
 end method;
+
+
+// min -- exported
+//
+// Return the minimum of a bunch of objects.
+// 
+define inline method min (object :: <object>, #rest more-objects)
+    => res :: <object>;
+  reduce(binary-min, object, more-objects);
+end;
+// 
+define inline method binary-min (x :: <object>, y :: <object>)
+    => res :: <object>;
+  if (x < y) x else y end;
+end;	  
+
+
+// max -- exported
+//
+// Return the maximum of a bunch of objects.
+// 
+define inline method max (object :: <object>, #rest more-objects)
+    => res :: <object>;
+  reduce(binary-max, object, more-objects);
+end;
+//
+define inline method binary-max (x :: <object>, y :: <object>)
+    => max :: <object>;
+  if (x < y) y else x end;
+end;	  
