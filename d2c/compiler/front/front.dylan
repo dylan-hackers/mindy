@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.53 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.54 1996/03/18 01:46:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -453,8 +453,17 @@ define class <fer-function-region>
   slot result-type :: <values-ctype>,
     init-function: wild-ctype, init-keyword: result-type:;
 
+  // An guess about the result type, used during optimistic type inference.
+  slot guessed-result-type :: <values-ctype>, 
+    init-function: empty-ctype;
+
   slot hidden-references? :: <boolean>,
     init-value: #f, init-keyword: hidden-references:;
+
+  // The function-literal this region is the main-entry for.  Used to find
+  // all the local references to this function.  Initialized when the function
+  // literal is made, or stays #f if no literal is made (e.g. for xeps).
+  slot literal :: false-or(<function-literal>) = #f;
 
   // The block self tail calls should exit to.  #f if we haven't inserted it
   // yet (i.e. haven't found any self tail calls yet).
@@ -480,11 +489,6 @@ end;
 // It can only be used as the main-entry for local function literals.
 //
 define class <lambda> (<fer-function-region>)
-
-  // The function-literal this lambda is the main-entry for.  Used to find
-  // all the references to this lambda.  Initialized when the function
-  // literal is made.
-  slot literal :: <function-literal>;
 
   // The structure which represents the environment that this Function's
   // variables are allocated in.
