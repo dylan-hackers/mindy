@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.24 1995/05/03 07:15:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.25 1995/05/03 09:42:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,6 @@ operation
     primitive
     abstract-call [annotatable] {abstract}
         local-call
-        known-call
         unknown-call
 	error-call
 	mv-call
@@ -106,29 +105,21 @@ end;
 define abstract class <abstract-call> (<operation>, <annotatable>)
 end class;
 
-// A syntactically correct call where the function is a fixed-arg method
-// literal.  Variable arg calls can be converted into fixed-arg local calls
-// (e.g. to the main entry of a function with keywords.)  These calls can
-// will be let-converted if there is only one reference.
-// 
-define class <local-call> (<abstract-call>)
-end class;
-
-// A syntactically correct call to a known global definition (or literal
-// extracted from one).  These calls will never be let-converted (but might
-// be inlined, which is equivalent).
-//
-define class <known-call> (<abstract-call>)
-end class;
-
 // An arbitrary function call where the function call might be computed and the
 // argument syntax might be incorrect.
 //
 define class <unknown-call> (<abstract-call>)
 end class;
 
+// A call where the function is known and all hairy argument stuff has been
+// expanded away into positional arguments, hence is now a candidate for
+// inlining and other magic.
+// 
+define class <known-call> (<abstract-call>)
+end;
+
 // A call that is known to be in error.  Basically, the same as <unknown-call>
-// but we've given up trying to optimize it.
+// but we've given up trying to improve it.
 //
 define class <error-call> (<abstract-call>)
 end;
