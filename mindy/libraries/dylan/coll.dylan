@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/coll.dylan,v 1.1 1998/05/03 19:55:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/coll.dylan,v 1.2 1998/11/23 14:52:15 andreas Exp $
 
 //======================================================================
 //
@@ -1102,7 +1102,7 @@ end method last-setter;
     
 define method subsequence-position(big :: <sequence>, pattern :: <sequence>,
 				   #key test = \==, count = 1) 
- => pos :: <integer>;
+ => (pos :: false-or(<integer>));
   let (init-state, limit, next-state, done?,
        current-key, current-element,
        current-element-setter, copy-state) = forward-iteration-protocol(big);

@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/vec.dylan,v 1.1 1998/05/03 19:55:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/vec.dylan,v 1.2 1998/11/23 14:52:16 andreas Exp $
 
 //======================================================================
 //
@@ -271,7 +271,7 @@ end method reduce1;
 
 define method subsequence-position(big :: <vector>, pattern :: <vector>,
 				   #key test = \==, count = 1)
- => position :: <integer>;
+ => (position :: false-or(<integer>));
   let sz = size(big);
   let pat-sz = size(pattern);
 
@@ -317,7 +317,7 @@ end method subsequence-position;
 define method subsequence-position(big :: <byte-string>,
 				   pattern :: <byte-string>,
 				   #key test = \==, count = 1)
- => position :: <integer>;
+ => (position :: false-or(<integer>));
   let sz = size(big);
   let pat-sz = size(pattern);
 
