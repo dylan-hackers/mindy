@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.27 1996/08/27 08:46:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.28 1997/01/16 15:15:28 nkramer Exp $
 *
 * This file implements the module system.
 *
@@ -70,6 +70,8 @@ struct bucket {
 };
 
 struct table {
+    char *owner;  /* Which namespace owns this table, so we can print
+		     better error messages about name clashes */
     int entries;
     int threshold;
     int length;
@@ -143,10 +145,11 @@ static struct var *make_var(obj_t name, struct module *home, enum var_kind k);
 
 /* Table manipulation stuff. */
 
-static struct table *make_table(void)
+static struct table *make_table(char *owner_of_table)
 {
     struct table *table = (struct table *)malloc(sizeof(struct table));
 
+    table->owner = owner_of_table;
     table->entries = 0;
     table->threshold = 96;
     table->length = 64;
@@ -302,7 +305,7 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     entry->p3 = p3;
 
     if (old_entry)
-        error("%s clashes with %s", 
+        error("In %s, %s clashes with %s", make_byte_string(table->owner),
               format_entry_origin(entry), format_entry_origin(old_entry));
 
     table_add(table, name, entry);
@@ -363,11 +366,15 @@ static void add_use(struct defn *defn, obj_t name)
 static struct library *make_library(obj_t name)
 {
     struct library *library = malloc(sizeof(struct library));
+    char *owner = (char *) malloc(strlen("library ") 
+				  + strlen(sym_name(name)) + 1);
+    strcpy(owner, "library ");
+    strcat(owner, sym_name(name));
 
     library->name = name;
     library->dylan_library = NULL;
     library->defn = NULL;
-    library->modules = make_table();
+    library->modules = make_table(owner);
     library->completed = FALSE;
     library->loading = FALSE;
     library->busy = FALSE;
@@ -544,12 +551,16 @@ static void complete_library(struct library *library)
 static struct module *make_module(obj_t name, struct library *home)
 {
     struct module *module = malloc(sizeof(struct module));
+    char *owner = (char *) malloc(strlen("module ") 
+				  + strlen(sym_name(name)) + 1);
+    strcpy(owner, "module ");
+    strcat(owner, sym_name(name));
 
     module->name = name;
     module->dylan_module = NULL;
     module->home = home;
     module->defn = NULL;
-    module->variables = make_table();
+    module->variables = make_table(owner);
     module->busy = FALSE;
     module->completed = FALSE;
     module->next = Modules;
@@ -1287,7 +1298,7 @@ void init_modules(void)
     obj_t dylan = symbol("Dylan");
     obj_t stuff = symbol("Builtin-Stuff");
 
-    LibraryTable = make_table();
+    LibraryTable = make_table("the table of all libraries");
 
     library_Dylan = find_library(dylan, TRUE);
 
