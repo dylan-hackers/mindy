@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.9 1996/02/21 15:50:25 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.10 1996/02/23 15:08:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -401,7 +401,7 @@ define module cheese
   use names;
   use definitions;
   use forward-defn-classes;
-  use variables;
+  use variables, exclude: {<renaming>};
   use flow;
   use front;
   use ctype;
