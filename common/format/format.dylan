@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.4 1996/07/12 01:13:42 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.5 1996/07/15 16:36:19 bfw Exp $
 
 ///======================================================================
 ///
@@ -251,10 +251,39 @@ define constant $digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /// format-integer -- internal.
 ///
-define function format-integer (arg :: <integer>,
-				radix :: limited(<integer>, min: 2, max: 36),
-				stream :: <stream>)
-    => ();
+define method format-integer (arg :: <extended-integer>,
+			      radix :: limited(<integer>, min: 2, max: 36),
+			      stream :: <stream>)
+ => ();
+  // Define an iteration that collects the digits for the print
+  // representation of arg.
+  local method repeat (arg /* :: <general-integer> */, digits :: <list>)
+	  let (quotient, remainder) = floor/(arg, radix);
+	  // remainder is prob. an <extended-integer>, even though it's small.
+	  let digits = pair($digits[as(<integer>, remainder)], digits);
+	  if (zero?(quotient))
+	    for (digit in digits)
+	      write-element(stream, digit);
+	    end;
+	  else
+	    repeat(quotient, digits);
+	  end;
+	end;
+  // Set up for the iteration.
+  if (negative?(arg))
+    write-element(stream, '-');
+    repeat(-arg, #());
+  else
+    repeat(arg, #());
+  end;
+end method format-integer;
+
+/// format-integer -- internal.
+///
+define method format-integer (arg :: <integer>,
+			      radix :: limited(<integer>, min: 2, max: 36),
+			      stream :: <stream>)
+ => ();
   // Define an iteration that collects the digits for the print
   // representation of arg.
   local method repeat (arg :: <integer>, digits :: <list>)
@@ -287,7 +316,7 @@ define function format-integer (arg :: <integer>,
   else
     repeat(arg, #());
   end;
-end function;
+end method format-integer;
 
 
 // Condition-Format and Condition-Force-Output methods.
