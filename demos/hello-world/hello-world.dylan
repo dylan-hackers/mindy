@@ -1,5 +1,5 @@
 module: Dylan-User
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.4 1994/12/02 06:31:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.dylan,v 1.5 1996/02/17 18:04:18 nkramer Exp $
 
 //======================================================================
 //
@@ -35,6 +35,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/hello-world/hello-world.
 // define out own module for something this simplistic.
 
 
-define method main (argv0, #rest noise)
+define method main (argv0 :: <byte-string>, #rest noise)
   puts("Hello, World.\n");
 end;
