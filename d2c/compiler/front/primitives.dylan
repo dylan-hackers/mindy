@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.4 2000/09/09 20:45:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.5 2001/02/04 22:05:48 gabor Exp $
 copyright: see below
 
 
@@ -289,6 +289,9 @@ define-primitive
 
 define-primitive
   (#"c-decl", #(#"<string>"), #(values:));
+
+define-primitive
+  (#"c-local-decl", #(#"<string>"), #(values:));
 
 define-primitive
   (#"c-expr", #(#"<symbol>", #"<string>"),
