@@ -42,9 +42,9 @@ define module duim-utilities
   export without-bounds-checks, find-value, assert, 
     with-keywords-removed, unsupplied?, supplied?, dynamic-bind,
     <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!,
+    <thread>, atomic-increment!, current-thread,
     <notification>, wait-for, release-all,
-    get-property, remove-property!,
+    put-property!, get-property, remove-property!,
     integer-to-string, float-to-string, string-to-integer,
     true?;
   // format, for format-to-string

@@ -223,6 +223,16 @@ end macro with-lock;
 define class <thread> ( <object> ) end class;
 
 
+// current-thread
+
+define method current-thread()
+=> ( result :: <thread> )
+
+    make( <thread> );
+
+end method current-thread;
+
+
 // atomic-increment!
 // increments without worrying about atomicity
 // Since we don't need to worry about atomicity, we just increment
@@ -259,9 +269,20 @@ define method release-all( notification :: <notification> )
 end method release-all;
 
 
+// put-property!
+
+define method put-property!( properties :: <collection>, property :: <object>, property :: <object> )
+=> ()
+
+    values();
+
+end method put-property!;
+
+
 // get-property
 
-define method get-property( properties :: <collection>, property :: <object> )
+define method get-property( properties :: <collection>, property :: <object>,
+                            #key items = #f, default = #f, test = #f   )
 => ( result :: <object> )
 
     local method is?( item ) item = property end;
