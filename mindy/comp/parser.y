@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.7 1994/04/14 19:15:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.8 1994/04/25 21:56:27 wlott Exp $
 *
 * This file does whatever.
 *
@@ -147,6 +147,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> IN
 %token <token> INHERITED
 %token <token> INSTANCE
+%token <token> KEYED_BY
 %token <token> KEYWORD_RESERVED_WORD
 %token <token> LET
 %token <token> LOCAL
@@ -602,7 +603,9 @@ for_clause:
 	{ free($1); free($3); free($4); free($6);
 	  $$ = make_equal_then_for_clause($2, $5, $7); }
     |	variable IN expression 
-	{ free($2); $$ = make_in_for_clause($1, $3); }
+	{ free($2); $$ = make_in_for_clause($1, NULL, $3); }
+    |	variable KEYED_BY variable IN expression
+	{ free($2); free($4); $$ = make_in_for_clause($1, $3, $5); }
     |	variable FROM expression to_part_opt by_part_opt
 	{ free($2); $$ = make_from_for_clause($1, $3, $4, $5); }
 ;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.5 1994/04/18 03:26:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.6 1994/04/25 21:56:25 wlott Exp $
 *
 * This file does whatever.
 *
@@ -76,6 +76,7 @@ if		is(IF);
 in		is(IN);
 inherited	is(INHERITED);
 instance	is(INSTANCE);
+keyed-by	is(KEYED_BY);
 keyword		is(KEYWORD_RESERVED_WORD);
 let		is(LET);
 local		is(LOCAL);

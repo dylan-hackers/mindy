@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.10 1994/04/20 00:23:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.11 1994/04/25 21:56:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -688,7 +688,8 @@ extern struct for_clause
     *make_equal_then_for_clause(struct param_list *vars, struct expr *equal,
 				struct expr *then);
 extern struct for_clause
-    *make_in_for_clause(struct param *var, struct expr *collection);
+    *make_in_for_clause(struct param *var, struct param *keyed_by,
+			struct expr *collection);
 extern struct for_clause
     *make_from_for_clause(struct param *var, struct expr *from,
 			  struct to_part *to, struct expr *by);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.15 1994/04/20 00:23:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.16 1994/04/25 21:56:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1333,14 +1333,19 @@ struct for_clause
 }
 
 struct for_clause
-    *make_in_for_clause(struct param *var, struct expr *collection)
+    *make_in_for_clause(struct param *var, struct param *keyed_by,
+			struct expr *collection)
 {
-    struct in_for_clause *res
-	= malloc(sizeof(struct in_for_clause));
+    struct in_for_clause *res = malloc(sizeof(*res));
+    struct param_list *vars = make_param_list();
+
+    if (keyed_by)
+	push_param(keyed_by, vars);
+    push_param(var, vars);
 
     res->kind = for_IN;
     res->next = NULL;
-    res->vars = push_param(var, make_param_list());
+    res->vars = vars;
     res->collection = collection;
 
     return (struct for_clause *)res;

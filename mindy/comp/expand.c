@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.11 1994/04/20 00:23:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.12 1994/04/25 21:56:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1760,6 +1760,8 @@ static void add_test(struct expr *test, struct for_info *info)
 static void grovel_in_for_clause(struct in_for_clause *clause,
 				 struct for_info *info)
 {
+    struct param *var = clause->vars->required_params;
+    struct param *keyed_by = var->next;
     struct symbol *coll = gensym();
     struct symbol *state = gensym();
     struct symbol *limit = gensym();
@@ -1800,7 +1802,20 @@ static void grovel_in_for_clause(struct in_for_clause *clause,
     add_argument(args, make_argument(make_varref(id(coll))));
     add_argument(args, make_argument(make_varref(id(state))));
     expr = make_function_call(make_varref(id(curel)), args);
-    bind_params(info->inner_body, clause->vars, expr);
+    bind_param(info->inner_body, var, expr);
+
+    /* Bind the keyed_by variable if supplied. */
+    if (keyed_by) {
+	args = make_argument_list();
+	add_argument(args, make_argument(make_varref(id(coll))));
+	add_argument(args, make_argument(make_varref(id(state))));
+	expr = make_function_call(make_varref(id(curkey)), args);
+	bind_param(info->inner_body, keyed_by, expr);
+    }
+
+    /* Free the clauses param_list, because we've extracted the two params */
+    /* from it. */
+    free(clause->vars);
 
     /* Advance the state in the steps. */
     args = make_argument_list();
