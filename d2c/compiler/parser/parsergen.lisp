@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.2 1996/01/11 16:08:53 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.3 1996/02/05 01:17:31 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;
@@ -27,6 +27,9 @@
   ;;
   ;; Hash table of all the grammar symbols.
   (symbols (make-hash-table :test #'eq) :type hash-table :read-only t)
+  ;;
+  ;; Next available terminal-id.
+  (next-terminal-id 0 :type fixnum)
   ;;
   ;; List of all the terminals.
   (terminals nil :type list)
@@ -60,11 +63,14 @@
 
 (defstruct (terminal
 	    (:include grammar-symbol)
-	    (:constructor %make-terminal (kind))
+	    (:constructor %make-terminal (kind id))
 	    (:print-function %print-terminal))
   ;;
   ;; The kind of token this terminal corresponds to.
-  (kind (required-argument) :type symbol))
+  (kind (required-argument) :type symbol)
+  ;;
+  ;; A unique integer corresponding to this terminal.
+  (id (required-argument) :type fixnum))
 
 (defun %print-terminal (terminal stream depth)
   (declare (ignore depth))
@@ -73,8 +79,8 @@
 	(prin1 (terminal-kind terminal) stream))
       (prin1 (terminal-kind terminal) stream)))
 
-(defun make-terminal (kind)
-  (let ((result (%make-terminal kind)))
+(defun make-terminal (kind id)
+  (let ((result (%make-terminal kind id)))
     (setf (terminal-first result) (list result))
     result))
 
@@ -128,6 +134,7 @@
 	    (production-number production)
 	    (production-left-side production)
 	    (production-right-side production))))
+
 
 
 (defstruct (item
@@ -212,8 +219,10 @@
 	   (values grammar-symbol))
   (or (gethash thing (grammar-symbols grammar))
       (if (char= (schar (symbol-name thing) 0) #\<)
-	  (let ((new (make-terminal thing)))
+	  (let* ((id (grammar-next-terminal-id grammar))
+		 (new (make-terminal thing id)))
 	    (push new (grammar-terminals grammar))
+	    (setf (grammar-next-terminal-id grammar) (1+ id))
 	    (setf (gethash thing (grammar-symbols grammar)) new)
 	    new)
 	  (let ((new (make-nonterminal thing)))
@@ -508,65 +517,21 @@
 
 ;;;; Compute tables
 
-(defun compute-action-entry (actions)
-  ;; First, convert the set of actions into an alist of lookahead terminals
-  ;; to integers encoding the action.
-  (let ((alist (mapcar #'(lambda (action)
-			   (cons (terminal-kind (first action))
-				 (ecase (second action)
-				   (:accept (list :accept))
-				   (:reduce
-				    (list :reduce
-					  (production-number (third action))))
-				   (:shift
-				    (list :shift
-					  (state-number (third action)))))))
-		       actions)))
-    ;; Sort this list so we can compare it against other lists
-    (setf alist
-	  (sort alist
-		#'(lambda (action1 action2)
-		    (cond ((not (eq (car action1) (car action2)))
-			   (string< (symbol-name (car action1))
-				    (symbol-name (car action2))))
-			  ((not (eq (cadr action1) (cadr action2)))
-			   (string< (symbol-name (cadr action1))
-				    (symbol-name (cadr action2))))
-			  ((cddr action1)
-			   (< (caddr action1) (caddr action2)))
-			  (t nil)))))
-    (cons nil alist)
-    ;; Check to see if there is an :error entry.
-    #+nil
-    (if (assoc :error alist)
-	;; Yes, don't do any defaulting, 'cause we want to catch all errors.
-	(cons nil alist)
-	;; No :error entry, so we can make the most common reduction be the
-	;; default.
-	(let ((counts nil)
-	      (most-common-reduction nil)
-	      (occurrences 0))
-	  ;; Count number of times each reduction shows up.
-	  (dolist (action alist)
-	    (let ((action (cdr action)))
-	      (unless (or (zerop action)
-			  (logbitp 0 action))
-		(let ((entry (assoc action counts)))
-		  (if entry
-		      (incf (cdr entry))
-		      (push (cons action 1) counts))))))
-	  ;; Find the most common reduction.
-	  (dolist (count counts)
-	    (when (> (cdr count) occurrences)
-	      (setf most-common-reduction (car count))
-	      (setf occurrences (cdr count))))
-	  (if (> occurrences 1)
-	      ;; There is a duplicated reduction.  Make it the default.
-	      (cons most-common-reduction
-		    (remove most-common-reduction alist
-			    :key #'cdr))
-	      ;; There isn't a duplicated reduction, so no default.
-	      (cons nil alist))))))
+(defun encode-actions (actions grammar)
+  (let ((terminal-bits
+	 (integer-length (1- (grammar-next-terminal-id grammar)))))
+    (flet ((encode-action (action)
+	     (multiple-value-bind
+		 (action-kind datum)
+		 (ecase (second action)
+		   (:accept (values 0 0))
+		   (:reduce (values 1 (production-number (third action))))
+		   (:shift (values 2 (state-number (third action)))))
+	       (logior (ash (logior (ash datum terminal-bits)
+				    (terminal-id (first action)))
+			    2)
+		       action-kind))))
+      (coerce (sort (mapcar #'encode-action actions) #'<) 'vector))))
 
 (defun add-gotos (gotos number new)
   (dolist (goto new)
@@ -642,8 +607,8 @@
 				    (subseq right-side dot-position))))
 		      (state-kernels state)))
 	(setf (aref action-table (state-number state))
-	      (let ((action (compute-action-entry (state-actions state))))
-		(or (find action action-table :test #'equal)
+	      (let ((action (encode-actions (state-actions state) grammar)))
+		(or (find action action-table :test #'equalp)
 		    action)))
 	(setf gotos
 	      (add-gotos gotos (state-number state) (state-gotos state))))
@@ -680,39 +645,23 @@
     ((or symbol integer string)
      (prin1 thing ofile))))
 
-(defun emit-action (action ofile)
-  (format ofile "  make-action-table(")
-  #+nil
-  (if (car action)
-      (prin1 (car action) ofile)
-      (format ofile "#f"))
-  #-nil
-  (when (car action)
-    (error "I though defaults were turned off."))
-  (let ((first t))
-    (dolist (x (cdr action))
-      (if first
-	  (setf first nil)
-	  (format ofile ",~%                    "))
-      (ecase (cadr x)
-	(:accept
-	 (format ofile "make(<accept>, on: ~A)" (car x)))
-	(:reduce
-	 (format ofile "make(<reduce>, on: ~A, production: ~D)"
-		 (car x) (caddr x)))
-	(:shift
-	 (format ofile "make(<shift>, on: ~A, state: ~D)"
-		 (car x) (caddr x))))))
-  (format ofile ")"))
-
 (defun emit-production (production gotos ofile)
   (let* ((right-side (production-right-side production))
-	 (pops (length right-side))
-	 (poped-symbol-stack-var "symbol-stack"))
-    #+nil
-    (format ofile "  method (state-stack, symbol-stack, token, recoveringb)~%")
-    (format ofile "  method (state-stack, symbol-stack)~%")
-    (format ofile "    // ~S ->~:[ epsilon~;~:*~{ ~S~}~]~%"
+	 (left-side (production-left-side production)))
+    (format ofile "define method production-~D (prev-state :: <integer>"
+	    (production-number production))
+    (let ((index 0))
+      (dolist (grammar-sym right-side)
+	(let* ((type (etypecase grammar-sym
+		       (terminal
+			(terminal-kind grammar-sym))
+		       (nonterminal
+			(nonterminal-type grammar-sym)))))
+	  (format ofile ", rhs-~D~@[ :: ~A~]" (incf index) type))))
+    (format ofile ")~%")
+    (format ofile "    => (new-state :: <integer>, new-symbol~@[ :: ~A~]);~%"
+	    (nonterminal-type left-side))
+    (format ofile "  // ~S ->~:[ epsilon~;~:*~{ ~S~}~]~%"
 	    (nonterminal-name (production-left-side production))
 	    (mapcar #'(lambda (sym)
 			(etypecase sym
@@ -721,60 +670,25 @@
 			  (nonterminal
 			   (nonterminal-name sym))))
 		    right-side))
-    (format ofile "    values(begin~%")
-    (format ofile "             let popped-state-stack = ")
-    (dotimes (i pops)
-      (format ofile "tail("))
-    (format ofile "state-stack")
-    (dotimes (i pops)
-      (format ofile ")"))
-    (format ofile ";~%")
-    (format ofile "             pair(")
+    (format ofile "  values(")
     (etypecase gotos
       (integer
        (format ofile "~D" gotos))
       (list
-       (format ofile "select (head(popped-state-stack))~%")
+       (format ofile "select (prev-state)~%")
        (dolist (goto gotos)
-	 (format ofile "                    ~S => ~S;~%"
-		 (car goto) (cadr goto)))
-       (format ofile "                  end"))
+	 (format ofile "           ~S => ~S;~%" (car goto) (cadr goto)))
+       (format ofile "         end"))
       (vector
        (dump-constant gotos ofile)
-       (format ofile "[head(popped-state-stack)]")))
-    (format ofile ",~%                  popped-state-stack);~%")
-    (format ofile "           end,~%")
-    (format ofile "           begin~%")
-    (dotimes (i pops)
-      (let* ((grammar-sym (elt right-side (- pops i 1)))
-	     (var (format nil "rhs-~D" (- pops i)))
-	     (type (etypecase grammar-sym
-		     (terminal
-		      (terminal-kind grammar-sym))
-		     (nonterminal
-		      (nonterminal-type grammar-sym))))
-	     (temp (format nil "temp~D" (- pops i))))
-	(format ofile "             let ~A~@[ :: ~A~] = head(~A);~%"
-		var type poped-symbol-stack-var)
-	(format ofile "             let ~A = tail(~A);~%"
-		temp poped-symbol-stack-var)
-	(setf poped-symbol-stack-var temp)))
-    (let* ((left-side (production-left-side production))
-	   (type (nonterminal-type left-side)))
-      (format ofile "             pair(~@[check-type(~]begin~%" type)
-      (dolist (form (production-body production))
-	(format ofile "                    ~A~%" form))
-      (cond (type
-	     (format ofile "                             end,~%")
-	     (format ofile "                             ~A),~%" type))
-	    (t
-	     (format ofile "                  end,~%"))))
-    (format ofile "                  ~A);~%" poped-symbol-stack-var)
-    #+nil (format ofile "           end,~%")
-    #+nil (format ofile "           token,~%")
-    #+nil (format ofile "           recovering);~%")
-    (format ofile "           end);~%")
-    (format ofile "  end;~%"))
+       (format ofile "[prev-state]")))
+    (format ofile ",~%")
+    (format ofile "         begin~%")
+    (dolist (form (production-body production))
+      (format ofile "         ~A~%" form))
+    (format ofile "         end);~%")
+    (format ofile "end method production-~D;~2%"
+	    (production-number production)))
   (values))
 
 (defun emit-parser (entry-points types productions
@@ -788,41 +702,76 @@
     (multiple-value-bind
 	(action gotos names)
 	(compute-tables grammar)
+      (let* ((num-terminals (grammar-next-terminal-id grammar))
+	     (terminals (make-array num-terminals)))
+	(dolist (terminal (grammar-terminals grammar))
+	  (setf (aref terminals (terminal-id terminal)) terminal))
+	(format ofile "define constant $action-bits = 2;~%")
+	(format ofile "define constant $accept-action = 0;~%")
+	(format ofile "define constant $reduce-action = 1;~%")
+	(format ofile "define constant $shift-action = 2;~2%")
+	(format ofile "define constant $terminal-id-bits = ~D;~%"
+		(integer-length (1- num-terminals)))
+	(format ofile
+		"define constant $terminals-table :: <simple-object-vector>~
+		 ~%  = vector(")
+	(dotimes (i num-terminals)
+	  (unless (zerop i)
+	    (format ofile ", "))
+	  (format ofile "~A" (terminal-kind (aref terminals i))))
+	(format ofile ");~2%"))
+
       (format ofile
-	      "define constant *action-table* = make(<vector>, size: ~D);~%"
-	      (length action))
-      (format ofile
-	      "define constant *production-table* = make(<vector>, ~
-	       size: ~S);~2%"
-	      (grammar-num-productions grammar))
-      
+	      "define constant $action-table :: <simple-object-vector>~
+	       ~%  = map-as(<simple-object-vector>,~
+	       ~%           decode-action-table,~
+	       ~%           #[")
       (dotimes (i (length action))
-	(format ofile "*action-table*[~D] :=~%" i)
+	(unless (zerop i)
+	  (format ofile ",~2%             "))
+	(format ofile "// Action ~D~%             " i)
 	(dolist (name (svref names i))
-	  (format ofile "  // ~A~%" name))
-	(emit-action (svref action i) ofile)
-	(format ofile ";~2%"))
+	  (format ofile "//  ~A~%             " name))
+	(dump-constant (svref action i) ofile))
+      (format ofile "]);~2%")
       
-      (collect ((productions))
+      (let* ((num-productions (grammar-num-productions grammar))
+	     (productions-vector
+	      (make-array num-productions :initial-element nil))
+	     (num-pops-vector
+	      (make-array num-productions :initial-element 0)))
 	(dolist (nonterminal (grammar-nonterminals grammar))
 	  (let* ((name (nonterminal-name nonterminal))
 		 (gotos (cdr (assoc name gotos))))
 	    (if gotos
 		(dolist (production (nonterminal-productions nonterminal))
-		  (unless (zerop (production-number production))
-		    (productions (cons production gotos))))
-	        (unless (find nonterminal (grammar-start-productions grammar)
+		  (let ((prod-num (production-number production)))
+		    (unless (zerop prod-num)
+		      (setf (aref productions-vector prod-num)
+			    (cons production gotos))
+		      (setf (aref num-pops-vector prod-num)
+			    (length (production-right-side production))))))
+		(unless (find nonterminal (grammar-start-productions grammar)
 			      :key #'production-left-side)
 		  (warn "Nonterminal ~S can't appear." name)))))
-
-	(dolist (production (sort (productions) #'<
-				  :key #'(lambda (x)
-					   (production-number (car x)))))
-	  (format ofile "*production-table*[~D] :=~%"
-		  (production-number (car production)))
-	  (emit-production (car production) (cdr production) ofile)
-	  (terpri ofile)))
-
+	(dotimes (i num-productions)
+	  (let ((info (aref productions-vector i)))
+	    (when info
+	      (emit-production (car info) (cdr info) ofile))))
+	(format ofile "define constant $number-of-pops~%  = ");
+	(dump-constant num-pops-vector ofile)
+	(format ofile ";~2%")
+	(format ofile
+		"define constant $production-table :: <simple-object-vector>~
+		 ~%  = vector(")
+	(dotimes (i num-productions)
+	  (unless (zerop i)
+	    (format ofile ", "))
+	  (if (aref productions-vector i)
+	      (format ofile "production-~D" i)
+	      (format ofile "#f")))
+	(format ofile ");~2%"))
+	
       (mapc #'(lambda (entry-point start-state)
 		(format ofile "define constant $~(~A~)-start-state = ~D;~%"
 			entry-point

@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.19 1996/02/02 23:13:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.20 1996/02/05 01:18:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ define constant stretchy-vector =
 
 define abstract class <action> (<object>)
   slot on :: <class>, required-init-keyword: on:, setter: #f;
-  slot next :: false-or(<action>), init-value: #f;
+  slot next :: false-or(<action>), required-init-keyword: next:;
 end;
 
 #if (~mindy)
@@ -59,19 +59,30 @@ define method \= (action1 :: <accept>, action2 :: <accept>)
   #t;
 end;
 
-define method make-action-table (#rest actions) => res :: false-or(<action>);
+define method decode-action-table (actions :: <simple-object-vector>)
+    => res :: false-or(<action>);
   let length = actions.size;
-  unless (length == 0)
-    let prev :: <action> = actions[0];
-    for (index :: <integer> from 1 below length)
-      let action :: <action> = actions[index];
-      prev.next := action;
-      prev := action;
-    end;
-    actions[0];
-  end;
-end;
+  for (result = #f then decode-action(action, result),
+       action in actions)
+  finally
+    result;
+  end for;
+end method decode-action-table;
 
+define method decode-action (action :: <integer>, next :: false-or(<action>))
+    => action :: <action>;
+  let (remainder, kind-id) = floor/(action, ash(1, $action-bits));
+  let (datum, terminal-id) = floor/(remainder, ash(1, $terminal-id-bits));
+  let terminal = $terminals-table[terminal-id];
+  select (kind-id)
+    $accept-action =>
+      make(<accept>, on: terminal, next: next);
+    $reduce-action =>
+      make(<reduce>, on: terminal, production: datum, next: next);
+    $shift-action =>
+      make(<shift>, on: terminal, state: datum, next: next);
+  end select;
+end method decode-action;
 
 %%
 
@@ -2188,6 +2199,16 @@ macro-opt (<macro-token>)
 
 // Driver loop.
 
+define method pop-stack (stack :: <list>, num-to-pop :: <integer>)
+    => (popped-stack :: <list>, popped-stuff :: <list>);
+  for (popped-stuff = #() then pair(popped-stack.head, popped-stuff),
+       popped-stack = stack then popped-stack.tail,
+       count :: <integer> from 0 below num-to-pop)
+  finally
+    values(popped-stack, popped-stuff);
+  end for;
+end method pop-stack;
+
 define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
     => result :: <object>;
   local
@@ -2208,25 +2229,33 @@ define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
 #end
 	    prev.next := action.next;
 	    let state :: <integer> = state-stack.head;
-	    action.next := *action-table*[state];
-	    *action-table*[state] := action;
+	    action.next := $action-table[state];
+	    $action-table[state] := action;
 	  end;
 	  select (action.object-class)
 	    <reduce> =>
-	      let semantic-action = *production-table*[action.production];
-	      let (new-state-stack, new-symbol-stack)
-		= semantic-action(state-stack, symbol-stack);
-	      repeat(new-state-stack,
-		     new-symbol-stack,
+	      let production-number = action.production;
+	      let semantic-action :: <function>
+		= $production-table[production-number];
+	      let number-pops :: <integer>
+		= $number-of-pops[production-number];
+	      let popped-state-stack = pop-stack(state-stack, number-pops);
+	      let (popped-symbol-stack, popped-symbols)
+		= pop-stack(symbol-stack, number-pops);
+	      let (new-state :: <integer>, new-symbol)
+		= apply(semantic-action, popped-state-stack.head,
+			popped-symbols);
+	      repeat(pair(new-state, popped-state-stack),
+		     pair(new-symbol, popped-symbol-stack),
 		     token,
-		     *action-table*[new-state-stack.head],
+		     $action-table[new-state],
 		     #f);
 	    <shift> =>
 	      let new-state = action.state;
 	      repeat(pair(new-state, state-stack),
 		     pair(token, symbol-stack),
 		     get-token(tokenizer),
-		     *action-table*[new-state],
+		     $action-table[new-state],
 		     #f);
 	    <accept> =>
 	      unget-token(tokenizer, token);
@@ -2244,7 +2273,7 @@ define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
       end;
     end method repeat;
   repeat(list(start-state), #(), get-token(tokenizer),
-	 *action-table*[start-state], #f);
+	 $action-table[start-state], #f);
 end;
 
 define method parse-program (tokenizer :: <tokenizer>)
