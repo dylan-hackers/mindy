@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.74 1995/06/04 22:55:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.75 1995/06/05 01:46:06 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -3224,10 +3224,6 @@ define method delete-dependent
       nlx-info.nlx-disable-catchers := op.disable-catcher-next;
     end;
   end;
-  if (nlx-info.nlx-catch & ~nlx-info.nlx-hidden-references?
-	& nlx-info.nlx-exit-function == #f & nlx-info.nlx-throws == #f)
-    reoptimize(component, nlx-info.nlx-catch);
-  end;
   next-method();
 end;
 
@@ -3243,6 +3239,10 @@ define method delete-dependent
     else
       nlx-info.nlx-throws := op.throw-next;
     end;
+  end;
+  if (nlx-info.nlx-catch & ~nlx-info.nlx-hidden-references?
+	& nlx-info.nlx-exit-function == #f & nlx-info.nlx-throws == #f)
+    reoptimize(component, nlx-info.nlx-catch);
   end;
   next-method();
 end;
