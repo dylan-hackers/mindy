@@ -6,7 +6,8 @@ define library ansi-c
 
   export
     c-types,
-    c-declarations;
+    c-declarations,
+    ansi-c;
 end library;
 
 define module outside-dependencies
@@ -127,4 +128,9 @@ define module c-declarations
 
   export
     format-c-declaration;
+end;
+
+define module ansi-c
+  use c-types, export: all;
+  use c-declarations, export: all;
 end;
