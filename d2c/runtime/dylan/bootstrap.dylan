@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.6 1999/03/26 04:14:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.7 1999/04/10 22:48:21 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -189,7 +189,7 @@ define module dylan-viscera
 		 <byte-character>, <true>, <false>,
     false-or, one-of, <never-returns>, subclass, direct-instance,
     report-condition, condition-format, condition-force-output,
-    *warning-output*,
+    *warning-output*, *gdb-output*,
     <debugger>, invoke-debugger, *debugger*,
     <byte>, <byte-vector>,
     $not-supplied, ignore,
@@ -198,6 +198,7 @@ define module dylan-viscera
     limited-collection-definer, limited-vector-class, element-type, 
     %elem, %elem-setter, limited-sv-class, ssv-data, ssv-data-setter,
     lsv-data-type, lsv-fill, %main, main,
+    <stretchy-sequence>, <simple-object-deque>, <stretchy-object-vector>,
 
     // Cheap IO
     format, print-message, print, write-integer, puts,

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.2 1998/11/25 09:47:00 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.3 1999/04/10 22:48:22 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -691,10 +691,16 @@ end;
 // internals.  There is no guarantee that they will continue to work
 // in the future.
 
+// XXX - *gdb-output* is evil and should go away when we get a new
+// streams-protocol. It should be bound to whatever the current program
+// is using for standard output.
+//
+define variable *gdb-output* = #"Cheap-IO";
+
 define method gdb-print-object (obj :: <object>) => ();
   block ()
-  condition-format(*warning-output*, "%=\n", obj);
-  condition-force-output(*warning-output*);
+  condition-format(*gdb-output*, "%=\n", obj);
+  condition-force-output(*gdb-output*);
   exception (error :: <error>)
     #f;
   end block;
@@ -715,8 +721,8 @@ define method apply-safely (fun :: <function>, #rest arguments)
   block ()
     apply(fun, arguments);
   exception (error :: <error>)
-    condition-format(*warning-output*, "%s\n", error);
-    condition-force-output(*warning-output*);
+    condition-format(*gdb-output*, "%s\n", error);
+    condition-force-output(*gdb-output*);
   end block;
 end method apply-safely;
 

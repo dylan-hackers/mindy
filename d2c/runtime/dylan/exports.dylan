@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.7 1999/04/10 10:05:41 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.8 1999/04/10 22:48:24 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -156,7 +156,9 @@ define module Extensions
 	     <ratio>, ratio, numerator, denominator,
 
 	     // More types.
-	     <byte-character>, <true>, <false>,
+	     <byte-character>, <true>, <false>, <stretchy-sequence>,
+	     <stretchy-object-vector>,
+	     <simple-object-deque> => <object-deque>,
 
 	     // Type extensions.
 	     false-or, one-of, <never-returns>, subclass, direct-instance,
@@ -198,6 +200,9 @@ define module System
 	     // Foreign interface stuff.
 	     \call-out, \c-include, \c-decl, \c-expr, \callback-method,
 	     callback-entry,
+
+	     // Nasty debugging hooks.
+	     *gdb-output*,
 
 	     // Raw pointer stuff.
 	     <raw-pointer>, pointer-deref, pointer-deref-setter,
