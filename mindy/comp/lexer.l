@@ -9,13 +9,15 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.8 1994/06/11 02:20:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.9 1994/06/11 18:01:01 hallgren Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 %{
+#include <string.h>
+
 #include "mindycomp.h"
 #include "lexer.h"
 #include "src.h"
