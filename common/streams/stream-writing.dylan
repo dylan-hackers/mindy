@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Writing to streams.
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-writing.dylan,v 1.2 2000/01/24 04:55:23 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/stream-writing.dylan,v 1.3 2000/10/31 13:26:20 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -33,15 +33,19 @@ copyright: see below
 
 /// write-element
 ///
-define open generic write-element (stream :: <stream>, element :: <object>)
+
+// Doug asks, "Isn't there a 'gotcha' when using a parameter called
+// "element" when you want to do indexing of sequences? -- Changed
+// parameter "element" to "elemnt"
+define open generic write-element (stream :: <stream>, elemnt :: <object>)
  => ();
 
-define method write-element (stream :: <buffered-stream>, element :: <object>)
+define method write-element (stream :: <buffered-stream>, elemnt :: <object>)
  => ();
   block ()
     let buf :: <buffer> = get-output-buffer(stream);
     let next :: <buffer-index> = buf.buffer-next;
-    buf[next] := as(<integer>, element);
+    buf[next] := as(<integer>, elemnt);
     buf.buffer-next := next + 1;
   cleanup
     release-output-buffer(stream);
@@ -53,7 +57,7 @@ define sealed domain write-element(<buffered-byte-string-output-stream>,
 				   <object>);
 
 define sealed method write-element (stream :: <simple-sequence-stream>,
-				    element :: <object>)
+				    elemnt :: <object>)
  => ();
   block ()
     lock-stream(stream);
@@ -66,7 +70,7 @@ define sealed method write-element (stream :: <simple-sequence-stream>,
       end if;
       stream.stream-end := stream.stream-end + 1;
     end if;
-    stream.contents[stream.position] := element;
+    stream.contents[stream.position] := elemnt;
     stream.position := stream.position + 1;
   cleanup
     unlock-stream(stream);

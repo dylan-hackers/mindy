@@ -1,14 +1,22 @@
 &makegen_include("../common-Makegen");
 
-if ($features{'compiled_for_unix'}) {
-    &emit_c_file_rule('unix-fds') if ($enable_d2c);
-    $streams_lid_file = 'unix-streams';
+$plat = "unix";
+
+# N.B.: The order of tests is important!  The cygnus
+# test MUST preceed the unix test.
+
+if ($features{'compiled_for_cygnus'}) {
+    $plat = "cygnus";
+} elsif ($features{'compiled_for_unix'}) {
+    # default
 } elsif ($features{'compiled_for_win32'}) {
-    &emit_c_file_rule('win32-fds') if ($enable_d2c);
-    $streams_lid_file = 'win32-streams';
+    $plat = "win32";
 } else {
     &unknown_platform_error();
 }
+
+&emit_c_file_rule("$plat-fds") if ($enable_d2c);
+$streams_lid_file = "$plat-streams";
 
 &emit_library_rule(
     $streams_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile',

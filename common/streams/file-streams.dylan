@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.5 2000/01/24 04:55:13 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/file-streams.dylan,v 1.6 2000/10/31 13:26:20 dauclair Exp $
 
 //======================================================================
 //
@@ -324,8 +324,15 @@ end method do-force-output-buffers;
 define sealed method do-synchronize (stream :: <fd-stream>) => ();
   if (stream.fd-direction == #"input")
     error("Stream is an input stream -- %=.", stream);
-  end;
+  end if;
+#if (compiled-for-cygnus)
+  // cygnus dies badly on synchronizing tty
+  unless(stream.file-descriptor < 3)
+#endif
   call-fd-function(fd-sync-output, stream.file-descriptor);
+#if (compiled-for-cygnus)
+  end unless;
+#endif
 end method do-synchronize;
 
 
