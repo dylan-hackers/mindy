@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.13 1994/04/12 19:49:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.14 1994/04/12 20:10:25 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1500,7 +1500,7 @@ static void install_breakpoint(obj_t func, obj_t line)
 
 	    if (pc < -1) {
 		prin1(func);
-		printf(" does not span line number %d\n", fixnum_value(line));
+		printf(" does not span line number %ld\n", fixnum_value(line));
 	    }
 	    else {
 		int id = install_byte_breakpoint(component, pc);
@@ -1510,7 +1510,7 @@ static void install_breakpoint(obj_t func, obj_t line)
 		else
 		    printf("breakpoint %d installed in ", id);
 		prin1(func);
-		printf(" at line %d (pc %d)\n", fixnum_value(line), pc);
+		printf(" at line %ld (pc %d)\n", fixnum_value(line), pc);
 	    }
 	}
     }
