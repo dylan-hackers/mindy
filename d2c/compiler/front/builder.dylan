@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.19 1995/10/05 01:10:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.20 1995/10/30 13:07:11 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -189,7 +189,7 @@ define generic make-literal-constant
 define generic make-lexical-var
     (builder :: <fer-builder>, name :: <symbol>, source :: <source-location>,
      of-type :: <ctype>)
- => res :: <abstract-variable>;
+ => res :: <initial-variable>;
 
 
 // Similar to MAKE-LEXICAL-VAR, but is used for variables known to be used only
@@ -198,7 +198,7 @@ define generic make-lexical-var
 //
 define generic make-local-var
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
- => res :: <abstract-variable>;
+ => res :: <initial-variable>;
 
 
 // Similar to MAKE-LOCAL-VAR, but returns a values-cluster variable which can
@@ -206,14 +206,32 @@ define generic make-local-var
 //
 define generic make-values-cluster
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <values-ctype>)
- => res :: <abstract-variable>;
+ => res :: <initial-variable>;
 
 
-// Make a copy of a local, lexical or values-cluster variable.
+// Make an initial-variable copy of a local, lexical or values-cluster
+// variable.
 //
 define generic copy-variable
     (builder :: <fer-builder>, var :: <abstract-variable>)
- => res :: <abstract-variable>;
+ => res :: <initial-variable>;
+
+
+// Make an initial-variable from an existing var-info.  Could be local,
+// lexical, values-cluster, etc.
+//
+define generic make-initial-var
+    (builder :: <fer-builder>, of-type :: <values-ctype>,
+     var-info :: <variable-info>)
+    => var :: <initial-variable>;
+
+
+// Make a local SSA variable.  This is a local variable which must be assigned
+// exactly once.
+//
+define generic make-ssa-var
+    (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
+ => res :: <ssa-variable>;
 
 
 // Return the exit function for the given nlx info, or make one if necessary.
