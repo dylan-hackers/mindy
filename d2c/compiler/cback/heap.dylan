@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.1 1998/05/03 19:55:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.2 1998/05/15 16:24:53 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,6 +257,7 @@ define method build-local-heap
     end if;
     if (name)
       spew-label(state, name, export: #t);
+      format(stream, "\t.size %s, %=\n", name, 8);
       if (target.supports-debugging?)
 	format(stream, target.descriptor-reference-string, 
 	       target.mangled-name-prefix, name);
@@ -304,6 +305,7 @@ define method spew-objects-in-queue (state :: <state>) => ();
 	format(stream, "%s %s\n", target.comment-token, label);
       else
 	spew-label(state, label, export: #t);
+	format(stream, "\t.size %s, %=\n", label, logand(object-size(object) + 7, -8));
       end if;
     end for;
 
