@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.22 1995/04/12 17:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.23 1995/04/14 02:57:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -438,7 +438,6 @@ define module representation
   use utils;
   use variables;
   use ctype;
-  use forwards, import: {<cclass>};
 
   export
     <representation>, pick-representation, representation-alignment,
@@ -461,6 +460,8 @@ define module classes
   export
     cclass-name, closest-primary-superclass, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
+    all-slot-infos, space-representation, space-representation-setter,
+    speed-representation, speed-representation-setter,
     <defined-cclass>,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
@@ -468,7 +469,20 @@ define module classes
     slot-init-function, slot-init-function-setter, slot-init-keyword,
     slot-init-keyword-required?,
 
-    layout-instance-slots;
+    inherit-slots, layout-instance-slots;
+end;
+
+define module c-representation
+  use common;
+
+  use utils;
+  use variables;
+  use ctype;
+  use representation;
+  use classes;
+
+  export
+    seed-representations;
 end;
 
 define module compile-time-eval
@@ -785,4 +799,5 @@ define module main
   use front;
   use dump;
   use classes;
+  use c-representation;
 end;
