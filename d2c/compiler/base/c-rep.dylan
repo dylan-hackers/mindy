@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.11 1995/05/08 11:42:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.12 1995/05/18 13:31:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -186,7 +186,7 @@ define method seed-representations () => ();
 	       to-more-general: "make_extended_float(%s)",
 	       from-more-general: "extended_float_value(%s)",
 	       alignment: $long-double-alignment, size: $long-double-size,
-	       c-type: "double");
+	       c-type: "long double");
 	else
 	  make(<data-word-representation>, more-general: $general-rep,
 	       to-more-general: #f, from-more-general: "%s.dataword.x",
