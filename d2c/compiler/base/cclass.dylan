@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.12 1995/05/29 23:09:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.13 1995/06/01 14:26:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -182,20 +182,20 @@ define abstract class <slot-info> (<object>)
   // The initial value.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
   slot slot-init-value :: union(<ct-value>, <boolean>),
-    required-init-keyword: init-value:;
+    init-value: #f, init-keyword: init-value:;
   //
   // The init-function.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
   slot slot-init-function :: union(<ct-value>, <boolean>),
-    required-init-keyword: init-function:;
+    init-value: #f, init-keyword: init-function:;
   //
   // The init-keyword, or #f if there isn't one.
   slot slot-init-keyword :: false-or(<symbol>),
-    required-init-keyword: init-keyword:;
+    init-value: #f, init-keyword: init-keyword:;
   //
   // True if the init-keyword is required, False if not.
   slot slot-init-keyword-required? :: <boolean>,
-    required-init-keyword: init-keyword-required:;
+    init-value: #f, init-keyword: init-keyword-required:;
   //
   // List of all the overrides for this slot.  Filled in when the overrides
   // for some class are processed.
@@ -819,7 +819,8 @@ end;
 define method find-slot-offset
     (slot :: <instance-slot-info>, instance-type :: <ctype>)
     => res :: false-or(<fixed-integer>);
-  let instance-class = best-idea-of-class(instance-type);
+  let instance-class
+    = best-idea-of-class(instance-type) | slot.slot-introduced-by;
   if (csubtype?(instance-class.closest-primary-superclass,
 		slot.slot-introduced-by))
     block (return)
