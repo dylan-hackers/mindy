@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.6 1998/09/09 13:40:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.7 1998/09/16 19:41:35 igor Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -849,8 +849,10 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
   end if;
   write(stream, "}\n");
   write(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
-  write(stream, "void main(int argc, char *argv[])\n{\n");
-  write(stream, "    real_main(argc, argv);\n}\n");
+  write(stream, "int main(int argc, char *argv[]) {\n");
+  write(stream, "    real_main(argc, argv);\n");
+  write(stream, "    return 0;\n");
+  write(stream, "}\n");
   close(stream);
 end method;
 
