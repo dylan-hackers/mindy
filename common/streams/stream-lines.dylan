@@ -47,13 +47,13 @@ define open generic read-line (stream :: <stream>,
 #if ($newlines-are-CRLF)
 
 define method read-line (stream :: <buffered-stream>,
-			 #key on-end-of-stream :: <object>)
+			 #key on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
       // Hit eos right away.
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -95,14 +95,15 @@ define method read-line (stream :: <buffered-stream>,
 end method read-line;
 
 define sealed method read-line (stream :: <simple-sequence-stream>,
-				#key on-end-of-stream :: <object>)
+				#key on-end-of-stream :: <object>
+				       = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block ()
     lock-stream(stream);
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -141,13 +142,13 @@ end method read-line;
 #else
 
 define method read-line (stream :: <buffered-stream>,
-			 #key on-end-of-stream :: <object>)
+			 #key on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
       // Hit eos right away.
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -189,14 +190,15 @@ define method read-line (stream :: <buffered-stream>,
 end method read-line;
 
 define sealed method read-line (stream :: <simple-sequence-stream>,
-				#key on-end-of-stream :: <object>)
+				#key on-end-of-stream :: <object> 
+				       = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block ()
     lock-stream(stream);
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -240,13 +242,14 @@ define open generic read-line-into! (stream :: <stream>, string :: <string>,
 define method read-line-into! (stream :: <buffered-stream>,
 			       string :: <string>,
 			       #key start :: <integer> = 0,
-			            on-end-of-stream :: <object> = #f,
+			            on-end-of-stream :: <object>
+				      = $not-supplied,
 			            grow? :: <boolean> = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -300,7 +303,8 @@ end method read-line-into!;
 define sealed method read-line-into! (stream :: <simple-sequence-stream>,
 				      string :: <string>,
 				      #key start :: <integer> = 0,
-				           on-end-of-stream :: <object> = #f,
+				           on-end-of-stream :: <object>
+					     = $not-supplied,
 				           grow? :: <boolean> = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block ()
@@ -308,7 +312,7 @@ define sealed method read-line-into! (stream :: <simple-sequence-stream>,
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -359,13 +363,14 @@ end method read-line-into!;
 define method read-line-into! (stream :: <buffered-stream>,
 			       string :: <string>,
 			       #key start :: <integer> = 0,
-			            on-end-of-stream :: <object> = #f,
+			            on-end-of-stream :: <object>
+				      = $not-supplied,
 			            grow? :: <boolean> = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
@@ -414,7 +419,8 @@ end method read-line-into!;
 define sealed method read-line-into! (stream :: <simple-sequence-stream>,
 				      string :: <string>,
 				      #key start :: <integer> = 0,
-				           on-end-of-stream :: <object> = #f,
+				           on-end-of-stream :: <object>
+					     = $not-supplied,
 				           grow? :: <boolean> = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block ()
@@ -422,7 +428,7 @@ define sealed method read-line-into! (stream :: <simple-sequence-stream>,
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream)
+      if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
       else
 	error(make(<end-of-stream-error>, stream: stream));
