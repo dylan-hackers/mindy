@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.5 1996/02/08 19:20:57 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.6 1996/02/09 01:37:43 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -28,6 +28,8 @@ end;
 
 
 define module cback
+  use system;
+  
   use c-representation;
   use classes;
   use common;
@@ -52,7 +54,7 @@ define module cback
   use variables;
 
   export
-    <unit-state>, unit-init-roots,
+    <unit-state>, unit-init-roots, unit-root-names,
     <file-state>, 
     <unit-info>, unit-name, undumped-objects,
     emit-prologue, emit-tlf-gunk, emit-component,
