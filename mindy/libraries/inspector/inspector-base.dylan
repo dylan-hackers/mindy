@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.8 1996/05/26 15:08:00 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.9 1996/08/10 21:30:25 nkramer Exp $
 
 //======================================================================
 //
@@ -35,6 +35,7 @@ define library inspector-base
   use dylan;
   use print;
   use string-extensions;
+  use regular-expressions;
   export
     inspector-base;
 end library inspector-base;

@@ -5,7 +5,7 @@ synopsis:   Contains the library and module definitions for the X-inspector
             library.
 copyright:  Copyright (C) 1996 Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.3 1996/04/25 18:23:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-library.dylan,v 1.4 1996/08/10 21:30:25 nkramer Exp $
 
 //======================================================================
 //
@@ -35,6 +35,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-li
 define library X-inspector
   use dylan;
   use string-extensions;
+  use regular-expressions;
   use tk;
   use inspector-base;
   export
