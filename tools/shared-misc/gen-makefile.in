@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.52 2003/10/22 20:26:16 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.52.4.1 2004/10/13 05:57:42 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -531,6 +531,9 @@ EOF
             print "$EXPORT CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
             if ($LIBTOOL) {
                 print "$EXPORT LIBTOOL = $LIBTOOL\n\n";
+            }
+            if ($GC_LIBS) {
+                print "$EXPORT GC_LIBS = $GC_LIBS\n\n";
             }
             if ($DYLANPATH) {
 		if ($enable_mindy_bootstrap) {

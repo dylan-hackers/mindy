@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.25 2003/09/26 03:13:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.25.4.1 2004/10/13 05:57:34 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -378,7 +378,8 @@ define method emit-make-prologue (state :: <lid-mode-state>) => ();
      if (libtool)
        format(makefile, "LIBTOOL = %s\n", libtool);
      end;
-     format(makefile, "GC_LIBS = %s\n", $gc-libs);   
+     let gc-libs = getenv("GC_LIBS") | $gc-libs;
+     format(makefile, "GC_LIBS = %s\n", gc-libs);
      
      format(makefile, "# We only know the ultimate target when we've finished"
 	      " building the rest\n");

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.15 2003/10/01 18:05:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.15.4.1 2004/10/13 05:57:34 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -327,8 +327,9 @@ define method build-executable (state :: <single-file-mode-state>) => ();
                                    state.unit-target.object-filename-suffix));
   let compile-string
     = substring-replace(compile-string, "$(CCFLAGS)", cc-flags);
+  let gc-libs = getenv("GC_LIBS") | $gc-libs;
   let linker-args
-    = substring-replace(linker-args, "$(GC_LIBS)", $gc-libs);
+    = substring-replace(linker-args, "$(GC_LIBS)", gc-libs);
 
   close(state.unit-stream);
   state.unit-stream := #f;
