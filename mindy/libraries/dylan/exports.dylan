@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.103 1996/10/06 13:01:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.104 1997/05/31 01:15:16 ram Exp $
 
 //======================================================================
 //
@@ -260,7 +260,7 @@ define module Extensions
   use extras, exclude: { add-debug-variable, instantiable? },
     export: all;
   export
-    one-of, ignore, key-exists?, <byte>, assert;
+    one-of, ignore, key-exists?, <byte>, assert, %main;
 end Extensions;
 
 define module System
