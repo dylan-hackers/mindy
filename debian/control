@@ -1,0 +1,41 @@
+Source: gwydion-dylan
+Section: devel
+Priority: optional
+Maintainer: Neil Schemenauer <nascheme@enme.ucalgary.ca>
+Standards-Version: 2.5.0
+
+Package: gwydion-dylan
+Architecture: any
+Depends: gcc, ${shlibs:Depends}
+Suggests: mindy
+Description: A Dylan-to-C batch compiler.
+ CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
+ fairly efficient output but requires strange incantations to compile even
+ simple programs. Tools for interfacing with C are included. (The Mindy
+ bytecode interpreter is available as a separate package.) If you're really
+ excited about writing Dylan programs for Linux--and don't mind the
+ inconveniences of d2c--these are the tools to use. If you prefer a mature
+ development environment, try another language.
+ .
+ For more infomration, see the Gwydion Dylan maintainers' web page at
+ <http://www.gwydiondylan.org/>.
+
+Package: gwydion-dylan-extras
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Tools used for recompiling Gwydion Dylan.
+ These tools are required to recompile d2c. They include a LISP to Dylan
+ translator, a parser generator, and various tools for maintaining the
+ build tree. This package also contains a few general-purpose development
+ utilities written in Dylan.
+
+Package: mindy
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: A Dylan interpreter.
+ Mindy is a Dylan bytecode interpreter, originally written as part of CMU's
+ Gwydion Dylan project. It compiles faster than d2c and includes much better
+ debugging tools. Unfortunately, Mindy makes no attempt to run fast.
+ .
+ Documentation for Mindy can be found in the main gwydion-dylan package, or
+ on the web at <http://www.gwydiondylan.org/>.
