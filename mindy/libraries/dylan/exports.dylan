@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.21 1994/04/29 06:11:57 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.22 1994/04/30 15:02:31 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -52,7 +52,7 @@ define module Builtin-Stuff
     direct-subclasses, direct-superclasses,
     ceiling/, copy-bytes, current-handler,
     do-next-method,
-    element, element-setter, enable-error-system,
+    element, element-setter, enable-error-system, exit,
     find-method, floor/, format, function-arguments,
     generic-function-methods, getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
@@ -64,7 +64,7 @@ define module Builtin-Stuff
     negative,
     object-class, object-hash,
     pair, prin1, print, putc, puts,
-    release-lock, remove-method, round/,
+    raw-exit, release-lock, remove-method, round/,
     signal-event, singleton, size, slot-initialized?, spawn-thread,
     sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate/,
@@ -78,7 +78,8 @@ define module Builtin-Stuff
     forward-iteration-protocol, backward-iteration-protocol, negative?,
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
-    debugger-return, debugger-eval;
+    debugger-return, debugger-eval,
+    on-exit;
 end Builtin-Stuff;
 
 define module Dylan
@@ -174,7 +175,8 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: (main, format, prin1, print, putc, puts, getc, <byte-vector>,
+    import: (main, exit, on-exit,
+	     format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object),
     export: all;
