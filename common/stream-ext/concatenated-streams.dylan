@@ -30,13 +30,23 @@ rcs-header: $header$
 // An input stream which is a wrapper for several input streams.
 // Reading from a <combination-stream> is equivalent to reading from
 // the first component stream, then on eof silently rolling over into
-// the second stream, etc.
+// the second stream, etc.  Because wrapper-streams are broken, there
+// must be at least one component stream.  (ie, because the
+// inner-stream slot only accepts <stream> rather than
+// false-or(<stream>)...)
 //
 define open class <combination-stream> (<wrapper-stream>)
   // get-next-stream takes no args and returns false-or(<stream>), the
-  // false being if there are no more streams.
+  // false being if there are no more streams.  close(<combo-stream>)
+  // will change this slot to be a function that returns a "stream
+  // closed you moron" error.
   slot get-next-component-stream :: <function>, 
     required-init-keyword: #"get-next-stream";
+  //
+  // ### This next slot is a kluge for the fact that inner-stream
+  // won't take #f as a legal value.  We set inner-stream-is-bogus to
+  // #t whenever we'd like to set inner-stream to #f.
+  slot inner-stream-is-bogus? :: <boolean> = #f;
 end class <combination-stream>;
 
 define method make (cls == <combination-stream>, #next next-method, 
@@ -54,8 +64,11 @@ define sealed domain initialize (<combination-stream>);
 define inline function move-to-next-stream
     (stream :: <combination-stream>) => ();
   close(stream.inner-stream);
-  stream.inner-stream := stream.get-next-component-stream();
-  if (stream.inner-stream ~== #f)
+  let next-component = stream.get-next-component-stream();
+  if (next-component == #f)
+    stream.inner-stream-is-bogus? := #t;
+  else
+    stream.inner-stream := next-component;
     stream.inner-stream.outer-stream := stream;
   end if;
 end function move-to-next-stream;
@@ -69,7 +82,7 @@ define inline function do-combo-stream-function
  => (#rest values :: <object>);
   block (return)
     while (#t)
-      if (stream.inner-stream = #f)
+      if (stream.inner-stream-is-bogus?)
 	if (on-end-of-stream == $not-supplied)
 	  signal(make(<end-of-stream-error>, stream: stream));
 	else
@@ -96,12 +109,12 @@ define inline method close
   stream.get-next-component-stream 
     := method () error("Combo-stream was closed!");  end method;
   apply(close, stream.inner-stream, keys);
-  stream.inner-stream := #f;
+  stream.inner-stream-is-bogus? := #t;
 end method;
 
 define inline method stream-open? (stream :: <combination-stream>)
  => open? :: <boolean>;
-  stream.inner-stream ~== #f;
+  ~stream.inner-stream-is-bogus?;
 end method;
 
 // ### We have to assume that all the component streams have the same
@@ -126,7 +139,8 @@ define inline method read-element
   do-combo-stream-function(read-element, stream, on-end-of-stream);
 end method;
 
-// wrapper-stream has no unread-element, so neither do we
+// wrapper-stream has no unread-element, so neither do we.  Besides,
+// it'd probably be a real bitch to implement...
 
 define inline method peek (stream :: <combination-stream>,
 			   #key on-end-of-stream :: <object> = $not-supplied)
