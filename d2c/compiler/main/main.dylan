@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.78 1996/07/12 14:38:46 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.79 1996/07/19 02:57:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -444,45 +444,51 @@ define method compile-library
 	  emit-prologue(file, other-units);
 
 	  for (tlf in tlfs)
-	    let name = format-to-string("%s", tlf);
-	    begin
-	      let column = *debug-output*.current-column;
-	      if (column & column > 75)
-		format(*debug-output*, "\n");
-	      end if;
-	    end;
-	    format(*debug-output*, ".");
-	    force-output(*debug-output*);
-	    note-context(name);
-	    let component = make(<fer-component>);
-	    let builder = make-builder(component);
-	    convert-top-level-form(builder, tlf);
-	    let inits = builder-result(builder);
-	    unless (instance?(inits, <empty-region>))
-	      let result-type = make-values-ctype(#(), #f);
-	      let source = make(<source-location>);
-	      let init-function
-		= build-function-body(builder, $Default-Policy, source, #f, name,
-				      #(), result-type, #t);
-	      build-region(builder, inits);
-	      build-return(builder, $Default-Policy, source, init-function, #());
-	      end-body(builder);
-	      let sig = make(<signature>, specializers: #(),
-			     returns: result-type);
-	      let ctv = make(<ct-function>, name: name, signature: sig);
-	      make-function-literal(builder, ctv, #f, #"global", sig,
-				    init-function);
-	      add!(init-functions, ctv);
-	    end;
-	    optimize-component(component);
-	    emit-tlf-gunk(tlf, file);
-	    emit-component(component, file);
-	    end-of-context();
-	  end;
+	    block ()
+	      let name = format-to-string("%s", tlf);
+	      begin
+		let column = *debug-output*.current-column;
+		if (column & column > 75)
+		  format(*debug-output*, "\n");
+		end if;
+	      end;
+	      format(*debug-output*, ".");
+	      force-output(*debug-output*);
+	      note-context(name);
+	      let component = make(<fer-component>);
+	      let builder = make-builder(component);
+	      convert-top-level-form(builder, tlf);
+	      let inits = builder-result(builder);
+	      unless (instance?(inits, <empty-region>))
+		let result-type = make-values-ctype(#(), #f);
+		let source = make(<source-location>);
+		let init-function
+		  = build-function-body(builder, $Default-Policy, source, #f,
+					name, #(), result-type, #t);
+		build-region(builder, inits);
+		build-return
+		  (builder, $Default-Policy, source, init-function, #());
+		end-body(builder);
+		let sig = make(<signature>, specializers: #(),
+			       returns: result-type);
+		let ctv = make(<ct-function>, name: name, signature: sig);
+		make-function-literal(builder, ctv, #f, #"global", sig,
+				      init-function);
+		add!(init-functions, ctv);
+	      end;
+	      optimize-component(component);
+	      emit-tlf-gunk(tlf, file);
+	      emit-component(component, file);
+	    cleanup
+	      end-of-context();
+	    exception (<fatal-error-recovery-restart>)
+	      #f;
+	    end block;
+	  end for;
 	cleanup
 	  close(body-stream);
 	  fresh-line(*debug-output*);
-	end;
+	end block;
 
 	pick-which-file(c-name, temp-c-name, target);
 	let o-name = concatenate(base-name, target.object-filename-suffix);
@@ -492,6 +498,8 @@ define method compile-library
 	format(clean-stream, " %s", o-name);
 	format(real-clean-stream, " %s %s", o-name, c-name);
 
+      exception (<fatal-error-recovery-restart>)
+	format(*debug-output*, "skipping rest of %s\n", file);
       exception (<simple-restart>,
 		   init-arguments:
 		   vector(format-string: "Blow off compiling this file."))
