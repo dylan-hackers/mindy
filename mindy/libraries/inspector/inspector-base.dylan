@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.5 1996/04/10 20:42:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.6 1996/04/22 15:28:05 nkramer Exp $
 
 //======================================================================
 //
@@ -136,10 +136,17 @@ define method short-string (cls :: <class>) => string :: <string>;
   as(<string>, cls.class-name);
 end method short-string;
 
+// The "false-or" hack is highly unportable.
+// Perhaps we should also have a "one-of" hack...
+//
 define method short-string (u :: <union>) => string :: <string>;
-  concatenate("type-union(", 
-	      apply(join, ", ", map(short-string, u.union-members)), 
-	      ")");
+  if (u.union-members.size == 2 & u.union-members.second == <false>)
+    concatenate("false-or(", short-string(u.union-members.first), ")");
+  else
+    concatenate("type-union(", 
+		apply(join, ", ", map(short-string, u.union-members)), 
+		")");
+  end if;
 end method short-string;
 
 define method short-string (s :: <singleton>) => string :: <string>;
@@ -406,8 +413,8 @@ define function slot-info (cls :: <class>, #key object = $no-object)
 	else
 	  values(concatenate(allocation-string, " slot #!",
 			     as(<string>, getter.function-name),
-			     "!# :: #!", short-string(type),
-			     value-string, "!#, setter: #!", 
+			     "!# :: #!", short-string(type), "!#", 
+			     value-string, ", setter: #!", 
 			     short-string(setter.function-name),
 			     "!#"),
 		 concatenate(list(getter), type-and-value, list(setter)));
