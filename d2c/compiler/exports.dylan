@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.14 1995/01/06 21:20:15 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.15 1995/01/10 16:24:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -93,8 +93,8 @@ define module tokens
     <from-token>, <generic-token>, <handler-token>, <if-token>,
     <in-token>, <let-token>, <library-token>, <local-token>,
     <macro-token>, <module-token>, <method-token>, <mv-call-token>,
-    <otherwise-token>, <set-token>, <use-token>, <uwp-token>,
-    <variable-token>, <while-token>, <keyword-token>,
+    <otherwise-token>, <primitive-token>, <set-token>, <use-token>,
+    <uwp-token>, <variable-token>, <while-token>, <keyword-token>,
     <abstract-literal-token>, <literal-token>, <string-token>,
     <operator-token>, <binary-operator-token>,
     <simple-binary-operator-token>, <unary-operator-token>,
@@ -283,6 +283,7 @@ define module parse-tree
     <if>, if-condition, if-consequent, if-alternate,
     <method-ref>, method-ref-method,
     <mv-call>, mv-call-operands,
+    <primitive>, primitive-name, primitive-operands,
     <uwp>, uwp-body, uwp-cleanup,
     <rule>, rule-pattern, rule-template,
     <abstract-define-rule>, define-rule-modifiers-pattern,
@@ -478,9 +479,10 @@ define module builder-interface
     <flow-builder>, make-builder, builder-result, end-body, build-region,
     build-if-body, build-else, build-block-body, build-exit, build-loop-body,
     build-assignment, build-join, make-operation, <fer-builder>, build-let,
-    make-mv-operation, make-literal-constant, make-definition-leaf,
-    make-lexical-var, make-local-var, make-values-cluster, copy-variable,
-    make-exit-function, build-method-body, make-hairy-method-literal,
+    make-primitive-operation, make-mv-operation, make-literal-constant,
+    make-definition-leaf, make-lexical-var, make-local-var,
+    make-values-cluster, copy-variable, make-exit-function, build-method-body,
+    make-hairy-method-literal,
 
     <fer-component>;
 end;
