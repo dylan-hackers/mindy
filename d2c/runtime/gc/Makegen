@@ -284,7 +284,7 @@ print "libgc$dot_lib: \$(OBJS) dyn_load.o\n";
 	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
 	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(OBJS) dyn_load.o
 EOF
-print "\t./if_not_there on_sparc_sunos5 \$(AR) rus libgc$dot_lib \$(OBJS) dyn_load.o\n";
+print "\t./if_not_there on_sparc_sunos5 \$(AR) ru libgc$dot_lib \$(OBJS) dyn_load.o\n";
     print <<'EOF';
 	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
 #	ignore ranlib failure; that usually means it doesn't exist, and isn't needed
