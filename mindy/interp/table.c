@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.13 1995/02/14 02:33:08 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.14 1995/12/07 15:51:47 wlott Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -57,64 +57,47 @@ static obj_t obj_HashStateClass = NULL;
 static obj_t permanent_state = NULL;
 static obj_t valid_state = NULL;
 
-/* object-hash returns $permanent-hash-state for all <number>s implemented
- * in Mindy. Basically, it's implemented by a series of if's: fixnum?
- * single_float? double_float? extended_float? If any of those, return an
- * appropriate value along with $permanent-hash-state. Otherwise, hash
- * the pointer and return a non-permanent hash state.
- *
- * Floats are hashed in a non-portable way: By using & on the C
- * representation of the floating point number (along with some type
- * coercision to keep the warnings to a minimum).
- * (see also float-hash)
- */
+/* The largest fixnum prime */
+#define REALLY_BIG_PRIME 1073741789
 
-static void dylan_object_hash(struct thread *thread, int nargs)
+static void dylan_pointer_hash(struct thread *thread, int nargs)
 {
     obj_t *old_sp = thread->sp - 2;
     obj_t object = old_sp[1];
-    obj_t class;
 
     assert(nargs == 1);
 
-    if (obj_is_fixnum(object)) {
-        old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-                    & ((unsigned long)object));
-	old_sp[1] = permanent_state;
-    }
-    else {
-    	class = obj_ptr(struct object *, object)->class;
-        if (class == obj_SingleFloatClass) {
-            old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-				& (*((int *)(&single_value(object)))));
-				/* Pretend the float is really an
-				   integer so we can get at its bits */
-	    old_sp[1] = permanent_state;
-	}
-        else if (class == obj_DoubleFloatClass) {
-            old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-				& (*((int *)(&double_value(object)))));
-				/* Pretend the float is really an
-				   integer so we can get at its bits */
-	    old_sp[1] = permanent_state;
-	}
-        else if (class == obj_ExtendedFloatClass) {
-            old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-				& (*((int *)(&extended_value(object)))));
-				/* Pretend the float is really an
-				   integer so we can get at its bits */
-	    old_sp[1] = permanent_state;
-	}
-	else {            /* Hash the pointer itself */
-	    old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-                       & ((unsigned long)object)>>2);
+    old_sp[0] = make_fixnum((unsigned long)object % REALLY_BIG_PRIME);
 
-	    if (valid_state == obj_False)
-	       valid_state = alloc(obj_HashStateClass, 
-                                   sizeof(struct hash_state));
-	    old_sp[1] = valid_state;
-	}
-    }
+    if (valid_state == obj_False)
+	valid_state = alloc(obj_HashStateClass, 
+			    sizeof(struct hash_state));
+    old_sp[1] = valid_state;
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_float_hash(struct thread *thread, int nargs)
+{
+    obj_t *old_sp = thread->sp - 2;
+    obj_t object = old_sp[1];
+    obj_t class = obj_ptr(struct object *, object)->class;
+    long double value;
+
+    assert(nargs == 1);
+
+    if (class == obj_SingleFloatClass)
+	value = single_value(object);
+    else if (class == obj_DoubleFloatClass)
+	value = double_value(object);
+    else if (class == obj_ExtendedFloatClass)
+	value = extended_value(object);
+
+    else 
+	lose("I can't float-hash that!");
+
+    old_sp[0] = make_fixnum((*((long *)(&value))) % REALLY_BIG_PRIME);
+    old_sp[1] = permanent_state;
 
     do_return(thread, old_sp, old_sp);
 }
@@ -151,33 +134,6 @@ static void dylan_merge_hash_codes(obj_t self, struct thread *thread,
 	old_sp[1] = state1;
 
     thread->sp = old_sp + 2;
-    do_return(thread, old_sp, old_sp);
-}
-
-static void dylan_float_hash(struct thread *thread, int nargs)
-{
-    obj_t *old_sp = thread->sp - 2;
-    obj_t object = old_sp[1];
-    obj_t class = obj_ptr(struct object *, object)->class;
-    long double value;
-
-    assert(nargs == 1);
-
-    if (class == obj_SingleFloatClass)
-	value = single_value(object);
-    else if (class == obj_DoubleFloatClass)
-	value = double_value(object);
-    else if (class == obj_ExtendedFloatClass)
-	value = extended_value(object);
-
-    else 
-	lose("I can't float-hash that!");
-
-    old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM) & (*((int *)(&value))));
-    		/* Pretend the float is really an integer so we 
-		   can get at its bits */
-
-    old_sp[1] = permanent_state;
     do_return(thread, old_sp, old_sp);
 }
 
@@ -237,12 +193,12 @@ void init_table_classes(void)
 
 void init_table_functions(void)
 {
-    define_constant("object-hash",
-		    make_raw_function("object-hash", 1, FALSE, obj_False,
+    define_constant("pointer-hash",
+		    make_raw_function("float-hash", 1, FALSE, obj_False,
 				      FALSE,
 				      list2(obj_FixnumClass,
 					    obj_HashStateClass),
-				      obj_False, dylan_object_hash));
+				      obj_False, dylan_pointer_hash));
     define_constant("float-hash",
 		    make_raw_function("float-hash", 1, FALSE, obj_False,
 				      FALSE,
