@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.18 2001/03/17 03:43:35 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.19 2001/03/30 13:50:46 bruce Exp $
 copyright: see below
 module: bootstrap
 
@@ -201,6 +201,7 @@ define module dylan-viscera
     %elem, %elem-setter, limited-sv-class, ssv-data, ssv-data-setter,
     lsv-data-type, lsv-fill, %main, main,
     <stretchy-sequence>, <simple-object-deque>, <stretchy-object-vector>,
+    <simple-object-table>,
 
     // Cheap IO
     format, print-message, print, write-integer, puts,
