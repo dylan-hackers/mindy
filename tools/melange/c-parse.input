@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.22 2004/05/24 12:15:39 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.23 2004/05/30 10:57:48 cpage Exp $
 
 //======================================================================
 //
@@ -1075,6 +1075,10 @@ declarator (pointer declarator2)
 %
 
 declarator2 (identifier)
+  %1;
+%
+
+declarator2 (<type-name-token>)
   %1;
 %
 
