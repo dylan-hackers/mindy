@@ -3,6 +3,7 @@ do compile_subdirs(
     'gc',
     'dylan',
     'streams',
+    'standard-io',
     'print',
     'format',
     'random',
