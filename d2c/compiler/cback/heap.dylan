@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.52 1996/08/05 12:46:21 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.53 1996/08/22 11:37:28 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -213,7 +213,7 @@ define method build-local-heap
   let state = make(<local-state>, stream: stream, target: target,
 		   id-prefix: concatenate(prefix, "_L"));
   // This debugging crap is only supported on the HP (at least for now)
-  if (target.target-name == #"hppa-hpux")
+  if (target.supports-debugging?)
     format(stream, "%s", $descriptor-type-string);
   end if;
   format(stream, "%s\n\n", target.heap-preamble);
@@ -482,8 +482,7 @@ define method object-name (object :: <ct-value>, state :: <state>)
   let name = concatenate(state.target.mangled-name-prefix, 
 			 info.const-info-heap-labels.first);
   unless (heap-object-referenced?(object, state))
-    // Only the HP needs this silly .import directive
-    if (state.target.target-name == #"hppa-hpux")
+    if (state.target.import-directive-required?)
       format(state.stream, "\t.import\t%s, data\n", name);
     end if;
     heap-object-referenced?(object, state) := #t;
@@ -503,8 +502,7 @@ define method entry-name (object :: <ct-entry-point>, state :: <state>)
   let name = concatenate(state.target.mangled-name-prefix,
 			 object.entry-point-c-name);
   unless (heap-object-referenced?(object, state))
-    // Only the HP needs this silly .import directive
-    if (state.target.target-name == #"hppa-hpux")
+    if (state.target.import-directive-required?)
       format(state.stream, "\t.import\t%s, code\n", name);
     end if;
     heap-object-referenced?(object, state) := #t;
