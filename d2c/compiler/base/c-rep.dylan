@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.16 1995/11/09 17:36:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.17 1995/11/09 23:34:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,7 +22,8 @@ define constant $long-double-size = 8;
 
 define constant $data-word-size = max($pointer-size, $long-size);
 
-define class <c-representation> (<representation>, <identity-preserving-mixin>)
+define abstract class <c-representation>
+    (<representation>, <identity-preserving-mixin>)
   slot representation-name :: false-or(<symbol>),
     init-value: #f, init-keyword: name:;
   slot more-general-representation :: union(<false>, <representation>),
@@ -65,6 +66,9 @@ end;
 define class <general-representation> (<c-representation>)
   keyword to-more-general:, init-value: #f;
   keyword from-more-general:, init-value: #f;
+end;
+
+define class <heap-representation> (<c-representation>)
 end;
 
 define class <immediate-representation> (<c-representation>)
@@ -114,7 +118,7 @@ define method seed-representations () => ();
 	    size: $pointer-size + $data-word-size,
 	    c-type: "descriptor_t");
   *heap-rep*
-    := make(<c-representation>, name: #"heap",
+    := make(<heap-representation>, name: #"heap",
 	    alignment: $pointer-alignment, size: $pointer-size,
 	    c-type: "heapptr_t", more-general: *general-rep*,
 	    to-more-general: #f, from-more-general: "%s.heapptr");
@@ -552,11 +556,11 @@ define constant $rep-slots
 	 representation-size, size:, #f,
 	 representation-c-type, c-type:, #f);
 
-add-make-dumper(#"c-representation", *compiler-dispatcher*,
-		<c-representation>, $rep-slots, load-external: #t);
-
 add-make-dumper(#"general-representation", *compiler-dispatcher*,
 		<general-representation>, $rep-slots, load-external: #t);
+
+add-make-dumper(#"heap-representation", *compiler-dispatcher*,
+		<heap-representation>, $rep-slots, load-external: #t);
 
 add-make-dumper(#"immediate-representation", *compiler-dispatcher*,
 		<immediate-representation>, $rep-slots, load-external: #t);
