@@ -36,6 +36,7 @@ OBJS = \
 	funcopt.dbc \
 	primopt.dbc \
 	trans.dbc \
+	cse.dbc \
 	constraint.dbc \
 	typeinf.dbc
 
