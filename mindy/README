@@ -38,7 +38,7 @@ Collection-extensions, String-extensions, and Random-numbers), some
 Dylan demos, and a Dylan mode for Gnu-emacs.
 
 There are two versions of Mindy developed by CMU, the Unix version and
-the Windows/NT version.  Mindy for Unix has been tested extensively
+the Windows version.  Mindy for Unix has been tested extensively
 under MACH on the DECstation and HP-UX on HP 700's.  We have built and
 run Mindy, but not tested it extensivly, under Irix, Linux, SunOS,
 AIX, Solaris, and Ultrix.  Mindy for Unix does not work on the Alpha.
@@ -48,24 +48,20 @@ pre-compiled to portable C), you will need GNU's Flex and Bison,
 respectively.  They can be obtained from
    prep.ai.mit.edu  in the directory pub/gnu
 
-Mindy for Windows/NT is distributed in binary form.  Source code is
-available by downloading the Unix version of Mindy.  Mindy/NT runs
-under Windows/NT v. 3.5 or later, and requires a file system that
-supports long file names (ie HPFS and NTFS, but not FAT).  Mindy/NT
-requires tar and GNU Zip (gzip) to unpackage.  To run tar you will
-need tar.exe and win32gnu.dll.  To run gzip, get gnubin.tar and use
-tar.exe to unpackage it.  Install the GNU utilities contained in
-gnubin.tar (gzip is one of these utilities).  These files are
-available via anonymous FTP in the same directory as mindyNT.tar.gz.
-Recompiling Mindy for Windows/NT requires Microsoft Visual C++ 2.0 and
-a ``make'' utility.
+WinMindy runs under Windows '95 and under Windows/NT v. 3.5 or later.
+It requires a file system that supports long file names.  WinMindy
+requires unzip.exe, which can be found in the same directory as
+WinMindy.zip.  (This is the Info-ZIP extractor.  WinZip 6.1 will also
+work.  PkZip will *not* work, because it doesn't do long file names)
+WinMindy is distributed in binary form, so you do not need a C
+compiler to install WinMindy.
 
 You can get Mindy from our public WWW page:
    http://legend.gwydion.cs.cmu.edu:8001/gwydion/
 You can also get Mindy by anonymous ftp from
 legend.gwydion.cs.cmu.edu in the following files:
    /afs/cs.cmu.edu/project/gwydion/release/mindy.tar.gz    (Unix version)
-   /afs/cs.cmu.edu/project/gwydion/release/mindyNT.tar.gz  (Windows/NT version)
+   /afs/cs.cmu.edu/project/gwydion/release/WinMindy.zip    (Windows version)
 
 You must cd in one command line to the directory containing
 mindy.tar.gz due to security measures at CMU.  Questions, comments,
