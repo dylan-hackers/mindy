@@ -447,7 +447,9 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   // CPP line, we should be prepared to evaluate the pseudo-function
   // "defined".
   //
-  if (instance?(@0, <parse-cpp-state>) & %1.string-value = "__GNUC_PREREQ")
+  if (instance?(@0, <parse-cpp-state>)
+        & (%1.string-value = "__GNUC_PREREQ"
+             | %1.string-value = "__GNUC_PREREQ__"))
     0;
   elseif (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
     parse-error(@0,"Function calls not allowed in constant expressions.");
