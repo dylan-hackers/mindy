@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.16 1996/03/21 19:17:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.17 1996/04/10 16:52:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -423,38 +423,40 @@ end class <word-info>;
 define sealed domain make (singleton(<word-info>));
 define sealed domain initialize (<word-info>);
 
-define constant $default-word-info
-  = begin
-      local method add-sub-category
-		(to :: <word-info>, category :: <word-category>,
-		 kind :: <integer>)
-		=> (sub-category :: <word-info>);
-	      to.word-info-sub-infos[category]
-		:= make(<word-info>,
-			categories: add(to.word-info-categories, category),
-			kind: kind);
-	    end method add-sub-category;
-      let default-info
-	= make(<word-info>, categories: #[], kind: $raw-ordinary-word-token);
-      for (category in #[#"ordinary", #"begin", #"function"],
-	   kind from $raw-ordinary-word-token)
-	let sub-info = add-sub-category(default-info, category, kind);
-	for (sub-category in #[#"define-body", #"define-list"],
-	     delta from 3 by 3)
-	  add-sub-category(sub-info, sub-category, kind + delta);
-	end for;
+define constant $default-word-info :: <word-info>
+  = make(<word-info>, categories: #[], kind: $raw-ordinary-word-token);
+
+begin
+  local
+    method add-sub-category
+	(to :: <word-info>, category :: <word-category>,
+	 kind :: <integer>)
+	=> (sub-category :: <word-info>);
+      let categories = add(to.word-info-categories, category);
+      let sub-info = make(<word-info>, categories: categories, kind: kind);
+      to.word-info-sub-infos[category] := sub-info;
+      for (category in categories)
+	sub-info.word-info-sub-infos[category] := sub-info;
       end for;
-      for (category in #[#"define-body", #"define-list"],
-	   kind from $ordinary-define-body-word-token by 3)
-	let sub-info = add-sub-category(default-info, category, kind);
-	for (sub-category in #[#"ordinary", #"begin", #"function"],
-	     delta from 0)
-	  add-sub-category(sub-info, sub-category, kind + delta);
-	end for;
-      end for;
-	  
-      default-info;
-    end;
+      sub-info;
+    end method add-sub-category;
+  for (category in #[#"ordinary", #"begin", #"function"],
+       kind from $raw-ordinary-word-token)
+    let sub-info = add-sub-category($default-word-info, category, kind);
+    for (sub-category in #[#"define-body", #"define-list"],
+	 delta from 3 by 3)
+      add-sub-category(sub-info, sub-category, kind + delta);
+    end for;
+  end for;
+  for (category in #[#"define-body", #"define-list"],
+       kind from $ordinary-define-body-word-token by 3)
+    let sub-info = add-sub-category($default-word-info, category, kind);
+    for (sub-category in #[#"ordinary", #"begin", #"function"],
+	 delta from 0)
+      add-sub-category(sub-info, sub-category, kind + delta);
+    end for;
+  end for;
+end;
 
 define class <core-word-info> (<word-info>)
   //
@@ -494,6 +496,11 @@ define method initialize (table :: <syntax-table>, #key) => ();
   end for;
 end method initialize;
 
+
+// syntax-for-name -- exported.
+//
+// Return the token kind and set of categories for given name.
+// 
 define method syntax-for-name (table :: <syntax-table>, name :: <symbol>)
     => (kind :: <integer>, categories :: <simple-object-vector>);
   let entry = element(table.syntax-table-entries, name,
@@ -502,27 +509,50 @@ define method syntax-for-name (table :: <syntax-table>, name :: <symbol>)
 end method syntax-for-name;
 
 
-define method category-merge-okay?
-    (table :: <syntax-table>, name :: <symbol>, category :: <word-category>)
-    => res :: <boolean>;
-  let current = element(table.syntax-table-entries, name,
+// problem-with-category-merge -- exported.
+//
+// Return the category that would clashe with new category if we were to
+// try to merge them, or #f if the merge is okay.
+// 
+define method problem-with-category-merge
+    (table :: <syntax-table>, word :: <symbol>, category :: <word-category>)
+    => problem :: false-or(<word-category>);
+  let current = element(table.syntax-table-entries, word,
 			default: $default-word-info);
-  if (member?(category, current.word-info-categories))
-    #t;
+  let current-categories = current.word-info-categories;
+  let new = element(current.word-info-sub-infos, category, default: #f);
+  if (new)
+    #f;
   else
-    element(current.word-info-sub-infos, category, default: #f) ~== #f;
+    if (current-categories.size == 1)
+      current-categories.first;
+    else
+      block (return)
+	let just-new = $default-word-info.word-info-sub-infos[category];
+	for (current-category in current-categories)
+	  unless (element(just-new.word-info-sub-infos, current-category,
+			  default: #f))
+	    return(current-category);
+	  end unless;
+	end for;
+	error("Can't merge %s with %=, but can't tell why.",
+	      category, current-categories);
+      end block;
+    end if;
   end if;
-end method category-merge-okay?;
+end method problem-with-category-merge;
 
+
+// merge-category -- exported.
+//
+// Note that word is also of the given category.
+// 
 define method merge-category
-    (table :: <syntax-table>, name :: <symbol>, category :: <word-category>)
+    (table :: <syntax-table>, word :: <symbol>, category :: <word-category>)
     => ();
-  let current = element(table.syntax-table-entries, name,
+  let current = element(table.syntax-table-entries, word,
 			default: $default-word-info);
-  unless (member?(category, current.word-info-categories))
-    table.syntax-table-entries[name]
-      := element(current.word-info-sub-infos, category)
-  end unless;
+  table.syntax-table-entries[word] := current.word-info-sub-infos[category];
 end method merge-category;
 
 
