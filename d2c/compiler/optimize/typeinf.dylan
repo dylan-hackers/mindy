@@ -1,11 +1,11 @@
 module: cheese
-header: $Header: /scm/cvs/src/d2c/compiler/optimize/typeinf.dylan,v 1.2 2000/01/24 04:56:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/typeinf.dylan,v 1.3 2003/03/22 11:48:41 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
