@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.30 1995/04/24 03:14:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.31 1995/04/25 23:04:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -582,10 +582,10 @@ define module builder-interface
     <flow-builder>, make-builder, builder-result, end-body, build-region,
     build-if-body, build-else, build-block-body, build-exit, build-loop-body,
     build-assignment, build-join, make-operation, <fer-builder>, build-let,
-    make-primitive-operation, make-mv-operation, make-literal-constant,
-    make-definition-leaf, make-lexical-var, make-local-var,
-    make-values-cluster, copy-variable, make-exit-function, build-method-body,
-    make-hairy-method-literal,
+    make-primitive-operation, make-mv-operation, make-set-operation,
+    make-literal-constant, make-definition-leaf, make-lexical-var,
+    make-local-var, make-values-cluster, copy-variable, make-exit-function,
+    build-method-body, make-hairy-method-literal,
 
     <fer-component>;
 end;
@@ -665,6 +665,7 @@ define module front
     dump-fer, id, optimize-component,
 
     <primitive>, name, <prologue>, <catcher>, <pitcher>,
+    <set>, variable,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
