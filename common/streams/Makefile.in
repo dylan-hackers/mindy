@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.3 1996/07/04 17:55:03 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/Makefile.in,v 1.4 1996/07/15 15:56:36 bfw Exp $
 ##
 ##  This is the makefile for the Mindy streams library, streams.dbc.
 ##
@@ -71,7 +71,7 @@ all: new-streams-lib.dbc streams-lib.dbc
 
 NEWMINDYFLAGS = -lNew-Streams
 
-NEWOBJS = new-library.dbc new-internals.dbc new-streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc bbso-stream.dbc
+NEWOBJS = new-library.dbc new-internals.dbc new-streams.dbc stream-reading.dbc stream-writing.dbc stream-lines.dbc stream-buffers.dbc wrapper-streams.dbc file-streams.dbc bbso-stream.dbc stream-reading-buf.dbc
 
 new-streams-lib.dbc: ${NEWOBJS}
 	cat ${NEWOBJS} > $@
@@ -84,6 +84,8 @@ new-streams.dbc: ${SRCDIR}/new-streams.dylan
 	${MC} ${NEWMINDYFLAGS} -o new-streams.dbc ${SRCDIR}/new-streams.dylan
 stream-reading.dbc: ${SRCDIR}/stream-reading.dylan
 	${MC} ${NEWMINDYFLAGS} -o stream-reading.dbc ${SRCDIR}/stream-reading.dylan
+stream-reading-buf.dbc: ${SRCDIR}/stream-reading-buf.dylan
+	${MC} ${NEWMINDYFLAGS} -o stream-reading-buf.dbc ${SRCDIR}/stream-reading-buf.dylan
 stream-writing.dbc: ${SRCDIR}/stream-writing.dylan
 	${MC} ${NEWMINDYFLAGS} -o stream-writing.dbc ${SRCDIR}/stream-writing.dylan
 stream-lines.dbc: ${SRCDIR}/stream-lines.dylan
