@@ -3,7 +3,7 @@ author: Ben Folk-Williams, bfw@cmu.edu and
         David Watson, dwatson@cmu.edu
 synopsis: Basic Time functions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.2 1996/07/29 18:34:19 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.3 1996/08/14 15:36:38 dwatson Exp $
  
 //======================================================================
 //
@@ -175,8 +175,7 @@ end class <decoded-time>;
 
 // This one is internal,
 define constant $null-decoded-time
-  = make(<decoded-time>, seconds: #f, minutes: #f, hours: #f, day-of-month: #f,
-	 month: #f, year: #f, daylight-savings-time?: #f, timezone: #f);
+  = make(<decoded-time>, default-from: #f);
 
 // This one is exported.
 define constant $default-time
@@ -235,17 +234,27 @@ define method initialize
       (time :: <decoded-time>,
        #next next-method,
        #key default-from :: false-or(<decoded-time>) = $null-decoded-time,
-       seconds: secs :: false-or(<seconds>) = default-from.seconds,
-       minutes: mins :: false-or(<minutes>) = default-from.minutes,
-       hours: hrs :: false-or(<hours>) = default-from.hours,
-       day-of-week: weekday :: false-or(<day-of-week>),
+       seconds: secs :: false-or(<seconds>)
+	 = if (default-from) default-from.seconds else #f end if,
+       minutes: mins :: false-or(<minutes>)
+	 = if (default-from) default-from.minutes else #f end if,
+       hours: hrs :: false-or(<hours>)
+	 = if (default-from) default-from.hours else #f end if,
+       day-of-week: weekday :: false-or(<day-of-week>)
+	 = if (default-from) default-from.day-of-week else #f end if,
        day-of-month: date :: false-or(<day-of-month>)
-         = default-from.day-of-month,
-       month: mth :: false-or(<month>) = default-from.month,
-       year: yr :: false-or(<year>) = default-from.year,
+	 = if (default-from) default-from.day-of-month else #f end if,
+       month: mth :: false-or(<month>)
+	 = if (default-from) default-from.month else #f end if,
+       year: yr :: false-or(<year>)
+	 = if (default-from) default-from.year else #f end if,
        daylight-savings-time?: dst? :: <boolean>
-         = default-from.daylight-savings-time?,
-       timezone: tzone :: false-or(<timezone>) = default-from.timezone);
+	 = if (default-from) default-from.daylight-savings-time?
+	   else
+	     #f
+	   end if,
+       timezone: tzone :: false-or(<timezone>)
+	 = if (default-from) default-from.timezone else #f end if);
     next-method();
 
     time.seconds := secs;
@@ -265,7 +274,7 @@ define method initialize
     // end if;
     time.day-of-week := computed-day-of-week;
   else
-    time.day-of-week := weekday | default-from.day-of-week;
+    time.day-of-week := weekday;
   end if;
 end method initialize;
 
