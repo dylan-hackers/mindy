@@ -3,6 +3,7 @@
 $plat = "unix";
 
 $D2CFLAGS = '-L../common-dylan -L../threads -L../io '. $D2CFLAGS;
+$CPPFLAGS .= ' -I$(SRCROOT)/common/network';
 
 # N.B.: The order of tests is important!  The cygnus
 # test MUST preceed the unix test.
