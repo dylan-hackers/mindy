@@ -14,9 +14,9 @@ end macro not-yet-implemented;
 
 
 define method make-native-pixarray( drawable :: <drawable>, width :: <integer>, height :: <integer> )
-=> ()
+=> (  result :: <array>  )
 
-    values();
+    make(<array>, dimensions: #(640, 480)); //* dummy return
 
 end method make-native-pixarray;
 
