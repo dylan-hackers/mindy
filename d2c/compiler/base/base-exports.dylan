@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.4 1998/08/10 15:41:03 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.5 1998/08/13 05:21:16 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -465,6 +465,7 @@ define module platform
     supports-debugging?,
     descriptor-type-string,
     descriptor-reference-string,
+    object-size-string,
 
     big-endian?,
     omit-colon-after-label-declarations?,

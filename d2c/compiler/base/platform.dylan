@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.3 1998/08/10 15:41:04 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.4 1998/08/13 05:21:15 housel Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -94,7 +94,8 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot library-filename-suffix :: <byte-string>,
     required-init-keyword: #"library-filename-suffix";
   // if this is defined, search for shared libraries
-  constant /* exported */ slot shared-library-filename-suffix :: false-or(<byte-string>) = #f,
+  constant /* exported */ slot shared-library-filename-suffix
+      :: false-or(<byte-string>) = #f,
     init-keyword: #"shared-library-filename-suffix";
   constant /* exported */ slot executable-filename-suffix :: <byte-string>,
     required-init-keyword: #"executable-filename-suffix";
@@ -110,8 +111,10 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot randomize-library-command
       :: false-or(<byte-string>) = #f,
     init-keyword: #"randomize-library-command";
+
   // if this is defined, we can build shared libraries
-  constant /* exported */ slot link-shared-library-command :: false-or(<byte-string>) = #f,
+  constant /* exported */ slot link-shared-library-command
+      :: false-or(<byte-string>) = #f,
     init-keyword: #"link-shared-library-command";
   constant /* exported */ slot link-executable-command :: <byte-string>,
     required-init-keyword: #"link-executable-command";
@@ -166,6 +169,9 @@ define sealed /* exported */ class <platform> (<object>)
     init-keyword: #"descriptor-type-string";
   constant /* exported */ slot descriptor-reference-string :: <byte-string>,
     init-keyword: #"descriptor-reference-string";
+  constant /* exported */ slot object-size-string :: false-or(<byte-string>)
+      = #f,
+    init-keyword: #"object-size-string";
 
   constant /* exported */ slot omit-colon-after-label-declarations? 
       :: <boolean> = #f,
