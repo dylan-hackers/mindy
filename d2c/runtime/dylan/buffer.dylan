@@ -1,34 +1,10 @@
 module: dylan-viscera
 author: ram+@cs.cmu.edu
 synopsis: <buffer> and <byte-vector>
-copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.1 1995/11/22 14:28:05 ram Exp $
+copyright: Copyright (c) 1995  Carnegie Mellon University
+	   All rights reserved.
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/buffer.dylan,v 1.2 1995/12/06 11:47:02 ram Exp $
 
-//======================================================================
-//
-// Copyright (c) 1994  Carnegie Mellon University
-// All rights reserved.
-// 
-// Use and copying of this software and preparation of derivative
-// works based on this software are permitted, including commercial
-// use, provided that the following conditions are observed:
-// 
-// 1. This copyright notice must be retained in full on any copies
-//    and on appropriate parts of any derivative works.
-// 2. Documentation (paper or online) accompanying any system that
-//    incorporates this software, or any part of it, must acknowledge
-//    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
-// 
-// This software is made available "as is".  Neither the authors nor
-// Carnegie Mellon University make any warranty about the software,
-// its performance, or its conformity to any specification.
-// 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
-//
-//======================================================================
-//
 
 %%primitive c-include ("string.h");
 
@@ -80,13 +56,54 @@ define /* exported */ generic copy-bytes
    src :: <byte-like>, src-start :: <fixed-integer>, src-end :: <fixed-integer>)
  => ();
 
+// These methods are all the same modulo specializers, but are replicated so
+// that the vector-elements works.
+
 define method copy-bytes 
     (dest :: <byte-vector>, dstart :: <fixed-integer>,
      src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
  => ();
   %%primitive call-out
     ("mmove", void:,
-     ptr: slot-address(dest, %element) + dstart,
-     ptr: slot-address(src, %element) + sstart,
+     ptr: %%primitive vector-elements(dest) + dstart,
+     ptr: %%primitive vector-elements(src) + sstart,
      int: send - sstart);
+end method;
+
+define method copy-bytes 
+    (dest :: <byte-string>, dstart :: <fixed-integer>,
+     src :: <byte-vector>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+ => ();
+  %%primitive call-out
+    ("mmove", void:,
+     ptr: %%primitive vector-elements(dest) + dstart,
+     ptr: %%primitive vector-elements(src) + sstart,
+     int: send - sstart);
+end method;
+
+define method copy-bytes 
+    (dest :: <byte-vector>, dstart :: <fixed-integer>,
+     src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+ => ();
+  %%primitive call-out
+    ("mmove", void:,
+     ptr: %%primitive vector-elements(dest) + dstart,
+     ptr: %%primitive vector-elements(src) + sstart,
+     int: send - sstart);
+end method;
+
+define method copy-bytes 
+    (dest :: <byte-string>, dstart :: <fixed-integer>,
+     src :: <byte-string>, sstart :: <fixed-integer>, send :: <fixed-integer>)
+ => ();
+  %%primitive call-out
+    ("mmove", void:,
+     ptr: %%primitive vector-elements(dest) + dstart,
+     ptr: %%primitive vector-elements(src) + sstart,
+     int: send - sstart);
+end method;
+
+define /* exported */ method buffer-address (x :: <buffer>)
+ => res :: <raw-pointer>;
+  %%primitive vector-elements(x);
 end method;
