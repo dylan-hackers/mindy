@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../transcendental -L../format -L../streams -L../standard-io -L../table-ext -L../format-out -L../print -L.' ;
+$D2CFLAGS = $D2CFLAGS . ' -L../transcendental -L../format -L../streams -L../standard-io -L../table-ext -L../format-out -L../print -L. -L../../d2c/runtime/random' ;
 $D2C = $D2C . " -fc-support.c -F'$LIBTOOL $CC $CFLAGS -I$srcdir $CPPFLAGS -c %s -o %s'";
 
 do emit_library_rule ('common-extensions', '$(BUILDROOT)/force.timestamp', '',

@@ -1,10 +1,4 @@
 local($common);
-if ($features{'compiled_for_win32'}) {
-	#$common = '..\..\common';
-	$common = '../../common';
-} else {
-	$common = '../../common';
-}
 
 if (!$enable_bootstrap || $enable_mindy_bootstrap) {
     if ($host_name eq $target_name) {
@@ -16,11 +10,13 @@ if (!$enable_bootstrap || $enable_mindy_bootstrap) {
 		       'melange',
 #		       'c-ffi',
 		       'garbage-collection',
-		       "$common",
-		       'random');
+		       '../../common/transcendental',
+		       'random',
+		       '../../common');
 
     do install_from_src($includedir, "runtime.h");
 } else {
-    do compile_subdirs("$common",
-                       'random');    
+    do compile_subdirs('../../common/transcendental',
+		       'random',
+		       '../../common');
 }
