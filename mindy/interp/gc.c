@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.6 2001/09/24 06:29:17 brent Exp $
+* $Header: /scm/cvs/src/mindy/interp/gc.c,v 1.7 2001/10/19 02:59:38 brent Exp $
 *
 * This file is the garbage collector.
 *
@@ -101,7 +101,7 @@ struct ref_list {
     int used;
 };
 
-#if defined (__arch64__)
+#if defined (__arch64__) || defined(__alpha__) || defined(__ia64__)
 #define BLOCK_SIZE (256*1024)
 #else
 #define BLOCK_SIZE (128*1024)
