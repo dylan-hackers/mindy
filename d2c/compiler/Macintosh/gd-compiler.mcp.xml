@@ -7675,13 +7675,6 @@
             <FILELIST>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>GwydionPanel.rsrc</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
-                    <FILEKIND>Resource</FILEKIND>
-                    <FILEFLAGS>Debug</FILEFLAGS>
-                </FILE>
-                <FILE>
-                    <PATHTYPE>Name</PATHTYPE>
                     <PATH>GwydionPanel.cpp</PATH>
                     <PATHFORMAT>MacOS</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
@@ -7731,11 +7724,6 @@
                 </FILE>
             </FILELIST>
             <LINKORDER>
-                <FILEREF>
-                    <PATHTYPE>Name</PATHTYPE>
-                    <PATH>GwydionPanel.rsrc</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
-                </FILEREF>
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
                     <PATH>GwydionPanel.cpp</PATH>
@@ -8429,12 +8417,6 @@
                 <PATHFORMAT>MacOS</PATHFORMAT>
             </FILEREF>
             <GROUP><NAME>Panel</NAME>
-                <FILEREF>
-                    <TARGETNAME>Panel</TARGETNAME>
-                    <PATHTYPE>Name</PATHTYPE>
-                    <PATH>GwydionPanel.rsrc</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
-                </FILEREF>
                 <FILEREF>
                     <TARGETNAME>Panel</TARGETNAME>
                     <PATHTYPE>Name</PATHTYPE>
