@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.10 1995/04/12 17:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.11 1995/04/21 02:38:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,7 +33,7 @@ leaf
 
     function-literal
 	method-literal
-	    lambda [method-region]
+	    lambda [method-region, dependent-mixin, annotatable]
 	    hairy-method-literal [source-location-mixin]
         exit-function
 
@@ -226,16 +226,17 @@ end class;
 
 
 // The Lambda only deals with required arguments.  Keyword and rest arguments
-// are represented by special helper lambdas and <hairy-method-literal> objects.
+// are represented by special helper lambdas and <hairy-method-literal>
+// objects.
 //
-define class <lambda> (<method-literal>, <method-region>)
+define class <lambda> (<method-literal>, <method-region>, <dependent-mixin>,
+		       <annotatable>)
 
   // List of lexical varibles for args.
   slot vars :: <list>, required-init-keyword: vars:;
 
-  // List of variables that receive the values of the body.  Might be a single
-  // values-cluster.
-  slot result :: <list>, required-init-keyword: result:;
+  // The results this lambda produces.
+  inherited slot depends-on;
 
   // A list of all the functions directly called from this function
   // using a non-let-converted local call.  May include deleted functions
