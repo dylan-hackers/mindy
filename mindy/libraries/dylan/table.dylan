@@ -1,10 +1,6 @@
 module:		Dylan
 Author:		Nick Kramer (nkramer@cs.cmu.edu)
 
-// Status: key-test, key= not worked in for <value-table>.
-//         <value-table> has no working default key-hash because
-//            <equal-table> has all the good stuff.
-
 //////////////////////////////////////////////////////////////////////
 //
 //  Copyright (C) 1994, Carnegie Mellon University
@@ -16,7 +12,7 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.4 1994/06/11 01:17:20 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.5 1994/06/13 13:01:31 nkramer Exp $
 //
 
 /* -------------------------------------------------------------------
@@ -54,8 +50,8 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 // Hopefully in the future merge-hash-states will also be predefined
 // in Mindy.
 
-define method merge-hash-states (state1 :: <object>,
-				 state2 :: <object>) => merged :: <object>;
+define method merge-hash-states (state1 :: <object>, state2 :: <object>) 
+          => merged :: <object>;
   let (junk, new-state) = merge-hash-codes (0, state1, 0, state2);
 
   new-state;
@@ -149,7 +145,7 @@ define constant default-shrink-to           :: <integer> = 100;
 /* ---------------- */
 
 define class <bucket-entry> (<object>)
-  slot key-slot      :: <integer>, required-init-keyword: key:               ;
+  slot key-slot                  , required-init-keyword: key:               ;
   slot hash-id-slot  :: <integer>, required-init-keyword: hash-id:           ;
   slot hash-state-slot           , required-init-keyword: hash-state:        ;
   slot item-slot                 , required-init-keyword: item:              ;
@@ -206,7 +202,8 @@ end method make-bucket-entry;
 
 /* ---------------- */
 
-define method make (c :: singleton (<table>), #rest key-value-pairs, #all-keys)
+define method make (c :: singleton (<table>), #rest key-value-pairs,
+		    #all-keys)  =>  table :: <object-table>;
   apply (make, <object-table>, key-value-pairs);
 end method make;
 
@@ -214,20 +211,20 @@ end method make;
 
 define method initialize (ht :: <table>,
 			  #next next-method,
-			  #key size: size    = default-starting-table-size,
-			  buckets: numbuckets      = size,
+			  #key size: size       = default-starting-table-size,
+			  buckets: numbuckets   = default-starting-table-size,
 			  expand-when: expand-when = default-expand-when,
 			  expand-to:   expand-to   = default-expand-to,
 			  shrink-when: shrink-when = default-shrink-when,
 			  shrink-to:   shrink-to   = default-shrink-to);
 
-  ht.bucket-array-slot := make (<simple-object-vector>, 
-				size: numbuckets,
-				fill: #() );     // filled with empty lists
+  ht.bucket-array-slot    := make (<simple-object-vector>, 
+				   size: numbuckets,
+				   fill: #() );     // filled with empty lists
 
   ht.bucket-states-slot   := make (<simple-object-vector>,
-				size: numbuckets,
-				fill: $permanent-hash-state);
+				   size: numbuckets,
+				   fill: $permanent-hash-state);
 
   ht.item-count-slot        := 0;
   ht.bucket-count-slot      := numbuckets;
@@ -253,9 +250,6 @@ end method initialize;
 
 /* ---------------- */
 
-// key-test returns id? (==) on object-tables, and equal (=) on
-// equal-tables.
-
 define method key-test (ht :: <object-table>) => test :: <function>;
   \==;
 end method key-test;
@@ -272,108 +266,83 @@ end method key-test;
 
 /* ---------------- */
 
-// Informally, two hash tables are = if they use the same key test,
-// have the same size, and all the elements in the first hash table
-// have matching elements in the second hash table.
-
-define constant not-in-ht2 = "not-in-ht2";
-
-define method \= (ht1 :: <table>, ht2 :: <table>)
-  let test1 = key-test (ht1);
-  let test2 = key-test (ht2);
-
-  (test1 == test2) 
-    & size(ht1) = size(ht2) 
-    & block (return)
-	for (elt1 keyed-by key in ht1)
-	  let elt2 = element (ht2, key, default: not-in-ht2);
-	  if (elt2 == not-in-ht2 | ~test1 (elt1, elt2))
-	    return(#f);
-	  end if;
-	end for;
-      
-	#t;
-      end block;
-end method \=;
-
-/* ---------------- */
-
-// The only key-hash for <object-table>
-
-define method key-hash (ht :: <object-table>, key)
-          => (id :: <integer>, state :: <object>);
-  object-hash (key);
-end method key-hash;
-
-// key-hash's for <equal-table>.
+// equal-hash is used in the table-protocol as the hash-function 
+// for equal tables. Calling convention is similar to object-hash.
 
 // The default method for objects that don't have any 
-// better methods defined.
+// better methods defined. (We can't call object-hash, so what can we do?)
 
-define method key-hash (ht :: <equal-table>, key :: <object>) 
+define method equal-hash (key :: <object>) 
           => (id :: <integer>, state :: <object>);
   values (42, $permanent-hash-state);
-end method key-hash;
+end method equal-hash;
 
 
 // Call object-hash for characters, integers, symbols, classes,
 // functions, and conditions.
 
-define method key-hash (ht :: <equal-table>, key :: <character>)
+define method equal-hash (key :: <character>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <integer>)
+define method equal-hash (key :: <integer>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <symbol>)
+define method equal-hash (key :: <symbol>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <class>)
+define method equal-hash (key :: <class>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <function>)
+define method equal-hash (key :: <function>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <type>)
+define method equal-hash (key :: <type>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: singleton (#f))
+define method equal-hash (key :: singleton (#f))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: singleton (#t))
+define method equal-hash (key :: singleton (#t))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
-define method key-hash (ht :: <equal-table>, key :: <condition>)
+define method equal-hash (key :: <condition>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
-end method key-hash;
+end method equal-hash;
 
 
 // key-hash for reals. Doesn't look like Mindy has good support for
 // reals.
 
-// define method key-hash (ht :: <equal-table>, key :: <real>)
+// define method equal-hash (key :: <real>)
 //           => (id :: <integer>, state :: <object>);
-//   key-hash (ht, truncate (abs (key)));
-// end method key-hash;
+//   equal-hash (ht, truncate (abs (key)));
+// end method equal-hash;
 
 
+
+define method equal-hash (col :: <collection>)
+          => (id :: <integer>, state :: <object>);
+  collection-hash(col, equal-hash, equal-hash);
+end method equal-hash;
+
+/* ---------------- */
 
 // You can't write a more specific method on collections because 
 // any two collections with identical key/element pairs are equal. 
@@ -383,13 +352,14 @@ end method key-hash;
 // always put the element before the key when you merge hash codes,
 // you *can* use ordered: #t for merging them)
 
-define method key-hash (ht :: <equal-table>, col :: <collection>)
+define method collection-hash(col :: <collection>, key-hash :: <function>,
+			      element-hash :: <function>)
           => (id :: <integer>, state :: <object>);
   let (current-id, current-state) = values (0, $permanent-hash-state);
 
   for (elt keyed-by key in col)
-    let (elt-id, elt-state)           = key-hash (ht, elt);
-    let (key-id, key-state)           = key-hash (ht, key);
+    let (elt-id, elt-state)           = element-hash (elt);
+    let (key-id, key-state)           = key-hash (key);
 
     let (captured-id1, captured-state1) = merge-hash-codes (elt-id, elt-state,
 							    key-id, key-state,
@@ -406,34 +376,89 @@ define method key-hash (ht :: <equal-table>, col :: <collection>)
   end for;
 
   values (current-id, current-state);
-end method key-hash;
-
-
-// "key-hash" for <value-table> turns around and calls the user
-// supplied hash function.
-
-define method key-hash (ht :: <value-table>, key :: <object>)
-          => (id :: <integer>, state :: <object>);
-  let id = ht.key-hash-slot(ht, key);  // explicitly ignore the state,
-				       // if any
-  values(id, $permanent-hash-state);
-end method key-hash;
+end method collection-hash;
 
 /* ---------------- */
 
-define method key= (ht :: <equal-table>, key1, key2)
-  key1 = key2;
-end method key=;
+// This is similar to an equal-hash, except that it hashes things with
+// ordered: #t and ignores the sequence keys. USE WITH CAUTION: This
+// isn't a proper equal-hash because two collections of different types
+// but identical key/element pairs won't generate the same hash id,
+// even though the two collections are =.
+
+define method sequence-hash(seq :: <sequence>, element-hash :: <function>)
+          => (id :: <integer>, state :: <object>);
+  let (current-id, current-state) = values (0, $permanent-hash-state);
+
+  for (elt in seq)
+    let (id, state) = element-hash (elt);
+
+    let (captured-id, captured-state) = merge-hash-codes (current-id, 
+							  current-state, 
+							  id, state,
+							  ordered: #t);
+
+    current-id    := captured-id;
+    current-state := captured-state;
+  end for;
+
+  values (current-id, current-state);
+end method sequence-hash;
+
+/* ---------------- */
+
+// A convenient method for hashing strings. Calls sequence-hash 
+// and "does the right thing."
+
+define method string-hash (s :: <string>)
+    => (id :: <integer>, state :: <object>);
+  sequence-hash(s, object-hash);
+end method string-hash;
+
+/* ---------------- */
+
+define method table-protocol(ht :: <object-table>) 
+         => (key-test :: <function>, key-hash :: <function>);
+  values(\==, object-hash);
+end method table-protocol;
 
 
-define method key= (ht :: <object-table>, key1, key2)
-  key1 == key2;
-end method key=;
+define method table-protocol(ht :: <equal-table>) 
+         => (key-test :: <function>, key-hash :: <function>);
+  values(\=, equal-hash);
+end method table-protocol;
 
 
-define method key= (ht :: <value-table>, key1, key2)
-  ht.key-test-slot(key1, key2);
-end method key=;
+define method table-protocol(ht :: <value-table>) 
+         => (key-test :: <function>, key-hash :: <function>);
+  values(ht.key-test-slot, ht.key-hash-slot);
+end method table-protocol;
+
+/* ---------------- */
+
+// Informally, two hash tables are = if they use the same key test,
+// have the same size, and all the elements in the first hash table
+// have matching elements in the second hash table.
+
+define constant not-in-ht2 = "not-in-ht2";
+
+define method \= (ht1 :: <table>, ht2 :: <table>);
+  let test1 = key-test (ht1);
+  let test2 = key-test (ht2);
+
+  (test1 == test2) 
+    & size(ht1) = size(ht2) 
+    & block (return)
+	for (elt1 keyed-by key in ht1)
+	  let elt2 = element (ht2, key, default: not-in-ht2);
+	  if (elt2 == not-in-ht2 | ~test1 (elt1, elt2))
+	    return(#f);
+	  end if;
+	end for;
+      
+	#t;
+      end block;
+end method \=;
 
 /* ---------------- */
 
@@ -464,13 +489,15 @@ define method element (  ht :: <table>, key,
     rehash (ht);
   end until;
 
-  let (key-id, key-state)   = key-hash (ht, key);
+  let (key=, key-hash)      = table-protocol(ht);
+
+  let (key-id, key-state)   = key-hash (key);
   let bucket-index          = modulo (key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot [bucket-index];
 	
   let test = method (entry :: <bucket-entry>)
 	       (entry.hash-id-slot = key-id)
-		 & key= (ht, entry.key-slot, key);
+		 & key= (entry.key-slot, key);
 	     end method;
 
   let find-result = find-elt (bucket, test);
@@ -497,13 +524,16 @@ end method element;
 
 define method element (  ht :: <value-table>, key, 
 		         #key default: default = no-default )
-  let key-id                = key-hash (ht, key);
+
+  let (key=, key-hash)      = table-protocol(ht);
+
+  let key-id                = key-hash (key);
   let bucket-index          = modulo (key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot [bucket-index];
 	
   let test = method (entry :: <bucket-entry>)
 	       (entry.hash-id-slot = key-id)
-		 & key= (ht, entry.key-slot, key);
+		 & key= (entry.key-slot, key);
 	     end method;
 
   let find-result = find-elt (bucket, test);
@@ -519,9 +549,6 @@ end method element;
 
 /* ---------------- */
 
-// Order of parameters for element-setter is 
-// different from that in the book
-
 // This function looks redundant at times, but it's necessary in order
 // to avoid race conditions with the garbage collector.
 
@@ -531,12 +558,14 @@ define method element-setter (value, ht :: <table>, key)
     rehash (ht);
   end until;
 
-  let (key-id, key-state) = key-hash (ht, key);
+  let (key=, key-hash)    = table-protocol(ht);
+
+  let (key-id, key-state) = key-hash (key);
   let bucket-index        = modulo (key-id, ht.bucket-count-slot);
   
   let test-method         = method (existing-item :: <bucket-entry>)
 			      (existing-item.hash-id-slot = key-id)
-				& (existing-item.key-slot   = key);
+				& key=(existing-item.key-slot, key);
 			    end method;
 
   let bucket-entry        = find-elt (ht.bucket-array-slot [bucket-index],
@@ -591,12 +620,14 @@ end method element-setter;
 // This is exactly the same code without the garbage collection stuff
 
 define method element-setter (value, ht :: <value-table>, key)
-  let key-id              = key-hash (ht, key);
+  let (key=, key-hash)    = table-protocol(ht);
+
+  let key-id              = key-hash (key);
   let bucket-index        = modulo (key-id, ht.bucket-count-slot);
   
   let test-method         = method (existing-item :: <bucket-entry>)
 			      (existing-item.hash-id-slot = key-id)
-				& (existing-item.key-slot   = key);
+				& key=(existing-item.key-slot, key);
 			    end method;
 
   let bucket-entry        = find-elt (ht.bucket-array-slot [bucket-index],
@@ -631,13 +662,15 @@ define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
     rehash (ht);
   end until;
 
-  let (key-id, key-state)   = key-hash (ht, key);
+  let (key=, key-hash)      = table-protocol(ht);
+
+  let (key-id, key-state)   = key-hash (key);
   let bucket-index          = modulo (key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot [bucket-index];
 
   let test = method (existing-item :: <bucket-entry>)
 	       (existing-item.hash-id-slot = key-id)
-		 & key= (ht, existing-item.key-slot, key);
+		 & key= (existing-item.key-slot, key);
 	     end method;
 
   let the-item = find-elt (bucket, test);
@@ -673,13 +706,15 @@ end method remove-key!;
 // This is exactly the same code without the garbage collection stuff
 
 define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
-  let key-id                = key-hash (ht, key);
+  let (key=, key-hash)      = table-protocol(ht);
+
+  let key-id                = key-hash (key);
   let bucket-index          = modulo (key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot [bucket-index];
 
   let test = method (existing-item :: <bucket-entry>)
 	       (existing-item.hash-id-slot = key-id)
-		 & key= (ht, existing-item.key-slot, key);
+		 & key= (existing-item.key-slot, key);
 	     end method;
 
   let the-item = find-elt (bucket, test);
@@ -733,6 +768,8 @@ end method resize-table;
 // good function to tune.
 
 define method rehash (ht :: <table>) => rehashed-ht :: <table>;
+  let (key=, key-hash)  =  table-protocol(ht);
+
   for (i from 0 below ht.bucket-count-slot)
 
     if (~ state-valid? (ht.bucket-states-slot [i]))     // rehash bucket
@@ -754,7 +791,7 @@ define method rehash (ht :: <table>) => rehashed-ht :: <table>;
 
 	else  // state is invalid
 
-	  let (id, state) = key-hash (ht, bucket-entry.key-slot);  
+	  let (id, state) = key-hash (bucket-entry.key-slot);  
 	  bucket-entry.hash-id-slot    := id;
 	  bucket-entry.hash-state-slot := state;
 
@@ -850,10 +887,7 @@ end class <ntable-state>;
 define method finished-table-state? (ht :: <table>,
 				     state :: <ntable-state>,
 				     limit)
-  // Return value:
-
   state.elements-touched-slot >= ht.item-count-slot;
-
 end method finished-table-state?;
 
 /* ---------------- */
@@ -923,7 +957,6 @@ define method get-bucket-entry (ht :: <table>, state :: <ntable-state>)
 
   let bucket = state.array-current-element-slot (ht.bucket-array-slot,
 						 state.array-state-slot);
-  // Return value:
 
   state.bucket-current-element-slot (bucket, state.bucket-state-slot);
 end method get-bucket-entry;
@@ -1084,42 +1117,3 @@ define method forward-iteration-protocol (ht :: <table>)
 	  current-table-element-setter,
 	  copy-table-state);
 end method forward-iteration-protocol;
-
-/* ---------------- */
-
-// Functions useful for people trying to build their own key hashes.
-
-
-// This is similar to a key-hash, except that it hashes things with
-// ordered: #t and ignores the sequence keys. USE WITH CAUTION: This
-// isn't a proper key-hash because two collections of different types
-// but identical key/element pairs won't generate the same hash id,
-// even though the two collections are =.
-
-// It also takes a function "element-hash" as a parameter, which it
-// applies to all elements of the sequence.
-
-define method sequence-hash (seq :: <sequence>, element-hash :: <function>)
-          => (id :: <integer>, state :: <object>);
-  let (current-id, current-state) = values (0, $permanent-hash-state);
-
-  for (elt in seq)
-    let (id, state) = element-hash (elt);
-
-    let (captured-id, captured-state) = merge-hash-codes (current-id, 
-							  current-state, 
-							  id, state,
-							  ordered: #t);
-
-    current-id    := captured-id;
-    current-state := captured-state;
-  end for;
-
-  values (current-id, current-state);
-end method sequence-hash;
-
-/* ---------------- */
-
-define method string-hash (s :: <string>)
-    => (id :: <integer>, state :: <object>);
-  sequence-hash(s, object-hash);
