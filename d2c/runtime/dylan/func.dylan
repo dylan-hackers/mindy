@@ -1,9 +1,13 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.9 1995/12/09 21:09:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.10 1995/12/14 00:12:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define abstract class <function> (<object>)
+  //
+  // Some human readable ``name'' for this function.
+  slot function-name :: <byte-string>,
+    required-init-keyword: function-name:;
   //
   // The general entry point for this function.  The actual address of the
   // C function.
@@ -54,6 +58,7 @@ define method make-closure
     (func :: <function>, closure-size :: <fixed-integer>)
     => res :: <raw-closure>;
   make(<raw-closure>,
+       function-name: func.function-name,
        general-entry: func.general-entry,
        specializers: func.function-specializers,
        rest?: func.function-rest?,
@@ -82,6 +87,7 @@ define method make-closure
     (func :: <method>, closure-size :: <fixed-integer>)
     => res :: <method-closure>;
   make(<method-closure>,
+       function-name: func.function-name,
        general-entry: func.general-entry,
        specializers: func.function-specializers,
        rest?: func.function-rest?,
