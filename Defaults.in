@@ -11,8 +11,6 @@ $srcroot = "@srcdir@";
 $buildroot = "@builddir@";
 $prefix = "@prefix@";
 $destdir = "@exec_prefix@";
-$bindir = "@bindir@";
-$libdir = "@libdir@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
@@ -37,7 +35,6 @@ $DYLANPATH = @DYLANPATH@;
 $CC = 'gcc';
 $CFLAGS = '-O4 -finline-functions';
 $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
-$PARSERGEN = $buildroot.'/tools/parsergen/parsergen';
 
 if (!$stage2) {
   $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen.dbc";
