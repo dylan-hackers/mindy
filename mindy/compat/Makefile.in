@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.6 2000/01/24 04:58:05 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.7 2000/10/31 14:17:25 dauclair Exp $
 ##
 ##  This is the makefile for the Mindy compatability library.
 ##
@@ -49,7 +49,7 @@ DESTDIR =
 AR      =               ar
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
-CFLAGS	=		$(CCOPTS) -I${SRCDIR} -I${CONFIGDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} -I${CONFIGDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\" -DTARGET=\"@d2c_target@\"
 YACC	=		@YACC@
 YFLAGS	=		-d
 LEX	=		@LEX@
@@ -66,15 +66,15 @@ LIBS	=		@LIBS@
 ## end of configure written portion
 ##
 
-OBJS	=	${LIBOBJS} protected.o
+OBJS	=	${LIBOBJS} protected.o cygwin.o
 
 SRCS	=	getcwd.c strerror.c strtod.c strtoul.c waitpid.c \
 		opendir.c strstr.c strtol.c tmpnam.c sigaction.c \
-		protected.c matherr.c memmove.c setsid.c shl.c
+		protected.c matherr.c memmove.c setsid.c shl.c cygwin.c
 
 ALLOBJS	=	getcwd.o strerror.o strtod.o strtoul.o waitpid.o \
 		opendir.o strstr.o strtol.o tmpnam.o sigaction.o \
-		protected.o matherr.o memmove.o setsid.c
+		protected.o matherr.o memmove.o setsid.c cygwin.o
 
 libcompat.a: ${OBJS}
 	${AR} ru libcompat.a ${OBJS}
@@ -93,6 +93,9 @@ install: libcompat.a
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
+
+cygwin.o: cygwin.c
+	${CC} -c ${CFLAGS} cygwin.c
 
 getcwd.o:  ${SRCDIR}/getcwd.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/getcwd.c
