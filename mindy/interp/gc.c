@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.21 1995/07/11 12:40:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.22 1996/01/19 11:25:58 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -39,6 +39,8 @@
 #include "module.h"
 #include "bool.h"
 #include "sym.h"
+#include "num.h"
+#include "error.h"
 
 extern void scavenge_thread_roots(void);
 extern void scavenge_bool_roots(void);
@@ -82,13 +84,13 @@ struct block {
 #define BLOCK_SIZE (128*1024)
 #define DEFAULT_BYTES_CONSED_BETWEEN_GCS (2*1024*1024)
 
-static struct block *FreeBlocks = 0;
-static struct block *UsedBlocks = 0;
+static struct block *FreeBlocks = NULL;
+static struct block *UsedBlocks = NULL;
 #if CHECKGC
-static struct block *OldBlocks = 0;
+static struct block *OldBlocks = NULL;
 #endif
-static struct block *cur_block = 0;
-static void *cur_fill = 0, *cur_end = 0;
+static struct block *cur_block = NULL;
+static void *cur_fill = NULL, *cur_end = NULL;
 static int BytesInUse = 0;
 static int BytesConsedBetweenGCs = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
 static int GCTrigger = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
@@ -106,14 +108,15 @@ void *raw_alloc(int bytes)
     void *result;
 
     if (bytes < 0)
+	/* We don't return NULL because trying to allocate a negative number */
+	/* of bytes is a sign that something real bad is trying to happen. */
 	lose("Can't allocate a negative number of bytes: %d", bytes);
 
     /* round bytes up to the next dual-word boundy. */
     bytes = (bytes + 7) & ~7;
 
     if (bytes > BLOCK_SIZE - sizeof(struct block))
-	lose("Can't allocate %d bytes, %d at most.",
-	     bytes, BLOCK_SIZE - sizeof(struct block));
+	return NULL;
 
     if ((char *)cur_fill + bytes > (char *)cur_end) {
 	struct block *block;
@@ -125,7 +128,7 @@ void *raw_alloc(int bytes)
 	else {
 	    block = malloc(BLOCK_SIZE);
             if (block == NULL)
-                lose("Heap is full!  Can't allocate %d bytes", bytes);
+		lose("Heap is full!  Can't allocate %d bytes", bytes);
 	    block->base = (char *)block + sizeof(struct block);
 	    block->end = (char *)block + BLOCK_SIZE;
 	}
@@ -170,12 +173,21 @@ obj_t alloc(obj_t class, int bytes)
 	lose("Tried to allocate a class that wasn't scavenged.");
 
     ptr = raw_alloc(bytes + sizeof(int)*2);
+#else
+    ptr = raw_alloc(bytes);
+#endif
+
+    if (ptr == NULL)
+	error("Can't allocate %d bytes for %s",
+	      make_fixnum(bytes),
+	      CLASS(class)->debug_name);
+
+#if CHECKGC
     ptr[0] = 0xbeadbabe;
     ptr[1] = bytes;
 
     result = ptr_obj(ptr + 2);
 #else
-    ptr = raw_alloc(bytes);
     result = ptr_obj(ptr);
 #endif
 
@@ -232,11 +244,18 @@ obj_t transport(obj_t obj, int bytes)
 	     ptr[1], bytes);
 
     new = raw_alloc(bytes + sizeof(int)*2);
+#else
+    new = raw_alloc(bytes);
+#endif
+
+    if (new == NULL)
+	lose("raw_alloc failed duing GC");
+
+#if CHECKGC
     new_obj = ptr_obj(new + 2);
 
     memcpy(new, ptr, bytes + sizeof(int)*2);
 #else
-    new = raw_alloc(bytes);
     new_obj = ptr_obj(new);
     memcpy(new, obj_ptr(void *, obj), bytes);
 #endif
