@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../common-dylan -L../file-system';
+$D2CFLAGS = $D2CFLAGS . ' -L../common-dylan -L../file-system -L../file-system-base';
 
 if ($features{'compiled_for_unix'}) {
     &emit_c_file_rule('posix-system') if ($enable_d2c);
