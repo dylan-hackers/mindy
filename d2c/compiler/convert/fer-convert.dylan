@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.55 1996/04/06 07:14:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.56 1996/05/01 12:45:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -642,7 +642,8 @@ define method fer-convert-method
     (builder :: <fer-builder>, meth :: <method-parse>,
      name :: false-or(<string>), ctv :: false-or(<ct-function>),
      visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
-     lexenv :: <lexenv>)
+     lexenv :: <lexenv>,
+     #key next-method-info :: false-or(<list>))
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
 
@@ -680,20 +681,17 @@ define method fer-convert-method
     let (type, type-var) = param-type-and-var(param);
     add!(specializers, type);
     let name = param.param-name;
-    let var = make-lexical-var(builder, name.token-symbol, source, type);
+    let var = make-lexical-var(body-builder, name.token-symbol, source, type);
     add-binding(lexenv, name, var, type-var: type-var);
     add!(vars, var);
     if (type-var)
       non-const-arg-types? := #t;
       add!(specializer-leaves, type-var);
     else
-      add!(specializer-leaves, make-literal-constant(builder, type));
+      add!(specializer-leaves, make-literal-constant(body-builder, type));
     end;
   end;
   let next = paramlist.paramlist-next;
-  let next-info-var
-    = next & make-lexical-var(builder, #"next-method-info", source,
-			      specifier-type(#"<list>"));
   let rest = paramlist.varlist-rest;
   let rest-var
     = if (rest)
@@ -703,55 +701,102 @@ define method fer-convert-method
 	     "#rest parameters can't have a type -- ignoring");
 	end;
 	let name = rest.param-name;
-	let var = make-lexical-var(builder, name.token-symbol, source,
+	let var = make-lexical-var(body-builder, name.token-symbol, source,
 				   // ### should this be <object>?
 				   specifier-type(#"<simple-object-vector>"));
 	add-binding(lexenv, name, var);
 	var;
       elseif (next & paramlist.paramlist-keys)
-	make-lexical-var(builder, #"rest", source,
+	make-lexical-var(body-builder, #"rest", source,
 			 specifier-type(#"<simple-object-vector>"));
       end;
   if (next)
-    let var = make-lexical-var(builder, next.token-symbol, source,
+    //
+    // Make the next-info var.
+    let next-info-var
+      = make-lexical-var(body-builder, #"next-method-info", source,
+			 specifier-type(#"<list>"));
+    //
+    // Make the actual #next var.
+    let var = make-lexical-var(body-builder, next.token-symbol, source,
 			       object-ctype());
-    let cookie-args = make(<stretchy-vector>);
-    if (rest-var)
-      add!(cookie-args,
-	   ref-dylan-defn(builder, lexenv.lexenv-policy, source,
-			  #"%make-next-method-cookie"));
-    end;
-    add!(cookie-args, next-info-var);
-    for (var in vars)
-      add!(cookie-args, var);
-    end;
-    if (rest-var)
-      add!(cookie-args, rest-var);
-    end;
-    build-let
-      (body-builder, lexenv.lexenv-policy, source, var,
-       make-unknown-call
-	 (builder,
-	  ref-dylan-defn(builder, lexenv.lexenv-policy, source,
-			 if (rest-var)
-			   #"apply";
-			 else
-			   #"%make-next-method-cookie";
-			 end),
-	  #f, as(<list>, cookie-args)));
-    add!(vars, next-info-var);
     add-binding(lexenv, next, var);
-  end;
+    //
+    // And bind it up.
+    if (next-method-info == #())
+      // We can statically tell that there is no next method.  So just bind
+      // the #next var to #f.
+      build-let(body-builder, lexenv.lexenv-policy, source, var,
+		make-literal-constant(body-builder, as(<ct-value>, #f)));
+    else
+      let orig-args-var
+	= make-local-var(body-builder, #"orig-args",
+			 specifier-type(#"<simple-object-vector>"));
+      if (rest-var)
+	let fixed = make-values-cluster(builder, #"fixed", wild-ctype());
+	build-assignment
+	  (body-builder, lexenv.lexenv-policy, source, fixed,
+	   make-operation
+	     (body-builder, <primitive>, as(<list>, vars), name: #"values"));
+	let rest = make-values-cluster(builder, #"rest", wild-ctype());
+	build-assignment
+	  (body-builder, lexenv.lexenv-policy, source, rest,
+	   make-operation
+	     (body-builder, <primitive>, list(rest-var),
+	      name: #"values-sequence"));
+	let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
+	build-assignment
+	  (body-builder, lexenv.lexenv-policy, source, cluster,
+	   make-operation
+	     (body-builder, <primitive>, list(fixed, rest),
+	      name: #"merge-clusters"));
+	build-assignment
+	  (body-builder, lexenv.lexenv-policy, source, orig-args-var,
+	   make-operation
+	     (body-builder, <primitive>,
+	      list(cluster,
+		   make-literal-constant(body-builder, as(<ct-value>, 0))),
+	      name: #"canonicalize-results"));
+      else
+	build-assignment
+	  (body-builder, lexenv.lexenv-policy, source, orig-args-var,
+	   make-operation
+	     (body-builder, <primitive>, as(<list>, vars), name: #"vector"));
+      end if;
+
+      build-let
+	(body-builder, lexenv.lexenv-policy, source, var,
+	 make-operation
+	   (body-builder, <primitive>,
+	    list(if (next-method-info)
+		   make-literal-constant
+		     (body-builder, as(<ct-value>, next-method-info));
+		 else
+		   next-info-var;
+		 end if,
+		 orig-args-var),
+	    name: #"make-next-method"));
+    end if;
+    //
+    // Add the next-info-var to the vars.  We have to add it here because we
+    // don't want it being included in the original-args vector.
+    add!(vars, next-info-var);
+  end if;
+
   if (rest-var)
+    // This has to be added after the next-info-var so that the vars show
+    // up in the correct order.
     add!(vars, rest-var);
   end;
+
   let keyword-infos
     = if (paramlist.paramlist-keys)
 	let infos = make(<stretchy-vector>);
 	for (param in paramlist.paramlist-keys)
 	  let name = param.param-name;
 	  let (type, type-var) = param-type-and-var(param);
-	  let var = make-lexical-var(builder, name.token-symbol, source, type);
+	  let var = make-lexical-var(body-builder, name.token-symbol,
+				     source, type);
 	  let default = if (param.param-default)
 			  ct-eval(param.param-default, lexenv);
 			else
@@ -764,15 +809,16 @@ define method fer-convert-method
 		      required: ~cinstance?(default, type)));
 	    add!(vars, var);
 	  else
-	    let temp = make-local-var(builder, name.token-symbol, type);
+	    let temp = make-local-var(body-builder, name.token-symbol, type);
 	    let pre-default
-	      = make-lexical-var(builder, name.token-symbol, source, type);
+	      = make-lexical-var(body-builder, name.token-symbol,
+				 source, type);
 	    let info = make(<key-info>, key-name: param.param-keyword,
 			    type: type, default: #f);
 	    add!(infos, info);
 	    add!(vars, pre-default);
 	    let supplied?-var
-	      = make-lexical-var(builder,
+	      = make-lexical-var(body-builder,
 				 as(<symbol>,
 				    format-to-string("%s-supplied?",
 						     name.token-symbol)),
@@ -783,7 +829,7 @@ define method fer-convert-method
 	      build-let(body-builder, lexenv.lexenv-policy,
 			source, supplied?-var,
 			make-operation
-			  (builder, <primitive>, list(pre-default),
+			  (body-builder, <primitive>, list(pre-default),
 			   name: #"initialized?"));
 	    else
 	      add!(vars, supplied?-var);
@@ -802,12 +848,12 @@ define method fer-convert-method
 		      var, temp);
 	  end;
 	  if (type-var)
-	    let checked = make-lexical-var(builder, name.token-symbol, source,
-					   object-ctype());
+	    let checked = make-lexical-var(body-builder, name.token-symbol,
+					   source, object-ctype());
 	    build-assignment
 	      (body-builder, lexenv.lexenv-policy, source, checked,
 	       make-check-type-operation
-		 (builder, lexenv.lexenv-policy, source, var, type-var));
+		 (body-builder, lexenv.lexenv-policy, source, var, type-var));
 	    add-binding(lexenv, name, checked, type-var: type-var);
 	  else
 	    add-binding(lexenv, name, var);
@@ -826,7 +872,9 @@ define method fer-convert-method
   for (param in returns.varlist-fixed)
     let (type, type-var) = param-type-and-var(param);
     add!(result-types, type);
-    let var = make-local-var(builder, param.param-name.token-symbol, type);
+    let var
+      = make-local-var(result-check-builder, param.param-name.token-symbol,
+		       type);
     if (type-var)
       non-const-result-types? := #t;
       add!(result-type-leaves, type-var);
@@ -840,7 +888,8 @@ define method fer-convert-method
 	   (result-check-builder, specializer-lexenv.lexenv-policy, source,
 	    temp, type-var));
     else
-      add!(result-type-leaves, make-literal-constant(builder, type));
+      add!(result-type-leaves,
+	   make-literal-constant(result-check-builder, type));
       add!(fixed-results, var);
     end;
     add!(checked-fixed-results, var);
