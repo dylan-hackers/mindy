@@ -2,7 +2,7 @@ library: parse-arguments
 module: dylan-user
 author:  Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.7 1998/12/23 20:35:02 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.8 1998/12/29 20:54:50 emk Exp $
 
 //======================================================================
 //
@@ -29,7 +29,7 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.7 1998/
 define library parse-arguments
   use dylan;
   use table-extensions;
-
+  
   export
     parse-arguments,
     option-parser-protocol;
@@ -52,9 +52,13 @@ define module option-parser-protocol
     reset-option-parser,
     parse-option,
 
+    <negative-option-parser>,
+    negative-option?,
+
     <argument-token>,
       token-value,
     <regular-argument-token>,
+    <option-token>,
     <short-option-token>,
       tightly-bound-to-next-token?, // XXX - not implemented fully
     <long-option-token>,

@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
-rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.3 1998/12/23 20:35:04 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.4 1998/12/29 20:54:51 emk Exp $
 
 //======================================================================
 //
@@ -28,6 +28,47 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.3 1998/12/23 2
 
 
 //======================================================================
+//  <negative-option-parser>
+//======================================================================
+//  Certain options may occur in positive and negative forms. This
+//  absract class takes care of the details.
+
+define abstract open primary class <negative-option-parser> (<option-parser>)
+  slot negative-long-options :: <list> /* of: <string> */,
+    init-keyword: negative-long-options:,
+    init-value: #();
+  slot negative-short-options :: <list> /* of: <string> */,
+    init-keyword: negative-short-options:,
+    init-value: #();  
+end class <negative-option-parser>;
+
+define method initialize
+    (parser :: <negative-option-parser>, #next next-method, #key, #all-keys)
+ => ()
+  next-method();
+  // We keep our own local lists of option names, because we support two
+  // different types--positive and negative. So we need to explain about
+  // our extra options to parse-options by adding them to the standard
+  // list.
+  parser.long-option-names := concatenate(parser.long-option-names,
+					  parser.negative-long-options);
+  parser.short-option-names := concatenate(parser.short-option-names,
+					   parser.negative-short-options);
+end method;
+
+define method negative-option?
+    (parser :: <negative-option-parser>, token :: <option-token>)
+ => (negative? :: <boolean>)
+  let negatives =
+    select (token by instance?)
+      <short-option-token> => parser.negative-short-options;
+      <long-option-token> => parser.negative-long-options;
+    end select;
+  member?(token.token-value, negatives, test: \=)
+end method negative-option?;
+
+
+//======================================================================
 //  <simple-option-parser>
 //======================================================================
 //  Simple options represent Boolean values. They may default to #t or
@@ -38,20 +79,7 @@ rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.3 1998/12/23 2
 //  Examples:
 //    -q, -v, --quiet, --verbose
 
-define class <simple-option-parser> (<option-parser>)
-  slot positive-long-options :: <list> /* of: <string> */,
-    init-keyword: long-options:,
-    init-value: #();
-  slot negative-long-options :: <list> /* of: <string> */,
-    init-keyword: negative-long-options:,
-    init-value: #();
-  slot positive-short-options :: <list> /* of: <string> */,
-    init-keyword: short-options:,
-    init-value: #();
-  slot negative-short-options :: <list> /* of: <string> */,
-    init-keyword: negative-short-options:,
-    init-value: #();
-
+define class <simple-option-parser> (<negative-option-parser>)
   // Information used to reset our parse state.
   slot option-default-value :: <boolean>,
     init-keyword: default:,
@@ -59,16 +87,9 @@ define class <simple-option-parser> (<option-parser>)
 end class <simple-option-parser>;
 
 define method initialize
-    (parser :: <simple-option-parser>, #rest rest, #key, #all-keys)
+    (parser :: <simple-option-parser>, #next next-method, #key, #all-keys)
  => ()
-  // We keep our own local lists of option names, because we support two
-  // different types--positive and negative. So we need to explain about
-  // our extra options to parse-options by adding them to the standard
-  // list.
-  parser.long-option-names := concatenate(parser.long-option-names,
-					  parser.negative-long-options);
-  parser.short-option-names := concatenate(parser.short-option-names,
-					   parser.negative-short-options);
+  next-method();
   parser.option-might-have-parameters? := #f;
 end method initialize;
 
@@ -83,12 +104,7 @@ define method parse-option
      arg-parser :: <argument-list-parser>)
  => ()
   let option = get-argument-token(arg-parser);
-  let negatives =
-    select (option by instance?)
-      <short-option-token> => parser.negative-short-options;
-      <long-option-token> => parser.negative-long-options;
-    end select;
-  parser.option-value := ~member?(option.token-value, negatives, test: \=);
+  parser.option-value := ~negative-option?(parser, option);
 end method parse-option;
 
 

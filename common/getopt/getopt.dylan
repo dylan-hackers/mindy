@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.11 1998/12/23 20:35:03 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.12 1998/12/29 20:54:50 emk Exp $
 
 //======================================================================
 //
@@ -202,13 +202,16 @@ end class <argument-token>;
 define class <regular-argument-token> (<argument-token>)
 end class <regular-argument-token>;
 
-define class <short-option-token> (<argument-token>)
+define abstract class <option-token> (<argument-token>)
+end class <option-token>;
+
+define class <short-option-token> (<option-token>)
   slot tightly-bound-to-next-token?,
     init-keyword: tightly-bound?:,
     init-value: #f;
 end class <short-option-token>;
 
-define class <long-option-token> (<argument-token>)
+define class <long-option-token> (<option-token>)
 end class <long-option-token>;
 
 define class <equals-token> (<argument-token>)
