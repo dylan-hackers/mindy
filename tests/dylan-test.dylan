@@ -549,5 +549,5 @@ define method main(argv0, #rest args)
 #endif
     end if;
   end if;
-  force-output(*standard-output*);
+//  force-output(*standard-output*);
 end method;
