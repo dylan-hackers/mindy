@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.6 1995/03/23 22:05:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.7 1995/04/27 02:54:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -228,10 +228,8 @@ define method expand (form :: <for>, lexenv :: union(<false>, <lexenv>))
     let return = make-temp(#"return");
     unless (empty?(form.for-finally))
       repeat-call
-	:= make(<funcall>,
-		function: make(<varref>, id: make-dylan-id(#"mv-call")),
-		arguments: vector(make(<varref>, id: return),
-				  repeat-call));
+	:= make(<mv-call>,
+		operands: vector(make(<varref>, id: return), repeat-call));
     end;
     if (explicit-end-test)
       add!(inner-body,
