@@ -27,6 +27,7 @@ $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
 $enable_debug = "@enable_debug@" eq "yes";
+$enable_profiling = "@enable_debug@" eq "profiling";
 $enable_mindy = "@enable_mindy@" eq "yes";
 $enable_d2c = "@enable_d2c@" eq "yes";
 $build_tools_with_d2c = "@build_tools_with_d2c@" eq "yes";
@@ -64,12 +65,12 @@ $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
 $CC = '@CC@';
-if ($enable_debug) {
-  $CFLAGS = '-g -O';
-} else {
-  #BGH -- use -pg for profiling, remove -g if you don't want debugging
-  $CFLAGS = '-O3 -g -fomit-frame-pointer';
-}
+#if ($enable_debug) {
+#  $CFLAGS = '-g -O';
+#} else {
+#  #BGH -- use -pg for profiling, remove -g if you don't want debugging
+#  $CFLAGS = '-O3 -g -fomit-frame-pointer';
+#}
 
 $PARSERGEN = "$buildroot/tools/parsergen/parsergen";
 $MELANGE = "$buildroot/tools/melange/melange";
