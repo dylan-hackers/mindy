@@ -1,11 +1,11 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.18 2001/01/25 03:50:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.19 2001/02/04 23:19:06 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -508,7 +508,7 @@ define method object-name (object :: <ct-value>, state :: <heap-file-state>)
     if (info.const-info-heap-labels.empty?)
       //
       // Make (and record) a new label.
-      let label = object-label(object, state)
+      let label = object-label(object)
 	           | stringify(state.id-prefix, state.next-id);
       state.next-id := state.next-id + 1;
       info.const-info-heap-labels := vector(label);
@@ -527,7 +527,7 @@ define method object-name (object :: <ct-value>, state :: <heap-file-state>)
 end method object-name;
 
 
-// object-label -- internal
+// object-label -- external (created in cback)
 // 
 // Since the following objects are deferred to the global heap (see
 // defer-for-global-heap? below), we need to try to give them them
@@ -535,39 +535,39 @@ end method object-name;
 // their own local names to the same object.
 
 define generic object-label
-    (object :: <ct-value>, state :: <heap-file-state>)
+    (object :: <ct-value>)
  => (label :: false-or(<byte-string>));
 
 // By default we can't come up with a name.
 //
 define method object-label
-    (object :: <ct-value>, state :: <heap-file-state>)
+    (object :: <ct-value>)
  => (label :: false-or(<byte-string>));
   #f;
 end;
 
 define method object-label
-    (object :: <literal-symbol>, state :: <heap-file-state>)
- => (label :: false-or(<byte-string>));
+    (object :: <literal-symbol>)
+ => (label :: <byte-string>);
   concatenate("SYM_",
 	      string-to-c-name(as(<string>, object.literal-value)),
 	      "_HEAP");
 end;
 
 define method object-label
-    (object :: <ct-open-generic>, state :: <heap-file-state>)
- => (label :: false-or(<byte-string>));
+    (object :: <ct-open-generic>)
+ => (label :: <byte-string>);
   concatenate(object.ct-function-definition.defn-name.c-name-global, "_HEAP");
 end;
 
 define method object-label
-    (object :: <defined-cclass>, state :: <heap-file-state>)
- => (label :: false-or(<byte-string>));
+    (object :: <defined-cclass>)
+ => (label :: <byte-string>);
   concatenate(object.class-defn.defn-name.c-name-global, "_HEAP");
 end;
 
 define method object-label
-    (object :: <slot-info>, state :: <heap-file-state>)
+    (object :: <slot-info>)
  => (label :: false-or(<byte-string>));
   let cclass-defn = object.slot-introduced-by.class-defn;
   let getter = object.slot-getter;
@@ -1426,7 +1426,7 @@ end;
 
 // Spew-instance is the workhorse function which actually writes out the value
 // for an object.  Given a class and a sequence of slot values, it spews
-// assembly code which creates a new object instance and provides values for
+// C code which creates a new object instance and provides values for
 // each slot.  Slot values may be specified explicitly as a keyword/value in
 // "slots".  Any slot which is not explicitly specified will be filled in with
 // a default value.

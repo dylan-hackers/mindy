@@ -1,11 +1,11 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.16 2000/10/30 09:07:13 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.17 2001/02/04 23:18:32 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -279,7 +279,7 @@ end;
 
 // Lots of places we emit ``useful'' information inside comments.  But if the
 // useful information contains a ``*/'' it will confuse the C compiler.  So
-// we use this routine to clobber all occurances of */ before actually writing
+// we use this routine to clobber all occurences of */ before actually writing
 // the comment. We also clobber ``/*'' because some C compilers warn about nested
 // comments if they encounter it.
 // 
@@ -645,6 +645,16 @@ define method emit-prototype-for
   let stream = file.file-body-stream;
   format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
 	 name, defn.clean-for-comment);
+end;
+
+// We know that the object is located in the global heap,
+// so we do not take the descriptor.heapptr route.
+define method emit-prototype-for
+    (name :: <byte-string>, heap-info == #"heap",
+     file :: <file-state>)
+    => ();
+  let stream = file.file-body-stream;
+  format(stream, "extern struct heapobj %s;\n\n", name);
 end;
 
 define method emit-prototype-for
@@ -2888,6 +2898,22 @@ define method ref-leaf (target-rep :: <c-representation>,
   conversion-expr(target-rep, expr, rep, file);
 end;
 
+define method ref-leaf (target-rep :: <heap-representation>,
+			leaf :: <literal-constant>,
+			file :: <file-state>,
+			#next next-method)
+    => res :: <string>;
+
+  let label = object-label(leaf.value);
+  if (label)
+    next-method();
+    maybe-emit-prototype(label, #"heap", file);
+    stringify('&', label);
+  else
+    next-method();
+  end;
+end;
+
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <definition-constant-leaf>,
 			file :: <file-state>)
@@ -2959,7 +2985,7 @@ end;
 // new-root.  Lit is the init-value, and defn is some thingie used to indicate
 // whether we've prototyped this thing yet or not.
 //
-// Putting things in the roots in done lazily because we don't know if we we
+// Putting things in the roots is done lazily because we don't know if we
 // will be able to represent as a C literal or constant until now.
 //
 define method aux-c-expr-and-rep
@@ -3093,7 +3119,7 @@ define method c-expr-and-rep (lit :: <literal-integer>,
   values(if (val == ash(as(<extended-integer>, -1),
 			*current-target*.platform-integer-length - 1))
 	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
-	   // print it in hex (assuming 2's compliment).
+	   // print it in hex (assuming 2's complement).
 	   format-to-string("0x%x", -val);
 	 else
 	   format-to-string("%d", val);

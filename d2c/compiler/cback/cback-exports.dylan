@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.7 2001/01/25 03:50:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.8 2001/02/04 23:18:08 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -67,12 +67,9 @@ define module cback
     import: {*current-target*, platform-integer-length};
   use ctype;
   use definitions;
-  // use define-functions;
   use function-definitions;
-  // use define-constants-and-variables;
   use variable-definitions;
   use define-classes;
-  // use forward-defn-classes;
   use flow;
   use front;
   use names;
@@ -81,13 +78,11 @@ define module cback
   use representation;
   use signature-interface;
   use stack-analysis;
-  // use top-level-expressions;
   use top-level-forms;
   use utils;
   use variables;
   use source;
   use source-utilities; // For <macro-source-location>, which isn't yet handled
-  // use cheese;
 
   export
     <unit-state>, unit-prefix, unit-init-roots, unit-eagerly-reference,
@@ -101,6 +96,8 @@ define module cback
     entry-point-c-name, *emit-all-function-objects?*,
     c-name, c-name-global, string-to-c-name, clean-for-comment,
     float-to-string;
+
+  create object-label;
 end;
 
 
@@ -118,9 +115,7 @@ define module heap
   use classes;
   use compile-time-functions;
   use definitions;
-  // use define-functions;
   use function-definitions;
-  // use define-classes;
   use cback;
   use od-format;
   use platform;
