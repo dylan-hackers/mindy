@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.4 2000/01/24 04:58:20 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.5 2000/03/18 15:43:27 robmyers Exp $
 *
 * This file starts everything going.
 *
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
     init();
 
-    thread = thread_create(symbol("main"));
+    thread = thread_make(symbol("main"));
     *thread->sp++ = make_raw_function("startup", obj_Nil,
 				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	if (var == NULL)
 	    lose("main undefined?");
 
-	thread = thread_create(symbol("exit"));
+	thread = thread_make(symbol("exit"));
 	*thread->sp++ = var->value;
     }
     return 0;

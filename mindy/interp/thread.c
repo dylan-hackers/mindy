@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/thread.c,v 1.3 2000/01/24 04:58:21 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/thread.c,v 1.4 2000/03/18 15:43:48 robmyers Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -189,7 +189,7 @@ static void start_thread(struct thread *thread)
 
 /* Thread creation. */
 
-struct thread *thread_create(obj_t debug_name)
+struct thread *thread_make(obj_t debug_name)
 {
     obj_t thread_obj = alloc(obj_ThreadClass, sizeof(struct thread_obj));
     struct thread_list *list = malloc(sizeof(*list));
@@ -229,7 +229,7 @@ struct thread *thread_create(obj_t debug_name)
 
 static obj_t dylan_spawn_thread(obj_t debug_name, obj_t func)
 {
-    struct thread *thread = thread_create(debug_name);
+    struct thread *thread = thread_make(debug_name);
 
     *thread->sp++ = func;
 
@@ -405,7 +405,7 @@ void thread_buggered(struct thread *thread)
     }
 }
 
-void thread_suspend(struct thread *thread)
+void thread_stop(struct thread *thread)
 {
     if (thread->suspend_count++ == 0 && thread->status == status_Running) {
 	suspend_thread(thread);

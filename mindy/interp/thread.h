@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/thread.h,v 1.2 2000/01/24 04:58:21 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/thread.h,v 1.3 2000/03/18 15:43:55 robmyers Exp $
 *
 \**********************************************************************/
 
@@ -86,13 +86,13 @@ extern struct thread_list *all_threads(void);
 extern struct thread *thread_current(void);
 extern void thread_set_current(struct thread *thread);
 extern struct thread *thread_pick_next(void);
-extern struct thread *thread_create(obj_t debug_name);
+extern struct thread *thread_make(obj_t debug_name);
 extern void thread_push_escape(struct thread *thread);
 extern void thread_pop_escape(struct thread *thread);
 extern void thread_kill(struct thread *thread);
 extern void thread_debuggered(struct thread *thread, obj_t condition);
 extern void thread_buggered(struct thread *thread);
-extern void thread_suspend(struct thread *thread);
+extern void thread_stop(struct thread *thread);
 extern void thread_restart(struct thread *thread);
 
 extern obj_t make_lock(void);

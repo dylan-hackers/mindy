@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.3 2000/01/24 04:58:10 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/debug.c,v 1.4 2000/03/18 15:42:56 robmyers Exp $
 *
 * This file implements the debugger.
 *
@@ -282,7 +282,7 @@ static void suspend_other_threads(struct thread *thread)
 
     for (threads = all_threads(); threads != NULL; threads = threads->next)
 	if (threads->thread != thread)
-	    thread_suspend(threads->thread);
+	    thread_stop(threads->thread);
 }
 
 static void restart_other_threads(struct thread *thread)
@@ -938,7 +938,7 @@ static void flush_cmd(obj_t args)
     }
 
     if ((thread = CurThread) == NULL) {
-	thread = thread_create(make_byte_string("debugger flush cmd"));
+	thread = thread_make(make_byte_string("debugger flush cmd"));
 	set_c_continuation(thread, kill_me);
     }
 
@@ -1261,7 +1261,7 @@ static void call_or_print(struct variable *var, obj_t args,
     }
 
     if (CurThread == NULL) {
-	thread = thread_create(var ? var->name : obj_False);
+	thread = thread_make(var ? var->name : obj_False);
 	set_c_continuation(thread, 
 			   suspend_others ? kill_me
 			     : kill_me_without_restart);
@@ -1407,7 +1407,7 @@ static void disable_cmd(obj_t args)
 	    return;
     }
 
-    thread_suspend(thread);
+    thread_stop(thread);
     print_thread(thread);
 }
     
@@ -1901,7 +1901,7 @@ static void breakpoint_cmd(obj_t args)
 
 	    if (thread == NULL) {
 		thread
-		    = thread_create(make_byte_string("eval for disassemble"));
+		    = thread_make(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {
@@ -2253,7 +2253,7 @@ static void disassemble_cmd(obj_t args)
 
 	    if (thread == NULL) {
 		thread
-		    = thread_create(make_byte_string("eval for disassemble"));
+		    = thread_make(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {
@@ -2326,7 +2326,7 @@ static void describe_cmd(obj_t args)
 
 	    if (thread == NULL) {
 		thread
-		    = thread_create(make_byte_string("eval for disassemble"));
+		    = thread_make(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {
