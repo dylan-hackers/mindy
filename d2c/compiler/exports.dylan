@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.40 1995/04/29 04:04:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.41 1995/04/29 08:39:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -588,8 +588,8 @@ define module builder-interface
     build-assignment, build-join, make-operation, <fer-builder>, build-let,
     make-primitive-operation, make-mv-operation, make-set-operation,
     make-literal-constant, make-definition-leaf, make-lexical-var,
-    make-local-var, make-values-cluster, copy-variable, make-exit-function,
-    build-method-body, make-hairy-method-literal,
+    make-ssa-var, make-local-var, make-values-cluster, copy-variable,
+    make-exit-function, build-method-body, make-hairy-method-literal,
 
     <fer-component>;
 end;
@@ -666,12 +666,15 @@ define module front
   export
     dump-fer, id, optimize-component,
 
+    <fer-assignment>, policy,
+    <let-assignment>, let-next, <set-assignment>,
+
     <abstract-call>, <local-call>, <known-call>,
     <unknown-call>, <error-call>, <mv-call>,
     <primitive>, name, <prologue>,
-    <catcher>, exit-function, <pitcher>,
+    <catcher>, exit-function, exit-function-setter, target-region,
     <set>, variable,
-    <self-tail-call>, self-tail-call-of,
+    <self-tail-call>, self-tail-call-of, next-self-tail-call,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
@@ -680,14 +683,20 @@ define module front
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
-    <function-literal>, <method-literal>, <lambda>, prologue, result-type,
-    environment,
-    <hairy-method-literal>,
+    <function-literal>, <method-literal>,
+    <lambda>, prologue, result-type, result-type-setter,
+    self-call-block, self-call-block-setter,
+    self-tail-calls, self-tail-calls-setter, environment,
+    <hairy-method-literal>, signature, main-entry,
+    <exit-function>, catcher, catcher-setter,
+
+    all-lets, all-lets-setter,
 
     <fer-exit-block-region>, catcher,
+    <pitcher>, pitched-type, pitched-type-setter,
 
-    <environment>, closure-vars,
-    <closure-var>, original-var, copy-var, closure-next;
+    <environment>, closure-vars, closure-vars-setter,
+    <closure-var>, original-var, copy-var, closure-next, closure-next-setter;
     
 end;
 
@@ -706,8 +715,8 @@ define module fer-convert
   use parse-tree;
   use expand;
   use flow,
-    rename: {<expression> => <fer-expression>,
-	     <assignment> => <fer-assignment>},
+    exclude: {<assignment>},
+    rename: {<expression> => <fer-expression>},
     export: all;
   use front, import: {catcher};
   use builder-interface, export: all;
@@ -744,7 +753,7 @@ define module define-functions
   export
     compute-signature,
     function-defn-signature-setter, function-defn-hairy?-setter,
-    <generic-definition>,
+    <generic-definition>, ct-sorted-applicable-methods,
     method-defn-leaf-setter,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
@@ -809,6 +818,23 @@ define module top-level-expressions
   use builder-interface;
   use fer-convert;
   use expand;
+end;
+
+define module cheese
+  use common;
+  use utils;
+  use compile-time-values;
+  use definitions;
+  use variables;
+  use flow;
+  use front;
+  use ctype;
+  use classes;
+  use signature-interface;
+  use source;
+  use builder-interface;
+  use policy;
+  use define-functions;
 end;
 
 define module cback
