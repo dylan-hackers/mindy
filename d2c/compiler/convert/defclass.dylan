@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.68 1996/04/14 19:42:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.69 1996/04/15 11:57:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -266,8 +266,8 @@ end;
 
 
 define class <maker-function-definition> (<abstract-method-definition>)
-  constant slot maker-func-defn-class-defn :: <class-definition>,
-    required-init-keyword: class-defn:;
+  slot maker-func-defn-class-defn :: <class-definition>,
+    init-keyword: class-defn:;
 end class <maker-function-definition>;
 
 define sealed domain make (singleton(<maker-function-definition>));
@@ -2776,6 +2776,15 @@ add-make-dumper(#"init-function-definition", *compiler-dispatcher*,
 		<init-function-definition>,
 		$abstract-method-definition-slots,
 		load-external: #t);
+
+add-make-dumper
+  (#"maker-function-definition", *compiler-dispatcher*,
+   <maker-function-definition>,
+   concatenate
+     ($abstract-method-definition-slots,
+      list(maker-func-defn-class-defn, class-defn:,
+	     maker-func-defn-class-defn-setter)),
+   load-external: #t);
 
 // Seals for file compiler/convert/defclass.dylan
 
