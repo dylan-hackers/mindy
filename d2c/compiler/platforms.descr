@@ -139,6 +139,12 @@
 // is in stabs format, and this does little good if the C compiler
 // doesn't also output debugging information in stabs format.
 //
+// uses-win32-stabs?: Win32 apparently uses a slightly different
+// varient of stabs than other machines; this flag controls whether
+// d2c emits win32-stabs or unix-stabs when writing assembly files.
+// Of course, if supports-debugging? is false, this option doesn't
+// make any difference at all.
+//
 // import-directive-required?: If #t, outputs a ".import" directive in
 // assembly files for every symbol that is declared outside that
 // assembly file.
@@ -193,7 +199,7 @@ inherit-from:                   x86-win32
 default-features:               compiled-for-x86-win32 newlines-are-CRLF
 				C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include -DWIN32 -DWIN32_GCC
+default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include -I. -DWIN32 -DWIN32_GCC
 // gcc/NT is perfectly capable of searching, but it'll look for .a
 // files instead of .lib files, which presents a whole different set
 // of problems
@@ -202,6 +208,7 @@ link-library-command:           ar qc %s %s
 link-executable-command:        gcc -o %s %s %s
 link-executable-flags:          -lm -lkernel32
 supports-debugging?:            #t
+uses-win32-stabs?:		#t
 path-separator:        		/
 
 
