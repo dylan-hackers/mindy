@@ -1,1 +1,10 @@
+dig
+posix-dig-c.c
+dig-exports.c
+dig-init.c
+dig.c
+heap.s
+dig-heap.s
+inits.c
+cc-dig-files.mak
 GNUmakefile
