@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.63 2001/03/23 22:05:30 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.64 2001/03/25 15:06:31 bruce Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -923,8 +923,12 @@ AC_OUTPUT(Defaults \
 	doc/dylan.7 \
 	doc/gwydion.7 \
 	doc/d2c.1 \
+	doc/dybug.1 \
 	doc/mindy.1 \
+	doc/mindycomp.1 \
+	doc/mindyexec.1 \
 	doc/melange.1 \
+	doc/parsergen.1 \
 	doc/make-dylan-app.1 \
 	doc/platforms.descr.4, [
 ${INSTALL} -m uog+rx $builddir/tools/shared-misc/mk-build-tree ./
