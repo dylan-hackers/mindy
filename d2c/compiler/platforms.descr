@@ -212,7 +212,7 @@ uses-win32-stabs?:		#t
 path-separator:        		/
 
 
-// HP/UX on HP PA-RISC processors
+// HP/UX on HP PA-RISC processors.  gcc/gdb/dig
 //
 target-name:                    hppa-hpux
 default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
@@ -228,7 +228,7 @@ comment-token:                  ;
 mangled-name-prefix:            
 object-filename-suffix:         .o
 library-filename-prefix:        lib
-library-filename-suffix:        .a
+library-filename-suffix:        .a .sl
 executable-filename-suffix:     
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -g -O4 -finline-functions
@@ -241,4 +241,36 @@ delete-file-command:            rm -f
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #t
+path-separator:        		/
+
+
+// HP/UX on HP PA-RISC processors w/ shared libs, HP CC, no gdb.  Try xdb.
+//
+target-name:                    hppa-hpux-shared
+default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
+integer-length:			32
+heap-preamble:                  \t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
+align-directive:                .align
+export-directive:               \t.export\t%s, DATA\n
+import-directive-required?:      #t
+word-directive:                 .word
+half-word-directive:            .half
+byte-directive:                 .byte
+comment-token:                  ;
+mangled-name-prefix:            
+object-filename-suffix:         .o
+library-filename-prefix:        lib
+library-filename-suffix:        .sl .a
+executable-filename-suffix:     
+compile-c-command:              cc -Ae +Z $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:       -O4
+assembler-command:              cc $(CCFLAGS) -c %s -o %s
+link-library-command:           ld -b -o %s %s
+link-executable-command:        cc -g -o %s %s %s
+link-executable-flags:          -L/lib/pa1.1 -lm
+make-command:                   gmake
+delete-file-command:            rm -f
+compare-file-command:           cmp -s %s %s
+move-file-command:              mv -f %s %s
+supports-debugging?:            #f
 path-separator:        		/
