@@ -58,6 +58,7 @@ define module gtk
          \GTK-LABEL,
          \GTK-BUTTON,
          \GTK-TOGGLE-BUTTON,
+         \GTK-CHECK-BUTTON,
          \GTK-RADIO-BUTTON,
          \GTK-ENTRY,
          \GTK-TEXT,

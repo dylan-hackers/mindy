@@ -281,6 +281,7 @@ define gtk-type-cast-function GTK-WINDOW => <GtkWindow*>;
 define gtk-type-cast-function GTK-LABEL => <GtkLabel*>;
 define gtk-type-cast-function GTK-BUTTON => <GtkButton*>;
 define gtk-type-cast-function GTK-TOGGLE-BUTTON => <GtkToggleButton*>;
+define gtk-type-cast-function GTK-CHECK-BUTTON => <GtkCheckButton*>;
 define gtk-type-cast-function GTK-RADIO-BUTTON => <GtkRadioButton*>;
 define gtk-type-cast-function GTK-ENTRY => <GtkEntry*>;
 define gtk-type-cast-function GTK-TEXT => <GtkText*>;
