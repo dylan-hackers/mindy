@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.77 1995/06/07 18:46:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.78 1995/06/07 19:38:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -682,7 +682,7 @@ define module flow
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, block-of, block-of-setter,
     next-exit, next-exit-setter, returned-type, returned-type-setter,
-    initial-definitions, initial-definitions-setter,
+    initial-variables, initial-variables-setter,
     reoptimize-queue, reoptimize-queue-setter,
     add-to-queue, all-function-regions,
 
@@ -695,9 +695,9 @@ define module flow
 
     dependents, derived-type, source-exp, source-next, dependent,
     dependent-next, var-info, asserted-type, definer, definer-next,
-    needs-type-check?, queue-next,
-    definition-of, next-initial-definition, next-initial-definition-setter,
-    definitions, defines, region, next-op, prev-op, depends-on,
+    needs-type-check?, queue-next, definition-of, definitions,
+    next-initial-variable, next-initial-variable-setter,
+    defines, region, next-op, prev-op, depends-on,
 
     dependents-setter, derived-type-setter, source-exp-setter,
     source-next-setter, dependent-setter, dependent-next-setter,

@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.14 1995/06/07 15:23:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.15 1995/06/07 19:38:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -160,9 +160,9 @@ end;
 define class <component> (<block-region-mixin>)
   keyword source-location:, init-value: make(<source-location>);
   //
-  // Queue of all the <initial-definition> variables that need to be ssa
-  // converted (threaded through next-initial-definition).
-  slot initial-definitions :: false-or(<initial-definition>),
+  // Queue of all the <initial-variable> variables that need to be ssa
+  // converted (threaded through next-initial-variable).
+  slot initial-variables :: false-or(<initial-variable>),
     init-value: #f;
   //
   // Queue of things that need to be updated (threaded by queue-next.)

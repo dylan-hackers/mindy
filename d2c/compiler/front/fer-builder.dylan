@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.35 1995/06/07 15:22:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.36 1995/06/07 19:38:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -303,11 +303,8 @@ end method;
 define method definition-site-for
     (component :: <component>, var :: <initial-variable>)
     => res :: <initial-definition>;
-  let new = make(<initial-definition>, var-info: var.var-info, definition: var,
-		 next-initial-definition: component.initial-definitions,
-		 derived-type: var.var-info.asserted-type);
-  component.initial-definitions := new;
-  new;
+  make(<initial-definition>, var-info: var.var-info, definition: var,
+       derived-type: var.var-info.asserted-type);
 end;
 
 define method definition-site-for
@@ -490,28 +487,39 @@ define method make-definition-leaf
 		      var-defn: defn, asserted-type: type));
 end method;
 
+// make-initial-var -- internal utility used by the various make-mumble-var
+// routines.
+// 
+define method make-initial-var
+    (builder :: <fer-builder>, of-type :: <values-ctype>,
+     var-info :: <variable-info>)
+    => var :: <initial-variable>;
+  let comp = builder.component;
+  let var = make(<initial-variable>, derived-type: of-type, var-info: var-info,
+		 next-initial-variable: comp.initial-variables);
+  comp.initial-variables := var;
+  var;
+end;
 
 define method make-lexical-var
     (builder :: <fer-builder>, name :: <symbol>, source :: <source-location>,
      of-type :: <ctype>)
  => res :: <initial-variable>;
-  ignore(builder);
-  make(<initial-variable>,
-       derived-type: of-type,
-       var-info: make(<lexical-var-info>,
-		      debug-name: name,
-		      asserted-type: of-type,
-       		      source-location: source));
+  make-initial-var(builder, of-type, 
+		   make(<lexical-var-info>,
+			debug-name: name,
+			asserted-type: of-type,
+			source-location: source));
 end method;
 
 
 define method make-local-var
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
  => res :: <initial-variable>;
-  make(<initial-variable>,
-       derived-type: of-type,
-       var-info: make(<local-var-info>, asserted-type: of-type,
-       		      debug-name: name));
+  make-initial-var(builder, of-type,
+		   make(<local-var-info>,
+			asserted-type: of-type,
+			debug-name: name));
 end method;
 
 define method make-ssa-var
@@ -527,21 +535,17 @@ end method;
 define method make-values-cluster
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <values-ctype>)
  => res :: <initial-variable>;
-  make(<initial-variable>,
-       derived-type: of-type,
-       var-info: make(<values-cluster-info>, asserted-type: of-type,
-       		      debug-name: name));
+  make-initial-var(builder, of-type,
+		   make(<values-cluster-info>,
+			asserted-type: of-type,
+			debug-name: name));
 end method;
 
 
 define method copy-variable
     (builder :: <fer-builder>, var :: <initial-variable>)
  => res :: <initial-variable>;
-
-  // ### may need to actually copy var-info...
-  make(<initial-variable>,
-       derived-type: var.var-info.asserted-type,
-       var-info: var.var-info);
+  make-initial-var(builder, var.var-info.asserted-type, var.var-info);
 end method;
 
 

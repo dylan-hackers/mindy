@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.82 1995/06/07 18:46:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.83 1995/06/07 19:38:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,15 +22,15 @@ define method optimize-component (component :: <component>) => ();
       check-sanity(component);
     end;
     if (*print-shit*) dump-fer(component) end;
-    if (component.initial-definitions)
+    if (component.initial-variables)
       if (*print-shit*)
-	format(*debug-output*, "\n********* doing trivial ssa conversion\n\n");
+	format(*debug-output*, "\n******** doing trivial ssa conversion\n\n");
       end;
-      while (component.initial-definitions)
-	let init-defn = component.initial-definitions;
-	component.initial-definitions := init-defn.next-initial-definition;
-	init-defn.next-initial-definition := #f;
-	maybe-convert-to-ssa(component, init-defn);
+      while (component.initial-variables)
+	let init-var = component.initial-variables;
+	component.initial-variables := init-var.next-initial-variable;
+	init-var.next-initial-variable := #f;
+	maybe-convert-to-ssa(component, init-var);
       end;
       if (*print-shit*) dump-fer(component) end;
     end;
@@ -39,7 +39,7 @@ define method optimize-component (component :: <component>) => ();
       component.reoptimize-queue := queueable.queue-next;
       queueable.queue-next := #"absent";
       if (*print-shit*)
-	format(*debug-output*, "\n********** about to optimize %=\n\n",
+	format(*debug-output*, "\n******** about to optimize %=\n\n",
 	       queueable);
       end;
       optimize(component, queueable);
@@ -47,11 +47,11 @@ define method optimize-component (component :: <component>) => ();
     else
       local method try (function, what)
 	      if (what & *print-shit*)
-		format(*debug-output*, "\n********** %s\n\n", what);
+		format(*debug-output*, "\n******** %s\n\n", what);
 	      end;
 	      function(component);
 	      let start-over?
-		= component.initial-definitions | component.reoptimize-queue;
+		= component.initial-variables | component.reoptimize-queue;
 	      if (start-over? & *print-shit*)
 		format(*debug-output*, "\nstarting over...\n");
 	      end;
@@ -96,16 +96,20 @@ end;
 // SSA conversion.
 
 define method maybe-convert-to-ssa
-    (component :: <component>, defn :: <initial-definition>) => ();
-  let var :: <initial-variable> = defn.definition-of;
+    (component :: <component>, var :: <initial-variable>) => ();
   if (var.definitions.size == 1)
+    // Single definition -- replace it with an ssa variable.
+    let defn = var.definitions[0];
     let assign = defn.definer;
     let ssa = make(<ssa-variable>,
 		   dependents: var.dependents,
 		   derived-type: var.var-info.asserted-type,
 		   var-info: var.var-info,
 		   definer: assign,
-		   definer-next: defn.definer-next);
+		   definer-next: defn.definer-next,
+		   needs-type-check: defn.needs-type-check?);
+    // Replace the <initial-definition> with the <ssa-var> in the assignment
+    // defines.
     for (other = assign.defines then other.definer-next,
 	 prev = #f then other,
 	 until: other == defn)
@@ -116,8 +120,8 @@ define method maybe-convert-to-ssa
 	assign.defines := ssa;
       end;
     end;
-    delete-definition(component, defn);
-    reoptimize(component, assign);
+    defn.definer := #f;
+    // Replace each reference of the <initial-var> with the <ssa-var>.
     for (dep = var.dependents then dep.source-next,
 	 while: dep)
       unless (dep.source-exp == var)
@@ -125,6 +129,8 @@ define method maybe-convert-to-ssa
 		"to replace?");
       end;
       dep.source-exp := ssa;
+      // Reoptimize the dependent in case they can do something now that
+      // they are being given an ssa variable.
       reoptimize(component, dep.dependent);
     end;
   end;
@@ -1674,15 +1680,13 @@ define method expand-cluster
     let debug-name = as(<symbol>, format-to-string("result%d", index));
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
-    let var = make(<initial-variable>, var-info: var-info);
+    let var = make(<initial-variable>, var-info: var-info,
+		   next-initial-variable: component.initial-variables);
+    component.initial-variables := var;
     let defns = map(method (assign, next-define)
-		      let defn = make(<initial-definition>, var-info: var-info,
-				      definition: var, definer: assign,
-				      definer-next: next-define,
-				      next-initial-definition:
-					component.initial-definitions);
-		      component.initial-definitions := defn;
-		      defn;
+		      make(<initial-definition>, var-info: var-info,
+			   definition: var, definer: assign,
+			   definer-next: next-define);
 		    end,
 		    assigns, new-defines);
     let dep = make(<dependency>, source-exp: var, source-next: #f,
@@ -3454,10 +3458,11 @@ define method delete-definition
   defn.definer := #f;
   let var = defn.definition-of;
   var.definitions := remove!(var.definitions, defn);
+  // We might be able to ssa convert var now, so add it back to
+  // initial-variables.
   unless (empty?(var.definitions))
-    let remaining-defn = var.definitions.first;
-    remaining-defn.next-initial-definition := component.initial-definitions;
-    component.initial-definitions := remaining-defn;
+    var.next-initial-variable := component.initial-variables;
+    component.initial-variables := var;
   end;
 end;
 
@@ -4131,7 +4136,7 @@ end;
 define method assure-all-done-dependent
     (component :: <component>, dependent :: <dependent-mixin>) => ();
   optimize(component, dependent);
-  if (component.initial-definitions | component.reoptimize-queue)
+  if (component.initial-variables | component.reoptimize-queue)
     error("optimizing %= did something, but we thought we were done.",
 	  dependent);
   end;

@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.15 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.16 1995/06/07 19:38:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -169,7 +169,8 @@ define abstract class <definition-site-variable> (<abstract-variable>)
     init-keyword: definer-next:, init-value: #f;
 
   // #f if the assignment to this variable does not need to be type checked.
-  slot needs-type-check? :: <boolean>, init-value: #t;
+  slot needs-type-check? :: <boolean>,
+    init-value: #t, init-keyword: needs-type-check:;
 end;
 
 
@@ -189,8 +190,6 @@ end class;
 define class <initial-definition> (<definition-site-variable>)
   slot definition-of :: <multi-definition-variable>,
     required-init-keyword: definition:;
-  slot next-initial-definition :: false-or(<initial-definition>),
-    required-init-keyword: next-initial-definition:;
 end;
 
 // When we make an initial-definition, add to definitions list in multi-def
@@ -216,6 +215,8 @@ end;
 // converted.
 //
 define class <initial-variable> (<multi-definition-variable>)
+  slot next-initial-variable :: false-or(<initial-variable>),
+    required-init-keyword: next-initial-variable:;
 end class;
 
 // Represents a global variable, which doesn't get SSA converted.
