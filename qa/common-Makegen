@@ -5,21 +5,17 @@
 $D2CFLAGS = $d2c_runtime . " -L$buildroot/common/threads ";
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
-# I only wrote this function because of the .\ for win32 vs. ./ for
-# Unix issue.
 sub emit_run_tests_rule {
     local (@tests) = @_;
     local ($test);
     print "run_tests : ";
     foreach $test (@tests) {
 	print "$test$dot_exe " if ($enable_d2c);
-	print "$test-lib.dbc " if ($enable_mindy);
     }
     print "\n";
 
     foreach $test (@tests) {
 	local ($test) = &convert_path_separator("./$test");
-	print "\t$run_mindy -f $test-lib.dbc\n" if ($enable_mindy);
 	print "\t$test\n" if ($enable_d2c);
     }
     push(@compile_dependencies, "run_tests");
