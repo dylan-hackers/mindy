@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.8 1996/03/21 03:01:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.9 1996/04/06 07:23:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,6 +22,7 @@ define module main
   use common;
 #if (mindy)
   use System, import: {system, copy-bytes, getenv, collect-garbage};
+  use Extensions, import: {exit};
 #else
   use System,
      import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
