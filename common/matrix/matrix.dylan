@@ -2,8 +2,8 @@ module: Matrix
 author: Russ Schaaf (rsbe@cs.cmu.edu)
 synopsis: Matrix and other linear algebra functions
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/matrix/matrix.dylan,v 1.3 2000/10/20 14:52:51 housel Exp $
- 
+rcs-header: $Header: /scm/cvs/src/common/matrix/matrix.dylan,v 1.4 2000/10/22 21:05:35 dauclair Exp $
+
 //======================================================================
 //
 // Copyright (c) 1994, 1995  Carnegie Mellon University
