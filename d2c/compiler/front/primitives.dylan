@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.6 2001/02/08 21:56:13 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.7 2001/06/22 07:28:43 housel Exp $
 copyright: see below
 
 
@@ -301,8 +301,19 @@ define-primitive
    #(values:, rest:, #"<object>"));
 
 define-primitive
-  (#"c-literal", #(#"<symbol>", #"<string>"), #"<integer>",	// <general/extended-integer> ??
+  (#"c-literal", #(#"<symbol>", #"<string>"), #"<integer>",
    cseable: #t);
+
+define-primitive
+  (#"c-struct-field",
+   #(#"<symbol>", #"<raw-pointer>", #"<string>", #"<string>"),
+   #"<object>",
+   side-effect-free: #t);
+
+define-primitive
+  (#"c-struct-field-setter",
+   #(#"<object>", #"<symbol>", #"<raw-pointer>", #"<string>", #"<string>"),
+   #(values:));
 
 define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.11 2001/02/25 20:35:11 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.12 2001/06/22 07:28:43 housel Exp $
 copyright: see below
 
 
@@ -606,6 +606,72 @@ define-primitive-emitter
 	      expr.value.literal-value);
        deliver-results(defines, #[], #f, file);
 //     end;
+   end);
+
+define-primitive-emitter
+  (#"c-struct-field",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let res-dep = operation.depends-on;
+     let result-rep = rep-for-c-type(res-dep.source-exp);
+
+     let ptr-dep = res-dep.dependent-next;
+     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+
+     let struct-dep = ptr-dep.dependent-next;
+     let struct = struct-dep.source-exp;
+     unless (instance?(struct, <literal-constant>)
+	       & instance?(struct.value, <literal-string>))
+       error("struct in c-struct-field isn't a constant string?");
+     end;
+
+     let field = struct-dep.dependent-next.source-exp;
+     unless (instance?(field, <literal-constant>)
+	       & instance?(field.value, <literal-string>))
+       error("struct in c-struct-field isn't a constant string?");
+     end;
+     
+     spew-pending-defines(file);
+     deliver-result(defines,
+		    stringify("((", struct.value.literal-value, " *) ",
+			      ptr, ")->", field.value.literal-value),
+		    result-rep, #f, file);
+   end);
+
+define-primitive-emitter
+  (#"c-struct-field-setter",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let new-dep = operation.depends-on;
+     let type-dep = new-dep.dependent-next;
+     let rep = rep-for-c-type(type-dep.source-exp);
+     let new = ref-leaf(rep, new-dep.source-exp, file);
+
+     let ptr-dep = type-dep.dependent-next;
+     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+
+     let struct-dep = ptr-dep.dependent-next;
+     let struct = struct-dep.source-exp;
+     unless (instance?(struct, <literal-constant>)
+	       & instance?(struct.value, <literal-string>))
+       error("struct in c-struct-field-setter isn't a constant string?");
+     end;
+
+     let field = struct-dep.dependent-next.source-exp;
+     unless (instance?(field, <literal-constant>)
+	       & instance?(field.value, <literal-string>))
+       error("struct in c-struct-field-setter isn't a constant string?");
+     end;
+     
+     spew-pending-defines(file);
+     format(file.file-guts-stream, "((%s *) %s)->%s = %s;",
+	    struct.value.literal-value, ptr, field.value.literal-value, new);
+     
+     deliver-results(defines, #[], #f, file);
    end);
 
 define method rep-for-c-type (leaf :: <leaf>)

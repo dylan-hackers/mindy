@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.3 2001/02/25 19:44:10 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.4 2001/06/22 07:28:43 housel Exp $
 copyright: see below
 
 
@@ -695,6 +695,22 @@ define-primitive-transformer
      let result-dep = primitive.depends-on;
      let result-type = result-dep.source-exp.dylan-type-for-c-type;
      maybe-restrict-type(component, primitive, result-type.ctype-extent);
+   end);
+
+define-primitive-transformer
+  (#"c-struct-field",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let result-dep = primitive.depends-on;
+     let result-type = result-dep.source-exp.dylan-type-for-c-type;
+     maybe-restrict-type(component, primitive, result-type.ctype-extent);
+   end);
+
+define-primitive-transformer
+  (#"c-struct-field-setter",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let new-dep = primitive.depends-on;
+     let type = new-dep.dependent-next.source-exp.dylan-type-for-c-type;
+     assert-type(component, primitive.dependents.dependent, new-dep, type);
    end);
 
 define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
