@@ -56,12 +56,14 @@ define constant $default-defines
   = #["const", "",
       "volatile", "", 
       "__cdecl", "",
-      "__STDC__", "",
+      "__STDC__", "(1)",
       "__APPLE__", "(1)",
       "__ppc__", "(1)",
       "__APPLE_CC__", "(1)",
-      "__GNUC__", "(1)",
-      "__BIG_ENDIAN__", "(1)"];
+      "__GNUC__", "(1)",			// Is this right?
+      "__BIG_ENDIAN__", "(1)",
+      "__MACH__", "(1)",			// Unless we're on Classic...
+      "TARGET_CPU_PPC", "(1)"];
 
 // Set up the search path for .h files
 
@@ -92,6 +94,6 @@ define constant $char-size :: <integer> = 1;
 define constant $float-size :: <integer> = 4;
 define constant $double-float-size :: <integer> = 8;
 define constant $long-double-size :: <integer> = 16;
-define constant $enum-size :: <integer> = $integer-size;
+define constant $enum-size :: <integer> = $long-int-size;	// Some Apple header constants are longs!
 define constant $pointer-size :: <integer> = 4;
 define constant $function-pointer-size :: <integer> = $pointer-size;
