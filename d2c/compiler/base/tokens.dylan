@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.1 1994/12/12 13:01:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.2 1994/12/15 17:40:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -35,11 +35,11 @@ end;
 define class <error-token> (<token>)
 end;
 
-// <word-token> -- exported.
+// <symbol-token> -- exported.
 //
-// Any word based token.
+// Any symbol based token.
 //
-define abstract class <word-token> (<token>)
+define abstract class <symbol-token> (<token>)
   //
   // The word as a symbol.
   slot token-symbol :: <symbol>, required-init-keyword: symbol:;
@@ -49,13 +49,13 @@ end;
 //
 // Return the word this token is for as a symbol.
 //
-define generic token-symbol (token :: <word-token>) => res :: <symbol>;
+define generic token-symbol (token :: <symbol-token>) => res :: <symbol>;
 
 // <identifier-token> -- exported.
 // 
 // Tokens that may need to be used to identify variables.
 //
-define abstract class <identifier-token> (<word-token>)
+define abstract class <identifier-token> (<symbol-token>)
   //
   // The module this name should be looked up in if interpreted as a free
   // reference, or #f if a generated name (and hence, not really from any
@@ -104,7 +104,10 @@ define method same-id? (id1 :: <identifier-token>, id2 :: <identifier-token>)
     & id1.token-uniquifier == id2.token-uniquifier;
 end;
 
-define abstract class <name-token> (<identifier-token>)
+define abstract class <word-token> (<identifier-token>)
+end;
+
+define abstract class <name-token> (<word-token>)
 end;
 
 define method make (c == <name-token>, #rest keys, #all-keys)
@@ -117,17 +120,17 @@ end;
 define class <quoted-name-token> (<simple-name-token>)
 end;
 
-define class <begin-word-token> (<identifier-token>)
+define class <begin-word-token> (<word-token>)
 end;
 
-define abstract class <define-word-token> (<identifier-token>)
+define abstract class <define-word-token> (<word-token>)
 end;
 
 define method make (c == <define-word-token>, #rest keys, #all-keys)
   apply(make, <define-word-and-name-token>, keys);
 end;
 
-define abstract class <define-bindings-word-token> (<identifier-token>)
+define abstract class <define-bindings-word-token> (<word-token>)
 end;
 
 define method make (c == <define-bindings-word-token>, #rest keys, #all-keys)
@@ -153,7 +156,7 @@ end;
 //
 // A constrained name, used by the macro system.
 //
-define class <constrained-name-token> (<word-token>)
+define class <constrained-name-token> (<symbol-token>)
   //
   // The constraint, as a symbol.
   slot token-constraint :: <symbol>, required-init-keyword: constraint:;
@@ -171,7 +174,7 @@ end;
 //
 // The various core words.
 //
-define abstract class <core-word-token> (<word-token>)
+define abstract class <core-word-token> (<symbol-token>)
 end;
 
 define method print-object (token :: <core-word-token>, stream :: <stream>)
@@ -261,9 +264,13 @@ end;
 define abstract class <operator-token> (<identifier-token>)
 end;
 
-define class <binary-operator-token> (<operator-token>)
+define abstract class <binary-operator-token> (<operator-token>)
   slot operator-precedence :: <integer>;
   slot operator-left-associative? :: <boolean>;
+end;
+
+define method make (wot == <binary-operator-token>, #rest keys, #key)
+  apply(make, <simple-binary-operator-token>, keys);
 end;
 
 define constant $operator-info
@@ -291,6 +298,9 @@ define method initialize (binop :: <binary-operator-token>, #key)
   let info = $operator-info[binop.token-symbol];
   binop.operator-precedence := head(info);
   binop.operator-left-associative? := tail(info);
+end;
+
+define class <simple-binary-operator-token> (<binary-operator-token>)
 end;
 
 define abstract class <unary-operator-token> (<operator-token>)
