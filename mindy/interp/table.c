@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.17 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.18 1997/01/16 15:15:33 nkramer Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -85,8 +85,13 @@ static void dylan_pointer_hash(struct thread *thread, int nargs)
 
     assert(nargs == 1);
 
-    old_sp[0] = make_fixnum((unsigned long)object % REALLY_BIG_PRIME);
+    /* We compute the hash state first and *then* the hash id.  If we
+       did it in the more natural order, there could be a GC right
+       after we compute the hash id, and we'd be returning an outdated
+       hash id without even knowing it.
+       */
     old_sp[1] = pointer_hash_state(object);
+    old_sp[0] = make_fixnum((unsigned long)object % REALLY_BIG_PRIME);
 
     do_return(thread, old_sp, old_sp);
 }
@@ -194,7 +199,7 @@ void init_table_classes(void)
 void init_table_functions(void)
 {
     define_constant("pointer-hash",
-		    make_raw_function("float-hash", list1(obj_ObjectClass),
+		    make_raw_function("pointer-hash", list1(obj_ObjectClass),
 				      FALSE, obj_False,
 				      FALSE,
 				      list2(obj_FixnumClass,
