@@ -30,6 +30,37 @@ compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 
 
+// Microsoft Windows '95 or NT on Intel 80386 or higher, but using the
+// GNU C compiler (+ friends like ld).  This is actually more similar to
+// a Unix platform, so we don't define compiled-for-x86-win32.  Still use
+// Microsoft nmake, though--I don't trust gmake on NT anymore.
+//
+target-name:                    x86-win32-gcc
+default-features:               newlines-are-CRLF
+heap-preamble:                  \t.data\n\t.balign 8\t
+align-directive:                .balign
+export-directive:               \t.globl\t%s\n
+word-directive:                 .long
+half-word-directive:            .hword
+byte-directive:                 .byte
+comment-token:                  #
+mangled-name-prefix:            _
+object-filename-suffix:         .o
+library-filename-prefix:        lib
+library-filename-suffix:        .a
+executable-filename-suffix:     .exe
+compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:       -g -O4 -finline-functions
+assembler-command:              as %s -o %s
+link-library-command:           ar qc
+link-executable-command:        gcc -z
+link-executable-flags:          
+make-command:                   nmake /nologo
+delete-file-command:            del
+compare-file-command:           cmp -s %s %s
+move-file-command:              mv -f %s %s
+
+
 // HP/UX on HP PA-RISC processors
 //
 target-name:                    hppa-hpux
