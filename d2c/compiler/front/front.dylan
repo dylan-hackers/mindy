@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.3 1994/12/13 14:19:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.4 1994/12/13 18:39:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,6 +17,7 @@ operation
 
 variable-info
     module-var-info
+	module-almost-constant-var-info
     debug-named-info {abstract}
         lambda-var-info [source-location-mixin]
 	values-cluster-info
@@ -149,6 +150,11 @@ define class <module-var-info> (<variable-info>)
   slot var-defn :: <definition>, required-init-keyword: var-defn:;
 end class;
   
+define class <module-almost-constant-var-info> (<module-var-info>)
+end class;
+  
+
+
 
 /// Function literals:
 
