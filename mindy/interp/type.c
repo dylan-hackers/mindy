@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.22 1994/12/14 19:53:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.23 1995/07/11 13:06:08 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -214,17 +214,6 @@ static inline boolean sing_type_subtypep(obj_t sing, obj_t type)
     return instancep(SING(sing)->object, type);
 }
 
-static inline boolean class_sing_subtypep(obj_t class, obj_t sing)
-{
-    obj_t o = SING(sing)->object;
-
-    if ((o == obj_Nil || o == obj_True || o == obj_False)
-	  && object_class(o) == class)
-	return TRUE;
-    else
-	return FALSE;
-}
-
 static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
 {
     obj_t cpl = CLASS(class1)->cpl;
@@ -240,58 +229,19 @@ static inline boolean class_class_subtypep(obj_t class1, obj_t class2)
     return FALSE;
 }
 
-static inline boolean class_subclass_subtypep(obj_t class, obj_t subclass)
-{
-    return class == obj_ClassClass
-	    && SUBCLASS(subclass)->of == obj_ClassClass;
-}
-
 static inline boolean never_subtypep(obj_t type1, obj_t type2)
 {
     return FALSE;
 }
 
-static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
+static inline boolean subclass_class_subtypep(obj_t sub, obj_t class)
 {
-    obj_t class = SUBCLASS(sub)->of;
-
-    if (CLASS(class)->all_subclasses == obj_Nil)
-	return instancep(class, type);
-    else
-	return subtypep(object_class(class), type);
+    return subtypep(object_class(SUBCLASS(sub)->of), class);
 }
 
 static inline boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
     return subtypep(SUBCLASS(sub1)->of, SUBCLASS(sub2)->of);
-}
-
-static inline boolean limfix_sing_subtypep(obj_t lim, obj_t sing)
-{
-    obj_t min = LIMINT(lim)->min;
-
-    if (min != LIMINT(lim)->max || min != SING(sing)->object)
-	return FALSE;
-    else
-	return TRUE;
-}
-
-static inline boolean limbig_sing_subtypep(obj_t lim, obj_t sing)
-{
-    obj_t thing = SING(sing)->object;
-
-    if (object_class(thing) == obj_BignumClass) {
-	obj_t min = LIMINT(lim)->min;
-	obj_t max = LIMINT(lim)->max;
-
-	if (min == obj_False || max == obj_False || compare_bignums(min, max)
-	    || compare_bignums(min, SING(sing)->object))
-	    return FALSE;
-	else
-	    return TRUE;
-    }
-    else
-	return FALSE;
 }
 
 static inline boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
@@ -425,35 +375,31 @@ boolean subtypep(obj_t type1, obj_t type2)
       case id_Class:
 	switch (type2_id) {
 	    /* class x mumble methods */
-	  case id_Singleton:
-	    return class_sing_subtypep(type1, type2);
-	    break;
 	  case id_Class:
 	    return class_class_subtypep(type1, type2);
 	    break;
-	  case id_SubClass:
-	    return class_subclass_subtypep(type1, type2);
+	  case id_Union:
+	    return type_union_subtypep(type1, type2);
 	    break;
+	  case id_Singleton:
+	  case id_SubClass:
 	  case id_LimFixnum:
 	  case id_LimBignum:
 	  case id_NoneOf:
 	    return never_subtypep(type1, type2);
-	    break;
-	  case id_Union:
-	    return type_union_subtypep(type1, type2);
 	    break;
 	};
 	break;
       case id_SubClass:
 	switch (type2_id) {
 	    /* subclass x mumble methods */
-	  case id_Singleton:
-	  case id_Class:
-	    return subclass_type_subtypep(type1, type2);
-	    break;
 	  case id_SubClass:
 	    return subclass_subclass_subtypep(type1, type2);
 	    break;
+	  case id_Class:
+	    return subclass_class_subtypep(type1, type2);
+	    break;
+	  case id_Singleton:
 	  case id_LimFixnum:
 	  case id_LimBignum:
 	  case id_NoneOf:
@@ -468,7 +414,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	switch (type2_id) {
 	    /* limfixnum x mumble methods */
 	  case id_Singleton:
-	    return limfix_sing_subtypep(type1, type2);
+	    return never_subtypep(type1, type2);
 	    break;
 	  case id_Class:
 	  case id_SubClass:
@@ -492,7 +438,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	switch (type2_id) {
 	    /* limint x mumble methods */
 	  case id_Singleton:
-	    return limbig_sing_subtypep(type1, type2);
+	    return never_subtypep(type1, type2);
 	    break;
 	  case id_Class:
 	  case id_SubClass:
