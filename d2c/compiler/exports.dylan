@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.8 1994/12/16 11:49:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.9 1994/12/16 12:18:20 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,7 +30,7 @@ define module utils
 
   // Stuff defined in utils
   export
-    write-class-name, write-address, pprint-fields, assert,
+    write-class-name, write-address, pprint-fields, dformat, assert,
     key-of, list?, pair?;
 end;
 
