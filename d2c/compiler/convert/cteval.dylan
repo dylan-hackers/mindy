@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.3 1994/12/17 02:07:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.4 1995/03/04 21:43:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -35,7 +35,7 @@ define method ct-eval (expr :: <constituent>,
     => res :: union(<ct-value>, <false>);
   let (#rest results) = ct-mv-eval(expr, lexenv);
   if (empty?(results))
-    make(<ct-literal>, value: #f);
+    make(<literal-false>);
   else
     results[0];
   end;
@@ -57,14 +57,14 @@ define method ct-mv-eval (expr :: <constituent>,
   end;
 end;
 
-// ct-mv-eval(<literal>, <lexenv>) -- exported method.
+// ct-mv-eval(<literal-ref>, <lexenv>) -- exported method.
 //
 // Just return a compile-time literal.
 //
-define method ct-mv-eval (expr :: <literal>,
+define method ct-mv-eval (expr :: <literal-ref>,
 			  lexenv :: union(<false>, <lexenv>))
     => res :: <ct-value>;
-  make(<ct-literal>, value: expr.lit-value);
+  expr.litref-literal;
 end;
 
 // ct-mv-eval(<varref>, <lexenv>) -- exported method.
@@ -131,7 +131,7 @@ end;
 define method ct-mv-eval-body (body :: <simple-object-vector>,
 			       lexenv :: union(<false>, <lexenv>))
   if (empty?(body))
-    make(<ct-literal>, value: #f);
+    make(<literal-false>);
   else
     block (return)
       let last = body.size - 1;
@@ -224,15 +224,12 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	    dylan-value(#"<integer>") =>
 	      let (okay, min, max) = ct-keywords(args, 1, #"min", #"max");
 	      if (okay)
-		if ((min == #f | instance?(min, <ct-literal>))
-		      & (max == #f | instance?(max, <ct-literal>)))
-		  let min = min & min.ct-literal-value;
-		  let max = max & max.ct-literal-value;
-		  if ((min == #f | instance?(min, <integer>))
-			& (max == #f | instance?(max, <integer>)))
-		    make(<limited-integer-ctype>, base-class: args[0],
-			 min: min, max: max);
-		  end;
+		if ((min == #f | instance?(min, <literal-integer>))
+		      & (max == #f | instance?(max, <literal-integer>)))
+		  let min = min & min.literal-value;
+		  let max = max & max.literal-value;
+		  make(<limited-integer-ctype>, base-class: args[0],
+		       low-bound: min, high-bound: max);
 		end;
 	      end;
 	    otherwise =>
@@ -247,10 +244,15 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	      if (okay & object)
 		make-canonical-singleton(object);
 	      end;
+	    dylan-value(#"<byte-character-type>") =>
+	      if (ct-keywords(args, 1))
+		make(<byte-character-ctype>);
+	      end;
 	    otherwise =>
 	      #f;
 	  end;
 	end;
+/*
       $negative-var =>
 	ct-eval-integer-func(negative, 1, args);
       $plus-var =>
@@ -263,6 +265,7 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	ct-eval-integer-func(ash, 2, args);
       $expt-var =>
 	ct-eval-integer-func(\^, 2, args);
+*/
       otherwise =>
 	#f;
     end;
@@ -279,8 +282,8 @@ define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
     end;
     for (index from start below args.size by 2)
       let ct-key = args[index];
-      unless (instance?(ct-key, <ct-literal>)
-		& member?(ct-key.ct-literal-value, keys))
+      unless (instance?(ct-key, <literal-symbol>)
+		& member?(ct-key.literal-value, keys))
 	return(#f);
       end;
     end;
@@ -289,7 +292,7 @@ define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
 	  map(method (key)
 		block (found)
 		  for (index from start below args.size by 2)
-		    if (args[index].ct-literal-value == key)
+		    if (args[index] = key)
 		      found(args[index + 1]);
 		    end;
 		  end;
@@ -301,10 +304,13 @@ define method ct-keywords (args :: <simple-object-vector>, start :: <integer>,
 end;
 
 
+/*
+
 define method ct-eval-integer-func (function :: <function>, nargs :: <integer>,
 				    args :: <simple-object-vector>)
-  if (nargs == args.size & every?(rcurry(instance?, <ct-literal>), args))
-    make(<ct-literal>, value: apply(function, map(ct-literal-value, args)));
+  if (nargs == args.size & every?(rcurry(instance?, <literal-integer>), args))
+    make(<ct-literal>, value: apply(function, map(literal-value, args)));
   end;
 end;
 
+*/
