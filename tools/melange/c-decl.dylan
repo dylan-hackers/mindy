@@ -224,6 +224,10 @@ define generic apply-options
 
 //------------------------------------------------------------------------
 
+define method equated?( decl :: <declaration> ) => ( result :: <boolean> )
+	#f;
+end method equated?;
+
 define method mapped-name
     (decl :: <declaration>, #key explicit-only?)
  => (result :: type-union(<string>, <false>));

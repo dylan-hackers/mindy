@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.14 2003/03/01 19:13:34 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.15 2003/03/05 11:45:37 robmyers Exp $
 
 //======================================================================
 //
@@ -232,7 +232,7 @@ define module c-declarations
     write-file-load, write-mindy-includes,
 
     // Miscellaneous
-    getter, setter, sealed-string, excluded?,
+    equated?, getter, setter, sealed-string, excluded?,
     declarations,
     melange-target;
 end module c-declarations;
