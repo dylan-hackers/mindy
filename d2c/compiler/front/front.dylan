@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.5 1994/12/16 16:35:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.6 1995/01/10 16:25:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,6 +11,7 @@ assignment
     fer-assignment
 
 operation
+    primitive
     abstract-call [annotatable] {abstract}
         call
 	mv-call
@@ -66,8 +67,13 @@ define class <fer-assignment> (<assignment>)
 end class;
 
 
-// The <call> operation represents a non-local function call (possibly a
-// primitive.)
+// The <primitive> operation represents some built in primitive operation.
+//
+define class <primitive> (<operation>)
+  slot name :: <symbol>, required-init-keyword: name:;
+end;
+
+// The <call> operation represents a non-local function call.
 // ### KIND may want to be encoded by subclassification.
 //
 define abstract class <abstract-call> (<operation>, <annotatable>)
