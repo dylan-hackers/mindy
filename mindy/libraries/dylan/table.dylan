@@ -1,6 +1,6 @@
 module:	    %Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.28 1996/07/12 16:35:25 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.29 1996/07/16 18:00:08 dwatson Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -689,6 +689,8 @@ define open generic remove-all-keys!
 define method remove-all-keys! (table :: <table>)
  => (table :: <table>);
   table-init(table);
+  table.table-size := 0;
+  table.table-hash-state := $permanent-hash-state;
   table;
 end method remove-all-keys!;
 
