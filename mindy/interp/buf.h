@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.h,v 1.5 1996/06/07 00:21:38 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.h,v 1.6 1996/11/13 02:47:08 wlott Exp $
 *
 \**********************************************************************/
 
@@ -38,4 +38,6 @@ struct buffer {
     unsigned char data[4];
 };
 
-#define buffer_data(buf) (obj_ptr(struct buffer *, buf)->data)
+#define BUF(buf) obj_ptr(struct buffer *, buf)
+
+#define buffer_data(buf) (BUF(buf)->data)
