@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.27 1995/11/08 18:35:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.28 1995/11/09 13:33:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,6 +20,7 @@ add-od-loader(*compiler-dispatcher*, #"here-be-roots",
   method (state :: <load-state>) => res :: <byte-string>;
     let prefix = load-object-dispatch(state);
     let roots = load-object-dispatch(state);
+    assert-end-object(state);
     here-be-roots(prefix, roots);
     prefix;
   end method
@@ -149,8 +150,6 @@ define method compile-library (lid-file :: <byte-string>) => ();
   layout-instance-slots();
   let init-functions = make(<stretchy-vector>);
   let unit-info = make(<unit-info>, prefix: unit-prefix);
-  let dump-buf
-    = begin-dumping(as(<symbol>, lib-name), $library-summary-unit-type);
   let objects-stream = make(<byte-string-output-stream>);
   for (file in files, tlfs in tlf-vectors)
     block ()
@@ -192,7 +191,6 @@ define method compile-library (lid-file :: <byte-string>) => ();
 	  format(*debug-output*, "...Emitting %s\n", name);
 	  emit-tlf-gunk(tlf, output-info);
 	  emit-component(component, output-info);
-	  dump-od(tlf, dump-buf);
 	end;
       cleanup
 	close(body-stream);
@@ -245,12 +243,22 @@ define method compile-library (lid-file :: <byte-string>) => ();
   end;
 
   begin
+    format(*debug-output*, "Dumping library summary.\n");
+    let dump-buf
+      = begin-dumping(as(<symbol>, lib-name), $library-summary-unit-type);
+
+    for (tlfs in tlf-vectors)
+      for (tlf in tlfs)
+	dump-od(tlf, dump-buf);
+      end;
+    end;
+
     let roots = as(<simple-object-vector>, unit-info.unit-info-init-roots);
     dump-simple-object(#"here-be-roots", dump-buf, unit-prefix, roots);
     here-be-roots(unit-prefix, roots);
-  end;
 
-  end-dumping(dump-buf);
+    end-dumping(dump-buf);
+  end;
 
   let executable = element(header, #"executable", default: #f);
   if (executable)
