@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.9 2000/01/24 04:56:46 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.10 2000/05/09 20:04:42 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -170,6 +170,9 @@ define module Extensions
 
 	     // Debugger Hooks
 	     <debugger>, invoke-debugger, *debugger*,
+
+	     // Collection operations
+	     difference,
 
 	     // Byte vector stuff.
 	     <byte>, <byte-vector>,
