@@ -43,6 +43,7 @@ For more infomration, see the Gwydion Dylan maintainers' web page at
 Summary: Tools used for recompiling Gwydion Dylan
 Requires: gwydion-dylan
 Group: Development/Languages/Dylan
+Prefix: /usr
 
 %description extras
 These tools are required to recompile d2c. They include a LISP to Dylan
@@ -54,6 +55,7 @@ utilities written in Dylan.
 %package -n mindy
 Summary: CMU's Gwydion Dylan interpreter
 Group: Development/Languages/Dylan
+Prefix: /usr
 
 %description -n mindy
 Mindy is a Dylan bytecode interpreter, originally written as part of CMU's
