@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.40 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.41 1996/02/17 17:53:48 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -1566,8 +1566,7 @@ obj_t add_method(obj_t gf, obj_t method)
 	obj_t methtype = HEAD(methscan);
 
 	if (!subtypep(methtype, gftype))
-	    error("Specializer %= is an instance of %= for %=, "
-		  "but is an instance of %= for %=",
+	    error("Specializer %= is %= for %=, but %= for %=",
 		  make_fixnum(i), gftype, gf, methtype, method);
 
 	gfscan = TAIL(gfscan);
@@ -1584,8 +1583,7 @@ obj_t add_method(obj_t gf, obj_t method)
 	obj_t methtype = HEAD(methscan);
 
 	if (!subtypep(methtype, gftype))
-	    error("Result %= is an instance of %= for %=, "
-		  "but is an instance of %= for %=",
+	    error("Result %= is %= for %=, but %= for %=",
 		  make_fixnum(i), gftype, gf, methtype, method);
 
 	gfscan = TAIL(gfscan);
@@ -1627,8 +1625,7 @@ obj_t add_method(obj_t gf, obj_t method)
 	    obj_t methtype = HEAD(methscan);
 
 	    if (!subtypep(methtype, gftype))
-		error("Result %d is an instance of %= for %=, "
-		      "but is an instance of %= for %=",
+		error("Result %d is %= for %=, but %= for %=",
 		      make_fixnum(i), gftype, gf, methtype, method);
 
 	    methscan = TAIL(methscan);
