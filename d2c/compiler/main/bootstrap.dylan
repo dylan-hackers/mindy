@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.34 1995/06/10 15:57:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.35 1995/06/14 12:30:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -515,6 +515,17 @@ end;
 define constant catch
   = method (saved-state :: <raw-pointer>, thunk :: <function>)
       thunk(saved-state);
+    end;
+
+define constant make-rest-arg
+  = method (arg-ptr :: <raw-pointer>, count :: <fixed-integer>)
+	=> res :: <simple-object-vector>;
+      let res = make(<simple-object-vector>, size: count);
+      for (index :: <fixed-integer> from 0,
+	   while: index < count)
+	%element(res, index) := %%primitive extract-arg (arg-ptr, index);
+      end;
+      res;
     end;
 
 define method make-closure
