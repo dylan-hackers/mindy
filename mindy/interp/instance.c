@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.24 1994/10/05 21:02:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.25 1994/10/18 00:31:38 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1505,6 +1505,112 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 }
 
 
+/* Introspection stuff. */
+
+static obj_t dylan_slot_descriptors(obj_t class)
+{
+    return DC(class)->all_slots;
+}
+
+static obj_t dylan_slot_name(obj_t slot)
+{
+    return SD(slot)->name;
+}
+
+static obj_t dylan_slot_alloc(obj_t slot)
+{
+    switch (SD(slot)->alloc) {
+      case alloc_INSTANCE:
+	return symbol("instance");
+      case alloc_CLASS:
+	return symbol("class");
+      case alloc_SUBCLASS:
+	return symbol("subclass");
+      case alloc_CONSTANT:
+	return symbol("constant");
+      case alloc_VIRTUAL:
+	return symbol("virtual");
+      default:
+	lose("Bogus kind of allocation in slot descriptor");
+	return obj_False;
+    }
+}
+
+static obj_t dylan_slot_getter(obj_t slot)
+{
+    return SD(slot)->getter;
+}
+
+static obj_t dylan_slot_getter_method(obj_t slot)
+{
+    return SD(slot)->getter_method;
+}
+
+static obj_t dylan_slot_setter(obj_t slot)
+{
+    return SD(slot)->setter;
+}
+
+static obj_t dylan_slot_setter_method(obj_t slot)
+{
+    return SD(slot)->setter_method;
+}
+
+static obj_t dylan_slot_type(obj_t slot)
+{
+    return SD(slot)->type;
+}
+
+static obj_t dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    obj_t slot = args[0];
+    obj_t instance = args[1];
+    obj_t class = object_class(instance);
+    int index;
+    obj_t value;
+
+    if (!instancep(instance, SD(slot)->creator))
+	error("%= is not one of %='s slots", slot, instance);
+
+    switch (SD(slot)->alloc) {
+      case alloc_INSTANCE:
+	index = find_position(DC(class)->instance_positions, slot);
+	value = INST(instance)->slots[index];
+	break;
+      case alloc_SUBCLASS:
+	index = find_position(DC(class)->subclass_positions, slot);
+	value = INST(instance)->slots[index];
+	break;
+      case alloc_CLASS:
+	value = value_cell_ref(accessor_method_datum
+			       (SD(slot)->getter_method));
+	break;
+      case alloc_CONSTANT:
+	value = accessor_method_datum(SD(slot)->getter_method);
+	break;
+      case alloc_VIRTUAL:
+	value = obj_Unbound;
+	break;
+      default:
+	lose("Strange slot allocation.");
+    }
+
+    thread->sp = old_sp + 2;
+
+    if (value == obj_Unbound) {
+	old_sp[0] = obj_False;
+	old_sp[1] = obj_False;
+    }
+    else {
+	old_sp[0] = value;
+	old_sp[1] = obj_True;
+    }
+	
+    do_return(thread, old_sp, old_sp);
+}
+
+
 /* Describe. */
 
 void describe(obj_t thing)
@@ -1782,4 +1888,23 @@ void init_instance_functions(void)
 		  list2(obj_ObjectClass, obj_FunctionClass),
 		  FALSE, obj_Nil, FALSE, obj_BooleanClass,
 		  dylan_slot_initialized_p);
+
+    define_method("slot-descriptors", list1(obj_DefinedClassClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_descriptors);
+    define_method("slot-name", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_name);
+    define_method("slot-allocation", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_alloc);
+    define_method("slot-getter", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_getter);
+    define_method("slot-getter-method", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_getter_method);
+    define_method("slot-setter", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter);
+    define_method("slot-setter-method", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter_method);
+    define_method("slot-type", list1(obj_SlotDescrClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_slot_type);
+    define_method("slot-value", list2(obj_SlotDescrClass,obj_ObjectClass),
+		  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_slot_value);
 }

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.8 1994/10/05 21:01:24 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.9 1994/10/18 00:31:23 wlott Exp $
 *
 * This file implements classes.
 *
@@ -319,6 +319,11 @@ void init_builtin_class(va_alist) va_dcl
 
 /* Dylan functions. */
 
+static obj_t class_name(obj_t class)
+{
+    return CLASS(class)->debug_name;
+}
+
 static obj_t direct_superclasses(obj_t class)
 {
     return CLASS(class)->superclasses;
@@ -391,6 +396,8 @@ void init_class_classes(void)
 
 void init_class_functions(void)
 {
+    define_method("class-name", list1(obj_ClassClass), FALSE, obj_False,
+		  FALSE, obj_ObjectClass, class_name);
     define_method("all-superclasses", list1(obj_ClassClass), FALSE, obj_False,
 		  FALSE, obj_ObjectClass, all_superclasses);
     define_method("direct-superclasses", list1(obj_ClassClass), FALSE,

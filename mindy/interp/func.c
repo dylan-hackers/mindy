@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.31 1994/10/05 21:01:56 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.32 1994/10/18 00:31:34 wlott Exp $
 *
 * This file implements functions.
 *
@@ -1826,6 +1826,8 @@ void init_func_classes(void)
 
 void init_func_functions(void)
 {
+    define_method("function-name", list1(obj_FunctionClass), FALSE, obj_False,
+		  FALSE, obj_ObjectClass, function_debug_name);
     define_function("make-generic-function",
 		    listn(7, obj_ObjectClass, obj_IntegerClass,
 			  obj_ObjectClass,
