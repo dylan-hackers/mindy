@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.84 1995/06/07 22:39:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.85 1995/06/07 23:06:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,40 +101,42 @@ define method maybe-convert-to-ssa
     // Single definition -- replace it with an ssa variable.
     let defn = var.definitions[0];
     let assign = defn.definer;
-    let ssa = make(<ssa-variable>,
-		   dependents: var.dependents,
-		   derived-type: var.var-info.asserted-type,
-		   var-info: var.var-info,
-		   definer: assign,
-		   definer-next: defn.definer-next,
-		   needs-type-check: defn.needs-type-check?);
-    // Replace the <initial-definition> with the <ssa-var> in the assignment
-    // defines.
-    for (other = assign.defines then other.definer-next,
-	 prev = #f then other,
-	 until: other == defn)
-    finally
-      if (prev)
-	prev.definer-next := ssa;
-      else
-	assign.defines := ssa;
+    if (assign)
+      let ssa = make(<ssa-variable>,
+		     dependents: var.dependents,
+		     derived-type: var.var-info.asserted-type,
+		     var-info: var.var-info,
+		     definer: assign,
+		     definer-next: defn.definer-next,
+		     needs-type-check: defn.needs-type-check?);
+      // Replace the <initial-definition> with the <ssa-var> in the assignment
+      // defines.
+      for (other = assign.defines then other.definer-next,
+	   prev = #f then other,
+	   until: other == defn)
+      finally
+	if (prev)
+	  prev.definer-next := ssa;
+	else
+	  assign.defines := ssa;
+	end;
       end;
-    end;
-    defn.definer := #f;
-    // Replace each reference of the <initial-var> with the <ssa-var>.
-    for (dep = var.dependents then dep.source-next,
-	 while: dep)
-      unless (dep.source-exp == var)
-	error("The dependent's source-exp wasn't the var we were trying "
-		"to replace?");
+      defn.definer := #f;
+      // Replace each reference of the <initial-var> with the <ssa-var>.
+      for (dep = var.dependents then dep.source-next,
+	   while: dep)
+	unless (dep.source-exp == var)
+	  error("The dependent's source-exp wasn't the var we were trying "
+		  "to replace?");
+	end;
+	dep.source-exp := ssa;
+	// Reoptimize the dependent in case they can do something now that
+	// they are being given an ssa variable.
+	reoptimize(component, dep.dependent);
       end;
-      dep.source-exp := ssa;
-      // Reoptimize the dependent in case they can do something now that
-      // they are being given an ssa variable.
-      reoptimize(component, dep.dependent);
     end;
   end;
-end;
+end method maybe-convert-to-ssa;
 
 
 // Optimizations.
