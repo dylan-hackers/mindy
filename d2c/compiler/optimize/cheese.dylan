@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.120 1996/02/09 04:42:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.121 1996/02/17 15:58:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1252,6 +1252,70 @@ define method replace-placeholder
 		     make-unknown-call(builder, func, #f,
 				       list(op.depends-on.source-exp, temp)));
 end;
+
+define method replace-placeholder
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>)
+    => ();
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    replace-placeholder(component, dep, dep.source-exp);
+  end;
+  replace-placeholder-call-leaf(component, dep, op, op.depends-on.source-exp);
+end method replace-placeholder;
+
+define method replace-placeholder-call-leaf
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <leaf>)
+    => ();
+end method replace-placeholder-call-leaf;
+
+define method replace-placeholder-call-leaf
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <literal-constant>)
+    => ();
+  replace-placeholder-call-ctv(component, dep, op, func.value);
+end method replace-placeholder-call-leaf;
+
+define method replace-placeholder-call-leaf
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <definition-constant-leaf>)
+    => ();
+  replace-placeholder-call-defn(component, dep, op, func.const-defn);
+end method replace-placeholder-call-leaf;
+
+define method replace-placeholder-call-ctv
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <ct-value>)
+    => ();
+end method replace-placeholder-call-ctv;
+
+define method replace-placeholder-call-ctv
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <ct-function>)
+    => ();
+  let defn = func.ct-function-definition;
+  if (defn)
+    replace-placeholder-call-defn(component, dep, op, defn);
+  end if;
+end method replace-placeholder-call-ctv;
+
+define method replace-placeholder-call-defn
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <definition>)
+    => ();
+end method replace-placeholder-call-defn;
+
+define method replace-placeholder-call-defn
+    (component :: <component>, dep :: <dependency>, op :: <unknown-call>,
+     func :: <generic-definition>)
+    => ();
+  let discriminator = func.generic-defn-discriminator;
+  if (discriminator)
+    replace-expression(component, op.depends-on,
+		       make-literal-constant(make-builder(component),
+					     discriminator));
+  end if;
+end method replace-placeholder-call-defn;
 
 
 // Environment analysis
