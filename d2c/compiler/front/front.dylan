@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.43 1995/11/11 11:16:17 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.44 1995/11/12 12:27:15 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -530,11 +530,16 @@ define class <closure-var> (<object>)
   slot closure-next :: false-or(<closure-var>), required-init-keyword: next:;
 end;
 
-define class <nlx-info> (<object>)
-  slot nlx-hidden-references? :: <boolean>, init-value: #f;
-  slot nlx-catch :: false-or(<catch>), init-value: #f;
-  slot nlx-make-catcher :: false-or(<make-catcher>), init-value: #f;
-  slot nlx-exit-function :: false-or(<exit-function>), init-value: #f;
-  slot nlx-disable-catchers :: false-or(<disable-catcher>), init-value: #f;
-  slot nlx-throws :: false-or(<throw>), init-value: #f;
+define class <nlx-info> (<identity-preserving-mixin>)
+  slot nlx-hidden-references? :: <boolean>, init-value: #f,
+      init-keyword: hidden-references:;
+  slot nlx-catch :: false-or(<catch>), init-value: #f, init-keyword: catch:;
+  slot nlx-make-catcher :: false-or(<make-catcher>), init-value: #f,
+    init-keyword: make-catcher:;
+  slot nlx-exit-function :: false-or(<exit-function>), init-value: #f,
+    init-keyword: exit-function:;
+  slot nlx-disable-catchers :: false-or(<disable-catcher>), init-value: #f,
+    init-keyword: disable-catchers:;
+  slot nlx-throws :: false-or(<throw>), init-value: #f,
+    init-keyword: throws:;
 end;
