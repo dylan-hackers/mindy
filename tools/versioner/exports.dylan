@@ -28,7 +28,7 @@ define module versioner
   use string-conversions;
   use table-extensions;
   use piped-exec;
-  use combination-streams;
+  use concatenated-streams;
 #if (mindy)
   use Extensions, import: {exit};
 #else

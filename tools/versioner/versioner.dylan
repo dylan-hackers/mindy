@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.5 1996/09/16 10:06:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.6 1996/09/20 16:20:57 nkramer Exp $
 
 // Program that slurps up a whole bunch of rlog outputs, and decides
 // which revisions go together to form a conceptual "version".  The
@@ -506,7 +506,7 @@ define function make-rlog-stream (filenames :: <sequence>)
 	  end if;
 	end method get-next-stream;
 
-  make(<combination-stream>, get-next-stream: get-next-stream);
+  make(<concatenated-stream>, get-next-stream: get-next-stream);
 end function make-rlog-stream;
 
 define function gwydionize (path :: <string>) => full-path :: <string>;
@@ -564,7 +564,6 @@ define method main (ignored :: <byte-string>, #rest argv-sequence)
     close(from-find);
   end for;
 
-  printe("Running rlog and slurping its output\n");
   let rlog-stream = make-rlog-stream(rcs-files);
   do-versioning(rcs-files, rlog-stream, start-date);
   close(rlog-stream);
