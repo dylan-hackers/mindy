@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.16 1994/06/16 22:09:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.17 1994/06/17 18:05:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -711,6 +711,7 @@ void scavenge_thread_roots(void)
 
     scavenge(&obj_ThreadClass);
     scavenge(&obj_LockClass);
+    scavenge(&obj_SpinLockClass);
     scavenge(&obj_EventClass);
 }
 
