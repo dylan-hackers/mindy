@@ -1,9 +1,16 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.18 1996/04/10 16:50:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.19 1996/08/23 13:59:50 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
+
 
+
+// Value used for defn-dynamic? when the init keyword is not specified.  Note
+// that the init keyword is always supplied by the OD loader, so this doesn't
+// affect inherited definitions.
+define variable *defn-dynamic-default* :: <boolean> = #f;
+
 // <definition> -- exported.
 //
 // Abstract class that all definitions inherit from.  A definition is the
@@ -21,6 +28,11 @@ define open primary abstract class <definition>
   // burried inside the defn-name, because the defn-name might refer to a
   // variable pulled in from some other library.
   slot defn-library :: <library>, required-init-keyword: library:;
+  //
+  // True if this definition is allowed to be dynamically redefined, and thus
+  // we can't really make use of any info except for warnings.
+  slot defn-dynamic? :: <boolean> = *defn-dynamic-default*,
+       init-keyword: dynamic:;
 end;
 
 define method print-object (defn :: <definition>, stream :: <stream>) => ();
@@ -30,8 +42,9 @@ end;
 define constant $definition-slots
   = list(info, #f, info-setter,
 	 defn-name, name:, #f,
-	 defn-library, library:, #f);
-	 
+	 defn-library, library:, #f,
+	 defn-dynamic?, dynamic:, #f);
+
 
 define open generic defn-type (defn :: <definition>)
     => res :: false-or(<ctype>);
