@@ -19,6 +19,11 @@ OBJS = \
 	front.dbc \
 	clone.dbc \
 	cheese.dbc \
+	fer-edit.dbc \
+	callopt.dbc \
+	xep.dbc \
+	tailcall.dbc \
+	funcopt.dbc \
 	primopt.dbc \
 	trans.dbc \
 	builder.dbc \

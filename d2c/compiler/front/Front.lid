@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/Front.lid,v 1.2 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/Front.lid,v 1.3 1996/02/02 18:49:11 wlott Exp $
 library: compiler-front
 unit-prefix: front
 unique-id-base: 10250
@@ -13,6 +13,11 @@ primitives.dylan
 front.dylan
 clone.dylan
 cheese.dylan
+fer-edit.dylan
+callopt.dylan
+xep.dylan
+tailcall.dylan
+funcopt.dylan
 primopt.dylan
 trans.dylan
 builder.dylan
