@@ -77,7 +77,8 @@ define module c-parser-engine
     <parse-macro-state>, repository, tokenizer, verbose, verbose-setter,
     push-include-level, pop-include-level, objects, process-type-list,
     process-declarator, declare-objects, processing-typedef?,
-    processing-typedef?-setter;
+    processing-typedef?-setter, retrieve-recent-declarations,
+    add-contents-to-c-file!;
 
   // Defined by c-decl.dylan, which we don't have.
   create

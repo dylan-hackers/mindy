@@ -343,12 +343,43 @@ file (<cpp-parse-token> constant-expr EOF)
   int-value(%2, @0);
 %
 
-file1 (external-definition)
-  %1;
+file1 (file-contents)
+  let file = make(<c-file>);
+  add-contents-to-c-file!(file, %1);
+  file;
 %
 
-file1 (file1 external-definition)
-  %1;
+file-contents ()
+  #();
+%
+
+file-contents (file-contents external-definition-or-subfile)
+  // Builds list in reverse order.
+  pair(%2, %1);
+%
+
+external-definition-or-subfile (external-definition)
+  // Grab a list of recent declarations, if any. It's possible for each
+  // top-level form to contain zero or more declarations, thanks to
+  // tagged types and other oddities.
+  retrieve-recent-declarations(@0);
+%
+
+external-definition-or-subfile (<begin-include-token> file-contents
+				<end-include-token>)
+  let file = make(<c-file>, name: %1.string-value);
+
+  // Grab our #defines from the lexer, process them, and add them to the
+  // front of the file we're building.
+  for (cpp-define in %3.value)
+    add-cpp-declaration(@0, cpp-define)
+  end for;
+  for (decl in reverse!(retrieve-recent-declarations(@0)))
+    add-c-declaration!(file, decl);
+  end for;
+
+  add-contents-to-c-file!(file, %2);
+  file;
 %
 
 primary-expr (identifier)
@@ -1426,14 +1457,16 @@ abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <r
 ;;  error("external-definition not yet handled.");
 ;;%
 
-external-definition (<begin-include-token>)
-  push-include-level(@0, %1.string-value);
-%
+;;external-definition (<begin-include-token>)
+;;  XXX - going away soon
+;;  push-include-level(@0, %1.string-value);
+;;%
 
-external-definition (<end-include-token>)
-  do(curry(add-cpp-declaration, @0), %1.value);
-  pop-include-level(@0);
-%
+;;external-definition (<end-include-token>)
+;;  XXX - going away soon
+;;  do(curry(add-cpp-declaration, @0), %1.value);
+;;  pop-include-level(@0);
+;;%
 
 internal-include-boundary ()
   #f;
@@ -1639,7 +1672,7 @@ define method parse
      #key defines,
      verbose,
      include-path :: <c-include-path>)
- => (result :: <parse-state>);
+ => (result :: <c-file>);
   let stream = make(<byte-string-stream>, contents: "",
                     direction: #"input-output");
   for (file in files)
@@ -1657,11 +1690,12 @@ define method parse
 			 tokenizer: tokenizer);
   parse-state.verbose := verbose;
 
-  parse-loop(parse-state);
+  let result = parse-loop(parse-state);
+  // XXX - we're loosing these right now.
   if (tokenizer.cpp-decls)
     do(curry(add-cpp-declaration, parse-state), tokenizer.cpp-decls)
   end if;
-  parse-state;
+  result;
 end;
 
 // This function parses the contents of the given string and tries to

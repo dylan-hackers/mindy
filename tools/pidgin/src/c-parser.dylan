@@ -91,9 +91,11 @@ end class <parse-state>;
 // level.
 //
 define class <parse-file-state> (<parse-state>) 
+  slot recent-declarations :: <list> = #();
+
+  // XXX - Old stuff. Maybe some of this should go away.
   // Declarations is an ordered list of all declarations made withing a single
   // ".h" file.
-  // XXX - less useful without Melange's declaration-closure function. Fix.
   slot declarations :: <deque> = make(<deque>);
   slot current-file :: <string> = "<top-level>";
   slot recursive-files-stack :: <deque> = make(<deque>);
@@ -101,8 +103,6 @@ define class <parse-file-state> (<parse-state>)
   slot recursive-include-table :: <table> = make(<string-table>);
   // maps a filename into a sequence of declarations from that file
   slot recursive-declaration-table :: <table> = make(<string-table>);
-  // XXX - this is temporary
-  slot hackish-output-list :: <c-file> = make(<c-file>);
 end class;
 
 define method initialize (value :: <parse-file-state>, #key repository: r)
@@ -522,6 +522,33 @@ define function declare-objects
   end for;
 end function declare-objects;
 
+// Add file contents to a <c-file> object, unwinding the fun data structures
+// built up by the parser.
+//
+define function add-contents-to-c-file!
+    (file :: <c-file>, contents :: <list>) => ()
+  for (item in reverse!(contents))
+    select (item by instance?)
+      <c-file> =>
+	add-c-file!(file, item);
+      <list> =>
+	for (decl in reverse!(item))
+	  add-c-declaration!(file, decl);
+	end for;
+    end select;
+  end for;
+end function add-contents-to-c-file!;
+
+// Get the most recent declarations and reset our list.
+//
+define function retrieve-recent-declarations
+    (state :: <parse-file-state>)
+ => (decls :: <list>)
+  let decls = state.recent-declarations;
+  state.recent-declarations := #();
+  decls;
+end function;
+
 //----------------------------------------------------------------------
 // "High level" functions for manipulating the parse state.
 //----------------------------------------------------------------------
@@ -533,7 +560,7 @@ define method add-declaration
     (state :: <parse-file-state>, declaration :: <c-declaration>)
  => (declaration :: <c-declaration>);
   push-last(state.declarations, declaration);
-  add-c-declaration!(state.hackish-output-list, declaration);
+  state.recent-declarations := pair(declaration, state.recent-declarations);
   declaration;
 end method add-declaration;
 
@@ -566,11 +593,10 @@ define function parse-c-file
     defines[default-defines[i]] := default-defines[i + 1];
   end for;
 
-  let state = parse(repository,
-		    list(filename),
-		    defines: defines,
-		    include-path: include-path);
-  state.hackish-output-list;
+  parse(repository,
+	list(filename),
+	defines: defines,
+	include-path: include-path);
 end function;
 
 
