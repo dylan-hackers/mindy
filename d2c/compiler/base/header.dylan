@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.6 2001/04/22 02:02:08 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.7 2001/04/22 07:17:43 brent Exp $
 copyright: see below
 
 
@@ -215,13 +215,15 @@ define method find-newline (contents :: <file-contents>, posn :: <integer>)
     if (char == '\r')
       let nxt_posn = posn + 1;
       if (as(<character>, contents[nxt_posn]) == '\n')
-        nxt_posn;
+        nxt_posn;	// DOS style?
+      else
+        posn;		// No? ... then, Mac style.
       end;
     end;
     if (char ~== '\n')
       find-newline(contents, posn + 1);
     else
-      posn;
+      posn;		// Standard UNIX case
     end;
   else
     posn;
