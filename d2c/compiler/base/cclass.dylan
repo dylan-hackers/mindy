@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.17 1995/06/09 16:12:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.18 1995/06/10 15:58:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -853,18 +853,18 @@ define method find-slot-offset
     block (return)
       let guess = #f;
       for (element in slot.slot-positions)
-	if (csubtype?(element.head, instance-class))
+	if (csubtype?(instance-class, element.head))
+	  if (guess & guess ~= element.tail)
+	    return(#f);
+	  else
+	    return(element.tail);
+	  end;
+	elseif (csubtype?(element.head, instance-class))
 	  if (guess)
 	    // At different locations in different subclasses.
 	    return(#f);
 	  else
 	    guess := element.tail;
-	  end;
-	elseif (csubtype?(instance-class, element.head))
-	  if (guess & guess ~= element.tail)
-	    return(element.tail);
-	  else
-	    return(#f);
 	  end;
 	end;
       end;
