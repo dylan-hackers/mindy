@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.3 1994/03/30 10:36:25 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.4 1994/03/31 10:06:18 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -287,5 +287,9 @@ void init_driver()
     sv.sv_handler = sigint_handler;
     sv.sv_mask = 0;
     sv.sv_flags = 0;
+#ifdef hpux
+    sigvector(SIGINT, &sv, NULL);
+#else
     sigvec(SIGINT, &sv, NULL);
+#endif
 }
