@@ -16,6 +16,9 @@ define method main(name, arguments)
                             short-options: #("h"),
                             long-options: #("usage"));
   add-option-parser-by-type(arg-parser,
+                            <parameter-option-parser>,
+                            long-options: #("platform"));
+  add-option-parser-by-type(arg-parser,
                             <repeated-parameter-option-parser>,
                             short-options: #("I"),
                             long-options: #("includedir"));
@@ -31,6 +34,9 @@ define method main(name, arguments)
                             <repeated-parameter-option-parser>,
                             short-options: #("u"),
                             long-options: #("use"));
+  add-option-parser-by-type(arg-parser,
+                            <simple-option-parser>,
+                            long-options: #("flat"));
   unless(parse-arguments(arg-parser, arguments))
     usage();
     exit-application(1);
@@ -47,10 +53,23 @@ define method main(name, arguments)
     exit-application(1);
   end unless;
 
+  let platform-name = option-value-by-long-name(arg-parser, "platform");
+  let platform
+    = select(platform-name by \=)
+        "x86-linux-gcc" =>
+          $i386-linux-platform;
+        "ppc-linux-gcc" =>
+          $ppc-linux-platform;
+        "x86-freebsd-elf-gcc" =>
+          $i386-freebsd-platform;
+        otherwise =>
+          $generic-platform;
+      end;
+
   let includedir = option-value-by-long-name(arg-parser, "includedir");
   let include-path = make(<gcc-include-path>,
                           standard-include-directories:
-                            $generic-platform.c-platform-default-include-path,
+                            platform.c-platform-default-include-path,
                           extra-include-directories: includedir,
                           extra-user-include-directories: #());
   for(arg in regular-arguments(arg-parser))
@@ -71,7 +90,7 @@ define method main(name, arguments)
         let c-file :: <c-file> = parse-c-file(repository,
                                               file,
                                               include-path: include-path,
-                                              platform: $generic-platform);
+                                              platform: platform);
         format(*standard-error*, ">", file);
         new-line(*standard-error*);
         force-output(*standard-error*);
