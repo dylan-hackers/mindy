@@ -2,25 +2,10 @@
 
 $D2CFLAGS = $d2c_runtime;
 
-# Solaris doesn't support the Transcendental library because it
-# doesn't have the sinf family of functions (works like sin, but uses
-# floats instead of doubles).
-#
-if ($features{'compiled_for_darwin'} || $features{'compiled_for_solaris'}) {
-   do emit_library_rule(
-       'No-float-transcendental', '$(BUILDROOT)/force.timestamp', '', 
-       'compile', 'no-mindy', 'install'
-   );
-}
-else {
-   do emit_library_rule(
-       'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
-       'compile', 'no-mindy', 'install'
-   );
-}
+do emit_library_rule('Transcendental', '$(BUILDROOT)/force.timestamp', '', 
+		     'compile', 'no-mindy', 'install');
 
-# However it does work in mindy, and the mindy random needs the mindy
-# transcendental.
+# The mindy random needs the mindy transcendental.
 do emit_library_rule(
    'Mindy-transcendental', '', '', 'compile-mindy', 'no-d2c', 'install'
 );
