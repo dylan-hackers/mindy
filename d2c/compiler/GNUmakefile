@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.1 1994/12/12 13:01:13 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.2 1994/12/13 13:16:17 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -40,6 +40,7 @@ OBJS = exports.dbc \
 	builder.dbc \
 	fer-builder.dbc \
 	fer-convert.dbc \
+	fer-dump.dbc \
 	defconstvar.dbc \
 	tlexpr.dbc \
 	dump.dbc \
