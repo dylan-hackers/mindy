@@ -1,7 +1,6 @@
 documented: #t
 module: portability
 copyright: see below
-rcs-header: :$Header: 
 
 //======================================================================
 //

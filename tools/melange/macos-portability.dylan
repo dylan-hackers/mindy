@@ -3,7 +3,6 @@ module: portability
 copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.
-rcs-header: $Header: /scm/cvs/src/tools/melange/macos-portability.dylan,v 1.8 2003/04/09 11:25:02 gabor Exp $
 
 //======================================================================
 //

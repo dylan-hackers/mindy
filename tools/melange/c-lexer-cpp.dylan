@@ -3,7 +3,6 @@ author:  Robert Stockton (rgs@cs.cmu.edu)
 synopsis: Encapsulates the lexical conventions of the C language.
           This file also incorporates most of the functionality of CPP.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer-cpp.dylan,v 1.16 2003/04/12 23:36:41 andreas Exp $
 
 //======================================================================
 //
@@ -749,6 +748,13 @@ define method try-cpp
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
 	    parse-error(state, "Encountered #error directive.");
 	  end if;
+        "warning" =>
+          // ignore warning, and kill to end of line
+	  for (i from state.position below contents.size,
+	       until: contents[i] == '\n')
+	  finally
+	    state.position := i;
+	  end for;
 	"line", "pragma" =>
 	  // Kill to end of line
 	  for (i from pos below contents.size, until: contents[i] == '\n')

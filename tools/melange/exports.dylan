@@ -4,7 +4,6 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.8 2003/03/01 19:13:34 robmyers Exp $
 
 //======================================================================
 //
@@ -96,7 +95,7 @@ end library melange;
 
 define module int-lexer
   use dylan;
-  use extensions;
+  use extensions, exclude: {value};
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
@@ -128,7 +127,7 @@ end module int-lexer;
 
 define module int-parse
   use dylan;
-  use extensions;
+  use extensions, exclude: {value};
   use table-extensions;
   use self-organizing-list;
   use c-lexer, import: {include-path, open-in-include-path};
@@ -157,7 +156,7 @@ end module name-mappers;
 define module define-interface
   // From Dylan
   use dylan;
-  use extensions;		// required for "main" (as well as key-exists?)
+  use extensions, exclude: {value};		// required for "main" (as well as key-exists?)
   use table-extensions;
   use %hash-tables;
 #if (~mindy)

@@ -4,7 +4,6 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
 
 //======================================================================
 //
@@ -838,6 +837,7 @@ define method compute-closure
     if (instance?(decl.type, <structured-type-declaration>)
 	  & decl.type.anonymous?)
       decl.type.simple-name := decl.simple-name;
+      decl.type.c-name := decl.simple-name;
       decl.type.anonymous? := #f;
     end if;
   end if;
@@ -971,7 +971,7 @@ define class <bitfield-declaration> (<type-declaration>)
 end class <bitfield-declaration>;
 
 define class <coalesced-bitfields> (<declaration>)
-  slot type :: <predefined-type-declaration> = unsigned-char-type;
+  slot type :: <predefined-type-declaration> = unsigned-long-type;
   slot bit-size :: <integer> = 0;
   slot fields :: <stretchy-vector> = make(<stretchy-vector>);
   constant slot excluded? :: <boolean> = #f; // defer to each field

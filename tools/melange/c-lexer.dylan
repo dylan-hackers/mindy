@@ -5,7 +5,6 @@ synopsis: Encapsulates the lexical conventions of the C language.  Along with
           c-lexer-cpp.dylan, this file also incorporates most of the
           functionality of CPP.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer.dylan,v 1.14 2003/04/12 23:36:41 andreas Exp $
 
 //======================================================================
 //
