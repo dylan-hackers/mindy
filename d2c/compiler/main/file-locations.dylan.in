@@ -1,6 +1,6 @@
 module: main
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.5 1997/02/04 14:39:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.6 1997/02/05 12:26:37 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,7 +17,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // then we'd need a way of specifying "no implicit -L$GwydionDir".
 
 define constant $gwydion-dir
-  = getenv("GwydionDir") | 
+  = getenv("GWYDIONDIR") | 
       #if (compiled-for-win32)
 	 "/gwydion";
       #elseif (compiled-for-unix)
