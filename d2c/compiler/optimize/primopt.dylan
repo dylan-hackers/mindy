@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.21 1996/04/06 07:09:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.22 1996/04/18 17:05:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,7 +7,16 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
   let info = primitive.primitive-info;
-  maybe-restrict-type(component, primitive, info.priminfo-result-type);
+  let type-deriver = info.priminfo-type-deriver;
+  maybe-restrict-type
+    (component, primitive,
+     if (type-deriver)
+       type-deriver(primitive,
+		    map(derived-type,
+			listify-dependencies(primitive.depends-on)));
+     else
+       info.priminfo-result-type;
+     end if);
   let transformer = info.priminfo-transformer;
   if (transformer)
     transformer(component, primitive);
@@ -67,22 +76,19 @@ define-primitive-transformer
 
 // Values manipulation primitives.
 
+define-primitive-type-deriver
+  (#"values",
+   method (primitive :: <primitive>, arg-types :: <list>)
+       => result :: <values-ctype>;
+     make-values-ctype(arg-types, #f);
+   end method);
+
 define-primitive-transformer
   (#"values",
    method (component :: <component>, primitive :: <primitive>) => ();
      let assign = primitive.dependents.dependent;
      let defns = assign.defines;
-     if (defns & instance?(defns.var-info, <values-cluster-info>))
-       // Assigning to a cluster.  Just compute a values type and propagate
-       // it.
-       for (dep = primitive.depends-on then dep.dependent-next,
-	    types = #() then pair(dep.source-exp.derived-type, types),
-	    while: dep)
-       finally
-	 maybe-restrict-type(component, primitive,
-			     make-values-ctype(reverse!(types), #f));
-       end;
-     else
+     unless (defns & instance?(defns.var-info, <values-cluster-info>))
        // Assigning to a bunch of discreet variables.  Replace the assignment
        // with individual assignments for each value.
        let builder = make-builder(component);
@@ -350,6 +356,212 @@ define-primitive-transformer
        end method repeat;
      repeat(primitive.depends-on, #f, #t);
    end method);
+
+
+// Arithmetic optimizers.
+
+define-primitive-transformer
+  (#"fixnum-<",
+   method (component :: <component>, primitive :: <primitive>)
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     let (maybe-less?, maybe-eql?, maybe-greater?)
+       = compare-integer-types(x.derived-type, y.derived-type);
+     if (~maybe-less?)
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant
+	    (make-builder(component), as(<ct-value>, #f)));
+     elseif (~(maybe-greater? | maybe-eql?))
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant
+	    (make-builder(component), as(<ct-value>, #t)));
+     end if;
+   end method);
+	 
+define-primitive-transformer
+  (#"fixnum-=",
+   method (component :: <component>, primitive :: <primitive>)
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     let (maybe-less?, maybe-eql?, maybe-greater?)
+       = compare-integer-types(x.derived-type, y.derived-type);
+     if (~maybe-eql?)
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant
+	    (make-builder(component), as(<ct-value>, #f)));
+     elseif (~(maybe-less? | maybe-greater?))
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant
+	    (make-builder(component), as(<ct-value>, #t)));
+     end if;
+   end method);
+	 
+define generic compare-integer-types
+    (type1 :: <ctype>, type2 :: <ctype>)
+    => (maybe-less? :: <boolean>,
+	maybe-eql? :: <boolean>,
+	maybe-greater? :: <boolean>);
+
+define method compare-integer-types
+    (type1 :: <ctype>, type2 :: <ctype>)
+    => (maybe-less? :: <boolean>,
+	maybe-eql? :: <boolean>,
+	maybe-greater? :: <boolean>);
+  values(#t, #t, #t);
+end method compare-integer-types;
+
+define method compare-integer-types
+    (type1 :: <limited-integer-ctype>, type2 :: <limited-integer-ctype>)
+    => (maybe-less? :: <boolean>,
+	maybe-eql? :: <boolean>,
+	maybe-greater? :: <boolean>);
+  let low1 = type1.low-bound;
+  let high1 = type1.high-bound;
+  let low2 = type2.low-bound;
+  let high2 = type2.high-bound;
+
+  let intersection-low
+    = if (low1)
+	if (low2)
+	  max(low1, low2);
+	else
+	  low1;
+	end;
+      else
+	low2;
+      end;
+  let intersection-high
+    = if (high1)
+	if (high2)
+	  min(high1, high2);
+	else
+	  high1;
+	end;
+      else
+	high2;
+      end if;
+
+  values(~low1 | ~high2 | low1 < high2,
+	 ~intersection-low | ~intersection-high
+	   | intersection-low <= intersection-high,
+	 ~low2 | ~high1 | low2 < high1);
+end method compare-integer-types;
+
+
+define-primitive-type-deriver
+  (#"fixnum-+",
+   method (primitive :: <primitive>, arg-types :: <list>)
+       => res :: <values-ctype>;
+     let x = primitive.depends-on.source-exp;
+     if (instance?(x, <literal-constant>))
+       type-adding-constant(arg-types.second, x.value.literal-value);
+     else
+       let y = primitive.depends-on.dependent-next.source-exp;
+       if (instance?(y, <literal-constant>))
+	 type-adding-constant(arg-types.first, y.value.literal-value);
+       else
+	 specifier-type(#"<integer>");
+       end if;
+     end if;
+   end method);
+
+define-primitive-type-deriver
+  (#"fixnum--",
+   method (primitive :: <primitive>, arg-types :: <list>)
+       => res :: <values-ctype>;
+     let x = primitive.depends-on.source-exp;
+     if (instance?(x, <literal-constant>))
+       type-adding-constant(type-negated(arg-types.second),
+			    x.value.literal-value);
+     else
+       let y = primitive.depends-on.dependent-next.source-exp;
+       if (instance?(y, <literal-constant>))
+	 type-adding-constant(arg-types.first, -y.value.literal-value);
+       else
+	 specifier-type(#"<integer>");
+       end if;
+     end if;
+   end method);
+
+define-primitive-type-deriver
+  (#"fixnum-negative",
+   method (primitive :: <primitive>, arg-types :: <list>)
+       => res :: <values-ctype>;
+     type-negated(arg-types.first);
+   end method);
+
+define generic type-adding-constant
+    (ctype :: <ctype>, constant :: <general-integer>) => res :: <ctype>;
+
+define method type-adding-constant
+    (ctype :: <ctype>, constant :: <general-integer>) => res :: <ctype>;
+  ctype;
+end method type-adding-constant;
+
+define method type-adding-constant
+    (ctype :: <limited-integer-ctype>, constant :: <general-integer>)
+    => res :: <ctype>;
+  //
+  // Instead of computing a precise result, we assume that we are going
+  // to end up doing this addition zero or more times.  This lets us infer
+  // that in ``for (i from 0) ... end'' i will be positive.  Which is all
+  // we are trying to get for now.
+  if (constant.positive?)
+    make-canonical-limited-integer(ctype.base-class, ctype.low-bound, #f);
+  elseif (constant.negative?)
+    make-canonical-limited-integer(ctype.base-class, #f, ctype.high-bound);
+  else
+    ctype;
+  end if;
+end method type-adding-constant;
+
+define generic type-negated
+    (ctype :: <ctype>) => res :: <ctype>;
+
+define method type-negated
+    (ctype :: <ctype>) => res :: <ctype>;
+  ctype;
+end method type-negated;
+
+define method type-negated
+    (ctype :: <limited-integer-ctype>) => res :: <ctype>;
+  make-canonical-limited-integer
+    (ctype.base-class, ctype.high-bound, ctype.low-bound);
+end method type-negated;
+
+
+define-primitive-transformer
+  (#"fixnum-+",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     if (instance?(x, <literal-constant>) & x.value.literal-value == 0)
+       replace-expression(component, primitive.dependents, y);
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value == 0)
+       replace-expression(component, primitive.dependents, x);
+     end if;
+   end method);
+
+define-primitive-transformer
+  (#"fixnum--",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     if (instance?(x, <literal-constant>) & x.value.literal-value == 0)
+       replace-expression
+	 (component, primitive.dependents,
+	  make-operation
+	    (make-builder(component), <primitive>, list(y),
+	     name: #"fixnum-negative"));
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value == 0)
+       replace-expression(component, primitive.dependents, x);
+     end if;
+   end method);
+
 
 
 // Foreign code support primitives
