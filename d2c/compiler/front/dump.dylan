@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.5 1995/03/23 22:05:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.6 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 define class <dump-state-stream> (<stream>)
   slot target :: <stream>, required-init-keyword: target:;
-  slot varinfo-table :: union(<false>, <table>), init-value: #f;
+  slot varinfo-table :: false-or(<table>), init-value: #f;
 end;
 
 define method stream-extension-get-output-buffer

@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.20 1995/12/15 01:54:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.21 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,13 +26,13 @@ define abstract class <c-representation>
     (<representation>, <identity-preserving-mixin>)
   slot representation-name :: false-or(<symbol>),
     init-value: #f, init-keyword: name:;
-  slot more-general-representation :: union(<false>, <representation>),
+  slot more-general-representation :: false-or(<representation>),
     setter: #f, init-value: #f, init-keyword: more-general:;
   slot representation-depth :: <fixed-integer>;
-  slot representation-to-more-general :: union(<byte-string>, one-of(#t, #f)),
+  slot representation-to-more-general :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: to-more-general:;
   slot representation-from-more-general
-    :: union(<byte-string>, one-of(#t, #f)),
+    :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: from-more-general:;
   slot representation-alignment :: <fixed-integer>, setter: #f,
     required-init-keyword: alignment:;

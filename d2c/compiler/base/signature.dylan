@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.9 1995/12/06 23:29:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.10 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -69,7 +69,7 @@ define class <key-info> (<object>)
     init-value: #f, init-keyword: required:;
 
   // The default, if it is a compile-time constant.  Otherwise, #f.
-  slot key-default :: union(<false>, <ct-value>),
+  slot key-default :: false-or(<ct-value>),
     init-value: #f, init-keyword: default:;
 end;
 

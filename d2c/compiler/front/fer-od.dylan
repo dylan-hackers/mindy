@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.5 1995/11/15 16:33:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.6 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,7 +30,7 @@ define variable *dump-component* = #f;
 // builder.
 //
 define method depends-list (x :: <dependent-mixin>)
- => res :: type-or(<expression>, <list>);
+ => res :: type-union(<expression>, <list>);
   let dep-on = x.depends-on;
   if (~dep-on)
     #();

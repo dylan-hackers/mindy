@@ -1,10 +1,10 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.47 1995/12/07 00:20:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.48 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define constant <var-or-vars>
-  = union(<abstract-variable>, <list>);
+  = type-union(<abstract-variable>, <list>);
 
 
 // Result stuff.
@@ -13,9 +13,9 @@ define constant <result-designator>
   = one-of(#"nothing", #"assignment", #"let", #"expr", #"leaf");
 
 define constant <result-datum>
-  = type-or(<var-or-vars>, <symbol>, <false>);
+  = type-union(<var-or-vars>, <symbol>, <false>);
 
-define constant <result> = union(<false>, <fer-expression>);
+define constant <result> = false-or(<fer-expression>);
 
 
 define generic deliver-result (builder :: <fer-builder>, policy :: <policy>,

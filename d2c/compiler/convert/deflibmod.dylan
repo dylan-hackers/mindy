@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.8 1995/11/16 17:14:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.9 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -202,7 +202,7 @@ define method extract-prefix (expr :: <literal-ref>)
   end;
 end;
 
-define method extract-prefix (whatever :: union(<property-set>, <expression>))
+define method extract-prefix (whatever :: type-union(<property-set>, <expression>))
   error("Bogus thing in prefix clause: %=", whatever);
 end;
 

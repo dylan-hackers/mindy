@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.16 1995/12/11 19:55:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.17 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ define constant stretchy-vector =
 
 define class <action> (<object>)
   slot on :: <class>, required-init-keyword: on:, setter: #f;
-  slot next :: union(<action>, <false>), init-value: #f;
+  slot next :: false-or(<action>), init-value: #f;
 end;
 
 define class <shift> (<action>)
@@ -164,7 +164,7 @@ property (<comma-token> <keyword-token> value)
   make(<property>, keyword: %2, value: %3);
 %
 
-:type value |union(<expression>, <property-set>)|
+:type value |type-union(<expression>, <property-set>)|
 
 value (expression)
   %1;
@@ -386,7 +386,7 @@ clauses (clauses <semicolon-token> clause)
   add!(%1, %3);
 %
 
-:type clause |type-or(<use-clause>, <export-clause>, <create-clause>)|
+:type clause |type-union(<use-clause>, <export-clause>, <create-clause>)|
 
 clause (<use-token> <name-token> <comma-token> value <comma-token>
 	value <comma-token> value <comma-token> value <comma-token> value)
@@ -546,7 +546,7 @@ method-definition (method-and-name method-body <end-token> method-and-name-opt)
   %2;
 %
 
-:type method-and-name-opt |union(<name-token>, <false>)|
+:type method-and-name-opt |false-or(<name-token>)|
 
 method-and-name-opt ()
   #f
@@ -1123,7 +1123,7 @@ modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
 		     contents: %2));
 %
 
-:type end-clause |union(<false>, <begin-word-token>)|
+:type end-clause |false-or(<begin-word-token>)|
 
 end-clause (<end-token>)
   #f;
@@ -1233,7 +1233,7 @@ case-body-2-semi (case-body-2 <semicolon-token>)
   %1;
 %
 
-:type case-label |union(<simple-object-vector>, <true>)|
+:type case-label |type-union(<simple-object-vector>, <true>)|
 
 case-label (expressions <arrow-token>)
   as(<simple-object-vector>, %1);
@@ -1439,7 +1439,7 @@ keyword-parameter (keyword-opt <name-token> <double-colon-token> type
        default: %5);
 %
 
-:type default-opt |union(<false>, <expression>)|
+:type default-opt |false-or(<expression>)|
 
 default-opt ()
   #f;
@@ -1790,7 +1790,7 @@ pattern-keyword (<double-question-token> <word-token> pattern-default-opt)
   make(<pattern-keyword>, name: %2.token-symbol, default: %3, all: #t);
 %
 
-:type pattern-default-opt |type-or(<expression>, <property-set>, <false>)|
+:type pattern-default-opt |type-union(<expression>, <property-set>, <false>)|
 
 pattern-default-opt ()
   #f;
@@ -2198,8 +2198,8 @@ end;
 
 define method parse-loop-aux (state-stack :: <list>, symbol-stack :: <list>,
 			      token :: <token>, tokenizer :: <tokenizer>,
-			      action :: union(<action>, <false>),
-			      prev :: union(<action>, <false>))
+			      action :: false-or(<action>),
+			      prev :: false-or(<action>))
   if (action)
     if (instance?(token, action.on))
       if (prev)

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.47 1995/12/15 01:55:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.48 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,7 +7,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define abstract class <function-definition> (<abstract-constant-definition>)
   //
   // The signature.
-  slot %function-defn-signature :: union(<signature>, <function>),
+  slot %function-defn-signature :: type-union(<signature>, <function>),
     setter: function-defn-signature-setter, init-keyword: signature:;
   //
   // #t if this definition requires special handling at loadtime.  Can be
@@ -20,7 +20,7 @@ define abstract class <function-definition> (<abstract-constant-definition>)
   // The ctv for this function.  #f if we can't represent it (because the
   // function is hairy) and #"not-computed-yet" if we haven't computed it yet.
   slot function-defn-ct-value
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet";
   //
   // The FER transformers for this function.  Gets initialized from the
@@ -62,7 +62,7 @@ define class <generic-definition> (<function-definition>)
   //
   // The discriminator ct-value, if there is one.
   slot %generic-defn-discriminator
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet", init-keyword: discriminator:;
 end;
 
@@ -86,7 +86,7 @@ define abstract class <abstract-method-definition> (<function-definition>)
   // The <function-literal> to clone when inlining this method, #f if we can't
   // inline it, and #"not-computed-yet" if we haven't tried yet.
   slot %method-defn-inline-function
-    :: union(<function-literal>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<function-literal>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet", init-keyword: inline-function:;
 end;
 
@@ -109,7 +109,7 @@ define class <method-definition> (<abstract-method-definition>)
   //
   // The generic function this method is part of, or #f if the base-name is
   // undefined or not a generic function.
-  slot method-defn-of :: union(<generic-definition>, <false>),
+  slot method-defn-of :: false-or(<generic-definition>),
     init-value: #f, init-keyword: method-of:;
   //
   // True if this method is congruent with the corresponding GF.
@@ -118,7 +118,7 @@ define class <method-definition> (<abstract-method-definition>)
 end;
 
 define abstract class <accessor-method-definition> (<method-definition>)
-  slot accessor-method-defn-slot-info :: union(<false>, <slot-info>),
+  slot accessor-method-defn-slot-info :: false-or(<slot-info>),
     required-init-keyword: slot:;
 end;
 
@@ -1252,8 +1252,8 @@ end;
 
 define method ct-sorted-applicable-methods
     (gf :: <generic-definition>, call-types :: <list>)
-    => (ordered :: union(<list>, <false>),
-	ambiguous :: union(<list>, <false>));
+    => (ordered :: false-or(<list>),
+	ambiguous :: false-or(<list>));
   let seal-info = find-seal(gf, call-types);
   if (seal-info)
     let definitely-applicable = #();

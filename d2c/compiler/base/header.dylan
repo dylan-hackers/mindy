@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.1 1994/12/12 13:01:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.2 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,7 +15,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define class <header> (<explicit-key-collection>)
   //
   // The chain of entries.
-  slot entries :: union(<header-entry>, <false>),
+  slot entries :: false-or(<header-entry>),
     required-init-keyword: entries:;
 end;
 
@@ -32,7 +32,7 @@ define class <header-entry> (<object>)
   slot value :: <byte-string>, required-init-keyword: value:;
   //
   // The next entry in the chain.
-  slot next :: union(<header-entry>, <false>), init-value: #f;
+  slot next :: false-or(<header-entry>), init-value: #f;
 end;
 
 define method print-object (entry :: <header-entry>, stream :: <stream>) => ();
@@ -54,11 +54,11 @@ end;
 define method forward-iteration-protocol (header :: <header>)
   local
     method header-fip-next (header :: <header>, state :: <header-entry>)
-     => next-state :: union(<header-entry>, <false>);
+     => next-state :: false-or(<header-entry>);
       state.next;
     end,
     method header-fip-finished? (header :: <header>,
-				 state :: union(<header-entry>, <false>),
+				 state :: false-or(<header-entry>),
 				 limit :: <false>)
      => finished? :: <boolean>;
       ~ state;
@@ -206,7 +206,7 @@ end method;
 // alphabetic, so we don't have to check that.
 //
 define method scan-keyword (contents :: <buffer>, start :: <integer>)
-    => (keywrd :: union(<symbol>, <false>),
+    => (keywrd :: false-or(<symbol>),
 	keyword-end :: <integer>);
   local
     method repeat (posn :: <integer>)

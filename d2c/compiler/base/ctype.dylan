@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.32 1995/12/15 01:56:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.33 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,7 @@ Todo:
 /// Type2.  If we can't determine this type, then return #f
 ///
 define generic ctype-difference(type1 :: <ctype>, type2 :: <ctype>)
-       => result :: union(<ctype>, <false>);
+       => result :: false-or(<ctype>);
 
 
 /// Superclass of multi-value types and regular single types.
@@ -53,7 +53,7 @@ end class;
 /// arguments are always types.)  This memoization is a probablistic cache, not
 /// a complete record of all results ever computed.
 ///
-/// ### vector could be limited to union(<ctype>, one-of(#t, #f));
+/// ### vector could be limited to type-union(<ctype>, one-of(#t, #f));
 ///
 define constant <memo-table> = <simple-object-vector>;
 
@@ -76,7 +76,7 @@ define variable memo2-probes = 0;
 // are returned.  If not, we return #"miss" and #f;
 define constant memo2-lookup = method
    (type1 :: <ctype>, type2 :: <ctype>, table :: <memo-table>)
-    => (value :: union(<ctype>, one-of(#f, #t, #"miss")),
+    => (value :: type-union(<ctype>, one-of(#f, #t, #"miss")),
         precise :: <boolean>);
 
   memo2-probes := memo2-probes + 1;
@@ -90,7 +90,7 @@ define constant memo2-lookup = method
 end method;
 
 define constant memo2-enter = method
-   (type1 :: <ctype>, type2 :: <ctype>, result :: union(<ctype>, <boolean>),
+   (type1 :: <ctype>, type2 :: <ctype>, result :: type-union(<ctype>, <boolean>),
     precise :: <boolean>, table :: <memo-table>)
 
   let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
@@ -338,11 +338,11 @@ end method;
 ///
 define sealed generic ctype-intersection-dispatch
     (type1 :: <ctype>, type2 :: <ctype>)
-     => (result :: union(<ctype>, <false>), precise :: <boolean>);
+     => (result :: false-or(<ctype>), precise :: <boolean>);
 
 /// indicates try swapping args, or if that failed, the result is empty.
 define method ctype-intersection-dispatch(type1, type2)
-     => (result :: union(<ctype>, <false>), precise :: <boolean>);
+     => (result :: false-or(<ctype>), precise :: <boolean>);
   values(#f, #t);
 end method;
 
@@ -475,7 +475,7 @@ define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
 end;
 
 define method print-message (union :: <union-ctype>, stream :: <stream>) => ();
-  write("union(", stream);
+  write("type-union(", stream);
   for (member in union.members, first? = #t then #f)
     unless(first?)
       write(", ", stream);
@@ -683,10 +683,10 @@ end;
 define constant $limited-integer-table = make(<limited-integer-table>);
 
 define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
-  slot low-bound :: union(<extended-integer>, <false>), 
+  slot low-bound :: false-or(<extended-integer>), 
        required-init-keyword: low-bound:;
 
-  slot high-bound :: union(<extended-integer>, <false>), 
+  slot high-bound :: false-or(<extended-integer>), 
        required-init-keyword:  high-bound:;
 end class;
 
@@ -745,8 +745,8 @@ end;
 
 define method make-canonical-limited-integer
     (base-class :: <cclass>,
-     low-bound :: union(<integer>, <false>),
-     high-bound :: union(<integer>, <false>))
+     low-bound :: false-or(<integer>),
+     high-bound :: false-or(<integer>))
     => res :: <ctype>;
   if (low-bound)
     low-bound := as(<extended-integer>, low-bound);
@@ -996,7 +996,7 @@ define method really-make-canonical-singleton
 end;
 
 define method really-make-canonical-singleton
-    (thing :: union(<literal-boolean>, <literal-empty-list>),
+    (thing :: type-union(<literal-boolean>, <literal-empty-list>),
      base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
   base-class-hint | ct-value-cclass(thing);
@@ -1527,7 +1527,7 @@ define constant empty-ctype
 
 //// Type specifiers.
 
-define constant <type-specifier> = union(<symbol>, <list>);
+define constant <type-specifier> = type-union(<symbol>, <list>);
 
 define generic specifier-type (spec :: <type-specifier>)
     => res :: <values-ctype>;

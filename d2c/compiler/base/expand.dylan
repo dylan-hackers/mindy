@@ -1,20 +1,20 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.9 1995/12/07 14:30:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.10 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
 define generic expand (form :: <constituent>,
-		       lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		       lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
 
 // expand-macro -- gf method.
 //
 // By default, just return #f indicating the form doesn't expand.
 //
 define method expand (form :: <constituent>,
-		      lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		      lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
   #f;
 end;
 
@@ -51,7 +51,7 @@ end;
 // binop series expander.
 
 define method expand (series :: <binop-series>,
-		      lexenv :: union(<false>, <lexenv>))
+		      lexenv :: false-or(<lexenv>))
     => res :: <simple-object-vector>;
   local
     method repeat (operator-stack :: <list>, operand-stack :: <list>,
@@ -119,13 +119,13 @@ end;
 
 // assignment expander.
 
-define method expand (form :: <assignment>, lexenv :: union(<false>, <lexenv>))
-    => res :: union(<false>, <simple-object-vector>);
+define method expand (form :: <assignment>, lexenv :: false-or(<lexenv>))
+    => res :: false-or(<simple-object-vector>);
   expand-assignment(form.assignment-place, form.assignment-value);
 end;
 
 define generic expand-assignment (place :: <expression>, value :: <expression>)
-    => res :: union(<false>, <simple-object-vector>);
+    => res :: false-or(<simple-object-vector>);
 
 define method make-setter (place :: <identifier-token>)
     => setter :: <name-token>;
@@ -136,12 +136,12 @@ define method make-setter (place :: <identifier-token>)
 end;
 
 define method expand-assignment (place :: <varref>, value :: <expression>)
-    => res :: union(<false>, <simple-object-vector>);
+    => res :: false-or(<simple-object-vector>);
   #f;
 end;
 
 define method expand-assignment (place :: <funcall>, value :: <expression>)
-    => res :: union(<false>, <simple-object-vector>);
+    => res :: false-or(<simple-object-vector>);
   unless (instance?(place.funcall-function, <varref>))
     error("Bogus place for assignment: %=", place);
   end;
@@ -165,7 +165,7 @@ define method expand-assignment (place :: <funcall>, value :: <expression>)
 end;
 
 define method expand-assignment (place :: <dot>, value :: <expression>)
-    => res :: union(<false>, <simple-object-vector>);
+    => res :: false-or(<simple-object-vector>);
   let (value-temp, value-bind-form) = bind-temp(#"value", value);
   let (arg-temp, arg-bind-form) = bind-temp(#"arg", place.dot-operand);
   let function = make(<varref>, id: make-setter(place.dot-name));
@@ -177,7 +177,7 @@ define method expand-assignment (place :: <dot>, value :: <expression>)
 end;
 
 define method expand-assignment (place :: <expression>, value :: <expression>)
-    => res :: union(<false>, <simple-object-vector>);
+    => res :: false-or(<simple-object-vector>);
   error("Bogus place for assignment: %=", place);
 end;
 
@@ -201,8 +201,8 @@ end;
 //       end;
 // repeat(init-forms);
 
-define method expand (form :: <for>, lexenv :: union(<false>, <lexenv>))
-    => res :: union(<false>, <simple-object-vector>);
+define method expand (form :: <for>, lexenv :: false-or(<lexenv>))
+    => res :: false-or(<simple-object-vector>);
   if (lexenv)
     let outer-body = make(<stretchy-vector>);
     let inner-body = make(<stretchy-vector>);
@@ -273,7 +273,7 @@ define method process-for-clause (clause :: <for-while-clause>,
 				  init-forms :: <stretchy-vector>,
 				  step-forms :: <stretchy-vector>,
 				  implied-end-tests :: <stretchy-vector>,
-				  lexenv :: union(<false>, <lexenv>))
+				  lexenv :: false-or(<lexenv>))
   clause.for-clause-condition;
 end;
 
@@ -284,7 +284,7 @@ define method process-for-clause (clause :: <for-in-clause>,
 				  init-forms :: <stretchy-vector>,
 				  step-forms :: <stretchy-vector>,
 				  implied-end-tests :: <stretchy-vector>,
-				  lexenv :: union(<false>, <lexenv>))
+				  lexenv :: false-or(<lexenv>))
   let var = bind-type(clause.for-clause-variable, outer-body, lexenv);
   let name = var.param-name.token-symbol;
   let (coll-temp, coll-bind)
@@ -343,7 +343,7 @@ define method process-for-clause (clause :: <for-step-clause>,
 				  init-forms :: <stretchy-vector>,
 				  step-forms :: <stretchy-vector>,
 				  implied-end-tests :: <stretchy-vector>,
-				  lexenv :: union(<false>, <lexenv>))
+				  lexenv :: false-or(<lexenv>))
   add!(step-vars, bind-type(clause.for-clause-variable, outer-body, lexenv));
   let (temp, bind-form)
     = bind-temp(symcat(clause.for-clause-variable.param-name.token-symbol,
@@ -362,7 +362,7 @@ define method process-for-clause (clause :: <for-from-clause>,
 				  init-forms :: <stretchy-vector>,
 				  step-forms :: <stretchy-vector>,
 				  implied-end-tests :: <stretchy-vector>,
-				  lexenv :: union(<false>, <lexenv>))
+				  lexenv :: false-or(<lexenv>))
   let var = bind-type(clause.for-clause-variable, outer-body, lexenv);
   add!(step-vars, var);
   let name = var.param-name.token-symbol;

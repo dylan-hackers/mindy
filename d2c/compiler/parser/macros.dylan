@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.10 1995/11/16 00:48:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.11 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,7 +39,7 @@ end;
 // Syntax table manipulation routines.
 
 define method sans-definer (name :: <symbol>)
-    => res :: union(<false>, <symbol>);
+    => res :: false-or(<symbol>);
   let name-str = as(<string>, name);
   let name-size = name-str.size;
   if (name-size > 8)
@@ -250,8 +250,8 @@ end;
 // expand methods.
 
 define method expand (form :: <define-parse>,
-		      lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		      lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
   let define-word = form.define-word;
   let name = make(<basic-name>,
 		  module: define-word.token-module,
@@ -270,8 +270,8 @@ define method expand (form :: <define-parse>,
 end;
 
 define method expand (form :: <define-bindings-parse>,
-		      lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		      lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
   let define-word = form.define-word;
   let name = make(<basic-name>,
 		  module: define-word.token-module,
@@ -292,8 +292,8 @@ define method expand (form :: <define-bindings-parse>,
 end;
 
 define method expand (form :: <macro-statement>,
-		      lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		      lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
   let var = find-variable(id-name(form.statement-begin-word));
   unless (var)
     error("syntax table and variable table inconsistent.");
@@ -306,8 +306,8 @@ define method expand (form :: <macro-statement>,
 end;
 
 define method expand (form :: <funcall>,
-		      lexenv :: union(<false>, <lexenv>))
-    => results :: union(<simple-object-vector>, <false>);
+		      lexenv :: false-or(<lexenv>))
+    => results :: false-or(<simple-object-vector>);
   let fun = form.funcall-function;
   if (instance?(fun, <varref>))
     let id = fun.varref-id;
@@ -353,7 +353,7 @@ end;
 define method expand-macro-aux (form :: <constituent>,
 				fragment :: <fragment>,
 				defn :: <macro-definition>)
-    => results :: union(<simple-object-vector>, <false>);
+    => results :: false-or(<simple-object-vector>);
   let intermediate-words = defn.macro-intermediate-words;
   block (return)
     for (rule in defn.macro-main-rule-set)
@@ -442,7 +442,7 @@ end;
 
 define method find-aux-rule-set
     (name :: <symbol>, aux-rule-sets :: <simple-object-vector>)
-    => res :: union(<auxiliary-rule-set>, <false>);
+    => res :: false-or(<auxiliary-rule-set>);
   block (return)
     for (aux-rule-set in aux-rule-sets)
       if (aux-rule-set.rule-set-name == name)
@@ -725,15 +725,15 @@ end;
 // Stuff to figure extents of things.
 
 define constant <type-part-type>
-  = type-or(<left-paren-token>, <left-bracket-token>, <dot-token>,
+  = type-union(<left-paren-token>, <left-bracket-token>, <dot-token>,
 	    <literal-token>, <string-token>, <true-token>, <false-token>,
 	    <literal-ref>, <expression>, <name-token>);
 define constant <var-part-type>
-  = type-or(<type-part-type>, <double-colon-token>);
+  = type-union(<type-part-type>, <double-colon-token>);
 define constant <expr-part-type>
-  = type-or(<type-part-type>, <operator-token>, <abstract-literal-token>);
+  = type-union(<type-part-type>, <operator-token>, <abstract-literal-token>);
 define constant <plist-part-type>
-  = type-or(<expr-part-type>, <comma-token>, <property-set>);
+  = type-union(<expr-part-type>, <comma-token>, <property-set>);
 
 
 define method guess-extent-of (fragment :: <fragment>, type :: <type>)
@@ -784,8 +784,8 @@ define method trim-until-parsable (fragment :: <fragment>,
 				   remaining :: <fragment>,
 				   parser :: <function>)
     => (result :: <object>,
-	fragment :: union(<fragment>, <false>),
-	remaining :: union(<fragment>, <false>));
+	fragment :: false-or(<fragment>),
+	remaining :: false-or(<fragment>));
   block (return)
     while (#t)
       block ()
@@ -810,10 +810,10 @@ end;
 
 
 define method match-rule (rule :: <rule>,
-			  form :: union(<constituent>, <false>),
+			  form :: false-or(<constituent>),
 			  fragment :: <fragment>,
 			  intermediate-words :: <simple-object-vector>)
-    => res :: union(<list>, <false>);
+    => res :: false-or(<list>);
   match(rule.rule-pattern, fragment, intermediate-words,
 	method () #f end,
 	method (fragment, fail, results)
@@ -826,7 +826,7 @@ define method match-rule (rule :: <abstract-define-rule>,
 			  form :: <defining-form>,
 			  fragment :: <fragment>,
 			  intermediate-words :: <simple-object-vector>)
-    => res :: union(<list>, <false>);
+    => res :: false-or(<list>);
   let modifiers-fragment = make(<fragment>);
   for (modifier in form.define-modifiers)
     postpend-piece(modifiers-fragment,
@@ -864,8 +864,8 @@ define method consume-token (fragment :: <fragment>) => res :: <fragment>;
        tail: fragment.fragment-tail);
 end;
 
-define method add-binding (name :: union(<false>, <symbol>),
-			   fragment :: union(<fragment>, <vector>),
+define method add-binding (name :: false-or(<symbol>),
+			   fragment :: type-union(<fragment>, <vector>),
 			   other-results :: <list>)
     => res :: <list>;
   pair(pair(name, fragment), other-results);
@@ -889,7 +889,7 @@ define method match (pattern :: <pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   match-pieces(pattern.pattern-pieces, <semicolon-token>, fragment,
 	       intermediate-words, fail, continue, results);
 end;
@@ -898,7 +898,7 @@ define method match (pattern :: <pattern-list>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   match-pieces(pattern.pattern-list-pieces, <comma-token>, fragment,
 	       intermediate-words, fail, continue, results);
 end;
@@ -907,7 +907,7 @@ define method match (pattern :: <pattern-sequence>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   match-pieces(pattern.pattern-sequence-pieces, #f, fragment,
 	       intermediate-words, fail, continue, results);
 end;
@@ -1022,7 +1022,7 @@ define method match (pattern :: <details-pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   if (fragment.more? & instance?(fragment.next-token, <left-paren-token>))
     let left = fragment.fragment-head;
     let right = left.piece-other;
@@ -1050,7 +1050,7 @@ define method match (pattern :: <identifier-pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   if (fragment.more?)
     let token = fragment.next-token;
     if (instance?(token, <identifier-token>)
@@ -1068,7 +1068,7 @@ define method match (pattern :: <variable-pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   if (fragment.more? & instance?(fragment.next-token, <name-token>))
     let results = add-binding(pattern.variable-name-pattern,
 			      make(<fragment>,
@@ -1111,7 +1111,7 @@ define method match (pattern :: <bound-variable-pattern>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>,
 		     continue :: <function>, results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   match(pattern.bound-variable-variable, fragment, intermediate-words, fail,
 	method (fragment, fail, results)
 	  if (fragment.more? & instance?(fragment.next-token, <equal-token>))
@@ -1128,7 +1128,7 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   select (pattern.patvar-constraint)
     #"expr" =>
       let (expr-guess, remaining-guess)
@@ -1207,7 +1207,7 @@ define method match-variable (pattern :: <pattern-variable>,
 			      fragment :: <fragment>, remaining :: <fragment>,
 			      parser :: <function>, fail :: <function>,
 			      continue :: <function>, results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   let fail = if (fragment.more?)
 	       method ()
 		 let prev-piece = fragment.fragment-tail;
@@ -1237,7 +1237,7 @@ end;
 define method match-wildcard (pattern :: <pattern-variable>,
 			      fragment :: <fragment>, fail :: <function>,
 			      continue :: <function>, results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   local method match-wildcard-aux (split :: <piece>)
 	  if (instance?(split, <balanced-piece>))
 	    split := split.piece-other;
@@ -1269,7 +1269,7 @@ define method match (pattern :: <otherwise-pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   if (fragment.more? & instance?(fragment.next-token, <otherwise-token>))
     let fragment = consume-token(fragment);
     if (fragment.more? & instance?(fragment.next-token, <arrow-token>))
@@ -1286,7 +1286,7 @@ define method match (pattern :: <arrow-pattern>, fragment :: <fragment>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   if (fragment.more? & instance?(fragment.next-token, <arrow-token>))
     continue(consume-token(fragment), fail, results);
   else
@@ -1299,7 +1299,7 @@ define method match (pattern :: <property-list-pattern>,
 		     intermediate-words :: <simple-object-vector>,
 		     fail :: <function>, continue :: <function>,
 		     results :: <list>)
-    => res :: union(<false>, <list>);
+    => res :: false-or(<list>);
   block (return)
     let (plist-frag-guess, remaining-guess)
       = guess-extent-of(fragment, <plist-part-type>);
@@ -1371,7 +1371,7 @@ end;
 
 define method expand-template (template :: <template>,
 			       bindings :: <list>,
-			       this-rule-set :: union(<symbol>, <false>),
+			       this-rule-set :: false-or(<symbol>),
 			       aux-rule-sets :: <simple-object-vector>,
 			       intermediate-words :: <simple-object-vector>,
 			       uniquifier :: <uniquifier>)
@@ -1409,7 +1409,7 @@ end;
 
 define method expand-template-aux (piece :: <pattern-variable-reference>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();
@@ -1465,7 +1465,7 @@ end;
 
 define method expand-template-aux (piece :: <paren-template>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();
@@ -1483,7 +1483,7 @@ end;
 
 define method expand-template-aux (piece :: <token>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();
@@ -1492,7 +1492,7 @@ end;
 
 define method expand-template-aux (piece :: <identifier-token>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();
@@ -1514,7 +1514,7 @@ end;
 
 define method expand-template-aux (piece :: <quoted-name-token>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();
@@ -1529,7 +1529,7 @@ end;
 
 define method expand-template-aux (piece :: <operator-token>,
 				   bindings :: <list>,
-				   this-rule-set :: union(<symbol>, <false>),
+				   this-rule-set :: false-or(<symbol>),
 				   uniquifier :: <uniquifier>,
 				   result :: <fragment>)
     => ();

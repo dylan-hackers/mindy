@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.4 1995/11/13 14:55:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.5 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,7 +48,7 @@ define generic source-location (thing :: <source-location-mixin>)
 // preserve identity for space sharing...
 define class <source-file> (<identity-preserving-mixin>)
   slot name :: <string>, required-init-keyword: name:;
-  slot %contents :: union(<buffer>, <false>), init-value: #f;
+  slot %contents :: false-or(<buffer>), init-value: #f;
 end;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();

@@ -1,5 +1,5 @@
 module: transformers
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/transdef.dylan,v 1.1 1995/05/26 10:54:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/transdef.dylan,v 1.2 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,7 +16,7 @@ define class <transformer> (<object>)
   // The ctypes for the specialiers, #f if unrestricted, or #"not-computed-yet"
   // if we haven't computed it yet from the specifiers.
   slot %transformer-specializers
-    :: union(<list>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<list>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet";
   //
   // The actual transformer function.  Takes the component and the call

@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.21 1995/11/14 14:16:16 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.22 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,7 +26,7 @@ end class;
 // associates generated methods with the component (or the argument builder's
 // component.)
 //
-define generic make-builder(thing :: type-or(<component>, <flow-builder>))
+define generic make-builder(thing :: type-union(<component>, <flow-builder>))
  => res :: <flow-builder>;
 
 
@@ -87,7 +87,7 @@ define generic build-exit
 define generic build-return
     (builder :: <flow-builder>, policy :: <policy>,
      source :: <source-location>, target :: <function-region>,
-     operands :: union(<list>, <leaf>))
+     operands :: type-union(<list>, <leaf>))
  => ();
 
 
@@ -105,7 +105,7 @@ define generic build-loop-body
 define generic build-assignment
     (builder :: <flow-builder>, policy :: <policy>,
      source :: <source-location>,
-     target-vars :: type-or(<leaf>, <list>),
+     target-vars :: type-union(<leaf>, <list>),
      source-exp :: <expression>)
  => ();
 
@@ -161,7 +161,7 @@ define generic build-function-body
 define generic build-let
     (builder :: <fer-builder>, policy :: <policy>,
      source :: <source-location>,
-     target-vars :: type-or(<leaf>, <list>),
+     target-vars :: type-union(<leaf>, <list>),
      source-exp :: <expression>)
  => ();
 

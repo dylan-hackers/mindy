@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.3 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.4 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,9 +7,9 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 //// Program fragments.
 
 define class <fragment> (<object>)
-  slot fragment-head :: union(<false>, <piece>),
+  slot fragment-head :: false-or(<piece>),
     init-value: #f, init-keyword: head:;
-  slot fragment-tail :: union(<false>, <piece>),
+  slot fragment-tail :: false-or(<piece>),
     init-value: #f, init-keyword: tail:;
 end;
 
@@ -34,9 +34,9 @@ define method print-object (frag :: <fragment>, stream :: <stream>) => ();
 end;
 
 define class <piece> (<object>)
-  slot piece-prev :: union(<false>, <piece>),
+  slot piece-prev :: false-or(<piece>),
     init-value: #f, init-keyword: prev:;
-  slot piece-next :: union(<false>, <piece>),
+  slot piece-next :: false-or(<piece>),
     init-value: #f, init-keyword: next:;
   slot piece-token :: <token>,
     required-init-keyword: token:;
@@ -47,7 +47,7 @@ define method print-object (piece :: <piece>, stream :: <stream>) => ();
 end;
 
 define class <balanced-piece> (<piece>)
-  slot piece-other :: union(<false>, <piece>),
+  slot piece-other :: false-or(<piece>),
     init-value: #f, init-keyword: other:;
 end;
 
@@ -91,8 +91,8 @@ define method append-fragments (frag1 :: <fragment>, frag2 :: <fragment>)
 end;
 
 define class <fragment-tokenizer> (<tokenizer>)
-  slot current-piece :: union(<piece>, <false>);
-  slot tail-piece :: union(<piece>, <false>);
+  slot current-piece :: false-or(<piece>);
+  slot tail-piece :: false-or(<piece>);
 end;
 
 define method print-object (tokenizer :: <fragment-tokenizer>,

@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.7 1995/08/28 13:03:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.8 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,11 +60,11 @@ define abstract class <identifier-token> (<symbol-token>)
   // The module this name should be looked up in if interpreted as a free
   // reference, or #f if a generated name (and hence, not really from any
   // module).
-  slot token-module :: union(<module>, <false>),
+  slot token-module :: false-or(<module>),
     init-value: #f, init-keyword: module:;
   //
   // A uniquifier.
-  slot token-uniquifier :: union(<uniquifier>, <false>),
+  slot token-uniquifier :: false-or(<uniquifier>),
     init-value: #f, init-keyword: uniquifier:;
 end;
   
@@ -84,12 +84,12 @@ end;
 // up in when used as a free reference.
 //
 define generic token-module (token :: <identifier-token>)
- => res :: union(<module>, <false>);
+ => res :: false-or(<module>);
 
 // token-uniquifier -- exported.
 //
 define generic token-uniquifier (token :: <identifier-token>)
-    => res :: union(<uniquifier>, <false>);
+    => res :: false-or(<uniquifier>);
 
 // <uniquifier> -- exported.
 //

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.109 1995/12/07 00:22:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.110 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -430,10 +430,10 @@ define method optimize
 	    else
 	      //
 	      // We might get a value, or we might default it to #f.
-	      let type-or-false = ctype-union(type, false-type);
+	      let type-union-false = ctype-union(type, false-type);
 	      for (var = var then var.definer-next,
 		   while: var)
-		maybe-restrict-type(component, var, type-or-false);
+		maybe-restrict-type(component, var, type-union-false);
 	      end;
 	    end;
 	  end;
@@ -827,7 +827,7 @@ end;
 
 define method maybe-change-to-known-or-error-call
     (component :: <component>, call :: <unknown-call>, sig :: <signature>,
-     func-name :: union(<name>, <string>))
+     func-name :: type-union(<name>, <string>))
     => ();
   select (compare-unknown-call-against-signature(call, sig, func-name))
     #"bogus" =>
@@ -847,7 +847,7 @@ end;
 
 define method compare-unknown-call-against-signature
     (call :: <unknown-call>, sig :: <signature>,
-     func-name :: union(<name>, <string>))
+     func-name :: type-union(<name>, <string>))
     => res :: one-of(#"bogus", #"valid", #"can't tell");
 
   // Find the next-method-info and arguments.
@@ -1137,7 +1137,7 @@ define method optimize
   end;
 end;
 
-define method find-transformers (func :: union(<leaf>, <definition>))
+define method find-transformers (func :: type-union(<leaf>, <definition>))
     => res :: <list>;
   #();
 end;
@@ -1172,7 +1172,7 @@ end;
 
 define method optimize-known-call
     (component :: <component>, call :: <known-call>,
-     func :: union(<leaf>, <definition>))
+     func :: type-union(<leaf>, <definition>))
     => ();
 end;
 
@@ -2413,13 +2413,13 @@ end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <simple-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   #f;
 end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <compound-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   block (return)
     for (remaining = region.regions then remaining.tail,
 	 until: remaining == #())
@@ -2445,7 +2445,7 @@ end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <if-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   let then-terminating-exit
     = cleanup-control-flow-aux(component, region.then-region);
   let else-terminating-exit
@@ -2470,7 +2470,7 @@ end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <loop-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   if (cleanup-control-flow-aux(component, region.body))
     // ### Hm.  Should flush this region, but that will cause all sorts of
     // problems with the iteration in <compound-region> above.
@@ -2481,7 +2481,7 @@ end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <block-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   let terminating-exit = cleanup-control-flow-aux(component, region.body);
   if (instance?(terminating-exit, <exit>)
 	& terminating-exit.block-of == region)
@@ -2494,13 +2494,13 @@ end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <unwind-protect-region>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   cleanup-control-flow-aux(component, region.body);
 end;
 
 define method cleanup-control-flow-aux
     (component :: <component>, region :: <exit>)
-    => terminating-exit :: union(<exit>, <boolean>);
+    => terminating-exit :: type-union(<exit>, <boolean>);
   region;
 end;
 

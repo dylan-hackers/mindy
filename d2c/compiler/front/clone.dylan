@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.1 1995/10/05 01:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.2 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -239,7 +239,7 @@ end;
 
 define method clone-expr
     (function :: <function-literal>, state :: <clone-state>)
-    => clone :: union(<function-literal>, <uninitialized-value>);
+    => clone :: type-union(<function-literal>, <uninitialized-value>);
   maybe-clone
     (function, state,
      method ()

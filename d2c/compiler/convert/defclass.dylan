@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.44 1995/12/13 23:57:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.45 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,17 +9,17 @@ define class <class-definition> (<abstract-constant-definition>)
   // superclasses), #"not-computed-yet" if we haven't computed it yet, or
   // #"computing" if we are actively working on it.
   slot class-defn-cclass
-    :: union(<cclass>, one-of(#f, #"not-computed-yet", #"computing")),
+    :: type-union(<cclass>, one-of(#f, #"not-computed-yet", #"computing")),
     init-value: #"not-computed-yet", init-keyword: class:;
   //
   // Defered evaluations function, of #f if there isn't one.
   slot %class-defn-defered-evaluations-function
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet";
   //
   // The maker function, of #f if there isn't one.
   slot %class-defn-maker-function
-    :: union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet";
 end;
 
@@ -68,7 +68,7 @@ define class <slot-defn> (<object>)
     required-init-keyword: allocation:;
   //
   // The expression to compute the type.
-  slot slot-defn-type :: union(<expression>, <false>),
+  slot slot-defn-type :: false-or(<expression>),
     required-init-keyword: type:;
   //
   // The name of the getter generic function.
@@ -79,22 +79,22 @@ define class <slot-defn> (<object>)
   slot slot-defn-getter :: <getter-method-definition>;
   //
   // The name of the setter generic function, or #f if there is no setter.
-  slot slot-defn-setter-name :: union(<name>, <false>),
+  slot slot-defn-setter-name :: false-or(<name>),
     required-init-keyword: setter-name:;
   //
   // The setter method.  Filled in when computed.
   slot slot-defn-setter :: false-or(<setter-method-definition>);
   //
   // The init-value expression, or #f if one wasn't supplied.
-  slot slot-defn-init-value :: union(<false>, <expression>),
+  slot slot-defn-init-value :: false-or(<expression>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function, or #f if there isn't one.
-  slot slot-defn-init-function :: union(<expression>, <false>),
+  slot slot-defn-init-function :: false-or(<expression>),
     init-value: #f, init-keyword: init-function:;
   //
   // The init-keyword, or #f if there isn't one.
-  slot slot-defn-init-keyword :: union(<literal-symbol>, <false>),
+  slot slot-defn-init-keyword :: false-or(<literal-symbol>),
     init-value: #f, init-keyword: init-keyword:;
   //
   // #t if the init-keyword is required, #f if not.
@@ -107,7 +107,7 @@ define class <slot-defn> (<object>)
 
   // The slot-info for this slot, or #f if we haven't computed it or don't know
   // enough about the class to compute it at all.
-  slot slot-defn-info :: union(<false>, <slot-info>),
+  slot slot-defn-info :: false-or(<slot-info>),
     init-value: #f;
 end;
 
@@ -121,16 +121,16 @@ define class <override-defn> (<object>)
     required-init-keyword: getter-name:;
   //
   // The init-value expression, or #f if none.
-  slot override-defn-init-value :: union(<false>, <expression>),
+  slot override-defn-init-value :: false-or(<expression>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function expression, or #f if none.
-  slot override-defn-init-function :: union(<false>, <expression>),
+  slot override-defn-init-function :: false-or(<expression>),
     init-value: #f, init-keyword: init-function:;
   //
   // The <override-info> for this override, or #f if we haven't computed it
   // or don't know enough about the class to compute it at all.
-  slot override-defn-info :: union(<false>, <override-info>),
+  slot override-defn-info :: false-or(<override-info>),
     init-value: #f;
 end;
 
@@ -494,7 +494,7 @@ end;
 // to indicate that this class doesn't have a compile-time value.
 
 define method ct-value (defn :: <class-definition>)
-    => res :: union(<false>, <cclass>);
+    => res :: false-or(<cclass>);
   select (defn.class-defn-cclass)
     #"not-computed-yet" =>
       defn.class-defn-cclass := compute-cclass(defn);
@@ -508,7 +508,7 @@ define method ct-value (defn :: <class-definition>)
 end;
 
 define method compute-cclass (defn :: <class-definition>)
-    => res :: union(<false>, <cclass>);
+    => res :: false-or(<cclass>);
   block (return)
     //
     // Mark that we are trying to compute this class.
@@ -685,7 +685,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
   let defn = tlf.tlf-defn;
   //
   // Compute the cclass if it hasn't been computed yet.
-  let cclass :: union(<false>, <cclass>)
+  let cclass :: false-or(<cclass>)
     = if (defn.class-defn-cclass == #"not-computed-yet")
 	defn.class-defn-cclass := compute-cclass(defn);
       else

@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.19 1995/12/15 05:55:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.20 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,7 +13,7 @@ define abstract class <literal> (<ct-value>)
 end;
 
 define abstract class <eql-ct-value> (<ct-value>)
-  slot ct-value-singleton :: union(<false>, <ctype>),
+  slot ct-value-singleton :: false-or(<ctype>),
     init-value: #f;
 end;
 

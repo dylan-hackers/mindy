@@ -1,5 +1,5 @@
 module: lexenv
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.2 1995/08/07 14:03:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.3 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,7 +24,7 @@ end;
 define class <binding> (<object>)
   slot binding-name :: <identifier-token>, required-init-keyword: name:;
   slot binding-var :: <abstract-variable>, required-init-keyword: var:;
-  slot binding-type-var :: union(<abstract-variable>, <false>),
+  slot binding-type-var :: false-or(<abstract-variable>),
     init-value: #f, init-keyword: type-var:;
 end;
 
@@ -40,7 +40,7 @@ define method add-binding (lexenv :: <lexenv>, name :: <name-token>,
 end;
 
 define method find-binding (lexenv :: <lexenv>, name :: <identifier-token>)
-    => res :: union(<false>, <binding>);
+    => res :: false-or(<binding>);
   block (return)
     for (binding in lexenv.lexenv-bindings)
       if (same-id?(name, binding.binding-name))

@@ -4,7 +4,7 @@ define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
   slot next-id :: <fixed-integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
-  slot symbols :: union(<literal-false>, <literal-symbol>),
+  slot symbols :: type-union(<literal-false>, <literal-symbol>),
     init-function: curry(make, <literal-false>);
 end;
 
@@ -653,7 +653,7 @@ end method get-class-fields;
 define method find-init-value
     (class :: <cclass>, slot :: <instance-slot-info>,
      slots :: <simple-object-vector>)
-    => res :: type-or(<ct-value>, <sequence>, <false>);
+    => res :: type-union(<ct-value>, <sequence>, <false>);
   block (return)
     let getter = slot.slot-getter;
     let slot-name = getter & getter.variable-name;

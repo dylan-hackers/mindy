@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.12 1995/11/15 17:25:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.13 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,8 +363,8 @@ end method;
 // 
 define method ct-sorted-applicable-methods
     (gf :: <generic-definition>, call-types :: <list>)
-    => (ordered :: union(<list>, <false>),
-	ambiguous :: union(<list>, <false>));
+    => (ordered :: false-or(<list>),
+	ambiguous :: false-or(<list>));
   block (return)
     for (seal-info in gf.generic-defn-seal-info)
       select (compare-specializers(seal-info.seal-types, call-types, #f))

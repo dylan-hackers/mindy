@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.20 1995/11/13 11:08:17 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.21 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -71,7 +71,7 @@ define abstract class <queueable-mixin> (<object>)
   // date), or #"deleted" if this queueable has been deleted (hence should
   // be ignored).
   slot queue-next
-      :: union(<queueable-mixin>, one-of(#f, #"absent", #"deleted")),
+      :: type-union(<queueable-mixin>, one-of(#f, #"absent", #"deleted")),
     init-value: #"absent";
 end;  
 

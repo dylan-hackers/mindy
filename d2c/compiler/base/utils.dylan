@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.13 1995/12/13 23:59:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.14 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -89,7 +89,7 @@ end;
 define constant $newline = as(<integer>, '\n');
 
 define method after-last-newline (buf :: <buffer>, stop :: <buffer-index>)
-    => res :: union(<false>, <buffer-index>);
+    => res :: false-or(<buffer-index>);
   local
     method repeat (i)
       if (zero?(i))
@@ -231,7 +231,7 @@ define method pretty-format (stream :: <stream>,
 			     end);
 end;
 
-define method report-condition (condition :: type-or(<simple-error>,
+define method report-condition (condition :: type-union(<simple-error>,
 						     <simple-warning>,
 						     <simple-restart>),
 				stream :: <stream>)

@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.27 1995/12/06 23:27:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.28 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,13 +10,13 @@ define abstract class <bindings-definition> (<definition>)
   //
   // The <ctype> for this definition if it is a compile-time constant.  Filled
   // in by finalize-top-level-form.
-  slot defn-type :: union(<false>, <ctype>), init-keyword: type:;
+  slot defn-type :: false-or(<ctype>), init-keyword: type:;
   //
   // The initial value (or only value for constants) if it is a compile-time
   // value, #f if it isn't compile-time computable, and #"not-computed-yet"
   // if we haven't figured it out yet.  Filled in either by ct-value on a
   // constant or by finalize-top-level-form.
-  slot defn-init-value :: union(<ct-value>, one-of(#f, #"not-computed-yet")),
+  slot defn-init-value :: type-union(<ct-value>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet", init-keyword: value:;
 end;
 
@@ -26,7 +26,7 @@ define class <constant-definition>
   // The top level form that makes this definition, or #f if it wasn't defined
   // by a define constant in this library.  If this is #f, then the init-value
   // must be supplied.
-  slot defconst-tlf :: union(<false>, <define-constant-tlf>),
+  slot defconst-tlf :: false-or(<define-constant-tlf>),
     init-value: #f;
 end;
 
@@ -48,7 +48,7 @@ define class <variable-definition> (<bindings-definition>)
   //
   // The <constant-definition> for the type if the type isn't a compile-time
   // constant.  Filled in by finalize-top-level-form.
-  slot var-defn-type-defn :: union(<false>, <constant-definition>),
+  slot var-defn-type-defn :: false-or(<constant-definition>),
     init-value: #f, init-keyword: type-defn:;
 end;
 
@@ -60,7 +60,7 @@ define abstract class <define-bindings-tlf> (<define-tlf>)
     required-init-keyword: bindings:;
   slot tlf-required-defns :: <simple-object-vector>,
     required-init-keyword: required-defns:;
-  slot tlf-rest-defn :: union(<false>, <bindings-definition>),
+  slot tlf-rest-defn :: false-or(<bindings-definition>),
     required-init-keyword: rest-defn:;
   slot tlf-finalized? :: <boolean>,
     init-value: #f;
@@ -147,23 +147,23 @@ define method process-top-level-form (form :: <define-constant-parse>) => ();
 end;
 
 define method expand-until-method-ref (expr :: <expression>)
-    => res :: union(<false>, <method-ref>);
+    => res :: false-or(<method-ref>);
   #f;
 end;
 
 define method expand-until-method-ref (expr :: <method-ref>)
-    => res :: union(<false>, <method-ref>);
+    => res :: false-or(<method-ref>);
   expr;
 end;
 
 define method expand-until-method-ref (expr :: <begin>)
-    => res :: union(<false>, <method-ref>);
+    => res :: false-or(<method-ref>);
   let body = expr.begin-body;
   body.size == 1 & expand-until-method-ref(body[0]);
 end;
 
 define method expand-until-method-ref (expr :: <macro-statement>)
-    => res :: union(<false>, <method-ref>);
+    => res :: false-or(<method-ref>);
   let expansion = expand(expr, #f);
   expansion & expansion.size == 1 & expand-until-method-ref(expansion[0]);
 end;
@@ -199,7 +199,7 @@ end;
 // Compile-time value stuff.
 
 define method ct-value (defn :: <constant-definition>)
-    => res :: union(<false>, <ct-value>);
+    => res :: false-or(<ct-value>);
   if (defn.defn-init-value == #"not-computed-yet")
     let tlf = defn.defconst-tlf;
     if (tlf)

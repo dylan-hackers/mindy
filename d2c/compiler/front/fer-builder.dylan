@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.42 1995/11/14 14:17:33 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.43 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -280,7 +280,7 @@ end method;
 define method build-return
     (builder :: <internal-builder>, policy :: <policy>,
      source :: <source-location>, target :: <function-region>,
-     operands :: union(<list>, <leaf>))
+     operands :: type-union(<list>, <leaf>))
  => ();
   ignore(policy);
   let res = make-operand-dependencies(builder,
@@ -316,7 +316,7 @@ end;
 
 define method build-assignment-aux
     (res :: <assignment>, builder :: <internal-builder>,
-     target-vars :: type-or(<leaf>, <list>),
+     target-vars :: type-union(<leaf>, <list>),
      expr :: <expression>)
 
   let component = builder.component;
@@ -347,7 +347,7 @@ end method;
 define method build-assignment
     (builder :: <internal-builder>, policy :: <policy>,
      source :: <source-location>,
-     target-vars :: type-or(<leaf>, <list>),
+     target-vars :: type-union(<leaf>, <list>),
      expr :: <expression>)
  => ();
   build-assignment-aux
@@ -439,7 +439,7 @@ end;
 define method build-let
     (builder :: <fer-builder>, policy :: <policy>,
      source :: <source-location>,
-     target-vars :: type-or(<leaf>, <list>),
+     target-vars :: type-union(<leaf>, <list>),
      expr :: <expression>)
  => ();
   let component = builder.component;

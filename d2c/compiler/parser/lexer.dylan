@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.10 1995/12/13 23:55:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.11 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -481,14 +481,14 @@ define class <state> (<object>)
   // makes it out of the lexer (e.g. whitespace), classes for simple
   // tokens that don't need any extra parsing, and functions for more
   // complex tokens.
-  slot result :: type-or(<false>, <symbol>, <class>, <function>),
+  slot result :: type-union(<false>, <symbol>, <class>, <function>),
     required-init-keyword: result:;
   //
   // Either #f or a vector of next-states indexed by character code.
   // During construction, vector elements are either state names or #f.
   // After construction, the state names are replaced by the actual
   // state objects.
-  slot transitions :: union(<false>, <simple-object-vector>),
+  slot transitions :: false-or(<simple-object-vector>),
     required-init-keyword: transitions:;
 end;
 
@@ -504,7 +504,7 @@ define constant $Initial-State$ =
   begin
     local
       method add-transition (table :: <simple-object-vector>,
-			     on :: type-or(<integer>, <character>,
+			     on :: type-union(<integer>, <character>,
 					   <byte-string>),
 			     new-state :: <symbol>);
 	//
@@ -553,7 +553,7 @@ define constant $Initial-State$ =
 	end;
       end,
       method state (name :: <symbol>,
-		    result :: type-or(<false>, <symbol>, <class>, <function>),
+		    result :: type-union(<false>, <symbol>, <class>, <function>),
 		    #rest transitions)
 	//
 	// Utility function for making states.  We expand the sequence
@@ -966,7 +966,7 @@ define method parse-feature-term (lexer :: <lexer>) => res :: <boolean>;
       parse-feature-expr(lexer);
     <tilde-token> =>
       ~parse-feature-term(lexer);
-    type-or(<word-token>, <core-word-token>) =>
+    type-union(<word-token>, <core-word-token>) =>
       feature-present?(token.token-symbol);
     otherwise =>
       parse-error(token);
@@ -1054,7 +1054,7 @@ end;
 //
 define method skip-multi-line-comment (lexer :: <lexer>,
 				       start :: <integer>)
-    => result :: union(<integer>, <false>);
+    => result :: false-or(<integer>);
   let contents = lexer.source.contents;
   let length = contents.size;
   local

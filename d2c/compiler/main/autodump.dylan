@@ -1,6 +1,6 @@
 module: autodump
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.7 1995/11/14 22:25:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/autodump.dylan,v 1.8 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,7 +65,7 @@ end method generate-dumper-and-loader;
 
 define method output-dumper
     (module-name :: <string>, file-name :: <string>, 
-     next-free-id :: union(<integer>, <false>), #rest classes) 
+     next-free-id :: false-or(<integer>), #rest classes) 
  => ();
   let stream = make(<file-stream>, name: file-name, direction: #"output");
   format(stream, "module: %s\n", module-name);
@@ -96,7 +96,7 @@ end method output-dumper;
 // won't output anything to *standard-output*.
 //
 define method autodump
-    (component :: <symbol>, id :: union(<integer>, <false>)) => ();
+    (component :: <symbol>, id :: false-or(<integer>)) => ();
   select (component)
     #"parse-tree" =>
       output-dumper("parse-tree", "parse-dump.dylan", id,

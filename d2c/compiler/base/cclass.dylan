@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.26 1995/12/15 05:55:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.27 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -72,9 +72,9 @@ define abstract class <cclass>
 
   // The representation of instances of this class or #f if we haven't
   // picked them yet.
-  slot speed-representation :: union(<false>, <representation>),
+  slot speed-representation :: false-or(<representation>),
     init-value: #f, init-keyword: speed-representation:;
-  slot space-representation :: union(<false>, <representation>),
+  slot space-representation :: false-or(<representation>),
     init-value: #f, init-keyword: space-representation:;
   //
   // Vector of <slot-info>s for the slots introduced by this class.
@@ -211,7 +211,7 @@ define abstract class <slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
   // The getter generic function definition.  Used for slot identity.  If #f,
   // that means that the slot is an auxiliary slot hung off some other slot,
   // and therefore doesn't need additional identity information.
-  slot slot-getter :: union(<false>, <variable>),
+  slot slot-getter :: false-or(<variable>),
     required-init-keyword: getter:;
   //
   // True if the slot is read-only (i.e. no setter), False otherwise.
@@ -220,12 +220,12 @@ define abstract class <slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
   //
   // The initial value.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
-  slot slot-init-value :: union(<ct-value>, <boolean>),
+  slot slot-init-value :: type-union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
-  slot slot-init-function :: union(<ct-value>, <boolean>),
+  slot slot-init-function :: type-union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-function:;
   //
   // The init-keyword, or #f if there isn't one.
@@ -271,11 +271,11 @@ define method initialize
 end;
 
 define class <instance-slot-info> (<slot-info>)
-  slot slot-representation :: union(<representation>, <false>),
+  slot slot-representation :: false-or(<representation>),
     init-value: #f, init-keyword: slot-representation:;
   slot slot-positions :: <list>,
     init-value: #(), init-keyword: slot-positions:;
-  slot slot-initialized?-slot :: union(<false>, <instance-slot-info>),
+  slot slot-initialized?-slot :: false-or(<instance-slot-info>),
     init-value: #f, init-keyword: slot-initialized?-slot:;
 end;
 
@@ -314,12 +314,12 @@ define class <override-info> (<identity-preserving-mixin>)
   //
   // The initial value.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
-  slot override-init-value :: union(<ct-value>, <boolean>),
+  slot override-init-value :: type-union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function.  A <ct-value> if we can figure one out, #t if there is
   // one but we can't tell what it is, and #f if there isn't one.
-  slot override-init-function :: union(<ct-value>, <boolean>),
+  slot override-init-function :: type-union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-function:;
 end;
 
@@ -851,7 +851,7 @@ define method inherit-layout
 end;
 
 define method inherit-layout
-    (slot :: union(<instance-slot-info>, <each-subclass-slot-info>),
+    (slot :: type-union(<instance-slot-info>, <each-subclass-slot-info>),
      class :: <cclass>, super :: <cclass>)
     => ();
   for (remaining = slot.slot-positions then remaining.tail,

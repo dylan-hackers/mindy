@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.16 1995/12/11 00:09:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.17 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,7 +7,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define method extract-args
     (call :: <known-call>, nfixed :: <fixed-integer>, want-next? :: <boolean>,
      rest? :: <boolean>, keys :: false-or(<list>))
-    => (okay? :: <boolean>, #rest arg :: union(<leaf>, <list>));
+    => (okay? :: <boolean>, #rest arg :: type-union(<leaf>, <list>));
   block (return)
     let sig = find-signature(call.depends-on.source-exp);
     unless (sig.specializers.size == nfixed)

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.85 1995/12/09 21:12:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.86 1995/12/15 16:16:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -339,7 +339,7 @@ define method new-global
   end if;
 end method new-global;
 
-define method new-root (init-value :: union(<false>, <ct-value>),
+define method new-root (init-value :: false-or(<ct-value>),
 			file :: <file-state>,
 			#key prefix)
   let unit = file.file-unit;
@@ -426,7 +426,7 @@ end method defn-guaranteed-initialized?;
 define class <backend-var-info> (<object>)
   slot backend-var-info-rep :: <representation>,
     required-init-keyword: representation:;
-  slot backend-var-info-name :: union(<false>, <string>),
+  slot backend-var-info-name :: false-or(<string>),
     required-init-keyword: name:;
 end;
 
@@ -434,7 +434,7 @@ add-make-dumper(#"backend-var-info", *compiler-dispatcher*, <backend-var-info>,
 		list(backend-var-info-rep, representation:, #f,
 		     backend-var-info-name, name:, #f));
 
-define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
+define method make-info-for (var :: type-union(<initial-variable>, <ssa-variable>),
 			     // ### Should really only be ssa-variable.
 			     file :: <file-state>)
     => res :: <backend-var-info>;
@@ -527,7 +527,7 @@ define class <function-info> (<object>)
   // returned.  If #"doesn't-return" then it doesn't return.  If #"cluster",
   // it returns a cluster of values.
   slot function-info-result-representation
-    :: type-or(<representation>, <list>,
+    :: type-union(<representation>, <list>,
 	       one-of(#"doesn't-return", #"cluster")),
     required-init-keyword: result-rep:;
   //
@@ -1379,7 +1379,7 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     call :: union(<unknown-call>, <error-call>),
+     call :: type-union(<unknown-call>, <error-call>),
      file :: <file-state>)
     => ();
   let setup-stream = make(<byte-string-output-stream>);
