@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.8 2003/04/24 05:46:00 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.9 2003/07/02 16:21:42 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -334,7 +334,7 @@ define module macros
   use source-utilities;
 
   export
-    <macro-definition>, macro-expand,
+    <macro-definition>, identify-variable-references, macro-expand,
 #if (mindy)
     recursively-macro-expand,
 #endif

@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.10 2003/02/19 21:10:00 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.11 2003/07/02 16:21:42 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -951,6 +951,150 @@ define method annotate-variables-pattern
     end for;
   end if;
 end method annotate-variables-pattern;
+
+
+// Identifying variables referenced in expansion templates
+
+// identify-variable-references -- exported.
+//
+define method identify-variable-references
+    (defn :: <macro-definition>) => ();
+  let aux-rule-sets = defn.macro-auxiliary-rule-sets;
+  for (rule in defn.macro-main-rule-set.rule-set-rules)
+    identify-variable-references-template(rule.rule-template, defn.defn-name);
+  end for;
+  for (rule-set in aux-rule-sets)
+    for (rule in rule-set.rule-set-rules)
+      identify-variable-references-template(rule.rule-template,
+                                            defn.defn-name);
+    end for;
+  end for;
+end method identify-variable-references;
+
+// identify-variable-references-template -- internal
+//
+define generic identify-variable-references-template
+    (template :: <template>, macro-name :: <name>) => ();
+
+// <procedural-template>
+define method identify-variable-references-template
+    (template :: <procedural-template>, macro-name :: <name>) => ();
+  for(argument in template.template-arguments)
+    identify-variable-references-template(argument, macro-name);
+  end for;
+end method;
+
+// <literal-template>
+
+define method identify-variable-references-template
+    (template :: <literal-template>, macro-name :: <name>) => ();
+  identify-variable-references-sequence(template.template-elements,
+                                        macro-name);
+end method;
+
+define method identify-variable-references-sequence
+    (seq :: <sequence>, macro-name :: <name>) => ();
+  local
+    method reference-name
+        (sym :: <symbol>, module :: <module>) => (var :: false-or(<variable>));
+      let name = make(<basic-name>, symbol: sym, module: module);
+      let var = find-variable(name);
+      if (var)
+        format(*debug-output*, "macro %s references variable %s\n",
+               macro-name, name);
+        note-variable-referencing-macro(var, macro-name);
+      end if;
+      var;
+    end method;
+  
+  let seq-size = seq.size;
+  for (i from 0 below seq-size)
+    let template-element = seq[i];
+
+    select (template-element by instance?)
+      <identifier-token> =>
+        // Reference to variable-name.
+        //
+        let var = reference-name(template-element.token-symbol,
+                                 template-element.token-module);
+
+        // Reference to getter-name ## "-setter".
+        //
+        if (i + 2 < seq-size
+              & bracketed?(seq[i + 1], $left-paren-token)
+              & assignment-operator?(seq[i + 2]))
+          reference-name(symcat(template-element.token-symbol, "-setter"),
+                         template-element.token-module);
+        end;
+
+        // Reference to definer-name ## "-definer".
+        //
+        if (template-element.token-kind = $define-token)
+          block (done)
+            for (j from i + 1 below seq-size)
+              let template-element = seq[j];
+              if (instance?(template-element, <identifier-token>))
+                if (define-word?(template-element))
+                  reference-name(symcat(template-element.token-symbol,
+                                        "-definer"),
+                                 template-element.token-module);
+                  done();
+                end if;
+              elseif (~instance?(template-element,
+                                 <pattern-variable-reference>))
+                done();
+              end if;
+            end for;
+          end;
+        end if;
+      <bracketed-element> =>
+        identify-variable-references-template
+          (template-element.bracketed-element-guts, macro-name);
+      <token> =>
+        // Reference to getter-name ## "-setter".
+        //
+        if (template-element.token-kind == $dot-token
+              & i + 2 < seq-size
+              & instance?(seq[i + 1], <identifier-token>)
+              & assignment-operator?(seq[i + 2]))
+          reference-name(symcat(seq[i + 1].token-symbol, "-setter"),
+                         seq[i + 1].token-module);
+        end if;
+      otherwise =>
+        #f;
+    end;
+  end for;
+end;
+
+define function define-word?
+    (token :: <identifier-token>) => (res :: <boolean>);
+  let kind = token.token-kind;
+  $ordinary-define-body-word-token <= kind
+    & kind <= $function-and-define-list-word-token
+end function;
+
+define method bracketed?
+    (template-element :: <object>, token-number :: <integer>)
+ => (res :: <boolean>);
+  #f;
+end method;
+
+define method bracketed?
+    (template-element :: <bracketed-element>, token-number :: <integer>)
+ => (res :: <boolean>);
+  template-element.bracketed-element-left-token.token-kind == token-number;
+end method;
+
+define method assignment-operator?
+    (token :: <object>) => (result :: <boolean>);
+  #f;
+end method;
+
+define method assignment-operator?
+    (token :: <operator-token>) => (result :: <boolean>);
+  token.token-kind = $other-binary-operator-token
+    & token.token-symbol == #":=";
+end method;
 
 
 // Bindings
