@@ -1,4 +1,34 @@
 module: fer-transform
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/traverse.dylan,v 1.3 2001/10/15 20:30:13 gabor Exp $
+copyright: see below
+
+
+//======================================================================
+//
+// Copyright (c) 2000, 2001  Gwydion Dylan Maintainers
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University, and the Gwydion Dylan Maintainers.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+//
+//======================================================================
+
 
 // These are helper functions to allow you to easily traverse the tree
 // of compound regions, etc. looking for specific features
