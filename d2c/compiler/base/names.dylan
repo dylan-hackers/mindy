@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.4 1995/05/05 09:25:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.5 1995/05/05 14:40:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,3 +49,17 @@ define method print-object (name :: <method-name>, stream :: <stream>) => ();
 		generic-function: name.method-name-generic-function,
 		specializers: name.method-name-specializers);
 end;
+
+define method print-message (name :: <method-name>, stream :: <stream>) => ();
+  let gf-name = name.method-name-generic-function;
+  format(stream, "%s{", gf-name.name-symbol);
+  for (spec in name.method-name-specializers,
+       first? = #t then #f)
+    unless (first?)
+      write(", ", stream);
+    end;
+    print-message(spec, stream);
+  end;
+  format(stream, "} in %s", gf-name.name-module);
+end;
+
