@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.10 1994/04/13 16:50:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.11 1994/04/29 06:47:49 wlott Exp $
 *
 * This file does whatever.
 *
@@ -136,6 +136,9 @@ static void return_false(struct thread *thread)
     thread->sp = old_sp + 1;
 
     do_return(thread, old_sp, old_sp);
+#if SLOW_LONGJMP
+    go_on();
+#endif
 }
 
 static void stop_thread(struct thread *thread, obj_t *vals)
@@ -454,6 +457,7 @@ static obj_t dylan_lock_grab(obj_t lock)
 {
     lock_grab(Current, lock, return_false);
     /* lock_grab doesn't return. */
+    lose("lock_grab actually returned?");
     return NULL;
 }
 
@@ -566,7 +570,8 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
 static obj_t dylan_event_wait(obj_t event, obj_t lock)
 {
     event_wait(Current, event, lock, return_false);
-    /* event_wait doens't return. */
+    /* event_wait doesn't return. */
+    lose("event_wait actually returned?\n");
     return NULL;
 }
 
