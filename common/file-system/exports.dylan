@@ -1,5 +1,5 @@
 module:      dylan-user
-rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.2 2000/10/31 13:17:02 dauclair Exp $
+rcs-header:  $Header: /scm/cvs/src/common/file-system/exports.dylan,v 1.3 2003/03/07 18:08:04 andreas Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 define library file-system
@@ -44,7 +44,9 @@ define module file-system
 	 working-directory;
 
 // section 8.6: Finding out file information
-  create file-exists?
+  create file-exists?,
+    file-type
+
   /** not yet: , file-properties,
 	 file-property,
 	 file-type
@@ -65,13 +67,6 @@ define module types
 	     <pathname>,
 	     <file-system-error> };
 end module types;
-
-define module information
-  use dylan;
-  use file-system;
-
-  use base-file-system, exclude: { delete-file, rename-file };
-end module information;
 
 define module dir-commands
   use dylan;
@@ -100,6 +95,15 @@ define module helpers
     $path-separator,
     append, as-dir, create-pointer, \with-pointer, convert-to-string;
 end module helpers;
+
+define module information
+  use dylan;
+  use file-system;
+  use dir-commands;
+  use helpers;
+
+  use base-file-system, exclude: { delete-file, rename-file };
+end module information;
 
 define module manipulating-files
   use dylan;
