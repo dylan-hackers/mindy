@@ -63,6 +63,11 @@ if ($cross_compiling) {
   $D2C = "@D2C@";
 }
 
+# Should this really go in D2CFLAGS?
+if("@with_thread_count@" ne "no") {
+    $D2C = $D2C . " -j @with_thread_count@";
+}
+
 $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;

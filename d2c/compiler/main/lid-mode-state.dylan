@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.22 2003/07/06 03:50:01 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.23 2003/07/16 15:03:36 scotek Exp $
 copyright: see below
 
 //======================================================================
@@ -849,8 +849,14 @@ define method do-make (state :: <lid-mode-state>) => ();
   end if;
 
   if (~state.unit-no-binaries)
-    let make-string = format-to-string("%s -f %s", target.make-command, 
-				       state.unit-makefile-name);
+    let jobs-string = if((target.make-jobs-flag ~= "#f") & state.unit-thread-count)
+			format-to-string(" %s %d", target.make-jobs-flag,
+					 state.unit-thread-count);
+		      else
+			"";
+		      end;
+    let make-string = format-to-string("%s%s -f %s", target.make-command, 
+				       jobs-string, state.unit-makefile-name);
     format(*debug-output*, "%s\n", make-string);
     unless (zero?(system(make-string)))
       cerror("so what", "gmake failed?");

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.79 2003/07/06 03:50:01 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.80 2003/07/16 15:03:35 scotek Exp $
 copyright: see below
 
 //======================================================================
@@ -100,6 +100,7 @@ define method show-help(stream :: <stream>) => ()
 "       -g, --debug:       Generate debugging code.\n"
 "       --profile:         Generate profiling code.\n"
 "       -s, --static:      Force static linking.\n"
+"       -j, --thread-count Max threads to use (default 1)\n"
 "       -d, --break:       Debug d2c by breaking on errors.\n"
 "       -o, --optimizer-option:\n"
 "                          Turn on an optimizer option. Prefix option with\n"
@@ -314,6 +315,10 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    <simple-option-parser>,
 			    long-options: #("profile"));
   add-option-parser-by-type(argp,
+			    <parameter-option-parser>,
+			    short-options: #("j"),
+			    long-options: #("thread-count"));
+  add-option-parser-by-type(argp,
 			    <simple-option-parser>,
 			    long-options: #("testworks-spec"));
   add-option-parser-by-type(argp,
@@ -400,6 +405,14 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
       end;
     optimizer-option-table[as(<symbol>, key)] := value;
   end for;
+
+  // How many threads are we using
+  let thread-count = option-value-by-long-name(argp, "thread-count");
+  if(thread-count)
+    thread-count := string-to-integer(thread-count);
+  else
+    thread-count := #f;
+  end if;
 
   // Figure out which optimizer to use.
   let optimizer-class =
@@ -516,7 +529,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
                profile?: profile?,
                dump-testworks-spec?: dump-testworks-spec?,
                cc-override: cc-override,
-               override-files: as(<list>, override-files));
+               override-files: as(<list>, override-files),
+	       thread-count: thread-count);
         end if;
   let worked? = compile-library(state);
   exit(exit-code: if (worked?) 0 else 1 end);

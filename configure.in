@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.137 2003/07/11 03:43:17 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.138 2003/07/16 15:03:35 scotek Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -585,6 +585,19 @@ yes)    if test $HAVE_GTK = yes; then
 esac
 AC_MSG_RESULT($enable_duim)    
 AC_SUBST(enable_duim)
+
+#--------------------------------------------------------------------
+#	How many threads do we want each invocation of d2c to use
+#--------------------------------------------------------------------
+AC_ARG_WITH(thread-count,
+[  --with-thread-count=INTEGER
+			  How many threads should d2c use. Currently only
+			  tells the sub-make process the same thing.])
+with_thread_count=${with_thread_count:-no}
+if test "$with_thread_count" = yes; then
+    with_thread_count=no
+fi
+AC_SUBST(with_thread_count)
 
 #====================================================================
 # Start of section lifted from original configure.in.

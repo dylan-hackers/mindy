@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.45 2003/07/06 03:49:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.46 2003/07/16 15:03:36 scotek Exp $
 copyright: see below
 
 //======================================================================
@@ -445,6 +445,7 @@ define module platform
     delete-file-command,
     compare-file-command,
     move-file-command,
+    make-jobs-flag,
     path-separator,
 
     link-doesnt-search-for-libs?,

@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.70 2003/06/25 21:57:34 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.71 2003/07/16 15:03:36 scotek Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -179,6 +179,9 @@ big-endian?:			#t
 // mk-build-tree will create makefiles that rebuild themselves
 // whenever the Makegen or Defaults files change.
 //
+// make-jobs-flag: The flag the make-command takes to run multiple
+// jobs in parallel.  If no such support is available, set to #f.
+//
 // uses-drive-letters?: Whether or not the platform uses drive letters
 // in its paths (like MS-Windows does).
 //
@@ -219,6 +222,7 @@ makefile-name:                  	Makefile
 make-supports-phony-targets?:   	#f
 makefiles-can-rebuild-themselves?:      #f
 make-command:                   	make 
+make-jobs-flag:                         #f
 
 // Generic Unix (parent class to linux, freebsd, solaris & hpux):
 platform-name:				generic-unix
@@ -238,6 +242,7 @@ use-dbclink?:                           #f
 makefile-name:				GNUmakefile
 make-supports-phony-targets?:   	#t
 makefiles-can-rebuild-themselves?:      #t
+make-jobs-flag:				-j
 recursive-make-command:         	$(MAKE) -C %s %s
 libtool-command:			libtool
 
