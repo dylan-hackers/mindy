@@ -1,48 +1,60 @@
 
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/standard-io -L../runtime/print -L../runtime/format -L../runtime/random -L. -L../runtime/coll-ext -L../runtime/string-ext -L../runtime/table-ext -L../runtime/format-out -L../runtime/itime -L../runtime/regexp -L../runtime/matrix -L../runtime/time -L../runtime/melange';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+$D2CFLAGS = '-L../d2c/runtime/c-code -L../d2c/runtime/gc -L../d2c/runtime/dylan -L../common/streams -L../common/standard-io -L../common/print -L../common/format -L../d2c/runtime/random -L. -L../common/coll-ext -L../common/string-ext -L../common/table-ext -L../common/format-out -L../common/itime -L../common/regexp -L../common/matrix -L../common/time -L../d2c/runtime/melange';
 
 do emit_library_rule(
-    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'table-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'table-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'random-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'random-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'matrix-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'matrix-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'coll-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'coll-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'print-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'print-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'format-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'format-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'format-out-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+    'format-out-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 );
 #do emit_library_rule(
-#    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+#    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 #);
 
-if (! $features{'compiled_for_solaris'}) {
+if (! $features{'compiled_for_solaris'}
+    && ! $features{'compiled_for_win32'}) {
 	do emit_library_rule(
-	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 	);
 }
 
+print <<"EOF"
+
+DYLANPATH=../common/transcendental:../mindy/libraries/dylan:../common/coll-ext:../common/table-ext:../common/string-ext:../common/standard-io:../common/streams:../mindy/libraries/random:../common/print:../common/format:../common/matrix::../common/format-out:../common/time:../common/regexp
+
+EOF
+;
+
+if ($features{compiled_for_win32}) {
+    $run_mindy = 'set DYLANPATH=$(DYLANPATH) && $(MINDY)';
+} else {
+    $run_mindy = 'DYLANPATH=$(DYLANPATH) ; $(MINDY)';
+}
+    
 # I only wrote this function because of the .\ for win32 vs. ./ for
 # Unix issue.
 sub emit_run_tests_rule {
@@ -50,12 +62,13 @@ sub emit_run_tests_rule {
     local ($test);
     print "run_tests : ";
     foreach $test (@tests) {
-	print "$test$dot_exe ";
+	print "$test$dot_exe $test-lib.dbc ";
     }
     print "\n";
 
     foreach $test (@tests) {
 	local ($test) = &convert_path_separator("./$test");
+	print "\t$run_mindy -f $test-lib.dbc\n";
 	print "\t$test\n";
     }
     push(@compile_dependencies, "run_tests");
