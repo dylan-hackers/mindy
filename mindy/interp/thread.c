@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.6 1994/03/28 11:08:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.7 1994/04/08 17:57:35 wlott Exp $
 *
 * This file does whatever.
 *
@@ -209,7 +209,6 @@ static void pop_escape_frame(struct thread *thread, obj_t *vals)
 {
     thread->sp = vals;
     thread_pop_escape(thread);
-    go_on();
 }
 
 void thread_push_escape(struct thread *thread)

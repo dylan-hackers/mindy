@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.6 1994/04/08 15:22:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.7 1994/04/08 17:59:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -870,8 +870,6 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 	lose("Strange call opcode: 0x%02x", opcode);
 
     thread->advance = interpret_byte;
-
-    go_on();
 }
 
 
