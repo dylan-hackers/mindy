@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.7 2003/02/01 16:56:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.8 2003/02/03 12:34:10 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -615,30 +615,14 @@ end method assert-function-type;
 
 define function relocator(call :: <general-call>)
  => relocator :: <function>;
-  local method same-location(loc, #rest ignore) loc end;
-
-  block (punt)
-    unless (call.dependents) // FIXME: assert this!
-      compiler-warning("no dependents for call?: %s", call);
-      punt(same-location);
-    end;
-
-    // change to the data-flow level
-    let dep :: <dependency> = call.dependents;
-
-    if (dep.dependent-next) // FIXME: either walk all, searching for _the_ assign or assert this!
-      compiler-warning("more than one thing depends on this call?: %s, %s", call, dep.dependent);
-      punt(same-location);
-    end;
-
-    let assign = dep.dependent;
-    unless (instance?(assign, <abstract-assignment>)) // FIXME: assert this!
-      compiler-warning("not an assignment: %s", assign);
-      punt(same-location);
-    end;
-
-    assign.source-location.always
-  end
+  // change to the data-flow level
+  // there must be at least one dependent (the assignment)
+  let dep :: <dependency> = call.dependents;
+  // expect no more dependents
+  let no-other-dep :: #f.singleton = dep.dependent-next;
+  // expect it to be an assignment
+  let assign :: <abstract-assignment> = dep.dependent;
+  assign.source-location.always
 end;
 
 define method maybe-change-to-known-or-error-call
@@ -657,10 +641,8 @@ define method maybe-change-to-known-or-error-call
     #"valid" =>
       if (inline-function)
 	let old-head = component.reoptimize-queue;
-	let new-func = clone-function(component, inline-function,
-				      location-transformer: call.relocator);
+	let new-func = clone-function(component, inline-function, call.relocator);
 	reverse-queue(component, old-head);
-//	compiler-warning("replacing %s by %s", call.dependents.dependent, new-func);
 	replace-expression(component, call.depends-on, new-func);
       elseif (~hairy?)
 	convert-to-known-call(component, sig, call);
