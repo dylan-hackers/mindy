@@ -298,6 +298,7 @@ define function process-type-list
 	      <float-token> =>
 		select (type)
 		  $c-unknown-type => $c-float-type;
+		  $c-long-type => $c-double-type; // Old idiom, not ANSI
 		  otherwise => parse-error(state, "Bad type specifier, expected <float-token>, got %=", type);
 		end select;
 	      <double-token> =>
@@ -336,20 +337,28 @@ end function process-type-list;
 // and take appropriate steps.
 //
 define constant <icky-type-name> =
-  type-union(<identifier-token>, <c-typedef-declaration>);
+  type-union(<identifier-token>,      // A regular type name
+	     <c-typedef-declaration>, // Potential typedef redeclaration
+	     <empty-list>);           // Abstract declarator
 
 // Deals with the odd idiomatic data structures which result from the LALR
 // parser generator.  These might take the form of 
 // #((#"pointer", #"pointer", ...) . name) or
 // #(#"function", args . name) or
-// #(#"vector", length . name)
+// #(#"vector", length . name) or
 // #(#"bitfield", bits . name)
+//
+// The 'args' field for functions may be:
+//   #($c-void-type)         Explicit void.
+//   #(args...)              Zero or more arguments.
+//   #(args..., #"varargs")  Zero or more arguments, explicit varargs.
 //
 define generic process-declarator
     (type :: <c-type>,
-     declarator :: type-union(<icky-type-name>, <list>),
+     declarator :: type-union(<icky-type-name>, <pair>),
      state :: <parse-state>)
- => (new-type :: <c-type>, name :: <icky-type-name>);
+ => (new-type :: <c-type>,
+     name :: <icky-type-name>);
 
 define method process-declarator
     (tp :: <c-type>, declarator :: <pair>, state :: <parse-state>)
@@ -371,7 +380,7 @@ define method process-declarator
 	process-declarator(tp, tail(declarator), state);
       end for;
       
-/* XXX - skip bitfields for now
+    /* XXX - skip bitfields, which don't work yet
     (declarator.head == #"bitfield") =>
       if (instance?(tp.true-type, <integer-type-declaration>))
 	let decl = make(<bitfield-declaration>, bits: second(declarator),
@@ -381,8 +390,7 @@ define method process-declarator
       else
 	parse-error(state, "Bit-fields must be of an integral type.  "
 		      "This is of type %=.", tp);
-      end if;
-*/
+      end if; */
 
     // Process vector types.
     (declarator.head == #"vector") =>
@@ -392,57 +400,48 @@ define method process-declarator
       // with the corresponding pointer type.
       let decl = make(<c-array-type>,
 		      repository: state.repository,
+		      referent: tp,
 		      size: length);
       process-declarator(decl, declarator.tail.tail, state);
-
-/* XXX - skip functions for now
-    (declarator.head == #"function") =>
-      // rgs: For now, we simple equate all function types to
-      // <function-pointer>.  At some later date, we will actually
-      // provide distinct types canonicalized by their signatures.
-      // XXX - this is starting to change... There's a horrible problem
-      // in C with the semantics of 'typedef void (foo)(void)' versus
-      // 'typedef void (*foo)()'. For now, we only allow the latter form,
-      // which dates back to K&R C. When somebody explains the ANSI C
-      // semantics very precisely to me, I'll fix this code to handle all
-      // cases.
-      let params = second(declarator);
-      let real-params = if (params.size == 1 & first(params).type == void-type)
-			  #();
-			else
-			  params;
-			end if;
-      for (count from 1,
-	   param in params)
-	param.dylan-name := format-to-string("arg%d", count);
-      end for;
-
-      // Force K&R semantics only (see above).
-//      let nested-type = declarator.tail.tail;
-//      unless (instance?(nested-type, <pair>)
-//		& instance?(nested-type.head, <list>)
-//		& nested-type.head.size == 1
-//		& nested-type.head.head == #"pointer"
-//		& instance?(nested-type.tail, <identifier-token>))
-//	parse-error(state, "function types must be of form 'void (*foo)()'");
-//      end unless;
       
-//      let new-name = nested-type.tail;
-//      let new-type = make(<function-type-declaration>,
-//			  name: new-name.value,
+    (declarator.head == #"function") =>
+      local method get-type (arg) => (type :: <c-type>)
+	      if (instance?(arg, <c-variable-declaration>))
+                // XXX - I fixed c-parser-engine so this won't happen.
+		arg.c-variable-type;
+	      else
+		arg;
+	      end if;
+	      // XXX - check for void arguments.
+	    end method;
+      let params = second(declarator);
 
-      let new-type = make(<function-type-declaration>, name: anonymous-name(),
-			  result: make(<result-declaration>,
-				       name: "result", type: tp),
-			  params: real-params);
-      // XXX - We used to call process declarator here:
-      // Instead, we handle the terminal case ourselves. If anyone
-      // figures out ANSI C function pointers, we'll need to re-examine
-      // this.
-      // process-declarator(new-type, declarator.tail.tail, state);
-      //values(new-type, new-name);
+      // Look for (void) argument lists.
+      let (params, explicit-void?) =
+	if (params.size == 1 & first(params) == $c-void-type)
+	  values(#(), #t);
+	else
+	  values(params, #f);
+	end if;
+
+      // Look for argument lists with ANSI C varargs.
+      let (params, explicit-varargs?) =
+	if (member?(#"varargs", params))
+	  values(choose(curry(\~=, #"varargs"), params), #t);
+	else
+	  values(params, #f);
+	end if;
+
+      // Construct the function type.
+      // XXX - we eventually want typedef-like types to hold argument names.
+      let new-type = make(<c-function-type>,
+			  repository: state.repository,
+			  return-type: tp,
+			  parameter-types: map-as(<stretchy-vector>,
+						  get-type, params),
+			  explicit-void?: explicit-void?,
+			  explicit-varargs?: explicit-varargs?);
       process-declarator(new-type, declarator.tail.tail, state);
-*/
 
     otherwise =>
       parse-error(state, "unknown type modifier");
@@ -453,9 +452,11 @@ end method process-declarator;
 // are therefore done.
 //
 define method process-declarator
-    (type :: <c-type>, declarator :: <icky-type-name>,
+    (type :: <c-type>,
+     declarator :: <icky-type-name>,
      state :: <parse-state>)
- => (new-type :: <c-type>, name :: <icky-type-name>);
+ => (new-type :: <c-type>,
+     name :: <icky-type-name>)
   values(type, declarator);
 end method process-declarator;
 

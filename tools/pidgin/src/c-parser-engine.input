@@ -1046,8 +1046,13 @@ declarator2 (declarator2 <lbracket-token> constant-expr <rbracket-token>)
 %
 
 declarator2 (declarator2 <lparen-token> <rparen-token>)
-  pair(#"function", pair(list(make(<varargs-declaration>,
-                                   name: "", type: unknown-type)), %1));
+  // We now handle this as an empty argument list without an explicit void.
+  // We used to handle this as an explicit varargs declaration.
+  pair(#"function", pair(#(), %1));
+%
+
+declarator2 (declarator2 <lparen-token> <ELIPSIS-Token> <rparen-token>)
+  pair(#"function", pair(list(#"varargs"), %1));
 %
 
 declarator2 (declarator2 <lparen-token> parameter-type-list <rparen-token>)
@@ -1093,21 +1098,27 @@ type-specifier-list (numeric-specifier)
 ; %
 
 parameter-identifier-list (identifier-list)
-  %1;
+  // We used to treat this as a regular parameter list. Now we treat it
+  // as a varargs function.
+  // XXX - Is this a K&R prototype? What's going on here?
+  list(#"varargs");
 %
 
 Parameter-Identifier-List (Identifier-List <Comma-Token> <ELIPSIS-Token>)
-  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
+  //pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
+  #f;
 %
 
 identifier-list (identifier)
-  list(make(<arg-declaration>, name: %1.string-value, type: unknown-type));
+  //list(make(<arg-declaration>, name: %1.string-value, type: unknown-type));
+  #f;
 %
 
 identifier-list (identifier-list <comma-token> identifier)
   // Produces list in reverse order.
-  pair(make(<arg-declaration>, name: %3.string-value, type: unknown-type),
-       %1);
+  //pair(make(<arg-declaration>, name: %3.string-value, type: unknown-type),
+  //     %1);
+  #f;
 %
 
 parameter-type-list (parameter-list)
@@ -1115,7 +1126,7 @@ parameter-type-list (parameter-list)
 %
 
 parameter-type-list (Parameter-List <Comma-Token> <ELIPSIS-Token>)
-  pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
+  pair(#"varargs", %1);
 %
 
 parameter-list (parameter-declaration)
@@ -1130,11 +1141,13 @@ parameter-list (parameter-list <comma-token> parameter-declaration)
 parameter-declaration (type-specifier-list declarator)
   let type = process-type-list(reverse!(%1), @0);
   let (type, name) = process-declarator(type, %2, @0);
-  make(<arg-declaration>, name: name.string-value, type: type);
+  // make(<arg-declaration>, name: name.string-value, type: type);
+  type;
 %
 
 parameter-declaration (type-name)
-  make(<arg-declaration>, name: "", type: %1);
+  // make(<arg-declaration>, name: "", type: %1);
+  %1;
 %
 
 type-name (type-specifier-list)
@@ -1184,8 +1197,13 @@ abstract-declarator2 (abstract-declarator2 <lbracket-token> constant-expr <rbrac
 %
 
 abstract-declarator2 (<lparen-token> <rparen-token>)
-  list(#"function",
-       list(make(<varargs-declaration>, name: "", type: unknown-type)));
+  // We now handle this as an empty argument list without an explicit void.
+  // We used to handle this as an explicit varargs declaration.
+  list(#"function", #());
+%
+
+abstract-declarator2 (<lparen-token> <ELIPSIS-Token> <rparen-token>)
+  list(#"function", list(#"varargs"));
 %
 
 abstract-declarator2 (<lparen-token> parameter-type-list <rparen-token>)
@@ -1193,8 +1211,14 @@ abstract-declarator2 (<lparen-token> parameter-type-list <rparen-token>)
 %
 
 abstract-declarator2 (abstract-declarator2 <lparen-token> <rparen-token>)
-  pair(#"function", pair(list(make(<varargs-declaration>,
-                                   name: "", type: unknown-type)), %1));
+  // We now handle this as an empty argument list without an explicit void.
+  // We used to handle this as an explicit varargs declaration.
+  pair(#"function", pair(#(), %1));
+%
+
+abstract-declarator2 (abstract-declarator2 <lparen-token> <ELIPSIS-Token>
+                      <rparen-token>)
+  pair(#"function", pair(list(#"varargs"), %1));
 %
 
 abstract-declarator2 (abstract-declarator2 <lparen-token> parameter-type-list <rparen-token>)
