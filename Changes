@@ -16,20 +16,36 @@ The following are enhancements added since release 1.2:
    Added the Tk library, which contains code to create graphical user
    interfaces using Tk (of TCL/TK fame).  See tk.doc for details.
 
+   Added while: and until: syntax to for statement.  Make words like
+   class, keyed-by, and module unresevered words.
+
 
 The following are bug fixes since release 1.2:
 
    Printing, formatting, and converting $minimum-fixed-integer now
-   work correctly.  (String-extensions, format)
+   work correctly.
+
+   make(<table>, size: 0) now works.
 
    NaN's now compare correctly.
 
    remove-key! now works on <self-organizing-list>s.
 
-   Corrected the precedence and associativity of ^.
+   Corrected the precedence of ^.  Brought the associativity of ^ into
+   line with other languages; used to be right associative, now is left.
 
-?  In comp/compile.c, compile_repeat_expr no longer depends on the
-   execution order of function arguments.
+   Apply now makes sure the object being applied is really a function.
+
+   as(<float>, extended-integer) now works correctly when the extended
+   integer is negative.
+
+   logbit? on extended integers now returns #f when given a negative
+   index.
+
+   ceiling and round now work for extended integers.
+
+   Rationalize has been added.
+
 
 
 I don't know what these mean:
@@ -48,19 +64,6 @@ date: 94/12/16 19:18:01;  author: wlott;  state: Exp;  lines added/del: 9/6
 Changed mumble_OPTION to mumble_KEYWORD.  Added UNTIL_KEYWORD and
 WHILE_KEYWORD.  Added \name notation.
 
-RCS file:        ./comp/RCS/parser.y,v;   Working file:    parser.y
-----------------------------
-revision 1.16        
-date: 94/12/16 19:19:41;  author: wlott;  state: Exp;  lines added/del: 102/57
-Added while: and until: syntax to for statement.  Allow words like class,
-keyed-by, and module as variable names.
-
-RCS file:        ./interp/RCS/class.c,v;   Working file:    class.c
-----------------------------
-revision 1.13        
-date: 95/02/14 02:30:00;  author: rgs;  state: Exp;  lines added/del: 2/10
-Fixes for statically typed pointer classes.
-
 RCS file:        ./interp/RCS/init.c,v;   Working file:    init.c
 ----------------------------
 revision 1.12        
@@ -73,37 +76,6 @@ revision 1.28
 date: 95/02/09 18:26:44;  author: wlott;  state: Exp;  lines added/del: 53/10
 Added a dylan interface to load.
 
-RCS file:        ./interp/RCS/misc.c,v;   Working file:    misc.c
-----------------------------
-revision 1.12        
-date: 94/12/16 12:12:11;  author: wlott;  state: Exp;  lines added/del: 5/1
-In dylan_apply, make sure the applied thing is a function.
-
-RCS file:        ./interp/RCS/num.c,v;   Working file:    num.c
-----------------------------
-revision 1.20        
-date: 95/03/02 21:11:25;  author: wlott;  state: Exp;  lines added/del: 24/7
-Fixed as(<mumble-float>, <extended-integer>) to return a negative number if the
-extended integer is negative instead of treating the extended integer as an
-unsigned quantity.
-----------------------------
-revision 1.19        
-date: 95/03/02 18:05:09;  author: wlott;  state: Exp;  lines added/del: 3/2
-Changed logbit? on <extended-integer> to return #f when given a negative index
-instead of seg faulting trying to signal an error.
-----------------------------
-revision 1.18        
-date: 95/02/08 02:45:01;  author: wlott;  state: Exp;  lines added/del: 92/51
-Fixed <extended-integer> ceiling and round.  Actually install the
-<extended-integer> round method.  Couple minor tweeks to get it to
-compile cleanly.
-
-RCS file:        ./interp/RCS/table.c,v;   Working file:    table.c
-----------------------------
-revision 1.13        
-date: 95/02/14 02:33:08;  author: rgs;  state: Exp;  lines added/del: 3/3
-Made object-hash on pointers a bit more random.
-
 RCS file:        ./interp/RCS/thread.c,v;   Working file:    thread.c
 ----------------------------
 revision 1.22        
@@ -111,24 +83,7 @@ date: 95/02/08 00:05:20;  author: wlott;  state: Exp;  lines added/del: 2/1
 Zero the stack after allocating it so that GC doesn't find random stuff
 on it.
 
-RCS file:        ./interp/RCS/extern.c,v;   Working file:    extern.c
-----------------------------
-revision 1.3        
-date: 95/02/14 02:30:58;  author: rgs;  state: Exp;  lines added/del: 28/8
-Fixed copyright headers.
-Added class: keyword to pointer-at-setter.
-
-RCS file:        ./interp/RCS/make-init.pl,v;   Working file:    make-init.pl
-----------------------------
-revision 1.3        
-date: 95/02/14 02:34:04;  author: rgs;  state: Exp;  lines added/del: 15/3
-Reorganized for easier GCC -O compilation.
-
 RCS file:        ./libraries/dylan/RCS/exports.dylan,v;   Working file:    exports.dylan
-----------------------------
-revision 1.63        
-date: 95/03/13 15:39:32;  author: wlott;  state: Exp;  lines added/del: 2/2
-Added rationalize.
 ----------------------------
 revision 1.62        
 date: 95/03/02 19:41:06;  author: wlott;  state: Exp;  lines added/del: 2/2
@@ -139,10 +94,6 @@ date: 95/03/02 19:15:24;  author: wlott;  state: Exp;  lines added/del: 3/3
 Added make-ratio to the builtin-stuff exports so that it can be called from the
 dylan module.  Removed a commented out create of some ratio related exports,
 because we have something for real now.
-----------------------------
-revision 1.60        
-date: 95/02/14 02:39:51;  author: rgs;  state: Exp;  lines added/del: 3/3
-Exported *print-GC-messages*.
 ----------------------------
 revision 1.59        
 date: 95/02/09 18:25:53;  author: wlott;  state: Exp;  lines added/del: 3/3
@@ -160,29 +111,6 @@ RCS file:        ./libraries/dylan/RCS/stretchy.dylan,v;   Working file:    stre
 revision 1.11        
 date: 95/01/10 16:12:40;  author: wlott;  state: Exp;  lines added/del: 3/3
 Fixed two uses of ceiling to ceiling/.
-
-RCS file:        ./libraries/dylan/RCS/table.dylan,v;   Working file:    table.dylan
-----------------------------
-revision 1.15        
-date: 95/03/12 22:06:35;  author: rgs;  state: Exp;  lines added/del: 3/2
-Proper fix for size: 0 bug.
-----------------------------
-revision 1.14        
-date: 95/03/12 21:34:06;  author: rgs;  state: Exp;  lines added/del: 2/2
-Bug fix: make(<table>, size: 0) allocated no buckets, causing crashes.
-----------------------------
-revision 1.13        
-date: 95/02/14 02:41:10;  author: rgs;  state: Exp;  lines added/del: 140/276
-Added extensive optimizations.  Mostly traded apparently unneeded generality
-for efficiency.  Also added code to make table size "mostly prime", which
-should reduce clustering.
-
-RCS file:        ./libraries/dylan/RCS/extern.dylan,v;   Working file:    extern.dylan
-----------------------------
-revision 1.2        
-date: 95/02/14 02:43:25;  author: rgs;  state: Exp;  lines added/del: 2/2
-Fixed bug in malloc code.
-,
 
 
 RCS file:        ./libraries/dylan/RCS/ratio.dylan,v;   Working file:    ratio.dylan
