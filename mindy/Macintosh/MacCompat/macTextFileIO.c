@@ -110,7 +110,7 @@ int MacOpen( const char *path, int oflag, int mode )
 	int fileStatusRecord;
 	int fd;
 	
-	if( strcmp( path, "OPEN THE APPLICATION FILE AS THE BYTECODE FILE" ) == 0 )	// 0 = equality
+	if( strcmp( path, "The Application File            " ) == 0 )	// 0 = equality
 	{
 		return OpenApplicationAsFile();
 	}
