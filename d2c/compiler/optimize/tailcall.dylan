@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.4 2003/06/24 21:00:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/tailcall.dylan,v 1.5 2003/06/25 06:09:04 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -303,11 +303,11 @@ define method convert-self-tail-call
   // Set up the wrapper loop and blocks.
   unless (func.self-call-block)
     let builder = make-builder(component);
-    let policy = prologue-assignment.policy;
     let source = func.source-location;
 
     // make temps for the function arguments
     let prologue-assignment = func.prologue.dependents.dependent;
+    let policy = prologue-assignment.policy;
     let new-vars = copy-defined-variables(builder, prologue-assignment);
     func.self-tail-call-temps := new-vars;
 
