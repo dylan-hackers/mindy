@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.28 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.29 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -110,6 +110,23 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.else-region, stream);
+	     pprint-indent(#"block", 0, stream);
+	     pprint-newline(#"mandatory", stream);
+	     write("END", stream);
+	   end);
+end;
+
+define method dump
+    (region :: <unwind-protect-region>, stream :: <stream>) => ();
+  pprint-logical-block
+    (stream,
+     body: method (stream)
+	     format(stream, "UWP[%d] (", region.id);
+	     dump(region.uwp-region-cleanup-function, stream);
+	     write(')', stream);
+	     pprint-indent(#"block", 2, stream);
+	     pprint-newline(#"mandatory", stream);
+	     dump(region.body, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
 	     write("END", stream);

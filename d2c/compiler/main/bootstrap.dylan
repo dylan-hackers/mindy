@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.17 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.18 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -405,6 +405,8 @@ define open generic make-catcher (saved-state :: <raw-pointer>)
     => res :: <catcher>;
 define open generic disable-catcher (catcher :: <catcher>) => ();
 
+define open generic push-unwind-protect (cleanup-function :: <function>) => ();
+define open generic pop-unwind-protect () => ();
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.44 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.45 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -626,6 +626,12 @@ define method emit-region (region :: <block-region>,
   indent(stream, - half-step);
   format(stream, "block%d:\n", get-info-for(region, output-info));
   indent(stream, half-step);
+end;
+
+define method emit-region (region :: <unwind-protect-region>,
+			   output-info :: <output-info>)
+    => ();
+  emit-region(region.body, output-info);
 end;
 
 define method emit-region (region :: <exit>, output-info :: <output-info>)

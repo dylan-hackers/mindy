@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.31 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.32 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -522,12 +522,39 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
+  let policy = lexenv.lexenv-policy;
+  let cleanup-builder = make-builder(builder);
+  let cleanup-region
+    = build-lambda-body(cleanup-builder, policy, source,
+			"Unwind-Protect Cleanup", #(), #"best");
+  let cleanup-literal
+    = make-function-literal(cleanup-builder, #"local",
+			    make(<signature>, specializers: #(),
+				 returns: make-values-ctype(#(), #f)),
+			    cleanup-region);
+
+  build-unwind-protect-body(builder, policy, source, cleanup-literal);
+  build-assignment
+    (builder, policy, source, #(),
+     make-unknown-call
+       (builder, dylan-defn-leaf(builder, #"push-unwind-protect"), #f,
+	list(cleanup-literal)));
   let res = fer-convert-body(builder, form.uwp-body,
 			     make(<lexenv>, inside: lexenv),
 			     want, datum);
-  fer-convert-body(builder, form.uwp-cleanup,
+  end-body(builder);
+
+  build-assignment
+    (cleanup-builder, policy, source, #(),
+     make-unknown-call
+       (cleanup-builder, dylan-defn-leaf(builder, #"pop-unwind-protect"),
+	#f, #()));
+  fer-convert-body(cleanup-builder, form.uwp-cleanup,
 		   make(<lexenv>, inside: lexenv),
 		   #"nothing", #f);
+  build-return(cleanup-builder, policy, source, cleanup-region, #());
+  end-body(cleanup-builder);
+
   res;
 end;
 

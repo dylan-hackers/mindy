@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.31 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.32 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -572,6 +572,19 @@ define method make-exit-function
   let exit-fun = make(<exit-function>);
   make-operand-dependencies(builder, exit-fun, list(catcher, from));
   exit-fun;
+end;
+
+// Starts building an unwind-protect body.
+// 
+define method build-unwind-protect-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     cleanup-function :: <function-literal>)
+    => res :: <unwind-protect-region>;
+  ignore(policy);
+  let res = make(<unwind-protect-region>, source-location: source,
+		 cleanup-function: cleanup-function);
+  push-body(builder, res);
+  res;
 end;
 
 

@@ -145,6 +145,12 @@ define method analize
 end;
 
 define method analize
+    (region :: <unwind-protect-region>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  analize(region.body, want, state);
+end;
+
+define method analize
     (region :: <exit>, want :: <list>, state :: <state>)
     => want :: <list>;
   let target = region.block-of;

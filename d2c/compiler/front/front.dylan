@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.34 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.35 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -54,8 +54,8 @@ function-region
 component
     fer-component
 
-block-region
-    fer-block-region
+body-region
+    unwind-protect-region
 
 object
     environment [annotatable]
@@ -430,15 +430,15 @@ define class <fer-component> (<component>)
 end class;
 
 
-// The FER-Block-Region is a subclass of Block-Region which holds information
-// related to handling of non-local exits.
+// An <unwind-protect-region> represents the nesting of unwind protects.
+// Any exit from inside the uwp-region to outside the uwp-region must
+// run the cleanup code.
 //
-define abstract class <fer-block-region> (<block-region>)
-end class;
-
-// FER-Cleanup-Block-Region represents a block/cleanup clause.  Somehow...
-//
-define class <fer-cleanup-block-region> (<fer-block-region>)
+define class <unwind-protect-region> (<body-region>)
+  //
+  // The function that does the cleanup.
+  slot uwp-region-cleanup-function :: <function-literal>,
+    required-init-keyword: cleanup-function:;
 end class;
 
 

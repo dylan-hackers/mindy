@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.63 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.64 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -617,7 +617,7 @@ define module builder-interface
     <fer-builder>, build-let, make-unknown-call, make-literal-constant,
     make-definition-leaf, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
-    build-function-body, build-lambda-body,
+    build-unwind-protect-body, build-function-body, build-lambda-body,
     make-function-literal, make-method-literal,
 
     <fer-component>;
@@ -744,7 +744,10 @@ define module front
     self-tail-calls, self-tail-calls-setter,
     <lambda>, literal, environment,
 
+    // <fer-component> is picked up via a create
     all-function-literals, all-lets, all-lets-setter, name,
+
+    <unwind-protect-region>, uwp-region-cleanup-function,
 
     <environment>, closure-vars, closure-vars-setter,
     <closure-var>, original-var, copy-var, closure-next, closure-next-setter;

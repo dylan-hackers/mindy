@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.61 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.62 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1408,6 +1408,16 @@ define-primitive-transformer
 	 (builder, assign.policy, assign.source-location, #(),
 	  make-operation(builder, <primitive>, list(catcher),
 		    name: #"disable-catcher"));
+       for (region = primitive.dependents.dependent.region
+	      then region.parent,
+	    until: region == body-region)
+	 if (instance?(region, <unwind-protect-region>))
+	   build-assignment
+	     (builder, $Default-Policy, region.source-location, #(),
+	      make-unknown-call
+		(builder, region.uwp-region-cleanup-function, #f, #()));
+	 end;
+       end;
        insert-before(component, assign, builder-result(builder));
        insert-return-before(component, assign, body-region,
 			    primitive.depends-on.dependent-next
@@ -2384,6 +2394,12 @@ define method cleanup-control-flow-aux
 end;
 
 define method cleanup-control-flow-aux
+    (component :: <component>, region :: <unwind-protect-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  cleanup-control-flow-aux(component, region.body);
+end;
+
+define method cleanup-control-flow-aux
     (component :: <component>, region :: <exit>)
     => terminating-exit :: union(<exit>, <boolean>);
   region;
@@ -3307,7 +3323,7 @@ define method exit-useless?
 end;
 
 define method exit-useless?
-    (from :: <if-region>, after :: <region>, target :: <block-region-mixin>)
+    (from :: <region>, after :: <region>, target :: <block-region-mixin>)
     => res :: <boolean>;
   exit-useless?(from.parent, from, target);
 end;
@@ -3430,6 +3446,13 @@ define method delete-stuff-after
   unless (region.exits)
     delete-stuff-after(component, region.parent, region);
   end;
+end;
+
+define method delete-stuff-after
+    (component :: <component>, region :: <unwind-protect-region>,
+     after :: <region>)
+    => ();
+  delete-stuff-after(component, region.parent, region);
 end;
 
 define method delete-stuff-after

@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.14 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.15 1995/05/18 21:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -141,6 +141,11 @@ define generic make-operation
 define abstract class <fer-builder> (<flow-builder>)
 end class;
 
+
+define generic build-unwind-protect-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     cleanup-function :: <function-literal>)
+    => res :: <unwind-protect-region>;
 
 // Starts building a <fer-function-region>.
 //
