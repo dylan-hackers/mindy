@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.14 1994/11/04 14:34:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.15 1994/11/06 20:01:06 rgs Exp $
 *
 * This file implements numbers.
 *
@@ -1853,6 +1853,7 @@ void scavenge_num_roots(void)
     scavenge(&obj_ComplexClass);
     scavenge(&obj_RealClass);
     scavenge(&obj_RationalClass);
+    scavenge(&obj_IntegerClass);
     scavenge(&obj_FixnumClass);
     scavenge(&obj_BignumClass);
     scavenge(&obj_RatioClass);
