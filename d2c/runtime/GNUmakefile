@@ -6,6 +6,7 @@ LIBS = c-code/libruntime.a /lib/pa1.1/libm.a
 DYLAN_FILES = \
 	dylan/exports.dylan \
 	dylan/macros.dylan \
+	dylan/misc.dylan \
 	dylan/object.dylan \
 	dylan/boolean.dylan \
 	dylan/cmp.dylan \
@@ -25,7 +26,6 @@ DYLAN_FILES = \
 	dylan/vector.dylan \
 	dylan/string.dylan \
 	dylan/list.dylan \
-	dylan/misc.dylan \
 	dylan/handler.dylan \
 	dylan/nlx.dylan \
 	dylan/output.dylan \
