@@ -2,7 +2,7 @@ module:     string-conversions
 author:     Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Convert strings to numbers and numbers to strings.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/conversions.dylan,v 1.3 2000/10/20 14:53:42 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/string-ext/conversions.dylan,v 1.4 2002/09/11 11:26:00 andreas Exp $
 
 //======================================================================
 //
@@ -73,7 +73,7 @@ define method positive-integer-to-string
   if (num = 0)
     "";
   else
-    let low-digit = modulo(num, base);
+    let low-digit = as(<integer>, modulo(num, base));
     add-last(positive-integer-to-string(truncate/(num, base), base, uppercase),
 	     integer-to-digit(low-digit, base: base, uppercase: uppercase));
   end if;
