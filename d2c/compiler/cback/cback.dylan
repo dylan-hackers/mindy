@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.23 2001/03/17 03:43:31 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.24 2001/04/04 09:44:10 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -327,7 +327,7 @@ end method clean-for-comment;
 // all Dylan names, including operator names.)  This is an information-
 // preserving, invertible transformation.
 //
-define constant $c-name-transform :: <vector>
+define constant $c-name-transform :: <simple-object-vector>
   = begin
       let map = make(<simple-object-vector>, size: 256, fill: #f);
       for (i from 0 below 256)
@@ -371,18 +371,22 @@ define constant $c-name-transform :: <vector>
 //
 define function string-to-c-name (str :: <byte-string>) 
  => res :: <byte-string>;
-  let res = make(<byte-string>, size: str.size);
+
+  let total-size = 0;
+  for (ch in str)
+    let mapping :: <byte-string> = $c-name-transform[as(<integer>, ch)];
+    total-size := total-size + mapping.size;
+  end;
+
+  let res = make(<byte-string>, size: total-size);
   let res-idx = 0;
   for (ch in str)
-    let mapping = $c-name-transform[as(<integer>, ch)];
-    if (mapping.size == 1)
-      res[res-idx] := mapping[0];
-      res-idx := res-idx + 1;
-    else
-      res := concatenate(copy-sequence(res, end: res-idx), mapping,
-      			 copy-sequence(res, start: res-idx + 1));
-      res-idx := res-idx + mapping.size;
-    end if;
+    let mapping :: <byte-string> = $c-name-transform[as(<integer>, ch)];
+    let sz = mapping.size;
+    for (i from 0 below sz)
+      res[res-idx + i] := mapping[i];
+    end;
+    res-idx := res-idx + sz;
   end for;
   res;
 end function;
@@ -395,7 +399,7 @@ define generic c-name (name :: <name>) => (result :: <byte-string>);
 
 define method c-name (name :: <basic-name>) => (result :: <byte-string>);
   let mod-name = string-to-c-name(as(<string>, name.name-module.module-name));
-  let def-name = as(<string>, name.name-symbol);
+  let def-name :: <byte-string> = as(<string>, name.name-symbol);
 
   // deal with <class> convention.
   let lastidx = def-name.size - 1;
@@ -495,7 +499,8 @@ define method new-local
      #key name :: <string> = "L_", modifier :: <string> = "anon")
  => res :: <string>;
   let result = stringify(name, modifier);
-  let num = element(file.file-local-table, result, default: 0) + 1;
+  let last-num :: <integer> = element(file.file-local-table, result, default: 0);
+  let num = last-num + 1;
   file.file-local-table[result] := num;
   if (num == 1)
     result;
