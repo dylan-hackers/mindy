@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.15 2003/10/18 04:15:33 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.16 2004/04/09 15:28:39 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -678,10 +678,10 @@ define sealed method report-condition
   let instance = condition.uninitialized-slot-error-instance;
   let source-location = condition.uninitialized-slot-error-source-location;
   if (name)
-    condition-format(stream, "Accessing uninitialized slot %s in %=, at\n%=",
+    condition-format(stream, "Accessing uninitialized slot %s in %=, at\n%s",
 		     name, instance, source-location);
   else
-    condition-format(stream, "Accessing uninitialized slot in %=, at\n%=", 
+    condition-format(stream, "Accessing uninitialized slot in %=, at\n%s", 
                      instance, source-location);
   end if;
 end method report-condition;

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.11 2003/06/10 06:16:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.12 2004/04/09 15:28:21 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1335,8 +1335,10 @@ define method optimize-slot-ref
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder, policy, source, #"uninitialized-slot-error",
-	    make-literal-constant(builder, class-slot), orig-instance));
+	   (builder, policy, source, #"uninitialized-slot-error-with-location",
+	    make-literal-constant(builder, class-slot), 
+            orig-instance,
+            make-literal-constant(builder, format-to-string("%=", source))));
       end-body(builder);
     end;
     let value = make-local-var(builder, getter-name,
@@ -1364,8 +1366,10 @@ define method optimize-slot-ref
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder, policy, source, #"uninitialized-slot-error",
-	    make-literal-constant(builder, class-slot), orig-instance));
+	   (builder, policy, source, #"uninitialized-slot-error-with-location",
+	    make-literal-constant(builder, class-slot), 
+            orig-instance,
+            make-literal-constant(builder, format-to-string("%=", source))));
       end-body(builder);
     end;
     insert-before(component, call-assign, builder-result(builder));
@@ -1427,8 +1431,10 @@ define method optimize-slot-ref
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder, policy, source, #"uninitialized-slot-error",
-	    make-literal-constant(builder, slot), instance));
+	   (builder, policy, source, #"uninitialized-slot-error-with-location",
+	    make-literal-constant(builder, slot), 
+            instance,
+            make-literal-constant(builder, format-to-string("%=", source))));
       end-body(builder);
     end;
     let value = make-local-var(builder, slot.slot-getter.variable-name,
@@ -1458,8 +1464,10 @@ define method optimize-slot-ref
       build-assignment
 	(builder, policy, source, #(),
 	 make-error-operation
-	   (builder, policy, source, #"uninitialized-slot-error",
-	    make-literal-constant(builder, slot), instance));
+	   (builder, policy, source, #"uninitialized-slot-error-with-location",
+	    make-literal-constant(builder, slot), 
+            instance,
+            make-literal-constant(builder, format-to-string("%=", source))));
       end-body(builder);
     end;
     insert-before(component, call-assign, builder-result(builder));
