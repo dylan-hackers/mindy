@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.51 1996/08/22 18:31:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.52 1996/08/23 14:00:12 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -503,7 +503,8 @@ define module definitions
   use errors;
 
   export
-    <definition>, defn-name, defn-library, defn-type, ct-value,
+    <definition>, defn-name, defn-library, defn-type, defn-dynamic?,
+    *defn-dynamic-default*, ct-value,
     install-transformers, $definition-slots,
     definition-syntax-info, definition-kind,
     <abstract-constant-definition>, <abstract-variable-definition>,
