@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.13 2003/03/28 00:30:37 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.14 2003/06/03 02:09:45 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -257,7 +257,7 @@ define method map-as
   if (empty?(more-collections))
     let (init, limit, next-state, finished?, current-key, current-element)
       = forward-iteration-protocol(collection);
-    let result = make(type, size: collection.size);
+    let result = make-collection(type, collection.size);
 
     // We can just iterate normally across collection, but we can't
     // iterate across result because we don't know that
@@ -271,7 +271,7 @@ define method map-as
     result;
   else
     let keys = key-intersection(collection, more-collections);
-    let result = make(type, size: keys.size);
+    let result = make-collection(type, keys.size);
     for (key in keys)
       result[key]
 	:= apply(proc, collection[key],
@@ -302,6 +302,26 @@ define method map-into
   end for;
   target;
 end method map-into;
+
+// make-collection -- internal
+//
+define method make-collection
+    (type :: <type>, collection-size :: <integer>)
+ => (res :: <mutable-collection>);
+  make(type, size: collection-size);
+end method;
+
+define method make-collection
+    (type :: subclass(<array>), collection-size :: <integer>)
+ => (res :: <mutable-collection>);
+  make(type, dimensions: vector(collection-size));
+end method;
+
+define method make-collection
+    (type :: subclass(<vector>), collection-size :: <integer>)
+ => (res :: <mutable-collection>);
+  make(type, size: collection-size);
+end method;
 
 define inline method any?
     (proc :: <function>, collection :: <collection>, #rest more-collections)
@@ -873,7 +893,7 @@ define method sequence-map-as
   unless (len)
     error("At least one argument to map-as must be bounded");
   end;
-  apply(sequence-map-into, make(type, size: len), proc, sequence,
+  apply(sequence-map-into, make-collection(type, len), proc, sequence,
 	more-sequences);
 end;
 
@@ -1066,7 +1086,7 @@ define method concatenate-as(type :: <type>, sequence :: <sequence>,
 	       finally total + sequence.int-size;
 	       end for;
 		 
-  let result = make(type, size: length);
+  let result = make-collection(type, length);
   let (init-state, limit, next-state, done?, current-key, current-element,
        current-element-setter) = forward-iteration-protocol(result);
 
@@ -1131,7 +1151,7 @@ define method copy-sequence
   end case;
 
   let sz :: <integer> = last - start;
-  let result = make(type-for-copy(sequence), size: sz);
+  let result = make-collection(type-for-copy(sequence), sz);
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(sequence);
 
