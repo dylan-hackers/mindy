@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.12 1994/11/29 06:43:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.13 1995/05/13 22:59:42 rgs Exp $
 *
 * This file implements strings.
 *
@@ -154,6 +154,18 @@ static obj_t dylan_unicode_str_element_setter(obj_t value,
 static obj_t dylan_str_size(obj_t str)
 {
     return make_fixnum(obj_ptr(struct string *, str)->len);
+}
+
+static obj_t dylan_byte_str_equal(obj_t /* <byte-string> */ str1,
+				  obj_t /* <byte-string> */ str2)
+{
+    struct string *s1 = obj_ptr(struct string *, str1);
+    struct string *s2 = obj_ptr(struct string *, str2);
+
+    if ((s1->len == s2->len) && (strcmp(s1->chars, s2->chars) == 0))
+	return obj_True;
+    else
+	return obj_False;
 }
 
 static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
@@ -343,6 +355,10 @@ void init_str_functions(void)
 		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
     define_method("size", list1(obj_UnicodeStringClass),
 		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
+
+    define_method("=", list2(obj_ByteStringClass, obj_ByteStringClass),
+		  FALSE, obj_False, FALSE, obj_BooleanClass,
+		  dylan_byte_str_equal);
 
     /* make(<string>) returns a <byte-string>, even if fill happens to 
        be a unicode character.
