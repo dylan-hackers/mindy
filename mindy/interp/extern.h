@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.h,v 1.3 1995/02/14 02:31:43 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.h,v 1.4 1995/06/12 01:06:17 rgs Exp $
 *
 * This file exports definitions for support of raw C pointers.
 *
@@ -55,6 +55,7 @@ struct foreign_file {
 extern obj_t obj_CPointerClass;
 extern obj_t /* <foreign-file> */ mindy_explicit_syms;
 extern obj_t obj_ForeignFileClass;
+extern obj_t obj_ArchivedFileClass;
 
 extern obj_t make_c_pointer(obj_t /* <static-pointer-class> */ cls, void *ptr);
 extern void *get_c_object(obj_t obj);

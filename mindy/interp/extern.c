@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.4 1995/03/27 23:45:35 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.5 1995/06/12 01:06:17 rgs Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -62,11 +62,13 @@
 #include <syms.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <dl.h>
 #endif
 
 obj_t obj_CPointerClass = NULL;	  /* all instances of StaticTypeClass are
 				     subclasses of this one */
 obj_t obj_ForeignFileClass = NULL;
+obj_t obj_ArchivedFileClass = NULL;
 obj_t obj_NullPointer = NULL;
 obj_t /* <foreign-file> */ mindy_explicit_syms = NULL;
 
@@ -83,91 +85,64 @@ obj_t make_c_pointer(obj_t /* <static-pointer-class> */ cls, void *ptr)
 
 /* Dylan routines. */
 
-/* Reads the symtab (in some machine specific format) from the named file 
+#ifdef hp9000s800
+
+obj_t obj_SharedFileClass = NULL;
+
+struct shared_file {
+    obj_t class;
+    obj_t file_name;		/* relocatable object file */
+    int file_count;
+    shl_t handles[1];
+};
+
+/* Links the named object files for dynamic loading, reads it in, and returns
+   a "foreign_file" object which allows access to its symbols.  If
+   names is a non-empty list (of byte-strings), then make ld "undefine"
+   these names so that they will show up in the linked version. */
+obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
+{
+    int i;
+    obj_t retval = obj_False;
+    struct shared_file *ret;
+    shl_t handle;
+
+    retval = alloc(obj_SharedFileClass,
+		   sizeof(struct shared_file)
+		     + ((length(c_files) - 1) * sizeof(shl_t)));
+    ret = obj_ptr(struct shared_file *, retval);
+    ret->file_count = length(c_files);
+    for (i = 0; c_files != obj_Nil; i++, c_files = TAIL(c_files)) {
+	handle = shl_load(string_chars(HEAD(c_files)), BIND_DEFERRED, 0);
+	if (handle == NULL) {
+	    error("Can't load shared library %s.", HEAD(c_files));
+	};
+	ret->handles[i] = handle;
+	ret->file_name = HEAD(c_files);
+    }
+    return retval;
+}
+
+/* Reads the symtab (in some machine specific format) from the main program 
    and returns a "foreign_file" object which allows access to those symbols */
-obj_t  load_c_symtab(obj_t /* <string> */ abs_file)
-{ 
-    int fd, count, total = 0;
-    char *file = string_chars(abs_file);
-    obj_t res;
+obj_t  load_program_file()
+{
+    obj_t retval;
     
-#if defined(hp9000s800)
-    struct header hdr;
-    struct symtab *retval;
-    int sym_count, sym_size, sym_loc, string_size, string_loc, table_size;
-    struct symbol_dictionary_record *syms;
-    char *strings;
-    int i, j;
-
-    /* Read beginning of "file" into "hdr" */
-    fd = open(file, O_RDONLY, 0);
-    if (fd < 0) return 0;
-    for (count = read(fd, ((char *)&hdr), sizeof(hdr)), total = count;
-	 count > 0 && total < sizeof(hdr);
-	 count = read(fd, ((char *)&hdr + total), sizeof(hdr) - total),
-	 total += count) ;
-    if (total < sizeof(hdr)) return 0;
-
-    /* Read in symbol table */
-    sym_count = hdr.symbol_total;
-    sym_loc = hdr.symbol_location;
-    sym_size = sizeof(struct symbol_dictionary_record) * sym_count;
-    if ((syms = (struct symbol_dictionary_record *) malloc(sym_size)) == NULL)
-	return 0;
-    if (lseek(fd, sym_loc, 0) < 0) return 0;
-    for (count = read(fd, (char *) syms, sym_size), total = count;
-	 count > 0 && total < sym_size;
-	 count = read(fd, ((char *) syms) + total, sym_size - total),
-	 total += count) ;
-    if (total < sym_size) return 0;
-
-    string_size = hdr.symbol_strings_size;
-    table_size = (sym_count - 1) * sizeof(struct symtab);
-    res = alloc(obj_ForeignFileClass,
-		sizeof(struct foreign_file) + table_size + string_size);
-    FOREIGN_FILE(res)->extra_size = string_size + table_size;
-
-    retval = FOREIGN_FILE(res)->syms;
-    strings = (char *)retval + table_size;
-
-    /* Read in symbol table strings */
-    string_loc = hdr.symbol_strings_location;
-    if (lseek(fd, string_loc, 0) < 0) return 0;
-    for (count = read(fd, strings, string_size), total = count;
-	 count > 0 && total < string_size;
-	 count = read(fd, strings + total, string_size - total),
-	 total += count) ;
-    if (total < string_size) return 0;
-
-    close(fd);
-
-    if (retval == NULL) return 0;
-    for (i = 0, j = 0; i < sym_count; i++)
-	if (syms[i].symbol_scope == SS_UNIVERSAL) {
-	    retval[j].name = strings + syms[i].name.n_strx;
-	    switch (syms[i].symbol_type) {
-	    case ST_DATA:
-		retval[j++].ptr = (void *) syms[i].symbol_value;
-		break;
-	    case ST_CODE:
-	    case ST_PRI_PROG:
-	    case ST_SEC_PROG:
-	    case ST_ENTRY:
-	    case ST_MILLICODE:
-		retval[j++].ptr = (void *) (syms[i].symbol_value & 0xfffffffc);
-		break;
-	    default:
-		retval[j++].ptr = 0;
-	    }
-	}
-
-    FOREIGN_FILE(res)->file_name = abs_file;
-    FOREIGN_FILE(res)->sym_count = j;
-
-    return res;
+    retval = alloc(obj_SharedFileClass, sizeof(struct shared_file));
+    obj_ptr(struct shared_file *, retval)->file_name
+	= make_byte_string(exec_file_name);
+    obj_ptr(struct shared_file *, retval)->file_count = 1;
+    obj_ptr(struct shared_file *, retval)->handles[0] = PROG_HANDLE;
+    return retval;
+}
 #else
-    return obj_False;
-#endif
+
+/* Reads the symtab (in some machine specific format) from the main program 
+   and returns a "foreign_file" object which allows access to those symbols */
+obj_t  load_program_file()
+{
+    error("Cannot do dynamic loading on this architecture");
 }
 
 /* Links the named object files for dynamic loading, reads it in, and returns
@@ -175,109 +150,23 @@ obj_t  load_c_symtab(obj_t /* <string> */ abs_file)
    names is a non-empty list (of byte-strings), then make ld "undefine"
    these names so that they will show up in the linked version. */
 obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
-/* c_file is a <string> */
 {
-#ifdef hp9000s800
-    char *execstr;
-    int execlimit = 1024, execsize;
-    char *absfile;
-    obj_t res, file_name = obj_False;
-    static int pagesize = 0;
-    int fd, count, total, codesize, bss_size, mapresult;
-    struct header hdr;
-    struct som_exec_auxhdr aux;
-    static void *addr = (void *)0x20000000;
-
-    if (pagesize == 0) pagesize = sysconf(_SC_PAGE_SIZE);
-
-    execstr = malloc(execlimit);
-    absfile = tmpnam(NULL);
-    sprintf(execstr, "/bin/ld -N -o %s -E -A %s -R %x",
-	    absfile, exec_file_name, (int) addr);
-    execsize = strlen(execstr);
-    /* append each object file */
-    for ( ; c_files != obj_Nil; c_files = TAIL(c_files)) {
-	int flaglen = obj_ptr(struct string *, HEAD(c_files))->len + 1;
-	if ((execsize + flaglen + 1) > execlimit) {
-	    execlimit += 1024;
-	    execstr = realloc(execstr, execlimit);
-	}
-	if (file_name == obj_False) file_name = HEAD(c_files);
-	sprintf(execstr+execsize, " %s", string_chars(HEAD(c_files)));
-	execsize += flaglen;
-    }
-    /* undefine each of the names we were given */
-    for ( ; names != obj_Nil; names = TAIL(names)) {
-	int flaglen = obj_ptr(struct string *, HEAD(names))->len + 4;
-	if ((execsize + flaglen + 1) > execlimit) {
-	    execlimit += 1024;
-	    execstr = realloc(execstr, execlimit);
-	}
-	sprintf(execstr+execsize, " -u %s", string_chars(HEAD(names)));
-	execsize += flaglen;
-    }
-    if (system(execstr) != 0)
-	return NULL;		/* unknown failure */
-    
-    /* Read beginning of "file" into "hdr" */
-    fd = open(absfile, O_RDONLY, 0);
-    if (fd < 0) return 0;
-    for (count = read(fd, ((char *)&hdr), sizeof(hdr)), total = count;
-	 count > 0 && total < sizeof(hdr);
-	 count = read(fd, ((char *)&hdr + total), sizeof(hdr) - total),
-	 total += count) ;
-    if (total < sizeof(hdr)) return NULL;
-
-    if (lseek(fd, hdr.aux_header_location, 0) < 0) return NULL;
-    for (count = read(fd, ((char *)&aux), sizeof(aux)), total = count;
-	 count > 0 && total < sizeof(aux);
-	 count = read(fd, ((char *)&aux + total), sizeof(aux) - total),
-	 total += count) ;
-    if (total < sizeof(aux)) return NULL;
-
-    codesize = ((aux.exec_tsize + pagesize - 1) / pagesize) * pagesize;
-    mapresult =
-	(int) mmap((void *) aux.exec_tmem, codesize,
-		   PROT_READ | PROT_WRITE | PROT_EXEC,
-		   MAP_FIXED | MAP_PRIVATE | MAP_FILE, fd, aux.exec_tfile);
-    if (mapresult < 0)
-	return NULL;
-    if (aux.exec_tmem + codesize > (int)addr)
-	addr = (void *)(aux.exec_tmem + codesize);
-    
-    codesize = ((aux.exec_dsize + pagesize - 1) / pagesize) * pagesize;
-    if (mmap((void *)aux.exec_dmem, codesize,
-	     PROT_READ | PROT_WRITE | PROT_EXEC,
-	     MAP_FIXED | MAP_PRIVATE | MAP_FILE, fd, aux.exec_dfile) < 0)
-	return NULL;
-
-    bss_size = ((aux.exec_bsize + pagesize - 1) / pagesize) * pagesize;
-    if (mmap((void *)(aux.exec_dmem + codesize), bss_size,
-	     PROT_READ | PROT_WRITE | PROT_EXEC,
-	     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) < 0)
-	return NULL;
-    if (aux.exec_bfill != 0)
-	error("Non-zero BSS fill value -- must fix extern.c");
-    if (aux.exec_dmem + codesize + bss_size > (int)addr)
-	addr = (void *)(aux.exec_dmem + codesize + bss_size);
-
-    close(fd);
-    
-    res = load_c_symtab(make_byte_string(absfile));
-    FOREIGN_FILE(res)->file_name = file_name;
-    unlink(absfile);
-    
-    return res;
-#else
-    error("Dynamic loading is not supported for this architecture.");
-    return obj_False;
-#endif
+    error("Cannot do dynamic loading on this architecture");
 }
+
+#endif /* hp9000s800 */
 
 static void print_foreign_file(obj_t file)
 {
     printf("{<foreign-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
 }
+
+#ifdef hp9000s800
+static void print_shared_foreign_file(obj_t file)
+{
+    printf("{<shared-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
+}
+#endif /* hp9000s800 */
 
 static void print_c_pointer(obj_t ptr)
 {
@@ -307,13 +196,24 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 	if (retval != obj_False) return retval;
 
 	if (mindy_dynamic_syms == NULL)
-	    mindy_dynamic_syms = load_c_symtab(make_byte_string(exec_file_name));
+	    mindy_dynamic_syms = load_program_file();
 	return find_c_function(symbol, mindy_dynamic_syms);
     } else if (lookup == obj_False)
 	return obj_False;
-    else if (object_class(lookup) != obj_ForeignFileClass) {
+    else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
+#ifdef hp9000s800
+    } else if (instancep(lookup, obj_SharedFileClass)) {
+	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
+	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
+	void *ptr;
+
+	for (i = 0; i < file_count; i++)
+	    if (shl_findsym(&files[i], string, TYPE_PROCEDURE, &ptr) == 0)
+		return(make_c_function(make_byte_string(string), ptr));
+	return retval;
+#endif
     } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
@@ -341,13 +241,24 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 	if (retval != obj_False) return retval;
 
 	if (mindy_dynamic_syms == NULL)
-	    mindy_dynamic_syms = load_c_symtab(make_byte_string(exec_file_name));
+	    mindy_dynamic_syms = load_program_file();
 	return find_c_ptr(symbol, mindy_dynamic_syms);
     } else if (lookup == obj_False)
 	return obj_False;
-    else if (object_class(lookup) != obj_ForeignFileClass) {
+    else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
+#ifdef hp9000s800
+    } else if (instancep(lookup, obj_SharedFileClass)) {
+	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
+	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
+	void *ptr;
+
+	for (i = 0; i < file_count; i++)
+	    if (shl_findsym(&files[i], string, TYPE_UNDEFINED, &ptr) == 0)
+		return(make_c_pointer(obj_CPointerClass, ptr));
+	return retval;
+#endif
     } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
@@ -728,10 +639,31 @@ static obj_t trans_foreign_file(obj_t cptr)
 		            + FOREIGN_FILE(cptr)->extra_size);
 }
 
+#ifdef hp9000s800
+static int scav_shared_file(struct object *obj)
+{
+    scavenge(&((struct shared_file *)obj)->file_name);
+    return sizeof(struct shared_file)
+	+ ((((struct shared_file *)obj)->file_count - 1) * sizeof(shl_t));
+}
+
+static obj_t trans_shared_file(obj_t cptr)
+{
+    return transport(cptr,
+		     sizeof(struct shared_file)
+		     + ((obj_ptr(struct shared_file *,cptr)->file_count - 1)
+			* sizeof(shl_t)));
+}
+#endif /* hp9000s800 */
+
 void scavenge_c_roots(void)
 {
     scavenge(&obj_CPointerClass);
     scavenge(&obj_ForeignFileClass);
+#ifdef hp9000s800
+    scavenge(&obj_SharedFileClass);
+#endif /* hp9000s800 */
+    scavenge(&obj_ArchivedFileClass);
     scavenge(&obj_NullPointer);
     if (mindy_dynamic_syms != NULL)
 	/* Let it be scavenged and we'll recreate it at need */
@@ -748,8 +680,13 @@ void make_c_classes(void)
 	= make_builtin_class(scav_c_pointer, trans_c_pointer);
     CLASS(obj_CPointerClass)->class = obj_StaticTypeClass;
     CLASS(obj_CPointerClass)->sealed_p = FALSE;
-    obj_ForeignFileClass
+    obj_ForeignFileClass = make_abstract_class(0);
+    obj_ArchivedFileClass
 	= make_builtin_class(scav_foreign_file, trans_foreign_file);
+#ifdef hp9000s800
+    obj_SharedFileClass 
+	= make_builtin_class(scav_shared_file, trans_shared_file);
+#endif /* hp9000s800 */
 }
 
 void init_c_classes(void)
@@ -759,7 +696,14 @@ void init_c_classes(void)
     def_printer(obj_CPointerClass, print_c_pointer);
     init_builtin_class(obj_ForeignFileClass, "<foreign-file>", obj_ObjectClass,
 		       NULL);
-    def_printer(obj_ForeignFileClass, print_foreign_file);
+    init_builtin_class(obj_ArchivedFileClass, "<archived-file>",
+		       obj_ForeignFileClass, NULL);
+    def_printer(obj_ArchivedFileClass, print_foreign_file);
+#ifdef hp9000s800
+    init_builtin_class(obj_SharedFileClass, "<shared-file>",
+		       obj_ForeignFileClass, NULL);
+    def_printer(obj_ForeignFileClass, print_shared_foreign_file);
+#endif /* hp9000s800 */
 }
 
 void init_c_functions(void)
