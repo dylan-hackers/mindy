@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.5 1995/03/23 22:00:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.6 1995/04/27 23:02:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -260,7 +260,7 @@ end;
 
 define class <for-step-clause> (<for-var-clause>)
   slot for-clause-init :: <expression>, required-init-keyword: init:;
-  slot for-clause-step :: <expression>, required-init-keyword: init:;
+  slot for-clause-step :: <expression>, required-init-keyword: step:;
 end;
 
 define class <for-from-clause> (<for-var-clause>)
