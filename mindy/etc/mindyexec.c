@@ -94,5 +94,6 @@ int main(argc, argv) int argc; char *argv[];
     fprintf(stderr, "mindyexec: execvp(\"mindy\", ...) failed:%s\n", strerror(errno));
     exit(1);
   }
+  return 0;
 }
 
