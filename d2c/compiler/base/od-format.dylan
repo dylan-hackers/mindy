@@ -478,21 +478,22 @@ register-object-id(#"define-macro-definition", #x00CA);
 register-object-id(#"function-macro-definition", #x00CB);
 register-object-id(#"statement-macro-definition", #x00CC);
 
+register-object-id(#"backend-var-info", #x00D0);
+// register-object-id(#"function-info", #x00D1);  ### Needed?
+register-object-id(#"constant-info", #x00D2);
+register-object-id(#"constant-function-info", #x00D3);
+register-object-id(#"constant-method-info", #x00D4);
+
+register-object-id(#"c-representation", #x00D8);
+register-object-id(#"general-representation", #x00D9);
+register-object-id(#"immediate-representation", #x00DA);
+register-object-id(#"data-word-representation", #x00DB);
 
 register-object-id(#"define-library-tlf", #x00E0);
 register-object-id(#"define-module-tlf", #x00E1);
 register-object-id(#"define-library/module-use-clause", #x00E2);
 register-object-id(#"define-binding-tlf", #x00E3);
 register-object-id(#"here-be-roots", #x00E4);
-
-/*
-generic-function
-gf-method
-
-module sys state
-macros, inline functions
-define constant, define variable
-*/
 
 
 // Buffer interface:
