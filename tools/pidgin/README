@@ -6,11 +6,13 @@ This version is intended for review and public comment.
 Current status:
 
  * ANSI C library
-   - C type model should be complete
-   - C declaration should be complete
+   - C type model should be essentially complete
+   - C declaration model should be essentially complete
 
  * C parser
-   - Not yet integrated from Melange
+   - Almost entirely integrated
+   - Many new bugs fixes
+   - Basic search paths work
 
 Please mail your feedback to <eric.kidd@pobox.com>. You can find more
 information about pidgin in the comp.lang.dylan newsgroup and on the
@@ -21,6 +23,8 @@ Gwydion Dylan website at:
 Eric Kidd
 27 March 1999
 
+Parts of the to do list are out of date.
+
 ----- THINGS TO DO -----
 Here's a rough list of things to do before the C parser is integrated.
 
@@ -30,6 +34,14 @@ Here's a rough list of things to do before the C parser is integrated.
  * Cut out dead code.
  * Replace code in c-parser-stubs.dylan with ANSI-C equivalents.
  * Handle all the problems described in "PROBLEM AREAS" below.
+ * Check printing of bitfields.
+ * Implement <c-empty-define>.
+ * Figure out why GL/gl.h parses so much slower than ansi-test.h.
+ * Profile.
+ * How fast is appending a chunk to the end of a <stretchy-vector>?
+   Not too bad... It only resizes every 1024 elements or so.
+ * How bad does fast-string-hash suck when run on the OpenGL headers?
+   Oh, wow. That's nasty.
 
 ----- PROBLEM AREAS -----
 This is an older list.
