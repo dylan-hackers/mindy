@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.5 2000/01/24 04:56:44 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.6 2001/07/07 17:10:45 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -63,8 +63,8 @@ define class <class> (<type>)
   constant slot class-sealed? :: <boolean>,
     init-value: #t, init-keyword: sealed:;
   //
-  // The defered evaluations for this class.
-  slot class-defered-evaluations :: false-or(<function>),
+  // The deferred evaluations for this class.
+  slot class-deferred-evaluations :: false-or(<function>),
     init-value: #f;
   //
   // The key defaulter function, or #f if no key defaults.
@@ -89,7 +89,7 @@ define class <class> (<type>)
   constant slot class-slot-overrides :: <simple-object-vector>,
     required-init-keyword: slot-overrides:;
   //
-  // Vector of all the slots for this class.  Filled in for real when defered-
+  // Vector of all the slots for this class.  Filled in for real when deferred-
   // evaluations are processed.
   slot class-all-slot-descriptors :: <simple-object-vector>,
     init-value: #[];
@@ -561,7 +561,7 @@ define method make (class :: <class>, #rest supplied-keys, #key, #all-keys)
   if (class.class-abstract?)
     error("Can't make instances of %= because it is abstract.", class);
   end;
-  maybe-do-defered-evaluations(class);
+  maybe-do-deferred-evaluations(class);
   let defaulted-keys :: <simple-object-vector>
     = if (class.class-key-defaulter)
 	class.class-key-defaulter(supplied-keys);
@@ -582,22 +582,22 @@ define method make (class :: <class>, #rest supplied-keys, #key, #all-keys)
   instance;
 end;
 
-define inline method maybe-do-defered-evaluations (class :: <class>) => ();
-  if (class.class-defered-evaluations)
-    do-defered-evaluations(class);
+define inline method maybe-do-deferred-evaluations (class :: <class>) => ();
+  if (class.class-deferred-evaluations)
+    do-deferred-evaluations(class);
   end;
 end;
 
-define method do-defered-evaluations (class :: <class>) => ();
-  let defered-evaluations = class.class-defered-evaluations;
-  class.class-defered-evaluations
+define method do-deferred-evaluations (class :: <class>) => ();
+  let deferred-evaluations = class.class-deferred-evaluations;
+  class.class-deferred-evaluations
     := method () => res :: <never-returns>;
-	 error("Circularity detected while processing the defered evaluations "
-		 "for %=",
+	 error("Circularity detected while processing the deferred "
+		 "evaluations for %=",
 	       class);
        end;
-  defered-evaluations();
-  class.class-defered-evaluations := #f;
+  deferred-evaluations();
+  class.class-deferred-evaluations := #f;
 end;
 
 define open generic initialize

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.20 2001/06/22 07:26:48 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.21 2001/07/07 17:10:45 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -280,7 +280,7 @@ define module dylan-viscera
     make-exit-function,
     make-limited-collection,
     make-rest-arg,
-    maybe-do-defered-evaluations,
+    maybe-do-deferred-evaluations,
     missing-required-init-keyword-error,
     \mv-call,
     no-applicable-methods-error,
