@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.9 1996/07/13 20:38:43 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.10 1996/07/13 20:46:53 bfw Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -84,7 +84,7 @@ threaded-io-test.dbc: ${SRCDIR}/threaded-io-test.dylan
 	${MC} ${MINDYFLAGS} -lthreaded-io-test -o threaded-io-test.dbc ${SRCDIR}/threaded-io-test.dylan
 
 stream-test-lib.dbc: stream-test-library.dbc stream-test.dbc
-	cat ${SRCDIR}/stream-test-library.dbc ${SRCDIR}/stream-test.dbc > $@
+	cat stream-test-library.dbc stream-test.dbc > $@
 stream-test-library.dbc: ${SRCDIR}/stream-test-library.dylan
 	${MC} ${MINDYFLAGS} -lstream-test -o stream-test-library.dbc ${SRCDIR}/stream-test-library.dylan
 stream-test.dbc: ${SRCDIR}/stream-test.dylan
