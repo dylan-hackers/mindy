@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.12 1996/04/13 21:39:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.13 1996/04/15 18:15:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -632,7 +632,7 @@ end;
 
 define method ambiguous-method-error (methods :: <list>)
     => res :: <never-returns>;
-  error("It is ambiguous which of these methods is most specific:\n  %s",
+  error("It is ambiguous which of these methods is most specific:\n  %=",
 	methods);
 end;
 
