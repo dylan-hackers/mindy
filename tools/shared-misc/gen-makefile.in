@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.45 2003/04/24 18:39:00 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.46 2003/06/18 01:04:24 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -201,7 +201,6 @@ sub set_default_defaults {
     $install_data = "cp";
     $install_program = "install";
     $install_library = "install";
-    $compiler_debug_flags = " ";
 }
 
 # find_Defaults_file() -- internal
@@ -253,7 +252,6 @@ sub read_Defaults_file {
     # Extract features from target platform
     local($feature_name);
     for $feature_name (split(/\s+/, $target_platform{'default_features'})) {
-        $compiler_debug_flags = "$compiler_debug_flags -D$feature_name ";
         $feature_name =~ tr/-A-Z/_a-z/;
         $features{$feature_name} = 1;
     }
@@ -514,14 +512,14 @@ sub maybe_emit_d2c_defines {
         }
         $CFLAGS =~ s/-I%s//;
         print <<EOF;
-D2C = $D2C $compiler_debug_flags
+D2C = $D2C
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
 CPPFLAGS = $CPPFLAGS $debug_platform_name
 COPTS = $COPTS
 MELANGE = $MELANGE
 PARSERGEN = $PARSERGEN
-MC = $MC $compiler_debug_flags -Dmindy
+MC = $MC
 MINDY = $MINDY
 
 EOF
@@ -924,7 +922,7 @@ sub emit_library_rule {
     }
 
     if (! grep(/^no-mindy$/, @keywords) && $enable_mindy) {
-        &emit_mindycomp_library_rule($library, $lidfile{'files'});
+        &emit_mindycomp_library_rule($library, $lidfile{'files'}, %lidfile);
     }
     if (grep(/^compile-mindy$/, @keywords) && $enable_mindy) {
         push(@compile_dependencies, "$library-lib.dbc");
@@ -1282,7 +1280,7 @@ sub emit_dbc_link_rule {
 # function.
 #
 sub emit_mindycomp_library_rule {
-    local($libname, $lid_sources) = @_;
+    local($libname, $lid_sources, %lidfile) = @_;
     $libname =~ tr/A-Z/a-z/;
     local($uppercase_libname) = $libname;
     $uppercase_libname =~ tr/-a-z/_A-Z/;
@@ -1293,14 +1291,26 @@ sub emit_mindycomp_library_rule {
         push(@objects, "$file.dbc");
         push(@files_to_clean, "$file.dbc");
     }
-    print "DASH_$uppercase_libname = -l$libname\n\n";
     print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n\n";
     push(@dbc_only_dependencies, "$libname-lib.dbc");
     push(@files_to_clean, "$libname-lib.dbc");
 
+    local $flags = "-l$libname";
+    local $feature;
+    foreach $feature (split /\s+/, $target_platform{'default_features'}) {
+	$flags = "$flags -D$feature";
+    }
+    foreach $feature (split /\s+/, $lidfile{'features'}) {
+	if($feature =~ /~(.*)/) {
+	    $flags = "$flags -U$1";
+	} else {
+	    $flags = "$flags -D$feature";
+	}
+    }
+
     local($source);
     foreach $source (@sources) {
-        &emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
+        &emit_mindycomp_rule($source, $flags);
     }
     &emit_dbc_link_rule("$libname-lib.dbc", "\$(${uppercase_libname}_OBJS)");
 }
