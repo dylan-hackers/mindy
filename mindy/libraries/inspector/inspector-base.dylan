@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.9 1996/08/10 21:30:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.10 1996/09/19 12:17:14 nkramer Exp $
 
 //======================================================================
 //
@@ -93,7 +93,7 @@ define class <object-attribute> (<object>)
 end class <object-attribute>;
 
 define constant $component-none
-  = make(<body-component>, description: "none", related-objects: #());
+  = make(<body-component>, description: "None", related-objects: #());
 
 // Make a body where the description for each component is simply the
 // short-string of the object.
@@ -123,22 +123,34 @@ define function make-one-liner-body (obj :: <object>)
 end function make-one-liner-body;
 
 
-// short-string is basically print-to-string without some of the
-// annoying text that comes with it.  When print-to-string isn't too
-// ugly, we use it instead of writing our own.
+// short-string is like print-object, except it prints out types and
+// functions in a way that doesn't make me want to vomit.
+// short-string also returns a string rather than print to a stream.
+// We'd like to be able to use print-object for all other objects, but
+// we're afraid of being spammed.  Actually, any print-object's that
+// forces a line-break is bad, because that'll screw the X-inspector.
+// (It'll also look pretty crappy in the text inspector if we don't
+// start using pretty-printing)
 //
 define open generic short-string (obj :: <object>) => string :: <string>;
 
 define method short-string (obj :: <object>) => string :: <string>;
-  concatenate("Instance of ", obj.object-class.short-string);
+  concatenate("{Instance of ", obj.object-class.short-string, "}");
+end method short-string;
+
+define method short-string
+    (obj :: type-union(<boolean>, <empty-list>, <string>, <character>,
+		       <number>, <symbol>))
+ => string :: <string>;
+  print-to-string(obj);
 end method short-string;
 
 define method short-string (cls :: <class>) => string :: <string>;
   as(<string>, cls.class-name);
 end method short-string;
 
-// The "false-or" hack is highly unportable.
-// Perhaps we should also have a "one-of" hack...
+// ### The "false-or" hack is highly unportable.
+// ### Perhaps we should also have a "one-of" hack...
 //
 define method short-string (u :: <union>) => string :: <string>;
   if (u.union-members.size == 2 & u.union-members.second == <false>)
@@ -158,35 +170,6 @@ define method short-string (s :: <subclass>) => string :: <string>;
   concatenate("subclass(", short-string(s.subclass-of), ")");
 end method short-string;
 
-define method short-string (kwd :: <symbol>) => string :: <string>;
-  concatenate("#\"", as(<string>, kwd), "\"");
-end method short-string;
-
-define method short-string (boolean == #t) => string :: <string>;
-  "#t";
-end method short-string;
-
-define method short-string (boolean == #f) => string :: <string>;
-  "#f";
-end method short-string;
-
-define method short-string (empty-list == #()) => string :: <string>;
-  "#()";
-end method short-string;
-
-define method short-string (string :: <string>) => string :: <string>;
-  // Silly as this sounds, we do need to add quote marks and such
-  print-to-string(string);  
-end method short-string;
-
-define method short-string (char :: <character>) => string :: <string>;
-  print-to-string(char);
-end method short-string;
-
-define method short-string (number :: <number>) => string :: <string>;
-  print-to-string(number);
-end method short-string;
-
 define method short-string (fun :: <function>) => string :: <string>;
   concatenate
     (as(<string>, fun.function-name | "Anonymous function"),
@@ -203,6 +186,19 @@ define method short-string (module :: <module>) => string :: <string>;
   concatenate("Module ", as(<string>, module.module-name));
 end method short-string;
 
+define method short-string (binding :: <binding>) => string :: <string>;
+  if (binding.constant-and-untyped?)
+    short-string(binding.binding-value);
+  else
+    concatenate(capitalize!(copy-sequence(as(<string>, 
+					     binding.binding-kind))),
+		" Binding ", as(<string>, binding.binding-name));
+  end if;
+end method short-string;
+
+
+// Assorted helper functions
+
 define function capitalize! (s :: <string>) => s :: <string>;
   s.first := s.first.as-uppercase;
   s;
@@ -217,18 +213,6 @@ define function constant-and-untyped? (binding :: <binding>)
     otherwise => #t;
   end select;
 end function constant-and-untyped?;
-
-define method short-string (binding :: <binding>) => string :: <string>;
-  if (binding.constant-and-untyped?)
-    short-string(binding.binding-value);
-  else
-    concatenate(capitalize!(copy-sequence(as(<string>, binding.binding-kind))),
-		" Binding ", as(<string>, binding.binding-name));
-  end if;
-end method short-string;
-
-
-// Assorted helper functions
 
 // Convenient way to make deques, much like list(), vector(), and range()
 //
@@ -398,27 +382,44 @@ define method object-info (subclass :: <subclass>) => info :: <sequence>;
   info;
 end method object-info;
 
-define constant $no-object = pair(#f, #f);
-define function slot-info (cls :: <class>, #key object = $no-object) 
+// ### This might be a good time to use pretty-printing...
+//
+define function instance-slot-info (object :: <object>)
  => info :: <sequence>;
+  let slots-body = make(<deque>);
+  let cls = object.object-class;
+  for (slt in cls.slot-descriptors)
+    let getter-name = slt.slot-getter.function-name;
+    let type = slt.slot-type;
+    let (value, bound?) = slot-value(slt, object);
+    if (~bound?)
+      let descr = concatenate("slot ", as(<string>, getter-name),
+			      " is unbound");
+      push-last(slots-body, make(<body-component>, 
+				 description: descr, 
+				 related-objects: #()));
+    else
+      let descr = concatenate("slot ", as(<string>, getter-name),
+			      " = #!", short-string(value), "!#");
+      push-last(slots-body, make(<body-component>, 
+				 description: descr, 
+				 related-objects: vector(value)));
+    end if;
+  end for;
+  deque(make(<object-attribute>, header: "Slots:", 
+	     body: if (slots-body.empty?)
+		     vector($component-none);
+		   else
+		     slots-body;
+		   end));
+end function instance-slot-info;
+
+define function class-slot-info (cls :: <class>) => info :: <sequence>;
   let slots-body = make(<deque>);
   for (slt in cls.slot-descriptors)
     let getter = slt.slot-getter;
     let setter = slt.slot-setter;
     let type = slt.slot-type;
-    let (value-string, type-and-value)
-      = if (object == $no-object)
-	  values("", list(type));
-	else
-	  let (value, bound?) = slot-value(slt, object);
-	  if (bound?)
-	    values(concatenate(" = #!", short-string(value), "!#"),
-		   list(type, value));
-	  else
-	    values(" is unbound", list(type));
-	  end if;
-	end if;
-
     let allocation-string = if (slt.slot-allocation == #"instance")
 			      "";
 			    else
@@ -428,27 +429,26 @@ define function slot-info (cls :: <class>, #key object = $no-object)
       = if (setter == #f & slt.slot-allocation ~== #"virtual")
 	  values(concatenate("constant ", allocation-string, " slot #!",
 			     as(<string>, getter.function-name),
-			     "!# :: #!", short-string(slt.slot-type), "!#",
-			     value-string),
-		 pair(getter, type-and-value));
+			     "!# :: #!", short-string(slt.slot-type), "!#"),
+		 vector(getter, type));
 	else
 	  values(concatenate(allocation-string, " slot #!",
 			     as(<string>, getter.function-name),
-			     "!# :: #!", short-string(type), "!#", 
-			     value-string, ", setter: #!", 
+			     "!# :: #!", short-string(type), 
+			     "!#, setter: #!", 
 			     as(<string>, setter.function-name),
 			     "!#"),
-		 concatenate(list(getter), type-and-value, list(setter)));
+		 vector(getter, type, setter));
 	end if;
     push-last(slots-body, make(<body-component>, 
 			       description: descr, related-objects: related));
   end for;
   deque(make(<object-attribute>, 
 	     header: "Slots:", body: slots-body));
-end function slot-info;
+end function class-slot-info;
 
 define method object-info (cls :: <class>) => info :: <sequence>;
-  let info = slot-info(cls);
+  let info = class-slot-info(cls);
   let class-adjectives
     = if (cls.abstract?)
 	if (cls.instantiable?) "Abstract Instantiable " else "Abstract " end;
@@ -474,7 +474,7 @@ define method object-info (cls :: <class>) => info :: <sequence>;
 end method object-info;
 
 define method object-info (seq :: <sequence>) => info :: <sequence>;
-  let info = slot-info(seq.object-class, object: seq);
+  let info = instance-slot-info(seq);
   push(info, make(<object-attribute>, header: "Sequence of type", 
 		  body: make-one-liner-body(seq.object-class)));
   if (*show-elements*)
@@ -509,7 +509,7 @@ end method object-info;
 
 define method object-info (coll :: <explicit-key-collection>)
  => info :: <sequence>;
-  let info = slot-info(coll.object-class, object: coll);
+  let info = instance-slot-info(coll);
   push(info, make(<object-attribute>, 
 		  header: "Explicit key collection of type", 
 		  body: make-one-liner-body(coll.object-class)));
@@ -655,7 +655,7 @@ define method object-info (obj :: <boolean>) => info :: <sequence>;
 end method object-info;
 
 define method object-info (obj :: <object>) => info :: <sequence>;
-  let info = slot-info(obj.object-class, object: obj);
+  let info = instance-slot-info(obj);
   push(info, make(<object-attribute>, header: "Object of type", 
 		  body: make-one-liner-body(obj.object-class)));
   info;
