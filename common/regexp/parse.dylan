@@ -2,7 +2,7 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.3 1996/04/06 18:30:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/parse.dylan,v 1.4 1996/04/22 15:52:12 nkramer Exp $
 
 //======================================================================
 //
@@ -248,12 +248,19 @@ define method parse-atom (s :: <parse-string>, info :: <parse-info>)
       consume(s);        // Eat the opening brace
       let set-string = make(<deque>);      // Need something that'll 
                                            // preserve the right ordering
-      for (char = lookahead(s) then lookahead(s), until: char = ']')
+      for (char = lookahead(s) then lookahead(s), until: char == ']')
 	consume(s);                    // eat char
-	push-last(set-string, char);
-	if (char = '\\')
-	  push-last(set-string, lookahead(s));
-	  consume(s);     // eat thing after backslash
+	if (char ~== '\\')
+	  push-last(set-string, char);
+	else
+	  let char2 = lookahead(s);
+	  consume(s);  // Eat escaped char
+	  if (char2 == ']')
+	    push-last(set-string, ']');
+	  else
+	    push-last(set-string, '\\');
+	    push-last(set-string, char2);
+	  end if;
 	end if;
       end for;
       consume(s);     // Eat ending brace
