@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifndef __MWERKS__
 #include "config.h"
+#endif
 #include "runtime.h"
 
 #ifdef HAVE_SYS_TYPES_H

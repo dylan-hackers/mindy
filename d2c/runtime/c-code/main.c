@@ -5,7 +5,9 @@
 #include <math.h>
 #include <time.h>
 
+#ifndef __MWERKS__
 #include "config.h"
+#endif
 #include "runtime.h"
 
 #if defined(HAVE_GC_H)
@@ -209,7 +211,7 @@ long *cpu_time(void)
 {
   long *retval = (long *) allocate(2 * sizeof(long));
   struct rusage ru;
-  if(getrusage(RUSAGE_SELF, &ru) == 0) {
+  if (getrusage(RUSAGE_SELF, &ru) == 0) {
     retval[0]
       = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec
       + (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000L;
@@ -224,9 +226,13 @@ long *cpu_time(void)
 {
   long *retval = (long *) allocate(2 * sizeof(long));
   clock_t runtime = clock();
-  if(runtime >= 0) {
+  if (runtime >= 0) {
     retval[0] = (runtime / CLOCKS_PER_SEC);
+#ifdef __MWERKS__
+    retval[1] = (runtime - retval[0] * CLOCKS_PER_SEC) * 1000000L / CLOCKS_PER_SEC;
+#else
     retval[1] = (runtime % CLOCKS_PER_SEC) * 1000000L / CLOCKS_PER_SEC;
+#endif
   } else {
     retval[0] = retval[1] = 0;
   }
