@@ -25,6 +25,8 @@ rcs-header: $Header:
 // compilation environment for an HP 735 running HPUX.
 //======================================================================
 
+// default defines came from "gcc -v anyfile.c"
+//
 define constant $default-defines
   = #["const", "",
       "volatile", "",
@@ -46,7 +48,7 @@ define constant $default-defines
       "__hppa", "",
       "__hp9000s800", "",
       "__hp9000s800", "",
-      "__hp9k8 _" "__PWB", "",
+      "__hp9k8 _" "__PWB",
       "__hpux", "",
       "__unix", "",
       "___HPUX_SOURCE", "",
