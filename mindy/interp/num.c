@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.20 1995/03/02 21:11:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.21 1995/07/11 12:39:47 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -754,6 +754,14 @@ static obj_t dylan_idp(obj_t this, obj_t that)
 	return obj_True;
     else
 	return obj_False;
+}
+
+static obj_t dylan_not_idp(obj_t this, obj_t that)
+{
+    if (idp(this, that))
+	return obj_False;
+    else
+	return obj_True;
 }
 
 
@@ -1998,6 +2006,8 @@ void init_num_functions(void)
 
     define_function("==", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		    dylan_idp);
+    define_function("~==", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
+		    dylan_not_idp);
     define_method("=", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_idp);
 
