@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.31 2001/11/08 00:28:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.32 2001/12/11 01:03:18 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -290,6 +290,7 @@ define class <file-state> (<object>)
   constant slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
 
   slot dumping-global-heap? :: <boolean> = #f;
+  constant slot single-file-mode? :: <boolean> = #f, init-keyword: single-file-mode?:;
 end;
 
 
@@ -3126,9 +3127,14 @@ define function aux-c-expr-and-rep
 	info.const-info-heap-labels := add!(labels, label);
       end if;
       let c-name = info.const-info-heap-labels.first;
-      maybe-emit-prototype(c-name, #"heap", file)
+
+      if(file.single-file-mode?)
+        spew-heap-prototype(c-name, lit, file)
+      else
+        maybe-emit-prototype(c-name, #"heap", file)
+      end
 	& (info.const-info-expr | eagerly-reference(lit, file));
-      values(stringify('&', c-name), best-rep);
+      values(stringify("(heapptr_t)&", c-name), best-rep);
     else
       make-global-root();
     end if;

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.4 2001/11/08 00:28:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.5 2001/12/11 01:03:19 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -153,7 +153,7 @@ define method compile-file (state :: <single-file-mode-state>) => ();
   let body-stream
      = make(<file-stream>, locator: c-name, direction: #"output");
   let file = make(<file-state>, unit: state.unit-cback-unit,
-                     body-stream: body-stream);
+                     body-stream: body-stream, single-file-mode?: #t);
   state.unit-c-file := file;
   state.unit-stream := body-stream;
   emit-prologue(file, state.unit-other-cback-units);
@@ -187,11 +187,6 @@ define method build-local-heap-file (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
   let heap-stream = state.unit-stream;
   let prefix = state.unit-cback-unit.unit-prefix;
-/*
-  let heap-state = make(<local-heap-file-state>, unit: state.unit-cback-unit,
-			body-stream: heap-stream, // target: state.unit-target,
-			id-prefix: stringify(prefix, "_L"));
-*/
   let (undumped, extra-labels) = build-local-heap(state.unit-cback-unit, 
 						  state.unit-c-file);
   let linker-options = element(state.unit-header, #"linker-options", 
@@ -205,10 +200,6 @@ end method build-local-heap-file;
 define method build-da-global-heap (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
   let heap-stream = state.unit-stream;
-/*
-  let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
-			body-stream: heap-stream); //, target: state.unit-target);
-*/
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 		    state.unit-c-file);
 end method;
@@ -236,7 +227,6 @@ define method build-inits-dot-c (state :: <single-file-mode-state>) => ();
   format(stream, "}\n");
 end method;
 
-/*
 define method build-executable (state :: <single-file-mode-state>) => ();
   let target = state.unit-target;
   let unit-libs = "";
@@ -271,53 +261,52 @@ define method build-executable (state :: <single-file-mode-state>) => ();
     end unless;
   end;
 
-  // We make sure the linker is not given any source files, only
-  // library and object files
-  format(state.unit-makefile, "\n");
-  let inits-dot-o 
-    = concatenate("inits", state.unit-target.object-filename-suffix);
-  let heap-dot-o
-    = concatenate("heap", state.unit-target.object-filename-suffix);
-  output-c-file-rule(state, "inits.c", inits-dot-o);
-  output-c-file-rule(state, "heap.c", heap-dot-o);
+  let cc-flags
+    = getenv("CCFLAGS") 
+    | format-to-string(if (state.unit-profile?)
+                         state.unit-target.default-c-compiler-profile-flags;
+                       elseif (state.unit-debug?)
+                         state.unit-target.default-c-compiler-debug-flags;
+                       else
+                         state.unit-target.default-c-compiler-flags;
+                       end if,
+                       $runtime-include-dir);
+  
+  cc-flags := concatenate(cc-flags, getenv("CCOPTS")|"");
 
-  let dash-cap-ells = "";
-  // If cross-compiling, throw in a bunch of -Ls that will probably help.
-  if (state.unit-no-binaries)
-    for (dir in *data-unit-search-path*)
-      dash-cap-ells := concatenate(dash-cap-ells, " -L", dir);
-    end for;
-    dash-cap-ells
-      := concatenate(" $(LDFLAGS)",
-      		     use-correct-path-separator(dash-cap-ells,
-		     				state.unit-target),
-		     " ");						
-
-  end;
+  let libtool = getenv("LIBTOOL") | state.unit-target.libtool-command;
 
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
-  // Again, make sure inits.o and heap.o come first
-  let objects = format-to-string("%s %s %s %s", inits-dot-o, heap-dot-o, 
-				 state.unit-ar-name, unit-libs);
+  let objects = format-to-string("%s.o %s", state.unit-name, unit-libs);
 
-  // rule to link executable
-  format(state.unit-makefile, "\n%s : %s\n", state.unit-executable, objects);
+  let compile-string
+    = substring-replace(format-to-string(state.unit-target.compile-c-command,
+                                         concatenate(state.unit-name, ".c"),
+                                         concatenate(state.unit-name, ".o")),
+                        "$(CCFLAGS)", cc-flags);
+
+  close(state.unit-stream);
+  state.unit-stream := #f;
+
+  if (system(compile-string) ~== 0)
+    cerror("so what", "gcc failed?");
+  end if;
+
   let link-string
-    = format-to-string(state.unit-target.link-executable-command,
-		       state.unit-executable,
-		       concatenate(objects, dash-cap-ells, dash-small-ells," "),
-		       linker-args);
-  format(state.unit-makefile, "\t%s\n", link-string);
+    = substring-replace(format-to-string(state.unit-target.link-executable-command,
+                                         state.unit-name,
+                                         concatenate(objects, dash-small-ells," "),
+                                         linker-args),
+                        "$(LIBTOOL)", libtool);
 
-  format(state.unit-clean-stream, " %s %s", 
-	 state.unit-ar-name, state.unit-executable);
-  format(state.unit-real-clean-stream, " %s %s", 
-	 state.unit-ar-name, state.unit-executable);
-  format(state.unit-makefile, "\nall-at-end-of-file : %s\n", 
-	 state.unit-executable);
+  if (system(link-string) ~== 0)
+    cerror("so what", "gcc failed?");
+  end if;
+
 end method build-executable;
 
+/*
 
 define method dump-library-summary (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Dumping library summary.\n");
@@ -399,11 +388,11 @@ define method compile-library (state :: <single-file-mode-state>)
     if (~ zero?(*errors*)) give-up(); end if;
     build-library-inits(state);
     build-local-heap-file(state);
-    calculate-type-inclusion-matrix();
+    calculate-type-inclusion-matrix(); // Hmmm... move this to program startup time one day
     build-da-global-heap(state);
     build-inits-dot-c(state);
-/*
     build-executable(state);
+/*
 
     if (state.unit-log-dependencies)
       spew-dependency-log(concatenate(state.unit-mprefix, ".dep"));

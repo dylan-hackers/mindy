@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.27 2001/11/08 00:28:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.28 2001/12/11 01:03:19 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1511,7 +1511,7 @@ end;
 //
 define method spew-heap-prototype
     (name :: <byte-string>, defn :: <ct-value>, state :: <file-state>)
- => ();
+ => did :: <boolean>;
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
     let cclass = defn.ct-value-cclass;
@@ -1524,7 +1524,7 @@ end method;
 
 define method spew-heap-prototype
     (name :: <byte-string>, defn :: <proxy>, state :: <file-state>)
- => ();
+ => did :: <boolean>;
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
     format(stream, "extern heapptr_t %s;\n\n", name);

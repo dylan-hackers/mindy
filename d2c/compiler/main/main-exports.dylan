@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.10 2001/07/30 04:52:38 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.11 2001/12/11 01:03:19 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -56,6 +56,7 @@ define module main
 	      get-time-of-day};
 #endif
   use string-conversions, import: {string-to-integer};
+  use substring-search;
   use character-type;
   use random;
   use parse-arguments;
