@@ -52,8 +52,6 @@ define module c-parser
   use dylan;
   use extensions;
 
-  use source-locations;
-
   use ansi-c;
   use c-lexer;
 
