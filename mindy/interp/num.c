@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.30 1996/05/11 21:33:56 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.31 1996/10/06 12:57:18 nkramer Exp $
 *
 * This file implements numbers.
 *
@@ -2394,8 +2394,10 @@ void init_num_functions(void)
     define_constant("$maximum-integer", MAX_FIXNUM);
     define_constant("$minimum-integer", MIN_FIXNUM);
 
-    define_constant("$pi", make_double(M_PI));
-    define_constant("$e", make_double(M_E));
+    define_constant("$single-pi", make_single((float) M_PI));
+    define_constant("$single-e", make_single((float) M_E));
+    define_constant("$double-pi", make_double(M_PI));
+    define_constant("$double-e", make_double(M_E));
 
     add_transcendental_function(sin);
     add_transcendental_function(cos);
