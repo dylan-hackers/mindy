@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.2 1995/06/06 17:47:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.3 1995/06/06 19:30:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,9 +20,21 @@ define method optimize (component :: <component>, primitive :: <primitive>)
 	let arg-type = arg-types.head;
 	if (arg-type == #"rest")
 	  let arg-type = arg-types.tail.head;
-	  for (dep = dep then dep.dependent-next,
-	       while: dep)
-	    assert-type(component, assign, dep, arg-type);
+	  if (arg-type == #"cluster")
+	    for (dep = dep then dep.dependent-next,
+		 while: dep)
+	      let arg = dep.source-exp;
+	      unless (instance?(arg, <abstract-variable>)
+			& instance?(arg.var-info, <values-cluster-info>))
+		error("%%%%primitive %s expected a values cluster but got "
+			"a regular variable.");
+	      end;
+	    end;
+	  else
+	    for (dep = dep then dep.dependent-next,
+		 while: dep)
+	      assert-type(component, assign, dep, arg-type);
+	    end;
 	  end;
 	elseif (dep == #f)
 	  error("Not enough arguments to %%%%primitive %s", primitive.name);
@@ -237,6 +249,59 @@ define method consumes-cluster? (expr :: <operation>)
     #f;
   end;
 end;
+
+define-primitive-transformer
+  (#"merge-clusters",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     local
+       method repeat (dep :: false-or(<dependency>),
+		      prev :: false-or(<dependency>),
+		      all-fixed? :: <boolean>)
+	 if (dep)
+	   let cluster = dep.source-exp;
+	   let type = cluster.derived-type;
+	   if (fixed-number-of-values?(type))
+	     if (type.min-values == 0)
+	       let next = dep.dependent-next;
+	       if (prev)
+		 prev.dependent-next := next;
+	       else
+		 primitive.depends-on := next;
+	       end;
+	       remove-dependency-from-source(component, dep);
+	       repeat(next, prev, all-fixed?);
+	     else
+	       repeat(dep.dependent-next, dep, all-fixed?);
+	     end;
+	   else
+	     repeat(dep.dependent-next, dep, #f);
+	   end;
+	 elseif (all-fixed?)
+	   let next = #f;
+	   for (dep = primitive.depends-on then next,
+		while: dep)
+	     next := dep.dependent-next;
+	     let cluster = dep.source-exp;
+	     expand-cluster(component, cluster,
+			    cluster.derived-type.min-values);
+	   finally
+	     for (dep = primitive.depends-on then dep.dependent-next,
+		  vars = #() then pair(dep.source-exp, vars),
+		  while: dep)
+	     finally
+	       replace-expression
+		 (component, primitive.dependents,
+		  make-operation(make-builder(component), <primitive>,
+				 reverse!(vars), name: #"values"));
+	     end;
+	   end;
+	 elseif (primitive.depends-on.dependent-next == #f)
+	   replace-expression(component, primitive.dependents,
+			      primitive.depends-on.source-exp);
+	 end;
+       end method repeat;
+     repeat(primitive.depends-on, #f, #t);
+   end method);
 
 
 // Foreign code support primitives
