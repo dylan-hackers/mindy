@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.12 2001/10/15 20:36:16 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.13 2001/10/16 21:59:34 gabor Exp $
 copyright: see below
 
 
@@ -92,7 +92,7 @@ define method optimize-component-internal
 	let init-var = component.initial-variables;
 	component.initial-variables := init-var.next-initial-variable;
 	init-var.next-initial-variable := #f;
-	maybe-convert-to-ssa(component, init-var);
+	maybe-convert-to-ssa(component, init-var, reoptimize);
       end;
       if (optimizer.debug-optimizer?) dump-fer(component) end;
     end;
@@ -163,7 +163,7 @@ end;
 
 // SSA conversion.
 
-define method maybe-convert-to-ssa
+/* define method maybe-convert-to-ssa
     (component :: <component>, var :: <initial-variable>) => ();
   let defns = var.definitions;
   if (defns ~== #() & defns.tail == #())
@@ -208,7 +208,7 @@ define method maybe-convert-to-ssa
       reoptimize(component, assign);
     end;
   end;
-end method maybe-convert-to-ssa;
+end method maybe-convert-to-ssa; */
 
 
 // Optimizations.
