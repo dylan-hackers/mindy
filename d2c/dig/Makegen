@@ -20,6 +20,7 @@ if ($features{'compiled_for_win32'}) {
 } elsif ($features{'compiled_for_solaris'}
 	 || $features{'compiled_for_linux'}
 	 || $features{'compiled_for_beos'}
+	 || $features{'compiled_for_macos'}
 	 || $features{'compiled_for_freebsd'}
 	 || $features{'compiled_for_openbsd'}) {
     # The only non-portable part of dig involves passing Control-C through
