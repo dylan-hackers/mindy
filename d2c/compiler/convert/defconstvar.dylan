@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.18 1995/05/08 17:04:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.19 1995/06/01 14:33:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -179,7 +179,7 @@ define method ct-value (defn :: <constant-definition>)
     if (tlf)
       if (tlf.tlf-finalized?)
 	compiler-warning("%= is circularly defined.", defn);
-	defn.defn-init-value = #f;
+	defn.defn-init-value := #f;
       else
 	finalize-top-level-form(tlf);
       end;
