@@ -1,5 +1,5 @@
 library: standard-io
-unique-id-base: 60500
+unique-id-base: 1700
 unit-prefix: stdio
 
 library.dylan
