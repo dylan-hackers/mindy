@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.3 1995/11/16 03:39:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.4 1995/12/14 00:12:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -76,4 +76,16 @@ end;
 define sealed inline method \- (ptr1 :: <raw-pointer>, ptr2 :: <raw-pointer>)
     => res :: <fixed-integer>;
   %%primitive pointer-- (ptr1, ptr2);
+end;
+
+
+define macro pointer-deref
+    // Should really match exactly two args, but the macro system is broken.
+    { pointer-deref (?args) } => { %%primitive pointer-deref (?args) }
+end;
+
+define macro pointer-deref-setter
+    // Should really match exactly three args, but the macro system is broken.
+    { pointer-deref-setter (?args) }
+      => { %%primitive pointer-deref-setter (?args) }
 end;
