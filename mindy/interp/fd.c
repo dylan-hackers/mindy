@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.23 1995/04/02 14:43:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.24 1995/04/02 15:11:28 wlott Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -852,6 +852,14 @@ void init_fd_functions(void)
     define_constant("EXFULL", make_fixnum(EXFULL)); 
 #endif
     
+    define_constant("$Newlines-Are-CRLF",
+#ifdef WIN32
+		    obj_True
+#else
+		    obj_False
+#endif
+		    );
+
 #if defined(WIN32) && !defined(FAKE_SELECT)
 {
 	WORD wVersionRequested;
