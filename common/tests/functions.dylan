@@ -276,9 +276,6 @@ define common-extensions function-test position ()
               3); 
 end function-test position;
 
-/*
- * Our split seems to have the wrong signature...
- *
 define common-extensions function-test split ()
   check-equal("split on empty string",
               split("", '/'),
@@ -332,7 +329,6 @@ define common-extensions function-test split ()
 	      split("0123456789", '3', start: 2, end: 8),
 	      #["2", "4567"]);
 end function-test split;
-*/
 
 define common-extensions function-test remove-all-keys! ()
   //---*** Do all collections by using dylan-test-suite collection code
