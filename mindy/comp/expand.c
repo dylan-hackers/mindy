@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.17 1994/06/27 16:49:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.18 1994/07/11 20:06:00 dpierce Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -950,8 +950,8 @@ static void expand_defclass_for_parse(struct defclass_constituent *c)
 {
     struct superclass *super;
     struct slot_spec *slot;
-    struct keyword_spec *keyword;
-    struct inherited_spec *inherit;
+    struct initarg_spec *initarg;
+    struct inherited_spec *inherited;
 
     for (super = c->supers; super != NULL; super = super->next)
 	expand_expr(&super->expr);
@@ -960,10 +960,188 @@ static void expand_defclass_for_parse(struct defclass_constituent *c)
 	    expand_expr(&slot->type);
 	expand_plist(slot->plist);
     }
-    for (keyword = c->keywords; keyword != NULL; keyword = keyword->next)
-	expand_plist(keyword->plist);
-    for (inherit = c->inherits; inherit != NULL; inherit = inherit->next)
-	expand_plist(inherit->plist);
+    for (initarg = c->initargs; initarg != NULL; initarg = initarg->next)
+	expand_plist(initarg->plist);
+    for (inherited = c->inheriteds; inherited != NULL;
+	 inherited = inherited->next)
+	expand_plist(inherited->plist);
+}
+
+static void expand_slots(struct body *body,
+			 struct arglist *defclass_args,
+			 struct defclass_constituent *c)
+{
+    struct slot_spec *slot;
+    struct arglist *list_args = make_argument_list();
+    struct expr *expr;
+
+    for (slot = c->slots; slot != NULL; slot = slot->next) {
+	struct arglist *slot_args;
+	boolean default_setter = TRUE;
+	
+	/* Extract the setter name, if there is one */
+	if (slot->plist) {
+	    struct property *prop, **prev;
+	    prev = &slot->plist->head;
+	    while ((prop = *prev) != NULL) {
+		if (prop->keyword == sym_Setter) {
+		    if (prop->expr->kind == expr_LITERAL
+			&& ((struct literal_expr *) (prop->expr))
+			->lit->kind == literal_FALSE) {
+			default_setter = FALSE;
+			*prev = prop->next;
+			free(prop);
+		    }
+		    else if (prop->expr->kind != expr_VARREF) {
+			error(prop->line, "Bogus %s in slot %s",
+			      prop->keyword->name,
+			      slot->name->symbol->name);
+			prev = &prop->next;
+		    }
+		    else {
+			struct varref_expr *v = (void *) prop->expr;
+			slot->setter = v->var;
+			*prev = prop->next;
+			free(prop);
+		    }
+		}
+		else
+		  prev = &prop->next;
+	    }
+	}
+	
+	/* Bind the getter and setter names */
+	slot->getter = slot->name;
+	if (slot->setter == NULL && default_setter) {
+	    slot->setter = dup_id(slot->name);
+	    change_to_setter(slot->setter);
+	}
+	
+	/* Make the call to %define-slot */
+
+	slot_args = make_argument_list();
+	add_argument(slot_args, make_find_var_arg(slot->getter));
+	if (slot->setter)
+	  add_argument(slot_args, make_find_var_arg(slot->setter));
+	else {
+	    expr = make_literal_ref(make_false_literal());
+	    add_argument(slot_args, make_argument(expr));
+	}
+	expr = make_varref(id(sym_DefineSlot));
+	add_expr(body, make_function_call(expr, slot_args));
+	
+	/* Make the call to make-slot */
+
+	slot_args = make_argument_list();
+	
+	/* First argument: the slot name */
+	expr = make_literal_ref(make_symbol_literal(slot->name->symbol));
+	add_argument(slot_args, make_argument(expr));
+	
+	/* Second argument: the allocation. */
+	expr = make_literal_ref(make_integer_literal((int) slot->alloc));
+	add_argument(slot_args, make_argument(expr));
+	
+	/* Third argument: the getter. */
+	add_argument(slot_args, make_argument(make_varref(slot->getter)));
+	
+	/* Fourth argument: the setter */
+	if (slot->setter == NULL)
+	  expr = make_literal_ref(make_false_literal());
+	else
+	  expr = make_varref(slot->setter);
+	add_argument(slot_args, make_argument(expr));
+	
+	/* Fifth argument: the type. */
+	if (slot->type)
+	  add_argument(slot_args, make_argument(slot->type));
+	else {
+	    expr = make_literal_ref(make_false_literal());
+	    add_argument(slot_args, make_argument(expr));
+	}
+	
+	/* Sixth and on: the other properties. */
+	if (slot->plist) {
+	    add_plist_arguments(slot_args, slot->plist);
+	    slot->plist = NULL;
+	}
+	
+	expr = make_varref(id(sym_MakeSlot));
+	expr = make_function_call(expr, slot_args);
+	add_argument(list_args, make_argument(expr));
+    }
+    expr = make_function_call(make_varref(id(sym_List)), list_args);
+    add_argument(defclass_args, make_argument(expr));
+}
+
+static void expand_initargs(struct body *body,
+			    struct arglist *defclass_args,
+			    struct defclass_constituent *c)
+{
+    struct initarg_spec *initarg;
+    struct arglist *list_args = make_argument_list();
+    struct expr *expr;
+
+    for (initarg = c->initargs; initarg != NULL; initarg = initarg->next) {
+	struct arglist *initarg_args = make_argument_list();
+	
+	/* Make the call to make-initarg */
+	
+	/* First argument: the slot name */
+	expr = make_literal_ref(make_symbol_literal(initarg->keyword));
+	add_argument(initarg_args, make_argument(expr));
+	
+	/* Second argument: required */
+	if (initarg->required)
+	    expr = make_literal_ref(make_true_literal());
+	else
+	    expr = make_literal_ref(make_false_literal());
+	add_argument(initarg_args, make_argument(expr));
+
+	/* Other arguments: properties */
+	if (initarg->plist) {
+	    add_plist_arguments(initarg_args, initarg->plist);
+	    initarg->plist = NULL;
+	}
+	
+	expr = make_varref(id(sym_MakeInitarg));
+	expr = make_function_call(expr, initarg_args);
+	add_argument(list_args, make_argument(expr));
+    }
+    expr = make_function_call(make_varref(id(sym_List)), list_args);
+    add_argument(defclass_args, make_argument(expr));
+}
+
+static void expand_inheriteds(struct body *body,
+			      struct arglist *defclass_args,
+			      struct defclass_constituent *c)
+{
+    struct inherited_spec *inherited;
+    struct arglist *list_args = make_argument_list();
+    struct expr *expr;
+
+    for (inherited = c->inheriteds; inherited != NULL;
+	 inherited = inherited->next) {
+	struct arglist *inherited_args = make_argument_list();
+	
+	/* Make the call to make-inherited */
+	
+	/* First argument: the slot name */
+	expr = make_literal_ref(make_symbol_literal(inherited->name->symbol));
+	add_argument(inherited_args, make_argument(expr));
+	
+	/* Other arguments: properties */
+	if (inherited->plist) {
+	    add_plist_arguments(inherited_args, inherited->plist);
+	    inherited->plist = NULL;
+	}
+	
+	expr = make_varref(id(sym_MakeInherited));
+	expr = make_function_call(expr, inherited_args);
+	add_argument(list_args, make_argument(expr));
+    }
+    expr = make_function_call(make_varref(id(sym_List)), list_args);
+    add_argument(defclass_args, make_argument(expr));
 }
 
 static void expand_defclass_for_compile(struct defclass_constituent *c)
@@ -974,155 +1152,43 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
     strcpy(debug_name, "Define Class ");
     strcat(debug_name, name);
 
+    /* Phase I: Create the class with its superclasses. */
+
     {
 	struct arglist *list_args = make_argument_list();
-	struct arglist *init_args = make_argument_list();
+	struct arglist *defclass_args = make_argument_list();
 	struct body *body = make_body();
 	struct superclass *super;
 	struct expr *expr;
 	
-	add_argument(init_args, make_argument(make_varref(c->name)));
+	add_argument(defclass_args, make_argument(make_varref(c->name)));
 	for (super = c->supers; super != NULL; super = super->next)
 	    add_argument(list_args, make_argument(super->expr));
 	expr = make_function_call(make_varref(id(sym_List)), list_args);
-	add_argument(init_args, make_argument(expr));
+	add_argument(defclass_args, make_argument(expr));
 
 	expr = make_varref(id(sym_DefineClass1));
-	add_expr(body, make_function_call(expr, init_args));
+	add_expr(body, make_function_call(expr, defclass_args));
 	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
 
 	c->tlf1 = make_top_level_method(debug_name, body);
     }
 
+    /* Phase II: Create the slots, init args, and inherited slots. */
+
     {
-	struct arglist *list_args = make_argument_list();
-	struct arglist *init_args = make_argument_list();
+	struct arglist *defclass_args = make_argument_list();
 	struct body *body = make_body();
-	struct symbol *getter = sym_Getter;
-	struct symbol *setter = sym_Setter;
-	struct symbol *make_slot = sym_MakeSlot;
-	struct symbol *defslot = sym_DefineSlot;
-	struct slot_spec *slot;
 	struct expr *expr;
 	
-	add_argument(init_args, make_argument(make_varref(dup_id(c->name))));
+	add_argument(defclass_args, make_argument(make_varref(dup_id(c->name))));
 
-	for (slot = c->slots; slot != NULL; slot = slot->next) {
-	    struct arglist *slot_args;
-	    boolean default_setter = (slot->name != NULL);
-
-	    /* Extract the getter and setter. */
-	    if (slot->plist) {
-		struct property *prop, **prev;
-		prev = &slot->plist->head;
-		while ((prop = *prev) != NULL) {
-		    if (prop->keyword == getter || prop->keyword == setter) {
-			if (prop->expr->kind == expr_LITERAL
-			      && ((struct literal_expr *)(prop->expr))
-			             ->lit->kind
-			          == literal_FALSE
-			      && prop->keyword == setter) {
-			    default_setter = FALSE;
-			    *prev = prop->next;
-			    free(prop);
-			}
-			else if (prop->expr->kind != expr_VARREF) {
-			    if (slot->name)
-				error(prop->line, "Bogus %s in slot %s",
-				      prop->keyword->name,
-				      slot->name->symbol->name);
-			    else
-				error(prop->line, "Bogus %s in anonymous slot",
-				      prop->keyword->name);
-			    prev = &prop->next;
-			}
-			else {
-			    struct varref_expr *v = (void *)prop->expr;
-			    if (prop->keyword == getter)
-				slot->getter = v->var;
-			    else
-				slot->setter = v->var;
-			    *prev = prop->next;
-			    free(prop);
-			}
-		    }
-		    else
-			prev = &prop->next;
-		}
-	    }
-
-	    /* Default the getter and setter. */
-	    if (slot->getter == NULL)
-		if (slot->name == NULL)
-		    error(slot->line,
-			  "Must supply either the getter or the slot name");
-		else
-		    slot->getter = slot->name;
-	    if (slot->setter == NULL && default_setter) {
-		slot->setter = dup_id(slot->name);
-		change_to_setter(slot->setter);
-	    }
-
-	    /* Make the call to %define-slot */
-	    slot_args = make_argument_list();
-	    add_argument(slot_args, make_find_var_arg(slot->getter));
-	    if (slot->setter)
-		add_argument(slot_args, make_find_var_arg(slot->setter));
-	    else {
-		expr = make_literal_ref(make_false_literal());
-		add_argument(slot_args, make_argument(expr));
-	    }
-	    expr = make_varref(id(defslot));
-	    add_expr(body, make_function_call(expr, slot_args));
-
-	    /* Make the call to make-slot */
-	    slot_args = make_argument_list();
-	    
-	    /* First argument: the slot name */
-	    if (slot->name)
-		expr=make_literal_ref(make_symbol_literal(slot->name->symbol));
-	    else
-		expr = make_literal_ref(make_false_literal());
-	    add_argument(slot_args, make_argument(expr));
-
-	    /* Second argument: the allocation. */
-	    expr = make_literal_ref(make_integer_literal((int)slot->alloc));
-	    add_argument(slot_args, make_argument(expr));
-
-	    /* Third argument: the getter. */
-	    add_argument(slot_args, make_argument(make_varref(slot->getter)));
-
-	    /* Fourth argument: the setter */
-	    if (slot->setter == NULL)
-		expr = make_literal_ref(make_false_literal());
-	    else
-		expr = make_varref(slot->setter);
-	    add_argument(slot_args, make_argument(expr));
-
-	    /* Fifth argument: the type. */
-	    if (slot->type)
-		add_argument(slot_args, make_argument(slot->type));
-	    else {
-		expr = make_literal_ref(make_false_literal());
-		add_argument(slot_args, make_argument(expr));
-	    }
-
-	    /* Sixth and on: the other properties. */
-	    if (slot->plist) {
-		add_plist_arguments(slot_args, slot->plist);
-		slot->plist = NULL;
-	    }
-
-	    expr = make_varref(id(make_slot));
-	    expr = make_function_call(expr, slot_args);
-	    add_argument(list_args, make_argument(expr));
-	}
-
-	expr = make_function_call(make_varref(id(sym_List)), list_args);
-	add_argument(init_args, make_argument(expr));
+	expand_slots(body, defclass_args, c);
+	expand_initargs(body, defclass_args, c);
+	expand_inheriteds(body, defclass_args, c);
 
 	expr = make_varref(id(sym_DefineClass2));
-	add_expr(body, make_function_call(expr, init_args));
+	add_expr(body, make_function_call(expr, defclass_args));
 	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
 
 	c->tlf2 = make_top_level_method(debug_name, body);
