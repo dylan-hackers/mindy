@@ -1,6 +1,6 @@
 module: File-system
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.4 1996/09/05 10:29:23 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.5 1997/02/04 14:39:00 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -68,7 +68,7 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 
 define constant <filename> = <byte-string>;
 
-define constant $search-path-separator = #if (compiled-for-x86-win32)
+define constant $search-path-separator = #if (compiled-for-win32)
                                             ';';
                                          #else 
                                             ':';
@@ -88,7 +88,7 @@ end function search-path-separator?;
 define constant $a-path-separator = '/';
 
 define function path-separator? (c :: <character>) => answer :: <boolean>;
-  #if (compiled-for-x86-win32)
+  #if (compiled-for-win32)
      (c == '/') | (c == '\\') | (c == ':');
   #else
      c == '/';
