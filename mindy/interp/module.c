@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.4 1994/04/10 16:24:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.5 1994/04/22 17:29:34 wlott Exp $
 *
 * This file does whatever.
 *
@@ -520,6 +520,8 @@ struct module *find_module(struct library *library, obj_t name,
 		error("Unknown module ~S in library ~S",
 		      name, library->name);
 	}
+	else
+	    error("Unknown module ~S in library ~S", name, library->name);
     }
 
     module = entry->datum;
