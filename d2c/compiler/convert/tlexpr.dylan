@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.10 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.11 1996/04/06 07:16:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,7 +20,7 @@ end;
 // Puke if any local declarations appear at top level.
 //
 define method process-top-level-form (form :: <local-declaration-parse>) => ();
-  compiler-error-location
+  compiler-fatal-error-location
     (form, "Local declarations cannot appear directly at top level.");
 end;
 

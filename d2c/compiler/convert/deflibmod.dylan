@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.14 1996/04/02 02:51:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.15 1996/04/06 07:16:54 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -267,7 +267,7 @@ define method extract-prefix (frag :: <token-fragment>)
     let str = token.token-literal.literal-value;
     ~str.empty? & str;
   else
-    compiler-error-location
+    compiler-fatal-error-location
       (token, "Invalid prefix: %s.  Must be a string.",
        token);
   end if;

@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.4 1996/03/27 23:59:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/support.dylan,v 1.5 1996/04/06 07:17:35 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -495,7 +495,7 @@ define method make-statement-or-function-rule
     make(<function-rule>, name: name, pattern: new-pattern.pattern-guts,
 	 template: rhs);
   else
-    compiler-error-location(name, "Invalid rule syntax.");
+    compiler-fatal-error-location(name, "Invalid rule syntax.");
   end if;
 end method make-statement-or-function-rule;
 
@@ -707,7 +707,7 @@ define method parse
 	= truncate/(action, ash(1, $action-bits));
       select (action-kind)
 	$error-action =>
-	  compiler-error("Parse error at or before %s", lookahead);
+	  compiler-fatal-error("Parse error at or before %s", lookahead);
 
 	$accept-action =>
 	  if (debug?)

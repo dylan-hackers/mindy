@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.15 1996/03/20 19:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.16 1996/04/06 07:17:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1012,7 +1012,8 @@ end method active?;
 
 
 define method parse-error (token :: <token>) => ();
-  compiler-error("syntax error in feature condition at or before %=", token);
+  compiler-fatal-error
+    ("syntax error in feature condition at or before %=", token);
 end method parse-error;
 
 
@@ -1364,9 +1365,9 @@ define method get-token (lexer :: <lexer>)
 	  
 	$feature-elseif-token =>
 	  if (lexer.conditional-state == #f)
-	    compiler-error("#elseif with no matching #if");
+	    compiler-fatal-error("#elseif with no matching #if");
 	  elseif (lexer.conditional-state.seen-else?)
-	    compiler-error("#elseif after #else in one #if");
+	    compiler-fatal-error("#elseif after #else in one #if");
 	  elseif (parse-conditional(lexer))
 	    lexer.conditional-state.active?
 	      := lexer.conditional-state.do-else?;
@@ -1377,9 +1378,9 @@ define method get-token (lexer :: <lexer>)
 
 	$feature-else-token =>
 	  if (lexer.conditional-state == #f)
-	    compiler-error("#else with no matching #if");
+	    compiler-fatal-error("#else with no matching #if");
 	  elseif (lexer.conditional-state.seen-else?)
-	    compiler-error("#else after #else in one #if");
+	    compiler-fatal-error("#else after #else in one #if");
 	  else
 	    lexer.conditional-state.seen-else? := #t;
 	    lexer.conditional-state.active?
@@ -1388,7 +1389,7 @@ define method get-token (lexer :: <lexer>)
 
 	$feature-end-token =>
 	  if (lexer.conditional-state == #f)
-	    compiler-error("#end with no matching #if");
+	    compiler-fatal-error("#end with no matching #if");
 	  else
 	    lexer.conditional-state := lexer.conditional-state.old-state;
 	  end if;

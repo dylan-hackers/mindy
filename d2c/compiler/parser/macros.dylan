@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.17 1996/03/27 23:59:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.18 1996/04/06 07:17:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -72,7 +72,7 @@ define method check-syntax-table-additions
   let (real-name, category) = real-name-and-category(name, defn);
   if (real-name)
     unless (category-merge-okay?(table, real-name, category))
-      compiler-error("Inconsistent syntax for %s", name);
+      compiler-fatal-error("Inconsistent syntax for %s", name);
     end unless;
   end if;
 end method check-syntax-table-additions;
@@ -174,7 +174,7 @@ define method make
 
   for (rule in rules)
     unless (rule.object-class == first-rule.object-class)
-      compiler-error-location(defmacro, "Inconsistent rule styles");
+      compiler-fatal-error-location(defmacro, "Inconsistent rule styles");
     end unless;
   end for;
 
@@ -217,8 +217,8 @@ end method make;
 define method fix-define-rules (defmacro :: <define-macro-parse>) => ();
   let name = sans-definer(defmacro.defmacro-name.token-symbol);
   unless (name)
-    compiler-error("Name of define macro doesn't end with -definer: %s",
-		   defmacro.defmacro-name);
+    compiler-fatal-error("Name of define macro doesn't end with -definer: %s",
+			 defmacro.defmacro-name);
   end unless;
   for (rule in defmacro.defmacro-main-rule-set.rule-set-rules)
     let (modifiers-pattern, name, remaining-pattern)
@@ -249,7 +249,7 @@ define method trim-modifiers-pattern
     (pattern :: <pattern>, name :: <symbol>)
     => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
 	remaining-pattern :: <pattern>);
-  compiler-error("Can't find the macro name (%s) in the rule.", name);
+  compiler-fatal-error("Can't find the macro name (%s) in the rule.", name);
 end method trim-modifiers-pattern;
 
 // trim-modifiers-pattern{<semicolon-pattern>}
@@ -350,7 +350,7 @@ define method trim-modifiers-pattern
     //
     // If the left is neither a name nor a pattern-varible, then there is
     // something wrong with the macro definition.
-    compiler-error("Can't find the macro name (%s) in the rule.", name);
+    compiler-fatal-error("Can't find the macro name (%s) in the rule.", name);
   end if;
 end method trim-modifiers-pattern;
 
@@ -370,7 +370,7 @@ define method trim-modifiers-pattern
 	   pattern.pattern-name,
 	   make(<empty-pattern>));
   else
-    compiler-error("Can't find the macro name (%s) in the rule.", name);
+    compiler-fatal-error("Can't find the macro name (%s) in the rule.", name);
   end if;
 end method trim-modifiers-pattern;
 
@@ -991,7 +991,7 @@ define method find-binding
 	return(binding);
       end if;
     end for;
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name, "Unbound pattern variable: %s", name);
   end block;
 end method find-binding;
@@ -1595,7 +1595,7 @@ define method macro-expand-aux (form :: <macro-call-parse>)
 	return(generator.generator-fragment);
       end unless;
     end for;
-    compiler-error-location
+    compiler-fatal-error-location
       (form, "Syntax error in %s.  None of the main rules matched.", form);
   end block;
 end method macro-expand-aux;
@@ -2265,12 +2265,12 @@ define method extract-constrained-fragment
 		    source-location-after(fragment.source-location)));
 
     #f =>
-      compiler-error-location
+      compiler-fatal-error-location
 	(patvar, "Pattern variable without a constraint: %s",
 	 patvar.patvar-name | "...");
 
     otherwise =>
-      compiler-error-location
+      compiler-fatal-error-location
 	(patvar, "Unknown constraint on %s: %s",
 	 patvar.patvar-name | "...",
 	 patvar.patvar-constraint);
@@ -2462,7 +2462,7 @@ define method find-atomic-value
   let binding = find-binding(bindings, varref, name, this-rule-set);
   let var = binding.pattern-binding-variable;
   if (instance?(var, <pattern-keyword>) & var.patkey-all?)
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name,
        "%s was bound using ?? so must be referenced with ??, not ?",
        name);
@@ -2499,7 +2499,7 @@ define method append-element!
      prev-was-separator? :: <boolean>)
     => ends-in-separator? :: <boolean>;
   unless (this-rule-set)
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name, "Can't use ... in the main rule set.");
   end unless;
   generate-new-section(generator);
@@ -2527,7 +2527,7 @@ define method append-element!
   let binding = find-binding(bindings, varref, name, this-rule-set);
   let var = binding.pattern-binding-variable;
   unless (instance?(var, <pattern-keyword>) & var.patkey-all?)
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name,
        "%s was bound using ? so must be referenced with ?, not ??",
        name);
@@ -2577,7 +2577,7 @@ define method append-element!
   expand-value(generator, value, aux-rule-set);
   let fragment = finish-sub-fragment(generator);
   unless (instance?(fragment, <token-fragment>))
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name,
        "Pattern variable %s is not bound to a single NAME token.", 
        name);
@@ -2585,7 +2585,7 @@ define method append-element!
   let token = fragment.fragment-token;
   unless (token.token-kind >= $define-token
 	    & token.token-kind <= $quoted-name-token)
-    compiler-error-location
+    compiler-fatal-error-location
       (varref.patvarref-name,
        "Pattern variable %s is not bound to a single NAME token.", 
        name);
@@ -2654,7 +2654,7 @@ define method expand-value
       end unless;
     end for;
     let call = generator.generator-call;
-    compiler-error-location
+    compiler-fatal-error-location
       (call,
        "Syntax error in %s.  None of the auxiliary rules for %s matched.",
        call, aux-rule-set.rule-set-name);
@@ -2806,7 +2806,7 @@ define method expand-template
   let var = find-variable(id-name(template.template-name));
   let expander = var & var.variable-fragment-expander;
   unless (expander)
-    compiler-error-location
+    compiler-fatal-error-location
       (template.template-name, "Unknown procedural template expander: %s",
        template.template-name.token-symbol);
   end unless;

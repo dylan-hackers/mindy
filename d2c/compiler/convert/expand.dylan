@@ -1,5 +1,5 @@
 module: expanders
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/expand.dylan,v 1.2 1996/03/28 00:07:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/expand.dylan,v 1.3 1996/04/06 07:16:54 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -279,7 +279,7 @@ define method expand-assignment
     (place :: <funcall-parse>, value :: <expression-parse>)
     => res :: <expression-parse>;
   unless (instance?(place.funcall-function, <varref-parse>))
-    compiler-error-location(place, "invalid place for assignment");
+    compiler-fatal-error-location(place, "invalid place for assignment");
   end;
   apply(make-setter-call, place.funcall-function.varref-id, value,
 	map(make-parsed-fragment, place.funcall-arguments));
@@ -306,7 +306,7 @@ end method expand-assignment;
 define method expand-assignment
     (place :: <expression-parse>, value :: <expression-parse>)
     => res :: <expression-parse>;
-  compiler-error-location(place, "invalid place for assignment");
+  compiler-fatal-error-location(place, "invalid place for assignment");
 end;
 
 define method make-setter-call
