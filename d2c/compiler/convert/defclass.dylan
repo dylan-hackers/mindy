@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.12 2001/02/08 22:39:29 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.13 2001/02/08 22:49:05 andreas Exp $
 copyright: see below
 
 
@@ -2136,92 +2136,89 @@ define method build-maker-function-body
 		 make-literal-constant(init-builder, as(<ct-value>, #f)));
 	    end if;
 	  end if;
-      <each-subclass-slot-info> =>
-	// ### Add stuff to the derived-evaluations function to init the
-	// slot.  If the slot is keyword-initializable, add stuff to the
-	// maker to check for that keyword and change the each-subclass
-	// slot.
-	error("Can't deal with each-subclass slots yet.");
-      <class-slot-info> =>
-	// ### If the slot is keyword-initializable, add stuff to the maker
-	// to check for that keyword and change the class slot.
-
-// TODO:
-//	pointed slots	¥¥¥
-//	major reuse of case-legs here!
-//	od-loader needed?
-
+	<each-subclass-slot-info> =>
+	  // ### Add stuff to the derived-evaluations function to init the
+	  // slot.  If the slot is keyword-initializable, add stuff to the
+	  // maker to check for that keyword and change the each-subclass
+	  // slot.
+	  error("Can't deal with each-subclass slots yet.");
+	<class-slot-info> =>
+	  // ### If the slot is keyword-initializable, add stuff to the maker
+	  // to check for that keyword and change the class slot.
+	  
+	  // TODO:
+	  //	pointed slots	¥¥¥
+	  //	major reuse of case-legs here!
+	  //	od-loader needed?
+	  
 	  local
 	    method build-slot-init
 		(slot :: <class-slot-info>, leaf :: <leaf>, inited?-leaf :: <leaf>) => ();
-		if (immediate-rep?) //¥¥¥???
-		  add!(make-immediate-args, leaf);
+	      if (immediate-rep?) //¥¥¥???
+		add!(make-immediate-args, leaf);
+	      else
+		let associated = slot.associated-meta-slot;
+		let metaclass = associated.slot-introduced-by;
+		
+		let posn
+		  = get-direct-position(associated.slot-positions, metaclass);
+		unless (posn)
+		  error("Couldn't find the position for %s",
+			slot-name);
+		end unless;
+		if (posn == #"data-word")
+		  error("Class slot allocated in data word for %s?",
+			slot-name);
 		else
-		  let associated = slot.associated-meta-slot;
-		  let metaclass = associated.slot-introduced-by;
+		  let posn-leaf
+		    = make-literal-constant(init-builder,
+					    as(<ct-value>, posn));
 		  
-		  let posn
-		    = get-direct-position(associated.slot-positions, metaclass);
-		  unless (posn)
-		    error("Couldn't find the position for %s",
-			  slot-name);
-		  end unless;
-		  if (posn == #"data-word")
-		    error("Class slot allocated in data word for %s?",
-			  slot-name);
-		  else
-		    let posn-leaf
-		      = make-literal-constant(init-builder,
-					      as(<ct-value>, posn));
+		  let slot-initialized?-posn-leaf :: false-or(<leaf>)
+		    = associated.slot-initialized?-slot
+		    & make-literal-constant
+		    (init-builder,
+		     as(<ct-value>, posn));
+		  
+		  
+		  
+		  
+		  // reuse¥¥¥done
+		  //  let slot-home = make-local-var(init-builder, symcat(slot-name, #"-home"), specifier-type(#"<class>"));
+		  //
+		  //  build-assignment
+		  //    (init-builder, policy, source, slot-home,
+		  //	   make-literal-constant(init-builder, cclass));
+		  // this area!
+		  
+		  //	let slot-home
+		  //	  = build-slot-home(init-builder, slot-name, cclass, policy, source);
 
-		    let slot-initialized?-posn-leaf :: false-or(<leaf>)
-		      = associated.slot-initialized?-slot
-			& make-literal-constant
-			    (init-builder,
-			     as(<ct-value>, posn));
+		  let slot-home
+		    = build-slot-home(slot-name,
+				      make-literal-constant(init-builder, cclass),
+				      init-builder, policy, source);
 
-
-
-
-// reuse¥¥¥done
-//  let slot-home = make-local-var(init-builder, symcat(slot-name, #"-home"), specifier-type(#"<class>"));
-//
-//  build-assignment
-//    (init-builder, policy, source, slot-home,
-//	   make-literal-constant(init-builder, cclass));
-// this area!
-
-//	let slot-home
-//	  = build-slot-home(init-builder, slot-name, cclass, policy, source);
-
-  let slot-home
-    = build-slot-home(slot-name,
-		      make-literal-constant(init-builder, cclass),
-		      init-builder, policy, source);
-
-
-
-
-		      build-assignment
-			(init-builder, policy, source, #(),
-			 make-operation
-			   (init-builder, <heap-slot-set>,
-			    list(leaf, slot-home, posn-leaf),
-			    slot-info: associated));
-		    if (slot-initialized?-posn-leaf)
-		      build-assignment
-			(init-builder, policy, source, #(),
-			 make-operation
-			   (init-builder, <heap-slot-set>,
-			    list(inited?-leaf, slot-home, slot-initialized?-posn-leaf),
-			    slot-info: associated.slot-initialized?-slot));
-		    end if;
+		  build-assignment
+		    (init-builder, policy, source, #(),
+		     make-operation
+		       (init-builder, <heap-slot-set>,
+			list(leaf, slot-home, posn-leaf),
+			slot-info: associated));
+		  if (slot-initialized?-posn-leaf)
+		    build-assignment
+		      (init-builder, policy, source, #(),
+		       make-operation
+			 (init-builder, <heap-slot-set>,
+			  list(inited?-leaf, slot-home, slot-initialized?-posn-leaf),
+			  slot-info: associated.slot-initialized?-slot));
 		  end if;
 		end if;
+	      end if;
 	    end method build-slot-init;
 
-	let key = slot.slot-init-keyword;
-	if (key)
+	  let key = slot.slot-init-keyword;
+	  if (key)
 	    let default = ~(init-value == #t) & init-value;
 	    let key-info = add-key-info!(key, key-infos, slot, type, override, default);
 	    let init-value-var
@@ -2235,11 +2232,11 @@ define method build-maker-function-body
 			      make-literal-constant
 				(init-builder,
 				 as(<ct-value>, #t)));
-/* typeerr!	¥¥¥      
-	      build-slot-init(slot.slot-initialized?-slot,
-			      make-literal-constant(init-builder,
-						    as(<ct-value>, #t)));
-*/
+	      /* typeerr!	¥¥¥      
+		build-slot-init(slot.slot-initialized?-slot,
+				make-literal-constant(init-builder,
+						      as(<ct-value>, #t)));
+		*/
 	    else
 	      let arg = make-local-var(maker-builder, key, type);
 	      add!(maker-args, arg);
