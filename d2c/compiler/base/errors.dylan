@@ -1,5 +1,5 @@
 module: errors
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.1 1996/02/08 19:18:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/errors.dylan,v 1.2 1996/02/09 18:05:24 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -83,16 +83,26 @@ define method find-source-loc (args :: <sequence>)
 end method;
 
 
+// Call compiler-{warning,error}-location with any location we can extract from
+// the args.
+// 
 define constant compiler-warning = method (string, #rest args) => ();
-  apply(compiler-warning-location, string, find-source-loc(args), args);
+  apply(compiler-warning-location, find-source-loc(args), string, args);
+end method;
+//
+define constant compiler-error = method (string, #rest args) => ();
+  apply(compiler-error-location, find-source-loc(args), string, args);
 end method;
 
+
+// Signal compiler warning with explicit source location (or #F if unknown.)
+//
 define constant compiler-warning-location = method
-    (string, loc :: false-or(<source-location-mixin>), #rest args) => ();
+    (loc :: false-or(<source-location-mixin>), string, #rest args) => ();
   if (loc & instance?(loc.source-location, <file-source-location>))
     let fs = loc.source-location;
     apply(pretty-format, *debug-output*,
-	  concatenate("%S:%=: Warning: ", string, "\n"),
+	  concatenate("%S:%=:Warning:\n  ", string, "\n"),
 	  fs.source-file.file-name, fs.start-line,
 	  args);
   else
@@ -103,18 +113,16 @@ define constant compiler-warning-location = method
   *warnings* := *warnings* + 1;
 end method;
 
-define constant compiler-error = method (string, #rest args) => ();
-  apply(compiler-error-location, string, find-source-loc(args), args);
-end method;
 
-
+// Signal compiler error with explicit source location (or #F if unknown.)
+//
 define constant compiler-error-location = method 
-    (string, loc :: false-or(<source-location-mixin>), #rest args)
+    (loc :: false-or(<source-location-mixin>), string, #rest args)
  => ();
   if (loc & instance?(loc.source-location, <file-source-location>))
     let fs = loc.source-location;
     apply(error,
-	  concatenate("%S:%=: Error: ", string, "\n"),
+    concatenate("%S:%=:Error:\n  ", string, "\n"),
 	  fs.source-file.file-name, fs.start-line,
 	  args);
   else
@@ -122,4 +130,22 @@ define constant compiler-error-location = method
 	  concatenate("Error: ", string, "\n"),
 	  args);
   end if;
+end method;
+
+
+// Extract-source:
+//
+// Utility used to extract a source location from some thing.
+// For now, and maybe always, we just take the source from the token.
+//
+
+define /* exported */ generic extract-source (wot) => res :: <source-location>;
+
+define method extract-source (wot) => res :: <unknown-source-location>;
+  make(<unknown-source-location>);
+end method;
+
+define method extract-source (wot :: <source-location-mixin>)
+ => res :: <source-location>;
+  wot.source-location;
 end method;
