@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.11 1994/06/27 16:49:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.12 1994/07/11 20:05:03 dpierce Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
@@ -628,6 +628,8 @@ static void
 				"constant", "virtual"};
     struct superclass *super;
     struct slot_spec *slot;
+    struct initarg_spec *initarg;
+    struct inherited_spec *inherited;
 
     printf("%sdefine class\n", indent(depth));
     printf("%sname: %s\n", indent(depth+1), c->name->symbol->name);
@@ -651,6 +653,21 @@ static void
 		print_expr(slot->type, depth+3);
 	    }
 	    print_plist(slot->plist, depth+2);
+	}
+        printf("%sinitialization arguments:\n", indent(depth+1));
+        for (initarg = c->initargs; initarg != NULL;
+	     initarg = initarg->next) {
+            printf("%s%s%s initarg\n", indent(depth+2),
+                   initarg->keyword->name,
+                   initarg->required ? " required " : "");
+            print_plist(initarg->plist, depth+2);
+        }
+	printf("%sinherited slots:\n", indent(depth+1));
+	for (inherited = c->inheriteds; inherited != NULL;
+	     inherited = inherited->next) {
+	    printf("%s%s inherited slot\n", indent(depth+2),
+		   inherited->name->symbol->name);
+	    print_plist(inherited->plist, depth+2);
 	}
     }
     printf("%send define class\n", indent(depth));
