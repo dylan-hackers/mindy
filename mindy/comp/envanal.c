@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.1 1994/03/24 21:49:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.2 1994/03/25 05:03:56 wlott Exp $
 *
 * This file does whatever.
 *
@@ -350,11 +350,9 @@ static void analize_let_constituent(struct let_constituent *let,
     }
     let->required = req;
 
-    if (params->rest_param) {
+    if (params->rest_param)
 	bindings = make_binding(params->rest_param, NULL, FALSE, offset++,
 				home, bindings);
-	let->restp = TRUE;
-    }
 
     let->lexenv = make_lexenv(home, bindings, offset);
 

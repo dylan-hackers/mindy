@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.1 1994/03/24 21:49:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.2 1994/03/25 05:03:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -113,7 +113,6 @@ struct let_constituent {
     int offset;
     struct bindings *bindings;
     int required;
-    boolean restp;
     struct lexenv *lexenv;
     struct binding *inside;
 };
@@ -269,7 +268,6 @@ struct bindings {
 struct param_list {
     struct param *required_params;
     struct id *next_param;
-    boolean restp;
     struct id *rest_param;
     boolean allow_keys;
     struct keyword_param *keyword_params;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.2 1994/03/25 02:35:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.3 1994/03/25 05:03:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -697,7 +697,8 @@ static void compile_let_constituent(struct let_constituent *c,
     struct bindings *bindings = c->bindings;
     struct binding *binding = c->lexenv->bindings;
 
-    compile_expr(bindings->expr, component, make_want(c->required, c->restp));
+    compile_expr(bindings->expr, component,
+		 make_want(c->required, bindings->params->rest_param));
     while (binding != c->inside) {
 	if (binding->set && binding->closed_over)
 	    emit_op(component, op_MAKE_VALUE_CELL);

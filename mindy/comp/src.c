@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.1 1994/03/24 21:48:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.2 1994/03/25 05:03:57 wlott Exp $
 *
 * This file does whatever.
 *
@@ -178,7 +178,6 @@ struct constituent *make_let(struct bindings *bindings)
     res->offset = 0;
     res->bindings = bindings;
     res->required = 0;
-    res->restp = FALSE;
     res->lexenv = NULL;
     res->inside = NULL;
 
@@ -315,7 +314,6 @@ struct param_list *make_param_list(void)
 
     res->required_params = NULL;
     res->next_param = NULL;
-    res->restp = FALSE;
     res->rest_param = NULL;
     res->allow_keys = FALSE;
     res->keyword_params = NULL;
@@ -341,7 +339,6 @@ struct param_list *set_next_param(struct param_list *list, struct id *var)
 
 struct param_list *set_rest_param(struct param_list *list, struct id *var)
 {
-    list->restp = TRUE;
     list->rest_param = var;
 
     return list;
