@@ -14,6 +14,7 @@ define library common-dylan
 	      simple-debugging,
 	      simple-io,
 	      byte-vector,
+		  transcendentals,
               functional-extensions };
 
   use transcendental,

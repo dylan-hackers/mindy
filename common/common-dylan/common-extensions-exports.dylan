@@ -10,11 +10,18 @@ define library common-extensions
   use format-out;
 
   // Only import transcendentals if we have them.
-#if (~compiled-for-solaris)
+//#if (~compiled-for-solaris)
   use transcendental,
-     import: { transcendental => transcendentals },
+     import: { transcendental => transcendentals},
      export: all;
-#endif
+//#endif
+
+  use random,
+     import: all,
+     export: all;
+  use regular-expressions,
+     import: all,
+     export: all;
 
   export
     common-extensions,
@@ -22,7 +29,7 @@ define library common-extensions
     simple-io,
     simple-random,
     simple-profiling,
-    byte-vectors,
+    byte-vector,
     functional-extensions;
 end library;
 
@@ -38,6 +45,7 @@ end module c-support;
 
 define module common-extensions
   use dylan;
+  use system, import: { copy-bytes }, export: { copy-bytes };
   use extensions,
     exclude: { assert },
     rename: {$not-supplied => $unsupplied,
@@ -64,6 +72,12 @@ define module common-extensions
   use format, export: all;
   use streams, import: { new-line, force-output };
   use standard-io;
+  use random,
+     export: all;
+  use regular-expressions,
+     export: all;
+  use functional-extensions,
+     export: all;
 
   export
     /* Numerics */
