@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.2 1998/11/10 16:35:24 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.3 1998/12/02 12:36:25 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -841,18 +841,22 @@ sub emit_cc_file_rule {
 # Emits the rule to turn a Melange input (.intr) file into a .dylan
 # file.
 #
+# stopgag measure, FIXME:
+# this is disabled until melange can actually cope with all the header
+# files, and the build order is fixed so melange gets built before
+# the libraries needing it.
 sub emit_melange_rule {
-    local ($basefile, @headers) = @_;
-    do maybe_emit_d2c_defines();
+#    local ($basefile, @headers) = @_;
+#    do maybe_emit_d2c_defines();
 
-    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
-    foreach $header (@headers) {
-	print " \$(SRCDIR)/$header";
-    }
-    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
-    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
-    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
-    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
+#    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+#    foreach $header (@headers) {
+#	print " \$(SRCDIR)/$header";
+#    }
+#    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
+#    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
+#    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
+#    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
 }
 
 # emit_parsergen_rule($base_file_name) -- exported
