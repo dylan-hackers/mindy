@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.5 1996/04/15 18:17:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.6 1996/04/15 18:29:31 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -660,6 +660,13 @@ define method compare-methods
 	    // kind of ordering this position would impose.
 	    unknown? := #t;
 	  end if;
+	elseif (instance?(spec1, <subclass-ctype>)
+		  & instance?(spec2, <subclass-ctype>))
+	  // If both specializers are subclass-ctypes, then the ordering
+	  // depends on their relative positions in the cpl of the actual
+	  // argument, so knowning the argument class isn't good enough.  So
+	  // we just have to give the answer up as unknown.
+	  unknown? := #t;
 	elseif (instance?(spec1, <unknown-ctype>)
 		  | instance?(spec2, <unknown-ctype>))
 	  // If either specializer is unknown, then we can't know what kind of
