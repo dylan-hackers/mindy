@@ -273,6 +273,15 @@ int MacRead(int fd, char *buf, int count)
 	IOParam			param;
 	OSErr			theError;
 	int				readCount;
+	
+	if( conversionBuffer == NULL )
+	{
+		conversionBuffer = NewPtr( WRITE_BUFFER_SIZE );
+		if( conversionBuffer == NULL || MemError() )
+		{
+			return -1;
+		}
+	}
 
 	if ((fd == 0)) 												// If it's 0/stdin
 	{
@@ -318,6 +327,15 @@ int MacWrite(int fd, const char *buf, int count)
 	long			blockSize;
 	short			vRef;
 
+	if( conversionBuffer == NULL )
+	{
+		conversionBuffer = NewPtr( WRITE_BUFFER_SIZE );
+		if( conversionBuffer == NULL || MemError() )
+		{
+			return -1;
+		}
+	}
+
 	if ((fd == 1) || (fd == 2)) 						// If it's 1/stdout or 2/stdtheError
 	{
 		if (InstallConsole(fd) == 0) 
@@ -347,15 +365,6 @@ int MacWrite(int fd, const char *buf, int count)
 	
 	if( FileIsText( fd ) )										// If it's a text file it needs translation
 	{
-		if( conversionBuffer == NULL )
-		{
-			conversionBuffer = NewPtr( WRITE_BUFFER_SIZE );
-			if( conversionBuffer == NULL || MemError() )
-			{
-				return -1;
-			}
-		}
-	
 		while( totalWritten < count )							// While there's more to write
 		{
 			if( count - totalWritten > WRITE_BUFFER_SIZE )		// If there's a whole buffer's worth
