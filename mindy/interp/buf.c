@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.11 1994/11/29 06:43:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.12 1995/03/12 16:41:37 nkramer Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -48,7 +48,9 @@
 #include "str.h"
 #include "buf.h"
 
-#define max(a,b) ((a)>(b) ? (a) : (b))
+#ifndef max
+#   define max(a,b) ((a)>(b) ? (a) : (b))
+#endif
 
 obj_t obj_BufferClass = NULL;
 

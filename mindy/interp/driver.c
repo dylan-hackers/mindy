@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.16 1994/10/05 21:01:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.17 1995/03/12 16:41:57 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -33,6 +33,9 @@
 #include "../compat/std-os.h"
 
 #include <setjmp.h>
+#ifdef WIN32
+#   define _longjmp	longjmp
+#endif
 
 #include "mindy.h"
 #include "gc.h"
@@ -41,7 +44,7 @@
 #include "bool.h"
 #include "gc.h"
 #if SLOW_FUNCTION_POINTERS
-#include "interp.h"
+#   include "interp.h"
 #endif
 
 static boolean InInterpreter = FALSE;
@@ -117,6 +120,7 @@ void unblock_interrupt_handler(void)
 {
     unblock_signal_handler(SIGINT);
 }
+
 
 /* Waiting on file descriptors. */
 
@@ -130,6 +134,20 @@ static void check_fds(boolean block)
 {
     fd_set readfds, writefds;
     int nfound, fd;
+
+#ifdef FAKE_SELECT
+	for (fd = 0; fd < NumFds; fd++) {
+	    if (FD_ISSET(fd, &readfds)) {
+		event_broadcast(Readers.events[fd]);
+		FD_CLR(fd, &Readers.fds);
+	    }
+	    if (FD_ISSET(fd, &writefds)) {
+		event_broadcast(Writers.events[fd]);
+		FD_CLR(fd, &Writers.fds);
+	    }
+	}
+	NumFds = 0;
+#else
     struct timeval tv, *tvp;
 
     if (NumFds == 0) {
@@ -190,12 +208,18 @@ static void check_fds(boolean block)
 		break;
 	NumFds = fd+1;
     }
+#endif
 }
 
 static void wait_for_fd(struct thread *thread, int fd, struct waiters *waiters,
 			void (*advance)(struct thread *thread))
 {
     obj_t event;
+
+#ifdef WIN32
+    fd = _get_osfhandle(fd);
+    assert(fd > 0);
+#endif
 
     FD_SET(fd, &waiters->fds);
 
@@ -222,7 +246,6 @@ void wait_for_output(struct thread *thread, int fd,
 {
     wait_for_fd(thread, fd, &Writers, advance);
 }
-
 
 
 /* Driver loop entry points. */

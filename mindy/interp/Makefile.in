@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.8 1994/11/10 13:35:43 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.9 1995/03/12 16:44:50 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -104,284 +104,284 @@ install: mindy
 # It's easiest to generate the rest by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
 
-bool.o :  ${SRCDIR}/bool.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/print.h ${SRCDIR}/gc.h ${SRCDIR}/class.h \
-          ${SRCDIR}/obj.h ${SRCDIR}/bool.h
+bool.o:  ${SRCDIR}/bool.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/print.h ${SRCDIR}/gc.h ${SRCDIR}/class.h \
+           ${SRCDIR}/obj.h ${SRCDIR}/bool.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/bool.c
 
-brkpt.o :  ${SRCDIR}/brkpt.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/weak.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
-           ${SRCDIR}/gc.h ${SRCDIR}/interp.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/print.h ${SRCDIR}/../comp/byteops.h ${SRCDIR}/brkpt.h
+brkpt.o:  ${SRCDIR}/brkpt.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/weak.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
+            ${SRCDIR}/gc.h ${SRCDIR}/interp.h ${SRCDIR}/bool.h \
+            ${SRCDIR}/print.h ${SRCDIR}/../comp/byteops.h ${SRCDIR}/brkpt.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/brkpt.c
 
-buf.o :  ${SRCDIR}/buf.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
-         ${SRCDIR}/module.h ${SRCDIR}/num.h ${SRCDIR}/bool.h \
-         ${SRCDIR}/obj.h ${SRCDIR}/error.h ${SRCDIR}/list.h \
-         ${SRCDIR}/def.h ${SRCDIR}/sym.h ${SRCDIR}/type.h \
-         ${SRCDIR}/vec.h ${SRCDIR}/str.h ${SRCDIR}/buf.h
+buf.o:  ${SRCDIR}/buf.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
+          ${SRCDIR}/module.h ${SRCDIR}/num.h ${SRCDIR}/bool.h \
+          ${SRCDIR}/obj.h ${SRCDIR}/error.h ${SRCDIR}/list.h \
+          ${SRCDIR}/def.h ${SRCDIR}/sym.h ${SRCDIR}/type.h \
+          ${SRCDIR}/vec.h ${SRCDIR}/str.h ${SRCDIR}/buf.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/buf.c
 
-char.o :  ${SRCDIR}/char.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/obj.h ${SRCDIR}/gc.h ${SRCDIR}/class.h \
-          ${SRCDIR}/num.h ${SRCDIR}/bool.h ${SRCDIR}/error.h \
-          ${SRCDIR}/print.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
-          ${SRCDIR}/def.h ${SRCDIR}/char.h
+char.o:  ${SRCDIR}/char.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/obj.h ${SRCDIR}/gc.h ${SRCDIR}/class.h \
+           ${SRCDIR}/num.h ${SRCDIR}/bool.h ${SRCDIR}/error.h \
+           ${SRCDIR}/print.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
+           ${SRCDIR}/def.h ${SRCDIR}/char.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/char.c
 
-class.o :  ${SRCDIR}/class.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/gc.h ${SRCDIR}/type.h ${SRCDIR}/list.h \
-           ${SRCDIR}/sym.h ${SRCDIR}/bool.h ${SRCDIR}/obj.h \
-           ${SRCDIR}/error.h ${SRCDIR}/def.h ${SRCDIR}/print.h \
-           ${SRCDIR}/class.h
+class.o:  ${SRCDIR}/class.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/gc.h ${SRCDIR}/type.h ${SRCDIR}/list.h \
+            ${SRCDIR}/sym.h ${SRCDIR}/bool.h ${SRCDIR}/obj.h \
+            ${SRCDIR}/error.h ${SRCDIR}/def.h ${SRCDIR}/print.h \
+            ${SRCDIR}/class.h ${SRCDIR}/extern.h ${SRCDIR}/instance.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/class.c
 
-coll.o :  ${SRCDIR}/coll.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/class.h ${SRCDIR}/obj.h ${SRCDIR}/gc.h \
-          ${SRCDIR}/coll.h
+coll.o:  ${SRCDIR}/coll.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/class.h ${SRCDIR}/obj.h ${SRCDIR}/gc.h \
+           ${SRCDIR}/coll.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/coll.c
 
-debug.o :  ${SRCDIR}/debug.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-           ${SRCDIR}/mindy.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
-           ${SRCDIR}/func.h ${SRCDIR}/module.h ${SRCDIR}/str.h \
-           ${SRCDIR}/list.h ${SRCDIR}/vec.h ${SRCDIR}/type.h \
-           ${SRCDIR}/sym.h ${SRCDIR}/num.h ${SRCDIR}/obj.h \
-           ${SRCDIR}/bool.h ${SRCDIR}/print.h ${SRCDIR}/interp.h \
-           ${SRCDIR}/value.h ${SRCDIR}/error.h ${SRCDIR}/gc.h \
-           ${SRCDIR}/brkpt.h ${SRCDIR}/instance.h ${SRCDIR}/../comp/byteops.h
+debug.o:  ${SRCDIR}/debug.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+            ${SRCDIR}/mindy.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
+            ${SRCDIR}/func.h ${SRCDIR}/module.h ${SRCDIR}/str.h \
+            ${SRCDIR}/list.h ${SRCDIR}/vec.h ${SRCDIR}/type.h \
+            ${SRCDIR}/sym.h ${SRCDIR}/num.h ${SRCDIR}/obj.h \
+            ${SRCDIR}/bool.h ${SRCDIR}/print.h ${SRCDIR}/interp.h \
+            ${SRCDIR}/value.h ${SRCDIR}/error.h ${SRCDIR}/gc.h \
+            ${SRCDIR}/brkpt.h ${SRCDIR}/instance.h ${SRCDIR}/../comp/byteops.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/debug.c
 
-def.o :  ${SRCDIR}/def.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/thread.h \
-         ${SRCDIR}/func.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
-         ${SRCDIR}/obj.h ${SRCDIR}/def.h ${SRCDIR}/type.h \
-         ${SRCDIR}/instance.h ${SRCDIR}/error.h ${SRCDIR}/class.h
+def.o:  ${SRCDIR}/def.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/thread.h \
+          ${SRCDIR}/func.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
+          ${SRCDIR}/obj.h ${SRCDIR}/def.h ${SRCDIR}/type.h \
+          ${SRCDIR}/instance.h ${SRCDIR}/error.h ${SRCDIR}/class.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/def.c
 
-driver.o :  ${SRCDIR}/driver.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-            ${SRCDIR}/mindy.h ${SRCDIR}/gc.h ${SRCDIR}/thread.h \
-            ${SRCDIR}/driver.h ${SRCDIR}/bool.h ${SRCDIR}/interp.h
+driver.o:  ${SRCDIR}/driver.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+             ${SRCDIR}/mindy.h ${SRCDIR}/gc.h ${SRCDIR}/thread.h \
+             ${SRCDIR}/driver.h ${SRCDIR}/bool.h ${SRCDIR}/interp.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/driver.c
 
-error.o :  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/str.h ${SRCDIR}/thread.h ${SRCDIR}/module.h \
-           ${SRCDIR}/sym.h ${SRCDIR}/list.h ${SRCDIR}/vec.h \
-           ${SRCDIR}/type.h ${SRCDIR}/def.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/obj.h ${SRCDIR}/print.h ${SRCDIR}/func.h \
-           ${SRCDIR}/driver.h
+error.o:  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/str.h ${SRCDIR}/thread.h ${SRCDIR}/module.h \
+            ${SRCDIR}/sym.h ${SRCDIR}/list.h ${SRCDIR}/vec.h \
+            ${SRCDIR}/type.h ${SRCDIR}/def.h ${SRCDIR}/bool.h \
+            ${SRCDIR}/obj.h ${SRCDIR}/print.h ${SRCDIR}/func.h \
+            ${SRCDIR}/driver.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/error.c
 
-extern.o :  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/char.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
-           ${SRCDIR}/class.h ${SRCDIR}/def.h ${SRCDIR}/sym.h \
-           ${SRCDIR}/module.h ${SRCDIR}/error.h ${SRCDIR}/thread.h \
-           ${SRCDIR}/func.h ${SRCDIR}/extern.h ${SRCDIR}/num.h \
-           ${SRCDIR}/str.h ${SRCDIR}/func.h ${SRCDIR}/func.h 
-	${CC} -c ${CFLAGS} ${SRCDIR}/extern.c
-
-ext-init.o :  ${SRCDIR}/extern.c ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def \
-           ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/extern.h
+ext-init.o:  ${SRCDIR}/ext-init.c ${SRCDIR}/mindy.h ${SRCDIR}/gc.h \
+               ${SRCDIR}/bool.h ${SRCDIR}/extern.h ${SRCDIR}/error.h \
+               ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def
 	${CC} -c ${CFLAGS} ${SRCDIR}/ext-init.c
 
-fd.o :  ${SRCDIR}/fd.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-        ${SRCDIR}/mindy.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
-        ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/driver.h \
-        ${SRCDIR}/buf.h ${SRCDIR}/str.h ${SRCDIR}/num.h \
-        ${SRCDIR}/obj.h ${SRCDIR}/def.h
+extern.o:  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+             ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
+             ${SRCDIR}/char.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
+             ${SRCDIR}/class.h ${SRCDIR}/def.h ${SRCDIR}/sym.h \
+             ${SRCDIR}/module.h ${SRCDIR}/error.h ${SRCDIR}/thread.h \
+             ${SRCDIR}/func.h ${SRCDIR}/extern.h ${SRCDIR}/num.h \
+             ${SRCDIR}/str.h ${SRCDIR}/print.h ${SRCDIR}/coll.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/extern.c
+
+fd.o:  ${SRCDIR}/fd.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+         ${SRCDIR}/mindy.h ${SRCDIR}/list.h ${SRCDIR}/bool.h \
+         ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/driver.h \
+         ${SRCDIR}/buf.h ${SRCDIR}/str.h ${SRCDIR}/num.h \
+         ${SRCDIR}/obj.h ${SRCDIR}/def.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/fd.c
 
-func.o :  ${SRCDIR}/func.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/bool.h \
-          ${SRCDIR}/list.h ${SRCDIR}/num.h ${SRCDIR}/class.h \
-          ${SRCDIR}/obj.h ${SRCDIR}/sym.h ${SRCDIR}/interp.h \
-          ${SRCDIR}/vec.h ${SRCDIR}/type.h ${SRCDIR}/module.h \
-          ${SRCDIR}/print.h ${SRCDIR}/driver.h ${SRCDIR}/error.h \
-          ${SRCDIR}/def.h ${SRCDIR}/func.h
+func.o:  ${SRCDIR}/func.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/bool.h \
+           ${SRCDIR}/list.h ${SRCDIR}/num.h ${SRCDIR}/class.h \
+           ${SRCDIR}/obj.h ${SRCDIR}/sym.h ${SRCDIR}/interp.h \
+           ${SRCDIR}/vec.h ${SRCDIR}/type.h ${SRCDIR}/module.h \
+           ${SRCDIR}/print.h ${SRCDIR}/driver.h ${SRCDIR}/error.h \
+           ${SRCDIR}/def.h ${SRCDIR}/extern.h ${SRCDIR}/func.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/func.c
 
-gc.o :  ${SRCDIR}/gc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-        ${SRCDIR}/class.h ${SRCDIR}/gc.h ${SRCDIR}/weak.h \
-        ${SRCDIR}/table.h
+gc.o:  ${SRCDIR}/gc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+         ${SRCDIR}/class.h ${SRCDIR}/gc.h ${SRCDIR}/weak.h \
+         ${SRCDIR}/table.h ${SRCDIR}/module.h ${SRCDIR}/bool.h \
+         ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/gc.c
 
-handler.o :  ${SRCDIR}/handler.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-             ${SRCDIR}/class.h ${SRCDIR}/gc.h ${SRCDIR}/obj.h \
-             ${SRCDIR}/def.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
-             ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/sym.h \
-             ${SRCDIR}/type.h ${SRCDIR}/handler.h
+handler.o:  ${SRCDIR}/handler.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+              ${SRCDIR}/class.h ${SRCDIR}/gc.h ${SRCDIR}/obj.h \
+              ${SRCDIR}/def.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
+              ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/sym.h \
+              ${SRCDIR}/type.h ${SRCDIR}/handler.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/handler.c
 
-init.o :  ${SRCDIR}/init.c ${SRCDIR}/init.h
+init.o:  ${SRCDIR}/init.c ${SRCDIR}/init.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/init.c
 
-input.o :  ${SRCDIR}/input.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-           ${SRCDIR}/mindy.h ${SRCDIR}/char.h ${SRCDIR}/list.h \
-           ${SRCDIR}/bool.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
-           ${SRCDIR}/driver.h ${SRCDIR}/error.h ${SRCDIR}/def.h
+input.o:  ${SRCDIR}/input.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+            ${SRCDIR}/mindy.h ${SRCDIR}/char.h ${SRCDIR}/list.h \
+            ${SRCDIR}/bool.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
+            ${SRCDIR}/driver.h ${SRCDIR}/error.h ${SRCDIR}/def.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/input.c
 
-instance.o :  ${SRCDIR}/instance.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-              ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/class.h \
-              ${SRCDIR}/list.h ${SRCDIR}/vec.h ${SRCDIR}/type.h \
-              ${SRCDIR}/bool.h ${SRCDIR}/module.h ${SRCDIR}/num.h \
-              ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/sym.h \
-              ${SRCDIR}/value.h ${SRCDIR}/error.h ${SRCDIR}/driver.h \
-              ${SRCDIR}/def.h ${SRCDIR}/print.h ${SRCDIR}/instance.h
+instance.o:  ${SRCDIR}/instance.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+               ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/class.h \
+               ${SRCDIR}/list.h ${SRCDIR}/vec.h ${SRCDIR}/type.h \
+               ${SRCDIR}/bool.h ${SRCDIR}/module.h ${SRCDIR}/num.h \
+               ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/sym.h \
+               ${SRCDIR}/value.h ${SRCDIR}/error.h ${SRCDIR}/driver.h \
+               ${SRCDIR}/def.h ${SRCDIR}/print.h ${SRCDIR}/instance.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/instance.c
 
-interp.o :  ${SRCDIR}/interp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-            ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
-            ${SRCDIR}/func.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
-            ${SRCDIR}/class.h ${SRCDIR}/obj.h ${SRCDIR}/module.h \
-            ${SRCDIR}/value.h ${SRCDIR}/num.h ${SRCDIR}/vec.h \
-            ${SRCDIR}/sym.h ${SRCDIR}/error.h ${SRCDIR}/type.h \
-            ${SRCDIR}/brkpt.h ${SRCDIR}/interp.h ${SRCDIR}/../comp/byteops.h
+interp.o:  ${SRCDIR}/interp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+             ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
+             ${SRCDIR}/func.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
+             ${SRCDIR}/class.h ${SRCDIR}/obj.h ${SRCDIR}/module.h \
+             ${SRCDIR}/value.h ${SRCDIR}/num.h ${SRCDIR}/vec.h \
+             ${SRCDIR}/sym.h ${SRCDIR}/error.h ${SRCDIR}/type.h \
+             ${SRCDIR}/brkpt.h ${SRCDIR}/interp.h ${SRCDIR}/../comp/byteops.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/interp.c
 
-lexer.o :  ${SRCDIR}/lexer.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-           ${SRCDIR}/mindy.h ${SRCDIR}/lexer.h ${SRCDIR}/parser.h \
-           ${SRCDIR}/parser.tab.h ${SRCDIR}/list.h ${SRCDIR}/char.h \
-           ${SRCDIR}/str.h ${SRCDIR}/sym.h ${SRCDIR}/num.h \
-           ${SRCDIR}/bool.h
+lexer.o:  ${SRCDIR}/lexer.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+            ${SRCDIR}/mindy.h ${SRCDIR}/lexer.h ${SRCDIR}/parser.h \
+            ${SRCDIR}/parser.tab.h ${SRCDIR}/list.h ${SRCDIR}/char.h \
+            ${SRCDIR}/str.h ${SRCDIR}/sym.h ${SRCDIR}/num.h \
+            ${SRCDIR}/bool.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lexer.c
 
-list.o :  ${SRCDIR}/list.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
-          ${SRCDIR}/obj.h ${SRCDIR}/bool.h ${SRCDIR}/num.h \
-          ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/error.h \
-          ${SRCDIR}/print.h ${SRCDIR}/type.h ${SRCDIR}/def.h \
-          ${SRCDIR}/list.h
+list.o:  ${SRCDIR}/list.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
+           ${SRCDIR}/obj.h ${SRCDIR}/bool.h ${SRCDIR}/num.h \
+           ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/error.h \
+           ${SRCDIR}/print.h ${SRCDIR}/type.h ${SRCDIR}/def.h \
+           ${SRCDIR}/list.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/list.c
 
-load.o :  ${SRCDIR}/load.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
-          ${SRCDIR}/mindy.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
-          ${SRCDIR}/module.h ${SRCDIR}/str.h ${SRCDIR}/sym.h \
-          ${SRCDIR}/num.h ${SRCDIR}/thread.h ${SRCDIR}/interp.h \
-          ${SRCDIR}/func.h ${SRCDIR}/obj.h ${SRCDIR}/gc.h \
-          ${SRCDIR}/class.h ${SRCDIR}/char.h ${SRCDIR}/driver.h \
-          ${SRCDIR}/debug.h ${SRCDIR}/instance.h ${SRCDIR}/vec.h \
-          ${SRCDIR}/error.h ${SRCDIR}/../comp/fileops.h ${SRCDIR}/load.h
+load.o:  ${SRCDIR}/load.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
+           ${SRCDIR}/mindy.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
+           ${SRCDIR}/module.h ${SRCDIR}/str.h ${SRCDIR}/sym.h \
+           ${SRCDIR}/num.h ${SRCDIR}/thread.h ${SRCDIR}/interp.h \
+           ${SRCDIR}/func.h ${SRCDIR}/obj.h ${SRCDIR}/gc.h \
+           ${SRCDIR}/class.h ${SRCDIR}/char.h ${SRCDIR}/driver.h \
+           ${SRCDIR}/debug.h ${SRCDIR}/instance.h ${SRCDIR}/vec.h \
+           ${SRCDIR}/error.h ${SRCDIR}/def.h ${SRCDIR}/../comp/fileops.h \
+           ${SRCDIR}/load.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/load.c
 
-lose.o :  ${SRCDIR}/lose.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h
+lose.o:  ${SRCDIR}/lose.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lose.c
 
-mindy.o :  ${SRCDIR}/mindy.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/init.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
-           ${SRCDIR}/module.h ${SRCDIR}/str.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/list.h ${SRCDIR}/obj.h ${SRCDIR}/sym.h \
-           ${SRCDIR}/func.h ${SRCDIR}/debug.h ${SRCDIR}/load.h \
-           ${SRCDIR}/num.h
+mindy.o:  ${SRCDIR}/mindy.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/init.h ${SRCDIR}/thread.h ${SRCDIR}/driver.h \
+            ${SRCDIR}/module.h ${SRCDIR}/str.h ${SRCDIR}/bool.h \
+            ${SRCDIR}/list.h ${SRCDIR}/obj.h ${SRCDIR}/sym.h \
+            ${SRCDIR}/func.h ${SRCDIR}/debug.h ${SRCDIR}/load.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/mindy.c
 
-misc.o :  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/thread.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
-          ${SRCDIR}/vec.h ${SRCDIR}/func.h ${SRCDIR}/obj.h \
-          ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/def.h \
-          ${SRCDIR}/num.h
+misc.o:  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/thread.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
+           ${SRCDIR}/vec.h ${SRCDIR}/func.h ${SRCDIR}/obj.h \
+           ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/def.h \
+           ${SRCDIR}/num.h ${SRCDIR}/error.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/misc.c
 
-module.o :  ${SRCDIR}/module.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-            ${SRCDIR}/gc.h ${SRCDIR}/sym.h ${SRCDIR}/list.h \
-            ${SRCDIR}/bool.h ${SRCDIR}/str.h ${SRCDIR}/obj.h \
-            ${SRCDIR}/module.h ${SRCDIR}/class.h ${SRCDIR}/type.h \
-            ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/def.h \
-            ${SRCDIR}/load.h ${SRCDIR}/error.h ${SRCDIR}/print.h
+module.o:  ${SRCDIR}/module.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+             ${SRCDIR}/gc.h ${SRCDIR}/sym.h ${SRCDIR}/list.h \
+             ${SRCDIR}/bool.h ${SRCDIR}/str.h ${SRCDIR}/obj.h \
+             ${SRCDIR}/module.h ${SRCDIR}/class.h ${SRCDIR}/type.h \
+             ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/def.h \
+             ${SRCDIR}/load.h ${SRCDIR}/error.h ${SRCDIR}/print.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/module.c
 
-nlx.o :  ${SRCDIR}/nlx.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
-         ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/obj.h \
-         ${SRCDIR}/sym.h ${SRCDIR}/class.h ${SRCDIR}/error.h \
-         ${SRCDIR}/def.h
+nlx.o:  ${SRCDIR}/nlx.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
+          ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/obj.h \
+          ${SRCDIR}/sym.h ${SRCDIR}/class.h ${SRCDIR}/error.h \
+          ${SRCDIR}/def.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/nlx.c
 
-num.o :  ${SRCDIR}/num.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/class.h ${SRCDIR}/obj.h \
-         ${SRCDIR}/bool.h ${SRCDIR}/def.h ${SRCDIR}/list.h \
-         ${SRCDIR}/type.h ${SRCDIR}/num.h ${SRCDIR}/thread.h \
-         ${SRCDIR}/func.h ${SRCDIR}/error.h ${SRCDIR}/print.h \
-         ${SRCDIR}/module.h ${SRCDIR}/sym.h
+num.o:  ${SRCDIR}/num.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/class.h ${SRCDIR}/obj.h \
+          ${SRCDIR}/bool.h ${SRCDIR}/def.h ${SRCDIR}/list.h \
+          ${SRCDIR}/type.h ${SRCDIR}/num.h ${SRCDIR}/thread.h \
+          ${SRCDIR}/func.h ${SRCDIR}/error.h ${SRCDIR}/print.h \
+          ${SRCDIR}/module.h ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/num.c
 
-obj.o :  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/num.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
-         ${SRCDIR}/list.h ${SRCDIR}/def.h ${SRCDIR}/gc.h \
-         ${SRCDIR}/obj.h
+obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/class.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
+          ${SRCDIR}/def.h ${SRCDIR}/gc.h ${SRCDIR}/num.h \
+          ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
 
-parser.tab.o :  ${SRCDIR}/parser.tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
-                ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser.tab.h \
-                ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
-                ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
+parser.tab.o:  ${SRCDIR}/parser.tab.c ${SRCDIR}/./../compat/std-c.h ${SRCDIR}/./mindy.h \
+                 ${SRCDIR}/./lexer.h ${SRCDIR}/./parser.h ${SRCDIR}/./parser.tab.h \
+                 ${SRCDIR}/./list.h ${SRCDIR}/./str.h ${SRCDIR}/./sym.h \
+                 ${SRCDIR}/./num.h ${SRCDIR}/./bool.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/parser.tab.c
 
-print.o :  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
-           ${SRCDIR}/list.h ${SRCDIR}/print.h ${SRCDIR}/vec.h \
-           ${SRCDIR}/char.h ${SRCDIR}/str.h ${SRCDIR}/thread.h \
-           ${SRCDIR}/func.h ${SRCDIR}/def.h ${SRCDIR}/sym.h \
-           ${SRCDIR}/error.h ${SRCDIR}/num.h ${SRCDIR}/type.h
+print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
+            ${SRCDIR}/list.h ${SRCDIR}/print.h ${SRCDIR}/vec.h \
+            ${SRCDIR}/char.h ${SRCDIR}/str.h ${SRCDIR}/thread.h \
+            ${SRCDIR}/func.h ${SRCDIR}/def.h ${SRCDIR}/sym.h \
+            ${SRCDIR}/error.h ${SRCDIR}/num.h ${SRCDIR}/type.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/print.c
 
-str.o :  ${SRCDIR}/str.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
-         ${SRCDIR}/char.h ${SRCDIR}/module.h ${SRCDIR}/num.h \
-         ${SRCDIR}/bool.h ${SRCDIR}/obj.h ${SRCDIR}/str.h \
-         ${SRCDIR}/error.h ${SRCDIR}/type.h ${SRCDIR}/print.h \
-         ${SRCDIR}/list.h ${SRCDIR}/def.h ${SRCDIR}/sym.h
+str.o:  ${SRCDIR}/str.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
+          ${SRCDIR}/char.h ${SRCDIR}/module.h ${SRCDIR}/num.h \
+          ${SRCDIR}/bool.h ${SRCDIR}/obj.h ${SRCDIR}/str.h \
+          ${SRCDIR}/error.h ${SRCDIR}/type.h ${SRCDIR}/print.h \
+          ${SRCDIR}/list.h ${SRCDIR}/def.h ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/str.c
 
-sym.o :  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/bool.h ${SRCDIR}/class.h \
-         ${SRCDIR}/obj.h ${SRCDIR}/coll.h ${SRCDIR}/str.h \
-         ${SRCDIR}/def.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
-         ${SRCDIR}/print.h ${SRCDIR}/sym.h
+sym.o:  ${SRCDIR}/sym.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/bool.h ${SRCDIR}/class.h \
+          ${SRCDIR}/obj.h ${SRCDIR}/coll.h ${SRCDIR}/str.h \
+          ${SRCDIR}/def.h ${SRCDIR}/list.h ${SRCDIR}/type.h \
+          ${SRCDIR}/print.h ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/sym.c
 
-table.o :  ${SRCDIR}/table.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/def.h \
-           ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/num.h \
-           ${SRCDIR}/obj.h ${SRCDIR}/sym.h ${SRCDIR}/gc.h \
-           ${SRCDIR}/class.h ${SRCDIR}/print.h ${SRCDIR}/table.h
+table.o:  ${SRCDIR}/table.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/def.h \
+            ${SRCDIR}/list.h ${SRCDIR}/bool.h ${SRCDIR}/num.h \
+            ${SRCDIR}/obj.h ${SRCDIR}/sym.h ${SRCDIR}/gc.h \
+            ${SRCDIR}/class.h ${SRCDIR}/print.h ${SRCDIR}/table.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/table.c
 
-thread.o :  ${SRCDIR}/thread.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-            ${SRCDIR}/gc.h ${SRCDIR}/bool.h ${SRCDIR}/class.h \
-            ${SRCDIR}/thread.h ${SRCDIR}/obj.h ${SRCDIR}/driver.h \
-            ${SRCDIR}/func.h ${SRCDIR}/num.h ${SRCDIR}/list.h \
-            ${SRCDIR}/def.h ${SRCDIR}/type.h ${SRCDIR}/error.h
+thread.o:  ${SRCDIR}/thread.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+             ${SRCDIR}/gc.h ${SRCDIR}/bool.h ${SRCDIR}/class.h \
+             ${SRCDIR}/thread.h ${SRCDIR}/obj.h ${SRCDIR}/driver.h \
+             ${SRCDIR}/func.h ${SRCDIR}/num.h ${SRCDIR}/list.h \
+             ${SRCDIR}/def.h ${SRCDIR}/type.h ${SRCDIR}/error.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/thread.c
 
-type.o :  ${SRCDIR}/type.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/type.h \
-          ${SRCDIR}/class.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
-          ${SRCDIR}/num.h ${SRCDIR}/module.h ${SRCDIR}/sym.h \
-          ${SRCDIR}/error.h ${SRCDIR}/print.h ${SRCDIR}/def.h
+type.o:  ${SRCDIR}/type.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/type.h \
+           ${SRCDIR}/class.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
+           ${SRCDIR}/num.h ${SRCDIR}/module.h ${SRCDIR}/sym.h \
+           ${SRCDIR}/error.h ${SRCDIR}/print.h ${SRCDIR}/def.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/type.c
 
-value.o :  ${SRCDIR}/value.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/class.h \
-           ${SRCDIR}/value.h
+value.o:  ${SRCDIR}/value.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+            ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/class.h \
+            ${SRCDIR}/value.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/value.c
 
-vec.o :  ${SRCDIR}/vec.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-         ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
-         ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/bool.h \
-         ${SRCDIR}/list.h ${SRCDIR}/num.h ${SRCDIR}/obj.h \
-         ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/type.h \
-         ${SRCDIR}/error.h ${SRCDIR}/print.h ${SRCDIR}/def.h \
-         ${SRCDIR}/vec.h
+vec.o:  ${SRCDIR}/vec.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+          ${SRCDIR}/gc.h ${SRCDIR}/coll.h ${SRCDIR}/class.h \
+          ${SRCDIR}/thread.h ${SRCDIR}/func.h ${SRCDIR}/bool.h \
+          ${SRCDIR}/list.h ${SRCDIR}/num.h ${SRCDIR}/obj.h \
+          ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/type.h \
+          ${SRCDIR}/error.h ${SRCDIR}/print.h ${SRCDIR}/def.h \
+          ${SRCDIR}/vec.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/vec.c
 
-weak.o :  ${SRCDIR}/weak.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-          ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
-          ${SRCDIR}/list.h ${SRCDIR}/type.h ${SRCDIR}/class.h \
-          ${SRCDIR}/def.h ${SRCDIR}/sym.h ${SRCDIR}/module.h \
-          ${SRCDIR}/error.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
-          ${SRCDIR}/weak.h
+weak.o:  ${SRCDIR}/weak.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
+           ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
+           ${SRCDIR}/list.h ${SRCDIR}/type.h ${SRCDIR}/class.h \
+           ${SRCDIR}/def.h ${SRCDIR}/sym.h ${SRCDIR}/module.h \
+           ${SRCDIR}/error.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
+           ${SRCDIR}/weak.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/weak.c

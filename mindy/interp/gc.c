@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.19 1995/02/14 02:31:57 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.20 1995/03/12 16:42:06 nkramer Exp $
 *
 * This file is the garbage collector.
 *
@@ -123,6 +123,8 @@ void *raw_alloc(int bytes)
 	}
 	else {
 	    block = malloc(BLOCK_SIZE);
+            if (block == NULL)
+                lose("Heap is full!  Can't allocate %d bytes", bytes);
 	    block->base = (char *)block + sizeof(struct block);
 	    block->end = (char *)block + BLOCK_SIZE;
 	}

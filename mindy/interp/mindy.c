@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.13 1994/11/06 20:00:45 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.14 1995/03/12 16:42:22 nkramer Exp $
 *
 * This file starts everything going.
 *
@@ -48,7 +48,7 @@
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
     obj_t *fp = thread->fp;
-    obj_t *args_end = fp - 4;
+    obj_t *args_end = fp - 5;
     obj_t *old_sp = pop_linkage(thread);
     struct variable *var = find_variable(module_BuiltinStuff, symbol("main"),
 					 FALSE, FALSE);
@@ -146,4 +146,33 @@ void main(int argc, char *argv[])
 	thread = thread_create(symbol("exit"));
 	*thread->sp++ = var->value;
     }
+}
+
+/* Try to keep this consistent with comp/mindycomp.c */
+
+#undef malloc
+void *check_malloc(size_t sz, char *file, int line)
+{
+    void *ret = malloc(sz);
+    if (ret == 0) 
+	lose("malloc failed -- out of memory in %s line %d", file, line);
+    return ret;
+}
+
+#undef calloc
+void *check_calloc(size_t nobj, size_t sz, char *file, int line)
+{
+    void *ret = calloc(nobj, sz);
+    if (ret == 0) 
+	lose("calloc failed -- out of memory in %s line %d", file, line);
+    return ret;
+}
+
+#undef realloc
+void *check_realloc(void *ptr, size_t sz, char *file, int line)
+{
+    void *ret = realloc(ptr, sz);
+    if (ret == 0) 
+	lose("realloc failed -- out of memory in %s line %d", file, line);
+    return ret;
 }

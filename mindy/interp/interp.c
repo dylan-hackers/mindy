@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.19 1994/11/29 06:43:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.20 1995/03/12 16:42:14 nkramer Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -306,7 +306,7 @@ static void op_push_constant(int byte, struct thread *thread)
 
 static void push_arg(struct thread *thread, int arg)
 {
-    *thread->sp++ = thread->fp[-5 - arg];
+    *thread->sp++ = thread->fp[-6 - arg];
 }
 
 static void op_push_arg_immed(int byte, struct thread *thread)
@@ -321,7 +321,7 @@ static void op_push_arg(int byte, struct thread *thread)
 
 static void pop_arg(struct thread *thread, int arg)
 {
-    thread->fp[-5 - arg] = *--thread->sp;
+    thread->fp[-6 - arg] = *--thread->sp;
 }
 
 static void op_pop_arg_immed(int byte, struct thread *thread)

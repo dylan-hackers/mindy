@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.21 1994/11/03 22:19:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.22 1995/03/12 16:42:02 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -68,21 +68,36 @@ static void fd_close(obj_t self, struct thread *thread, obj_t *args)
     results(thread, args-1, close(fixnum_value(fd)), obj_True);
 }
 
-static obj_t fd_error_str(obj_t errno)
+static obj_t fd_error_str(obj_t xerrno)
 {
-  return make_byte_string(strerror(fixnum_value(errno)));
+  return make_byte_string(strerror(fixnum_value(xerrno)));
 }
 
 static int input_available(int fd)
 {
+#ifdef FAKE_SELECT
+    return 1;
+#else
     fd_set fds;
     struct timeval tv;
+
+#   ifdef WIN32
+    fd = _get_osfhandle(fd);
+    if (fd < 0) return 1;
+#   endif
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    return select(fd+1, &fds, NULL, NULL, &tv);
+#   ifdef WIN32
+	fd = select(0, &fds, NULL, NULL, &tv);
+	if (fd < 0) fd = WSAGetLastError();
+	return fd;
+#   else
+        return select(fd+1, &fds, NULL, NULL, &tv);
+#   endif
+#endif
 }
 
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
@@ -107,10 +122,16 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
 static void maybe_read(struct thread *thread)
 {
     obj_t *fp = thread->fp;
-    int fd = fixnum_value(fp[-8]);
+    int fd = fixnum_value(fp[-9]);
     int nfound, res;
     obj_t *old_sp;
 
+#ifdef FAKE_SELECT
+ 	res = read(fd,
+		   buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		   fixnum_value(fp[-6]));
+	results(thread, pop_linkage(thread), res, make_fixnum(res));
+#else
     nfound = input_available(fd);
     if (nfound < 0) {
 	old_sp = pop_linkage(thread);
@@ -123,11 +144,12 @@ static void maybe_read(struct thread *thread)
 	wait_for_input(thread, fd, maybe_read);
     else {
 	res = read(fd,
-		   buffer_data(fp[-7]) + fixnum_value(fp[-6]),
-		   fixnum_value(fp[-5]));
+		   buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		   fixnum_value(fp[-6]));
 	
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
+#endif
 }
 
 static void fd_read(obj_t self, struct thread *thread, obj_t *args)
@@ -153,9 +175,15 @@ static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 {
     int res = fsync(fixnum_value(args[0]));
 
-    if (res < 0 && errno == EINVAL)
+    if ((res < 0 && errno == EINVAL)
 	/* EINVAL means the fd is a socket, not a file descriptor.  We don't */
 	/* care that you can't fsync sockets. */
+#ifdef WIN32
+ 	|| (res < 0 && errno == EBADF)
+	/* In Windows, EBADF means that the fd is a descriptor for
+           the console. */
+#endif
+		)
 	results(thread, args-1, 0, obj_True);
     else
 	results(thread, args-1, res, obj_True);
@@ -164,11 +192,24 @@ static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 static void maybe_write(struct thread *thread)
 {
     obj_t *fp = thread->fp;
-    int fd = fixnum_value(fp[-8]);
+    int fd = fixnum_value(fp[-9]);
+#ifndef FAKE_SELECT
     fd_set fds;
     struct timeval tv;
+#endif
     int nfound, res;
     obj_t *old_sp;
+
+#ifdef FAKE_SELECT
+	res = write(fd,
+		    buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		    fixnum_value(fp[-6]));
+	results(thread, pop_linkage(thread), res, make_fixnum(res));
+#else
+#   ifdef WIN32
+	fd = _get_osfhandle(fd);
+	assert(fd > 0);
+#   endif
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
@@ -190,11 +231,12 @@ static void maybe_write(struct thread *thread)
 	wait_for_output(thread, fd, maybe_write);
     else {
 	res = write(fd,
-		    buffer_data(fp[-7]) + fixnum_value(fp[-6]),
-		    fixnum_value(fp[-5]));
+		    buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		    fixnum_value(fp[-6]));
 
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
+#endif
 }
 
 static void fd_write(obj_t self, struct thread *thread, obj_t *args)
@@ -215,6 +257,10 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     oldargs = args - 1;
     thread->sp = args + 1;
 
+#ifdef WIN32
+	oldargs[0] = obj_False;
+	oldargs[1] = obj_False;
+#else
     if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
 	(forkresult = fork()) != -1)
     {
@@ -262,6 +308,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 	oldargs[0] = obj_False;
 	oldargs[1] = obj_False;
     }
+#endif
 
     do_return(thread, oldargs, oldargs);
 }
@@ -330,11 +377,31 @@ void init_fd_functions(void)
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_exec));
 
+#ifdef L_SET
     define_constant("L_SET", make_fixnum(L_SET));
+#else
+#	ifdef SEEK_SET
+	define_constant("L_SET", make_fixnum(SEEK_SET));
+#	endif
+#endif
+#ifdef L_INCR
     define_constant("L_INCR", make_fixnum(L_INCR));
+#else
+#	ifdef SEEK_CUR
+	define_constant("L_INCR", make_fixnum(SEEK_CUR));
+#	endif
+#endif
+#ifdef L_XTND
     define_constant("L_XTND", make_fixnum(L_XTND));
+#else
+#	ifdef SEEK_END
+	define_constant("L_XTND", make_fixnum(SEEK_END));
+#	endif
+#endif
 
+#ifdef FNDELAY
     define_constant("FNDELAY", make_fixnum(FNDELAY));
+#endif
 #ifdef FAPPEND
     define_constant("FAPPEND", make_fixnum(FAPPEND));
 #else
@@ -360,7 +427,9 @@ void init_fd_functions(void)
     define_constant("O_RDONLY", make_fixnum(O_RDONLY));
     define_constant("O_WRONLY", make_fixnum(O_WRONLY));
     define_constant("O_RDWR", make_fixnum(O_RDWR));
+#ifdef O_NDELAY
     define_constant("O_NDELAY", make_fixnum(O_NDELAY));
+#endif
     define_constant("O_APPEND", make_fixnum(O_APPEND));
     define_constant("O_CREAT", make_fixnum(O_CREAT));
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
@@ -779,4 +848,18 @@ void init_fd_functions(void)
     define_constant("EXFULL", make_fixnum(EXFULL)); 
 #endif
     
+#if defined(WIN32) && !defined(FAKE_SELECT)
+{
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+	wVersionRequested = MAKEWORD(1, 1);
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err) lose("Couldn't startup Windows sockets");
+	if (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1 ) {
+		WSACleanup();
+		lose("Wrong version of Windows sockets");
+	}
+}
+#endif
 }

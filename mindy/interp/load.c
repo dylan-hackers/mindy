@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.28 1995/02/09 18:26:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.29 1995/03/12 16:42:18 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -965,6 +965,10 @@ static void free_load_info(struct load_info *info)
     free(info);
 }
 
+#ifndef O_BINARY
+#   define O_BINARY 0
+#endif
+
 void load(char *name)
 {
     int fd;
@@ -973,7 +977,7 @@ void load(char *name)
     if (strcmp(name, "-") == 0)
       fd = 0;
     else
-      fd = open(name, O_RDONLY, 0);
+      fd = open(name, O_RDONLY | O_BINARY, 0);
     if (fd < 0)
 	error("Error loading %s: %s\n",
 	      make_byte_string(name),
@@ -1241,4 +1245,3 @@ void init_loader(void)
     State.top_level_forms.head = NULL;
     State.top_level_forms.tail = &State.top_level_forms.head;
 }
-

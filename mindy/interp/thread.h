@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.5 1994/10/05 21:04:45 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.6 1995/03/12 16:43:37 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -52,6 +52,16 @@ struct thread_obj {
 
 #define THREAD(o) obj_ptr(struct thread_obj *, o)
 
+#define C_CONTINUATION_MARKER rawptr_obj(0xf00)
+#define obj_is_saved_c_function(o) \
+  (((unsigned long)(o) & 0xffff) == (unsigned long)C_CONTINUATION_MARKER)
+#define save_c_function_hi(c) \
+  rawptr_obj((unsigned long)(c) & 0xffff0000)
+#define save_c_function_lo(c) \
+  rawptr_obj((((unsigned long)(c) & 0xffff) << 16) | (unsigned long)C_CONTINUATION_MARKER)
+#define restore_c_function(lo, hi) \
+  (void (*)(struct thread *thread, obj_t *vals))(((unsigned long)(hi) & 0xffff0000) | ((unsigned long)(lo) >> 16)) 
+
 struct thread {
     int id;
     obj_t thread_obj;
@@ -67,6 +77,7 @@ struct thread {
     obj_t cur_catch;
     struct uwp *cur_uwp;
     obj_t handlers;
+    void (*c_continuation)(struct thread *thread, obj_t *vals);
 };
 
 extern struct thread_list *all_threads(void);

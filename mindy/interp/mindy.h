@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.6 1994/11/06 20:01:03 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.7 1995/03/12 16:43:21 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -49,7 +49,11 @@ extern void lose _ANSI_ARGS_((char *fmt, ...));
 	    lose("assertion failed, line %d file %s", __LINE__, __FILE__); \
     } while (0)
 
-typedef int boolean;
+#ifdef WIN32
+    typedef unsigned char boolean;
+#else
+    typedef int boolean;
+#endif
 #define TRUE 1
 #define FALSE 0
 
@@ -74,3 +78,17 @@ typedef int boolean;
 #ifndef SLOW_FUNCTION_POINTERS
 #define SLOW_FUNCTION_POINTERS 0
 #endif
+
+/* Don't call check_malloc yourself, always use the malloc macro.
+ * Has no parameter list so that ext-init.c can read this file 
+ * without knowing about a size_t.
+ * Also, try to keep this section consistent with comp/mindycomp.h
+ */
+void *check_malloc();
+#define malloc(sz) check_malloc(sz, __FILE__, __LINE__)
+
+void *check_calloc();
+#define calloc(nobj,sz) check_calloc(nobj, sz, __FILE__, __LINE__)
+
+void *check_realloc();
+#define realloc(ptr,sz) check_realloc(ptr, sz, __FILE__, __LINE__)

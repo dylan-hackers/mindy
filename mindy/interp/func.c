@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.34 1994/11/06 19:59:23 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.35 1995/03/12 16:42:03 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -217,11 +217,17 @@ void invoke(struct thread *thread, int nargs)
 
 obj_t *push_linkage(struct thread *thread, obj_t *args)
 {
-    obj_t *fp = thread->sp += 4;
+    obj_t *fp = thread->sp += 5;
 
-    fp[-4] = rawptr_obj(thread->fp);
-    fp[-3] = rawptr_obj(args-1);
-    fp[-2] = thread->component;
+    fp[-5] = rawptr_obj(thread->fp);
+    fp[-4] = rawptr_obj(args-1);
+	fp[-3] = fp[-2] = rawptr_obj(NULL);
+    if (obj_is_ptr(thread->component))
+		fp[-2] = thread->component;
+	else if (thread->component == C_CONTINUATION_MARKER) {
+		fp[-3] = save_c_function_hi(thread->c_continuation);
+		fp[-2] = save_c_function_lo(thread->c_continuation);
+	}
     fp[-1] = make_fixnum(thread->pc);
     thread->fp = fp;
     thread->component = rawptr_obj(NULL);
@@ -234,17 +240,25 @@ obj_t *pop_linkage(struct thread *thread)
 {
     obj_t *fp = thread->fp;
 
-    thread->fp = obj_rawptr(fp[-4]);
-    thread->component = fp[-2];
+    thread->fp = obj_rawptr(fp[-5]);
+    if (obj_is_ptr(fp[-2]))
+    	thread->component = fp[-2];
+	else if (obj_is_saved_c_function(fp[-2])) {
+		thread->component = C_CONTINUATION_MARKER;
+		thread->c_continuation = restore_c_function(fp[-2], fp[-3]);
+	}
+	else
+		thread->component = rawptr_obj(NULL);
     thread->pc = fixnum_value(fp[-1]);
 
-    return obj_rawptr(fp[-3]);
+    return obj_rawptr(fp[-4]);
 }
 
 void set_c_continuation(struct thread *thread,
 			void (*cont)(struct thread *thread, obj_t *vals))
 {
-    thread->component = rawptr_obj(cont);
+    thread->component = C_CONTINUATION_MARKER;
+    thread->c_continuation = cont;
     thread->pc = 0;
 }
 
@@ -259,11 +273,7 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
 
     if (thread->pc)
 	do_byte_return(thread, old_sp, vals);
-    else {
-	void (*cont)(struct thread *thread, obj_t *vals)
-	    = (void (*)(struct thread *thread, obj_t *vals))
-		obj_rawptr(thread->component);
-	if (cont) {
+    else if (thread->component == C_CONTINUATION_MARKER) {
 	    thread->component = rawptr_obj(NULL);
 	    if (old_sp != vals) {
 		obj_t *src = vals, *dst = old_sp, *end = thread->sp;
@@ -271,11 +281,10 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
 		    *dst++ = *src++;
 		thread->sp = dst;
 	    }
-	    (*cont)(thread, old_sp);
+	    (*thread->c_continuation)(thread, old_sp);
 	}
 	else
 	    lose("Attempt to return, but no continuation established.\n");
-    }
 }
 
 #if !SLOW_LONGJMP

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.40 1994/11/28 15:48:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.41 1995/03/12 16:41:51 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -157,7 +157,7 @@ static struct frame_info *frame_down(struct frame_info *frame)
 	return frame->down;
     else {
 	obj_t *fp = frame->fp;
-	obj_t *old_fp = obj_rawptr(fp[-4]);
+	obj_t *old_fp = obj_rawptr(fp[-5]);
 
 	if (old_fp) {
 	    frame->down = make_frame(frame, old_fp, fp[-2],
@@ -200,8 +200,8 @@ static void scav_frames(struct frame_info *frame)
 
 static void print_frame(struct frame_info *frame, boolean print_line)
 {
-    obj_t *ptr = obj_rawptr(frame->fp[-3]);
-    obj_t *end = frame->fp - 4;
+    obj_t *ptr = obj_rawptr(frame->fp[-4]);
+    obj_t *end = frame->fp - 5;
     obj_t name = function_debug_name_or_self(*ptr++);
 
     printf("fp 0x%08lx: ", (unsigned long)frame->fp);
@@ -866,7 +866,7 @@ static void locals_cmd(obj_t args)
 	    obj_t value;
 
 	    if (argument)
-		value = CurFrame->fp[-offset-5];
+		value = CurFrame->fp[-offset-6];
 	    else
 		value = CurFrame->fp[offset];
 	    if (indirect)
@@ -939,7 +939,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 			obj_t value;
 
 			if (argument)
-			    value = CurFrame->fp[-offset-5];
+			    value = CurFrame->fp[-offset-6];
 			else
 			    value = CurFrame->fp[offset];
 			if (indirect)
@@ -990,8 +990,8 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 	}
 	else {
 	    obj_t *fp = CurFrame->fp;
-	    obj_t *args = ((obj_t *)obj_rawptr(fp[-3])) + 1;
-	    int nargs = fp - args - 4;
+	    obj_t *args = ((obj_t *)obj_rawptr(fp[-4])) + 1;
+	    int nargs = fp - args - 5;
 	    int arg = fixnum_value(arg_value(expr));
 
 	    if (arg >= nargs) {
