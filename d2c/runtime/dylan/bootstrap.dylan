@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.26 2002/11/01 21:40:56 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.27 2002/11/20 04:25:01 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -145,7 +145,7 @@ define module dylan-viscera
     add, add!, add-new, add-new!, remove, remove!, push, pop, push-last,
     pop-last, reverse, reverse!, sort, sort!, intersection, difference, union,
     remove-duplicates, remove-duplicates!, copy-sequence, concatenate,
-    concatenate-as, replace-subsequence!, subsequence-position,
+    concatenate!, concatenate-as, replace-subsequence!, subsequence-position,
     do, map, map-as, map-into, any?, every?, reduce, reduce1, choose,
     choose-by, member?, find-key, remove-key!, replace-elements!, fill!,
     forward-iteration-protocol, backward-iteration-protocol, table-protocol,

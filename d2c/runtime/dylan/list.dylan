@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.5 2002/08/01 15:42:58 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.6 2002/11/20 04:25:01 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -234,6 +234,33 @@ define method remove! (list :: <list>, element, #key test = \==, count)
   end;
   list;
 end;
+
+define sealed method concatenate!
+    (pair :: <pair>, #next next-method, #rest more-sequences)
+ => (pair :: <pair>)
+  if(every?(rcurry(instance?, <list>), more-sequences))
+    let prev :: <pair>
+      = for(prev :: <pair> = pair then pair.tail,
+            until: prev.tail == #())
+        finally
+          prev;
+        end;
+    for(lst :: <list> in more-sequences)
+      unless(empty?(lst))
+        prev.tail := lst;
+        for(nprev :: <pair> = lst then nprev.tail,
+            until: nprev.tail == #())
+        finally
+          prev := nprev;
+        end;
+      end unless;
+    end for;
+        
+    pair;
+  else
+    next-method();
+  end if;
+end method concatenate!;
 
 define method size (list :: <list>)
     => res :: type-union(<false>, <integer>);

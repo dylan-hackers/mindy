@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.11 2002/10/09 22:46:23 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.12 2002/11/20 04:25:01 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -553,6 +553,10 @@ define sealed generic concatenate
     (seq :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
 
+define open generic concatenate!
+    (sequence :: <sequence>, #rest more-sequences)
+ => (result :: <sequence>);
+
 define open generic replace-subsequence!
     (seq :: <sequence>, insert-seq :: <sequence>, #key start, end: finis)
     => result-seq :: <sequence>;
@@ -1039,6 +1043,12 @@ define inline method concatenate (sequence :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
   apply(concatenate-as, sequence.type-for-copy, sequence, more-sequences);
 end;
+
+define inline method concatenate!
+    (sequence :: <sequence>, #rest more-sequences)
+ => (result :: <sequence>)
+  apply(concatenate, sequence, more-sequences);
+end method concatenate!;
 
 define method concatenate-as(type :: <type>, sequence :: <sequence>,
 			     #rest more-sequences) => result :: <sequence>;

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.9 2002/10/15 15:41:39 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.10 2002/11/20 04:25:01 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -311,6 +311,39 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
   end unless;
   ssv;
 end method remove!;
+
+define sealed method concatenate!
+    (ssv :: <stretchy-object-vector>, #rest more-sequences)
+ => (ssv :: <stretchy-object-vector>)
+  let current = ssv.size;
+
+  let new-size
+    = for(sequence in more-sequences,
+          new-size = current then new-size + sequence.size)
+      finally
+        new-size;
+      end;
+    
+  if (new-size >= ssv.ssv-data.size)
+    let data-size = if(current * 2 > new-size) current * 2 else new-size end;
+    ssv.ssv-data := replace-subsequence!(make(<simple-object-vector>,
+                                              size: data-size),
+                                         ssv.ssv-data, end: current);
+  end if;
+
+  let data = ssv.ssv-data;
+  for(sequence in more-sequences,
+      outer-index = current
+        then for(item in sequence, index from outer-index)
+               data[index] := item;
+             finally
+               index;
+             end)
+  end;
+  
+  ssv.ssv-current-size := new-size;
+  ssv;
+end method concatenate!;
 
 define sealed method as
     (class == <stretchy-vector>, collection :: <collection>)
