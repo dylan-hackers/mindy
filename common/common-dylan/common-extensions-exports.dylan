@@ -72,12 +72,8 @@ define module functional-extensions
   use common-extensions, import: { find-element };
   export 
     find-value,
-    with-keywords-removed, 
-    put-property!, get-property, \remove-property!,
     \profiling;
 end module;
-
-                                      
 
 define module common-extensions
   use dylan;
