@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.14 1996/05/01 14:36:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.15 1996/06/24 23:16:47 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -651,3 +651,18 @@ define method ambiguous-method-error (methods :: <list>)
 	methods);
 end;
 
+
+
+// GDB debugging hooks.
+// These are included in this file, because they will thus be more or
+// less guaranteed to be linked in, and because we are bootstrapping
+// off of the "condition-format" stuff.
+//
+// Note that these routines rely upon a magical knowledge of compiler
+// internals.  There is no guarantee that they will continue to work
+// in the future.
+
+define method gdb-print-object (obj :: <object>) => ();
+  condition-format(*warning-output*, "%=\n", obj);
+  condition-force-output(*warning-output*);
+end method gdb-print-object;
