@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.48 1995/05/04 09:23:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.49 1995/05/05 09:24:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -858,7 +858,7 @@ end;
 
 define method optimize-known-call
     (component :: <component>, call :: <known-call>,
-     func :: <leaf>)
+     func :: union(<leaf>, <definition>))
     => ();
 end;
 
@@ -866,7 +866,7 @@ define method optimize-known-call
     (component :: <component>, call :: <known-call>,
      func :: <definition-constant-leaf>)
     => ();
-  optimize-known-call(component, call, func.const-defn, #f);
+  optimize-known-call(component, call, func.const-defn);
 end;
 
 define method optimize-known-call
