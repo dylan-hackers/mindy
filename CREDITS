@@ -21,7 +21,7 @@ Neel Krishnaswami (neel)
 Nolan Darilek     (nolan)
 Ole J. Tetlie     (olet)
 Peter Hinely      (phinely)*
-Igo Albrecht      (prom)*
+Ingo Albrecht     (prom)*
 Rob Myers         (robmyers)
 Paul Dempster     (scotek)
 Matthias Hölzl    (tc)
@@ -45,13 +45,36 @@ Noah Gibbs         (panda)
 Robert Stockton    (rgs)
 Robert MacLachlan  (ram)
 Russell M. Schaaf  (rsbe)
+Scott Fahlman      (sfa)
 Sean Hallgren      (hallgren)
 William Lott       (wlott)
 
-
-People credited with code imported to the project at some point
-===============================================================
+Harlequin Dylan Project
+=======================
 
 Andrew Armstrong
-Roger Critchlow
+Carl Gay
+David Gray
+Eliot Miranda
+Gail Zacharia
+Gary Palter
+Hugh Greene
+James Kirsch
+Jonathan Bachrach
+Jonathon Lee
+Keith Dennison
+Keith Playford
 Scott McKay
+Shri Amit
+Toby Weinberg
+
+Other people credited in the code
+===================================
+
+Gareth Baker
+Roger Critchlow
+
+
+And a numerous other people who contributed patches, ideas and bug
+reports.
+
