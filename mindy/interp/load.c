@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.3 1999/04/10 01:14:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/load.c,v 1.4 1999/06/02 18:44:29 andreas Exp $
 *
 * This file implements the loader.
 *
@@ -1043,8 +1043,8 @@ void load_library(obj_t name)
 	else {
 	    memcpy(next, dylandir, strlen(dylandir));
 	    next += strlen(dylandir);
-	    memcpy(next, "/lib/dylan/" VERSION "/runtime", strlen("/lib/dylan/" VERSION "/runtime"));
-	    next += strlen("/lib/dylan/" VERSION "/runtime");
+	    memcpy(next, "/lib/dylan/" VERSION "/" TARGET, strlen("/lib/dylan/" VERSION "/" TARGET));
+	    next += strlen("/lib/dylan/" VERSION "/" TARGET);
 	}
 	*next = '\0';
 	load_path = default_path;

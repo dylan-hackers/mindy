@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.11 1999/04/10 09:16:43 emk Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.12 1999/06/02 18:44:29 andreas Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -41,12 +41,12 @@ srcdir	=		@srcdir@
 SRCDIR	=		${srcdir}
 CONFIGDIR =		@builddir@
 BINDIR	=		@bindir@
-LIBDIR	=		@libdir@/dylan/@version@/runtime
+LIBDIR	=		@libdir@/dylan/@version@/@d2c_target@
 DESTDIR =
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
-CFLAGS	=		$(CCOPTS) -I${SRCDIR} -I${CONFIGDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\" -DVERSION=\"@version@\"
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} -I${CONFIGDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\" -DVERSION=\"@version@\" -DTARGET=\"@d2c_target@\"
 CFLAGS_NO_WERROR =      `echo $(CFLAGS) | sed 's/-Werror//g'`
 YACC	=		@YACC@
 YFLAGS	=		-d
