@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.21 1994/08/20 19:20:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.22 1994/08/20 20:19:17 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1356,6 +1356,11 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
     obj_t slots;
     obj_t initargs;
     obj_t inits;
+
+    if (DC(class)->all_slots == obj_False)
+	error("Attempt to make an instance of %= before\n"
+	      "the define class for it has been processed.",
+	      class);
 
     initializers = obj_Nil;
 
