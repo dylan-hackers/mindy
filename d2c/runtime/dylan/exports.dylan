@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.31 1996/07/12 00:54:43 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.32 1996/07/12 14:23:11 dwatson Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Cheap-IO, System, Introspection, Magic;
+    Dylan, Extensions, Cheap-IO, System, Introspection, Magic, %Hash-Tables;
 end;
 
 define module Dylan
@@ -132,12 +132,6 @@ define module Extensions
 	     // More types.
 	     <byte-character>, <true>, <false>,
 
-	     // Hash table extensions.
-	     <equal-table>, equal-hash, 
-	     <value-table>, value-hash,
-	     <string-table>, string-hash,
-	     collection-hash, sequence-hash,
-
 	     // Type extensions.
 	     false-or, one-of, <never-returns>, subclass, direct-instance,
 
@@ -203,6 +197,15 @@ define module Introspection
     export: all;
 end;
 
+define module %Hash-Tables
+  use Dylan-Viscera,
+    import: {remove-all-keys!, uppercase?,
+	     <hash-state>, collection-hash,
+	     <equal-table>, equal-hash,
+	     <value-table>, value-hash,
+	     string-hash, sequence-hash},
+    export: all;
+end module %Hash-Tables;
 
 define module magic
   use Dylan-Viscera,
@@ -268,4 +271,3 @@ define module magic
 	     wrong-number-of-arguments-error},
     export: all;
 end;
-
