@@ -327,8 +327,8 @@ sub emit_melange_rule {
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(MELANGE) -d2c -I\$(SRCDIR) ";
-    print "\$(SRCDIR)/$basefile.intr > $basefile.dylan\n\n";
+    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
+    print "\$(SRCDIR)/$basefile.intr $basefile.dylan\n\n";
     push(@compile_dependencies, "$basefile.dylan");
     push(@files_to_clean, "$basefile.dylan");
 }
