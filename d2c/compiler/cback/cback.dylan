@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.69 1995/08/29 15:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.70 1995/08/31 01:28:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -288,7 +288,12 @@ define method make-info-for (defn :: <definition>,
     let name = new-global(output-info);
     make(<backend-var-info>, representation: rep, name: name);
   else
-    let name = new-root(defn.ct-value, output-info);
+    let name = new-root(if (instance?(defn, <variable-definition>))
+			  defn.defn-init-value;
+			else
+			  defn.ct-value;
+			end,
+			output-info);
     make(<backend-var-info>, representation: $general-rep, name: name);
   end;
 end;
@@ -689,7 +694,11 @@ define method emit-bindings-definition-gunk
     format(stream, "static %s %s",
 	   rep.representation-c-type,
 	   info.backend-var-info-name);
-    let init-value = defn.ct-value;
+    let init-value = if (instance?(defn, <variable-definition>))
+		       defn.defn-init-value;
+		     else
+		       defn.ct-value;
+		     end;
     if (init-value)
       let (init-value-expr, init-value-rep)
 	= c-expr-and-rep(init-value, rep, output-info);
@@ -1433,14 +1442,16 @@ define method emit-assignment
   let name = info.backend-var-info-name;
   let rep = info.backend-var-info-rep;
   let stream = output-info.output-info-guts-stream;
-  if (rep.representation-has-bottom-value?)
-    let temp = new-local(output-info);
-    format(output-info.output-info-vars-stream, "%s %s;\n",
-	   rep.representation-c-type, temp);
-    format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
-    name := temp;
-  else
-    format(stream, "if (!%s_initialized) abort();\n", name);
+  unless (defn.defn-init-value)
+    if (rep.representation-has-bottom-value?)
+      let temp = new-local(output-info);
+      format(output-info.output-info-vars-stream, "%s %s;\n",
+	     rep.representation-c-type, temp);
+      format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
+      name := temp;
+    else
+      format(stream, "if (!%s_initialized) abort();\n", name);
+    end;
   end;
   deliver-result(defines, name, rep, #f, output-info);
 end;
@@ -1456,11 +1467,9 @@ define method emit-assignment
   let source = extract-operands(set, output-info, rep);
   spew-pending-defines(output-info);
   emit-copy(target, rep, source, rep, output-info);
-  unless (defn.ct-value)
-    unless (rep.representation-has-bottom-value?)
-      let stream = output-info.output-info-guts-stream;
-      format(stream, "%s_initialized = TRUE;\n", target);
-    end;
+  unless (defn.defn-init-value | rep.representation-has-bottom-value?)
+    let stream = output-info.output-info-guts-stream;
+    format(stream, "%s_initialized = TRUE;\n", target);
   end;
   deliver-results(defines, #[], #f, output-info);
 end;
