@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.26 1996/04/03 02:43:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.27 1996/04/06 07:05:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -319,6 +319,22 @@ define method ordinal-suffix (int :: <integer>) => res :: <byte-string>;
 end method ordinal-suffix;
   
 
+define open generic current-column (stream :: <stream>)
+    => res :: false-or(<integer>);
+
+define method current-column (stream :: <stream>)
+    => res :: false-or(<integer>);
+  #f;
+end method current-column;
+
+
+define method fresh-line (stream :: <stream>) => ();
+  let column = stream.current-column;
+  unless (column == 0)
+    write('\n', stream);
+  end unless;
+end method fresh-line;
+
 
 
 // Flush-happy stream
@@ -412,6 +428,14 @@ define method close (stream :: <flush-happy-stream>) => ();
   force-output(stream);
 end;
 
+define method current-column (stream :: <flush-happy-stream>)
+    => res :: false-or(<integer>);
+  let (buf, next) = get-output-buffer(stream);
+  let column = stream.column + next;
+  release-output-buffer(stream, next);
+  column;
+end method current-column;
+
 define method pprint-logical-block
     (stream :: <flush-happy-stream>,
      #next next-method,
@@ -421,10 +445,7 @@ define method pprint-logical-block
           body :: <function>,
           suffix :: false-or(<byte-string>))
     => ();
-  let (buf, next) = get-output-buffer(stream);
-  let column = stream.column + next;
-  release-output-buffer(stream, next);
-  next-method(stream, column: column, prefix: prefix,
+  next-method(stream, column: current-column(stream), prefix: prefix,
 	      per-line-prefix: per-line-prefix, body: body,
 	      suffix: suffix);
 end;
@@ -452,9 +473,10 @@ end class <pretty-debugger>;
 define method invoke-debugger
     (debugger :: <pretty-debugger>, condition :: <condition>)
     => res :: <never-returns>;
+  fresh-line(*debug-output*);
   format(*debug-output*, "%s\n", condition);
   force-output(*debug-output*);
-  call-out("exit", void:, int:, 1);
+  call-out("abort", void:);
 end;
   
 method ()
