@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.29 1996/07/12 00:58:36 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.30 1996/07/12 14:25:26 dwatson Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -164,11 +164,7 @@ define module dylan-viscera
     <general-integer>, <extended-integer>,
     $maximum-integer, $minimum-integer, integer-length,
     <ratio>, ratio, numerator, denominator,
-    <byte-character>, <true>, <false>,
-    <equal-table>, equal-hash, 
-    <value-table>, value-hash,
-    <string-table>, string-hash,
-    collection-hash, sequence-hash,
+		 <byte-character>, <true>, <false>,
     false-or, one-of, <never-returns>, subclass, direct-instance,
     report-condition, condition-format, condition-force-output,
     *warning-output*,
@@ -202,6 +198,13 @@ define module dylan-viscera
     <subclass>, subclass-of,
     <direct-instance>, direct-instance-of,
     <byte-character-type>,
+
+    // %Hash-Tables Stuff (Ultimately exported from Table-Extensions
+    remove-all-keys!, uppercase?,
+    <hash-state>, collection-hash,
+    <equal-table>, equal-hash,
+    <value-table>, value-hash,
+    string-hash, sequence-hash,
 
     // Variables magically referenced by the compiler which we need to hang
     // around even though they aren't otherwise overtly exported.
