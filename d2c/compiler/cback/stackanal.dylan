@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.2 2000/01/21 23:42:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.3 2000/01/22 01:22:14 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -117,7 +117,6 @@ define method analyze
   // HOTFIX: some primitives (need to figure out which)
   // need a cluster. Example is values-sequence.
   // Need to look at op.primitive-name ???
-  format-out("Analyzing primitive %s\n");
   let new-depth = depth + 1;
   if (new-depth > state.max-depth)
     state.max-depth := new-depth;
