@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.4 1995/03/24 12:35:14 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.5 1995/04/21 02:31:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -134,7 +134,7 @@ define class <component> (<block-region-mixin>)
   keyword source-location:, init-value: make(<source-location>);
   //
   // Queue of dependencies that need to be updated (threaded by queue-next.)
-  slot reoptimize-queue :: false-or(<dependency>), init-value: #f;
+  slot reoptimize-queue :: false-or(<dependent-mixin>), init-value: #f;
   //
   // List of all methods.
   slot all-methods :: <list>, init-value: #();
