@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.7 1995/04/21 19:39:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.8 1995/04/22 00:42:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -160,8 +160,10 @@ end class;
 // Represents the "variables" that can appear directly as an assignment target.
 // 
 define abstract class <definition-site-variable> (<abstract-variable>)
-  // The assignment that defines this variable.
-  slot definer :: <abstract-assignment>, init-keyword: definer:;
+  // The assignment that defines this variable.  Only #f during creation
+  // or if the variable has been deleted.
+  slot definer :: false-or(<abstract-assignment>),
+    init-keyword: definer:, init-value: #f;
 
   // Thread through all the variables defined at our defining operation.
   slot definer-next :: false-or(<definition-site-variable>), init-value: #f;
