@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.9 1995/05/03 07:13:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.10 1995/05/05 14:41:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -177,7 +177,7 @@ define method seed-representations () => ();
     set-representations(df-class, df-rep, df-rep);
   end;
   begin
-    let xf-class = dylan-value(#"<double-float>");
+    let xf-class = dylan-value(#"<extended-float>");
     let xf-rep
       = if ($long-double-size > $data-word-size)
 	  make(<immediate-representation>, more-general: $heap-rep,
