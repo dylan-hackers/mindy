@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.15 1994/06/11 02:20:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.16 1994/06/11 16:15:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1643,14 +1643,8 @@ static struct expr *expand_case_body(struct condition_body *body)
 	    return make_body_expr(clause->body);
 	}
     }
-    else {
-	struct expr *expr
-	    = make_literal_ref(make_string_literal("fell though case"));
-	struct arglist *args
-	    = add_argument(make_argument_list(), make_argument(expr));
-
-	return make_function_call(make_varref(id(sym_Error)), args);
-    }
+    else
+	return make_literal_ref(make_false_literal());
 }
 
 static boolean expand_case_expr(struct expr **ptr)
