@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.36 1994/06/17 15:55:37 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.37 1994/06/19 01:25:49 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -52,7 +52,7 @@ define module Builtin-Stuff
     ceiling, ceiling/, copy-bytes, current-handler, current-thread,
     do-next-method,
     element, element-setter, enable-error-system,
-    find-method, floor, floor/, format, function-arguments,
+    find-method, float-hash, floor, floor/, format, function-arguments,
     generic-function-mandatory-keywords, generic-function-methods,
     getc, grab-lock,
     handler-function, handler-init-args, handler-next, handler-test,
@@ -88,7 +88,7 @@ define module Builtin-Stuff
     debugger-return, debugger-eval,
     on-exit, exit, 
     <equal-table>, equal-hash, collection-hash,
-    <value-table>, sequence-hash, string-hash;
+    <value-table>, value-hash, sequence-hash, string-hash;
 end Builtin-Stuff;
 
 define module Dylan
@@ -188,7 +188,7 @@ define module Extensions
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object, 
 	     <equal-table>, equal-hash, collection-hash, 
-             <value-table>, sequence-hash, string-hash},
+             <value-table>, value-hash, sequence-hash, string-hash},
     export: all;
   export
     one-of, type-or, ignore;
