@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.13 1995/12/03 21:23:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.14 1995/12/05 03:03:56 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -253,6 +253,12 @@ end;
 define method always-the-same?
     (x :: <expression>, y :: <expression>) => res :: <boolean>;
   x == y;
+end;
+
+define method always-the-same?
+    (x :: <literal-constant>, y :: <literal-constant>)
+    => res :: <boolean>;
+  x.value == y.value;
 end;
 
 define method always-the-same?
