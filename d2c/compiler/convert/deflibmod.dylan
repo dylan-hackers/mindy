@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.12 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.13 1996/03/28 00:07:04 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -144,11 +144,15 @@ end class <export-clause>;
 
 define-procedural-expander
   (#"make-export-clause",
-   method (names-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, names-frag :: <fragment>)
+       => ();
      let names = split-fragment-at-commas(names-frag);
-     make-magic-fragment(make(<export-clause>,
-			      names: map(extract-name, names)));
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<export-clause>,
+		names: map(extract-name, names),
+		source-location: generate-token-source-location(generator))));
    end method);
 
 
@@ -159,21 +163,26 @@ end class <create-clause>;
 
 define-procedural-expander
   (#"make-create-clause",
-   method (names-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, names-frag :: <fragment>)
+       => ();
      let names = split-fragment-at-commas(names-frag);
-     make-magic-fragment(make(<create-clause>,
-			      names: map(extract-name, names)));
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<create-clause>,
+		names: map(extract-name, names)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
 
 define-procedural-expander
   (#"make-use-clause",
-   method (name-frag :: <fragment>, import-frag :: <fragment>,
-	   exclude-frag :: <fragment>, prefix-frag :: <fragment>,
-	   rename-frag :: <fragment>, export-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   import-frag :: <fragment>, exclude-frag :: <fragment>,
+	   prefix-frag :: <fragment>, rename-frag :: <fragment>,
+	   export-frag :: <fragment>)
+       => ();
      let name = extract-name(name-frag);
      let import = (is-all?(import-frag)
 		     | map(method (frag)
@@ -186,34 +195,37 @@ define-procedural-expander
      let export = (is-all?(export-frag)
 		     | map(extract-name,
 			   split-fragment-at-commas(export-frag)));
-     make-magic-fragment
-       (make(<use>,
-	     name: name.token-symbol,
-	     imports:
-	       if (import == #t)
-		 #t;
-	       else
-		 remove-duplicates!
-		   (union(map(method (name-or-rename) => res :: <symbol>;
-				if (instance?(name-or-rename, <renaming>))
-				  name-or-rename.orig-name;
-				else
-				  name-or-rename.token-symbol;
-				end if;
-			      end method,
-			      import),
-			  map(orig-name, rename)));
-	       end if,
-	     excludes: map(token-symbol, exclude),
-	     prefix: prefix,
-	     renamings:
-	       if (import == #t)
-		 rename;
-	       else
-		 concatenate(choose(rcurry(instance?, <renaming>), import),
-			     rename);
-	       end if,
-	     exports: (export == #t) | map(token-symbol, export)));
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<use>,
+		name: name.token-symbol,
+		imports:
+		  if (import == #t)
+		    #t;
+		  else
+		    remove-duplicates!
+		      (union(map(method (name-or-rename) => res :: <symbol>;
+				   if (instance?(name-or-rename, <renaming>))
+				     name-or-rename.orig-name;
+				   else
+				     name-or-rename.token-symbol;
+				   end if;
+				 end method,
+				 import),
+			     map(orig-name, rename)));
+		  end if,
+		excludes: map(token-symbol, exclude),
+		prefix: prefix,
+		renamings:
+		  if (import == #t)
+		    rename;
+		  else
+		    concatenate(choose(rcurry(instance?, <renaming>), import),
+				rename);
+		  end if,
+		exports: (export == #t) | map(token-symbol, export)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
@@ -264,38 +276,53 @@ end method extract-prefix;
 
 define-procedural-expander
   (#"make-renaming",
-   method (from-frag :: <fragment>, to-frag :: <fragment>)
-       => result :: <fragment>;
-     make-magic-fragment(make(<renaming>,
-			      orig-name: extract-name(from-frag).token-symbol,
-			      new-name: extract-name(to-frag).token-symbol));
+   method (generator :: <expansion-generator>, from-frag :: <fragment>,
+	   to-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<renaming>,
+		orig-name: extract-name(from-frag).token-symbol,
+		new-name: extract-name(to-frag).token-symbol),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
 define-procedural-expander
   (#"make-define-module",
-   method (name-frag :: <fragment>, clauses-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   clauses-frag :: <fragment>)
+       => ();
      let name = extract-name(name-frag);
      let (uses, exports, creates) = extract-clauses(clauses-frag);
-     make-parsed-fragment(make(<define-module-tlf>,
-			       name: name.token-symbol, uses: uses,
-			       exports: exports, creates: creates));
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-module-tlf>,
+		name: name.token-symbol, uses: uses,
+		exports: exports, creates: creates),
+	   source-location: generate-token-source-location(generator)));
    end method);
 			      
 
 define-procedural-expander
   (#"make-define-library",
-   method (name-frag :: <fragment>, clauses-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   clauses-frag :: <fragment>)
+       => ();
      let name = extract-name(name-frag);
      let (uses, exports, creates) = extract-clauses(clauses-frag);
      unless (creates.empty?)
        error("bug in define library macro: somehow some creates showed up.");
      end unless;
-     make-parsed-fragment(make(<define-library-tlf>,
-			       name: name.token-symbol, uses: uses,
-			       exports: exports));
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-library-tlf>,
+		name: name.token-symbol, uses: uses,
+		exports: exports),
+	   source-location: generate-token-source-location(generator)));
    end method);
 			      
 

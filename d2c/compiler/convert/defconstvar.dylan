@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.31 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.32 1996/03/28 00:07:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,13 +23,17 @@ define sealed domain make (singleton(<define-constant-parse>));
 
 define-procedural-expander
   (#"make-define-constant",
-   method (variables-frag :: <fragment>, expression-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-parsed-fragment
-       (make(<define-constant-parse>,
-	     variables: parse-variable-list(make(<fragment-tokenizer>,
-						 fragment: variables-frag)),
-	     expression: expression-from-fragment(expression-frag)));
+   method (generator :: <expansion-generator>, variables-frag :: <fragment>,
+	   expression-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-constant-parse>,
+		variables: parse-variable-list(make(<fragment-tokenizer>,
+						    fragment: variables-frag)),
+		expression: expression-from-fragment(expression-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define class <define-variable-parse> (<define-binding-parse>)
@@ -39,13 +43,17 @@ define sealed domain make (singleton(<define-variable-parse>));
 
 define-procedural-expander
   (#"make-define-variable",
-   method (variables-frag :: <fragment>, expression-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-parsed-fragment
-       (make(<define-variable-parse>,
-	     variables: parse-variable-list(make(<fragment-tokenizer>,
-						 fragment: variables-frag)),
-	     expression: expression-from-fragment(expression-frag)));
+   method (generator :: <expansion-generator>, variables-frag :: <fragment>,
+	   expression-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-variable-parse>,
+		variables: parse-variable-list(make(<fragment-tokenizer>,
+						    fragment: variables-frag)),
+		expression: expression-from-fragment(expression-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 

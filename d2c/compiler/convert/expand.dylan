@@ -1,5 +1,5 @@
 module: expanders
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/expand.dylan,v 1.1 1996/03/17 00:57:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/expand.dylan,v 1.2 1996/03/28 00:07:04 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -121,10 +121,14 @@ end method extract-properties;
 
 
 
-define method make-magic-fragment (thing :: <object>)
+define method make-magic-fragment
+    (thing :: <object>,
+     #key source-location = make(<unknown-source-location>))
     => res :: <token-fragment>;
   make(<token-fragment>,
+       source-location: source-location,
        token: make(<pre-parsed-token>,
+		   source-location: source-location,
 		   kind: $error-token,
 		   parse-tree: thing));
 end method make-magic-fragment;
@@ -156,67 +160,88 @@ end;
 
 define-procedural-expander
   (#"make-bind-exit",
-   method (name-frag :: <fragment>, body-frag :: <fragment>)
-       => res :: <fragment>;
-     make-parsed-fragment
-       (make(<bind-exit-parse>,
-	     name: extract-name(name-frag),
-	     body: expression-from-fragment(body-frag)));
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   body-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<bind-exit-parse>,
+		// source-location: ???,
+		name: extract-name(name-frag),
+		body: expression-from-fragment(body-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define-procedural-expander
   (#"make-unwind-protect",
-   method (body-frag :: <fragment>, cleanup-frag :: <fragment>)
-       => res :: <fragment>;
-     make-parsed-fragment
-       (make(<unwind-protect-parse>,
-	     body: expression-from-fragment(body-frag),
-	     cleanup: expression-from-fragment(cleanup-frag)));
+   method (generator :: <expansion-generator>, body-frag :: <fragment>,
+	   cleanup-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<unwind-protect-parse>,
+		// source-location: ???,
+		body: expression-from-fragment(body-frag),
+		cleanup: expression-from-fragment(cleanup-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define-procedural-expander
   (#"make-if",
-   method (cond-frag :: <fragment>, then-frag :: <fragment>,
-	   else-frag :: <fragment>)
-       => res :: <fragment>;
-     make-parsed-fragment
-       (make(<if-parse>,
-	     // source-location: ???,
-	     condition: expression-from-fragment(cond-frag),
-	     consequent: expression-from-fragment(then-frag),
-	     alternate: expression-from-fragment(else-frag)));
+   method (generator :: <expansion-generator>, cond-frag :: <fragment>,
+	   then-frag :: <fragment>, else-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<if-parse>,
+		// source-location: ???,
+		condition: expression-from-fragment(cond-frag),
+		consequent: expression-from-fragment(then-frag),
+		alternate: expression-from-fragment(else-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define-procedural-expander
   (#"make-anonymous-method",
-   method (parameters-frag :: <fragment>, results-frag :: <fragment>,
-	   body-frag :: <fragment>)
-       => res :: <fragment>;
-     make-parsed-fragment
-       (make(<method-ref-parse>,
-	     method:
-	       make(<method-parse>,
-		    parameters:
-		      parse-parameter-list(make(<fragment-tokenizer>,
-						fragment: parameters-frag)),
-		    returns: parse-variable-list(make(<fragment-tokenizer>,
-						      fragment: results-frag)),
-		    body: expression-from-fragment(body-frag))));
+   method (generator :: <expansion-generator>, parameters-frag :: <fragment>,
+	   results-frag :: <fragment>, body-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<method-ref-parse>,
+		method:
+		  make(<method-parse>,
+		       parameters:
+			 parse-parameter-list(make(<fragment-tokenizer>,
+						   fragment: parameters-frag)),
+		       returns:
+			 parse-variable-list(make(<fragment-tokenizer>,
+						  fragment: results-frag)),
+		       body: expression-from-fragment(body-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define-procedural-expander
   (#"make-primitive",
-   method (name-frag :: <token-fragment>, args-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, name-frag :: <token-fragment>,
+	   args-frag :: <fragment>)
+       => ();
      let name = name-frag.fragment-token;
      assert (name.token-kind >= $define-token
 	       & name.token-kind <= $quoted-name-token);
-     make-parsed-fragment
-       (make(<primitive-parse>,
-	     source-location: name.source-location,
-	     name: name,
-	     operands: map(expression-from-fragment,
-			   split-fragment-at-commas(args-frag))));
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<primitive-parse>,
+		source-location: name.source-location,
+		name: name,
+		operands: map(expression-from-fragment,
+			      split-fragment-at-commas(args-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
@@ -225,11 +250,15 @@ define-procedural-expander
 
 define-procedural-expander
   (#"make-assignment",
-   method (place-frag :: <token-fragment>, value-frag :: <fragment>)
-       => result :: <fragment>;
-     make-parsed-fragment
-       (expand-assignment(expression-from-fragment(place-frag),
-			  expression-from-fragment(value-frag)));
+   method (generator :: <expansion-generator>, place-frag :: <token-fragment>,
+	   value-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (expand-assignment(expression-from-fragment(place-frag),
+			     expression-from-fragment(value-frag)),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 

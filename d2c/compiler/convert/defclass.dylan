@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.62 1996/03/21 03:01:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.63 1996/03/28 00:07:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,17 +20,21 @@ end class <define-class-parse>;
 
 define-procedural-expander
   (#"make-define-class",
-   method (name-frag :: <fragment>, supers-frag :: <fragment>,
-	   slots-frag :: <fragment>, options-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-parsed-fragment
-       (make(<define-class-parse>,
-	     name: extract-name(name-frag),
-	     superclass-exprs: map(expression-from-fragment,
-				   split-fragment-at-commas(supers-frag)),
-	     slots: map(extract-slot, split-fragment-at-commas(slots-frag)),
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))));
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   supers-frag :: <fragment>, slots-frag :: <fragment>,
+	   options-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-class-parse>,
+		name: extract-name(name-frag),
+		superclass-exprs: map(expression-from-fragment,
+				      split-fragment-at-commas(supers-frag)),
+		slots: map(extract-slot, split-fragment-at-commas(slots-frag)),
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 define method extract-slot (frag :: <fragment>)
@@ -59,13 +63,17 @@ end class <slot-parse>;
 
 define-procedural-expander
   (#"make-slot",
-   method (name-frag :: <fragment>, options-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-magic-fragment
-       (make(<slot-parse>,
-	     name: extract-name(name-frag),
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))))
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   options-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<slot-parse>,
+		name: extract-name(name-frag),
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)))
    end method);
 
 define class <inherited-slot-parse> (<abstract-slot-parse>)
@@ -77,13 +85,17 @@ end class <inherited-slot-parse>;
 
 define-procedural-expander
   (#"make-inherited-slot",
-   method (name-frag :: <fragment>, options-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-magic-fragment
-       (make(<inherited-slot-parse>,
-	     name: extract-name(name-frag),
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))))
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   options-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<inherited-slot-parse>,
+		name: extract-name(name-frag),
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)))
    end method);
 
 define class <init-arg-parse> (<abstract-slot-parse>)
@@ -95,13 +107,17 @@ end class <init-arg-parse>;
 
 define-procedural-expander
   (#"make-init-arg",
-   method (keyword-frag :: <fragment>, options-frag :: <fragment>)
-       => expansion :: <fragment>;
-     make-magic-fragment
-       (make(<init-arg-parse>,
-	     keyword: extract-keyword(keyword-frag),
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))))
+   method (generator :: <expansion-generator>, keyword-frag :: <fragment>,
+	   options-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-magic-fragment
+	  (make(<init-arg-parse>,
+		keyword: extract-keyword(keyword-frag),
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)))
    end method);
 
 define method extract-keyword (frag :: <fragment>)

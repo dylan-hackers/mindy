@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.64 1996/03/21 04:46:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.65 1996/03/28 00:07:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,18 +33,22 @@ end class <define-generic-parse>;
 
 define-procedural-expander
   (#"make-define-generic",
-   method (name-frag :: <fragment>, params-frag :: <fragment>,
-	   results-frag :: <fragment>, options-frag :: <fragment>)
-       => result :: <fragment>;
-     make-parsed-fragment
-       (make(<define-generic-parse>,
-	     name: extract-name(name-frag),
-	     parameters: parse-parameter-list(make(<fragment-tokenizer>,
-						   fragment: params-frag)),
-	     results: parse-variable-list(make(<fragment-tokenizer>,
-					       fragment: results-frag)),
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))));
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   params-frag :: <fragment>, results-frag :: <fragment>,
+	   options-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-generic-parse>,
+		name: extract-name(name-frag),
+		parameters: parse-parameter-list(make(<fragment-tokenizer>,
+						      fragment: params-frag)),
+		results: parse-variable-list(make(<fragment-tokenizer>,
+						  fragment: results-frag)),
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
@@ -62,13 +66,17 @@ end class <define-sealed-domain-parse>;
 
 define-procedural-expander
   (#"make-define-sealed-domain",
-   method (name-frag :: <fragment>, types-frag :: <fragment>)
-       => result :: <fragment>;
-     make-parsed-fragment
-       (make(<define-sealed-domain-parse>,
-	     name: extract-name(name-frag),
-	     type-exprs: map(expression-from-fragment,
-			     split-fragment-at-commas(types-frag))));
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   types-frag :: <fragment>)
+       => ();
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-sealed-domain-parse>,
+		name: extract-name(name-frag),
+		type-exprs: map(expression-from-fragment,
+				split-fragment-at-commas(types-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
@@ -88,9 +96,9 @@ end class <define-method-parse>;
 
 define-procedural-expander
   (#"make-define-method",
-   method (name-frag :: <fragment>, method-frag :: <fragment>,
-	   options-frag :: <fragment>)
-       => result :: <fragment>;
+   method (generator :: <expansion-generator>, name-frag :: <fragment>,
+	   method-frag :: <fragment>, options-frag :: <fragment>)
+       => ();
      let method-parse
        = for (method-expr = expression-from-fragment(method-frag)
 		then macro-expand(method-expr),
@@ -103,11 +111,14 @@ define-procedural-expander
 	   method-expr.method-ref-method;
 	 end for;
      method-parse.method-name := extract-name(name-frag);
-     make-parsed-fragment
-       (make(<define-method-parse>,
-	     method: method-parse,
-	     options: parse-property-list(make(<fragment-tokenizer>,
-					       fragment: options-frag))));
+     generate-fragment
+       (generator,
+	make-parsed-fragment
+	  (make(<define-method-parse>,
+		method: method-parse,
+		options: parse-property-list(make(<fragment-tokenizer>,
+						  fragment: options-frag))),
+	   source-location: generate-token-source-location(generator)));
    end method);
 
 
