@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.3 2000/10/20 15:04:06 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.4 2001/03/17 03:43:33 bruce Exp $
 copyright: see below
 
 
@@ -286,10 +286,7 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
   if (~defines)
     write(stream, "()");
   elseif (~defines.definer-next)
-    dump(defines, stream);
-    if (defines.needs-type-check?)
-      write-element(stream, '*');
-    end if;
+    dump-variable-and-type(defines, stream);
   else
     pprint-logical-block
       (stream,
@@ -302,19 +299,29 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
 		   write(stream, ", ");
 		   pprint-newline(#"fill", stream);
 		 end;
-		 dump(def, stream);
-		 if (def.needs-type-check?)
-		   write-element(stream, '*');
-		 end if;
+		 dump-variable-and-type(def, stream);
 	       end;
 	     end,
        suffix: ")");
   end;
 end;
 
+define method dump-variable-and-type
+    (variable :: <definition-site-variable>, stream :: <stream>)  => ()
+  dump(variable, stream);
+  if (variable.needs-type-check?)
+    write-element(stream, '*');
+  end if;
+  write(stream, " :: ");
+  print-message(variable.derived-type, stream);
+end;
+
 define method dump (op :: <operation>, stream :: <stream>) => ();
   format(stream, "%s[%d]", op.kind, op.id);
   dump-operands(op.depends-on, stream);
+  pprint-newline(#"fill", stream);
+  write(stream, " => ");
+  print-message(op.derived-type, stream);
 end;
 
 define method kind (op :: <operation>) => res :: <string>;
@@ -337,6 +344,14 @@ end;
 
 define method kind (op :: <error-call>) => res :: <string>;
   "ERROR-CALL";
+end;
+
+define method kind (op :: <delayed-optimization-call>) => res :: <string>;
+  if (op.use-generic-entry?)
+    "DELAYED-OPT-CALL-W/-NEXT";
+  else
+    "DELAYED-OPT-CALL";
+  end;
 end;
 
 define method kind (op :: <mv-call>) => res :: <string>;

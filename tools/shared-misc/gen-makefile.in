@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.18 2001/03/15 12:42:39 bruce Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.19 2001/03/17 03:43:36 bruce Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -366,7 +366,7 @@ sub do_Makegen_file {
     print "BUILDDIR=$builddir\n";
     print "DESTDIR=\n"; # GNU DESTDIR, not the $destdir variable.
     if ($host_platform{'make_supports_phony_targets?'}) {
-	print "\n.PHONY: default compile install clean\n\n";
+	print "\n.PHONY: default compile install uninstall clean\n\n";
     }
     print "default: compile\n\n";
 

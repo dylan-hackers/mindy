@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.3 2000/01/24 04:55:57 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.4 2001/03/17 03:43:30 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -28,6 +28,44 @@ copyright: see below
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
+
+/*
+
+ct-value [annotatable] {abstract}
+    literal {abstract}
+        literal-sequence [identity-preserving-mixin] {abstract}
+            literal-list {abstract}
+               literal-pair
+               literal-empty-list [eql-literal]
+            literal-vector {abstract}
+               literal-simple-object-vector
+            literal-string {abstract}
+               literal-byte-string
+    eql-ct-value {abstract}
+        ct-not-supplied-marker [identity-preserving-mixin]
+
+eql-literal [literal, eql-ct-value] {abstract}
+    literal-boolean {abstract} [identity-preserving-mixin]
+        literal-true
+        literal-false
+    literal-number {abstract}
+        literal-rational {abstract}
+            literal-ratio
+        literal-real {abstract}
+            literal-float {abstract}
+                literal-single-float
+                literal-double-float
+                literal-extended-float
+        literal-general-integer {abstract}
+            literal-integer
+            literal-extended-integer
+    literal-symbol [identity-preserving-mixin]
+        literal-byte-symbol
+    literal-character
+        literal-byte-character
+
+*/
+
 
 define abstract class <ct-value> (<annotatable>)
 end;

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.7 2000/01/24 04:56:23 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-exports.dylan,v 1.8 2001/03/17 03:43:34 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -36,6 +36,7 @@ define library compiler-main
   use parse-arguments;
   use compiler-base;
   use compiler-front;
+  use compiler-fer-transform;
   use compiler-optimize;
   use compiler-parser;
   use compiler-cback;
@@ -85,6 +86,8 @@ define module main
   use compile-time-functions;
   use signature-interface;
   use ctype;
+  use abstract-optimizer;
+  use null-optimizer;
   use cheese;
   use od-format;
   use standard-io;

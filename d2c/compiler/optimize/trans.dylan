@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.4 2001/03/12 18:40:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.5 2001/03/17 03:43:34 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -962,16 +962,66 @@ define method build-instance?
     end;
     res;
   else
-    let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
-    let class-literal = make-literal-constant(builder, class);
-    build-assignment
-      (builder, policy, source, res,
-       make-unknown-call
-	 (builder, ref-dylan-defn(builder, policy, source, #"fast-class-instance?"), #f,
-	  list(value, class-literal)));
-    res;
+//<<<<<<< trans.dylan
+//    let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+//    let class-literal = make-literal-constant(builder, class);
+//    build-assignment
+//      (builder, policy, source, res,
+//       make-unknown-call
+//	 (builder, ref-dylan-defn(builder, policy, source, #"fast-class-instance?"), #f,
+//	  list(value, class-literal)));
+//    res;
+//=======
+    // Call next-method instead if you don't want to inline checks.
+    if (*optimizer*.inline-instance-checks?)
+      build-inline-instance?-cclass-check(builder,policy,source, value, class);
+    else
+      next-method();
+    end;
+//>>>>>>> 1.2.4.2
   end;
 end;  
+
+define method build-inline-instance?-cclass-check
+    (b :: <fer-builder>, p :: <policy>, s :: <source-location>,
+     value :: <leaf>, class :: <cclass>)
+ => (res :: <expression>)
+  // Implement a PE typecheck.
+  // \==(truly-the(<integer>, %element(class1.class-row, class2.class-bucket)),
+  //     truly-the(<integer>, %element(class2.class-row, class2.class-bucket)))
+  // XXX - This code is pretty crummy. We're using unknown-call too much,
+  // and we're greatly increasing the optimizer's workload. Think of this as
+  // a proof of concept--we should implement a better version using a
+  // new primitive.
+  local
+    method build-var
+	(label :: <symbol>, type :: <symbol>,
+	 dylan-func :: <symbol>, args :: <list>)
+      let var = make-local-var(b, label, specifier-type(type));
+      build-assignment(b, p, s, var,
+		       make-unknown-call
+			 (b, ref-dylan-defn(b, p, s, dylan-func), #f, args));
+      var;
+    end method;
+  let class2 = make-literal-constant(b, class);
+  let bucket = build-var(#"temp", #"<integer>", #"class-bucket", list(class2));
+  let row2 = build-var(#"temp", #"<object>", #"class-row", list(class2));
+  let %tid2 = build-var(#"temp", #"<object>", #"%element", list(row2, bucket));
+  let tid2 = make-local-var(b, #"temp", specifier-type(#"<object>"));
+  build-assignment(b, p, s, tid2,
+		   make-operation
+		     (b, <truly-the>, list(%tid2),
+		      guaranteed-type: specifier-type(#"<integer>")));
+  let class1 = build-var(#"temp", #"<class>", #"%object-class", list(value));
+  let row1 = build-var(#"temp", #"<object>", #"class-row", list(class1));
+  let %tid1 = build-var(#"temp", #"<object>", #"%element", list(row1, bucket));
+  let tid1 = make-local-var(b, #"temp", specifier-type(#"<object>"));
+  build-assignment(b, p, s, tid1,
+		   make-operation
+		     (b, <truly-the>, list(%tid1),
+		      guaranteed-type: specifier-type(#"<integer>")));
+  build-var(#"instance?", #"<boolean>", #"==", list(tid1, tid2));
+end method;
 
 define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,

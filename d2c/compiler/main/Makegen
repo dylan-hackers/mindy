@@ -2,13 +2,14 @@
 &makegen_include("../common-Makegen");
 @potential_targets
     = &d2c_library('Main', 
-		   '-L../base -L../front -L../optimize -L../parser '
-		   . '-L../convert -L../cback');
+		   '-L../base -L../front -L../fer-transform -L../optimize '
+		   . '-L../parser -L../convert -L../cback');
 
 &emit_dbc_link_rule
     ('d2c.dbc', 
      '../../../common/file-system-base/base-file-system-lib.dbc '
      . '../base/compiler-base-lib.dbc ../front/compiler-front-lib.dbc'
+     . ' ../fer-transform/compiler-fer-transform-lib.dbc'
      . ' ../optimize/compiler-optimize-lib.dbc '
      . ' ../parser/compiler-parser-lib.dbc ../convert/compiler-convert-lib.dbc'
      . ' ../cback/compiler-cback-lib.dbc compiler-main-lib.dbc');

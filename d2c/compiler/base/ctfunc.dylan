@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.3 2000/01/24 04:55:56 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.4 2001/03/17 03:43:30 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -28,6 +28,22 @@ copyright: see below
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
+
+/*
+
+ct-value {abstract} (external)
+    ct-function [annotatable, identity-preserving-mixin] {abstract}
+        ct-raw-function
+        ct-callback-function
+        ct-generic-function [eql-ct-value] {abstract}
+            ct-open-generic
+            ct-sealed-generic
+        ct-method
+        ct-accessor-method
+    ct-entry-point [identity-preserving-mixin]
+
+*/
+
 
 // A ct-function is a kind of compile-time value used to represent a function.
 // ct-functions contain various linkage-related information needed to call the

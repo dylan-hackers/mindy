@@ -5,6 +5,7 @@ push(@compile_commands,
 &compile_subdirs(
     'base',
     'front',
+    'fer-transform',
     'optimize',
     'parser',
     'convert',
@@ -20,6 +21,7 @@ $enable_mindy_bootstrap && print <<'EOF';
 d2c-compile:
 	$(MAKE) -C base d2c-compile
 	$(MAKE) -C front d2c-compile
+	$(MAKE) -C fer-transform d2c-compile
 	$(MAKE) -C optimize d2c-compile
 	$(MAKE) -C parser d2c-compile
 	$(MAKE) -C convert d2c-compile

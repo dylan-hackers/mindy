@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.5 2001/02/26 20:22:22 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.6 2001/03/17 03:43:33 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -43,6 +43,7 @@ operation
 	general-call {abstract}
 	    unknown-call
 	    mv-call
+            delayed-optimization-call
 	error-call
     prologue
     self-tail-call
@@ -177,6 +178,16 @@ end class;
 define class <error-call> (<abstract-call>)
 end;
 
+// A call that we shouldn't optimize prematurely. Again, this is basically
+// the same as an <unknown-call>, but we don't want to improve it until we
+// have enough information available.
+//
+// We create these when simplifying inline functions, and change them back
+// into unknown calls after the functions have been inlined.
+//
+define class <delayed-optimization-call> (<general-call>)
+end;
+
 // A prologue is used to represent the incoming arguments to a function.
 // 
 define class <prologue> (<operation>)
@@ -271,7 +282,6 @@ define class <instance?> (<operation>)
   inherited slot derived-type, init-function: boolean-ctype;
   slot type :: <ctype>, required-init-keyword: type:;
 end;
-
 
 define class <nlx-operation> (<operation>)
   slot nlx-info :: <nlx-info>, required-init-keyword: nlx-info:;
@@ -605,15 +615,6 @@ end;
 
 
 
-// Functions defined in support libraries.
-
-define open generic optimize-component
-    (component :: <component>, #key simplify-only) => ();
-
-define open generic build-xep-component
-    (function :: <ct-function>, generic-entry? :: <boolean>)
- => (entry :: <fer-function-region>, component :: <component>);
-
 // Seals for file front.dylan
 
 // <let-assignment> -- subclass of <fer-assignment>
@@ -631,6 +632,8 @@ define sealed domain make(singleton(<unknown-call>));
 define sealed domain make(singleton(<mv-call>));
 // <error-call> -- subclass of <abstract-call>
 define sealed domain make(singleton(<error-call>));
+// <delayed-optimization-call> -- subclass of <general-call>
+define sealed domain make(singleton(<delayed-optimization-call>));
 // <prologue> -- subclass of <operation>
 define sealed domain make(singleton(<prologue>));
 define sealed domain initialize(<prologue>);

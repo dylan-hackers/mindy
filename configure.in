@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.61 2001/03/03 23:23:44 bruce Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.62 2001/03/17 03:43:30 bruce Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -48,7 +48,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=6
+CURRENT_BOOTSTRAP_COUNTER=7
 
 #--------------------------------------------------------------------
 # Make srcdir absolute to keep Mindy's build system from choking.
@@ -314,7 +314,7 @@ elif test -x "$builddir/bootstrap_compiler/d2c"; then
     bootstrap_d2c="$builddir/bootstrap_compiler/d2c"
     D2C="$bootstrap_d2c -p$srcdir/d2c/compiler/platforms.descr"
 elif test "$D2C" != no; then
-    if test $CURRENT_BOOTSTRAP_COUNTER -gt $_DCI_D2C_BOOTSTRAP_COUNTER
+    if test $CURRENT_BOOTSTRAP_COUNTER -ne $_DCI_D2C_BOOTSTRAP_COUNTER
     then
 	SCENARIO=BOOTSTRAPPING_WITH_D2C
 	enable_mindy=no

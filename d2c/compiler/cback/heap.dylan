@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.22 2001/02/26 21:07:19 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.23 2001/03/17 03:43:31 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -144,6 +144,14 @@ define sealed domain initialize(<local-heap-file-state>);
 // we will just end up dumping a reference to the original external definition.
 // Therefore, we instead use an <extra-label> object to record that we need
 // an extra label added to that ctv and then dump the <extra-label>.
+//
+// XXX - emk - The <extra-label> code appears to be slightly stale. Back
+// when the heap dumper generated assembly code, we could assign more than
+// one label to an object. But now that we dump C, we can only assign
+// a single label. So if an object's 'const-info-heap-labels' ever
+// contains multiple (unmatched) labels, we're in trouble.
+// See 'object-label', which now tries to generate unique labels for
+// everything. And think about cleaning this up.
 //
 define class <extra-label> (<object>)
   //
@@ -685,6 +693,8 @@ end;
 //
 // Decide if we should be defering the dump of this object, and queue it
 // for defered dumping if so.
+// XXX - If we defer anything, we need to generate a unique label for it, too.
+// See 'object-label' above.
 // 
 define generic defer-for-global-heap? (object :: <ct-value>, state :: <heap-file-state>)
     => defer? :: <boolean>;

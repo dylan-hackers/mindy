@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.45 2001/03/03 23:23:13 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.46 2001/03/17 03:43:34 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -732,7 +732,7 @@ define method compile-1-tlf
 			  sig, init-function);
     add!(state.unit-init-functions, ctv);
   end;
-  optimize-component(component);
+  optimize-component(*current-optimizer*, component);
   emit-tlf-gunk(tlf, file);
   emit-component(component, file);
 end method compile-1-tlf;
@@ -1331,7 +1331,7 @@ define method build-command-line-entry
 		 returns: result-type);
   let ctv = make(<ct-function>, name: name-obj, signature: sig);
   make-function-literal(builder, ctv, #"function", #"global", sig, func);
-  optimize-component(component);
+  optimize-component(*current-optimizer*, component);
   emit-component(component, file);
   ctv;
 end method build-command-line-entry;
@@ -1417,10 +1417,13 @@ define method show-help(stream :: <stream>) => ()
 "       --profile:         Generate profiling code.\n"
 "       -s, --static:      Force static linking.\n"
 "       -d, --break:       Debug d2c by breaking on errors.\n"
-"       --dump-transforms: Display detailed optimizer information.\n"
+"       -o, --optimizer-option:\n"
+"                          Turn on an optimizer option. Prefix option with\n"
+"                          'no-' to turn it off.\n"
+"       --debug-optimizer: Display detailed optimizer information.\n"
 "       -F, --cc-overide-command:\n"
 "                          Alternate method of invoking the C compiler.\n"
-"                          Used on files speficied with -f.\n"
+"                          Used on files specified with -f.\n"
 "       -f, --cc-overide-file:\n"
 "                          Files which need special C compiler invocation.\n"
 "       --help:            Show this help text.\n"
@@ -1437,7 +1440,7 @@ define method show-compiler-info(stream :: <stream>) => ()
   // All output must be of the form "KEY=VALUE". All keys must begin with
   // "_DCI_" (for "Dylan compiler info") and either "DYLAN" (which designates
   // a general purpose value) or "D2C" (which should be used for anything
-  // which is necessarily specific to d2c.
+  // which is necessarily specific to d2c).
 
   // This value indicates how much of LID we implement correctly.
   //   0: We only support CMU-style LID files.
@@ -1447,7 +1450,7 @@ define method show-compiler-info(stream :: <stream>) => ()
 
   // Increment this value here (and CURRENT_BOOTSTRAP_COUNTER) in
   // configure.in to force an automatic bootstrap.
-  p("_DCI_D2C_BOOTSTRAP_COUNTER=6\n");
+  p("_DCI_D2C_BOOTSTRAP_COUNTER=7\n");
 
   // The directory (relative to --prefix) where ./configure can find our
   // runtime libraries. This is used when bootstrapping.
@@ -1589,8 +1592,13 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("rpath"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
-			    long-options: #("dump-transforms"));
-			    
+			    long-options: #("debug-optimizer",
+					    "dump-transforms"));
+  add-option-parser-by-type(argp,
+			    <repeated-parameter-option-parser>,
+			    long-options: #("optimizer-option"),
+			    short-options: #("o"));
+
   // Parse our command-line arguments.
   unless(parse-arguments(argp, args))
     show-usage-and-exit();
@@ -1613,7 +1621,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     show-dylan-user-location(*standard-output*);
     exit(exit-code: 0);
   end if;
-
+  
   // Get our simple options.
   let library-dirs = option-value-by-long-name(argp, "libdir");
   let features = option-value-by-long-name(argp, "define");
@@ -1634,6 +1642,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let profile? = option-value-by-long-name(argp, "profile");
   *emit-all-function-objects?* = debug?;
 
+  // For folks who have *way* too much time (or a d2c bug) on their hands.
+  let debug-optimizer = option-value-by-long-name(argp, "debug-optimizer");
+
   // Determine our compilation target.
   let target-machine-name = option-value-by-long-name(argp, "target");
   let target-machine =
@@ -1645,10 +1656,18 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let targets-file = option-value-by-long-name(argp, "platforms") |
     $default-targets-dot-descr;
 
-  // For folks who have *way* too much time (or a d2c bug) on their hands.
-  if (option-value-by-long-name(argp, "dump-transforms"))
-    print-debugging-output();
-  end if;
+  // Decide if anyone passed some '-o' flags to our optimizer.
+  let optimizer-options = option-value-by-long-name(argp, "optimizer-option");
+  let optimizer-option-table = make(<table>);
+  for (option :: <string> in optimizer-options)
+    let (key, value) =
+      if (option.size > 3 & copy-sequence(option, end: 3) = "no-")
+	values(copy-sequence(option, start: 3), #f);
+      else
+	values(option, #t);
+      end;
+    optimizer-option-table[as(<symbol>, key)] := value;
+  end for;
 
   // Process our regular arguments, too.
   let args = regular-arguments(argp);
@@ -1656,6 +1675,19 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     show-usage-and-exit();
   end unless;
   let lid-file = args[0];
+
+  // Figure out which optimizer to use.
+  let optimizer-class =
+    if (element(optimizer-option-table, #"null", default: #f))
+      format(*standard-error*,
+	     "d2c: warning: -onull produces incorrect code\n");
+      <null-optimizer>;
+    else
+      <cmu-optimizer>;
+    end;
+  *current-optimizer* := make(optimizer-class,
+			      options: optimizer-option-table,
+			      debug-optimizer?: debug-optimizer);
 
   // Set up our target.
   if (targets-file == #f)

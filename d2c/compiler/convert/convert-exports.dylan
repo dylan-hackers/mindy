@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.5 2001/02/08 22:28:19 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.6 2001/03/17 03:43:31 bruce Exp $
 copyright: see below
 
 
@@ -217,13 +217,15 @@ define module define-functions
   use function-definitions;
   use front,
     import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>,
-             <literal-constant>, value, optimize-component};
+             <literal-constant>, value};
   use top-level-forms;
 
   use expanders;
   use lexenv;
   use compile-time-eval;
   use fer-convert;
+
+  use abstract-optimizer;
 
   export
     *implicitly-define-next-method*,
@@ -292,7 +294,7 @@ define module define-classes
   use front,
     import: {<heap-slot-ref>, <data-word-ref>, <heap-slot-set>,
        <uninitialized-value>, <primitive>, <fer-function-region>,
-       <function-literal>, <method-literal>, optimize-component};
+       <function-literal>, <method-literal>};
   use c-representation;
   use function-definitions;
 
@@ -308,6 +310,8 @@ define module define-classes
   use fer-convert;
   use define-constants-and-variables;
   use define-functions;
+
+  use abstract-optimizer;
 
   export
     class-defn-overrides, class-defn-slots,

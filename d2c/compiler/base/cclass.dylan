@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.9 2001/02/08 22:42:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.10 2001/03/17 03:43:30 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -28,6 +28,34 @@ copyright: see below
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
+
+/*
+
+ctype {abstract} (external)
+    cclass [eql-ct-value] {abstract}
+        defined-cclass
+        limited-cclass {abstract}
+    limited-ctype {abstract} (external)
+        direct-instance-ctype [ct-value]
+        subclass-ctype [ct-value, identity-preserving-mixin]
+
+ct-value {abstract} (external)
+    eql-ct-value {abstract} (external)
+        slot-info [identity-preserving-mixin] {abstract}
+            instance-slot-info
+                vector-slot-info
+            class-slot-info
+            each-subclass-slot-info
+            virtual-slot-info
+        override-info [identity-preserving-mixin]
+        keyword-info [identity-preserving-mixin]
+    proxy [identity-preserving-mixin]
+
+class-precedence-description    
+layout-table
+position-table
+
+*/
 
 // $All-Classes -- internal.
 //

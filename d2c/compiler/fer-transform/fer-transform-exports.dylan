@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.2 2000/06/11 22:38:19 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.3 2001/03/17 03:43:32 bruce Exp $
 copyright: see below
 
 
@@ -37,21 +37,8 @@ define library compiler-fer-transform
 
   export
     fer-transform,
-    abstract-optimizer,
     null-optimizer;
 end library compiler-fer-transform;
-
-define module abstract-optimizer
-  use common;
-  use flow, import: {<component>};
-  use front, import: {dump-fer};
-
-  export
-    <abstract-optimizer>,
-      debug-optimizer?, debug-optimizer?-setter,
-    optimize-component,
-    maybe-dump-fer;
-end module abstract-optimizer;
 
 define module fer-transform
   use common;
@@ -64,7 +51,7 @@ define module fer-transform
   use definitions;
   use variables, exclude: {<renaming>};
   use flow;
-  use front, exclude: {build-xep-component, optimize-component};
+  use front;
   use ctype;
   use classes;
   use signature-interface;
@@ -75,21 +62,19 @@ define module fer-transform
   use transformers;
   use compile-time-functions;
   use function-definitions;
-
-  // XXX - For use by build-xep-component only. This will go away when
-  // build-xep-component moves into cback.
-  use abstract-optimizer;
-
-  export
-    build-local-xeps,
-    build-xep-component;
+  
+  export 
+    add-type-checks, 
+    convert-component-to-ssa,
+    traverse-component;
 end module fer-transform;
 
 define module null-optimizer
   use common;
   use flow, import: {<component>};
+  use front, import: {dump-fer};
   use utils, import: {dformat};
-
+  use xep-tools, import: {build-local-xeps};
   use abstract-optimizer;
   use fer-transform;
 

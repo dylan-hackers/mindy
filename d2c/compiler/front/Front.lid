@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/Front.lid,v 1.4 1999/08/24 19:50:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/Front.lid,v 1.5 2001/03/17 03:43:33 bruce Exp $
 library: compiler-front
 unit-prefix: front
 unique-id-base: 10250
@@ -15,3 +15,5 @@ builder.dylan
 fer-builder.dylan
 fer-dump.dylan
 fer-od.dylan
+abstract-optimizer.dylan
+xep.dylan

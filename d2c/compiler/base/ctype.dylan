@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.4 2000/01/24 04:55:57 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.5 2001/03/17 03:43:30 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -29,6 +29,27 @@ copyright: see below
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
+
+/*
+
+values-ctype [identity-preserving-mixin] {abstract}
+    ctype {abstract}
+        cclass [eql-ct-value] {abstract} (external)
+        union-ctype [ct-value]
+        unknown-ctype        
+        limited-ctype {abstract}
+            limited-integer-type [ct-value]
+            limited-collection-type [ct-value]
+            singleton-type [ct-value]
+            byte-character-type [ct-value]
+            direct-instance-ctype [ct-value] (external)
+            subclass-ctype [ct-value, identity-preserving-mixin] (external)
+    multi-value-ctype
+
+wild-ctype() returns a <multi-value-ctype> with zero or more values of
+type <object>. This is the result type of an unconstrained function.
+
+*/
 
 /// Superclass of multi-value types and regular single types.
 define abstract class <values-ctype> (<identity-preserving-mixin>)
@@ -1227,10 +1248,23 @@ end;
 
 define constant $limited-collection-table = make(<limited-collection-table>);
 
+// optimize/limopt.dylan uses this hook to supply implementation classes
+// for limited collection types.
+define variable *find-limited-collection-implementation* :: <function>
+  = method (type :: <limited-collection-ctype>)
+     => (cclass :: false-or(<cclass>))
+      error("No function supplied for "
+	      "*find-limited-collection-implementation*");
+    end method;
+
 define class <limited-collection-ctype> (<limited-ctype>, <ct-value>)
   slot element-type :: <ctype>, required-init-keyword: element-type:;
   slot size-or-dimension :: type-union(<false>, <integer>, <sequence>) = #f,
        init-keyword: size:;
+  // The implementation class, if one exists and we know it. All instances
+  // of this type will be instances of this class. (If the type isn't
+  // instantiable, this will be #f.)
+  slot implementation-class :: false-or(<cclass>) = #f;
 end class;
 
 define sealed domain make (singleton(<limited-collection-ctype>));
@@ -1242,6 +1276,12 @@ define method make (class == <limited-collection-ctype>, #next next-method,
   element($limited-collection-table, key, default: #f)
     | (element($limited-collection-table, key) := next-method());
 end;
+
+define method initialize
+    (instance :: <limited-collection-ctype>, #key, #all-keys) => ()
+  instance.implementation-class :=
+    *find-limited-collection-implementation*(instance);
+end method initialize;
 
 define method print-object (limcol :: <limited-collection-ctype>,
 			    stream :: <stream>)
@@ -1298,18 +1338,22 @@ define method ctype-extent-dispatch
           make(<limited-collection-ctype>, base-class: class,
                element-type: type.element-type, size: type.size-or-dimension);
         end method;
-  let base-extent = ctype-extent(type.base-class);
-  if (instance?(base-extent, <union-ctype>))
-    reduce(method (result :: <ctype>, member :: <ctype>)
-	     => result :: <ctype>;
- 	     ctype-union(result, build-limited(member));
-	   end method,
-	   empty-ctype(),
-	   base-extent.members);
+  let implementation = type.implementation-class;
+  if (implementation)
+    build-limited(implementation)
   else
-    build-limited(base-extent);
+    let base-extent = ctype-extent(type.base-class);
+    if (instance?(base-extent, <union-ctype>))
+      reduce(method (result :: <ctype>, member :: <ctype>)
+	      => result :: <ctype>;
+	       ctype-union(result, build-limited(member));
+	     end method,
+	     empty-ctype(),
+	     base-extent.members);
+    else
+      build-limited(base-extent);
+    end if;
   end if;
-//  type;
 end method ctype-extent-dispatch;
 
 // csubtype-dispatch{<limited-collection-ctype>,<limited-collection-ctype>}
@@ -1374,7 +1418,7 @@ define method ctype-intersection-dispatch
     => (result :: <ctype>, precise :: <boolean>);
   let (base, precise) = ctype-intersection(type1.base-class, type2);
   if (base == empty-ctype())
-    values(empty-ctype(), #f);
+    values(empty-ctype(), precise);
   elseif (instance?(base, <cclass>))
     values(make(<limited-collection-ctype>, base-class: base,
 		element-type: type1.element-type,

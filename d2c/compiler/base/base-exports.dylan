@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.20 2001/02/08 22:52:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.21 2001/03/17 03:43:30 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -608,7 +608,12 @@ define module ctype
     ctype-extent-dispatch, csubtype-dispatch, ctype-intersection-dispatch,
 
     // Hooks need by the dumper code.
-    %ctype-extent, %ctype-extent-setter;
+    %ctype-extent, %ctype-extent-setter,
+
+    // Hook to improve ctype-extent on limited collections.
+    // XXX - There's no reason this needs to be a hook. The relevant code
+    // could be included directly in this module.
+    *find-limited-collection-implementation*;
 end;
 
 define module transformers

@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.4 2000/09/09 20:35:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.5 2001/03/17 03:43:33 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -145,6 +145,15 @@ define method clone-expr
   make-operation(state.clone-builder, <error-call>,
 		 clone-arguments(expr.depends-on, state),
 		 derived-type: expr.derived-type);
+end;
+
+define method clone-expr
+    (expr :: <delayed-optimization-call>, state :: <clone-state>)
+    => clone :: <delayed-optimization-call>;
+  make-operation(state.clone-builder, <delayed-optimization-call>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 use-generic-entry: expr.use-generic-entry?);
 end;
 
 define method clone-expr

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.3 2000/01/24 04:56:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.4 2001/03/17 03:43:34 bruce Exp $
 copyright: see below
 
 
@@ -37,7 +37,6 @@ define library compiler-optimize
 
   export
     cheese;
-
 end library compiler-optimize;
 
 
@@ -63,9 +62,10 @@ define module cheese
   use transformers;
   use compile-time-functions;
   use function-definitions;
+  use abstract-optimizer;
+  use xep-tools;
 
   export
-    print-debugging-output,
-    dont-print-debugging-output,
+    <cmu-optimizer>,
     *optimize-ncalls*;
 end;

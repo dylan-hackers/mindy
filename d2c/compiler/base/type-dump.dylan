@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.5 2001/02/08 22:24:09 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.6 2001/03/17 03:43:31 bruce Exp $
 copyright: see below
 
 
@@ -150,6 +150,7 @@ add-make-dumper
   (#"limited-collection", *compiler-dispatcher*, <limited-collection-ctype>,
    list(info, #f, merge-and-set-info,
 	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class:, #f,
 	element-type, element-type:, #f,
 	size-or-dimension, size:, #f));
 

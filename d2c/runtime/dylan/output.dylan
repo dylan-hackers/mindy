@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.5 2000/10/20 15:23:36 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.6 2001/03/17 03:43:36 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -257,6 +257,27 @@ define method cheap-print
     (int :: <extended-integer>, fake-stream :: <symbol>) => ();
   fputs("#e", fake-stream);
   cheap-write-integer(fake-stream, int, 10);
+end;
+
+define method cheap-print
+    (coll :: <limited-collection>, fake-stream :: <symbol>) => ()
+  let base = coll.limited-integer-base-class;
+  let of = coll.limited-element-type;
+  let size = coll.limited-size-restriction;
+  let dim = coll.limited-dimensions;
+
+  cheap-format(fake-stream, "{limited %=", base);
+  if (of) cheap-format(fake-stream, ", of: %=", of) end;
+  if (size) cheap-format(fake-stream, ", size: %=", size) end;
+  if (dim) cheap-format(fake-stream, ", dim: %=", dim) end;
+  fputs("}", fake-stream);
+end;
+
+define method cheap-print
+    (obj :: <limited-collection-mixin>, fake-stream :: <symbol>) => ()
+  let class = obj.object-class.class-name;
+  let base = obj.%limited-collection-type;
+  cheap-format(fake-stream, "{an instance of %s, a %=}", class, base);
 end;
 
 

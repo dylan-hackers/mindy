@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.6 2001/02/26 20:22:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.7 2001/03/17 03:43:33 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -40,6 +40,8 @@ define library compiler-front
   export function-definitions;
   export variable-definitions;
   export top-level-forms;
+  export abstract-optimizer;
+  export xep-tools;
 end library;
 
 
@@ -102,12 +104,12 @@ define module front
   export
     dump-fer, id, reset-ids,
 
-    optimize-component, clone-function, build-xep-component,
+    clone-function,
 
     <fer-assignment>, policy,
     <let-assignment>, let-next, <set-assignment>,
 
-    <abstract-call>, <known-call>, <error-call>,
+    <abstract-call>, <known-call>, <error-call>, <delayed-optimization-call>,
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, primitive-name, primitive-info,
     <prologue>, function, function-setter,
@@ -271,3 +273,52 @@ define module top-level-forms
 
     <magic-interal-primitives-placeholder>;
 end;
+
+define module abstract-optimizer
+  use common;
+  use flow, import: {<component>};
+
+  export
+    <abstract-optimizer>,
+      debug-optimizer?, debug-optimizer?-setter, optimizer-options,
+    optimize-component,
+    *current-optimizer*;
+end module abstract-optimizer;
+
+// XXX - Move xep someplace more logical someday.
+// This code is pretty weird--it's needed by both the optimizers and cback,
+// but it doesn't rely on anything that isn't declared in front. This was
+// moved in here by emk for three reasons:
+//   1) Build performance when working on the optimizers.
+//   2) Everybody who needs this code already uses this library.
+//   3) No lower library already imports precisely right libraries.
+// This code originally lived in optimizer/xep.dylan.
+//
+define module xep-tools
+  use common;
+  use utils;
+  use errors;
+  use compile-time-values;
+  use names;
+  use definitions;
+  use variables, exclude: {<renaming>};
+  use flow;
+  use front;
+  use ctype;
+  use classes;
+  use signature-interface;
+  use source;
+  use builder-interface;
+  use policy;
+  use primitives;
+  use transformers;
+  use compile-time-functions;
+  use function-definitions;
+  use abstract-optimizer;
+
+  export
+    build-xep,
+    build-local-xeps,
+    build-callback-xep,
+    build-xep-component;
+end module xep-tools;

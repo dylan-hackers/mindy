@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Optimize.lid,v 1.4 1999/08/24 19:50:07 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Optimize.lid,v 1.5 2001/03/17 03:43:34 bruce Exp $
 library: compiler-optimize
 unit-prefix: optimize
 unique-id-base: 11250
@@ -9,11 +9,11 @@ optutil.dylan
 cheese.dylan
 fer-edit.dylan
 callopt.dylan
-xep.dylan
 tailcall.dylan
 funcopt.dylan
 primopt.dylan
 trans.dylan
+limopt.dylan
 cse.dylan
 constraint.dylan
 typeinf.dylan

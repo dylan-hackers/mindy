@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.4 2001/03/14 23:34:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.5 2001/03/17 03:43:36 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -603,22 +603,17 @@ end;
 // Return the number of ``interesting'' bits in x.  The interesting bits
 // are all but the sign bits.
 //
+// emk - The old code here was clever, but wrong. I've replaced it with
+// the naive but correct code from Mindy's runtime.
+//
 define method integer-length (x :: <integer>) => res :: <integer>;
-  local
-    method repeat (x :: <integer>, length :: <integer>, bits :: <integer>)
-	=> res :: <integer>;
-      if (bits.zero?)
-	length;
-      else
-	let shift = ash(bits, -1);
-	if (x < ash(1, shift))
-	  repeat(x, length, shift);
-	else
-	  repeat(ash(x, -bits), length + bits, shift);
-	end if;
-      end if;
-    end method repeat;
-  repeat(if (x.negative?) lognot(x) else x end, 0, $fixed-integer-bits);
+  for (x = if (x < 0) lognot(x) else x end
+	 then ash(x, -1),
+       length from 0,
+       until: x == 0)
+  finally
+    length;
+  end for;
 end method integer-length;
 
 

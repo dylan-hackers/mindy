@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.2 2001/01/25 03:50:28 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.3 2001/03/17 03:43:35 bruce Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -32,6 +32,7 @@ range.dylan
 deque.dylan
 table.dylan
 sort.dylan
+limited-collection.dylan
 seals.dylan
 handler.dylan
 nlx.dylan

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.22 2001/03/03 10:18:03 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.23 2001/03/17 03:43:31 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -977,7 +977,7 @@ define method maybe-emit-generic-entry
   let info = get-info-for(ctv, file);
   let name = generic-entry-c-name(info, file);
   if (~ctv.has-generic-entry?)
-    let (entry, component) = build-xep-component(ctv, #t);
+    let (entry, component) = build-xep-component(*current-optimizer*, ctv, #t);
     let entry-info = get-info-for(entry, file);
     // We've already allocated a meaningful name for this entry, so
     // we want copy it into the entry's info.
@@ -993,7 +993,7 @@ define method maybe-emit-general-entry
   let info = get-info-for(ctv, file);
   let name = general-entry-c-name(info, file);
   if (~ctv.has-general-entry?)
-    let (entry, component) = build-xep-component(ctv, #f);
+    let (entry, component) = build-xep-component(*current-optimizer*, ctv, #f);
     let entry-info = get-info-for(entry, file);
     // We've already allocated a meaningful name for this entry, so
     // we want copy it into the entry's info.
@@ -1010,7 +1010,7 @@ define method maybe-emit-callback-entry
   let info = get-info-for(ctv, file);
   let name = callback-entry-c-name(info, file);
   if (~ctv.has-callback-entry?)
-    let (entry, component) = build-xep-component(ctv, #f);
+    let (entry, component) = build-xep-component(*current-optimizer*, ctv, #f);
     let entry-info = get-info-for(entry, file);
     // We've already allocated a meaningful name for this entry, so
     // we want copy it into the entry's info.
