@@ -1,2 +1,4 @@
 strftime()
+timezone
 strptime()
+daylight
