@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.10 1995/05/01 06:49:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.11 1995/05/02 03:56:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,7 +17,7 @@ region [source-location-mixin] {abstract}
     join-region {abstract}
         if-region [dependent-mixin]
 	body-region {abstract}
-	    block-region [block-region-mixin]
+	    block-region [block-region-mixin, queueable-mixin, annotatable]
 	    method-region
 	    loop-region
 
@@ -116,7 +116,7 @@ end;
 // function joins the values arriving at the endpoint.
 //
 define class <block-region>
-    (<body-region>, <block-region-mixin>, <queueable-mixin>)
+    (<body-region>, <block-region-mixin>, <queueable-mixin>, <annotatable>)
 end;
 
 // A <method-region>'s Parent slot is the <component>, but conceptually it can
