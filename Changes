@@ -2,36 +2,17 @@ Mindy 1.5 Change Log
 
 The following are enhancements added since release 1.4:
 
-   Added the TK library, which is a Dylan binding for TK 4.0 (of
-   TCL/TK fame).  See dylan-tk.txt for details.  Also added a
-   graphical version of html2txt and a game of Minesweeper.
-
-   Added $not-supplied to the Extensions module.  See mindy.txt for
-   details.
-
-   Added <byte> to the Extensions module.  See mindy.txt for details.
-
-   Added <buffer-index> and $maximum-buffer-size to System module.
-   See mindy.txt for details.
-
-   *format-function* and *force-output-function* have been replaced by
-   condition-format.  See mindy.txt for details.
-
-   Object printing in the Print library is now generally more terse,
-   but still within the spec laid out in print.txt.
-
-   Limited-integer-class is now limited-integer-base-class,
-   limited-integer-min is now limited-integer-minimum, and
-   limited-integer-max is now limited-integer-maximum.  See mindy.txt
-   for details.
-
    Mindy is now compliant with most of the DRM; previous versions of
    Mindy were based on the older DIRM.  See mindy.txt for Mindy's
    deficiencies with respect to the DRM.
 
-   The function collect-garbage has been added to the System module of
-   the Dylan library.  This function can also do a purifying garbage
-   collection; see mindy.txt for details.
+   Added the TK library, which is a Dylan binding for TK 4.0 (of
+   TCL/TK fame).  See dylan-tk.txt for details.  Also added a
+   graphical version of html2txt and a game of Minesweeper.
+
+   Added the inspect and xinspect commands to the debugger, which
+   allow interactive examining of Dylan objects.  See debug.txt and
+   inspector.txt for details.
 
    Mindy now supports conditional compilation; see mindy.txt for
    details.
@@ -43,28 +24,12 @@ The following are enhancements added since release 1.4:
    protocols other than the forward-iteration-protocol.  See mindy.txt
    for details.
 
-   Mindy now supports a different integer model.  In brief, the
-   following renaming has been done:
-	<integer>              => <general-integer>
-	<fixed-integer>        => <integer>
-	$minimum-fixed-integer => $minimum-integer
-	$maximum-fixed-integer => $maximum-integer
-   See mindy.txt for details.
+   Added $not-supplied to the Extensions module.  See mindy.txt for
+   details.
 
-   The function abstract?, which tells you if a class is an abstract
-   class, has been added to the Introspections module of the Dylan
-   library.
-
-   The function instantiable?, which tells you if a class is either
-   concrete or has an applicable method on make which is not the
-   default make method, has been added to the Introspections module of
-   the Dylan library.
-
-   The functions load-file and load-library have been added to the
-   Extensions module.  See mindy.txt for details.
-
-   Mindy will now return an exit status of 1 if the debugger "quit"
-   command was used to exit the interpretter.
+   Added the Matrix library, which contains standard matrix
+   manipulations like matrix multiply and gaussian elimination.  See
+   matrix.txt for details.
 
    Mindycomp now gives warning messages when "while" or "until" are
    used inside a for loop (you should use "while:" or "until:"), or  
@@ -83,6 +48,49 @@ The following are enhancements added since release 1.4:
    the generic's return types because return types were not specified
    for the method.  This used to be an error.
 
+   The function collect-garbage has been added to the System module of
+   the Dylan library.  This function can also do a purifying garbage
+   collection; see mindy.txt for details.
+
+   Mindy now supports a different integer model.  In brief, the
+   following renaming has been done:
+	<integer>              => <general-integer>
+	<fixed-integer>        => <integer>
+	$minimum-fixed-integer => $minimum-integer
+	$maximum-fixed-integer => $maximum-integer
+   See mindy.txt for details.
+
+   *format-function* and *force-output-function* have been replaced by
+   condition-format.  See mindy.txt for details.
+
+   The functions load-file and load-library have been added to the
+   Extensions module.  See mindy.txt for details.
+
+   The function abstract?, which tells you if a class is an abstract
+   class, has been added to the Introspections module of the Dylan
+   library.
+
+   The function instantiable?, which tells you if a class is either
+   concrete or has an applicable method on make which is not the
+   default make method, has been added to the Introspections module of
+   the Dylan library.
+
+   Added <byte> to the Extensions module.  See mindy.txt for details.
+
+   Added <buffer-index> and $maximum-buffer-size to System module.
+   See mindy.txt for details.
+
+   Object printing in the Print library is now generally more terse,
+   but still within the spec laid out in print.txt.
+
+   Limited-integer-class is now limited-integer-base-class,
+   limited-integer-min is now limited-integer-minimum, and
+   limited-integer-max is now limited-integer-maximum.  See mindy.txt
+   for details.
+
+   Mindy will now return an exit status of 1 if the debugger "quit"
+   command was used to exit the interpretter.
+
    The function type-or in the Extensions module of the Dylan library
    has been removed.  Use type-union instead.
 
@@ -97,14 +105,6 @@ The following are enhancements added since release 1.4:
    In the Regular-expressions module of the String-Extensions library,
    the join() function now only works on byte strings.
 
-   Added the inspect and xinspect commands to the debugger, which
-   allow interactive examining of Dylan objects.  See debug.txt and
-   inspector.txt for details.
-
-   Added the Matrix library, which contains standard matrix
-   manipulations like matrix multiply and gaussian elimination.  See
-   matrix.txt for details.
-   
 
 The following are bug fixes since release 1.4:
 
@@ -141,7 +141,8 @@ The following are bug fixes since release 1.4:
 
    Fill! now returns a value of the correct type.
 
-   Only release the buffer if we still hold it.
+   Under Win32, the first line of console input would sometimes be
+   dropped.  This has been fixed.
 
    The Mindy documentation now documents <string-table>.
 
