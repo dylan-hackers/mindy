@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.19 1995/04/28 07:21:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.20 1995/04/28 09:05:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -371,16 +371,13 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     format(stream, "struct %s_results", name);
   end;
 
-  format(stream, " %s(", name);
+  format(stream, " %s(%s sp", name, $cluster-rep.representation-c-type);
   if (defines)
     for (var = defines then var.definer-next,
 	 index from 0,
 	 while: var)
-      unless (zero?(index))
-	write(", ", stream);
-      end;
       let (name, rep) = c-name-and-rep(var, output-info);
-      format(stream, "%s %s", rep.representation-c-type, name);
+      format(stream, ", %s %s", rep.representation-c-type, name);
       let varinfo = var.var-info;
       if (instance?(varinfo, <debug-named-info>))
 	format(stream, " /* %s */", varinfo.debug-name);
@@ -732,28 +729,29 @@ define method emit-assignment
      call :: union(<unknown-call>, <error-call>),
      output-info :: <output-info>)
     => ();
-  let temp = new-local(output-info);
+  let temp = if (results) new-local(output-info) else "sp" end;
   format(output-info.output-info-vars-stream, "%s %s;\n",
 	 $cluster-rep.representation-c-type, temp);
   let stream = make(<byte-string-output-stream>);
   let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
-  format(stream, "%s = sp;\n", temp);
+  if (results)
+    format(stream, "%s = sp;\n", temp);
+  end;
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        count from 0,
        while: arg-dep)
-  finally
-    format(stream, "sp += %d;\n", count);
-  end;
-  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
-       index from 0,
-       while: arg-dep)
-    format(stream, "%s[%d] = %s;\n", temp, index, 
+    format(stream, "%s[%d] = %s;\n", temp, count, 
 	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
+  finally
+    spew-pending-defines(output-info);
+    format(output-info.output-info-guts-stream, "%s%sCALL(%s, %s, %d);\n",
+	   stream.string-output-stream-string,
+	   if (results) "sp = " else "" end,
+	   func, temp, count);
   end;
-  spew-pending-defines(output-info);
-  format(output-info.output-info-guts-stream, "%ssp = CALL(%s, %s);\n",
-	 stream.string-output-stream-string, func, temp);
-  deliver-cluster(results, temp, call.derived-type, output-info);
+  if (results)
+    deliver-cluster(results, temp, call.derived-type, output-info);
+  end;
 end;
 
 define method emit-assignment
@@ -766,8 +764,8 @@ define method emit-assignment
   let cluster
     = ref-leaf($cluster-rep, call.depends-on.dependent-next.source-exp,
 	       output-info);
-  format(output-info.output-info-guts-stream, "sp = CALL(%s, %s);\n",
-	 func, cluster);
+  format(output-info.output-info-guts-stream, "%sCALL(%s, %s, sp - %s);\n",
+	 if (results) "sp = " else "" end, func, cluster, cluster);
   deliver-cluster(results, cluster, call.derived-type, output-info);
 end;
 
@@ -780,16 +778,13 @@ define method emit-assignment
   let stream = make(<byte-string-output-stream>);
   let name = func-info.lambda-info-main-entry-name;
   write(name, stream);
-  write('(', stream);
+  write("(sp", stream);
   for (arg-dep = expr.depends-on.dependent-next then arg-dep.dependent-next,
        param = func.prologue.dependents.dependent.defines
 	 then param.definer-next,
-       first? = #t then #f,
        while: arg-dep & param)
     let param-rep = variable-representation(param, output-info);
-    unless (first?)
-      write(", ", stream);
-    end;
+    write(", ", stream);
     write(ref-leaf(param-rep, arg-dep.source-exp, output-info), stream);
   finally
     if (arg-dep | param)
