@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.122 1996/02/23 15:12:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.123 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,6 +14,8 @@ define method dont-print-shit () => (); *print-shit* := #f; end;
 
 define variable *optimize-ncalls* = 0;
 
+// Note: the simplify-only: keyword is used only during inline
+// expansions.  It is not useful in any other situation.
 define method optimize-component
     (component :: <component>, #key simplify-only) => ();
   reverse-queue(component, #f);
@@ -66,7 +68,7 @@ define method optimize-component
 	| try(add-type-checks, "adding type checks")
 	| try(replace-placeholders, "replacing placeholders")
 	| try(environment-analysis, "running environment analysis")
-	| try(build-external-entries, "building external entries")
+	| try(build-local-xeps, "building external entries for local funs")
 	| (done := #t);
     end;
   end;
@@ -1434,7 +1436,7 @@ define method find-in-environment
 	  return(closure.copy-var);
 	end;
       end;
-      if (function.literal.visibility == #"global")
+      if (function.literal.visibility ~= #"local")
 	error("%= can't close over %= because it has hidden references.",
 	      function, var);
       end;
@@ -1591,7 +1593,7 @@ define-primitive-transformer
      let source = assign.source-location;
      let func = primitive.depends-on.source-exp;
      assert(instance?(func, <function-literal>));
-     func.visibility := #"global";
+     func.visibility := #"closure";
      let closure-size
        = for (dep = primitive.depends-on.dependent-next
 		then dep.dependent-next,
@@ -1600,7 +1602,6 @@ define-primitive-transformer
 	 finally
 	   res;
 	 end;
-     func.visibility := #"global";
      let ctv
        = (func.ct-function
 	    | (func.ct-function
@@ -1621,6 +1622,14 @@ define-primitive-transformer
 			   finally
 			     reverse!(results);
 			   end)));
+     ctv.has-general-entry? := #t;
+     unless (func.general-entry)
+       func.general-entry := build-xep(func, #f, component);
+     end unless;
+     if (instance?(func, <method-literal>) & ~func.generic-entry)
+       ctv.has-generic-entry? := #t;
+       func.generic-entry := build-xep(func, #t, component);
+     end if;
      let var = make-local-var(builder, #"closure", object-ctype());
      build-assignment
        (builder, policy, source, var,
