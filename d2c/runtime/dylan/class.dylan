@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.2 1999/01/25 12:09:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.3 1999/05/24 17:14:21 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -191,6 +191,15 @@ define class <slot-descriptor> (<object>)
   // entails.
   slot slot-positions-cache
     :: type-union(<position-cache-node>, <integer>, one-of(#f, #"data-word")),
+    init-value: #f;
+  //
+  // The name of the representation of this slot
+  slot slot-representation :: false-or(<symbol>),
+    init-value: #f;
+  //
+  // The slot that marks whether or not this one has been initialized,
+  // if there is one.
+  slot slot-initialized?-slot :: false-or(<slot-descriptor>),
     init-value: #f;
 end;
 
@@ -455,11 +464,52 @@ end method find-slot-offset;
 // slot-initialized? -- exported.
 //
 // Return #t if the slot has been initialized, and #f if not.
-// 
+//
+
+define open generic slot-initialized?
+    (instance :: <object>, getter :: <generic-function>)
+    => res :: <boolean>;
+
 define method slot-initialized?
     (instance :: <object>, getter :: <generic-function>)
     => res :: <boolean>;
-  error("### runtime slot-initialized? not yet implemented.");
+  let (sorted :: <list>, unsorted :: <list>)
+    = sorted-applicable-methods(getter, instance);
+  let meth = if(empty?(sorted))
+	       if(empty?(unsorted))
+		 error("slot-initialized? can't find"
+			 " an applicable method of %=",  getter);
+	       else
+		 first(unsorted);
+	       end if;
+	     else
+	       first(sorted);
+	     end if;
+  if(~instance?(meth, <accessor-method>))
+    error("slot-initialized? can't find a slot-accessor method of %=", getter);
+  end if;
+  let slot = meth.accessor-slot;
+  if(slot.slot-initialized?-slot)
+    let offset = find-slot-offset(object-class(instance),
+				  slot.slot-initialized?-slot);
+    %%primitive(ref-slot, instance, #"boolean", offset);
+  elseif (slot.slot-init-value ~== $not-supplied
+	    | slot.slot-init-function
+	    | slot.slot-init-keyword-required?)
+    #t;
+  else
+    let offset = find-slot-offset(object-class(instance), slot);
+    select(slot.slot-representation)
+      #"general" =>
+	let result = %%primitive(ref-slot, instance, #"general", offset);
+	%%primitive(initialized?, result);
+      #"heap" =>
+	let result = %%primitive(ref-slot, instance, #"heap", offset);
+	%%primitive(initialized?, result);
+      otherwise =>
+	error("slot-initialized? can't handle slot representation");
+    end select;
+  end if;
 end;
 
 
