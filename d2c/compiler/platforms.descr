@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.76 2003/07/19 19:17:54 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.77 2003/07/20 08:02:03 prom Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -107,6 +107,7 @@ maximum-long-double-float-exponent: 16384
 platform-name:			sparc
 inherit-from:			32-bit ieee-754
 default-features:		compiled-for-sparc
+double-alignment:		8
 big-endian?:			#t
 
 // PowerPC:
