@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.5 2000/01/24 04:58:04 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/mindycomp.c,v 1.6 2000/10/31 14:21:45 dauclair Exp $
 *
 * This file is the main driver.
 *
@@ -48,6 +48,7 @@
 #include "dump.h"
 #include "feature.h"
 #include "lose.h"
+#include "../compat/cygwin.h"
 
 #ifdef MACOS
 #	include <console.h>
@@ -324,7 +325,7 @@ int main(int argc, char *argv[])
 	usage();
 
 
-    yyin = fopen(source_name, "r");
+    yyin = fopen(source_name, "rb");
     if (yyin == NULL) {
         /* Try the same filename but in the current directory */
         /* Start ptr at the null termination, and work backwards to a 
@@ -340,7 +341,7 @@ int main(int argc, char *argv[])
 	/* If ptr is a different string than source_name, and it isn't
 	   the empty string... */
 	if (ptr != source_name && *ptr != 0) {
-	    yyin = fopen(ptr, "r");
+	    yyin = fopen(ptr, "rb");
 	}
 	if (yyin == NULL) {
 	    perror(source_name);
