@@ -46,7 +46,7 @@
  */
 #ifdef _FCNTL
 #ifndef _FCNTL_H_
-#error "Headers conflict. Please #include <sys/types.h> before <fcntl.h>"
+//-#error "Headers conflict. Please #include <sys/types.h> before <fcntl.h>"
 #endif
 #else
 /* Prevent future inclusions of MW fcntl.h */
@@ -62,16 +62,16 @@ typedef	unsigned short	ushort;		/* Sys V compatibility */
 
 typedef	char *	caddr_t;		/* core address */
 typedef	long	daddr_t;		/* disk address */
-typedef	short	dev_t;			/* device number */
+//-typedef	short	dev_t;			/* device number */
 typedef	u_long	ino_t;			/* inode number */
 typedef	long	off_t;			/* file offset (should be a quad) */
-typedef	u_short	nlink_t;		/* link count */
+//-typedef	u_short	nlink_t;		/* link count */
 typedef	long	swblk_t;		/* swap offset */
 typedef	long	segsz_t;		/* segment size */
-typedef	u_short	uid_t;			/* user id */
-typedef	u_short	gid_t;			/* group id */
+//-typedef	u_short	uid_t;			/* user id */
+//-typedef	u_short	gid_t;			/* group id */
 typedef	short	pid_t;			/* process id */
-typedef	u_short	mode_t;			/* permissions */
+//-typedef	u_short	mode_t;			/* permissions */
 typedef u_long	fixpt_t;		/* fixed point number */
 
 #ifndef _POSIX_SOURCE
