@@ -789,7 +789,8 @@ define method write-declaration
 		 decl.type.result.type.d2c-type-tag);
 	  for (count from 1, arg in params)
 	    if (instance?(arg, <varargs-declaration>))
-	      // print nothing
+	      // print nothing (values needed by Mindy)
+	      values();
 	    elseif (arg.direction == #"in-out" | arg.direction == #"out")
 		format(stream, ", ptr: %s-ptr.raw-value", arg.dylan-name);
 	    else

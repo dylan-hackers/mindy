@@ -76,6 +76,7 @@ define function pop-default-parse-context() => (context);
   pop(*default-parse-context*);
 end;
 
+/*
 define macro with-default-parse-context
   { with-default-parse-context (?context:expression) ?:body end }
     => { push-default-parse-context(?context);
@@ -85,7 +86,7 @@ define macro with-default-parse-context
 	   pop-default-parse-context();
          end }
 end;
-
+*/
 
 //======================================================================
 //  Reporting parse conditions

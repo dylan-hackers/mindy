@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.7 1998/12/17 08:05:04 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.8 1999/04/10 09:57:10 emk Exp $
 
 //======================================================================
 //
@@ -92,7 +92,7 @@ define module parse-conditions
     <parse-progress-report>,
     push-default-parse-context,
     pop-default-parse-context,
-    \with-default-parse-context,
+    // \with-default-parse-context,
     parse-error,
     parse-warning,
     parse-progress-report;
