@@ -2,12 +2,12 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.6 2002/02/28 23:53:57 brent Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.7 2002/06/08 18:02:27 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -32,16 +32,14 @@ rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.6 2002/02/28 23
 //======================================================================
 //
 
-method () => ();
-#if (compiled-for-win32 | compiled-for-solaris | compiled-for-FreeBSD)
-  c-include("errno.h");
-#endif
-  c-include("fcntl.h");
-  c-include("string.h");
+c-include("errno.h");
+c-include("fcntl.h");
+c-include("string.h");
+
 #if (~compiled-for-win32)
   c-include("unistd.h");
 #endif
-end();
+
   
 // Top-level init code, done in C
 begin
