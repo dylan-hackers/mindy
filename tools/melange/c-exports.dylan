@@ -68,6 +68,8 @@ end module c-lexer;
 define module portability
   use dylan;
   use c-lexer, import: {include-path, *handle-//-comments*};
+  use system, import: {getenv};  // win32 only
+  use regular-expressions;       // win32 only			  
   export
     $default-defines,
     $enum-size,
