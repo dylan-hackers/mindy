@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.2 1994/03/25 00:50:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.3 1994/03/31 10:18:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -987,7 +987,7 @@ static void gf_xep(struct thread *thread, int nargs)
 		    push_linkage(thread, args);
 		    error("The keyword ~S is accepted by none of the "
 			  "applicable methods:~%  ~S",
-			  keyword, methods);
+			  *ptr, methods);
 		}
 		ptr += 2;
 	    }
