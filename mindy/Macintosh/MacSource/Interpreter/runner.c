@@ -14,10 +14,23 @@
 #include<console.h>
 
 
-// defines
+// consts
 
-#define INITIAL_SEARCH_PATH 	":\t:libraries\t"
-#define FOLDER_SEARCH_PATH	"\p:Mindy:libraries\t"	// \t is the separator
+// Arg array length
+static const int MAX_ARGS = 32;	// Must be at least 2 longer than in ccommand.h
+
+// Search path building strings
+static const char * INITIAL_SEARCH_PATH  =	":\t:libraries\t";
+static const Str255 FOLDER_SEARCH_PATH	= "\p:Mindy:libraries\t";	// \t is the separator
+
+// Magic resource to check for for CLI for self runner
+static const int kCLI_RESOURCE = 'CLI?'; 
+static const short kCLI_RESOURCE_NUM = 128;
+
+// arguments for self-runner
+const char *		APPLICATION_NAME = "Mindy";
+const char * 		APPLICATION_FILE_MAGIC_STRING = "The Application File            ";
+static const char * 	_F = "-f";
 
 
 // Prototypes
@@ -25,17 +38,24 @@
 extern void main( int argc, char ** argv );
 
 static void BuildLibPath( void );
+
 static void FindFolderPath( Handle appendPathTo, int folderType, Str255 pathInFolder );
 
-static OSErr	GetFullPath(short vRefNum,
+static OSErr GetFullPath(	short vRefNum,
 					long dirID,
 					StringPtr name,
 					short *fullPathLength,
 					Handle *fullPath);
 
-static OSErr	FSpGetFullPath(const FSSpec *spec,
-					   short *fullPathLength,
-					   Handle *fullPath);
+static OSErr FSpGetFullPath(	const FSSpec *spec,
+						short *fullPathLength,
+						Handle *fullPath);
+					   
+static Boolean ShouldShowCommandLine( void );
+
+static int SelfRunnerCCommand( char ***args );
+
+static void InitializeToolbox( void );
 
 void DummyMain( void );
 
@@ -43,6 +63,8 @@ void DummyMain( void );
 // Globals
 
 extern char * LIBDIR;
+char * gargv[ MAX_ARGS ];
+char gargv0[256];
 
 
 // Functions
@@ -51,14 +73,32 @@ extern char * LIBDIR;
 
 void DummyMain( void )
 {
-#ifdef SELF_RUNNER
-	int argc = 3;
-	char * argv[4] = { "Mindy", "-f", "The Application File            ", 0 };
-#else
-	int argc;
 	char ** argv;
-	argc = ccommand( &argv );
+	int argc;
+	
+	InitializeToolbox();
+	
+#ifdef SELF_RUNNER
+	if( ShouldShowCommandLine() )
+	{
+		// Get command line and extend to include magic bytecode runner string
+		argc = SelfRunnerCCommand( &argv );
+	}
+	else
+	{
+		// No command line, just run
+		argc = 3;
+		gargv[ 0 ] = APPLICATION_NAME;
+		gargv[ 1 ] = _F;
+		gargv[ 2 ] = APPLICATION_FILE_MAGIC_STRING;
+		gargv[ 3 ] = NULL;
+		
+		argv = gargv;
+	}
+#else
+	argc = ccommand( &argv );	// Initializes Toolbox
 #endif
+
 	BuildLibPath();
 	main( argc, argv );	/* Just call the real main in Mindy. */
 }
@@ -223,4 +263,99 @@ OSErr FSpGetFullPath(	const FSSpec *spec,
 	}
 	
 	return ( result );
+}
+
+
+// ShouldShowCommandLine
+// Looks for a CLI? resource 128 . If it;s there, show CLI, if not, don't
+// returns - TRUE : show CLI	FALSE: don't
+Boolean ShouldShowCommandLine( void )
+{
+	EventRecord event;
+	Boolean result = FALSE;
+	
+	// try to get the magic resource
+	Handle h = Get1Resource( kCLI_RESOURCE, kCLI_RESOURCE_NUM );
+	// If we succeed
+	if( (h != NULL) && (! ResError()) )
+	{
+		// Set the flag and release the resource
+		result = TRUE;
+		ReleaseResource( h );
+	}
+	
+	// Get a null event and check for the command key
+	OSEventAvail( 0, &event );
+	if( event.modifiers & cmdKey )
+	{
+		result = TRUE;
+	}
+		
+		
+	// return the result
+	return result;
+}
+
+
+// SelfRunnerCCommand
+// Build argc and argv to include the application bytecode file as the first -f option
+// Uses the strings from ccommand proper, copying pointers to them into a new array
+// IN:	args - The char[] pointer to fill with a reference to the argument array
+// OUT: The length of the argument list (excluding the terminating null)
+int SelfRunnerCCommand( char ***args )
+{
+	int i;
+	
+	// Call ccommand to get argc and argv
+	// item 0 of argv is the application name
+	int argc = ccommand( args );
+	
+	// Copy over everything from ccommand's argument list except the fileName
+	// We do this before we do anything to argc
+	// Note that our argv must be at least 3 longer than ccommand's args
+	// We copy argc+1 to copy the terminating NULL as well
+	for( i = 1; i < argc+1; i++ )
+		gargv[ i + 2 ] = (*args)[ i ];
+	
+	// Now prepend some stuff to the argument list	
+	// First item is the application name
+	strcpy( gargv0, (*args)[ 0 ] );
+	gargv[ 0 ] = gargv0;	
+	// Second the -f switch, note that we've added it
+	gargv[ 1 ] = _F;
+	argc++;
+	// Third is the magic string for the application bytecode file, note that we've added it
+	gargv[ 2 ] = APPLICATION_FILE_MAGIC_STRING;
+	argc++;
+	
+	// Replace the argument list with our extended one
+	*args = gargv;
+	
+	// Return the length of the new argument list
+	return argc;
+}
+
+//	InitializeToolbox
+//	Fossilized but useful
+
+void InitializeToolbox( void )
+{
+	MaxApplZone();				// Set the heap zone size to its limit
+	
+	MoreMasters();				// Get 3x32=96 more master pointers
+	MoreMasters();				// In addition to our free starting 32
+	MoreMasters();				// This gives us 128 free handles, which should be plenty
+
+	InitGraf(&qd.thePort);		// Initialize QuickDraw
+	InitFonts();				// Initialize the Font Manager
+	InitWindows();				// Initialize the Window Manager
+	InitMenus();				// Initialize theMenu Manager
+	TEInit();					// Initialize TextEdit
+	InitDialogs(nil);			// Initialize the Dialog Manager
+
+	//	Flush out mouse and keyboard events.  This prevents some things like clicking through
+	//	to the Finder while the app is launching, etc.
+	FlushEvents( mDownMask | keyDownMask | autoKeyMask, 0 );
+	
+	InitCursor();				// Initialize the Cursor to an arrow 
 }
