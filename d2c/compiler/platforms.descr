@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.62 2003/01/22 22:22:31 housel Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.63 2003/01/29 21:13:52 prom Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -446,7 +446,7 @@ assembler-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
 link-library-command:		  ar qc %s %s
 link-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
 link-shared-executable-command:	  $(LIBTOOL) --mode=link gcc-3.2 -o %s %s %s
-link-executable-flags:		  -lm
+link-executable-flags:		  $(GC_LIBS) -lm
 link-profile-flags:		  -pg
 path-separator:			  /
 
