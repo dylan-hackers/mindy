@@ -6,8 +6,8 @@ This version is intended for review and public comment.
 Current status:
 
  * ANSI C library
-   - C type model is mostly complete
-   - C declaration model is half done
+   - C type model should be complete
+   - C declaration should be complete
 
  * C parser
    - Not yet integrated from Melange
@@ -19,4 +19,4 @@ Gwydion Dylan website at:
   http://www.gwydiondylan.org/
 
 Eric Kidd
-26 March 1999
+27 March 1999
