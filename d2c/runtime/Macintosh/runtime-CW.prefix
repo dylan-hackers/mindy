@@ -9,11 +9,19 @@
 // these #defines come from MPW headers...
 // they are needed for the streams .c files
 
-#define ENOENT       2   /* No such file or directory           */
-#define EACCES      13   /* File access permission denied       */
-#define EEXIST      17   /* File already exists                 */
+#ifndef ENOENT
+#	define ENOENT       2   /* No such file or directory           */
+#endif
+#ifndef EACCES
+#	define EACCES      13   /* File access permission denied       */
+#endif
+#ifndef EEXIST
+#	define EEXIST      17   /* File already exists                 */
+#endif
 
-#define DEBUGGING_PLUGIN
+#undef DEBUGGING_PLUGIN
+// uncomment below if using the debugging version of the plugin
+// #define DEBUGGING_PLUGIN
 
 #ifdef DEBUGGING_PLUGIN
 
