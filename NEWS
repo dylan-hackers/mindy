@@ -1,3 +1,20 @@
+Gwydion Dylan 2.3.1
+
+  This is the first release of the new development branch. Lots of things
+  changed: the build system has been completely revamped by Eric Kidd to
+  support bootstrapping under various conditions, the instance? test
+  has been made faster by Andreas Bogk, there's an OpenBSD port by
+  Brad Dominy, work has been done (but not yet finished) on a
+  Harlequin Dylan compatible c-ffi by Peter Housel, Eric Kidd started
+  work on replacing melange by pidgin, bugs have been fixed by
+  various people.
+
+Gwydion Dylan 2.2.0 
+
+  This is basically a polished-up 2.1.3, with several more bugfixes.
+  It is intended to be a stable release without too much new code
+  introduced.
+
 Gwydion Dylan 2.1.3 (1998-12-??)
 
   This release includes Melange enhancements by Peter Housel, Andreas Bogk
