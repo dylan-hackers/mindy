@@ -1,3 +1,8 @@
+Gwydion Dylan 2.3.7
+  
+  This release mainly fixes a bug in class slots, and is considered
+  a maintenance release. Various other tweaks and bugfixes as well.
+
 Gwydion Dylan 2.3.6
 
   The most visible change in 2.3.6 is support for DUIM, a framework
