@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/tlf.dylan,v 1.2 2000/01/24 04:56:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/tlf.dylan,v 1.3 2003/03/12 21:47:07 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -43,7 +43,11 @@ end;
 
 define method print-object (tlf :: <simple-define-tlf>, stream :: <stream>)
     => ();
-  pprint-fields(tlf, stream, name: tlf.tlf-defn.defn-name);
+  if (slot-initialized?(tlf, tlf-defn))
+    pprint-fields(tlf, stream, name: tlf.tlf-defn.defn-name);
+  else
+    pprint-fields(tlf, stream);
+  end;
 end;
 
 // finalize-top-level-form -- exported.
@@ -74,7 +78,11 @@ end class <define-method-tlf>;
 
 define method print-message
     (tlf :: <define-method-tlf>, stream :: <stream>) => ();
-  format(stream, "Define Method %s", tlf.tlf-defn.defn-name);
+  if (slot-initialized?(tlf, tlf-defn))
+    format(stream, "Define Method %s", tlf.tlf-defn.defn-name);
+  else
+    format(stream, "Define Method ???");
+  end;
 end;
 
 
