@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.7 1994/11/09 00:30:50 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.8 1994/11/10 13:35:43 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -89,8 +89,8 @@ ${SRCDIR}/parser.tab.c: ${SRCDIR}/parser.y
 
 ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: ${SRCDIR}/$(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
 	$(PERL) ${SRCDIR}/make-init.pl ${SRCDIR}/$(EXTERN-INCLUDES)
-	mv extern1.def ${SRCDIR}/extern1.def
-	mv extern2.def ${SRCDIR}/extern2.def
+	mv ,extern1.def ${SRCDIR}/extern1.def
+	mv ,extern2.def ${SRCDIR}/extern2.def
 
 clean:
 	rm -f ${OBJS} mindy *~ \#* core
