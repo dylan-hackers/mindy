@@ -76,10 +76,11 @@ sub do_makefile {
 	} 
 
         s/\@prefix\@/./;
-	s|\@exec_prefix\@|/gwydion|;  
-        # If we add a drive letter, cp won't work.  And we can't use copy,
-        # because many of the path delimiters are / rather than \.
 	s/\@srcdir\@/./;
+
+	# exec_prefix -- where to install to.
+	local($GwydionDir) = $ENV{'GwydionDir'};
+	s|\@exec_prefix\@|$GwydionDir|;
 
 	s/\@CC\@/cl/;
 	s/\@CCOPTS\@/-O2/;
