@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.9 1999/10/10 17:20:03 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.10 1999/10/10 17:36:55 robmyers Exp $
 
 //======================================================================
 //
@@ -718,7 +718,7 @@ define method main (program, #rest args)
   #if (MacOS)
   	push(include-path, "");
   #else
-  	push(include-path, ".");
+  	push(include-path, "./");
   #endif
 
   // Handle regular arguments.
