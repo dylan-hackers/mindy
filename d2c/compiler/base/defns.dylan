@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.3 1994/12/13 13:21:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.4 1994/12/14 20:15:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,7 +13,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // 
 define abstract class <definition> (<object>)
   //
-  // The name of the module variable this is the definition for.
+  // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
 end;
 
