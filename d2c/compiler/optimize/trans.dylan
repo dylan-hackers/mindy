@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.20 1996/01/12 00:58:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.21 1996/01/14 02:05:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -527,8 +527,9 @@ define method build-instance?
 	    end;
 	  end;
 	  unless (test-min? | test-max?)
-	    error("None of the potential direct classes are not subtypes of "
-		    "the class we are testing against?");
+	    signal("All of the potential direct classes are subtypes of "
+		     "the class against which we are testing.  Someone should "
+		     "have noticed before this.");
 	  end;
 	else
 	  test-min? := #t;
