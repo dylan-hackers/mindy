@@ -353,6 +353,8 @@ AC_OUTPUT(Makefile \
 	libraries/Makefile \
 	libraries/dylan/Makefile \
 	libraries/streams/Makefile \
+	libraries/print/Makefile \
+	libraries/format/Makefile \
 	libraries/coll-ext/Makefile \
 	libraries/random/Makefile \
 	libraries/string-ext/Makefile \
