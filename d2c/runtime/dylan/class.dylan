@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.17 1996/04/13 21:48:04 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.18 1996/04/14 19:48:00 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -57,11 +57,11 @@ define class <class> (<type>)
   // Vector of keyword initialization arguments introduced by this class.
   constant slot class-keyword-init-args :: <simple-object-vector>,
     required-init-keyword: keyword-init-args:;
+*/
   //
   // Vector of inherited slot overrides introduced by this class.
   constant slot class-slot-overrides :: <simple-object-vector>,
     required-init-keyword: slot-overrides:;
-*/
   //
   // Vector of all the slots for this class.  Filled in for real when defered-
   // evaluations are processed.
@@ -82,10 +82,6 @@ define class <class> (<type>)
   // is computed.
   slot class-each-subclass-slots :: <simple-object-vector>;
 */
-  //
-  // Single entry caches of the last classes that were and weren't subtype? us.
-  slot subtype-success-cache :: false-or(<class>), init-value: #f;
-  slot subtype-failure-cache :: false-or(<class>), init-value: #f;
 end;
 
 /*
@@ -151,9 +147,10 @@ define class <slot-descriptor> (<object>)
   constant slot slot-init-keyword-required? :: <boolean>,
     init-value: #f;
   //
-  // A-list mapping classes to offsets for the slot.  An entry is for all
+  // A-list mapping classes to positions for the slot.  An entry is for all
   // subclasses of the key class, therefore more specific classes must preceed
-  // less specific classes.
+  // less specific classes.  Positions are either integers for heap allocated
+  // slots or #"data-word" for slots allocated in the data-word.
   slot slot-positions :: <list>,
     init-value: #();
   //
@@ -162,7 +159,7 @@ define class <slot-descriptor> (<object>)
   // having to do the subtype? tests that checking slot-positions directly
   // entails.
   slot slot-positions-cache
-    :: type-union(<position-cache-node>, <false>, <integer>),
+    :: type-union(<position-cache-node>, <integer>, one-of(#f, #"data-word")),
     init-value: #f;
 end;
 
@@ -209,9 +206,10 @@ define class <position-cache-node> (<object>)
   constant slot cache-class :: <class>,
     required-init-keyword: class:;
   //
-  // The offset this slot shows up at in the above class.
-  constant slot cache-offset :: <integer>,
-    required-init-keyword: offset:;
+  // The position this slot shows up at in the above class (and subclasses).
+  constant slot cache-position
+      :: type-union(<integer>, singleton(#"data-word")),
+    required-init-keyword: position:;
   //
   // The next node in the position cache.
   slot cache-next :: false-or(<position-cache-node>),
@@ -220,6 +218,22 @@ end class <position-cache-node>;
 
 define sealed domain make (singleton(<position-cache-node>));
 define sealed domain initialize (<position-cache-node>);
+
+
+define class <override-descriptor> (<object>)
+  //
+  // The init-value, or $not-supplied if there is none.
+  slot override-init-value :: <object> = $not-supplied,
+    init-keyword: init-value:;
+  //
+  // The init-function, or #f if there is none.
+  slot override-init-function :: false-or(<function>) = #f,
+    init-keyword: init-function:;
+end class <override-descriptor>;
+
+define sealed domain make (singleton(<override-descriptor>));
+define sealed domain initialize (<override-descriptor>);
+
 
 /*
 define method make (class == <class>,
@@ -369,10 +383,10 @@ end;
 // determine where a slot is located.
 // 
 define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
-    => offset :: <integer>;
+    => offset :: type-union(<integer>, singleton(#"data-word"));
   block (return)
     let cache = slot.slot-positions-cache;
-    if (instance?(cache, <integer>))
+    if (instance?(cache, <integer>) | cache == #"data-word")
       return(cache);
     end if;
     for (prev :: false-or(<position-cache-node>) = #f then node,
@@ -381,10 +395,10 @@ define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
       if (node.cache-class == class)
 	if (prev)
 	  prev.cache-next := node.cache-next;
-	  node.cache-next := slot.slot-positions-cache;
+	  node.cache-next := cache;
 	  slot.slot-positions-cache := node;
 	end if;
-	return(node.cache-offset);
+	return(node.cache-position);
       end if;
     end for;
     let positions = slot.slot-positions;
@@ -394,11 +408,12 @@ define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
     for (entry :: <list> in positions)
       let entry-class :: <class> = entry.head;
       if (subtype?(class, entry-class))
-	let offset :: <integer> = entry.tail;
-	let node = make(<position-cache-node>, class: class, offset: offset,
+	let position = entry.tail;
+	let node = make(<position-cache-node>,
+			class: class, position: position,
 			next: slot.slot-positions-cache);
 	slot.slot-positions-cache := node;
-	return(offset);
+	return(position);
       end if;
     end for;
     lose("Can't find the position for %s in %s.",
