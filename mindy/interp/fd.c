@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.7 1994/04/10 16:24:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.8 1994/04/18 05:41:34 wlott Exp $
 *
 * This file does whatever.
 *
@@ -236,7 +236,7 @@ void init_fd_functions(void)
 				    list2(obj_BooleanClass, obj_ObjectClass),
 				    obj_False, fd_close));
     define_method("fd-error-string", list1(obj_IntegerClass), FALSE, obj_False,
-		  list1(obj_ObjectClass), fd_error_str);
+		  obj_ObjectClass, fd_error_str);
     define_constant("fd-input-available?",
 		    make_raw_method("fd-input-available?",
 				    list1(obj_IntegerClass), FALSE, obj_False,
