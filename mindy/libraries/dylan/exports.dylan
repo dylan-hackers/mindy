@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.62 1995/03/02 19:41:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.63 1995/03/13 15:39:32 wlott Exp $
 
 //======================================================================
 //
@@ -205,7 +205,7 @@ define module Dylan
     map, map-as, map-into, max, member?, min, modulo,
     odd?,
     pop, pop-last, positive?, push, push-last,
-    range, rank, rcurry, reduce, reduce1, remainder, remove,
+    range, rank, rationalize, rcurry, reduce, reduce1, remainder, remove,
     remove!, remove-duplicates, remove-duplicates!,
     replace-elements!, replace-subsequence!, restart-query,
     return-allowed?, return-description, return-query, reverse, reverse!,

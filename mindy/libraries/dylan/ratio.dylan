@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.2 1995/03/02 19:31:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.3 1995/03/13 15:39:32 wlott Exp $
 
 //======================================================================
 //
@@ -63,10 +63,10 @@ define method ratio (num :: <integer>, denom :: <integer>)
   make(<ratio>, numerator: num, denominator: denom);
 end;
 
-define method as (class == <ratio>, num :: <integer>)
-    => res :: <ratio>;
-  ratio(num, 1);
+define method as (class == <ratio>, num :: <number>)
+  rationalize(num);
 end;
+
 
 define method as (class :: limited(<class>, subclass-of: <float>),
 		  num :: <ratio>)
@@ -184,6 +184,40 @@ end;
 define method abs (r :: <ratio>)
     => res :: <ratio>;
   ratio(r.numerator.abs, r.denominator);
+end;
+
+define method rationalize (num :: <integer>) => res :: <ratio>;
+  ratio(num, 1);
+end;
+
+define method rationalize (num :: <ratio>) => res :: <ratio>;
+  num;
+end;
+
+define method rationalize (num :: <float>) => res :: <ratio>;
+  let sign = if (negative?(num))
+	       num := -num;
+	       -1;
+	     else
+	       1;
+	     end;
+  let scale = 0;
+  while (num >= 1)
+    scale := scale + 8;
+    num := num / 256;
+  end;
+  let numerator = as(<extended-integer>, 0);
+  until (zero?(num))
+    let (chunk, remainder) = floor(num * 256);
+    numerator := ash(numerator, 8) + chunk;
+    num := remainder;
+    scale := scale - 8;
+  end;
+  if (zero?(scale))
+    ratio(sign * numerator, 1);
+  else
+    sign * numerator * ratio(2,1) ^ scale;
+  end;
 end;
 
 
