@@ -2,7 +2,7 @@ module: format
 author: Robert Stockton (rgs@cs.cmu.edu).
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.4 2003/05/31 02:50:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.5 2003/09/15 16:49:02 housel Exp $
 
 ///======================================================================
 ///
@@ -199,6 +199,8 @@ define method format (stream :: <buffered-stream>,
     bd.buffer.buffer-next := bd.next-ele;
     release-output-buffer(stream);
     unlock-stream(stream);
+  exception (condition :: <condition>)
+    signal(condition);          // re-signal after running cleanup
   end;
 end method;
     
