@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.40 1995/08/07 14:03:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.41 1995/08/08 02:21:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -669,6 +669,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
   let res = fer-convert-body(builder, form.uwp-body,
 			     make(<lexenv>, inside: lexenv),
 			     want, datum);
+  build-assignment(builder, policy, source, #(),
+		   make-unknown-call(builder, cleanup-literal, #f, #()));
   end-body(builder);
 
   build-assignment
