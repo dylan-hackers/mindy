@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.5 1994/12/16 11:51:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.6 1994/12/16 14:30:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -215,7 +215,8 @@ define method convert-top-level-form
 	      else
 		let type = make-local-var(builder, #"type",
 					  dylan-value(#"<type>"));
-		fer-convert(builder, param.param-type, lexenv, type);
+		fer-convert(builder, param.param-type, lexenv,
+			    #"assignment", type);
 		if (instance?(defn, <variable-definition>))
 		  let type-defn = defn.var-defn-type-defn;
 		  build-assignment(builder, policy, source,
@@ -237,10 +238,12 @@ define method convert-top-level-form
 				     paramlist.paramlist-rest.token-symbol,
 				     rest-defn.defn-type | object-ctype());
       let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
-      fer-convert(builder, bindings.bindings-expression, lexenv, cluster);
+      fer-convert(builder, bindings.bindings-expression, lexenv,
+		  #"assignment", cluster);
       canonicalize-results(builder, policy, source, cluster, vars, rest-temp);
     else
-      fer-convert(builder, bindings.bindings-expression, lexenv, vars);
+      fer-convert(builder, bindings.bindings-expression, lexenv,
+		  #"assignment", vars);
     end;
     build-region(builder, builder-result(init-builder));
   end;

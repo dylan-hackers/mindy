@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.6 1994/12/16 11:50:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.7 1994/12/16 14:30:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -371,7 +371,7 @@ define method convert-top-level-form
       add!(supers-args, vector-leaf);
       for (super in defn.class-defn-supers)
 	let temp = make-local-var(builder, #"temp", cclass-ctype);
-	fer-convert(builder, super, lexenv, temp);
+	fer-convert(builder, super, lexenv, #"assignment", temp);
 	add!(supers-args, temp);
       end;
       let temp = make-local-var(builder, #"supers", object-ctype());
@@ -425,20 +425,23 @@ define method convert-top-level-form
 	  else
 	    let temp = make-local-var(builder, #"type",
 				      dylan-value(#"<type>"));
-	    fer-convert(builder, slot-defn.slot-type-expr, lexenv, temp);
+	    fer-convert(builder, slot-defn.slot-type-expr, lexenv,
+			#"assignment", temp);
 	    add!(slot-args, temp);
 	  end;
 	end;
 	if (slot-defn.slot-init-value)
 	  add!(slot-args, make-keyword-literal(init-value:));
-	  let temp = make-local-var(builder, #"init-value", object-ctype());
-	  fer-convert(builder, slot-defn.slot-init-value, lexenv, temp);
-	  add!(slot-args, temp);
+	  add!(slot-args,
+	       fer-convert(builder, slot-defn.slot-init-value, lexenv,
+			   #"leaf", #"init-value"));
 	end;
 	if (slot-defn.slot-init-function)
 	  add!(slot-args, make-keyword-literal(init-function:));
-	  let temp = make-local-var(builder, #"init-function", object-ctype());
-	  fer-convert(builder, slot-defn.slot-init-function, lexenv, temp);
+	  let temp = make-local-var(builder, #"init-function",
+				    function-ctype());
+	  fer-convert(builder, slot-defn.slot-init-function, lexenv,
+		      #"assignment", temp);
 	  add!(slot-args, temp);
 	end;
 	if (slot-defn.slot-init-keyword)
