@@ -56,6 +56,16 @@ define method print-object
   pprint-fields(info, stream, name: info.primitive-name);
 end;
 
+define method dump-od (obj :: <primitive-info>, buf :: <dump-buffer>) => ();
+  dump-simple-object(#"primitive-info", buf, obj.primitive-name);
+end method;
+
+add-od-loader(*compiler-dispatcher*, #"primitive-info",
+  method (state :: <load-state>) => res :: <primitive-info>;
+    primitive-info-or-lose(load-sole-subobject(state));
+  end method
+);
+
 
 define constant $primitives = make(<object-table>);
 
