@@ -152,27 +152,23 @@ end;
 
 
 //=========================================================================
-//  Finding canonical C pointer types
+//  Making C types.
 //=========================================================================
-//  This is a special case version of find-canonical-c-type. It allows you
-//  to look up a canonical pointer type given only the referent type, and
-//  only calls make(<c-pointer-type>, ...) when the pointer type does not
-//  already exist.
+//  We override make(...) to force all derived types to be created in a
+//  repository.
 //
-//  This function is included for performance and notational convenience.
+//  If have performance problems, we should optimize this method, probably
+//  starting with pointer types.
 
-define function find-canonical-pointer-to-c-type
-    (repository :: <c-type-repository>, type :: <c-type>)
- => (canonical-pointer-type :: <c-pointer-type>)
-  let existing = element(repository.c-pointer-types, type, default: #f);
-  if (existing)
-    existing;
-  else
-    let pointer-type = make(<c-pointer-type>, referent: type);
-    repository.c-pointer-types[type] := pointer-type;
-    pointer-type;
-  end;
-end;
+define inline method make
+    (class :: subclass(<c-derived-type>),
+     #next next-method,
+     #rest keys,
+     #key repository,
+     #all-keys)
+ => (type :: <c-derived-type>)
+  find-canonical-c-type(repository, next-method());
+end method make;
 
 
 //=========================================================================
@@ -203,20 +199,3 @@ define function do-c-type-repository-entries
     function(item);
   end;
 end;
-
-
-//=========================================================================
-//  Making C types.
-//=========================================================================
-//  We override make(...) to force all derived types to be created in a
-//  repository.
-
-define inline method make
-    (class :: subclass(<c-derived-type>),
-     #next next-method,
-     #rest keys,
-     #key repository,
-     #all-keys)
- => (type :: <c-derived-type>)
-  find-canonical-c-type(repository, next-method());
-end method make;

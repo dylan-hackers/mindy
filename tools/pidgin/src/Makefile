@@ -20,7 +20,8 @@ parser-utilities.lib.du: parser-utilities.lid
 
 # ansi-c library
 
-ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan
+ansi-c.lid: ansi-c-exports.dylan c-types.dylan c-declarations.dylan \
+            c-type-repository.dylan
 	touch $@
 
 ansi-c.lib.du: ansi-c.lid parser-utilities.lib.du
