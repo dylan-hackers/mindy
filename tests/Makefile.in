@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.16 1996/10/06 14:45:46 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.17 1996/10/06 14:51:56 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,7 +64,12 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS = 
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix::../libraries/format-out:../libraries/time:../libraries/regexp:../libraries/transcendental
+
+# We put transcendental first in the path because if we don't, it'll
+# go to look for the Transcendental library and instead find
+# ../libraries/dylan/transcendental.dbc
+#
+MINDYPATH =   MINDYPATH=../libraries/transcendental:../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix::../libraries/format-out:../libraries/time:../libraries/regexp
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
