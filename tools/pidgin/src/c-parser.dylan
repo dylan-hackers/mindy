@@ -389,78 +389,89 @@ define generic process-declarator
 define method process-declarator
     (tp :: <c-type>, declarator :: <pair>, state :: <parse-state>)
  => (new-type :: <c-type>, name :: <icky-type-name>)
-  case 
-
-    // Process pointer types.
-    (instance?(declarator.head, <list>)) =>
-      for (tp = tp
-	     then if (ptr ~= #"pointer")
-		    parse-error(state, "unknown type modifier");
-		  else
-		    make(<c-pointer-type>,
-			 repository: state.repository,
-			 referent: tp);
-		  end if,
-	   ptr in head(declarator))
-      finally
-	process-declarator(tp, tail(declarator), state);
-      end for;
-      
-    // Process vector types.
-    (declarator.head == #"vector") =>
-      let length = second(declarator);
-      // Vector types are represented the same as the corresponding pointer
-      // types, but are accessed differently, so make sure that we share names
-      // with the corresponding pointer type.
-      let decl = make(<c-array-type>,
-		      repository: state.repository,
-		      referent: tp,
-		      size: length);
-      process-declarator(decl, declarator.tail.tail, state);
-      
-    (declarator.head == #"function") =>
-      local method get-type (arg) => (type :: <c-type>)
-	      if (instance?(arg, <c-variable-declaration>))
-                // XXX - I fixed c-parser-engine so this won't happen.
-		arg.c-variable-type;
-	      else
-		arg;
-	      end if;
-	      // XXX - check for void arguments.
-	    end method;
-      let params = second(declarator);
-
-      // Look for (void) argument lists.
-      let (params, explicit-void?) =
-	if (params.size == 1 & first(params) == $c-void-type)
-	  values(#(), #t);
-	else
-	  values(params, #f);
-	end if;
-
-      // Look for argument lists with ANSI C varargs.
-      let (params, explicit-varargs?) =
-	if (member?(#"varargs", params))
-	  values(choose(curry(\~=, #"varargs"), params), #t);
-	else
-	  values(params, #f);
-	end if;
-
-      // Construct the function type.
-      // XXX - we eventually want typedef-like types to hold argument names.
-      let new-type = make(<c-function-type>,
-			  repository: state.repository,
-			  return-type: tp,
-			  parameter-types: map-as(<stretchy-vector>,
-						  get-type, params),
-			  explicit-void?: explicit-void?,
-			  explicit-varargs?: explicit-varargs?);
-      process-declarator(new-type, declarator.tail.tail, state);
-
-    otherwise =>
-      parse-error(state, "unknown type modifier");
-  end case;
+  real-process-declarator(tp, declarator.head, declarator, state);
 end method process-declarator;
+
+define method real-process-declarator
+    (tp :: <c-type>, declarator-type :: <list>, declarator :: <pair>, state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <icky-type-name>)
+    // Process pointer types.
+  for (tp = tp
+	 then if (ptr ~= #"pointer")
+		parse-error(state, "unknown type modifier");
+	      else
+		make(<c-pointer-type>,
+		     repository: state.repository,
+		     referent: tp);
+	      end if,
+       ptr in head(declarator))
+  finally
+    process-declarator(tp, tail(declarator), state);
+  end for;
+end method real-process-declarator;
+      
+define method real-process-declarator
+    (tp :: <c-type>, declarator-type == #"vector", declarator :: <pair>, state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <icky-type-name>)
+    // Process vector types.
+  let length = second(declarator);
+  // Vector types are represented the same as the corresponding pointer
+  // types, but are accessed differently, so make sure that we share names
+  // with the corresponding pointer type.
+  let decl = make(<c-array-type>,
+		  repository: state.repository,
+		  referent: tp,
+		  length: length);
+  process-declarator(decl, declarator.tail.tail, state);
+end method real-process-declarator;
+      
+define method real-process-declarator
+    (tp :: <c-type>, declarator-type == #"function", declarator :: <pair>, state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <icky-type-name>)
+  local method get-type (arg) => (type :: <c-type>)
+	  if (instance?(arg, <c-variable-declaration>))
+	    // XXX - I fixed c-parser-engine so this won't happen.
+	    arg.c-variable-type;
+	  else
+	    arg;
+	  end if;
+	  // XXX - check for void arguments.
+	end method;
+  let params = second(declarator);
+  
+  // Look for (void) argument lists.
+  let (params, explicit-void?) =
+    if (params.size == 1 & first(params) == $c-void-type)
+      values(#(), #t);
+    else
+      values(params, #f);
+    end if;
+  
+  // Look for argument lists with ANSI C varargs.
+  let (params, explicit-varargs?) =
+    if (member?(#"varargs", params))
+      values(choose(curry(\~=, #"varargs"), params), #t);
+    else
+      values(params, #f);
+    end if;
+  
+  // Construct the function type.
+  // XXX - we eventually want typedef-like types to hold argument names.
+  let new-type = make(<c-function-type>,
+		      repository: state.repository,
+		      return-type: tp,
+		      parameter-types: map-as(<stretchy-vector>,
+					      get-type, params),
+		      explicit-void?: explicit-void?,
+		      explicit-varargs?: explicit-varargs?);
+  process-declarator(new-type, declarator.tail.tail, state);
+end method real-process-declarator;
+
+define method real-process-declarator
+    (tp :: <c-type>, declarator-type, declarator :: <pair>, state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <icky-type-name>)
+  parse-error(state, "unknown type modifier");
+end method real-process-declarator;
 
 // This handles the trivial case in which we are down to the bare "name" and
 // are therefore done.

@@ -52,7 +52,7 @@ define module c-types
       c-pointer-referent-type,
     <c-pointer-type>,
     <c-array-type>,
-      c-array-size,
+      c-array-length,
     <c-function-type>,
       c-function-return-type,
       c-function-parameter-types,

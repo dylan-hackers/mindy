@@ -221,28 +221,7 @@ define method format-c-tagged-type
   if (type.c-type-complete?)
     let result = concatenate(type.c-type-name, " {", suffix);
     for (member in type.c-type-members)
-      let formatted =
-	select (member by instance?)
-	  <c-member-variable> =>
-	    format-c-type(member.c-member-variable-type,
-			  decl-name: member.c-member-variable-name);
-	  <c-bit-field> =>
-	    let name = member.c-bit-field-name;
-	    let sign = select (member.c-bit-field-sign-specifier)
-			 #"signed" => "signed ";
-			 #"unsigned" => "unsigned ";
-			 #"unspecified" => "";
-		       end;
-	    let width = member.c-bit-field-width;
-	    if (name)
-	      format-to-string("%sint %s : %d", sign, name, width);
-	    else
-	      format-to-string("%sint : %d", sign, width);
-	    end;
-	  otherwise =>
-	    error("illegal member %= in %s", member, type.c-type-name);
-	end select;
-      result := concatenate(result, prefix, formatted, ";", suffix);
+      result := concatenate(result, prefix, format-c-tagged-type-member(member), ";", suffix);
     end for;
     concatenate(result, "}");
   else
@@ -250,6 +229,35 @@ define method format-c-tagged-type
   end if;
 end;
 
+define method format-c-tagged-type-member
+    (member :: <c-member-variable>)
+ => (string :: <byte-string>)
+  format-c-type(member.c-member-variable-type,
+		decl-name: member.c-member-variable-name);
+end method format-c-tagged-type-member;
+
+define method format-c-tagged-type-member
+    (member :: <c-bit-field>)
+ => (string :: <byte-string>)
+  let name = member.c-bit-field-name;
+  let sign = select (member.c-bit-field-sign-specifier)
+	       #"signed" => "signed ";
+	       #"unsigned" => "unsigned ";
+	       #"unspecified" => "";
+	     end;
+  let width = member.c-bit-field-width;
+  if (name)
+    format-to-string("%sint %s : %d", sign, name, width);
+  else
+    format-to-string("%sint : %d", sign, width);
+  end;
+end method format-c-tagged-type-member;
+
+define method format-c-tagged-type-member
+    (member :: <c-struct-member>)
+ => (string :: <byte-string>)
+  error("illegal member %=", member);
+end method format-c-tagged-type-member;
 
 //=========================================================================
 //  Enums
@@ -314,16 +322,15 @@ define class <c-pointer-type> (<c-pointer-valued-type>)
 end;
 
 define class <c-array-type> (<c-pointer-valued-type>)
-  // XXX - may want to change this to c-array-length.
-  slot c-array-size :: false-or(<integer>),
-    init-keyword: size:,
+  slot c-array-length :: false-or(<integer>),
+    init-keyword: length:,
     init-value: #f;
 end;
 
 define method c-type-complete?
     (type :: <c-array-type>)
  => (complete? :: <boolean>)
-  type.c-array-size ~= #f;
+  type.c-array-length ~= #f;
 end;
 
 
@@ -480,18 +487,18 @@ define function format-c-type
 	  last-was-direct? := #f;
 
 	<c-array-type> =>
-	  let size = type.c-array-size;
-	  let size-str =
-	    if (size)
-	      format-to-string("[%d]", size);
+	  let length = type.c-array-length;
+	  let length-str =
+	    if (length)
+	      format-to-string("[%d]", length);
 	    else
 	      "[]"
 	    end;
 	  decl :=
 	    if (last-was-direct?)
-	      concatenate(decl, size-str);
+	      concatenate(decl, length-str);
 	    else
-	      concatenate("(", decl, ")", size-str);
+	      concatenate("(", decl, ")", length-str);
 	    end;
 	  last-was-direct? := #t;
 

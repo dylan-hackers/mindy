@@ -116,11 +116,11 @@ end function make-tagged-type;
 //=========================================================================
 
 // Used when processing <SIZEOF-token>.
-define function c-type-size (name :: <icky-type-name>)
+define function c-type-size (name /*:: <icky-type-name>*/)
  => (size :: <integer>)
   // XXX - need information about local C compiler
-  signal(make(<simple-warning>,
-	      format-string: "STUB: returning 4 for sizeof"));
+  // signal(make(<simple-warning>,
+  //	      format-string: "STUB: returning 4 for sizeof"));
   4;
 end;
 

@@ -55,19 +55,19 @@ define function test-c-types-and-declarations () => ()
   print-c-type(make(<c-array-type>, repository: r,
 		    referent: $c-char-type));
   print-c-type(make(<c-array-type>, repository: r,
-		    referent: $c-char-type, size: 10));
+		    referent: $c-char-type, length: 10));
   print-c-type(make(<c-pointer-type>, repository: r,
 		    referent: make(<c-array-type>, repository: r,
-				   referent: $c-char-type, size: 10)));
+				   referent: $c-char-type, length: 10)));
   print-c-type(make(<c-array-type>, repository: r,
-		    size: 10,
+		    length: 10,
 		    referent: make(<c-pointer-type>, repository: r,
 				   referent: $c-char-type)));
 
   let char* =
     make(<c-pointer-type>, repository: r, referent: $c-char-type);
   let array-10-char* =
-    make(<c-array-type>, repository: r, referent: char*, size: 10);
+    make(<c-array-type>, repository: r, referent: char*, length: 10);
   let array-10-char*-* =
     make(<c-pointer-type>, repository: r, referent: array-10-char*);
   let func =
