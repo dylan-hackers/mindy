@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/funcopt.dylan,v 1.1 1996/02/02 23:19:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/funcopt.dylan,v 1.2 1996/03/18 01:47:57 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -75,10 +75,13 @@ define method optimize
       let old-type = function.result-type;
       if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
 	function.result-type := type;
-      end;
-    end;
-  end;
-end;
+	if (function.literal)
+	  queue-dependents(component, function.literal);
+	end if;
+      end if;
+    end for;
+  end unless;
+end method optimize;
 
 define method optimize (component :: <component>, prologue :: <prologue>)
     => ();
