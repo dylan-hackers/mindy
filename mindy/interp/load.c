@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.30 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.31 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -1111,7 +1111,7 @@ static void do_first_init(struct thread *thread, int nargs)
 
 void load_do_inits(struct thread *thread)
 {
-    *thread->sp++ = make_raw_function("init", 0, FALSE, obj_False, FALSE,
+    *thread->sp++ = make_raw_function("init", obj_Nil, FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      do_first_init);
     invoke(thread, 0);

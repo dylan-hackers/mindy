@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.16 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.17 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -194,13 +194,15 @@ void init_table_classes(void)
 void init_table_functions(void)
 {
     define_constant("pointer-hash",
-		    make_raw_function("float-hash", 1, FALSE, obj_False,
+		    make_raw_function("float-hash", list1(obj_ObjectClass),
+				      FALSE, obj_False,
 				      FALSE,
 				      list2(obj_FixnumClass,
 					    obj_HashStateClass),
 				      obj_False, dylan_pointer_hash));
     define_constant("float-hash",
-		    make_raw_function("float-hash", 1, FALSE, obj_False,
+		    make_raw_function("float-hash", list1(obj_FloatClass),
+				      FALSE, obj_False,
 				      FALSE,
 				      list2(obj_FixnumClass,
 					    obj_HashStateClass),

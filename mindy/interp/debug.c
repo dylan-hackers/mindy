@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.46 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.47 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -2537,10 +2537,12 @@ void scavenge_debug_roots(void)
 
 void init_debug_functions(void)
 {
-    do_print_func = make_raw_function("debug-print", 1, FALSE, obj_False,
+    do_print_func = make_raw_function("debug-print", list1(obj_ObjectClass),
+				      FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
 				      do_print_start);
-    do_eval_func = make_raw_function("debug-eval", 1, FALSE, obj_False,
+    do_eval_func = make_raw_function("debug-eval", list1(obj_ObjectClass),
+				     FALSE, obj_False,
 				     FALSE, obj_Nil, obj_ObjectClass,
 				     do_eval_start);
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.42 1996/02/17 21:15:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.43 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -140,7 +140,7 @@ struct function {
 
 #define FUNC(o) obj_ptr(struct function *, o)
 
-obj_t make_raw_function(char *debug_name, int required_args,
+obj_t make_raw_function(char *debug_name, obj_t specializers,
 			boolean restp, obj_t keywords, boolean all_keys,
 			obj_t result_types, obj_t more_results_type,
 			void (*xep)(struct thread *thread, int nargs))
@@ -149,12 +149,13 @@ obj_t make_raw_function(char *debug_name, int required_args,
 
     FUNC(res)->xep = xep;
     FUNC(res)->debug_name = symbol(debug_name);
-    FUNC(res)->required_args = required_args;
+    FUNC(res)->required_args = length(specializers);
     FUNC(res)->restp = restp;
     FUNC(res)->keywords = keywords;
     FUNC(res)->all_keys = all_keys;
     FUNC(res)->result_types = result_types;
     FUNC(res)->more_results_type = more_results_type;
+    FUNC(res)->specializers = specializers;
 
     return res;
 }

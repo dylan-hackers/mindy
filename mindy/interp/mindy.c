@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.15 1995/06/12 01:42:16 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.16 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file starts everything going.
 *
@@ -91,7 +91,8 @@ void main(int argc, char *argv[])
     init();
 
     thread = thread_create(symbol("main"));
-    *thread->sp++ = make_raw_function("startup", 0, TRUE, obj_False, FALSE,
+    *thread->sp++ = make_raw_function("startup", obj_Nil,
+				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      startup);
 

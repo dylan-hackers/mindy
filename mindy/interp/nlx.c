@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.9 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements non-local exit.
 *
@@ -280,12 +280,16 @@ void init_nlx_classes(void)
 void init_nlx_functions(void)
 {
     define_constant("uwp",
-		    make_raw_function("uwp", 2, FALSE, obj_False, FALSE,
+		    make_raw_function("uwp", 
+				      list2(obj_ObjectClass, obj_ObjectClass),
+				      FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, uwp));
     define_constant("catch",
-		    make_raw_function("catch", 1, FALSE, obj_False, FALSE,
+		    make_raw_function("catch", list1(obj_ObjectClass),
+				      FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, catch));
     define_constant("throw",
-		    make_raw_function("throw", 1, TRUE, obj_False, FALSE,
+		    make_raw_function("throw", list1(obj_ObjectClass),
+				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, throw));
 }

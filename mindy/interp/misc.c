@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.16 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.17 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -45,6 +45,7 @@
 #include "num.h"
 #include "error.h"
 #include "str.h"
+#include "coll.h"
 
 static struct variable *generic_apply_var = NULL;
 
@@ -184,22 +185,31 @@ void init_misc_functions(void)
     define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, dylan_getenv);
     define_constant("invoke-debugger",
-		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
+		    make_raw_function("invoke-debugger", 
+				      list1(obj_ObjectClass),
+				      FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
 				      dylan_invoke_debugger));
     define_constant("values",
-		    make_raw_function("values", 0, TRUE, obj_False, FALSE,
+		    make_raw_function("values", obj_Nil,
+				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      dylan_values));
     define_constant("apply",
-		    make_raw_function("apply", 2, TRUE, obj_False, FALSE,
+		    make_raw_function("apply", 
+				      list2(obj_FunctionClass, 
+					    obj_ObjectClass), 
+				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      dylan_apply));
     generic_apply_var = find_variable(module_BuiltinStuff,
 				      symbol("generic-apply"),
 				      FALSE, TRUE);
     define_constant("apply-curry",
-		    make_raw_function("apply-curry", 3, FALSE, obj_False,
+		    make_raw_function("apply-curry", 
+				      list3(obj_FunctionClass, obj_SeqClass, 
+					    obj_SeqClass), 
+				      FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
 				      dylan_apply_curry));
 }

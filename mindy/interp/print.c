@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.14 1994/11/28 15:00:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.15 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements the printer framework.
 *
@@ -334,7 +334,8 @@ void init_print_functions(void)
     define_function("puts", list1(obj_ByteStringClass), FALSE, obj_False,
 		    FALSE, obj_ByteStringClass, dylan_puts);
     define_constant("format",
-		    make_raw_function("format", 1, TRUE, obj_False, FALSE,
+		    make_raw_function("format", list1(obj_ByteStringClass),
+				      TRUE, obj_False, FALSE,
 				      obj_Nil, obj_False, dylan_format));
     define_function("fflush", obj_Nil, FALSE, obj_False, FALSE,
 		    obj_ObjectClass, dylan_fflush);

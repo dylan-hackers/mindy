@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.15 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.16 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements vectors.
 *
@@ -331,7 +331,8 @@ void init_vec_classes(void)
 void init_vec_functions(void)
 {
     define_constant("vector",
-		    make_raw_function("vector", 0, TRUE, obj_False, FALSE,
+		    make_raw_function("vector", obj_Nil,
+				      TRUE, obj_False, FALSE,
 				      list1(obj_SimpleObjectVectorClass),
 				      obj_False, dylan_vector));
     define_method("element",

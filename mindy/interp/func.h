@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.13 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.14 1996/02/26 23:00:55 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -46,7 +46,7 @@ struct method_info {
 
 #define METHOD_INFO(o) obj_ptr(struct method_info *, o)
 
-extern obj_t make_raw_function(char *debug_name, int required_args,
+extern obj_t make_raw_function(char *debug_name, obj_t specializers,
 			       boolean restp, obj_t keywords, boolean all_keys,
 			       obj_t result_types, obj_t more_results_type,
 			       void (*xep)(struct thread *thread, int nargs));

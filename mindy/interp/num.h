@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.6 1994/11/03 22:19:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.h,v 1.7 1996/02/26 23:00:55 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -90,7 +90,8 @@ extern obj_t make_extended(long double value);
 extern obj_t obj_IntegerClass;
 extern obj_t obj_FixnumClass;
 extern obj_t obj_BignumClass;
-extern obj_t obj_SingleFloatClass;     /* table.c needs the floats */
+extern obj_t obj_FloatClass;     /* table.c needs the floats */
+extern obj_t obj_SingleFloatClass;
 extern obj_t obj_DoubleFloatClass;
 extern obj_t obj_ExtendedFloatClass;
 

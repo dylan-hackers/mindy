@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.9 1996/02/26 23:00:55 nkramer Exp $
 *
 * This file implements the low level support for exception handlers.
 *
@@ -161,7 +161,8 @@ void init_handler_functions(void)
 					       obj_Nil)),
 				    FALSE, obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
-		    make_raw_function("current-handler", 0, FALSE, obj_False,
+		    make_raw_function("current-handler", obj_Nil,
+				      FALSE, obj_False,
 				      FALSE, list1(obj_HandlerClass),
 				      obj_False, current_handler));
     define_function("handler-type", list1(obj_HandlerClass), FALSE, obj_False,
@@ -175,6 +176,6 @@ void init_handler_functions(void)
     define_function("handler-next", list1(obj_HandlerClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, handler_next);
     define_constant("pop-handler",
-		    make_raw_function("pop-handler", 0, FALSE, obj_False,
+		    make_raw_function("pop-handler", obj_Nil, FALSE, obj_False,
 				      FALSE, obj_Nil, obj_False, pop_handler));
 }
