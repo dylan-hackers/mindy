@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.25 2001/11/09 20:13:16 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.26 2001/11/09 23:52:02 gabor Exp $
 copyright: see below
 
 
@@ -1420,6 +1420,19 @@ define method class-defn-deferred-evaluations-function
 	       // ### inherited each-subclass slots w/ non obvious init
 	       // values impose the existence of the deferred-evaluations
 	       // function.
+	       
+	       // also indirect slots with non-ctv init-values/functions
+	       // imply a deferred-evaluations function.
+	       for (slot-defn in defn.class-defn-slots)
+		 let info = slot-defn.slot-defn-info;
+		 if (instance?(info, <class-slot-info>))
+		   if (info.slot-init-value /* == #t е TODO */
+			| info.slot-init-function)
+		     return(#t);
+		   end;
+		 end;
+	       end;
+	       
 	     end)
 	   make(<ct-function>,
 		name: make(<derived-name>, how: #"deferred-evaluation",
@@ -1703,6 +1716,8 @@ define method convert-top-level-form
 
 	let init-value = slot-info.slot-init-value;
 	let init-function = slot-info.slot-init-function;
+
+	let init-value-var = // ее indent
 	if (init-value == #t)
 	  let var = make-local-var(evals-builder,
 				   symcat(slot-name, "-init-value"),
@@ -1717,6 +1732,7 @@ define method convert-top-level-form
 			       #"slot-init-value-setter"),
 		#f,
 		list(var, make-literal-constant(evals-builder, slot-info))));
+	  var;
 	elseif (init-function == #t)
 	  let leaf = convert-init-function(evals-builder, slot-info.slot-getter,
 					   slot-defn.slot-defn-init-function);
@@ -1729,6 +1745,76 @@ define method convert-top-level-form
 		#f,
 		list(leaf, make-literal-constant(evals-builder, slot-info))));
 	end;
+
+	// Now that the <slot-info> contains the proper values,
+	// we can begin to initialize the storage allocated for
+	// indirect slots (if they are not already).
+	// еее SAME HAS TO HAPPEN FOR OVERRIDES TOO (SEE BELOW)
+	if (instance?(slot-info, <class-slot-info>))
+	  if (init-value) // later: init-value == #t TODO
+	    //
+	    // Copy over the value into the class instance.
+	    let var = init-value-var
+		      | make-local-var(evals-builder, // use local method? ее
+				       symcat(slot-name, "-init-value"),
+				       object-ctype());
+	    unless (init-value-var)
+	      build-assignment
+		(evals-builder, policy, source, var,
+		 make-unknown-call
+		   (evals-builder,
+		    ref-dylan-defn(evals-builder, policy, source,
+				   #"slot-init-value"),
+		    #f,
+		    list(make-literal-constant(evals-builder, slot-info))));
+	    end unless;
+	    //
+	    // assign to the class slot.
+	    // cannot simply use the slot-setter because slot might be constant.
+	    // ### SHOULD REALLY MAKE A SPECIAL BUILDER FOR THIS. SEE ALSO OPTIMIZE.
+	    let slot-home
+	      = build-slot-home
+		  (slot-info.slot-getter.variable-name,
+		   make-literal-constant(evals-builder, slot-info.slot-introduced-by),
+		   evals-builder, policy, source);
+	    let meta-slot = slot-info.associated-meta-slot;
+	    let meta-instance = meta-slot.slot-introduced-by;
+	    let offset = find-slot-offset(meta-slot, meta-instance);
+	    build-assignment
+	      (evals-builder, policy, source, #(),
+	       make-operation
+		 (evals-builder, <heap-slot-set>,
+		  list(var, slot-home, make-literal-constant(evals-builder, offset)),
+		  slot-info: meta-slot));
+	  elseif (init-function)
+	    //
+	    // Invoke the init function and store the result
+	    // into the class instance.
+	  // еее TODO
+	  end if;
+	end if;
+
+
+
+/* this is bull-... but may be needed somewere else...	
+	if (value-goes-into ~== #())
+	  // assign to the class slot, possibly setting init?-slot (can this be?##).
+	  // cannot simply use the slot-setter because slot might be constant.
+	  let slot-home
+	    = build-slot-home
+	        (slot-info.slot-getter.variable-name,
+		 make-literal-constant(evals-builder, slot-info.slot-introduced-by),
+		 evals-builder, policy, source);
+	  let meta-slot = slot-info.associated-meta-slot;
+	  let meta-instance = meta-slot.slot-introduced-by;
+	  let offset = find-slot-offset(meta-slot, meta-instance);
+	  build-assignment
+	    (evals-builder, policy, source, #(),
+	     make-operation
+	       (evals-builder, <heap-slot-set>,
+		list(value-goes-into, slot-home, make-literal-constant(evals-builder, offset)),
+		slot-info: meta-slot));
+	end if; */
 	
 	unless (allocation == #"virtual")
 	  if (type-var)
@@ -2231,47 +2317,46 @@ define method build-maker-function-body
 
   for (slot in cclass.all-slot-infos, index from 0)
     //
-    // If there isn't a getter, this is an init? slot.  init? slots
+    // If there isn't a getter, this is an init? slot.  Init? slots
     // are initialized along with the regular slot.
     // Also, don't need to do anything for virtual slots.
     if (slot.slot-getter & ~instance?(slot, <virtual-slot-info>))
-	  let slot-name = slot.slot-getter.variable-name;
+      let slot-name = slot.slot-getter.variable-name;
 
-	  // Get ahold of the type.
-	  let slot-type = slot.slot-type;
-	  let (type, type-var)
-	    = if (instance?(slot-type, <unknown-ctype>))
-		let var = make-local-var(maker-builder,
-					 symcat(slot-name, "-type"),
-					 specifier-type(#"<type>"));
-		build-assignment
-		  (maker-builder, policy, source, var,
-		   make-unknown-call
-		     (maker-builder,
-		      ref-dylan-defn(maker-builder, policy, source,
-				     #"slot-type"),
-		      #f,
-		      list(make-literal-constant(maker-builder, slot))));
-		values(object-ctype(), var);
-	      else
-		values(slot-type, #f);
-	      end;
-	  //
-	  // Find the active override if there is one. 
-	  let override = find-override(slot, cclass);
-	  //
-	  // Get the init-value or init-function, either from the
-	  // active override or from the slot itself if there is no
-	  // active override.
-	  let (init-value, init-function)
-	    = if (override)
-		values(override.override-init-value,
-		       override.override-init-function);
-	      else
-		values(slot.slot-init-value, slot.slot-init-function);
-	      end;
+      // Get ahold of the type.
+      let slot-type = slot.slot-type;
+      let (type, type-var)
+	= if (instance?(slot-type, <unknown-ctype>))
+	    let var = make-local-var(maker-builder,
+				     symcat(slot-name, "-type"),
+				     specifier-type(#"<type>"));
+	    build-assignment
+	      (maker-builder, policy, source, var,
+	       make-unknown-call
+		 (maker-builder,
+		  ref-dylan-defn(maker-builder, policy, source, #"slot-type"),
+		  #f,
+		  list(make-literal-constant(maker-builder, slot))));
+	    values(object-ctype(), var);
+	  else
+	    values(slot-type, #f);
+	  end;
+      //
+      // Find the active override if there is one. 
+      let override = find-override(slot, cclass);
+      //
+      // Get the init-value or init-function, either from the
+      // active override or from the slot itself if there is no
+      // active override.
+      let (init-value, init-function)
+	= if (override)
+	    values(override.override-init-value,
+		   override.override-init-function);
+	  else
+	    values(slot.slot-init-value, slot.slot-init-function);
+	  end;
 
-	local method extract-init-value (init-value-var) => ();
+      local method extract-init-value (init-value-var) => ();
 	      if (init-value == #t)
 		if (override)
 		  build-assignment
@@ -2447,8 +2532,7 @@ define method build-maker-function-body
 	  let key = slot.slot-init-keyword;
 	  if (key)
 	    let default = ~(init-value == #t) & init-value;
-	    let key-info
-              = add-key-info!(key, key-infos, slot, type, override, default);
+	    let key-info = add-key-info!(key, key-infos, slot, type, override, default);
 	    let init-value-var
 	      = make-local-var(maker-builder,
 			       symcat(slot-name, "-init-value"),
@@ -2496,16 +2580,16 @@ define method build-maker-function-body
 				      derived-type: type.ctype-extent));
 	      end;
 	      end-body(maker-builder);
-              build-slot-init(slot, init-value-var);
-              build-slot-init(slot.slot-initialized?-slot,
-                              if (init-value | init-function)
+	      build-slot-init(slot, init-value-var);
+	      build-slot-init(slot.slot-initialized?-slot,
+			      if (init-value | init-function)
 				make-literal-constant(init-builder, #t);
-                              else
-                                supplied?-arg;
-                              end);
-            end;
-          else
-            if (init-value | init-function)
+			      else
+				supplied?-arg;
+			      end);
+	    end;
+	  else
+	    if (init-value | init-function)
 	      let init-value-var
 		= make-local-var(maker-builder,
 				 symcat(slot-name, "-init-value"),
@@ -2541,8 +2625,6 @@ define method build-maker-function-body
 	    method build-slot-init
 		(slot :: <class-slot-info>, leaf :: <leaf>, init?-leaf :: <leaf>) => ();
 
-	      let init-builder = maker-builder; // е just a kludge... -- too lazy to rename now.
-	      
 	      if (immediate-rep?) //еее???
 		add!(make-immediate-args, leaf);
 	      else
@@ -2560,28 +2642,28 @@ define method build-maker-function-body
 			slot-name);
 		else
 		  let posn-leaf
-		    = make-literal-constant(init-builder, posn);
+		    = make-literal-constant(maker-builder, posn);
 		  
 		  let slot-initialized?-posn-leaf :: false-or(<leaf>)
 		    = associated.slot-initialized?-slot
-			& make-literal-constant(init-builder, posn);
+			& make-literal-constant(maker-builder, posn);
 
 		  let slot-home
 		    = build-slot-home(slot-name,
-				      make-literal-constant(init-builder, cclass),
-				      init-builder, policy, source);
+				      make-literal-constant(maker-builder, cclass),
+				      maker-builder, policy, source);
 
 		  build-assignment
-		    (init-builder, policy, source, #(),
+		    (maker-builder, policy, source, #(),
 		     make-operation
-		       (init-builder, <heap-slot-set>,
+		       (maker-builder, <heap-slot-set>,
 			list(leaf, slot-home, posn-leaf),
 			slot-info: associated));
 		  if (slot-initialized?-posn-leaf)
 		    build-assignment
-		      (init-builder, policy, source, #(),
+		      (maker-builder, policy, source, #(),
 		       make-operation
-			 (init-builder, <heap-slot-set>,
+			 (maker-builder, <heap-slot-set>,
 			  list(init?-leaf, slot-home, slot-initialized?-posn-leaf),
 			  slot-info: associated.slot-initialized?-slot));
 		  end if;
