@@ -171,7 +171,7 @@ define module functional-extensions
     <thread>, atomic-increment!, current-thread,
     <notification>, wait-for, release-all,
     put-property!, get-property, \remove-property!,
-    element-range-error;
+    element-range-error, \profiling;
 end module;
 
 
