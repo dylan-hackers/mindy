@@ -1,12 +1,12 @@
 module: tokens
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.5 2000/04/01 12:08:26 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.6 2001/05/26 16:52:17 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -164,6 +164,7 @@ define class <identifier-token> (<symbol-token>)
 end class <identifier-token>;
 
 define sealed domain make (singleton(<identifier-token>));
+define sealed domain initialize (<identifier-token>);
 
 define sealed method print-object
     (token :: <identifier-token>, stream :: <stream>) => ();
@@ -176,29 +177,6 @@ define sealed method print-object
 		if (uniq) uniquifier: end, uniq);
 end;
 
-// <left-bracket-token> -- exported
-//
-// The left bracket "[". It gets treated magically in order to make
-// the equivalence of element(foo, bar) == foo[bar] hold in the 
-// presence of lexically-scoped rebindings of element/aref. Ugly, 
-// but that's life. Since the slots of <left-bracket-token>s are
-// the same as <identifier-token>s, there should probably be a mixin
-// class that both of them inherit from. I haven't implemented it
-// yet, though, because I don't have a good name for it yet. :)
-
-define class <left-bracket-token> (<token>)
-  constant slot token-module :: false-or(<module>),
-    init-value: #f,
-    init-keyword: module:;
-  constant slot token-uniquifier :: false-or(<uniquifier>),
-    init-value: #f,
-    init-keyword: uniquifier:;
-end class <left-bracket-token>;
-    
-define sealed domain make (singleton(<left-bracket-token>));
-
-// TBD: print-object method for <left-bracket-token>
-
 // <uniquifier> -- exported.
 //
 define class <uniquifier> (<identity-preserving-mixin>)
@@ -210,7 +188,7 @@ define sealed domain initialize (<uniquifier>);
 
 // same-id? -- exported.
 // 
-define method same-id? (id1 :: <identifier-token>, id2 :: <identifier-token>)
+define function same-id? (id1 :: <identifier-token>, id2 :: <identifier-token>)
     => res :: <boolean>;
   id1.token-symbol == id2.token-symbol
     & id1.token-module == id2.token-module
@@ -229,6 +207,7 @@ define class <operator-token> (<identifier-token>)
 end class <operator-token>;
 
 define sealed domain make (singleton(<operator-token>));
+define sealed domain initialize (<operator-token>);
 
 define sealed method print-object
     (token :: <operator-token>, stream :: <stream>) => ();
@@ -320,7 +299,7 @@ end method print-object;
 define class <pre-parsed-token> (<token>)
   //
   // The piece of parse tree this token represents.
-  slot token-parse-tree :: <object>,
+  constant slot token-parse-tree :: <object>,
     required-init-keyword: parse-tree:;
 end class <pre-parsed-token>;
 
@@ -509,7 +488,7 @@ end;
 define class <core-word-info> (<word-info>)
   //
   // The core-word this is the info for.
-  slot core-word-info-word :: <symbol>, required-init-keyword: word:;
+  constant slot core-word-info-word :: <symbol>, required-init-keyword: word:;
 end class <core-word-info>;
 
 define sealed domain make (singleton(<core-word-info>));
@@ -525,7 +504,7 @@ define constant $core-word-infos :: <simple-object-vector>
 	   end method,
 	   #[#"define", #"end", #"handler", #"let",
 	     #"local", #"macro", #"otherwise"],
-	   make(<range>, from: $define-token));
+	   range(from: $define-token));
 
 
 define class <syntax-table> (<object>)
@@ -631,7 +610,7 @@ add-make-dumper(#"uniquifier", *compiler-dispatcher*, <uniquifier>, #(),
 
 // We don't need to dump the precedence and associativity of operators because
 // they are a static property of the symbol.  We only have them as slots at
-// all so that they can be more effeciently accessed.
+// all so that they can be more efficiently accessed.
 //
 add-make-dumper(#"operator-token", *compiler-dispatcher*, <operator-token>,
 		$identifier-token-slots);
