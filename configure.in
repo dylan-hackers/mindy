@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.24 1999/01/06 06:51:32 igor Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.25 1999/01/07 23:37:55 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -64,48 +64,32 @@ fi
 AC_CANONICAL_SYSTEM		# Find the system type
 AC_ARG_PROGRAM			# Provide support for name prefixes
 
+AC_DEFUN(GD_D2C_SYSTEM,[
+case $1 in
+    i*86-pc-linux-gnu*) $2=x86-linux-gcc ;;
+    powerpc-*-linux-gnu*) $2=ppc-linux-gcc ;;
+    alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
+    hppa*-hp-hpux*) $2=hppa-hpux-gcc ;;
+    sparc*-solaris*) $2=sparc-solaris-gcc ;;
+    i*86-*-freebsd2.*) $2=x86-freebsd-aout-gcc ;;
+    i*86-*-freebsd3.*) $2=x86-freebsd-elf-gcc ;;
+    i*86-pc-cygwin32) $2=x86-win32-gcc ;;
+    i*86-pc-none) $2=x86-win32-vc ;;
+    *) $2=unknown-unix ;;
+esac])
+
 AC_MSG_CHECKING(d2c build system type)
-case $build in
-    i*86-pc-linux-gnu*) d2c_build=x86-linux-gcc ;;
-    hppa*-hp-hpux*) d2c_build=hppa-hpux-gcc ;;
-    sparc*-solaris*) d2c_build=sparc-solaris-gcc ;;
-    i*86-*-freebsd*) d2c_build=x86-freebsd-gcc ;;
-    i*86-pc-cygwin32) d2c_build=x86-win32-gcc ;;
-    i*86-pc-none) echo d2c_build=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_build=ppc-linux-gcc ;;
-    alpha*-*-linux-gnu*) d2c_build=alpha-linux-gcc ;;
-    *) d2c_build=unknown-unix ;;
-esac
+GD_D2C_SYSTEM($build,d2c_build)
 AC_MSG_RESULT($d2c_build)
 AC_SUBST(d2c_build)
 
 AC_MSG_CHECKING(d2c host system type)
-case $host in
-    i*86-pc-linux-gnu*) d2c_host=x86-linux-gcc ;;
-    hppa*-hp-hpux*) d2c_host=hppa-hpux-gcc ;;
-    sparc*-solaris*) d2c_host=sparc-solaris-gcc ;;
-    i*86-*-freebsd*) d2c_host=x86-freebsd-gcc ;;
-    i*86-pc-cygwin32) d2c_host=x86-win32-gcc ;;
-    i*86-pc-none) echo d2c_host=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_host=ppc-linux-gcc ;;
-    alpha*-*-linux-gnu*) d2c_host=alpha-linux-gcc ;;
-    *) d2c_host=unknown-unix ;;
-esac
+GD_D2C_SYSTEM($host,d2c_host)
 AC_MSG_RESULT($d2c_host)
 AC_SUBST(d2c_host)
 
 AC_MSG_CHECKING(d2c target system type)
-case $target in
-    i*86-pc-linux-gnu*) d2c_target=x86-linux-gcc ;;
-    hppa*-hp-hpux*) d2c_target=hppa-hpux-gcc ;;
-    sparc*-solaris*) d2c_target=sparc-solaris-gcc ;;
-    i*86-*-freebsd*) d2c_target=x86-freebsd-gcc ;;
-    i*86-pc-cygwin32) d2c_target=x86-win32-gcc ;;
-    i*86-pc-none) echo d2c_target=x86-win32-vc ;;
-    powerpc-*-linux-gnu*) d2c_target=ppc-linux-gcc ;;
-    alpha*-*-linux-gnu*) d2c_target=alpha-linux-gcc ;;
-    *) d2c_target=unknown-unix ;;
-esac
+GD_D2C_SYSTEM($target,d2c_target)
 AC_MSG_RESULT($d2c_target)
 AC_SUBST(d2c_target)
 
