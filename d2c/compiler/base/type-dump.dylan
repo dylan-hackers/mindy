@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.6 2001/03/17 03:43:31 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.7 2001/07/24 06:30:51 housel Exp $
 copyright: see below
 
 
@@ -268,6 +268,17 @@ add-make-dumper(#"override-info", *compiler-dispatcher*,
   load-external: #t
 );
 
+add-make-dumper(#"keyword-info", *compiler-dispatcher*,
+  <keyword-info>,
+  list(keyword-introduced-by, introduced-by:, keyword-introduced-by-setter,
+       keyword-symbol, symbol:, #f,
+       keyword-init-value, init-value:, keyword-init-value-setter,
+       keyword-init-function, init-function:, keyword-init-function-setter,
+       keyword-required?, required?:, keyword-required?-setter,
+       keyword-type, type:, keyword-type-setter),
+  load-external: #t
+);
+
 /* ### -- currently recomputed, so we don't really need to dump it.
 add-make-dumper(#"layout-table", *compiler-dispatcher*,
   <layout-table>,
@@ -302,13 +313,12 @@ add-make-dumper(#"defined-designator-class", *compiler-dispatcher*,
   <defined-cdclass>,
   concatenate($class-dump-slots,
 	      list(size-of, size:, #f,
-		   alignment-of, alignment:, #f,
-		   designated-representation, representation:, #f,
-		   referenced-type, referenced-type:, #f,
-		   pointer-type, pointer-type:, #f,
-		   import-type, import-type:, #f,
-		   export-type, export-type:, #f,
-		   struct-slot-infos, struct-slots:, #f)),
+                   alignment-of, alignment:, #f,
+                   designated-representation, representation:, #f,
+                   referenced-type, referenced-type:, #f,
+                   pointer-type, pointer-type:, #f,
+                   import-type, import-type:, #f,
+                   export-type, export-type:, #f)),
   load-external: #t
 );
 

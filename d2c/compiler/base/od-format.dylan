@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.14 2001/03/30 17:16:38 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.15 2001/07/24 06:30:51 housel Exp $
 
 //======================================================================
 //
@@ -476,6 +476,7 @@ begin
   register-object-id(#"meta-slot-info", #x006B);
   register-object-id(#"virtual-slot-info", #x006C);
   register-object-id(#"override-info", #x006D);
+  register-object-id(#"keyword-info", #x014F);
   register-object-id(#"layout-table", #x006E);
   register-object-id(#"defined-class", #x006F);
   register-object-id(#"limited-class", #x0070);
@@ -660,6 +661,7 @@ begin
   // see above: register-object-id(#"designator-class-definition", #x014D);
   // see above: register-object-id(#"delayed-optimization-call-operation",
   //                               #x014E);  
+  // see above: register-object-id(#"keyword-info", #x014F);
 
 end;
 
