@@ -104,16 +104,26 @@ define method delete-char-backwards(c)
   end if;
 end method delete-char-backwards;
 
-define method complete-command(c)
-  for(i in *command-table*)
+define method complete-command-aux()
+    for(i in *command-table*)
     if(case-insensitive-equal(*command-line*, 
                               subsequence(i.name, end: *command-line*.size)))
       *command-line* := copy-sequence(i.name);
       *buffer-pointer* := i.name.size;
     end if;
   end for;
+end method complete-command-aux;
+
+define method complete-command(c)
+  complete-command-aux();
   repaint-line();
 end method complete-command;
+
+define method complete-command-and-insert-space(c)
+  complete-command-aux();
+  self-insert-command(' ');
+  repaint-line();
+end method complete-command-and-insert-space;
 
 define method beginning-of-line(c)
   *buffer-pointer* := 0;
@@ -144,6 +154,7 @@ define variable *key-bindings* = make(<simple-vector>,
 *key-bindings*[8] := delete-char-backwards;
 *key-bindings*[127] := delete-char-backwards;
 *key-bindings*[9] := complete-command;
+*key-bindings*[as(<integer>, ' ')] := complete-command-and-insert-space;
 *key-bindings*[1] := beginning-of-line;
 *key-bindings*[5] := end-of-line;
 *key-bindings*[11] := kill-to-end-of-line;
