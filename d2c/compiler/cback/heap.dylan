@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.6 1999/01/25 12:09:41 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.7 1999/03/02 13:48:58 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -969,7 +969,7 @@ define method spew-object
 		'\0' =>
 		  add!($spewed-string-buffer, '\\');
 		  add!($spewed-string-buffer, '0');
-		'\n' =>
+                '\n' =>
 		  add!($spewed-string-buffer, '\\');
 		  add!($spewed-string-buffer, 'n');
 		'\t' =>
@@ -985,13 +985,17 @@ define method spew-object
 		  add!($spewed-string-buffer, '\\');
 		  add!($spewed-string-buffer, 'f');
 		otherwise =>
+                  // characters outside of C0 and C1 are passed through
+                  // as is: the rest are escaped
 		  if (char >= ' ' & char <= '~')
-		    add!($spewed-string-buffer, char);
-		  else
-		    let code = as(<integer>, char);
-		    let substr = format-to-string("\\x%x%x", ash(code, -16),
-						  logand(code, 15));
-		    map(method (c) add!($spewed-string-buffer, c) end, substr);
+                    add!($spewed-string-buffer, char);
+                  elseif (as(<integer>, char) >= #xa1 & as(<integer>, char) <= #xff)
+                    add!($spewed-string-buffer, char);
+                  else
+                    let code = as(<integer>, char);
+                    // this will need to be updated when Unicode is fully supported
+		    let substr = format-to-string("\\x%x", logand(code, #xff));
+		    do(method (c) add!($spewed-string-buffer, c) end, substr);
 		  end if;
 	      end select;
 	    end for;

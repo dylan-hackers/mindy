@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.2 1998/12/02 10:12:59 tc Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.3 1999/03/02 13:49:00 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -153,27 +153,95 @@ define method make-constrained-name
        constraint: constraint);
 end method;
 
-// escape-character -- internal.
+// decode-escape-character -- internal
 //
-// Return the real character that corresponds to the \-quoted
-// character in a string or character literal.
+// Decode the current escape character, returning its integral value. It is
+// up to the caller to determine whether or not the value is in range for
+// a given <character> instance. It is assumed that the escape code is
+// complete.
 //
-define method escape-character
-    (char :: <character>) => escaped-char :: <character>;
-  select (char)
-    'a' => '\a';
-    'b' => '\b';
-    'e' => '\e';
-    'f' => '\f';
-    'n' => '\n';
-    'r' => '\r';
-    't' => '\t';
-    '0' => '\0';
-    '\\' => '\\';
-    '\'' => '\'';
-    '"' => '"';
-  end select;
-end method escape-character;
+define method decode-escape-character
+    (source-location :: <file-source-location>, start :: <integer>)
+ => result :: <integer>;
+  let contents = source-location.source-file.contents;
+  if (contents[start] ~= as(<integer>, '<'))
+    let char = select (as(<character>, contents[start]))
+                 'a' => '\a';
+                 'b' => '\b';
+                 'e' => '\e';
+                 'f' => '\f';
+                 'n' => '\n';
+                 'r' => '\r';
+                 't' => '\t';
+                 '0' => '\0';
+                 '\\' => '\\';
+                 '\'' => '\'';
+                 '"' => '"';
+               end select;
+    as(<integer>, char);
+  else
+    // this is provided inline since we need slightly different behavior
+    // than that provided by parse-integer: we stop on the first non-hex
+    // character encountered (like the C runtime's strtoul function) and
+    // return the value.
+    local method decode-unicode-escape(posn :: <integer>, value :: <integer>) => <integer>;
+            let digit  = contents[posn];
+          
+            if (as(<integer>, '0') <= digit & digit <= as(<integer>, '9'))
+              decode-unicode-escape(posn + 1, (value * 16) + (digit - as(<integer>, '0')));
+            elseif (as(<integer>, 'a') <= digit & digit <= as(<integer>, 'f'))
+              decode-unicode-escape(posn + 1, (value * 16) + (digit - as(<integer>, 'a') + 10));
+            elseif (as(<integer>, 'A') <= digit & digit <= as(<integer>, 'F'))
+              decode-unicode-escape(posn + 1, (value * 16) + (digit - as(<integer>, 'A') + 10));
+            else
+              value;
+            end if;
+          end method decode-unicode-escape;
+    decode-unicode-escape(start + 1, 0);
+  end if;
+end method decode-escape-character;
+
+// escape-character-width -- internal
+//
+// Return the number of bytes used by an escape character, including
+// the initial '\'. This function also determines whether or not a
+// Unicode escape sequence is within the supported range of the
+// implementation (currently U+0000 -- U+00FF).
+//
+define method escape-character-width
+    (source-location :: <file-source-location>, start :: <integer>, finish :: <integer>)
+ => (decode-size :: <integer>, bytes-used :: <integer>)
+  let contents = source-location.source-file.contents;
+
+  if (contents[start + 1] ~= as(<integer>, '<'))
+    values(1, 2);
+  else
+    local method repeat(posn, result)
+            if (posn < finish)
+              if (contents[posn] == as(<integer>, '>'))
+                result + 1;
+              else
+                repeat(posn + 1, result + 1);
+              end if;
+            else
+              compiler-fatal-error("unterminated Unicode escape sequence, line %=, character %=",
+                                   source-location.start-line,
+                                   source-location.start-column);
+            end if;
+          end method repeat;
+
+    let escape-code-length = repeat(start + 1, 1);
+
+    if (decode-escape-character(source-location, start + 1) < 256)
+      values(1, escape-code-length);
+    else
+      compiler-fatal-error("Unicode escape out of range, line %=, character %=",
+                           source-location.start-line,
+                           source-location.start-column);
+    end if;
+  end if;
+
+end method escape-character-width;
 
 // decode-string -- internal.
 //
@@ -185,39 +253,45 @@ define method decode-string
     (source-location :: <file-source-location>,
      #key start :: <integer> = source-location.start-posn + 1,
      end: finish :: <integer> = source-location.end-posn - 1)
-    => result :: <byte-string>;
+ => result :: <byte-string>;
   let contents = source-location.source-file.contents;
+
   let length = begin
-		 local method repeat (posn, result)
-			 if (posn < finish)
-			   if (contents[posn] == as(<integer>, '\\'))
-			     repeat (posn + 2, result + 1);
-			   else
-			     repeat (posn + 1, result + 1);
-			   end if;
-			 else
-			   result;
-			 end if;
-		       end method repeat;
-		 repeat(start, 0);
-	       end;
+                 local method repeat(posn, result)
+                         if (posn < finish)
+                           if (contents[posn] == as(<integer>, '\\'))
+                             let (char-len, skip-count) = escape-character-width(source-location, posn, finish);
+                             repeat(posn + skip-count, result + char-len);
+                           else
+                             repeat(posn + 1, result + 1);
+                           end if;
+                         else
+                           result;
+                         end if;
+                       end method repeat;
+                 repeat(start, 0);
+               end;
+
   let result = make(<string>, size: length);
-  local method repeat (src, dst)
-	  if (dst < length)
-	    if (contents[src] == as(<integer>, '\\'))
-	      result[dst] := escape-character(as(<character>,
-						 contents[src + 1]));
-	      repeat(src + 2, dst + 1);
-	    else
-	      result[dst] := as(<character>, contents[src]);
-	      repeat(src + 1, dst + 1);
-	    end if;
-	  end if;
-	end method repeat;
-  repeat(start, 0);
+
+  local method repeat(src, dst)
+          if (dst < length)
+            if (contents[src] == as(<integer>, '\\'))
+              let (unused, skip-count) = escape-character-width(source-location, src, finish);
+              let char-code = decode-escape-character(source-location, src + 1);
+              result[dst] := as(<character>, char-code);
+              repeat(src + skip-count, dst + 1);
+            else
+              result[dst] := as(<character>, contents[src]);
+              repeat(src + 1, dst + 1);
+            end if;
+          end if;
+        end method repeat;
+  repeat(start,0);
+
   result;
 end method decode-string;
-			 
+
 // make-quoted-symbol -- internal.
 //
 // Make a <literal-token> when confronted with the #"foo" syntax.
@@ -361,7 +435,14 @@ define method make-character-literal
        literal:
 	 make(<literal-character>,
 	      value: if (char == '\\')
-		       escape-character(as(<character>, contents[posn + 1]));
+                       let char = decode-escape-character(source-location, posn + 1);
+                       if (char < 256)
+                         as(<character>, char);
+                       else
+                         compiler-fatal-error("Unicode escape out of range, line %=, character %=",
+                                              source-location.start-line,
+                                              source-location.start-column);
+                       end if;
 		     else
 		       char;
 		     end));
@@ -743,7 +824,7 @@ define constant $Initial-State
 	     pair('\\', #"sharp-quote-escape"),
 	     pair(" !#-[]-~", #"sharp-quote")),
        state(#"sharp-quote-escape", #f,
-	     pair("\\abefnrt0\"", #"sharp-quote")),
+	     pair("\\abefnrt0\"<", #"sharp-quote")),
        state(#"quoted-keyword", make-quoted-symbol),
        state(#"sharp-b", #f, pair("01", #"binary-integer")),
        state(#"binary-integer", parse-integer-literal,
@@ -932,15 +1013,19 @@ define constant $Initial-State
        state(#"quote-char", #f,
 	     pair('\'', #"character")),
        state(#"character", make-character-literal),
+       state(#"quote-unicode-escape", #f,
+             pair('>', #"quote-char"),
+             pair("a-fA-F0-9", #"quote-unicode-escape")),
        state(#"quote-escape", #f,
-	     pair("\\abefnrt0'", #"quote-char")),
+             pair('<', #"quote-unicode-escape"),
+             pair("\\abefnrt0'", #"quote-char")),
        state(#"double-quote", #f,
 	     pair('"', #"string"), 
 	     pair('\\', #"double-quote-escape"),
 	     pair(" !#-[]-~", #"double-quote")),
        state(#"string", make-string-literal),
        state(#"double-quote-escape", #f,
-	     pair("\\abefnrt0\"", #"double-quote")),
+	     pair("\\abefnrt0\"<", #"double-quote")),
        state(#"decimal", parse-integer-literal,
 	     pair("0-9", #"decimal"),
 	     pair('/', #"decimal-slash"),

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/print.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/print.c,v 1.2 1999/03/02 13:49:02 andreas Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
@@ -95,24 +95,24 @@ static void print_extended_float_literal(struct extended_float_literal *l,
 static void print_char(int c, int quote)
 {
     switch (c) {
-      case '"':
-      case '\'':
-	if (c == quote)
-	    printf("\\%c", c);
-	else
-	    putchar(c);
-	break;
-      case '\b': printf("\\b");	break;
-      case '\f': printf("\\f");	break;
-      case '\n': printf("\\n");	break;
-      case '\r': printf("\\r");	break;
-      case '\t': printf("\\t");	break;
-      default:
-	if (' ' <= c && c <= '~')
-	    putchar(c);
-	else
-	    printf("\\%03o", c);
-	break;
+    case '"':
+    case '\'':
+        if (c == quote)
+            printf("\\%c", c);
+        else
+            putchar(c);
+        break;
+    case '\b': printf("\\b");	break;
+    case '\f': printf("\\f");	break;
+    case '\n': printf("\\n");	break;
+    case '\r': printf("\\r");	break;
+    case '\t': printf("\\t");	break;
+    default:
+        if (' ' <= c/* && c <= '~'*/)
+            putchar(c);
+        else
+            printf("\\%03o", c);
+        break;
     }
 }
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/src.c,v 1.1 1998/05/03 19:55:08 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/src.c,v 1.2 1999/03/02 13:49:03 andreas Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -783,18 +783,42 @@ struct literal *parse_unbound_token(struct token *token)
     return res;
 }
 
-static int escape_char(int c)
+static int unicode_escape(char **c, int line)
 {
-    switch (c) {
-      case 'a': return '\007';
-      case 'b': return '\b';
-      case 'e': return '\033';
-      case 'f': return '\f';
-      case 'n': return '\n';
-      case 'r': return '\r';
-      case 't': return '\t';
-      case '0': return '\0';
-      default: return c;
+    char *term;
+    long  character;
+
+    character = strtol(*c, &term, 16);
+    if (((character == 0) && (term == *c)) || (character > 255))
+        error(line, "invalid Unicode escape \\<%x>.", character);
+    *c = term + 1;
+    return character;
+}
+
+/* the semantics of this function are different than in previous
+ * releases: before any character prefixed by '\' that was not
+ * recognized as a valid escape was simply passed through untouched.
+ * now it actually recognizes only the set of escapes defined in
+ * the DRM. */
+static int escape_char(char **c, int line)
+{
+    switch (*(*c)++) {
+    case 'a': return '\007';
+    case 'b': return '\b';
+    case 'e': return '\033';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case '0': return '\0';
+    case '\\': return '\\';
+    case '"': return '"';
+    case '\'': return '\'';
+    case '<' : return unicode_escape(c, line);
+    default:
+        /* we should never get here since the lexer will barf long before */
+        error(line, "invalid escape sequence, \\%c", *((*c)-1));
+        return 0; /* silence compiler warning */
     }
 }
 
@@ -807,11 +831,15 @@ struct literal *parse_string_token(struct token *token)
 
     src = (char *)token->chars + 1;
     for (i = length; i > 0; i--) {
-	if (*src++ == '\\') {
-	    length--;
-	    i--;
-	    src++;
-	}
+        if (*src++ == '\\') {
+            length--, i--;
+            if (*src != '<') {
+                src++;
+            } else {
+                while ((*src++ != '>') && (i > 0))
+                    i--, length--;
+            }
+        }
     }
 
     res = malloc(sizeof(struct string_literal) 
@@ -827,7 +855,7 @@ struct literal *parse_string_token(struct token *token)
     for (i = length; i > 0; i--) {
 	int c = *src++;
 	if (c == '\\')
-	    *dst++ = escape_char(*src++);
+	    *dst++ = escape_char(&src, res->line);
 	else
 	    *dst++ = c;
     }
@@ -860,10 +888,11 @@ struct literal
     src = (char *)token->chars + 1;
     dst = (char *)res->chars + old_length;
     for (i = 0; i < length; i++) {
-	int c = *src++;
-	if (c == '\\') {
-	    *dst++ = escape_char(*src++);
-	    length--;
+        int c = *src++;
+        if (c == '\\') {
+            char *t = src;
+            *dst++ = escape_char(&src, res->line);
+            length -= src - t;
 	} else
 	    *dst++ = c;
     }
@@ -880,8 +909,10 @@ struct literal *parse_character_token(struct token *token)
     int c = token->chars[1];
     struct literal *res;
 
-    if (c == '\\')
-	c = escape_char(token->chars[2]);
+    if (c == '\\') {
+        char *cp = &token->chars[2];
+        c = escape_char(&cp, token->line);
+    }
 
     res = make_character_literal(c);
     res->line = token->line;
@@ -1043,7 +1074,7 @@ struct literal *parse_symbol_token(struct token *token)
 
 struct literal *parse_keyword_token(struct token *token)
 {
-    char *ptr = (char *)token->chars;
+    char *ptr = (char *)token->chars, *p = NULL;
     struct literal *res;
 
     /* We modify the token here, but we don't care 'cause we will be */
@@ -1052,14 +1083,29 @@ struct literal *parse_keyword_token(struct token *token)
     /* keyword tokens have a trailing : or " */
     ptr[token->length-1] = '\0';
 
-    /* Sometimes they also have a leading #" */
-    if (*ptr == '#')
-	ptr += 2;
-
+    /* Sometimes they also have a leading #", in which case we need
+     * to also process escape sequences in the string. */
+    if (*ptr == '#') {
+        ptr += 2;
+        /* this allocation makes some assumptions: it assumes that the token
+         * name will not grow when the escapes are decoded, so there will
+         * be enough room in the buffer to hold the string. it also assumes
+         * that the buffer is big enough to hold the entire name (in the
+         * case where there are no escapes) */
+        if ((p = (char *) malloc(token->length * sizeof(char))) != NULL) {
+            char *dest = p, c;
+            while ((c = *ptr++) != '\0')
+                *dest++ = c != '\\' ? c : escape_char(&ptr, token->line);
+            *dest = '\0';
+            ptr = p;
+        }
+    }
     res = make_symbol_literal(symbol(ptr));
     res->line = token->line;
 
     free(token);
+    if (p != NULL)
+        free(p);
 
     return res;
 }

@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.3 1999/01/07 23:46:11 housel Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.4 1999/03/02 13:49:02 andreas Exp $
 *
 * This file is the lexical analizer.
 *
@@ -68,7 +68,7 @@ N	((({G}{DGS}*)?{A}{ADGS}*)|({D}{DGS}*({A}{DGS}+)*{A}{A}{ADGS}*))
 
 O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"~=="|"&"|"|"|"^"
 
-STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
+STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0<]))*\"
 
 %%
 
@@ -188,6 +188,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 
 <etc>'[ -&(-\[\]-~]'		is(CHARACTER);
 <etc>'\\['\\abefnrt0]'		is(CHARACTER);
+<etc>'\\<[0-9a-f]{1,4}>'	is(CHARACTER);
 
 <etc>{STR}			is(STRING);
 
