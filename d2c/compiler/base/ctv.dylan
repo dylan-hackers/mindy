@@ -1,12 +1,14 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.24 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.25 1996/01/27 20:10:36 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define abstract class <ct-value> (<annotatable>)
-  //
-  // Used by the heap builder.
-  slot ct-value-heap-label :: false-or(<byte-string>), init-value: #f;
+  // Used by the heap builder -- this sequence will typically be empty
+  // or contain a single element, but certain shared objects (such as
+  // symbols) can accumulate several names.
+  slot ct-value-heap-labels :: <sequence>, init-value: #(),
+    init-keyword: #"heap-labels";
 end;
 
 define abstract class <literal> (<ct-value>)
@@ -36,7 +38,9 @@ end;
 
 // Literal booleans.
 
-define abstract class <literal-boolean> (<eql-literal>) end;
+define abstract class <literal-boolean>
+    (<eql-literal>, <identity-preserving-mixin>) 
+end;
 define class <literal-true> (<literal-boolean>) end;
 define class <literal-false> (<literal-boolean>) end;
 
@@ -311,7 +315,7 @@ end;
 
 // Literal symbols.
 
-define class <literal-symbol> (<eql-literal>)
+define class <literal-symbol> (<eql-literal>, <identity-preserving-mixin>)
   slot literal-value :: <symbol>, required-init-keyword: value:;
 end;
 
@@ -321,7 +325,7 @@ end class;
 define constant $literal-symbol-memo = make(<table>);
 
 define method make (class == <literal-symbol>, #next next-method, #key value)
-    => res :: <literal-symbol>;
+    => (res :: <literal-symbol>);
   element($literal-symbol-memo, value, default: #f)
     | (element($literal-symbol-memo, value) 
          := make(<literal-byte-symbol>, value: value))
@@ -408,7 +412,8 @@ end;
 
 // Literal sequences.
 
-define abstract class <literal-sequence> (<literal>)
+define abstract class <literal-sequence>
+    (<literal>, <identity-preserving-mixin>)
 end;
 
 define abstract class <literal-list> (<literal-sequence>)
@@ -484,7 +489,8 @@ define method as (class == <ct-value>, thing :: <pair>)
        tail: as(<ct-value>, thing.tail));
 end;
 
-define class <literal-empty-list> (<literal-list>, <eql-literal>)
+define class <literal-empty-list>
+    (<literal-list>, <eql-literal>, <identity-preserving-mixin>)
 end;
 
 define method literal-value (wot :: <literal-empty-list>)
@@ -656,8 +662,8 @@ define /* exported */ variable *compiler-dispatcher*
 
 add-make-dumper
   (#"not-supplied-marker", *compiler-dispatcher*, <ct-not-supplied-marker>,
-   list(info, #f, info-setter));
-
+   list(info, #f, info-setter,
+	ct-value-heap-labels, heap-labels:, #f));
 
 // The method is inherited by all EQL literals.  It must be overridden for some
 // where the type of the literal-value is ambiguous (e.g. for numbers.)
@@ -666,10 +672,21 @@ define method dump-od (obj :: <eql-literal>, buf :: <dump-state>) => ();
   dump-simple-object(#"eql-literal", buf, obj.info, obj.literal-value);
 end method;
 
+// All varieties of sequence literals should also benefit from shared
+// references. 
+//
+define method dump-od
+    (obj :: <literal-sequence>,  buf :: <dump-state>)
+ => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"eql-literal", buf, obj.info, obj.literal-value);
+  end if;
+end method;
+
 // Just use AS to reconstruct the literal.
 //
 add-od-loader(*compiler-dispatcher*, #"eql-literal",
-  method (state :: <load-state>) => res :: <eql-literal>;
+  method (state :: <load-state>) => res :: <literal>;
     let saved-info = load-object-dispatch(state);
     let value = load-object-dispatch(state);
     assert-end-object(state);
@@ -681,13 +698,53 @@ add-od-loader(*compiler-dispatcher*, #"eql-literal",
   end method
 );
 
+// Some literals need the heap-labels dumped.
+//
+define method dump-od
+    (obj :: type-union(<literal-boolean>, <literal-symbol>),
+     buf :: <dump-state>)
+ => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"labelled-literal", buf, obj.info,
+		       obj.literal-value, obj.ct-value-heap-labels);
+  end if;
+end method;
+
+define method dump-od
+    (obj :: <literal-empty-list>,  buf :: <dump-state>)
+ => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"labelled-literal", buf, obj.info,
+		       obj.literal-value, obj.ct-value-heap-labels);
+  end if;
+end method;
+
+// Just use AS to reconstruct the literal.
+//
+add-od-loader(*compiler-dispatcher*, #"labelled-literal",
+  method (state :: <load-state>) => res :: <eql-literal>;
+    let saved-info = load-object-dispatch(state);
+    let value = load-object-dispatch(state);
+    let labels = load-object-dispatch(state);
+    assert-end-object(state);
+    let res = as(<ct-value>, value);
+    unless (res.info)
+      res.info := saved-info;
+    end;
+    res.ct-value-heap-labels
+      := union(labels, res.ct-value-heap-labels, test: \=);
+    res;
+  end method
+);
 
 // We represent literal lists via literal-pair entries to more closely match
 // the internal representation of literals.
 //
 define method dump-od (obj :: <literal-pair>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-pair", buf,
-  		     obj.literal-head, obj.literal-tail);
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"literal-pair", buf,
+		       obj.literal-head, obj.literal-tail);
+  end if;
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"literal-pair",
@@ -698,20 +755,6 @@ add-od-loader(*compiler-dispatcher*, #"literal-pair",
     make(<literal-pair>, head: hd, tail: tl, sharable: #t);
   end method
 );
-
-
-// The default for literal vectors is just like for eql-literals.
-//
-define method dump-od (obj :: <literal-vector>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-vector", buf, obj.literal-value);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"literal-vector",
-  method (state :: <load-state>) => res :: <literal-vector>;
-    as(<ct-value>, load-sole-subobject(state));
-  end method
-);
-
 
 // Since all literal numbers are represented as rationals, we need to mark the
 // specialized representation.
