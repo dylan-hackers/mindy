@@ -13,12 +13,13 @@ define method build-initial-heap
     => ();
   let state = make(<state>, stream: stream, output-info: output-info);
   format(stream, "\t.data\n\t.align\t8\n\t.export\troots, DATA\nroots");
-  for (ctv in roots)
-    spew-reference(ctv, $general-rep, state);
+  for (ctv in roots, index from 0)
+    spew-reference(ctv, $general-rep, format-to-string("roots[%d]", index),
+		   state);
   end;
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
-    format(stream, "\n# %s\n\t.align\t8\n%s",
+    format(stream, "\n; %s\n\t.align\t8\n%s",
 	   object, state.object-names[object]);
     spew-object(object, state);
   end;
@@ -26,32 +27,37 @@ end;
 
 
 define generic spew-reference
-    (object :: false-or(<ct-value>), rep :: <representation>, state :: <state>)
+    (object :: false-or(<ct-value>), rep :: <representation>,
+     tag :: <byte-string>, state :: <state>)
     => ();
 
 define method spew-reference
-    (object :: <false>, rep :: <representation>, state :: <state>)
+    (object :: <false>, rep :: <representation>,
+     tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.blockz\t%d\n", rep.representation-size);
+  format(state.stream, "\t.blockz\t%d\t; %s\n", rep.representation-size, tag);
 end;
 
 define method spew-reference
-    (object :: <literal>, rep :: <immediate-representation>, state :: <state>)
+    (object :: <literal>, rep :: <immediate-representation>,
+     tag :: <byte-string>, state :: <state>)
     => ();
   let bits = raw-bits(object);
   select (rep.representation-size)
-    1 => format(state.stream, "\t.byte\t%d\n", bits);
-    2 => format(state.stream, "\t.half\t%d\n", bits);
-    4 => format(state.stream, "\t.word\t%d\n", bits);
+    1 => format(state.stream, "\t.byte\t%d\t; %s\n", bits, tag);
+    2 => format(state.stream, "\t.half\t%d\t; %s\n", bits, tag);
+    4 => format(state.stream, "\t.word\t%d\t; %s\n", bits, tag);
     8 =>
-      format(state.stream, "\t.word\t%d, %d\n",
+      format(state.stream, "\t.word\t%d, %d\t; %s\n",
 	     ash(bits, -32),
-	     logand(bits, ash(as(<extended-integer>, 1), 32) - 1))
+	     logand(bits, ash(as(<extended-integer>, 1), 32) - 1),
+	     tag)
   end;
 end;
 
 define method spew-reference
-    (object :: <ct-value>, rep :: <general-representation>, state :: <state>)
+    (object :: <ct-value>, rep :: <general-representation>,
+     tag :: <byte-string>, state :: <state>)
     => ();
   let cclass = object.ct-value-cclass;
   let best-rep = pick-representation(cclass, #"speed");
@@ -61,36 +67,39 @@ define method spew-reference
       else
 	values(object, 0);
       end;
-  format(state.stream, "\t.word\t%s, %d\n",
+  format(state.stream, "\t.word\t%s, %d\t; %s\n",
 	 object-name(heapptr, state),
-	 dataword);
+	 dataword, tag);
 end;
 
 define method spew-reference
-    (object :: <proxy>, rep :: <general-representation>, state :: <state>)
+    (object :: <proxy>, rep :: <general-representation>,
+     tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s, 0\n", object-name(object, state));
+  format(state.stream, "\t.word\t%s, 0\t; %s\n",
+	 object-name(object, state), tag);
 end;
 
 define method spew-reference
-    (object :: <ct-value>, rep == $heap-rep, state :: <state>) => ();
-  format(state.stream, "\t.word\t%s\n", object-name(object, state));
+    (object :: <ct-value>, rep == $heap-rep,
+     tag :: <byte-string>, state :: <state>) => ();
+  format(state.stream, "\t.word\t%s\t; %s\n", object-name(object, state), tag);
 end;
 
 define method spew-reference
     (object :: <ct-entry-point>, rep :: <immediate-representation>,
-     state :: <state>)
+     tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s\n", object-name(object, state));
+  format(state.stream, "\t.word\t%s\t; %s\n", object-name(object, state), tag);
 end;
 
 define method spew-reference
     (object :: <ct-entry-point>, rep :: <general-representation>,
-     state :: <state>)
+     tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s, %s\n",
+  format(state.stream, "\t.word\t%s, %s\t; %s\n",
 	 object-name(make(<proxy>, for: object.ct-value-cclass), state),
-	 object-name(object, state));
+	 object-name(object, state), tag);
 end;
 
 
@@ -366,12 +375,14 @@ define method spew-object
 		class-abstract?: as(<ct-value>, object.abstract?),
 		class-sealed?: as(<ct-value>, object.sealed?),
 		class-defered-evaluations:
-		  defn.class-defn-defered-evaluations-function,
-		class-maker: defn.class-defn-maker-function);
+		  defn.class-defn-defered-evaluations-function
+		  | as(<ct-value>, #f),
+		class-maker: defn.class-defn-maker-function
+		  | as(<ct-value>, #f));
 end;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
-  spew-reference(object.proxy-for, $heap-rep, state);
+  spew-reference(object.proxy-for, $heap-rep, "%object-class", state);
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
@@ -490,6 +501,12 @@ define method spew-instance
 	format(state.stream, "\t.blockz\t%d\n", field);
       <instance-slot-info> =>
 	let init-value = find-init-value(class, field, slots);
+	let getter = field.slot-getter;
+	let name = if (getter)
+		     as(<string>, getter.variable-name);
+		   else
+		     "???";
+		   end;
 	if (instance?(field, <vector-slot-info>))
 	  let len-ctv = find-init-value(class, field.slot-size-slot, slots);
 	  unless (len-ctv)
@@ -505,16 +522,21 @@ define method spew-instance
 	    unless (init-value.size == len)
 	      error("Size mismatch.");
 	    end;
-	    for (element in init-value)
-	      spew-reference(element, field.slot-representation, state);
+	    for (element in init-value,
+		 index from 0)
+	      spew-reference(element, field.slot-representation,
+			     format-to-string("%s[%d]", name, index),
+			     state);
 	    end;
 	  else
 	    for (i from 0 below len)
-	      spew-reference(init-value, field.slot-representation, state);
+	      spew-reference(init-value, field.slot-representation,
+			     format-to-string("%s[%d]", name, i),
+			     state);
 	    end;
 	  end;
 	else
-	  spew-reference(init-value, field.slot-representation, state);
+	  spew-reference(init-value, field.slot-representation, name, state);
 	end;
     end;
   end;
