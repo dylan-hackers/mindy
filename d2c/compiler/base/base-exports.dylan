@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.25 1996/02/21 02:42:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.26 1996/02/21 16:07:26 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -356,6 +356,7 @@ define module definitions
 
   use utils;
   use tokens;
+  use source;
   use compile-time-values;
   use names;
   use od-format;
