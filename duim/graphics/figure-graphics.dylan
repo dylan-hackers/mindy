@@ -755,5 +755,3 @@ define function set-pixels*
  => (record)
   set-pixels(drawable, color, spread-point-sequence(points))
 end function set-pixels*;
-
-
