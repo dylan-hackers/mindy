@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.1 1996/02/02 23:19:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/fer-edit.dylan,v 1.2 1996/02/23 15:09:53 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -458,6 +458,11 @@ define method delete-stuff-after
 end;
 
 
+
+// Query operations.
+
+define generic doesnt-return? (region :: <region>) => res :: <boolean>;
+
 define method doesnt-return? (region :: <simple-region>) => res :: <boolean>;
   #f;
 end;
@@ -494,6 +499,75 @@ end;
 define method doesnt-return? (region :: <exit>) => res :: <boolean>;
   #t;
 end;
+
+
+// anything-after? -- internal.
+//
+// Return #t if there is anything after the given subregion and not
+// after anything else.
+// 
+define generic anything-after? (region :: <region>, after :: <region>)
+    => res :: <boolean>;
+
+// anything-after?{<region>}
+//
+// Flame out because something is wrong.
+//
+define method anything-after? (region :: <region>, after :: <region>)
+    => res :: <boolean>;
+  error("%= doesn't have any subregions.", region);
+end method anything-after?;
+
+// anything-after?{<compound-region>}
+//
+// Return #t if the subregion is not the last subregion.  If it is the last
+// subregion, then look above this region.
+//
+define method anything-after? (region :: <compound-region>, after :: <region>)
+    => res :: <boolean>;
+  for (remaining = region.regions then remaining.tail,
+       until: remaining.head == after)
+    if (remaining == #())
+      error("%= isn't a subregion of %=", after, region);
+    end if;
+  finally
+    if (remaining.tail == #())
+      anything-after?(region.parent, region);
+    else
+      #t;
+    end if;
+  end for;
+end method anything-after?;
+
+// anything-after?{<if-region>}
+//
+// Return #f.  We don't look above this region because anything up there has to
+// be after the other branch of the if.
+//
+define method anything-after? (region :: <if-region>, after :: <region>)
+    => res :: <boolean>;
+  unless (after == region.then-region | after == region.else-region)
+    error("%= isn't a subregion of %=", after, region);
+  end unless;
+  #f;
+end method anything-after?;
+
+// anything-after?{<body-region>}
+//
+// Return #f because none of the body regions have anything after them that
+// isn't also after something else:
+//   function-regions have nothing after them.
+//   stuff after block-regions must stay there because of exits.
+//   loop regions have nothing after them.
+// 
+define method anything-after? (region :: <body-region>, after :: <region>)
+    => res :: <boolean>;
+  unless (after == region.body)
+    error("%= isn't a subregion of %=", after, region);
+  end unless;
+  #f;
+end method anything-after?;
+
 
 
 // replace-expression
@@ -804,3 +878,110 @@ define method replace-subregion
     replace-subregion(component, parent, region, combo);
   end;
 end;
+
+
+
+// extract-stuff-after
+
+// extract-stuff-after -- internal GF.
+//
+// Return the stuff after this subregion and not after anything else as a
+// region.
+// 
+define generic extract-stuff-after
+    (component :: <component>, region :: <region>, after :: <region>)
+    => res :: <region>;
+
+// extract-stuff-after{<region>}
+//
+// Flame out because something is wrong.
+// 
+define method extract-stuff-after
+    (component :: <component>, region :: <region>, after :: <region>)
+    => res :: <region>;
+  error("%= doesn't have any subregions.", region);
+end method extract-stuff-after;
+
+// extract-stuff-after{<compound-region>}
+//
+// Split the compound region and append anything after it.
+// 
+define method extract-stuff-after
+    (component :: <component>, region :: <compound-region>, after :: <region>)
+    => res :: <region>;
+  //
+  // Find where to make the split.
+  for (remaining = region.regions then remaining.tail,
+       until: remaining.head == after)
+    if (remaining == #())
+      error("%= isn't a subregion of %=", after, region);
+    end if;
+  finally
+    //
+    // Lop off the tail.
+    let tail = remaining.tail;
+    remaining.tail := #();
+    //
+    // If the stuff after the split is just one region, use that region.
+    // Otherwise, make a compound region for that stuff.
+    let after
+      = if (tail.size ~== 1)
+	  let after = make(<compound-region>, regions: tail);
+	  for (subregion in tail)
+	    subregion.parent := after;
+	  end for;
+	  after;
+	else
+	  tail.head;
+	end if;
+    //
+    // If spliting the compound region left just a single subregion before
+    // the split, replace the compound region with that subregion.
+    let region
+      = if (region.regions.size == 1)
+	  let subregion = region.regions.head;
+	  replace-subregion(component, region.parent, region, subregion);
+	  //
+	  // We have to change region so that the references below refer to
+	  // a valid region.
+	  subregion;
+	else
+	  region;
+	end if;
+    //
+    // Combine the stuff we clipped off with the stuff following this
+    // region.
+    combine-regions(after,
+		    extract-stuff-after(component, region.parent, region));
+  end for;
+end method extract-stuff-after;
+
+// extract-stuff-after{<if-region>}
+//
+// We don't actually extract anything because the stuff following the if
+// region has to follow both subregions.  If one of the two subregions doesn't
+// return, then the stuff above us will be moved down into the other when
+// *this* if gets optimized.
+// 
+define method extract-stuff-after
+    (component :: <component>, region :: <if-region>, after :: <region>)
+    => res :: <region>;
+  unless (after == region.then-region | after == region.else-region)
+    error("%= isn't a subregion of %=", after, region);
+  end unless;
+  make(<empty-region>);
+end method extract-stuff-after;
+
+// extract-stuff-after{<body-region>}
+//
+// Just return an empty region because there is nothing extractble following
+// any of the different kinds of body regions.
+//
+define method extract-stuff-after
+    (component :: <component>, region :: <body-region>, after :: <region>)
+    => res :: <region>;
+  unless (after == region.body)
+    error("%= isn't a subregion of %=", after, region);
+  end unless;
+  make(<empty-region>);
+end method extract-stuff-after;
