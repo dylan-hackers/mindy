@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.15 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.16 1995/06/04 01:04:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -147,22 +147,13 @@ define generic build-unwind-protect-body
      cleanup-function :: <function-literal>)
     => res :: <unwind-protect-region>;
 
-// Starts building a <fer-function-region>.
+// Starts building a <fer-function-region> or <lambda>.
 //
 define generic build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>,
-     return-convention :: one-of(#"best", #"cluster"))
+     lambda? :: <boolean>, name :: <byte-string>, arg-vars :: <list>,
+     result-type :: <values-ctype>, hidden-references? :: <boolean>)
  => res :: <fer-function-region>;
-
-// Identical to build-function-body, except builds a <lambda> instead of a
-// straight <fer-function-region>.
-// 
-define generic build-lambda-body
-    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>,
-     return-convention :: one-of(#"best", #"cluster"))
- => res :: <lambda>;
 
 
 // Like BUILD-ASSIGNMENT, but also indicates the creation point of the assigned
@@ -243,11 +234,8 @@ define generic make-exit-function
 
 
 define generic make-function-literal
-    (builder :: <fer-builder>, visibility :: <function-visibility>,
+    (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
+     method? :: <boolean>, visibility :: <function-visibility>,
      signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
 
-define generic make-method-literal
-    (builder :: <fer-builder>, visibility :: <function-visibility>,
-     signature :: <signature>, main-entry :: <fer-function-region>)
- => res :: <leaf>;
