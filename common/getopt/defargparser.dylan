@@ -5,7 +5,7 @@ copyright: see below
 
 //======================================================================
 //
-//  Copyright (c) 1999 David Lichteblau
+//  Copyright (c) 1999-2000 David Lichteblau
 //  All rights reserved.
 // 
 //  Use and copying of this software and preparation of derivative
@@ -190,11 +190,11 @@ define macro argument-parser-definer
     { } => { }
 
   initargs:
-    { ?syntax:expression, ?docstring:expression, ?realargs:* }
+    { ?syntax:expression, ?docstring:expression, #rest ?realargs:* }
       => { [?syntax, ?docstring], ?realargs }
-    { ?docstring:expression, ?realargs:* }
+    { ?docstring:expression, #rest ?realargs:* }
       => { ["", ?docstring], ?realargs }
-    { ?realargs:* }
+    { #rest ?realargs:* }
       => { ["", ""], ?realargs }
 end macro;
 
@@ -235,8 +235,8 @@ define macro defargparser-class
 	   end class }
 
   slots:
-    { [?class:name, ?option:name, ?value-type:expression, ?default:token,
-       ?docstrings:token, #rest ?initargs:*,
+    { [?class:name, ?option:name, ?value-type:expression, [?default:*],
+       [?docstrings:*], #rest ?initargs:*,
        #key ?kind:expression = <simple-option-parser>,
             ?short:expression = #(),
             ?long:expression = #(),
@@ -277,8 +277,8 @@ define macro defargparser-init
 	   end method initialize }
 
   adders:
-    { [?class:name, ?option:name, ?value-type:expression, ?default:token,
-       ?docstrings:token, ?initargs:*] ... }
+    { [?class:name, ?option:name, ?value-type:expression, [?default:*],
+       [?docstrings:*], ?initargs:*] ... }
       => { add-option-parser(instance, ?option ## "-parser" (instance)); ... }
     { [?class:name, ?regular-arguments:name] ... }
       => {  ... }
@@ -293,14 +293,14 @@ define macro defargparser-accessors
 
   accessors:
     { [?class:name, ?option:name, ?value-type:expression,
-       [], ?docstrings:token, ?initargs:*] ... }
+       [], [?docstrings:*], ?initargs:*] ... }
       => { define method ?option (arglistparser :: ?class)
 	    => (value :: ?value-type);
 	     let optionparser = ?option ## "-parser" (arglistparser);
 	     option-value(optionparser);
 	   end method ?option; ... }
     { [?class:name, ?option:name, ?value-type:expression,
-       [?default:expression], ?docstrings:token, ?initargs:*] ... }
+       [?default:expression], [?docstrings:*], ?initargs:*] ... }
       => { define method ?option (arglistparser :: ?class)
 	    => (value :: ?value-type);
 	     let optionparser = ?option ## "-parser" (arglistparser);
@@ -372,7 +372,7 @@ define macro defargparser-synopsis
 
   options:
     { [?class:name, ?option:name, ?value-type:expression,
-       ?default:token, [?syntax:expression, ?description:expression],
+       [?default:*], [?syntax:expression, ?description:expression],
        #rest ?initargs:*,
        #key ?short:expression = #f,
             ?long:expression = #f,
