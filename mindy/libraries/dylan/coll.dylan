@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.15 1994/06/01 18:12:28 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.16 1994/06/03 00:38:29 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -54,7 +54,7 @@ define method element-setter (new_value, collection :: <mutable-collection>,
   let (init_state, limit, next_state, done?,
        current_key, current_element,
        current_element-setter) = forward-iteration-protocol(collection);
-  let test = key-test(coll);
+  let test = key-test(collection);
   block (return)
     for (state = init_state then next_state(collection, state),
 	 until done?(collection, state, limit))
@@ -478,7 +478,7 @@ define method map-into(destination :: <mutable-sequence>, proc :: <function>,
     end for;
     destination;
   else
-    next_method();
+    next-method();
   end if;
 end method map-into;
 
@@ -857,7 +857,7 @@ define abstract class <stretchy-collection> (<collection>) end class;
 define method map-into(destination :: <stretchy-collection>,
 		       proc :: <function>, coll :: <collection>,
 		       #rest more_collections) => <stretchy-collection>;
-  let test1 = key-test(collection);
+  let test1 = key-test(coll);
   if (~instance?(destination, <mutable-collection>))
     error("%= is not a mutable collection.", destination);
   elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
@@ -884,10 +884,10 @@ end method map-into;
 define method map-into(destination :: <stretchy-collection>,
 		       proc :: <function>, sequence :: <sequence>,
 		       #rest more_sequences)
-  let test1 = key-test(collection);
+  let test1 = key-test(sequence);
   if (~instance?(destination, <mutable-collection>))
     error("%= is not a mutable collection.", destination);
-  elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+  elseif (~ every?( method (c) test1 == key-test(c); end, more_sequences ))
     error("Can't map over collections with a different key tests");
   elseif (~ (test1 == key-test(destination)))
     error("Can't map into a collection with a different key test than its sources.");
