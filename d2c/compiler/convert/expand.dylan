@@ -1,5 +1,5 @@
 module: expanders
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.5 2001/06/29 05:10:53 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.6 2003/03/27 17:39:01 housel Exp $
 copyright: see below
 
 
@@ -404,7 +404,8 @@ define method make-setter-call
   end for;
 
   let new-name = symcat(getter.token-symbol, "-setter");
-  let module = getter.token-module;
+  let module = getter.token-module
+    | compiler-fatal-error-location(getter, "getter %s has no module", getter);
   let kind = syntax-for-name(module.module-syntax-table, new-name);
   let setter = make(<identifier-token>,
 		    source-location: getter.source-location,
