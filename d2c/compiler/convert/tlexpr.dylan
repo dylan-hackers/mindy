@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.1 1998/05/03 19:55:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.2 1999/09/16 17:24:04 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -68,9 +68,9 @@ define method process-top-level-form (form :: <body-parse>) => ();
 	  if (instance?(subform, <body-parse>))
 	    let new-body = process(subform.body-parts);
 	    if (new-body)
-	      apply(return,
-		    make(<body-parse>, parts: new-body),
-		    copy-sequence(forms, start: index + 1));
+	      let result = copy-sequence(forms, start: index);
+	      result[0] := make(<body-parse>, parts: new-body);
+	      return(result);
 	    end;
 	  elseif (instance?(subform, <local-declaration-parse>))
 	    return(copy-sequence(forms, start: index));
