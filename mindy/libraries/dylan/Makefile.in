@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.9 1996/02/17 15:13:40 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.10 1996/03/19 23:51:13 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -69,7 +69,7 @@ OBJS = exports.dbc misc.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc \
 	list.dbc \
 	deque.dbc range.dbc stretchy.dbc ext.dbc table.dbc sort.dbc cond.dbc \
 	num.dbc ratio.dbc char.dbc func.dbc debug.dbc exit.dbc \
-	multilock.dbc semaphore.dbc extern.dbc transcendental.dbc
+	multilock.dbc semaphore.dbc extern.dbc transcendental.dbc system.dbc
 
 dylan.dbc: ${OBJS}
 	cat ${OBJS} > $@
@@ -124,6 +124,8 @@ extern.dbc: ${SRCDIR}/extern.dylan
 	${MC} ${MINDYFLAGS} -o extern.dbc ${SRCDIR}/extern.dylan
 transcendental.dbc: ${SRCDIR}/transcendental.dylan
 	${MC} ${MINDYFLAGS} -o transcendental.dbc ${SRCDIR}/transcendental.dylan
+system.dbc: ${SRCDIR}/system.dylan
+	${MC} ${MINDYFLAGS} -o system.dbc ${SRCDIR}/system.dylan
 
 clean:
 	rm -f ${OBJS} dylan.dbc *~ \#* core
