@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.5 1994/04/09 15:38:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.6 1994/05/19 22:35:41 wlott Exp $
 *
 * This file does whatever.
 *
@@ -52,6 +52,7 @@ IDENTIFIER	[-!$%&*+/0-9<=>?@A-Z^_a-z~]+
 "$"			yylval = make_fixnum(-1); return tok_DEBUGVAR;
 "$$"			yylval = make_fixnum(-2); return tok_DEBUGVAR;
 "$"-?{DIGIT}+	yylval = make_fixnum(atoi(yytext+1)); return tok_DEBUGVAR;
+"$a"{DIGIT}+	yylval = make_fixnum(atoi(yytext+2)); return tok_ARG;
 0x{HEXDIGIT}+		yylval = token_as_address(); return tok_LITERAL;
 -?{DIGIT}+	yylval = make_fixnum(atoi(yytext)); return tok_LITERAL;
 \"[^"\\]*(\\.[^"\\])*\"	yylval = token_as_string(); return tok_LITERAL;
