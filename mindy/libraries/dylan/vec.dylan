@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.7 1994/04/21 01:32:24 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.8 1994/04/21 02:04:12 rgs Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -297,7 +297,7 @@ define method subsequence-position(big :: <byte-string>,
 	let pat-last = pat-sz - 1;
 	let last-char = pattern[pat-last];
 	let skip = make(<vector>, size: 256, fill: pat-sz);
-	for (i from pat-last - 1 to 0 by -1)
+	for (i from 0 below pat-last)
 	  skip[as(<integer>, pattern[i])] := pat-last - i;
 	end for;
 	local method do-skip(index, count)
