@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.85 2003/08/21 23:23:31 bruce Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.86 2003/11/06 03:52:51 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -75,9 +75,10 @@
 platform-name:			32-bit
 integer-length:			32
 pointer-size:			4
+integer-size:			4
 short-size:			2
 long-size:			4
-integer-size:			4
+long-long-size:			8
 single-size:			4
 double-size:			8
 double-alignment:		4
@@ -97,6 +98,7 @@ platform-name:			x86
 inherit-from:			32-bit ieee-754
 default-features:		compiled-for-x86
 big-endian?:			#f
+long-long-alignment:		4
 long-double-size:		12
 long-double-alignment:		4
 long-double-mantissa-digits:	64
@@ -256,8 +258,6 @@ inherit-from:				generic-unix
 make-command:				make
 use-dbclink?:				#t
 executable-filename-suffix:		.exe
-double-alignment:			8
-long-double-alignment:			4
 long-double-mantissa-digits:		53
 minimum-long-double-float-exponent:	-1021
 maximum-long-double-float-exponent:	1024
@@ -554,16 +554,12 @@ platform-name:			x86-gcc32
 inherit-from:			x86 gcc
 default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-size:			8
-long-long-alignment:		4
 
 platform-name:			x86-gcc33
 inherit-from:			x86 gcc
 default-c-compiler-flags:	-I. -I%s -O
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 link-executable-command:        gcc -static -o %s %s %s
-long-long-size:			8
-long-long-alignment:		4
 
 /// sparc
 platform-name:			sparc-gcc30
@@ -571,7 +567,6 @@ inherit-from:			sparc gcc
 default-c-compiler-flags:	-I. -I%s -O1
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-size:			8
 long-long-alignment:	8
 
 
@@ -580,8 +575,6 @@ platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 link-executable-command:        gcc -static -o %s %s %s
-long-long-size:			8
-long-long-alignment:		4
 
 platform-name:			x86-linux-gcc32
 inherit-from:			linux x86-gcc32
@@ -592,14 +585,10 @@ inherit-from:			linux x86-gcc33
 platform-name:			x86-bsdi-gcc
 inherit-from:			gcc bsdi x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-size:			8
-long-long-alignment:		4
 
 platform-name:			x86-netbsd-gcc
 inherit-from:			gcc netbsd x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-size:			8
-long-long-alignment:		4
 
 platform-name:			x86-beos-gcc
 // Note:  These rules depend on the presence of the MingW utilities in your
@@ -611,7 +600,6 @@ link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 
 platform-name:			ppc-linux
 inherit-from:			linux ppc
-long-long-size:			8
 double-alignment:		8
 long-double-alignment:		8
 
@@ -635,8 +623,6 @@ inherit-from:			gcc freebsd x86
 platform-name:			x86-freebsd-elf-gcc
 inherit-from:			gcc freebsd x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-size:			8
-long-long-alignment:		4
 
 platform-name:			x86-freebsd-elf-gcc32
 inherit-from:			freebsd x86-gcc32
@@ -663,7 +649,6 @@ inherit-from:			mac-cw macintosh ppc
 
 platform-name:			ppc-macos-egcs
 inherit-from:			egcs macintosh ppc
-long-long-size:			8
 long-long-alignment:	4
 long-double-size:		8
 long-double-alignment:	4
@@ -673,7 +658,6 @@ inherit-from:			egcs darwin ppc
 default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -no-cpp-precomp -Wno-long-double
 default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
 default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
-long-long-size:			8
 long-long-alignment:	4
 long-double-size:		8
 long-double-alignment:	4
@@ -690,9 +674,6 @@ link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 platform-name:			x86-cygnus-gcc33
 inherit-from:			x86-gcc33 cygnus
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-double-alignment:		8
-long-long-alignment:		8
-long-double-alignment:		4
 
 // Mingwin Port
 platform-name:			x86-mingw32-gcc32
@@ -720,7 +701,6 @@ default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 double-alignment:               8
 long-double-size:               16
 long-double-alignment:          8
-long-long-size:                 8
 long-long-alignment:            8
 long-double-mantissa-digits:	113
 minimum-long-double-float-exponent: -16381
@@ -766,7 +746,6 @@ link-executable-command:        	$(LIBTOOL) --mode=link gcc -o %s %s %s
 //link-shared-library-command:    	$(LIBTOOL) --mode=link gcc -o %s %s -L/lib/pa1.1 -lm -rpath %s
 link-executable-flags:          	$(GC_LIBS) -L/lib/pa1.1 -lm
 double-alignment:                       8
-long-long-size:                         8
 long-long-alignment:                    8
 long-double-size:                       8
 long-double-alignment:                  8
