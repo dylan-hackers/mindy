@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.13 1995/12/16 21:54:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.14 1995/12/17 05:49:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -382,8 +382,8 @@ define method internal-sorted-applicable-methods
 	if (meth.function-all-keys?)
 	  valid-keywords := #"all";
 	else
-	  for (keyword in check-type(meth.function-keywords,
-				     <simple-object-vector>))
+	  for (keyword :: <symbol>
+		 in check-type(meth.function-keywords, <simple-object-vector>))
 	    unless (member?(keyword, check-type(valid-keywords, <list>)))
 	      valid-keywords := pair(keyword, valid-keywords);
 	    end unless;
@@ -481,6 +481,7 @@ define method internal-sorted-applicable-methods
 	     keyword in check-type(valid-keywords, <list>))
 	  vec[index] := keyword;
 	end for;
+	vec;
       else
 	valid-keywords;
       end if;
