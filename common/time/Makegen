@@ -27,8 +27,7 @@ if ($features{'compiled_for_win32'}) {
 
 	close(OLDLID);
 	close(NEWLID);
-		
-	`rename ,Time.lid Time.lid`;
-	#die "Couldn't move Time.lid back" if $?;
+	`del /F Time.lid` && die ("Can't delete old file: $!\n");
+	`rename ",Time.lid" Time.lid` && die ("Can't rename temp file: $!\n");
 }
 	
