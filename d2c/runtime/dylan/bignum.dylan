@@ -3,6 +3,8 @@ module: dylan
 
 // Extended integer digits.
 
+/* ### not absolutly needed
+
 define constant $digit-bits = 8;
 define constant $digit-mask = #xff /* lognot(ash(-1, $digit-bits)) */;
 
@@ -180,6 +182,8 @@ define inline method digit-lognot (x :: <digit>) => res :: <digit>;
   make-digit(lognot(x.value));
 end;
 
+*/
+
 
 // Extended integer class and utilities
 
@@ -188,6 +192,7 @@ end;
 // A bignum.
 // 
 define class <extended-integer> (<integer>)
+/* ### not absolutly needed
   //
   // A bignum is just a vector of digits.  We require a fill instead of
   // supplying an init-value because we can't supply an obviously constant
@@ -195,7 +200,10 @@ define class <extended-integer> (<integer>)
   slot bignum-digit :: <digit>,
     sizer: bignum-size, required-size-init-keyword: size:,
     required-init-keyword: fill:;
+*/
 end;
+
+/* ### not absolutly needed
 
 seal generic make (singleton(<extended-integer>));
 seal generic initialize (<extended-integer>);
@@ -1605,3 +1613,5 @@ define method ash (num :: <integer>, shift :: <extended-integer>)
 	  num, shift);
   end;
 end;
+
+*/

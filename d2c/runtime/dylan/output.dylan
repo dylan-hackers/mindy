@@ -170,10 +170,12 @@ define method print (int :: <fixed-integer>) => ();
   write-integer(int, 10);
 end;
 
+/* ### not absolutly needed
 define method print (int :: <extended-integer>) => ();
   write("#e");
   write-integer(int, 10);
 end;
+*/
 
 
 define generic write-integer (int :: <integer>, radix :: <fixed-integer>)
@@ -201,6 +203,7 @@ define method write-integer (int :: <fixed-integer>, radix :: <fixed-integer>)
   end;
 end;
 
+/* ### not absolutly needed
 define method write-integer
     (int :: <extended-integer>, radix :: <fixed-integer>) => ();
   local
@@ -230,7 +233,7 @@ define method write-integer
     write(digit);
   end;
 end;
-  
+*/  
 
 
 define generic write (thing :: <object>) => ();

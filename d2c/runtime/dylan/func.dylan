@@ -391,6 +391,8 @@ end;
 
 // Functional Operations
 
+/* ### not absolutly needed
+
 define inline method compose (function :: <function>, #rest more-functions)
     => res :: <function>;
   reduce(binary-compose, function, more-functions);
@@ -431,6 +433,8 @@ define inline method binary-conjoin
   end;
 end;
 
+*/
+
 define inline method curry (function :: <function>, #rest curried-args)
     => res :: <function>;
   method (#rest more-args)
@@ -449,8 +453,11 @@ define inline method rcurry (function :: <function>, #rest curried-args)
   end;
 end;
 
+/* ### not absolutly needed
 define inline method always (object :: <object>) => res :: <function>;
   method (#rest ignore) => object :: <object>;
     object;
   end;
 end;
+
+*/

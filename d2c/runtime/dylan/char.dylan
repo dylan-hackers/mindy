@@ -43,6 +43,8 @@ seal generic \<= (<character>, <character>);
 seal generic \= (<character>, <character>);
 seal generic \~= (<character>, <character>);
 
+/* ### not absolutly needed
+
 define sealed method as-uppercase (char :: <character>)
     => res :: <character>;
   if ('a' <= char & char <= 'z')
@@ -60,3 +62,5 @@ define sealed method as-lowercase (char :: <character>)
     char;
   end;
 end;
+
+*/

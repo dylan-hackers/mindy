@@ -19,6 +19,8 @@ define method \< (str1 :: <string>, str2 :: <string>) => res :: <boolean>;
   end;
 end;
 
+/* ### not absolutly needed
+
 define method as-lowercase (str :: <string>)
     => res :: <string>;
   map(as-lowercase, str);
@@ -38,6 +40,7 @@ define method as-uppercase! (str :: <string>)
     => res :: <string>;
   map-into(str, as-uppercase, str);
 end;
+*/
 
 
 // Built-in strings.

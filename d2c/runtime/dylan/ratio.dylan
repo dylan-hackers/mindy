@@ -13,6 +13,8 @@ define functional class <ratio> (<rational>)
     required-init-keyword: denominator:;
 end;
 
+/* ### not absolutly needed
+
 define sealed inline method make (class == <ratio>, #next next-method,
 				  #key numerator, denominator)
     => res :: <ratio>;
@@ -480,3 +482,4 @@ define inline method \/ (a :: <extended-float>, b :: <ratio>)
   a / as(<extended-float>, b);
 end;
 
+*/

@@ -26,6 +26,8 @@ define open generic dimension (array :: <array>, axis :: <integer>)
 
 // Default methods.
 
+/* ### not absolutly needed
+
 define inline method forward-iteration-protocol (array :: <array>)
     => (initial-state :: <integer>,
 	limit :: <integer>,
@@ -126,6 +128,8 @@ define inline method dimension (array :: <array>, axis :: <integer>)
     => dimension :: <integer>;
   array.dimensions[axis];
 end;
+
+*/
 
 
 // Support for builtin arrays.

@@ -129,6 +129,7 @@ define open generic key-test
 
 // Collection Methods.
 
+/* ### not absolutly needed
 define method size (collection :: <collection>) => res :: <fixed-integer>;
   for (element in collection,
        result :: <fixed-integer> from 0)
@@ -147,7 +148,6 @@ define inline method empty? (coll :: <collection>) => res :: <boolean>;
     = forward-iteration-protocol(coll);
   finished-state?(coll, state, limit);
 end method empty?;
-
 
 define method key-intersection
     (collection :: <collection>, more-collections :: <simple-object-vector>)
@@ -181,6 +181,8 @@ define method do
   #f;
 end method do;
 
+*/
+
 define inline method map
     (proc :: <function>, collection :: <collection>, #rest more-collections)
     => res :: <collection>;
@@ -188,6 +190,7 @@ define inline method map
 	more-collections);
 end;
 
+/* ### not absolutly needed
 
 define method map-as
     (class :: <class>, proc :: <function>, collection :: <collection>,
@@ -236,6 +239,8 @@ define method map-into
   end for;
   target;
 end method map-into;
+
+*/
 
 define inline method any?
     (proc :: <function>, collection :: <collection>, #rest more-collections)
@@ -308,6 +313,7 @@ define inline method member?
   end;
 end method member?;
 
+/* ### not absolutly needed
 define method find-key
     (collection :: <collection>, proc :: <function>, #key skip, failure = #f)
     => key-or-failure :: <object>;
@@ -375,6 +381,8 @@ define method key-sequence (collection :: <collection>)
 end method key-sequence;
 
 // No method on key-test for <collection>.
+
+*/
 
 
 // Sequence generics
@@ -681,6 +689,8 @@ define method sequence-map-into
   target;
 end method sequence-map-into;
 
+/* ### not absolutly needed
+
 define method find-key
     (sequence :: <sequence>, proc :: <function>, #key skip, failure = #f)
     => key-or-failure :: <object>;
@@ -793,3 +803,4 @@ define inline method third-setter
   sequence[2] := new-value;
 end;
 
+*/
