@@ -1,43 +1,148 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.14 1996/02/21 02:50:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.15 1996/03/17 00:54:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
+// <macro-definition>
+//
+// Some kind of macro definition.
+// 
 define abstract class <macro-definition> (<definition>)
-  slot macro-intermediate-words :: <simple-object-vector>,
+  //
+  // The intermediate words.  Computed when the top level form is processed.
+  slot macro-intermediate-words :: <simple-object-vector> = #[],
     init-keyword: intermediate-words:;
-  slot macro-main-rule-set :: <simple-object-vector>,
+  //
+  // The main rule set.
+  slot macro-main-rule-set :: <main-rule-set>,
     required-init-keyword: main-rule-set:;
+  //
+  // The auxiliary rule sets.
   slot macro-auxiliary-rule-sets :: <simple-object-vector>,
     required-init-keyword: auxiliary-rule-sets:;
-end;
+end class <macro-definition>;
 
-define class <define-macro-definition> (<macro-definition>)
-end;
+define sealed domain make (singleton(<macro-definition>));
+define sealed domain initialize (<macro-definition>);
 
-define class <define-bindings-macro-definition> (<macro-definition>)
-end;
+// <define-body-macro-definition>
+//
+// A body-style define macro definition.
+// 
+define class <define-body-macro-definition> (<macro-definition>)
+end class <define-body-macro-definition>;
 
+define sealed domain make (singleton(<define-body-macro-definition>));
+
+// <define-list-macro-definition>
+//
+// A list-style define macro definition.
+// 
+define class <define-list-macro-definition> (<macro-definition>)
+end class <define-list-macro-definition>;
+
+define sealed domain make (singleton(<define-list-macro-definition>));
+
+// <statement-macro-definition>
+//
+// A statement macro definition.
+// 
 define class <statement-macro-definition> (<macro-definition>)
-end;
+end class <statement-macro-definition>;
 
+define sealed domain make (singleton(<statement-macro-definition>));
+
+// <function-macro-definition>
+//
+// A function macro definition.
+// 
 define class <function-macro-definition> (<macro-definition>)
-end;
+end class <function-macro-definition>;
 
-define class <define-macro-tlf> (<simple-define-tlf>)
-  //
-  // Make the definition required.
-  required keyword defn:;
-end;
-
-define method print-message
-    (tlf :: <define-macro-tlf>, stream :: <stream>) => ();
-  format(stream, "Define Macro %s", tlf.tlf-defn.defn-name);
-end;
+define sealed domain make (singleton(<function-macro-definition>));
 
 
 // Syntax table manipulation routines.
 
+// check-syntax-table-additions{<macro-definition>} -- method on imported gf
+//
+define method check-syntax-table-additions
+    (table :: <syntax-table>, defn :: <macro-definition>, name :: <symbol>)
+    => ();
+  let (real-name, category) = real-name-and-category(name, defn);
+  if (real-name)
+    unless (category-merge-okay?(table, real-name, category))
+      compiler-error("Inconsistent syntax for %s", name);
+    end unless;
+  end if;
+end method check-syntax-table-additions;
+
+// make-syntax-table-additions{<macro-definition>} -- method on imported gf
+//
+define method make-syntax-table-additions
+    (table :: <syntax-table>, defn :: <macro-definition>, name :: <symbol>)
+    => ();
+  let (real-name, category) = real-name-and-category(name, defn);
+  if (real-name)
+    merge-category(table, real-name, category);
+  end if;
+end method make-syntax-table-additions;
+
+
+// real-name-and-category -- internal.
+//
+// Return the real name to use based on the name in the macro definition and
+// the syntactic category for that name.
+// 
+define generic real-name-and-category
+    (name :: <symbol>, defn :: <macro-definition>)
+    => (real-name :: false-or(<symbol>), category :: <symbol>);
+
+// real-name-and-category{<define-body-macro-definition>}
+//
+// For body-style define macros, strip off the -definer.
+// 
+define method real-name-and-category
+    (name :: <symbol>, defn :: <define-body-macro-definition>)
+    => (real-name :: false-or(<symbol>), category :: <symbol>);
+  values(sans-definer(name), #"define-body");
+end method real-name-and-category;
+
+// real-name-and-category{<define-list-macro-definition>}
+//
+// For list-style define macros, strip off the -definer.
+// 
+define method real-name-and-category
+    (name :: <symbol>, defn :: <define-list-macro-definition>)
+    => (real-name :: false-or(<symbol>), category :: <symbol>);
+  values(sans-definer(name), #"define-list");
+end method real-name-and-category;
+
+// real-name-and-category{<function-macro-definition>}
+//
+// For function macros, use the name as is.
+// 
+define method real-name-and-category
+    (name :: <symbol>, defn :: <function-macro-definition>)
+    => (real-name :: <symbol>, category :: <symbol>);
+  values(name, #"function");
+end method real-name-and-category;
+
+// real-name-and-category{<statement-macro-definition>}
+//
+// For statement macros, use the name as is.
+// 
+define method real-name-and-category
+    (name :: <symbol>, defn :: <statement-macro-definition>)
+    => (real-name :: <symbol>, category :: <symbol>);
+  values(name, #"begin");
+end method real-name-and-category;
+
+
+// sans-definer -- internal.
+//
+// Strip off the -definer if it is there and return #f if it isn't.
+// 
 define method sans-definer (name :: <symbol>)
     => res :: false-or(<symbol>);
   let name-str = as(<string>, name);
@@ -47,400 +152,478 @@ define method sans-definer (name :: <symbol>)
       for (i from name-size - 8, char in "-definer")
 	unless (as-lowercase(name-str[i]) == char)
 	  return(#f);
-	end;
-      end;
+	end unless;
+      end for;
       as(<symbol>, copy-sequence(name-str, end: name-size - 8));
-    end;
+    end block;
   else
     #f;
-  end;
-end;
-
-define method check-syntax-table-additions (table :: <table>,
-					    defn :: <define-macro-definition>,
-					    name :: <symbol>)
-    => ();
-  let name = name.sans-definer;
-  if (name)
-    unless (merge-category(table, name, <define-word-token>))
-      error("Inconsistent syntax for %=", name);
-    end;
-  end;
-end;
-
-define method make-syntax-table-additions (table :: <table>,
-					   defn :: <define-macro-definition>,
-					   name :: <symbol>)
-    => ();
-  let name = name.sans-definer;
-  if (name)
-    table[name] := merge-category(table, name, <define-word-token>);
-  end;
-end;
-
-define method check-syntax-table-additions
-    (table :: <table>,
-     defn :: <define-bindings-macro-definition>,
-     name :: <symbol>)
-    => ();
-  let name = name.sans-definer;
-  if (name)
-    unless (merge-category(table, name, <define-bindings-word-token>))
-      error("Inconsistent syntax for %=", name);
-    end;
-  end;
-end;
-
-define method make-syntax-table-additions
-    (table :: <table>,
-     defn :: <define-bindings-macro-definition>,
-     name :: <symbol>)
-    => ();
-  let name = name.sans-definer;
-  if (name)
-    table[name] := merge-category(table, name, <define-bindings-word-token>);
-  end;
-end;
-
-define method check-syntax-table-additions
-    (table :: <table>,
-     defn :: <statement-macro-definition>,
-     name :: <symbol>)
-    => ();
-  unless (merge-category(table, name, <begin-word-token>))
-    error("Inconsistent syntax for %=", name);
-  end;
-end;
-
-define method make-syntax-table-additions
-    (table :: <table>,
-     defn :: <statement-macro-definition>,
-     name :: <symbol>)
-    => ();
-  table[name] := merge-category(table, name, <begin-word-token>);
-end;
-
+  end if;
+end method sans-definer;
 
 
-// process-top-level-form methods.
-// 
+// make(<macro-definition>) -- method on imported GF.
+//
+define method make
+    (class == <macro-definition>,
+     #key module :: <module>, library :: <library>,
+          defmacro :: <define-macro-parse>)
+    => defn :: <macro-definition>;
+  let rules = defmacro.defmacro-main-rule-set.rule-set-rules;
+  let first-rule = rules.first;
 
-define method process-top-level-form (form :: <macro-statement>) => ();
-  let expansion = expand(form, #f);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    error("Macro statement didn't expand?");
-  end;
-end;
+  for (rule in rules)
+    unless (rule.object-class == first-rule.object-class)
+      compiler-error-location(defmacro, "Inconsistent rule styles");
+    end unless;
+  end for;
 
-define method process-top-level-form (form :: <define-parse>) => ();
-  let expansion = expand(form, #f);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    error("Use of define macro %s didn't expand?",
-	  form.define-word.token-symbol);
-  end;
-end;
+  let defn-class
+    = select (first-rule by instance?)
+	<body-style-define-rule> =>
+	  fix-define-rules(defmacro);
+	  <define-body-macro-definition>;
+	<list-style-define-rule> =>
+	  fix-define-rules(defmacro);
+	  <define-list-macro-definition>;
+	<function-rule> =>
+	  <function-macro-definition>;
+	<statement-rule> =>
+	  <statement-macro-definition>;
+      end select;
 
-define method process-top-level-form (form :: <define-bindings-parse>) => ();
-  let expansion = expand(form, #f);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    error("Use of define bindings macro %s didn't expand?",
-	  form.define-word.token-symbol);
-  end;
-end;
-
-
-define method process-top-level-form
-    (defmacro :: <define-statement-macro-parse>)
-    => ();
-  define-macro(defmacro, <statement-macro-definition>);
-end;
-
-define method process-top-level-form
-    (defmacro :: <define-function-macro-parse>)
-    => ();
-  define-macro(defmacro, <function-macro-definition>);
-end;
-
-define method process-top-level-form
-    (defmacro :: <define-define-macro-parse>)
-    => ();
-  fix-define-rules(defmacro);
-  define-macro(defmacro, <define-macro-definition>);
-end;
-
-define method process-top-level-form
-    (defmacro :: <define-define-bindings-macro-parse>)
-    => ();
-  fix-define-rules(defmacro);
-  define-macro(defmacro, <define-bindings-macro-definition>);
-end;
-
-
-define method finalize-top-level-form (tlf :: <define-macro-tlf>) => ();
-  // Nothing to do.
-end;
-
-define method convert-top-level-form
-    (builder :: <fer-builder>, tlf :: <define-macro-tlf>) => ();
-  // Nothing to do.
-end;
-
-
-// define-macro & fix-define-rules
-
-define method define-macro (defmacro :: <define-macro-parse>,
-			    defn-class :: <class>)
-    => ();
   let name = defmacro.defmacro-name;
   let defn = make(defn-class,
 		  name: make(<basic-name>,
 			     symbol: name.token-symbol,
-			     module: *Current-Module*),
-		  library: *Current-Library*,
+			     module: module),
+		  library: library,
 		  main-rule-set: defmacro.defmacro-main-rule-set,
 		  auxiliary-rule-sets: defmacro.defmacro-auxiliary-rule-sets);
-  find-wildcards(defn);
-  find-end-variables(defn, #t);
+  annotate-variables(defn);
   find-intermediate-words(defn);
-  note-variable-definition(defn);
-  add!(*Top-Level-Forms*, make(<define-macro-tlf>, defn: defn));
-end;
+  defn;
+end method make;
 
+
+
+// fix-define-rules
+
+// fix-define-rules -- internal.
+//
+// Extract the modifiers pattern and the name from the head of each rule.
+// Puke if we can't find the name.
+//
 define method fix-define-rules (defmacro :: <define-macro-parse>) => ();
   let name = sans-definer(defmacro.defmacro-name.token-symbol);
   unless (name)
-    error("Name of define macro doesn't end with -definer: %s",
-	  defmacro.defmacro-name.token-symbol);
-  end;
-  for (rule in defmacro.defmacro-main-rule-set)
-    let pattern = rule.rule-pattern;
-    let pattern-list = first(pattern.pattern-pieces);
-    let pattern-sequence = first(pattern-list.pattern-list-pieces);
-    if (instance?(pattern-sequence, <pattern-sequence>))
-      block (return)
-	let pieces = pattern-sequence.pattern-sequence-pieces;
-	for (piece in pieces, index from 0)
-	  if (instance?(piece, <identifier-pattern>)
-		& piece.pattern-identifier.token-symbol == name)
-	    rule.define-rule-modifiers-pattern
-	      := make(<pattern-sequence>,
-		      pieces: copy-sequence(pieces, end: index));
-	    pattern-sequence.pattern-sequence-pieces
-	      := copy-sequence(pieces, start: index + 1);
-	    return();
-	  end;
-	end;
-	error("Can't find macro name (%s) in rule.", name);
-	#f;
-      end;
-    else
-      error("Can't find macro name (%s) in rule.", name);
-      #f;
-    end;
-  end;
-end;
+    compiler-error("Name of define macro doesn't end with -definer: %s",
+		   defmacro.defmacro-name);
+  end unless;
+  for (rule in defmacro.defmacro-main-rule-set.rule-set-rules)
+    let (modifiers-pattern, name, remaining-pattern)
+      = trim-modifiers-pattern(rule.rule-pattern, name);
+    rule.define-rule-modifiers-pattern := modifiers-pattern;
+    rule.rule-pattern := remaining-pattern;
+  end for;
+end method fix-define-rules;
 
+
+// trim-modifiers-pattern -- internal.
+//
+// Grovel though pattern trying to find name.  Return the modifiers pattern
+// (the stuff that preceeds name), the token that matched name, and the
+// remaining stuff from the pattern.
+// 
+define generic trim-modifiers-pattern
+    (pattern :: <pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+
+// trim-modifiers-pattern{<pattern>}
+//
+// Catch-all method for patterns that can't be part of the modifier-pattern.
+// Puke because it means we couldn't find the name.
+// 
+define method trim-modifiers-pattern
+    (pattern :: <pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+  compiler-error("Can't find the macro name (%s) in the rule.", name);
+end method trim-modifiers-pattern;
+
+// trim-modifiers-pattern{<semicolon-pattern>}
+//
+// A semicolon can't occur in the modifiers pattern so the name must be down
+// the left side, so extract the modifiers pattern from the left.  When
+// returning, wrap the stuff left over on the left with a new semicolon pattern
+// that concatenates it with the original right hand side.
+// 
+define method trim-modifiers-pattern
+    (pattern :: <semicolon-pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+  let (modifiers-pattern, name, remaining-pattern)
+    = trim-modifiers-pattern(pattern.pattern-left, name);
+  values(modifiers-pattern,
+	 name,
+	 make(<semicolon-pattern>,
+	      left: remaining-pattern,
+	      right: pattern.pattern-right,
+	      last: pattern.pattern-last?));
+end method trim-modifiers-pattern;
+
+// trim-modifiers-pattern{<comma-pattern>}
+//
+// A comma can't occur in the modifiers pattern so the name must be down
+// the left side, so extract the modifiers pattern from the left.  When
+// returning, wrap the stuff left over on the left with a new comma pattern
+// that concatenates it with the original right hand side.
+// 
+define method trim-modifiers-pattern
+    (pattern :: <comma-pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+  let (modifiers-pattern, name, remaining-pattern)
+    = trim-modifiers-pattern(pattern.pattern-left, name);
+  values(modifiers-pattern,
+	 name,
+	 make(<comma-pattern>,
+	      left: remaining-pattern,
+	      right: pattern.pattern-right,
+	      last: pattern.pattern-last?));
+end method trim-modifiers-pattern;
+
+// trim-modifiers-pattern{<sequential-pattern>}
+//
+// Does most of the real work for this generic function.
+//
+define method trim-modifiers-pattern
+    (pattern :: <sequential-pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+  let left = pattern.pattern-left;
+  if (instance?(left, <name-pattern>))
+    //
+    // If the left is a name pattern, then it is either a literal modifier
+    // (i.e. part of the modifier pattern) or it is the name.  
+    if (left.pattern-name.token-symbol == name)
+      //
+      // The name matches.
+      values(make(<empty-pattern>), left.pattern-name, pattern.pattern-right);
+    else
+      //
+      // Recurse into the right hand side and prepend the name pattern onto
+      // the start of the returned modifier pattern.  But take care that
+      // we don't make a <sequential-pattern> with an empty right hand side.
+      let (modifiers-pattern, name, remaining-pattern)
+	= trim-modifiers-pattern(pattern.pattern-right, name);
+      values(if (instance?(modifiers-pattern, <empty-pattern>))
+	       left;
+	     else
+	       make(<sequential-pattern>,
+		    left: left, right: modifiers-pattern,
+		    last: ~instance?(modifiers-pattern, <sequential-pattern>));
+	     end if,
+	     name,
+	     remaining-pattern);
+    end if;
+  elseif (instance?(left, <pattern-variable>))
+    //
+    // Otherwise, if the left is a pattern-variable, it is part of the
+    // modifiers pattern.  So Recurse into the right hand side and
+    // prepend the name pattern onto the start of the returned
+    // modifier pattern.  But take care that we don't make a
+    // <sequential-pattern> with an empty right hand side.
+    let (modifiers-pattern, name, remaining-pattern)
+      = trim-modifiers-pattern(pattern.pattern-right, name);
+    values(if (instance?(modifiers-pattern, <empty-pattern>))
+	     left;
+	   else
+	     make(<sequential-pattern>,
+		  left: left, right: modifiers-pattern,
+		  last: ~instance?(modifiers-pattern, <sequential-pattern>));
+	   end if,
+	   name,
+	   remaining-pattern);
+  else
+    //
+    // If the left is neither a name nor a pattern-varible, then there is
+    // something wrong with the macro definition.
+    compiler-error("Can't find the macro name (%s) in the rule.", name);
+  end if;
+end method trim-modifiers-pattern;
+
+// trim-modifiers-pattern{<name-pattern>}
+//
+// If the name matches, then great.  Otherwise, puke because it means that
+// we couldn't find the name anywhere.  We don't have to worry about this
+// name being part of the modifiers-pattern, because that case is picked off
+// above us in the <sequential-pattern> method.
+// 
+define method trim-modifiers-pattern
+    (pattern :: <name-pattern>, name :: <symbol>)
+    => (modifiers-pattern :: <pattern>, name :: <symbol-token>,
+	remaining-pattern :: <pattern>);
+  if (pattern.pattern-name.token-symbol == name)
+    values(make(<empty-pattern>),
+	   pattern.pattern-name,
+	   make(<empty-pattern>));
+  else
+    compiler-error("Can't find the macro name (%s) in the rule.", name);
+  end if;
+end method trim-modifiers-pattern;
 
 
-// expand methods.
+// macro-expand.
 
-define method expand (form :: <define-parse>,
-		      lexenv :: false-or(<lexenv>))
-    => results :: false-or(<simple-object-vector>);
-  let define-word = form.define-word;
-  let name = make(<basic-name>,
-		  module: define-word.token-module,
-		  symbol: as(<symbol>,
-			     concatenate(as(<string>, define-word.token-symbol),
-					 "-definer")));
+// macro-expand -- exported.
+//
+// Expand the form returning an <expression-parse>.  The real work is done
+// by macro-expand-aux which is separated out so that we can use it for
+// macro constraints.
+// 
+define method macro-expand (form :: <macro-call-parse>)
+    => expansion :: <expression-parse>;
+  parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form)));
+end method macro-expand;
+
+// macro-expand-aux -- internal.
+//
+// Does the real work of a macro expansion.  Find the definition and run its
+// main rules until one of them gives us a match.  Once we have a match,
+// compute the replacement and return it.
+// 
+define method macro-expand-aux (form :: <macro-call-parse>)
+    => replacement :: <fragment>;
+  let name = name-for-macro-call(form);
   let var = find-variable(name);
   unless (var)
     error("syntax table and variable table inconsistent.");
-  end;
+  end unless;
   let defn = var.variable-definition;
-  unless (instance?(defn, <define-macro-definition>))
+  unless (defn)
     error("syntax table and variable table inconsistent.");
-  end;
-  expand-macro-aux(form, form.define-fragment, defn);
-end;
-
-define method expand (form :: <define-bindings-parse>,
-		      lexenv :: false-or(<lexenv>))
-    => results :: false-or(<simple-object-vector>);
-  let define-word = form.define-word;
-  let name = make(<basic-name>,
-		  module: define-word.token-module,
-		  symbol: as(<symbol>,
-			     concatenate(as(<string>, define-word.token-symbol),
-					 "-definer")));
-  let var = find-variable(name);
-  unless (var)
-    error("syntax table and variable table inconsistent.");
-  end;
-  let defn = var.variable-definition;
-  unless (instance?(defn, <define-bindings-macro-definition>))
-    error("syntax table and variable table inconsistent.");
-  end;
-  let piece = make(<piece>, token: form.define-bindings);
-  let fragment = make(<fragment>, head: piece, tail: piece);
-  expand-macro-aux(form, fragment, defn);
-end;
-
-define method expand (form :: <macro-statement>,
-		      lexenv :: false-or(<lexenv>))
-    => results :: false-or(<simple-object-vector>);
-  let var = find-variable(id-name(form.statement-begin-word));
-  unless (var)
-    error("syntax table and variable table inconsistent.");
-  end;
-  let defn = var.variable-definition;
-  unless (instance?(defn, <statement-macro-definition>))
-    error("syntax table and variable table inconsistent.");
-  end;
-  expand-macro-aux(form, form.statement-fragment, defn);
-end;
-
-define method expand (form :: <funcall>,
-		      lexenv :: false-or(<lexenv>))
-    => results :: false-or(<simple-object-vector>);
-  let fun = form.funcall-function;
-  if (instance?(fun, <varref>))
-    let id = fun.varref-id;
-    if (id.token-module)
-      let var = find-variable(id-name(id));
-      if (var)
-	let defn = var.variable-definition;
-	if (instance?(defn, <function-macro-definition>))
-	  //
-	  // Build a fragment that looks like the function call.
-	  //
-	  let fragment = make(<fragment>);
-	  let args = form.funcall-arguments;
-	  let need-comma? = #f;
-	  for (arg in args,
-	       possible-keyword? = even?(args.size) then ~possible-keyword?)
-	    if (need-comma?)
-	      postpend-piece(fragment,
-			     make(<piece>, token: make(<comma-token>)));
-	    end;
-	    if (possible-keyword?
-		  & instance?(arg, <literal-ref>)
-		  & instance?(arg.litref-literal, <literal-symbol>))
-	      postpend-piece(fragment,
-			     make(<piece>,
-				  token: make(<keyword-token>,
-					      literal: arg.litref-literal)));
-	      need-comma? := #f;
-	    else
-	      postpend-piece(fragment, make(<piece>, token: arg));
-	      need-comma? := #t;
-	    end;
-	  end;
-	  //
-	  // Now feed it to the pattern matcher
-	  expand-macro-aux(form, fragment, defn);
-	end;
-      end;
-    end;
-  end;
-end;
-
-define method expand-macro-aux (form :: <constituent>,
-				fragment :: <fragment>,
-				defn :: <macro-definition>)
-    => results :: false-or(<simple-object-vector>);
+  end unless;
   let intermediate-words = defn.macro-intermediate-words;
   block (return)
-    for (rule in defn.macro-main-rule-set)
+    let fragment = form.macro-call-fragment;
+    for (rule in defn.macro-main-rule-set.rule-set-rules)
       let results = match-rule(rule, form, fragment, intermediate-words);
-      if (results)
-	let replacement = expand-template(rule.rule-template, results, #f,
-					  defn.macro-auxiliary-rule-sets,
-					  intermediate-words,
-					  make(<uniquifier>));
-	let tokenizer = make(<fragment-tokenizer>, fragment: replacement);
-	return(parse-body(tokenizer));
-      end;
-    end;
-    error("Syntax error in %=", form);
-  end;
-end;
+      unless (results == #"failed")
+	return(do-replacement(rule.rule-template, results, #f,
+			      defn.macro-auxiliary-rule-sets,
+			      intermediate-words, make(<uniquifier>)));
+      end unless;
+    end for;
+    compiler-error("Syntax error in %=.  None of the main rules matched.",
+		   form);
+  end block;
+end method macro-expand-aux;
+
+
+// name-for-macro-call -- internal.
+//
+// Return the <name> of the macro being called by this macro call parse.
+// 
+define generic name-for-macro-call (form :: <macro-call-parse>)
+    => name :: <basic-name>;
+
+// name-for-macro-call{type-union(<statement-parse>, <fn-macro-call-parse>)}
+//
+// For statement and function-macro calls, we just use the word as is.
+// 
+define method name-for-macro-call
+    (form :: type-union(<statement-parse>, <function-macro-call-parse>))
+    => name :: <basic-name>;
+  id-name(form.macro-call-word);
+end method name-for-macro-call;
+
+// name-for-macro-call{<definition-macro-call-parse>}
+//
+// For definition macro calls, we tack -definer onto the word.
+// 
+define method name-for-macro-call (form :: <definition-macro-call-parse>)
+    => name :: <basic-name>;
+  let define-word = form.macro-call-word;
+  make(<basic-name>,
+       module: define-word.token-module,
+       symbol: symcat(define-word.token-symbol, "-definer"));
+end method name-for-macro-call;
+
 
 
+// find-intermediate-words
+//
+// This stuff finds all the intermediate words in a macro definition.  From
+// the DRM:
+//
+//     * Define a body-variable to be a pattern variable that either has a
+//       constraint of body or case-body, or names an auxiliary rule-set
+//       where some left-hand side in that rule-set ends in a body-variable.
+//       This is a least fixed point, so a recursive auxiliary rule-set does
+//       not automatically make its name into a body-variable!  Note that an
+//       ellipsis that stands for a pattern variable is a body-variable when
+//       that pattern variable is one.
+//
+//     * Define an intermediate-variable to be a pattern variable that
+//       either immediately follows a body-variable in a left-hand side,
+//       or appears at the beginning of a left-hand side in an auxiliary
+//       rule-set named by an itermediate-variable.
+//
+//     * An intermediate word is a name that either immediately follows a
+//       body-variable in a left-hand side, or occurs at the beginning of a
+//       left-hand side in an auxiliary rule-set named by an intermediate-
+//       variable.  Intermediate words are not reserved, they are just used
+//       as delimiters during the parsing for a pattern-variable with body
+//       or case-body constraint.
+//
+// From that description, we derive the following algorithm.
+// 
+// The first thing we do is find all the auxiliary rule sets that end
+// in body variables.  Note that when we identify a rule-set as ending
+// in a body-variable, that means that any variable naming that
+// rule-set is now a body-variable, so we have to iterate until we find
+// no more rule sets ending in body variables.
+//
+// Then we scan over all the patterns looking for things that follow body
+// variables.  We are interested in two: names (i.e. intermediate words) and
+// pattern variables (i.e. intermediate-variables).  For intermediate-
+// variables discovered in the manner, if it names some auxiliary rule set,
+// then all of the patterns in that rule set also follow a body variable.
+// 
 define method find-intermediate-words (defn :: <macro-definition>)
     => res :: <simple-object-vector>;
   let aux-rule-sets = defn.macro-auxiliary-rule-sets;
-  find-body-variable-rule-sets(aux-rule-sets);
-  let results = #();
-  for (rule in defn.macro-main-rule-set)
-    results := find-intermediate-words-in(rule.rule-pattern, #f, aux-rule-sets,
-					  results);
-  end;
-  for (aux-rule-set in aux-rule-sets)
-    for (rule in aux-rule-set.rule-set-rules)
-      results := find-intermediate-words-in(rule.rule-pattern, aux-rule-set,
-					    aux-rule-sets, results);
-    end;
-  end;
-  defn.macro-intermediate-words := as(<simple-object-vector>, results);
-end;
-
-define method find-body-variable-rule-sets
-    (aux-rule-sets :: <simple-object-vector>)
-    => ();
+  //
+  // Find the rule sets that are named by body variables.
   let again? = #t;
   while (again?)
     again? := #f;
     for (rule-set in aux-rule-sets)
       for (rule in rule-set.rule-set-rules,
 	   until: rule-set.rule-set-body-variable?)
-	let pieces = rule.rule-pattern.pattern-pieces;
-	unless (empty?(pieces))
-	  let pattern-list = pieces.last;
-	  let list-tail = pattern-list.pattern-list-pieces.last;
-	  if (instance?(list-tail, <pattern-sequence>)
-		& body-variable?(list-tail.pattern-sequence-pieces.last,
-				 rule-set, aux-rule-sets))
-	    rule-set.rule-set-body-variable? := #t;
-	    again? := #t;
-	  end;
-	end;
-      end;
-    end;
-  end;
-end;
+	if (ends-in-body-variable?(rule.rule-pattern, rule-set.rule-set-name,
+				   aux-rule-sets))
+	  rule-set.rule-set-body-variable? := #t;
+	  again? := #t;
+	end if;
+      end for;
+    end for;
+  end while;
+  //
+  // Find all the intermediate words.
+  let results = #();
+  for (rule in defn.macro-main-rule-set.rule-set-rules)
+    results := find-intermediate-words-in
+      (rule.rule-pattern, #f, aux-rule-sets, results);
+  end for;
+  for (aux-rule-set in aux-rule-sets)
+    for (rule in aux-rule-set.rule-set-rules)
+      results := find-intermediate-words-in
+	(rule.rule-pattern, aux-rule-set.rule-set-name,
+	 aux-rule-sets, results);
+    end for;
+  end for;
+  //
+  // Store 'em away for posterity.
+  defn.macro-intermediate-words := as(<simple-object-vector>, results);
+end method find-intermediate-words;
 
-define method body-variable?
-    (thing, cur-set :: false-or(<auxiliary-rule-set>),
+// ends-in-body-variable? -- internal.
+//
+// Return #t iff the pattern ends in a body variable.  Return #f iff not.
+// 
+define generic ends-in-body-variable?
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>)
+    => res :: <boolean>;
+
+// ends-in-body-variable?{<pattern>}
+//
+// Catch-all method that returns #f.  We explicitly enumerate the exceptions.
+//
+define method ends-in-body-variable?
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>)
     => res :: <boolean>;
   #f;
-end;
+end method ends-in-body-variable?;
 
-define method body-variable?
-    (patvar :: <pattern-variable>, cur-set :: false-or(<auxiliary-rule-set>),
+// ends-in-body-variable?{<binary-pattern>}
+//
+// A binary pattern ends in a body-variable if the right hand side ends
+// in a body variable.
+// 
+define method ends-in-body-variable?
+    (pattern :: <binary-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>)
+    => res :: <boolean>;
+  ends-in-body-variable?(pattern.pattern-right, this-rule-set, aux-rule-sets);
+end method ends-in-body-variable?;
+
+// ends-in-body-variable?{<pattern-variable>}
+//
+// A pattern variable ends in a body-variable if it is a body variable.
+// And it is a body variable if the constraint is either body or case-body
+// or it names a rule-set we have previously determined ends in a body
+// variable.
+// 
+define method ends-in-body-variable?
+    (patvar :: <pattern-variable>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>)
     => res :: <boolean>;
   let constraint = patvar.patvar-constraint;
   if (constraint == #"body" | constraint == #"case-body")
     #t;
   else
-    let aux-rule-set
-      = if (patvar.patvar-name)
-	  find-aux-rule-set(patvar.patvar-name, aux-rule-sets);
-	else
-	  cur-set;
-	end;
-    aux-rule-set & aux-rule-set.rule-set-body-variable?;
-  end;
-end;
+    let name = patvar.patvar-name | this-rule-set;
+    if (name)
+      let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
+      aux-rule-set & aux-rule-set.rule-set-body-variable?;
+    else
+      #f;
+    end if;
+  end if;
+end method ends-in-body-variable?;
 
+// ends-in-body-variable?{<variable-pattern>}
+//
+// A typed-variable-pattern ends in a body variable if the type pattern
+// ends in a body variable.  That would be a rather strange pattern, but
+// the description of intermediate words doesn't disallow it, so we have
+// to support it.
+// 
+define method ends-in-body-variable?
+    (pattern :: <variable-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>)
+    => res :: <boolean>;
+  ends-in-body-variable?
+    (pattern.variable-type-pattern, this-rule-set, aux-rule-sets);
+end method ends-in-body-variable?;
+
+// ends-in-body-variable?{<bindings-pattern>}
+//
+// A typed-variable-pattern ends in a body variable if the type pattern
+// ends in a body variable.  That would be a rather strange pattern, but
+// the description of intermediate words doesn't disallow it, so we have
+// to support it.
+// 
+define method ends-in-body-variable?
+    (pattern :: <bindings-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>)
+    => res :: <boolean>;
+  ends-in-body-variable?
+    (pattern.bindings-value-pattern, this-rule-set, aux-rule-sets);
+end method ends-in-body-variable?;
+
+
+// find-aux-rule-set -- internal.
+//
+// Finds the auxiliary rule set named by symbol.  This function is also used
+// way down below in do-replacement, but this is as good of a place as any
+// to define it.
+// 
 define method find-aux-rule-set
     (name :: <symbol>, aux-rule-sets :: <simple-object-vector>)
     => res :: false-or(<auxiliary-rule-set>);
@@ -448,1139 +631,1899 @@ define method find-aux-rule-set
     for (aux-rule-set in aux-rule-sets)
       if (aux-rule-set.rule-set-name == name)
 	return(aux-rule-set);
-      end;
-    end;
+      end if;
+    end for;
     #f;
-  end;
-end;
+  end block;
+end method find-aux-rule-set;
 
-define method find-intermediate-words-in
-    (pattern :: <pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+
+// find-intermediate-words-in -- internal.
+//
+// Find places in pattern where something follows a body-variable and call
+// find-intermediate-words-at-start on that something.
+// 
+define generic find-intermediate-words-in
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  for (piece in pattern.pattern-pieces)
-    results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
-					  results);
-  end;
-  results;
-end;
 
+// find-intermediate-words-in{<pattern>}
+//
+// Catch-all method for patterns that either can't have two adjacent pattern
+// variables or a whole sub-pattern.  We explicitly enumerate the exceptions
+// below.
+// 
 define method find-intermediate-words-in
-    (pattern :: <pattern-list>, cur-set :: false-or(<auxiliary-rule-set>),
-     aux-rule-sets :: <simple-object-vector>, results :: <list>)
-    => res :: <list>;
-  for (piece in pattern.pattern-list-pieces)
-    results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
-					  results);
-  end;
-  results;
-end;
-
-define method find-intermediate-words-in
-    (pattern :: <pattern-sequence>, cur-set :: false-or(<auxiliary-rule-set>),
-     aux-rule-sets :: <simple-object-vector>, results :: <list>)
-    => res :: <list>;
-  for (piece in pattern.pattern-sequence-pieces,
-       prev = #f then piece)
-    if (body-variable?(prev, cur-set, aux-rule-sets))
-      results := find-intermediate-words-in(piece, cur-set, aux-rule-sets,
-					    results);
-    end;
-  end;
-  results;
-end;
-
-define method find-intermediate-words-in
-    (pattern :: <simple-pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
   results;
-end;
+end method find-intermediate-words-in;
 
+// find-intermediate-words-in{<binary-pattern>}
+//
+// Descend into the two halves.  This method assumes that there is a separator
+// between the two halves so that it doesn't matter what the first half ends
+// with.  The exception (<sequential-pattern>) is delt with below.
+// 
 define method find-intermediate-words-in
-    (pattern :: <identifier-pattern>,cur-set :: false-or(<auxiliary-rule-set>),
+    (pattern :: <binary-pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  let sym = pattern.pattern-identifier.token-symbol;
+  find-intermediate-words-in
+    (pattern.pattern-right, this-rule-set, aux-rule-sets,
+     find-intermediate-words-in
+       (pattern.pattern-left, this-rule-set, aux-rule-sets, results));
+end method find-intermediate-words-in;
+
+// find-intermediate-words-in{<sequential-pattern>}
+//
+// The two sub-patterns are adjacent, so first check to see if the left ends
+// in a body variable.  If so, find the intermediate words at the start of
+// the right sub-pattern.
+//
+// And in any case, descend into the two subpatterns just like the
+// <binary-pattern> method above.
+// 
+define method find-intermediate-words-in
+    (pattern :: <sequential-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+  let left = pattern.pattern-left;
+  let right = pattern.pattern-right;
+  find-intermediate-words-in
+    (right, this-rule-set, aux-rule-sets,
+     find-intermediate-words-in
+       (left, this-rule-set, aux-rule-sets,
+	if (ends-in-body-variable?(left, this-rule-set, aux-rule-sets))
+	  find-intermediate-words-at-start
+	    (right, this-rule-set, aux-rule-sets, results);
+	else
+	  results;
+	end if));
+end method find-intermediate-words-in;
+
+// find-intermediate-words-in{<bracketed-pattern>}
+//
+// Descend into the guts pattern.
+// 
+define method find-intermediate-words-in
+    (pattern :: <bracketed-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+  find-intermediate-words-in
+    (pattern.pattern-guts, this-rule-set, aux-rule-sets, results);
+end method find-intermediate-words-in;
+
+
+
+// find-intermediate-words-at-start -- internal.
+//
+// Called whenever we have determined that some pattern ``follows'' a body
+// variable.  A pattern can follow a body variable by physically being
+// next to it in the pattern, or it can be the pattern for some rule in
+// an auxiliary rule set named by a pattern variable that follows a body
+// variable.
+//
+define generic find-intermediate-words-at-start
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+
+// find-intermediate-words-at-start{<pattern>}
+//
+// Catch all method for patterns that can't start with intermediate words
+// or variables.  The exceptions are explicitly enumerated below.
+// 
+define method find-intermediate-words-at-start
+    (pattern :: <pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+  results;
+end method find-intermediate-words-at-start;
+
+// find-intermediate-words-at-start{<binary-pattern>}
+//
+// Find the intermediate words at the start of the left half.
+// 
+define method find-intermediate-words-at-start
+    (pattern :: <binary-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+  find-intermediate-words-at-start
+    (pattern.pattern-left, this-rule-set, aux-rule-sets, results);
+end method find-intermediate-words-at-start;
+
+// find-intermediate-words-at-start{<name-pattern>}
+//
+// Hey, we found one!  If we don't already know about it, add it to the
+// results.
+// 
+define method find-intermediate-words-at-start
+    (pattern :: <name-pattern>, this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>, results :: <list>)
+    => res :: <list>;
+  let sym = pattern.pattern-name.token-symbol;
   if (member?(sym, results))
     results;
   else
     pair(sym, results);
-  end;
-end;
+  end if;
+end method find-intermediate-words-at-start;
 
-define method find-intermediate-words-in
-    (pattern :: <pattern-variable>, cur-set :: false-or(<auxiliary-rule-set>),
+// find-intermediate-words-at-start{<pattern-variable>}
+//
+// Okay, we have an intermediate variable.  Check the start of the patterns
+// for the corresponding auxiliary-rule-set (if there is one).
+//
+// We set a flag in the rule set before recursing so that we will eventually
+// terminate.  Otherwise a right-recursive rule set would cause use to hang.
+// For as long as we had stack space, that is.
+// 
+define method find-intermediate-words-at-start
+    (pattern :: <pattern-variable>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  if (pattern.patvar-name)
-    let aux-rule-set = find-aux-rule-set(pattern.patvar-name, aux-rule-sets);
+  let name = pattern.patvar-name | this-rule-set;
+  if (name)
+    let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
     if (aux-rule-set & ~aux-rule-set.rule-set-processed-intermediate-words?)
       aux-rule-set.rule-set-processed-intermediate-words? := #t;
       for (rule in aux-rule-set.rule-set-rules)
 	results := find-intermediate-words-at-start
-	             (rule.rule-pattern, cur-set, aux-rule-sets, results);
-      end;
-    end;
-  end;
+	  (rule.rule-pattern, this-rule-set, aux-rule-sets, results);
+      end for;
+    end if;
+  end if;
   results;
-end;
+end method find-intermediate-words-at-start;
 
-define method find-intermediate-words-in
-    (pattern :: <property-list-pattern>,
-     cur-set :: false-or(<auxiliary-rule-set>),
-     aux-rule-sets :: <simple-object-vector>, results :: <list>)
-    => res :: <list>;
-  results;
-end;
-
-define method find-intermediate-words-in
-    (pattern :: <details-pattern>, cur-set :: false-or(<auxiliary-rule-set>),
-     aux-rule-sets :: <simple-object-vector>, results :: <list>)
-    => res :: <list>;
-  find-intermediate-words-in(pattern.pattern-sub-pattern, cur-set,
-			     aux-rule-sets, results);
-end;
-
+// find-intermediate-words-at-start{<variable-pattern>}
+//
+// We have to deal with this case even though it is rather strange.  Just
+// recurse on the name pattern.
+// 
 define method find-intermediate-words-at-start
-    (pattern :: <pattern>, cur-set :: false-or(<auxiliary-rule-set>),
+    (pattern :: <variable-pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  if (empty?(pattern.pattern-pieces))
-    results;
-  else
-    find-intermediate-words-at-start(pattern.pattern-pieces.first,
-				     cur-set, aux-rule-sets, results);
-  end;
-end;
+  find-intermediate-words-at-start
+    (pattern.variable-name-pattern, this-rule-set, aux-rule-sets, results);
+end method find-intermediate-words-at-start;
 
+// find-intermediate-words-at-start{<bindings-pattern>}
+//
+// We have to deal with this case even though it is rather strange.  Just
+// recurse on the variable pattern.
+// 
 define method find-intermediate-words-at-start
-    (pattern :: <pattern-list>, cur-set :: false-or(<auxiliary-rule-set>),
+    (pattern :: <bindings-pattern>, this-rule-set :: false-or(<symbol>),
      aux-rule-sets :: <simple-object-vector>, results :: <list>)
     => res :: <list>;
-  if (empty?(pattern.pattern-list-pieces))
-    results;
-  else
-    find-intermediate-words-at-start(pattern.pattern-list-pieces.first,
-				     cur-set, aux-rule-sets, results);
-  end;
-end;
-
-define method find-intermediate-words-at-start
-    (pattern :: <pattern-sequence>, cur-set :: false-or(<auxiliary-rule-set>),
-     aux-rule-sets :: <simple-object-vector>, results :: <list>)
-    => res :: <list>;
-  if (empty?(pattern.pattern-sequence-pieces))
-    results;
-  else
-    find-intermediate-words-in(pattern.pattern-sequence-pieces.first,
-			       cur-set, aux-rule-sets, results);
-  end;
-end;
+  find-intermediate-words-at-start
+    (pattern.bindings-variables-pattern, this-rule-set, aux-rule-sets,
+     results);
+end method find-intermediate-words-at-start;
 
 
 
-define generic find-end-variables (within, at-end?) => ();
-
-define method find-end-variables (defn :: <macro-definition>,
-				  at-end? :: <boolean>)
-    => ();
-  for (rule in defn.macro-main-rule-set)
-    find-end-variables(rule, at-end?);
-  end;
-  for (rule-set in defn.macro-auxiliary-rule-sets)
+// annotate-variables -- internal.
+//
+// We make some annotations on variables when the macro is defined so that
+// we don't have to expensively recompute these values each time the macro
+// is used.  The two annotations we currently make are ``at-end?'' for wildcard
+// variables that must consume the entire fragment they are matched against
+// and defaulting the constraint to wildcard for variables that name
+// auxiliary rule sets.
+//
+define method annotate-variables
+    (defn :: <macro-definition>) => ();
+  let aux-rule-sets = defn.macro-auxiliary-rule-sets;
+  for (rule in defn.macro-main-rule-set.rule-set-rules)
+    annotate-variables-rule(rule, aux-rule-sets);
+  end for;
+  for (rule-set in aux-rule-sets)
     for (rule in rule-set.rule-set-rules)
-      find-end-variables(rule, at-end?);
-    end;
-  end;
-end;
+      annotate-variables-rule(rule, aux-rule-sets);
+    end for;
+  end for;
+end method annotate-variables;
 
-define method find-end-variables (rule :: <rule>, at-end? :: <boolean>) => ();
-  find-end-variables(rule.rule-pattern, at-end?);
-end;
 
-define method find-end-variables (rule :: <abstract-define-rule>,
-				  at-end? :: <boolean>,
-				  #next next-method)
+// annotate-variables-rule
+//
+// Annotate a rule.
+// 
+define generic annotate-variables-rule
+    (within :: <rule>, aux-rule-sets :: <simple-object-vector>) => ();
+
+// annotate-variables-rule{<rule>}
+//
+// By default, just annotate the rule's pattern.
+// 
+define method annotate-variables-rule
+    (rule :: <rule>, aux-rule-sets :: <simple-object-vector>) => ();
+  annotate-variables-pattern(rule.rule-pattern, aux-rule-sets, #t);
+end method annotate-variables-rule;
+
+// annotate-variables-rule{<abstract-define-rule>}
+//
+// But for define-rules, we want to annotate the modifiers pattern also.
+// 
+define method annotate-variables-rule
+    (rule :: <define-rule>, aux-rule-sets :: <simple-object-vector>)
     => ();
-  find-end-variables(rule.define-rule-modifiers-pattern, at-end?);
-  next-method();
-end;
+  annotate-variables-pattern
+    (rule.define-rule-modifiers-pattern, aux-rule-sets, #t);
+  annotate-variables-pattern(rule.rule-pattern, aux-rule-sets, #t);
+end method annotate-variables-rule;
 
-define method find-end-variables (pattern :: <pattern>, at-end? :: <boolean>)
+
+// annotate-variables-pattern
+//
+// Annotate the variables in some pattern.
+// 
+define generic annotate-variables-pattern
+    (within :: <pattern>, aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
     => ();
-  let pieces = pattern.pattern-pieces;
-  let length = pieces.size;
-  unless (length == 0)
-    for (index from 0 below length - 1)
-      find-end-variables(pieces[index], #f);
-    finally
-      find-end-variables(pieces[index], at-end?);
-    end;
-  end;
-end;
+
+// annotate-variables-pattern{<pattern>}
+//
+// Catch-all method for patterns that contain no variables.  Exceptions below.
+// 
+define method annotate-variables-pattern
+    (pattern :: <pattern>, aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
+    => ();
+end method annotate-variables-pattern;
+
+// annotate-variables-pattern{type-union(<semicolon-pattern>, <comma-pattern>)}
+//
+// Annotate the two sub-patterns.  The ; or , form hard delimiters that
+// wildcards can't pass, pass at-end down as #t.
+// 
+define method annotate-variables-pattern
+    (pattern :: type-union(<semicolon-pattern>, <comma-pattern>),
+     aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
+    => ();
+  assert(at-end?);
+  annotate-variables-pattern(pattern.pattern-left, aux-rule-sets, #t);
+  annotate-variables-pattern(pattern.pattern-right, aux-rule-sets, #t);
+end method annotate-variables-pattern;
 				 
-define method find-end-variables (pattern :: <pattern-list>,
-				  at-end? :: <boolean>)
+// annotate-variables-pattern{<sequential-pattern>}
+//
+// Annotate the two sub-patterns.
+// 
+define method annotate-variables-pattern
+    (pattern :: <sequential-pattern>, aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
     => ();
-  let pieces = pattern.pattern-list-pieces;
-  let length = pieces.size;
-  unless (length == 0)
-    for (index from 0 below length - 1)
-      find-end-variables(pieces[index], #f);
-    finally
-      find-end-variables(pieces[index], at-end?);
-    end;
-  end;
-end;
+  assert(at-end?);
+  annotate-variables-pattern(pattern.pattern-left, aux-rule-sets, #f);
+  annotate-variables-pattern(pattern.pattern-right, aux-rule-sets, #t);
+end method annotate-variables-pattern;
 
-define method find-end-variables (pattern :: <pattern-sequence>,
-				  at-end? :: <boolean>)
+// annotate-variables-pattern{<bracketed-pattern>}
+//
+// Annotate the guts.
+// 
+define method annotate-variables-pattern
+    (pattern :: <bracketed-pattern>, aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
     => ();
-  let pieces = pattern.pattern-sequence-pieces;
-  let length = pieces.size;
-  unless (length == 0)
-    for (index from 0 below length - 1)
-      find-end-variables(pieces[index], #f);
-    finally
-      find-end-variables(pieces[index], at-end?);
-    end;
-  end;
-end;
+  annotate-variables-pattern(pattern.pattern-guts, aux-rule-sets, #t);
+end method annotate-variables-pattern;
 
-define method find-end-variables (pattern :: <property-list-pattern>,
-				  at-end? :: <boolean>)
+// annotate-variables-pattern{<variable-pattern>}
+//
+// Annotate the two pattern variables.  Note: the parser handles figuring
+// out how much this pattern should match, so any contained wildcards must
+// consume everything they are given.
+// 
+define method annotate-variables-pattern
+    (pattern :: <variable-pattern>,
+     aux-rule-sets :: <simple-object-vector>, at-end? :: <boolean>)
     => ();
-end;
+  annotate-variables-pattern(pattern.variable-name-pattern, aux-rule-sets, #t);
+  annotate-variables-pattern(pattern.variable-type-pattern, aux-rule-sets, #t);
+end method annotate-variables-pattern;
 
-define method find-end-variables (pattern :: <simple-pattern>,
-				  at-end? :: <boolean>)
+// annotate-variables-pattern{<bindings-pattern>}
+//
+// Annotate the two pattern variables.  Note: the parser handles figuring
+// out how much this pattern should match, so any contained wildcards must
+// consume everything they are given.
+// 
+define method annotate-variables-pattern
+    (pattern :: <bindings-pattern>,
+     aux-rule-sets :: <simple-object-vector>, at-end? :: <boolean>)
     => ();
-end;
+  annotate-variables-pattern
+    (pattern.bindings-variables-pattern, aux-rule-sets, #t);
+  annotate-variables-pattern
+    (pattern.bindings-value-pattern, aux-rule-sets, #t);
+end method annotate-variables-pattern;
 
-define method find-end-variables (pattern :: <details-pattern>,
-				  at-end? :: <boolean>)
-    => ();
-  find-end-variables(pattern.pattern-sub-pattern, #t);
-end;
-
-define method find-end-variables (pattern :: <pattern-variable>,
-				  at-end? :: <boolean>)
+// annotate-variables-pattern{<pattern-variable>}
+//
+// Annotate the variable.  Set the at-end flag and default the constraint
+// to wildcard if it names an auxiliary rule.
+// 
+define method annotate-variables-pattern
+    (pattern :: <pattern-variable>, aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
     => ();
   pattern.patvar-at-end? := at-end?;
-end;
+  if (pattern.patvar-constraint == #f
+	& find-aux-rule-set(pattern.patvar-name, aux-rule-sets))
+    pattern.patvar-constraint := #"*";
+  end if;
+end method annotate-variables-pattern;
 
-
-define generic find-wildcards (within) => ();
-
-define method find-wildcards (defn :: <macro-definition>) => ();
-  do(find-wildcards, defn.macro-main-rule-set);
-  for (rule-set in defn.macro-auxiliary-rule-sets)
-    do(find-wildcards, rule-set.rule-set-rules);
-  end;
-end;
-
-define method find-wildcards (rule :: <rule>) => ();
-  find-wildcards(rule.rule-pattern);
-end;
-
-define method find-wildcards (rule :: <abstract-define-rule>,
-			      #next next-method)
+// annotate-variables-pattern{<property-list-pattern>}
+//
+// Annotate the pattern varibles buried inside this property list pattern.
+// 
+define method annotate-variables-pattern
+    (pattern :: <property-list-pattern>,
+     aux-rule-sets :: <simple-object-vector>,
+     at-end? :: <boolean>)
     => ();
-  find-wildcards(rule.define-rule-modifiers-pattern);
-  next-method();
-end;
-
-define method find-wildcards (pattern :: <pattern>) => ();
-  for (piece in pattern.pattern-pieces)
-    find-wildcards(piece);
-  end;
-end;
-				 
-define method find-wildcards (pattern :: <pattern-list>) => ();
-  for (piece in pattern.pattern-list-pieces)
-    find-wildcards(piece);
-  end;
-end;
-
-define method find-wildcards (pattern :: <pattern-sequence>) => ();
-  let wildcard = #f;
-  for (piece in pattern.pattern-sequence-pieces)
-    if (instance?(piece, <pattern-variable>) & ~piece.patvar-constraint)
-      if (~piece.patvar-name | ~wildcard)
-	wildcard := piece;
-      end;
-    elseif (instance?(piece, <details-pattern>))
-      find-wildcards(piece.pattern-sub-pattern);
-    end;
-  end;
-  if (wildcard)
-    wildcard.patvar-wildcard? := #t;
-  end;
-end;
-
-define method find-wildcards (pattern :: <property-list-pattern>) => ();
-end;
+  if (pattern.plistpat-rest)
+    annotate-variables-pattern(pattern.plistpat-rest, aux-rule-sets, #t);
+  end if;
+  if (pattern.plistpat-keys)
+    for (key in pattern.plistpat-keys)
+      annotate-variables-pattern(key, aux-rule-sets, #t);
+    end for;
+  end if;
+end method annotate-variables-pattern;
 
 
-// Stuff to figure extents of things.
+// Bindings
 
-define constant <type-part-type>
-  = type-union(<left-paren-token>, <left-bracket-token>, <dot-token>,
-	    <literal-token>, <string-token>, <true-token>, <false-token>,
-	    <literal-ref>, <expression>, <name-token>);
-define constant <var-part-type>
-  = type-union(<type-part-type>, <double-colon-token>);
-define constant <expr-part-type>
-  = type-union(<type-part-type>, <operator-token>, <abstract-literal-token>);
-define constant <plist-part-type>
-  = type-union(<expr-part-type>, <comma-token>, <property-set>);
+// <pattern-binding> -- internal.
+//
+// Used to represent the binding of some pattern variable.
+// 
+define class <pattern-binding> (<object>)
+  //
+  // The pattern variable this is the binding for.
+  constant slot pattern-binding-variable :: <pattern-variable>,
+    required-init-keyword: variable:;
+  //
+  // The fragment of a vector of fragments that this variable is bound to.
+  slot pattern-binding-value :: type-union(<fragment>, <simple-object-vector>),
+    required-init-keyword: value:;
+  //
+  // Link for chaining pattern bindings together.
+  constant slot pattern-binding-next :: false-or(<pattern-binding>),
+    required-init-keyword: next:;
+end class <pattern-binding>;
+
+define sealed domain make (singleton(<pattern-binding>));
+define sealed domain initialize (<pattern-binding>);
 
 
-define method guess-extent-of (fragment :: <fragment>, type :: <type>)
+// <pattern-binding-set>
+//
+// The type of a set of pattern variable bindings.
+// 
+define constant <pattern-binding-set>
+  = false-or(<pattern-binding>);
+
+// add-binding
+//
+// Adds a binding for variable to value to the set of bindings and returns
+// the new set.  Note: it is critical that this operation does not modify the
+// old set of bindings.  Otherwise, the retry stuff would puke.
+// 
+define method add-binding
+    (variable :: <pattern-variable>,
+     value :: type-union(<fragment>, <simple-object-vector>),
+     bindings :: <pattern-binding-set>)
+    => res :: <pattern-binding-set>;
+  make(<pattern-binding>,
+       variable: variable,
+       value: value,
+       next: bindings);
+end method add-binding;
+
+// find-binding -- internal.
+//
+// Scan the bindings set trying to find a binding for name.
+// 
+define method find-binding
+    (bindings :: <pattern-binding-set>, name :: <symbol>,
+     this-rule-set :: false-or(<symbol>))
+    => res :: false-or(<pattern-binding>);
+  block (return)
+    for (binding = bindings then binding.pattern-binding-next,
+	 while: binding)
+      let bound-name = binding.pattern-binding-variable.patvar-name;
+      if ((bound-name | this-rule-set) == name)
+	return(binding);
+      end if;
+    end for;
+    #f;
+  end block;
+end method find-binding;
+
+
+// Fragment hacking utilities.
+
+// more? -- internal.
+//
+// Utility function that checks to see if we've consumed the entire fragment.
+// Note: we don't use generic function dispatch because it will be a lot
+// faster to just compare the class with ==.
+//
+define inline method more? (fragment :: <fragment>) => res :: <boolean>;
+  ~instance?(fragment, <empty-fragment>);
+end method more?;
+
+// consume-elementary-fragment
+//
+// Consume the next elementary fragment in the given fragment and return
+// it and whatever is left over.  Note that the argument fragment might
+// itself be an elementary fragment, in which case nothing is left over.
+//
+define generic consume-elementary-fragment (fragment :: <fragment>)
+    => (res :: <elementary-fragment>, remainder :: <fragment>);
+
+// consume-elementary-fragment{<empty-fragment>}
+//
+// Puke because this shouldn't happen.
+// 
+define method consume-elementary-fragment (fragment :: <empty-fragment>)
+    => (res :: <elementary-fragment>, remainder :: <fragment>);
+  error("Someone called consume-elementary-fragment on an empty fragment.");
+end method consume-elementary-fragment;
+
+// consume-elementary-fragment{<elementary-fragment>}
+//
+// Consume it all.
+// 
+define method consume-elementary-fragment (fragment :: <elementary-fragment>)
+    => (res :: <elementary-fragment>, remainder :: <fragment>);
+  values(fragment, make(<empty-fragment>));
+end method consume-elementary-fragment;
+
+// consume-elementary-fragment{<compound-fragment>}
+//
+// If the fragment only has two elementary fragments inside it, return them.
+// Otherwise return the current head and make a new compound fragment that
+// contains everything except the current head.
+//
+define method consume-elementary-fragment (fragment :: <compound-fragment>)
+    => (res :: <elementary-fragment>, remainder :: <fragment>);
+  let head = fragment.fragment-head;
+  let new-head = head.fragment-next;
   let tail = fragment.fragment-tail;
-  for (prev = #f then piece,
-       piece = fragment.fragment-head then piece.piece-next,
-       while: (piece & piece.piece-prev ~= tail
-		 & instance?(piece.piece-token, type)))
-    if (instance?(piece, <balanced-piece>))
-      piece := piece.piece-other;
-    end;
-  finally
-    if (prev)
-      values(make(<fragment>, head: fragment.fragment-head, tail: prev),
-	     make(<fragment>, head: piece, tail: fragment.fragment-tail));
-    else
-      values(make(<fragment>), fragment);
-    end;
-  end;
-end;
+  values(head,
+	 if (new-head == tail)
+	   new-head;
+	 else
+	   make(<compound-fragment>, head: new-head, tail: tail);
+	 end if);
+end method consume-elementary-fragment;
 
 
+// split-at-separator -- internal.
+//
+// Split the fragment into two sub-fragments, the stuff before the separator
+// and the stuff after the separator.  If the separator doesn't appear in the
+// fragment, return the entire fragment as before the separator and an empty
+// fragment as after the separator.  Neither fragment contains the separator
+// after the split.
+//
+define generic split-at-separator
+    (fragment :: <fragment>, seperator :: <integer>)
+    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
+
+// split-at-separator{<fragment>}
+//
+// Catch-all method that gives up.
+// 
+define method split-at-separator
+    (fragment :: <fragment>, seperator :: <integer>)
+    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
+  values(#f, fragment, make(<empty-fragment>));
+end method split-at-separator;
+
+// split-at-separator{<token-fragment>}
+//
+// If the token is the separator, return two empty fragments.  If the token
+// is not the separator, then return it as the before fragment.
+//
+define method split-at-separator
+    (fragment :: <token-fragment>, seperator :: <integer>)
+    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
+  if (fragment.fragment-token.token-kind == seperator)
+    values(#t, make(<empty-fragment>), make(<empty-fragment>));
+  else
+    values(#f, fragment, make(<empty-fragment>));
+  end if;
+end method split-at-separator;
+
+// split-at-separator{<compound-fragment>}
+//
+// Scan down the fragment looking for the separator.  When we find it, take
+// care to preserve the <compound-fragment> invariants when creating the
+// subfragments.
+//
+define method split-at-separator
+    (fragment :: <compound-fragment>, seperator :: <integer>)
+    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
+  block (return)
+    let head-fragment = fragment.fragment-head;
+    let tail-fragment = fragment.fragment-tail;
+    let end-fragment = tail-fragment.fragment-next;
+    for (sub-fragment = head-fragment then sub-fragment.fragment-next,
+	 until: sub-fragment == end-fragment)
+      if (instance?(sub-fragment, <token-fragment>)
+	    & sub-fragment.fragment-token.token-kind == seperator)
+	return(#t,
+	       if (head-fragment == sub-fragment)
+		 make(<empty-fragment>);
+	       elseif (head-fragment.fragment-next == sub-fragment)
+		 head-fragment;
+	       else
+		 make(<compound-fragment>, head: head-fragment,
+		      tail: sub-fragment.fragment-prev);
+	       end if,
+	       if (sub-fragment == tail-fragment)
+		 make(<empty-fragment>);
+	       elseif (sub-fragment == tail-fragment.fragment-prev)
+		 tail-fragment;
+	       else
+		 make(<compound-fragment>, head: sub-fragment.fragment-next,
+		      tail: tail-fragment);
+	       end if);
+      end if;
+    end for;
+    return(#f, fragment, make(<empty-fragment>));
+  end block;
+end method split-at-separator;
+
+
+// fragment-from-variables -- internal.
+//
+// Return a fragment that corresponds to results of parsing a variables-list.
+// But return it in such a form that it can be parsed as a variable if
+// there is only one variable.
+// 
+define method fragment-from-variables
+    (varlist :: <variable-list>) => res :: <fragment>;
+  let res = make(<empty-fragment>);
+  for (var in varlist.varlist-fixed)
+    res := append-fragments!(res, fragment-from-variable(var));
+  end for;
+  if (varlist.varlist-rest)
+    let rest-frag
+      = append-fragments!(make(<token-fragment>,
+			       token: make(<token>, kind: $rest-token)),
+			  fragment-from-variable(varlist.varlist-rest));
+  end if;
+  if (varlist.varlist-fixed.size ~== 1 | varlist.varlist-rest)
+    make(<bracketed-fragment>,
+	 left-token: make(<token>, kind: $left-paren-token),
+	 contents: res,
+	 right-token: make(<token>, kind: $right-paren-token));
+  else
+    res;
+  end if;
+end method fragment-from-variables;
+
+
+define method fragment-from-variable
+    (variable :: <parameter>) => res :: <fragment>;
+  let var-fragment = make(<token-fragment>, token: variable.param-name);
+  if (variable.param-type)
+    let double-colon-fragment
+      = make(<token-fragment>,
+	     token: make(<token>, kind: $double-colon-token));
+    let type-fragment = make-parsed-fragment(variable.param-type);
+    append-fragments!(append-fragments!(var-fragment, double-colon-fragment),
+		      type-fragment);
+  else
+    var-fragment;
+  end if;
+end method fragment-from-variable;
+
+
+// find-intermediate-word -- internal.
+//
+// Scan through the fragment looking for the first occurance of one of the
+// intermediate words.  Return the <token-fragment> that is that occurance.
+// Or #f if there are no intermediate words in the fragment.
+// 
+define generic find-intermediate-word
+    (fragment :: <fragment>, intermediate-words :: <simple-object-vector>)
+    => res :: false-or(<token-fragment>);
+
+// find-intermediate-word{<empty-fragment>}
+//
+// Pretty easy, huh?
+// 
 define method find-intermediate-word
-    (fragment :: <fragment>,
+    (fragment :: <empty-fragment>,
      intermediate-words :: <simple-object-vector>)
+    => res :: false-or(<token-fragment>);
+  #f;
+end method find-intermediate-word;
+
+// find-intermediate-word{<compound-fragment>}
+//
+// Scan the contents for an elementary fragment that is the intermediate word.
+//
+define method find-intermediate-word
+    (fragment :: <compound-fragment>,
+     intermediate-words :: <simple-object-vector>)
+    => res :: false-or(<token-fragment>);
+  block (return)
+    let stop = fragment.fragment-tail.fragment-next;
+    for (frag = fragment.fragment-head then frag.fragment-next,
+	 until: frag == stop)
+      let res = find-intermediate-word(frag, intermediate-words);
+      if (res)
+	return(res);
+      end if;
+    end for;
+    #f;
+  end block;
+end method find-intermediate-word;
+
+// find-intermediate-word{<token-fragment>}
+//
+// Return this fragment if it matches any of the intermediate words, or #f
+// if not.
+//
+define method find-intermediate-word
+    (fragment :: <token-fragment>,
+     intermediate-words :: <simple-object-vector>)
+    => res :: false-or(<token-fragment>);
+  let token = fragment.fragment-token;
+  let kind = token.token-kind;
+  if (kind >= $define-token & kind <= $quoted-name-token
+	& member?(token.token-symbol, intermediate-words))
+    fragment;
+  else
+    #f;
+  end if;
+end method find-intermediate-word;
+
+// find-intermediate-word{<bracketed-fragment>}
+//
+// Return #f because no bracketed fragment can be an intermediate word.
+// 
+define method find-intermediate-word
+    (fragment :: <bracketed-fragment>,
+     intermediate-words :: <simple-object-vector>)
+    => res :: false-or(<token-fragment>);
+  #f;
+end method find-intermediate-word;
+
+
+// split-fragment-at -- internal.
+//
+// Split the fragment into two sub-fragments, the stuff before the split point
+// and the stuff from the split point and on.  A split point of #f means
+// at the very end (allowed just to make boundary conditions easier).
+// 
+define generic split-fragment-at
+    (fragment :: <fragment>, split-point :: false-or(<elementary-fragment>))
+    => (before :: <fragment>, at-and-after :: <fragment>);
+
+// split-fragment-at{<fragment>, singleton(#f)}
+//
+// Just return the whole fragment as before the split point.
+// 
+define method split-fragment-at
+    (fragment :: <fragment>, split-point == #f)
+    => (before :: <fragment>, at-and-after :: <fragment>);
+  values(fragment, make(<empty-fragment>));
+end method split-fragment-at;
+
+// split-fragment-at{<empty-fragment>,<elementary-fragment>}
+//
+// If we are trying to split an empty fragment at anything other than the
+// end (handled above), something when wrong somewhere.
+// 
+define method split-fragment-at
+    (fragment :: <empty-fragment>, split-point :: <elementary-fragment>)
+    => (before :: <fragment>, at-and-after :: <fragment>);
+  error("Splitting fragment at an elementary-fragment it doesn't contain.");
+end method split-fragment-at;
+
+// split-fragment-at{<compound-fragment>,<elementary-fragment>}
+//
+define method split-fragment-at
+    (fragment :: <compound-fragment>, split-point :: <elementary-fragment>)
+    => (before :: <fragment>, at-and-after :: <fragment>);
+  let head = fragment.fragment-head;
   let tail = fragment.fragment-tail;
-  for (prev = #f then piece,
-       piece = fragment.fragment-head then piece.piece-next,
-       while: (piece & piece.piece-prev ~= tail
-		 & ~(instance?(piece.piece-token, <word-token>)
-		       & member?(piece.piece-token.token-symbol,
-				 intermediate-words))))
-    if (instance?(piece, <balanced-piece>))
-      piece := piece.piece-other;
-    end;
-  finally
-    if (prev)
-      values(make(<fragment>, head: fragment.fragment-head, tail: prev),
-	     make(<fragment>, head: piece, tail: tail));
-    else
-      values(make(<fragment>), fragment);
-    end;
-  end;
-end;
+  //
+  // Verify that the split point is valid.
+  block (return)
+    let stop = tail.fragment-next;
+    for (frag = head then frag.fragment-next,
+	 until: frag == stop)
+      if (frag == split-point)
+	return();
+      end if;
+    end for;
+    error("Splitting fragment at an elementary-fragment it doesn't contain.");
+  end block;
+  //
+  // Now make the split.
+  if (split-point == head)
+    values(make(<empty-fragment>), fragment);
+  else
+    values(if (split-point == head.fragment-next)
+	     head;
+	   else
+	     make(<compound-fragment>,
+		  head: head,
+		  tail: split-point.fragment-prev);
+	   end if,
+	   if (split-point == tail)
+	     fragment.fragment-tail;
+	   else
+	     make(<compound-fragment>,
+		  head: split-point,
+		  tail: tail);
+	   end if);
+  end if;
+end method split-fragment-at;
+
+// split-fragment-at{<elementary-fragment>,<elementary-fragment>}
+//
+define method split-fragment-at
+    (fragment :: <elementary-fragment>, split-point :: <elementary-fragment>)
+    => (before :: <fragment>, at-and-after :: <fragment>);
+  if (fragment == split-point)
+    values(make(<empty-fragment>), fragment);
+  else
+    error("Splitting fragment at an elementary-fragment it doesn't contain.");
+  end if;
+end method split-fragment-at;
 
 
-define method trim-until-parsable (fragment :: <fragment>,
-				   remaining :: <fragment>,
-				   parser :: <function>)
+// last-elementary-fragment -- internal.
+//
+// Return the last elementary fragment that makes up fragment.
+// Used as the split point in trim-until-parsable if the parser didn't give
+// us a hint.
+//
+define generic last-elementary-fragment (fragment :: <fragment>)
+    => result :: <elementary-fragment>;
+
+define method last-elementary-fragment (fragment :: <empty-fragment>)
+    => result :: <elementary-fragment>;
+  error("last-elementary-fragment called on an empty fragment?");
+end method last-elementary-fragment;
+
+define method last-elementary-fragment (fragment :: <compound-fragment>)
+    => result :: <elementary-fragment>;
+  fragment.fragment-tail;
+end method last-elementary-fragment;
+
+define method last-elementary-fragment (fragment :: <elementary-fragment>)
+    => result :: <elementary-fragment>;
+  fragment;
+end method last-elementary-fragment;
+
+
+// trim-until-parsable -- internal.
+//
+// Find the initial prefix of fragment that is parsable by parser.
+// 
+define method trim-until-parsable
+    (fragment :: <fragment>, end-point :: false-or(<elementary-fragment>),
+     parser :: <function>)
     => (result :: <object>,
 	fragment :: false-or(<fragment>),
 	remaining :: false-or(<fragment>));
   block (return)
     while (#t)
+      let (before, remaining) = split-fragment-at(fragment, end-point);
+      let tokenizer = make(<fragment-tokenizer>, fragment: before);
       block ()
-	let result = parser(make(<fragment-tokenizer>, fragment: fragment));
-	return(result, fragment, remaining);
-      exception <error>
-	if (more?(fragment))
-	  let prev-piece = fragment.fragment-tail;
-	  if (instance?(prev-piece, <balanced-piece>))
-	    prev-piece := prev-piece.piece-other;
-	  end;
-	  remaining.fragment-head := prev-piece;
-	  fragment.fragment-tail := prev-piece.piece-prev;
+	let result = parser(tokenizer);
+	return(result, before, remaining);
+      exception (<error>)
+	if (before.more?)
+	  end-point := (tokenizer.tokenizer-potential-end-point
+			  | last-elementary-fragment(before));
 	else
 	  return(#f, #f, #f);
-	end;
-      end;
-    end;
-  end;
-end;
-
-
-define method split-at-separator
-    (fragment :: <fragment>, seperator :: <class>)
-    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
-  block (return)
-    let tail = fragment.fragment-tail;
-    for (prev = #f then piece,
-	 piece = fragment.fragment-head then piece.piece-next,
-	 while: (piece & piece.piece-prev ~= tail))
-      if (instance?(piece.piece-token, seperator))
-	if (prev)
-	  return(#t,
-		 make(<fragment>, head: fragment.fragment-head, tail: prev),
-		 make(<fragment>, head: piece.piece-next, tail: tail));
-	else
-	  return(#t,
-		 make(<fragment>),
-		 make(<fragment>, piece.piece-next, tail));
 	end if;
-      end if;
-      if (instance?(piece, <balanced-piece>))
-	piece := piece.piece-other;
-      end;
-    end for;
-    values(#f, fragment, make(<fragment>));
+      end block;
+    end while;
   end block;
-end method split-at-separator;
+end method trim-until-parsable;
 
 
 
-
-define method match-rule (rule :: <rule>,
-			  form :: false-or(<constituent>),
-			  fragment :: <fragment>,
-			  intermediate-words :: <simple-object-vector>)
-    => res :: false-or(<list>);
+// Match-rule
+//
+// Main entry to the pattern matcher.  Takes a rule, the form, the fragment,
+// and the set of intermediate-words, and returns either #"failed" of a set of
+// pattern variable bindings.
+//
+define method match-rule
+    (rule :: <rule>, form :: false-or(<macro-call-parse>),
+     fragment :: <fragment>, intermediate-words :: <simple-object-vector>)
+    => res :: type-union(<pattern-binding-set>, singleton(#"failed"));
   match(rule.rule-pattern, fragment, intermediate-words,
-	method () #f end,
-	method (fragment, fail, results)
+	method ()
+	  #"failed"
+	end,
+	method (fragment :: <fragment>, fail :: <function>,
+		results :: <pattern-binding-set>)
 	  if (fragment.more?) fail() else results end;
 	end,
-	#());
-end;
+	#f);
+end method match-rule;
 
-define method match-rule (rule :: <abstract-define-rule>,
-			  form :: <defining-form>,
-			  fragment :: <fragment>,
-			  intermediate-words :: <simple-object-vector>)
-    => res :: false-or(<list>);
-  let modifiers-fragment = make(<fragment>);
-  for (modifier in form.define-modifiers)
-    postpend-piece(modifiers-fragment,
-		   make(<piece>, token: modifier));
-  end;
+define method match-rule
+    (rule :: <define-rule>, form :: <definition-macro-call-parse>,
+     fragment :: <fragment>, intermediate-words :: <simple-object-vector>)
+    => res :: type-union(<pattern-binding-set>, singleton(#"failed"));
+  let modifiers-fragment = make(<empty-fragment>);
+  for (modifier in form.definition-modifiers)
+    modifiers-fragment
+      := append-fragments!(modifiers-fragment,
+			   make(<token-fragment>, token: modifier));
+  end for;
   match(rule.define-rule-modifiers-pattern, modifiers-fragment, #[],
-	method () #f end,
+	method () #"failed" end,
 	method (modifiers-fragment, fail, results)
 	  if (modifiers-fragment.more?)
 	    fail();
 	  else
 	    match(rule.rule-pattern, fragment, intermediate-words,
-		  method () #f end,
+		  method () #"failed" end,
 		  method (fragment, fail, results)
 		    if (fragment.more?) fail() else results end;
 		  end,
 		  results);
-	  end;
+	  end if;
 	end,
-	#());
-end;
+	#f);
+end method match-rule;
 
-define method more? (fragment :: <fragment>) => res :: <boolean>;
-  let head = fragment.fragment-head;
-  head & head.piece-prev ~= fragment.fragment-tail;
-end;
-
-define method next-token (fragment :: <fragment>) => res;
-  fragment.fragment-head.piece-token;
-end;
-
-define method consume-token (fragment :: <fragment>) => res :: <fragment>;
-  make(<fragment>,
-       head: fragment.fragment-head.piece-next,
-       tail: fragment.fragment-tail);
-end;
-
-define method add-binding (name :: false-or(<symbol>),
-			   fragment :: type-union(<fragment>, <vector>),
-			   other-results :: <list>)
-    => res :: <list>;
-  pair(pair(name, fragment), other-results);
-end;
-
-define method add-binding (var :: <pattern-variable>, fragment :: <fragment>,
-			   other-results :: <list>)
-    => res :: <list>;
-  add-binding(var.patvar-name, fragment, other-results);
-end;
-
-define method add-binding (var :: <pattern-keyword>, fragment :: <fragment>,
-			   other-results :: <list>)
-    => res :: <list>;
-  add-binding(var.patkey-name, fragment, other-results);
-end;
-
-
-
-define method match (pattern :: <pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  match-pieces(pattern.pattern-pieces, <semicolon-token>, fragment,
-	       intermediate-words, fail, continue, results);
-end;
-
-define method match (pattern :: <pattern-list>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  match-pieces(pattern.pattern-list-pieces, <comma-token>, fragment,
-	       intermediate-words, fail, continue, results);
-end;
-
-define method match-pieces
-    (pieces :: <simple-object-vector>, seperator :: <class>,
-     fragment :: <fragment>, intermediate-words :: <simple-object-vector>,
-     fail :: <function>, continue :: <function>, results :: <list>)
-    => res :: false-or(<list>);
-  local
-    method match-piece
-	(this-piece :: <integer>, fragment :: <fragment>, results :: <list>)
-      let next-piece = this-piece + 1;
-      if (next-piece == pieces.size)
-	match(pieces[this-piece], fragment, intermediate-words, fail,
-	      continue, results);
-      else
-	let (found?, before, after) = split-at-separator(fragment, seperator);
-	if (found? | this-piece + 2 == pieces.size)
-	  match(pieces[this-piece], before, intermediate-words, fail,
-		method (remaining :: <fragment>, fail :: <function>,
-			results :: <list>)
-		  if (remaining.more?)
-		    fail();
-		  else
-		    match-piece(next-piece, after, results);
-		  end if;
-		end method,
-		results);
-	else
-	  fail();
-	end if;
-      end if;
-    end method match-piece;
-  if (pieces.empty?)
-    continue(fragment, fail, results);
-  else
-    match-piece(0, fragment, results);
-  end if;
-end method match-pieces;
-
-
-define method match
-    (pattern :: <pattern-sequence>, fragment :: <fragment>,
+// match
+//
+// The actual pattern matcher.
+//
+// Match recursively decends into the pattern and the fragment building up
+// the set of pattern variable bindings as it goes.  The backup-and-retry
+// semantics of wildcards are implemented by passing a ``fail'' function to
+// match.  When a match fails, the fail function is called and it can
+// retry the match based on state it closed over.  But because we don't have
+// a true call-with-current-continuation in Dylan, we also have to pass in
+// a continue function that is basically the current continuation.
+//
+// So if some pattern matcher wants to match two parts, it calls match on
+// the first part with a continue function that calls match on the second
+// part.  The second call to match should pass in the original continue
+// function so that matching continues correctly once the second sub-match
+// is done.
+// 
+// Note: we don't declare the return value for any of these functions because
+// doing so would keep the compiler from being able to use any tail calls.
+// This is because the compiler can't prove the result types are guaranteed
+// because we have no way of declaring the result type of the fail and continue
+// arguments.
+// 
+define generic match
+    (pattern :: <pattern>, fragment :: <fragment>,
      intermediate-words :: <simple-object-vector>,
-     fail :: <function>, continue :: <function>, results :: <list>)
-    => res :: false-or(<list>);
-  let pieces = pattern.pattern-sequence-pieces;
-  local
-    method match-piece
-	(this-piece :: <integer>, fragment :: <fragment>, fail :: <function>,
-	 results :: <list>)
-      match(pieces[this-piece], fragment, intermediate-words, fail,
-	    method (fragment :: <fragment>, fail :: <function>,
-		    results :: <list>)
-	      let next-piece = this-piece + 1;
-	      if (next-piece == pieces.size)
-		continue(fragment, fail, results);
-	      else
-		match-piece(next-piece, fragment, fail, results);
-	      end;
-	    end,
-	    results);
-    end;
-  if (pieces.empty?)
-    continue(fragment, fail, results);
-  else
-    match-piece(0, fragment, fail, results);
-  end;
-end;
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>);
 
+// match{<empty-pattern>}
+//
+// The empty pattern consumes nothing, so just continue with the whole
+// fragment.
+// 
+define method match
+    (pattern :: <empty-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>);
+  continue(fragment, fail, results);
+end method match;
 
-define method match-empty (pattern :: <pattern>, fail, continue, results)
-  match-empty-pieces(pattern.pattern-pieces, fail, continue, results);
-end;
+// match{<semicolon-pattern>}
+//
+// Match some stuff divided at a semicolon.  The real work is done by
+// match-seperated-patterns.
+// 
+define method match
+    (pattern :: <semicolon-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  match-seperated-patterns(pattern, $semicolon-token, fragment,
+			   intermediate-words, fail, continue, results);
+end method match;
 
-define method match-empty (pattern :: <pattern-list>, fail, continue, results)
-  match-empty-pieces(pattern.pattern-list-pieces, fail, continue, results);
-end;
+// match{<comma-pattern>}
+//
+// Match some stuff divided at a comma.  The real work is done by
+// match-seperated-patterns.
+// 
+define method match
+    (pattern :: <comma-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  match-seperated-patterns(pattern, $comma-token, fragment,
+			   intermediate-words, fail, continue, results);
+end method match;
 
-define method match-empty (pattern :: <pattern-sequence>, fail, continue,
-			   results)
-  match-empty-pieces(pattern.pattern-sequence-pieces, fail, continue,
-		     results);
-end;
-
-define method match-empty-pieces (pieces, fail, continue, results)
-  if (pieces.size == 1)
-    match-empty(pieces[0], fail, continue, results);
-  else
-    fail();
-  end;
-end;
-
-define method match-empty (pattern :: <simple-pattern>, fail, continue,
-			   results)
-  fail();
-end;
-
-define method match-empty (pattern :: <pattern-variable>, fail, continue,
-			   results)
-  if (pattern.patvar-wildcard?
-	| pattern.patvar-constraint == #"body"
-	| pattern.patvar-constraint == #"case-body")
-    continue(add-binding(pattern, make(<fragment>), results));
-  else
-    fail();
-  end;
-end;
-
-define method match-empty (pattern :: <property-list-pattern>, fail, continue,
-			   results)
-  block (return)
-    if (pattern.plistpat-rest)
-      results := add-binding(pattern.plistpat-rest, make(<fragment>), results);
-    end;
-    if (pattern.plistpat-keys)
-      for (key in pattern.plistpat-keys)
-	if (key.patkey-default)
-	  let fragment = make(<fragment>);
-	  postpend-piece(fragment, make(<piece>, token: key.patkey-default));
-	  results := add-binding(key.patkey-name,
-				 if (key.patkey-all?)
-				   vector(fragment);
-				 else
-				   fragment;
-				 end,
-				 results);
-	else
-	  if (key.patkey-all?)
-	    results := add-binding(key.patkey-name, #[], results);
-	  else
-	    return(fail());
-	  end;
-	end;
-      end;
-    end;
-    continue(results);
-  end;
-end;
-
-define method match (pattern :: <details-pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  if (fragment.more? & instance?(fragment.next-token, <left-paren-token>))
-    let left = fragment.fragment-head;
-    let right = left.piece-other;
-    match(pattern.pattern-sub-pattern,
-	  make(<fragment>, head: left.piece-next, tail: right.piece-prev),
-	  intermediate-words, fail,
-	  method (remaining-guts-fragment, fail, results)
-	    if (remaining-guts-fragment.more?)
-	      fail();
+// match-seperated-pattern -- internal.
+//
+// Does the real work of matching <semicolon-pattern>s and <comma-pattern>s.
+// We pass in the original fail function when calling match on the right
+// hand side because we don't want to reconsider any wildcards that
+// precede the separator if the right hand side fails.
+//
+define method match-seperated-patterns
+    (pattern :: <binary-pattern>, seperator :: <integer>,
+     fragment :: <fragment>, intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  let (found?, before, after) = split-at-separator(fragment, seperator);
+  if (found? | pattern.pattern-last?)
+    match(pattern.pattern-left, before, intermediate-words, fail,
+	  method (remaining :: <fragment>, left-fail :: <function>,
+		  results :: <pattern-binding-set>)
+	    if (remaining.more?)
+	      left-fail();
 	    else
-	      continue(make(<fragment>,
-			    head: right.piece-next,
-			    tail: fragment.fragment-tail),
-		       fail,
-		       results);
-	    end;
-	  end,
+	      match(pattern.pattern-right, after, intermediate-words, fail,
+		    continue, results);
+	    end if;
+	  end method,
 	  results);
   else
     fail();
-  end;
-end;
+  end if;
+end method match-seperated-patterns;
 
-define method match (pattern :: <identifier-pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
+// match{<sequential-pattern>}
+//
+// Match the two sub-patterns sequentially.  We pass the fail function
+// on though from the first call to the second call so that if the second
+// sub-pattern fails, we will reconsider any wildcards in the first
+// sub-pattern.
+// 
+define method match
+    (pattern :: <sequential-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  match(pattern.pattern-left, fragment, intermediate-words, fail,
+	method (remaining :: <fragment>, fail :: <function>,
+		results :: <pattern-binding-set>)
+	  match(pattern.pattern-right, remaining, intermediate-words, fail,
+		continue, results);
+	end method,
+	results);
+end method match;
+
+// match{<name-pattern>}
+//
+// Match a literal name.  If name is ``otherwise'' and it is followed by
+// an arrow (``=>'') in the fragment, skip over that also.  This special
+// case makes writing forgiving case-body macros a bit easier.
+// 
+define method match
+    (pattern :: <name-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  block (return)
+    if (fragment.more?)  
+      let (name-frag, after-name) = consume-elementary-fragment(fragment);
+      if (instance?(name-frag, <token-fragment>))
+	let token = name-frag.fragment-token;
+	let kind = token.token-kind;
+	if (kind >= $define-token & kind <= $quoted-name-token
+	      & token.token-symbol == pattern.pattern-name.token-symbol)
+	  if (token.token-symbol == #"otherwise" & fragment.more?)
+	    let (arrow-frag, after-arrow)
+	      = consume-elementary-fragment(after-name);
+	    if (instance?(arrow-frag, <token-fragment>)
+		  & arrow-frag.fragment-token.token-kind == $arrow-token)
+	      return(continue(after-arrow, fail, results));
+	    else
+	      return(continue(after-name, fail, results));
+	    end if;
+	  else
+	    return(continue(after-name, fail, results));
+	  end if;
+	end if;
+      end if;
+    end if;
+    fail();
+  end block;
+end method match;
+
+// match{<arrow-pattern>}
+//
+// Match a literal arrow.
+// 
+define method match
+    (pattern :: <arrow-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
   if (fragment.more?)
-    let token = fragment.next-token;
-    if (instance?(token, <identifier-token>)
-	  & token.token-symbol == pattern.pattern-identifier.token-symbol)
-      continue(consume-token(fragment), fail, results);
+    let (arrow-frag, after-arrow) = consume-elementary-fragment(fragment);
+    if (instance?(arrow-frag, <token-fragment>)
+	  & arrow-frag.fragment-token.token-kind == $arrow-token)
+      continue(after-arrow, fail, results);
     else
       fail();
-    end;
+    end if;
   else
     fail();
-  end;
-end;
+  end if;
+end method match;
 
-define method match (pattern :: <variable-pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  if (fragment.more? & instance?(fragment.next-token, <name-token>))
-    let results = add-binding(pattern.variable-name-pattern,
-			      make(<fragment>,
-				   head: fragment.fragment-head,
-				   tail: fragment.fragment-head),
-			      results);
-    let fragment = consume-token(fragment);
-    local method no-type ()
-	    let object-token = make(<name-token>,
-				    symbol: #"<object>",
-				    module: $Dylan-Module);
-	    let piece = make(<piece>, token: object-token);
-	    continue(fragment, fail,
-		     add-binding(pattern.variable-type-pattern,
-				 make(<fragment>, head: piece, tail: piece),
-				 results));
-	  end;
-    if (fragment.more? & instance?(fragment.next-token, <double-colon-token>))
-      let (type-guess, remaining-guess)
-	= guess-extent-of(consume-token(fragment), <type-part-type>);
-      let (type, type-fragment, remaining)
-	= trim-until-parsable(type-guess, remaining-guess, parse-type);
-      if (type)
-	let piece = make(<piece>, token: type);
-	continue(remaining, fail,
-		 add-binding(pattern.variable-type-pattern,
-			     make(<fragment>, head: piece, tail: piece),
-			     results));
-      else
-	no-type();
-      end;
+// match{<bracketed-pattern>}
+//
+// Match a bracketed-pattern.  If the fragment starts with a bracketed
+// fragment, match it against the pattern, otherwise fail.  A bracketed
+// fragment matches a bracketed pattern if the brackets are the same kind
+// and the sub-pattern matches the sub-fragment in total.
+//
+// When the match succeeds, we pass the original fail function to the
+// continue function because we don't want to reconsider any wildcards
+// that are inside the sub-fragment if something chokes after the
+// bracketed pattern.
+// 
+define method match
+    (pattern :: <bracketed-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  if (fragment.more?)
+    local method same-kind?
+	      (token1 :: <token>, token2 :: <token>) => res :: <boolean>;
+	    token1.token-kind == token2.token-kind;
+	  end method same-kind?;
+    let (bracketed-frag, after-bracketed)
+      = consume-elementary-fragment(fragment);
+    if (instance?(bracketed-frag, <bracketed-fragment>)
+	  & same-kind?(pattern.pattern-left-token,
+		       bracketed-frag.fragment-left-token)
+	  & same-kind?(pattern.pattern-right-token,
+		       bracketed-frag.fragment-right-token))
+      match(pattern.pattern-guts, bracketed-frag.fragment-contents,
+	    intermediate-words, fail,
+	    method (remaining :: <fragment>, sub-fail :: <function>,
+		    results :: <pattern-binding-set>)
+	      if (remaining.more?)
+		sub-fail();
+	      else
+		continue(after-bracketed, fail, results);
+	      end if;
+	    end method,
+	    results);
     else
-      no-type();
-    end;
+      fail();
+    end if;
   else
     fail();
-  end;
-end;
+  end if;
+end method match;
 
-define method match (pattern :: <bound-variable-pattern>,
-		     fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>,
-		     continue :: <function>, results :: <list>)
-    => res :: false-or(<list>);
-  match(pattern.bound-variable-variable, fragment, intermediate-words, fail,
-	method (fragment, fail, results)
-	  if (fragment.more? & instance?(fragment.next-token, <equal-token>))
-	    match(pattern.bound-variable-value, consume-token(fragment),
-		  intermediate-words, fail, continue, results);
+
+// match{<variable-pattern>}
+//
+// Match an optionally typed varaible.  We use the parser to find the extent
+// of the variable and then fail if we can't bind the var and type pattern
+// variables to the variable name and type expression.  (Those bindings
+// might fail if someone supplies a strange constraint on them.)
+//
+// Once we have bound up the pattern variables, we continue with the original
+// fail function, because we don't want later failures to cause us to
+// reconsider our pattern variables if any of them happen to have wildcard
+// constraints.
+//
+define method match
+    (pattern :: <variable-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  let (variable, variable-fragment, variable-remaining)
+    = trim-until-parsable(fragment, #f, parse-variable);
+  if (variable)
+    match(pattern.variable-name-pattern,
+	  make(<token-fragment>, token: variable.param-name),
+	  intermediate-words, fail,
+	  method (remaining :: <fragment>, sub-fail :: <function>,
+		  results :: <pattern-binding-set>)
+	    if (remaining.more?)
+	      sub-fail();
+	    else
+	      let type = variable.param-type;
+	      let type-frag
+		= if (type)
+		    make-parsed-fragment(type);
+		  else
+		    make(<token-fragment>,
+			 token: make(<identifier-token>,
+				     kind: $raw-ordinary-word-token,
+				     symbol: #"<object>",
+				     module: $Dylan-Module,
+				     uniquifier: make(<uniquifier>)));
+		  end if;
+	      match(pattern.variable-type-pattern, type-frag,
+		    intermediate-words, fail,
+		    method (remaining :: <fragment>, sub-fail :: <function>,
+			    results :: <pattern-binding-set>)
+		      if (remaining.more?)
+			sub-fail();
+		      else
+			continue(variable-remaining, fail, results);
+		      end if;
+		    end method,
+		    results);
+	    end if;
+	  end method,
+	  results);
+  else
+    fail();
+  end if;
+end method match;
+
+// match{<bindings-pattern>}
+//
+// Match against ``variable = expression''.  We use the parser to parse
+// the binding, and then match our pattern variables against the various
+// parts of that binding.  If either of those matches fail (because of
+// strange constraints) then fail the whole bindings-pattern.
+//
+// When we continue, we pass in the original fail function so that we don't
+// reconsider our pattern variables if either happen to be wildcards.
+// 
+define method match
+    (pattern :: <bindings-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  let (bindings :: false-or(<bindings-parse>), bindings-fragment,
+       bindings-remaining)
+    = trim-until-parsable(fragment, #f, parse-bindings);
+  if (bindings)
+    let variables = bindings.bindings-variables;
+    let variables-fragment = fragment-from-variables(variables);
+    match(pattern.bindings-variables-pattern, variables-fragment,
+	  intermediate-words, fail,
+	  method (remainder :: <fragment>, sub-fail :: <function>,
+		  results :: <pattern-binding-set>)
+	    if (remainder.more?)
+	      sub-fail();
+	    else
+	      match(pattern.bindings-value-pattern,
+		    make-parsed-fragment(bindings.bindings-expression),
+		    intermediate-words, fail,
+		    method (remainder :: <fragment>, sub-fail :: <function>,
+			    results :: <pattern-binding-set>)
+		      if (remainder.more?)
+			sub-fail();
+		      else
+			continue(bindings-remaining, fail, results);
+		      end if;
+		    end method,
+		    results);
+	    end if;
+	  end method,
+	  results);
+  else    
+    fail();
+  end if;
+end method match;
+
+// match{<pattern-variable>}
+//
+// Bind a pattern variable.  All the real work is done either in match-wildcard
+// or extract-constrained-fragment.  Note: we use extract-constrained-fragment
+// for wildcards if the wildcard is the last thing in some wildcard scope.
+// Doing so is much more efficient because match-wildcard will just have to
+// keep trying one more token in the match until it uses them all up.  So if
+// we know we are going to have to match them all, why not just match them
+// all?
+// 
+define method match
+    (pattern :: <pattern-variable>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  if (pattern.patvar-constraint == #"*" & ~pattern.patvar-at-end?)
+    match-wildcard(pattern, fragment, fail, continue, results);
+  else
+    let (result, remaining)
+      = extract-constrained-fragment(pattern, fragment, intermediate-words);
+    if (result)
+      continue(remaining, fail, add-binding(pattern, result, results));
+    else
+      fail();
+    end if;
+  end if;
+end method match;
+
+// match-wildcard
+//
+// Match a wildcard against some fragment, retrying the match with
+// successively longer matches until the remainder matches.
+//
+define generic match-wildcard
+    (pattern :: <pattern-variable>, fragment :: <fragment>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>);
+
+// match-wildcard{<compound-fragment>}
+//
+// The hard case.  Start off matching nothing.  If that fails, try again
+// after consuming the first token.  If we end up consuming all the tokens
+// and the later match still fails, then fail this match as well.
+//
+define method match-wildcard
+    (pattern :: <pattern-variable>, fragment :: <compound-fragment>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  let head = fragment.fragment-head;
+  let tail = fragment.fragment-tail;
+  local
+    method match-wildcard-aux (split :: <elementary-fragment>)
+      let matched-fragment
+	= if (split == head)
+	    split;
 	  else
-	    fail();
-	  end;
-	end,
-	results);
-end;
-
-define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  select (pattern.patvar-constraint)
-    #"expr" =>
-      let (expr-guess, remaining-guess)
-	= guess-extent-of(fragment, <expr-part-type>);
-      let (expr, expr-fragment, remaining)
-	= trim-until-parsable(expr-guess, remaining-guess, parse-expression);
-      if (expr)
-	let piece = make(<piece>, token: expr);
-	continue(remaining, fail,
-		 add-binding(pattern,
-			     make(<fragment>, head: piece, tail: piece),
-			     results));
+	    make(<compound-fragment>, head: head, tail: split);
+	  end if;
+      let results = add-binding(pattern, matched-fragment, results);
+      if (split == tail)
+	continue(make(<empty-fragment>), fail, results);
       else
-	fail();
-      end;
-    #"var" =>
-      let (var-guess, remaining-guess)
-	= guess-extent-of(fragment, <var-part-type>);
-      let (var, var-fragment, remaining)
-	= trim-until-parsable(var-guess, remaining-guess, parse-variable);
-      if (var)
-	continue(remaining, fail, add-binding(pattern, var-fragment, results));
-      else
-	fail();
-      end;
-    #"name" =>
-      if (fragment.more? & instance?(fragment.next-token, <name-token>))
-	continue(consume-token(fragment), fail,
-		 add-binding(pattern,
-			     make(<fragment>,
-				  head: fragment.fragment-head,
-				  tail: fragment.fragment-head),
-			     results));
-      else
-	fail();
-      end;
-    #"body" =>
-      let (body-guess, remaining-guess)
-	= find-intermediate-word(fragment, intermediate-words);
-      let (body, body-fragment, remaining)
-	= trim-until-parsable(body-guess, remaining-guess, parse-body);
-      if (body)
-	let piece = make(<piece>, token: make(<begin>, body: body));
-	let body-frag = make(<fragment>, head: piece, tail: piece);
-	continue(remaining, fail, add-binding(pattern, body-frag, results));
-      else
-	fail();
+	let next = split.fragment-next;
+	let remaining-fragment
+	  = if (next == tail)
+	      next;
+	    else
+	      make(<compound-fragment>, head: next, tail: tail);
+	    end if;
+	continue(remaining-fragment, curry(match-wildcard-aux, next), results);
       end if;
-    #"case-body" =>
-      let (body-guess, remaining-guess)
-	= find-intermediate-word(fragment, intermediate-words);
-      let (body, body-fragment, remaining)
-	= trim-until-parsable(body-guess, remaining-guess, parse-case-body);
-      if (body)
-	continue(remaining, fail, add-binding(pattern, body, results));
-      else
-	fail();
-      end if;
-    #f =>
-      if (pattern.patvar-wildcard?)
-	if (pattern.patvar-at-end?)
-	  continue(make(<fragment>), fail,
-		   add-binding(pattern, fragment, results));
-	else
-	  match-wildcard(pattern, fragment, fail, continue, results);
-	end;
-      elseif (fragment.more?)
-	let head = fragment.fragment-head;
-	if (instance?(head, <balanced-piece>))
-	  let tail = head.piece-other;
-	  continue(make(<fragment>,
-			head: tail.piece-next,
-			tail: fragment.fragment-tail),
-		   fail,
-		   add-binding(pattern,
-			       make(<fragment>, head: head, tail: tail),
-			       results));
-	else
-	  continue(consume-token(fragment), fail,
-		   add-binding(pattern,
-			       make(<fragment>, head: head, tail: head),
-			       results));
-	end;
-      else
-	fail();
-      end;
-  end;
-end;
-
-define method match-wildcard (pattern :: <pattern-variable>,
-			      fragment :: <fragment>, fail :: <function>,
-			      continue :: <function>, results :: <list>)
-    => res :: false-or(<list>);
-  local method match-wildcard-aux (split :: <piece>)
-	  if (instance?(split, <balanced-piece>))
-	    split := split.piece-other;
-	  end;
-	  let matched-fragment
-	    = make(<fragment>, head: fragment.fragment-head, tail: split);
-	  let remaining-fragment
-	    = make(<fragment>,
-		   head: split.piece-next,
-		   tail: fragment.fragment-tail);
-	  continue(remaining-fragment,
-		   if (split == fragment.fragment-tail)
-		     fail;
-		   else
-		     curry(match-wildcard-aux, split.piece-next);
-		   end,
-		   add-binding(pattern, matched-fragment, results));
-	end;
+    end method match-wildcard-aux;
   continue(fragment,
-	   if (fragment.more?)
-	     curry(match-wildcard-aux, fragment.fragment-head);
-	   else
-	     fail;
-	   end,
-	   add-binding(pattern, make(<fragment>), results));
-end;
+	   curry(match-wildcard-aux, head),
+	   add-binding(pattern, make(<empty-fragment>), results));
+end method match-wildcard;
 
-define method match (pattern :: <otherwise-pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  if (fragment.more? & instance?(fragment.next-token, <otherwise-token>))
-    let fragment = consume-token(fragment);
-    if (fragment.more? & instance?(fragment.next-token, <arrow-token>))
-      continue(consume-token(fragment), fail, results);
-    else
-      continue(fragment, fail, results);
-    end;
-  else
-    fail();
-  end;
-end;
+// match-wildcard{<empty-fragment>}
+//
+// The easy case.  If there is nothing to match, then how much to match
+// is an easy question.
+// 
+define method match-wildcard
+    (pattern :: <pattern-variable>, fragment :: <empty-fragment>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  continue(fragment, fail, add-binding(pattern, fragment, results));
+end method match-wildcard;
 
-define method match (pattern :: <arrow-pattern>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
-  if (fragment.more? & instance?(fragment.next-token, <arrow-token>))
-    continue(consume-token(fragment), fail, results);
-  else
-    fail();
-  end;
-end;
+// match-wildcard{<elementary-fragment>}
+//
+// We either match the elementary-fragment, or we don't.
+//
+define method match-wildcard
+    (pattern :: <pattern-variable>, fragment :: <elementary-fragment>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
+  continue(fragment,
+	   method ()	     continue(make(<empty-fragment>), fail,
+		      add-binding(pattern, fragment, results));
+	   end method,
+	   add-binding(pattern, make(<empty-fragment>), results));
+end method match-wildcard;
 
-define method match (pattern :: <property-list-pattern>,
-		     fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
-    => res :: false-or(<list>);
+// extract-constrained-fragment
+//
+// Handles the real work of pattern variable constraints.
+// 
+define method extract-constrained-fragment
+    (patvar :: <pattern-variable>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>)
+    => (result :: false-or(<fragment>), remaining :: false-or(<fragment>));
+  let constraint = patvar.patvar-constraint;
+  select (constraint)
+    //
+    // Expression constrains are pretty much handled by the parser.
+    #"expression" =>
+      let (expr, expr-fragment, remaining)
+	= trim-until-parsable(fragment, #f, parse-expression);
+      if (expr)
+	values(make-parsed-fragment(expr), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // Variable constraints are also pretty much handled by the parser.
+    #"variable" =>
+      let (var, var-fragment, remaining)
+	= trim-until-parsable(fragment, #f, parse-variable);
+      if (var)
+	values(fragment-from-variable(var), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // Name constraints are pretty easy.  If the thing is a name token,
+    // then match it.  If not, fail.
+    #"name" =>
+      block (return)
+	if (fragment.more?)
+	  let (name-frag, after-name) = consume-elementary-fragment(fragment);
+	  if (instance?(name-frag, <token-fragment>))
+	    let token = name-frag.fragment-token;
+	    let kind = token.token-kind;
+	    if (kind >= $define-token & kind <= $quoted-name-token)
+	      return(make(<token-fragment>, token: token), after-name);
+	    end if;
+	  end if;
+	end if;
+	values(#f, #f);
+      end block;
+
+    // Now this is an easy constraint.
+    #"token" =>
+      if (fragment.more?)
+	consume-elementary-fragment(fragment);
+      else
+	values(#f, #f);
+      end if;
+
+    // Parse a body, stoping before any of the intermediate words.
+    #"body" =>
+      let word = find-intermediate-word(fragment, intermediate-words);
+      let (body, body-fragment, remaining)
+	= trim-until-parsable(fragment, word, parse-body);
+      if (body)
+	values(make-parsed-fragment(body), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // Parse a case-body, stoping before any of the intermediate words.
+    // Note: parse-case-body returns a fragment, so we don't have to
+    // convert it into one.
+    #"case-body" =>
+      let word = find-intermediate-word(fragment, intermediate-words);
+      let (body, body-fragment, remaining)
+	= trim-until-parsable(fragment, word, parse-case-body);
+      if (body)
+	values(body, remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // Parameter-list constraints are a Gwydion extension.  They consume and
+    // match as much of the fragment that parses as a parameter-list-opt.
+    #"parameter-list" =>
+      let (paramlist, paramlist-fragment, remaining)
+	= trim-until-parsable(fragment, #f, parse-parameter-list);
+      if (paramlist)
+	values(make-parsed-fragment(paramlist), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // Variable-list constraints are a Gwydion extension.  They consume and
+    // match as much of the fragment that parses as a variable-list-opt.
+    #"variable-list" =>
+      let (varlist, varlist-fragment, remaining)
+	= trim-until-parsable(fragment, #f, parse-variable-list);
+      if (varlist)
+	values(make-parsed-fragment(varlist), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    #"macro" =>
+      let (macro-call, macro-fragment, remaining)
+	= trim-until-parsable(fragment, #f, parse-macro-call);
+      if (macro-call)
+	values(macro-expand-aux(macro-call), remaining);
+      else
+	values(#f, #f);
+      end if;
+
+    // If someone called us with a wildcard constraint that means that they
+    // know that the entire fragment must match, so lets just accommodate them.
+    #"*" =>
+      values(fragment, make(<empty-fragment>));
+
+    #f =>
+      compiler-error-location
+	(patvar, "Pattern variable without a constraint: %s",
+	 patvar.patvar-name | "...");
+
+    otherwise =>
+      compiler-error-location
+	(patvar, "Unknown constraint on %s: %s",
+	 patvar.patvar-name | "...",
+	 patvar.patvar-constraint);
+  end select;
+end method extract-constrained-fragment;
+
+
+// match{<property-list-pattern>}
+//
+// Match a property-list against a property-list-pattern.
+// 
+define method match
+    (pattern :: <property-list-pattern>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>,
+     results :: <pattern-binding-set>)
   block (return)
-    let (plist-frag-guess, remaining-guess)
-      = guess-extent-of(fragment, <plist-part-type>);
-    let (plist, plist-frag, remaining)
-      = trim-until-parsable(plist-frag-guess, remaining-guess,
-			    parse-property-list);
-    unless (plist)
-      return(fail());
-    end;
-    if (pattern.plistpat-rest)
-      results := add-binding(pattern.plistpat-rest, plist-frag, results);
-    end;
+    //
+    // First, parse a pattern list and puke if the whole thing doesn't parse.
+    let plist
+      = block ()
+	  parse-property-list(make(<fragment-tokenizer>, fragment: fragment));
+	exception (<error>)
+	  return(fail());
+	end block;
+    //
+    // If there is a #rest var, bind it to the whole fragment.
+    let restvar = pattern.plistpat-rest;
+    if (restvar)
+      let constraint = restvar.patvar-constraint;
+      if (constraint == #"*")
+	//
+	// No processing necessary (or desired), use the original fragment.
+	results := add-binding(pattern.plistpat-rest, fragment, results);
+      else
+	//
+	// We need to constrain each value in the property list and build
+	// a new plist fragment that has the results of the constraint
+	// for each value.
+	let frag = make(<empty-fragment>);
+	local method append! (new-frag :: <fragment>) => ();
+		frag := append-fragments!(frag, new-frag);
+	      end method append!;
+	for (prop in plist)
+	  if (prop.prop-comma)
+	    append!(make(<token-fragment>, token: prop.prop-comma));
+	  end if;
+	  append!(make(<token-fragment>, token: prop.prop-keyword));
+	  let (val, remaining)
+	    = extract-constrained-fragment(restvar, prop.prop-value,
+					   intermediate-words);
+	  if (val == #f | remaining.more?)
+	    return(fail());
+	  end if;
+	  //
+	  // We copy the fragment because it would be impolite to destructivly
+	  // modify the fragment found in the property list.
+	  append!(copy-fragment(val));
+	end for;
+	results := add-binding(restvar, frag, results);
+      end if;
+    end if;
+    //
+    // Now deal with the #key variables.
     if (pattern.plistpat-keys)
+      //
+      // If they didn't also spec #all-keys make sure all the supplied
+      // properties are valid.
       unless (pattern.plistpat-all-keys?)
 	for (prop in plist)
 	  block (okay)
+	    let sym = prop.prop-keyword.token-literal.literal-value;
 	    for (key in pattern.plistpat-keys)
-	      if (prop.prop-keyword.token-literal.literal-value
-		    == key.patkey-name)
+	      if (sym == key.patvar-name)
 		okay();
-	      end;
-	    end;
+	      end if;
+	    end for;
 	    return(fail());
-	  end;
-	end;
-      end;
+	  end block;
+	end for;
+      end unless;
+      //
+      // Now bind up each keyword variable.
       for (key in pattern.plistpat-keys)
+	let sym = key.patvar-name;
 	if (key.patkey-all?)
+	  //
+	  // It was a ?? variable, so it gets a vector of all the values.
 	  let this-result = make(<stretchy-vector>);
 	  for (prop in plist)
-	    if (prop.prop-keyword.token-literal.literal-value
-		  == key.patkey-name)
-	      let piece = make(<piece>, token: prop.prop-value);
-	      let frag = make(<fragment>, head: piece, tail: piece);
-	      add!(this-result, frag);
-	    end;
-	  end;
+	    if (prop.prop-keyword.token-literal.literal-value == sym)
+	      let (val, remaining)
+		= extract-constrained-fragment(key, prop.prop-value,
+					       intermediate-words);
+	      if (val == #f | remaining.more?)
+		return(fail());
+	      end if;
+	      add!(this-result, val);
+	    end if;
+	  end for;
+	  //
+	  // If the keyword wasn't supplied and there is a default, then
+	  // act like the default showed up once.
 	  if (empty?(this-result) & key.patkey-default)
-	    add!(this-result, key.patkey-default);
-	  end;
-	  results := add-binding(key.patkey-name,
+	    add!(this-result, make-parsed-fragment(key.patkey-default));
+	  end if;
+	  //
+	  // Bind it up.
+	  results := add-binding(key,
 				 as(<simple-object-vector>, this-result),
 				 results);
 	else
+	  //
+	  // It was a ? variable, so it gets the first one.
 	  block (found-key)
 	    for (prop in plist)
-	      if (prop.prop-keyword.token-literal.literal-value == key.patkey-name)
-		let piece = make(<piece>, token: prop.prop-value);
-		let frag = make(<fragment>, head: piece, tail: piece);
-		results := add-binding(key.patkey-name, frag, results);
+	      if (prop.prop-keyword.token-literal.literal-value == sym)
+		let (val, remaining)
+		  = extract-constrained-fragment(key, prop.prop-value,
+						 intermediate-words);
+		if (val == #f | remaining.more?)
+		  return(fail());
+		end if;
+		results := add-binding(key, val, results);
 		found-key();
-	      end;
-	    end;
+	      end if;
+	    end for;
+	    //
+	    // Wasn't there, so use the default or fail if there isn't one.
+	    // Note: the default is *not* supposed to be subject to the
+	    // constraint.
 	    if (key.patkey-default)
-	      let piece = make(<piece>, token: key.patkey-default);
-	      let frag = make(<fragment>, head: piece, tail: piece);
-	      results := add-binding(key.patkey-name, frag, results);
+	      let frag = make-parsed-fragment(key.patkey-default);
+	      results := add-binding(key, frag, results);
 	    else
 	      return(fail());
-	    end;
-	  end;
-	end;
-      end;
-    end;
-    continue(remaining, fail, results);
-  end;
-end;
+	    end if;
+	  end block;
+	end if;
+      end for;
+    end if;
+    //
+    // Wow, everything worked.  So continue with the empty fragment (because
+    // property-lists have to match everything) and the bindings we have
+    // accumulated.
+    continue(make(<empty-fragment>), fail, results);
+  end block;
+end method match;
 
 
 
-
-define method expand-template (template :: <template>,
-			       bindings :: <list>,
-			       this-rule-set :: false-or(<symbol>),
-			       aux-rule-sets :: <simple-object-vector>,
-			       intermediate-words :: <simple-object-vector>,
-			       uniquifier :: <uniquifier>)
+// do-replacement
+//
+// Compute the replacement for some rhs, recursivly matching and expanding
+// auxiliary rules.
+// 
+define method do-replacement
+    (template :: <template>, bindings :: <pattern-binding-set>,
+     this-rule-set :: false-or(<symbol>),
+     aux-rule-sets :: <simple-object-vector>,
+     intermediate-words :: <simple-object-vector>,
+     uniquifier :: <uniquifier>)
+    => res :: <fragment>;
   //
   // First, expand out any recursive rules.
-  for (binding in bindings)
-    let name = binding.head | this-rule-set;
+  for (binding = bindings then binding.pattern-binding-next,
+       while: binding)
+    let name = binding.pattern-binding-variable.patvar-name | this-rule-set;
     unless (name)
       error("Can't use ... in the main rule set.");
-    end;
+    end unless;
     let aux-rule-set = find-aux-rule-set(name, aux-rule-sets);
     if (aux-rule-set)
-      block (return)
-	for (rule in aux-rule-set.rule-set-rules)
-	  let results = match-rule(rule, #f, binding.tail, intermediate-words);
-	  if (results)
-	    binding.tail := expand-template(rule.rule-template, results, name,
-					    aux-rule-sets, intermediate-words,
-					    uniquifier);
-	    return();
-	  end;
-	end;
-	error("None of the rules for auxiliary rule set %= matched.", name);
-      end;
-    end;
-  end;
+      let value = binding.pattern-binding-value;
+      if (instance?(value, <simple-object-vector>))
+	for (index from 0 below value.size)
+	  block (return)
+	    for (rule in aux-rule-set.rule-set-rules)
+	      let replacement
+		= match-rule(rule, #f, value[index], intermediate-words);
+	      unless (replacement == #"failed")
+		value[index]
+		  := do-replacement(rule.rule-template, replacement, name,
+				    aux-rule-sets, intermediate-words,
+				    uniquifier);
+		return();
+	      end unless;
+	    end for;
+	    compiler-error
+	      ("None of the rules for auxiliary rule set %s matched", name);
+	  end block;
+	end for;
+      else
+	block (return)
+	  for (rule in aux-rule-set.rule-set-rules)
+	    let replacement = match-rule(rule, #f, value, intermediate-words);
+	    unless (replacement == #"failed")
+	      binding.pattern-binding-value
+		:= do-replacement(rule.rule-template, replacement, name,
+				  aux-rule-sets, intermediate-words,
+				  uniquifier);
+	      return();
+	    end unless;
+	  end for;
+	  compiler-error
+	    ("None of the rules for auxiliary rule set %s matched.", name);
+	end block;
+      end if;
+    end if;
+  end for;
   //
   // Produce a new fragment built from the template.
-  let result = make(<fragment>);
-  for (piece in template.template-parts)
-    expand-template-aux(piece, bindings, this-rule-set, uniquifier, result);
-  end;
-  result;
-end;
+  expand-template(template, bindings, this-rule-set, uniquifier);
+end method do-replacement;
 
-define method expand-template-aux (piece :: <pattern-variable-reference>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  block (return)
-    let name = piece.patvarref-name | this-rule-set;
-    for (binding in bindings)
-      if ((binding.head | this-rule-set) == name)
-	local
-	  method append-frag (frag :: <fragment>)
-	    let tail-piece = frag.fragment-tail;
-	    for (new-piece = frag.fragment-head then new-piece.piece-next,
-		 while: (new-piece & new-piece.piece-prev ~= tail-piece))
-	      postpend-piece(result,
-			     make(<piece>, token: new-piece.piece-token));
-	    end;
-	  end,
-	  method maybe-nuke-separator ()
-	    if (result.fragment-tail)
-	      let prev-token = result.fragment-tail.piece-token;
-	      if (instance?(prev-token, <binary-operator-token>)
-		    | instance?(prev-token, <semicolon-token>)
-		    | instance?(prev-token, <comma-token>))
-		result.fragment-tail := result.fragment-tail.piece-prev;
-	      end;
-	    end;
-	  end;
-	if (instance?(binding.tail, <fragment>))
-	  if (more?(binding.tail))
-	    append-frag(binding.tail);
-	  else
-	    maybe-nuke-separator();
-	  end;
-	else
-	  if (empty?(binding.tail))
-	    maybe-nuke-separator();
-	  else
-	    let separator = piece.patvarref-separator;
-	    for (frag in binding.tail,
-		 first? = #t then #f)
-	      append-frag(frag);
-	      if (separator & ~first?)
-		postpend-piece(result, make(<piece>, token: separator));
-	      end;
-	    end;
-	  end;
-	end;
-	return();
-      end;
-    end;
-    error("Unbound pattern variable: %=", name);
-  end;
-end;
 
-define method expand-template-aux (piece :: <paren-template>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  let left = make(<balanced-piece>, token: piece.template-left-token);
-  let right = make(<balanced-piece>, token: piece.template-right-token);
-  left.piece-other := right;
-  right.piece-other := left;
-  postpend-piece(result, left);
-  for (sub-piece in piece.template-parts)
-    expand-template-aux(sub-piece, bindings, this-rule-set,
-			uniquifier, result);
-  end;
-  postpend-piece(result, right);
-end;
+define generic expand-template
+    (template :: <template>, bindings :: <pattern-binding-set>,
+     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
+    => results :: <fragment>;
 
-define method expand-template-aux (piece :: <token>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  postpend-piece(result, make(<piece>, token: piece));
-end;
 
-define method expand-template-aux (piece :: <identifier-token>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  let mod = piece.token-module;
-  postpend-piece(result,
-		 make(<piece>,
-		      token: make(if (mod)
-				    element(mod.module-syntax-table,
-					    piece.token-symbol,
-					    default: <name-token>);
-				  else
-				    object-class(piece);
-				  end,
-				  source-location: piece.source-location,
-				  symbol: piece.token-symbol,
-				  module: mod,
-				  uniquifier: uniquifier)));
-end;
+define method expand-template
+    (template :: <literal-template>, bindings :: <pattern-binding-set>,
+     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let results = make(<empty-fragment>);
+  for (piece in template.template-elements,
+       results = make(<empty-fragment>)
+	 then append-element!(results, piece, bindings, this-rule-set,
+			      uniquifier))
+  finally
+    results;
+  end for;
+end method expand-template;
 
-define method expand-template-aux (piece :: <quoted-name-token>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  postpend-piece(result,
-		 make(<piece>,
-		      token: make(<quoted-name-token>,
-				  source-location: piece.source-location,
-				  symbol: piece.token-symbol,
-				  module: piece.token-module,
-				  uniquifier: uniquifier)));
-end;
+define generic append-element!
+    (fragment :: <fragment>,
+     element :: type-union(<token>, <bracketed-element>,
+			   <pattern-variable-reference>),
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
 
-define method expand-template-aux (piece :: <operator-token>,
-				   bindings :: <list>,
-				   this-rule-set :: false-or(<symbol>),
-				   uniquifier :: <uniquifier>,
-				   result :: <fragment>)
-    => ();
-  postpend-piece(result,
-		 make(<piece>,
-		      token: make(object-class(piece),
-				  source-location: piece.source-location,
-				  symbol: piece.token-symbol,
-				  module: piece.token-module,
-				  uniquifier: uniquifier)));
-end;
+define method append-element!
+    (fragment :: <fragment>, piece :: <simple-pattern-variable-reference>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let binding = find-binding(bindings, piece.patvarref-name.token-symbol,
+			     this-rule-set);
+  if (binding)
+    let var = binding.pattern-binding-variable;
+    if (instance?(var, <pattern-keyword>) & var.patkey-all?)
+      compiler-error-location
+	(piece.patvarref-name,
+	 "%s was bound using ??, so must be referenced with ??",
+	 piece.patvarref-name);
+    else
+      let value = binding.pattern-binding-value;
+      if (value.more?)
+	append-fragments!(fragment, copy-fragment(value));
+      else
+	maybe-nuke-separator(fragment);
+      end if;
+    end if;
+  else
+    compiler-error-location
+      (piece.patvarref-name, "Unbound pattern variable: %s",
+       piece.patvarref-name);
+  end if;
+end method append-element!;
+    
+define method append-element!
+    (fragment :: <fragment>, piece :: <ellipsis-pattern-variable-reference>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  unless (this-rule-set)
+    compiler-error-location
+      (piece.patvarref-name, "Can't use ... in the main rule set.");
+  end unless;
+  let binding = find-binding(bindings, this-rule-set, this-rule-set);
+  unless (binding)
+    compiler-error-location
+      (piece.patvarref-name, "Unbound pattern variable: ...");
+  end unless;
+  let value = binding.pattern-binding-value;
+  if (value.more?)
+    append-fragments!(fragment, copy-fragment(value));
+  else
+    maybe-nuke-separator(fragment);
+  end if;
+end method append-element!;
+  
+
+define method append-element!
+    (fragment :: <fragment>, piece :: <sequence-pattern-variable-reference>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let binding = find-binding(bindings, piece.patvarref-name.token-symbol,
+			     this-rule-set);
+  unless (binding)
+    compiler-error-location
+      (piece.patvarref-name, "Unbound pattern variable: %s",
+       piece.patvarref-name);
+  end unless;
+  let var = binding.pattern-binding-variable;
+  unless (instance?(var, <pattern-keyword>) & var.patkey-all?)
+    compiler-error-location
+      (piece.patvarref-name,
+       "%s was bound using ?, so must be referenced with ?",
+       piece.patvarref-name);
+  end unless;
+  let value = binding.pattern-binding-value;
+  if (value.empty?)
+    maybe-nuke-separator(fragment);
+  else
+    let separator = piece.patvarref-separator;
+    for (frag in value, first? = #t then #f)
+      if (separator & ~first?)
+	fragment := append-fragments!(fragment,
+				      make(<token-fragment>,
+					   token: separator));
+      end if;
+      fragment := append-fragments!(fragment, copy-fragment(frag));
+    end for;
+    fragment;
+  end if;
+end method append-element!;
+
+define method maybe-nuke-separator
+    (fragment :: <fragment>) => res :: <fragment>;
+  if (fragment.more?)
+    let last = last-elementary-fragment(fragment);
+    if (instance?(last, <token-fragment>))
+      let token = last.fragment-token;
+      select (token.token-kind)
+	$minus-token, $equal-token, $double-equal-token,
+	$other-binary-operator-token, $comma-token, $semicolon-token =>
+	  split-fragment-at(fragment, last);
+	otherwise =>
+	  fragment;
+      end select;
+    else
+      fragment;
+    end if;
+  else
+    fragment;
+  end if;
+end method maybe-nuke-separator;
+
+
+define method append-element!
+    (fragment :: <fragment>, piece :: <bracketed-element>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  append-fragments!(fragment,
+		    make(<bracketed-fragment>,
+			 left-token: piece.bracketed-element-left-token,
+			 contents:
+			   expand-template(piece.bracketed-element-guts,
+					   bindings, this-rule-set,
+					   uniquifier),
+			 right-token: piece.bracketed-element-right-token));
+end method append-element!;
+
+define method append-element!
+    (fragment :: <fragment>, token :: <token>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  append-fragments!(fragment, make(<token-fragment>, token: token));
+end method append-element!;
+
+define method append-element!
+    (fragment :: <fragment>, token :: <identifier-token>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let kind = token.token-kind;
+  let symbol = token.token-symbol;
+  let module = token.token-module;
+  let new-kind
+    = if (kind == $quoted-name-token | kind == $tilde-token | module == #f)
+	kind;
+      else
+	syntax-for-name(module.module-syntax-table, symbol);
+      end if;
+  let new-token
+    = make(<identifier-token>, source-location: token.source-location,
+	   kind: new-kind, symbol: symbol, module: module,
+	   uniquifier: uniquifier);
+  append-fragments!(fragment, make(<token-fragment>, token: new-token));
+end method append-element!;
+
+define method append-element!
+    (fragment :: <fragment>, token :: <operator-token>,
+     bindings :: <pattern-binding-set>, this-rule-set :: false-or(<symbol>),
+     uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let new-token
+    = make(<operator-token>, source-location: token.source-location,
+	   kind: token.token-kind, symbol: token.token-symbol,
+	   module: token.token-module, uniquifier: uniquifier);
+  append-fragments!(fragment, make(<token-fragment>, token: new-token));
+end method append-element!;
+
+
+define method expand-template
+    (template :: <procedural-template>, bindings :: <pattern-binding-set>,
+     this-rule-set :: false-or(<symbol>), uniquifier :: <uniquifier>)
+    => results :: <fragment>;
+  let var = find-variable(id-name(template.template-name));
+  let expander = var & var.variable-fragment-expander;
+  unless (expander)
+    compiler-error-location
+      (template.template-name, "Unknown procedural template expander: %s",
+       template.template-name);
+  end unless;
+  apply(expander,
+	map(method (argument :: <template>) => frag :: <fragment>;
+	      expand-template(argument, bindings, this-rule-set, uniquifier);
+	    end method,
+	    template.template-arguments));
+end method expand-template;
+
+
+// Defining procedural expanders.
+
+define method define-procedural-expander
+    (name :: <symbol>, expander :: <function>) => ();
+  add-bootstrap-export(name);
+  let var = find-variable(make(<basic-name>, symbol: name,
+			       module: $Bootstrap-Module),
+			  create: #t);
+  var.variable-fragment-expander := expander;
+end method define-procedural-expander;
+
 
 
 // Dump/Load stuff.
@@ -1592,10 +2535,10 @@ define constant $define-macro-slots
 		     macro-auxiliary-rule-sets, auxiliary-rule-sets:, #f));
 
 add-make-dumper(#"define-bindings-macro-definition", *compiler-dispatcher*,
-		<define-bindings-macro-definition>,
+		<define-list-macro-definition>,
 		$define-macro-slots, load-external: #t);
 add-make-dumper(#"define-macro-definition", *compiler-dispatcher*,
-		<define-macro-definition>,
+		<define-body-macro-definition>,
 		$define-macro-slots, load-external: #t);
 add-make-dumper(#"function-macro-definition", *compiler-dispatcher*,
 		<function-macro-definition>,
@@ -1603,3 +2546,333 @@ add-make-dumper(#"function-macro-definition", *compiler-dispatcher*,
 add-make-dumper(#"statement-macro-definition", *compiler-dispatcher*,
 		<statement-macro-definition>,
 		$define-macro-slots, load-external: #t);
+
+
+define constant $rule-set-slots
+  = list(rule-set-rules, rules: #f);
+
+add-make-dumper(#"main-rule-set", *compiler-dispatcher*, <main-rule-set>,
+		$rule-set-slots);
+
+add-make-dumper
+  (#"aux-rule-set", *compiler-dispatcher*, <auxiliary-rule-set>,
+   concatenate($rule-set-slots,
+	       list(rule-set-name, name:, #f,
+		    rule-set-body-variable?, body-variable?:, #f)));
+
+define constant $rule-slots
+  = list(rule-pattern, pattern:, #f,
+	 rule-template, template:, #f);
+
+define constant $main-rule-slots
+  = concatenate($rule-slots,
+		list(main-rule-name, name:, #f));
+
+define constant $define-rule-slots
+  = concatenate($main-rule-slots,
+		list(define-rule-modifiers-pattern, modifiers-pattern:, #f));
+
+add-make-dumper
+  (#"body-style-define-rule", *compiler-dispatcher*, <body-style-define-rule>,
+   $define-rule-slots);
+
+add-make-dumper
+  (#"list-style-define-rule", *compiler-dispatcher*, <list-style-define-rule>,
+   $define-rule-slots);
+
+add-make-dumper
+  (#"statement-rule", *compiler-dispatcher*, <statement-rule>,
+   $main-rule-slots);
+
+add-make-dumper
+  (#"function-rule", *compiler-dispatcher*, <function-rule>,
+   $main-rule-slots);
+
+add-make-dumper
+  (#"auxiliary-rule", *compiler-dispatcher*, <auxiliary-rule>,
+   $rule-slots);
+
+
+add-make-dumper
+  (#"empty-pattern", *compiler-dispatcher*, <empty-pattern>,
+   #());
+
+define constant $binary-pattern-slots
+  = list(pattern-left, left:, #f,
+	 pattern-right, right:, #f,
+	 pattern-last?, last:, #f);
+
+add-make-dumper
+  (#"semicolon-pattern", *compiler-dispatcher*, <semicolon-pattern>,
+   $binary-pattern-slots);
+
+add-make-dumper
+  (#"comma-pattern", *compiler-dispatcher*, <comma-pattern>,
+   $binary-pattern-slots);
+
+add-make-dumper
+  (#"sequential-pattern", *compiler-dispatcher*, <sequential-pattern>,
+   $binary-pattern-slots);
+
+add-make-dumper
+  (#"bracketed-pattern", *compiler-dispatcher*, <bracketed-pattern>,
+   list(pattern-left-token, left-token:, #f,
+	pattern-guts, guts:, #f,
+	pattern-right-token, right-token:, #f));
+
+add-make-dumper
+  (#"variable-pattern", *compiler-dispatcher*, <variable-pattern>,
+   list(variable-name-pattern, name-pattern:, #f,
+	variable-type-pattern, type-pattern:, #f));
+
+add-make-dumper
+  (#"bindings-pattern", *compiler-dispatcher*, <bindings-pattern>,
+   list(bindings-variables-pattern, variables-pattern:, #f,
+	bindings-value-pattern, value-pattern:, #f));
+
+add-make-dumper
+  (#"name-pattern", *compiler-dispatcher*, <name-pattern>,
+   list(pattern-name, name:, #f));
+
+add-make-dumper
+  (#"arrow-pattern", *compiler-dispatcher*, <arrow-pattern>,
+   #());
+
+define constant $pattern-variable-slots
+  = list(source-location, source-location:, #f,
+	 patvar-name, name:, #f,
+	 patvar-constraint, constraint:, #f,
+	 patvar-at-end?, at-end:, #f);
+
+add-make-dumper
+  (#"pattern-variable", *compiler-dispatcher*, <pattern-variable>,
+   $pattern-variable-slots);
+
+add-make-dumper
+  (#"property-list-pattern", *compiler-dispatcher*, <property-list-pattern>,
+   list(plistpat-rest, rest:, #f,
+	plistpat-keys, keys:, #f,
+	plistpat-all-keys?, all-keys:, #f));
+
+add-make-dumper
+  (#"pattern-keyword", *compiler-dispatcher*, <pattern-keyword>,
+   concatenate($pattern-variable-slots,
+	       list(patkey-default, default:, #f,
+		    patkey-all?, all:, #f)));
+
+
+add-make-dumper
+  (#"procedural-template", *compiler-dispatcher*, <procedural-template>,
+   list(template-name, name:, #f,
+	template-arguments, arguments:, #f));
+
+add-make-dumper
+  (#"literal-template", *compiler-dispatcher*, <literal-template>,
+   list(template-elements, elements:, #f));
+
+add-make-dumper
+  (#"bracketed-element", *compiler-dispatcher*, <bracketed-element>,
+   list(bracketed-element-left-token, left-token:, #f,
+	bracketed-element-guts, guts:, #f,
+	bracketed-element-right-token, right-token:, #f));
+
+define constant $pattern-variable-reference-slots
+  = list(patvarref-name, name:, #f);
+
+add-make-dumper
+  (#"simple-pattern-variable-reference", *compiler-dispatcher*,
+   <simple-pattern-variable-reference>,
+   $pattern-variable-reference-slots);
+
+add-make-dumper
+  (#"ellipsis-pattern-variable-reference", *compiler-dispatcher*,
+   <ellipsis-pattern-variable-reference>,
+   $pattern-variable-reference-slots);
+
+add-make-dumper
+  (#"concatenating-pattern-variable-reference", *compiler-dispatcher*,
+   <concatenating-pattern-variable-reference>,
+   concatenate($pattern-variable-reference-slots,
+	       list(patvarref-prefix, prefix:, #f,
+		    patvarref-suffix, suffix:, #f)));
+
+add-make-dumper
+  (#"sequence-pattern-variable-reference", *compiler-dispatcher*,
+   <sequence-pattern-variable-reference>,
+   concatenate($pattern-variable-reference-slots,
+	       list(patvarref-separator, separator:, #f)));
+
+add-make-dumper
+  (#"unhygienic-pattern-variable-reference", *compiler-dispatcher*,
+   <unhygienic-pattern-variable-reference>,
+   $pattern-variable-reference-slots);
+
+
+define constant $expression-parse-slots
+  = list(source-location, source-location:, #f);
+
+add-make-dumper
+  (#"literal-ref-parse", *compiler-dispatcher*, <literal-ref-parse>,
+   concatenate($expression-parse-slots,
+	       list(litref-literal, literal:, #f)));
+
+add-make-dumper
+  (#"varref-parse", *compiler-dispatcher*, <varref-parse>,
+   concatenate($expression-parse-slots,
+	       list(varref-id, id:, #f)));
+
+
+
+
+// Testing code.
+
+define open generic recursively-macro-expand (thing :: <object>)
+    => new-thing :: <object>;
+
+define method recursively-macro-expand
+    (thing :: <method-parse>) => replacement :: <method-parse>;
+  make(<method-parse>,
+       name: thing.method-name,
+       parameters: recursively-macro-expand(thing.method-parameters),
+       returns: recursively-macro-expand(thing.method-returns),
+       body: recursively-macro-expand(thing.method-body));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <variable-list>) => replacement :: <variable-list>;
+  make(<variable-list>,
+       fixed: map(recursively-macro-expand, thing.varlist-fixed),
+       rest: (thing.varlist-rest
+		& recursively-macro-expand(thing.varlist-rest)));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <parameter-list>) => replacement :: <parameter-list>;
+  make(<parameter-list>,
+       fixed: map(recursively-macro-expand, thing.varlist-fixed),
+       rest: thing.varlist-rest & recursively-macro-expand(thing.varlist-rest),
+       next: thing.paramlist-next,
+       keys: (thing.paramlist-keys
+		& map(recursively-macro-expand, thing.paramlist-keys)),
+       all-keys: thing.paramlist-all-keys?);
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <parameter>) => replacement :: <parameter>;
+  make(<parameter>,
+       name: thing.param-name,
+       type: thing.param-type & recursively-macro-expand(thing.param-type));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <keyword-parameter>) => replacement :: <keyword-parameter>;
+  make(<keyword-parameter>,
+       name: thing.param-name,
+       type: thing.param-type & recursively-macro-expand(thing.param-type),
+       keyword: thing.param-keyword,
+       default: (thing.param-default
+		   & recursively-macro-expand(thing.param-default)));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <definition-parse>) => thing :: <definition-parse>;
+  thing;
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <macro-call-parse>) => replacement :: <expression-parse>;
+  recursively-macro-expand(macro-expand(thing));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <let-parse>) => replacement :: <let-parse>;
+  make(<let-parse>,
+       variables: recursively-macro-expand(thing.let-variables),
+       expression: recursively-macro-expand(thing.let-expression));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <handler-parse>) => replacement :: <handler-parse>;
+  make(<handler-parse>,
+       type: recursively-macro-expand(thing.handler-type),
+       options: map(recursively-macro-expand, thing.handler-options),
+       handler: recursively-macro-expand(thing.handler-expression));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <local-parse>) => replacement :: <local-parse>;
+  make(<local-parse>,
+       methods: map(recursively-macro-expand, thing.local-methods));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <literal-ref-parse>) => replacement :: <literal-ref-parse>;
+  thing;
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <varref-parse>) => replacement :: <varref-parse>;
+  thing;
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <varset-parse>) => replacement :: <varset-parse>;
+  make(<varset-parse>, id: thing.varset-id,
+       value: recursively-macro-expand(thing.varset-value));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <funcall-parse>) => replacement :: <funcall-parse>;
+  make(<funcall-parse>,
+       function: recursively-macro-expand(thing.funcall-function),
+       arguments: map(recursively-macro-expand, thing.funcall-arguments));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <dot-parse>) => replacement :: <dot-parse>;
+  make(<dot-parse>,
+       operand: recursively-macro-expand(thing.dot-operand),
+       name: thing.dot-name);
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <body-parse>) => replacement :: <body-parse>;
+  make(<body-parse>,
+       parts: map(recursively-macro-expand, thing.body-parts));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <bind-exit-parse>) => replacement :: <bind-exit-parse>;
+  make(<bind-exit-parse>,
+       name: thing.exit-name,
+       body: recursively-macro-expand(thing.exit-body));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <if-parse>) => replacement :: <if-parse>;
+  make(<if-parse>,
+       condition: recursively-macro-expand(thing.if-condition),
+       consequent: recursively-macro-expand(thing.if-consequent),
+       alternate: recursively-macro-expand(thing.if-alternate));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <method-ref-parse>) => replacement :: <method-ref-parse>;
+  make(<method-ref-parse>,
+       method: recursively-macro-expand(thing.method-ref-method));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <primitive-parse>) => replacement :: <primitive-parse>;
+  make(<primitive-parse>,
+       name: thing.primitive-name,
+       operands: map(recursively-macro-expand, thing.primitive-operands));
+end method recursively-macro-expand;
+
+define method recursively-macro-expand
+    (thing :: <unwind-protect-parse>) => replacement :: <unwind-protect-parse>;
+  make(<unwind-protect-parse>,
+       body: recursively-macro-expand(thing.uwp-body),
+       cleanup: recursively-macro-expand(thing.uwp-cleanup));
+end method recursively-macro-expand;
+

@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.14 1996/01/12 00:58:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.15 1996/03/17 00:56:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,26 +12,8 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // is a compile-time constant.  Otherwise, return #f.  We only use lexenv
 // to tell when a constant module variable has been locally shadowed.
 //
-define generic ct-eval (expr :: <constituent>,
-			lexenv :: false-or(<lexenv>))
-    => res :: false-or(<ct-value>);
-
-// ct-mv-eval -- exported.
-//
-// Like ct-eval, but return all the values.
-// 
-define generic ct-mv-eval (expr :: <constituent>,
-			   lexenv :: false-or(<lexenv>));
-
-
-// ct-eval(<constituent>,...) -- exported method.
-//
-// Just call ct-mv-eval and return the first result, if there is one.
-// Otherwise return the compile-time literal for #f, because the expression
-// constantly returns no values.
-// 
-define method ct-eval (expr :: <constituent>,
-		       lexenv :: false-or(<lexenv>))
+define method ct-eval
+    (expr :: <constituent-parse>, lexenv :: false-or(<lexenv>))
     => res :: false-or(<ct-value>);
   let (#rest results) = ct-mv-eval(expr, lexenv);
   if (empty?(results))
@@ -42,38 +24,52 @@ define method ct-eval (expr :: <constituent>,
 end;
 
 
-// ct-mv-eval(<constituent>, <lexenv>) -- exported method.
+// ct-mv-eval -- exported.
 //
-// The default method just retries with the expansion if there is one, and
-// bails if not.
+// Like ct-eval, but return all the values.
 // 
-define method ct-mv-eval (expr :: <constituent>,
-			  lexenv :: false-or(<lexenv>))
-  let (expansion) = expand(expr, lexenv);
-  if (expansion)
-    ct-mv-eval-body(expansion, lexenv);
-  else
-    #f;
-  end;
+define generic ct-mv-eval
+    (expr :: <constituent-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+
+
+// ct-mv-eval(<constituent-parse>, <lexenv>) -- exported method
+//
+// Default method that just gives up.
+// 
+define method ct-mv-eval
+    (expr :: <constituent-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+  #f;
+end method ct-mv-eval;
+
+// ct-mv-eval(<macro-call-parse>, <lexenv>) -- exported method.
+//
+// Just ct-mv-eval the macro expansion of the macro call.
+// 
+define method ct-mv-eval
+    (expr :: <macro-call-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+  ct-mv-eval(macro-expand(expr), lexenv);
 end;
 
-// ct-mv-eval(<literal-ref>, <lexenv>) -- exported method.
+// ct-mv-eval(<literal-ref-parse>, <lexenv>) -- exported method.
 //
 // Just return a compile-time literal.
 //
-define method ct-mv-eval (expr :: <literal-ref>,
-			  lexenv :: false-or(<lexenv>))
+define method ct-mv-eval
+    (expr :: <literal-ref-parse>, lexenv :: false-or(<lexenv>))
     => res :: <ct-value>;
   expr.litref-literal;
 end;
 
-// ct-mv-eval(<varref>, <lexenv>) -- exported method.
+// ct-mv-eval(<varref-parse>, <lexenv>) -- exported method.
 //
 // As long as the variable isn't bound in the lexenv, call ct-value on the
 // definition (assuming there is one).
 //
-define method ct-mv-eval (expr :: <varref>,
-			  lexenv :: false-or(<lexenv>))
+define method ct-mv-eval
+    (expr :: <varref-parse>, lexenv :: false-or(<lexenv>))
     => res :: false-or(<ct-value>);
   let id = expr.varref-id;
   unless (lexenv & find-binding(lexenv, id))
@@ -82,54 +78,45 @@ define method ct-mv-eval (expr :: <varref>,
   end;
 end;
 
-// ct-mv-eval(<funcall>, <lexenv>) -- exported method.
+// ct-mv-eval(<funcall-parse>, <lexenv>) -- exported method.
 //
-// If there is an expansion, eval it.  Otherwise, check it see if it is one
-// of the functions we know something about.
+// Check it see if it is one of the functions we know something about.
 // 
-define method ct-mv-eval (expr :: <funcall>,
-			  lexenv :: false-or(<lexenv>))
-  let (expansion) = expand(expr, lexenv);
-  if (expansion)
-    ct-mv-eval-body(expansion, lexenv);
-  else
-    ct-mv-eval-funcall(expr.funcall-function, expr.funcall-arguments, lexenv);
-  end;
+define method ct-mv-eval
+    (expr :: <funcall-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+  ct-mv-eval-funcall(expr.funcall-function, expr.funcall-arguments, lexenv);
 end;
 
-// ct-mv-eval(<dot>, <lexenv>) -- exported method.
+// ct-mv-eval(<dot-parse>, <lexenv>) -- exported method.
 //
-// If there is an expansion, eval it.  Otherwise, check it see if it is one
-// of the functions we know something about.
+// Check it see if it is one of the functions we know something about.
 // 
-define method ct-mv-eval (expr :: <dot>,
-			  lexenv :: false-or(<lexenv>))
-  let (expansion) = expand(expr, lexenv);
-  if (expansion)
-    ct-mv-eval-body(expansion, lexenv);
-  else
-    ct-mv-eval-funcall(expr.dot-name, vector(expr.dot-operand), lexenv);
-  end;
+define method ct-mv-eval
+    (expr :: <dot-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+  ct-mv-eval-funcall(expr.dot-name, vector(expr.dot-operand), lexenv);
 end;
 
-// ct-mv-eval(<begin>, <lexenv>) -- exported method.
+// ct-mv-eval(<body-parse>, <lexenv>) -- exported method.
 //
 // Just eval the body.
 //
-define method ct-mv-eval (expr :: <begin>,
-			  lexenv :: false-or(<lexenv>))
-  ct-mv-eval-body(expr.begin-body, lexenv);
+define method ct-mv-eval
+    (expr :: <body-parse>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
+  ct-mv-eval-body(expr.body-parts, lexenv);
 end;
-
 
 // ct-mv-eval-body -- internal.
 //
 // Eval the body, and return the results of the last form.  We make sure all
-// the intervening forms return a compile-time constant value, because we
+// the intervening forms return a compile-time constant value, because
 // that is the best guess we can make about them not having side effects.
 //
-define method ct-mv-eval-body (body :: <simple-object-vector>,
-			       lexenv :: false-or(<lexenv>))
+define method ct-mv-eval-body
+    (body :: <simple-object-vector>, lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
   if (empty?(body))
     make(<literal-false>);
   else
@@ -145,23 +132,26 @@ define method ct-mv-eval-body (body :: <simple-object-vector>,
   end;
 end;
 
+
 // ct-mv-eval-function -- internal.
 //
 // If the function is one of the ones we know about, deal with it.  If not,
 // then return #f.
 //
 define generic ct-mv-eval-funcall
-    (function :: type-union(<expression>, <identifier-token>),
+    (function :: type-union(<expression-parse>, <identifier-token>),
      args :: <simple-object-vector>,
-     lexenv :: false-or(<lexenv>));
+     lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
 
 // ct-mv-eval-function -- internal method
 //
 // Give up because the function expression is something we can't deal with.
 //
-define method ct-mv-eval-funcall (function :: <expression>,
-				  args :: <simple-object-vector>,
-				  lexenv :: false-or(<lexenv>))
+define method ct-mv-eval-funcall
+    (function :: <expression-parse>, args :: <simple-object-vector>,
+     lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
   #f;
 end;
 
@@ -169,9 +159,10 @@ end;
 //
 // The function is a varref, so just try again directly on the name.
 //
-define method ct-mv-eval-funcall (function :: <varref>,
-				  args :: <simple-object-vector>,
-				  lexenv :: false-or(<lexenv>))
+define method ct-mv-eval-funcall
+    (function :: <varref-parse>, args :: <simple-object-vector>,
+     lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
   ct-mv-eval-funcall(function.varref-id, args, lexenv);
 end;
 
@@ -184,6 +175,7 @@ end;
 define method ct-mv-eval-funcall
     (function :: <identifier-token>, args :: <simple-object-vector>,
      lexenv :: false-or(<lexenv>))
+    => (#rest results :: false-or(<ct-value>));
   if (lexenv & find-binding(lexenv, function))
     #f;
   else
@@ -192,7 +184,7 @@ define method ct-mv-eval-funcall
       let evaluator = var.variable-ct-evaluator;
       if (evaluator)
 	block (return)
-	  let args = map(method (arg :: <expression>)
+	  let args = map(method (arg :: <expression-parse>)
 			     => res :: <ct-value>;
 			   ct-eval(arg, lexenv) | return(#f)
 			 end,
@@ -219,7 +211,7 @@ define method define-ct-evaluator
     := method (#rest args)
 	 let specializers
 	   = map(method (specifier :: type-union(<type-specifier>,
-					      singleton(#"rest")))
+						 singleton(#"rest")))
 		     => res :: type-union(<ctype>, singleton(#"rest"));
 		   if (specifier == #"rest")
 		     #"rest";

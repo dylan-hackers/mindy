@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.19 1996/02/09 00:00:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.20 1996/03/17 00:41:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -28,6 +28,16 @@ define-primitive-transformer
 
 
 // Call related primitives.
+
+define-primitive-transformer
+  (#"mv-call",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     replace-expression
+       (component, primitive.dependents,
+	make-operation(make-builder(component), <mv-call>,
+		       listify-dependencies(primitive.depends-on),
+		       use-generic-entry: #f));
+   end method);
 
 define-primitive-transformer
   (#"invoke-generic-entry",

@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/do-parsergen.lisp,v 1.2 1995/12/11 15:33:48 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/do-parsergen.lisp,v 1.3 1996/03/17 00:54:29 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 
@@ -33,7 +33,7 @@
 
 (handler-case
     (progn
-      (grovel-file (second *command-line-words*) "parser.dylan")
+      (grovel-file (second *command-line-words*) "parser.dylan" "parser.log")
       (quit 0))
   (error (cond)
     (format *error-output* "~2&It didn't work:~%~A~%" cond)

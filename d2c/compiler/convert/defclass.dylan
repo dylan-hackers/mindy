@@ -1,7 +1,121 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.59 1996/02/21 02:46:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.60 1996/03/17 00:56:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+
+
+// Parse tree stuff.
+
+define class <define-class-parse> (<definition-parse>)
+  constant slot defclass-name :: <identifier-token>,
+    required-init-keyword: name:;
+  constant slot defclass-superclass-exprs :: <simple-object-vector>,
+    required-init-keyword: superclass-exprs:;
+  constant slot defclass-slots :: <simple-object-vector>,
+    required-init-keyword: slots:;
+  constant slot defclass-options :: <simple-object-vector>,
+    required-init-keyword: options:;
+end class <define-class-parse>;
+
+define-procedural-expander
+  (#"make-define-class",
+   method (name-frag :: <fragment>, supers-frag :: <fragment>,
+	   slots-frag :: <fragment>, options-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-parsed-fragment
+       (make(<define-class-parse>,
+	     name: extract-name(name-frag),
+	     superclass-exprs: map(expression-from-fragment,
+				   split-fragment-at-commas(supers-frag)),
+	     slots: map(extract-slot, split-fragment-at-commas(slots-frag)),
+	     options: parse-property-list(make(<fragment-tokenizer>,
+					       fragment: options-frag))));
+   end method);
+
+define method extract-slot (frag :: <fragment>)
+    => res :: <abstract-slot-parse>;
+  if (instance?(frag, <token-fragment>)
+	& frag.fragment-token.token-kind == $error-token
+	& instance?(frag.fragment-token, <pre-parsed-token>)
+	& instance?(frag.fragment-token.token-parse-tree,
+		    <abstract-slot-parse>))
+    frag.fragment-token.token-parse-tree;
+  else
+    error("bug in define class macro: %= isn't a slot parse", frag);
+  end if;
+end method extract-slot;
+
+
+define abstract class <abstract-slot-parse> (<object>)
+end class <abstract-slot-parse>;
+
+define class <slot-parse> (<abstract-slot-parse>)
+  constant slot slot-parse-name :: <identifier-token>,
+    required-init-keyword: name:;
+  constant slot slot-parse-options :: <simple-object-vector>,
+    required-init-keyword: options:;
+end class <slot-parse>;
+
+define-procedural-expander
+  (#"make-slot",
+   method (name-frag :: <fragment>, options-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-magic-fragment
+       (make(<slot-parse>,
+	     name: extract-name(name-frag),
+	     options: parse-property-list(make(<fragment-tokenizer>,
+					       fragment: options-frag))))
+   end method);
+
+define class <inherited-slot-parse> (<abstract-slot-parse>)
+  constant slot inherited-slot-parse-name :: <identifier-token>,
+    required-init-keyword: name:;
+  constant slot inherited-slot-parse-options :: <simple-object-vector>,
+    required-init-keyword: options:;
+end class <inherited-slot-parse>;
+
+define-procedural-expander
+  (#"make-inherited-slot",
+   method (name-frag :: <fragment>, options-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-magic-fragment
+       (make(<inherited-slot-parse>,
+	     name: extract-name(name-frag),
+	     options: parse-property-list(make(<fragment-tokenizer>,
+					       fragment: options-frag))))
+   end method);
+
+define class <init-arg-parse> (<abstract-slot-parse>)
+  constant slot init-arg-parse-keyword :: <symbol>,
+    required-init-keyword: keyword:;
+  constant slot init-arg-parse-options :: <simple-object-vector>,
+    required-init-keyword: options:;
+end class <init-arg-parse>;
+
+define-procedural-expander
+  (#"make-init-arg",
+   method (keyword-frag :: <fragment>, options-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-magic-fragment
+       (make(<init-arg-parse>,
+	     keyword: extract-keyword(keyword-frag),
+	     options: parse-property-list(make(<fragment-tokenizer>,
+					       fragment: options-frag))))
+   end method);
+
+define method extract-keyword (frag :: <fragment>)
+    => keyword :: <symbol>;
+  if (instance?(frag, <token-fragment>)
+	& frag.fragment-token.token-kind == $symbol-token)
+    frag.fragment-token.token-literal.literal-value;
+  else
+    error("Bug in define class macro: %= isn't a keyword.", frag);
+  end if;
+end method extract-keyword;
+
+
+// 
 
 define class <real-class-definition> (<class-definition>)
   //
@@ -29,7 +143,7 @@ end;
 
 define class <local-class-definition> (<real-class-definition>)
   // 
-  // Vector of <expression>s for the superclasses.
+  // Vector of <expression-parse>s for the superclasses.
   slot class-defn-supers :: <simple-object-vector>,
     required-init-keyword: supers:;
   //
@@ -68,7 +182,7 @@ define class <slot-defn> (<object>)
     required-init-keyword: allocation:;
   //
   // The expression to compute the type.
-  slot slot-defn-type :: false-or(<expression>),
+  slot slot-defn-type :: false-or(<expression-parse>),
     required-init-keyword: type:;
   //
   // The name of the getter generic function.
@@ -86,15 +200,15 @@ define class <slot-defn> (<object>)
   slot slot-defn-setter :: false-or(<setter-method-definition>);
   //
   // The init-value expression, or #f if one wasn't supplied.
-  slot slot-defn-init-value :: false-or(<expression>),
+  slot slot-defn-init-value :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function, or #f if there isn't one.
-  slot slot-defn-init-function :: false-or(<expression>),
+  slot slot-defn-init-function :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-function:;
   //
   // The init-keyword, or #f if there isn't one.
-  slot slot-defn-init-keyword :: false-or(<literal-symbol>),
+  slot slot-defn-init-keyword :: false-or(<symbol>),
     init-value: #f, init-keyword: init-keyword:;
   //
   // #t if the init-keyword is required, #f if not.
@@ -121,11 +235,11 @@ define class <override-defn> (<object>)
     required-init-keyword: getter-name:;
   //
   // The init-value expression, or #f if none.
-  slot override-defn-init-value :: false-or(<expression>),
+  slot override-defn-init-value :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function expression, or #f if none.
-  slot override-defn-init-function :: false-or(<expression>),
+  slot override-defn-init-function :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-function:;
   //
   // The <override-info> for this override, or #f if we haven't computed it
@@ -139,22 +253,6 @@ define class <init-function-definition> (<abstract-method-definition>)
   slot init-func-defn-method-parse :: false-or(<method-parse>),
     init-value: #f, init-keyword: method-parse:;
 end class <init-function-definition>;
-
-
-define class <define-class-tlf> (<simple-define-tlf>)
-  //
-  // Make the definition required.
-  required keyword defn:;
-  //
-  // Stretchy vector of <init-function-definition>s.
-  slot tlf-init-function-defns :: <stretchy-vector>
-    = make(<stretchy-vector>);
-end;
-
-define method print-message
-    (tlf :: <define-class-tlf>, stream :: <stream>) => ();
-  format(stream, "Define Class %s", tlf.tlf-defn.defn-name);
-end;
 
 
 // Top level form processing.
@@ -171,293 +269,30 @@ end;
 
 define method process-top-level-form (form :: <define-class-parse>) => ();
   let name = form.defclass-name.token-symbol;
-  let (class-functional?, class-open?, class-sealed?, class-primary?,
-       class-free?, class-abstract?, class-concrete?)
-    = extract-modifiers("define class", name, form.define-modifiers,
-			#"functional", #"open", #"sealed", #"primary", #"free",
-			#"abstract", #"concrete");
-  if (class-open? & class-sealed?)
-    compiler-error("define class %s can't be both open and sealed.", name);
-  end;
-  if (class-primary? & class-free?)
-    compiler-error("define class %s can't be both primary and free.", name);
-  end;
-  if (class-abstract? & class-concrete?)
-    compiler-error("define class %s can't be both abstract and concrete.",
-		   name);
-  end;
+  let (class-functional?-frag, class-sealed?-frag, class-primary?-frag,
+       class-abstract?-frag)
+    = extract-properties(form.defclass-options, #"functional", #"sealed",
+			 #"primary", #"abstract");
+  let class-functional?
+    = class-functional?-frag & extract-boolean(class-functional?-frag);
+  let class-sealed?
+    = ~class-sealed?-frag | extract-boolean(class-sealed?-frag);
+  let class-primary?
+    = class-primary?-frag & extract-boolean(class-primary?-frag);
+  let class-abstract?
+    = class-abstract?-frag & extract-boolean(class-abstract?-frag);
   let slots = make(<stretchy-vector>);
   let overrides = make(<stretchy-vector>);
-  unless (empty?(form.defclass-supers))
+  unless (class-abstract? | empty?(form.defclass-superclass-exprs))
     add!(overrides,
 	 make(<override-defn>,
 	      getter-name: make(<basic-name>, symbol: #"%object-class",
 				module: $Dylan-Module),
-	      init-value: make(<varref>, id: form.defclass-name)));
+	      init-value: make(<varref-parse>, id: form.defclass-name)));
   end;
-  for (option in form.defclass-options)
-    select (option.classopt-kind)
-      #"slot" =>
-	let (sealed?, allocation, type, setter, init-keyword,
-	     req-init-keyword, init-value, init-function, sizer,
-	     size-init-keyword, req-size-init-keyword,
-	     size-init-value, size-init-function)
-	  = extract-properties("slot spec", option.classopt-plist,
-			       sealed:, allocation:, type:, setter:,
-			       init-keyword:, required-init-keyword:,
-			       init-value:, init-function:,
-			       sizer:, size-init-keyword:,
-			       required-size-init-keyword:,
-			       size-init-value:, size-init-function:);
-	let allocation = if (allocation)
-			   allocation.varref-id.token-symbol;
-			 else
-			   #"instance";
-			 end;
-	let getter = option.classopt-name.token-symbol;
-	unless (type == #f | instance?(type, <expression>))
-	  compiler-error("Bogus type expression: %=", type);
-	end;
-	let setter = if (class-functional? & allocation == #"instance")
-		       if (setter)
-			 compiler-warning("Instance allocation slots in "
-					    "functional classes can't "
-					    "have a setter");
-		       end;
-		       #f;
-		     elseif (instance?(setter, <varref>))
-		       setter.varref-id.token-symbol;
-		     elseif (instance?(setter, <literal-ref>)
-			       & setter.litref-literal = #f)
-		       #f;
-		     elseif (setter)
-		       compiler-error("Bogus setter name: %=", setter);
-		     else
-		       symcat(getter, "-setter");
-		     end;
-	if (init-value)
-	  if (init-function)
-	    compiler-error("Can't supply both an init-value: and an "
-			     "init-function:.");
-	  end;
-	  if (req-init-keyword)
-	    compiler-error("Can't supply both an init-value: and a "
-			     "required-init-keyword:.");
-	  end;
-	  unless (instance?(init-value, <expression>))
-	    compiler-error("Bogus init-value: %=", init-value);
-	  end;
-	elseif (init-function)
-	  if (req-init-keyword)
-	    compiler-error("Can't supply both an init-function: and a "
-			     "required-init-keyword:.");
-	  end;
-	  unless (instance?(init-function, <expression>))
-	    compiler-error("Bogus init-function: %=", init-function);
-	  end;
-	end;
-	if (init-keyword)
-	  if (req-init-keyword)
-	    compiler-error("Can't supply both an init-keyword: and a "
-			     "required-init-keyword:.");
-	  end;
-	  unless (instance?(init-keyword, <literal-ref>)
-		    & instance?(init-keyword.litref-literal,
-				<literal-symbol>))
-	    compiler-error("Bogus init-keyword: %=", init-keyword);
-	  end;
-	elseif (req-init-keyword)
-	  unless (instance?(req-init-keyword, <literal-ref>)
-		    & instance?(req-init-keyword.litref-literal,
-				<literal-symbol>))
-	    compiler-error("Bogus required-init-keyword: %=",
-			   req-init-keyword);
-	  end;
-	end;
-
-	let getter-name = make(<basic-name>, symbol: getter,
-			       module: *Current-Module*);
-	let setter-name = setter & make(<basic-name>, symbol: setter,
-					module: *Current-Module*);
-
-	let size-defn
-	  = if (instance?(sizer, <varref>))
-	      let sizer-name
-		= make(<basic-name>, symbol: sizer.varref-id.token-symbol,
-		       module: *Current-Module*);
-	      
-	      unless (allocation == #"instance")
-		compiler-error("Only instance allocation slots can be "
-				 "variable length.");
-	      end;
-	      
-	      if (size-init-value)
-		unless (instance?(size-init-value, <expression>))
-		  compiler-error("Bogus size-init-value: %=", size-init-value);
-		end;
-		if (size-init-function)
-		  compiler-error("Can't have both a size-init-value: and "
-				   "size-init-function:");
-		end;
-	      elseif (size-init-function)
-		unless (instance?(size-init-function, <expression>))
-		  compiler-error("Bogus size-init-function: %=",
-				 size-init-value);
-		end;
-	      elseif (~req-size-init-keyword)
-		compiler-error("The Initial size must be supplied somehow.");
-	      end;
-	      
-	      if (size-init-keyword)
-		if (req-size-init-keyword)
-		  compiler-error("Can't have both a size-init-keyword: and a "
-				   "required-size-init-keyword:");
-		end;
-		unless (instance?(size-init-keyword, <literal-ref>)
-			  & instance?(size-init-keyword.litref-literal,
-				      <literal-symbol>))
-		  compiler-error("Bogus size-init-keyword: %=",
-				 size-init-keyword);
-		end;
-	      elseif (req-size-init-keyword)
-		unless (instance?(req-size-init-keyword, <literal-ref>)
-			  & instance?(req-size-init-keyword.litref-literal,
-				      <literal-symbol>))
-		  compiler-error("Bogus required-size-init-keyword: %=",
-				 req-size-init-keyword);
-		end;
-	      end;
-	      
-	      let slot = make(<slot-defn>,
-			      sealed: sealed? & #t,
-			      allocation: allocation,
-			      type:
-				make(<varref>,
-				     id: make(<name-token>,
-					      symbol: #"<integer>",
-					      module: $Dylan-Module,
-					      uniquifier: make(<uniquifier>))),
-			      getter-name: sizer-name,
-			      setter-name: #f,
-			      init-value: size-init-value,
-			      init-function: size-init-function,
-			      init-keyword:
-				if (size-init-keyword)
-				  size-init-keyword.litref-literal;
-				elseif (req-size-init-keyword)
-				  req-size-init-keyword.litref-literal;
-				end,
-			      init-keyword-required:
-				req-size-init-keyword & #t);
-	      add!(slots, slot);
-	      slot;
-	    else
-	      unless (sizer == #f
-			| (instance?(sizer, <literal-ref>)
-			     & sizer.litref-literal = #f))
-		compiler-error("Bogus sizer name: %=", sizer);
-	      end;
-	      if (size-init-value)
-		compiler-error("Can't supply a size-init-value: without a "
-				 "sizer: generic function");
-	      end;
-	      if (size-init-function)
-		compiler-error("Can't supply a size-init-function: without a "
-				 "sizer: generic function");
-	      end;
-	      if (size-init-keyword)
-		compiler-error("Can't supply a size-init-keyword: without a "
-				 "sizer: generic function");
-	      end;
-	      if (req-size-init-keyword)
-		compiler-error("Can't supply a required-size-init-keyword: "
-				 "without a sizer: generic function");
-	      end;
-
-	      #f;
-	    end;
-	
-	let slot = make(<slot-defn>,
-			sealed: sealed? & #t,
-			allocation: allocation,
-			type: type,
-			getter-name: getter-name,
-			setter-name: setter-name,
-			init-value: init-value,
-			init-function: init-function,
-			init-keyword:
-			  if (init-keyword)
-			    init-keyword.litref-literal;
-			  elseif (req-init-keyword)
-			    req-init-keyword.litref-literal;
-			  end,
-			sizer-defn: size-defn,
-			init-keyword-required: req-init-keyword & #t);
-	add!(slots, slot);
-
-      #"inherited" =>
-	let (init-value, init-function)
-	  = extract-properties("inherited slot spec", option.classopt-plist,
-			       init-value:, init-function:);
-	if (init-value)
-	  if (init-function)
-	    compiler-error("Can't supply both an init-value: and an "
-			     "init-function:");
-	  end;
-	  unless (instance?(init-value, <expression>))
-	    compiler-error("Bogus init-value: %=", init-value);
-	  end;
-	elseif (init-function)
-	  unless (instance?(init-function, <expression>))
-	    compiler-error("Bogus init-function: %=", init-function);
-	  end;
-	end;
-	add!(overrides,
-	     make(<override-defn>,
-		  getter-name:
-		    make(<basic-name>,
-			 symbol: option.classopt-name.token-symbol,
-			 module: *Current-Module*),
-		  init-value: init-value,
-		  init-function: init-function));
-
-      #"keyword" =>
-	unless (instance?(option.classopt-name, <keyword-token>))
-	  compiler-error("Bogus keyword: %=", option.classopt-name);
-	end;
-	let (required?, type, init-value, init-function)
-	  = extract-properties("init arg spec", option.classopt-plist,
-			       required:, type:, init-value:, init-function:);
-	if (required?)
-	  if (init-value)
-	    compiler-error("Can't supply an init-value: for required keyword "
-			     "init arg specs");
-	  end;
-	  if (init-function)
-	    compiler-error("Can't supply an init-function: for required "
-			     "keyword init arg specs");
-	  end;
-	elseif (init-value)
-	  if (init-function)
-	    compiler-error("Can't supply both an init-value: and an "
-			     "init-function: for keyword init arg specs");
-	  end;
-	  unless (instance?(init-value, <expression>))
-	    compiler-error("Bogus init-value: %=", init-value);
-	  end;
-	elseif (init-function)
-	  unless (instance?(init-function, <expression>))
-	    compiler-error("Bogus init-function: %=", init-function);
-	  end;
-	end;
-	if (type)
-	  unless (instance?(type, <expression>))
-	    compiler-error("Bogus type: %=", type);
-	  end;
-	end;
-	// ### Need to do something with it.
-    end;
-  end;
+  for (option in form.defclass-slots)
+    process-slot(name, class-functional?, slots, overrides, option);
+  end for;
   let slots = as(<simple-object-vector>, slots);
   let overrides = as(<simple-object-vector>, overrides);
   let defn = make(<local-class-definition>,
@@ -465,9 +300,9 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 			     symbol: name,
 			     module: *Current-Module*),
 		  library: *Current-Library*,
-		  supers: form.defclass-supers,
+		  supers: form.defclass-superclass-exprs,
 		  functional: class-functional?,
-		  sealed: ~class-open?,
+		  sealed: class-sealed?,
 		  primary: class-primary?,
 		  abstract: class-abstract?,
 		  slots: slots,
@@ -494,10 +329,310 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
   end;
   for (override in overrides)
     override.override-defn-class := defn;
-  end;
+  end for;
   note-variable-definition(defn);
   add!(*Top-Level-Forms*, make(<define-class-tlf>, defn: defn));
-end;
+end method process-top-level-form;
+
+
+define generic process-slot
+    (class-name :: <symbol>, class-functional? :: <boolean>,
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     slot :: <abstract-slot-parse>)
+    => ();
+
+define method process-slot
+    (class-name :: <symbol>, class-functional? :: <boolean>,
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     slot :: <slot-parse>)
+    => ();
+  let (sealed?-frag, allocation-frag, type-frag, setter-frag,
+       init-keyword-frag, req-init-keyword-frag, init-value-frag,
+       init-expr-frag, init-function-frag, sizer-frag, size-init-keyword-frag,
+       req-size-init-keyword-frag, size-init-value-frag,
+       size-init-function-frag)
+    = extract-properties(slot.slot-parse-options,
+			 sealed:, allocation:, type:, setter:,
+			 init-keyword:, required-init-keyword:,
+			 init-value:, init-expr:, init-function:,
+			 sizer:, size-init-keyword:,
+			 required-size-init-keyword:,
+			 size-init-value:, size-init-function:);
+  let getter = slot.slot-parse-name.token-symbol;
+  let sealed? = sealed?-frag & extract-boolean(sealed?-frag);
+  let allocation = if (allocation-frag)
+		     extract-identifier(allocation-frag).token-symbol;
+		   else
+		     #"instance";
+		   end;
+  let type = type-frag & expression-from-fragment(type-frag);
+  let setter = if (class-functional? & allocation == #"instance")
+		 if (setter-frag & extract-identifier-or-false(setter-frag))
+		   compiler-warning("Instance allocation slots in "
+				      "functional classes can't "
+				      "have a setter");
+		 end;
+		 #f;
+	       elseif (setter-frag)
+		 let id = extract-identifier-or-false(setter-frag);
+		 id & id.token-symbol;
+	       else
+		 symcat(getter, "-setter");
+	       end;
+  let init-keyword = init-keyword-frag & extract-keyword(init-keyword-frag);
+  let req-init-keyword
+    = req-init-keyword-frag & extract-keyword(req-init-keyword-frag);
+  let init-value = init-value-frag & expression-from-fragment(init-value-frag);
+  let init-expr = init-expr-frag & expression-from-fragment(init-expr-frag);
+  let init-function
+    = init-function-frag & expression-from-fragment(init-function-frag);
+  let sizer = sizer-frag & extract-identifier(sizer-frag).token-symbol;
+  let size-init-keyword
+    = size-init-keyword-frag & extract-keyword(size-init-keyword-frag);
+  let req-size-init-keyword
+    = req-size-init-keyword-frag & extract-keyword(req-size-init-keyword-frag);
+  let size-init-value
+    = size-init-value-frag & expression-from-fragment(size-init-value-frag);
+  let size-init-function
+    = (size-init-function-frag
+	 & expression-from-fragment(size-init-function-frag));
+
+  if (init-value)
+    if (init-expr)
+      compiler-error
+	("Can't supply both an init-value: and an init-expression.");
+    end if;
+    if (init-function)
+      compiler-error
+	("Can't supply both an init-value: and an init-function:.");
+    end;
+    if (req-init-keyword)
+      compiler-error
+	("Can't supply both an init-value: and a required-init-keyword:.");
+    end;
+  elseif (init-expr)
+    if (init-function)
+      compiler-error
+	("Can't supply both an init-function: and an init-expression.");
+    end if;
+    if (req-init-keyword)
+      compiler-error
+	("Can't supply both an init-value: and a required-init-keyword:.");
+    end;
+    if (instance?(init-expr, <literal-ref-parse>))
+      init-value := init-expr;
+    else
+      init-function
+	:= make(<method-ref-parse>,
+		method: make(<method-parse>,
+			     parameters: make(<parameter-list>, fixed: #[]),
+			     body: init-expr));
+    end if;
+  elseif (init-function)
+    if (req-init-keyword)
+      compiler-error("Can't supply both an init-function: and a "
+		       "required-init-keyword:.");
+    end;
+  end;
+  if (init-keyword & req-init-keyword)
+    compiler-error("Can't supply both an init-keyword: and a "
+		     "required-init-keyword:.");
+  end;
+
+  let getter-name = make(<basic-name>, symbol: getter,
+			 module: *Current-Module*);
+  let setter-name = setter & make(<basic-name>, symbol: setter,
+				  module: *Current-Module*);
+
+  let size-defn
+    = if (sizer)
+	let sizer-name
+	  = make(<basic-name>, symbol: sizer, module: *Current-Module*);
+	
+	unless (allocation == #"instance")
+	  compiler-error
+	    ("Only instance allocation slots can be variable length.");
+	end;
+	
+	if (size-init-value)
+	  if (size-init-function)
+	    compiler-error("Can't have both a size-init-value: and "
+			     "size-init-function:");
+	  end;
+	elseif (~(size-init-function | req-size-init-keyword))
+	  compiler-error
+	    ("The Initial size must be supplied somehow.");
+	end;
+	
+	if (size-init-keyword & req-size-init-keyword)
+	  compiler-error("Can't have both a size-init-keyword: and a "
+			   "required-size-init-keyword:");
+	end;
+	
+	let slot = make(<slot-defn>,
+			sealed: sealed?,
+			allocation: #"instance",
+			type:
+			  make(<varref-parse>,
+			       id: make(<identifier-token>,
+					kind: $raw-ordinary-word-token,
+					symbol: #"<integer>",
+					module: $Dylan-Module,
+					uniquifier: make(<uniquifier>))),
+			getter-name: sizer-name,
+			setter-name: #f,
+			init-value: size-init-value,
+			init-function: size-init-function,
+			init-keyword:
+			  size-init-keyword | req-size-init-keyword,
+			init-keyword-required:
+			  req-size-init-keyword & #t);
+	add!(slots, slot);
+	slot;
+      else
+	if (size-init-value)
+	  compiler-error("Can't supply a size-init-value: without a "
+			   "sizer: generic function");
+	end;
+	if (size-init-function)
+	  compiler-error("Can't supply a size-init-function: without a "
+			   "sizer: generic function");
+	end;
+	if (size-init-keyword)
+	  compiler-error("Can't supply a size-init-keyword: without a "
+			   "sizer: generic function");
+	end;
+	if (req-size-init-keyword)
+	  compiler-error("Can't supply a required-size-init-keyword: "
+			   "without a sizer: generic function");
+	end;
+
+	#f;
+      end;
+  
+  let slot = make(<slot-defn>,
+		  sealed: sealed? & #t,
+		  allocation: allocation,
+		  type: type,
+		  getter-name: getter-name,
+		  setter-name: setter-name,
+		  init-value: init-value,
+		  init-function: init-function,
+		  init-keyword: init-keyword | req-init-keyword,
+		  sizer-defn: size-defn,
+		  init-keyword-required: req-init-keyword & #t);
+  add!(slots, slot);
+end method process-slot;
+
+define method process-slot
+    (class-name :: <symbol>, class-functional? :: <boolean>,
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     slot :: <inherited-slot-parse>)
+    => ();
+  let (init-value-frag, init-expr-frag, init-function-frag)
+    = extract-properties(slot.inherited-slot-parse-options,
+			 init-value:, init-expr:, init-function:);
+
+  let init-value = init-value-frag & expression-from-fragment(init-value-frag);
+  let init-expr = init-expr-frag & expression-from-fragment(init-expr-frag);
+  let init-function
+    = init-function-frag & expression-from-fragment(init-function-frag);
+
+  if (init-value)
+    if (init-expr)
+      compiler-error
+	("Can't supply both an init-value: and an init-expression.");
+    end if;
+    if (init-function)
+      compiler-error
+	("Can't supply both an init-value: and an init-function:.");
+    end;
+  elseif (init-expr)
+    if (init-function)
+      compiler-error
+	("Can't supply both an init-function: and an init-expression.");
+    end if;
+    if (instance?(init-expr, <literal-ref-parse>))
+      init-value := init-expr;
+    else
+      init-function
+	:= make(<method-ref-parse>,
+		method: make(<method-parse>,
+			     parameters: make(<parameter-list>, fixed: #[]),
+			     body: init-expr));
+    end if;
+  end;
+
+  add!(overrides,
+       make(<override-defn>,
+	    getter-name:
+	      make(<basic-name>,
+		   symbol: slot.inherited-slot-parse-name.token-symbol,
+		   module: *Current-Module*),
+	    init-value: init-value,
+	    init-function: init-function));
+end method process-slot;
+
+define method process-slot
+    (class-name :: <symbol>, class-functional? :: <boolean>,
+     slots :: <stretchy-vector>, overrides :: <stretchy-vector>,
+     slot :: <init-arg-parse>)
+    => ();
+  let (required?-frag, type-frag, init-value-frag, init-function-frag)
+    = extract-properties(slot.init-arg-parse-options,
+			 required:, type:, init-value:, init-function:);
+
+  let required? = required?-frag & extract-boolean(required?-frag);
+  let type = type-frag & expression-from-fragment(type-frag);
+  let init-value = init-value-frag & expression-from-fragment(init-value-frag);
+  let init-function
+    = init-function-frag & expression-from-fragment(init-function-frag);
+
+  if (required?)
+    if (init-value)
+      compiler-error("Can't supply an init-value: for required keyword "
+		       "init arg specs");
+    end;
+    if (init-function)
+      compiler-error("Can't supply an init-function: for required "
+		       "keyword init arg specs");
+    end;
+  elseif (init-value)
+    if (init-function)
+      compiler-error("Can't supply both an init-value: and an "
+		       "init-function: for keyword init arg specs");
+    end;
+  end;
+  // ### Need to do something with it.
+end method process-slot;
+
+
+define method extract-identifier-or-false (fragment :: <token-fragment>)
+    => res :: false-or(<identifier-token>);
+  let token = fragment.fragment-token;
+  select (token.token-kind)
+    $false-token =>
+      #f;
+    $raw-ordinary-word-token, $ordinary-define-body-word-token,
+    $ordinary-define-list-word-token, $quoted-name-token =>
+      token;
+    otherwise =>
+      compiler-error("Bogus name for setter generic function: %s", token);
+  end select;
+end method extract-identifier-or-false;
+
+define method extract-identifier (fragment :: <token-fragment>)
+    => res :: false-or(<identifier-token>);
+  let token = fragment.fragment-token;
+  select (token.token-kind)
+    $raw-ordinary-word-token, $ordinary-define-body-word-token,
+    $ordinary-define-list-word-token, $quoted-name-token =>
+      token;
+    otherwise =>
+      compiler-error("Bogus name for setter generic function: %s", token);
+  end select;
+end method extract-identifier;
+
 
 
 // CT-Value
@@ -651,11 +786,7 @@ define method compute-slot (slot :: <slot-defn>) => info :: <slot-info>;
 	     read-only: slot.slot-defn-setter-name == #f,
 	     init-value: slot.slot-defn-init-value & #t,
 	     init-function: slot.slot-defn-init-function & #t,
-	     init-keyword: if (slot.slot-defn-init-keyword)
-			     slot.slot-defn-init-keyword.literal-value;
-			   else
-			     #f;
-			   end,
+	     init-keyword: slot.slot-defn-init-keyword,
 	     init-keyword-required:
 	       slot.slot-defn-init-keyword-required?,
 	     size-slot: slot.slot-defn-sizer-defn.slot-defn-info);
@@ -666,11 +797,7 @@ define method compute-slot (slot :: <slot-defn>) => info :: <slot-info>;
 	     read-only: slot.slot-defn-setter-name == #f,
 	     init-value: slot.slot-defn-init-value & #t,
 	     init-function: slot.slot-defn-init-function & #t,
-	     init-keyword: if (slot.slot-defn-init-keyword)
-			     slot.slot-defn-init-keyword.literal-value;
-			   else
-			     #f;
-			   end,
+	     init-keyword: slot.slot-defn-init-keyword,
 	     init-keyword-required:
 	       slot.slot-defn-init-keyword-required?);
       end;
@@ -813,7 +940,7 @@ define method finalize-slot
 	      slot: info);
     let gf = slot.slot-defn-getter.method-defn-of;
     if (gf)
-      ct-add-method(tlf, gf, slot.slot-defn-getter);
+      ct-add-method(gf, slot.slot-defn-getter);
     end;
     if (slot.slot-defn-sealed?)
       if (gf)
@@ -837,7 +964,7 @@ define method finalize-slot
 			   slot: info);
 	   let gf = defn.method-defn-of;
 	   if (gf)
-	     ct-add-method(tlf, gf, defn);
+	     ct-add-method(gf, defn);
 	   end;
 	   if (slot.slot-defn-sealed?)
 	     if (gf)
@@ -857,7 +984,7 @@ end method finalize-slot;
 
 
 define method maybe-define-init-function
-    (expr :: <expression>, getter-name :: <basic-name>,
+    (expr :: <expression-parse>, getter-name :: <basic-name>,
      tlf :: <define-class-tlf>)
     => (ctv :: false-or(<ct-value>), change-to-init-value? :: <boolean>);
   let init-val = ct-eval(expr, #f);
@@ -873,19 +1000,12 @@ define method maybe-define-init-function
     if (method-ref)
       let method-parse = method-ref.method-ref-method;
       let (signature, anything-non-constant?)
-	= compute-signature(method-parse.method-param-list,
+	= compute-signature(method-parse.method-parameters,
 			    method-parse.method-returns);
       if (anything-non-constant?)
 	values(#f, #f);
       else
-	let body = method-parse.method-body;
-	let ctv = if (body.empty?)
-		    as(<ct-value>, #f);
-		  elseif (body.size == 1)
-		    ct-eval(body[0], #f);
-		  else
-		    #f;
-		  end if;
+	let ctv = ct-eval(method-parse.method-body, #f);
 	if (ctv
 	      & cinstance?(ctv,
 			   first(signature.returns.positional-types,
@@ -1213,8 +1333,8 @@ define method convert-top-level-form
 		let gf-var = find-variable(gf-name);
 		let gf-defn = gf-var & gf-var.variable-definition;
 		if (gf-defn)
-		  let gf-leaf = fer-convert-defn-ref(evals-builder, policy,
-						     source, gf-defn);
+		  let gf-leaf = build-defn-ref(evals-builder, policy,
+					       source, gf-defn);
 		  build-assignment
 		    (evals-builder, policy, source, #(),
 		     make-unknown-call
@@ -1860,7 +1980,7 @@ end;
 
 define method convert-init-function
     (builder :: <fer-builder>, slot-name :: <symbol>,
-     init-function :: <expression>)
+     init-function :: <expression-parse>)
     => res :: <leaf>;
   let lexenv = make(<lexenv>);
   let policy = lexenv.lexenv-policy;
@@ -2401,7 +2521,7 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
     if (getter.method-defn-of & name-inherited-or-exported?(getter.defn-name))
       dump-od(slot.slot-defn-getter, state);
       if (sealed? & getter.method-defn-of.defn-library ~== defn.defn-library)
-	dump-simple-object(#"seal-generic", state,
+	dump-simple-object(#"sealed-domain", state,
 			   getter.method-defn-of,
 			   defn.defn-library,
 			   getter.function-defn-signature.specializers);
@@ -2413,7 +2533,7 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
       dump-od(setter, state);
       if (sealed? & setter.method-defn-of.defn-library ~== defn.defn-library)
 	dump-simple-object
-	  (#"seal-generic", state, setter.method-defn-of, defn.defn-library,
+	  (#"sealed-domain", state, setter.method-defn-of, defn.defn-library,
 	   // We don't use the setter specializers, because the first
 	   // specializer will be the slot type, not <object>.
 	   pair(object-ctype(), getter.function-defn-signature.specializers));

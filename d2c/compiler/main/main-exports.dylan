@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.6 1996/02/21 02:53:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.7 1996/03/17 00:50:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,73 +11,11 @@ define library compiler-main
   use Random;
   use compiler-base;
   use compiler-front;
+  use compiler-optimize;
   use compiler-parser;
   use compiler-cback;
+  use compiler-convert;
 end;
-
-define module lexer
-  use common;
-
-  use utils;
-  use errors;
-  use source;
-  use compile-time-values;
-  use tokens;
-  use variables;
-
-  export
-    <lexer>,
-
-    add-feature, remove-feature;
-end;
-
-define module init
-  use common;
-  use utils;
-  use tokens;
-  use variables;
-  use lexer;
-  use parser;
-  use source;
-  use header;
-end;
-
-define module parse-tree-dump
-  use common;
-  use od-format;
-  use compile-time-values, import: { *compiler-dispatcher* };
-  use source;
-  use parse-tree;
-end module parse-tree-dump;
-
-define module tokens-dump
-  use common;
-  use od-format;
-  use compile-time-values, import: { *compiler-dispatcher* };
-  use source;
-  use tokens;
-end module tokens-dump;
-
-
-#if (mindy)
-// Part of the compiler library
-//
-define module autodump
-  use common;
-  use introspection;
-  use regular-expressions;
-  use streams;
-  use string-conversions;
-  use standard-io;
-
-  use parse-tree;
-  use tokens;
-  use variables;
-
-  export 
-    autodump;
-end module autodump;
-#end
 
 
 define module main
@@ -93,8 +31,9 @@ define module main
   use random;
 
   use utils;
-  use define-classes;
-  use define-functions;
+  // use define-classes;
+  // use define-functions;
+  use function-definitions;
   use variables;
   use parser;
   use format;
@@ -104,9 +43,9 @@ define module main
   use top-level-forms;
   use flow;
   use builder-interface;
-  use fer-convert;
+  // use fer-convert;
   use front;
-  use dump;
+  // use dump;
   use classes;
   use c-representation;
   use cback;
@@ -117,11 +56,12 @@ define module main
   use ctype;
   use cheese;
   use od-format;
-#if (mindy)
-  use autodump;
-#end
   use standard-io;
   use tokens;
   use names;
   use errors;
+  use policy;
+  use macros;
+  use fragments;
+  use parse-tree, exclude: {primitive-name};
 end;

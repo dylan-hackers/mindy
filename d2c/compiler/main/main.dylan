@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.57 1996/02/22 17:51:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.58 1996/03/17 00:50:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,7 +103,7 @@ define method test-lexer (file :: <byte-string>) => ();
     *Current-Module* := module;
     while (#t)
       let token = get-token(tokenizer);
-      if (instance?(token, <eof-token>))
+      if (token.token-kind == $eof-token)
 	return();
       else
 	format(*debug-output*, "%=\n", token);
@@ -113,6 +113,43 @@ define method test-lexer (file :: <byte-string>) => ();
     *Current-Module* := #f;
   end block;
 end method test-lexer;
+
+
+define method set-module (module :: type-union(<false>, <module>)) => ();
+  *current-module* := module;
+end method set-module;
+
+define method set-module (module :: <symbol>) => ();
+  *current-module* := find-module(*Current-Library* | $Dylan-library, module);
+end method set-module;
+
+define method set-library (library :: type-union(<false>, <library>)) => ();
+  *current-library* := library;
+end method set-library;
+
+define method set-library (library :: <symbol>) => ();
+  *current-library* := find-library(library);
+end method set-library;
+
+
+
+define method test-parse
+    (parser :: <function>, file :: <byte-string>,
+     #key debug: debug? :: <boolean>)
+    => result;
+  let (tokenizer, module) = file-tokenizer($dylan-library, file);
+  let orig-library = *current-library*;
+  let orig-module = *current-module*;
+  block ()
+    *current-library* := $dylan-library;
+    *current-module* := module;
+    parser(tokenizer, debug: debug?);
+  cleanup
+    *current-library* := orig-library;
+    *current-module* := orig-module;
+  end block;
+end method test-parse;
+
 
 
 define method strip-extension
@@ -275,7 +312,7 @@ define method compile-library
       let tlfs = make(<stretchy-vector>);
       *Top-Level-Forms* := tlfs;
       add!(tlf-vectors, tlfs);
-      parse-program(tokenizer);
+      parse-source-record(tokenizer);
     cleanup
       *Current-Library* := #f;
       *Current-Module* := #f;
@@ -616,7 +653,7 @@ define method build-command-line-entry
   let argv = make-local-var(builder, #"argv", rawptr-type);
   let func = build-function-body(builder, policy, source, #f, name,
 				 list(argc, argv), result-type, #t);
-  let user-func = fer-convert-defn-ref(builder, policy, source, defn);
+  let user-func = build-defn-ref(builder, policy, source, defn);
   // ### Should really spread the arguments out, but I'm lazy.
   build-assignment(builder, policy, source, #(),
 		   make-unknown-call(builder, user-func, #f,
@@ -643,86 +680,64 @@ define method load-library (name :: <symbol>) => ();
 end;
 
 define method incorrect-usage () => ();
-  format(*standard-error*, "Usage: compile [-Ldir ...] lid-file\n");
-#if (mindy)
-  format(*standard-error*,
-	 "    or compile -autodump component [next-free-id-in-hex]\n");
-#end
-  force-output(*standard-error*);
-  error("Incorrect usage");
+  error("Usage: compile [-Ldir ...] lid-file");
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
   *random-state* := make(<random-state>, seed: 0);
-#if (mindy)
-  if (args.size > 0 & args.first = "-autodump")
-    if (args.size < 2 | args.size > 3)
-      incorrect-usage();
-    end if;
-    let component = as(<symbol>, args.second);
-    let next-free-id = if (args.size = 3) 
-			 string-to-integer(args.third, base: 16);
-		       else
-			 #f;
-		       end if;
-    autodump(component, next-free-id);
-  else
-#end
-    let library-dirs = make(<stretchy-vector>);
-    let lid-file = #f;
-    let features = #();
-    let log-dependencies = #f;
-    for (arg in args)
-      if (arg.size >= 1 & arg[0] == '-')
-	if (arg.size >= 2)
-	  select (arg[1])
-	    'L' =>
-	      if (arg.size > 2)
-		add!(library-dirs, copy-sequence(arg, start: 2));
-	      else
-		error("Directory not supplied with -L.");
-	      end;
-	    'D' =>
-	      if (arg.size > 2)
-		features := pair(copy-sequence(arg, start: 2), features);
-	      else
-		error("Feature to define not supplied with -D.");
-	      end;
-	    'U' =>
-	      if (arg.size > 2)
-		let feature = copy-sequence(arg, start: 1);
-		feature[0] := '~';
-		features := pair(feature, features);
-	      else
-		error("Feature to undefine not supplied with -U.");
-	      end;
-	    'M' =>
-	      if (arg.size > 2)
-		error("Bogus switch: %s", arg);
-	      end if;
-	      log-dependencies := #t;
-	    otherwise =>
+  define-bootstrap-module();
+  let library-dirs = make(<stretchy-vector>);
+  let lid-file = #f;
+  let features = #();
+  let log-dependencies = #f;
+  for (arg in args)
+    if (arg.size >= 1 & arg[0] == '-')
+      if (arg.size >= 2)
+	select (arg[1])
+	  'L' =>
+	    if (arg.size > 2)
+	      add!(library-dirs, copy-sequence(arg, start: 2));
+	    else
+	      error("Directory not supplied with -L.");
+	    end;
+	  'D' =>
+	    if (arg.size > 2)
+	      features := pair(copy-sequence(arg, start: 2), features);
+	    else
+	      error("Feature to define not supplied with -D.");
+	    end;
+	  'U' =>
+	    if (arg.size > 2)
+	      let feature = copy-sequence(arg, start: 1);
+	      feature[0] := '~';
+	      features := pair(feature, features);
+	    else
+	      error("Feature to undefine not supplied with -U.");
+	    end;
+	  'M' =>
+	    if (arg.size > 2)
 	      error("Bogus switch: %s", arg);
-	  end select;
-	else
-	  error("Bogus switch: %s", arg);
-	end;
+	    end if;
+	    log-dependencies := #t;
+	  otherwise =>
+	    error("Bogus switch: %s", arg);
+	end select;
       else
-	if (lid-file)
-	  error("Multiple LID files: %s and %s", lid-file, arg);
-	else
-	  lid-file := arg;
-	end;
+	error("Bogus switch: %s", arg);
+      end;
+    else
+      if (lid-file)
+	error("Multiple LID files: %s and %s", lid-file, arg);
+      else
+	lid-file := arg;
       end;
     end;
-    *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
-    unless (lid-file)
-      incorrect-usage();
-    end;
-    compile-library(lid-file, reverse!(features), log-dependencies);
-#if (mindy)
-  end if;
-#end
+  end;
+  *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
+  unless (lid-file)
+    incorrect-usage();
+  end;
+  compile-library(lid-file, reverse!(features), log-dependencies);
 end method main;
 
 

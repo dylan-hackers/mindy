@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.3 1996/02/05 01:17:31 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.4 1996/03/17 00:47:39 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;
@@ -20,19 +20,23 @@
 ;;;;
 
 (defstruct (grammar
-	    (:print-function %print-grammar))
+	    (:print-function %print-grammar)
+	    (:constructor make-grammar ()))
   ;;
   ;; List of entry-point grammar symbols.
-  (entry-points (required-argument) :type list)
+  (entry-points '() :type list)
   ;;
   ;; Hash table of all the grammar symbols.
   (symbols (make-hash-table :test #'eq) :type hash-table :read-only t)
   ;;
-  ;; Next available terminal-id.
-  (next-terminal-id 0 :type fixnum)
+  ;; Next available token-id.
+  (next-token-id 0 :type fixnum)
   ;;
-  ;; List of all the terminals.
-  (terminals nil :type list)
+  ;; List of all the tokens.
+  (tokens nil :type list)
+  ;;
+  ;; List of all the token unions.
+  (token-unions nil :type list)
   ;;
   ;; List of all the non-terminals.
   (nonterminals nil :type list)
@@ -40,11 +44,17 @@
   ;; List of the start productions.  One for each entry point.
   (start-productions nil :type list)
   ;;
+  ;; Number of productions.
+  (num-productions 0 :type (integer 0 *))
+  ;;
   ;; List or start states, one for each entry point.
   (start-states nil :type list)
   ;;
-  ;; Number of productions.
-  (num-productions 0 :type (integer 0 *)))
+  ;; The complete set of states.
+  (all-states nil :type list)
+  ;;
+  ;; The number of states.
+  (num-states 0 :type integer))
 
 (defun %print-grammar (grammar stream depth)
   (declare (ignore depth))
@@ -54,57 +64,71 @@
 (defstruct (grammar-symbol
 	    (:constructor nil))
   ;;
-  ;; List of non-terminals that can start this grammar symbol.
+  ;; List of tokens that can start this grammar symbol.
   (first nil :type list)
   ;;
   ;; True iff there is some (foo -> epsilon) production for this grammar
   ;; symbol.
-  (nullable nil :type (member t nil)))
+  (nullable nil :type (member t nil))
+  ;;
+  ;; The symbol name for this grammar symbol.
+  (name (required-argument) :type symbol)
+  ;;
+  ;; The type for this grammar symbol, or nil if not specified.
+  (type nil :type symbol))
 
 (defstruct (terminal
 	    (:include grammar-symbol)
-	    (:constructor %make-terminal (kind id))
+	    (:constructor nil)
 	    (:print-function %print-terminal))
-  ;;
-  ;; The kind of token this terminal corresponds to.
-  (kind (required-argument) :type symbol)
+  )
+
+(defun %print-terminal (symbol stream depth)
+  (declare (ignore depth))
+  (if (or *print-readably* *print-escape*)
+      (print-unreadable-object (symbol stream :type t)
+	(let ((*print-case* :upcase))
+	  (prin1 (grammar-symbol-name symbol) stream)))
+      (let ((*print-case* :upcase))
+	(prin1 (grammar-symbol-name symbol) stream))))
+  
+
+(defstruct (token
+	    (:include terminal)
+	    (:constructor %make-token (name type id)))
   ;;
   ;; A unique integer corresponding to this terminal.
   (id (required-argument) :type fixnum))
 
-(defun %print-terminal (terminal stream depth)
-  (declare (ignore depth))
-  (if (or *print-readably* *print-escape*)
-      (print-unreadable-object (terminal stream :type t)
-	(prin1 (terminal-kind terminal) stream))
-      (prin1 (terminal-kind terminal) stream)))
-
-(defun make-terminal (kind id)
-  (let ((result (%make-terminal kind id)))
-    (setf (terminal-first result) (list result))
+(defun make-token (name type id)
+  (let ((result (%make-token name type id)))
+    (setf (token-first result) (list result))
     result))
 
+(defstruct (token-union
+	    (:include terminal)
+	    (:constructor make-token-union (name type members)))
+  ;;
+  ;; List of the names for the terminals that make up this union.
+  (members (required-argument) :type list))
 
 (defstruct (nonterminal
 	    (:include grammar-symbol)
 	    (:constructor make-nonterminal (name))
 	    (:print-function %print-nonterminal))
   ;;
-  ;; The symbol name for this nonterminal.
-  (name (required-argument) :type symbol)
-  ;;
-  ;; The type for this nonterminal, or nil if not specified.
-  (type nil :type symbol)
-  ;;
   ;; List of productions with this nonterminal on the left hand side.
   (productions nil :type list))
 
-(defun %print-nonterminal (nonterminal stream depth)
+(defun %print-nonterminal (symbol stream depth)
   (declare (ignore depth))
   (if (or *print-readably* *print-escape*)
-      (print-unreadable-object (nonterminal stream :type t)
-	(prin1 (nonterminal-name nonterminal) stream))
-      (prin1 (nonterminal-name nonterminal) stream)))
+      (print-unreadable-object (symbol stream :type t)
+	(let ((*print-case* :downcase))
+	  (prin1 (grammar-symbol-name symbol) stream)))
+      (let ((*print-case* :downcase))
+	(prin1 (grammar-symbol-name symbol) stream))))
+
 
 (defstruct (production
 	    (:constructor make-production (number left-side right-side body))
@@ -129,23 +153,30 @@
 
 (defun %print-production (production stream depth)
   (declare (ignore depth))
-  (print-unreadable-object (production stream :type t)
-    (format stream "~D: ~A ->~{ ~A~}"
-	    (production-number production)
-	    (production-left-side production)
-	    (production-right-side production))))
+  (if (or *print-escape* *print-readably*)
+      (print-unreadable-object (production stream :type t)
+	(format stream "~D: ~A ->~:[ epsilon~;~:*~{ ~A~}~]"
+		(production-number production)
+		(production-left-side production)
+		(production-right-side production)))
+      (format stream "~A ->~:[ epsilon~;~:*~{ ~A~}~]"
+		(production-left-side production)
+		(production-right-side production))))
 
-
+(defvar *item-counter* 0)
 
 (defstruct (item
-	    (:constructor make-item (production dot-position))
+	    (:constructor make-item (production))
 	    (:print-function %print-item))
   ;;
   ;; The production this item is built from.
   (production (required-argument) :type production)
   ;;
   ;; The position of the dot in this item.
-  (dot-position 0 :type (integer 0 *)))
+  (dot-position 0 :type (integer 0 *))
+  ;;
+  ;; Unique index arbitrarily assigned to items as they are crested.
+  (counter (incf *item-counter*) :type (integer 0 *)))
 
 (defun %print-item (item stream depth)
   (declare (ignore depth))
@@ -186,6 +217,28 @@
 	      (kernel-item-lookaheads item)))))
 
 
+(defstruct (item-set
+	    (:constructor %make-item-set (items))
+	    (:print-function %print-item-set))
+  ;;
+  ;; List of items, sorted by item-counter.
+  (items (required-argument) :type list))
+
+(defun %print-item-set (set stream depth)
+  (declare (ignore depth))
+  (print-unreadable-object (set stream :type t)
+    (prin1 (item-set-items set) stream)))
+
+(defun make-item-set (items)
+  (declare (type list items))
+  (%make-item-set (sort items #'< :key #'item-counter)))
+
+(defun item-sets-= (set1 set2)
+  (declare (type item-set set1 set2))
+  (equal (item-set-items set1) (item-set-items set2)))
+
+
+
 (defstruct (state
 	    (:constructor make-state (number kernels))
 	    (:print-function %print-state))
@@ -194,7 +247,7 @@
   (number 0 :type (integer 0 *))
   ;;
   ;; List of kernel states.
-  (kernels nil :type list)
+  (kernels (required-argument) :type item-set)
   ;;
   ;; A-list mapping grammar symbols to next states.
   (gotos nil :type list)
@@ -218,59 +271,57 @@
 	   (type symbol thing)
 	   (values grammar-symbol))
   (or (gethash thing (grammar-symbols grammar))
-      (if (char= (schar (symbol-name thing) 0) #\<)
-	  (let* ((id (grammar-next-terminal-id grammar))
-		 (new (make-terminal thing id)))
-	    (push new (grammar-terminals grammar))
-	    (setf (grammar-next-terminal-id grammar) (1+ id))
-	    (setf (gethash thing (grammar-symbols grammar)) new)
-	    new)
-	  (let ((new (make-nonterminal thing)))
-	    (push new (grammar-nonterminals grammar))
-	    (setf (gethash thing (grammar-symbols grammar)) new)
-	    new))))
+      (let ((new (make-nonterminal thing)))
+	(push new (grammar-nonterminals grammar))
+	(setf (gethash thing (grammar-symbols grammar)) new)
+	new)))
 
-(defun parse-production (grammar production)
-  (destructuring-bind
-      (left-side (&rest right-side) &rest body)
-      production
-    (let* ((nonterminal (find-grammar-symbol grammar left-side))
-	   (num-productions (grammar-num-productions grammar))
-	   (production
-	    (make-production num-productions
-			     nonterminal
-			     (mapcar #'(lambda (thing)
-					 (find-grammar-symbol grammar thing))
-				     right-side)
-			     body)))
-      (setf (grammar-num-productions grammar) (1+ num-productions))
-      (push production (nonterminal-productions nonterminal))
-      production)))
-
-(defun parse-productions (entry-points productions)
-  (let ((grammar (make-grammar :entry-points entry-points)))
-    (setf (grammar-start-productions grammar)
-	  (mapcar #'(lambda (entry-point)
-		      (parse-production
-		       grammar
-		       (list (intern (concatenate 'string
-						  (symbol-name entry-point)
-						  "-PRIME"))
-			     (list entry-point))))
-		  entry-points))
-    (dolist (production productions)
-      (parse-production grammar production))
-    (let ((undefined (remove nil (grammar-nonterminals grammar)
-			     :key #'nonterminal-productions :test-not #'eq)))
-      (when undefined
-	(error "Undefined nonterminals:~{ ~S~}"
-	       (mapcar #'nonterminal-name undefined))))
-    grammar))
+(defun parse-production (grammar left-side right-side body)
+  (declare (type grammar grammar)
+	   (type symbol left-side)
+	   (type list right-side)
+	   (type list body)
+	   (values production))
+  (let* ((nonterminal (find-grammar-symbol grammar left-side))
+	 (num-productions (grammar-num-productions grammar))
+	 (production
+	  (make-production num-productions
+			   nonterminal
+			   (mapcar #'(lambda (thing)
+				       (declare (type symbol thing)
+						(values grammar-symbol))
+				       (find-grammar-symbol grammar thing))
+				   right-side)
+			   body)))
+    (setf (grammar-num-productions grammar) (1+ num-productions))
+    (push production (nonterminal-productions nonterminal))
+    production))
 
 
 ;;;; compute firsts.
 
-(defun compute-firsts (grammar)
+(defun compute-token-union-firsts (grammar)
+  (labels ((maybe-expand-union (union)
+	     (declare (type token-union union))
+	     (or (token-union-first union)
+		 (let ((results nil))
+		   (dolist (member-name (token-union-members union))
+		     (let ((member (find-grammar-symbol grammar member-name)))
+		       (etypecase member
+			 (nonterminal
+			  (error "In union ~S, member ~S is a non-terminal."
+				 (token-union-name union) member-name))
+			 (token
+			  (pushnew member results))
+			 (token-union
+			  (dolist (member-member (maybe-expand-union member))
+			    (pushnew member-member results))))))
+		   (setf (token-union-first union) results)))))
+    (dolist (union (grammar-token-unions grammar))
+      (maybe-expand-union union)))
+  (undefined-value))
+
+(defun compute-nonterminal-firsts (grammar)
   (loop
     (let ((anything-changed nil))
       (dolist (nonterminal (grammar-nonterminals grammar))
@@ -287,7 +338,13 @@
 	    (unless (grammar-symbol-nullable symbol)
 	      (return)))))
       (unless anything-changed
-	(return)))))
+	(return))))
+  (undefined-value))
+
+(defun compute-firsts (grammar)
+  (compute-token-union-firsts grammar)
+  (compute-nonterminal-firsts grammar)
+  (undefined-value))
 
 
 ;;;; Compute-items
@@ -299,25 +356,24 @@
 (declaim (inline map-items))
 ;;;
 (defun map-items (function item-set)
+  (declare (type item-set item-set))
   (let ((productions-added nil))
-    (labels ((grovel (item)
-	       (funcall function item)
-	       (let* ((production (item-production item))
-		      (dot-position (item-dot-position item))
-		      (right-side (production-right-side production)))
+    (labels ((grovel (production dot-position)
+	       (funcall function production dot-position)
+	       (let ((right-side (production-right-side production)))
 		 (when (< dot-position (length right-side))
 		   (let ((next-symbol (nth dot-position right-side)))
 		     (when (nonterminal-p next-symbol)
 		       (dolist (prod (nonterminal-productions next-symbol))
 			 (unless (member prod productions-added)
 			   (push prod productions-added)
-			   (grovel (make-item prod 0))))))))))
-      (dolist (item item-set)
-	(grovel item)))))
+			   (grovel prod 0)))))))))
+      (dolist (item (item-set-items item-set))
+	(grovel (item-production item) (item-dot-position item))))))
 
 
-(defmacro do-items ((var items) &body body)
-  `(map-items #'(lambda (,var) ,@body) ,items))
+(defmacro do-items ((production-var dot-position-var items) &body body)
+  `(map-items #'(lambda (,production-var ,dot-position-var) ,@body) ,items))
 
 (defun item-equal (item-1 item-2)
   (and (eq (item-production item-1) (item-production item-2))
@@ -333,59 +389,60 @@
 	(setf (aref vector dot-position)
 	      (make-kernel-item production dot-position)))))
 
+(defun compute-state (grammar kernel-items)
+  (let ((item-set (make-item-set kernel-items)))
+    (or (find item-set (grammar-all-states grammar)
+	      :key #'state-kernels
+	      :test #'item-sets-=)
+	(let ((state (make-state (grammar-num-states grammar) item-set))
+	      (gotos nil))
+	  (push state (grammar-all-states grammar))
+	  (incf (grammar-num-states grammar))
+	  (do-items (production dot-position item-set)
+	    (let* ((right-side (production-right-side production)))
+	      (when (< dot-position (length right-side))
+		(let* ((new-item
+			(find-kernel-item production
+					  (1+ dot-position)))
+		       (next-symbol (nth dot-position right-side))
+		       (entry (assoc next-symbol gotos :test #'eq)))
+		  (if entry
+		      (push new-item (cdr entry))
+		      (push (list next-symbol new-item) gotos))))))
+	  (dolist (goto gotos)
+	    (push (cons (car goto)
+			(compute-state grammar (cdr goto)))
+		  (state-gotos state)))
+	  state))))
+
 (defun compute-states (grammar)
-  (let ((results nil)
-	(number 0))
-    (labels ((add (item-set)
-	       (or (find item-set results
-			 :key #'state-kernels
-			 :test #'(lambda (set1 set2)
-				   (null (set-exclusive-or
-					  set1 set2
-					  :test #'item-equal))))
-		   (let ((state (make-state number item-set))
-			 (gotos nil))
-		     (push state results)
-		     (incf number)
-		     (do-items (item item-set)
-		       (let* ((production (item-production item))
-			      (right-side (production-right-side production))
-			      (dot-position (item-dot-position item)))
-			 (when (< dot-position (length right-side))
-			   (let* ((new-item
-				   (make-kernel-item production
-						     (1+ dot-position)))
-				  (next-symbol (nth dot-position right-side))
-				  (entry (assoc next-symbol gotos :test #'eq)))
-			     (if entry
-				 (push new-item (cdr entry))
-				 (push (list next-symbol new-item) gotos))))))
-		     (dolist (goto gotos)
-		       (push (cons (car goto) (add (cdr goto)))
-			     (state-gotos state)))
-		     state))))
-      (setf (grammar-start-states grammar)
-	    (mapcar #'(lambda (start-production)
-			(add (list (make-kernel-item start-production 0))))
-		    (grammar-start-productions grammar))))
-    results))
+  (setf (grammar-start-states grammar)
+	(mapcar #'(lambda (start-production)
+		    (let ((item (find-kernel-item start-production 0)))
+		      (compute-state grammar (list item))))
+		(grammar-start-productions grammar)))
+  (setf (grammar-all-states grammar) (nreverse (grammar-all-states grammar)))
+  (undefined-value))
+
 
 
 ;;;; Compute lookaheads.
 
-(defun compute-initial-lookaheads (grammar states)
-  (declare (type grammar grammar) (type list states))
-  (let ((eof-symbol (find-grammar-symbol grammar '<eof-token>)))
+(defun compute-initial-lookaheads (grammar)
+  (declare (type grammar grammar))
+  (let ((eof-symbol (find-grammar-symbol grammar (intern "EOF"))))
+    (unless (token-p eof-symbol)
+      (error "EOF isn't defined as a token."))
     (mapc #'(lambda (start-production start-state)
 	      (push eof-symbol
 		    (kernel-item-new-lookaheads
 		     (find start-production
-			   (state-kernels start-state)
+			   (item-set-items (state-kernels start-state))
 			   :key #'kernel-item-production))))
 	  (grammar-start-productions grammar)
 	  (grammar-start-states grammar)))
-  (dolist (state states)
-    (dolist (kernel-item (state-kernels state))
+  (dolist (state (grammar-all-states grammar))
+    (dolist (kernel-item (item-set-items (state-kernels state)))
       (let ((done nil))
 	(labels
 	    ((grovel (item lookahead)
@@ -402,7 +459,7 @@
 						   (item-production item))
 					       (= (1+ dot-position)
 						  (item-dot-position item))))
-				      (state-kernels goto))))
+				      (item-set-items (state-kernels goto)))))
 		       (declare (type state goto)
 				(type kernel-item other-item))
 		       (if lookahead
@@ -425,16 +482,16 @@
 					 (eq (cdr x) lookahead)))
 				done)
 		 (push (cons production lookahead) done)
-		 (grovel (make-item production 0) lookahead))))
+		 (grovel (make-item production) lookahead))))
 	  (grovel kernel-item nil)))))
   (undefined-value))
 
-(defun propagate-lookaheads (states)
-  (declare (type list states))
+(defun propagate-lookaheads (grammar)
+  (declare (type grammar grammar))
   (loop
     (let ((anything-changed nil))
-      (dolist (state states)
-	(dolist (item (state-kernels state))
+      (dolist (state (grammar-all-states grammar))
+	(dolist (item (item-set-items (state-kernels state)))
 	  (let ((new (kernel-item-new-lookaheads item)))
 	    (when new
 	      (setf anything-changed t)
@@ -453,22 +510,69 @@
 
 (defvar *conflicts*)
 
-(defun add-action (state action)
-  (unless (find action (state-actions state) :test #'equal)
-    (let* ((terminal (car action))
-	   (old-action (find terminal (state-actions state) :key #'car)))
-      (when old-action
-	(format t "~%~A/~A conflict at ~A on ~A:~% ~A~%with~% ~A~%"
-		(second old-action) (second action) state terminal
-		(cdr old-action) (cdr action))
-	(incf *conflicts*)))
-    (push action (state-actions state)))
-  action)
+(defun describe-state (state)
+  (dolist (item (item-set-items (state-kernels state)))
+    (let* ((production (item-production item))
+	   (right-side (production-right-side production))
+	   (dot-position (item-dot-position item)))
+      (format t "  ~A ->~{ ~A~} *~{ ~A~}~%"
+	      (production-left-side production)
+	      (subseq right-side 0 dot-position)
+	      (subseq right-side dot-position)))))  
 
-(defun compute-actions (grammar states)
-  (declare (type grammar grammar) (type list states))
-  (dolist (state states)
-    (dolist (kernel-item (state-kernels state))
+(defun describe-action (action final-newline)
+  (case (second action)
+    (:reduce
+     (let ((production (third action)))
+       (format t " reduction by production ~D:~%  ~A ->~{ ~A~}~%"
+	       (production-number production)
+	       (production-left-side production)
+	       (production-right-side production))))
+    (:shift
+     (let ((target (third action)))
+       (format t " shift to state ~D:~%" (state-number target))
+       (describe-state target)))
+    (:accept
+     (if final-newline
+	 (format t " accept~%")
+	 (format t " accept ")))
+    (t
+     (error "Strange action kind."))))
+
+(defun add-action (state action)
+  (labels ((add-token-action (token action-kind action-datum)
+	     (let ((old-action (find token (state-actions state) :key #'car)))
+	       (cond ((not old-action)
+		      (push (list token action-kind action-datum)
+			    (state-actions state)))
+		     ((and (eq action-kind (second old-action))
+			   (eq action-datum (third old-action)))
+		      nil)
+		     (t
+		      (format t "~%~A/~A conflict at state ~D:~%"
+			      (second old-action) action-kind
+			      (state-number state))
+		      (describe-state state)
+		      (format t "on token ~S between" (token-name token))
+		      (describe-action old-action nil)
+		      (format t "and")
+		      (describe-action action t)
+		      (incf *conflicts*))))))
+    (let ((terminal (car action))
+	  (action-kind (cadr action))
+	  (action-datum (caddr action)))
+      (etypecase terminal
+	(token
+	 (add-token-action terminal action-kind action-datum))
+	(token-union
+	 (dolist (token (token-union-first terminal))
+	   (add-token-action token action-kind action-datum))))))
+  (undefined-value))
+
+(defun compute-actions (grammar)
+  (declare (type grammar grammar))
+  (dolist (state (grammar-all-states grammar))
+    (dolist (kernel-item (item-set-items (state-kernels state)))
       (let ((done nil))
 	(labels
 	    ((grovel (item lookahead)
@@ -508,30 +612,16 @@
 					   (and (eq (car x) (car y))
 						(eq (cdr x) (cdr y)))))
 		   (push entry done)
-		   (grovel (make-item production 0) lookahead)))))
+		   (grovel (make-item production) lookahead)))))
 	  (dolist (lookahead (kernel-item-lookaheads kernel-item))
 	    (grovel kernel-item lookahead))))))
   (undefined-value))
   
 
-
-;;;; Compute tables
 
-(defun encode-actions (actions grammar)
-  (let ((terminal-bits
-	 (integer-length (1- (grammar-next-terminal-id grammar)))))
-    (flet ((encode-action (action)
-	     (multiple-value-bind
-		 (action-kind datum)
-		 (ecase (second action)
-		   (:accept (values 0 0))
-		   (:reduce (values 1 (production-number (third action))))
-		   (:shift (values 2 (state-number (third action)))))
-	       (logior (ash (logior (ash datum terminal-bits)
-				    (terminal-id (first action)))
-			    2)
-		       action-kind))))
-      (coerce (sort (mapcar #'encode-action actions) #'<) 'vector))))
+
+
+;;;; Compute gotos
 
 (defun add-gotos (gotos number new)
   (dolist (goto new)
@@ -584,37 +674,13 @@
 		      (cons nonterm result))))))))
    gotos))
 
-(defun compute-tables (grammar)
-  (compute-firsts grammar)
-  (let ((states (compute-states grammar)))
-    (compute-initial-lookaheads grammar states)
-    (propagate-lookaheads states)
-    (compute-actions grammar states)
-    (let* ((number-states (length states))
-	   (state-name-table (make-array number-states :initial-element nil))
-	   (action-table (make-array number-states :initial-element nil))
-	   (gotos nil))
-      (dolist (state states)
-	(setf (aref state-name-table (state-number state))
-	      (mapcar #'(lambda (item)
-			  (let* ((production (item-production item))
-				 (right-side
-				  (production-right-side production))
-				 (dot-position (item-dot-position item)))
-			    (format nil "~A ->~{ ~A~} *~{ ~A~}"
-				    (production-left-side production)
-				    (subseq right-side 0 dot-position)
-				    (subseq right-side dot-position))))
-		      (state-kernels state)))
-	(setf (aref action-table (state-number state))
-	      (let ((action (encode-actions (state-actions state) grammar)))
-		(or (find action action-table :test #'equalp)
-		    action)))
-	(setf gotos
-	      (add-gotos gotos (state-number state) (state-gotos state))))
-      (values action-table
-	      (compact-gotos gotos)
-	      state-name-table))))
+(defun compute-gotos (grammar)
+  (let* ((gotos nil))
+    (dolist (state (grammar-all-states grammar))
+      (setf gotos
+	    (add-gotos gotos (state-number state) (state-gotos state))))
+    (compact-gotos gotos)))
+
       
 
 ;;;; Emitter
@@ -652,24 +718,13 @@
 	    (production-number production))
     (let ((index 0))
       (dolist (grammar-sym right-side)
-	(let* ((type (etypecase grammar-sym
-		       (terminal
-			(terminal-kind grammar-sym))
-		       (nonterminal
-			(nonterminal-type grammar-sym)))))
-	  (format ofile ", rhs-~D~@[ :: ~A~]" (incf index) type))))
+	(format ofile ", rhs-~D~@[ :: ~A~]"
+		(incf index)
+		(grammar-symbol-type grammar-sym))))
     (format ofile ")~%")
     (format ofile "    => (new-state :: <integer>, new-symbol~@[ :: ~A~]);~%"
 	    (nonterminal-type left-side))
-    (format ofile "  // ~S ->~:[ epsilon~;~:*~{ ~S~}~]~%"
-	    (nonterminal-name (production-left-side production))
-	    (mapcar #'(lambda (sym)
-			(etypecase sym
-			  (terminal
-			   (terminal-kind sym))
-			  (nonterminal
-			   (nonterminal-name sym))))
-		    right-side))
+    (format ofile "  // ~A~%" production)
     (format ofile "  values(")
     (etypecase gotos
       (integer
@@ -691,96 +746,155 @@
 	    (production-number production)))
   (values))
 
-(defun emit-parser (entry-points types productions
-		    &optional (ofile *standard-output*))
-  (let ((grammar (parse-productions entry-points productions))
-	(*conflicts* 0))
-    (dolist (type types)
-      (let ((nonterminal (find-grammar-symbol grammar (car type))))
-	(check-type nonterminal nonterminal)
-	(setf (nonterminal-type nonterminal) (cdr type))))
-    (multiple-value-bind
-	(action gotos names)
-	(compute-tables grammar)
-      (let* ((num-terminals (grammar-next-terminal-id grammar))
-	     (terminals (make-array num-terminals)))
-	(dolist (terminal (grammar-terminals grammar))
-	  (setf (aref terminals (terminal-id terminal)) terminal))
-	(format ofile "define constant $action-bits = 2;~%")
-	(format ofile "define constant $accept-action = 0;~%")
-	(format ofile "define constant $reduce-action = 1;~%")
-	(format ofile "define constant $shift-action = 2;~2%")
-	(format ofile "define constant $terminal-id-bits = ~D;~%"
-		(integer-length (1- num-terminals)))
-	(format ofile
-		"define constant $terminals-table :: <simple-object-vector>~
-		 ~%  = vector(")
-	(dotimes (i num-terminals)
-	  (unless (zerop i)
-	    (format ofile ", "))
-	  (format ofile "~A" (terminal-kind (aref terminals i))))
-	(format ofile ");~2%"))
+(defun encode-actions (actions grammar)
+  (let ((vec (make-array (grammar-next-token-id grammar)
+			 :initial-element 0)))
+    (dolist (action actions)
+      (multiple-value-bind
+	  (action-kind datum)
+	  (ecase (second action)
+	    (:accept (values 1 0))
+	    (:reduce (values 2 (production-number (third action))))
+	    (:shift (values 3 (state-number (third action)))))
+	(setf (aref vec (token-id (first action)))
+	      (logior (ash datum 2) action-kind))))
+    vec))
 
-      (format ofile
-	      "define constant $action-table :: <simple-object-vector>~
-	       ~%  = map-as(<simple-object-vector>,~
-	       ~%           decode-action-table,~
-	       ~%           #[")
-      (dotimes (i (length action))
-	(unless (zerop i)
-	  (format ofile ",~2%             "))
-	(format ofile "// Action ~D~%             " i)
-	(dolist (name (svref names i))
-	  (format ofile "//  ~A~%             " name))
-	(dump-constant (svref action i) ofile))
-      (format ofile "]);~2%")
-      
-      (let* ((num-productions (grammar-num-productions grammar))
-	     (productions-vector
-	      (make-array num-productions :initial-element nil))
-	     (num-pops-vector
-	      (make-array num-productions :initial-element 0)))
-	(dolist (nonterminal (grammar-nonterminals grammar))
-	  (let* ((name (nonterminal-name nonterminal))
-		 (gotos (cdr (assoc name gotos))))
-	    (if gotos
-		(dolist (production (nonterminal-productions nonterminal))
-		  (let ((prod-num (production-number production)))
-		    (unless (zerop prod-num)
-		      (setf (aref productions-vector prod-num)
-			    (cons production gotos))
-		      (setf (aref num-pops-vector prod-num)
-			    (length (production-right-side production))))))
-		(unless (find nonterminal (grammar-start-productions grammar)
-			      :key #'production-left-side)
-		  (warn "Nonterminal ~S can't appear." name)))))
-	(dotimes (i num-productions)
-	  (let ((info (aref productions-vector i)))
-	    (when info
-	      (emit-production (car info) (cdr info) ofile))))
-	(format ofile "define constant $number-of-pops~%  = ");
-	(dump-constant num-pops-vector ofile)
-	(format ofile ";~2%")
-	(format ofile
-		"define constant $production-table :: <simple-object-vector>~
-		 ~%  = vector(")
-	(dotimes (i num-productions)
-	  (unless (zerop i)
-	    (format ofile ", "))
-	  (if (aref productions-vector i)
-	      (format ofile "production-~D" i)
-	      (format ofile "#f")))
-	(format ofile ");~2%"))
-	
-      (mapc #'(lambda (entry-point start-state)
-		(format ofile "define constant $~(~A~)-start-state = ~D;~%"
-			entry-point
-			(state-number start-state)))
-	    (grammar-entry-points grammar)
-	    (grammar-start-states grammar)))
-    (unless (zerop *conflicts*)
-      (warn "~D conflicts." *conflicts*)))
+(defun emit-parser (grammar &optional (ofile *standard-output*))
+  (let* ((num-tokens (grammar-next-token-id grammar))
+	 (tokens (make-array num-tokens)))
+    (dolist (token (grammar-tokens grammar))
+      (setf (aref tokens (token-id token)) token))
+    (format ofile "define constant $action-bits = 2;~%")
+    (format ofile
+	    "define constant $action-mask = ash(1, $action-bits) - 1;~2%")
+    (format ofile "define constant $error-action = 0;~%")
+    (format ofile "define constant $accept-action = 1;~%")
+    (format ofile "define constant $reduce-action = 2;~%")
+    (format ofile "define constant $shift-action = 3;~2%")
+    (format ofile
+	    "define constant $tokens-table :: <simple-object-vector>~
+	     ~%  = vector(")
+    (dotimes (i num-tokens)
+      (unless (zerop i)
+	(format ofile ",~%           "))
+      (format ofile "$~A-token" (token-name (aref tokens i))))
+    (format ofile ");~2%"))
+  
+  (format ofile
+	  "define constant $action-table~
+	   ~%  = #[")
+  (let ((index 0))
+    (dolist (state (grammar-all-states grammar))
+      (unless (= index (state-number state))
+	(error "State numbers got out of sync."))
+      (unless (zerop index)
+	(format ofile ",~%      "))
+      (dump-constant (encode-actions (state-actions state) grammar) ofile)
+      (incf index)))
+  (format ofile "];~2%")
+  
+  (let* ((num-productions (grammar-num-productions grammar))
+	 (productions-vector
+	  (make-array num-productions :initial-element nil))
+	 (num-pops-vector
+	  (make-array num-productions :initial-element 0))
+	 (gotos-table (compute-gotos grammar)))
+    (dolist (nonterminal (grammar-nonterminals grammar))
+      (let* ((name (nonterminal-name nonterminal))
+	     (gotos (cdr (assoc name gotos-table))))
+	(if gotos
+	    (dolist (production (nonterminal-productions nonterminal))
+	      (let ((prod-num (production-number production)))
+		(unless (zerop prod-num)
+		  (setf (aref productions-vector prod-num)
+			(cons production gotos))
+		  (setf (aref num-pops-vector prod-num)
+			(length (production-right-side production))))))
+	    (unless (find nonterminal (grammar-start-productions grammar)
+			  :key #'production-left-side)
+	      (warn "Nonterminal ~S can't appear." name)))))
+    (dotimes (i num-productions)
+      (let ((info (aref productions-vector i)))
+	(when info
+	  (emit-production (car info) (cdr info) ofile))))
+    (format ofile "define constant $number-of-pops~%  = ");
+    (dump-constant num-pops-vector ofile)
+    (format ofile ";~2%")
+    (format ofile
+	    "define constant $production-table :: <simple-object-vector>~
+	     ~%  = vector(")
+    (dotimes (i num-productions)
+      (unless (zerop i)
+	(format ofile ", "))
+      (if (aref productions-vector i)
+	  (format ofile "production-~D" i)
+	  (format ofile "#f")))
+    (format ofile ");~2%"))
+  
+  (mapc #'(lambda (entry-point start-state)
+	    (format ofile "define constant $~(~A~)-start-state = ~D;~%"
+		    entry-point
+		    (state-number start-state)))
+	(grammar-entry-points grammar)
+	(grammar-start-states grammar))
+
   (values))
+
+
+;;;; Log file emitter.
+
+
+(defun print-state (state line-prefix line-suffix file)
+  (dolist (item (item-set-items (state-kernels state)))
+    (let* ((production (item-production item))
+	   (right-side (production-right-side production))
+	   (dot-position (item-dot-position item)))
+      (format file "~A~A ->~{ ~A~} *~{ ~A~}~%~A"
+	      line-prefix
+	      (production-left-side production)
+	      (subseq right-side 0 dot-position)
+	      (subseq right-side dot-position)
+	      line-suffix))))
+
+(defun emit-log-file (grammar file)
+  (format file "~D tokens, ~D non-terminals, ~D productions, ~D states.~2%"
+	  (grammar-next-token-id grammar)
+	  (length (grammar-nonterminals grammar))
+	  (grammar-num-productions grammar)
+	  (grammar-num-states grammar))
+  
+  (format file "ID Token Type~%")
+  (dolist (token (grammar-tokens grammar))
+    (format file "~D ~A ~A~%"
+	    (token-id token) (token-name token) (token-type token)))
+  (terpri file)
+
+
+  (dolist (state (grammar-all-states grammar))
+    (format file "State ~D:~%" (state-number state))
+    (print-state state "    " "" file)
+    (terpri file)
+    (let ((actions nil))
+      (dolist (action (state-actions state))
+	(let ((entry (assoc (cdr action) actions :test #'equal)))
+	  (if entry
+	      (push (car action) (cdr entry))
+	      (push (list (cdr action) (car action)) actions))))
+      (dolist (entry actions)
+	(format file "  on:")
+	(dolist (token (sort (cdr entry) #'< :key #'token-id))
+	  (format file " ~A" token))
+	(let ((action (car entry)))
+	  (ecase (first action)
+	    (:accept (format file "~%   accept~%"))
+	    (:shift
+	     (format file "~%   shift to:~%")
+	     (print-state (second action) "     " "" file))
+	    (:reduce
+	     (format file "~%   reduce by:~%     ~A~%" (second action)))))
+	(terpri file))
+      (terpri file))))
 
 
 
@@ -793,30 +907,89 @@
 	(return))
       (write-line line ofile))))
 
-(defun grovel-guts (ifile)
-  (collect ((entry-points) (types) (productions))
-    (loop
-      (let ((lhs (read ifile)))
-	(when (eq lhs '%%)
-	  (return))
-	(case lhs
-	  (:entry-point
-	   (entry-points (read ifile)))
-	  (:type
-	   (types (cons (read ifile) (read ifile))))
-	  (t
-	   (let ((rhs (read ifile)))
-	     (collect ((body))
-	       (loop
-		 (let ((line (read-line ifile)))
-		   (when (string= line "%")
-		     (return))
-		   (body (expand-precents line))))
-	       (productions `(,lhs ,rhs ,@(body)))))))))
-    (values
-     (entry-points)
-     (types)
-     (productions))))
+(defun parse-grammar (grammar ifile)
+  (loop
+    (let ((lhs (read ifile)))
+      (when (eq lhs '%%)
+	(return))
+      (case lhs
+	(:entry-point
+	 (let* ((ep (read ifile))
+		(prime (intern (concatenate 'string (symbol-name ep)
+					    "-PRIME"))))
+	   (push ep (grammar-entry-points grammar))
+	   (push (parse-production grammar prime (list ep) nil)
+		 (grammar-start-productions grammar))))
+	(:token
+	 (let ((name (read ifile))
+	       (type (read ifile)))
+	   (let ((old (gethash name (grammar-symbols grammar))))
+	     (typecase old
+	       (token
+		(error "token ~S multiply defined." name))
+	       (token-union
+		(error "~S previously defined to be a token-union" name))
+	       (nonterminal
+		(if (nonterminal-productions old)
+		    (error "~S was previously defined to be a non-terminal"
+			   name)
+		    (error "~S was previously assumed to be a non-terminal"
+			   name)))))
+	   (let* ((id (grammar-next-token-id grammar))
+		  (new (make-token name type id)))
+	     (push new (grammar-tokens grammar))
+	     (setf (grammar-next-token-id grammar) (1+ id))
+	     (setf (gethash name (grammar-symbols grammar)) new))))
+	(:union
+	 (let ((name (read ifile))
+	       (type (read ifile))
+	       (members (read ifile)))
+	   (let ((old (gethash name (grammar-symbols grammar))))
+	     (typecase old
+	       (token
+		(error "~S previously defined to be an atomic token" name))
+	       (token-union
+		(error "token-union ~S multiply defined" name))
+	       (nonterminal
+		(if (nonterminal-productions old)
+		    (error "~S was previously defined to be a non-terminal"
+			   name)
+		    (error "~S was previously assumed to be a non-terminal"
+			   name)))))
+	   (let ((new (make-token-union name type members)))
+	     (push new (grammar-token-unions grammar))
+	     (setf (gethash name (grammar-symbols grammar)) new))))
+	(:type
+	 (let ((name (read ifile))
+	       (type (read ifile)))
+	   (let ((nonterminal (find-grammar-symbol grammar name)))
+
+	     (unless (typep nonterminal 'nonterminal)
+	       (error "~S is a terminal, change change its type now." name))
+	     (when (nonterminal-type nonterminal)
+	       (warn "Multiple types defined for nonterminal ~S" name))
+	     (setf (nonterminal-type nonterminal) type))))
+	(t
+	 (let ((rhs (read ifile)))
+	   (collect ((body))
+	     (loop
+	       (let ((line (read-line ifile)))
+		 (when (string= line "%")
+		   (return))
+		 (body (expand-precents line))))
+	     (parse-production grammar lhs rhs (body))))))))
+  (let ((undefined (remove nil (grammar-nonterminals grammar)
+			   :key #'nonterminal-productions :test-not #'eq)))
+    (when undefined
+      (error "Undefined nonterminals:~{ ~S~}"
+	     (mapcar #'nonterminal-name undefined))))
+  (setf (grammar-entry-points grammar)
+	(nreverse (grammar-entry-points grammar)))
+  (setf (grammar-tokens grammar)
+	(nreverse (grammar-tokens grammar)))
+  (setf (grammar-start-productions grammar)
+	(nreverse (grammar-start-productions grammar)))
+  (values))
 
 (defun expand-precents (line)
   (declare (type simple-string line))
@@ -853,17 +1026,31 @@
 	(return))
       (write-line line ofile))))
 
-(defun grovel-file (iname oname)
-  (with-open-file (ifile iname)
-    (with-open-stream (ofile (if oname
-				 (open oname
-				       :direction :output
-				       :if-exists :supersede
-				       :if-does-not-exist :create)
-				 (make-broadcast-stream *standard-output*)))
-      (grovel-header ifile ofile)
-      (multiple-value-bind
-	  (entry-points types productions)
-	  (grovel-guts ifile)
-	(emit-parser entry-points types productions ofile))
-      (grovel-trailer ifile ofile))))
+(defun grovel-file (iname &optional oname logname)
+  (let ((*conflicts* 0))
+    (with-open-file (ifile iname)
+      (with-open-stream (ofile (if oname
+				   (open oname
+					 :direction :output
+					 :if-exists :supersede
+					 :if-does-not-exist :create)
+				   (make-broadcast-stream *standard-output*)))
+	(grovel-header ifile ofile)
+	(let ((grammar (make-grammar)))
+	  (parse-grammar grammar ifile)
+	  (compute-firsts grammar)
+	  (compute-states grammar)
+	  (compute-initial-lookaheads grammar)
+	  (propagate-lookaheads grammar)
+	  (compute-actions grammar)
+	  (emit-parser grammar ofile)
+	  (when logname
+	    (with-open-stream (logfile (open logname
+					     :direction :output
+					     :if-exists :supersede
+					     :if-does-not-exist :create))
+	      (emit-log-file grammar logfile))))
+	(grovel-trailer ifile ofile)))
+    (unless (zerop *conflicts*)
+      (warn "~D conflicts." *conflicts*))))
+

@@ -9,12 +9,12 @@ $CPPFLAGS = '-I$(SRCROOT)/runtime';
 if ($stage2) {
     push(@compile_dependencies, 'd2c');
     do install ('bin', 'd2c');
-    push(@files_to_clean, 'd2c', 'parse-dump.dylan', 'token-dump.dylan');
+    push(@files_to_clean, 'd2c');
 }
 else {
     push(@compile_dependencies, 'd2c.dbc');
     do install ('lib', 'd2c.dbc');
-    push(@files_to_clean, '*.dbc', 'parse-dump.dylan', 'token-dump.dylan');
+    push(@files_to_clean, '*.dbc');
     $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
     print <<'EOF';
 
@@ -27,42 +27,22 @@ MINDYFLAGS = -lcompiler-main
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
 
-
-# Autodump divides object files into two types: Normal ones, and 
-# ones derived from autodumped Dylan code.
-#
-NORMAL_OBJS = \
+OBJS = \
 	main-exports.dbc \
-	lexer.dbc \
-	init.dbc \
-	autodump.dbc \
 	main.dbc
-
-AUTODUMPED_OBJS = parse-dump.dbc token-dump.dbc
-
-OBJS = ${NORMAL_OBJS} ${AUTODUMPED_OBJS}
 
 LIBS = \
 	../base/baselib.dbc \
 	../front/frontlib.dbc \
+	../optimize/optimizelib.dbc \
 	../parser/parserlib.dbc \
+	../convert/convertlib.dbc \
 	../cback/cbacklib.dbc
 
 d2c.dbc: ${LIBS} ${OBJS}
 	cat  $^ > $@
-
-parse-dump.dylan: ../base/parse-tree.dylan autodump.dylan
-	${MAKE} autodumper.dbc
-	${MINDY} -f autodumper.dbc -autodump parse-tree
-
-token-dump.dylan: ../base/tokens.dylan autodump.dylan
-	${MAKE} autodumper.dbc
-	${MINDY} -f autodumper.dbc -autodump tokens
-
-autodumper.dbc: ${LIBS} ${NORMAL_OBJS}
-	cat $^ > $@
 
 $(DESTDIR)/bin/d2c: d2c
 	@-mv $@ $@.old
@@ -76,6 +56,6 @@ EOF
 
 do emit_library_rule(
     'Main', '$(BUILDROOT)/force.timestamp',
-    '-L../base -L../front -L../parser -L../cback'
+    '-L../base -L../front -L../optimize -L../parser -L../convert -L../cback'
 );
 

@@ -20,14 +20,18 @@ else {
 d2c-compile: compiler-parser.lib.du libparser.a
 
 MC = mindycomp
-MINDYFLAGS = 
+MINDYFLAGS = -lcompiler-parser
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -lcompiler-parser -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
 
 OBJS = \
 	parser-exports.dbc \
+	lexer.dbc \
+	fragments.dbc \
+	parse-tree.dbc \
+	support.dbc \
 	parser.dbc \
 	macros.dbc
 
@@ -39,7 +43,7 @@ EOF
 }
 
 do emit_library_rule(
-    'Parser', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
+    'Parser', '$(BUILDROOT)/force.timestamp', '-L../base'
 );
 
 print <<'EOF';

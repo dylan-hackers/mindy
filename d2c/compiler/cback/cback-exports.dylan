@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.9 1996/03/02 19:12:12 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.10 1996/03/17 00:46:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,6 +7,7 @@ define library compiler-cback
   use Dylan;
   use compiler-base;
   use compiler-front;
+  use compiler-convert;
   export cback;
   export heap;
 end library;
@@ -36,11 +37,13 @@ define module cback
   use compile-time-functions;
   use compile-time-values;
   use ctype;
-  use define-constants-and-variables;
-  use define-functions;
-  use define-classes;
   use definitions;
-  use forward-defn-classes;
+  // use define-functions;
+  use function-definitions;
+  // use define-constants-and-variables;
+  use variable-definitions;
+  use define-classes;
+  // use forward-defn-classes;
   use flow;
   use front;
   use names;
@@ -49,11 +52,11 @@ define module cback
   use representation;
   use signature-interface;
   use stack-analysis;
-  use top-level-expressions;
+  // use top-level-expressions;
   use top-level-forms;
   use utils;
   use variables;
-  use cheese;
+  // use cheese;
 
   export
     <unit-state>, unit-prefix, unit-init-roots, unit-eagerly-reference,
@@ -80,8 +83,9 @@ define module heap
   use classes;
   use compile-time-functions;
   use definitions;
-  use define-functions;
-  use define-classes;
+  // use define-functions;
+  use function-definitions;
+  // use define-classes;
   use cback;
   use od-format;
 

@@ -20,18 +20,18 @@ else {
 d2c-compile: compiler-cback.lib.du libcback.a
 
 MC = mindycomp
-MINDYFLAGS = 
+MINDYFLAGS = -lcompiler-cback
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -lcompiler-cback -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
 
 OBJS = \
 	cback-exports.dbc \
-	stackanal.dbc \
 	cback.dbc \
 	primemit.dbc \
-	heap.dbc
+	heap.dbc \
+	stackanal.dbc
 
 cbacklib.dbc: ${OBJS}
 	cat $^ > $@
@@ -40,6 +40,7 @@ EOF
 }
 
 do emit_library_rule(
-    'Cback', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
+    'Cback', '$(BUILDROOT)/force.timestamp',
+    '-L../base -L../front -L../parser -L../convert'
 );
 

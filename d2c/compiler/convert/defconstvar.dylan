@@ -1,34 +1,59 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.29 1996/02/06 15:47:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.30 1996/03/17 00:56:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-// definition class definitions
+// Parse tree classes and macro expanders.
 
-define abstract class <bindings-definition> (<definition>)
-  //
-  // The <ctype> for this definition if it is a compile-time constant.  Filled
-  // in by finalize-top-level-form.
-  slot defn-type :: false-or(<ctype>), init-keyword: type:;
-  //
-  // The initial value (or only value for constants) if it is a compile-time
-  // value, #f if it isn't compile-time computable, and #"not-computed-yet"
-  // if we haven't figured it out yet.  Filled in either by ct-value on a
-  // constant or by finalize-top-level-form.
-  slot defn-init-value
-    :: type-union(<ct-value>, one-of(#f, #"not-computed-yet")),
-    init-value: #"not-computed-yet", init-keyword: value:;
-end;
+define abstract class <define-binding-parse> (<definition-parse>)
+  constant slot defbinding-variables :: <variable-list>,
+    required-init-keyword: variables:;
+  slot defbinding-expression :: <expression-parse>,
+    required-init-keyword: expression:;
+end class <define-binding-parse>;
+
+define sealed domain make (singleton(<define-binding-parse>));
+define sealed domain initialize (<define-binding-parse>);
+
+define class <define-constant-parse> (<define-binding-parse>)
+end class <define-constant-parse>;
+
+define sealed domain make (singleton(<define-constant-parse>));
+
+define-procedural-expander
+  (#"make-define-constant",
+   method (variables-frag :: <fragment>, expression-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-parsed-fragment
+       (make(<define-constant-parse>,
+	     variables: parse-variable-list(make(<fragment-tokenizer>,
+						 fragment: variables-frag)),
+	     expression: expression-from-fragment(expression-frag)));
+   end method);
+
+define class <define-variable-parse> (<define-binding-parse>)
+end class <define-variable-parse>;
+
+define sealed domain make (singleton(<define-variable-parse>));
+
+define-procedural-expander
+  (#"make-define-variable",
+   method (variables-frag :: <fragment>, expression-frag :: <fragment>)
+       => expansion :: <fragment>;
+     make-parsed-fragment
+       (make(<define-variable-parse>,
+	     variables: parse-variable-list(make(<fragment-tokenizer>,
+						 fragment: variables-frag)),
+	     expression: expression-from-fragment(expression-frag)));
+   end method);
+
+
+// More definitions.
 
 define class <constant-definition>
     (<bindings-definition>, <abstract-constant-definition>)
-  //
-  // The top level form that makes this definition, or #f if it wasn't defined
-  // by a define constant in this library.  If this is #f, then the init-value
-  // must be supplied.
-  slot defconst-tlf :: false-or(<define-constant-tlf>),
-    init-value: #f;
+  slot const-defn-tlf :: <define-constant-tlf>;
 end;
 
 // <constant-method-definition>
@@ -42,27 +67,17 @@ define class <constant-method-definition>
      // version of defn-type instead of the slot.
      <function-definition>,
      <constant-definition>)
-  inherited slot defn-init-value, init-value: #f;
 end;
 
-define class <variable-definition> (<bindings-definition>)
-  //
-  // The <constant-definition> for the type if the type isn't a compile-time
-  // constant.  Filled in by finalize-top-level-form.
-  slot var-defn-type-defn :: false-or(<constant-definition>),
-    init-value: #f, init-keyword: type-defn:;
-end;
 
 
 // Top level form class definitions.
 
-define abstract class <define-bindings-tlf> (<define-tlf>)
-  slot tlf-bindings :: <bindings>,
-    required-init-keyword: bindings:;
-  slot tlf-required-defns :: <simple-object-vector>,
-    required-init-keyword: required-defns:;
-  slot tlf-rest-defn :: false-or(<bindings-definition>),
-    required-init-keyword: rest-defn:;
+define abstract class <real-define-bindings-tlf> (<define-bindings-tlf>)
+  constant slot tlf-variables :: <variable-list>,
+    required-init-keyword: variables:;
+  constant slot tlf-expression :: <expression-parse>,
+    required-init-keyword: expression:;
   slot tlf-finalized? :: <boolean>,
     init-value: #f;
   slot tlf-anything-non-constant? :: <boolean>,
@@ -105,24 +120,26 @@ define method print-object (tlf :: <define-bindings-tlf>, stream :: <stream>)
   end;
 end;
 
-define class <define-constant-tlf> (<define-bindings-tlf>)
+define class <define-constant-tlf> (<real-define-bindings-tlf>)
 end;
 
+
 define method initialize
-    (tlf :: <define-constant-tlf>, #next next-method, #key) => ();
-  next-method();
+    (tlf :: <define-constant-tlf>, #next next-method, #key)
+    => ();
   for (defn in tlf.tlf-required-defns)
-    defn.defconst-tlf := tlf;
-  end;
+    defn.const-defn-tlf := tlf;
+  end for;
   if (tlf.tlf-rest-defn)
-    tlf.tlf-rest-defn.defconst-tlf := tlf;
-  end;
-end;
+    tlf.tlf-rest-defn.const-defn-tlf := tlf;
+  end if;
+end method initialize;
+
 
 define class <define-constant-method-tlf> (<define-constant-tlf>)
 end;
 
-define class <define-variable-tlf> (<define-bindings-tlf>)
+define class <define-variable-tlf> (<real-define-bindings-tlf>)
 end;
 
 
@@ -130,52 +147,52 @@ end;
 // Process-top-level-form methods
 
 define method process-top-level-form (form :: <define-constant-parse>) => ();
-  let bindings = form.defconst-bindings;
-  let param-list = bindings.bindings-parameter-list;
-  if (param-list.paramlist-required-vars.size == 1
-	& param-list.paramlist-required-vars[0].param-type == #f
-	& param-list.paramlist-rest == #f
+  let variables = form.defbinding-variables;
+  if (variables.varlist-fixed.size == 1
+	& variables.varlist-fixed[0].param-type == #f
+	& variables.varlist-rest == #f
 	& begin
 	    let method-ref
-	      = expand-until-method-ref(bindings.bindings-expression);
-	    method-ref & (bindings.bindings-expression := method-ref);
+	      = expand-until-method-ref(form.defbinding-expression);
+	    method-ref & (form.defbinding-expression := method-ref);
 	  end)
-    process-aux(bindings, <define-constant-method-tlf>,
-		<constant-method-definition>)
+    process-aux(form.defbinding-variables, form.defbinding-expression,
+		<define-constant-method-tlf>, <constant-method-definition>);
   else
-    process-aux(bindings, <define-constant-tlf>, <constant-definition>);
+    process-aux(form.defbinding-variables, form.defbinding-expression,
+		<define-constant-tlf>, <constant-definition>);
   end;
 end;
 
-define method expand-until-method-ref (expr :: <expression>)
-    => res :: false-or(<method-ref>);
+define method expand-until-method-ref (expr :: <expression-parse>)
+    => res :: false-or(<method-ref-parse>);
   #f;
 end;
 
-define method expand-until-method-ref (expr :: <method-ref>)
-    => res :: false-or(<method-ref>);
+define method expand-until-method-ref (expr :: <method-ref-parse>)
+    => res :: false-or(<method-ref-parse>);
   expr;
 end;
 
-define method expand-until-method-ref (expr :: <begin>)
-    => res :: false-or(<method-ref>);
-  let body = expr.begin-body;
+define method expand-until-method-ref (expr :: <body-parse>)
+    => res :: false-or(<method-ref-parse>);
+  let body = expr.body-parts;
   body.size == 1 & expand-until-method-ref(body[0]);
 end;
 
-define method expand-until-method-ref (expr :: <macro-statement>)
-    => res :: false-or(<method-ref>);
-  let expansion = expand(expr, #f);
-  expansion & expansion.size == 1 & expand-until-method-ref(expansion[0]);
+define method expand-until-method-ref (expr :: <macro-call-parse>)
+    => res :: false-or(<method-ref-parse>);
+  expand-until-method-ref(macro-expand(expr));
 end;
 
 define method process-top-level-form (form :: <define-variable-parse>) => ();
-  process-aux(form.defvar-bindings, <define-variable-tlf>,
-	      <variable-definition>);
+  process-aux(form.defbinding-variables, form.defbinding-expression,
+	      <define-variable-tlf>, <variable-definition>);
 end;
 
-define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
-			   defn-class :: <class>)
+define method process-aux
+    (variables :: <variable-list>, expr :: <expression-parse>,
+     tlf-class :: <class>, defn-class :: <class>)
     => ();
   local method make-and-note-defn (param :: <parameter>)
 	  let name = param.param-name;
@@ -187,14 +204,15 @@ define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
 	  note-variable-definition(defn);
 	  defn;
 	end;
-  let paramlist = bindings.bindings-parameter-list;
-  let rest-param = paramlist.paramlist-rest;
-  add!(*Top-Level-Forms*,
-       make(tlf-class,
-	    bindings: bindings,
-	    required-defns:
-	      map(make-and-note-defn, paramlist.paramlist-required-vars),
-	    rest-defn: rest-param & make-and-note-defn(rest-param)));
+  let required-defns = map(make-and-note-defn, variables.varlist-fixed);
+  let rest-param = variables.varlist-rest;
+  let rest-defn = rest-param & make-and-note-defn(rest-param);
+  let tlf = make(tlf-class,
+		 variables: variables,
+		 expression: expr,
+		 required-defns: required-defns,
+		 rest-defn: rest-defn);
+  add!(*Top-Level-Forms*, tlf);
 end;
 
 
@@ -202,8 +220,8 @@ end;
 
 define method ct-value (defn :: <constant-definition>)
     => res :: false-or(<ct-value>);
-  if (defn.defn-init-value == #"not-computed-yet")
-    let tlf = defn.defconst-tlf;
+  if (defn.%defn-init-value == #"not-computed-yet")
+    let tlf = defn.const-defn-tlf;
     if (tlf)
       if (tlf.tlf-finalized?)
 	compiler-warning("%= is circularly defined.", defn);
@@ -228,12 +246,11 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
     // circularities.
     tlf.tlf-finalized? := #t;
     // Eval the expression
-    let (#rest res) = ct-mv-eval(tlf.tlf-bindings.bindings-expression, #f);
+    let (#rest res) = ct-mv-eval(tlf.tlf-expression, #f);
     let constant? = res.empty? | ~(res[0] == #f);
     // Fill in all the required definitions.
     for (defn in tlf.tlf-required-defns,
-	 param in tlf.tlf-bindings.bindings-parameter-list
-	   .paramlist-required-vars,
+	 param in tlf.tlf-variables.varlist-fixed,
 	 index from 0)
       let type = if (param.param-type)
 		   let ctype = ct-eval(param.param-type, #f);
@@ -298,9 +315,9 @@ end;
 define method finalize-top-level-form
     (tlf :: <define-constant-method-tlf>) => ();
   tlf.tlf-finalized? := #t;
-  let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
+  let meth = tlf.tlf-expression.method-ref-method;
   let (signature, anything-non-constant?)
-    = compute-signature(meth.method-param-list, meth.method-returns);
+    = compute-signature(meth.method-parameters, meth.method-returns);
   let defn = tlf.tlf-required-defns[0];
   defn.function-defn-signature := signature;
   if (anything-non-constant?)
@@ -322,8 +339,7 @@ define method convert-top-level-form
     let policy = $Default-Policy;
     let source = make(<source-location>);
     let init-builder = make-builder(builder);
-    let bindings = tlf.tlf-bindings;
-    let paramlist = bindings.bindings-parameter-list;
+    let variables = tlf.tlf-variables;
     local
       method foo (defn, param)
 	let temp = make-local-var(builder, param.param-name.token-symbol,
@@ -338,26 +354,26 @@ define method convert-top-level-form
 		fer-convert(builder, param.param-type, lexenv,
 			    #"assignment", type);
 		if (instance?(defn, <variable-definition>))
-		  fer-convert-defn-set(builder, policy, source,
-				       defn.var-defn-type-defn, type);
+		  build-defn-set(builder, policy, source,
+				 defn.var-defn-type-defn, type);
 		end;
 		make-check-type-operation(init-builder, policy, source,
 					  temp, type);
 	      end;
-	  fer-convert-defn-set(init-builder, policy, source, defn, checked);
+	  build-defn-set(init-builder, policy, source, defn, checked);
 	end;
 	temp;
       end;
     let vars = map-as(<list>, foo, tlf.tlf-required-defns,
-		      paramlist.paramlist-required-vars);
+		      variables.varlist-fixed);
     let rest-defn = tlf.tlf-rest-defn;
     if (rest-defn & ~rest-defn.defn-init-value)
       let rest-temp
 	= make-local-var(builder,
-			 paramlist.paramlist-rest.param-name.token-symbol,
+			 variables.varlist-rest.param-name.token-symbol,
 			 rest-defn.defn-type | object-ctype());
       let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
-      fer-convert(builder, bindings.bindings-expression, lexenv,
+      fer-convert(builder, tlf.tlf-expression, lexenv,
 		  #"assignment", cluster);
       build-assignment
 	(builder, policy, source, concatenate(vars, list(rest-temp)),
@@ -366,9 +382,9 @@ define method convert-top-level-form
 	    list(cluster,
 		 make-literal-constant(builder, as(<ct-value>, vars.size))),
 	    name: #"canonicalize-results"));
-      fer-convert-defn-set(init-builder, policy, source, rest-defn, rest-temp);
+      build-defn-set(init-builder, policy, source, rest-defn, rest-temp);
     else
-      fer-convert(builder, bindings.bindings-expression, lexenv,
+      fer-convert(builder, tlf.tlf-expression, lexenv,
 		  #"assignment", vars);
     end;
     build-region(builder, builder-result(init-builder));
@@ -381,13 +397,13 @@ define method convert-top-level-form
     => ();
   let defn = tlf.tlf-required-defns[0];
   let lexenv = make(<lexenv>);
-  let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
+  let meth = tlf.tlf-expression.method-ref-method;
   let name = format-to-string("%s", defn.defn-name);
   let leaf = fer-convert-method(builder, meth, name, defn.ct-value, #"global",
 				lexenv, lexenv);
   if (defn.function-defn-hairy?)
     let source = make(<source-location>);
-    fer-convert-defn-set(builder, lexenv.lexenv-policy, source, defn, leaf);
+    build-defn-set(builder, lexenv.lexenv-policy, source, defn, leaf);
   end;
 end;
 
@@ -406,7 +422,7 @@ end;
 
 define constant $bindings-definition-slots
   = list(defn-type, type:, defn-type-setter,
-	 defn-init-value, value:, defn-init-value-setter);
+	 %defn-init-value, value:, defn-init-value-setter);
 
 add-make-dumper(#"constant-definition", *compiler-dispatcher*,
 		<constant-definition>,

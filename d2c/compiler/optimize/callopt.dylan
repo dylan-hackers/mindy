@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.6 1996/02/22 17:47:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.7 1996/03/17 00:41:36 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -404,10 +404,8 @@ define method optimize-generic
     let assign = call.dependents.dependent;
     let policy = assign.policy;
     let source = assign.source-location;
-    let new-func
-      = fer-convert-defn-ref(builder, policy, source, ordered.head);
-    let next-leaf
-      = make-next-method-info-leaf(builder, ordered, ambiguous);
+    let new-func = build-defn-ref(builder, policy, source, ordered.head);
+    let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
     insert-before(component, assign, builder-result(builder));
     let new-call = make-unknown-call(builder, new-func, next-leaf, arg-leaves);
     replace-expression(component, call.dependents, new-call);
@@ -497,29 +495,6 @@ end;
 
 
 // Call manipulation utilities.
-
-define method method-defn-inline-function
-    (defn :: <abstract-method-definition>)
-    => res :: false-or(<function-literal>);
-  if (defn.%method-defn-inline-function == #"not-computed-yet")
-    if (defn.method-defn-inline-expansion & ~defn.function-defn-hairy?)
-      let component = make(<fer-component>);
-      let builder = make-builder(component);
-      let lexenv = make(<lexenv>);
-      let leaf = fer-convert-method(builder, defn.method-defn-inline-expansion,
-				    format-to-string("%s", defn.defn-name),
-				    #f, #"local", lexenv, lexenv);
-      optimize-component(component, simplify-only: #t);
-      defn.%method-defn-inline-function := leaf;
-    else
-      defn.%method-defn-inline-function := #f;
-    end;
-  else
-    defn.%method-defn-inline-function;
-  end;
-end;
-
-
 
 define method maybe-change-to-known-or-error-call
     (component :: <component>, call :: <unknown-call>, sig :: <signature>,

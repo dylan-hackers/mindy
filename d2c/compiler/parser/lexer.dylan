@@ -1,61 +1,62 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.13 1996/01/12 14:03:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.14 1996/03/17 00:54:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-// Feature tokens.
-
-define abstract class <feature-token> (<token>) end;
-define class <feature-if-token> (<feature-token>) end;
-define class <feature-else-if-token> (<feature-token>) end;
-define class <feature-else-token> (<feature-token>) end;
-define class <feature-end-token> (<feature-token>) end;
-
-
 // Constructors.
 
-// make-binary-operator, make-tilde, make-minus, make-equal,
-// make-double-equal -- internal.
+// make-binary-operator, make-tilde, make-minus, make-equal, make-double-equal
+//   -- internal.
 //
-// Make a various kinds of operators.
+// Make various kinds of operators.
 // 
-define method make-binary-operator (lexer :: <lexer>,
-				    source-location :: <file-source-location>)
-  make(<binary-operator-token>,
+define method make-binary-operator
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <operator-token>;
+  make(<operator-token>,
        source-location: source-location,
+       kind: $other-binary-operator-token,
        symbol: as(<symbol>, extract-string(source-location)),
        module: *Current-Module*);
 end;
 //
-define method make-tilde (lexer :: <lexer>,
-			  source-location :: <file-source-location>)
-  make(<tilde-token>,
+define method make-tilde
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <identifier-token>;
+  make(<identifier-token>,
        source-location: source-location,
+       kind: $tilde-token,
        symbol: #"~",
        module: *Current-Module*);
 end;
 //
-define method make-minus (lexer :: <lexer>,
-			  source-location :: <file-source-location>)
-  make(<minus-token>,
+define method make-minus
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <operator-token>;
+  make(<operator-token>,
        source-location: source-location,
+       kind: $minus-token,
        symbol: #"-",
        module: *Current-Module*);
 end;
 //
-define method make-equal (lexer :: <lexer>,
-			  source-location :: <file-source-location>)
-  make(<equal-token>,
+define method make-equal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <operator-token>;
+  make(<operator-token>,
        source-location: source-location,
+       kind: $equal-token,
        symbol: #"=",
        module: *Current-Module*);
 end;
 //
-define method make-double-equal (lexer :: <lexer>,
-				 source-location :: <file-source-location>)
-  make(<double-equal-token>,
+define method make-double-equal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <operator-token>;
+  make(<operator-token>,
        source-location: source-location,
+       kind: $double-equal-token,
        symbol: #"==",
        module: *Current-Module*);
 end;
@@ -65,45 +66,42 @@ end;
 //
 // Make a <quoted-name-token> for \-quoted operator.
 // 
-define method make-quoted-name (lexer :: <lexer>,
-				  source-location :: <file-source-location>)
-  make(<quoted-name-token>,
+define method make-quoted-name
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <identifier-token>;
+  make(<identifier-token>,
        source-location: source-location,
+       kind: $quoted-name-token,
        symbol: as(<symbol>,
 		  extract-string(source-location,
 				 start: source-location.start-posn + 1)),
        module: *Current-Module*);
-end;
+end method make-quoted-name;
 
-// maybe-reserved-word -- internal.
+// make-identifier -- internal.
 //
 // Extract the name from the source location, figure out what kind of word it
 // is, and make it.
 // 
-define method maybe-reserved-word (lexer :: <lexer>,
-				   source-location :: <file-source-location>)
+define method make-identifier
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <identifier-token>;
   let name = as(<symbol>, extract-string(source-location));
-  let mod = *Current-Module*;
-  let class = element(mod.module-syntax-table, name, default: <name-token>);
-  select (class by subtype?)
-    <identifier-token> =>
-      make(class,
-	   source-location: source-location,
-	   symbol: name,
-	   module: mod);
-    <symbol-token> =>
-      make(class,
-	   source-location: source-location,
-	   symbol: name);
-  end;
-end;
+  let module = *Current-Module*;
+  make(<identifier-token>,
+       source-location: source-location,
+       kind: syntax-for-name(module.module-syntax-table, name),
+       symbol: name,
+       module: module);
+end method make-identifier;
+
 
 // make-constrainted-name -- internal.
 //
 // Make a constrained name.
 // 
-define method make-constrained-name (lexer :: <lexer>,
-				     source-location :: <file-source-location>)
+define method make-constrained-name
+    (lexer :: <lexer>, source-location :: <file-source-location>)
   let colon-posn
     = block (return)
 	let contents = source-location.source-file.contents;
@@ -116,12 +114,18 @@ define method make-constrained-name (lexer :: <lexer>,
 	error("No : in a constrained-name?");
 	#f;
       end;
+  let constraint
+    = as(<symbol>, extract-string(source-location, start: colon-posn + 1));
   make(<constrained-name-token>,
        source-location: source-location,
-       constraint: as(<symbol>,
-		      extract-string(source-location, end: colon-posn)),
-       symbol: as(<symbol>,
-		  extract-string(source-location, start: colon-posn + 1)));
+       kind: $constrained-name-token,
+       symbol: if (colon-posn == source-location.start-posn)
+		 constraint;
+	       else
+		 as(<symbol>,
+		    extract-string(source-location, end: colon-posn));
+	       end if,
+       constraint: constraint);
 end method;
 
 // escape-character -- internal.
@@ -129,7 +133,8 @@ end method;
 // Return the real character that corresponds to the \-quoted
 // character in a string or character literal.
 //
-define method escape-character (char :: <character>)
+define method escape-character
+    (char :: <character>) => escaped-char :: <character>;
   select (char)
     'a' => '\a';
     'b' => '\b';
@@ -151,11 +156,11 @@ end;
 // default to starting one character in from either end, under the
 // assumption that the string will be surrounded by quotes.
 //
-define method decode-string (source-location :: <file-source-location>,
-			     #key start :: <integer>
-			       = source-location.start-posn + 1,
-			     end: finish :: <integer>
-			       = source-location.end-posn - 1)
+define method decode-string
+    (source-location :: <file-source-location>,
+     #key start :: <integer> = source-location.start-posn + 1,
+     end: finish :: <integer> = source-location.end-posn - 1)
+    => result :: <byte-string>;
   let contents = source-location.source-file.contents;
   let length = begin
 		 local method repeat (posn, result)
@@ -188,46 +193,47 @@ define method decode-string (source-location :: <file-source-location>,
   result;
 end;
 			 
-// make-quoted-keyword -- internal.
+// make-quoted-symbol -- internal.
 //
-// Make a <keyword-token> when confronted with the #"foo" syntax.
+// Make a <literal-token> when confronted with the #"foo" syntax.
 //
-define method make-quoted-keyword (lexer :: <lexer>,
-				   source-location :: <file-source-location>)
-  make(<keyword-token>,
+define method make-quoted-symbol
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
+  let sym = as(<symbol>,
+	       decode-string(source-location,
+			     start: source-location.start-posn + 2));
+  make(<literal-token>,
        source-location: source-location,
-       literal:
-	 make(<literal-symbol>,
-	      value: as(<symbol>,
-			decode-string(source-location,
-				      start: source-location.start-posn + 2))));
+       kind: $symbol-token,
+       literal: make(<literal-symbol>, value: sym));
 end;
 
-// make-colon-keyword -- internal.
+// make-keyword-symbol -- internal.
 //
-// Make a <keyword-token> when confronted with the foo: syntax.
+// Make a <literal-token> when confronted with the foo: syntax.
 // 
-define method make-colon-keyword (lexer :: <lexer>,
-				  source-location :: <file-source-location>)
-  make(<keyword-token>,
+define method make-keyword-symbol
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
+  let sym = as(<symbol>,
+	       extract-string(source-location,
+			      end: source-location.end-posn - 1));
+  make(<literal-token>,
        source-location: source-location,
-       literal:
-	 make(<literal-symbol>,
-	      value: as(<symbol>,
-			extract-string(source-location,
-				       end: source-location.end-posn - 1))));
+       kind: $symbol-token,
+       literal: make(<literal-symbol>, value: sym));
 end;
 		    
 // parse-integer -- internal.
 //
 // Parse and return an integer in the supplied radix.
 // 
-define method parse-integer (source-location :: <file-source-location>,
-			     #key radix :: <integer> = 10,
-			     start :: <integer>
-			       = source-location.start-posn,
-			     end: finish :: <integer>
-			       = source-location.end-posn)
+define method parse-integer
+    (source-location :: <file-source-location>,
+     #key radix :: <integer> = 10,
+          start :: <integer> = source-location.start-posn,
+          end: finish :: <integer> = source-location.end-posn)
     => res :: <extended-integer>;
   let contents = source-location.source-file.contents;
   local method repeat (posn, result)
@@ -248,8 +254,11 @@ define method parse-integer (source-location :: <file-source-location>,
 	    result;
 	  end;
 	end;
-  if (contents[start] == as(<integer>, '-'))
+  let first = as(<character>, contents[start]);
+  if (first == '-')
     -repeat(start + 1, as(<extended-integer>, 0));
+  elseif (first == '+')
+    repeat(start + 1, as(<extended-integer>, 0));
   else
     repeat(start, as(<extended-integer>, 0));
   end;
@@ -259,8 +268,9 @@ end;
 //
 // Parse an integer and return a <literal-token> holding it.
 // 
-define method parse-integer-literal (lexer :: <lexer>,
-				     source-location :: <file-source-location>)
+define method parse-integer-literal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
   let contents = source-location.source-file.contents;
   let posn = source-location.start-posn;
   let extended = #f;
@@ -299,25 +309,27 @@ define method parse-integer-literal (lexer :: <lexer>,
 
   make(<literal-token>,
        source-location: source-location,
-       literal: make(if (extended)
-		       <literal-extended-integer>;
-		     else
-		       <literal-integer>;
-		     end,
-		     value: int));
+       kind: $literal-token,
+       literal: if (extended)
+		  make(<literal-extended-integer>, value: int);
+		else
+		  make(<literal-integer>, value: int);
+		end);
 end;
 
 // make-character-literal -- internal.
 //
 // Return a <literal-token> holding the character token.
 // 
-define method make-character-literal (lexer :: <lexer>,
-				      source-location :: <file-source-location>)
+define method make-character-literal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
   let contents = source-location.source-file.contents;
   let posn = source-location.start-posn + 1;
   let char = as(<character>, contents[posn]);
   make(<literal-token>,
        source-location: source-location,
+       kind: $literal-token,
        literal:
 	 make(<literal-character>,
 	      value: if (char == '\\')
@@ -331,18 +343,21 @@ end;
 //
 // Should be obvious by now.
 //
-define method make-string-literal (lexer :: <lexer>,
-				   source-location :: <file-source-location>)
-  make(<string-token>,
+define method make-string-literal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
+  make(<literal-token>,
        source-location: source-location,
+       kind: $string-token,
        literal: make(<literal-string>,
 		     value: decode-string(source-location)));
 end;
 
 // parse-ratio-literal -- internal.
 // 
-define method parse-ratio-literal (lexer :: <lexer>,
-				   source-location :: <file-source-location>)
+define method parse-ratio-literal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
   let slash
     = block (return)
 	let contents = source-location.source-file.contents;
@@ -359,14 +374,15 @@ define method parse-ratio-literal (lexer :: <lexer>,
   let denominator = parse-integer(source-location, start: slash + 1);
   make(<literal-token>,
        source-location: source-location,
-       literal:
-	 make(<literal-ratio>, value: ratio(numerator, denominator)));
+       kind: $literal-token,
+       literal: make(<literal-ratio>, value: ratio(numerator, denominator)));
 end;
 
 define method atof (string :: <byte-string>,
 		    #key start :: <integer> = 0,
-		    end: finish :: <integer> = string.size)
-    => (class :: one-of(#f, #"single", #"double", #"extended"), value :: <ratio>);
+		         end: finish :: <integer> = string.size)
+    => (class :: one-of(#f, #"single", #"double", #"extended"),
+	value :: <ratio>);
   let class = #f;
   let posn = start;
   let sign = 1;
@@ -444,17 +460,20 @@ define method atof (string :: <byte-string>,
   end block;
 
   values(class,
-	 sign * mantissa * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
+	 sign * mantissa
+	   * ratio(10,1) ^ (exponent-sign * exponent - (scale | 0)));
 end;
 
 // parse-fp-literal -- internal.
 // 
-define method parse-fp-literal (lexer :: <lexer>,
-				source-location :: <file-source-location>)
+define method parse-fp-literal
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+    => res :: <literal-token>;
   let (class, value) = atof(extract-string(source-location));
-  
+
   make(<literal-token>,
        source-location: source-location,
+       kind: $literal-token,
        literal: make(select (class)
 		       #"single" => <literal-single-float>;
 		       #f, #"double" => <literal-double-float>;
@@ -481,7 +500,7 @@ define class <state> (<object>)
   // makes it out of the lexer (e.g. whitespace), classes for simple
   // tokens that don't need any extra parsing, and functions for more
   // complex tokens.
-  slot result :: type-union(<false>, <symbol>, <class>, <function>),
+  slot result :: type-union(<false>, <symbol>, <integer>, <function>),
     required-init-keyword: result:;
   //
   // Either #f or a vector of next-states indexed by character code.
@@ -492,431 +511,465 @@ define class <state> (<object>)
     required-init-keyword: transitions:;
 end;
 
+define sealed domain make (singleton(<state>));
+define sealed domain initialize (<state>);
+
 define method print-object (state :: <state>, stream :: <stream>) => ();
   pprint-fields(state, stream, name: state.name);
 end;
 
-// $Initial-State$ -- internal.
+
+define method add-transition
+    (table :: <simple-object-vector>,
+     on :: type-union(<integer>, <character>, <byte-string>),
+     new-state :: <symbol>)
+    => ();
+  //
+  // Make as many entries are necessary to represent the transitions
+  // from on to new-state.  On can be either an integer, a character,
+  // or a byte-string.  If a byte-string, then it supports ranges
+  // as in a-z.
+  //
+  // We also check to see if this entry classes with any earlier
+  // entries.  If so, it means someone messed up editing the
+  // state machine.
+  // 
+  select (on by instance?)
+    <integer> =>
+      if (table[on])
+	error("input %= transitions to both %= and %=",
+	      as(<character>, on), table[on], new-state);
+      else
+	table[on] := new-state;
+      end;
+    <character> =>
+      add-transition(table, as(<integer>, on), new-state);
+    <byte-string> =>
+      let last = #f;
+      let range = #f;
+      for (char in on)
+	if (range)
+	  if (last)
+	    for (i from as(<integer>, last) + 1 to as(<integer>, char))
+	      add-transition(table, i, new-state);
+	    end;
+	    last := #f;
+	  else
+	    add-transition(table, as(<integer>, '-'), new-state);
+	    add-transition(table, as(<integer>, char), new-state);
+	    last := char;
+	  end;
+	  range := #f;
+	elseif (char == '-')
+	  range := #t;
+	else 
+	  add-transition(table, as(<integer>, char), new-state);
+	  last := char;
+	end;
+      end;
+  end;
+end method add-transition;
+
+define method state
+    (name :: <symbol>,
+     result :: type-union(<false>, <symbol>, <integer>, <function>),
+     #rest transitions)
+  //
+  // Utility function for making states.  We expand the sequence
+  // of transitions into a transition table and make the state object.
+  //
+  let table = size(transitions) > 0
+    & make(<vector>, size: 128, fill: #f);
+  for (transition in transitions)
+    add-transition(table, head(transition), tail(transition));
+  end;
+  make(<state>,
+       name: name,
+       result: result,
+       transitions: table);
+end method state;
+
+
+define method compile-state-machine (#rest states)
+    => start-state :: <state>;
+  //
+  // make a hash table mapping state names to states.
+  // 
+  let state-table = make(<table>);
+  for (state in states)
+    if (element(state-table, state.name, default: #f))
+      error("State %= multiply defined.", state.name);
+    else
+      state-table[state.name] := state;
+    end if;
+  end for;
+  //
+  // Now that we have a table mapping state names to states, change the
+  // entries in the transition tables to refer to the new state
+  // object themselves instead of just to the new state name.
+  // 
+  for (state in states)
+    let table = state.transitions;
+    if (table)
+      for (i from 0 below 128)
+	let new-state = table[i];
+	if (new-state)
+	  table[i] := state-table[new-state];
+	end;
+      end;
+    end;
+  end;
+  //
+  // Return the start state, 'cause that is what we want
+  // $Initial-State to hold.
+  element(state-table, #"start");
+end method compile-state-machine;
+
+
+// $Initial-State -- internal.
 //
 // Build the state graph and save the initial state.
 // 
-define constant $Initial-State$ =
-  begin
-    local
-      method add-transition (table :: <simple-object-vector>,
-			     on :: type-union(<integer>, <character>,
-					      <byte-string>),
-			     new-state :: <symbol>);
-	//
-	// Make as many entries are necessary to represent the transitions
-	// from on to new-state.  On can be either an integer, a character,
-	// or a byte-string.  If a byte-string, then it supports ranges
-	// as in a-z.
-	//
-	// We also check to see if this entry classes with any earlier
-	// entries.  If so, it means someone messed up editing the
-	// state machine.
-	// 
-	select (on by instance?)
-	  <integer> =>
-	    if (table[on])
-	      error("input %= transitions to both %= and %=",
-		    as(<character>, on), table[on], new-state);
-	    else
-	      table[on] := new-state;
-	    end;
-	  <character> =>
-	    add-transition(table, as(<integer>, on), new-state);
-	  <byte-string> =>
-	    let last = #f;
-	    let range = #f;
-	    for (char in on)
-	      if (range)
-		if (last)
-		  for (i from as(<integer>, last) + 1 to as(<integer>, char))
-		    add-transition(table, i, new-state);
-		  end;
-		  last := #f;
-		else
-		  add-transition(table, as(<integer>, '-'), new-state);
-		  add-transition(table, as(<integer>, char), new-state);
-		  last := char;
-		end;
-		range := #f;
-	      elseif (char == '-')
-		range := #t;
-	      else 
-		add-transition(table, as(<integer>, char), new-state);
-		last := char;
-	      end;
-	    end;
-	end;
-      end,
-      method state (name :: <symbol>,
-		    result :: type-union(<false>, <symbol>, <class>, <function>),
-		    #rest transitions)
-	//
-	// Utility function for making states.  We expand the sequence
-	// of transitions into a transition table and make the state object.
-	//
-	let table = size(transitions) > 0
-	              & make(<vector>, size: 128, fill: #f);
-	for (transition in transitions)
-	  add-transition(table, head(transition), tail(transition));
-	end;
-	make(<state>,
-	     name: name,
-	     result: result,
-	     transitions: table);
-      end;
-    //
-    // Start out by making a vector of all the states.  The state
-    // names are reasonably descriptive of what as already been
-    // matched when we are in a particular state.
-    // 
-    let states = vector(state(#"start", #f,
-			      pair(" \t\f\r", #"whitespace"),
-			      pair('\n', #"newline"),
-			      pair('/', #"slash"),
-			      pair('#', #"sharp"),
-			      pair('(', #"lparen"),
-			      pair(')', #"rparen"),
-			      pair(',', #"comma"),
-			      pair('.', #"dot"),
-			      pair(';', #"semicolon"),
-			      pair('[', #"lbracket"),
-			      pair(']', #"rbracket"),
-			      pair('{', #"lbrace"),
-			      pair('}', #"rbrace"),
-			      pair(':', #"colon"),
-			      pair('-', #"minus"),
-			      pair('=', #"equal"),
-			      pair('?', #"question"),
-			      pair('\\', #"backslash"),
-			      pair('+', #"plus"),
-			      pair('~', #"tilde"),
-			      pair("&*|^", #"operator-graphic"),
-			      pair("<>", #"operator-graphic-pre-equal"),
-			      pair("!$%@_", #"leading-graphic"),
-			      pair("A-Za-z", #"symbol"),
-			      pair('\'', #"quote"),
-			      pair('"', #"double-quote"),
-			      pair("0-9", #"decimal")),
-			state(#"whitespace", #"whitespace",
-			      pair(" \t\f\r", #"whitespace")),
-			state(#"newline", #"newline"),
-			state(#"slash", make-binary-operator,
-			      pair('/', #"double-slash"),
-			      pair('*', #"slash-star")),
-			state(#"double-slash", #"end-of-line-comment"),
-			state(#"slash-star", #"multi-line-comment"),
-			state(#"sharp", #f,
-			      pair('(', #"sharp-paren"),
-			      pair('[', #"sharp-bracket"),
-			      pair("tT", #"true"),
-			      pair("fF", #"false"),
-			      pair("nN", #"sharp-n"),
-			      pair("rR", #"sharp-r"),
-			      pair("kK", #"sharp-k"),
-			      pair("aA", #"sharp-a"),
-			      pair('"', #"sharp-quote"),
-			      pair("bB", #"sharp-b"),
-			      pair("oO", #"sharp-o"),
-			      pair("xX", #"sharp-x"),
-			      pair("eE", #"sharp-e"),
-			      pair("iI", #"sharp-i")),
-			state(#"sharp-paren", <sharp-paren-token>),
-			state(#"sharp-bracket", <sharp-bracket-token>),
-			state(#"true", <true-token>),
-			state(#"false", <false-token>),
-			state(#"sharp-n", #f, pair("eE", #"sharp-ne")),
-			state(#"sharp-ne", #f, pair("xX", #"sharp-nex")),
-			state(#"sharp-nex", #f, pair("tT", #"sharp-next")),
-			state(#"sharp-next", <next-token>),
-			state(#"sharp-r", #f, pair("eE", #"sharp-re")),
-			state(#"sharp-re", #f, pair("sS", #"sharp-res")),
-			state(#"sharp-res", #f, pair("tT", #"sharp-rest")),
-			state(#"sharp-rest", <rest-token>),
-			state(#"sharp-k", #f, pair("eE", #"sharp-ke")),
-			state(#"sharp-ke", #f, pair("yY", #"sharp-key")),
-			state(#"sharp-key", <key-token>),
-			state(#"sharp-a", #f, pair("lL", #"sharp-al")),
-			state(#"sharp-al", #f, pair("lL", #"sharp-all")),
-			state(#"sharp-all", #f, pair('-', #"sharp-all-")),
-			state(#"sharp-all-", #f, pair("kK", #"sharp-all-k")),
-			state(#"sharp-all-k", #f, pair("eE", #"sharp-all-ke")),
-			state(#"sharp-all-ke", #f,
-			      pair("yY", #"sharp-all-key")),
-			state(#"sharp-all-key", #f,
-			      pair("sS", #"sharp-all-keys")),
-			state(#"sharp-all-keys", <all-keys-token>),
-			state(#"sharp-i", #f, pair("fF", #"sharp-if")),
-			state(#"sharp-if", <feature-if-token>),
-			state(#"sharp-quote", #f,
-			      pair('"', #"quoted-keyword"), 
-			      pair('\\', #"sharp-quote-escape"),
-			      pair(" !#-[]-~", #"sharp-quote")),
-			state(#"sharp-quote-escape", #f,
-			      pair("\\abefnrt0\"", #"sharp-quote")),
-			state(#"quoted-keyword", make-quoted-keyword),
-			state(#"sharp-b", #f, pair("01", #"binary-integer")),
-			state(#"binary-integer", parse-integer-literal,
-			      pair("01", #"binary-integer")),
-			state(#"sharp-o", #f, pair("0-7", #"octal-integer")),
-			state(#"octal-integer", parse-integer-literal,
-			      pair("0-7", #"octal-integer")),
-			state(#"sharp-x", #f,
-			      pair("0-9a-fA-F", #"hex-integer")),
-			state(#"hex-integer", parse-integer-literal,
-			      pair("0-9a-fA-F", #"hex-integer")),
-			state(#"sharp-e", #f,
-			      pair('-', #"sharp-e-minus"),
-			      pair("0-9", #"extended-integer"),
-			      pair("bB", #"sharp-b"),
-			      pair("oO", #"sharp-o"),
-			      pair("xX", #"sharp-x"),
-			      pair("lL", #"sharp-el"),
-			      pair("nN", #"sharp-en")),
-			state(#"sharp-e-minus", #f,
-			      pair("0-9", #"extended-integer")),
-			state(#"sharp-el", #f, pair("sS", #"sharp-els")),
-			state(#"sharp-els", #f, pair("eE", #"sharp-else")),
-			state(#"sharp-else", <feature-else-token>,
-			      pair("iI", #"sharp-elsei")),
-			state(#"sharp-elsei", #f, pair("fF", #"sharp-elseif")),
-			state(#"sharp-elseif", <feature-else-if-token>),
-			state(#"sharp-en", #f, pair("dD", #"sharp-end")),
-			state(#"sharp-end", <feature-end-token>),
-			state(#"extended-integer", parse-integer-literal,
-			      pair("0-9", #"extended-integer")),
-			state(#"lparen", <left-paren-token>),
-			state(#"rparen", <right-paren-token>),
-			state(#"comma", <comma-token>),
-			state(#"dot", <dot-token>,
-			      pair('.', #"dot-dot"),
-			      pair("0123456789", #"fp-frac")),
-			state(#"dot-dot", #f, pair('.', #"ellipsis")),
-			state(#"ellipsis", <ellipsis-token>),
-			state(#"semicolon", <semicolon-token>),
-			state(#"colon", #f,
-			      pair('=', #"colon-equal"),
-			      pair(':', #"double-colon")),
-			state(#"colon-equal", make-binary-operator),
-			state(#"double-colon", <double-colon-token>),
-			state(#"lbracket", <left-bracket-token>),
-			state(#"rbracket", <right-bracket-token>),
-			state(#"lbrace", <left-brace-token>),
-			state(#"rbrace", <right-brace-token>),
-			state(#"minus", make-minus,
-			      pair("0-9", #"signed-decimal")),
-			state(#"equal", make-equal,
-			      pair('=', #"double-equal"),
-			      pair('>', #"arrow"),
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<|^$%@_-+~?/", #"leading-graphic")),
-			state(#"double-equal", make-double-equal,
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<=>|^$%@_-+~?/",
-				   #"leading-graphic")),
-			state(#"arrow", <arrow-token>,
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<=>|^$%@_-+~?/",
-				   #"leading-graphic")),
-			state(#"question", <question-token>,
-			      pair('?', #"double-question")),
-			state(#"double-question", <double-question-token>),
-			state(#"backslash", #f,
-			      pair("-+/", #"backslash-done"),
-			      pair('~', #"backslash-tilde"),
-			      pair(':', #"backslash-colon"),
-			      pair("a-zA-Z", #"backslash-symbol"),
-			      pair("0-9", #"backslash-digit"),
-			      pair("!$%@_", #"backslash-graphic"),
-			      pair("&*^|", #"backslash-graphic-done"),
-			      pair("=<>", #"backslash-graphic-pre-equal")),
-			state(#"backslash-done", make-quoted-name),
-			state(#"backslash-tilde", make-quoted-name,
-			      pair('=', #"backslash-tilde-equal")),
-			state(#"backslash-tilde-equal", make-quoted-name,
-			      pair('=', #"backslash-done")),
-			state(#"backslash-colon", #f,
-			      pair('=', #"backslash-done")),
-			state(#"backslash-graphic", #f,
-			      pair("-0-9!&*<=>|^$%@_+~?/",
-				   #"backslash-graphic"),
-			      pair("a-zA-Z", #"backslash-symbol")),
-			state(#"backslash-graphic-done", make-quoted-name,
-			      pair("-0-9!&*<=>|^$%@_+~?/",
-				   #"backslash-graphic"),
-			      pair("a-zA-Z", #"backslash-symbol")),
-			state(#"backslash-graphic-pre-equal", make-quoted-name,
-			      pair('=', #"backslash-graphic-done"),
-			      pair("-0-9!&*<>|^$%@_+~?/",#"backslash-graphic"),
-			      pair("a-zA-Z", #"backslash-symbol")),
-			state(#"backslash-symbol", make-quoted-name,
-			      pair("-+~?/!&*<=>|^$%@_0-9a-zA-Z",
-				   #"backslash-symbol")),
-			state(#"backslash-digit", #f,
-			      pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-digit"),
-			      pair("a-zA-Z", #"backslash-digit-alpha")),
-			state(#"backslash-digit-alpha", #f,
-			      pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-digit"),
-			      pair("a-zA-Z", #"backslash-symbol")),
-			state(#"plus", make-binary-operator,
-			      pair("0-9", #"signed-decimal")),
-			state(#"tilde", make-tilde,
-			      pair('=', #"tilde-equal")),
-			state(#"tilde-equal", make-binary-operator,
-			      pair('=', #"tilde-equal-equal")),
-			state(#"tilde-equal-equal", make-binary-operator),
-			state(#"operator-graphic", make-binary-operator,
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<=>|^$%@_-+~?/",
-				   #"leading-graphic")),
-			state(#"operator-graphic-pre-equal",
-			      make-binary-operator,
-			      pair('=', #"operator-graphic"),
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<>|^$%@_-+~?/", #"leading-graphic")),
-			state(#"leading-graphic", #f,
-			      pair("0-9!&*<=>|^$%@_+~?/", #"leading-graphic"),
-			      pair('-', #"leading-graphic"),
-			      pair("a-zA-Z", #"symbol")),
-			state(#"symbol", maybe-reserved-word,
-			      pair("a-zA-Z0-9!&*<=>|^$%@_+~?/", #"symbol"),
-			      pair('-', #"symbol"),
-			      pair(':', #"colon-keyword")),
-			state(#"colon-keyword", make-colon-keyword,
-			      pair("a-zA-Z", #"cname"),
-			      pair("0-9", #"cname-leading-numeric"),
-			      pair("!&*<=>|^$%@_", #"cname-leading-graphic")),
-			state(#"cname-leading-numeric", #f,
-			      pair("0-9!&*<=>|^$%@_+~?/",
-				   #"cname-leading-numeric"),
-			      pair('-', #"cname-leading-numeric"),
-			      pair("a-zA-Z", #"cname-numeric-alpha")),
-			state(#"cname-numeric-alpha", #f,
-			      pair("0-9!&*<=>|^$%@_+~?/",
-				   #"cname-leading-numeric"),
-			      pair('-', #"cname-leading-numeric"),
-			      pair("a-zA-Z", #"cname")),
-			state(#"cname-leading-graphic", #f,
-			      pair("0-9!&*<=>|^$%@_+~?/",
-				   #"cname-leading-graphic"),
-			      pair('-', #"cname-leading-graphic"),
-			      pair("a-zA-Z", #"cname")),
-			state(#"cname", make-constrained-name,
-			      pair("a-zA-Z0-9!&*<=>|^$%@_+~?/", #"cname"),
-			      pair('-', #"cname")),
-			state(#"quote", #f,
-			      pair(" -&(-[]-~", #"quote-char"),
-			      pair('\\', #"quote-escape")),
-			state(#"quote-char", #f,
-			      pair('\'', #"character")),
-			state(#"character", make-character-literal),
-			state(#"quote-escape", #f,
-			      pair("\\abefnrt0'", #"quote-char")),
-			state(#"double-quote", #f,
-			      pair('"', #"string"), 
-			      pair('\\', #"double-quote-escape"),
-			      pair(" !#-[]-~", #"double-quote")),
-			state(#"string", make-string-literal),
-			state(#"double-quote-escape", #f,
-			      pair("\\abefnrt0\"", #"double-quote")),
-			state(#"decimal", parse-integer-literal,
-			      pair("0-9", #"decimal"),
-			      pair('/', #"decimal-slash"),
-			      pair('.', #"fp-frac"),
-			      pair("eEsSdDxX", #"decimal-e")),
-			state(#"decimal-slash", #f,
-			      pair("0-9", #"ratio"),
-			      pair("a-zA-Z", #"numeric-alpha"),
-			      pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
-			      pair('-', #"leading-numeric")),
-			state(#"numeric-alpha", #f,
-			      pair("a-zA-Z", #"symbol"),
-			      pair("0-9!&*<=>|^$%@_+~?/", #"leading-numeric"),
-			      pair('-', #"leading-numeric")),
-			state(#"leading-numeric", #f,
-			      pair("a-zA-Z", #"numeric-alpha"),
-			      pair("0-9!&*<=>|^$%@_+~?/", #"leading-numeric"),
-			      pair('-', #"leading-numeric")),
+define constant $Initial-State
+  = compile-state-machine
+      (state(#"start", #f,
+	     pair(" \t\f\r", #"whitespace"),
+	     pair('\n', #"newline"),
+	     pair('/', #"slash"),
+	     pair('#', #"sharp"),
+	     pair('(', #"lparen"),
+	     pair(')', #"rparen"),
+	     pair(',', #"comma"),
+	     pair('.', #"dot"),
+	     pair(';', #"semicolon"),
+	     pair('[', #"lbracket"),
+	     pair(']', #"rbracket"),
+	     pair('{', #"lbrace"),
+	     pair('}', #"rbrace"),
+	     pair(':', #"colon"),
+	     pair('-', #"minus"),
+	     pair('=', #"equal"),
+	     pair('?', #"question"),
+	     pair('\\', #"backslash"),
+	     pair('+', #"plus"),
+	     pair('~', #"tilde"),
+	     pair("*^&|", #"operator-graphic"),
+	     pair("<>", #"operator-graphic-pre-equal"),
+	     pair("!$%@_", #"leading-graphic"),
+	     pair("A-Za-z", #"symbol"),
+	     pair('\'', #"quote"),
+	     pair('"', #"double-quote"),
+	     pair("0-9", #"decimal")),
+       state(#"whitespace", #"whitespace",
+	     pair(" \t\f\r", #"whitespace")),
+       state(#"newline", #"newline"),
+       state(#"slash", make-binary-operator,
+	     pair('/', #"double-slash"),
+	     pair('*', #"slash-star")),
+       state(#"double-slash", #"end-of-line-comment"),
+       state(#"slash-star", #"multi-line-comment"),
+       state(#"sharp", #f,
+	     pair('(', #"sharp-paren"),
+	     pair('[', #"sharp-bracket"),
+	     pair("tT", #"true"),
+	     pair("fF", #"false"),
+	     pair("nN", #"sharp-n"),
+	     pair("rR", #"sharp-r"),
+	     pair("kK", #"sharp-k"),
+	     pair("aA", #"sharp-a"),
+	     pair('"', #"sharp-quote"),
+	     pair("bB", #"sharp-b"),
+	     pair("oO", #"sharp-o"),
+	     pair("xX", #"sharp-x"),
+	     pair("eE", #"sharp-e"),
+	     pair("iI", #"sharp-i")),
+       state(#"sharp-paren", $sharp-paren-token),
+       state(#"sharp-bracket", $sharp-bracket-token),
+       state(#"true", $true-token),
+       state(#"false", $false-token),
+       state(#"sharp-n", #f, pair("eE", #"sharp-ne")),
+       state(#"sharp-ne", #f, pair("xX", #"sharp-nex")),
+       state(#"sharp-nex", #f, pair("tT", #"sharp-next")),
+       state(#"sharp-next", $next-token),
+       state(#"sharp-r", #f, pair("eE", #"sharp-re")),
+       state(#"sharp-re", #f, pair("sS", #"sharp-res")),
+       state(#"sharp-res", #f, pair("tT", #"sharp-rest")),
+       state(#"sharp-rest", $rest-token),
+       state(#"sharp-k", #f, pair("eE", #"sharp-ke")),
+       state(#"sharp-ke", #f, pair("yY", #"sharp-key")),
+       state(#"sharp-key", $key-token),
+       state(#"sharp-a", #f, pair("lL", #"sharp-al")),
+       state(#"sharp-al", #f, pair("lL", #"sharp-all")),
+       state(#"sharp-all", #f, pair('-', #"sharp-all-")),
+       state(#"sharp-all-", #f, pair("kK", #"sharp-all-k")),
+       state(#"sharp-all-k", #f, pair("eE", #"sharp-all-ke")),
+       state(#"sharp-all-ke", #f, pair("yY", #"sharp-all-key")),
+       state(#"sharp-all-key", #f, pair("sS", #"sharp-all-keys")),
+       state(#"sharp-all-keys", $all-keys-token),
+       state(#"sharp-i", #f, pair("fF", #"sharp-if")),
+       state(#"sharp-if", $feature-if-token),
+       state(#"sharp-quote", #f,
+	     pair('"', #"quoted-keyword"), 
+	     pair('\\', #"sharp-quote-escape"),
+	     pair(" !#-[]-~", #"sharp-quote")),
+       state(#"sharp-quote-escape", #f,
+	     pair("\\abefnrt0\"", #"sharp-quote")),
+       state(#"quoted-keyword", make-quoted-symbol),
+       state(#"sharp-b", #f, pair("01", #"binary-integer")),
+       state(#"binary-integer", parse-integer-literal,
+	     pair("01", #"binary-integer")),
+       state(#"sharp-o", #f, pair("0-7", #"octal-integer")),
+       state(#"octal-integer", parse-integer-literal,
+	     pair("0-7", #"octal-integer")),
+       state(#"sharp-x", #f, pair("0-9a-fA-F", #"hex-integer")),
+       state(#"hex-integer", parse-integer-literal,
+	     pair("0-9a-fA-F", #"hex-integer")),
+       state(#"sharp-e", #f,
+	     pair('-', #"sharp-e-minus"),
+	     pair("0-9", #"extended-integer"),
+	     pair("bB", #"sharp-b"),
+	     pair("oO", #"sharp-o"),
+	     pair("xX", #"sharp-x"),
+	     pair("lL", #"sharp-el"),
+	     pair("nN", #"sharp-en")),
+       state(#"sharp-e-minus", #f,
+	     pair("0-9", #"extended-integer")),
+       state(#"sharp-el", #f, pair("sS", #"sharp-els")),
+       state(#"sharp-els", #f, pair("eE", #"sharp-else")),
+       state(#"sharp-else", $feature-else-token,
+	     pair("iI", #"sharp-elsei")),
+       state(#"sharp-elsei", #f, pair("fF", #"sharp-elseif")),
+       state(#"sharp-elseif", $feature-elseif-token),
+       state(#"sharp-en", #f, pair("dD", #"sharp-end")),
+       state(#"sharp-end", $feature-end-token),
+       state(#"extended-integer", parse-integer-literal,
+	     pair("0-9", #"extended-integer")),
+       state(#"lparen", $left-paren-token),
+       state(#"rparen", $right-paren-token),
+       state(#"comma", $comma-token),
+       state(#"dot", $dot-token,
+	     pair('.', #"dot-dot"),
+	     pair("0123456789", #"fp-frac")),
+       state(#"dot-dot", #f, pair('.', #"ellipsis")),
+       state(#"ellipsis", $ellipsis-token),
+       state(#"semicolon", $semicolon-token),
+       state(#"colon", #f,
+	     pair('=', #"colon-equal"),
+	     pair(':', #"double-colon"),
+	     pair("a-zA-Z", #"cname"),
+	     pair("0-9", #"cname-leading-numeric"),
+	     pair("!$%@_", #"cname-leading-graphic"),
+	     pair("+/", #"cname-binop"),
+	     pair('-', #"cname-binop"),
+	     pair("*^&|", #"cname-graphic-binop"),
+	     pair('~', #"cname-tilde"),
+	     pair("<>", #"cname-angle")),
+       state(#"colon-equal", make-binary-operator,
+	     pair('=', #"cname-binop")),
+       state(#"double-colon", $double-colon-token,
+	     pair('=', #"cname-binop")),
+       state(#"lbracket", $left-bracket-token),
+       state(#"rbracket", $right-bracket-token),
+       state(#"lbrace", $left-brace-token),
+       state(#"rbrace", $right-brace-token),
+       state(#"minus", make-minus,
+	     pair("0-9", #"signed-decimal")),
+       state(#"equal", make-equal,
+	     pair('=', #"double-equal"),
+	     pair('>', #"arrow"),
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<|^$%@_-+~?/", #"leading-graphic")),
+       state(#"double-equal", make-double-equal,
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+       state(#"arrow", $arrow-token,
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+       state(#"question", $question-token,
+	     pair('?', #"double-question")),
+       state(#"double-question", $double-question-token),
+       state(#"backslash", #f,
+	     pair("-+/", #"backslash-done"),
+	     pair('~', #"backslash-tilde"),
+	     pair(':', #"backslash-colon"),
+	     pair("a-zA-Z", #"backslash-symbol"),
+	     pair("0-9", #"backslash-digit"),
+	     pair("!$%@_", #"backslash-graphic"),
+	     pair("&*^|", #"backslash-graphic-done"),
+	     pair("=<>", #"backslash-graphic-pre-equal")),
+       state(#"backslash-done", make-quoted-name),
+       state(#"backslash-tilde", make-quoted-name,
+	     pair('=', #"backslash-tilde-equal")),
+       state(#"backslash-tilde-equal", make-quoted-name,
+	     pair('=', #"backslash-done")),
+       state(#"backslash-colon", #f,
+	     pair('=', #"backslash-done")),
+       state(#"backslash-graphic", #f,
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-graphic"),
+	     pair("a-zA-Z", #"backslash-symbol")),
+       state(#"backslash-graphic-done", make-quoted-name,
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-graphic"),
+	     pair("a-zA-Z", #"backslash-symbol")),
+       state(#"backslash-graphic-pre-equal", make-quoted-name,
+	     pair('=', #"backslash-graphic-done"),
+	     pair("-0-9!&*<>|^$%@_+~?/",#"backslash-graphic"),
+	     pair("a-zA-Z", #"backslash-symbol")),
+       state(#"backslash-symbol", make-quoted-name,
+	     pair("-+~?/!&*<=>|^$%@_0-9a-zA-Z", #"backslash-symbol")),
+       state(#"backslash-digit", #f,
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-digit"),
+	     pair("a-zA-Z", #"backslash-digit-alpha")),
+       state(#"backslash-digit-alpha", #f,
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"backslash-digit"),
+	     pair("a-zA-Z", #"backslash-symbol")),
+       state(#"plus", make-binary-operator,
+	     pair("0-9", #"signed-decimal")),
+       state(#"tilde", make-tilde,
+	     pair('=', #"tilde-equal")),
+       state(#"tilde-equal", make-binary-operator,
+	     pair('=', #"tilde-equal-equal")),
+       state(#"tilde-equal-equal", make-binary-operator),
+       state(#"operator-graphic", make-binary-operator,
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+       state(#"operator-graphic-pre-equal", make-binary-operator,
+	     pair('=', #"operator-graphic"),
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<>|^$%@_-+~?/", #"leading-graphic")),
+       state(#"leading-graphic", #f,
+	     pair("0-9!&*<=>|^$%@_+~?/", #"leading-graphic"),
+	     pair('-', #"leading-graphic"),
+	     pair("a-zA-Z", #"symbol")),
+       state(#"symbol", make-identifier,
+	     pair("a-zA-Z0-9!&*<=>|^$%@_+~?/", #"symbol"),
+	     pair('-', #"symbol"),
+	     pair(':', #"colon-keyword")),
+       state(#"colon-keyword", make-keyword-symbol,
+	     pair("a-zA-Z", #"cname"),
+	     pair("0-9", #"cname-leading-numeric"),
+	     pair("!$%@_", #"cname-leading-graphic"),
+	     pair("+/", #"cname-binop"),
+	     pair('-', #"cname-binop"),
+	     pair("*^&|", #"cname-graphic-binop"),
+	     pair('~', #"cname-tilde"),
+	     pair("<>", #"cname-angle"),
+	     pair('=', #"cname-equal"),
+	     pair(':', #"cname-colon")),
+       state(#"cname-binop", make-constrained-name),
+       state(#"cname-graphic-binop", make-constrained-name,
+	     pair("0-9!&*<>|^$%@_+~?/=", #"cname-leading-graphic"),
+	     pair('-', #"cname-leading-graphic"),
+	     pair("a-zA-Z", #"cname")),
+       state(#"cname-tilde", #f,
+	     pair('=', #"cname-tilde-equal")),
+       state(#"cname-tilde-equal", make-constrained-name,
+	     pair('=', #"cname-tilde-double-equal")),
+       state(#"cname-tilde-double-equal", make-constrained-name),
+       state(#"cname-angle", make-constrained-name,
+	     pair('=', #"cname-angle-equal"),
+	     pair("0-9!&*<>|^$%@_+~?/", #"cname-leading-graphic"),
+	     pair('-', #"cname-leading-graphic"),
+	     pair("a-zA-Z", #"cname")),
+       state(#"cname-angle-equal", make-constrained-name,
+	     pair("0-9!&*<>|^$%@_+~?/=", #"cname-leading-graphic"),
+	     pair('-', #"cname-leading-graphic"),
+	     pair("a-zA-Z", #"cname")),
+       state(#"cname-equal", make-constrained-name,
+	     pair('=', #"cname-binop")),
+       state(#"cname-colon", #f,
+	     pair('=', #"cname-binop")),
+       state(#"cname-leading-numeric", #f,
+	     pair("0-9!&*<>|^$%@_+~?/=", #"cname-leading-numeric"),
+	     pair('-', #"cname-leading-numeric"),
+	     pair("a-zA-Z", #"cname-numeric-alpha")),
+       state(#"cname-numeric-alpha", #f,
+	     pair("0-9!&*<>|^$%@_+~?/=",
+		  #"cname-leading-numeric"),
+	     pair('-', #"cname-leading-numeric"),
+	     pair("a-zA-Z", #"cname")),
+       state(#"cname-leading-graphic", #f,
+	     pair("0-9!&*<>|^$%@_+~?/=", #"cname-leading-graphic"),
+	     pair('-', #"cname-leading-graphic"),
+	     pair("a-zA-Z", #"cname")),
+       state(#"cname", make-constrained-name,
+	     pair("a-zA-Z0-9!&*<>|^$%@_+~?/=", #"cname"),
+	     pair('-', #"cname")),
+       state(#"quote", #f,
+	     pair(" -&(-[]-~", #"quote-char"),
+	     pair('\\', #"quote-escape")),
+       state(#"quote-char", #f,
+	     pair('\'', #"character")),
+       state(#"character", make-character-literal),
+       state(#"quote-escape", #f,
+	     pair("\\abefnrt0'", #"quote-char")),
+       state(#"double-quote", #f,
+	     pair('"', #"string"), 
+	     pair('\\', #"double-quote-escape"),
+	     pair(" !#-[]-~", #"double-quote")),
+       state(#"string", make-string-literal),
+       state(#"double-quote-escape", #f,
+	     pair("\\abefnrt0\"", #"double-quote")),
+       state(#"decimal", parse-integer-literal,
+	     pair("0-9", #"decimal"),
+	     pair('/', #"decimal-slash"),
+	     pair('.', #"fp-frac"),
+	     pair("eEsSdDxX", #"decimal-e")),
+       state(#"decimal-slash", #f,
+	     pair("0-9", #"ratio"),
+	     pair("a-zA-Z", #"numeric-alpha"),
+	     pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
+	     pair('-', #"leading-numeric")),
+       state(#"numeric-alpha", #f,
+	     pair("a-zA-Z", #"symbol"),
+	     pair("0-9!&*<=>|^$%@_+~?/", #"leading-numeric"),
+	     pair('-', #"leading-numeric")),
+       state(#"leading-numeric", #f,
+	     pair("a-zA-Z", #"numeric-alpha"),
+	     pair("0-9!&*<=>|^$%@_+~?/", #"leading-numeric"),
+	     pair('-', #"leading-numeric")),
 
-			state(#"ratio", parse-ratio-literal,
-			      pair("0-9", #"ratio"),
-			      pair("a-zA-Z", #"numeric-alpha"),
-			      pair("-!&*<=>|^$%@_+~?/", #"leading-numeric")),
+       state(#"ratio", parse-ratio-literal,
+	     pair("0-9", #"ratio"),
+	     pair("a-zA-Z", #"numeric-alpha"),
+	     pair("-!&*<=>|^$%@_+~?/", #"leading-numeric")),
 
-			state(#"signed-decimal", parse-integer-literal,
-			      pair("0-9", #"signed-decimal"),
-			      pair('/', #"signed-decimal-slash"),
-			      pair('.', #"fp-frac")),
-			state(#"signed-decimal-slash", #f,
-			      pair("0-9", #"signed-ratio")),
-			state(#"signed-ratio", parse-ratio-literal,
-			      pair("0-9", #"signed-ratio")),
-			
-			state(#"fp-frac", parse-fp-literal,
-			      pair("0-9", #"fp-frac"),
-			      pair("eEsSdDxX", #"fp-e")),
-			state(#"fp-e", #f,
-			      pair('-', #"fp-e-sign"),
-			      pair('+', #"fp-e-sign"),
-			      pair("0-9", #"fp-exp")),
-			state(#"fp-e-sign", #f,
-			      pair("0-9", #"fp-exp")),
-			state(#"fp-exp", parse-fp-literal,
-			      pair("0-9", #"fp-exp")),
-	   
-			state(#"decimal-e", #f,
-			      pair("a-zA-Z", #"symbol"),
-			      pair("[0-9]", #"decimal-exp"),
-			      pair("!&*<=>|^$%@_~?/", #"leading-numeric"),
-			      pair('-', #"decimal-e-sign"),
-			      pair('+', #"decimal-e-sign")),
-			state(#"decimal-exp", parse-fp-literal,
-			      pair("0-9", #"decimal-exp"),
-			      pair("a-zA-Z", #"numeric-alpha"),
-			      pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
-			      pair("-", #"leading-numeric")),
-			state(#"decimal-e-sign", #f,
-			      pair("0-9", #"decimal-exp"),
-			      pair("a-zA-Z", #"numeric-alpha"),
-			      pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
-			      pair("-", #"leading-numeric")));
-    //
-    // Now that we have a vector of all the states, make a hash table
-    // mapping state names to states.
-    // 
-    let state-table = make(<table>);
-    for (state in states)
-      if (element(state-table, state.name, default: #f))
-	error("State %= multiply defined.", state.name);
-      else
-	state-table[state.name] := state;
-      end;
-    end;
-    //
-    // Now that we have a table mapping state names to states, change the
-    // entries in the transition tables to refer to the new state
-    // object themselves instead of just to the new state name.
-    // 
-    for (state in states)
-      let table = state.transitions;
-      if (table)
-	for (i from 0 below 128)
-	  let new-state = table[i];
-	  if (new-state)
-	    table[i] := state-table[new-state];
-	  end;
-	end;
-      end;
-    end;
-    //
-    // Return the start state, 'cause that is what we want
-    // $Initial-State$ to hold.
-    element(state-table, #"start");
-  end;
+       state(#"signed-decimal", parse-integer-literal,
+	     pair("0-9", #"signed-decimal"),
+	     pair('/', #"signed-decimal-slash"),
+	     pair('.', #"fp-frac")),
+       state(#"signed-decimal-slash", #f,
+	     pair("0-9", #"signed-ratio")),
+       state(#"signed-ratio", parse-ratio-literal,
+	     pair("0-9", #"signed-ratio")),
+       
+       state(#"fp-frac", parse-fp-literal,
+	     pair("0-9", #"fp-frac"),
+	     pair("eEsSdDxX", #"fp-e")),
+       state(#"fp-e", #f,
+	     pair('-', #"fp-e-sign"),
+	     pair('+', #"fp-e-sign"),
+	     pair("0-9", #"fp-exp")),
+       state(#"fp-e-sign", #f,
+	     pair("0-9", #"fp-exp")),
+       state(#"fp-exp", parse-fp-literal,
+	     pair("0-9", #"fp-exp")),
+       
+       state(#"decimal-e", #f,
+	     pair("a-zA-Z", #"symbol"),
+	     pair("[0-9]", #"decimal-exp"),
+	     pair("!&*<=>|^$%@_~?/", #"leading-numeric"),
+	     pair('-', #"decimal-e-sign"),
+	     pair('+', #"decimal-e-sign")),
+       state(#"decimal-exp", parse-fp-literal,
+	     pair("0-9", #"decimal-exp"),
+	     pair("a-zA-Z", #"numeric-alpha"),
+	     pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
+	     pair("-", #"leading-numeric")),
+       state(#"decimal-e-sign", #f,
+	     pair("0-9", #"decimal-exp"),
+	     pair("a-zA-Z", #"numeric-alpha"),
+	     pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
+	     pair("-", #"leading-numeric")));
 
 
 // Features.
@@ -949,6 +1002,10 @@ define class <conditional-state> (<object>)
     required-init-keyword: old-state:;
 end class <conditional-state>;
 
+define sealed domain make (singleton(<conditional-state>));
+define sealed domain initialize (<conditional-state>);
+
+
 define method active? (state == #f) => res :: <boolean>;
   #t;
 end method active?;
@@ -961,16 +1018,16 @@ end method parse-error;
 
 define method parse-feature-term (lexer :: <lexer>) => res :: <boolean>;
   let token = internal-get-token(lexer);
-  select (token by instance?)
-    <left-paren-token> =>
-      parse-feature-expr(lexer);
-    <tilde-token> =>
-      ~parse-feature-term(lexer);
-    type-union(<word-token>, <core-word-token>) =>
-      feature-present?(token.token-symbol);
-    otherwise =>
-      parse-error(token);
-  end select;
+  let kind = token.token-kind;
+  if (kind == $left-paren-token)
+    parse-feature-expr(lexer);
+  elseif (kind == $tilde-token)
+    ~parse-feature-term(lexer);
+  elseif (kind >= $define-token & kind <= $quoted-name-token)
+    feature-present?(token.token-symbol);
+  else
+    parse-error(token);
+  end if;
 end method parse-feature-term;
 
 
@@ -979,32 +1036,32 @@ define method parse-feature-expr (lexer :: <lexer>) => res :: <boolean>;
     let res = parse-feature-term(lexer);
     while (#t)
       let token = internal-get-token(lexer);
-      select (token by instance?)
-	<right-paren-token> =>
-	  return(res);
-	<binary-operator-token> =>
-	  select (token.token-symbol)
-	    #"&" =>
-	      if (~parse-feature-term(lexer))
-		res := #f;
-	      end if;
-	    #"|" =>
-	      if (parse-feature-term(lexer))
-		res := #t;
-	      end if;
-	    otherwise =>
-	      parse-error(token);
-	  end select;
-	otherwise =>
-	  parse-error(token);
-      end select;
+      let kind = token.token-kind;
+      if (kind == $right-paren-token)
+	return(res);
+      elseif (kind == $other-binary-operator-token)
+	select (token.token-symbol)
+	  #"&" =>
+	    if (~parse-feature-term(lexer))
+	      res := #f;
+	    end if;
+	  #"|" =>
+	    if (parse-feature-term(lexer))
+	      res := #t;
+	    end if;
+	  otherwise =>
+	    parse-error(token);
+	end select;
+      else
+	parse-error(token);
+      end if;
     end while;
   end block;
 end method parse-feature-expr;
     
 define method parse-conditional (lexer :: <lexer>) => res :: <boolean>;
   let token = internal-get-token(lexer);
-  unless (instance?(token, <left-paren-token>))
+  unless (token.token-kind == $left-paren-token)
     parse-error(token);
   end unless;
   parse-feature-expr(lexer);
@@ -1036,6 +1093,9 @@ define class <lexer> (<tokenizer>)
   //
   slot conditional-state :: false-or(<conditional-state>), init-value: #f;
 end;
+
+define sealed domain make (singleton(<lexer>));
+define sealed domain initialize (<lexer>);
 
 define method print-object (lexer :: <lexer>, stream :: <stream>) => ();
   pprint-fields(lexer, stream,
@@ -1172,7 +1232,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
     // 
     let contents = lexer.source.contents;
     let length = contents.size;
-    let result-class = #f;
+    let result-kind = #f;
     let result-start = lexer.posn;
     let result-end = #f;
     local
@@ -1182,7 +1242,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	  // It is an accepting state, so record the result and where
 	  // it ended.
 	  // 
-	  result-class := state.result;
+	  result-kind := state.result;
 	  result-end := posn;
 	end;
 	//
@@ -1207,15 +1267,15 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	// advanced any further.  It just checks to see if we really
 	// are done or not.
 	//
-	if (instance?(result-class, <symbol>))
+	if (instance?(result-kind, <symbol>))
 	  //
-	  // The result-class is a symbol if this is one of the magic
+	  // The result-kind is a symbol if this is one of the magic
 	  // accepting states.  Instead of returning some token, we do
 	  // some special processing depending on exactly what symbol
 	  // it is, and then start the state machine over at the
 	  // initial state.
 	  //
-	  select (result-class)
+	  select (result-kind)
 	    #"whitespace" =>
 	      #f;
 	    #"newline" =>
@@ -1230,26 +1290,26 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	    #"multi-line-comment" =>
 	      result-end := skip-multi-line-comment(lexer, result-end);
 	  end;
-	  result-class := #f;
+	  result-kind := #f;
 	  if (result-end)
 	    result-start := result-end;
 	    result-end := #f;
-	    repeat($Initial-State$, result-start);
+	    repeat($Initial-State, result-start);
 	  end;
 	end;
       end;
-    repeat($Initial-State$, lexer.posn);
-    if (~result-class)
+    repeat($Initial-State, lexer.posn);
+    if (~result-kind)
       //
-      // If result-class is #f, that means we didn't find an accepting
-      // state.  Check to see if that means we are at the end of hit
+      // If result-kind is #f, that means we didn't find an accepting
+      // state.  Check to see if that means we are at the end or hit
       // an error.
       // 
       if (result-start == length)
-	result-class := <eof-token>;
+	result-kind := $eof-token;
 	result-end := result-start;
       else
-	result-class := <error-token>;
+	result-kind := $error-token;
 	result-end := result-start + 1;
       end;
     end;
@@ -1273,11 +1333,11 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
     //
     // And finally, make and return the actual token.
     // 
-    select(result-class by instance?)
-      <class> =>
-	make(result-class, source-location: source-location);
+    select(result-kind by instance?)
+      <integer> =>
+	make(<token>, source-location: source-location, kind: result-kind);
       <function> =>
-	result-class(lexer, source-location);
+	result-kind(lexer, source-location);
       otherwise =>
 	error("oops");
 	#f;
@@ -1289,8 +1349,8 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
   block (return)
     while (#t)
       let token = internal-get-token(lexer);
-      select (token by instance?)
-	<feature-if-token> =>
+      select (token.token-kind)
+	$feature-if-token =>
 	  let cond = parse-conditional(lexer);
 	  lexer.conditional-state
 	    := if (lexer.conditional-state.active?)
@@ -1301,7 +1361,7 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
 		      old-state: lexer.conditional-state);
 	       end if;
 	  
-	<feature-else-if-token> =>
+	$feature-elseif-token =>
 	  if (lexer.conditional-state == #f)
 	    compiler-error("#elseif with no matching #if");
 	  elseif (lexer.conditional-state.seen-else?)
@@ -1314,7 +1374,7 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
 	    lexer.conditional-state.active? := #f;
 	  end if;
 
-	<feature-else-token> =>
+	$feature-else-token =>
 	  if (lexer.conditional-state == #f)
 	    compiler-error("#else with no matching #if");
 	  elseif (lexer.conditional-state.seen-else?)
@@ -1325,7 +1385,7 @@ define method get-token (lexer :: <lexer>) => token :: <token>;
 	      := lexer.conditional-state.do-else?;
 	  end if;
 
-	<feature-end-token> =>
+	$feature-end-token =>
 	  if (lexer.conditional-state == #f)
 	    compiler-error("#end with no matching #if");
 	  else

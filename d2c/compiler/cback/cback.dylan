@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.113 1996/03/13 03:15:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.114 1996/03/17 00:46:06 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1296,9 +1296,7 @@ end;
 // This method does useful stuff to insure that heap dumping does the
 // right thing for generic functions.
 //
-define method emit-tlf-gunk
-    (tlf :: type-union(<define-generic-tlf>, <define-implicit-generic-tlf>),
-     file :: <file-state>)
+define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
     => ();
   format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
@@ -3019,30 +3017,30 @@ end;
 // Seals for file cback.dylan
 
 // <indenting-stream> -- subclass of <stream>
-seal generic make(singleton(<indenting-stream>));
-seal generic initialize(<indenting-stream>);
+define sealed domain make(singleton(<indenting-stream>));
+define sealed domain initialize(<indenting-stream>);
 // <unit-state> -- subclass of <object>
-seal generic make(singleton(<unit-state>));
-seal generic initialize(<unit-state>);
+define sealed domain make(singleton(<unit-state>));
+define sealed domain initialize(<unit-state>);
 // <root> -- subclass of <object>
-seal generic make(singleton(<root>));
-seal generic initialize(<root>);
+define sealed domain make(singleton(<root>));
+define sealed domain initialize(<root>);
 // <file-state> -- subclass of <object>
-seal generic make(singleton(<file-state>));
-seal generic initialize(<file-state>);
+define sealed domain make(singleton(<file-state>));
+define sealed domain initialize(<file-state>);
 // <backend-var-info> -- subclass of <object>
-seal generic make(singleton(<backend-var-info>));
-seal generic initialize(<backend-var-info>);
+define sealed domain make(singleton(<backend-var-info>));
+define sealed domain initialize(<backend-var-info>);
 // <function-info> -- subclass of <object>
-seal generic make(singleton(<function-info>));
-seal generic initialize(<function-info>);
+define sealed domain make(singleton(<function-info>));
+define sealed domain initialize(<function-info>);
 // <constant-info> -- subclass of <object>
-seal generic make(singleton(<constant-info>));
-seal generic initialize(<constant-info>);
+define sealed domain make(singleton(<constant-info>));
+define sealed domain initialize(<constant-info>);
 // <constant-function-info> -- subclass of <constant-info>, <function-info>
-seal generic make(singleton(<constant-function-info>));
+define sealed domain make(singleton(<constant-function-info>));
 // <constant-method-info> -- subclass of <constant-function-info>
-seal generic make(singleton(<constant-method-info>));
+define sealed domain make(singleton(<constant-method-info>));
 // <pending-define> -- subclass of <object>
-seal generic make(singleton(<pending-define>));
-seal generic initialize(<pending-define>);
+define sealed domain make(singleton(<pending-define>));
+define sealed domain initialize(<pending-define>);

@@ -1,149 +1,169 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.51 1996/02/22 17:50:48 wlott Exp $
-copyright: Copyright (c) 1994  Carnegie Mellon University
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.52 1996/03/17 00:50:44 wlott Exp $
+copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
-%%primitive break ();
 
 
-// Statement macros.
+// Primitive macro
+
+define macro %%primitive
+    { %%primitive(?:name, ?args) }
+      => make-primitive({ ?name }, { ?args } );
+  args:
+    { } => { }
+    { ?:expression, ... } => { ?expression, ... }
+end macro;
+
+%%primitive(break);
+
+
+// Simple statement macros
 
 define macro begin
-    { begin ?body end } => { %%begin ?body end };
+    { begin ?:body end } => { ?body };
 end;
 
 define macro block
-    { block () ?body end } => { begin ?body end }
-    { block (?name) ?body end } => { %%bind-exit (?name) ?body end }
-    { block () ?body cleanup ?body:cleanup end }
-      => { %%unwind-protect ?body %%cleanup ?cleanup end }
-    { block (?name) ?body cleanup ?body:cleanup end }
-      => { %%bind-exit (?name)
-	     %%unwind-protect ?body %%cleanup ?cleanup end
+    // First, pick off the simple cases.
+    { block () ?:body end } => { ?body }
+    { block (?:name) ?:body end } => make-bind-exit({ ?name }, { ?body })
+    { block () ?:body cleanup ?cleanup:body end }
+      => make-unwind-protect({ ?body }, { ?cleanup })
+    { block () ?:body afterwards ?afterwards:body end }
+      => { let (#rest results) = begin ?body end;
+	   ?afterwards;
+	   apply(values, results); }
+
+    // Pick of the bind-exit & uwp combo.
+    { block (?:name) ?:body cleanup ?cleanup:body end }
+      => { block (?name) block () ?body cleanup ?cleanup end end }
+
+    // Pick off the bind-exit & afterwards combo.
+    { block (?:name) ?:body afterwards ?afterwards:body end }
+      => { block (?name) block () ?body afterwards ?afterwards end end }
+
+    // Pick off the afterwards & uwp combo.
+    { block () ?:body afterwards ?afterwards:body cleanup ?cleanup:body end }
+      => { block () 
+	     block () ?body afterwards ?afterwards end
+	   cleanup
+	     ?cleanup
 	   end }
-    { block () ?bbody end }
-      => { %%bind-exit (done)
-	     %%bind-exit (do-handler)
-	       %%mv-call(done, begin ?bbody end);
+
+    // Pick off the bind-exit, afterwards, & uwp combo.
+    { block (?:name) ?:body afterwards ?after:body cleanup ?cleanup:body end }
+      => { block (?name) 
+	     block () ?body afterwards ?after cleanup ?cleanup end
+	   end }
+
+    // If we get here, they used exception.  So set up the exception handling
+    // context and use ebody to expand the exception clauses into let handlers.
+    { block () ?ebody end }
+      => { block (done)
+	     block (do-handler)
+	       mv-call(done, begin ?ebody end);
 	     end();
 	   end }
-    { block (?name) ?bbody end }
-      => { %%bind-exit (done)
-	     let ?name = done;
-	     %%bind-exit(do-handler)
-	       %%mv-call(done, begin ?bbody end);
+    { block (?:name) ?ebody end }
+      => { block (?name)
+	     let done = ?name;
+	     block (do-handler)
+	       mv-call(done, begin ?ebody end);
 	     end();
 	   end }
-  bbody:
-    { ... cleanup ?body }
-      => { %%unwind-protect
-	     %%bind-exit (do-handler)
-	       %%mv-call(done, begin ... end);
-	     end();
-	   %%cleanup
-	     ?body
-	   end }
-    { ... exception ?name ?body }
-      => { let handler ?name
+
+  ebody:
+    // Left recursive so that the first one is innermost.
+    { ... exception (?type:expression, #rest ?options:expression)
+	    ?:body }
+      => { let handler (?type, ?options)
 	     = method (condition, next-handler)
 		 do-handler(method () ?body end);
 	       end;
 	    ... }
-    { ... exception (?expr, #rest ?opt, #key ?test (#f), ?init-arguments (#f))
-	    ?body }
-      => { let handler (?expr, ?opt)
-	     = method (condition, next-handler)
-		 do-handler(method () ?body end);
-	       end;
-	    ... }
-    { ... exception (?name :: ?expr, #rest ?opt, 
-		     #key ?test (#f), ?init-arguments (#f))
-	    ?body }
-      => { let handler (?expr, ?opt)
+    { ... exception (?:name :: ?type:expression, #rest ?options:expression)
+	    ?:body }
+      => { let handler (?type, ?options)
 	     = method (?name, next-handler)
 		 do-handler(method () ?body end);
 	       end;
 	    ... }
-    { ?body } => { ?body };
+
+    // Done with exception clauses.  Deal with cleanups and afterwards.
+    { ?abody cleanup ?cleanup:body }
+      => { block () ?abody cleanup ?cleanup end }
+    { ?abody }
+      => { ?abody }
+  abody:
+    { ?:body }
+      => { ?body }
+    { ?:body afterwards ?afterwards:body }
+      => { block () ?body afterwards ?afterwards end }
 end;
 
 define macro case
-    { case ?case-body end } => { ?case-body }
+    { case ?:case-body end } => { ?case-body }
   case-body:
-    { ?expr => ; ... }
-      => { begin let temp = ?expr; if (temp) temp else ... end end }
-    { ?expr => ?body ; ... } => { if (?expr) ?body else ... end }
-    { otherwise ?body } => { ?body }
+    { ?x:expression => ; ... }
+      => { begin let temp = ?x; if (temp) temp else ... end end }
+    { ?x:expression => ?:body ; ... } => { if (?x) ?body else ... end }
+    { otherwise ?:body } => { ?body }
     { } => { #f }
 end;
 
-define macro for
-    { for (?header) ?fbody end } => { %%for (?header) ?fbody end }
-  fbody:
-    { ?body } => { ?body %%finally }
-    { ?body:b1 finally ?body:b2 } => { ?b1 %%finally ?b2 }
-  header:
-    { ?var in ?expr, ... } 
-      => { %%in ?var, ?expr, #f, forward-iteration-protocol; ... }
-    { ?var in ?expr keyed-by ?var:keyed-by, ... }
-       => { %%in ?var, ?expr, ?keyed-by, forward-iteration-protocol; ... }
-    { ?var in ?expr using ?expr:using, ... }
-       => { %%in ?var, ?expr, #f, ?using; ... }
-    { ?var in ?expr keyed-by ?var:keyed-by using ?expr:using, ... }
-       => { %%in ?var, ?expr, ?keyed-by, ?using; ... }
-    { ?var = ?expr:e1 then ?expr:e2, ... } => { = ?var, ?e1, ?e2; ... }
-    { ?var from ?expr ?to, ... } => { %%from ?var, ?expr, ?to; ... }
-    { #key ?while } => { %%while ?while }
-    { #key ?until } => { %%while ~ ?until }
-    { } => { }
-  to:
-    { to ?expr ?by } => { ?by, to ?expr }
-    { above ?expr ?by } => { ?by, above ?expr }
-    { below ?expr ?by } => { ?by, below ?expr }
-    { ?by } => { ?by }
-  by:
-    { by ?expr } => { ?expr }
-    { } => { 1 }
-end;
-
 define macro if
-    { if (?expr) ?body ?elses end }
-      => { %%if (?expr) ?body ?elses end }
+    { if (?x:expression) ?:body ?elses end }
+      => make-if({ ?x }, { ?body }, { ?elses })
   elses:
-    { else ?body } => { %%else ?body };
-    { elseif (?expr) ?body ... } => { %%else %%if (?expr) ?body ... end };
-    { } => { %%else #f };
+    { else ?:body } => { ?body }
+    { elseif (?x:expression) ?:body ... }
+      => make-if({ ?x }, { ?body }, { ... })
+    { } => { #f };
 end;
 
 define macro method
-    { method ?noise end } => { %%method ?noise end }
+    { method ( ?:parameter-list ) => (?results:variable-list) ; ?:body end }
+      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+    { method ( ?:parameter-list ) => (?results:variable-list) ?:body end }
+      => make-anonymous-method({ ?parameter-list }, { ?results }, { ?body })
+    { method ( ?:parameter-list ) => ?result:variable ; ?:body end }
+      => make-anonymous-method({ ?parameter-list }, { ?result }, { ?body })
+    { method ( ?:parameter-list ) ; ?:body end }
+      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
+    { method ( ?:parameter-list ) ?:body end }
+      => make-anonymous-method({ ?parameter-list }, { #rest res }, { ?body })
 end;
 
 define macro select
-    { select (?what) ?case-body end }
+    { select (?what) ?:case-body end }
       => { ?what; ?case-body }
   what:
-    { ?expr by ?expr:fn } => { let target = ?expr; let fn = ?fn }
-    { ?expr } => { let target = ?expr; let fn = \== }
+    { ?:expression by ?fn:expression }
+      => { let target = ?expression; let compare :: <function> = ?fn }
+    { ?:expression }
+      => { let target = ?expression; let compare :: <function> = \== }
   case-body:
     { } => { error("select error") }
-    { otherwise ?body } => { ?body }
-    { ?keys => ?body ; ... } => { if (?keys) ?body else ... end }
+    { otherwise ?:body } => { ?body }
+    { (?keys:*) => ?:body ; ... } => { if (?keys) ?body else ... end }
+    { ?keys:* => ?:body ; ... } => { if (?keys) ?body else ... end }
   keys:
-    { ?expr } => { fn(target, ?expr) }
-    { ?expr , ... } => { fn(target, ?expr) | ... }
+    { ?:expression } => { compare(target, ?expression) }
+    { ?:expression , ... } => { compare(target, ?expression) | ... }
 end;
 
 define macro unless
-    { unless (?expr) ?body end } => { %%if (?expr) #f %%else ?body end }
+    { unless (?:expression) ?:body end }
+      => { if (?expression) else ?body end }
 end;
 
 define macro until
-    { until (?expr) ?body end }
+    { until (?:expression) ?:body end }
       => { begin
 	     local method loop () 
-		     unless (?expr)
-		       begin ?body end;
+		     unless (?expression)
+		       ?body;
 		       loop();
 		     end;
 		   end;
@@ -152,11 +172,11 @@ define macro until
 end;
 
 define macro while
-    { while (?expr) ?body end }
+    { while (?:expression) ?:body end }
       => { begin
 	     local method loop () 
-		     if (?expr)
-		       begin ?body end;
+		     if (?expression)
+		       ?body;
 		       loop();
 		     end;
 		   end;
@@ -165,149 +185,361 @@ define macro while
 end;
 
 
+// For statement macro
+
+define macro for
+    { for (?header) ?fbody end }
+      => { for-aux ?fbody, ?header end }
+
+  fbody:
+    { ?main:body } => { ?main, #f }
+    { ?main:body finally ?val:body } => { ?main, ?val }
+
+  header:
+    { ?v:variable in ?c:expression, ... }
+      => { for-clause(?v in ?c) ... }
+    { ?v:variable = ?e1:expression then ?e2:expression, ... }
+      => { for-clause(?v = ?e1 then ?e2) ... }
+    { ?v:variable from ?e1:expression ?to, ... }
+      => { for-clause(?v from ?e1 ?to) ... }
+    { #key ?while:expression }
+      => { for-clause(~?while stop) }
+    { #key ?until:expression }
+      => { for-clause(?until stop) }
+    { } => { }
+
+  to:
+    { to ?limit:expression by ?step:expression } => { hard ?limit by ?step }
+    { to ?limit:expression } => { easy ?limit by 1 test > }
+    { above ?limit:expression ?by } => { easy ?limit by ?by test <= }
+    { below ?limit:expression ?by } => { easy ?limit by ?by test >= }
+    { ?by } => { loop ?by }
+
+  by:
+    { by ?step:expression } => { ?step }
+    { } => { 1 }
+end;
+
+define macro for-clause
+
+    // while: and until: clauses
+    { for-clause(?e:expression stop) }
+      => {, stop2: ?e }
+
+    // Explicit step clauses
+    { for-clause(?v:variable = ?e1:expression then ?e2:expression) }
+      => {, var1: ?v, init1: ?e1, next1: ?e2 }
+
+    // Collection clauses
+    { for-clause(?v:variable in ?c:expression) }
+      => {, init0: [ let collection = ?c;
+		     let (initial-state, limit, next-state, finished-state?,
+			  current-key, current-element)
+		       = forward-iteration-protocol(collection); ]
+	  , var1: state, init1: initial-state
+	  , next1: next-state(collection, state)
+	  , stop1: finished-state?(collection, state, limit)
+	  , var2: ?v, next2: current-element(collection, state) }
+
+    // Numeric clauses (three different variants depending on to/by combos)
+    { for-clause(?v:name :: ?t:expression from ?e1:expression
+		 loop ?by:expression) }
+      => {, init0: [ let init = ?e1; let by = ?by; ]
+	  , var1: ?v :: ?t, init1: init, next1: ?v + by }
+
+    { for-clause(?v:name :: ?t:expression from ?e1:expression
+		 easy ?limit:expression by ?by:expression test ?test:token) }
+      => {, init0: [ let init = ?e1; let limit = ?limit; let by = ?by; ]
+	  , var1: ?v :: ?t, init1: init, next1: ?v + by
+	  , stop1: ?v ?test limit }
+
+    { for-clause(?v:name :: ?t:expression from ?e1:expression
+		 hard ?limit:expression by ?by:expression) }
+      => {, init0: [ let init = ?e1; let limit = ?limit; let by = ?by; ]
+	  , var1: ?v :: ?t, init1: init, next1: ?v + by
+	  , stop1: if (by >= 0) ?v > limit else ?v < limit end }
+end;
+
+define macro for-aux
+    { for-aux ?main:expression, ?value:expression, ?clauses:* end }
+      => { for-aux2 ?main, ?value ?clauses end }
+
+  clauses:
+    { ?clause:macro ... } => { ?clause ... }
+    { } => { }
+end;
+
+
+define macro for-aux2
+    { for-aux2 ?main:expression, ?value:expression,
+	       #key ??init0:*, ??var1:variable, ??init1:expression,
+		    ??next1:expression, ??stop1:expression = #f,
+		    ??var2:variable = ignore, ??next2:expression = #f,
+		    ??stop2:expression = #f;
+      end }
+      => { ??init0 ...
+	   local method repeat (??var1, ...)
+		   block (return)
+		     unless (??stop1 | ...)
+		       let (??var2, ...) = values(??next2, ...);
+		       unless (??stop2 | ...)
+			 ?main;
+			 mv-call(return, repeat(??next1, ...));
+		       end;
+		     end;
+		     ?value;
+		   end;
+		 end;
+	   repeat(??init1, ...) }
+
+  init0:
+    { [ ?stuff:* ] } => { ?stuff }
+end;
+
+
 // Function macros.
 
 define macro \&
-    { \& (?exprs) } => { ?exprs }
-  exprs:
-    { } => { #t }
-    { ?expr } => { ?expr }
-    { ?expr , ... } => { if (?expr) ... end }
+    { \& (?left:expression, ?right:expression) }
+      => { if (?left) ?right end }
 end;
 
 define macro \|
-    { \| (?exprs) } => { begin ?exprs end }
-  exprs:
-    { } => { #f }
-    { ?expr } => { ?expr }
-    { ?expr, ... } => { let temp = ?expr; if (temp) temp else ... end }
+    { \| (?left:expression, ?right:expression) }
+      => { let temp = ?left; if (temp) temp else ?right end }
 end;
 
 define macro \:=
-    { \:= (?expr:place, ?expr:value) } => { %%set (?place, ?value) }
+    { \:= (?place:expression, ?value:expression) }
+      => make-assignment({ ?place }, { ?value })
+end;
+
+define macro mv-call
+    { mv-call(?func:expression) }
+      => { ?func() }
+    { mv-call(?func:expression, ?arg-expr:expression) }
+      => { %%primitive(\mv-call, ?func, ?arg-expr) }
+    { mv-call(?func:expression, ?exprs) } 
+      => { %%primitive(\mv-call, ?func, %%primitive(merge-clusters, ?exprs)) }
+  exprs:
+    { } => { }
+    { ?:expression, ... } => { ?expression, ... }
 end;
 
 
-// Define macros
+// Definition macros.
+
 
 define macro class-definer
-    { define ?modifiers class ?name (?supers) ?slots end }
-      => { define ?modifiers %%class ?name (?supers) ?slots end }
-  modifiers:
+    { define ?class-adjectives class ?:name (?supers) ?slots end }
+      => make-define-class({?name}, {?supers}, {?slots}, {?class-adjectives})
+
+  class-adjectives:
     { } => { }
-    { open ... } => { open ... }
-    { sealed ... } => { sealed ... }
-    { free ... } => { free ... }
-    { primary ... } => { primary ... }
-    { abstract ... } => { abstract ... }
-    { concrete ... } => { concrete ... }
-    { functional ... } => { functional ... }
+    { abstract ... } => { abstract: #t, ... }
+    { concrete ... } => { abstract: #f, ... }
+    { primary ... } => { primary: #t, ... }
+    { free ... } => { primary: #f, ... }
+    { sealed ... } => { sealed: #t, ... }
+    { open ... } => { sealed: #f, ... }
+    { functional ... } => { functional: #t, ... }
+
   supers:
-    { ?expr } => { ?expr }
-    { ?expr, ... } => { ?expr, ... }
+    { } => { }
+    { ?:expression, ... } => { ?expression, ... }
+
   slots:
     { } => { }
-    { inherited slot ?name, #rest ?options; ... }
-      => { inherited ?name, ?options; ... }
-    { required keyword ?key, #rest ?options; ... }
-      => { keyword ?key, required: #t, ?options; ... }
-    { keyword ?key, #rest ?options; ... }
-      => { keyword ?key, ?options; ... }
-    { ?slot-modifiers slot ?name, #rest ?options; ... }
-      => { slot ?name, ?slot-modifiers, ?options; ... }
-    { ?slot-modifiers slot ?name = ?expr, #rest ?options; ... }
-      => { slot ?name, ?slot-modifiers,
-             init-function: method () ?expr end,
-             ?options;
-           ... }
-    { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
-      => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
-    { ?slot-modifiers slot ?name :: ?type = ?expr, #rest ?options; ... }
-      => { slot ?name, type: ?type, ?slot-modifiers,
-	     init-function: method () ?expr end,
-	     ?options;
-	   ... }
-  slot-modifiers:
+    { ?slot; ... } => { ?slot, ... }
+
+  slot:
+    { inherited slot ?:name, #rest ?inherited-options }
+      => make-inherited-slot({?name}, {?inherited-options})
+    { inherited slot ?:name = ?:expression, #rest ?inherited-options }
+      => make-inherited-slot({?name},
+			     {init-expr: ?expression, ?inherited-options})
+
+    { slot ?:name, #rest ?slot-options}
+      => make-slot({?name}, {?slot-options})
+    { ?slot-adjectives slot ?:name, #rest ?slot-options}
+      => make-slot({?name}, {?slot-adjectives, ?slot-options})
+    { ?slot-adjectives slot ?:name :: ?type:expression, #rest ?slot-options}
+      => make-slot({?name}, {type: ?type, ?slot-adjectives, ?slot-options})
+    { ?slot-adjectives slot ?:name :: ?:expression, #rest ?slot-options }
+      => make-slot({?name},
+		   {init-expr: ?expression, ?slot-adjectives, ?slot-options})
+    { ?slot-adjectives slot ?:name :: ?type:expression = ?:expression,
+	#rest ?slot-options }
+      => make-slot({?name},
+		   {type: ?type, init-expr: ?expression,
+		    ?slot-adjectives, ?slot-options})
+
+    { keyword ?key:token, #rest ?init-arg-options }
+      => make-init-arg({?key}, {?init-arg-options})
+    { required keyword ?key:token, #rest ?init-arg-options }
+      => make-init-arg({?key}, {required: #t, ?init-arg-options})
+
+  inherited-options:
+    { #rest ?all:*, 
+      #key ?init-value:expression = #f,
+	   ?init-function:expression = #f }
+      => {?all}
+
+  slot-adjectives:
     { } => { }
-    { instance } => { allocation: #"instance" }
-    { class } => { allocation: #"class" }
-    { each-subclass } => { allocation: #"each-subclass" }
-    { virtual } => { allocation: #"virtual" }
-    { open ... } => { open: #t, ... }
-    { sealed ... } => { sealed: #t, ...}
     { constant ... } => { setter: #f, ... }
+    { sealed ... } => { sealed: #t, ... }
+    { instance } => { allocation: instance }
+    { class } => { allocation: class }
+    { each-subclass } => { allocation: each-subclass }
+    { virtual } => { allocation: virtual }
+
+  slot-options:
+    { #rest ?all:*,
+      #key ?setter:expression = #f,
+	   ?init-keyword:token = foo:,
+	   ?required-init-keyword:token = foo:,
+	   ?init-value:expression = #f,
+	   ?init-function:expression = #f,
+	   ?type:expression = #f,
+	   ?sizer:expression = #f,
+	   ?size-init-keyword:token = foo:,
+	   ?required-size-init-keyword:token = foo:,
+	   ?size-init-value:expression = #f,
+	   ?size-init-function:expression = #f }
+      => {?all}
+
+  init-arg-options:
+    { #rest ?all:*,
+      #key ?init-value:expression = #f,
+	   ?init-function:expression = #f,
+	   ?type:expression = #f }
+      => {?all}
+
 end;
 
 define macro constant-definer
-    { define constant ?bindings } => { define %%constant ?bindings }
+    { define constant ?vars = ?:expression }
+      => make-define-constant({ ?vars }, { ?expression })
+  vars:
+    { ?:variable } => { ?variable }
+    { (?:variable-list) } => { ?variable-list }
 end;
 
-define macro library-definer
-    { define library ?name ?clauses end }
-      => { define %%library ?name ?clauses end }
-  clauses:
-    { use ?name, #key ?import (all), ?exclude ({}), ?prefix (#f),
-		      ?rename ({}), ?export ({}); ... }
-      => { %%use ?name, ?import, ?exclude, ?prefix, ?rename, ?export; ... }
-    { export ?names ; ... }
-      => { %%export ?names; ... }
+define macro domain-definer
+    { define sealed domain ?:name (?types ) }
+      => make-define-sealed-domain({ ?name }, { ?types })
+  types:
+    { ?type:expression, ... } => { ?type, ...}
     { } => { }
-  names:
-    { ?name } => { ?name }
-    { ?name, ... } => { ?name, ... }
 end;
 
-define macro module-definer
-    { define module ?name ?clauses end }
-      => { define %%module ?name ?clauses end }
-  clauses:
-    { use ?name, #key ?import (all), ?exclude ({}), ?prefix (#f),
-		      ?rename ({}), ?export ({}); ... }
-      => { %%use ?name, ?import, ?exclude, ?prefix, ?rename, ?export; ... }
-    { export ?names ; ... }
-      => { %%export ?names; ... }
-    { create ?names ; ... }
-      => { %%create ?names; ... }
+define macro generic-definer
+    { define ?adjectives:* generic ?:name ( ?:parameter-list ) ?rest }
+      => { define-generic(?name; ?parameter-list; ?rest ?adjectives) }
+
+  adjectives:
     { } => { }
-  names:
-    { ?name } => { ?name }
-    { ?name, ... } => { ?name, ... }
+    { sealed ... } => { sealed: #t, ... }
+    { open ... } => { sealed: #f, ... }
+    { movable ... } => { movable: #t, ... }
+    { flushable ... } => { flushable: #t, ... }
+
+  rest:
+    { => ?:variable, #key } => { ?variable; }
+    { => (?:variable-list), #key } => { ?variable-list; }
+    { #key } => { #rest results; }
+end;
+
+define macro define-generic
+    { define-generic(?:name; ?params:parameter-list; ?results:variable-list;
+		     #rest ?options:*,
+		     #key ?sealed:expression = #t,
+		          ?movable:expression = #f,
+		          ?flushable:expression = #f) }
+      => make-define-generic({ ?name }, { ?params }, { ?results}, { ?options })
 end;
 
 define macro method-definer
-    { define ?modifiers method ?name ?noise end }
-      => { define ?modifiers %%method ?name ?noise end }
-  modifiers:
+    { define ?adjectives:* method ?:name ?rest:* end }
+      => make-define-method({?name}, {method ?rest end}, {?adjectives})
+
+  adjectives:
     { } => { }
-    { ?name ... } => { ?name ... }
+    { sealed ... } => { sealed: #t, ... }
+    { inline ... } => { inline: #t, ... }
+    { movable ... } => { movable: #t, ... }
+    { flushable ... } => { flushable: #t, ... }
+end;
+
+define macro library-definer
+    { define library ?:name ?clauses end }
+      => make-define-library({ ?name }, { ?clauses })
+
+  clauses:
+    { } => { }
+    { ?clause; ... } => { ?clause, ... }
+
+  clause:
+    {use ?:name, #key ?import = all, ?exclude = none, ?prefix:token = "", 
+		      ?rename = none, ?export = none }
+      => make-use-clause({ ?name }, { ?import }, { ?exclude }, { ?prefix },
+			 { ?rename }, { ?export })
+    {export ?names }
+      => make-export-clause({ ?names })
+
+  names:
+    { } => { }
+    { ?:name, ... } => { ?name, ... }
+
+  import:
+    { all } => { #t }
+    { { ?variable-specs } } => { ?variable-specs }
+
+  variable-specs:
+    { } => { }
+    { ?:name, ... } => { ?name, ... }
+    { ?renaming, ... } => { ?renaming, ... }
+
+  exclude:
+    { none } => { }
+    { { ?names } } => { ?names }
+
+  rename:
+    { none } => { }
+    { { ?renamings } } => { ?renamings }
+
+  renamings:
+    { } => { }
+    { ?renaming, ... } => { ?renaming, ... }
+
+  renaming:
+    { ?from:name => ?to:name } => make-renaming({ ?from }, { ?to })
+
+  export:
+    { none } => { }
+    { all } => { #t }
+    { { ?names } } => { ?names }
+
 end;
 
 define macro variable-definer
-    { define variable ?bindings } => { define %%variable ?bindings }
-end;
-
-
-// Dylan library and module, just for completeness.
-
-define library dylan
-  export dylan;
-end;
-
-define module dylan
-  use dylan-viscera,
-    export: all;
+    { define variable ?vars = ?:expression }
+      => make-define-variable({ ?vars }, { ?expression })
+  vars:
+    { ?:variable } => { ?variable }
+    { (?:variable-list) } => { ?variable-list }
 end;
 
 
 // Classes that need to be pre-defined.
 
-define primary abstract open %%class <object> ()
+define primary abstract open class <object> ()
   //
   // The class of the instance.  Non-abstract classes automatically override
   // the init-value to be the correct class.
-  slot %object-class, type: <class>, setter: #f, init-value: <object>
+  constant slot %object-class :: <class> = <object>;
 end;
-
 
 define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
@@ -323,14 +555,14 @@ define abstract class <closure> (<function>)
     init-value: #f,
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
-seal generic initialize (<closure>);
+define sealed domain initialize (<closure>);
 
 define class <raw-function> (<function>)
 end;
 
 define class <raw-closure> (<raw-function>, <closure>)
 end;
-seal generic make (singleton(<raw-closure>));
+define sealed domain make (singleton(<raw-closure>));
 
 define class <method> (<function>)
   slot generic-entry :: <raw-pointer>,
@@ -344,7 +576,7 @@ end class <accessor-method>;
 
 define class <method-closure> (<method>, <closure>)
 end;
-seal generic make (singleton(<method-closure>));
+define sealed domain make (singleton(<method-closure>));
 
 define class <generic-function> (<function>)
 end;
@@ -595,17 +827,19 @@ define constant make-rest-arg
   = method (arg-ptr :: <raw-pointer>, count :: <integer>)
 	=> res :: <simple-object-vector>;
       let res = make(<simple-object-vector>, size: count);
+/*
       for (index :: <integer> from 0,
 	   while: index < count)
-	%element(res, index) := %%primitive extract-arg (arg-ptr, index);
+	%element(res, index) := %%primitive(extract-arg, arg-ptr, index);
       end;
+*/
       res;
     end;
 
 define method make-closure
     (func :: <function>, closure-size :: <integer>)
     => res :: <raw-closure>;
-  make(<closure>,
+  make(<raw-closure>,
        general-entry: func.general-entry,
        closure-size: closure-size);
 end;
@@ -633,32 +867,32 @@ define inline method pair (head, tail) => res :: <pair>;
 end;
 
 define sealed inline method \~ (thing :: <object>) => res :: <boolean>;
-  %%primitive not (thing);
+  %%primitive(not, thing);
 end;
 
 define sealed inline method \< (x :: <integer>, y :: <integer>)
     => res :: <boolean>;
-  %%primitive fixnum-< (x, y);
+  %%primitive(fixnum-<, x, y);
 end;
 
 define sealed inline method \== (x :: <integer>, y :: <integer>)
     => res :: <boolean>;
-  %%primitive fixnum-= (x, y);
+  %%primitive(fixnum-=, x, y);
 end;
 
 define sealed inline method \+ (x :: <integer>, y :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-+ (x, y);
+  %%primitive(fixnum-+, x, y);
 end;
 
 define sealed inline method \* (x :: <integer>, y :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-* (x, y);
+  %%primitive(fixnum-*, x, y);
 end;
 
 define sealed inline method \- (x :: <integer>, y :: <integer>)
     => res :: <integer>;
-  %%primitive fixnum-- (x, y);
+  %%primitive(fixnum--, x, y);
 end;
 
 
@@ -667,7 +901,7 @@ end;
 
 define generic values-sequence (sequence :: <sequence>);
 
-seal generic values-sequence (<sequence>);
+define sealed domain values-sequence (<sequence>);
 
 define inline method values-sequence (sequence :: <sequence>)
   values-sequence(as(<simple-object-vector>, sequence));
@@ -675,14 +909,14 @@ end;
 
 define inline method values-sequence
     (vector :: <simple-object-vector>)
-  %%primitive values-sequence (vector);
+  %%primitive(values-sequence, vector);
 end;
 
 
 define generic values (#rest values);
 
 define inline method values (#rest values)
-  %%primitive values-sequence (values);
+  %%primitive(values-sequence, values);
 end;
 
 
@@ -695,4 +929,4 @@ end;
 
 // Might as well.
 
-%%primitive magic-internal-primitives-placeholder ();
+%%primitive(magic-internal-primitives-placeholder);

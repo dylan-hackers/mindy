@@ -1,10 +1,10 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.8 1995/12/04 16:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.9 1996/03/17 00:56:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define class <expression-tlf> (<top-level-form>)
-  slot tlf-expression :: <expression>,
+  slot tlf-expression :: <expression-parse>,
     required-init-keyword: expression:;
 end;
 
@@ -13,42 +13,53 @@ define method print-message
   write("Top level form.", stream);
 end;
 
-define method process-top-level-form (form :: <expression>) => ();
-  let expansion = expand(form, #f);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    add!(*Top-Level-Forms*, make(<expression-tlf>, expression: form));
-  end;
+
+
+// process-top-level-form -- method on imported GF.
+//
+// Puke if any local declarations appear at top level.
+//
+define method process-top-level-form (form :: <local-declaration-parse>) => ();
+  compiler-error-location
+    (form, "Local declarations cannot appear directly at top level.");
 end;
 
-define method process-top-level-form (form :: <begin>) => ();
+
+
+define method process-top-level-form (form :: <expression-parse>) => ();
+  add!(*Top-Level-Forms*, make(<expression-tlf>, expression: form));
+end;
+
+define method process-top-level-form (form :: <body-parse>) => ();
   local
     method process (forms :: <simple-object-vector>)
 	=> new-body :: false-or(<simple-object-vector>);
       block (return)
 	for (subform in forms,
 	     index from 0)
-	  let expansion = expand(subform, #f);
-	  if (expansion)
-	    let new-body = process(expansion);
+	  while (instance?(subform, <macro-call-parse>))
+	    subform := macro-expand(subform);
+	  end while;
+	  if (instance?(subform, <body-parse>))
+	    let new-body = process(subform.body-parts);
 	    if (new-body)
-	      return(concatenate(new-body,
-				 copy-sequence(forms, start: index + 1)));
+	      apply(return,
+		    make(<body-parse>, parts: new-body),
+		    copy-sequence(forms, start: index + 1));
 	    end;
-	  elseif (instance?(subform, <local-declaration>))
+	  elseif (instance?(subform, <local-declaration-parse>))
 	    return(copy-sequence(forms, start: index));
 	  else
 	    process-top-level-form(subform);
 	  end;
 	finally
 	  #f;
-	end;
-      end;
-    end;
-  let new-body = process(form.begin-body);
+	end for;
+      end block;
+    end method process;
+  let new-body = process(form.body-parts);
   if (new-body)
-    let expr = make(<begin>, body: new-body);
+    let expr = make(<body-parse>, parts: new-body);
     add!(*Top-Level-Forms*, make(<expression-tlf>, expression: expr));
   end;
 end;
@@ -70,16 +81,8 @@ end;
 
 // Magic internal primitives placeholder.
 
-define class <magic-interal-primitives-placeholder> (<top-level-form>)
-end;
-
-define method print-message
-    (tlf :: <magic-interal-primitives-placeholder>, stream :: <stream>) => ();
-  write("Magic internal primitives.", stream);
-end;
-
 define method process-top-level-form
-    (form :: <primitive>, #next next-method)
+    (form :: <primitive-parse>, #next next-method)
     => ();
   if (form.primitive-name.token-symbol
 	== #"magic-internal-primitives-placeholder")
