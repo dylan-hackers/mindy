@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.28 1996/02/23 02:34:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.29 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -153,12 +153,18 @@ define class <literal-single-float> (<literal-float>) end;
 define class <literal-double-float> (<literal-float>) end;
 define class <literal-extended-float> (<literal-float>) end;
 				       
-define constant $literal-fixed-integer-memo = make(<table>);
-define constant $literal-extended-integer-memo = make(<table>);
-define constant $literal-ratio-memo = make(<table>);
-define constant $literal-single-float-memo = make(<table>);
-define constant $literal-double-float-memo = make(<table>);
-define constant $literal-extended-float-memo = make(<table>);
+define constant $literal-fixed-integer-memo :: <object-table>
+  = make(<table>);
+define constant $literal-extended-integer-memo :: <object-table>
+  = make(<table>);
+define constant $literal-ratio-memo :: <object-table>
+  = make(<table>);
+define constant $literal-single-float-memo :: <object-table>
+  = make(<table>);
+define constant $literal-double-float-memo :: <object-table>
+  = make(<table>);
+define constant $literal-extended-float-memo :: <object-table>
+  = make(<table>);
 
 define method make (class == <literal-integer>, #next next-method,
 		    #key value)
@@ -308,7 +314,8 @@ end;
 define class <literal-byte-symbol> (<literal-symbol>)
 end class;
 
-define constant $literal-symbol-memo = make(<table>);
+define constant $literal-symbol-memo :: <object-table>
+  = make(<table>);
 
 define method make (class == <literal-symbol>, #next next-method, #key value)
     => (res :: <literal-symbol>);
@@ -350,7 +357,8 @@ define class <literal-byte-character> (<literal-character>)
   slot literal-value :: <byte-character>, required-init-keyword: value:;
 end class;
 
-define constant $literal-character-memo = make(<table>);
+define constant $literal-character-memo :: <object-table>
+  = make(<table>);
 
 define method make (class == <literal-character>, #next next-method,
 		    #key value)
@@ -432,8 +440,10 @@ end;
 
 define class <literal-pair-memo-table> (<table>)
 end;
+define sealed domain make(singleton(<literal-pair-memo-table>));
+define sealed domain initialize(<literal-pair-memo-table>);
 
-define method table-protocol (table :: <literal-pair-memo-table>)
+define sealed inline method table-protocol (table :: <literal-pair-memo-table>)
     => (tester :: <function>, hasher :: <function>);
   values(method (key1 :: <literal-pair>, key2 :: <literal-pair>)
 	     => res :: <boolean>;
@@ -448,7 +458,8 @@ define method table-protocol (table :: <literal-pair-memo-table>)
 	 end);
 end;
 
-define constant $literal-pair-memo = make(<literal-pair-memo-table>);
+define constant $literal-pair-memo :: <literal-pair-memo-table>
+  = make(<literal-pair-memo-table>);
 
 define method make (class == <literal-pair>, #next next-method,
 		    #key sharable: sharable?, head, tail)
@@ -533,8 +544,10 @@ end;
 // if each element is identical even if the vectors themselves are not.
 //
 define class <shallow-equal-table> (<table>) end class;
+define sealed domain make(singleton(<shallow-equal-table>));
+define sealed domain initialize(<shallow-equal-table>);
 
-define method table-protocol (table :: <shallow-equal-table>)
+define sealed inline method table-protocol (table :: <shallow-equal-table>)
  => (test :: <function>, hash :: <function>);
   values(shallow-equal, shallow-hash);
 end method table-protocol;
@@ -565,7 +578,8 @@ define method shallow-hash (vec :: <simple-object-vector>)
   values(current-id, current-state);
 end method shallow-hash;
 
-define constant $literal-vector-memo = make(<shallow-equal-table>);
+define constant $literal-vector-memo :: <shallow-equal-table>
+  = make(<shallow-equal-table>);
 
 define method make (class == <literal-simple-object-vector>, #next next-method,
 		    #key sharable: sharable?, contents)
@@ -600,7 +614,7 @@ define class <literal-byte-string> (<literal-string>)
   slot literal-value :: <byte-string>, required-init-keyword: value:;
 end;
 
-define constant $literal-string-memo = make(<string-table>);
+define constant $literal-string-memo :: <string-table> = make(<string-table>);
 
 define method make (class == <literal-string>, #next next-method,
 		    #key value)
