@@ -19,6 +19,7 @@ appearance.dylan
 navigation.dylan
 gestalt.dylan
 os-utils.dylan
+processes.dylan
 resources.dylan
 sound.dylan
 call-by-value-wrappers.o

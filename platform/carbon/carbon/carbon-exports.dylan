@@ -459,6 +459,12 @@ define module carbon
     GetPortTextFont, GetPortTextFace, GetPortTextMode, GetPortTextSize,
     QDIsPortBuffered, QDIsPortBufferDirty, QDFlushPortBuffer, QDGetDirtyRegion, 
     QDSetDirtyRegion,
+
+// Processes
+    <ProcessSerialNumber*>,
+    highLongOfPSN-value, highLongOfPSN-value-setter,
+    lowLongOfPSN-value, lowLongOfPSN-value-setter,
+    GetCurrentProcess, SetFrontProcess,
     
 // QuickDraw Text
     $teFlushDefault, $teCenter, $teFlushRight, $teFlushLeft,
