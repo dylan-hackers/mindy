@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.2 1998/09/09 13:40:51 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.3 1999/02/25 07:04:30 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -523,7 +523,11 @@ define macro method-definer
   adjectives:
     { } => { }
     { sealed ... } => { sealed: #t, ... }
-    { inline ... } => { inline: #t, ... }
+    { not-inline ... } => { inline-type: not-inline, ... }
+    { default-inline ... } => { inline-type: default-inline, ... }
+    { may-inline ... } => { inline-type: may-inline, ... }
+    { inline ... } => { inline: #t, inline-type: inline, ... }
+    { inline-only ... } => { inline-type: inline-only, ... }
     { movable ... } => { movable: #t, ... }
     { flushable ... } => { flushable: #t, ... }
 end;
