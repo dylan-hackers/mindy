@@ -5,6 +5,8 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "win32-vc-decl";
 } elsif ($features{'compiled_for_hpux'}) {
     $c_decl_lid = "hp-c-decl";
+} elsif ($features{'compiled_for_solaris'}) {
+    $c_decl_lid = "solaris-c-decl";
 } else {
     &uknown_platform_error();
 }
