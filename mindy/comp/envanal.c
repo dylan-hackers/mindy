@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.6 1994/04/14 19:16:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.7 1994/04/18 05:30:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -97,8 +97,8 @@ static void analize_method(struct method *method, struct lexenv *lexenv)
     analize_expr(method->specializers, lexenv);
     if (method->rettypes) {
 	analize_expr(method->rettypes->req_types_list, lexenv);
-	if (method->rettypes->rest_type)
-	    analize_expr(method->rettypes->rest_type, lexenv);
+	if (method->rettypes->rest_temp_varref)
+	    analize_expr(method->rettypes->rest_temp_varref, lexenv);
     }
 
     for (p = params->required_params; p != NULL; p = p->next)
@@ -309,22 +309,26 @@ static void analize_local_constituent(struct local_constituent *c,
 				      struct lexenv *lexenv)
 {
     struct method *home = lexenv->method;
-    struct binding *bindings = lexenv->bindings;
+    struct binding *bindings = NULL;
+    struct binding **prev = &bindings;
     struct method *method;
     int offset = lexenv->depth;
 
     c->offset = offset;
 
     for (method = c->methods; method != NULL; method = method->next_local) {
-	bindings = make_binding(method->name, NULL, FALSE, offset++, home,
-				bindings);
-	bindings->function = TRUE;
-	bindings->set = TRUE;
+	struct binding *new = make_binding(method->name, NULL, FALSE, offset++,
+					   home, NULL);
+	new->function = TRUE;
+	new->set = TRUE;
+	*prev = new;
+	prev = &new->next;
     }
 
     if (offset > home->frame_size)
 	home->frame_size = offset;
 
+    *prev = lexenv->bindings;
     c->lexenv = make_lexenv(home, bindings, offset);
 
     for (method = c->methods; method != NULL; method = method->next_local)
