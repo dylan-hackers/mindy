@@ -5,6 +5,8 @@ define function output-melange
      repository :: <c-type-repository>,
      stream :: <stream>)
  => ();
+  output-includes(mod, stream);
+  
   for(type keyed-by name in mod.defs-module-types)
     output-melange-clause(type, mod, repository, stream);
   end;
@@ -151,9 +153,10 @@ define method output-melange-included-struct-field
 
   let field-type-name = type-name(defs-type(mod, field[0][1]));
 
-  format(stream, "define method %s-value\n", melange-name(field[1]));
+  format(stream, "define inline method %s-value\n", melange-name(field[1]));
   format(stream, "    (obj :: %s)\n", type-name(clause));
   format(stream, " => (value :: %s);\n", field-type-name);
+  output-includes(mod, stream);
   format(stream, "  make(%s,\n", field-type-name);
   format(stream, "       pointer: obj.raw-value\n");
   format(stream, "                  + c-expr(int:, \"offsetof(%s, %s)\"));\n",
@@ -182,9 +185,10 @@ define method output-melange-vector-field
 
   let field-type-name = melange-map-type(field[0], mod);
 
-  format(stream, "define method %s-value\n", melange-name(field[1]));
+  format(stream, "define inline method %s-value\n", melange-name(field[1]));
   format(stream, "    (obj :: %s)\n", type-name(clause));
   format(stream, " => (value :: %s);\n", field-type-name);
+  output-includes(mod, stream);
   format(stream, "  make(%s,\n", field-type-name);
   format(stream, "       pointer: obj.raw-value\n");
   format(stream, "                  + c-expr(int:, \"offsetof(%s, %s)\"));\n",
@@ -221,9 +225,10 @@ define method output-melange-data-field
     mod.defs-module-written[field[1]] := #t;
   end unless;
   
-  format(stream, "define method %s-value\n", melange-name(field[1]));
+  format(stream, "define inline method %s-value\n", melange-name(field[1]));
   format(stream, "    (obj :: %s)\n", type-name(clause));
   format(stream, " => (value :: %s);\n", melange-map-type(field[0], mod));
+  output-includes(mod, stream);
   if(rep = "ptr")
     format(stream, "  make(%s,\n", melange-map-type(field[0], mod));
     format(stream, "       pointer: c-struct-field(%s:, obj.raw-value,\n",
@@ -237,13 +242,15 @@ define method output-melange-data-field
   end if;
   format(stream, "end;\n\n");
   
-  format(stream, "define method %s-value-setter\n", melange-name(field[1]));
+  format(stream, "define inline method %s-value-setter\n",
+         melange-name(field[1]));
   format(stream, "    (value :: %s, obj :: %s)\n",
          melange-map-type(field[0], mod), type-name(clause));
   format(stream, " => (value :: %s);\n", melange-map-type(field[0], mod));
+  output-includes(mod, stream);
   if(rep = "ptr")
     format(stream, "  c-struct-field(%s:, obj.raw-value,\n", rep);
-    format(stream, "                 \"%s\", \"%s\")\n",
+    format(stream, "                 \"%s\", \"%s\")",
            clause.clause-name, accessor);
     format(stream, " := value.raw-value;\n");
     format(stream, "  value;\n");
@@ -277,9 +284,10 @@ define method output-melange-clause
            type-name(clause));
 
     format(stream,
-           "define sealed method content-size\n");
+           "define sealed inline method content-size\n");
     format(stream,
            "    (class == %s) => (size :: <integer>);\n", type-name(clause));
+    output-includes(mod, stream);
     format(stream,
            "  c-expr(int:, \"%s\");\n", size-expr);
     format(stream,
@@ -316,9 +324,10 @@ define method output-melange-clause
            type-name(clause));
 
     format(stream,
-           "define sealed method content-size\n");
+           "define sealed inline method content-size\n");
     format(stream,
            "    (class == %s) => (size :: <integer>);\n", type-name(clause));
+    output-includes(mod, stream);
     format(stream,
            "  c-expr(int:, \"%s\");\n", size-expr);
     format(stream,
@@ -369,7 +378,7 @@ define method output-melange-clause
      repository :: <c-type-repository>,
      stream :: <stream>)
  => ();
-  format(stream, "define function %s\n",
+  format(stream, "define inline-only method %s\n",
 	 melange-name(func.clause-name));
   format(stream, "    (");
 
@@ -419,6 +428,8 @@ define method output-melange-clause
 
   format(stream, ");\n");
 
+  output-includes(mod, stream);
+
   if(return == #"none")
     format(stream, "  call-out(\"%s\", void:", func.clause-name);
   else
@@ -467,7 +478,7 @@ define method output-melange-clause
     format(stream, "  return-value;\n");
   end if;
 
-  format(stream, "end function;\n\n");
+  format(stream, "end method;\n\n");
 end method;
 
 define method output-melange-clause
@@ -682,6 +693,16 @@ define method output-melange-exports-clause
      stream :: <stream>)
  => ();
   format(stream, "  export %s;\n", melange-name(func.clause-name));
+end method;
+
+define method output-includes
+    (mod :: <defs-module>,
+     stream :: <stream>)
+ => ();
+  format(stream, "  c-include(\"stddef.h\");\n");
+  for(file in defs-module-includes(mod))
+    format(stream, "  c-include(\"%s\");\n", file);
+  end for;
 end method;
 
 define method melange-name
