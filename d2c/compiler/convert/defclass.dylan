@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.44 2003/02/05 20:35:01 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.45 2003/02/18 20:46:12 gabor Exp $
 copyright: see below
 
 
@@ -1784,7 +1784,6 @@ define function call-init-function
    override :: false-or(<override-info>),
    slot-name :: <symbol>,
    builder :: <fer-builder>,
-// ICE!!!   builder :: <internal-builder>,
    policy :: <policy>,
    source :: <source-location>,
    init-value-var :: <abstract-variable>,
