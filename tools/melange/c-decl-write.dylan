@@ -159,7 +159,7 @@ define method c-accessor
 end method c-accessor;
 
 define method c-accessor
-    (type :: type-or(<struct-declaration>, <union-declaration>,
+    (type :: type-union(<struct-declaration>, <union-declaration>,
 		     <vector-declaration>),
      offset :: <string>, parameter :: <string>, equated :: <string>)
  => (result :: <string>);
@@ -210,7 +210,7 @@ define method write-c-accessor-method
 	 slot-name);
 
   if (~slot-type.read-only
-	& ~instance?(real-type, type-or(<struct-declaration>,
+	& ~instance?(real-type, type-union(<struct-declaration>,
 					<union-declaration>,
 					<vector-declaration>)))
     // Write setter method
@@ -331,9 +331,9 @@ define method write-declaration
     // as a synonym for <integer>
     if (decl.members)
       let min-enum = reduce(method (a, b) min(a, b.constant-value) end method,
-			    $maximum-fixed-integer, decl.members);
+			    $maximum-integer, decl.members);
       let max-enum = reduce(method (a, b) max(a, b.constant-value) end method,
-			    $minimum-fixed-integer, decl.members);
+			    $minimum-integer, decl.members);
       format(stream,
 	     "define constant %s = limited(<integer>, min: %d, max: %d);\n",
 	     type-name, min-enum, max-enum);
@@ -387,7 +387,7 @@ define method write-declaration
 
   // Write a setter method
   if (~decl.read-only 
-	& ~instance?(real-type, type-or(<struct-declaration>,
+	& ~instance?(real-type, type-union(<struct-declaration>,
 					<union-declaration>,
 					<vector-declaration>)))
     format(stream,
