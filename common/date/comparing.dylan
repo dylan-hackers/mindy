@@ -9,11 +9,11 @@ copyright: LGPL, 2000
 
 // 7.4.1 Comparing Dates
 define method \=(d1 :: <date>, d2 :: <date>) => (equal? :: <boolean>)
-  d1.time = d2.time;
+  d1.time.encode-time = d2.time.encode-time;
 end method \=;
 
 define method \<(d1 :: <date>, d2 :: <date>) => (before? :: <boolean>)
-  d1.time < d2.time;
+  d1.time.encode-time < d2.time.encode-time;
 end method \<;
 
 // 7.4.2 Comparing Durations
