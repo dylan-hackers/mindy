@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.13 1996/03/02 19:21:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.14 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -83,8 +83,9 @@ define class <class> (<type>)
   slot class-each-subclass-slots :: <simple-object-vector>;
 */
   //
-  // A single entry cache of the last class that was subtype? us.
-  slot subtype-cache :: false-or(<class>), init-value: #f;
+  // Single entry caches of the last classes that were and weren't subtype? us.
+  slot subtype-success-cache :: false-or(<class>), init-value: #f;
+  slot subtype-failure-cache :: false-or(<class>), init-value: #f;
 end;
 
 /*
