@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.9 2001/06/05 20:48:35 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.10 2001/10/06 11:49:21 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -663,7 +663,7 @@ define function wrong-number-of-arguments-error
 	wanted, got);
 end;
 
-define function odd-number-of-keyword/value-arguments-error()
+define function odd-number-of-keyword/value-arguments-error ()
  => res :: <never-returns>;
   error("Odd number of keyword/value arguments.");
 end;
@@ -674,7 +674,7 @@ define function unrecognized-keyword-error
 end;
 
 define function no-applicable-methods-error (function :: <generic-function>, arguments :: <simple-object-vector>)
- => res :: type-union();
+ => res :: <never-returns>;
   error("No applicable methods in call of %= when given arguments:\n  %=",
 	function, arguments);
 end;
