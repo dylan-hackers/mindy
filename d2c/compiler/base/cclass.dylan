@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.24 1995/11/15 15:56:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.25 1995/12/05 22:13:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -192,7 +192,7 @@ end;
 define constant <slot-allocation>
   = one-of(#"instance", #"class", #"each-subclass", #"virtual");
 
-define abstract class <slot-info> (<identity-preserving-mixin>)
+define abstract class <slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
   //
   // The cclass that introduces this slot.  Not required, because we have to
   // make the regular slots before we can make the cclass that defines them.
@@ -235,6 +235,11 @@ define abstract class <slot-info> (<identity-preserving-mixin>)
   // List of all the overrides for this slot.  Filled in when the overrides
   // for some class are processed.
   slot slot-overrides :: <list>, init-value: #();
+end;
+
+define method print-message
+    (lit :: <slot-info>, stream :: <stream>) => ();
+  write("{a <slot-descriptor>}", stream);
 end;
 
 define method make (class == <slot-info>, #rest keys, #key allocation)
@@ -312,6 +317,15 @@ define class <override-info> (<identity-preserving-mixin>)
   // one but we can't tell what it is, and #f if there isn't one.
   slot override-init-function :: union(<ct-value>, <boolean>),
     init-value: #f, init-keyword: init-function:;
+end;
+
+
+define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
+  dylan-value(#"<class>");
+end;
+
+define method ct-value-cclass (object :: <slot-info>) => res :: <cclass>;
+  dylan-value(#"<slot-descriptor>");
 end;
 
 
