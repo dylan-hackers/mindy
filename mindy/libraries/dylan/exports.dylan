@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.69 1995/07/11 12:43:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.70 1995/09/27 22:48:55 nkramer Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 define library Dylan
   export
     Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
-    Cheap-IO, Extern;
+    Cheap-IO, Extern, Transcendental;
 end Dylan;
 
 define module Builtin-Stuff
@@ -73,6 +73,7 @@ define module Builtin-Stuff
     fflush, find-method, float-hash, floor, floor/, format, function-arguments,
     function-name,
     generic-function-mandatory-keywords, generic-function-methods,
+    get-time-of-day,
     getc, grab-lock,
     handler-function, handler-init-args, handler-next, handler-test,
     handler-type, head, head-setter,
@@ -108,7 +109,11 @@ define module Builtin-Stuff
     signed-long-at-setter, unsigned-byte-at-setter, unsigned-short-at-setter,
     unsigned-long-at-setter, pointer-at, pointer-at-setter, c-pointer-slot,
     c-pointer-slot-setter, load-object-file, null-pointer, find-c-pointer,
-    find-c-function, constrain-c-function;
+    find-c-function, constrain-c-function,
+    sin, cos, tan, asin, acos, atan, atan2, 
+    sinh, cosh, tanh,
+    exp, log, expt, sqrt,
+    pi;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -224,6 +229,7 @@ define module Extensions
   use Builtin-Stuff,
     import: {main, exit, on-exit, load, *print-GC-messages*,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
+	     get-time-of-day,  
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <fixed-integer>, <extended-integer>,
@@ -358,3 +364,14 @@ define module Extern
     structure-size, import-value, export-value, pointer-value,
     pointer-value-setter;
 end module Extern;
+
+define module Transcendental
+  use Dylan;
+  use Builtin-stuff, 
+    import: { sin, cos, tan, asin, acos, atan, atan2, 
+	      sinh, cosh, tanh, // no inverse hyperbolic functions
+	      exp, log, expt, sqrt,
+	      pi }, 
+    export: all;
+end module Transcendental;
+
