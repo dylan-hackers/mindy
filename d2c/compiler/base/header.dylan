@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.3 2000/01/24 04:56:02 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.4 2000/06/16 23:58:09 neel Exp $
 copyright: see below
 
 
@@ -153,16 +153,16 @@ define method element (header :: <header>, keywrd, #key default = no-default)
   end;
 end method;
 
-// class-for-copy -- gf method.
+// type-for-copy -- gf method.
 //
 // Because <header>s arn't mutable, we have to define a method for
 // class-for-copy.  We return <object-table>, because it is a mutable
 // explicit key collection that uses the same key test -- i.e. just
 // what we need.
 //
-define method class-for-copy (header :: <header>) => result :: <class>;
+define method type-for-copy (header :: <header>) => result :: <class>;
   <object-table>;
-end;
+end method type-for-copy;
 
 
 // Header parsing.
