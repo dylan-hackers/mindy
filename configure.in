@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.44 2000/03/31 16:06:09 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.45 2000/05/10 02:09:42 igor Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -26,6 +26,24 @@ dnl	it.
 AC_INIT(common/format/format.dylan)
 AC_PREREQ(2.12)
 AC_CONFIG_HEADER(config.h)
+
+#--------------------------------------------------------------------
+# Version/package information, eventually to be used by automake, but
+# used by gwydion-dylan.spec.in for now.
+#--------------------------------------------------------------------
+
+PACKAGE="gwydion-dylan"
+
+VERSION="SNAP_`date +%s`"
+# Use this line instead before packaging up a release:
+# VERSION="X.X.X"
+
+# XXX - Kludge.  Is there a standard way of finding this out?
+LIBC_VERSION=`ls /lib/libc.so* | cut -c 14`
+
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
+AC_SUBST(LIBC_VERSION)
 
 #--------------------------------------------------------------------
 # This is used in conjuction with the output of 'd2c --compiler-info'
@@ -894,6 +912,7 @@ $srcdir/mkinstalldirs mindy tools
 # in and of itself) and configure tries to create the *.dylan files before
 # we build our builddir tree causing things to flame out horribly.
 AC_OUTPUT(Defaults \
+        gwydion-dylan.spec \
 	mindy/comp/Makefile \
 	mindy/interp/Makefile \
 	mindy/compat/Makefile \
