@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.5 1996/07/12 01:12:51 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.6 1996/07/15 21:31:22 dwatson Exp $
 
 
 ///======================================================================
@@ -245,7 +245,11 @@ define sealed method integer-to-string
        // We do one division before negating arg in case arg is
        // $minimum-integer.
        let (quotient, remainder) = truncate/(arg, radix);
-       pair('-', repeat(-quotient, list($digits[-remainder])));
+       if (zero?(quotient))
+	 pair('-', list($digits[-remainder]));
+       else
+	 pair('-', repeat(-quotient, list($digits[-remainder])));
+       end if;
      else
        repeat(arg, #());
      end);
@@ -873,6 +877,196 @@ define sealed method print-object
 		       suffix: "]");
 end method;
 
+
+/// Print-object <sequence> method.
+///
+
+/// Sequences.
+///
+define sealed method print-object
+    (object :: <sequence>, stream :: <stream>)
+ => ();
+  let obj-class = object.object-class;
+  let name = obj-class.class-name;
+  let name-prefix = concatenate("{", as(<byte-string>, name), ": ");
+
+  let requested-level :: false-or(<integer>) = stream.print-level;
+  let depth :: <integer> = stream.print-depth + 1;
+
+  if (requested-level & (depth > requested-level))
+    write(stream, name-prefix);
+    write(stream, "(size = ");
+    write(stream, print-to-string(object.size));
+    write(stream, ")}");
+  else
+    pprint-logical-block(stream,
+			 prefix: concatenate(name-prefix),
+			 body: method (stream)
+				 print-items(object, print, stream);
+			       end method,
+			 suffix: "}");
+  end if;
+end method print-object;
+
+
+/// Print-object <array> method.
+///
+
+/// Arrays.
+///
+define sealed method print-object
+    (object :: <array>, stream :: <stream>, #next next-method)
+ => ();
+  let array-rank = object.rank;
+
+  if (array-rank <= 1)
+    // If this is a simple array, just use the sequence method
+    next-method();
+  else
+    let requested-level :: false-or(<integer>) = stream.print-level;
+    let depth :: <integer> = stream.print-depth + 1;
+
+    if (requested-level & (depth > requested-level))
+      write(stream, "{<array>: (size = ");
+      write(stream, print-to-string(object.size));
+      write(stream, ")}");
+    else
+      let print-method =
+	method (stream)
+	  print-array(array-to-nested-list(as(<vector>, object),
+					   dimensions(object), 0),
+		      stream);
+	end method;
+      pprint-logical-block(stream,
+			   prefix: "{<array>: ",
+			   body: print-method,
+			   suffix: "}");
+    end if;
+  end if;
+end method print-object;
+
+// Array-to-nested-list takes an <array> (that has been converted to a
+// <vector>) and converts it into a nested list.
+//
+define method array-to-nested-list
+    (object :: <vector>, dimensions :: <vector>, start :: <integer>)
+ => (result :: <list>, next-start :: <integer>);
+  if (dimensions.size = 1)
+    let next-start = start + dimensions[0];
+    let elements
+      = as(<list>, copy-sequence(object, start: start, end: next-start));
+    values(pair(#"lowest-array-level", elements), next-start);
+  else
+    let elements = #();
+    for (i from 0 below dimensions[0])
+      let (result-list, next-start)
+	= array-to-nested-list(object, copy-sequence(dimensions, start: 1),
+			       start);
+
+      elements := concatenate(elements, list(result-list));
+      start := next-start;
+    end for;
+
+    values(elements, start);
+  end if;
+end method array-to-nested-list;
+
+define method print-array (object :: <list>, stream :: <stream>) => ();
+  if (first(object) == #"lowest-array-level")
+    pprint-logical-block(stream,
+			 prefix: "{",
+			 body: method (stream)
+				   print-items(tail(object), print, stream);
+			       end method,
+			 suffix: "}");
+  else
+      pprint-logical-block(stream,
+			   prefix: "{",
+			   body: method (stream)
+				   print-items(object, print-array, stream);
+				 end method,
+			   suffix: "}");
+  end if;
+end method print-array;
+
+
+/// Print-object <table> method.
+///
+
+/// Tables.
+///
+define sealed method print-object
+    (object :: <table>, stream :: <stream>)
+ => ();
+  let requested-level :: false-or(<integer>) = stream.print-level;
+  let depth :: <integer> = stream.print-depth + 1;
+
+  if (requested-level & (depth > requested-level))
+    write(stream, "{<table>: (size = ");
+    write(stream, print-to-string(object.size));
+    write(stream, ")}");
+  else
+    pprint-logical-block(stream,
+			 prefix: "{<table>: ",
+			 body: method (stream)
+				 print-items-with-keys(object, print, stream);
+			       end method,
+			 suffix: "}");
+  end if;
+end method print-object;
+
+
+/// Print-object <range> method.
+///
+
+/// Ranges.
+///
+define sealed method print-object
+    (object :: <range>, stream :: <stream>)
+ => ();
+  let requested-level :: false-or(<integer>) = stream.print-level;
+  let depth :: <integer> = stream.print-depth + 1;
+
+  if (requested-level & (depth > requested-level))
+    let r-size = object.size;
+    write(stream, "{<range>: (size = ");
+    if (r-size)
+      write(stream, print-to-string(r-size));
+    else
+      write(stream, "unbounded");
+    end if;
+    write(stream, ")}");
+  else
+    pprint-logical-block(stream,
+			 prefix: "{<range>: ",
+			 body: method (stream)
+				 print-range(object, stream);
+			       end method,
+			 suffix: "}");
+  end if;
+end method print-object;
+
+define method print-range(object :: <range>, stream :: <stream>) => ();
+  let r-size = object.size;
+  let r-first = if (~r-size | r-size > 0) object.first else #f end if;
+  let r-second = if (~r-size | r-size > 1) object.second else #f end if;
+  let r-last = if (r-size & r-size > 0) object.last else #f end if;
+
+  if (r-first)
+    print(r-first, stream);
+    if (r-second)
+      write(stream, ", ");
+      pprint-newline(#"fill", stream);
+      print(r-second, stream);
+      write(stream, ", ...");
+      if (r-last)
+	write(stream, ", ");
+	pprint-newline(#"fill", stream);
+	print(r-last, stream);
+      end if;
+    end if;
+  end if;
+end method print-range;
 
 
 /// Print-object <function> method.
@@ -957,6 +1151,37 @@ define method print-items (items :: <collection>, print-fun :: <function>,
     end for;
   end block;
 end method;
+
+/// Print-items-with-keys is identical to print-items, except that it
+/// prints the keys along with the items.
+///
+define method print-items-with-keys (items :: <collection>,
+				     print-fun :: <function>,
+				     stream :: <stream>)
+ => ();
+  block (exit)
+    let length :: false-or(<integer>)
+      = stream.print-length;
+    let stream-for-apply = list(stream);
+    let keys = key-sequence(items);
+    for (key in keys,
+	 count = 0 then (count + 1))
+      if (count ~= 0)
+	write(stream, ", ");
+	pprint-newline(#"fill", stream);
+      end if;
+      if (length & (count = length))
+	write(stream, "...");
+	exit();
+      end if;
+      write-element(stream, '(');
+      apply(print-fun, key, stream-for-apply);
+      write(stream, " => ");
+      apply(print-fun, items[key], stream-for-apply);
+      write-element(stream, ')');
+    end for;
+  end block;
+end method print-items-with-keys;
 
 
 /// Print-specializer generic function and methods.
