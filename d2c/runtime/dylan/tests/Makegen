@@ -1,3 +1,5 @@
+&makegen_include("../../../../qa/common-Makegen");
+
 $D2CFLAGS         # added by update-libdirs
     = $d2c_runtime
     . ' -L../../../../common/threads'
@@ -7,12 +9,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../../common/common-dylan'
     . ' -L../../../../qa/testworks'
     . ' -L../../../../qa/testworks-specs';
-$CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
-if ($host_platform{'integer_length'} >= 64) {
-        $CFLAGS = "$CFLAGS -DDYLAN_64BIT";
-}       
-	
 do emit_library_rule(
     'dylan-test-suite', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
