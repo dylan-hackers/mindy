@@ -10,7 +10,7 @@ do emit_library_rule(
 print <<'EOF';
 
 compile:
-	/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple.rsrc $(BUILDDIR)/../simple/simple-resources.r -useDF
+	/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple.rsrc $(BUILDDIR)/../simple/simple-resources-macosx.r -useDF
 	/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple.rsrc $(BUILDDIR)/my-resources.r -useDF
 	/Developer/Tools/SetFile -c ???? -t APPL $(BUILDDIR)/my-simple
 	$(BUILDDIR)/../make-app-package my-simple
