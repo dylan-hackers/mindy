@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.30 1994/11/06 20:00:30 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.31 1994/11/18 03:40:52 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1370,12 +1370,19 @@ static obj_t defaulted_initargs(obj_t class, obj_t keyword_arg_pairs)
 
 static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 {
-    obj_t res = alloc(class, sizeof(struct instance) 
-		               + (DC(class)->instance_length - 1) * sizeof(obj_t));
+    int length = DC(class)->instance_length;
+    obj_t res = alloc(class,
+		      sizeof(struct instance) + (length - 1) * sizeof(obj_t));
     obj_t default_initargs;
     obj_t slots;
     obj_t initargs;
     obj_t inits;
+    int i;
+
+    /* Fill the instance in with something so that the garbage collector */
+    /* doesn't get annoyed. */
+    for (i = 0; i < length; i++)
+	INST(res)->slots[i] = obj_Unbound;
 
     if (DC(class)->all_slots == obj_False)
 	error("Attempt to make an instance of %= before\n"
