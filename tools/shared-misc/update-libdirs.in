@@ -54,7 +54,8 @@ sub scan_directory {
     # print STDERR "Scanning: $dir\n";
     opendir(DIR, $dir) || die "failed to open $dir: $!";
     while(my $entry = readdir(DIR)) {
-	next if($entry eq '.' || $entry eq '..' || $entry eq 'CVS');
+	next if($entry eq '.' || $entry eq '..'
+		|| $entry eq 'CVS' || $entry eq '.svn');
 	if($entry =~ /.*\.lid$/) {
 	    push @lidfiles, File::Spec->catfile($dir, $entry);
 	} elsif($entry eq 'Makegen') {

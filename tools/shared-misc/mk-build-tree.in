@@ -57,7 +57,8 @@ sub mk_build_tree {
     $has_makegen = 0;
 
     while ($entry = readdir(SRCDIR)) {
-	if ($entry eq '.' || $entry eq '..' || $entry eq 'CVS') {
+	if ($entry eq '.' || $entry eq '..'
+	    || $entry eq 'CVS' || $entry eq '.svn') {
 	}
 	elsif ($entry eq "Makegen") {
 	    $has_makegen = 1;
