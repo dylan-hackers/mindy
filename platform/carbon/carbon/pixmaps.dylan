@@ -1,3 +1,5 @@
+module: quickdraw
+
 define functional class <PixMap>	( <statically-typed-pointer> )
 end class <PixMap>;
 
@@ -28,4 +30,4 @@ CopyMask                        (const BitMap *         srcBits,
                                  const Rect *           srcRect,
                                  const Rect *           maskRect,
                                  const Rect *           dstRect)                            ONEWORDINLINE(0xA817);
-
+
