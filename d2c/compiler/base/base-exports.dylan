@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.9 1996/02/02 23:10:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.10 1996/02/05 01:15:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -57,7 +57,9 @@ define module params
 end;
 
 define module common
-  use Dylan, export: all;
+  use Dylan,
+    exclude: {direct-superclasses, direct-subclasses},
+    export: all;
   use Extensions,
     import: {<general-integer>, <extended-integer>,
 	     $maximum-integer, ratio,
@@ -622,17 +624,17 @@ define module classes
   use forwards, import: {<cclass>}, export: all;
 
   export
-    cclass-name, loaded?, closest-primary-superclass,
-    closest-primary-superclass-setter, precedence-list, subclasses,
-    sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, all-slot-infos-setter, new-slot-infos,
-    new-slot-infos-setter, override-infos, override-infos-setter,
-    unique-id, set-and-record-unique-id,
-    subclass-id-range-min, subclass-id-range-max,
-    direct-type, space-representation, space-representation-setter,
-    speed-representation, speed-representation-setter,
-    instance-slots-layout, vector-slot, vector-slot-setter,
-    class-heap-fields, class-heap-fields-setter,
+    cclass-name, loaded?, direct-superclasses,
+    closest-primary-superclass, closest-primary-superclass-setter,
+    precedence-list, subclasses, direct-subclasses, sealed?,
+    abstract?, primary?, functional?, not-functional?, all-slot-infos,
+    all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
+    override-infos, override-infos-setter, unique-id,
+    set-and-record-unique-id, subclass-id-range-min,
+    subclass-id-range-max, direct-type, space-representation,
+    space-representation-setter, speed-representation,
+    speed-representation-setter, instance-slots-layout, vector-slot,
+    vector-slot-setter, class-heap-fields, class-heap-fields-setter,
     <defined-cclass>, class-defn, class-defn-setter,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
