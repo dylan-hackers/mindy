@@ -23,11 +23,12 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.4 1994/10/05 21:04:57 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.5 1996/03/07 17:40:09 nkramer Exp $
 *
 \**********************************************************************/
 
 
+extern obj_t obj_SimpleVectorClass;
 extern obj_t obj_SimpleObjectVectorClass;
 extern obj_t obj_ByteVectorClass;
 
