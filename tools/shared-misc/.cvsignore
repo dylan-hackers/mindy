@@ -3,3 +3,4 @@ line-count
 mk-build-tree
 GNUmakefile
 make-dylan-app
+make-dylan-lib

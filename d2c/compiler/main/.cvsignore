@@ -10,3 +10,5 @@ main-heap.s
 cc-main-files.mak
 d2c
 .cvsignore
+version.dylan
+version.c
