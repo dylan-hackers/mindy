@@ -2,21 +2,34 @@ Mindy 1.4 Change Log
 
 The following are enhancements added since release 1.3:
 
-   A new module, Sequence-diff, has been added to the
-   Collection-Extensions library.  A Unix style "diff" command has
-   been added to the demo directory.  See collection-extensions.doc
-   for details.
+   Ported Mindy to Windows/NT, Solaris, and AIX.  See README for
+   details on obtaining the different versions of Mindy.
 
-   A ~== operator has been introduced, which is the negated version of
-   ==.
+   Replaced the old Random library with a brand new library of the
+   same name.  See random.txt for details.
 
-   Mindy now runs under AIX.
+   Added the Transcendental module to the Dylan library.  See
+   mindy.txt for details.
 
-   A Transcendental module has been added to the Dylan library.  See
-   mindy.doc for details.
+   Added the Sequence-diff module to the Collection-Extensions
+   library.  Added a Unix style "diff" program the demo directory.
+   See collection-extensions.txt and demos.html for details.
 
-   A brand new Random library (random number generator) has replaced
-   the old library of the same name.  See random.doc for details.
+   Added the "next" debugger command which is like "step" but skips over
+   function calls.
+   
+   Extended the "continue" debugger command to be able to continue
+   from more contexts.
+   
+   Added an option to specify how often to run the garbage
+   collector.  If the environment variable BYTES_CONSED_BETWEEN_GCS
+   is set, that value will be used; otherwise a default value of 2
+   megs will be used.  See mindy.txt for details.
+
+   Added the ~== operator described in the DRM.  See mindy.txt for
+   details.
+
+   Made ~ a true function, rather than mere syntax.
 
 
 The following are bug fixes since release 1.3:
@@ -27,10 +40,8 @@ The following are bug fixes since release 1.3:
    Fixed a bug in the Streams library where read-as would sometimes
    return #f even though to-eof? was supplied as #t.
 
-   In the Streams library, <random-access-class> is now exported.  See
-   streams.doc for details.
-
-   ~ is now a true function, rather than merely syntax.
+   In the Streams library, <random-access-stream> is now exported.  See
+   streams.txt for details.
 
    In the fd module of the Dylan library, if an exec fails while doing
    an fd-exec(), the child process will now exit gracefully.  An error
@@ -39,16 +50,16 @@ The following are bug fixes since release 1.3:
 
 The following are enhancements added since release 1.2:
 
-   Mindy now supports ratios.  For details, please see mindy.doc.
+   Mindy now supports ratios.  For details, please see mindy.txt.
 
    Garbage collection reporting is now optional, with the default
-   value being no reporting.  See mindy.doc for details.
+   value being no reporting.  See mindy.txt for details.
 
    Added while: and until: syntax to for statement.  The old syntax is
    still supported.  Words like class, keyed-by, and module are now
    unresevered words.
 
-   Added <string-table> to the Extensions module.  See mindy.doc for
+   Added <string-table> to the Extensions module.  See mindy.txt for
    details.
 
    A new test, threaded-io-test, has been added to the tests
@@ -63,7 +74,7 @@ The following are enhancements added since release 1.2:
    non-POSIX constants FCREAT, FTRUNC, and FEXCL have been removed,
    since they already had POSIX equivalents.  ONDELAY, FNDELAY ELOOP,
    EDQUOT, EOPNOTSUPP, and ETXTBSY have been removed, since they are
-   unused and cause portability problems.  See mindy.doc for more
+   unused and cause portability problems.  See mindy.txt for more
    details.
 
    In the Streams library, modified read-line and write-line to make
@@ -154,7 +165,7 @@ The following are enhancements added since release 1.1:
 
    main() now has a required parameter argv0 which contains the name
    of the file that was executed (similar to C's argv[0]).  See
-   mindy.doc for details.
+   mindy.txt for details.
 
    Added the Print library, which contains extendable code for
    printing arbitrary objects.  If an object has a Dylan literal
@@ -185,7 +196,7 @@ The following are enhancements added since release 1.1:
    from Collection-Extensions to the Substring-Search module of
    String-Extensions.  Renamed the String-Search module of the
    Collection-Extensions library to Vector-Search.  See
-   collection-extensions.txt and string-extensions.doc for details. 
+   collection-extensions.txt and string-extensions.txt for details. 
 
    <so-list> and the Solist module of Collection-extensions have been
    renamed <self-organizing-list> and Self-organizing-list,
@@ -196,7 +207,7 @@ The following are enhancements added since release 1.1:
    Self-Organizing-List module of Collection-extensions are now
    subclasses of <dictionary>.  Remove-key! is now a generic function 
    on <dictionary>s.  <Dictionary> is exported from the Extensions
-   module; see mindy.doc for details.
+   module; see mindy.txt for details.
 
    Mindy now gives warnings about undefined variables.
 
@@ -212,10 +223,10 @@ The following are enhancements added since release 1.1:
    in $MINDYPATH, and failing to find that file, searches for foo.dbc.
 
    Added key-exits?(collection, key) to the Extensions module.  See
-   mindy.doc for details.
+   mindy.txt for details.
 
    Created the Introspective module in the Dylan library.  See
-   mindy.doc for deatils.
+   mindy.txt for deatils.
 
    An error is now signalled if the parent of a subclass has not yet
    been initialized when the subclass is defined.
@@ -244,7 +255,7 @@ The following are enhancements added since release 1.0:
 
    Added some additional error checking.
 
-   Added a "describe" debugger command.  See debug.doc for details.
+   Added a "describe" debugger command.  See debug.txt for details.
 
    The debugger "module" command now annotates the listing of modules with
    "i"s and "x"s to indicate modules that are imported, exported, or both.
