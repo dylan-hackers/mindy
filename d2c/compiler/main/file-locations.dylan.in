@@ -1,6 +1,6 @@
 module: main
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.4 1997/02/02 17:07:04 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.5 1997/02/04 14:39:37 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,9 +18,9 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 define constant $gwydion-dir
   = getenv("GwydionDir") | 
-      #if (compiled-for-x86-win32)
+      #if (compiled-for-win32)
 	 "/gwydion";
-      #elseif (compiled-for-hppa-hpux | compiled-for-x86-linux)
+      #elseif (compiled-for-unix)
 	 "/afs/cs/project/gwydion/compiler";
       #else
          #f;  // no default
@@ -28,7 +28,7 @@ define constant $gwydion-dir
 
 define constant $default-targets-dot-descr
   = if ($gwydion-dir)
-      concatenate($gwydion-dir, "/etc/targets.descr");
+      concatenate($gwydion-dir, "/etc/platforms.descr");
     else
       #f;
     end if;
