@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.6 1994/04/09 14:09:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.7 1994/04/10 21:50:50 wlott Exp $
 *
 * This file does whatever.
 *
@@ -191,11 +191,19 @@ static void print_param_list(struct param_list *list, int depth)
     if (list->allow_keys) {
 	printf("%s#key\n", indent(depth));
 	for (k = list->keyword_params; k != NULL; k = k->next) {
-	    if (k->id)
-		printf("%s%s: %s\n", indent(depth+1), k->keyword->name,
+	    if (k->id->symbol != k->keyword)
+		printf("%s%s: %s", indent(depth+1), k->keyword->name,
 		       k->id->symbol->name);
 	    else
-		printf("%s%s:\n", indent(depth+1), k->keyword->name);
+		printf("%s%s:", indent(depth+1), k->keyword->name);
+	    if (k->type_temp)
+		printf(" :: %s\n", k->type_temp->name);
+	    else if (k->type) {
+		printf("\n%styped\n", indent(depth+2));
+		print_expr(k->type, depth+3);
+	    }
+	    else
+		putchar('\n');
 	    if (k->def) {
 		printf("%sdefault\n", indent(depth+2));
 		print_expr(k->def, depth+3);
