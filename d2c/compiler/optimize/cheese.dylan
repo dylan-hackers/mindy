@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.24 1995/04/26 11:58:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.25 1995/04/26 22:08:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -996,37 +996,54 @@ end;
 define-primitive-deriver(#"values", values-type-deriver);
 
 
-define method boolean-result
+define method fixnum-args-boolean-result
     (component :: <component>, primitive :: <primitive>)
     => res :: <values-ctype>;
+  let fixed-int = dylan-value(#"<fixed-integer>");
+  let assign = primitive.dependents.dependent;
+  for (dep = primitive.depends-on then dep.dependent-next,
+       while: dep)
+    assert-type(component, assign, dep, fixed-int);
+  end;
   dylan-value(#"<boolean>");
 end;
 
-define-primitive-deriver(#"fixnum-=", boolean-result);
-define-primitive-deriver(#"fixnum-<", boolean-result);
+define-primitive-deriver(#"fixnum-=", fixnum-args-boolean-result);
+define-primitive-deriver(#"fixnum-<", fixnum-args-boolean-result);
 
-define method fixnum-result
+define method fixnum-args-fixnum-result
     (component :: <component>, primitive :: <primitive>)
     => res :: <values-ctype>;
-  dylan-value(#"<fixed-integer>");
+  let fixed-int = dylan-value(#"<fixed-integer>");
+  let assign = primitive.dependents.dependent;
+  for (dep = primitive.depends-on then dep.dependent-next,
+       while: dep)
+    assert-type(component, assign, dep, fixed-int);
+  end;
+  fixed-int;
 end;
 
 for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-negative",
 		 #"fixnum-logior", #"fixnum-logxor", #"fixnum-logand",
 		 #"fixnum-lognot", #"fixnum-ash"])
-  define-primitive-deriver(name, fixnum-result);
+  define-primitive-deriver(name, fixnum-args-fixnum-result);
 end;
 
-define method two-fixnums-result
+define method fixnum-args-two-fixnums-result
     (component :: <component>, primitive :: <primitive>)
     => res :: <values-ctype>;
-  let fi = dylan-value(#"<fixed-integer>");
-  make-values-ctype(list(fi, fi), #f);
+  let fixed-int = dylan-value(#"<fixed-integer>");
+  let assign = primitive.dependents.dependent;
+  for (dep = primitive.depends-on then dep.dependent-next,
+       while: dep)
+    assert-type(component, assign, dep, fixed-int);
+  end;
+  make-values-ctype(list(fixed-int, fixed-int), #f);
 end;
 
 for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
 		 #"fixnum-truncate/"])
-  define-primitive-deriver(name, two-fixnums-result);
+  define-primitive-deriver(name, fixnum-args-two-fixnums-result);
 end;
 
 
