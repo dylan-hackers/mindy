@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.8 1994/11/03 22:19:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.9 1994/11/06 19:59:21 rgs Exp $
 *
 \**********************************************************************/
 
@@ -37,6 +37,7 @@ enum type_Id {
 #endif
 
 extern obj_t obj_ClassClass;
+extern obj_t obj_StaticTypeClass; /* type of static pointer classes */
 
 struct class {
     obj_t class;

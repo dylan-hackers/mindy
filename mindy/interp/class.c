@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.9 1994/10/18 00:31:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.10 1994/11/06 19:58:57 rgs Exp $
 *
 * This file implements classes.
 *
@@ -42,8 +42,10 @@
 #include "def.h"
 #include "print.h"
 #include "class.h"
+#include "extern.h"
 
 obj_t obj_ClassClass = 0;
+obj_t obj_StaticTypeClass = NULL; /* type of static pointer classes */
 
 
 
@@ -252,12 +254,30 @@ static obj_t compute_cpl(obj_t class, obj_t superclasses)
 void setup_class_supers(obj_t class, obj_t supers)
 {
     obj_t cpl, scan;
+    boolean some_static = FALSE, all_static = TRUE;
 
     for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
 	obj_t super = HEAD(scan);
 	if (CLASS(super)->sealed_p
 	      && CLASS(super)->library != CLASS(class)->library)
 	    error("Can't add subclasses to sealed class %=", super);
+	if (object_class(super) == obj_StaticTypeClass)
+	    some_static = TRUE;
+	else
+	    all_static = all_static && CLASS(super)->abstract_p;
+    }
+    
+    if (some_static) {
+	/* If we inherit from a statically typed pointer class, then we must
+	   be a statically typed pointer class.  We must therefore act like
+	   one */
+	if (!all_static)
+	    error("Can't mix normal classes with "
+		  "statically typed pointer classes in %=", class);
+	CLASS(class)->class = obj_StaticTypeClass;
+	CLASS(class)->scavenge = scav_c_pointer;
+	CLASS(class)->transport = trans_c_pointer;
+	shrink(class, sizeof(struct class));
     }
 
     CLASS(class)->superclasses = supers;
@@ -376,6 +396,7 @@ static obj_t trans_class(obj_t class)
 void scavenge_class_roots(void)
 {
     scavenge(&obj_ClassClass);
+    scavenge(&obj_StaticTypeClass);
 }
 
 
@@ -386,12 +407,16 @@ void make_class_classes(void)
     obj_ClassClass = ptr_obj(0);
     obj_ClassClass = make_builtin_class(scav_class, trans_class);
     CLASS(obj_ClassClass)->class = obj_ClassClass;
+    obj_StaticTypeClass = make_builtin_class(scav_class, trans_class);
 }
 
 void init_class_classes(void)
 {
     init_builtin_class(obj_ClassClass, "<class>", obj_TypeClass, NULL);
     def_printer(obj_ClassClass, print_class);
+    init_builtin_class(obj_StaticTypeClass, "<static-pointer-class>",
+		       obj_ClassClass, NULL);
+    def_printer(obj_StaticTypeClass, print_class);
 }
 
 void init_class_functions(void)
