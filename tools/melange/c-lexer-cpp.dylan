@@ -311,7 +311,7 @@ end method cpp-define;
 
 define constant preprocessor-match
   = make-regexp-positioner("^#[ \t]*(define|undef|include|ifdef|ifndef|if"
-			     "|else|line|endif|error|pragma)\\b",
+			     "|else|elif|line|endif|error|pragma)\\b",
 			   byte-characters-only: #t, case-sensitive: #t);
 define constant do-skip-matcher
   = make-regexp-positioner("#|/\\*",
@@ -324,14 +324,14 @@ define constant do-skip-matcher
 // continue as normal.
 //
 define method try-cpp
-    (state :: <tokenizer>, pos :: <integer>) => (result :: <boolean>);
+    (state :: <tokenizer>, start-pos :: <integer>) => (result :: <boolean>);
   let contents = state.contents;
 
-  if (contents[pos] ~= '#')
+  if (contents[start-pos] ~= '#')
     #f;
   else
     let (found, pos, word-start, word-end)
-      = preprocessor-match(contents, start: pos);
+      = preprocessor-match(contents, start: start-pos);
     
     if (found)
       // If an #if killed off a region of code, this routine will quickly skip
@@ -416,6 +416,26 @@ define method try-cpp
 	  finally
 	    state.position := i;
 	  end for;
+	"elif" =>
+	  let stack = state.cpp-stack;
+	  if (empty?(stack))
+	    parse-error(state, "Mismatched #elif.");
+	  else
+	    let rest = tail(stack); 
+	    if (head(stack) == #"skip"
+		  & (empty?(rest) | head(rest) == #"accept")
+		  & cpp-parse(state) ~= 0)
+	      state.cpp-stack := pair(#"accept", rest);
+	    else 
+	      do-skip(pos, state.cpp-stack := pair(#"skip", tail(stack)));
+	    end if;
+	  end if;
+	  // For SUN4 headers, kill to end of line
+	  for (i from state.position below contents.size,
+	       until: contents[i] == '\n')
+	  finally
+	    state.position := i;
+	  end for;
 	"endif" =>
 	  let old-stack = state.cpp-stack;
 	  if (empty?(old-stack))
@@ -458,7 +478,10 @@ define method try-cpp
       // Certain compilers might accept additional directives.  As long as
       // they are within failed #ifdefs, we can ignore them.
       if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
-	parse-error(state, "Unknown preprocessor directive");
+	parse-error(state, "Unknown preprocessor directive starting with %=",
+		    // Take a wild guess at how much context is enough
+		    copy-sequence(contents, start: start-pos, 
+				  end: start-pos + 30));
       end if;
       #f;
     end if;
