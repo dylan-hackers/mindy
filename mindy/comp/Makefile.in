@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.6 1995/03/12 16:29:02 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.7 1995/03/13 21:43:09 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -61,11 +61,11 @@ LIBS	=		../compat/libcompat.a @LIBS@
 ## end of configure written portion
 ##
 
-OBJS = mindycomp.o parser.tab.o lexer.tab.o src.o sym.o print.o expand.o \
+OBJS = mindycomp.o parser-tab.o lexer-tab.o src.o sym.o print.o expand.o \
 	literal.o info.o lose.o lexenv.o envanal.o compile.o header.o \
 	dump.o free.o dup.o
 
-SRCS = mindycomp.c parser.tab.c lexer.tab.c src.c sym.c print.c expand.c \
+SRCS = mindycomp.c parser-tab.c lexer-tab.c src.c sym.c print.c expand.c \
 	literal.c info.c lose.c lexenv.c envanal.c compile.c header.c \
 	dump.c free.c dup.c
 
@@ -73,19 +73,19 @@ mindycomp: ${OBJS}
 	${CC} ${OBJS} -DVERSION=\""`/bin/date`"\" ${SRCDIR}/version.c ${LIBS} -o ,$@
 	mv ,$@ $@
 
-${SRCDIR}/parser.tab.c: ${SRCDIR}/parser.y
+${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	${YACC} -d ${SRCDIR}/parser.y
-	mv y.tab.c ${SRCDIR}/parser.tab.c
-	mv y.tab.h ${SRCDIR}/parser.tab.h
+	mv y.tab.c ${SRCDIR}/parser-tab.c
+	mv y.tab.h ${SRCDIR}/parser-tab.h
 
-${SRCDIR}/lexer.tab.c: ${SRCDIR}/lexer.l
-	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer.tab.c
+${SRCDIR}/lexer-tab.c: ${SRCDIR}/lexer.l
+	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer-tab.c
 
 clean:
 	rm -f ${OBJS} version.o mindycomp *~ \#* core
 
 realclean:
-	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.tab.c mindycomp Makefile *~ \#* core
+	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp Makefile *~ \#* core
 	
 install: mindycomp
 	${INSTALL_PROGRAM} mindycomp ${BINDIR}/mindycomp
@@ -140,9 +140,9 @@ lexenv.o:  ${SRCDIR}/lexenv.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h 
              ${SRCDIR}/src.h ${SRCDIR}/lexenv.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/lexenv.c
 
-lexer.tab.o:  ${SRCDIR}/lexer.tab.c ${SRCDIR}/lexer.h ${SRCDIR}/src.h \
-                ${SRCDIR}/parser.tab.h
-	${CC} -c ${CFLAGS} ${SRCDIR}/lexer.tab.c
+lexer-tab.o:  ${SRCDIR}/lexer-tab.c ${SRCDIR}/lexer.h ${SRCDIR}/src.h \
+                ${SRCDIR}/parser-tab.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/lexer-tab.c
 
 literal.o:  ${SRCDIR}/literal.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
               ${SRCDIR}/literal.h ${SRCDIR}/lose.h
@@ -158,10 +158,10 @@ mindycomp.o:  ${SRCDIR}/mindycomp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../com
                 ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/mindycomp.c
 
-parser.tab.o:  ${SRCDIR}/parser.tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
                  ${SRCDIR}/header.h ${SRCDIR}/parser.h ${SRCDIR}/lexer.h \
                  ${SRCDIR}/literal.h ${SRCDIR}/src.h ${SRCDIR}/sym.h
-	${CC} -c ${CFLAGS} ${SRCDIR}/parser.tab.c
+	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
             ${SRCDIR}/src.h ${SRCDIR}/sym.h ${SRCDIR}/literal.h \

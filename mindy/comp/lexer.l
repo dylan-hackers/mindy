@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.13 1994/12/16 19:18:01 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.14 1995/03/13 21:43:23 nkramer Exp $
 *
 * This file is the lexical analizer.
 *
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include "lexer.h"
 #include "src.h"
-#include "parser.tab.h"
+#include "parser-tab.h"
 
 extern int isatty();
 extern void warn();
