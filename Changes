@@ -5,19 +5,33 @@ The following are enhancements added since release 1.2:
    Mindy now runs on Windows/NT.  Thanks are due to Gary Palter for
    doing the bulk of the port.
 
+   Mindy now supports ratios.  For details, please see mindy.doc.
+
    Garbage collection reporting is now optional, with the default
    value being no reporting.  See mindy.doc for details.
+
+   Added the Tk library, which contains code to create graphical user
+   interfaces using Tk (of TCL/TK fame).  See tk.doc for details.
+
+   Added while: and until: syntax to for statement.  Make words like
+   class, keyed-by, and module unresevered words.  The old syntax is
+   still supported.
+
+   Added <string-table> to the Extensions module.  See mindy.doc for
+   details.
 
    A new test, threaded-io-test, has been added to the tests
    directory.  This program tries to read from three different streams
    simultaneously.  However, the program is interactive, and for that
    reason is not run by the makefile.
 
-   Added the Tk library, which contains code to create graphical user
-   interfaces using Tk (of TCL/TK fame).  See tk.doc for details.
-
-   Added while: and until: syntax to for statement.  Make words like
-   class, keyed-by, and module unresevered words.
+   The constants in the File-Descriptors module of the Dylan library
+   have been made POSIX conformant.  The seek constants L_SET, L_INCR,
+   L_XTND have been replaced with the POSIX equivalents SEEK_SET,
+   SEEK_CUR, SEEK_END.  ONDELAY has been changed to ONONBLOCK.  The
+   non-POSIX constants FCREAT, FTRUNC, FEXCL, and FNDELAY have been
+   removed, since they already had POSIX equivalents.  See mindy.doc
+   for more details.
 
 
 The following are bug fixes since release 1.2:
@@ -32,7 +46,8 @@ The following are bug fixes since release 1.2:
    remove-key! now works on <self-organizing-list>s.
 
    Corrected the precedence of ^.  Brought the associativity of ^ into
-   line with other languages; used to be right associative, now is left.
+   line with other languages; used to be left associative (as
+   specified in the DIRM), now is right associative.
 
    Apply now makes sure the object being applied is really a function.
 
@@ -44,8 +59,7 @@ The following are bug fixes since release 1.2:
 
    ceiling and round now work for extended integers.
 
-   Rationalize has been added.
-
+   every? for vectors now works.
 
 
 I don't know what these mean:
