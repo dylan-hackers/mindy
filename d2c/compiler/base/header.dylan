@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.7 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.8 1996/08/07 13:34:24 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -162,7 +162,7 @@ end;
 // Return #t if char is whitespace (space, tab, or form-feed), #f if not.
 //
 define method whitespace? (char :: <character>)
-  char == ' ' | char == '\t' | char == '\f';
+  char == ' ' | char == '\t' | char == '\f' | char == '\r' | char == '\n';
 end;
 
 // skip-whitespace -- internal.
@@ -184,6 +184,23 @@ define method skip-whitespace (contents :: <file-contents>, posn :: <integer>)
   end;
 end method;
 
+// Return position of last whitespace (as seen going backwards)
+//
+define method skip-whitespace-backwards
+    (contents :: <file-contents>, posn :: <integer>)
+ => text-end :: <integer>;
+  if (posn == 0)
+    0;
+  else
+    let char = as(<character>, contents[posn - 1]);
+    if (char.whitespace?)
+      skip-whitespace-backwards(contents, posn - 1);
+    else
+      posn;
+    end if;
+  end if;
+end method skip-whitespace-backwards;
+
 // find-newline -- internal.
 //
 // Return the position of the next newline at or after posn.
@@ -192,7 +209,7 @@ define method find-newline (contents :: <file-contents>, posn :: <integer>)
     => newline :: <integer>;
   if (posn < contents.size)
     let char = as(<character>, contents[posn]);
-    if (char ~= '\n')
+    if (char ~== '\n')
       find-newline(contents, posn + 1);
     else
       posn;
@@ -233,6 +250,14 @@ define method scan-keyword (contents :: <file-contents>, start :: <integer>)
   repeat(start + 1);
 end method;
 
+// Tells you if the line starting at posn is a blank line (ie, nothing
+// but whitespace).
+//
+define function blank-line? (contents :: <file-contents>, posn :: <integer>)
+ => answer :: <boolean>;
+  skip-whitespace(contents, posn) >= find-newline(contents, posn);
+end function blank-line?;
+
 // scan-value -- internal.
 //
 // Extract the value starting at posn and return it.  Additionally,
@@ -246,18 +271,17 @@ define method scan-value
 		   prefix :: <byte-string>)
       let ws-end = skip-whitespace(contents, posn);
       let newline = find-newline(contents, ws-end);
+      let value-end = skip-whitespace-backwards(contents, newline);
       let continued?
-	= (newline + 1 < contents.size
-	     & whitespace?(as(<character>, contents[newline + 1])));
-      let len = if (continued?)
-		  newline + 1 - ws-end;
-		else
-		  newline - ws-end;
-		end;
+	= (newline + 1 < contents.size 
+	     & whitespace?(as(<character>, contents[newline + 1]))
+	     & ~blank-line?(contents, newline + 1));
+      let len = value-end - ws-end + if (continued?) 1 else 0 end;
       let result = make(<byte-string>, size: len + prefix.size);
       copy-bytes(result, 0, prefix, 0, prefix.size);
       copy-bytes(result, prefix.size, contents, ws-end, len);
       if (continued?)
+	result.last := '\n';
 	repeat(newline + 1, line + 1, result);
       elseif (newline < contents.size)
 	values(result, newline + 1, line + 1);
@@ -301,8 +325,9 @@ define method parse-header (source :: <source-file>)
 	  else
 	    error("Bogus header keyword on line %d", line);
 	  end;
-	elseif (char == '\n')
-	  values(make(<header>, entries: entries), line + 1, posn + 1);
+	elseif (blank-line?(contents, posn))
+	  values(make(<header>, entries: entries), line + 1, 
+		 1 + find-newline(contents, posn));
 	else
 	  error("Bogus header keyword on line %d", line);
 	end;
