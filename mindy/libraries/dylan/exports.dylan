@@ -11,7 +11,7 @@ module: dylan-user
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.2 1994/03/26 07:46:39 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.3 1994/03/28 11:33:48 wlott Exp $
 ##
 ##  This file does whatever.
 ##
@@ -68,7 +68,7 @@ define module Builtin-Stuff
     values, vector;
   create
     do, error, type-error, make-next-method-function, generic-apply,
-    forward-iteration-protocol, backward-iteration-protocol,
+    forward-iteration-protocol, backward-iteration-protocol, negative?,
     debugger-print, debugger-report-condition, debugger-abort,
     debugger-describe-restarts, debugger-restart, debugger-return;
 end Builtin-Stuff;
@@ -118,7 +118,7 @@ define module Dylan
     key-sequence,
     last, last-setter, lcm,
     map, map-as, map-into, max, member?, min, modulo,
-    negative?, numerator,
+    numerator,
     odd?,
     pop, pop-last, positive?, push, push-last,
     range, rationalize, rcurry, reduce, reduce1, remainder, remove,
