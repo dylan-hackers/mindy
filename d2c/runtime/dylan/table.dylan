@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.1 1995/12/10 21:39:31 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.2 1995/12/12 01:06:05 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -465,13 +465,14 @@ end method \=;
 // test.  Internal use only.
 //
 define method find-elt
-    (list :: <list>, key :: <object>, key-id :: <object>, key= :: <function>)
- => whatever :: <object>;
+    (list :: <list>, key :: <object>, key-id :: <fixed-integer>,
+     key= :: <function>)
+ => (whatever :: <object>);
   if (list.empty?)
     #f;
   else
     let elem = list.head;
-    if ((elem.entry-hash-id = key-id) & key=(elem.entry-key, key))
+    if ((elem.entry-hash-id == key-id) & key=(elem.entry-key, key))
       elem;
     else
       find-elt(list.tail, key, key-id, key=);
