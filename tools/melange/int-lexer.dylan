@@ -553,7 +553,7 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
       // can really confuse the emacs mode....
       if (is-prefix?("/" "/", contents, start: index))
 	for (j from index + 2 below sz,
-	     until contents[j] == '\n')
+	     until: contents[j] == '\n')
 	finally
 	  j
 	end for;
@@ -564,7 +564,7 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
       end if;
     end method skip-comment;
   for (i from position below sz,
-       until (~whitespace?(contents[i])))
+       until: (~whitespace?(contents[i])))
   finally
     let comment-end = skip-comment(i);
     if (comment-end == i)
