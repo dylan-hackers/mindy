@@ -76,7 +76,7 @@ end method condition-to-string;
 /// Constructors
 
 // External interface ensures everything is a single float
-define /*sideways*/ method make-transform
+define sideways method make-transform
     (mxx :: <real>, mxy :: <real>, myx :: <real>, myy :: <real>,
      tx :: <real>,  ty :: <real>)
  => (transform :: <transform>)
@@ -87,7 +87,7 @@ define /*sideways*/ method make-transform
 end method make-transform;
 
 //--- 'sideways' because <transform> is defined in DUIM-Geometry
-define sealed inline /*sideways*/ method make 
+define sealed inline sideways method make 
     (class == <transform>,
      #key mxx = 1.0, mxy = 0.0, myx = 0.0, myy = 1.0, tx = 0.0, ty = 0.0)
  => (transform :: <transform>)
@@ -116,7 +116,7 @@ define method make-transform-1
   end
 end method make-transform-1;
 
-define /*sideways*/ method make-rotation-transform
+define sideways method make-rotation-transform
     (angle :: <real>, #key origin-x = 0, origin-y = 0)
  => (transform :: <transform>)
   let angle = as(<single-float>, modulo(angle, $2pi));
@@ -136,7 +136,7 @@ define /*sideways*/ method make-rotation-transform
   end
 end method make-rotation-transform;
 
-define /*sideways*/ method make-rotation-transform*
+define sideways method make-rotation-transform*
     (angle :: <real>, #key origin) => (transform :: <transform>)
   if (origin)
     make-rotation-transform(angle,
@@ -147,7 +147,7 @@ define /*sideways*/ method make-rotation-transform*
   end
 end method make-rotation-transform*;
 
-define /*sideways*/ method make-scaling-transform
+define sideways method make-scaling-transform
     (mx :: <real>, my :: <real>, #key origin-x = 0, origin-y = 0)
  => (transform :: <transform>)
   let mx = as(<single-float>, mx);
@@ -163,7 +163,7 @@ define /*sideways*/ method make-scaling-transform
   end
 end method make-scaling-transform;
 
-define /*sideways*/ method make-scaling-transform*
+define sideways method make-scaling-transform*
     (mx :: <real>, my :: <real>, #key origin) => (transform :: <transform>)
   if (origin)
     make-scaling-transform(mx, my, 
@@ -174,7 +174,7 @@ define /*sideways*/ method make-scaling-transform*
   end
 end method make-scaling-transform*;
 
-define /*sideways*/ method make-reflection-transform
+define sideways method make-reflection-transform
     (x1 :: <real>, y1 :: <real>, x2 :: <real>, y2 :: <real>)
  => (transform :: <transform>)
   when (x1 = x2 & y1 = y2)
@@ -200,14 +200,14 @@ define /*sideways*/ method make-reflection-transform
        tx: nxx * x1 - nxy * y1, ty: nyy * y1 - nxy * x1)
 end method make-reflection-transform;
 
-define /*sideways*/ method make-reflection-transform*
+define sideways method make-reflection-transform*
     (point-1 :: <standard-point>, point-2 :: <standard-point>)
  => (transform :: <transform>)
   make-reflection-transform(point-x(point-1), point-y(point-1),
 			    point-x(point-2), point-y(point-2))
 end method make-reflection-transform*;
 
-define /*sideways*/ method make-3-point-transform
+define sideways method make-3-point-transform
     (x1, y1, x2, y2, x3, y3,
      x1-image, y1-image, x2-image, y2-image, x3-image, y3-image)
  => (transform :: <transform>)
@@ -241,7 +241,7 @@ define /*sideways*/ method make-3-point-transform
      (y1-image * x2y3-x3y2 + y2-image * x3y1-x1y3 + y3-image * x1y2-x2y1) * one/det)
 end method make-3-point-transform;
 
-define /*sideways*/ method make-3-point-transform*
+define sideways method make-3-point-transform*
     (point-1, point-2, point-3,
      point-1-image, point-2-image, point-3-image)
  => (transform :: <transform>)
@@ -395,13 +395,13 @@ end method compose-translation-with-transform;
 
 /// Scaling composition operators
 
-define /*sideways*/ method compose-scaling-with-transform
+define sideways method compose-scaling-with-transform
     (transform :: <identity-transform>, mx :: <real>, my :: <real>, #key origin)
  => (transform :: <transform>)
   make-scaling-transform*(mx, my, origin: origin)
 end method compose-scaling-with-transform;
 
-define /*sideways*/ method compose-scaling-with-transform
+define sideways method compose-scaling-with-transform
     (transform :: <translation-transform>, mx :: <real>, my :: <real>, #key origin)
  => (transform :: <transform>)
   let mx = as(<single-float>, mx);
@@ -452,7 +452,7 @@ define method compose-scaling-with-transform
   end
 end method compose-scaling-with-transform;
 
-define /*sideways*/ method compose-transform-with-scaling
+define sideways method compose-transform-with-scaling
     (transform :: <transform>, mx :: <real>, my :: <real>, #key origin)
  => (transform :: <transform>)
   compose-transforms(make-scaling-transform*(mx, my, origin: origin), transform)
@@ -461,13 +461,13 @@ end method compose-transform-with-scaling;
 
 /// Rotation composition operators
 
-define /*sideways*/ method compose-rotation-with-transform
+define sideways method compose-rotation-with-transform
     (transform :: <identity-transform>, angle :: <real>, #key origin)
  => (transform :: <transform>)
   make-rotation-transform*(angle, origin: origin)
 end method compose-rotation-with-transform;
 
-define /*sideways*/ method compose-rotation-with-transform
+define sideways method compose-rotation-with-transform
     (transform :: <translation-transform>, angle :: <real>, #key origin)
  => (transform :: <transform>)
   let angle :: <single-float> = modulo(angle, $2pi);
@@ -525,7 +525,7 @@ define method compose-rotation-with-transform
   end
 end method compose-rotation-with-transform;
 
-define /*sideways*/ method compose-transform-with-rotation
+define sideways method compose-transform-with-rotation
     (transform :: <transform>, angle :: <real>, #key origin)
  => (transform :: <transform>)
   compose-transforms(make-rotation-transform*(angle, origin: origin), transform)
