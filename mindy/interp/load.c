@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.13 1994/06/11 02:23:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.14 1994/06/11 18:15:00 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -26,7 +26,7 @@ extern int close(int fd);
 extern int read(int fd, void *ptr, int bytes);
 extern int access(const void *path, int flags);
 #endif
-#ifdef hpux
+#if defined(hpux) || defined(__osf__)
 #define pause buttplug
 #include <unistd.h>
 #undef pause
@@ -54,8 +54,10 @@ extern int access(const void *path, int flags);
 #include "../comp/fileops.h"
 #include "load.h"
 
+#if defined(MACH) || defined(hpux)
 extern char *strerror(int errnum);
 extern char *getenv(char *name);
+#endif
 
 #define BUFFER_SIZE 4096
 
