@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.7 1995/03/04 21:52:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.8 1995/03/23 21:59:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -651,16 +651,16 @@ binary-operand-sans-keyword (operand)
 binary-operand-sans-keyword (<minus-token> operand)
   make(<funcall>,
        function: make(<varref>,
-		      name: make(<name-token>,
-				 symbol: #"negative",
-				 module: %1.token-module,
-				 uniquifier: %1.token-uniquifier)),
+		      id: make(<name-token>,
+			       symbol: #"negative",
+			       module: %1.token-module,
+			       uniquifier: %1.token-uniquifier)),
        arguments: vector(%2));
 %
 
 binary-operand-sans-keyword (<tilde-token> operand)
   make(<funcall>,
-       function: make(<varref>, name: %1),
+       function: make(<varref>, id: %1),
        arguments: vector(%2));
 %
 
@@ -673,14 +673,14 @@ operand (operand <left-paren-token> arguments-opt <right-paren-token>)
 operand (operand <left-bracket-token> arguments <right-bracket-token>)
   make(<funcall>,
        function: make(<varref>,
-		      name: make(<name-token>,
-				 symbol: if (%3.size == 1)
-					   #"element";
-					 else
-					   #"aref";
-					 end,
-				 module: $Dylan-Module,
-				 uniquifier: make(<uniquifier>))),
+		      id: make(<name-token>,
+			       symbol: if (%3.size == 1)
+					 #"element";
+				       else
+					 #"aref";
+				       end,
+			       module: $Dylan-Module,
+			       uniquifier: make(<uniquifier>))),
        arguments: apply(vector, %1, %3));
 %
 
@@ -731,7 +731,7 @@ leaf (literal)
 %
 
 leaf (<name-token>)
-  make(<varref>, name: %1);
+  make(<varref>, id: %1);
 %
 
 leaf (<left-paren-token> expression <right-paren-token>)
@@ -1363,7 +1363,7 @@ parameter (<name-token> <double-equal-token> expression)
 			    symbol: #"singleton",
 			    module: $Dylan-Module,
 			    uniquifier: make(<uniquifier>));
-  let singleton-varref = make(<varref>, name: singleton-name);
+  let singleton-varref = make(<varref>, id: singleton-name);
   let funcall = make(<funcall>,
 		     function: singleton-varref,
 		     arguments: vector(%3));

@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.3 1995/03/04 21:57:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.4 1995/03/23 22:05:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -70,7 +70,7 @@ define method extract-names-or-all (expr :: <expression>, where :: <string>)
 end;
 
 define method extract-names-or-all (expr :: <varref>, where :: <string>)
-  if (expr.varref-name.token-symbol == #"all")
+  if (expr.varref-id.token-symbol == #"all")
     #t;
   else
     error("Bogus thing in %s clause: %=", where, expr);

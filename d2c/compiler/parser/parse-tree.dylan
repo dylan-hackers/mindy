@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.4 1995/03/04 21:55:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.5 1995/03/23 22:00:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -645,11 +645,11 @@ end;
 // <varref> -- exported.
 //
 define class <varref> (<expression>)
-  slot varref-name :: <identifier-token>, required-init-keyword: name:;
+  slot varref-id :: <identifier-token>, required-init-keyword: id:;
 end;
 
 define method print-object (varref :: <varref>, stream :: <stream>) => ();
-  pprint-fields(varref, stream, name: varref.varref-name);
+  pprint-fields(varref, stream, name: varref.varref-id);
 end;
 
 // <macro-statement> -- exported.

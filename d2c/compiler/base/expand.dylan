@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.6 1995/03/23 22:05:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,7 +30,7 @@ define method make-temp (name :: <symbol>) => res :: <name-token>;
   make(<name-token>, symbol: name, uniquifier: make(<uniquifier>));
 end;
 
-define method make-dylan-name (name :: <symbol>) => res :: <name-token>;
+define method make-dylan-id (name :: <symbol>) => res :: <name-token>;
   make(<name-token>,
        symbol: name,
        module: $Dylan-Module,
@@ -115,7 +115,7 @@ define method make-binary-fn-call(operator :: <binary-operator-token>,
 				  right :: <expression>)
     => res :: <expression>;
   make(<funcall>,
-       function: make(<varref>, name: operator),
+       function: make(<varref>, id: operator),
        arguments: vector(left, right));
 end;
 
@@ -149,22 +149,22 @@ define method expand-assignment (place :: <funcall>, value :: <expression>)
   unless (instance?(place.funcall-function, <varref>))
     error("Bogus place for assignment: %=", place);
   end;
-  let setter = make-setter(place.funcall-function.varref-name);
+  let setter = make-setter(place.funcall-function.varref-id);
   let forms = make(<stretchy-vector>);
   let args = make(<stretchy-vector>);
   let (value-temp, value-bind-form) = bind-temp(#"value", value);
-  add!(args, make(<varref>, name: value-temp));
+  add!(args, make(<varref>, id: value-temp));
   for (arg in place.funcall-arguments)
     let (temp, bind-form) = bind-temp(#"arg", arg);
-    add!(args, make(<varref>, name: temp));
+    add!(args, make(<varref>, id: temp));
     add!(forms, bind-form);
   end;
   add!(forms, value-bind-form);
   add!(forms,
        make(<funcall>,
-	    function: make(<varref>, name: setter),
+	    function: make(<varref>, id: setter),
 	    arguments: as(<simple-object-vector>, args)));
-  add!(forms, make(<varref>, name: value-temp));
+  add!(forms, make(<varref>, id: value-temp));
   as(<simple-object-vector>, forms);
 end;
 
@@ -172,12 +172,12 @@ define method expand-assignment (place :: <dot>, value :: <expression>)
     => res :: union(<false>, <simple-object-vector>);
   let (value-temp, value-bind-form) = bind-temp(#"value", value);
   let (arg-temp, arg-bind-form) = bind-temp(#"arg", place.dot-operand);
-  let function = make(<varref>, name: make-setter(place.dot-name));
-  let args = vector(make(<varref>, name: value-temp),
-		    make(<varref>, name: arg-temp));
+  let function = make(<varref>, id: make-setter(place.dot-name));
+  let args = vector(make(<varref>, id: value-temp),
+		    make(<varref>, id: arg-temp));
   let funcall = make(<funcall>, function: function, arguments: args);
   vector(arg-bind-form, value-bind-form, funcall,
-	 make(<varref>, name: value-temp));
+	 make(<varref>, id: value-temp));
 end;
 
 define method expand-assignment (place :: <expression>, value :: <expression>)
@@ -223,15 +223,14 @@ define method expand (form :: <for>, lexenv :: union(<false>, <lexenv>))
     end;
     let repeat = make-temp(#"repeat");
     let repeat-call = make(<funcall>,
-			   function: make(<varref>, name: repeat),
+			   function: make(<varref>, id: repeat),
 			   arguments: as(<simple-object-vector>, step-forms));
     let return = make-temp(#"return");
     unless (empty?(form.for-finally))
       repeat-call
 	:= make(<funcall>,
-		function: make(<varref>,
-			       name: make-dylan-name(#"mv-call")),
-		arguments: vector(make(<varref>, name: return),
+		function: make(<varref>, id: make-dylan-id(#"mv-call")),
+		arguments: vector(make(<varref>, id: return),
 				  repeat-call));
     end;
     if (explicit-end-test)
@@ -267,7 +266,7 @@ define method expand (form :: <for>, lexenv :: union(<false>, <lexenv>))
     add!(outer-body, make(<local>, methods: vector(method-parse)));
     add!(outer-body,
 	 make(<funcall>,
-	      function: make(<varref>, name: repeat),
+	      function: make(<varref>, id: repeat),
 	      arguments: as(<simple-object-vector>, init-forms)));
     as(<simple-object-vector>, outer-body);
   end;
@@ -308,27 +307,27 @@ define method process-for-clause (clause :: <for-in-clause>,
 		    required: map(curry(make, <parameter>, name:),
 				  vector(state-temp, limit-temp, next-temp,
 					 done-temp, curkey-temp, curel-temp)));
-  let fip = make-dylan-name(#"forward-iteration-protocol");
+  let fip = make-dylan-id(#"forward-iteration-protocol");
   let fip-call = make(<funcall>,
-		      function: make(<varref>, name: fip),
-		      arguments: vector(make(<varref>, name: coll-temp)));
+		      function: make(<varref>, id: fip),
+		      arguments: vector(make(<varref>, id: coll-temp)));
   add!(outer-body,
        make(<let>,
 	    bindings: make(<bindings>,
 			   parameter-list: params,
 			   expression: fip-call)));
   add!(step-vars, make(<parameter>, name: state-temp));
-  add!(init-forms, make(<varref>, name: state-temp));
+  add!(init-forms, make(<varref>, id: state-temp));
   add!(implied-end-tests,
        make(<funcall>,
-	    function: make(<varref>, name: done-temp),
-	    arguments: vector(make(<varref>, name: coll-temp),
-			      make(<varref>, name: state-temp),
-			      make(<varref>, name: limit-temp))));
+	    function: make(<varref>, id: done-temp),
+	    arguments: vector(make(<varref>, id: coll-temp),
+			      make(<varref>, id: state-temp),
+			      make(<varref>, id: limit-temp))));
   let curel = make(<funcall>,
-		   function: make(<varref>, name: curel-temp),
-		   arguments: vector(make(<varref>, name: coll-temp),
-				     make(<varref>, name: state-temp)));
+		   function: make(<varref>, id: curel-temp),
+		   arguments: vector(make(<varref>, id: coll-temp),
+				     make(<varref>, id: state-temp)));
   add!(inner-body,
        make(<let>,
 	    bindings: make(<bindings>,
@@ -337,9 +336,9 @@ define method process-for-clause (clause :: <for-in-clause>,
 			   expression: curel)));
   add!(step-forms,
        make(<funcall>,
-	    function: make(<varref>, name: next-temp),
-	    arguments: vector(make(<varref>, name: coll-temp),
-			      make(<varref>, name: state-temp))));
+	    function: make(<varref>, id: next-temp),
+	    arguments: vector(make(<varref>, id: coll-temp),
+			      make(<varref>, id: state-temp))));
   #f;
 end;
 
@@ -357,7 +356,7 @@ define method process-for-clause (clause :: <for-step-clause>,
 		       "-init"),
 		clause.for-clause-init);
   add!(outer-body, bind-form);
-  add!(init-forms, make(<varref>, name: temp));
+  add!(init-forms, make(<varref>, id: temp));
   add!(step-forms, clause.for-clause-step);
   #f;
 end;
@@ -376,13 +375,13 @@ define method process-for-clause (clause :: <for-from-clause>,
   let (start-temp, start-bind)
     = bind-temp(symcat(name, "-start"), clause.for-clause-from);
   add!(outer-body, start-bind);
-  add!(init-forms, make(<varref>, name: start-temp));
+  add!(init-forms, make(<varref>, id: start-temp));
   let bound
     = if (clause.for-clause-bound)
 	let (bound-temp, bound-bind)
 	  = bind-temp(symcat(name, "-bound"), clause.for-clause-bound);
 	add!(outer-body, bound-bind);
-	make(<varref>, name: bound-temp);
+	make(<varref>, id: bound-temp);
       end;
   let by-expr
     = if (~clause.for-clause-by)
@@ -393,25 +392,24 @@ define method process-for-clause (clause :: <for-from-clause>,
 	let (by-temp, by-bind)
 	  = bind-temp(symcat(name, "-by"), clause.for-clause-by);
 	add!(outer-body, by-bind);
-	make(<varref>, name: by-temp);
+	make(<varref>, id: by-temp);
       end;
   add!(step-forms,
        make(<funcall>,
-	    function: make(<varref>, name: make-dylan-name(#"+")),
-	    arguments: vector(make(<varref>, name: var.param-name), by-expr)));
+	    function: make(<varref>, id: make-dylan-id(#"+")),
+	    arguments: vector(make(<varref>, id: var.param-name), by-expr)));
   if (bound)
     let fn
       = select (clause.for-clause-kind)
-	  #"above" => make-dylan-name(#"<=");
-	  #"below" => make-dylan-name(#">=");
+	  #"above" => make-dylan-id(#"<=");
+	  #"below" => make-dylan-id(#">=");
 	  #"to" =>
 	    if (instance?(by-expr, <literal-ref>)
 		  & instance?(by-expr.litref-literal, <literal-number>))
-	      make-dylan-name(if (by-expr.litref-literal < 0) #"<" else #">" end);
+	      make-dylan-id(if (by-expr.litref-literal < 0) #"<" else #">" end);
 	    else
 	      let cmp = make(<funcall>,
-			     function: make(<varref>,
-					    name: make-dylan-name(#"<")),
+			     function: make(<varref>, id: make-dylan-id(#"<")),
 			     arguments: vector(by-expr,
 					       make(<literal-ref>,
 						    literal:
@@ -420,10 +418,8 @@ define method process-for-clause (clause :: <for-from-clause>,
 	      let test
 		= make(<if>,
 		       condition: cmp,
-		       consequent: vector(make(<varref>,
-					       name: make-dylan-name(#"<"))),
-		       alternate: vector(make(<varref>,
-					      name: make-dylan-name(#">"))));
+		       consequent: vector(make(<varref>, id: make-dylan-id(#"<"))),
+		       alternate: vector(make(<varref>, id: make-dylan-id(#">"))));
 	      let (fn-temp, fn-bind) = bind-temp(symcat(name, "-test"), test);
 	      add!(outer-body, fn-bind);
 	      fn-temp;
@@ -431,8 +427,8 @@ define method process-for-clause (clause :: <for-from-clause>,
 	end;
     add!(implied-end-tests,
 	 make(<funcall>,
-	      function: make(<varref>, name: fn),
-	      arguments: vector(make(<varref>, name: var.param-name), bound)));
+	      function: make(<varref>, id: fn),
+	      arguments: vector(make(<varref>, id: var.param-name), bound)));
   end;
   #f;
 end;
@@ -447,7 +443,7 @@ define method bind-type (var :: <parameter>, outer-body :: <stretchy-vector>,
     add!(outer-body, bind-form);
     make(<parameter>,
 	 name: var.param-name,
-	 type: make(<varref>, name: temp));
+	 type: make(<varref>, id: temp));
   else
     var;
   end;

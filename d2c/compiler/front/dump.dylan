@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.4 1995/03/04 21:55:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.5 1995/03/23 22:05:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -311,7 +311,7 @@ define method dump (form :: <literal-ref>, stream :: <dump-state-stream>) => ();
 end;
 
 define method dump (form :: <varref>, stream :: <dump-state-stream>) => ();
-  dump(form.varref-name, stream);
+  dump(form.varref-id, stream);
 end;
 
 define method dump (meth :: <method-parse>, stream :: <dump-state-stream>)
