@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.6 1996/01/25 00:27:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.7 1996/01/27 20:17:33 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -205,7 +205,7 @@ define module compile-time-values
   use od-format;
 
   export
-    <ct-value>, ct-value-heap-label, ct-value-heap-label-setter,
+    <ct-value>, ct-value-heap-labels, ct-value-heap-labels-setter,
     <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <literal>, literal-value, <eql-literal>,
     <ct-not-supplied-marker>,
@@ -730,7 +730,7 @@ define module compile-time-functions
     ct-function-name, ct-function-signature,
     ct-function-definition, ct-function-closure-var-types,
 
-    <ct-generic-function>,
+    <ct-generic-function>, <ct-open-generic>, <ct-sealed-generic>,
 
     <ct-method>, ct-method-hidden?,
 
