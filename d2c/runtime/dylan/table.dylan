@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.4 1996/01/12 02:10:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.5 1996/02/06 15:52:20 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -52,6 +52,20 @@ Synopsis:   Implements <table>, <object-table>, <equal-table>,
 //
 // For a more in depth explanation, see mindy.doc
 
+
+// Exported interface.
+
+define open generic table-protocol (table :: <table>)
+    => (key-test :: <function>, key-hash :: <function>);
+
+define open generic value-hash (thing :: <object>)
+    => (id :: <integer>, state :: <hash-state>);
+
+define open generic equal-hash (thing :: <object>)
+    => (id :: <integer>, state :: <hash-state>);
+
+
+
 // -------------------------------------------------------------------
 // Compiler-specific code
 // -------------------------------------------------------------------
@@ -167,6 +181,7 @@ define class <bucket-entry> (<object>)
 end class <bucket-entry>;
 
 seal generic make (singleton(<bucket-entry>));
+seal generic initialize (<bucket-entry>);
 
 define open abstract primary class <table>
     (<mutable-explicit-key-collection>, <stretchy-collection>)
@@ -183,13 +198,17 @@ define open abstract class <object-table> (<table>)
 end class <object-table>;
 
 define sealed class <simple-object-table> (<object-table>) end class;
+
 seal generic make (singleton(<simple-object-table>));
+seal generic initialize (<simple-object-table>);
 
 // Uses = as key comparison
 //
 define sealed class <equal-table> (<table>)
 end class <equal-table>;
+
 seal generic make (singleton(<equal-table>));
+seal generic initialize (<equal-table>);
 
 // Uses a user defined key comparison and hash function, so long as
 // the hash function doesn't involve addresses.
@@ -217,12 +236,11 @@ define method initialize
   ht.bucket-states := make(<simple-object-vector>, 
 			   size: sz, fill: $permanent-hash-state);
 end method initialize;
-seal generic initialize (<simple-object-table>);
 
 define inline method key-test (ht :: <table>) => test :: <function>;
-  let test = table-protocol(ht);    // drop the second return value
-  test;
+  values(table-protocol(ht));    // drop the second return value
 end method key-test;
+
 seal generic key-test (<simple-object-table>);
 
 define inline method object-hash (key :: <object>)
@@ -340,32 +358,32 @@ end method equal-hash;
 // this file. Trust me, this works in *Mindy*) object-hash in Mindy
 // does not return $permanent-hash-state for anything else.
 //
-define method value-hash (key :: <general-integer>)
+define sealed method value-hash (key :: <general-integer>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key);
 end method value-hash;
 
-define method value-hash (key :: <float>)
+define sealed method value-hash (key :: <float>)
  => (id :: <integer>, state :: <hash-state>);
   float-hash(key);
 end method value-hash;
 
-define method value-hash (key :: <character>)
+define sealed method value-hash (key :: <character>)
  => (id :: <integer>, state :: <hash-state>);
   value-hash(as(<integer>, key));
 end method value-hash;
 
-define method value-hash (key :: <symbol>)
+define sealed method value-hash (key :: <symbol>)
  => (id :: <integer>, state :: <hash-state>);
   string-hash(as(<string>, key));
 end method value-hash;
 
-define method value-hash (key == #f)
+define sealed method value-hash (key == #f)
  => (id :: <integer>, state :: <hash-state>);
   values(0, $permanent-hash-state);
 end method value-hash;
 
-define method value-hash (key == #t)
+define sealed method value-hash (key == #t)
  => (id :: <integer>, state :: <hash-state>);
   values(1, $permanent-hash-state);
 end method value-hash;
@@ -449,7 +467,9 @@ define method table-protocol (ht :: <object-table>)
   values(\==, object-hash);
 end method table-protocol;
 
-define method table-protocol (ht :: <equal-table>) 
+seal generic table-protocol (<simple-object-table>);
+
+define sealed method table-protocol (ht :: <equal-table>) 
  => (key-test :: <function>, key-hash :: <function>);
   values(\=, equal-hash);
 end method table-protocol;
@@ -944,6 +964,7 @@ end method forward-iteration-protocol;
 define class <string-table> (<value-table>)
 end class <string-table>;
 
-define inline method table-protocol (ht :: <string-table>);
+define sealed inline method table-protocol (ht :: <string-table>)
+ => (key-test :: <function>, key-hash :: <function>);
   values(\=, string-hash);
 end method table-protocol;
