@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.10 1996/03/20 14:16:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.11 1996/03/21 03:25:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -151,7 +151,7 @@ define variable *warning-output* :: <object> = #"cheap-IO";
 
 // Condition reporting.
 
-// report-condition -- exported from ???.
+// report-condition -- exported from Extensions.
 //
 // Generate a human readable report of the condition on stream.  We restrict
 // the stream to <object> because we have no idea what the underlying output
@@ -189,9 +189,9 @@ end method report-condition;
 //
 define sealed method report-condition (condition :: <type-error>, stream)
     => ();
-  condition-format(stream, "%= is not of type %=",
-		   condition.type-error-value,
-		   condition.type-error-expected-type);
+  condition-format(stream, "Expected an instance of %=, but got %=",
+		   condition.type-error-expected-type,
+		   condition.type-error-value);
 end method report-condition;
 
 // report-condition(<sealed-object-error>) -- exported gf method.
