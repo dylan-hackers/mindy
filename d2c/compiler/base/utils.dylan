@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.21 1996/02/02 23:09:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.22 1996/02/08 19:18:54 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,65 +193,6 @@ define variable *debug-output* :: <stream>
 #end
 
 
-// pretty format
-
-define method pretty-format (stream :: <stream>,
-			     string :: <byte-string>,
-			     #rest args)
-  let length = string.size;
-  local
-    method scan-for-space (stream, start, posn, arg-index)
-      if (posn == length)
-	maybe-spew(stream, start, posn);
-      else
-	let char = string[posn];
-	if (char == ' ')
-	  scan-for-end-of-spaces(stream, start, posn + 1, arg-index);
-	elseif (char == '%')
-	  maybe-spew(stream, start, posn);
-	  let directive = string[posn + 1];
-	  if (directive == '%')
-	    scan-for-space(stream, posn + 1, posn + 2, arg-index);
-	  else
-	    format(stream, copy-sequence(string, start: posn, end: posn + 2),
-		   args[arg-index]);
-	    scan-for-space(stream, posn + 2, posn + 2, arg-index + 1);
-	  end;
-	else
-	  scan-for-space(stream, start, posn + 1, arg-index);
-	end;
-      end;
-    end,
-    method scan-for-end-of-spaces(stream, start, posn, arg-index)
-      if (posn < length & string[posn] == ' ')
-	scan-for-end-of-spaces(stream, start, posn + 1, arg-index);
-      else
-	maybe-spew(stream, start, posn);
-	pprint-newline(#"fill", stream);
-	scan-for-space(stream, posn, posn, arg-index);
-      end;
-    end,
-    method maybe-spew (stream, start, stop)
-      unless (start == stop)
-	write(string, stream, start: start, end: stop);
-      end;
-    end;
-  pprint-logical-block(stream,
-		       body: method (stream)
-			       scan-for-space(stream, 0, 0, 0);
-			     end);
-end;
-
-define method report-condition (condition :: type-union(<simple-error>,
-						     <simple-warning>,
-						     <simple-restart>),
-				stream :: <stream>)
-  apply(pretty-format, stream,
-	condition.condition-format-string,
-	condition.condition-format-arguments);
-end;
-
-
 // Defines the Info slot used for back-end annotation.
 //
 define abstract open class <annotatable> (<object>)
@@ -302,19 +243,6 @@ define constant assert
       unless (value)
 	error("Assertion failed.");
       end;
-    end;
-
-define variable *warnings* = 0;
-
-define constant compiler-warning = method (string, #rest args) => ();
-  apply(pretty-format, *debug-output*, concatenate("Warning: ", string, "\n"),
-	args);
-  *warnings* := *warnings* + 1;
-end;
-
-define constant compiler-error
-  = method (#rest args) => ();
-      apply(error, args);
     end;
 
 define generic key-of
@@ -472,3 +400,4 @@ define method append
     repeat(what);
   end if;
 end method append;
+

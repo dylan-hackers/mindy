@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.14 1996/02/08 16:04:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.15 1996/02/08 19:18:54 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,6 +24,7 @@ define library compiler-base
   export compile-time-values;
   export ctype;
   export definitions;
+  export errors;
   export expand;
   export flow;
   export forwards;
@@ -40,8 +41,8 @@ define library compiler-base
   export tokens;
   export transformers;
   export utils;
-  export variables;
   export variables-dumper-vars;
+  export variables;
 
 end;
 
@@ -99,7 +100,7 @@ define module utils
     find-in, size-in,
     dformat, assert,
     <annotatable>, info, info-setter,
-    compiler-warning, *warnings*, compiler-error, key-of, list?, pair?,
+    key-of, list?, pair?,
     symcat, stringify;
 end;
 
@@ -241,9 +242,20 @@ define module source
     <file-source-location>, source-file,
     start-posn, start-line, start-column,
     end-posn, end-line, end-column,
+    file-name,
 
     extract-string;
 end;
+
+define module errors
+  use common;
+  use utils;
+  use source;
+  use standard-io;
+  export
+    compiler-warning, *warnings*, compiler-error,
+    compiler-warning-location, compiler-error-location;
+end module;
 
 define module header
   use common;
@@ -373,6 +385,7 @@ define module variables
   use common;
 
   use utils;
+  use errors;
   use compile-time-values;
   use tokens;
   use names;
@@ -613,6 +626,7 @@ define module classes
   use common;
 
   use utils;
+  use errors;
   use names;
   use definitions;
   use variables;

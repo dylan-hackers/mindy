@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.9 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.10 1996/02/08 19:18:54 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -155,16 +155,16 @@ end method fill-buffer;
 
 // preserve identity for space sharing...
 define class <source-file> (<identity-preserving-mixin>)
-  slot name :: <string>, required-init-keyword: name:;
+  slot file-name :: <string>, required-init-keyword: name:;
   slot %contents :: false-or(<file-contents>), init-value: #f;
 end;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
-  pprint-fields(sf, stream, name: sf.name);
+  pprint-fields(sf, stream, name: sf.file-name);
 end;
 
 add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
-		list(name, name:, #f));
+		list(file-name, name:, #f));
 
 
 define class <file-source-location> (<source-location>)
@@ -212,7 +212,7 @@ end;
 define method contents (source :: <source-file>)
   source.%contents
     | begin
-	let file = make(<file-stream>, name: source.name);
+	let file = make(<file-stream>, name: source.file-name);
 	block ()
 	  let result = make-buffer(file.stream-size);
 	  fill-buffer(result, file);
