@@ -392,4 +392,3 @@ define method set-mirror-size
  => ()
   gtk-drawing-area-size(mirror-widget(mirror), width, height);
 end method set-mirror-size;
-

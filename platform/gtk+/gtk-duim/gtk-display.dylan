@@ -62,7 +62,7 @@ define method size-mirror
     (parent :: <display-mirror>, child :: <top-level-mirror>,
      width :: <integer>, height :: <integer>)
  => ()
-  let widget = mirror-widget(child);
+  let widget = GTK-WIDGET(mirror-widget(child));
   //--- This may not work after the sheet is mapped...
   //---*** This causes the window to grow and grow...
   // gtk-window-set-default-size(widget, width, height)

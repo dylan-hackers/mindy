@@ -50,7 +50,7 @@ define macro with-disabled-event-handler
   { with-disabled-event-handler (?widget:expression, ?name:expression)
       ?body:body
     end }
- => { do-with-disabled-event-handler(method () ?body end, ?widget, ?name) }
+ => { do-with-disabled-event-handler(method () ?body end, GTK-WIDGET(?widget), ?name) }
 end macro with-disabled-event-handler;
 
 define macro event-handler-definer
@@ -496,3 +496,4 @@ define sealed method note-mirror-enabled/disabled
     (_port :: <gtk-port>, sheet :: <top-level-sheet>, enabled? :: <boolean>) => ()
   ignoring("note-mirror-enabled/disabled")
 end method note-mirror-enabled/disabled;
+

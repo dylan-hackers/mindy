@@ -51,7 +51,7 @@ define sealed method do-attach-medium
 	 sheet);
   debug-message("Attaching medium to %= (medium-sheet %=)",
 		sheet, medium-sheet(medium));
-  let widget = mirror.mirror-widget;
+  let widget = GTK-WIDGET(mirror.mirror-widget);
   let drawable = pointer-cast(<GdkDrawable*>, widget.window-value);
   clear-ink-cache(medium);
   medium-drawable(medium) := drawable;
@@ -172,7 +172,7 @@ define inline method get-gcontext
  => (drawable :: <GdkDrawable*>, gcontext :: <GdkGC*>)
   let sheet = medium.medium-sheet;
   let mirror = sheet.sheet-mirror;
-  let widget = mirror.mirror-widget;
+  let widget = GTK-WIDGET(mirror.mirror-widget);
   let drawable = medium-drawable(medium);
   // let gcontext = widget.style-value.black-gc-value;
   let gcontext = widget.style-value.fg-gc-value[GTK-WIDGET(widget).state-value];

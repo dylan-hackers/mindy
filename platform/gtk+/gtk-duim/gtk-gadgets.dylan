@@ -92,7 +92,7 @@ define method do-compose-space
 //  debug-message("do-compose-space(%= , %d, %d)", gadget, width, height);
   let mirror = sheet-direct-mirror(gadget);
   if (mirror)
-    let widget = mirror-widget(mirror);
+    let widget = GTK-WIDGET(mirror-widget(mirror));
     gtk-space-requirements(gadget, widget)
   else
     gtk-debug("Composing space on an unmirrored gadget!");
@@ -172,7 +172,7 @@ define sealed method note-gadget-enabled
     (client, gadget :: <gtk-gadget-mixin>) => ()
   ignore(client);
   next-method();
-  let widget = gadget-widget(gadget);
+  let widget = GTK-WIDGET(gadget-widget(gadget));
   gtk-widget-set-sensitive(widget, $true)
 end method note-gadget-enabled;
 
@@ -180,7 +180,7 @@ define sealed method note-gadget-disabled
     (client, gadget :: <gtk-gadget-mixin>) => ()
   ignore(client);
   next-method();
-  let widget = gadget-widget(gadget);
+  let widget = GTK-WIDGET(gadget-widget(gadget));
   gtk-widget-set-sensitive(widget, $false)
 end method note-gadget-disabled;
 
@@ -334,7 +334,7 @@ end method make-gtk-mirror;
 define sealed method update-mirror-label
     (gadget :: <gtk-label>, mirror :: <gadget-mirror>) => ()
   with-c-string (c-string = defaulted-gadget-label(gadget))
-    let widget = mirror-widget(mirror);
+    let widget = GTK-LABEL(mirror-widget(mirror));
     gtk-label-set-text(widget, c-string)
   end
 end method update-mirror-label;
@@ -674,7 +674,7 @@ define sealed method handle-text-gadget-changing
     (gadget :: <gtk-text-gadget-mixin>) => ()
   gtk-debug("handle-text-gadget-changing");
   let old-text = gadget.gadget-text-buffer;
-  let widget = gadget-widget(gadget);
+  let widget = GTK-EDITABLE(gadget-widget(gadget));
   // --- TODO: use a stretchy buffer to avoid copying on each character?
   let chars = GTK-STRING(gtk-editable-get-chars(widget, 0, -1));
   let new-text = unless (old-text = chars)
@@ -750,7 +750,7 @@ define sealed method text-selection-setter
     (range :: type-union(<text-range>, one-of(#t, #f)),
      gadget :: <gtk-text-gadget-mixin>)
  => (range :: type-union(<text-range>, one-of(#t, #f)))
-  let widget = gadget-widget(gadget);
+  let widget = GTK-EDITABLE(gadget-widget(gadget));
   let (start-pos, end-pos) = widget-range-bounds(widget, range);
   gtk-editable-select-region(widget, start-pos, end-pos);
   range
@@ -759,7 +759,7 @@ end method text-selection-setter;
 define sealed method text-caret-position
     (gadget :: <gtk-text-gadget-mixin>)
  => (position :: <integer>)
-  let widget = gadget-widget(gadget);
+  let widget = GTK-EDITABLE(gadget-widget(gadget));
   gtk-editable-get-position(widget);
 end method text-caret-position;
 
@@ -767,7 +767,7 @@ define sealed method text-caret-position-setter
     (position :: false-or(<integer>), gadget :: <gtk-text-gadget-mixin>)
  => (position :: false-or(<integer>))
   if (position)
-    let widget = gadget-widget(gadget);
+    let widget = GTK-EDITABLE(gadget-widget(gadget));
     gtk-editable-set-position(widget, position);
     position
   end;
@@ -788,7 +788,7 @@ end class <gtk-text-field-mixin>;
 
 define open generic %gtk-text-visibility
     (gadget :: <gtk-text-field-mixin>)
- => (fixed? :: <gboolean>);
+ => (fixed? :: <boolean>);
 
 define method %gtk-fixed-height?
     (gadget :: <gtk-text-field-mixin>)
@@ -810,7 +810,7 @@ define sealed method make-gtk-mirror
   assert(~null-pointer?(widget), "gtk-entry-new failed");
   // Note that this is happening before install-event-handlers, so don't
   // need to disable events.
-  gtk-entry-set-visibility(widget, visibility);
+  gtk-entry-set-visibility(widget, if (visibility) 1 else 0 end);
   unless (empty?(text))
     with-c-string (c-text = text)
       gtk-entry-set-text(widget, c-text);
@@ -825,7 +825,7 @@ end method make-gtk-mirror;
 define sealed method update-gadget-text
     (gadget :: <gtk-text-field-mixin>, mirror :: <gadget-mirror>) => ()
   ignore(mirror);
-  let widget = gadget-widget(gadget);
+  let widget = GTK-ENTRY(gadget-widget(gadget));
   let new-text = gadget-text-buffer(gadget);
   with-disabled-event-handler (widget, #"changed")
     with-c-string (c-text = new-text)
@@ -846,9 +846,9 @@ end class <gtk-text-field>;
 
 define method %gtk-text-visibility
     (gadget :: <gtk-text-field>)
- => (fixed? :: <gboolean>);
-  $true;
-end method;
+ => (fixed? :: <boolean>);
+  #t
+end method %gtk-text-visibility;
 
 define sealed method class-for-make-pane 
     (framem :: <gtk-frame-manager>, class == <text-field>, #key)
@@ -868,9 +868,9 @@ end class <gtk-password-field>;
 
 define method %gtk-text-visibility
     (gadget :: <gtk-password-field>)
- => (fixed? :: <gboolean>);
-  $false;
-end method;
+ => (fixed? :: <boolean>)
+  #f
+end method %gtk-text-visibility;
 
 define sealed method class-for-make-pane 
     (framem :: <gtk-frame-manager>, class == <password-field>, #key)
@@ -919,7 +919,7 @@ end method make-gtk-mirror;
 define sealed method update-gadget-text
     (gadget :: <gtk-text-editor>, mirror :: <gadget-mirror>) => ()
   ignore(mirror);
-  let widget = gadget-widget(gadget);
+  let widget = GTK-TEXT(gadget-widget(gadget));
   when (widget)
     let new-text = gadget-text-buffer(gadget);
     let old-text = GTK-STRING(gtk-editable-get-chars(widget, 0, -1));
@@ -1120,7 +1120,7 @@ end class <gtk-list-control-mixin>;
 define method update-mirror-attributes
     (gadget :: <gtk-list-control-mixin>, mirror :: <gadget-mirror>) => ()
   next-method();
-  let widget = mirror.mirror-widget;
+  let widget = GTK-CLIST(mirror.mirror-widget);
   gtk-clist-set-selection-mode
     (widget,
      select (gadget-selection-mode(gadget))
@@ -1181,7 +1181,7 @@ end method handle-gtk-button-press-event;
 define method list-selection
     (gadget :: <gtk-list-control-mixin>, mirror :: <gadget-mirror>)
  => (vector :: <vector>)
-  let widget = pointer-cast(<GTKCList*>, mirror.mirror-widget);
+  let widget = GTK-CLIST(mirror.mirror-widget);
   let selection = widget.selection-value;
   glist-to-vector(selection, <integer>)
 end method list-selection;
@@ -1221,7 +1221,7 @@ end method update-gadget;
 define sealed method update-list-control-items
     (gadget :: <gtk-list-control-mixin>, mirror :: <gadget-mirror>)
  => ()
-  let widget = mirror.mirror-widget;
+  let widget = GTK-CLIST(mirror.mirror-widget);
   let items = gadget-items(gadget);
   let label-function = gadget-label-key(gadget);
   gtk-clist-clear(widget);
@@ -1347,7 +1347,7 @@ end method make-gtk-mirror;
 define method update-mirror-attributes
     (gadget :: <gtk-table-control>, mirror :: <gadget-mirror>) => ()
   next-method();
-  let widget = mirror.mirror-widget;
+  let widget = GTK-CLIST(mirror.mirror-widget);
   gtk-clist-column-titles-active(widget);
   for (i :: <integer> from 0,
        column :: <table-column> in table-control-columns(gadget))
@@ -1393,7 +1393,7 @@ end method handle-gtk-resize-column-event;
 define sealed method update-list-control-items
     (gadget :: <gtk-table-control>, mirror :: <gadget-mirror>)
  => ()
-  let widget = mirror.mirror-widget;
+  let widget = GTK-CLIST(mirror.mirror-widget);
   let items = gadget-items(gadget);
   let label-function = gadget-label-key(gadget);
   let columns = table-control-columns(gadget);
