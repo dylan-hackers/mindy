@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/symbol.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/symbol.dylan,v 1.3 2001/03/30 13:53:31 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -248,7 +248,13 @@ end;
 // Return the symbol's name.
 // 
 define sealed inline method as
-    (class :: one-of(<string>, <byte-string>), symbol :: <symbol>)
+    (class == <string>, symbol :: <symbol>)
     => res :: <string>;
+  symbol.symbol-string;
+end;
+
+define sealed inline method as
+    (class == <byte-string>, symbol :: <symbol>)
+    => res :: <byte-string>;
   symbol.symbol-string;
 end;
