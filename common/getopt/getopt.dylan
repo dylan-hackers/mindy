@@ -2,13 +2,13 @@ library: getopt
 module: getopt
 author: Jeff Dubrule & Ole Tetlie
 copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.4 1998/09/24 11:20:46 igor Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.5 1998/09/24 18:41:29 olet Exp $
 
 define class <option-table> (<object-table>)
   // perhaps we'll need something here later
 end;
 
-define method add-internal (table :: <option-table, option :: <option>)
+define method add-internal (table :: <option-table>, option :: <option>)
   // Note: names can't be symbols, as symbols are case-insensitive
   for (name in option.names)
     table[name] := option;
@@ -48,11 +48,11 @@ define method element-setter (new-value :: <object>, table :: <option-table>,
   table[<symbol>].value := new-value;
 end method;
 
-define constant option-not-there = pair(#f, #f);
+define constant $option-not-there = pair(#f, #f);
 
 define method has-option? (table :: <option-table>, key :: <string>)
-  element (table, key, default: option-not-there)
-    ~= option-not-there;
+  element (table, key, default: $option-not-there)
+    ~= $option-not-there;
 end method;
 
 define method parse-options (table :: <option-table>, argv :: <list>)
