@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.2 1995/11/14 13:53:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.3 1995/11/16 03:35:20 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -109,6 +109,11 @@ define %%module dylan-viscera
     // Special Operators
     \&, \|, \:=,
 
-    // Extra shit we are exporting for now.
-    <fixed-integer>, format, print-message, print, write-integer, write;
+    // Extensions
+    <fixed-integer>, <extended-integer>, <byte-character>,
+    $not-supplied,
+    false-or, one-of, <never-returns>,
+    format, print-message, print, write-integer, write,
+    report-condition,
+    *format-function*, *debug-output*, *debugger*;
 end;
