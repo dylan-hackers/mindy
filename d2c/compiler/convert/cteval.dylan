@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.8 1995/06/01 14:29:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.9 1995/11/16 03:45:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -178,8 +178,7 @@ end;
 // The <variable> objects for the various functions we know how to deal with.
 // 
 define constant $singleton-var = dylan-var(#"singleton", create: #t);
-define constant $union-var = dylan-var(#"union", create: #t);
-define constant $type-or-var = dylan-var(#"type-or", create: #t);
+define constant $type-union-var = dylan-var(#"type-union", create: #t);
 define constant $false-or-var = dylan-var(#"false-or", create: #t);
 define constant $one-of-var = dylan-var(#"one-of", create: #t);
 define constant $limited-var = dylan-var(#"limited", create: #t);
@@ -214,21 +213,13 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	  let thing = args[0];
 	  instance?(thing, <eql-ct-value>) & make-canonical-singleton(args[0]);
 	end;
-      $union-var =>
-	if (args.size == 2
-	      & instance?(args[0], <ctype>)
-	      & instance?(args[1], <ctype>))
-	  ctype-union(args[0], args[1]);
-	else
-	  #f;
-	end;
       $false-or-var =>
 	if (args.size == 1 & instance?(args[0], <ctype>))
 	  ctype-union(args[0], specifier-type(#"<false>"));
 	else
 	  #f;
 	end;
-      $type-or-var =>
+      $type-union-var =>
 	if (every?(rcurry(instance?, <ctype>), args))
 	  reduce(ctype-union, empty-ctype(), args);
 	end;
