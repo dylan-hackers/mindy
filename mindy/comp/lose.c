@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.c,v 1.2 1994/04/09 14:09:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.c,v 1.3 1994/06/11 18:05:09 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "lose.h"
 

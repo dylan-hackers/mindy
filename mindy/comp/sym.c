@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.5 1994/06/02 23:27:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.6 1994/06/11 18:02:58 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "sym.h"

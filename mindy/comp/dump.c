@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.13 1994/06/11 02:20:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.14 1994/06/11 18:06:19 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "src.h"
