@@ -56,6 +56,7 @@ define library melange
   use dylan;
   use string-extensions;
   use collection-extensions;
+  use regular-expressions;
   use streams;
   use standard-io;
   use format;

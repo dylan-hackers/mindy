@@ -17,6 +17,7 @@ define library melange-c
   use dylan;
   use string-extensions;
   use collection-extensions;
+  use regular-expressions;
   use table-extensions;
   use streams;
   use standard-io;
