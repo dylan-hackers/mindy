@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.12 2001/07/31 16:33:50 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.13 2001/09/17 11:47:32 andreas Exp $
 copyright: see below
 
 
@@ -38,7 +38,7 @@ copyright: see below
 // Make various kinds of operators.
 // 
 define method make-binary-operator
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <operator-token>;
   make(<operator-token>,
        source-location: source-location,
@@ -48,7 +48,7 @@ define method make-binary-operator
 end method make-binary-operator;
 //
 define method make-tilde
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <identifier-token>;
   make(<identifier-token>,
        source-location: source-location,
@@ -58,7 +58,7 @@ define method make-tilde
 end method make-tilde;
 //
 define method make-minus
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <operator-token>;
   make(<operator-token>,
        source-location: source-location,
@@ -68,7 +68,7 @@ define method make-minus
 end method make-minus;
 //
 define method make-equal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <operator-token>;
   make(<operator-token>,
        source-location: source-location,
@@ -78,7 +78,7 @@ define method make-equal
 end method make-equal;
 //
 define method make-double-equal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <operator-token>;
   make(<operator-token>,
        source-location: source-location,
@@ -93,7 +93,7 @@ end method make-double-equal;
 // Make a <quoted-name-token> for \-quoted operator.
 // 
 define method make-quoted-name
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <identifier-token>;
   make(<identifier-token>,
        source-location: source-location,
@@ -110,7 +110,7 @@ end method make-quoted-name;
 // is, and make it.
 // 
 define method make-identifier
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <identifier-token>;
   let name = as(<symbol>, extract-string(source-location));
   let module = *Current-Module*;
@@ -127,10 +127,10 @@ end method make-identifier;
 // Make a constrained name.
 // 
 define method make-constrained-name
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
   let colon-posn
     = block (return)
-	let contents = source-location.source-file.contents;
+	let contents = source-location.source.contents;
 	for (posn from source-location.start-posn
 	       below source-location.end-posn)
 	  if (contents[posn] == as(<integer>, ':'))
@@ -162,9 +162,9 @@ end method;
 // complete.
 //
 define method decode-escape-character
-    (source-location :: <file-source-location>, start :: <integer>)
+    (source-location :: <known-source-location>, start :: <integer>)
  => result :: <integer>;
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
   if (contents[start] ~= as(<integer>, '<'))
     let char = select (as(<character>, contents[start]))
                  'a' => '\a';
@@ -210,9 +210,9 @@ end method decode-escape-character;
 // implementation (currently U+0000 -- U+00FF).
 //
 define method escape-character-width
-    (source-location :: <file-source-location>, start :: <integer>, finish :: <integer>)
+    (source-location :: <known-source-location>, start :: <integer>, finish :: <integer>)
  => (decode-size :: <integer>, bytes-used :: <integer>)
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
 
   if (contents[start + 1] ~= as(<integer>, '<'))
     values(1, 2);
@@ -251,11 +251,11 @@ end method escape-character-width;
 // assumption that the string will be surrounded by quotes.
 //
 define method decode-string
-    (source-location :: <file-source-location>,
+    (source-location :: <known-source-location>,
      #key start :: <integer> = source-location.start-posn + 1,
      end: finish :: <integer> = source-location.end-posn - 1)
  => result :: <byte-string>;
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
 
   let length = begin
                  local method repeat(posn, result)
@@ -298,7 +298,7 @@ end method decode-string;
 // Make a <literal-token> when confronted with the #"foo" syntax.
 //
 define method make-quoted-symbol
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   let sym = as(<symbol>,
 	       decode-string(source-location,
@@ -314,7 +314,7 @@ end method make-quoted-symbol;
 // Make a <literal-token> when confronted with the foo: syntax.
 // 
 define method make-keyword-symbol
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   let sym = as(<symbol>,
 	       extract-string(source-location,
@@ -330,12 +330,12 @@ end method make-keyword-symbol;
 // Parse and return an integer in the supplied radix.
 // 
 define method parse-integer
-    (source-location :: <file-source-location>,
+    (source-location :: <known-source-location>,
      #key radix :: <integer> = 10,
           start :: <integer> = source-location.start-posn,
           end: finish :: <integer> = source-location.end-posn)
     => res :: <extended-integer>;
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
   local method repeat (posn :: <integer>, result)
 	  if (posn < finish)
 	    let digit = contents[posn];
@@ -369,9 +369,9 @@ end method parse-integer;
 // Parse an integer and return a <literal-token> holding it.
 // 
 define method parse-integer-literal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
   let posn = source-location.start-posn;
   let extended = #f;
   let radix = 10;
@@ -425,9 +425,9 @@ end method parse-integer-literal;
 // Return a <literal-token> holding the character token.
 // 
 define method make-character-literal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
-  let contents = source-location.source-file.contents;
+  let contents = source-location.source.contents;
   let posn = source-location.start-posn + 1;
   let char = as(<character>, contents[posn]);
   make(<literal-token>,
@@ -454,7 +454,7 @@ end method make-character-literal;
 // Should be obvious by now.
 //
 define method make-string-literal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   make(<literal-token>,
        source-location: source-location,
@@ -466,11 +466,11 @@ end method make-string-literal;
 // parse-ratio-literal -- internal.
 // 
 define method parse-ratio-literal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   let slash
     = block (return)
-	let contents = source-location.source-file.contents;
+	let contents = source-location.source.contents;
 	for (posn from source-location.start-posn
 	       below source-location.end-posn)
 	  if (contents[posn] == as(<integer>, '/'))
@@ -578,7 +578,7 @@ end method atof;
 // parse-fp-literal -- internal.
 // 
 define method parse-fp-literal
-    (lexer :: <lexer>, source-location :: <file-source-location>)
+    (lexer :: <lexer>, source-location :: <known-source-location>)
     => res :: <literal-token>;
   let (class, value) = atof(extract-string(source-location));
 
@@ -1253,7 +1253,7 @@ end method parse-conditional;
 define class <lexer> (<tokenizer>)
   //
   // The source file we are currently tokenizing.
-  slot source :: <source-file>, required-init-keyword: source:;
+  slot lexer-source :: <source>, required-init-keyword: source:;
   //
   // The position we are currently at in the source file.
   slot posn :: <integer>, required-init-keyword: start-posn:;
@@ -1275,7 +1275,7 @@ define sealed domain initialize (<lexer>);
 
 define method print-object (lexer :: <lexer>, stream :: <stream>) => ();
   pprint-fields(lexer, stream,
-		source: lexer.source,
+		source: lexer.lexer-source,
 		posn: lexer.posn,
 		line: lexer.line,
 		column: lexer.posn - lexer.line-start + 1);
@@ -1291,7 +1291,7 @@ define method skip-multi-line-comment (lexer :: <lexer>,
 				       start :: <integer>)
     => result :: false-or(<integer>);
   block (return)
-    let contents = lexer.source.contents;
+    let contents = lexer.lexer-source.contents;
     let length = contents.size;
     let depth = 1;
     let state = #"seen-nothing";
@@ -1383,7 +1383,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   // and then when the state machine jams, we just use that latest
   // accepting state's result.
   // 
-  let contents :: <file-contents> = lexer.source.contents;
+  let contents :: <file-contents> = lexer.lexer-source.contents;
   let length :: <integer> = contents.size;
   let result-kind = #f;
   let result-start :: <integer> = lexer.posn;
@@ -1481,8 +1481,8 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   // Make a source location for the current token.
   // 
   let source-location
-    = make(<file-source-location>,
-	   source: lexer.source,
+    = make(<known-source-location>,
+	   source: lexer.lexer-source,
 	   start-posn: result-start,
 	   start-line: lexer.line,
 	   start-column: result-start - lexer.line-start,

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.16 2001/08/01 15:02:52 dauclair Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.17 2001/09/17 11:47:30 andreas Exp $
 
 //======================================================================
 //
@@ -513,7 +513,8 @@ begin
   register-object-id(#"compiler-policy", #x0090);
   register-object-id(#"unknown-source-location", #x0091);
   register-object-id(#"source-file", #x0092);
-  register-object-id(#"file-source-location", #x0093);
+  register-object-id(#"source-buffer", #x009F);
+  register-object-id(#"known-source-location", #x0093);
 
   register-object-id(#"linear-region", #x0094);
   register-object-id(#"if-region", #x0095);
@@ -527,6 +528,7 @@ begin
   register-object-id(#"values-cluster-info", #x009C);
   register-object-id(#"local-var-info", #x009D);
   register-object-id(#"lexical-var-info", #x009E);
+  // #x009F is #"source-buffer"
 
   register-object-id(#"let-assignment", #x00A0);
   register-object-id(#"set-assignment", #x00A1);

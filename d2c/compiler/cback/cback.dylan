@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.27 2001/08/02 07:09:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.28 2001/09/17 11:47:31 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -447,10 +447,10 @@ define method c-name (name :: <internal-name>) => res :: <byte-string>;
 end method;
 
 // really shouldn't be any unknown source locations here, but we'll get to that
-// later... 
+// later... FIXME
 define method c-name (name :: <anonymous-name>) => res :: <byte-string>;
   let loc = name.anonymous-name-location;
-  if (instance?(loc, <file-source-location>))
+  if (instance?(loc, <known-source-location>))
     format-to-string("LINE_%d", loc.start-line);
   else
     "UNKNOWN";
@@ -467,14 +467,14 @@ define method c-name-global (name :: <name>) => (result :: <byte-string>);
 end method;
 
 // Emit a description of the <source-location> in C.  For 
-// <file-source-location>s, this will be a #line directive.  For
+// <known-source-location>s, this will be a #line directive.  For
 // other types of <source-location>, this will be a comment.
 
-define method maybe-emit-source-location(source-loc :: <file-source-location>,
+define method maybe-emit-source-location(source-loc :: <known-source-location>,
 				   file :: <file-state>) => ();
   if (file.file-source-location ~= source-loc)
     format(file.file-guts-stream, "\n/* #line %d \"%s\" */\n",
-	   source-loc.end-line, source-loc.source-file.full-file-name);
+	   source-loc.end-line, source-loc.source.full-file-name); // FIXME
     file.file-source-location := source-loc;
   end if;
 end method;

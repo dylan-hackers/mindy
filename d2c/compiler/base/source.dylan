@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.5 2001/09/17 09:02:42 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.6 2001/09/17 11:47:30 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -216,6 +216,21 @@ end class <source>;
 define sealed domain make (singleton(<source>));
 define sealed domain initialize (<source>);
 
+define method extract-line
+    (source :: <source>, line-start :: <integer>) => res :: <byte-string>;
+  let contents = source.contents;
+  for (index from line-start below contents.size,
+       until: contents[index] == as(<integer>, '\n')
+	      | contents[index] == as(<integer>, '\r'))
+  finally
+    let len = index - line-start;
+    let result = make(<byte-string>, size: len);
+    copy-bytes(result, 0, contents, line-start, len);
+    result;
+  end for;
+end method extract-line;
+
+
 // <source-file> -- exported.
 // 
 define class <source-file> (<source>)
@@ -234,6 +249,10 @@ define sealed domain initialize (<source-file>);
 define function file-name (source-file :: <source-file>) => name :: <string>;
   source-file.full-file-name.pathless-filename;
 end function file-name;
+
+define sealed method source-name (src :: <source-file>)
+  src.file-name;
+end method source-name;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
   pprint-fields(sf, stream, name: sf.file-name);
@@ -263,19 +282,6 @@ define method contents (source :: <source-file>)
 end method contents;
 
 
-define method extract-line
-    (source :: <source-file>, line-start :: <integer>) => res :: <byte-string>;
-  let contents = source.contents;
-  for (index from line-start below contents.size,
-       until: contents[index] == as(<integer>, '\n')
-	      | contents[index] == as(<integer>, '\r'))
-  finally
-    let len = index - line-start;
-    let result = make(<byte-string>, size: len);
-    copy-bytes(result, 0, contents, line-start, len);
-    result;
-  end for;
-end method extract-line;
 
 
 
@@ -292,46 +298,33 @@ define class <source-buffer> (<source>)
     init-keyword: #"name";
   //
   // The contents, or #f if we haven't read them in yet.
-  slot contents :: <buffer>,
+  slot contents,             // FIXME: which type?
     required-init-keyword: #"buffer";
 end;
+
 
 define sealed domain make (singleton(<source-buffer>));
 define sealed domain initialize (<source-buffer>);
 
+define sealed method source-name (src :: <source-buffer>)
+  src.buffer-name;
+end method source-name;
+
 define method print-object (sb :: <source-buffer>, stream :: <stream>) => ();
   pprint-fields(sb, stream, name: sb.buffer-name);
 end;
-
-define method extract-line
-    (source :: <source-buffer>, line-start :: <integer>) => res :: <byte-string>;
-  let contents = source.contents;
-  for (index from line-start below contents.size,
-       until: contents[index] == as(<integer>, '\n')
-	      | contents[index] == as(<integer>, '\r'))
-  finally
-    let len = index - line-start;
-    let result = make(<byte-string>, size: len);
-    copy-bytes(result, 0, contents, line-start, len);
-    result;
-  end for;
-end method extract-line;
-
 
 
 add-make-dumper(#"source-buffer", *compiler-dispatcher*, <source-buffer>,
 		list(buffer-name, name:, #f));
 
 
+
 
-// file source locations.
-
-
-define class <file-source-location> (<source-location>)
-  
-  constant slot source-file :: <source-file>,
+define class <known-source-location> (<source-location>)
+  constant slot source :: <source>,
     required-init-keyword: source:;
-  
+
   constant slot start-posn :: <integer>,
     required-init-keyword: start-posn:;
   
@@ -351,22 +344,11 @@ define class <file-source-location> (<source-location>)
     required-init-keyword: end-column:;
 end;
 
-define sealed domain make (singleton(<file-source-location>));
-define sealed domain initialize (<file-source-location>);
-
-define method print-object (sl :: <file-source-location>, stream :: <stream>)
-    => ();
-  pprint-fields(sl, stream,
-		source-file: sl.source-file,
-		start-line: sl.start-line,
-		start-column: sl.start-column,
-		end-line: sl.end-line,
-		end-column: sl.end-column);
-end;
-
+define sealed domain make (singleton(<unknown-source-location>));
+define sealed domain initialize (<unknown-source-location>);
 
 define sealed method describe-source-location
-    (srcloc :: <file-source-location>, stream :: <stream>)
+    (srcloc :: <known-source-location>, stream :: <stream>)
     => ();
   pprint-logical-block
     (stream,
@@ -375,15 +357,15 @@ define sealed method describe-source-location
 	 if (srcloc.end-line <= srcloc.start-line)
 	   if (srcloc.end-column <= srcloc.start-column)
 	     format(stream, "\"%s\", line %d, before character %d:",
-		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.source.source-name, srcloc.start-line,
 		    srcloc.start-column + 1);
 	   elseif (srcloc.end-column == srcloc.start-column + 1)
 	     format(stream, "\"%s\", line %d, character %d:",
-		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.source.source-name, srcloc.start-line,
 		    srcloc.start-column + 1);
 	   else
 	     format(stream, "\"%s\", line %d, characters %d through %d:",
-		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.source.source-name, srcloc.start-line,
 		    srcloc.start-column + 1, srcloc.end-column);
 	   end if;
 	   pprint-newline(#"mandatory", stream);
@@ -392,7 +374,7 @@ define sealed method describe-source-location
 	       = begin
 		   let handler (<file-does-not-exist-error>)
 		     = method (cond, next-handler) return() end method;
-		   extract-line(srcloc.source-file,
+		   extract-line(srcloc.source,
 				srcloc.start-posn - srcloc.start-column);
 		 end;
 	     highlight-line(line, srcloc.start-column, srcloc.end-column,
@@ -402,7 +384,7 @@ define sealed method describe-source-location
 	   format(stream,
 		  "\"%s\", line %d, character %d through "
 		    "line %d, character %d:",
-		  srcloc.source-file.file-name, srcloc.start-line,
+		  srcloc.source.source-name, srcloc.start-line,
 		  srcloc.start-column + 1, srcloc.end-line,
 		  srcloc.end-column);
 	   pprint-newline(#"mandatory", stream);
@@ -412,10 +394,10 @@ define sealed method describe-source-location
 		   let handler (<file-does-not-exist-error>)
 		     = method (cond, next-handler) return() end method;
 		   values(extract-line
-			    (srcloc.source-file,
+			    (srcloc.source,
 			     srcloc.start-posn - srcloc.start-column),
 			  extract-line
-			    (srcloc.source-file,
+			    (srcloc.source,
 			     srcloc.end-posn - srcloc.end-column));
 		 end;
 	     highlight-line(first-line, srcloc.start-column,
@@ -430,6 +412,19 @@ define sealed method describe-source-location
        end method);
   write(stream, "  ");
 end method describe-source-location;
+
+define method print-object (sl :: <known-source-location>, stream :: <stream>)
+    => ();
+  pprint-fields(sl, stream,
+		source: sl.source,
+		start-line: sl.start-line,
+		start-column: sl.start-column,
+		end-line: sl.end-line,
+		end-column: sl.end-column);
+end;
+
+
+// file source locations.
 
 
 define method highlight-line
@@ -495,7 +490,7 @@ end method compute-column;
 // be used to adjust exactly where to start and end the string.
 // 
 define method extract-string
-    (source-location :: <file-source-location>,
+    (source-location :: <known-source-location>,
      #key start :: <integer> = -1,
           end: finish :: <integer> = -1)
  => string :: <byte-string>;
@@ -508,7 +503,7 @@ define method extract-string
   let len = finish - start;
   if (len.positive?)
     let result = make(<string>, size: len);
-    copy-bytes(result, 0, source-location.source-file.contents, start, len);
+    copy-bytes(result, 0, source-location.source.contents, start, len);
     result;
   else
     "";
@@ -519,13 +514,13 @@ end;
 
 define constant $source-file-location-words = 6;
 
-// We represent most slots in file source locations as raw data to save
-// space/time.  The only subobject is the source-file.
+// We represent most slots in known source locations as raw data to save
+// space/time.  The only subobject is the source.
 //
-define method dump-od (obj :: <file-source-location>, buf :: <dump-state>)
+define method dump-od (obj :: <known-source-location>, buf :: <dump-state>)
  => ();
   let start-pos = buf.current-pos;
-  dump-definition-header(#"file-source-location", buf, subobjects: #t,
+  dump-definition-header(#"known-source-location", buf, subobjects: #t,
   			 raw-data: $odf-word-raw-data-format);
   dump-word($source-file-location-words, buf);
   dump-word(obj.start-posn, buf);
@@ -534,12 +529,12 @@ define method dump-od (obj :: <file-source-location>, buf :: <dump-state>)
   dump-word(obj.end-posn, buf);
   dump-word(obj.end-line, buf);
   dump-word(obj.end-column, buf);
-  dump-od(obj.source-file, buf);
+  dump-od(obj.source, buf);
   dump-end-entry(start-pos, buf);
 end method;
 
-add-od-loader(*compiler-dispatcher*, #"file-source-location",
-  method (state :: <load-state>) => res :: <file-source-location>;
+add-od-loader(*compiler-dispatcher*, #"known-source-location",
+  method (state :: <load-state>) => res :: <known-source-location>;
     state.od-next := state.od-next + $word-bytes; // skip count
     let nbytes = $source-file-location-words * $word-bytes;
     let next = fill-at-least(nbytes, state);
@@ -553,7 +548,7 @@ add-od-loader(*compiler-dispatcher*, #"file-source-location",
     state.od-next := next + nbytes;
     let file = load-object-dispatch(state);
     assert-end-object(state);
-    make(<file-source-location>,
+    make(<known-source-location>,
          source: file,
          start-posn: s-posn,
 	 start-line: s-line,

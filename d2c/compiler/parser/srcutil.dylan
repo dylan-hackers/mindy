@@ -1,5 +1,5 @@
 Module: source-utilities
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.2 2000/01/24 04:56:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.3 2001/09/17 11:47:32 andreas Exp $
 copyright: see below
 
 
@@ -180,10 +180,10 @@ define method source-location-before
   make(<unknown-source-location>);
 end method source-location-before;
 
-define method source-location-before (srcloc :: <file-source-location>)
-    => res :: <file-source-location>;
-  make(<file-source-location>,
-       source: srcloc.source-file,
+define method source-location-before (srcloc :: <known-source-location>)
+    => res :: <known-source-location>;
+  make(<known-source-location>,
+       source: srcloc.source,
        start-posn: srcloc.start-posn,
        start-line: srcloc.start-line,
        start-column: srcloc.start-column,
@@ -228,10 +228,10 @@ define method source-location-after
   make(<unknown-source-location>);
 end method source-location-after;
 
-define method source-location-after (srcloc :: <file-source-location>)
-    => res :: <file-source-location>;
-  make(<file-source-location>,
-       source: srcloc.source-file,
+define method source-location-after (srcloc :: <known-source-location>)
+    => res :: <known-source-location>;
+  make(<known-source-location>,
+       source: srcloc.source,
        start-posn: srcloc.end-posn,
        start-line: srcloc.end-line,
        start-column: srcloc.end-column,
@@ -277,11 +277,11 @@ define method source-location-between
 end method source-location-between;
 
 define method source-location-between
-    (left :: <file-source-location>, right :: <file-source-location>)
-    => res :: <file-source-location>;
-  assert(left.source-file == right.source-file);
-  make(<file-source-location>,
-       source: left.source-file,
+    (left :: <known-source-location>, right :: <known-source-location>)
+    => res :: <known-source-location>;
+  assert(left.source == right.source);
+  make(<known-source-location>,
+       source: left.source,
        start-posn: right.start-posn,
        start-line: right.start-line,
        start-column: right.start-column,
@@ -337,11 +337,11 @@ define method source-location-spanning
 end method source-location-spanning;
 
 define method source-location-spanning
-    (start :: <file-source-location>, stop :: <file-source-location>)
-    => res :: <file-source-location>;
-  assert(start.source-file == stop.source-file);
-  make(<file-source-location>,
-       source: start.source-file,
+    (start :: <known-source-location>, stop :: <known-source-location>)
+    => res :: <known-source-location>;
+  assert(start.source == stop.source);
+  make(<known-source-location>,
+       source: start.source,
        start-posn: start.start-posn,
        start-line: start.start-line,
        start-column: start.start-column,

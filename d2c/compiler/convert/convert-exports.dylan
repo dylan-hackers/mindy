@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.7 2001/05/26 18:57:18 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.8 2001/09/17 11:47:31 andreas Exp $
 copyright: see below
 
 
@@ -116,7 +116,7 @@ define module fer-convert
   use common;
 
   use utils;
-  use source;
+  use source, exclude: {source};
   use errors;
   use tokens;
   use names;
