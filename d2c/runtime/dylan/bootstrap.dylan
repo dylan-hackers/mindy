@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.16 1996/02/18 18:36:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.17 1996/02/22 23:53:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -124,6 +124,7 @@ define %%module dylan-viscera
     <byte>, <byte-vector>,
     $not-supplied, ignore,
     <format-string-condition>,
+    functional-==,
 
     // Cheap IO
     format, print-message, print, write-integer, write,
@@ -163,7 +164,6 @@ define %%module dylan-viscera
     closure-var-setter,
     disable-catcher,
     find-slot-offset,
-    functional-==,
     general-call,
     general-rep-getter,
     general-rep-setter,
@@ -192,6 +192,7 @@ define %%module dylan-viscera
     slot-init-value-setter,
     slot-type,
     slot-type-setter,
+    slow-functional-==,
     throw,
     type-error,
     uninitialized-slot-error,
