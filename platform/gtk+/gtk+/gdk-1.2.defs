@@ -433,7 +433,7 @@
 (define-func gdk_gc_get_values
   none
   ((GdkGC gc)
-   (GdkGCValues values)))
+   (GdkGCValues gc_values)))
 
 (define-func gdk_gc_set_foreground
   none
