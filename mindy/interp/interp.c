@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.9 1994/04/12 19:47:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.10 1994/04/13 16:44:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -914,6 +914,7 @@ static int scav_component(struct object *ptr)
     int i;
 
     scavenge(&component->debug_name);
+    scavenge(&component->source_file);
     scavenge(&component->debug_info);
     for (i = 0; i < component->n_constants; i++)
 	scavenge(component->constant + i);
