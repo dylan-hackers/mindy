@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.23 1995/12/05 03:04:16 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.24 1995/12/09 00:12:11 wlott Exp $
 
 /*
 
@@ -497,6 +497,7 @@ register-object-id(#"define-bindings-macro-definition", #x00C9);
 register-object-id(#"define-macro-definition", #x00CA);
 register-object-id(#"function-macro-definition", #x00CB);
 register-object-id(#"statement-macro-definition", #x00CC);
+register-object-id(#"seal-info", #x00CD);
 
 register-object-id(#"backend-var-info", #x00D0);
 // register-object-id(#"function-info", #x00D1);  ### Needed?
