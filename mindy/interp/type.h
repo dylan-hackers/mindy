@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.1 1994/03/24 21:49:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.h,v 1.2 1994/04/23 03:52:41 rgs Exp $
 *
 * This file does whatever.
 *
@@ -31,6 +31,9 @@ extern obj_t type_union(obj_t type1, obj_t type2);
 
 /* Extra dreck. */
 extern void init_class_type_stuff(obj_t class);
-
+extern obj_t obj_SingletonClass; /* so other routines can check equivalence */
+extern obj_t obj_LimIntClass;
+extern obj_t intersect_limited_integers(obj_t lim1, obj_t lim2);
+extern obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2);
 
 extern void type_init_classes(void);

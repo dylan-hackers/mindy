@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.9 1994/04/19 20:38:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.10 1994/04/23 03:49:34 rgs Exp $
 *
 * This file does whatever.
 *
@@ -32,8 +32,8 @@
 #include "def.h"
 
 obj_t obj_TypeClass = 0;
-static obj_t obj_SingletonClass, obj_SubclassClass;
-static obj_t obj_LimIntClass, obj_UnionClass;
+obj_t obj_SingletonClass, obj_LimIntClass;
+static obj_t obj_SubclassClass, obj_UnionClass;
 
 struct type {
     obj_t class;
@@ -204,7 +204,7 @@ static inline boolean never_subtypep(obj_t type1, obj_t type2)
 
 static inline boolean subclass_type_subtypep(obj_t sub, obj_t type)
 {
-    obj_t class = obj_ptr(struct subclass *, subclass)->of;
+    obj_t class = obj_ptr(struct subclass *, sub)->of;
 
     if (obj_ptr(struct class *, class)->all_subclasses == obj_Nil)
 	return instancep(class, type);
@@ -242,7 +242,7 @@ static inline boolean lim_lim_subtypep(obj_t lim1, obj_t lim2)
 
     if (min2 != obj_False && (min1 == obj_False || (long)min1 < (long)min2))
 	return FALSE;
-    if (max2 != obj_False && (max2 == obj_False || (long)max1 > (long)max1))
+    if (max2 != obj_False && (max2 == obj_False || (long)max1 > (long)max2))
 	return FALSE;
     return TRUE;
 }
@@ -575,6 +575,74 @@ static obj_t merge_limited_integers(obj_t lim1, obj_t lim2)
     return limited_integer(min, max);
 }
 
+/* returns a new limited integer type which contains all elements common to
+   lim1 and lim2.  If there are no common elements, obj_False is returned. */
+obj_t intersect_limited_integers(obj_t lim1, obj_t lim2)
+{
+    obj_t min1, min2, max1, max2, min, max;
+
+    min1 = obj_ptr(struct lim_int *, lim1)->min;
+    max1 = obj_ptr(struct lim_int *, lim1)->max;
+    min2 = obj_ptr(struct lim_int *, lim2)->min;
+    max2 = obj_ptr(struct lim_int *, lim2)->max;
+
+    if (max1 != obj_False && min2 != obj_False
+	  && (long)max1 < (long)min2)
+	return obj_False;
+
+    if (max2 != obj_False && min1 != obj_False
+	  && (long)max2 < (long)min1)
+	return obj_False;
+
+    if (min1 != obj_False || min2 != obj_False)
+	if (min1 == obj_False || (long)min1 < (long)min2)
+	    min = min2;
+        else
+	    min = min1;
+    else
+	min = obj_False;
+
+    if (max1 != obj_False || max2 != obj_False)
+	if (max1 == obj_False || (long)max1 > (long)max2)
+	    max = max2;
+	else
+	    max = max1;
+    else
+	max = obj_False;
+
+    return limited_integer(min, max);
+}
+
+/* Return a new limited integer type containing the portion of lim1 which
+   contains val but contains no items from lim2.  Lim1 may be "<integer>"
+   rather than a limited integer, and we require, as a precondition,
+   that lim2 does not contain val. */
+obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2)
+{
+    obj_t min1, min2, max1, max2, min, max;
+
+    if (object_class(lim1) == obj_LimIntClass) {
+	min1 = obj_ptr(struct lim_int *, lim1)->min;
+	max1 = obj_ptr(struct lim_int *, lim1)->max;
+    } else
+	min1 = max1 = obj_False;
+    min2 = obj_ptr(struct lim_int *, lim2)->min;
+    max2 = obj_ptr(struct lim_int *, lim2)->max;
+
+    if ((min2 == obj_False || (long)min2 < (long)val) &&
+	(min1 == obj_False || (long)min1 < (long)max2))
+	min = (obj_t)((long)max2 + (long)make_fixnum(1));
+    else
+	min = min1;
+    
+    if ((max2 == obj_False || (long)max2 > (long)val) &&
+	(max1 == obj_False || (long)max1 > (long)min2))
+	max = (obj_t)((long)min2 - (long)make_fixnum(1));
+    else
+	max = max1;
+
+    return limited_integer(min, max);
+}
 
 /* union construction. */
 
