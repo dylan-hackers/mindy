@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.5 1996/01/12 02:10:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.6 1996/03/13 03:18:46 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -67,6 +67,11 @@ define open generic dimension (array :: <array>, axis :: <integer>)
 
 // Default methods.
 
+// This method is duplicated in several places, except that the duplicates
+// are more tightly specialized to a single sealed class.  If you need to 
+// make a general change, you should probably grep for "outlined-iterator" 
+// and change all matching locations.
+//
 define inline method forward-iteration-protocol (array :: <array>)
     => (initial-state :: <integer>,
 	limit :: <integer>,

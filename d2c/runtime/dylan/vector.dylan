@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.9 1996/03/02 19:21:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.10 1996/03/13 03:18:46 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -117,6 +117,51 @@ define sealed inline method element-setter
   else
     element-error(vec, index);
   end;
+end;
+
+// This method is identical to the one in "array.dylan", except that it
+// is more tightly specialized to a single sealed class.  If you need to 
+// make a general change, you should probably grep for "outlined-iterator" 
+// and change all matching locations.
+//
+define inline method forward-iteration-protocol
+    (array :: <simple-object-vector>)
+    => (initial-state :: <integer>,
+	limit :: <integer>,
+	next-state :: <function>,
+	finished-state? :: <function>,
+	current-key :: <function>,
+	current-element :: <function>,
+	current-element-setter :: <function>,
+	copy-state :: <function>);
+  values(0,
+	 array.size,
+	 method (array :: <simple-object-vector>, state :: <integer>)
+	     => new-state :: <integer>;
+	   state + 1;
+	 end,
+	 method (array :: <simple-object-vector>, state :: <integer>,
+		 limit :: <integer>)
+	     => done? :: <boolean>;
+	   state == limit;
+	 end,
+	 method (array :: <simple-object-vector>, state :: <integer>)
+	     => key :: <integer>;
+	   state;
+	 end,
+	 method (array :: <simple-object-vector>, state :: <integer>)
+	     => element :: <object>;
+	   element(array, state);
+	 end,
+	 method (new-value :: <object>, array :: <simple-object-vector>,
+		 state :: <integer>)
+	     => new-value :: <object>;
+	   element(array, state) := new-value;
+	 end,
+	 method (array :: <simple-object-vector>, state :: <integer>)
+	     => state-copy :: <integer>;
+	   state;
+	 end);
 end;
 
 define sealed method as
