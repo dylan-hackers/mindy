@@ -3,7 +3,7 @@ dnl   libraries should be visited by the makefiles.
 dnl   By changing this file for a Mindy release, we can easily control
 dnl   which libraries we ship with Mindy.
 
-BUNDLED_LIBRARY_DIRS="dylan streams standard-io print format random coll-ext string-ext tk inspector matrix internal-time table-ext format-out time regexp"
+BUNDLED_LIBRARY_DIRS="dylan streams standard-io print format stream-ext random coll-ext string-ext tk inspector matrix internal-time table-ext format-out time regexp"
 
 define(BUNDLED_LIBRARY_MAKEFILES,
 	libraries/dylan/Makefile \
@@ -11,6 +11,7 @@ define(BUNDLED_LIBRARY_MAKEFILES,
 	libraries/standard-io/Makefile \
 	libraries/print/Makefile \
 	libraries/format/Makefile \
+	libraries/stream-ext/Makefile \
 	libraries/random/Makefile \
 	libraries/coll-ext/Makefile \
 	libraries/string-ext/Makefile \
