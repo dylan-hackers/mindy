@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.4 1996/02/08 02:23:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.5 1996/02/08 19:20:57 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,6 +18,7 @@ define module lexer
   use common;
 
   use utils;
+  use errors;
   use source;
   use compile-time-values;
   use tokens;
@@ -120,4 +121,5 @@ define module main
   use standard-io;
   use tokens;
   use names;
+  use errors;
 end;

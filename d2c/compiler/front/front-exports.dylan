@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.5 1996/01/31 23:56:21 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.6 1996/02/08 19:20:57 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,6 +53,7 @@ end;
 define module top-level-forms
   use common;
   use utils;
+  use errors;
   use tokens;
   use compile-time-values;
   use parse-tree;
@@ -75,6 +76,7 @@ end;
 define module define-libraries-and-modules
   use common;
   use utils;
+  use errors;
   use names;
   use compile-time-values;
   use tokens;
@@ -179,6 +181,7 @@ define module fer-convert
   use common;
 
   use utils;
+  use errors;
   use source;
   use tokens;
   use names;
@@ -219,6 +222,7 @@ end;
 define module define-functions
   use common;
   use utils;
+  use errors;
   use tokens;
   use names;
   use definitions;
@@ -263,6 +267,7 @@ end;
 define module define-constants-and-variables
   use common;
   use utils;
+  use errors;
   use compile-time-values;
   use compile-time-eval;
   use lexenv;
@@ -290,6 +295,7 @@ end;
 define module define-classes
   use common;
   use utils;
+  use errors;
   use compile-time-values;
   use tokens;
   use names;
@@ -385,6 +391,7 @@ end;
 define module cheese
   use common;
   use utils;
+  use errors;
   use compile-time-values;
   use names;
   use definitions;

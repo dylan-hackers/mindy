@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.1 1996/01/08 13:10:52 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser-exports.dylan,v 1.2 1996/02/08 19:20:57 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,6 +14,7 @@ define module parser
   use common;
   use self-organizing-list;
   use utils;
+  use errors;
   use compile-time-values;
   use tokens;
   use variables;

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.4 1996/02/05 13:31:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.5 1996/02/08 19:20:57 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,6 +63,7 @@ end;
 define module heap
   use common;
   use utils;
+  use errors;
   use names;
   use signature-interface;
   use compile-time-values;
