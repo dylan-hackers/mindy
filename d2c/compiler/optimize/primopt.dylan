@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.12 1995/12/01 16:53:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.13 1995/12/06 04:58:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -173,16 +173,48 @@ define-primitive-transformer
 	   let builder = make-builder(component);
 	   let policy = assign.policy;
 	   let source = assign.source-location;
-	   local
-	     method copy-arg (arg)
-	       if (arg.expression-movable?)
-		 arg;
+	   let copy-arg
+	     = if (primitive.home-function-region == vec.home-function-region)
+		 method (arg :: <leaf>) => new :: <leaf>;
+		   if (arg.expression-movable?)
+		     arg;
+		   else
+		     let temp
+		       = make-ssa-var(builder,
+				      if (instance?(arg, <abstract-variable>))
+					arg.var-info.debug-name;
+				      else
+					#"temp";
+				      end,
+				      arg.derived-type);
+		     build-assignment(builder, policy, source, temp, arg);
+		     temp;
+		   end;
+		 end;
 	       else
-		 let temp = make-ssa-var(builder, #"temp", object-ctype());
-		 build-assignment(builder, policy, source, temp, arg);
-		 temp;
-	       end;
-	     end;
+		 method (arg :: <leaf>) => new :: <leaf>;
+		   if (if (instance?(arg, <ssa-variable>))
+			 instance?(arg.var-info, <lexical-var-info>);
+		       else
+			 arg.expression-movable?;
+		       end)
+		     arg;
+		   else
+		     let temp
+		       = make-lexical-var(builder, 
+					  if (instance?(arg,
+							<abstract-variable>))
+					    arg.var-info.debug-name;
+					  else
+					    #"temp";
+					  end,
+					  assign.source-location,
+					  arg.derived-type);
+		     build-let(builder, policy, source, temp, arg);
+		     temp;
+		   end;
+		 end;
+	       end if;
 	   for (value-dep = vec.depends-on then value-dep.dependent-next,
 		values = #() then pair(copy-arg(value-dep.source-exp), values),
 		while: value-dep)
