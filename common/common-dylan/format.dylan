@@ -186,9 +186,7 @@ define method print-unique-name
     <collection>   => print-collection(buffer, object);
     <boolean>      => print-string(buffer, if (object) "#t" else "#f" end);
     <integer>      => print-string(buffer, integer-to-string(object));
-#if (~bootstrap)
     <float>        => print-string(buffer, float-to-string(object));
-#endif
     <machine-word> => print-string(buffer, machine-word-to-string(object));
     <method>       => print-method(buffer, object);
     otherwise      => print-basic-name(buffer, object: object);
@@ -221,7 +219,6 @@ end function primitive-name;
 define method print-unique-name
     (buffer :: <string-buffer>, union :: <union>) => ()
   print-format(buffer, "{%s: ", object-class-name(union));
-#if (~mindy)
   unless (empty?(union.union-singletons))
     print-string(buffer, "one-of(");
     for (object in union.union-singletons, first? = #t then #f)
@@ -235,12 +232,6 @@ define method print-unique-name
     unless (first?) print-string(buffer, ", ") end;
     print-pretty-name(buffer, type);
   end;
-#else
-  for(type in union.union-members, first? = #t then #f)
-    unless (first?) print-string(buffer, ", ") end;
-    print-pretty-name(buffer, type);
-  end;
-#endif
   print-string(buffer, "}")
 end method print-unique-name;
 
