@@ -1,5 +1,6 @@
 module: stream-test
 author: Ben Folk-Williams, Nick Kramer
+common-dylan-spec-modification: Doug Auclair
 synopsis: Test for the streams library.
 copyright: see below
 
@@ -130,11 +131,54 @@ define method buffered-read-test ();
   close(s);
 end method buffered-read-test;
 
+define function make-foo-file(file-name :: <string>, direction :: <symbol>)
+ => f :: <file-stream>;
+  let out = make(<file-stream>, direction: #"output", locator: file-name);
+  write(out, "foo");
+  close(out);
+  make(<file-stream>, direction: direction, locator: file-name, if-exists: #"append");
+end function make-foo-file;
+
+define function clearing-helper(test-name :: <string>, clear? :: <boolean>, 
+				direction :: <symbol>) => ()
+  let in = make-foo-file(".contents.txt~", direction);
+  let full-test-name = concatenate(test-name, if(clear?) "" else "-no" end if,
+				   "-clear test, ");
+  run-test(stream-contents(in, clear-contents?: clear?), "foo",
+           concatenate(full-test-name, "first read"));
+  close(in);
+  // run the test again to test the contents of the file
+  let new-in = make(<file-stream>, direction: direction,
+                    locator: ".contents.txt~", if-exists: #"append");
+  let new-contents = if(clear? & direction ~== #"input") "" else "foo" end if;
+  run-test(stream-contents(new-in, clear-contents?: clear?), new-contents,
+           concatenate(full-test-name, "second read"));
+  close(new-in);
+end function clearing-helper;
+
 define method main (argv0, #rest ignored)
+  let crry = method(str, bool, sym) 
+               method() clearing-helper(str, bool, sym) end
+             end;
   format("\nRegression test for the streams library.\n\n");
   run-several-tests("Writing", write-test);
   run-several-tests("Reading", read-test);
   run-several-tests("Buffered writing", buffered-write-test);
+  run-several-tests("Buffered reading", buffered-read-test);
+  run-several-tests("File stream-contents via #\"input\", no clearing",
+                    crry("stream-contents-input", #f, #"input"));
+  run-several-tests("File stream-contents via #\"input\", clearing",
+                    crry("stream-contents-input", #t, #"input"));
+  run-several-tests("File stream-contents via #\"input-output\", no clearing",
+                    crry("stream-contents-input-output", #f, #"input-output"));
+  run-several-tests("File stream-contents via #\"input-output\", clearing",
+                    crry("stream-contents-input-output", #t, #"input-output"));
+  run-several-tests("File stream-contents via #\"output\", no clearing",
+                    crry("stream-contents-output", #f, #"output"));
+  run-several-tests("File stream-contents via #\"output\", clearing",
+                    crry("stream-contents-output", #t, #"output"));
+
+  run-several-tests("Buffered reading", buffered-read-test);
   run-several-tests("Buffered reading", buffered-read-test);
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");
