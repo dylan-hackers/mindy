@@ -1,0 +1,8 @@
+
+$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
+$D2CFLAGS = '-L../dylan -L../streams -L../melange';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+do emit_library_rule(
+    'StreamExt', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);
