@@ -1,12 +1,12 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/signature.dylan,v 1.2 2000/01/24 04:56:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/signature.dylan,v 1.3 2002/04/13 01:29:12 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -36,7 +36,7 @@ copyright: see below
 define class <signature> (<object>)
 
   // List of <ctype>s representing the specializers for required arguments.
-  slot specializers :: <list>, required-init-keyword: specializers:;
+  constant slot specializers :: <list>, required-init-keyword: specializers:;
 
   // True if there was a #next.
   slot next? :: <boolean>,
@@ -81,10 +81,10 @@ add-make-dumper(#"function-signature", *compiler-dispatcher*, <signature>,
 define class <key-info> (<object>)
 
   // name of this keyword arg.
-  slot key-name :: <symbol>, required-init-keyword: key-name:;
+  constant slot key-name :: <symbol>, required-init-keyword: key-name:;
 
   // type restriction.
-  slot key-type :: <ctype>, required-init-keyword: type:;
+  constant slot key-type :: <ctype>, required-init-keyword: type:;
 
   // True if a required keyword.  Keywords can be required in two different
   // ways: if the default is known to not be of the correct type or a 
