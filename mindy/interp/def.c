@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.1 1994/03/24 21:49:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.2 1994/04/08 17:55:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -181,8 +181,7 @@ static obj_t defclass(obj_t var_obj, obj_t superclasses, obj_t slots)
     struct variable *var = obj_rawptr(var_obj);
 
     init_defined_class(var->value, superclasses, slots);
-
-    return var->name;
+    /* init_defined_class doesn't return */
 }
 
 static obj_t defslot(obj_t getter, obj_t setter)
