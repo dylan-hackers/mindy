@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.46 1995/05/03 09:44:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.47 1995/05/04 09:13:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -148,6 +148,14 @@ end;
 
 define method side-effect-free? (expr :: <expression>) => res :: <boolean>;
   #f;
+end;
+
+define method side-effect-free? (expr :: <slot-ref>) => res :: <boolean>;
+  #t;
+end;
+
+define method side-effect-free? (expr :: <truly-the>) => res :: <boolean>;
+  #t;
 end;
 
 define method side-effect-free?
@@ -432,8 +440,8 @@ end;
 // Basically, we check the arguments against the signature and try to change
 // into a <known-call> if we can and an <error-call> if we have to.
 //
-define method optimize (component :: <component>, call :: <unknown-call>)
-    => ();
+define method optimize
+    (component :: <component>, call :: <unknown-call>) => ();
   let func-dep = call.depends-on;
   unless (func-dep)
     error("No function in a call?");
@@ -441,6 +449,7 @@ define method optimize (component :: <component>, call :: <unknown-call>)
   // Dispatch of the thing we are calling.
   optimize-unknown-call(component, call, func-dep.source-exp, #f);
 end;
+
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>, func :: <leaf>,
@@ -792,6 +801,36 @@ end;
 
 define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
+     func :: <getter-method-definition>,
+     inline-expansion :: false-or(<method-parse>))
+    => ();
+  let sig = func.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  let leaf = func.method-defn-leaf;
+  if (leaf)
+    optimize-unknown-call(component, call, leaf, #f);
+  else
+    optimize-slot-ref(component, call, func.accessor-method-defn-slot-info);
+  end;
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
+     func :: <setter-method-definition>,
+     inline-expansion :: false-or(<method-parse>))
+    => ();
+  let sig = func.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  let leaf = func.method-defn-leaf;
+  if (leaf)
+    optimize-unknown-call(component, call, leaf, #f);
+  else
+    optimize-slot-set(component, call, func.accessor-method-defn-slot-info);
+  end;
+end;
+
+define method optimize-unknown-call
+    (component :: <component>, call :: <unknown-call>,
      func :: <exit-function>, inline-expansion :: false-or(<method-parse>))
     => ();
   // Make a values operation, steeling the args from the call.
@@ -805,6 +844,148 @@ define method optimize-unknown-call
   reoptimize(component, cluster);
   expand-exit-function(component, call, func, cluster);
 end;
+
+
+define method optimize
+    (component :: <component>, call :: <known-call>) => ();
+  let func-dep = call.depends-on;
+  unless (func-dep)
+    error("No function in a call?");
+  end;
+  // Dispatch of the thing we are calling.
+  optimize-known-call(component, call, func-dep.source-exp);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <leaf>)
+    => ();
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <definition-constant-leaf>)
+    => ();
+  optimize-known-call(component, call, func.const-defn, #f);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <getter-method-definition>)     
+    => ();
+  optimize-slot-ref(component, call, func.accessor-method-defn-slot-info);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <setter-method-definition>)     
+    => ();
+  optimize-slot-set(component, call, func.accessor-method-defn-slot-info);
+end;
+
+
+
+
+define method optimize-slot-ref
+    (component :: <component>, call :: <abstract-call>,
+     slot :: <instance-slot-info>)
+    => ();
+  let instance = call.depends-on.dependent-next.source-exp;
+  let offset = find-slot-offset(slot, instance.derived-type);
+  if (offset)
+    let builder = make-builder(component);
+    let call-assign = call.dependents.dependent;
+    let policy = call-assign.policy;
+    let source = call-assign.source-location;
+    let init?-slot = slot.slot-initialized?-slot;
+    if (init?-slot)
+      let init?-offset = find-slot-offset(init?-slot, instance.derived-type);
+      unless (init?-offset)
+	error("The slot is at a fixed offset, but the initialized flag "
+		"isn't?");
+      end;
+      let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
+      build-assignment(builder, policy, source, temp,
+		       make-operation(builder, <slot-ref>, list(instance),
+				      derived-type: init?-slot.slot-type,
+				      slot-info: init?-slot,
+				      slot-offset: init?-offset));
+      build-if-body(builder, policy, source, temp);
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation(builder, "Slot is not initialized"));
+      end-body(builder);
+    end;
+    let value = make-local-var(builder, slot.slot-getter.variable-name,
+			       slot.slot-type);
+    build-assignment(builder, policy, source, value,
+		     make-operation(builder, <slot-ref>, list(instance),
+				    derived-type: slot.slot-type,
+				    slot-info: slot, slot-offset: offset));
+    unless (init?-slot | slot.slot-guaranteed-initialized?)
+      let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
+      build-assignment(builder, policy, source, temp,
+		       make-operation(builder, <primitive>, list(value),
+				      name: #"initialized?"));
+      build-if-body(builder, policy, source, temp);
+      build-else(builder, policy, source);
+      build-assignment
+	(builder, policy, source, #(),
+	 make-error-operation(builder, "Slot is not initialized"));
+      end-body(builder);
+    end;
+    insert-before(component, call-assign, builder-result(builder));
+
+    let dep = call-assign.depends-on;
+    remove-dependency-from-source(component, dep);
+    dep.source-exp := value;
+    dep.source-next := value.dependents;
+    value.dependents := dep;
+  end;
+end;
+
+define method optimize-slot-set
+    (component :: <component>, call :: <abstract-call>,
+     slot :: <instance-slot-info>)
+    => ();
+  let instance = call.depends-on.dependent-next.dependent-next.source-exp;
+  let offset = find-slot-offset(slot, instance.derived-type);
+  if (offset)
+    let new = call.depends-on.dependent-next.source-exp;
+    let builder = make-builder(component);
+    let call-assign = call.dependents.dependent;
+    let op = make-operation(builder, <slot-set>, list(new, instance),
+			    slot-info: slot, slot-offset: offset);
+
+    build-assignment(builder, call-assign.policy, call-assign.source-location,
+		     #(), op);
+    begin
+      let init?-slot = slot.slot-initialized?-slot;
+      if (init?-slot)
+	let init?-offset = find-slot-offset(init?-slot, instance.derived-type);
+	unless (init?-offset)
+	  error("The slot is at a fixed offset, but the initialized flag "
+		  "isn't?");
+	end;
+	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let init-op = make-operation
+	  (builder, <slot-set>, list(true-leaf, instance),
+	   slot-info: init?-slot, slot-offset: init?-offset);
+	build-assignment(builder, call-assign.policy,
+			 call-assign.source-location, #(), init-op);
+      end;
+    end;
+    insert-before(component, call-assign, builder-result(builder));
+
+    let dep = call-assign.depends-on;
+    remove-dependency-from-source(component, dep);
+    dep.source-exp := new;
+    dep.source-next := new.dependents;
+    new.dependents := dep;
+  end;
+end;
+
 
 
 define method change-call-kind
@@ -829,25 +1010,13 @@ define method change-call-kind
 end;
 
 
-// <known-call> optimization.
+
+// <error-call> optimization.
 //
-define method optimize (component :: <component>, call :: <known-call>)
-    => ();
-  let func-dep = call.depends-on;
-  unless (func-dep)
-    error("No function in a call?");
-  end;
-  // Dispatch of the thing we are calling.
-  optimize-known-call(component, call, func-dep.source-exp);
+// We only make <error-call>s when we want to give up.
+// 
+define method optimize (component :: <component>, call :: <error-call>) => ();
 end;
-
-define method optimize-known-call
-    (component :: <component>, call :: <known-call>, func :: <leaf>)
-    => ();
-  // Default method that does nothing.
-  #f;
-end;
-
 
 
 // <mv-call> optimization.
