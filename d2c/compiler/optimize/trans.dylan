@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.17 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.18 1996/01/03 21:36:04 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -121,14 +121,14 @@ end;
 
 // == stuff.
 
-define method ==-transformer
+define method da-==-transformer
     (component :: <component>, call :: <known-call>)
     => did-anything? :: <boolean>;
   let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
   okay? & trivial-==-optimization(component, call, x, y);
 end;
 
-define-transformer(#"==", #f, ==-transformer);
+define-transformer(#"==", #f, da-==-transformer);
 
 define method object-==-transformer
     (component :: <component>, call :: <known-call>)
