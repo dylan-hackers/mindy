@@ -101,6 +101,11 @@ define module common-extensions
     \table-definer,
     \iterate,
     \when;
+
+  export
+    \%iterate-aux,
+    \%iterate-param-helper,
+    \%iterate-value-helper;
 #endif
 end module;
 
