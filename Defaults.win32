@@ -9,27 +9,76 @@
 
 $target_name = 'x86-win32-vc';
 $host_name = 'x86-win32-vc';
+$version = "2.3.9pre3";
+$bootstrap_counter = 20;
+$lid_format_version = 0;
+$prefix="c:/fulgham/projects/gd";
 
-$prefix = "c:/dylan"; ####
-$srcroot = "$prefix/src";
-$buildroot = "$prefix/build";
-$destdir = $prefix;
+$srcroot = "${prefix}/src";
+$buildroot = "${srcroot}";
+$exec_preix = "c:/dylan";
+$destdir = "${prefix}";
+$bindir = "${exec_prefix}/bin";
+$libdir = "${exec_prefix}/lib/dylan/${version}/${target_name}";
+$sitelibdir = "${exec_prefix}/lib/dylan/${version}/${target_name}/dylan-user";
+$mandir = "${prefix}/man";
+$datadir = "${prefix}/share";
+$sysconfdir = "${prefix}/etc";
+$includedir = "${prefix}/include";
+$gen_makefile = "${buildroot}/gen-makefile";
+$enable_debug = "minimum" eq "yes";
+$enable_profiling = "minimum" eq "profiling";
+$enable_mindy = "no" eq "yes";
+$enable_d2c = "yes" eq "yes";
+$build_tools_with_d2c = "yes" eq "yes";
+$cross_compiling = "no" eq "yes";
+$enable_bootstrap = "yes" eq "yes";
+$bootstrap_compiler = "d2c";
+$enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
+$recheck = "./configure ";
+$shared = "no" eq "yes";
+$static = "yes" eq "yes";
+$INSTALL = "/usr/bin/install -c";
+$LIBTOOL = '/bin/bash ${srcroot}/libtool';
+
 $MC = "$srcroot/mindy/Compiler/release/mindycomp.exe";
 $MINDY = "$srcroot/mindy/Interpretter/release/interpretter.exe";
-
+$DYLANPATH = ":/home/gd/src/common/collection-extensions:/home/gd/src/common/format:/home/gd/src/common/format-out:/home/gd/src/common/internal-time:/home/gd/src/common/matrix:/home/gd/src/common/print:/home/gd/src/common/regular-expressions:/home/gd/src/common/standard-io:/home/gd/src/common/stream-ext:/home/gd/src/common/streams:/home/gd/src/common/string-ext:/home/gd/src/common/table-ext:/home/gd/src/common/time:/home/gd/src/common/transcendental:/home/gd/src/common/getopt:/home/gd/src/mindy/libraries/random:/home/gd/src/mindy/libraries/dylan:/home/gd/src/mindy/libraries/inspector:/home/gd/src/mindy/libraries/tk";
+$CC = 'cl';
 $D2C = "d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
 if ($host_name ne $target_name) {
   $D2C = "$D2C -no-binaries";
 };
 
-$stage2 = 1;
-$DYLANPATH = 'c:/ram/dylan/lib/dylan';
-$DYLANDIR = $destdir;
+$PARSERGEN = "$buildroot/tools/parsergen/parsergen";
+$MELANGE = "$buildroot/tools/melange/melange";
 
-if (!$stage2) {
-  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen.dbc";
-  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
+unless ($build_tools_with_d2c) {
+  $PARSERGEN = "$MINDY -f $PARSERGEN-lib.dbc";
+  $MELANGE = "$MINDY -f $MELANGE.dbc";
 };
 
-$CPPFLAGS = '-DWIN32 -Ic:\ram\dylan\include';  #####
-$CFLAGS = '-O';
+if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
+    $CPPFLAGS = '-I/home/gd/src/previous_runtime';
+    $d2c_runtime = '-L/home/gd/src/previous_runtime ';
+} else {
+    $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
+    @runtime_directories = ('c-code', 'gc', 'dylan', 'melange');
+    foreach (@runtime_directories) {
+	$d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
+    }
+}
+
+$have_gtk = 'no';
+$gtk_cflags = '';
+$gtk_libs = '';
+$enable_duim = 'no';
+
+# Handle constants from operating-system module.
+$architecture_little_endian = "#t";
+$machine_name = "i686";
+$os_name = "WIN_NT-5.0";
+$os_variant = "WIN_NT-5.0";
+$os_version = "1.3.12(0.54/3/2)";
+$platform_name = "i686-CYGWIN_NT-5.0";
+
