@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.8 1996/09/04 16:47:24 nkramer Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.9 1996/10/06 14:09:40 nkramer Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -153,8 +153,11 @@ gdb_print_genobj (descriptor_t obj)
 
 double rint(double x)
 {
-  /* uh, this is wrong unless rounding to -infinity */
-  return floor(x+0.5);				
+  /* ### I'm not sure this is entirely correct, but it's certainly
+     closer than what we had here before 
+     */
+  double temp = floor(x+0.5);
+  return (temp > x) ? temp : floor(x);
 }
 
 float fabsf (float x)
@@ -207,8 +210,7 @@ float sqrtf (float x)
   return (float) sqrt(x);
 }
 
-/* Man, is this broken...
- */
+/* Man, is this broken...  */
 double log2 (double x)
 {
   return 0;
