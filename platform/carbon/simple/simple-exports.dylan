@@ -18,22 +18,12 @@ define module simple
 
 	use dylan;
 	
-        use System;
+    use System;
 	use melange-support;
         
-        use format;
+    use format;
 	
-	use mac-types;
-	use controls;
-	use dialogs;
-	use events;
-	use memory;
-	use menus;
-	use quickdraw;
-	use resources;
-	use sound;
-	use windows;
-        use appearance;
+	use carbon;
 	
 	export
 	

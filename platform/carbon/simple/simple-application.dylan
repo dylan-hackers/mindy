@@ -198,7 +198,7 @@ define open generic next-event( app :: <simple-application> ) => ();
 define method next-event( app :: <simple-application> )
 => ()
 
-	let event :: <EventRecord> = make( <EventRecord> );
+	let event :: <EventRecord*> = make( <EventRecord*> );
 	let got-event :: <boolean> = WaitNextEvent( $everyEvent, event, 3, $NULL );
 	
 	if( got-event)
@@ -216,9 +216,9 @@ end method next-event;
 	application-idle
 */
 
-define open generic application-idle( app :: <simple-application>, idle-event :: <EventRecord> ) => ();
+define open generic application-idle( app :: <simple-application>, idle-event :: <EventRecord*> ) => ();
 
-define method application-idle( app :: <simple-application>, idle-event :: <EventRecord> )
+define method application-idle( app :: <simple-application>, idle-event :: <EventRecord*> )
 => ()
 
 	if( app.front-window ~= #f )
@@ -234,28 +234,28 @@ end method application-idle;
 	dispatch-event
 */
 
-define open generic dispatch-event( app :: <simple-application>, event :: <EventRecord> );
+define open generic dispatch-event( app :: <simple-application>, event :: <EventRecord*> );
 
-define method dispatch-event( app :: <simple-application>, event :: <EventRecord> )
+define method dispatch-event( app :: <simple-application>, event :: <EventRecord*> )
 => ( result :: <boolean> )
 	
-	select( event.event-what )
+	select( event.what-value )
 		
-		$mouseDown =>	dispatch-mouse-event( app, event, event.event-where );
+		$mouseDown =>	dispatch-mouse-event( app, event, event.where-value );
 		
-		$autoKey, $keyDown =>	let theKey :: <character> = as( <character>, logand(event.event-message, $charCodeMask) );//event.event-char;
-								let theCode :: <integer> = as( <integer>, logand(event.event-message, $keyCodeMask) );
-								//as( <character>, theKey ), theCode, event.event-modifiers
+		$autoKey, $keyDown =>	let theKey :: <character> = as( <character>, logand(event.message-value, $charCodeMask) );//event.event-char;
+								let theCode :: <integer> = as( <integer>, logand(event.message-value, $keyCodeMask) );
+								//as( <character>, theKey ), theCode, event.modifiers-value
 								application-key( app, event, theKey, theCode );
 
-		$activateEvt => let makeActive :: <boolean> = if( logand(event.event-modifiers, $activeFlag) ) #t else #f end if;					
-						application-window-activate( app, make( <WindowRef>, pointer: event.event-message ), event, makeActive );
+		$activateEvt => let makeActive :: <boolean> = if( logand(event.modifiers-value, $activeFlag) ) #t else #f end if;					
+						application-window-activate( app, make( <WindowRef>, pointer: event.message-value ), event, makeActive );
 									
-		$updateEvt =>	application-window-update( app, make( <WindowRef>, pointer: event.event-message ), event );
+		$updateEvt =>	application-window-update( app, make( <WindowRef>, pointer: event.message-value ), event );
 
-	/*	$diskEvt =>		let dPt :: <Point> = make( <Point>, h: 100, v: 100 );					
-						if( floor/( event.event-message, 65536 ) ~= 0)
-							DIBadMount( dPt, event.event-message );
+	/*	$diskEvt =>		let dPt :: <Point*> = make( <Point*>, h: 100, v: 100 );					
+						if( floor/( event.message-value, 65536 ) ~= 0)
+							DIBadMount( dPt, event.message-value );
 						end if;
 	*/
 		$kHighLevelEvent => application-apple-event( app, event );
@@ -276,12 +276,12 @@ end method dispatch-event;
 	dispatch-mouse-event
 */
 
-define open generic dispatch-mouse-event( app :: <simple-application>, event :: <EventRecord>, point :: <Point> ) => (); 
+define open generic dispatch-mouse-event( app :: <simple-application>, event :: <EventRecord*>, point :: <Point*> ) => (); 
 
-define method dispatch-mouse-event( app :: <simple-application>, event :: <EventRecord>, point :: <Point> )
+define method dispatch-mouse-event( app :: <simple-application>, event :: <EventRecord*>, point :: <Point*> )
 => ()
 
-	let ( partCode :: <integer>, targetWindow ) = FindWindow( event.event-where );
+	let ( partCode :: <integer>, targetWindow ) = FindWindow( event.where-value );
 
 	if( targetWindow ~= #f )
 		
@@ -291,7 +291,7 @@ define method dispatch-mouse-event( app :: <simple-application>, event :: <Event
 		
 			$inDesk => #f;
 			
-			$inMenuBar =>	let( menu, item ) = MenuSelect( event.event-where );
+			$inMenuBar =>	let( menu, item ) = MenuSelect( event.where-value );
 							if( menu ~= 0 )
 								application-menu-choice( app, menu, item );
 							end if;
@@ -315,10 +315,10 @@ define method dispatch-mouse-event( app :: <simple-application>, event :: <Event
 			$inDrag =>		if((app.front-window.modal = #t) & ( window-object ~= app.front-window ))
 								SysBeep( 8 );
 							else
-								DragWindow( targetWindow, event.event-where );
+								DragWindow( targetWindow, event.where-value );
 							end if;
 			
-			$inGrow =>		let (newHeight, newWidth) = GrowWindow( targetWindow, event.event-where );
+			$inGrow =>		let (newHeight, newWidth) = GrowWindow( targetWindow, event.where-value );
 							if((app.front-window.modal = #t) & ( window-object ~= app.front-window ))
 								SysBeep( 8 );
 							elseif( newWidth + newHeight ~= 0 )
@@ -327,14 +327,14 @@ define method dispatch-mouse-event( app :: <simple-application>, event :: <Event
 									resize( window-object, newWidth, newHeight );
 								else
 									SizeWindow( targetWindow, newWidth, newHeight, #t );
-									let invalr :: <Rect> = make( <Rect>, top: 0, left: 0, bottom: newHeight, right: newWidth);
+									let invalr :: <Rect*> = make( <Rect*>, top: 0, left: 0, bottom: newHeight, right: newWidth);
 									InvalWindowRect( app.front-window.windowRef, invalr );
 								end if;
 							end if;
 			
 			$inGoAway =>	if((app.front-window.modal = #t) & ( window-object ~= app.front-window ))
 								SysBeep( 8 );
-							elseif( TrackGoAway( targetWindow, event.event-where ) )
+							elseif( TrackGoAway( targetWindow, event.where-value ) )
 								// if the user clicks in the go-away box, the window will be closed. If the
 								// option key is down, we close all of the windows.
 								
@@ -372,12 +372,12 @@ end method dispatch-mouse-event;
 	application-key
 */
 
-define open generic application-key( app :: <simple-application>, event :: <EventRecord>, key :: <character>, keyCode :: <integer> ) => ();
+define open generic application-key( app :: <simple-application>, event :: <EventRecord*>, key :: <character>, keyCode :: <integer> ) => ();
 
-define method application-key( app :: <simple-application>, event :: <EventRecord>, key :: <character>, keyCode :: <integer> )
+define method application-key( app :: <simple-application>, event :: <EventRecord*>, key :: <character>, keyCode :: <integer> )
 => ()			
 
-	if( logbit?( $cmdKeyBit, event.event-modifiers ) )	// beats logand with untyped $cmdkey
+	if( logbit?( $cmdKeyBit, event.modifiers-value ) )	// beats logand with untyped $cmdkey
 		let (menu, item) = MenuKey( key );
 		if( menu ~= 0 )
 			application-menu-choice( app, menu, item );
@@ -430,9 +430,9 @@ end method application-menu-choice;
 	application-window-activate
 */
 
-define open generic application-window-activate( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord>, makeActive :: <boolean> );
+define open generic application-window-activate( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord*>, makeActive :: <boolean> );
 
-define method application-window-activate( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord>, makeActive :: <boolean> )
+define method application-window-activate( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord*>, makeActive :: <boolean> )
 => ()
 	let window-object = window-to-object( window );
 	if( window-object )
@@ -464,9 +464,9 @@ end method application-window-activate;
 	application-window-update
 */
 
-define open generic application-window-update( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord> );
+define open generic application-window-update( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord*> );
 
-define method application-window-update( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord> )
+define method application-window-update( app :: <simple-application>, window :: <WindowRef>, event :: <EventRecord*> )
 => ()
 
 	let window-object = window-to-object( window );
@@ -486,9 +486,9 @@ end method application-window-update;
 	application-apple-event
 */
 
-define open generic application-apple-event( app :: <simple-application>,  event :: <EventRecord> ) => ();
+define open generic application-apple-event( app :: <simple-application>,  event :: <EventRecord*> ) => ();
 
-define method application-apple-event( app :: <simple-application>, event :: <EventRecord> )
+define method application-apple-event( app :: <simple-application>, event :: <EventRecord*> )
 => ()
 	
 	let err :: <OSErr> = AEProcessAppleEvent( event );
@@ -507,12 +507,12 @@ end method application-apple-event;
 	application-os-event
 */
 
-define open generic application-os-event( app :: <simple-application>, theEvent :: <EventRecord> ) => (); 
+define open generic application-os-event( app :: <simple-application>, theEvent :: <EventRecord*> ) => (); 
 
-define method application-os-event( app :: <simple-application>, event :: <EventRecord> )
+define method application-os-event( app :: <simple-application>, event :: <EventRecord*> )
 => ()
 
-	if( logand( event-message( event ), $suspendResumeMessage ) )
+	if( logand( message-value( event ), $suspendResumeMessage ) )
 		app.background := #f;
 	else
 		app.background := #t;

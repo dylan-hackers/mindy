@@ -16,7 +16,7 @@ module: simple
     Open Application Apple Event Handler Method
 */
 
-define method open-application-Apple-Event-handler( appleEvt :: <AppleEvent>, reply :: <AppleEvent>, refcon :: <integer> )
+define method open-application-Apple-Event-handler( appleEvt :: <AppleEvent*>, reply :: <AppleEvent*>, refcon :: <integer> )
 => (res :: <OSErr>)
 
     //- We don't do anything. We should call a method on *application*
@@ -28,7 +28,7 @@ end method;
     Open Document Apple Event Handler Method
 */
 
-define method open-document-Apple-Event-handler( appleEvt :: <AppleEvent>, reply :: <AppleEvent>, refcon :: <integer> )
+define method open-document-Apple-Event-handler( appleEvt :: <AppleEvent*>, reply :: <AppleEvent*>, refcon :: <integer> )
 => (res :: <OSErr>)
 
     //- We don't do anything. We should call a method on *application*
@@ -40,7 +40,7 @@ end method;
     Print Document Apple Event Handler Method
 */
 
-define method print-document-Apple-Event-handler( appleEvt :: <AppleEvent>, reply :: <AppleEvent>, refcon :: <integer> )
+define method print-document-Apple-Event-handler( appleEvt :: <AppleEvent*>, reply :: <AppleEvent*>, refcon :: <integer> )
 => (res :: <OSErr>)
 
     //- We don't do anything. We should call a method on *application*
@@ -52,7 +52,7 @@ end method;
     Quit Apple Event Handler Method
 */
 
-define method quit-Apple-Event-handler( appleEvt :: <AppleEvent>, reply :: <AppleEvent>, refcon :: <integer> )
+define method quit-Apple-Event-handler( appleEvt :: <AppleEvent*>, reply :: <AppleEvent*>, refcon :: <integer> )
 => (res :: <OSErr>)
 
 	*application*.quit := #t;
@@ -70,8 +70,8 @@ end method;
 
 define constant $open-application-handler-callback =
         callback-method(arg1 :: <raw-pointer>, arg2 :: <raw-pointer>, refcon :: <integer>) => (res :: <OSErr>);
-		let appleEvt = make(<AppleEvent>, pointer: arg1);
-		let reply = make(<AppleEvent>, pointer: arg2);
+		let appleEvt = make(<AppleEvent*>, pointer: arg1);
+		let reply = make(<AppleEvent*>, pointer: arg2);
 		let res = open-application-Apple-Event-handler( appleEvt, reply, refcon );
 		values(res);
 	end;
@@ -82,8 +82,8 @@ define constant $open-application-handler-callback =
 
 define constant $open-document-handler-callback =
         callback-method(arg1 :: <raw-pointer>, arg2 :: <raw-pointer>, refcon :: <integer>) => (res :: <OSErr>);
-		let appleEvt = make(<AppleEvent>, pointer: arg1);
-		let reply = make(<AppleEvent>, pointer: arg2);
+		let appleEvt = make(<AppleEvent*>, pointer: arg1);
+		let reply = make(<AppleEvent*>, pointer: arg2);
 		let res = open-document-Apple-Event-handler( appleEvt, reply, refcon );
 		values(res);
 	end;
@@ -94,8 +94,8 @@ define constant $open-document-handler-callback =
 
 define constant $print-document-handler-callback =
         callback-method(arg1 :: <raw-pointer>, arg2 :: <raw-pointer>, refcon :: <integer>) => (res :: <OSErr>);
-		let appleEvt = make(<AppleEvent>, pointer: arg1);
-		let reply = make(<AppleEvent>, pointer: arg2);
+		let appleEvt = make(<AppleEvent*>, pointer: arg1);
+		let reply = make(<AppleEvent*>, pointer: arg2);
 		let res = print-document-Apple-Event-handler( appleEvt, reply, refcon );
 		values(res);
 	end;
@@ -106,8 +106,8 @@ define constant $print-document-handler-callback =
 
 define constant $quit-handler-callback =
         callback-method(arg1 :: <raw-pointer>, arg2 :: <raw-pointer>, refcon :: <integer>) => (res :: <OSErr>);
-		let appleEvt = make(<AppleEvent>, pointer: arg1);
-		let reply = make(<AppleEvent>, pointer: arg2);
+		let appleEvt = make(<AppleEvent*>, pointer: arg1);
+		let reply = make(<AppleEvent*>, pointer: arg2);
 		let res = quit-Apple-Event-handler( appleEvt, reply, refcon );
 		values(res);
 	end;

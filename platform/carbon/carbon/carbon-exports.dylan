@@ -316,6 +316,8 @@ define module carbon
 		<AEEventHandlerUPP>, $uppAEEventHandlerProcInfo,
                 NewAEEventHandlerUPP,
 		AEInstallEventHandler, AERemoveEventHandler, AEProcessAppleEvent,
+	// PRP added:
+		AEGetParamPtr,	
 		// Misc Event Stuff
 		TickCount, Button, StillDown, WaitMouseUp, GetMouse,
 		//SystemClick,

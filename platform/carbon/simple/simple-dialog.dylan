@@ -137,7 +137,7 @@ end method dialog-selection;
 	window-idle
 */
 
-define method window-idle( dialog :: <simple-dialog>, event :: <EventRecord> )
+define method window-idle( dialog :: <simple-dialog>, event :: <EventRecord*> )
 => ()
 
 	SetWindowKind( dialog.windowRef, $dialogKind );
@@ -152,7 +152,7 @@ end method window-idle;
 	update
 */
 
-define method update( dialog :: <simple-dialog>, event :: <EventRecord>  )
+define method update( dialog :: <simple-dialog>, event :: <EventRecord*>  )
 => ()
 
 	//next-method(); Would call draw, which we shouldn't need. I'm open to debate on this.
@@ -171,7 +171,7 @@ end method update;
 */
 
 
-define method window-click( dialog :: <simple-dialog>, event :: <EventRecord>, localPoint :: <Point> )
+define method window-click( dialog :: <simple-dialog>, event :: <EventRecord*>, localPoint :: <Point*> )
 => ()
 
 	let( didSelect, dialogRef, itemHit ) = DialogSelect( event );
@@ -188,7 +188,7 @@ end method window-click;
 	window-key
 */
 
-define method window-key( dialog :: <simple-dialog>, event :: <EventRecord>, charCode :: <character>, keyCode :: <integer>  )
+define method window-key( dialog :: <simple-dialog>, event :: <EventRecord*>, charCode :: <character>, keyCode :: <integer>  )
 => ()
 
 	SetWindowKind( dialog.windowRef, $dialogKind );
@@ -203,7 +203,7 @@ end method window-key;
 	activate
 */
 
-define method activate( dialog :: <simple-dialog>, event :: <EventRecord>, activating :: <boolean> )
+define method activate( dialog :: <simple-dialog>, event :: <EventRecord*>, activating :: <boolean> )
 => ()
 
 	SetWindowKind( dialog.windowRef, $dialogKind );
@@ -224,13 +224,13 @@ define method set-radio-buttons( dialog :: <DialogRef>, selected :: <integer>,
 => ()
 	
 	for( item :: <integer> from first to last )	// Turn all the radio buttons off <= last!
-		let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+		let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 		SetControlValue( itemHandle, 0 );	// 0 = false = off
 	end for;
 		
 	// Set the selected one
 	
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, selected );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, selected );
 	SetControlValue( itemHandle, 1 );	// 1 = true = on
 		
 	values();
@@ -251,7 +251,7 @@ define method handle-radio-button( dialog :: <DialogRef>, selected :: <integer> 
 	// Lop down away from the radio button
 	block( finish )
 		for( first :: <integer> from selected to 1 by -1 )
-			let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, first );
+			let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, first );
 			if( itemType ~= $kRadioButtonDialogItem )	// When it's no longer a radio button
 				// The one after it is the first radio button
 				first-radio := first + 1;							// So reflect this
@@ -262,7 +262,7 @@ define method handle-radio-button( dialog :: <DialogRef>, selected :: <integer> 
 	
 	block( finish )
 		for( last :: <integer> from selected to numItems ) // <= numItems
-			let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, last );
+			let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, last );
 			if( itemType ~= $kRadioButtonDialogItem )	// When it's no longer a radio button
 				// The one before it is the last radio button
 				last-radio := last - 1;					// So reflect this					
@@ -283,7 +283,7 @@ end method handle-radio-button;
 define method handle-checkbox( dialog :: <DialogRef>, box :: <integer> )
 => ()
 	
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, box );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, box );
 	let state = GetControlValue( itemHandle );		// Get whether the box is checked or not
 	let flipped-state =	if( state = 1 )								// Toggle it
 							0;
@@ -307,7 +307,7 @@ define method handle-dialog-item( dialog :: <DialogRef>, item :: <integer> )
 
 	let dialog-object = dialog-to-object( dialog );
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	
 	dialog-object.focus-item-number := item;
 	dialog-object.focus-item-handle := itemhandle;
@@ -341,7 +341,7 @@ define method get-dialog-item-text( dialog :: <DialogRef>, item :: <integer> )
 
 	let text :: <pascal-string> = make( <pascal-string> );
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	GetDialogItemText( itemHandle, text );
 
 	text;
@@ -356,7 +356,7 @@ end method get-dialog-item-text;
 define method set-dialog-item-text( dialog :: <DialogRef>, item :: <integer>, text :: <pascal-string> )
 => ()
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	SetDialogItemText( itemHandle, text );
 
 	values();
@@ -371,7 +371,7 @@ end method set-dialog-item-text;
 define method get-radio-button-state( dialog :: <DialogRef>, item :: <integer> )
 => ( result :: <boolean> )
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	
 	let result = GetControlValue( itemHandle );
 
@@ -397,7 +397,7 @@ define method set-checkbox-state( dialog :: <DialogRef> , item :: <integer>, sta
 										0; 
 									end if;
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	SetControlValue( itemHandle, state-value );
 	
 	values();
@@ -412,7 +412,7 @@ end method set-checkbox-state;
 define method get-checkbox-state( dialog :: <DialogRef>, item :: <integer> )
 => ( result :: <boolean> )
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 
 	let value = GetControlValue( itemHandle );
 	
@@ -438,7 +438,7 @@ define method get-popup-string( dialog :: <DialogRef>, menuRsrc :: <integer>, it
 
 	let text :: <pascal-string> = make( <pascal-string> );
 
-	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect> ) = GetDialogItem( dialog, item );
+	let( itemType :: <integer>, itemHandle :: <ControlHandle>, itemRect :: <Rect*> ) = GetDialogItem( dialog, item );
 	
 	itemSelected = GetControlValue( itemHandle );
 	

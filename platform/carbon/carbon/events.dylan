@@ -73,32 +73,32 @@ end method content-size;
 */
 
 define method what-value ( event :: <EventRecord*> )
-=> ( what :: <integer> );
+=> ( what :: <integer> )
 	unsigned-short-at(event, offset: 0);
 end method what-value;
 
 
 define method message-value ( event :: <EventRecord*> )
-=> ( message :: <integer> );
+=> ( message :: <integer> )
 	unsigned-long-at(event, offset: 2 );
 end method message-value;
 
 
 define method when-value ( event :: <EventRecord*> )
-=> ( when :: <integer>);
+=> ( when :: <integer>)
 	unsigned-long-at(event, offset: 6);
 end method when-value;
 
 
 define method where-value ( event :: <EventRecord*> )
-=> ( where :: <Point*> );
+=> ( where :: <Point*> )
 	// v and h ARE the "wrong" way round in the C struct.
 	make( <Point*>, v: signed-short-at( event, offset: 10 ), h: signed-short-at( event, offset: 12 ) ); 
 end method where-value;
 
 
 define method modifiers-value ( event :: <EventRecord*> )
-=> ( modifiers :: <EventModifiers> );
+=> ( modifiers :: <EventModifiers> )
 	unsigned-short-at( event, offset: 14 );
 end method modifiers-value;
 
@@ -197,6 +197,44 @@ define method content-size( cls == <AEDescList*> )
 =>( result :: <integer> )
 	c-expr( int: "sizeof(AEDescList)" );
 end method content-size;
+
+/* PRP added */
+define method AEGetParamPtr(
+	appleEvt :: <AppleEvent*>, 
+	key :: <OSType>, 
+	desired-type :: <OSType>,
+	expected-size :: <integer>) 
+	
+	=> (result :: <integer>, 
+	actual-type :: <OSType>, 
+	actual-size :: <integer>, 
+	extracted-data :: <integer>)
+
+	// not literally handles	
+	let actual-type-ptr = make(<Handle>);
+	let actual-size-ptr = make(<Handle>);	
+	let extracted-data-ptr = make(<Handle>);
+	//  TODO: how do we make this a block of raw memory of arbitrary size?
+
+	// RETURN VALUES:
+	// actual-type comes in as a pointer to OSType and is filled out by the call
+	// param comes in as a raw pointer
+	// actual-size comes in as a raw pointer
+	// the function call returns OSType (int) 
+	
+	let result-value = call-out(
+		"AEGetParamPtr", 
+		int:, // return value
+		ptr: appleEvt.raw-value, 
+		unsigned-int: key, 
+		unsigned-int: desired-type, 
+		ptr: actual-type-ptr.raw-value, 
+		ptr: extracted-data-ptr.raw-value, 
+		unsigned-int: expected-size, 
+		ptr: actual-size-ptr.raw-value
+	);
+	values(result-value, unsigned-long-at(actual-type-ptr), unsigned-long-at(actual-size-ptr), unsigned-long-at(extracted-data-ptr));
+end method;
 
 /*
     NewAEEventHandlerUPP

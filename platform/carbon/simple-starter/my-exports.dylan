@@ -13,13 +13,7 @@ define module my-simple
 	use dylan;
 	use extensions;
 	
-	use mac-types;
-        use dialogs;
-        use controls;
-	use events;
-        use memory;
-	use quickdraw;
-	use windows;
+	use carbon;	
 	
 	use simple;
 	

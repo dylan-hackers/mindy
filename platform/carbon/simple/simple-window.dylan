@@ -28,7 +28,7 @@ define open abstract class <simple-window> ( <object> )
 
 	slot windowRef :: <WindowRef>, init-value: as( <WindowRef>, $NULL );
 	
-	slot grafPort :: <GrafPtr>, init-value: as( <GrafPtr>, $NULL );
+	slot grafPort :: <CGrafPtr>, init-value: as( <CGrafPtr>, $NULL );
 	
 	slot modal :: <boolean>, init-value: #f;
 	
@@ -71,7 +71,7 @@ define method initialize(	window :: <simple-window>,
                                 can-close :: <boolean> = #t, 
                                 can-zoom :: <boolean> = #f,
                                 is-floating :: <boolean> = #f,
-                                bounds :: <Rect> = make( <Rect>, top: 40, left: 40, right: 400, bottom: 300 ),
+                                bounds :: <Rect*> = make( <Rect*>, top: 40, left: 40, right: 400, bottom: 300 ),
                                 title :: <pascal-string> = as( <pascal-string>, "Untitled" ) )
 => ( window :: <simple-window> )
 
@@ -111,7 +111,7 @@ end method initialize;
 	make-window
 */
 
-define method make-window(  window :: <simple-window>, bounds :: <Rect>, title :: <pascal-string>  )
+define method make-window(  window :: <simple-window>, bounds :: <Rect*>, title :: <pascal-string>  )
 => ()
 
 	let defProc =	case
@@ -224,9 +224,9 @@ end method focus;
 	refresh
 */
 
-define open generic refresh( window :: <simple-window>, subrect :: type-union( <Rect>, <boolean> ) ) => ();
+define open generic refresh( window :: <simple-window>, subrect :: type-union( <Rect*>, <boolean> ) ) => ();
 
-define method refresh( window :: <simple-window>, subrect :: type-union( <Rect>, <boolean> ) ) // type-union( <Rect>, #f );
+define method refresh( window :: <simple-window>, subrect :: type-union( <Rect*>, <boolean> ) ) // type-union( <Rect*>, #f );
 => ()
 
 	focus( window );
@@ -260,9 +260,9 @@ end method draw;
 	activate
 */
 
-define open generic activate( window :: <simple-window>, event :: <EventRecord>, activating :: <boolean>  );
+define open generic activate( window :: <simple-window>, event :: <EventRecord*>, activating :: <boolean>  );
 
-define method activate( window :: <simple-window>, event :: <EventRecord>, activating :: <boolean>  )
+define method activate( window :: <simple-window>, event :: <EventRecord*>, activating :: <boolean>  )
 => ()
 
 	values();
@@ -274,12 +274,12 @@ end method activate;
 	update
 */
 
-define open generic update( window :: <simple-window>, event :: <EventRecord>  );
+define open generic update( window :: <simple-window>, event :: <EventRecord*>  );
 
-define method update( window :: <simple-window>, event :: <EventRecord>  )
+define method update( window :: <simple-window>, event :: <EventRecord*>  )
 => ()
 
-	let savePort :: <GrafPtr> = GetPort();
+	let savePort :: <CGrafPtr> = GetPort();
 		if( window ~= #f )
 		 	focus( window );
 		 end if;
@@ -363,9 +363,9 @@ end method close-window;
 	window-idle
 */
 
-define open generic window-idle( win :: <simple-window>, idle-event :: <EventRecord> ); 
+define open generic window-idle( win :: <simple-window>, idle-event :: <EventRecord*> ); 
 
-define method window-idle( win :: <simple-window>, idle-event :: <EventRecord> )
+define method window-idle( win :: <simple-window>, idle-event :: <EventRecord*> )
 => ()
 
 	values();
@@ -377,9 +377,9 @@ end method window-idle;
 	window-click
 */
 
-define open generic window-click( window :: <simple-window>, event :: <EventRecord>, localPoint :: <Point>  ) => ();
+define open generic window-click( window :: <simple-window>, event :: <EventRecord*>, localPoint :: <Point*>  ) => ();
 
-define method window-click( window :: <simple-window>, event :: <EventRecord>, localPoint :: <Point>  )
+define method window-click( window :: <simple-window>, event :: <EventRecord*>, localPoint :: <Point*>  )
 => ()
 
 	values();
@@ -391,9 +391,9 @@ end method window-click;
 	window-key
 */
 
-define open generic window-key( win :: <simple-window>, event :: <EventRecord>, charCode :: <character>, keyCode :: <integer> );
+define open generic window-key( win :: <simple-window>, event :: <EventRecord*>, charCode :: <character>, keyCode :: <integer> );
 
-define method window-key( win :: <simple-window>, event :: <EventRecord>, charCode :: <character>, keyCode :: <integer> )
+define method window-key( win :: <simple-window>, event :: <EventRecord*>, charCode :: <character>, keyCode :: <integer> )
 => ()
 
 	values();
