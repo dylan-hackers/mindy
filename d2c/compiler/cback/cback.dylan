@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.42 1995/05/12 15:35:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.43 1995/05/18 13:33:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1499,6 +1499,39 @@ define-primitive-emitter
 		     #f, output-info);
    end);
 
+define-primitive-emitter
+  (#"allocate",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let bytes = extract-operands(operation, output-info, *long-rep*);
+     deliver-results(defines,
+		     vector(pair(format-to-string("allocate(%s)", bytes),
+				 $heap-rep)),
+		     #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"make-data-word-instance",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let cclass = operation.derived-type;
+     let target-rep = pick-representation(cclass, #"speed");
+     let source-rep
+       = pick-representation(cclass.all-slot-infos[1].slot-type, #"speed");
+     unless (source-rep == target-rep
+	       | (representation-data-word-member(source-rep)
+		    = representation-data-word-member(target-rep)))
+       error("The instance and slot representations don't match in a "
+	       "data-word reference?");
+     end;
+     let source = extract-operands(operation, output-info, source-rep);
+     deliver-results(defines, vector(pair(source, target-rep)),
+		     #f, output-info);
+   end);
 
 define-primitive-emitter
   (#"fixnum-=",
