@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.4 1996/03/15 04:35:25 rsbe Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.5 1996/04/10 20:39:17 nkramer Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -63,28 +63,30 @@ LIBS	=		@LIBS@
 
 MC	=	../../comp/mindycomp
 
-MINDYFLAGS = -linspector
+OBJS = inspector-base.dbc text-inspector.dbc class-diagram.dbc x-inspector.dbc
 
-OBJS = library.dbc inspector.dbc
+all: ${OBJS}
 
-inspector-lib.dbc: ${OBJS}
-	cat ${OBJS} > $@
+inspector-base.dbc: ${SRCDIR}/inspector-base.dylan
+	${MC} -linspector-base -o inspector-base.dbc ${SRCDIR}/inspector-base.dylan
 
-library.dbc: ${SRCDIR}/library.dylan
-	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
-inspector.dbc: ${SRCDIR}/inspector.dylan
-	${MC} ${MINDYFLAGS} -o inspector.dbc ${SRCDIR}/inspector.dylan
+text-inspector.dbc: ${SRCDIR}/text-inspector.dylan
+	${MC} -ltext-inspector -o text-inspector.dbc ${SRCDIR}/text-inspector.dylan
+
+class-diagram.dbc: ${SRCDIR}/class-diagram.dylan
+	${MC} -lclass-diagram -o class-diagram.dbc ${SRCDIR}/class-diagram.dylan
+
+x-inspector.dbc: ${SRCDIR}/x-inspector.dylan
+	${MC} -lx-inspector -o x-inspector.dbc ${SRCDIR}/x-inspector.dylan
 
 clean:
-	rm -f ${OBJS} inspector-lib.dbc *~ \#* core
+	rm -f ${OBJS} *~ \#* core
 
 realclean:
-	rm -f ${OBJS} inspector-lib.dbc Makefile *~ \#* core
+	rm -f ${OBJS} Makefile *~ \#* core
 
-install: inspector-lib.dbc
-	${INSTALL_DATA} inspector-lib.dbc ${LIBDIR}
-
-
-
-
-
+install: inspector-base.dbc text-inspector.dbc x-inspector.dbc
+	${INSTALL_DATA} inspector-base.dbc ${LIBDIR}
+	${INSTALL_DATA} text-inspector.dbc ${LIBDIR}
+	${INSTALL_DATA} class-diagram.dbc ${LIBDIR}
+	${INSTALL_DATA} x-inspector.dbc ${LIBDIR}
