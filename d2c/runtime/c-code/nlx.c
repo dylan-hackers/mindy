@@ -15,15 +15,15 @@ descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
 					heapptr_t body_func),
 		    descriptor_t *sp, heapptr_t body_func)
 {
-    volatile jmp_buf state;
-    volatile long rc;
+    jmp_buf state;
+    long rc;
 
     if(rc = setjmp(state)) { /* This _is_ an assignment */
       /* longjmp was called, return stack_top */
       return (descriptor_t *)rc;    
     } else {
       /* first pass */
-      return (descriptor_t *)(fn(sp, state, body_func));
+      return fn(sp, state, body_func);
     }
 }
 
