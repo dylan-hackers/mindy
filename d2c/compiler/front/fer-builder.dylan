@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.1 1994/12/12 13:01:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.2 1994/12/13 13:22:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -345,7 +345,9 @@ define method make-definition-leaf
  => res :: <global-variable>;
   ignore(builder);
   make(<global-variable>,
-       var-info: make(<module-var-info>, var-defn: defn));
+       var-info: make(<module-var-info>,
+		      var-defn: defn,
+		      asserted-type: defn.defn-type));
 end method;
 
 
