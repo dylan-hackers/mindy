@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/string-ext/Attic/Makefile.in,v 1.1 1996/02/17 16:17:05 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/string-ext/Attic/Makefile.in,v 1.2 1996/02/17 17:04:37 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy string extensions library, 
 ##  string-extensions.dbc.
@@ -66,7 +66,7 @@ MC	= ../../comp/mindycomp
 
 MINDYFLAGS = -lString-extensions
 
-OBJS = exports.dbc character-type.dbc conversions.dbc string-hacking.dbc \
+OBJS = library.dbc character-type.dbc conversions.dbc string-hacking.dbc \
        do-replacement.dbc parse-string.dbc parse.dbc match.dbc           \
        finite-automaton.dbc interface.dbc substring-search.dbc
 
@@ -74,8 +74,8 @@ string-extensions.dbc: ${OBJS}
 	cat ${OBJS} > $@
 
 
-exports.dbc: ${SRCDIR}/exports.dylan
-	${MC} ${MINDYFLAGS} -o exports.dbc ${SRCDIR}/exports.dylan
+library.dbc: ${SRCDIR}/library.dylan
+	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
 
 character-type.dbc: ${SRCDIR}/character-type.dylan
 	${MC} ${MINDYFLAGS} -o character-type.dbc ${SRCDIR}/character-type.dylan
