@@ -1,0 +1,15 @@
+$D2CFLAGS = $d2c_runtime . '-L.. -L../../base '
+  . '-L../../../../common/streams '
+  . '-L../../../../common/standard-io -L../../../../common/stream-ext '
+  . '-L../../../../common/print -L../../../../common/format '
+  . '-L../../../runtime/random -L../../../../common/collection-extensions '
+  . '-L../../../../common/string-ext -L../../../../common/table-ext '
+  . '-L../../../../common/regular-expressions -L../../../../common/transcendental '
+  . '-L../../../runtime/melange -L../../../runtime/garbage-collection '
+  . '-L../../../../qa/testworks -L../../../../common/common-dylan '
+  . '-L../../../../common/threads -L../../../../common/io '
+  . '-L../../../../common/file-system -L../../../../common/base-file-system '
+  . '-L../../../../common/getopt -L../../../common/base-file-system';
+
+&emit_library_rule('compiler-parser-test', 
+		   '$(BUILDROOT)/force.timestamp', '', 'compile');
