@@ -56,8 +56,8 @@ define method relayout-parent
   #f
 end method relayout-parent;
 
-
-define sealed class <push-menu-box-pane>
+//* Unsealed for Vanilla
+define /*sealed*/ class <push-menu-box-pane>
     (<menu-box-pane>, 
      <push-menu-box>, 
      <multiple-child-composite-pane>)
@@ -69,7 +69,7 @@ define method class-for-make-pane
   values(<push-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-define sealed domain make (singleton(<push-menu-box-pane>));
+//*define sealed domain make (singleton(<push-menu-box-pane>));
 define sealed domain initialize (<push-menu-box-pane>);
 
 define method do-execute-activate-callback
@@ -80,8 +80,8 @@ define method do-execute-activate-callback
   next-method()
 end method do-execute-activate-callback;
 
-
-define sealed class <radio-menu-box-pane>
+//* Unsealed for Vanilla
+define /*sealed*/ class <radio-menu-box-pane>
     (<menu-box-pane>,
      <radio-menu-box>,
      <multiple-child-composite-pane>)
@@ -93,7 +93,7 @@ define method class-for-make-pane
   values(<radio-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-define sealed domain make (singleton(<radio-menu-box-pane>));
+//define sealed domain make (singleton(<radio-menu-box-pane>));
 define sealed domain initialize (<radio-menu-box-pane>);
 
 define method do-execute-value-changed-callback
@@ -108,8 +108,8 @@ define method do-execute-value-changed-callback
   next-method()
 end method do-execute-value-changed-callback;
 
-
-define sealed class <check-menu-box-pane>
+//* Unsealed for Vanilla
+define /*sealed*/ class <check-menu-box-pane>
     (<menu-box-pane>,
      <check-menu-box>,
      <multiple-child-composite-pane>)
@@ -121,7 +121,7 @@ define method class-for-make-pane
   values(<check-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-define sealed domain make (singleton(<check-menu-box-pane>));
+//define sealed domain make (singleton(<check-menu-box-pane>));
 define sealed domain initialize (<check-menu-box-pane>);
 
 define method do-execute-value-changed-callback
