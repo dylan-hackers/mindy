@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.7 1996/01/12 02:10:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.8 1996/02/19 20:19:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -113,6 +113,8 @@ define sealed method make
     // Not found -- create.
     if ($symbol-table.sym-count > $symbol-table.resize-threshold)
       rehash-symbols($symbol-table);
+      // Recompute the cell-index because the cell-count will have changed.
+      cell-index := modulo(hash, $symbol-table.cell-count);
     end if;
     let new-sym :: <symbol> = next-method();
     new-sym.symbol-next := $symbol-table.cells[cell-index];
