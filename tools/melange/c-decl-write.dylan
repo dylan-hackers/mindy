@@ -355,6 +355,16 @@ define method write-declaration
   end if;
 end method write-declaration;
 
+define method write-declaration
+    (decl :: <enum-slot-declaration>, load-string :: <string>,
+     stream :: <stream>)
+ => ();
+  // The routine for <enum-declaration> will already have written these, so we
+  // need do nothing.
+  #f;
+end method write-declaration;
+
+
 // We write getter functions for global variables and write setter functions
 // if appropriate (see comments for "write-c-accessor-method" above).
 //

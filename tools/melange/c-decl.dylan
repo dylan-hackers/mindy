@@ -36,7 +36,8 @@ define module c-declarations
   // objects that will be needed by "define-interface".  Note that the 
   // classes are actually defined within this module but are exported
   // from c-parse.
-  use c-parse, export: {<declaration>, <parse-state>, parse, parse-type};
+  use c-parse, export: {<declaration>, <parse-state>, parse, parse-type,
+			constant-value, true-type};
 
   use c-lexer;			// Tokens are used in process-type-list and
 				// make-struct-type
@@ -51,7 +52,7 @@ define module c-declarations
     ignored?-setter, find-result, find-parameter, find-slot,
     argument-direction-setter, constant-value-setter, getter-setter,
     setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
-    exclude-slots, equate, remap, rename, true-type, superclasses-setter,
+    exclude-slots, equate, remap, rename, superclasses-setter,
 
     // "Import declarations phase" 
     declaration-closure, // also calls compute-closure
@@ -65,7 +66,7 @@ define module c-declarations
     write-file-load, write-mindy-includes,
 
     // Miscellaneous
-    constant-value, getter, setter, sealed-string, excluded?,
+    getter, setter, sealed-string, excluded?,
     canonical-name,declarations;
 end module c-declarations;
 
@@ -434,6 +435,26 @@ define method canonical-name (decl :: <enum-declaration>)
   decl.c-name | (decl.c-name := concatenate("enum ", decl.simple-name));
 end method canonical-name;
 
+define method make-enum-slot
+    (name :: <string>, value :: false-or(<integer>),
+     prev :: false-or(<enum-slot-declaration>), state :: <parse-state>)
+ => (result :: <enum-slot-declaration>);
+  if (key-exists?(state.objects, name))
+    parse-error(state, "Enumeration literal does not have a unique name: %s",
+		name);
+  else
+    let value
+      = case
+	  value => value;
+	  prev => prev.constant-value + 1;
+	  otherwise => 0;
+	end case;
+    state.objects[name] := add-declaration(state,
+					   make(<enum-slot-declaration>,
+						name: name, value: value))
+  end if;
+end method make-enum-slot;
+
 define method make-struct-type
     (name :: union(<string>, <false>), member-list :: union(<list>, <false>),
      decl-token :: <token>, state :: <parse-state>)
@@ -469,12 +490,7 @@ define method make-struct-type
   let process-member
     = if (declaration-class == <enum-declaration>)
 	method (elem)
-	  if (instance?(elem, <pair>))
-	    make(<enum-slot-declaration>, name: elem.head,
-		 value: last := elem.tail);
-	  else
-	    make(<enum-slot-declaration>, name: elem, value: last := last + 1);
-	  end if;
+	  elem;
 	end method;
       else
 	method (elem :: <pair>)
