@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.3 1994/03/30 17:04:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.4 1994/03/31 22:44:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -258,6 +258,7 @@ void collect_garbage(void)
     scavenge_nlx_roots();
     scavenge_driver_roots();
     scavenge_table_roots();
+    scavenge_buffer_roots();
 
     scavenge_newspace();
 
