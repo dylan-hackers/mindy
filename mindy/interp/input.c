@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.6 1994/04/10 16:24:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.7 1994/04/29 06:47:43 wlott Exp $
 *
 * This file does whatever.
 *
@@ -88,6 +88,7 @@ static obj_t dylan_getc(void)
     getc_or_wait(thread_current());
     go_on();
     /* go_on never returns. */
+    lose("go_on actually returned?");
     return NULL;
 }
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.5 1994/04/20 00:21:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.6 1994/04/29 06:46:55 wlott Exp $
 *
 * This file does whatever.
 *
@@ -194,6 +194,7 @@ static obj_t defclass2(obj_t class, obj_t slots)
 {
     init_defined_class(class, slots);
     /* init_defined_class doesn't return */
+    lose("init_defined_class actually returned?\n");
     return NULL;
 }
 

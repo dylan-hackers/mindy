@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.8 1994/04/20 00:22:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.9 1994/04/29 06:47:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -938,6 +938,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
 
     do_inits(res, key_and_value_pairs, init_functions);
     /* do_inits never returns. */
+    lose("do_inits actually returned?");
     return NULL;
 }
 
