@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.24 1996/02/02 01:49:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.25 1996/02/02 12:01:23 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -539,6 +539,11 @@ void collect_garbage(boolean purify)
     scavenge_ref_list(ConstantRoots);
     scavenge_ref_list(VariableRoots);
 #if PURIFY
+    if (ReadOnlySpace->hash_state != NULL)
+	scavenge(&ReadOnlySpace->hash_state);
+    if (StaticSpace->hash_state != NULL)
+	scavenge(&StaticSpace->hash_state);
+
     StaticSpace->scan_block = StaticSpace->blocks;
     StaticSpace->scan_ptr = StaticSpace->scan_block->base;
     if (purify) {
