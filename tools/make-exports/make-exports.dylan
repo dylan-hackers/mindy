@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/make-exports/make-exports.dylan,v 1.2 2000/01/24 04:58:47 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/make-exports/make-exports.dylan,v 1.3 2002/12/03 21:51:00 robmyers Exp $
 
 //======================================================================
 //
@@ -327,7 +327,7 @@ end function generate-output;
 // generates the output.
 //
 define method main (ignored, #rest filenames) => ();
-  *default-pretty?* := #t;
+ // *default-pretty?* := #t;
 
   if (filenames.empty?)
     format(*standard-error*,
