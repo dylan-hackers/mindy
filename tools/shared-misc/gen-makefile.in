@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.13 2000/10/31 13:35:15 dauclair Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.14 2000/11/03 04:25:11 dauclair Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -259,7 +259,7 @@ sub read_Defaults_file {
     $target_platform{'platform_name'} =~ /\-(\w+)\-/;
     $debug_platform_name = $1;
     $debug_platform_name =~ tr/a-z/A-Z/;
-    $debug_platform_name = "-D__$debug_platform_name" . "__";
+    $debug_platform_name = "-DGD_PLATFORM_$debug_platform_name";
 
     # Create some useful shorthands (internal use only)
     $makefile = $host_platform{'makefile_name'};

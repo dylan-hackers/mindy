@@ -22,14 +22,14 @@ void delegate_signal(int signum)
 
 int delegate_gdb_signals(void)
 {
-#ifdef __CYGNUS__
+#ifdef GD_PLATFORM_CYGNUS
     int SA_RESTART = 0;
 #endif
 
     struct sigaction act;
 
     act.sa_handler  = &delegate_signal;
-#if !defined(__BEOS__)
+#if !defined(GD_PLATFORM_BEOS)
     act.sa_flags    = SA_RESTART;
 #else
     /* Can't find an SA_RESTART flag in the BeOS posix headers so
