@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.60 1995/02/14 02:39:51 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.61 1995/03/02 19:15:24 wlott Exp $
 
 //======================================================================
 //
@@ -80,7 +80,8 @@ define module Builtin-Stuff
     kill-thread,
     limited, limited-integer-class, limited-integer-min, limited-integer-max,
     list, load, locked?, logand, logbit?, logior, lognot, logxor,
-    main, make, make-generic-function, merge-hash-codes, method-specializers,
+    main, make, make-generic-function, make-ratio, merge-hash-codes,
+    method-specializers,
     negative, numerator,
     object-address, object-class, object-hash,
     pair, prin1, print, putc, puts,
@@ -215,7 +216,6 @@ define module Dylan
     type-error-expected-type,
     zero?;
   create
-    /* <ratio>, rationalize, numerator, denominator, */
     <object-table>, <table>, remove-key!;
 end Dylan;
 
