@@ -12,7 +12,7 @@ $bootstrap_counter = @CURRENT_BOOTSTRAP_COUNTER@;
 $lid_format_version= "@lid_format_version@";
 
 $srcroot = "@srcdir@";
-$buildroot = "@builddir@";
+$buildroot = "@buildroot@";
 $prefix = "@prefix@";
 $destdir = $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";

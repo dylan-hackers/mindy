@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.8 2000/11/01 05:25:19 housel Exp $
+##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.9 2002/05/08 14:42:10 housel Exp $
 ##
 ##  This is the makefile for the Mindy compatability library.
 ##
@@ -41,7 +41,7 @@ exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
 SRCDIR	=		${srcdir}
-CONFIGDIR = 		@builddir@
+CONFIGDIR = 		@top_builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
 DESTDIR =

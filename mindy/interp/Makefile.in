@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.16 2001/03/23 21:59:39 housel Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.17 2002/05/08 14:42:10 housel Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -43,7 +43,7 @@ srcdir	=		@srcdir@
 top_srcdir =		@top_srcdir@
 
 SRCDIR	=		${srcdir}
-CONFIGDIR =		@builddir@
+CONFIGDIR =		@top_builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan/@version@/@d2c_target@
 DESTDIR =
