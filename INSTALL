@@ -9,17 +9,22 @@ platforms. If you want to put them somewhere else, please see the section
 on relocating binaries below. "Packaged" binaries such as RPMs install
 wherever convention would have them install, and need no tweaking.
 
-To install a source distribution, you'll first need to install a binary
-distribution. This is because large parts of Gwydion Dylan are written in
-Dylan. (If you only want to install Mindy, you don't need the binary
-distribution. Just pass the option '--disable-d2c' to configure.)
+To install a source distribution, you'll first probably want to
+install a binary distribution. This is because large parts of Gwydion
+Dylan are written in Dylan and the bootstrap process is fairly time
+consuming. (If you only want to install Mindy, you don't need the
+binary distribution. Just pass the option '--disable-d2c' to
+configure.)
 
-Recent versions of d2c require a preinstalled Boehm-Weiser-Demers garbage
-collection library. (The sources of libgc used to be part of the
-distribution, but we chose to remove it in favor of the real thing.)
-The configure script will provide a download link for libgc. If you
-install it under, say, /usr/lib/libgc.a, provide --with-gc-prefix=/usr
-to make it accessible to the d2c build process.
+Recent versions of d2c require a preinstalled Boehm-Weiser-Demers
+garbage collection library. The sources of libgc used to be part of
+the distribution, but we chose to remove it in favor of the real
+thing.  Your operating system or C compiler may already have supplied
+it for you (look for gc.h and libgc.a, or let the configure script
+check for you).  If it can't find libgc the configure script will
+provide a download link for it.  If you install it under, say,
+/usr/lib/libgc.a, provide --with-gc-prefix=/usr to make it accessible
+to the d2c build process.
 
 Once you have binaries installed, grab a source snapshot from the FTP site
 or download one from CVS (see the website mentioned in the README for
