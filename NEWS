@@ -1,3 +1,21 @@
+Gwydion Dylan 2.1.1 (1998-10-18)
+
+  Dylan is an advanced programming language, similar to Java, but with many
+  power-user features borrowed from Common LISP. Gwydion Dylan was written
+  by the Gwydion Group at CMU and is now maintained by a group of
+  volunteers. This is a beta of Gwydion Dylan 2.2, which will be intended
+  to allow people to learn Dylan and write programs for their own personal
+  use.  We will soon begin the 2.3 development cycle, with the goal of
+  making Gwydion Dylan suitable for day-to-day development of production
+  code.
+
+  This release includes many bug fixes by Jeff Dubrule, Andreas Bogk, and
+  Peter Housel; a tricky and impressive CSE fix by Matthias Hoeltzl; more
+  documentation work by Peter Housel and Eric Kidd; major Melange
+  improvements by Eric Kidd; a 30% performance improvement to Mindy by
+  Pierre Pascale; more low-level C interface work by Peter Housel; and the
+  beginnings of GDB support by Jeff Dubrule.
+
 Gwydion Dylan 2.1 1998-09-16
 
   This month's snapshot includes a LinuxPPC port by Andreas Bogk, new
