@@ -68,7 +68,7 @@ define class <active-variable> (<object>)
   slot internal-value :: <object>,  // Will be stored as a member of "cls"
     required-init-keyword: #"value";
   slot cls :: <class>, init-keyword: #"class", init-value: <string>;
-  slot command :: union(<function>, <false>),
+  slot command :: false-or(<function>),
     init-keyword: #"command", init-value: #f;
 end class <active-variable>;
 
