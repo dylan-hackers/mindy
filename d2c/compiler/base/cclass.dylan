@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.22 2002/04/28 20:44:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.23 2003/03/27 17:36:20 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1719,7 +1719,10 @@ define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
     => ();
   if (class.vector-slot)
     compiler-fatal-error
-      ("variable length slots must be the last slot in the class.");
+      ("variable-length slot %s is not the last slot in class %s "
+         "after adding %s",
+       class.vector-slot.slot-getter.variable-name, class,
+       slot.slot-getter.variable-name);
   end;
   let rep = slot.slot-representation;
   let offset
@@ -1737,7 +1740,10 @@ define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
     => ();
   if (class.vector-slot)
     compiler-fatal-error
-      ("variable length slots must be the last slot in the class.");
+      ("variable-length slot %s is not the last slot in class %s "
+         "after adding %s",
+       class.vector-slot.slot-getter.variable-name, class,
+       slot.slot-getter.variable-name);
   end;
   class.vector-slot := slot;
   let rep = slot.slot-representation;
