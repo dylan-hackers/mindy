@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.7 1995/04/21 02:35:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.8 1995/04/26 03:26:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -361,6 +361,10 @@ end;
 
 define constant <byte-character> = make(<byte-character-type>);
 
+define class <value-cell> (<object>)
+  slot value, required-init-keyword: value:
+end;
+
 
 // Functions that need to be defined.
 
@@ -383,6 +387,7 @@ define generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
 define generic check-type (value, type :: <type>) => value;
 define generic error (msg, #rest args) => (); // ### doesn't actually return
+define generic make (class :: <class>, #key) => thing;
 
 
 // Other functions that we would like to use.
