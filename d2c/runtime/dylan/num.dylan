@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.10 1996/03/28 18:02:37 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -36,10 +36,6 @@ define open generic positive? (num :: <object>) => res :: <boolean>;
 define open generic negative? (num :: <object>) => res :: <boolean>;
 
 define open generic integral? (num :: <object>) => res :: <boolean>;
-
-define inline method intergral? (object :: <object>) => res :: <boolean>;
-  #f;
-end method intergral?;
 
 define open generic \+ (num1 :: <object>, num2 :: <object>);
 
