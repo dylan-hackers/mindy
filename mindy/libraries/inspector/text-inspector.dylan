@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.6 1996/04/22 15:30:52 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.7 1996/07/13 03:23:10 bfw Exp $
 
 //======================================================================
 //
@@ -32,7 +32,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text
 
 define library text-inspector
   use dylan;
-  use streams;
+  use new-streams;
+  use standard-io;
   use print;
   use string-extensions;
   use inspector-base;
@@ -41,7 +42,7 @@ end library text-inspector;
 define module text-inspector
   use dylan;
   use extensions;
-  use streams, import: { read-line };
+  use new-streams, import: { read-line };
   use standard-io, import: { *standard-input* };
   use print;
   use character-type;
@@ -147,7 +148,8 @@ end function show-help;
 define function command-prompt () => command :: <string>;
   condition-format(*debug-output*, "inspect> ");
   condition-force-output(*debug-output*);
-  read-line(*standard-input*, signal-eof?: #f);
+  let str = read-line(*standard-input*, on-end-of-stream: #"eos");
+  if (str == #"eos") #f else str end;
 end function command-prompt;
 
 // This is the main loop of the inspector.  This method processes commands, and
