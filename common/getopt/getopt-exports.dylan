@@ -2,7 +2,7 @@ library: getopt
 module: dylan-user
 author: Jeff Dubrule and Ole Tetlie
 copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.1 1998/09/22 18:49:26 olet Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.2 1998/09/23 17:23:04 andreas Exp $
 
 define library getopt
   use dylan;
@@ -15,8 +15,6 @@ define module getopt
     <option-table>,
     <option>,
     add-option,
-    element,
-    element-setter,
     has-option?,
     parse-options;
 end module;

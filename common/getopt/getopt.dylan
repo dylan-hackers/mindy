@@ -2,7 +2,7 @@ library: getopt
 module: getopt
 author: Jeff Dubrule & Ole Tetlie
 copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.2 1998/09/23 16:26:28 igor Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.3 1998/09/23 17:23:05 andreas Exp $
 
 define class <option-table> (<object-table>)
   // perhaps we'll need something here later
@@ -38,13 +38,13 @@ end method;
 
 define method element (table :: <option-table>, key :: <string>,
 		       #key default = #f)
- => (element :: <object>)
+ => (element :: <object>);
   element (table, key, default: default).value;
 end method;
 
 define method element-setter (new-value :: <object>, table :: <option-table>,
 			      key :: <string>)
- => (new-value :: <object>)
+ => (new-value :: <object>);
   table[<symbol>].value := new-value;
 end method;
 
@@ -62,6 +62,7 @@ define method parse-options (table :: <option-table>, argv :: <list>)
     if (arg.size > 0 & arg[0] = '-')
       if (arg.size > 1 & arg[1] = '-')
 	//parse long args
+	1;
       elseif (arg.size > 1)
 	let the-arg = copy-sequence (arg, start: 0, end: 2);
 	if (has-option? (table, the-arg))
