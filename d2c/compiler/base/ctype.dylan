@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.21 1995/10/02 01:44:27 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.22 1995/10/02 01:50:45 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -256,7 +256,7 @@ define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
 	      csubtype-dispatch(type1, type2);
 	  end case;
 
-	memo2-enter(type1, type2, val, win, csubtype-memo);
+	memo2-enter(type1, type2, val, #t, csubtype-memo);
 	values(val, #t);
       else
 	values(memo-val, memo-win);
