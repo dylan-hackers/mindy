@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.11 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.12 1996/04/08 11:22:51 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -25,6 +25,19 @@ define inline method as (class == <string>, string :: <string>)
 end;
 
 define method \< (str1 :: <string>, str2 :: <string>) => res :: <boolean>;
+  block (return)
+    for (char1 in str1, char2 in str2)
+      if (char1 < char2)
+	return(#t);
+      elseif (char2 < char1)
+	return(#f);
+      end;
+    end;
+    str1.size < str2.size;
+  end;
+end;
+
+define method \< (str1 :: <byte-string>, str2 :: <byte-string>) => res :: <boolean>;
   block (return)
     for (char1 in str1, char2 in str2)
       if (char1 < char2)
