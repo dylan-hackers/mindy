@@ -98,10 +98,12 @@ define method initialize (value :: <parse-file-state>, #key)
   value.objects := make(<string-table>);
   value.structs := make(<string-table>);
   value.pointers := make(<object-table>);
+/*
   value.pointers[void-type] := make(<pointer-declaration>, referent: void-type,
 				    dylan-name: "<machine-pointer>",
 				    equated: #t,
 				    name: "statically-typed-pointer");
+*/
 end method initialize;
 
 // Push-include-level informs the <parse-state> that it is now processing a
