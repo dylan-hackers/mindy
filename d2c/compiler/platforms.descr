@@ -5,6 +5,7 @@
 //
 target-name:                    x86-win32
 default-features:               compiled-for-x86-win32 newlines-are-CRLF
+				C-compiler-is-VC 
 heap-preamble:                  \t.data\n\t.balign 8\t
 align-directive:                .balign
 export-directive:               \t.globl\t%s\n
@@ -18,9 +19,12 @@ library-filename-prefix:
 library-filename-suffix:        .lib
 executable-filename-suffix:     .exe
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       /nologo /O2
+default-c-compiler-flags:       /nologo /Ox
 assembler-command:              as %s -o %s
-// The next three are partially hardwired into d2c
+// If link-like-a-windows-machine is #t, it triggers some compiler black 
+// magic for linking both libs and executables
+link-like-a-windows-machine?:   #t
+link-doesnt-search-for-libs?:   #t
 link-library-command:           lib /nologo
 link-executable-command:        link /nologo
 link-executable-flags:          /subsystem:console
@@ -28,47 +32,42 @@ make-command:                   nmake /nologo
 delete-file-command:            del
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
+supports-debugging?:            #f
+
+// Another name for x86-win32
+//
+target-name:                    x86-win32-vc
+inherit-from:                   x86-win32
 
 
 // Microsoft Windows '95 or NT on Intel 80386 or higher, but using the
-// GNU C compiler (+ friends like ld).  This is actually more similar to
-// a Unix platform, so we don't define compiled-for-x86-win32.  Still use
-// Microsoft nmake, though--I don't trust gmake on NT anymore.
+// GNU C compiler (+ friends like ar).
+//
+// Since we only added gcc/NT support for debugging purposes,
+// default-cc-flags says to keep debugging information.
 //
 target-name:                    x86-win32-gcc
-default-features:               newlines-are-CRLF
-heap-preamble:                  \t.data\n\t.balign 8\t
-align-directive:                .balign
-export-directive:               \t.globl\t%s\n
-word-directive:                 .long
-half-word-directive:            .hword
-byte-directive:                 .byte
-comment-token:                  #
-mangled-name-prefix:            _
-object-filename-suffix:         .o
-library-filename-prefix:        lib
-library-filename-suffix:        .a
-executable-filename-suffix:     .exe
+inherit-from:                   x86-win32
+default-features:               compiled-for-x86-win32 newlines-are-CRLF
+				C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -g -O4 -finline-functions
-assembler-command:              as %s -o %s
+default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include
+// Override special VC linking black magic
+link-like-a-windows-machine?:   #f
 link-library-command:           ar qc
 link-executable-command:        gcc -z
 link-executable-flags:          
-make-command:                   nmake /nologo
-delete-file-command:            del
-compare-file-command:           cmp -s %s %s
-move-file-command:              mv -f %s %s
+supports-debugging?:            #t
 
 
 // HP/UX on HP PA-RISC processors
 //
 target-name:                    hppa-hpux
-default-features:               compiled-for-hppa-hpux
+default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
 heap-preamble:                  \t.data\n\t.align 8\t
 align-directive:                .align
 export-directive:               \t.export\t%s, DATA\n
-// Code for .import is hardwired in
+import-directive-required?:      #t
 word-directive:                 .word
 half-word-directive:            .half
 byte-directive:                 .byte
@@ -83,8 +82,9 @@ default-c-compiler-flags:       -g -O4 -finline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           /bin/ar qc
 link-executable-command:        gcc -z
-link-executable-flags:          -L/lib/pa1.1
+link-executable-flags:          -L/lib/pa1.1 /usr/lib/end.o
 make-command:                   gmake
 delete-file-command:            rm -f
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
+supports-debugging?:            #t
