@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.12 1994/11/03 22:19:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.13 1995/02/14 02:33:08 rgs Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -106,8 +106,8 @@ static void dylan_object_hash(struct thread *thread, int nargs)
 	    old_sp[1] = permanent_state;
 	}
 	else {            /* Hash the pointer itself */
-            old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
-                       & ((unsigned long)object));
+	    old_sp[0] = (obj_t)(((unsigned long)MAX_FIXNUM)
+                       & ((unsigned long)object)>>2);
 
 	    if (valid_state == obj_False)
 	       valid_state = alloc(obj_HashStateClass, 
