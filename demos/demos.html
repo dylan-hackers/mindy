@@ -1,8 +1,11 @@
-<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.4 1996/05/21 22:28:31 nkramer Exp $>
+<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.5 1997/05/28 01:28:20 ram Exp $>
 <TITLE>Mindy Demo Programs</TITLE>
 <H1>Mindy Demo Programs</H1>
+
+These demos live in <SAMP><A HREF="">mindy/src/demos</A></SAMP> subdirectories. 
+
 <HR>
-<H2>hello-world</H2>
+<H2><A HREF="hello-world/hello-world.dylan">hello-world</A></H2>
 
 This is the canonical "hello, world" demo.  Type 
 <PRE>
@@ -11,7 +14,7 @@ This is the canonical "hello, world" demo.  Type
 to run it.
 <P>
 <HR>
-<H2>cat</H2>
+<H2><A HREF="cat/cat.dylan">cat</A></H2>
 
 This program demonstrates the streams library by duplicating the UNIX (tm)
 "cat" utility.
@@ -41,7 +44,7 @@ demo uses only "dylan" and "streams", but the "html2txt" demo also uses
 <P>
 
 <HR>
-<H2>diff</H2>
+<H2><A HREF="diff/diff.dylan">diff</A></H2>
 
 This program demonstrates the diff module of the Collection-extensions
 library.  It mimics the UNIX (tm) "diff" utility.
@@ -64,12 +67,14 @@ demo uses "dylan", "streams", "format", and "collection-extensions")
 <P>
 
 <HR>
-<H2>html2txt</H2>
+<H2><A HREF="html2txt/html2txt.dylan">html2txt</A></H2>
 
 The "html2txt" program is a filter which converts text in WWWs "HyperText
 Markup Language" into simple formatted text.  Although it is a complete and
 useful application, it is included in this distribution primarily as a
-demonstration of a "real" (albeit small) Dylan (tm) program.  
+demonstration of a "real" (albeit small) Dylan (tm) program.  Note that this
+demo only understands HTML 2.0.
+
 <P>
 Usage is similar to "cat" above, except that it does not support the "-" 
 argument.  You may therefore set of files on the command line or use
@@ -82,10 +87,7 @@ At present, "html2txt" accepts no command line switches, although the
 behavior may be changed by changing several constant declarations towards 
 the top of the source file.
 <P>
-Useful test cases for this program are the files "demos.html", which was used 
-as the source for "README"; and "$INSTALL/doc/collection-extensions.html", 
-which was used as the source file for the documentation file 
-"$INSTALL/doc/collection-extensions.doc".
+A useful test case for this program is this file (<SAMP>demos.html</SAMP>).
 <P>
 The basic translation strategy used by html2txt is to scan the file line by
 line, looking for HTML "tags" and accumulating text that lies between any
@@ -110,7 +112,7 @@ create anonymous methods and manipulate them as first class data objects,
 as well as from the rich set of available collection types.
 
 <HR>
-<H2>html2txt for TK</H2>
+<H2><A HREF="tk-html2txt/html2txt.dylan">HTML2TXT for TK</A></H2>
 
 This is the same program, only now with a spiffy graphical interface.
 
@@ -122,7 +124,7 @@ Alternately, go down a few lines further and delete the "font:
 normal-font" and "font: bold-font" clauses.
 
 <HR>
-<H2>minesweper</H2>
+<H2><A HREF="minesweeper/minesweeper.dylan">minesweeper</A></H2>
 
 This is a quick and dirty imitation of Microsoft's Minesweeper game.
 It has a few improvements--it can do much of the tedious work for you!
