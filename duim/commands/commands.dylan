@@ -131,7 +131,7 @@ end method command-undoable?;
 /// Default methods for <function>
 
 // No applicable methods if you try to 'make' a function command type
-//* Not congruent!!! - define sealed domain make-command (subclass(<function>));
+define sealed domain make-command (subclass(<function>));
 
 define sealed method execute-command-type
     (function :: <function>, #rest initargs,

@@ -47,14 +47,8 @@ end module commands;
 
 // Implementation module
 define module commands-internals
-  //use functional-dylan;
-  use dylan;
-  use common-dylan, exclude: { assert };
-  use duim-utilities, exclude: { position };	//* For plists
-  //use simple-format;
+  use common-dylan;
   use format;
-  use print;
-  //use threads;
   use commands, export: all;
 
   export command-pattern-string,

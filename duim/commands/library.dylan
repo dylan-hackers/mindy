@@ -8,13 +8,8 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library commands
-  //use functional-dylan;
-  use dylan;
   use common-dylan;
-  use duim-utilities;
   use format;
-  use print;
-  //use threads;
 
   export commands,
 	 commands-internals;
