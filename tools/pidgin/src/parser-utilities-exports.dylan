@@ -18,7 +18,8 @@ define library parser-utilities
 
   export
     source-locations,
-    parse-conditions;
+    parse-conditions,
+    multistring-match;
 end library;
 
 define module source-locations
@@ -57,3 +58,13 @@ define module parse-conditions
     parse-warning,
     parse-progress-report;
 end module;
+
+define module multistring-match
+  use dylan;
+  use extensions;
+  export
+#if (~mindy)
+    multistring-checker-definer, multistring-positioner-definer,
+#endif
+    make-multistring-positioner, make-multistring-checker
+end module multistring-match;

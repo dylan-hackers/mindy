@@ -9,7 +9,7 @@ clean:
 
 # parser-utilities library
 
-parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan parse-conditions.dylan
+parser-utilities.lid: parser-utilities-exports.dylan source-locations.dylan parse-conditions.dylan multistring.dylan
 	touch $@
 
 parser-utilities.lib.du: parser-utilities.lid

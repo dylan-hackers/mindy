@@ -5,3 +5,4 @@ Unit-Prefix:    parser_utilities
 parser-utilities-exports.dylan
 source-locations.dylan
 parse-conditions.dylan
+multistring.dylan
