@@ -90,14 +90,23 @@ define method make-closure
        closure-size: closure-size);
 end;
 
+define class <type-vector> (<builtin-vector>)
+  sealed slot %element :: <type>,
+    init-value: type-or(), init-keyword: fill:,
+    sizer: size, required-size-init-keyword: size:;
+end class <type-vector>;
+
+seal generic make (singleton(<type-vector>));
+seal generic initialize (<type-vector>);
+
 define class <gf-cache> (<object>)
   slot simple :: <boolean>, init-value: #t;
   slot cached-normal :: <list>, init-value: #();
   slot cached-ambiguous :: <list>, init-value: #();
-  slot cached-classes :: <simple-object-vector>,
+  slot cached-classes :: <type-vector>,
     required-init-keyword: #"classes";
-  slot next :: union(<false>, <gf-cache>), required-init-keyword: #"next";
-  slot prev :: union(<false>, <gf-cache>), init-value: #f;
+  slot next :: union(<false>, <gf-cache>), init-value: #f;
+  slot call-count :: <fixed-integer>, init-value: 1;
 end class <gf-cache>;
 
 seal generic make(singleton(<gf-cache>));
@@ -123,11 +132,15 @@ seal generic make(singleton(<generic-function>));
 define constant make-rest-arg
   = method (arg-ptr :: <raw-pointer>, count :: <fixed-integer>)
 	=> res :: <simple-object-vector>;
-      let res = make(<simple-object-vector>, size: count);
-      for (index :: <fixed-integer> from 0 below count)
-	%element(res, index) := %%primitive extract-arg (arg-ptr, index);
-      end;
-      res;
+      if (count == 0)
+	#[];
+      else
+	let res = make(<simple-object-vector>, size: count);
+	for (index :: <fixed-integer> from 0 below count)
+	  %element(res, index) := %%primitive extract-arg (arg-ptr, index);
+	end;
+	res;
+      end if;
     end;
 
 
@@ -165,27 +178,20 @@ define constant gf-call
 	  wrong-number-of-arguments-error(#t, nfixed, nargs);
 	end;
       end;
-      let arg-ptr = %%primitive extract-args(nargs);
-      let args = make(<simple-object-vector>, size: nargs);
-      for (index :: <fixed-integer> from 0 below nargs)
-	// This is a very critical path, and we know that the indices are
-	// valid, so use the lower level function
-	%element(args, index) := %%primitive extract-arg (arg-ptr, index);
-      end;
-      %%primitive pop-args(arg-ptr);
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(nargs);
       let (ordered, ambiguous)
-	= cached-sorted-applicable-methods(self, args);
+	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
       if (ambiguous == #())
 	if (ordered == #())
 	  for (index :: <fixed-integer> from 0 below nfixed)
 	    let specializer :: <type> = %element(specializers, index);
-	    let arg = %element(args, index);
+	    let arg = %%primitive extract-arg(arg-ptr, index);
 	    %check-type(arg, specializer);
 	  end;
 	  no-applicable-methods-error();
 	else
 	  %%primitive invoke-generic-entry
-	    (ordered.head, ordered.tail, values-sequence(args));
+	    (ordered.head, ordered.tail, %%primitive pop-args(arg-ptr));
 	end;
       else
 	for (prev :: false-or(<pair>) = #f then remaining,
@@ -195,7 +201,7 @@ define constant gf-call
 	  if (prev)
 	    prev.tail := list(ambiguous);
 	    %%primitive invoke-generic-entry
-	      (ordered.head, ordered.tail, values-sequence(args));
+	      (ordered.head, ordered.tail, %%primitive pop-args(arg-ptr));
 	  else
 	    ambiguous-method-error(ambiguous);
 	  end;
@@ -204,16 +210,18 @@ define constant gf-call
     end;
     
 define method internal-sorted-applicable-methods
-    (gf :: <generic-function>, args :: <simple-object-vector>)
+    (gf :: <generic-function>, nargs :: <fixed-integer>,
+     arg-ptr :: <raw-pointer>)
     => (ordered :: <list>, ambiguous :: <list>);
 
   // We have to use low-level stuff here.  It would be bad to do a full
   // generic function call at this point.
-  let cache-classes = make(<simple-object-vector>, size: args.size);
-  for (i :: <fixed-integer> from 0 below args.size)
-    %element(cache-classes, i) := %element(args, i).object-class;
+  let cache-classes = make(<type-vector>, size: nargs);
+  for (i :: <fixed-integer> from 0 below nargs)
+    %element(cache-classes, i)
+      := (%%primitive extract-arg(arg-ptr, i)).object-class;
   end for;
-  let cache = make(<gf-cache>, next: gf.method-cache, classes: cache-classes);
+  let cache = make(<gf-cache>, classes: cache-classes);
 
   // Ordered accumulates the methods we can tell the ordering of.  Each
   // element in this list is a method.
@@ -224,7 +232,7 @@ define method internal-sorted-applicable-methods
   let ambiguous = #();
 
   for (meth :: <method> in gf.generic-function-methods)
-    if (internal-applicable-method?(meth, args, cache))
+    if (internal-applicable-method?(meth, arg-ptr, cache))
       block (done-with-method)
 	for (remaining :: <list> = ordered then remaining.tail,
 	     prev :: false-or(<pair>) = #f then remaining,
@@ -232,7 +240,7 @@ define method internal-sorted-applicable-methods
 	  //
 	  // Grab the method to compare this method against.
 	  let other = remaining.head;
-	  select (compare-methods(meth, other, args))
+	  select (compare-methods(meth, other, arg-ptr))
 	    //
 	    // Our method is more specific, so insert it in the list of ordered
 	    // methods and go on to the next method.
@@ -274,7 +282,7 @@ define method internal-sorted-applicable-methods
 	  let ambiguous-with = #();
 	  for (remaining :: <list> = ambiguous then remaining.tail,
 	       until: remaining == #())
-	    select (compare-methods(meth, remaining.head, args))
+	    select (compare-methods(meth, remaining.head, arg-ptr))
 	      #"more-specific" =>
 		#f;
 	      #"less-specific" =>
@@ -302,67 +310,80 @@ define method internal-sorted-applicable-methods
     end;
   end;
 
+  let old-cache = gf.method-cache;
   gf.method-cache := cache;
+  cache.next := old-cache;
   cache.cached-normal := ordered;
   cache.cached-ambiguous := ambiguous;
 
   values(ordered, ambiguous);
 end;
 
+define variable *debug-generic-threshold* :: <fixed-integer> = -1;
+
 define method cached-sorted-applicable-methods
-    (gf :: <generic-function>, args :: <simple-object-vector>)
+    (gf :: <generic-function>, nargs :: <fixed-integer>,
+     arg-ptr :: <raw-pointer>)
  => (ordered :: <list>, ambiguous :: <list>);
-  if (gf.generic-function-methods.empty?)
-    values(#(), #());
-  else
-    block (return)
-      for (cache :: union(<false>, <gf-cache>) = gf.method-cache
-	     then cache.next,
-	   until: cache == #f)
-	block (no-match)
-	  let cache :: <gf-cache> = cache; // A hint to the type system.
+  block (return)
+    for (prev :: union(<false>, <gf-cache>) = #f then cache,
+	 cache :: union(<false>, <gf-cache>) = gf.method-cache
+	   then cache.next,
+	 until: cache == #f)
+      block (no-match)
+	let cache :: <gf-cache> = cache; // A hint to the type system.
 
-	  let classes :: <simple-object-vector> = cache.cached-classes;
-	  if (cache.simple)
-	    for (index :: <fixed-integer> from 0 below args.size)
-	      let type :: <type> = %element(classes, index);
-	      let arg = %element(args, index);
-	      unless (type == arg.object-class) no-match() end unless;
-	    end for;
-	  else
-	    for (index :: <fixed-integer> from 0 below args.size)
-	      let type :: <type> = %element(classes, index);
-	      let arg = %element(args, index);
-	      unless (type == arg.object-class
-			| (~instance?(type, <class>) & instance?(arg, type)))
-		no-match();
-	      end unless;
-	    end for;
-	  end if;
+	let classes :: <type-vector> = cache.cached-classes;
+	if (cache.simple)
+	  for (index :: <fixed-integer> from 0 below nargs)
+	    let type :: <type> = %element(classes, index);
+	    let arg = %%primitive extract-arg(arg-ptr, index);
+	    unless (type == arg.object-class) no-match() end unless;
+	  end for;
+	else
+	  for (index :: <fixed-integer> from 0 below nargs)
+	    let type :: <type> = %element(classes, index);
+	    let arg = %%primitive extract-arg(arg-ptr, index);
+	    unless (type == arg.object-class
+		      | (~instance?(type, <class>) & instance?(arg, type)))
+	      no-match();
+	    end unless;
+	  end for;
+	end if;
 
-	  unless (gf.method-cache == cache)
-	    if (cache.prev) cache.prev.next := cache.next end if;
-	    if (cache.next) cache.next.prev := cache.prev end if;
-	    cache.next := gf.method-cache;
-	    gf.method-cache := cache;
-	  end unless;
-	  return(cache.cached-normal, cache.cached-ambiguous);
-	end block;
-      end for;
-      internal-sorted-applicable-methods(gf, args);
-    end block;
-  end if;
+	if (prev)	// not the first entry -- make it so.
+	  prev.next := cache.next;
+	  cache.next := gf.method-cache;
+	  gf.method-cache := cache;
+	end if;
+
+	// Debugging code.  This will slow down dispatch by a tiny fraction,
+	// but will pay off in the short term for optimization purposes.
+	let hits = cache.call-count + 1;
+	if (hits == *debug-generic-threshold*)
+	  format("\n*** Generic function %= called %= times with types %=\n",
+		 gf, hits, classes);
+	  cache.call-count := 0;
+	else
+	  cache.call-count := hits;
+	end if;
+
+	return(cache.cached-normal, cache.cached-ambiguous);
+      end block;
+    end for;
+    internal-sorted-applicable-methods(gf, nargs, arg-ptr);
+  end block;
 end method cached-sorted-applicable-methods;
 
 define method internal-applicable-method?
-    (meth :: <method>, args :: <simple-object-vector>, cache :: <gf-cache>)
+    (meth :: <method>, arg-ptr :: <raw-pointer>, cache :: <gf-cache>)
  => (res :: <boolean>);
   block (return)
-    let classes :: <simple-object-vector> = cache.cached-classes;
+    let classes :: <type-vector> = cache.cached-classes;
     for (specializer :: <type> in meth.function-specializers,
-	 arg :: <object> in args,
 	 index :: <fixed-integer> from 0)
       let arg-type = classes[index];
+      let arg :: <object> = %%primitive extract-arg(arg-ptr, index);
 
       // arg-type may be either a singleton, a limited-int, or a class.  This
       // stuff has been worked out on a case by case basis.  It could
@@ -375,13 +396,18 @@ define method internal-applicable-method?
 	if (instance?(arg, specializer))
 	  // Still a valid arg, but a complicated one.  Therefore we patch up
 	  // the cache entry to better identify this particular case.
-	  classes[index] := if (~%instance?(specializer, <limited-integer>))
-			      singleton(arg);
-			    elseif (%instance?(arg-type, <limited-integer>))
-			      intersect-limited-ints(arg-type, specializer);
-			    else
-			      specializer;
-			    end if;
+	  classes[index] 
+	    := case
+		 (%instance?(specializer, <limited-integer>)) =>
+		   if (%instance?(arg-type, <limited-integer>))
+		     intersect-limited-ints(arg-type, specializer);
+		   else
+		     specializer;
+		   end if;
+		 (specializer == <byte-character>) =>
+		   <byte-character>;
+		 otherwise => singleton(arg);
+	       end case;
 	  cache.simple := #f;
 	else
 	  // At last, we've found something which isn't valid.  We'll return
@@ -389,10 +415,12 @@ define method internal-applicable-method?
 	  // subtypes that might still be valid.
 	  if (overlap?(arg-type, specializer))
 	    classes[index]
-	      := if (~%instance?(specializer, <limited-integer>))
-		   restrict-type(specializer, arg-type);
-		 else
+	      := if (%instance?(specializer, <limited-integer>))
 		   restrict-limited-ints(arg, arg-type, specializer);
+		 elseif (specializer == <byte-character>)
+		   <non-byte-character>;
+		 else
+		   restrict-type(arg-type, specializer);
 		 end if;
 	    cache.simple := #f;
 	  end if;
@@ -405,7 +433,7 @@ define method internal-applicable-method?
 end;
 
 define method compare-methods
-    (meth1 :: <method>, meth2 :: <method>, args :: <simple-object-vector>)
+    (meth1 :: <method>, meth2 :: <method>, arg-ptr :: <raw-pointer>)
     => res :: one-of(#"more-specific", #"less-specific", #"ambiguous",
 		     #"identical");
   block (return)
@@ -430,7 +458,7 @@ define method compare-methods
 	  result := #"less-specific";
 	end;
       elseif (instance?(spec1, <class>) & instance?(spec2, <class>))
-	let arg-class = object-class(args[index]);
+	let arg-class = object-class(%%primitive extract-arg(arg-ptr, index));
 	block (found)
 	  for (super :: <class> in arg-class.all-superclasses)
 	    if (super == spec1)
@@ -467,7 +495,8 @@ define method sorted-applicable-methods
   unless (args.size == gf.function-specializers.size)
     error("Wrong number of arguments to sorted-applicable-methods.");
   end;
-  cached-sorted-applicable-methods(gf, args);
+  let arg-ptr :: <raw-pointer> = %%primitive extract-args(args.size);
+  cached-sorted-applicable-methods(gf, args.size, arg-ptr);
 end;
 
 
