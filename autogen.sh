@@ -6,7 +6,7 @@ if test -z "$srcdir"; then srcdir=.; fi
 
 DIE=0
 
-(autoconf --version) < /dev/null > /dev/null 2>&1 || {
+(autoconf --version && autoheader --version) < /dev/null > /dev/null 2>&1 || {
         echo
         echo "You must have autoconf installed to compile Gwydion Dylan."
         echo "Download the appropriate package for your distribution,"
@@ -45,6 +45,7 @@ if test -z "$*"; then
         echo "to pass any to it, please specify them on the $0 command line."
 fi
 
+rm -f config.cache
 $srcdir/configure "$@"
 
 echo 
