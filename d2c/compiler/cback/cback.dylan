@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.29 1995/05/02 16:36:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.30 1995/05/03 07:19:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1058,6 +1058,17 @@ define method emit-assignment
     end;
   end;
   deliver-results(results, #[], #f, output-info);
+end;
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
+     op :: <truly-the>, output-info :: <output-info>)
+    => ();
+  if (results)
+    let rep = variable-representation(results, output-info);
+    let source = extract-operands(op, output-info, rep);
+    deliver-results(results, vector(pair(source, rep)), #f, output-info);
+  end;
 end;
 
 
