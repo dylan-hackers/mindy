@@ -1,4 +1,34 @@
 module: tk
+author: Robert Stockton (rgs@cs.cmu.edu)
+
+//======================================================================
+//
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+//
+//======================================================================
+//
+// This file contains support for <canvas>s and <canvas-item>s.
+//
+//======================================================================
 
 define class <canvas> (<window>)
   slot items :: <dictionary>, init-function: curry(make, <equal-table>);
@@ -9,7 +39,7 @@ define-widget(<canvas>, "canvas",
 	      #"insertborderwidth", #"insertofftime", #"insertontime",
 	      #"insertwidth", #"scrollincrement", #"scrollregion",
 	      #"selectbackground", #"selectborderwidth", #"selectforeground",
-	      #"width", #"yscrollcommand");
+	      #"width", #"xscrollcommand", #"yscrollcommand");
 
 define class <canvas-item> (<object>)
   slot window :: <window>, required-init-keyword: #"in";
@@ -25,8 +55,9 @@ define method as (cls == <string>, value :: <canvas-item>);
   value.name;
 end method as;
 
-define method configure-item
-    (item :: <canvas-item>, #rest options) => (item :: <canvas-item>);
+define method configure
+    (item :: <canvas-item>, #rest options, #all-keys)
+ => (item :: <canvas-item>);
   apply(put-tk-line, item.window, " itemconfigure ", item.name,
 	std-options(#[#"anchor", #"arrow", #"arrowshape", #"capstyle",
 			#"joinstyle", #"smooth", #"splinesteps", #"font",
@@ -34,36 +65,35 @@ define method configure-item
 			#"outline", #"start", #"stipple", #"style", #"width"],
 		    #t, options));
   item;
-end method configure-item;
+end method configure;
 
-define method item-configuration
-    (item :: <canvas-item>, index :: <object>) => (result :: <sequence>);
+define method configuration
+    (item :: <canvas-item>) => (result :: <sequence>);
   let string = call-tk-function(item.window, " itemconfigure ", item.name);
   parse-tk-list(string, depth: 2);
-end method item-configuration;
+end method configuration;
 
-define method bind-item
-    (item :: <canvas-item>, event :: <string>, command, #key append = #f)
+define method bind
+    (item :: <canvas-item>, event :: <string>, command)
  => (item :: <canvas-item>);
   put-tk-line(item.window, " bind ", item.name, " ", event,
-	       if (append) " +{" else " {" end if,
-	       command,
-	       "}");
+	       " {" , command, "}");
   item;
-end method bind-item;
+end method bind;
 
-define method delete-item (item :: <canvas-item>) => ();
-  put-tk-line(item.window, " delete ", item.name);
+define method delete-item (item :: <canvas-item>, #rest rest) => ();
+  put-tk-line(item.window, " delete ",
+	      apply(join-tk-args, item.name, map(name, rest)));
 end method delete-item;
 
 define method raise-item
-    (item :: <canvas-item>, #key past :: <canvas-item>) => ();
+    (item :: <canvas-item>, #key past :: false-or(<canvas-item>)) => ();
   put-tk-line(item.window, " raise ", item.name, " ",
 	       if (past) past else "" end if);
 end method raise-item;
 
 define method lower-item
-    (item :: <canvas-item>, #key past :: <canvas-item>) => ();
+    (item :: <canvas-item>, #key past :: false-or(<canvas-item>)) => ();
   put-tk-line(item.window, " lower ", item.name, " ",
 	       if (past) past else "" end if);
 end method lower-item;

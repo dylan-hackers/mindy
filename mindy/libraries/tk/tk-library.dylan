@@ -1,4 +1,37 @@
 module: tk
+author: Robert Stockton (rgs@cs.cmu.edu)
+
+//======================================================================
+//
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+//
+//======================================================================
+//
+// This file contains the library declarations for the "tk" library.  It
+// exports two modules:  "tk-internal" provides an informal "extension
+// protocol" for outside implementors, while "tk" provides all user level
+// functions. 
+//
+//======================================================================
 
 define library tk
   use dylan;
@@ -58,7 +91,7 @@ define module tk
     *root-window*;
   export // user functions
     configure, configuration, map-window, unmap-window, destroy-window,
-    pack;
+    pack, unpack;
   export // bindings
     bind, get-binding, get-bindings;
   export // <button>s
@@ -67,7 +100,7 @@ define module tk
   export // <canvas>s
     xview, yview, focus, focus-setter, scan-mark, scan-dragto, select-item,
     create-arc, create-bitmap, create-line, create-oval, create-polygon,
-    create-rectangle, create-window, postscript;
+    create-rectangle, create-text, create-window, postscript, items;
   export // <entry>s, <listbox>s, and <text>s
     delete, insert, get-all, get-elements, scan-mark, scan-dragto,
     select-adjust, select-clear, select-from, select-to;
@@ -89,10 +122,10 @@ define module tk
   export // <text-mark>s
     name; // value, value-setter
   export // <text-tag>s
-    name, configure-tag, tag-configuration, bind-tag, delete-tag, raise-tag,
+    name, configure, configuration, bind, delete-tag, raise-tag,
     lower-tag, next-range, add-tag, remove-tag;
   export // <canvas-item>s
-    configure-item, item-configuration, bind-item, delete-item, raise-item,
+    configure, configuration, bind, delete-item, raise-item,
     lower-item, move-item, scale-item, item-type, item-coords,
     item-coords-setter;
 end module tk;
@@ -100,5 +133,5 @@ end module tk;
 define module tk-extension
   use tk-internal,
     export: {tk-as, put-tk-line, call-tk-function, join-tk-args, make-option,
-	       tk-quote, tk-unquote, anonymous-name};
+	       tk-quote, tk-unquote, anonymous-name, parse-tk-list};
 end module tk-extension;
