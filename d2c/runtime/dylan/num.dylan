@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.5 1995/11/16 03:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.6 1995/12/09 21:01:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -9,7 +9,7 @@ module: dylan-viscera
 define open abstract class <number> (<object>)
 end;
 
-define open abstract class <complex> (<number>)
+define abstract class <complex> (<number>)
 end;
 
 define abstract class <real> (<complex>)
@@ -29,6 +29,18 @@ end;
 
 // These are defined on object because they are useful abstract interfaces.
 
+define open generic zero? (object :: <object>) => res :: <boolean>;
+
+define open generic positive? (num :: <object>) => res :: <boolean>;
+
+define open generic negative? (num :: <object>) => res :: <boolean>;
+
+define open generic integral? (num :: <object>) => res :: <boolean>;
+
+define inline method intergral? (object :: <object>) => res :: <boolean>;
+  #f;
+end method intergral?;
+
 define open generic \+ (num1 :: <object>, num2 :: <object>);
 
 define open generic \* (num1 :: <object>, num2 :: <object>);
@@ -37,80 +49,60 @@ define open generic \- (num1 :: <object>, num2 :: <object>);
 
 define open generic \/ (num1 :: <object>, num2 :: <object>);
 
+define open generic negative (num :: <object>) => res :: <object>;
+
+define open generic \^ (num :: <object>, power :: <object>) => res :: <object>;
+
+define open generic abs (num :: <object>) => res :: <object>;
+
 
-// Number methods.
+// Complex methods.
 
-define open generic zero? (num :: <number>) => res :: <boolean>;
+seal generic \= (<complex>, <complex>);
 
-define inline method zero? (num :: <number>) => res :: <boolean>;
+seal generic \~= (<complex>, <complex>);
+
+define sealed inline method zero? (num :: <complex>) => res :: <boolean>;
   num = 0;
 end;
 
-define open generic negative (num :: <number>) => res :: <number>;
+seal generic \+ (<complex>, <complex>);
 
-define inline method negative (num :: <number>) => res :: <number>;
-  0 - num;
-end;
+seal generic \* (<complex>, <complex>);
 
-/* ### not absolutly needed
-define open generic \^ (num :: <number>, power :: <number>) => res :: <number>;
-*/
+seal generic \- (<complex>, <complex>);
 
-define open generic abs (num :: <number>) => res :: <number>;
+seal generic \/ (<complex>, <complex>);
 
-/* ### not absolutly needed
-define open generic rationalize (num :: <number>) => res :: <number>;
+seal generic \^ (<complex>, <complex>);
 
-define open generic numerator (num :: <number>) => res :: <number>;
+seal generic abs (<complex>);
 
-define open generic denominator (num :: <number>) => res :: <number>;
-*/
 
 
 // Real methods.
-
-seal generic \= (<real>, <real>);
-
-seal generic \~= (<real>, <real>);
 
 seal generic \< (<real>, <real>);
 
 seal generic \<= (<real>, <real>);
 
-seal generic zero? (<real>);
-
-define sealed generic positive? (num :: <real>) => res :: <boolean>;
-
-define inline method positive? (num :: <real>) => res :: <boolean>;
+define sealed inline method positive? (num :: <real>) => res :: <boolean>;
   num > 0;
 end;
 
-define sealed generic negative? (num :: <real>) => res :: <boolean>;
-
-define inline method negative? (num :: <real>) => res :: <boolean>;
+define sealed inline method negative? (num :: <real>) => res :: <boolean>;
   num < 0;
 end;
 
-/* ### not absolutly needed
-define sealed generic integral? (num :: <real>) => res :: <boolean>;
-
-define inline method integral? (num :: <real>) => res :: <boolean>;
+define sealed inline method integral? (num :: <real>) => res :: <boolean>;
   let (quo, rem) = floor(num);
   zero?(rem);
 end;
-*/
 
-seal generic \+ (<real>, <real>);
+define sealed inline method negative (num :: <real>) => res :: <real>;
+  0 - num;
+end;
 
-seal generic \* (<real>, <real>);
-
-seal generic \- (<real>, <real>);
-
-seal generic \/ (<real>, <real>);
-
-seal generic negative (<real>);
-
-/* ### not absolutly needed
 define sealed generic floor (num :: <real>)
     => (quo :: <integer>, rem :: <real>);
 
@@ -122,51 +114,42 @@ define sealed generic round (num :: <real>)
 
 define sealed generic truncate (num :: <real>)
     => (quo :: <integer>, rem :: <real>);
-*/
 
 define sealed generic floor/ (a :: <real>, b :: <real>)
     => (quo :: <integer>, rem :: <real>);
 
-/* ### not absolutly needed
 define inline method floor/ (a :: <real>, b :: <real>)
     => (quo :: <fixed-integer>, rem :: <real>);
   let quo = floor(a / b);
   values(quo, a - quo * b);
 end;
-*/
 
 define sealed generic ceiling/ (a :: <real>, b :: <real>)
     => (quo :: <integer>, rem :: <real>);
 
-/* ### not absolutly needed
 define inline method ceiling/ (a :: <real>, b :: <real>)
     => (quo :: <fixed-integer>, rem :: <real>);
   let quo = ceiling(a / b);
   values(quo, a - quo * b);
 end;
-*/
 
 define sealed generic round/ (a :: <real>, b :: <real>)
     => (quo :: <integer>, rem :: <real>);
 
-/* ### not absolutly needed
 define inline method round/ (a :: <real>, b :: <real>)
     => (quo :: <fixed-integer>, rem :: <real>);
   let quo = round(a / b);
   values(quo, a - quo * b);
 end;
-*/
 
 define sealed generic truncate/ (a :: <real>, b :: <real>)
     => (quo :: <integer>, rem :: <real>);
 
-/* ### not absolutly needed
 define inline method truncate/ (a :: <real>, b :: <real>)
     => (quo :: <fixed-integer>, rem :: <real>);
   let quo = truncate(a / b);
   values(quo, a - quo * b);
 end;
-*/
 
 define sealed generic modulo (real1 :: <real>, real2 :: <real>)
     => res :: <real>;
@@ -186,11 +169,7 @@ define inline method remainder (real1 :: <real>, real2 :: <real>)
   rem;
 end;
 
-/* ### not absolutly needed
-seal generic \^ (<real>, <integer>);
-*/
-
-define sealed inline method abs (num :: <real>)
+define inline method abs (num :: <real>)
     => res :: <real>;
   if (negative?(num))
     -num;
@@ -198,39 +177,6 @@ define sealed inline method abs (num :: <real>)
     num;
   end;
 end;
-
-/* ### not absolutly needed
-seal generic rationalize (<real>);
-
-seal generic numerator (<real>);
-
-seal generic denominator (<real>);
-*/
-
-define sealed generic min (real :: <real>, #rest more-reals)
-    => res :: <real>;
-
-define inline method min (real :: <real>, #rest more-reals)
-    => res :: <real>;
-  reduce(binary-min, real, more-reals);
-end;
-
-define inline method binary-min (x :: <real>, y :: <real>) => res :: <real>;
-  if (x < y) x else y end;
-end;	  
-
-define sealed generic max (real :: <real>, #rest more-reals)
-    => res :: <real>;
-
-define inline method max (real :: <real>, #rest more-reals)
-    => res :: <real>;
-  reduce(binary-max, real, more-reals);
-end;
-
-define inline method binary-max (x :: <real>, y :: <real>) => res :: <real>;
-  if (x < y) y else x end;
-end;	  
-
 
 
 // Integer methods.
@@ -245,7 +191,6 @@ define sealed generic even? (a :: <integer>) => res :: <boolean>;
 
 // No default method for even?.
 
-/* ### not absolutly needed
 define inline method integral? (a :: <integer>) => res :: <boolean>;
   #t;
 end;
@@ -269,10 +214,6 @@ define inline method truncate (a :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
   values(a, 0);
 end;
-*/
-
-define sealed generic logior (#rest integers)
-    => res :: <integer>;
 
 define inline method logior (#rest integers)
     => res :: <integer>;
@@ -282,18 +223,12 @@ end;
 define sealed generic binary-logior (x :: <integer>, y :: <integer>)
     => res :: <integer>;
 
-define sealed generic logxor (#rest integers)
-    => res :: <integer>;
-
 define inline method logxor (#rest integers)
     => res :: <integer>;
   reduce(binary-logxor, 0, integers);
 end;
 
 define sealed generic binary-logxor (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
-
-define sealed generic logand (#rest integers)
     => res :: <integer>;
 
 define inline method logand (#rest integers)
@@ -306,13 +241,12 @@ define sealed generic binary-logand (x :: <integer>, y :: <integer>)
 
 define sealed generic lognot (x :: <integer>) => res :: <integer>;
 
-define sealed generic logbit? (index :: <integer>, int :: <integer>)
+define sealed generic logbit? (index :: <fixed-integer>, int :: <integer>)
     => res :: <boolean>;
 
-define sealed generic ash (int :: <integer>, count :: <integer>)
+define sealed generic ash (int :: <integer>, count :: <fixed-integer>)
     => res :: <integer>;
 
-/* ### not absolutly needed
 define sealed generic lcm (x :: <integer>, y :: <integer>)
     => res :: <integer>;
 
@@ -323,7 +257,6 @@ end;
 
 define sealed generic gcd (x :: <integer>, y :: <integer>)
     => res :: <integer>;
-*/
 
 
 // Fixed Integers.
@@ -348,12 +281,7 @@ define constant $minimum-fixed-integer :: <fixed-integer>
 define constant $maximum-fixed-integer :: <fixed-integer>
   = lognot($minimum-fixed-integer);
 
-seal generic as (singleton(<fixed-integer>), <integer>);
-
-define inline method as (class == <fixed-integer>, num :: <fixed-integer>)
-    => res :: <fixed-integer>;
-  num;
-end;
+seal generic as (singleton(<fixed-integer>), <complex>);
 
 define inline method \== (a :: <fixed-integer>, b :: <fixed-integer>)
     => res :: <boolean>;
@@ -490,8 +418,7 @@ define method truncate/
   end;
 end;
 
-/* ### not absolutly needed
-define method \^ (base :: <number>, power :: <fixed-integer>)
+define method \^ (base :: <complex>, power :: <fixed-integer>)
     => res :: <number>;
   case
     negative?(power) =>
@@ -515,7 +442,6 @@ define method \^ (base :: <number>, power :: <fixed-integer>)
       end;
   end;
 end;
-*/
 
 define inline method binary-logior (a :: <fixed-integer>, b :: <fixed-integer>)
     => res :: <fixed-integer>;
@@ -552,7 +478,6 @@ define inline method ash (integer :: <fixed-integer>, count :: <fixed-integer>)
   end;
 end;
 
-/* ### not absolutly needed
 // gcd -- exported generic function method
 //
 // I have no idea why this results in the gcd, but it apparently does.
@@ -644,14 +569,11 @@ define method gcd (u :: <fixed-integer>, v :: <fixed-integer>)
     end;
   end;
 end;
-*/
 
 
 // Float methods.
 
-/* ### not absolutly needed
-
-seal generic as (singleton(<float>), <real>);
+seal generic as (singleton(<float>), <complex>);
 
 define inline method as (class == <float>, num :: <float>)
     => res :: <float>;
@@ -662,8 +584,6 @@ define inline method as (class == <float>, num :: <rational>)
     => res :: <float>;
   as(<single-float>, num);
 end;
-
-*/
 
 
 // Single floats.
@@ -677,9 +597,7 @@ define sealed method make (class == <single-float>, #key)
   error("Can't make instances of <single-float>, they just are.");
 end;
 
-/* ### not absolutly needed
-
-seal generic as (singleton(<single-float>), <real>);
+seal generic as (singleton(<single-float>), <complex>);
 
 define inline method as (class == <single-float>, num :: <fixed-integer>)
     => res :: <single-float>;
@@ -889,8 +807,6 @@ define inline method abs (a :: <single-float>)
   %%primitive single-abs (a);
 end;
 
-*/
-
 
 // Double floats.
 
@@ -903,9 +819,7 @@ define sealed method make (class == <double-float>, #key)
   error("Can't make instances of <double-float>, they just are.");
 end;
 
-/* ### not absolutly needed
-
-seal generic as (singleton(<double-float>), <real>);
+seal generic as (singleton(<double-float>), <complex>);
 
 define inline method as (class == <double-float>, num :: <fixed-integer>)
     => res :: <double-float>;
@@ -1194,8 +1108,6 @@ define inline method abs (a :: <double-float>)
   %%primitive double-abs (a);
 end;
 
-*/
-
 
 // Extended floats.
 
@@ -1208,9 +1120,7 @@ define sealed method make (class == <extended-float>, #key)
   error("Can't make instances of <extended-float>, they just are.");
 end;
 
-/* ### not absolutly needed
-
-seal generic as (singleton(<extended-float>), <real>);
+seal generic as (singleton(<extended-float>), <complex>);
 
 define inline method as (class == <extended-float>, num :: <fixed-integer>)
     => res :: <extended-float>;
@@ -1578,5 +1488,3 @@ define inline method abs (a :: <extended-float>)
     => abs :: <extended-float>;
   %%primitive extended-abs (a);
 end;
-
-*/
