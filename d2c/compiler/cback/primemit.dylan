@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.5 2000/03/20 00:47:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.6 2000/09/09 20:44:13 gabor Exp $
 copyright: see below
 
 
@@ -269,7 +269,7 @@ define-primitive-emitter
 	   let cluster = dep.source-exp;
 	   let (my-bottom, my-top) = consume-cluster(cluster, file);
 	   unless (next-bottom == #f | my-top = next-bottom)
-	     error("Merging two clusters that arn't adjacent?");
+	     error("Merging two clusters that aren't adjacent?");
 	   end;
 	   values(my-bottom, next-top | my-top,
 		  values-count + cluster.derived-type.min-values);

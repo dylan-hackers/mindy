@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.3 2000/01/24 04:56:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.4 2000/09/09 20:45:20 gabor Exp $
 copyright: see below
 
 
@@ -208,7 +208,7 @@ define-primitive
   (#"values", #(rest:, #"<object>"), #(values:, rest:, #"<object>"),
    // This is not cseable, because it isn't really a computation.
    // Besides, cse replaces common subexpressions with uses of values,
-   // so if we replaces values with values, we would spend a long time
+   // so if we replace values with values, we would spend a long time
    // compiling.
    pure: #t);
 
