@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.2 1994/12/15 17:40:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.3 1995/01/10 16:26:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -207,6 +207,7 @@ define class <method-token> (<core-word-token>) end;
 define class <module-token> (<core-word-token>) end;
 define class <mv-call-token> (<core-word-token>) end;
 define class <otherwise-token> (<core-word-token>) end;
+define class <primitive-token> (<core-word-token>) end;
 define class <set-token> (<core-word-token>) end;
 define class <use-token> (<core-word-token>) end;
 define class <uwp-token> (<core-word-token>) end;
