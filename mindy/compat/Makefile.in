@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: Makefile.in
+##  $Header: /scm/cvs/src/mindy/compat/Makefile.in,v 1.5 1999/01/17 03:01:31 emk Exp $
 ##
 ##  This is the makefile for the Mindy compatability library.
 ##
@@ -42,6 +42,7 @@ SRCDIR	=		${srcdir}
 CONFIGDIR = 		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
+DESTDIR =
 
 AR      =               ar
 CC	=		@CC@
@@ -85,7 +86,7 @@ clean:
 
 realclean:
 	rm -f ${OBJS} libcompat.a Makefile *~ \#* core
-	
+
 install: libcompat.a
 
 # It's easiest to generate this part by machine.

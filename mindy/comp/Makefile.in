@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.5 1999/01/08 06:21:28 housel Exp $
+##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.6 1999/01/17 03:01:29 emk Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -42,6 +42,7 @@ SRCDIR	=		${srcdir}
 CONFIGDIR =		@builddir@
 BINDIR	=		@bindir@
 LIBDIR	=		@libdir@/dylan
+DESTDIR =
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
@@ -90,9 +91,9 @@ clean:
 
 realclean:
 	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp Makefile *~ \#* core
-	
+
 install: mindycomp
-	${INSTALL_PROGRAM} mindycomp ${BINDIR}/mindycomp
+	${INSTALL_PROGRAM} mindycomp ${DESTDIR}${BINDIR}/mindycomp
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
