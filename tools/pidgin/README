@@ -25,3 +25,5 @@ Eric Kidd
 c-parser.input needs to know about enum members for constant folding
 c-lexer.dylan needs to know about typedefs (in a complicated fashion, too)
 c-parser.input knows too much about function arguments
+c-parser.input refers to '@0.objects' a lot
+c-parser-interface.dylan uses 'state.objects' in 'declare-objects'.
