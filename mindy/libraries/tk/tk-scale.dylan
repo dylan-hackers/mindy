@@ -33,9 +33,11 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <scale> (<window>) end class;
 
 define-widget(<scale>, "scale",
-	      #"activeforeground", #"command", #"font", #"from", #"label",
-	      #"length", #"orient", #"showvalue", #"sliderforeground",
-	      #"sliderlength", #"state", #"tickinterval", #"to", #"width");
+	      #"troughcolor", #"command", #"font", #"from", #"label",
+	      #"length", #"orient", #"showvalue", #"activebackground",
+	      #"sliderlength", #"state", #"tickinterval", #"to", #"width",
+	      #"bigincrement", #"repeatinterval", #"repeatdelay",
+	      #"digits", #"resolution", #"variable");
 
 define method get-value (scale :: <scale>) => (value :: <integer>);
   tk-as(<integer>, call-tk-function(scale, " get"));
