@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.2 1999/09/14 12:30:33 bruce Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -239,7 +239,7 @@ define method scan-keyword (contents :: <file-contents>, start :: <integer>)
 	  let str = make(<byte-string>, size: len);
 	  copy-bytes(str, 0, contents, start, len);
 	  values(as(<symbol>, str), posn + 1);
-	elseif (alphanumeric?(char) | char == '-' | char == '?')
+	elseif (alphanumeric?(char) | char == '-' | char == '?' | char == ' ')
 	  repeat(posn + 1);
 	else
 	  values(#f, posn);
