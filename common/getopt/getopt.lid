@@ -1,4 +1,4 @@
-library: getopt
+library: get-options
 unique-id-base: 1500
 unit-prefix: getopt
 

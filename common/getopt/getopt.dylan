@@ -1,171 +1,193 @@
-library: getopt
-module: getopt
-author: Jeff Dubrule <igor@pobox.com> & Ole Tetlie
-copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.6 1998/09/25 12:48:45 igor Exp $
+module: get-options
+authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>, Ole Tetlie
 
-define class <option-table> (<value-table>)
-  // perhaps we'll need something here later
-end;
+//=== Option list parser
 
-define method table-protocol (ht :: <option-table>)
- => (key-test :: <function>, key-hash :: <function>);
-  values(\=, string-hash);
-end method table-protocol;
+define class <option-list-parser> (<object>)
+  // Logical contents
+  slot option-parsers :: <collection> = make(<list> /* XXX */); // <option-parser>
+  slot option-string-map :: <table> = make(<table>); // <string> => <option-parser>
+  slot current-parse-state;
+end class <option-list-parser>;
 
-define method as (c == <string>, char :: <character>) => str :: <string>;
-  make(<string>, size: 1, fill: char);
-end method;
-
-define method add-internal (table :: <option-table>, option :: <option>)
-  // Note: names can't be symbols, as symbols are case-insensitive
-  for (name in option.names)
-    table[name] := option;
-    // This still works because we aren't trying to 
-    // assign a string or boolean into table[name].
+define function add-option-parser(option-list-parser :: <option-list-parser>, 
+				  option-parser :: <option-parser>) 
+ => ()
+  option-list-parser.option-parsers := add(option-list-parser.option-parsers, 
+					   option-parser);
+  let x = 17;
+  for (x in option-parser.option-names)
+    option-list-parser.option-string-map[x] := option-parser;
   end for;
-end method;
+end function add-option-parser;
 
-define class <option> (<object>)
-  slot names :: <list>, init-keyword: names:;
-  slot doc-string :: <string>, init-keyword: doc-string:;
-  slot value :: type-union(<string>, <boolean>), init-keyword: value:;
-end;
+define function parse-option-list(parser :: <option-list-parser>, 
+				  argv :: <collection>)
+ => (arguments)
+  let tokens = make(<list>);
+  let arguments = make(<list>);
 
-define method add-option (table :: <option-table>, doc-string :: <string>,
-			  value :: type-union(<string>, <boolean>), 
-			  #rest names)
- => ();
-  let real-names :: <list> = make (<list>);
-  for (name in names)
-    if (instance? (name, <string>))
-      real-names := add! (real-names, name);
-      // Should we be blowing up if we're not given a string/character?
-    end if;
-  end for;
-
-  let option = make (<option>, names: real-names, doc-string: doc-string,
-		     value: value);
-
-  add-internal (table, option);
-end method add-option;
-
-// OK, so we need a way of retrieving the actual <option>, but element() 
-// is totally overloaded.  So, by defining this magic constant, we can
-// suck out the option so that element-setter() can play with it.
-// If anyone knows a better approach here, let me know, eh?  (igor@pobox.com)
-define constant $secret-decoder-constant = pair(#f, #f);
-
-// All values in table are <string> or <boolean>, however the default may be
-// any type, so <object> is all we know we can return.
-define method element (table :: <option-table>, 
-                       key :: type-union(<string>, <character>),
-		       #next next-method,
-                       #key default: default = #f)
- => value :: <object>;
-
-  let option = next-method(table, as(<string>, key), default: default);
-  if (option == default)
-    default;
-  elseif (default == $secret-decoder-constant)
-    option;
-  else
-    option.value;
-  end if;
-end method element;
-
-define method element-setter (new-value :: type-union(<string>, <boolean>), 
-			      table :: <option-table>,
-			      key :: type-union(<string>, <character>))
- => new-value :: type-union(<string>, <boolean>);
-
-  if (has-option?(table, key))
-    element(table, key, default: $secret-decoder-constant).value := new-value;
-  else
-    // This can't happen as a result of a parse-options() argument, but only
-    // as a programming error (*options*["non-existant"] := "foobie"), so its
-    // OK to just throw an error here.
-    error("Attempt to set a non-existant option.");
-  end if;
-end method;
-
-define constant $option-not-there = pair(#f, #f);
-
-define method has-option? (table :: <option-table>, key :: type-union(<string>, <character>))
-  element(table, key, default: $option-not-there) ~= $option-not-there;
-end method;
-
-define method parse-options (table :: <option-table>, argv :: <collection>) => non-options :: <list>;
-  let non-options = make(<list>);
-  let option-wannabes = make(<list>);
-  let missing-vals = make(<list>);
-
-  let pos = as(<list>, argv);
-
-  local method parse-option () => ();
-	  let arg = pos.head;
-	  if (arg[1] = '-')
-	    let equalindex = find-key(arg, curry(\=, '='), failure: -1);
-	    let argname = copy-sequence(arg, start: 2);
-	    if (equalindex = -1)
-	      if (has-option?(table, argname) = #f)
-	        option-wannabes := add!(option-wannabes, argname);	      
-	      elseif (instance?(table[argname], <boolean>))
-		table[argname] := #t;
-	      else
-		missing-vals := add!(missing-vals, argname);
-	      end if;
-	    else
-	      let value = copy-sequence(argname, start: equalindex - 1);
-	      argname := copy-sequence(argname, end: equalindex - 2);
-  	      if (has-option?(table, argname) = #f)
-	        option-wannabes := add!(option-wannabes, argname);
-	      elseif (instance?(table[argname], <boolean>))
-		option-wannabes := add!(option-wannabes, argname);
-	      else 
-	        table[argname] := value;
-	      end if;
-	    end if;
-	  else 
-	    if (has-option?(table, arg[1]) = #f)
-	      option-wannabes := add!(option-wannabes, as(<string>, arg[1]));
-	    elseif (instance?(table[arg[1]], <boolean>))
-	      table[arg[1]] := #t;
-	    elseif (empty?(pos.tail) | pos.tail.head[0] = "-")
-	      missing-vals := add!(missing-vals, as(<string>, arg[1]));
-	    else
-	      table[arg[1]] := pos.tail.head;
-	      pos := pos.tail;
-	    end if;
+  local method retokenise(args :: <list>) => ();
+	  format-out("retokenising: %=\n", args);
+	  force-output(*standard-output*);
+	  if (empty?(args))
+	    values();
+	  elseif (args.head[0] ~= '-' | args.size = 1)
+	    arguments = add(arguments, args.head);
+	    retokenise(args.tail);
+	  elseif (args.head[1] = '-')
+	    tokens := add(tokens, args.head);
+	    retokenise(args.tail);
+	  elseif 
 	  end if;
-	end method;
+	end method retokenise;
+  retokenise(as(<list>, argv));
+  tokens;
+end function parse-option-list;
 
-  local method parse-arg-and-continue () => ();
-	  unless (empty?(pos))
-	    let arg = pos.head;
-	    if (arg = "--")
-	      // The rest are non-options.
-	      for (arg in pos.tail)
-		non-options := add!(non-options, arg);
-	      end for;
-	    elseif (arg.size > 1 & arg[0] = '-')
-	      parse-option();
-	      pos := pos.tail;
-	      parse-arg-and-continue();
-	    else
-	      non-options := add!(non-options, arg);
-	      pos := pos.tail;
-	      parse-arg-and-continue();
-	    end if;
-	  end unless;
-	end method;
+define function find-option-value
+    (parser :: <option-list-parser>, key :: <string>) => (value :: <object>)
+  parser.option-string-map[key].option-value;
+end function find-option-value;
 
-  parse-arg-and-continue();
+//=== Option list parser API for option parser classes
 
-  // if option-wannabes or missing-vals has anything in it, we should die
-  // and emit the help text or something.
+define function get-option-parameter
+    (option-list-parser :: <option-list-parser>)
+ => (parameter, was-explicit? :: <boolean>)
+  // ...
+end function;
 
-  // Since add!() adds things to the front of the list, flip it back over:
-  reverse!(non-options);
-end method parse-options;
+define function get-optional-option-parameter
+    (option-list-parser :: <option-list-parser>)
+ => (parameter, was-explicit? :: <boolean>)
+  // ...
+end function;
+
+//=== Individual option parser protocol
+
+define open abstract class <option-parser> (<object>)
+end class <option-parser>;
+
+define generic option-allows-parameters?
+    (option-parser :: <option-parser>)
+ => (allows-parameters? :: <boolean>);
+
+define method option-allows-parameters?
+    (option-parser :: <option-parser>)
+ => (allows-parameters? :: <boolean>)
+  #t;
+end method option-allows-parameters?;
+
+define generic option-names
+    (option-parser :: <option-parser>)
+ => (option-names :: <collection>); // of <string>
+
+define generic option-value
+    (option-parser :: <option-parser>)
+ => (value :: <object>);
+
+define generic parse-option
+    (option-parser :: <option-parser>,
+     option-string :: <string>,
+     option-list-parser :: <option-list-parser>)
+ => ();
+
+//=== Flag options
+
+define class <flag-option-parser> (<option-parser>)
+  slot positive-option-names,
+    required-init-keyword: option-names:;
+  slot negative-option-names = #(), // XXX - empty collection
+    init-keyword: negative-option-names:;
+
+  slot current-value :: <boolean> = #f,
+    init-keyword: default-value:;
+end class <flag-option-parser>;
+
+define method option-allows-parameters?
+    (option-parser :: <flag-option-parser>)
+ => (allows-parameters? :: <boolean>)
+  #f;
+end method option-allows-parameters?;
+
+define method option-names
+    (option-parser :: <flag-option-parser>)
+ => (option-names :: <collection>)
+  concatenate(option-parser.positive-option-names,
+	      option-parser.negative-option-names);
+end method option-names;
+
+define method option-value
+    (option-parser :: <flag-option-parser>)
+ => (value :: <object>)
+  option-parser.current-value;
+end method option-value;
+
+define method parse-option
+    (option-parser :: <flag-option-parser>,
+     option-string :: <string>,
+     option-list-parser :: <option-list-parser>)
+ => ()
+  if (member?(option-string, option-parser.positive-option-names))
+    option-parser.current-value = #t;
+  elseif (member?(option-string, option-parser.negative-option-names))
+    option-parser.current-value = #f;
+  else
+    error("It looks like parse-option list is confused.");
+  end if;
+end method parse-option;
+
+/*
+  add-option-templates
+  parse-options
+  find-option-value
+  print-synopsis
+  hypothetical: execute-program?
+
+  don't forget --help and --version, which exit immediately
+  program names...
+  erroneous argument lists
+
+  Parameterless options:
+   -b, --bar, --no-bar
+     Present or absent. May have opposites; latter values override
+     previous values.
+
+  Parameter options:
+   -f x, --foo=x
+     May be specified multiple times; this indicates multiple values.
+
+  Immediate-exit options:
+   --help, --version
+
+  Key/value options:
+   -DFOO -DBAR=1
+
+  Degenerate options forms we don't approve of:
+   -vvvvv (multiple verbosity)
+   -z3 (optional parameter)
+
+  Tokenization:
+   b -> -b
+   f x -> -f x
+   fx -> -f x
+   foo=x -> -foo =x
+   DFOO -> -D FOO
+   DBAR=1 -> -D BAR =1
+   bfx -> b f x
+   fbx -> f bx
+
+  Four kinds of tokens:
+   Options
+   Values
+   Explicit parameter values
+   Magic separator '--' (last token; no more!)
+
+  <option-descriptor> protocol:
+    define method on process-option
+    call get-parameter and get-optional-parameter as needed
+*/
+
+
 
