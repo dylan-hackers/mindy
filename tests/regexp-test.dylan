@@ -1,9 +1,9 @@
-module: regression-test
+module: string-ext-test
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.12 1996/07/19 09:50:21 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.13 1996/08/07 15:11:42 dwatson Exp $
 
 //======================================================================
 //
@@ -30,23 +30,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.12
 //
 //======================================================================
 
-define library regression-test
-  use dylan;
-  use string-extensions;
-end library regression-test;
-
-define module regression-test
-  use dylan;
-  use extensions;            // need main
-  use regular-expressions;
-  use substring-search;
-  use string-hacking;
-  use cheap-io;
-end module regression-test;
-
 define variable has-errors = #f;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the string-extensions library.\n\n");
   run-several-tests("regexp-positioner", positioner-test);
   run-several-tests("regexp-replace", replace-test);

@@ -128,9 +128,7 @@ define method buffered-read-test ();
   close(s);
 end method buffered-read-test;
 
-#if (mindy)
-define method main (argv0 :: <byte-string>, #rest ignored)
-#endif
+define method main (argv0, #rest ignored)
   format("\nRegression test for the streams library.\n\n");
   run-several-tests("Writing", write-test);
   run-several-tests("Reading", read-test);
@@ -141,6 +139,4 @@ define method main (argv0 :: <byte-string>, #rest ignored)
   else
     format("All streams tests pass.\n");
   end if;
-#if (mindy)
 end method main;
-#endif

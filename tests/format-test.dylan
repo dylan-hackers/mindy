@@ -2,7 +2,7 @@ module: format-test
 author: David Watson, Nick Kramer
 synopsis: Test for the format library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-test.dylan,v 1.1 1996/07/18 10:59:10 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-test.dylan,v 1.2 1996/08/07 15:18:22 dwatson Exp $
 
 //======================================================================
 //
@@ -28,19 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/format-test.dylan,v 1.1 
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library format-test
-  use Dylan;
-  use Format;
-  use Print;
-end library format-test;
-
-define module format-test
-  use Dylan;
-  use Extensions;
-  use Format;
-  use Cheap-io, prefix: "cheap-io-";
-end module format-test;
 
 define variable has-errors = #f;
 
@@ -76,7 +63,7 @@ define method format-test () => ();
   run-test(string, "Hello32a67101010%", "format-to-string");
 end method format-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   cheap-io-format("\nRegression test for the format library.\n\n");
   run-several-tests("format", format-test);
   if (has-errors)
@@ -85,4 +72,3 @@ define method main (argv0 :: <byte-string>, #rest ignored)
     cheap-io-format("All format tests pass.\n");
   end if;
 end method main;
-

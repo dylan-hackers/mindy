@@ -2,7 +2,7 @@ module: table-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the table-extensions library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1.2 1996/07/19 09:49:29 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1.3 1996/08/07 15:13:13 dwatson Exp $
 
 //======================================================================
 //
@@ -28,18 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/table-ext-test.dylan,v 1
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library table-ext-test
-  use Dylan;
-  use Table-Extensions;
-end library table-ext-test;
-
-define module table-ext-test
-  use Dylan;
-  use Extensions;
-  use Table-extensions;
-  use cheap-io;
-end module table-ext-test;
 
 define variable has-errors = #f;
 
@@ -116,7 +104,7 @@ define method remove-all-keys-test () => ();
   run-test(member?(42, string-table), #f, "remove-all-keys! test");
 end method remove-all-keys-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the table-extensions library.\n\n");
   run-several-tests("string tables", string-table-test);
   run-several-tests("case-insensitive functions", case-ins-test);
@@ -128,13 +116,3 @@ define method main (argv0 :: <byte-string>, #rest ignored)
     format("All table-extension tests pass.\n");
   end if;
 end method main;
-
-
-
-
-
-
-
-
-
-

@@ -2,7 +2,7 @@ module: time-test
 author: David Watson, Nick Kramer
 synopsis: Test for the time library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.1 1996/07/23 16:07:41 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.2 1996/08/07 15:14:40 dwatson Exp $
 
 //======================================================================
 //
@@ -28,19 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/time-test.dylan,v 1.1 19
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library time-test
-  use Dylan;
-  use Time;
-end library time-test;
-
-define module time-test
-  use Dylan;
-  use Extensions;
-  use Time;
-  use Time-io;
-  use Cheap-io;
-end module time-test;
 
 define variable has-errors = #f;
 
