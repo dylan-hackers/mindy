@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.8 1994/11/03 23:51:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.9 1994/11/28 15:38:51 wlott Exp $
 
 //======================================================================
 //
@@ -152,24 +152,35 @@ define method \/ (x :: <float>, y :: <rational>)
   x / y;
 end;
 
-define method truncate (x :: <fixed-integer>)
-      => (q :: <fixed-integer>, r :: <fixed-integer>);
+define method truncate (x :: <integer>)
+      => (q :: <integer>, r :: <fixed-integer>);
   truncate/ (x, 1);
 end;
 
-define method floor (x :: <fixed-integer>)
-      => (q :: <fixed-integer>, r :: <fixed-integer>);
+define method floor (x :: <integer>)
+      => (q :: <integer>, r :: <fixed-integer>);
   floor/ (x, 1);
 end;
 
-define method ceiling (x :: <fixed-integer>)
-      => (q :: <fixed-integer>, r :: <fixed-integer>);
+define method ceiling (x :: <integer>)
+      => (q :: <integer>, r :: <fixed-integer>);
   ceiling/ (x, 1);
 end;
 
-define method round (x :: <fixed-integer>)
-      => (q :: <fixed-integer>, r :: <fixed-integer>);
+define method round (x :: <integer>)
+      => (q :: <integer>, r :: <fixed-integer>);
   round/ (x, 1);
+end;
+
+define method floor/ (x :: <extended-integer>, y :: <fixed-integer>)
+    => (q :: <extended-integer>, r :: <fixed-integer>);
+  let (q, r) = floor/ (x, as(<extended-integer>, y));
+  values(q, as(<fixed-integer>, r));
+end;
+
+define method floor/ (x :: <fixed-integer>, y :: <extended-integer>)
+    => (q :: <extended-integer>, r :: <extended-integer>);
+  floor/ (as(<extended-integer>, x), y);
 end;
 
 define method floor/ (x :: <real>, y :: <real>)
@@ -178,16 +189,49 @@ define method floor/ (x :: <real>, y :: <real>)
   values (res, x - res * y);
 end;
 
+define method ceiling/ (x :: <extended-integer>, y :: <fixed-integer>)
+    => (q :: <extended-integer>, r :: <fixed-integer>);
+  let (q, r) = ceiling/ (x, as(<extended-integer>, y));
+  values(q, as(<fixed-integer>, r));
+end;
+
+define method ceiling/ (x :: <fixed-integer>, y :: <extended-integer>)
+    => (q :: <extended-integer>, r :: <extended-integer>);
+  ceiling/ (as(<extended-integer>, x), y);
+end;
+
 define method ceiling/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
   let res = ceiling (x / y);
   values (res, x - res * y);
 end;
 
+define method round/ (x :: <extended-integer>, y :: <fixed-integer>)
+    => (q :: <extended-integer>, r :: <fixed-integer>);
+  let (q, r) = round/ (x, as(<extended-integer>, y));
+  values(q, as(<fixed-integer>, r));
+end;
+
+define method round/ (x :: <fixed-integer>, y :: <extended-integer>)
+    => (q :: <extended-integer>, r :: <extended-integer>);
+  round/ (as(<extended-integer>, x), y);
+end;
+
 define method round/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
   let res = round (x / y);
   values (res, x - res * y);
+end;
+
+define method truncate/ (x :: <extended-integer>, y :: <fixed-integer>)
+    => (q :: <extended-integer>, r :: <fixed-integer>);
+  let (q, r) = truncate/ (x, as(<extended-integer>, y));
+  values(q, as(<fixed-integer>, r));
+end;
+
+define method truncate/ (x :: <fixed-integer>, y :: <extended-integer>)
+    => (q :: <extended-integer>, r :: <extended-integer>);
+  truncate/ (as(<extended-integer>, x), y);
 end;
 
 define method truncate/ (x :: <real>, y :: <real>)
@@ -204,6 +248,21 @@ end;
 define method remainder (x :: <real>, y :: <real>)
   let (quo, rem) = truncate/(x, y);
   rem;
+end;
+
+define method binary-logand (x :: <integer>, y :: <integer>)
+  let (x, y) = combine-contagion(x, y);
+  binary-logand(x, y);
+end;
+
+define method binary-logior (x :: <integer>, y :: <integer>)
+  let (x, y) = combine-contagion(x, y);
+  binary-logior(x, y);
+end;
+
+define method binary-logxor (x :: <integer>, y :: <integer>)
+  let (x, y) = combine-contagion(x, y);
+  binary-logxor(x, y);
 end;
 
 define method \= (x :: <real>, y :: <real>)
@@ -230,14 +289,6 @@ end;
 
 // Other routines.
 
-define method abs (real :: <real>)
-  if (negative?(real))
-    -real;
-  else
-    real;
-  end;
-end;
-
 define method \^ (base :: <number>, power :: <integer>)
   case
     negative? (power) =>
@@ -255,33 +306,28 @@ define method \^ (base :: <number>, power :: <integer>)
   end;
 end;
 
-define method min (x :: <real>, #rest more)
-  select (size(more))
-    0 => x;
-    1 =>
-      let y = first(more);
-      if (y < x) y else x end if;
-    otherwise =>
-      for (y in more,
-	   result = x then if (y < result) y else result end)
-      finally
-	result;
-      end;
-  end select;
+define method abs (real :: <real>)
+  if (negative?(real))
+    -real;
+  else
+    real;
+  end;
 end;
 
-define method max (x :: <real>, #rest more)
-  select (size(more))
-    0 => x;
-    1 =>
-      let y = first(more);
-      if (y > x) y else x end if;
-    otherwise =>
-      for (y in more,
-	   result = x then if (y > result) y else result end)
-      finally result;
-      end;
-  end select;
+define method logior (#rest integers)
+  reduce(binary-logior, 0, integers);
+end;
+
+define method logxor (#rest integers)
+  reduce(binary-logxor, 0, integers);
+end;
+
+define method logand (#rest integers)
+  reduce(binary-logand, -1, integers);
+end;
+
+define method lcm (n :: <integer>, m :: <integer>)
+  truncate/(max(n, m), gcd(n, m)) * min(n, m);
 end;
 
 define method gcd (u :: <integer>, v :: <integer>)
@@ -314,6 +360,32 @@ define method gcd (u :: <integer>, v :: <integer>)
   end case;
 end gcd;
 
-define method lcm (n :: <integer>, m :: <integer>)
-  truncate/(max(n, m), gcd(n, m)) * min(n, m);
+define method min (x :: <real>, #rest more)
+  select (size(more))
+    0 => x;
+    1 =>
+      let y = first(more);
+      if (y < x) y else x end if;
+    otherwise =>
+      for (y in more,
+	   result = x then if (y < result) y else result end)
+      finally
+	result;
+      end;
+  end select;
 end;
+
+define method max (x :: <real>, #rest more)
+  select (size(more))
+    0 => x;
+    1 =>
+      let y = first(more);
+      if (y > x) y else x end if;
+    otherwise =>
+      for (y in more,
+	   result = x then if (y > result) y else result end)
+      finally result;
+      end;
+  end select;
+end;
+
