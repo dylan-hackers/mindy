@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.22 1995/11/20 05:26:38 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.23 1995/12/05 03:04:16 wlott Exp $
 
 /*
 
@@ -389,6 +389,9 @@ register-object-id(#"literal-extended-float", #x0055);
 // One subobject, the vector dylan value.
 register-object-id(#"literal-vector", #x0056);
 
+// Similar in concept to literals, but not quite one because there is no
+// literal syntax for it.
+register-object-id(#"not-supplied-marker", #x0057);
 
 // Types:
 //
