@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.14 1996/02/16 03:37:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.15 1996/04/13 21:09:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -124,9 +124,18 @@ define constant $class-dump-slots =
        unique-id, #f, set-and-record-unique-id,
        subclass-id-range-min, subclass-id-range-min:, #f,
        subclass-id-range-max, subclass-id-range-max:, #f,
-       speed-representation,speed-representation:,speed-representation-setter,
-       space-representation,space-representation:,space-representation-setter,
-       each-subclass-slots-count, each-subclass-slots-count:, #f);
+       direct-speed-representation, direct-speed-representation:,
+         direct-speed-representation-setter,
+       direct-space-representation, direct-space-representation:,
+         direct-space-representation-setter,
+       general-speed-representation, general-speed-representation:,
+         general-speed-representation-setter,
+       general-space-representation, general-space-representation:,
+         general-space-representation-setter
+	 /* ### -- currently recomputed, so we don't really need to dump it.
+	 , each-subclass-slots-count, each-subclass-slots-count:, #f
+	 */
+       );
 
 
 define constant $slot-info-dump-slots =
@@ -144,9 +153,11 @@ define constant $slot-info-dump-slots =
 add-make-dumper(#"instance-slot-info", *compiler-dispatcher*,
   <instance-slot-info>,
   concatenate(
-    $slot-info-dump-slots,
+    $slot-info-dump-slots
+    /* ### -- currently recomputed, so we don't really need to dump it.
+    ,
     list(slot-positions, slot-positions:, #f,
-	 slot-initialized?-slot, slot-initialized?-slot:, #f)),
+	 slot-initialized?-slot, slot-initialized?-slot:, #f) */),
   load-external: #t
 );
 
@@ -166,8 +177,10 @@ add-make-dumper(#"class-slot-info", *compiler-dispatcher*, <class-slot-info>,
 add-make-dumper(#"each-subclass-slot-info", *compiler-dispatcher*,
   <each-subclass-slot-info>,
   concatenate(
-    $slot-info-dump-slots,
-    list(slot-positions, slot-positions:, #f)),
+    $slot-info-dump-slots
+    /* ### -- currently recomputed, so we don't really need to dump it.
+    ,
+    list(slot-positions, slot-positions:, #f) */),
   load-external: #t
 );
 
@@ -186,11 +199,13 @@ add-make-dumper(#"override-info", *compiler-dispatcher*,
   load-external: #t
 );
 
+/* ### -- currently recomputed, so we don't really need to dump it.
 add-make-dumper(#"layout-table", *compiler-dispatcher*,
   <layout-table>,
   list(layout-length, length:, #f,
        layout-holes, holes:, #f)
 );
+*/
 
 add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
   $class-dump-slots,
