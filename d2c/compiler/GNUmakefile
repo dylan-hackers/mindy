@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.14 1995/05/29 00:29:09 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.15 1995/06/01 14:26:11 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -7,7 +7,7 @@ MC = mindycomp
 MINDYFLAGS = -lcompiler
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $$PWD/$<
 
 OBJS = exports.dbc \
 	set-module.dbc \
