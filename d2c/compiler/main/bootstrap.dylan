@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.43 1995/11/16 04:11:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.44 1995/11/16 17:12:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -248,7 +248,7 @@ define macro module-definer
     { export ?names ; ... }
       => { %%export ?names; ... }
     { create ?names ; ... }
-      => { %%export ?names; ... }
+      => { %%create ?names; ... }
     { } => { }
   names:
     { ?name } => { ?name }
